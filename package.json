@@ -1,0 +1,16 @@
+{
+  "name": "restaurant-ai-mcp",
+  "version": "1.0.0",
+  "description": "AI Restaurant Phone Receptionist MCP Server",
+  "main": "api/index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}
