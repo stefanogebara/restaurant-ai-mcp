@@ -7,15 +7,21 @@ const RESTAURANT_INFO_TABLE_ID = process.env.RESTAURANT_INFO_TABLE_ID;
 
 const airtableRequest = async (method, endpoint, data = null) => {
   try {
-    const response = await axios({
+    const config = {
       method,
       url: `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${endpoint}`,
       headers: {
         'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
         'Content-Type': 'application/json'
-      },
-      data
-    });
+      }
+    };
+
+    // Only include data for non-GET requests
+    if (data !== null && method !== 'GET') {
+      config.data = data;
+    }
+
+    const response = await axios(config);
     return { success: true, data: response.data };
   } catch (error) {
     console.error('Airtable request error:', error.response?.data || error.message);
