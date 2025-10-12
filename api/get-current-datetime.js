@@ -32,7 +32,7 @@ export default async function handler(req, res) {
 
   // Handle OPTIONS request for CORS preflight
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    return res.status(200).json({ success: true });
   }
 
   // Only accept GET requests
