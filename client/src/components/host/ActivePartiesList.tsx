@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActiveParty } from '../../types/host.types';
+import type { ActiveParty } from '../../types/host.types';
 import { useCompleteService } from '../../hooks/useCompleteService';
 
 interface ActivePartiesListProps {

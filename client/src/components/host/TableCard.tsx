@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Table } from '../../types/host.types';
+import type { Table } from '../../types/host.types';
 import { hostAPI } from '../../services/api';
 
 interface TableCardProps {

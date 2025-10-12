@@ -1,4 +1,4 @@
-import { UpcomingReservation } from '../../types/host.types';
+import type { UpcomingReservation } from '../../types/host.types';
 
 interface UpcomingReservationsProps {
   reservations: UpcomingReservation[];

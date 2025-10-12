@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { hostAPI } from '../services/api';
-import { DashboardData } from '../types/host.types';
+import type { DashboardData } from '../types/host.types';
 
 export function useHostDashboard() {
   return useQuery<DashboardData>({

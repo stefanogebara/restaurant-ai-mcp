@@ -1,4 +1,4 @@
-import { DashboardSummary } from '../../types/host.types';
+import type { DashboardSummary } from '../../types/host.types';
 
 interface DashboardStatsProps {
   summary: DashboardSummary;

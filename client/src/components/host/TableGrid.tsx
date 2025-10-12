@@ -1,4 +1,4 @@
-import { Table } from '../../types/host.types';
+import type { Table } from '../../types/host.types';
 import TableCard from './TableCard';
 
 interface TableGridProps {

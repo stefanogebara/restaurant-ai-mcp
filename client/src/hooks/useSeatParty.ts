@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { hostAPI } from '../services/api';
-import { SeatPartyRequest, SeatPartyResponse } from '../types/host.types';
+import type { SeatPartyRequest, SeatPartyResponse } from '../types/host.types';
 
 export function useSeatParty() {
   const queryClient = useQueryClient();

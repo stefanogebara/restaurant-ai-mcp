@@ -7,7 +7,7 @@ import DashboardStats from '../components/host/DashboardStats';
 import WalkInModal from '../components/host/WalkInModal';
 import CheckInModal from '../components/host/CheckInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
-import { UpcomingReservation } from '../types/host.types';
+import type { UpcomingReservation } from '../types/host.types';
 
 export default function HostDashboard() {
   const { data, isLoading, error, refetch } = useHostDashboard();

@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { UpcomingReservation, TableRecommendation } from '../../types/host.types';
+import type { UpcomingReservation, TableRecommendation } from '../../types/host.types';
 import { hostAPI } from '../../services/api';
 import { useState } from 'react';
 
