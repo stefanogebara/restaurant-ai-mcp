@@ -1,4 +1,5 @@
 const { getReservations, getRestaurantInfo } = require('./_lib/airtable');
+const { checkTimeSlotAvailability, getSuggestedTimes } = require('./_lib/availability-calculator');
 
 module.exports = async (req, res) => {
   // Enable CORS for ElevenLabs
@@ -37,6 +38,8 @@ module.exports = async (req, res) => {
     }
 
     const capacity = restaurant.fields.Capacity || 60;
+    const openTime = restaurant.fields['Opening Time'] || '17:00';
+    const closeTime = restaurant.fields['Closing Time'] || '22:00';
 
     // Get existing reservations for that date
     const filter = `AND(IS_SAME({Date}, '${date}', 'day'), OR({Status} = 'Confirmed', {Status} = 'Seated'))`;
@@ -46,24 +49,56 @@ module.exports = async (req, res) => {
       return res.status(500).json(reservationsResult);
     }
 
-    // Calculate current bookings
-    let totalBooked = 0;
-    reservationsResult.data.records.forEach(reservation => {
-      totalBooked += reservation.fields['Party Size'] || 0;
-    });
-
-    const availableCapacity = capacity - totalBooked;
+    const existingReservations = reservationsResult.data.records || [];
     const partySize = parseInt(party_size);
-    const available = availableCapacity >= partySize;
 
-    return res.status(200).json({
-      success: true,
-      available,
-      available_capacity: availableCapacity,
-      message: available
-        ? `Yes, we have availability for ${partySize} guests on ${date} at ${time}`
-        : `Sorry, we only have capacity for ${availableCapacity} more guests on ${date}. Your party of ${partySize} exceeds our available space.`
-    });
+    // Check availability using the sophisticated calculator
+    const availabilityCheck = checkTimeSlotAvailability(
+      time,
+      partySize,
+      existingReservations,
+      capacity
+    );
+
+    if (availabilityCheck.available) {
+      return res.status(200).json({
+        success: true,
+        available: true,
+        message: `Yes, we have availability for ${partySize} guests on ${date} at ${time}`,
+        details: {
+          estimated_duration: `${availabilityCheck.estimatedDuration} minutes`,
+          occupied_seats: availabilityCheck.occupiedSeats,
+          available_seats: availabilityCheck.availableSeats
+        }
+      });
+    } else {
+      // Get alternative time suggestions
+      const suggestions = getSuggestedTimes(
+        time,
+        partySize,
+        existingReservations,
+        capacity,
+        openTime,
+        closeTime
+      );
+
+      return res.status(200).json({
+        success: true,
+        available: false,
+        message: `Sorry, ${time} is fully booked. ${availabilityCheck.reason}. We have ${availabilityCheck.availableSeats} seats available at that time, but your party needs ${partySize} seats.`,
+        details: {
+          requested_time: time,
+          party_size: partySize,
+          available_seats_at_time: availabilityCheck.availableSeats,
+          occupied_seats: availabilityCheck.occupiedSeats
+        },
+        alternative_times: suggestions.length > 0 ? suggestions.map(s => ({
+          time: s.time,
+          available_seats: s.availableSeats,
+          message: `${s.time} has ${s.availableSeats} seats available`
+        })) : []
+      });
+    }
 
   } catch (error) {
     console.error('Check availability error:', error);
