@@ -5,7 +5,13 @@
       "Bash(git add:*)",
       "Bash(git push:*)",
       "Bash(node:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git log:*)",
+      "Bash(npm create:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npx tailwindcss init:*)",
+      "Bash(test:*)"
     ],
     "deny": [],
     "ask": []
