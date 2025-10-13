@@ -14,7 +14,10 @@
       "Bash(test:*)",
       "Bash(npm uninstall:*)",
       "Bash(curl -s \"https://api.airtable.com/v0/$AIRTABLE_BASE_ID/?maxRecords=1\" -H \"Authorization: Bearer $AIRTABLE_API_KEY\")",
-      "Bash(curl -s \"https://api.airtable.com/v0/$AIRTABLE_BASE_ID/$TABLES_TABLE_ID?maxRecords=1\" -H \"Authorization: Bearer $AIRTABLE_API_KEY\")"
+      "Bash(curl -s \"https://api.airtable.com/v0/$AIRTABLE_BASE_ID/$TABLES_TABLE_ID?maxRecords=1\" -H \"Authorization: Bearer $AIRTABLE_API_KEY\")",
+      "Bash(curl -s \"https://api.airtable.com/v0/$AIRTABLE_BASE_ID/Service%20Records?maxRecords=1\" -H \"Authorization: Bearer $AIRTABLE_API_KEY\")",
+      "Bash(curl -s \"https://api.airtable.com/v0/meta/bases/$AIRTABLE_BASE_ID/tables\" -H \"Authorization: Bearer $AIRTABLE_API_KEY\")",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

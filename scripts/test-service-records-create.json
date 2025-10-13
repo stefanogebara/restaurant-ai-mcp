@@ -1,0 +1,18 @@
+{
+  "records": [
+    {
+      "fields": {
+        "Service ID": "SVC-20250113-TEST",
+        "Reservation ID": "",
+        "Customer Name": "Test Customer",
+        "Customer Phone": "555-0000",
+        "Party Size": 2,
+        "Table IDs": "1",
+        "Seated At": "2025-01-13T20:00:00.000Z",
+        "Estimated Departure": "2025-01-13T21:30:00.000Z",
+        "Special Requests": "",
+        "Status": "Active"
+      }
+    }
+  ]
+}
