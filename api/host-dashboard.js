@@ -274,7 +274,11 @@ async function handleSeatParty(req, res) {
 
   // Map table numbers to Airtable record IDs
   const tableRecordIds = table_ids.map(tableNum => {
-    const table = tablesResult.tables.find(t => t.table_number === tableNum);
+    // Convert to number for comparison since table_number could be string or number
+    const table = tablesResult.tables.find(t => Number(t.table_number) === Number(tableNum));
+    if (!table) {
+      console.error(`Table not found for number: ${tableNum}`, { available_tables: tablesResult.tables.map(t => t.table_number) });
+    }
     return table ? table.id : null;
   }).filter(id => id !== null);
 
@@ -333,7 +337,11 @@ async function handleCompleteService(req, res) {
 
   // Map table numbers to Airtable record IDs
   const tableRecordIds = tableIds.map(tableNum => {
-    const table = tablesResult.tables.find(t => t.table_number === tableNum);
+    // Convert to number for comparison since table_number could be string or number
+    const table = tablesResult.tables.find(t => Number(t.table_number) === Number(tableNum));
+    if (!table) {
+      console.error(`Table not found for number: ${tableNum}`, { available_tables: tablesResult.tables.map(t => t.table_number) });
+    }
     return table ? table.id : null;
   }).filter(id => id !== null);
 
