@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "restaurant-ai": {
+      "command": "node",
+      "args": ["./dist/index.js"],
+      "env": {
+        "AIRTABLE_API_KEY": "${AIRTABLE_API_KEY}",
+        "AIRTABLE_BASE_ID": "${AIRTABLE_BASE_ID}",
+        "RESERVATIONS_TABLE_ID": "${RESERVATIONS_TABLE_ID}",
+        "TABLES_TABLE_ID": "${TABLES_TABLE_ID}",
+        "SERVICE_RECORDS_TABLE_ID": "${SERVICE_RECORDS_TABLE_ID}",
+        "RESTAURANT_INFO_TABLE_ID": "${RESTAURANT_INFO_TABLE_ID}",
+        "MENU_ITEMS_TABLE_ID": "${MENU_ITEMS_TABLE_ID}",
+        "API_URL": "${API_URL}"
+      }
+    }
+  }
+}
