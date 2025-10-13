@@ -257,9 +257,14 @@ async function handleSeatParty(req, res) {
 
   const serviceResult = await createServiceRecord(serviceFields);
   if (!serviceResult.success) {
+    console.error('Failed to create service record:', {
+      serviceFields,
+      error: serviceResult.message || serviceResult.error
+    });
     return res.status(500).json({
       success: false,
-      error: 'Failed to create service record'
+      error: 'Failed to create service record',
+      details: serviceResult.message || 'Unknown error'
     });
   }
 
