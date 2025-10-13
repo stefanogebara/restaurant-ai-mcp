@@ -263,8 +263,23 @@ async function handleSeatParty(req, res) {
     });
   }
 
-  const updatePromises = table_ids.map(tableId =>
-    updateTable(tableId, {
+  // Get all tables to map table numbers to Airtable record IDs
+  const tablesResult = await getAllTables();
+  if (!tablesResult.success) {
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to load tables for update'
+    });
+  }
+
+  // Map table numbers to Airtable record IDs
+  const tableRecordIds = table_ids.map(tableNum => {
+    const table = tablesResult.tables.find(t => t.table_number === tableNum);
+    return table ? table.id : null;
+  }).filter(id => id !== null);
+
+  const updatePromises = tableRecordIds.map(recordId =>
+    updateTable(recordId, {
       'Status': 'Occupied',
       'Current Service ID': serviceId
     })
@@ -306,8 +321,24 @@ async function handleCompleteService(req, res) {
   }
 
   const tableIds = updateResult.service_record.table_ids;
-  const updatePromises = tableIds.map(tableId =>
-    updateTable(tableId, {
+
+  // Get all tables to map table numbers to Airtable record IDs
+  const tablesResult = await getAllTables();
+  if (!tablesResult.success) {
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to load tables for update'
+    });
+  }
+
+  // Map table numbers to Airtable record IDs
+  const tableRecordIds = tableIds.map(tableNum => {
+    const table = tablesResult.tables.find(t => t.table_number === tableNum);
+    return table ? table.id : null;
+  }).filter(id => id !== null);
+
+  const updatePromises = tableRecordIds.map(recordId =>
+    updateTable(recordId, {
       'Status': 'Being Cleaned',
       'Current Service ID': ''
     })
