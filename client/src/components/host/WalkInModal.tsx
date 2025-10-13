@@ -20,10 +20,12 @@ export default function WalkInModal({ isOpen, onClose, onSuccess }: WalkInModalP
     mutationFn: (data: { party_size: number; preferred_location?: string }) =>
       hostAPI.checkWalkIn(data.party_size, data.preferred_location),
     onSuccess: (response) => {
+      const recommendation = response.data.recommendation;
       onSuccess({
         type: 'walk-in',
         ...formData,
         party_size: parseInt(formData.party_size),
+        table_ids: recommendation?.tables || [],
         recommendations: response.data,
       });
     },
