@@ -12,7 +12,9 @@
       "Bash(npm install:*)",
       "Bash(npx tailwindcss init:*)",
       "Bash(test:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(curl -s \"https://api.airtable.com/v0/$AIRTABLE_BASE_ID/?maxRecords=1\" -H \"Authorization: Bearer $AIRTABLE_API_KEY\")",
+      "Bash(curl -s \"https://api.airtable.com/v0/$AIRTABLE_BASE_ID/$TABLES_TABLE_ID?maxRecords=1\" -H \"Authorization: Bearer $AIRTABLE_API_KEY\")"
     ],
     "deny": [],
     "ask": []
