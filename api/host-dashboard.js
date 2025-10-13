@@ -248,7 +248,7 @@ async function handleSeatParty(req, res) {
     'Customer Name': customer_name,
     'Customer Phone': customer_phone,
     'Party Size': parseInt(party_size),
-    'Table IDs': table_ids,
+    'Table IDs': table_ids.join(', '),
     'Seated At': seatedAt,
     'Estimated Departure': estimatedDeparture,
     'Special Requests': special_requests || '',
