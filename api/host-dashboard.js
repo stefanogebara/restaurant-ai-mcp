@@ -73,12 +73,17 @@ async function handleDashboard(req, res) {
     const timeElapsed = Math.floor((now - seatedAt) / 1000 / 60);
     const timeRemaining = Math.floor((estimatedDeparture - now) / 1000 / 60);
 
+    // Convert table_ids from string to array (Airtable stores as comma-separated string)
+    const tablesArray = typeof record.table_ids === 'string'
+      ? record.table_ids.split(',').map(id => id.trim())
+      : (Array.isArray(record.table_ids) ? record.table_ids : []);
+
     return {
       service_id: record.service_id,
       customer_name: record.customer_name,
       customer_phone: record.customer_phone,
       party_size: record.party_size,
-      tables: record.table_ids,
+      tables: tablesArray,
       seated_at: record.seated_at,
       estimated_departure: record.estimated_departure,
       time_elapsed_minutes: timeElapsed,
