@@ -35,10 +35,12 @@ module.exports = async (req, res) => {
         return await handleCompleteService(req, res);
       case 'mark-table-clean':
         return await handleMarkTableClean(req, res);
+      case 'update-table-status':
+        return await handleUpdateTableStatus(req, res);
       default:
         return res.status(400).json({
           success: false,
-          error: 'Invalid action. Use: dashboard, check-in, check-walk-in, seat-party, complete-service, or mark-table-clean'
+          error: 'Invalid action. Use: dashboard, check-in, check-walk-in, seat-party, complete-service, mark-table-clean, or update-table-status'
         });
     }
   } catch (error) {
@@ -362,7 +364,7 @@ async function handleCompleteService(req, res) {
 
   const updatePromises = tableRecordIds.map(recordId =>
     updateTable(recordId, {
-      'Status': 'Being Cleaned',
+      'Status': 'Available',
       'Current Service ID': ''
     })
   );
@@ -372,7 +374,7 @@ async function handleCompleteService(req, res) {
   return res.status(200).json({
     success: true,
     message: 'Service completed successfully',
-    tables_to_clean: tableIds
+    tables_freed: tableIds
   });
 }
 
@@ -400,5 +402,46 @@ async function handleMarkTableClean(req, res) {
   return res.status(200).json({
     success: true,
     message: `Table ${updateResult.data.fields['Table Number']} is now available`
+  });
+}
+
+async function handleUpdateTableStatus(req, res) {
+  const { table_id, status } = req.body;
+
+  if (!table_id || !status) {
+    return res.status(400).json({
+      success: false,
+      error: 'Table ID and status are required'
+    });
+  }
+
+  // Validate status
+  const validStatuses = ['Available', 'Occupied', 'Being Cleaned', 'Reserved'];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({
+      success: false,
+      error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+    });
+  }
+
+  const updateResult = await updateTable(table_id, {
+    'Status': status
+  });
+
+  if (!updateResult.success) {
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to update table status'
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: `Table ${updateResult.data.fields['Table Number']} status updated to ${status}`,
+    table: {
+      id: table_id,
+      table_number: updateResult.data.fields['Table Number'],
+      status: status
+    }
   });
 }

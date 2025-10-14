@@ -13,12 +13,13 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
   const { success, error: showError } = useToast();
 
   const updateTableMutation = useMutation({
-    mutationFn: () => {
-      return hostAPI.markTableClean(table.id);
+    mutationFn: ({ status }: { status: 'Available' | 'Occupied' | 'Being Cleaned' | 'Reserved' }) => {
+      return hostAPI.updateTableStatus(table.id, status);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['hostDashboard'] });
-      success(`Table ${table.table_number} marked as available`);
+      const statusText = variables.status === 'Available' ? 'free' : variables.status.toLowerCase();
+      success(`Table ${table.table_number} marked as ${statusText}`);
       onClose();
     },
     onError: () => {
@@ -28,39 +29,25 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
 
   const actions = [
     {
-      label: 'Mark as Available',
+      label: 'Mark as Free',
       icon: '✅',
       color: 'text-emerald-400',
       show: table.status !== 'Available',
-      onClick: () => updateTableMutation.mutate(),
+      onClick: () => updateTableMutation.mutate({ status: 'Available' }),
     },
     {
       label: 'Mark as Occupied',
       icon: '🔴',
       color: 'text-red-400',
       show: table.status !== 'Occupied',
-      onClick: () => console.log('Mark as Occupied - requires new endpoint'),
+      onClick: () => updateTableMutation.mutate({ status: 'Occupied' }),
     },
     {
-      label: 'Mark as Being Cleaned',
-      icon: '🧹',
-      color: 'text-yellow-400',
-      show: table.status !== 'Being Cleaned',
-      onClick: () => console.log('Mark as Being Cleaned - requires new endpoint'),
-    },
-    {
-      label: 'View History',
-      icon: '📊',
+      label: 'Mark as Reserved',
+      icon: '🔵',
       color: 'text-blue-400',
-      show: true,
-      onClick: () => console.log('View table history'),
-    },
-    {
-      label: 'Edit Details',
-      icon: '✏️',
-      color: 'text-purple-400',
-      show: true,
-      onClick: () => console.log('Edit table details'),
+      show: table.status !== 'Reserved',
+      onClick: () => updateTableMutation.mutate({ status: 'Reserved' }),
     },
   ];
 

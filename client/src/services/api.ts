@@ -37,4 +37,7 @@ export const hostAPI = {
 
   markTableClean: (tableId: string) =>
     api.post('/host-dashboard?action=mark-table-clean', { table_id: tableId }),
+
+  updateTableStatus: (tableId: string, status: 'Available' | 'Occupied' | 'Being Cleaned' | 'Reserved') =>
+    api.post('/host-dashboard?action=update-table-status', { table_id: tableId, status }),
 };
