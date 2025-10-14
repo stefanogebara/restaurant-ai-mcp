@@ -1,4 +1,3 @@
-import { Fragment } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Table } from '../../types/host.types';
 import { hostAPI } from '../../services/api';
@@ -12,7 +11,7 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
   const queryClient = useQueryClient();
 
   const updateTableMutation = useMutation({
-    mutationFn: (status: string) => {
+    mutationFn: () => {
       // For now, we'll use the mark clean endpoint as a template
       // You can create a new endpoint for generic status updates
       return hostAPI.markTableClean(table.id);
@@ -29,7 +28,7 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
       icon: '✅',
       color: 'text-emerald-400',
       show: table.status !== 'Available',
-      onClick: () => updateTableMutation.mutate('Available'),
+      onClick: () => updateTableMutation.mutate(),
     },
     {
       label: 'Mark as Occupied',
@@ -44,13 +43,6 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
       color: 'text-yellow-400',
       show: table.status !== 'Being Cleaned',
       onClick: () => console.log('Mark as Being Cleaned - requires new endpoint'),
-    },
-    {
-      label: 'Out of Service',
-      icon: '🚫',
-      color: 'text-gray-400',
-      show: table.status !== 'Out of Service',
-      onClick: () => console.log('Mark as Out of Service - requires new endpoint'),
     },
     {
       label: 'View History',
