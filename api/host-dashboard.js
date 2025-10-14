@@ -251,8 +251,8 @@ async function handleSeatParty(req, res) {
     'Table IDs': table_ids.join(', '),
     'Seated At': seatedAt,
     'Estimated Departure': estimatedDeparture,
-    'Special Requests': special_requests || ''
-    // NOTE: 'Status': 'Active' - Temporarily removed until "Active" option is added to Status field in Airtable
+    'Special Requests': special_requests || '',
+    'Status': 'Active'
   };
 
   const serviceResult = await createServiceRecord(serviceFields);
@@ -318,8 +318,8 @@ async function handleCompleteService(req, res) {
   const departedAt = new Date().toISOString();
 
   const updateResult = await updateServiceRecord(service_record_id, {
-    'Departed At': departedAt
-    // NOTE: 'Status': 'Completed' - Temporarily removed until "Completed" option is added to Status field in Airtable
+    'Departed At': departedAt,
+    'Status': 'Completed'
   });
 
   if (!updateResult.success) {
