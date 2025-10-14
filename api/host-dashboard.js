@@ -334,7 +334,12 @@ async function handleCompleteService(req, res) {
     });
   }
 
-  const tableIds = updateResult.service_record.table_ids;
+  const tableIdsRaw = updateResult.service_record.table_ids;
+
+  // Convert table_ids from string to array (Airtable stores as comma-separated string)
+  const tableIds = typeof tableIdsRaw === 'string'
+    ? tableIdsRaw.split(',').map(id => id.trim())
+    : (Array.isArray(tableIdsRaw) ? tableIdsRaw : []);
 
   // Get all tables to map table numbers to Airtable record IDs
   const tablesResult = await getAllTables();
