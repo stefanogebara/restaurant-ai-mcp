@@ -399,6 +399,6 @@ async function handleMarkTableClean(req, res) {
 
   return res.status(200).json({
     success: true,
-    message: `Table ${updateResult.table.table_number} is now available`
+    message: `Table ${updateResult.data.fields['Table Number']} is now available`
   });
 }
