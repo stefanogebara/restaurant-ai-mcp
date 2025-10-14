@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ToastProvider } from './contexts/ToastContext';
 import HostDashboard from './pages/HostDashboard';
 
 const queryClient = new QueryClient({
@@ -13,7 +14,9 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <HostDashboard />
+      <ToastProvider>
+        <HostDashboard />
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useToast } from '../../contexts/ToastContext';
 import type { ActiveParty } from '../../types/host.types';
 import { useCompleteService } from '../../hooks/useCompleteService';
 
@@ -9,6 +10,7 @@ interface ActivePartiesListProps {
 export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
   const [confirmingServiceId, setConfirmingServiceId] = useState<string | null>(null);
   const completeServiceMutation = useCompleteService();
+  const { success, error: showError } = useToast();
 
   if (parties.length === 0) {
     return (
@@ -19,10 +21,14 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
     );
   }
 
-  const handleCompleteService = (serviceId: string) => {
+  const handleCompleteService = (serviceId: string, partyName: string) => {
     completeServiceMutation.mutate(serviceId, {
       onSuccess: () => {
         setConfirmingServiceId(null);
+        success(`Service completed for ${partyName}`);
+      },
+      onError: () => {
+        showError('Failed to complete service');
       },
     });
   };
@@ -67,16 +73,19 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
             <div className="flex gap-2">
               <button
                 onClick={() => setConfirmingServiceId(null)}
-                className="flex-1 px-3 py-2 text-sm border border-gray-700 text-gray-300 rounded-lg hover:bg-gray-800 transition-colors"
+                className="flex-1 px-3 py-2 text-sm border border-gray-700 text-gray-300 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={completeServiceMutation.isPending}
               >
                 Cancel
               </button>
               <button
-                onClick={() => handleCompleteService(party.service_id)}
-                className="flex-1 px-3 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors shadow-lg shadow-emerald-500/30"
+                onClick={() => handleCompleteService(party.service_id, party.customer_name)}
+                className="flex-1 px-3 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={completeServiceMutation.isPending}
               >
+                {completeServiceMutation.isPending && (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                )}
                 {completeServiceMutation.isPending ? 'Completing...' : 'Confirm'}
               </button>
             </div>

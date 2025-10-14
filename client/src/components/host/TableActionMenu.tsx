@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '../../contexts/ToastContext';
 import type { Table } from '../../types/host.types';
 import { hostAPI } from '../../services/api';
 
@@ -9,16 +10,19 @@ interface TableActionMenuProps {
 
 export default function TableActionMenu({ table, onClose }: TableActionMenuProps) {
   const queryClient = useQueryClient();
+  const { success, error: showError } = useToast();
 
   const updateTableMutation = useMutation({
     mutationFn: () => {
-      // For now, we'll use the mark clean endpoint as a template
-      // You can create a new endpoint for generic status updates
       return hostAPI.markTableClean(table.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hostDashboard'] });
+      success(`Table ${table.table_number} marked as available`);
       onClose();
+    },
+    onError: () => {
+      showError(`Failed to update table ${table.table_number}`);
     },
   });
 
@@ -120,9 +124,13 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
                 key={index}
                 onClick={action.onClick}
                 disabled={updateTableMutation.isPending}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-[#252525] hover:bg-[#2A2A2A] transition-colors text-left group"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-[#252525] hover:bg-[#2A2A2A] transition-colors text-left group disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span className="text-2xl">{action.icon}</span>
+                {updateTableMutation.isPending ? (
+                  <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <span className="text-2xl">{action.icon}</span>
+                )}
                 <span className={`font-medium ${action.color} group-hover:text-white transition-colors`}>
                   {action.label}
                 </span>

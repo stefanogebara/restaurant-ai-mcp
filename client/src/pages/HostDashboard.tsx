@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useHostDashboard } from '../hooks/useHostDashboard';
+import { useToast } from '../contexts/ToastContext';
 import TableGrid from '../components/host/TableGrid';
 import ActivePartiesList from '../components/host/ActivePartiesList';
 import UpcomingReservations from '../components/host/UpcomingReservations';
@@ -7,10 +8,12 @@ import DashboardStats from '../components/host/DashboardStats';
 import WalkInModal from '../components/host/WalkInModal';
 import CheckInModal from '../components/host/CheckInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
+import TableStatusLegend from '../components/host/TableStatusLegend';
 import type { UpcomingReservation } from '../types/host.types';
 
 export default function HostDashboard() {
   const { data, isLoading, error, refetch } = useHostDashboard();
+  const { success } = useToast();
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
   const [checkInReservation, setCheckInReservation] = useState<UpcomingReservation | null>(null);
   const [seatPartyData, setSeatPartyData] = useState<any>(null);
@@ -85,7 +88,7 @@ export default function HostDashboard() {
           {/* Table Grid - 60% width on desktop */}
           <div className="lg:col-span-2">
             <div className="bg-[#1E1E1E] rounded-2xl shadow-2xl p-8 border border-gray-800">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold text-white">Table Layout</h2>
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-gray-400">Click any table to manage</span>
@@ -93,6 +96,9 @@ export default function HostDashboard() {
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                   </svg>
                 </div>
+              </div>
+              <div className="mb-6">
+                <TableStatusLegend />
               </div>
               <TableGrid tables={data.tables} />
             </div>
@@ -151,7 +157,10 @@ export default function HostDashboard() {
       <SeatPartyModal
         isOpen={seatPartyData !== null}
         data={seatPartyData}
-        onClose={() => setSeatPartyData(null)}
+        onClose={() => {
+          setSeatPartyData(null);
+          success('Party seated successfully!');
+        }}
       />
     </div>
   );
