@@ -15,7 +15,8 @@ const airtableRequest = async (method, endpoint, data = null) => {
       headers: {
         'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
         'Content-Type': 'application/json'
-      }
+      },
+      timeout: 8000 // 8 second timeout to prevent hanging
     };
 
     // Only include data for non-GET requests
@@ -26,6 +27,14 @@ const airtableRequest = async (method, endpoint, data = null) => {
     const response = await axios(config);
     return { success: true, data: response.data };
   } catch (error) {
+    if (error.code === 'ECONNABORTED') {
+      console.error('Airtable request timeout:', endpoint);
+      return {
+        success: false,
+        error: true,
+        message: 'Database request timed out. Please try again or call us directly.'
+      };
+    }
     console.error('Airtable request error:', error.response?.data || error.message);
     return {
       success: false,
