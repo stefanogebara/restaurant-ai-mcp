@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
-    return res.status(200).send('OK');
+    return res.status(200).json({ message: 'OK' });
   }
 
   const { action } = req.query;
@@ -29,11 +29,15 @@ module.exports = async (req, res) => {
       case 'cancel':
         return await handleCancel(req, res);
       default:
-        return res.status(400).send('Invalid action requested. Please specify whether you want to create, lookup, modify, or cancel a reservation.');
+        return res.status(400).json({
+          message: 'Invalid action requested. Please specify whether you want to create, lookup, modify, or cancel a reservation.'
+        });
     }
   } catch (error) {
     console.error('Reservation error:', error);
-    return res.status(500).send('I apologize, but something went wrong processing your request. Please try again or contact the restaurant directly.');
+    return res.status(500).json({
+      message: 'I apologize, but something went wrong processing your request. Please try again or contact the restaurant directly.'
+    });
   }
 };
 
@@ -49,7 +53,9 @@ async function handleCreate(req, res) {
   } = req.method === 'POST' ? req.body : req.query;
 
   if (!date || !time || !party_size || !customer_name || !customer_phone) {
-    return res.status(400).send('I need a few more details to complete your reservation. Please provide the date, time, party size, your name, and phone number.');
+    return res.status(400).json({
+      message: 'I need a few more details to complete your reservation. Please provide the date, time, party size, your name, and phone number.'
+    });
   }
 
   const reservationId = generateReservationId();
@@ -74,10 +80,14 @@ async function handleCreate(req, res) {
   const result = await createReservation(fields);
 
   if (!result.success) {
-    return res.status(500).send('I apologize, but I encountered an issue creating your reservation. Please try again or call us directly at the restaurant.');
+    return res.status(500).json({
+      message: 'I apologize, but I encountered an issue creating your reservation. Please try again or call us directly at the restaurant.'
+    });
   }
 
-  return res.status(200).send(`Perfect! Your reservation is confirmed for ${customer_name}, party of ${party_size}, on ${date} at ${time}. Your confirmation number is ${reservationId}. We look forward to seeing you!`);
+  return res.status(200).json({
+    message: `Perfect! Your reservation is confirmed for ${customer_name}, party of ${party_size}, on ${date} at ${time}. We look forward to seeing you!`
+  });
 }
 
 async function handleLookup(req, res) {
@@ -88,7 +98,9 @@ async function handleLookup(req, res) {
   } = req.method === 'POST' ? req.body : req.query;
 
   if (!reservation_id && !customer_phone && !customer_name) {
-    return res.status(400).send('To look up your reservation, I need either your confirmation number, phone number, or name.');
+    return res.status(400).json({
+      message: 'To look up your reservation, I need either your confirmation number, phone number, or name.'
+    });
   }
 
   const result = await findReservation({
@@ -98,12 +110,16 @@ async function handleLookup(req, res) {
   });
 
   if (!result.success) {
-    return res.status(404).send('I couldn\'t find a reservation with that information. Could you double-check the details and try again?');
+    return res.status(404).json({
+      message: 'I couldn\'t find a reservation with that information. Could you double-check the details and try again?'
+    });
   }
 
   const r = result.reservation;
   const specialReqs = r.special_requests ? ` Special requests: ${r.special_requests}.` : '';
-  return res.status(200).send(`I found your reservation! ${r.customer_name}, party of ${r.party_size}, scheduled for ${r.reservation_time}. Confirmation number: ${r.reservation_id}. Status: ${r.status}.${specialReqs}`);
+  return res.status(200).json({
+    message: `I found your reservation! ${r.customer_name}, party of ${r.party_size}, scheduled for ${r.reservation_time}. Confirmation number: ${r.reservation_id}. Status: ${r.status}.${specialReqs}`
+  });
 }
 
 async function handleModify(req, res) {
@@ -116,7 +132,9 @@ async function handleModify(req, res) {
   } = req.method === 'POST' ? req.body : req.query;
 
   if (!reservation_id) {
-    return res.status(400).send('I need your confirmation number to modify your reservation.');
+    return res.status(400).json({
+      message: 'I need your confirmation number to modify your reservation.'
+    });
   }
 
   const updateFields = {
@@ -131,7 +149,9 @@ async function handleModify(req, res) {
   const result = await updateReservation(reservation_id, updateFields);
 
   if (!result.success) {
-    return res.status(500).send('I couldn\'t update your reservation. Please try again or call us directly.');
+    return res.status(500).json({
+      message: 'I couldn\'t update your reservation. Please try again or call us directly.'
+    });
   }
 
   const changes = [];
@@ -141,21 +161,29 @@ async function handleModify(req, res) {
   if (special_requests !== undefined) changes.push('special requests');
 
   const changesList = changes.length > 0 ? ` I've updated your ${changes.join(', ')}.` : '';
-  return res.status(200).send(`Your reservation has been successfully modified!${changesList} Your confirmation number is still ${reservation_id}.`);
+  return res.status(200).json({
+    message: `Your reservation has been successfully modified!${changesList} Your confirmation number is still ${reservation_id}.`
+  });
 }
 
 async function handleCancel(req, res) {
   const { reservation_id } = req.method === 'POST' ? req.body : req.query;
 
   if (!reservation_id) {
-    return res.status(400).send('I need your confirmation number to cancel your reservation.');
+    return res.status(400).json({
+      message: 'I need your confirmation number to cancel your reservation.'
+    });
   }
 
   const result = await airtableCancelReservation(reservation_id);
 
   if (!result.success) {
-    return res.status(500).send('I couldn\'t cancel your reservation. Please try again or call us directly.');
+    return res.status(500).json({
+      message: 'I couldn\'t cancel your reservation. Please try again or call us directly.'
+    });
   }
 
-  return res.status(200).send(`Your reservation ${reservation_id} has been cancelled. We're sorry we won't see you this time, but we hope you'll visit us in the future!`);
+  return res.status(200).json({
+    message: `Your reservation has been cancelled. We're sorry we won't see you this time, but we hope you'll visit us in the future!`
+  });
 }
