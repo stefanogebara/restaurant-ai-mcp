@@ -62,9 +62,17 @@ class AirtableClient {
         url: `${this.baseUrl}/${endpoint}`,
         headers: this.headers,
         data,
+        timeout: 8000, // 8 second timeout
       });
       return { success: true, data: response.data };
     } catch (error: any) {
+      if (error.code === 'ECONNABORTED') {
+        console.error('Airtable request timeout:', endpoint);
+        return {
+          success: false,
+          error: 'Database request timed out. Please try again.',
+        };
+      }
       console.error('Airtable request error:', error.response?.data || error.message);
       return {
         success: false,
