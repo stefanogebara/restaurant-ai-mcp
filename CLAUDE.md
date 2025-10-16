@@ -194,6 +194,41 @@ onSuccess: (response) => {
 
 **Code Location**: `client/src/components/host/WalkInModal.tsx:19-32`
 
+### Issue #4: ElevenLabs LLM Parameter Extraction Error ✅ FIXED
+**Problem**: "Invalid message received: Expecting value: line 1 column 1 (char 0)" error in ElevenLabs conversations when calling `create_reservation` tool
+
+**Root Cause** (Discovered via Playwright investigation):
+- LLM was extracting date value (e.g., "2025-10-30") into the `party_size` parameter instead of the actual party count (e.g., "2")
+- The `date` parameter was missing entirely from tool calls
+- Original `party_size` description was too vague: "Number of guests"
+- This caused the webhook to fail with "Missing required parameter: date"
+
+**Investigation Method**:
+- Used Playwright to navigate ElevenLabs dashboard
+- Examined failed conversation (conv_5201k7n2ggpefmasdenawxem608c) transcription
+- Clicked "Result" button on failed tool call to see exact LLM-extracted parameters
+- Compared with successful conversation to identify pattern
+
+**Fix Applied** (Oct 16, 2025):
+Updated `party_size` parameter description in ElevenLabs Tools configuration:
+- **Before**: "Number of guests"
+- **After**: "Number of people dining (e.g., 2, 4, 6). This must be a NUMBER, not a date. Example: if 2 people are dining, use 2."
+
+**Files Created**:
+- `api/elevenlabs-webhook.js`: Unified webhook wrapper with comprehensive error handling (Commit: fda32d2)
+
+**Status**: Fix applied to ElevenLabs tool configuration. Ready for testing with new conversation.
+
+**Testing Instructions**:
+1. Call the ElevenLabs agent phone number
+2. Request a reservation (e.g., "I'd like to make a reservation for 2 people tomorrow at 7 PM")
+3. Go to https://elevenlabs.io/app/agents/history
+4. Click on the most recent conversation
+5. Verify that the `create_reservation` tool call shows:
+   - `party_size`: 2 (number, not date)
+   - `date`: "2025-10-30" (actual date value)
+   - No error message about missing date parameter
+
 ## 📚 Important Documentation Files
 
 1. **SERVICE_RECORDS_SETUP.md**: Current work - Service Records table configuration
@@ -249,18 +284,19 @@ onSuccess: (response) => {
 
 ## 🎯 Current Session Context
 
-**Last Session Summary**:
-- Continued Phase 2 Host Dashboard testing
-- Discovered Service Records table configuration issue
-- Used Playwright to manually configure 3 of 11 fields via Airtable web UI
-- Browser session ended, remaining fields need manual completion
-- Created comprehensive setup documentation
-- Committed progress to GitHub (commit: 3cc818d)
+**Last Session Summary** (Oct 16, 2025):
+- Debugged ElevenLabs agent "Invalid message received" error
+- Used Playwright to investigate failed conversations via live ElevenLabs dashboard
+- Applied "Live Environment First" principle from claude-code-workflows design review methodology
+- Discovered root cause: LLM was extracting date into party_size parameter
+- Fixed party_size parameter description in ElevenLabs Tools configuration
+- Created api/elevenlabs-webhook.js wrapper for comprehensive error handling
+- Committed changes to GitHub (commit: fda32d2)
 
 **Next Immediate Steps**:
-1. Manually complete Service Records field configuration (8 fields)
-2. Update Vercel env var: `SERVICE_RECORDS_TABLE_ID=tblEEHaoicXQA7NcL`
-3. Redeploy application
+1. **Test ElevenLabs Fix**: Call agent and verify create_reservation works correctly
+2. Complete Service Records field configuration (8 more fields) for Host Dashboard
+3. Update Vercel env var: `SERVICE_RECORDS_TABLE_ID=tblEEHaoicXQA7NcL`
 4. Test walk-in flow end-to-end
 5. Complete remaining Phase 2 testing checklist
 
@@ -317,6 +353,8 @@ Environment variables must be configured in Vercel dashboard.
 
 ---
 
-**Last Updated**: 2025-01-15 (Session: Phase 2 testing continuation)
-**Project Status**: Phase 2 in progress - Service Records configuration blocking walk-in flow
-**Next Milestone**: Complete Service Records setup → Test all Host Dashboard features
+**Last Updated**: 2025-10-16 (Session: ElevenLabs LLM parameter extraction fix)
+**Project Status**:
+- Phase 1 (Customer Reservation Bot): Production-ready, ElevenLabs fix applied
+- Phase 2 (Host Dashboard): Service Records configuration blocking walk-in flow
+**Next Milestone**: Test ElevenLabs fix → Complete Service Records setup → Test all Host Dashboard features
