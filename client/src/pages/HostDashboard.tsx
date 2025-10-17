@@ -3,7 +3,7 @@ import { useHostDashboard } from '../hooks/useHostDashboard';
 import { useToast } from '../contexts/ToastContext';
 import TableGrid from '../components/host/TableGrid';
 import ActivePartiesList from '../components/host/ActivePartiesList';
-import UpcomingReservations from '../components/host/UpcomingReservations';
+import ReservationsCalendar from '../components/host/ReservationsCalendar';
 import DashboardStats from '../components/host/DashboardStats';
 import WalkInModal from '../components/host/WalkInModal';
 import CheckInModal from '../components/host/CheckInModal';
@@ -117,15 +117,15 @@ export default function HostDashboard() {
               <ActivePartiesList parties={data.active_parties} />
             </div>
 
-            {/* Upcoming Reservations */}
+            {/* Reservations Calendar */}
             <div className="bg-[#1E1E1E] rounded-2xl shadow-2xl p-6 border border-gray-800">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-white">Upcoming Reservations</h2>
+                <h2 className="text-xl font-bold text-white">📅 Reservations Calendar</h2>
                 <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm font-semibold">
                   {data.upcoming_reservations.length}
                 </span>
               </div>
-              <UpcomingReservations
+              <ReservationsCalendar
                 reservations={data.upcoming_reservations}
                 onCheckIn={(reservation) => setCheckInReservation(reservation)}
               />

@@ -276,16 +276,17 @@ const cancelReservation = async (reservationId) => {
 
 const getUpcomingReservations = async () => {
   const now = new Date();
-  const twoHoursFromNow = new Date(now.getTime() + 120 * 60000);
-
   const today = now.toISOString().split('T')[0];
-  const currentTime = now.toTimeString().slice(0, 5);
-  const futureTime = twoHoursFromNow.toTimeString().slice(0, 5);
 
+  // Show ALL future reservations, not just next 2 hours
   const filter = `AND(
-    {Date} = '${today}',
-    {Time} >= '${currentTime}',
-    {Time} <= '${futureTime}',
+    OR(
+      {Date} > '${today}',
+      AND(
+        {Date} = '${today}',
+        {Time} >= '${now.toTimeString().slice(0, 5)}'
+      )
+    ),
     OR({Status} = 'Confirmed', {Status} = 'Waitlist')
   )`;
 
@@ -299,13 +300,24 @@ const getUpcomingReservations = async () => {
     reservation_id: r.fields['Reservation ID'],
     customer_name: r.fields['Customer Name'],
     customer_phone: r.fields['Customer Phone'],
+    customer_email: r.fields['Customer Email'] || '',
     party_size: r.fields['Party Size'],
+    date: r.fields.Date,
+    time: r.fields.Time,
     reservation_time: `${r.fields.Date} ${r.fields.Time}`,
     special_requests: r.fields['Special Requests'] || '',
     checked_in: !!r.fields['Checked In At'],
     checked_in_at: r.fields['Checked In At'] || null,
+    status: r.fields.Status,
     record_id: r.id
   }));
+
+  // Sort by date and time (earliest first)
+  reservations.sort((a, b) => {
+    const dateTimeA = new Date(`${a.date}T${a.time}`);
+    const dateTimeB = new Date(`${b.date}T${b.time}`);
+    return dateTimeA - dateTimeB;
+  });
 
   return {
     success: true,
