@@ -24,7 +24,23 @@ const airtableRequest = async (method, endpoint, data = null) => {
       config.data = data;
     }
 
+    console.log(`[Airtable ${method}] ${endpoint}`, data ? JSON.stringify(data, null, 2) : '');
     const response = await axios(config);
+
+    // Validate response for POST/PATCH operations
+    if (method === 'POST' || method === 'PATCH') {
+      // Check if we got a record back
+      if (!response.data || !response.data.id) {
+        console.error('Airtable response missing record ID:', response.data);
+        return {
+          success: false,
+          error: true,
+          message: 'Failed to create/update record - no ID returned'
+        };
+      }
+      console.log(`[Airtable ${method}] Success - Record ID: ${response.data.id}`);
+    }
+
     return { success: true, data: response.data };
   } catch (error) {
     if (error.code === 'ECONNABORTED') {
