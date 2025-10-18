@@ -1,4 +1,4 @@
-const airtable = require('../services/airtable');
+const airtable = require('./_lib/airtable');
 
 /**
  * Waitlist Management API
