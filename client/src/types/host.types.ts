@@ -27,10 +27,14 @@ export interface UpcomingReservation {
   customer_name: string;
   customer_phone: string;
   party_size: number;
+  date: string;
+  time: string;
   reservation_time: string;
   special_requests?: string;
   checked_in: boolean;
   checked_in_at?: string;
+  status?: string;
+  record_id?: string;
 }
 
 export interface DashboardSummary {
