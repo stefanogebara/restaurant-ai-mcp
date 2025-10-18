@@ -72,9 +72,11 @@ async function handleGetWaitlist(req, res) {
 
   try {
     // Build filter formula for Airtable
+    // Note: Status field options in Airtable are currently: Todo, In progress, Done
+    // These should be renamed to: Waiting, Notified, Seated (+ add Cancelled, No Show)
     let filterFormula = '';
     if (active === 'true') {
-      filterFormula = "OR({Status}='Waiting', {Status}='Notified')";
+      filterFormula = "OR({Status}='Todo', {Status}='In progress')";
     } else if (status) {
       filterFormula = `{Status}='${status}'`;
     }
@@ -206,7 +208,7 @@ async function handleAddToWaitlist(req, res) {
           'Customer Email': customer_email || '',
           'Party Size': party_size,
           'Estimated Wait': calculatedWait,
-          // Status will use default value or can be set after record creation
+          'Status': 'Todo',  // Using existing option name (will need to rename in Airtable UI)
           'Priority': nextPriority,
           'Special Requests': special_requests || '',
         }
