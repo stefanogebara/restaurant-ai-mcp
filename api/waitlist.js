@@ -85,8 +85,6 @@ async function handleGetWaitlist(req, res) {
     // Add sort parameters (Airtable format: sort[0][field]=Priority&sort[0][direction]=asc)
     params.append('sort[0][field]', 'Priority');
     params.append('sort[0][direction]', 'asc');
-    params.append('sort[1][field]', 'Added At');
-    params.append('sort[1][direction]', 'asc');
 
     if (filterFormula) {
       params.append('filterByFormula', filterFormula);
