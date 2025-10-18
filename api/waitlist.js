@@ -80,12 +80,13 @@ async function handleGetWaitlist(req, res) {
     }
 
     const url = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}`;
-    const params = new URLSearchParams({
-      sort: JSON.stringify([
-        { field: 'Priority', direction: 'asc' },
-        { field: 'Added At', direction: 'asc' }
-      ])
-    });
+    const params = new URLSearchParams();
+
+    // Add sort parameters (Airtable format: sort[0][field]=Priority&sort[0][direction]=asc)
+    params.append('sort[0][field]', 'Priority');
+    params.append('sort[0][direction]', 'asc');
+    params.append('sort[1][field]', 'Added At');
+    params.append('sort[1][direction]', 'asc');
 
     if (filterFormula) {
       params.append('filterByFormula', filterFormula);
