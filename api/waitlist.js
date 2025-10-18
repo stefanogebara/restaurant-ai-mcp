@@ -98,12 +98,18 @@ async function handleGetWaitlist(req, res) {
     // Build filter formula for Airtable
     let filterFormula = '';
     if (active === 'true') {
-      // Active = Waiting (Todo) or Notified (In progress)
-      filterFormula = "OR({Status}='Todo', {Status}='In progress')";
+      // Active = Waiting (Todo or empty) or Notified (In progress)
+      // Note: Empty status is treated as 'Waiting' (Todo)
+      filterFormula = "OR({Status}='Todo', {Status}='In progress', {Status}=BLANK())";
     } else if (status) {
       // Translate API status to Airtable status
       const airtableStatus = STATUS_TO_AIRTABLE[status] || status;
-      filterFormula = `{Status}='${airtableStatus}'`;
+      if (status === 'Waiting') {
+        // Waiting matches both 'Todo' and empty status
+        filterFormula = "OR({Status}='Todo', {Status}=BLANK())";
+      } else {
+        filterFormula = `{Status}='${airtableStatus}'`;
+      }
     }
 
     const url = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}`;
