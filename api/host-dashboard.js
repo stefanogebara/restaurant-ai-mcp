@@ -95,7 +95,14 @@ async function handleDashboard(req, res) {
   });
 
   const totalCapacity = tables.reduce((sum, table) => sum + table.capacity, 0);
-  const occupiedSeats = activeParties.reduce((sum, party) => sum + party.party_size, 0);
+
+  // Calculate occupied seats from BOTH service records AND manually occupied tables
+  const seatsFromActiveParties = activeParties.reduce((sum, party) => sum + party.party_size, 0);
+  const seatsFromOccupiedTables = tables
+    .filter(table => table.status === 'Occupied' && !activeParties.some(p => p.tables.includes(table.table_number.toString())))
+    .reduce((sum, table) => sum + table.capacity, 0);
+  const occupiedSeats = seatsFromActiveParties + seatsFromOccupiedTables;
+
   const availableSeats = totalCapacity - occupiedSeats;
 
   return res.status(200).json({
