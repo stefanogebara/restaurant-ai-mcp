@@ -207,7 +207,7 @@ async function handleAddToWaitlist(req, res) {
           'Customer Email': customer_email || '',
           'Party Size': party_size,
           'Estimated Wait': calculatedWait,
-          'Status': 'Waiting',
+          // Status will use default value or can be set after record creation
           'Priority': nextPriority,
           'Special Requests': special_requests || '',
         }
