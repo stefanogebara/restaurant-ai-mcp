@@ -9,6 +9,7 @@ import WalkInModal from '../components/host/WalkInModal';
 import CheckInModal from '../components/host/CheckInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import TableStatusLegend from '../components/host/TableStatusLegend';
+import WaitlistPanel from '../components/host/WaitlistPanel';
 import type { UpcomingReservation } from '../types/host.types';
 
 export default function HostDashboard() {
@@ -129,6 +130,11 @@ export default function HostDashboard() {
                 reservations={data.upcoming_reservations}
                 onCheckIn={(reservation) => setCheckInReservation(reservation)}
               />
+            </div>
+
+            {/* Waitlist Panel */}
+            <div className="bg-[#1E1E1E] rounded-2xl shadow-2xl border border-gray-800 overflow-hidden">
+              <WaitlistPanel />
             </div>
           </div>
         </div>

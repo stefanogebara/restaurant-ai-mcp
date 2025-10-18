@@ -232,6 +232,60 @@ Updated `party_size` parameter description in ElevenLabs Tools configuration:
    - `date`: "2025-10-30" (actual date value)
    - No error message about missing date parameter
 
+### Issue #5: Dashboard Stats Not Counting Manually Occupied Tables ✅ FIXED
+**Problem**: When table 11 was manually marked as "Occupied" (without a service record), the dashboard stats (occupied seats, occupancy %) didn't update.
+
+**Root Cause**: Dashboard stats calculation only counted tables with active service records, ignoring manually occupied tables.
+
+**Fix Applied** (Oct 18, 2025):
+Updated `api/routes/host-dashboard.js:99-106` to count BOTH:
+- Active service records (seated parties with service IDs)
+- Manually occupied tables without service records
+
+**Code Location**: `api/routes/host-dashboard.js:handleGetDashboard`
+
+**Status**: ✅ RESOLVED - Dashboard now correctly counts all occupied tables
+
+### Issue #6: Calendar Not Showing Reservations - TypeScript Build Error ✅ FIXED
+**Problem**: Reservations calendar component was empty despite 9 reservations existing in Airtable. Production API returned 0 reservations.
+
+**Root Cause Discovery Process**:
+1. Verified environment variable `RESERVATIONS_TABLE_ID=tbloL2huXFYQluomn` was correct in Vercel
+2. Triggered multiple redeployments - issue persisted
+3. Examined Vercel logs - discovered production was running OLD code from commit `50f69ca`
+4. Found that "Redeploy" feature redeploys the SAME commit, not latest code
+5. Discovered all commits after `2d21783` (calendar feature) were failing to build
+6. Root cause: TypeScript compilation error in `ReservationsCalendar.tsx`
+
+**TypeScript Error**:
+```
+src/components/host/ReservationsCalendar.tsx(17,32): error TS2339: Property 'date' does not exist on type 'UpcomingReservation'.
+src/components/host/ReservationsCalendar.tsx(29,25): error TS2339: Property 'time' does not exist on type 'UpcomingReservation'.
+```
+
+**Fix Applied** (Oct 18, 2025 - Commit: 26427bf):
+Added missing fields to `UpcomingReservation` interface in `client/src/types/host.types.ts`:
+```typescript
+export interface UpcomingReservation {
+  reservation_id: string;
+  customer_name: string;
+  customer_phone: string;
+  party_size: number;
+  date: string;              // ✅ Added
+  time: string;              // ✅ Added
+  reservation_time: string;
+  special_requests?: string;
+  checked_in: boolean;
+  checked_in_at?: string;
+  status?: string;           // ✅ Added
+  record_id?: string;        // ✅ Added
+}
+```
+
+**Key Discovery**: Vercel's "Redeploy" button redeploys the SAME commit. To deploy latest code, must push new commits.
+
+**Status**: ✅ RESOLVED - Production now shows all 9 reservations including Jonas (Party of 3, Oct 19, 8PM)
+
 ## 📚 Important Documentation Files
 
 1. **SERVICE_RECORDS_SETUP.md**: Current work - Service Records table configuration
@@ -249,8 +303,9 @@ Updated `party_size` parameter description in ElevenLabs Tools configuration:
 - [✅] Dashboard: Verify table status updates to "Occupied"
 - [✅] Complete Service: Mark party as departed
 - [✅] Complete Service: Verify table status returns to "Available"
+- [✅] Dashboard Stats: Verify counts include manually occupied tables
+- [✅] Reservations Calendar: Displays all 9 upcoming reservations across 3 days
 - [ ] Mark Table Clean: Clean table after party leaves (optional - auto-cleans)
-- [ ] Upcoming Reservations: Check if existing reservations display
 - [ ] Reservation Check-in: Check in a reservation
 - [ ] Real-time Polling: Verify 30-second auto-refresh
 
@@ -287,34 +342,40 @@ Updated `party_size` parameter description in ElevenLabs Tools configuration:
 
 ## 🎯 Current Session Context
 
-**Current Session Summary** (Oct 17, 2025 - Phase 2 Complete):
-- 🎉 **PHASE 2 HOST DASHBOARD FULLY OPERATIONAL!**
+**Current Session Summary** (Oct 18, 2025 - Calendar & Dashboard Stats Complete):
+- 🎉 **RESERVATIONS CALENDAR FULLY FUNCTIONAL!**
+- Fixed TypeScript build error that was blocking all deployments since commit `2d21783`
+- Discovered Vercel "Redeploy" feature only redeploys same commit, not latest code
+- Fixed dashboard stats to count manually occupied tables
+- Created 4 comprehensive Claude Skills for productivity
+
+**Major Fixes Applied**:
+1. ✅ **Dashboard Stats Fix**: Now counts both service records AND manually occupied tables (Issue #5)
+2. ✅ **TypeScript Build Error Fix**: Added missing `date`, `time`, `status`, `record_id` fields to `UpcomingReservation` interface (Issue #6)
+3. ✅ **Reservations Calendar**: Production now displays all 9 reservations across 3 days (Today: 3, Tomorrow: 2, Oct 20: 4)
+
+**Claude Skills Created**:
+1. `airtable-debug` - Airtable debugging toolkit
+2. `vercel-deploy` - Playwright-based deployment automation
+3. `api-test` - Comprehensive API testing commands
+4. `restaurant-mcp-context` - Complete project context reference
+
+**Tests Verified in Production**:
+1. ✅ Calendar displays 9 total reservations, 23 total guests
+2. ✅ Jonas reservation appears correctly (Party of 3, Oct 19, 8PM)
+3. ✅ Luis Miguel reservation appears (Party of 4, Oct 19, 7PM)
+4. ✅ Calendar organized by date with expandable day sections
+5. ✅ Each reservation shows Check In and Details buttons
+
+**Key Commits**:
+- `26427bf`: Fix TypeScript build error - add missing date/time fields to UpcomingReservation interface
+- `5b18af5`: Add Claude Skills setup documentation
+
+**Previous Session Summary** (Oct 17, 2025 - Phase 2 Complete):
 - Fixed 404 routing error by adding SPA configuration to vercel.json
-- Discovered Service Records table was already fully configured (all 11 fields present)
-- Successfully tested complete walk-in flow end-to-end
-- Successfully tested Complete Service flow
+- Successfully tested complete walk-in flow and Complete Service flow
 - All core Host Dashboard functionality working in production
-
-**Tests Completed Successfully**:
-1. ✅ Walk-in Flow: Add customer details (John Smith, party of 4)
-2. ✅ Walk-in Flow: Find available tables (Table 4 recommended)
-3. ✅ Walk-in Flow: Confirm seating → Service Record created
-4. ✅ Dashboard Stats: All metrics updated correctly (occupancy 0% → 10%)
-5. ✅ Table Status: Table 4 changed from "Available" to "Occupied"
-6. ✅ Active Parties Display: Shows customer info, seated time, estimated departure
-7. ✅ Complete Service: Mark party departed → Service Record updated
-8. ✅ Dashboard Stats Reset: Metrics returned to 0% occupancy, 42 available seats
-9. ✅ Table Status Reset: Table 4 returned to "Available" status
-
-**Key Fixes Applied**:
-- Added SPA routing to vercel.json: `{"source": "/(.*)", "destination": "/index.html"}`
-- Fixed 404 error on /host-dashboard route (commit: f434f74)
-
-**Previous Session Summary** (Oct 17, 2025):
-- Successfully tested and fixed ElevenLabs agent performance issues
-- Changed LLM model from Qwen3-30B-A3B to GLM-4.5-Air (recommended for agentic use cases)
-- Agent response time improved from 30+ seconds to under 2 seconds
-- Committed elevenlabs-webhook.js to GitHub (commit: fda32d2)
+- Commit: f434f74
 
 ## 💡 Development Tips
 
@@ -369,8 +430,8 @@ Environment variables must be configured in Vercel dashboard.
 
 ---
 
-**Last Updated**: 2025-10-17 (Session: Phase 2 Host Dashboard - Production Ready)
+**Last Updated**: 2025-10-18 (Session: Calendar & Dashboard Stats - All Issues Resolved)
 **Project Status**:
 - Phase 1 (Customer Reservation Bot): ✅ PRODUCTION-READY - All issues resolved, <2s response time
-- Phase 2 (Host Dashboard): ✅ PRODUCTION-READY - Walk-in flow and Complete Service working flawlessly
-**Next Milestone**: Phase 3 Advanced Features - Waitlist management, reservation check-in, analytics
+- Phase 2 (Host Dashboard): ✅ PRODUCTION-READY - Walk-in, Complete Service, Stats, and Calendar all working
+**Next Milestone**: Phase 2 Final - Reservation check-in flow, then Phase 3 Advanced Features
