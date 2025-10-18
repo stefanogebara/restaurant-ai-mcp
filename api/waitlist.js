@@ -8,7 +8,31 @@ const airtable = require('./_lib/airtable');
  * - POST /api/waitlist - Add new customer to waitlist
  * - PATCH /api/waitlist/:id - Update waitlist entry (status, estimated wait, etc.)
  * - DELETE /api/waitlist/:id - Remove from waitlist
+ *
+ * Status Mapping:
+ * Airtable field uses default options (Todo, In progress, Done)
+ * API translates to proper waitlist terminology:
+ * - Todo → Waiting
+ * - In progress → Notified
+ * - Done → Seated
  */
+
+// Status mapping helpers
+const STATUS_TO_AIRTABLE = {
+  'Waiting': 'Todo',
+  'Notified': 'In progress',
+  'Seated': 'Done',
+  'Cancelled': 'Cancelled',
+  'No Show': 'No Show'
+};
+
+const STATUS_FROM_AIRTABLE = {
+  'Todo': 'Waiting',
+  'In progress': 'Notified',
+  'Done': 'Seated',
+  'Cancelled': 'Cancelled',
+  'No Show': 'No Show'
+};
 
 module.exports = async (req, res) => {
   // Set CORS headers
@@ -72,13 +96,14 @@ async function handleGetWaitlist(req, res) {
 
   try {
     // Build filter formula for Airtable
-    // Note: Status field options in Airtable are currently: Todo, In progress, Done
-    // These should be renamed to: Waiting, Notified, Seated (+ add Cancelled, No Show)
     let filterFormula = '';
     if (active === 'true') {
+      // Active = Waiting (Todo) or Notified (In progress)
       filterFormula = "OR({Status}='Todo', {Status}='In progress')";
     } else if (status) {
-      filterFormula = `{Status}='${status}'`;
+      // Translate API status to Airtable status
+      const airtableStatus = STATUS_TO_AIRTABLE[status] || status;
+      filterFormula = `{Status}='${airtableStatus}'`;
     }
 
     const url = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}`;
@@ -107,20 +132,25 @@ async function handleGetWaitlist(req, res) {
     const data = await response.json();
 
     // Transform Airtable records to our format
-    const waitlist = data.records.map(record => ({
-      id: record.id,
-      waitlist_id: record.fields['Waitlist ID'],
-      customer_name: record.fields['Customer Name'],
-      customer_phone: record.fields['Customer Phone'],
-      customer_email: record.fields['Customer Email'],
-      party_size: record.fields['Party Size'],
-      added_at: record.fields['Added At'],
-      estimated_wait: record.fields['Estimated Wait'],
-      status: record.fields['Status'] || 'Waiting',
-      priority: record.fields['Priority'],
-      special_requests: record.fields['Special Requests'],
-      notified_at: record.fields['Notified At'],
-    }));
+    const waitlist = data.records.map(record => {
+      const airtableStatus = record.fields['Status'] || 'Todo';
+      const apiStatus = STATUS_FROM_AIRTABLE[airtableStatus] || airtableStatus;
+
+      return {
+        id: record.id,
+        waitlist_id: record.fields['Waitlist ID'],
+        customer_name: record.fields['Customer Name'],
+        customer_phone: record.fields['Customer Phone'],
+        customer_email: record.fields['Customer Email'],
+        party_size: record.fields['Party Size'],
+        added_at: record.fields['Added At'],
+        estimated_wait: record.fields['Estimated Wait'],
+        status: apiStatus,
+        priority: record.fields['Priority'],
+        special_requests: record.fields['Special Requests'],
+        notified_at: record.fields['Notified At'],
+      };
+    });
 
     return res.status(200).json({
       success: true,
@@ -283,7 +313,10 @@ async function handleUpdateWaitlist(req, res, recordId) {
           error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
         });
       }
-      fields['Status'] = status;
+
+      // Translate API status to Airtable status
+      const airtableStatus = STATUS_TO_AIRTABLE[status] || status;
+      fields['Status'] = airtableStatus;
 
       // If status is Notified, record the notification time
       if (status === 'Notified') {
@@ -320,6 +353,9 @@ async function handleUpdateWaitlist(req, res, recordId) {
 
     const data = await response.json();
 
+    const airtableStatus = data.fields['Status'];
+    const apiStatus = STATUS_FROM_AIRTABLE[airtableStatus] || airtableStatus;
+
     return res.status(200).json({
       success: true,
       message: 'Waitlist entry updated',
@@ -331,7 +367,7 @@ async function handleUpdateWaitlist(req, res, recordId) {
         customer_email: data.fields['Customer Email'],
         party_size: data.fields['Party Size'],
         estimated_wait: data.fields['Estimated Wait'],
-        status: data.fields['Status'],
+        status: apiStatus,
         priority: data.fields['Priority'],
         special_requests: data.fields['Special Requests'],
         added_at: data.fields['Added At'],
