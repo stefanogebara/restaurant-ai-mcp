@@ -144,69 +144,88 @@ export default function WaitlistPanel() {
             <div className="text-sm text-gray-500">Click "Add to Waitlist" to get started</div>
           </div>
         ) : (
-          waitlist.map((entry) => (
-            <div
-              key={entry.id}
-              className="p-4 hover:bg-gray-800/50 transition-colors"
-            >
-              <div className="flex items-start justify-between gap-4">
-                {/* Left side: Customer info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-500/20 text-purple-400 font-semibold flex-shrink-0">
-                      {entry.priority}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="font-semibold text-white truncate">{entry.customer_name}</div>
-                      <div className="text-sm text-gray-400 truncate">{entry.customer_phone}</div>
-                    </div>
+          waitlist.map((entry) => {
+            // Get initials for avatar
+            const initials = entry.customer_name
+              ? entry.customer_name
+                  .split(' ')
+                  .map(n => n[0])
+                  .join('')
+                  .toUpperCase()
+                  .substring(0, 2)
+              : '?';
+
+            return (
+              <div
+                key={entry.id}
+                className="px-4 py-3 hover:bg-gray-800/30 transition-colors border-b border-gray-800/50 last:border-0"
+              >
+                {/* Main horizontal layout */}
+                <div className="flex items-center gap-3">
+                  {/* Priority badge */}
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 font-bold text-xs flex items-center justify-center">
+                    {entry.priority}
                   </div>
 
-                  <div className="flex items-center gap-3 text-sm text-gray-400 ml-11 flex-wrap">
-                    <div className="flex items-center gap-1 whitespace-nowrap">
-                      <span className="font-medium">Party of {entry.party_size}</span>
+                  {/* Avatar with initials */}
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center text-white font-semibold text-sm border border-purple-500/30">
+                    {initials}
+                  </div>
+
+                  {/* Customer info - takes available space */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="font-semibold text-white text-sm truncate">
+                        {entry.customer_name || 'Unknown'}
+                      </span>
+                      <span className="text-xs text-gray-500">•</span>
+                      <span className="text-xs text-gray-400 truncate">
+                        {entry.customer_phone}
+                      </span>
                     </div>
-                    <div>•</div>
-                    <div className="flex items-center gap-1 whitespace-nowrap">
-                      <span>Wait: ~{entry.estimated_wait} min</span>
-                    </div>
-                    <div>•</div>
-                    <div className="flex items-center gap-1 whitespace-nowrap">
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <span className="font-medium text-gray-300">
+                        👥 {entry.party_size || '?'} guests
+                      </span>
+                      <span>•</span>
+                      <span>⏱️ ~{entry.estimated_wait || '?'} min</span>
+                      <span>•</span>
                       <span>{formatTimeSince(entry.added_at)}</span>
                     </div>
+                    {entry.special_requests && (
+                      <div className="mt-1 text-xs text-gray-400 italic truncate">
+                        "{entry.special_requests}"
+                      </div>
+                    )}
                   </div>
 
-                  {entry.special_requests && (
-                    <div className="mt-2 ml-11 text-sm text-gray-400">
-                      <span className="font-medium text-gray-300">Note:</span> {entry.special_requests}
-                    </div>
-                  )}
-                </div>
+                  {/* Status badge */}
+                  <div className="flex-shrink-0">
+                    <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusColor(entry.status)}`}>
+                      {entry.status}
+                    </span>
+                  </div>
 
-                {/* Right side: Status and actions */}
-                <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(entry.status)}`}>
-                    {entry.status}
-                  </span>
-
-                  <div className="flex gap-2 flex-wrap justify-end">
+                  {/* Action buttons - compact */}
+                  <div className="flex-shrink-0 flex items-center gap-1.5">
                     {entry.status === 'Waiting' && (
                       <>
                         <button
                           onClick={() => notifyMutation.mutate(entry.id)}
                           disabled={notifyMutation.isPending}
-                          className="px-3 py-1.5 text-sm bg-yellow-600 hover:bg-yellow-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                          className="px-2.5 py-1 text-xs bg-yellow-600/90 hover:bg-yellow-600 text-white font-medium rounded transition-colors disabled:opacity-50"
+                          title="Notify customer"
                         >
                           Notify
                         </button>
                         <button
                           onClick={() => {
-                            // TODO: Open seat party modal with pre-filled data from waitlist entry
                             alert('Seat Now functionality will be integrated with existing seat party flow');
                           }}
-                          className="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
+                          className="px-2.5 py-1 text-xs bg-green-600/90 hover:bg-green-600 text-white font-medium rounded transition-colors"
+                          title="Seat party now"
                         >
-                          Seat Now
+                          Seat
                         </button>
                         <button
                           onClick={() => {
@@ -215,26 +234,29 @@ export default function WaitlistPanel() {
                             }
                           }}
                           disabled={removeMutation.isPending}
-                          className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                          className="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors disabled:opacity-50"
+                          title="Remove from waitlist"
                         >
-                          Remove
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
                         </button>
                       </>
                     )}
 
                     {entry.status === 'Notified' && (
                       <>
-                        <div className="text-xs text-gray-400 whitespace-nowrap">
+                        <div className="text-xs text-gray-500 mr-1">
                           Notified {entry.notified_at && formatTimeSince(entry.notified_at)}
                         </div>
                         <button
                           onClick={() => {
-                            // TODO: Open seat party modal with pre-filled data from waitlist entry
                             alert('Seat Now functionality will be integrated with existing seat party flow');
                           }}
-                          className="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
+                          className="px-2.5 py-1 text-xs bg-green-600/90 hover:bg-green-600 text-white font-medium rounded transition-colors"
+                          title="Seat party now"
                         >
-                          Seat Now
+                          Seat
                         </button>
                         <button
                           onClick={() => {
@@ -243,17 +265,20 @@ export default function WaitlistPanel() {
                             }
                           }}
                           disabled={removeMutation.isPending}
-                          className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                          className="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors disabled:opacity-50"
+                          title="Remove from waitlist"
                         >
-                          Remove
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
                         </button>
                       </>
                     )}
                   </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
