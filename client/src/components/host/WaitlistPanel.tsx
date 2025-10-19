@@ -82,23 +82,23 @@ export default function WaitlistPanel() {
     return `${hours}h ${diffMinutes % 60}m ago`;
   };
 
-  // Status badge color
+  // Status badge color (dark theme)
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Waiting': return 'bg-blue-100 text-blue-800';
-      case 'Notified': return 'bg-yellow-100 text-yellow-800';
-      case 'Seated': return 'bg-green-100 text-green-800';
-      case 'Cancelled': return 'bg-red-100 text-red-800';
-      case 'No Show': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'Waiting': return 'bg-blue-500/20 text-blue-400';
+      case 'Notified': return 'bg-yellow-500/20 text-yellow-400';
+      case 'Seated': return 'bg-green-500/20 text-green-400';
+      case 'Cancelled': return 'bg-red-500/20 text-red-400';
+      case 'No Show': return 'bg-gray-500/20 text-gray-400';
+      default: return 'bg-gray-500/20 text-gray-400';
     }
   };
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="p-6">
         <div className="flex items-center justify-center h-32">
-          <div className="text-gray-500">Loading waitlist...</div>
+          <div className="text-gray-400">Loading waitlist...</div>
         </div>
       </div>
     );
@@ -106,96 +106,96 @@ export default function WaitlistPanel() {
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="text-red-600">Error loading waitlist: {(error as Error).message}</div>
+      <div className="p-6">
+        <div className="text-red-400">Error loading waitlist: {(error as Error).message}</div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow">
+    <>
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+      <div className="p-6 border-b border-gray-700 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h2 className="text-lg font-semibold text-gray-900">Waitlist</h2>
+          <h2 className="text-xl font-bold text-white">Waitlist</h2>
           <div className="flex items-center gap-2">
-            <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-500/20 text-blue-400">
               {waitingCount} Waiting
             </span>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-400">
               {waitlist.length} Total
             </span>
           </div>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50"
         >
           + Add to Waitlist
         </button>
       </div>
 
       {/* Waitlist entries */}
-      <div className="divide-y divide-gray-200">
+      <div className="divide-y divide-gray-700">
         {waitlist.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
+          <div className="p-8 text-center text-gray-400">
             <div className="text-4xl mb-2">📋</div>
             <div className="font-medium">No customers on waitlist</div>
-            <div className="text-sm">Click "Add to Waitlist" to get started</div>
+            <div className="text-sm text-gray-500">Click "Add to Waitlist" to get started</div>
           </div>
         ) : (
           waitlist.map((entry) => (
             <div
               key={entry.id}
-              className="p-4 hover:bg-gray-50 transition-colors"
+              className="p-4 hover:bg-gray-800/50 transition-colors"
             >
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-4">
                 {/* Left side: Customer info */}
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-semibold">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-500/20 text-purple-400 font-semibold flex-shrink-0">
                       {entry.priority}
                     </div>
-                    <div>
-                      <div className="font-medium text-gray-900">{entry.customer_name}</div>
-                      <div className="text-sm text-gray-500">{entry.customer_phone}</div>
+                    <div className="min-w-0">
+                      <div className="font-semibold text-white truncate">{entry.customer_name}</div>
+                      <div className="text-sm text-gray-400 truncate">{entry.customer_phone}</div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 text-sm text-gray-600 ml-11">
-                    <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-3 text-sm text-gray-400 ml-11 flex-wrap">
+                    <div className="flex items-center gap-1 whitespace-nowrap">
                       <span className="font-medium">Party of {entry.party_size}</span>
                     </div>
                     <div>•</div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 whitespace-nowrap">
                       <span>Wait: ~{entry.estimated_wait} min</span>
                     </div>
                     <div>•</div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 whitespace-nowrap">
                       <span>{formatTimeSince(entry.added_at)}</span>
                     </div>
                   </div>
 
                   {entry.special_requests && (
-                    <div className="mt-2 ml-11 text-sm text-gray-600">
-                      <span className="font-medium">Note:</span> {entry.special_requests}
+                    <div className="mt-2 ml-11 text-sm text-gray-400">
+                      <span className="font-medium text-gray-300">Note:</span> {entry.special_requests}
                     </div>
                   )}
                 </div>
 
                 {/* Right side: Status and actions */}
-                <div className="flex flex-col items-end gap-2">
+                <div className="flex flex-col items-end gap-2 flex-shrink-0">
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(entry.status)}`}>
                     {entry.status}
                   </span>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap justify-end">
                     {entry.status === 'Waiting' && (
                       <>
                         <button
                           onClick={() => notifyMutation.mutate(entry.id)}
                           disabled={notifyMutation.isPending}
-                          className="px-3 py-1 text-sm bg-yellow-600 text-white rounded hover:bg-yellow-700 disabled:opacity-50"
+                          className="px-3 py-1.5 text-sm bg-yellow-600 hover:bg-yellow-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
                         >
                           Notify
                         </button>
@@ -204,16 +204,27 @@ export default function WaitlistPanel() {
                             // TODO: Open seat party modal with pre-filled data from waitlist entry
                             alert('Seat Now functionality will be integrated with existing seat party flow');
                           }}
-                          className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                          className="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
                         >
                           Seat Now
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm(`Remove ${entry.customer_name} from waitlist?`)) {
+                              removeMutation.mutate(entry.id);
+                            }
+                          }}
+                          disabled={removeMutation.isPending}
+                          className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          Remove
                         </button>
                       </>
                     )}
 
                     {entry.status === 'Notified' && (
                       <>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-gray-400 whitespace-nowrap">
                           Notified {entry.notified_at && formatTimeSince(entry.notified_at)}
                         </div>
                         <button
@@ -221,24 +232,23 @@ export default function WaitlistPanel() {
                             // TODO: Open seat party modal with pre-filled data from waitlist entry
                             alert('Seat Now functionality will be integrated with existing seat party flow');
                           }}
-                          className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                          className="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
                         >
                           Seat Now
                         </button>
+                        <button
+                          onClick={() => {
+                            if (confirm(`Remove ${entry.customer_name} from waitlist?`)) {
+                              removeMutation.mutate(entry.id);
+                            }
+                          }}
+                          disabled={removeMutation.isPending}
+                          className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          Remove
+                        </button>
                       </>
                     )}
-
-                    <button
-                      onClick={() => {
-                        if (confirm(`Remove ${entry.customer_name} from waitlist?`)) {
-                          removeMutation.mutate(entry.id);
-                        }
-                      }}
-                      disabled={removeMutation.isPending}
-                      className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
-                    >
-                      Remove
-                    </button>
                   </div>
                 </div>
               </div>
@@ -301,14 +311,14 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-[#1E1E1E] rounded-2xl shadow-2xl border border-gray-700 max-w-md w-full">
         <div className="p-6">
-          <h3 className="text-xl font-semibold mb-4">Add to Waitlist</h3>
+          <h3 className="text-2xl font-bold text-white mb-6">Add to Waitlist</h3>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Customer Name *
               </label>
               <input
@@ -316,13 +326,13 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
                 required
                 value={formData.customer_name}
                 onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2.5 bg-[#0A0A0A] border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                 placeholder="John Smith"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Phone Number *
               </label>
               <input
@@ -330,33 +340,33 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
                 required
                 value={formData.customer_phone}
                 onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2.5 bg-[#0A0A0A] border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                 placeholder="+1 234 567 8900"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Email (Optional)
               </label>
               <input
                 type="email"
                 value={formData.customer_email}
                 onChange={(e) => setFormData({ ...formData, customer_email: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2.5 bg-[#0A0A0A] border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                 placeholder="john@example.com"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Party Size *
               </label>
               <select
                 required
                 value={formData.party_size}
                 onChange={(e) => setFormData({ ...formData, party_size: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2.5 bg-[#0A0A0A] border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
               >
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(size => (
                   <option key={size} value={size}>{size} {size === 1 ? 'guest' : 'guests'}</option>
@@ -365,20 +375,20 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Special Requests (Optional)
               </label>
               <textarea
                 value={formData.special_requests}
                 onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2.5 bg-[#0A0A0A] border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none"
                 rows={3}
                 placeholder="High chair needed, outdoor seating preferred..."
               />
             </div>
 
             {addMutation.isError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
+              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-sm text-red-400">
                 {(addMutation.error as Error).message}
               </div>
             )}
@@ -387,14 +397,14 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                className="flex-1 px-4 py-2.5 border border-gray-700 text-gray-300 rounded-xl hover:bg-gray-800 transition-all font-medium"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={addMutation.isPending}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {addMutation.isPending ? 'Adding...' : 'Add to Waitlist'}
               </button>
