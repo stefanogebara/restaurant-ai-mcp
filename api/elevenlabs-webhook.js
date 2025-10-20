@@ -182,10 +182,13 @@ async function handleCheckAvailability(req, res) {
   }
 
   try {
+    const { getTables } = require('./_lib/airtable');
+
     // Get restaurant info AND real-time table status
-    const [restaurantResult, tablesResult] = await Promise.all([
+    console.log('[ElevenLabs] ===== AVAILABILITY CHECK v3.0 - FRESH DATA =====');
+    const [restaurantResult, rawTablesResult] = await Promise.all([
       getRestaurantInfo(),
-      getAllTables()
+      getTables() // Get RAW tables data directly
     ]);
 
     if (!restaurantResult.success) {
@@ -209,20 +212,28 @@ async function handleCheckAvailability(req, res) {
     const openTime = restaurant.fields['Opening Time'] || '17:00';
     const closeTime = restaurant.fields['Closing Time'] || '22:00';
 
-    // Calculate REAL-TIME occupied seats from Tables table
+    // Calculate REAL-TIME occupied seats from Tables table - DIRECTLY FROM AIRTABLE
     let currentlyOccupiedSeats = 0;
-    if (tablesResult.success && tablesResult.tables) {
-      tablesResult.tables.forEach(table => {
-        // Count seats from tables that are currently Occupied or Reserved
-        if (table.status === 'Occupied' || table.status === 'Reserved') {
-          currentlyOccupiedSeats += table.capacity;
-        }
-      });
-    }
+    const allTables = rawTablesResult.success ? (rawTablesResult.data.records || []) : [];
 
-    console.log(`[ElevenLabs] ===== REAL-TIME TABLE CHECK v2.0 =====`);
-    console.log(`[ElevenLabs] Real-time table status: ${currentlyOccupiedSeats} seats currently occupied/reserved out of ${totalCapacity} total`);
-    console.log(`[ElevenLabs] Tables result:`, JSON.stringify(tablesResult, null, 2));
+    console.log(`[ElevenLabs] Found ${allTables.length} total tables in Airtable`);
+
+    allTables.forEach(table => {
+      const status = table.fields.Status || 'Available';
+      const capacity = table.fields.Capacity || 0;
+      const tableNum = table.fields['Table Number'];
+      const isActive = table.fields['Is Active'];
+
+      console.log(`[ElevenLabs] Table ${tableNum}: ${status}, ${capacity} seats, Active: ${isActive}`);
+
+      // Count ONLY active tables that are Occupied or Reserved
+      if (isActive && (status === 'Occupied' || status === 'Reserved')) {
+        currentlyOccupiedSeats += capacity;
+        console.log(`[ElevenLabs] ++ Added ${capacity} occupied seats from Table ${tableNum}`);
+      }
+    });
+
+    console.log(`[ElevenLabs] TOTAL currently occupied/reserved: ${currentlyOccupiedSeats} seats out of ${totalCapacity} total capacity`);
 
     // Get reservations for the requested date/time
     const filter = `AND(IS_SAME({Date}, '${date}', 'day'), OR({Status} = 'Confirmed', {Status} = 'Seated'))`;
