@@ -220,7 +220,9 @@ async function handleCheckAvailability(req, res) {
       });
     }
 
+    console.log(`[ElevenLabs] ===== REAL-TIME TABLE CHECK v2.0 =====`);
     console.log(`[ElevenLabs] Real-time table status: ${currentlyOccupiedSeats} seats currently occupied/reserved out of ${totalCapacity} total`);
+    console.log(`[ElevenLabs] Tables result:`, JSON.stringify(tablesResult, null, 2));
 
     // Get reservations for the requested date/time
     const filter = `AND(IS_SAME({Date}, '${date}', 'day'), OR({Status} = 'Confirmed', {Status} = 'Seated'))`;
