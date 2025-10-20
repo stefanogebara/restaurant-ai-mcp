@@ -167,7 +167,7 @@ async function handleGetDateTime(req, res) {
 }
 
 async function handleCheckAvailability(req, res) {
-  const { getReservations, getRestaurantInfo } = require('./_lib/airtable');
+  const { getReservations, getRestaurantInfo, getAllTables } = require('./_lib/airtable');
   const { checkTimeSlotAvailability, getSuggestedTimes } = require('./_lib/availability-calculator');
 
   const data = req.method === 'POST' ? req.body : req.query;
@@ -182,7 +182,12 @@ async function handleCheckAvailability(req, res) {
   }
 
   try {
-    const restaurantResult = await getRestaurantInfo();
+    // Get restaurant info AND real-time table status
+    const [restaurantResult, tablesResult] = await Promise.all([
+      getRestaurantInfo(),
+      getAllTables()
+    ]);
+
     if (!restaurantResult.success) {
       return res.status(200).json({
         success: false,
@@ -200,10 +205,24 @@ async function handleCheckAvailability(req, res) {
       });
     }
 
-    const capacity = restaurant.fields.Capacity || 60;
+    const totalCapacity = restaurant.fields.Capacity || 60;
     const openTime = restaurant.fields['Opening Time'] || '17:00';
     const closeTime = restaurant.fields['Closing Time'] || '22:00';
 
+    // Calculate REAL-TIME occupied seats from Tables table
+    let currentlyOccupiedSeats = 0;
+    if (tablesResult.success && tablesResult.tables) {
+      tablesResult.tables.forEach(table => {
+        // Count seats from tables that are currently Occupied or Reserved
+        if (table.status === 'Occupied' || table.status === 'Reserved') {
+          currentlyOccupiedSeats += table.capacity;
+        }
+      });
+    }
+
+    console.log(`[ElevenLabs] Real-time table status: ${currentlyOccupiedSeats} seats currently occupied/reserved out of ${totalCapacity} total`);
+
+    // Get reservations for the requested date/time
     const filter = `AND(IS_SAME({Date}, '${date}', 'day'), OR({Status} = 'Confirmed', {Status} = 'Seated'))`;
     const reservationsResult = await getReservations(filter);
 
@@ -218,11 +237,33 @@ async function handleCheckAvailability(req, res) {
     const existingReservations = reservationsResult.data.records || [];
     const partySize = parseInt(party_size);
 
+    // Use the EFFECTIVE capacity (total - currently occupied)
+    const effectiveCapacity = Math.max(0, totalCapacity - currentlyOccupiedSeats);
+
+    console.log(`[ElevenLabs] Effective capacity for reservations: ${effectiveCapacity} (${totalCapacity} total - ${currentlyOccupiedSeats} occupied)`);
+
+    // If ALL tables are occupied right now, we have ZERO availability
+    if (effectiveCapacity === 0) {
+      console.log('[ElevenLabs] All tables currently occupied - no availability');
+      return res.status(200).json({
+        success: true,
+        available: false,
+        message: `Sorry, we are fully booked right now. All ${totalCapacity} seats are currently occupied. Please try calling us to check for walk-in availability or cancellations.`,
+        details: {
+          total_capacity: totalCapacity,
+          currently_occupied: currentlyOccupiedSeats,
+          available_seats: 0,
+          requested_party_size: partySize
+        },
+        alternative_times: []
+      });
+    }
+
     const availabilityCheck = checkTimeSlotAvailability(
       time,
       partySize,
       existingReservations,
-      capacity
+      effectiveCapacity
     );
 
     if (availabilityCheck.available) {
@@ -232,8 +273,8 @@ async function handleCheckAvailability(req, res) {
         message: `Yes, we have availability for ${partySize} guests on ${date} at ${time}`,
         details: {
           estimated_duration: `${availabilityCheck.estimatedDuration} minutes`,
-          occupied_seats: availabilityCheck.occupiedSeats,
-          available_seats: availabilityCheck.availableSeats
+          occupied_seats: availabilityCheck.occupiedSeats + currentlyOccupiedSeats,
+          available_seats: effectiveCapacity - availabilityCheck.occupiedSeats
         }
       };
       console.log('[ElevenLabs] check_availability response:', response);
@@ -243,7 +284,7 @@ async function handleCheckAvailability(req, res) {
         time,
         partySize,
         existingReservations,
-        capacity,
+        effectiveCapacity,
         openTime,
         closeTime
       );
@@ -256,7 +297,7 @@ async function handleCheckAvailability(req, res) {
           requested_time: time,
           party_size: partySize,
           available_seats_at_time: availabilityCheck.availableSeats,
-          occupied_seats: availabilityCheck.occupiedSeats
+          occupied_seats: availabilityCheck.occupiedSeats + currentlyOccupiedSeats
         },
         alternative_times: suggestions.length > 0 ? suggestions.map(s => ({
           time: s.time,
