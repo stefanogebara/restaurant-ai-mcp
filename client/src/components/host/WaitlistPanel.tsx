@@ -22,7 +22,11 @@ interface WaitlistResponse {
   waitlist: WaitlistEntry[];
 }
 
-export default function WaitlistPanel() {
+interface WaitlistPanelProps {
+  onSeatNow: (entry: WaitlistEntry) => void;
+}
+
+export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
   const queryClient = useQueryClient();
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -232,9 +236,7 @@ export default function WaitlistPanel() {
                         🔔 Notify
                       </button>
                       <button
-                        onClick={() => {
-                          alert('Seat Now functionality will be integrated with existing seat party flow');
-                        }}
+                        onClick={() => onSeatNow(entry)}
                         className="px-4 py-2 text-sm bg-green-600 hover:bg-green-500 text-white font-medium rounded-lg transition-colors"
                         title="Seat party now"
                       >
@@ -258,9 +260,7 @@ export default function WaitlistPanel() {
                   {entry.status === 'Notified' && (
                     <>
                       <button
-                        onClick={() => {
-                          alert('Seat Now functionality will be integrated with existing seat party flow');
-                        }}
+                        onClick={() => onSeatNow(entry)}
                         className="px-4 py-2 text-sm bg-green-600 hover:bg-green-500 text-white font-medium rounded-lg transition-colors"
                         title="Seat party now"
                       >

@@ -10,6 +10,7 @@ import CheckInModal from '../components/host/CheckInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import TableStatusLegend from '../components/host/TableStatusLegend';
 import WaitlistPanel from '../components/host/WaitlistPanel';
+import WaitlistSeatModal from '../components/host/WaitlistSeatModal';
 import type { UpcomingReservation } from '../types/host.types';
 
 export default function HostDashboard() {
@@ -17,6 +18,7 @@ export default function HostDashboard() {
   const { success } = useToast();
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
   const [checkInReservation, setCheckInReservation] = useState<UpcomingReservation | null>(null);
+  const [waitlistEntry, setWaitlistEntry] = useState<any>(null);
   const [seatPartyData, setSeatPartyData] = useState<any>(null);
 
   if (isLoading) {
@@ -134,7 +136,7 @@ export default function HostDashboard() {
 
             {/* Waitlist Panel */}
             <div className="bg-[#1E1E1E] rounded-2xl shadow-2xl border border-gray-800 overflow-hidden">
-              <WaitlistPanel />
+              <WaitlistPanel onSeatNow={(entry) => setWaitlistEntry(entry)} />
             </div>
           </div>
         </div>
@@ -160,12 +162,35 @@ export default function HostDashboard() {
         }}
       />
 
+      <WaitlistSeatModal
+        isOpen={waitlistEntry !== null}
+        entry={waitlistEntry}
+        onClose={() => setWaitlistEntry(null)}
+        onSuccess={(data) => {
+          setSeatPartyData(data);
+          setWaitlistEntry(null);
+        }}
+      />
+
       <SeatPartyModal
         isOpen={seatPartyData !== null}
         data={seatPartyData}
-        onClose={() => {
+        onClose={async () => {
+          // If this was a waitlist seating, update waitlist status
+          if (seatPartyData?.type === 'waitlist' && seatPartyData?.waitlist_id) {
+            try {
+              await fetch(`/api/waitlist?id=${seatPartyData.waitlist_id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'Seated' }),
+              });
+            } catch (error) {
+              console.error('Failed to update waitlist status:', error);
+            }
+          }
           setSeatPartyData(null);
           success('Party seated successfully!');
+          refetch(); // Refresh dashboard data
         }}
       />
     </div>
