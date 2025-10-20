@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import type { UpcomingReservation } from '../../types/host.types';
+import ReservationDetailsModal from './ReservationDetailsModal';
 
 interface ReservationsCalendarProps {
   reservations: UpcomingReservation[];
@@ -8,6 +9,7 @@ interface ReservationsCalendarProps {
 
 export default function ReservationsCalendar({ reservations, onCheckIn }: ReservationsCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [detailsReservation, setDetailsReservation] = useState<UpcomingReservation | null>(null);
 
   // Group reservations by date
   const reservationsByDate = useMemo(() => {
@@ -191,7 +193,10 @@ export default function ReservationsCalendar({ reservations, onCheckIn }: Reserv
                           </button>
                         )}
                         <button
-                          onClick={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDetailsReservation(reservation);
+                          }}
                           className="px-3 py-2 text-sm bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition"
                         >
                           Details
@@ -225,6 +230,13 @@ export default function ReservationsCalendar({ reservations, onCheckIn }: Reserv
           </div>
         </div>
       </div>
+
+      {/* Reservation Details Modal */}
+      <ReservationDetailsModal
+        isOpen={detailsReservation !== null}
+        reservation={detailsReservation}
+        onClose={() => setDetailsReservation(null)}
+      />
     </div>
   );
 }
