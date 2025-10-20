@@ -158,123 +158,128 @@ export default function WaitlistPanel() {
             return (
               <div
                 key={entry.id}
-                className="px-4 py-3 hover:bg-gray-800/30 transition-colors border-b border-gray-800/50 last:border-0"
+                className="px-4 py-4 hover:bg-gray-800/30 transition-colors border-b border-gray-800/50 last:border-0"
               >
-                {/* Main horizontal layout */}
-                <div className="flex items-center gap-3">
+                {/* Top row: Priority + Avatar + Info */}
+                <div className="flex gap-3 mb-3">
                   {/* Priority badge */}
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 font-bold text-xs flex items-center justify-center">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 text-purple-400 font-bold text-sm flex items-center justify-center">
                     {entry.priority}
                   </div>
 
                   {/* Avatar with initials */}
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center text-white font-semibold text-sm border border-purple-500/30">
+                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center text-white font-semibold border border-purple-500/30">
                     {initials}
                   </div>
 
-                  {/* Customer info - takes available space */}
+                  {/* Customer info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="font-semibold text-white text-sm truncate">
-                        {entry.customer_name || 'Unknown'}
-                      </span>
-                      <span className="text-xs text-gray-500">•</span>
-                      <span className="text-xs text-gray-400 truncate">
-                        {entry.customer_phone}
-                      </span>
+                    <div className="font-semibold text-white mb-1">
+                      {entry.customer_name || 'Unknown'}
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-400">
-                      <span className="font-medium text-gray-300">
-                        👥 {entry.party_size || '?'} guests
-                      </span>
-                      <span>•</span>
-                      <span>⏱️ ~{entry.estimated_wait || '?'} min</span>
-                      <span>•</span>
-                      <span>{formatTimeSince(entry.added_at)}</span>
+                    <div className="text-sm text-gray-400">
+                      {entry.customer_phone}
                     </div>
-                    {entry.special_requests && (
-                      <div className="mt-1 text-xs text-gray-400 italic truncate">
-                        "{entry.special_requests}"
-                      </div>
-                    )}
                   </div>
 
-                  {/* Status badge */}
+                  {/* Status badge - aligned to top right */}
                   <div className="flex-shrink-0">
-                    <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusColor(entry.status)}`}>
+                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(entry.status)}`}>
                       {entry.status}
                     </span>
                   </div>
+                </div>
 
-                  {/* Action buttons - compact */}
-                  <div className="flex-shrink-0 flex items-center gap-1.5">
-                    {entry.status === 'Waiting' && (
-                      <>
-                        <button
-                          onClick={() => notifyMutation.mutate(entry.id)}
-                          disabled={notifyMutation.isPending}
-                          className="px-2.5 py-1 text-xs bg-yellow-600/90 hover:bg-yellow-600 text-white font-medium rounded transition-colors disabled:opacity-50"
-                          title="Notify customer"
-                        >
-                          Notify
-                        </button>
-                        <button
-                          onClick={() => {
-                            alert('Seat Now functionality will be integrated with existing seat party flow');
-                          }}
-                          className="px-2.5 py-1 text-xs bg-green-600/90 hover:bg-green-600 text-white font-medium rounded transition-colors"
-                          title="Seat party now"
-                        >
-                          Seat
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm(`Remove ${entry.customer_name} from waitlist?`)) {
-                              removeMutation.mutate(entry.id);
-                            }
-                          }}
-                          disabled={removeMutation.isPending}
-                          className="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors disabled:opacity-50"
-                          title="Remove from waitlist"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </>
-                    )}
-
-                    {entry.status === 'Notified' && (
-                      <>
-                        <div className="text-xs text-gray-500 mr-1">
-                          Notified {entry.notified_at && formatTimeSince(entry.notified_at)}
-                        </div>
-                        <button
-                          onClick={() => {
-                            alert('Seat Now functionality will be integrated with existing seat party flow');
-                          }}
-                          className="px-2.5 py-1 text-xs bg-green-600/90 hover:bg-green-600 text-white font-medium rounded transition-colors"
-                          title="Seat party now"
-                        >
-                          Seat
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm(`Remove ${entry.customer_name} from waitlist?`)) {
-                              removeMutation.mutate(entry.id);
-                            }
-                          }}
-                          disabled={removeMutation.isPending}
-                          className="p-1 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors disabled:opacity-50"
-                          title="Remove from waitlist"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </>
-                    )}
+                {/* Middle row: Party details */}
+                <div className="flex items-center gap-4 text-sm text-gray-400 mb-3 ml-14">
+                  <div className="flex items-center gap-1.5">
+                    <span>👥</span>
+                    <span className="font-medium">{entry.party_size || '?'} guests</span>
                   </div>
+                  <div className="flex items-center gap-1.5">
+                    <span>⏱️</span>
+                    <span>~{entry.estimated_wait || '?'} min wait</span>
+                  </div>
+                  <div className="text-gray-500">
+                    Added {formatTimeSince(entry.added_at)}
+                  </div>
+                </div>
+
+                {/* Special requests if any */}
+                {entry.special_requests && (
+                  <div className="text-sm text-gray-400 italic ml-14 mb-3">
+                    "{entry.special_requests}"
+                  </div>
+                )}
+
+                {/* Notified timestamp for notified status */}
+                {entry.status === 'Notified' && entry.notified_at && (
+                  <div className="text-xs text-yellow-400/80 ml-14 mb-3">
+                    🔔 Notified {formatTimeSince(entry.notified_at)}
+                  </div>
+                )}
+
+                {/* Bottom row: Action buttons */}
+                <div className="flex items-center gap-2 ml-14">
+                  {entry.status === 'Waiting' && (
+                    <>
+                      <button
+                        onClick={() => notifyMutation.mutate(entry.id)}
+                        disabled={notifyMutation.isPending}
+                        className="px-4 py-2 text-sm bg-yellow-600 hover:bg-yellow-500 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Notify customer"
+                      >
+                        🔔 Notify
+                      </button>
+                      <button
+                        onClick={() => {
+                          alert('Seat Now functionality will be integrated with existing seat party flow');
+                        }}
+                        className="px-4 py-2 text-sm bg-green-600 hover:bg-green-500 text-white font-medium rounded-lg transition-colors"
+                        title="Seat party now"
+                      >
+                        ✓ Seat Now
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Remove ${entry.customer_name} from waitlist?`)) {
+                            removeMutation.mutate(entry.id);
+                          }
+                        }}
+                        disabled={removeMutation.isPending}
+                        className="px-4 py-2 text-sm border border-red-500/50 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                        title="Remove from waitlist"
+                      >
+                        Remove
+                      </button>
+                    </>
+                  )}
+
+                  {entry.status === 'Notified' && (
+                    <>
+                      <button
+                        onClick={() => {
+                          alert('Seat Now functionality will be integrated with existing seat party flow');
+                        }}
+                        className="px-4 py-2 text-sm bg-green-600 hover:bg-green-500 text-white font-medium rounded-lg transition-colors"
+                        title="Seat party now"
+                      >
+                        ✓ Seat Now
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Remove ${entry.customer_name} from waitlist?`)) {
+                            removeMutation.mutate(entry.id);
+                          }
+                        }}
+                        disabled={removeMutation.isPending}
+                        className="px-4 py-2 text-sm border border-red-500/50 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                        title="Remove from waitlist"
+                      >
+                        Remove
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             );
