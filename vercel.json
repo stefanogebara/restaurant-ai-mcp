@@ -1,5 +1,6 @@
 {
-  "buildCommand": "npm install && cd client && rm -rf dist node_modules/.vite && npm install && npm run build",
+  "installCommand": "npm install",
+  "buildCommand": "cd client && rm -rf dist node_modules/.vite && npm install && npm run build",
   "outputDirectory": "client/dist",
   "rewrites": [
     {
