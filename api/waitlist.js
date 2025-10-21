@@ -1,5 +1,6 @@
 const airtable = require('./_lib/airtable');
 const twilio = require('twilio'); // Force redeploy to fix Vercel dependency bundling
+const { Resend } = require('resend');
 
 /**
  * Waitlist Management API
@@ -346,17 +347,29 @@ async function handleUpdateWaitlist(req, res, recordId) {
       const airtableStatus = STATUS_TO_AIRTABLE[status] || status;
       fields['Status'] = airtableStatus;
 
-      // If status is Notified, record the notification time and send SMS
+      // If status is Notified, record the notification time and send notifications
       if (status === 'Notified') {
         fields['Notified At'] = new Date().toISOString();
 
-        // Send SMS notification (don't block on failure)
+        // Send notifications (don't block on failure)
         if (customerDetails) {
-          sendSMSNotification(
-            customerDetails.name,
-            customerDetails.phone,
-            customerDetails.partySize
-          ).catch(err => console.error('SMS notification failed:', err));
+          // Prefer email notification (free and unlimited)
+          if (customerDetails.email) {
+            sendEmailNotification(
+              customerDetails.name,
+              customerDetails.email,
+              customerDetails.partySize
+            ).catch(err => console.error('Email notification failed:', err));
+          }
+
+          // Also send SMS if phone number provided (costs money with Twilio)
+          if (customerDetails.phone) {
+            sendSMSNotification(
+              customerDetails.name,
+              customerDetails.phone,
+              customerDetails.partySize
+            ).catch(err => console.error('SMS notification failed:', err));
+          }
         }
       }
     }
@@ -552,6 +565,124 @@ async function sendSMSNotification(customerName, customerPhone, partySize) {
   } catch (error) {
     console.error('Failed to send SMS:', error);
     // Don't throw error - we don't want SMS failure to break the API
+    return false;
+  }
+}
+
+/**
+ * Helper: Send EMAIL notification to customer (FREE alternative to SMS)
+ *
+ * @param {string} customerName - Customer's name
+ * @param {string} customerEmail - Customer's email address
+ * @param {number} partySize - Number of guests
+ * @returns {Promise<boolean>} - True if email sent successfully
+ */
+async function sendEmailNotification(customerName, customerEmail, partySize) {
+  // Skip if Resend API key not configured
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('Resend API key not configured - email notification skipped');
+    return false;
+  }
+
+  // Skip if no email provided
+  if (!customerEmail) {
+    console.warn('No email provided - email notification skipped');
+    return false;
+  }
+
+  try {
+    // Initialize Resend client
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
+    // Create professional HTML email
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Table is Ready!</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">🍽️ Your Table is Ready!</h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; font-size: 18px; color: #333333; line-height: 1.6;">
+                Hi <strong>${customerName}</strong>,
+              </p>
+
+              <p style="margin: 0 0 20px; font-size: 16px; color: #555555; line-height: 1.6;">
+                Great news! Your table for <strong>${partySize} ${partySize === 1 ? 'person' : 'people'}</strong> is now ready.
+              </p>
+
+              <div style="background-color: #f8f9fa; border-left: 4px solid #667eea; padding: 20px; margin: 30px 0; border-radius: 4px;">
+                <p style="margin: 0; font-size: 16px; color: #333333; font-weight: 500;">
+                  ⏰ Please come to the host stand to be seated
+                </p>
+              </div>
+
+              <p style="margin: 0 0 10px; font-size: 16px; color: #555555; line-height: 1.6;">
+                We're looking forward to serving you!
+              </p>
+
+              <p style="margin: 0; font-size: 16px; color: #555555; line-height: 1.6;">
+                See you soon! 👋
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;">
+              <p style="margin: 0 0 10px; font-size: 14px; color: #6c757d;">
+                Thank you for dining with us
+              </p>
+              <p style="margin: 0; font-size: 12px; color: #adb5bd;">
+                This is an automated notification from our waitlist system
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `;
+
+    // Plain text fallback
+    const textContent = `Hi ${customerName}!\n\nYour table for ${partySize} ${partySize === 1 ? 'person' : 'people'} is ready!\n\nPlease come to the host stand to be seated.\n\nSee you soon!`;
+
+    // Send email
+    const { data, error } = await resend.emails.send({
+      from: 'Restaurant Waitlist <onboarding@resend.dev>', // Will be updated after domain verification
+      to: [customerEmail],
+      subject: `🍽️ Your Table for ${partySize} is Ready!`,
+      html: htmlContent,
+      text: textContent,
+    });
+
+    if (error) {
+      console.error('Failed to send email via Resend:', error);
+      return false;
+    }
+
+    console.log(`Email sent to ${customerEmail} for ${customerName} - Message ID: ${data?.id}`);
+    return true;
+  } catch (error) {
+    console.error('Failed to send email:', error);
+    // Don't throw error - we don't want email failure to break the API
     return false;
   }
 }
