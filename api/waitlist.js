@@ -1,4 +1,5 @@
 const airtable = require('./_lib/airtable');
+const twilio = require('twilio');
 
 /**
  * Waitlist Management API
@@ -310,6 +311,27 @@ async function handleUpdateWaitlist(req, res, recordId) {
   }
 
   try {
+    // If notifying customer, fetch their details first for SMS
+    let customerDetails = null;
+    if (status === 'Notified') {
+      const getUrl = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}/${recordId}`;
+      const getResponse = await fetch(getUrl, {
+        headers: {
+          'Authorization': `Bearer ${process.env.AIRTABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (getResponse.ok) {
+        const recordData = await getResponse.json();
+        customerDetails = {
+          name: recordData.fields['Customer Name'],
+          phone: recordData.fields['Customer Phone'],
+          partySize: recordData.fields['Party Size'],
+        };
+      }
+    }
+
     const fields = {};
 
     if (status) {
@@ -324,9 +346,18 @@ async function handleUpdateWaitlist(req, res, recordId) {
       const airtableStatus = STATUS_TO_AIRTABLE[status] || status;
       fields['Status'] = airtableStatus;
 
-      // If status is Notified, record the notification time
+      // If status is Notified, record the notification time and send SMS
       if (status === 'Notified') {
         fields['Notified At'] = new Date().toISOString();
+
+        // Send SMS notification (don't block on failure)
+        if (customerDetails) {
+          sendSMSNotification(
+            customerDetails.name,
+            customerDetails.phone,
+            customerDetails.partySize
+          ).catch(err => console.error('SMS notification failed:', err));
+        }
       }
     }
 
@@ -484,4 +515,43 @@ async function calculateEstimatedWait(partySize, queuePosition) {
   }
 
   return estimatedWait;
+}
+
+/**
+ * Helper: Send SMS notification to customer
+ *
+ * @param {string} customerName - Customer's name
+ * @param {string} customerPhone - Customer's phone number
+ * @param {number} partySize - Number of guests
+ * @returns {Promise<boolean>} - True if SMS sent successfully
+ */
+async function sendSMSNotification(customerName, customerPhone, partySize) {
+  // Skip if Twilio credentials not configured
+  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
+    console.warn('Twilio credentials not configured - SMS notification skipped');
+    return false;
+  }
+
+  try {
+    // Initialize Twilio client with environment variables
+    const twilioClient = twilio(
+      process.env.TWILIO_ACCOUNT_SID,
+      process.env.TWILIO_AUTH_TOKEN
+    );
+
+    const message = `Hi ${customerName}! Your table for ${partySize} ${partySize === 1 ? 'person' : 'people'} is ready! Please come to the host stand. See you soon!`;
+
+    await twilioClient.messages.create({
+      body: message,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: customerPhone,
+    });
+
+    console.log(`SMS sent to ${customerPhone} for ${customerName}`);
+    return true;
+  } catch (error) {
+    console.error('Failed to send SMS:', error);
+    // Don't throw error - we don't want SMS failure to break the API
+    return false;
+  }
 }
