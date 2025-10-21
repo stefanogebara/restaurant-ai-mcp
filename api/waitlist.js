@@ -1,5 +1,5 @@
 const airtable = require('./_lib/airtable');
-const twilio = require('twilio');
+const twilio = require('twilio'); // Force redeploy to fix Vercel dependency bundling
 
 /**
  * Waitlist Management API
