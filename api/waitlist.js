@@ -329,6 +329,7 @@ async function handleUpdateWaitlist(req, res, recordId) {
           name: recordData.fields['Customer Name'],
           phone: recordData.fields['Customer Phone'],
           partySize: recordData.fields['Party Size'],
+          email: recordData.fields['Customer Email'],
         };
       }
     }
