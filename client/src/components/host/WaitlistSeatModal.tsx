@@ -26,11 +26,10 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
 
   const findTablesMutation = useMutation({
     mutationFn: async (partySize: number) => {
-      const response = await fetch('/api/host-dashboard', {
+      const response = await fetch('/api/host-dashboard?action=check-walk-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'check-walk-in',
           party_size: partySize,
         }),
       });
