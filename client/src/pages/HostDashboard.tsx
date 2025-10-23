@@ -82,7 +82,13 @@ export default function HostDashboard() {
 
       {/* Stats */}
       <div className="max-w-[1400px] mx-auto px-6 py-8">
-        <DashboardStats summary={data.summary} />
+        <DashboardStats summary={data.summary || {
+          total_capacity: 0,
+          available_seats: 0,
+          occupied_seats: 0,
+          occupancy_percentage: 0,
+          active_parties: 0
+        }} />
       </div>
 
       {/* Main Content */}
@@ -103,7 +109,7 @@ export default function HostDashboard() {
               <div className="mb-6">
                 <TableStatusLegend />
               </div>
-              <TableGrid tables={data.tables} />
+              <TableGrid tables={data.tables || []} />
             </div>
           </div>
 
@@ -114,10 +120,10 @@ export default function HostDashboard() {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-white">Active Parties</h2>
                 <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm font-semibold">
-                  {data.active_parties.length}
+                  {data.active_parties?.length || 0}
                 </span>
               </div>
-              <ActivePartiesList parties={data.active_parties} />
+              <ActivePartiesList parties={data.active_parties || []} />
             </div>
 
             {/* Reservations Calendar */}
@@ -125,11 +131,11 @@ export default function HostDashboard() {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-white">📅 Reservations Calendar</h2>
                 <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm font-semibold">
-                  {data.upcoming_reservations.length}
+                  {data.upcoming_reservations?.length || 0}
                 </span>
               </div>
               <ReservationsCalendar
-                reservations={data.upcoming_reservations}
+                reservations={data.upcoming_reservations || []}
                 onCheckIn={(reservation) => setCheckInReservation(reservation)}
               />
             </div>
