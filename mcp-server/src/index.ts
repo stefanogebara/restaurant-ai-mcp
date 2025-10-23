@@ -615,14 +615,45 @@ async function handleSeatParty(args: any) {
   const seatedAt = new Date().toISOString();
   const estimatedDeparture = new Date(Date.now() + 90 * 60 * 1000).toISOString();
 
-  // Create service record
+  // Get all tables to map table numbers to Airtable record IDs
+  const tablesResult = await airtable.getRecords(TABLES_TABLE_ID!);
+  if (!tablesResult.success || !tablesResult.data.records) {
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify({ success: false, error: 'Failed to load tables' }),
+      }],
+      isError: true,
+    };
+  }
+
+  // Map table numbers to Airtable record IDs
+  const tableRecordIds = table_ids.map((tableNum: number) => {
+    const table = tablesResult.data.records.find((t: any) => Number(t.fields.table_number) === Number(tableNum));
+    if (!table) {
+      console.error(`Table ${tableNum} not found`);
+    }
+    return table ? table.id : null;
+  }).filter((id: string | null) => id !== null);
+
+  if (tableRecordIds.length === 0) {
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify({ success: false, error: 'No valid tables found for the provided table numbers' }),
+      }],
+      isError: true,
+    };
+  }
+
+  // Create service record with Airtable record IDs
   const serviceResult = await airtable.createRecord(SERVICE_RECORDS_TABLE_ID!, {
     'Service ID': serviceId,
     'Reservation ID': reservation_id || '',
     'Customer Name': customer_name,
     'Customer Phone': customer_phone,
     'Party Size': party_size,
-    'Table IDs': table_ids,
+    'Table IDs': tableRecordIds,
     'Seated At': seatedAt,
     'Estimated Departure': estimatedDeparture,
     'Special Requests': special_requests || '',
@@ -639,8 +670,15 @@ async function handleSeatParty(args: any) {
     };
   }
 
-  // Update table statuses (simplified - you'd need to get table record IDs first)
-  // This would require additional logic to map table numbers to record IDs
+  // Update table statuses to 'Occupied'
+  const updatePromises = tableRecordIds.map((recordId: string) =>
+    airtable.updateRecord(TABLES_TABLE_ID!, recordId, {
+      'Status': 'Occupied',
+      'Current Service ID': serviceId,
+    })
+  );
+
+  await Promise.all(updatePromises);
 
   return {
     content: [{
@@ -675,6 +713,7 @@ async function handleCompleteService(args: any) {
   const recordId = findResult.data.records[0].id;
   const tableIds = findResult.data.records[0].fields['Table IDs'];
 
+  // Update service record status
   const updateResult = await airtable.updateRecord(SERVICE_RECORDS_TABLE_ID!, recordId, {
     'Status': 'Completed',
     'Departed At': new Date().toISOString(),
@@ -688,6 +727,17 @@ async function handleCompleteService(args: any) {
       }],
       isError: true,
     };
+  }
+
+  // Update table statuses to 'Being Cleaned'
+  if (tableIds && Array.isArray(tableIds)) {
+    const updatePromises = tableIds.map((tableRecordId: string) =>
+      airtable.updateRecord(TABLES_TABLE_ID!, tableRecordId, {
+        'Status': 'Being Cleaned',
+        'Current Service ID': '',
+      })
+    );
+    await Promise.all(updatePromises);
   }
 
   return {
