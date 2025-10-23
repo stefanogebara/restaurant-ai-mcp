@@ -8,8 +8,10 @@
     "deploy": "vercel --prod"
   },
   "dependencies": {
+    "@google-cloud/vertexai": "^1.10.0",
     "axios": "^1.12.2",
-    "dotenv": "^17.2.3"
+    "dotenv": "^17.2.3",
+    "twilio": "^5.10.3"
   },
   "engines": {
     "node": ">=18.x"
