@@ -629,7 +629,7 @@ async function handleSeatParty(args: any) {
 
   // Map table numbers to Airtable record IDs
   const tableRecordIds = table_ids.map((tableNum: number) => {
-    const table = tablesResult.data.records.find((t: any) => Number(t.fields.table_number) === Number(tableNum));
+    const table = tablesResult.data.records.find((t: any) => Number(t.fields['Table Number']) === Number(tableNum));
     if (!table) {
       console.error(`Table ${tableNum} not found`);
     }
@@ -653,7 +653,7 @@ async function handleSeatParty(args: any) {
     'Customer Name': customer_name,
     'Customer Phone': customer_phone,
     'Party Size': party_size,
-    'Table IDs': tableRecordIds,
+    'Table IDs': table_ids.join(','),
     'Seated At': seatedAt,
     'Estimated Departure': estimatedDeparture,
     'Special Requests': special_requests || '',

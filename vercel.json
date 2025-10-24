@@ -30,5 +30,11 @@
         }
       ]
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/check-late-reservations",
+      "schedule": "*/5 * * * *"
+    }
   ]
 }

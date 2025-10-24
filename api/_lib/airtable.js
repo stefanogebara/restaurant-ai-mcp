@@ -274,6 +274,26 @@ const cancelReservation = async (reservationId) => {
   };
 };
 
+const markReservationAsNoShow = async (recordId) => {
+  const updateResult = await airtableRequest('PATCH', `${RESERVATIONS_TABLE_ID}/${recordId}`, {
+    fields: {
+      'Status': 'No-Show',
+      'Updated At': new Date().toISOString().split('T')[0],
+      'Notes': 'Automatically marked as no-show - 20+ minutes late without check-in'
+    }
+  });
+
+  if (!updateResult.success) {
+    return updateResult;
+  }
+
+  return {
+    success: true,
+    message: 'Reservation marked as no-show',
+    record_id: recordId
+  };
+};
+
 const getUpcomingReservations = async () => {
   const now = new Date();
   const today = now.toISOString().split('T')[0];
@@ -412,6 +432,7 @@ module.exports = {
   updateReservation,
   findReservation,
   cancelReservation,
+  markReservationAsNoShow,
   getUpcomingReservations,
 
   // Tables
