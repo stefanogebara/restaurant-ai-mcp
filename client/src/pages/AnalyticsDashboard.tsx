@@ -5,6 +5,8 @@ import PeakHoursChart from '../components/analytics/PeakHoursChart';
 import DayOfWeekChart from '../components/analytics/DayOfWeekChart';
 import TableUtilizationHeatmap from '../components/analytics/TableUtilizationHeatmap';
 import StatusBreakdownPie from '../components/analytics/StatusBreakdownPie';
+import NoShowPredictions from '../components/analytics/NoShowPredictions';
+import RevenueOpportunities from '../components/analytics/RevenueOpportunities';
 
 interface AnalyticsData {
   overview: {
@@ -148,6 +150,16 @@ export default function AnalyticsDashboard() {
           {/* Peak Hours and Day of Week */}
           <PeakHoursChart reservationsByTimeSlot={data.reservations_by_time_slot} />
           <DayOfWeekChart reservationsByDay={data.reservations_by_day} />
+
+          {/* No-Show Predictions - Full width */}
+          <div className="lg:col-span-2">
+            <NoShowPredictions />
+          </div>
+
+          {/* Revenue Optimization Opportunities - Full width */}
+          <div className="lg:col-span-2">
+            <RevenueOpportunities />
+          </div>
 
           {/* Table Utilization Heatmap - Full width */}
           <div className="lg:col-span-2">
