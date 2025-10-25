@@ -6,6 +6,12 @@ const {
   cancelReservation: airtableCancelReservation
 } = require('./_lib/airtable');
 
+const {
+  findOrCreateCustomer,
+  updateCustomerHistory,
+  getCustomerStats
+} = require('./_lib/customer-history');
+
 module.exports = async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -83,6 +89,30 @@ async function handleCreate(req, res) {
     return res.status(500).json({
       message: 'I apologize, but I encountered an issue creating your reservation. Please try again or call us directly at the restaurant.'
     });
+  }
+
+  // ============================================================================
+  // CUSTOMER HISTORY TRACKING (ML Foundation)
+  // ============================================================================
+  try {
+    // Find or create customer in Customer History table
+    const customer = await findOrCreateCustomer(
+      customer_email,
+      customer_phone,
+      customer_name
+    );
+
+    if (customer) {
+      console.log(`[CustomerTracking] Customer found/created: ${customer.id}`);
+
+      // Update customer statistics (increment total reservations)
+      await updateCustomerHistory(customer.id, fields, 'created');
+
+      console.log(`[CustomerTracking] Updated customer ${customer.id} statistics`);
+    }
+  } catch (error) {
+    // Don't fail the reservation if customer tracking fails
+    console.error('[CustomerTracking] Error tracking customer:', error);
   }
 
   return res.status(200).json({
