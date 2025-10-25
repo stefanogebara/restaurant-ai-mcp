@@ -109,6 +109,14 @@ async function handleCreate(req, res) {
       await updateCustomerHistory(customer.id, fields, 'created');
 
       console.log(`[CustomerTracking] Updated customer ${customer.id} statistics`);
+
+      // Link reservation to customer record
+      if (result.data && result.data.id) {
+        await updateReservation(result.data.id, {
+          'Customer History': [customer.id]
+        });
+        console.log(`[CustomerTracking] Linked reservation ${result.data.id} to customer ${customer.id}`);
+      }
     }
   } catch (error) {
     // Don't fail the reservation if customer tracking fails
