@@ -1,52 +1,69 @@
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { hostAPI } from '../../services/api';
+import type { Table } from '../../types/host.types';
+import TableCombinationSelector from './TableCombinationSelector';
 
 interface WalkInModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (data: any) => void;
+  availableTables: Table[];
 }
 
-export default function WalkInModal({ isOpen, onClose, onSuccess }: WalkInModalProps) {
+export default function WalkInModal({ isOpen, onClose, onSuccess, availableTables }: WalkInModalProps) {
+  const [step, setStep] = useState<1 | 2>(1);
   const [formData, setFormData] = useState({
     party_size: '',
     customer_name: '',
     customer_phone: '',
     preferred_location: '',
   });
-
-  const checkWalkInMutation = useMutation({
-    mutationFn: (data: { party_size: number; preferred_location?: string }) =>
-      hostAPI.checkWalkIn(data.party_size, data.preferred_location),
-    onSuccess: (response) => {
-      const recommendation = response.data.recommendation;
-      onSuccess({
-        type: 'walk-in',
-        ...formData,
-        party_size: parseInt(formData.party_size),
-        table_ids: recommendation?.tables || [],
-        recommendations: response.data,
-      });
-    },
-  });
+  const [selectedTableIds, setSelectedTableIds] = useState<string[]>([]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    checkWalkInMutation.mutate({
+    setStep(2); // Move to table selection step
+  };
+
+  const handleProceedToSeat = () => {
+    onSuccess({
+      type: 'walk-in',
+      customer_name: formData.customer_name,
+      customer_phone: formData.customer_phone,
       party_size: parseInt(formData.party_size),
-      preferred_location: formData.preferred_location || undefined,
+      table_ids: selectedTableIds,
+      special_requests: '',
     });
+  };
+
+  const handleBack = () => {
+    setStep(1);
+    setSelectedTableIds([]);
+  };
+
+  const handleClose = () => {
+    setStep(1);
+    setFormData({ party_size: '', customer_name: '', customer_phone: '', preferred_location: '' });
+    setSelectedTableIds([]);
+    onClose();
   };
 
   if (!isOpen) return null;
 
+  // Filter tables by preferred location if specified
+  const filteredTables = formData.preferred_location
+    ? availableTables.filter(t => t.location === formData.preferred_location)
+    : availableTables;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h2 className="text-xl font-bold mb-4">Add Walk-in Customer</h2>
+      <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          {step === 1 ? 'Add Walk-in Customer' : 'Select Table'}
+        </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Step 1: Customer Information */}
+        {step === 1 && (
+          <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Party Size *
@@ -105,30 +122,67 @@ export default function WalkInModal({ isOpen, onClose, onSuccess }: WalkInModalP
             </select>
           </div>
 
-          {checkWalkInMutation.isError && (
-            <div className="text-sm text-red-600 bg-red-50 p-3 rounded">
-              Error checking availability. Please try again.
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700"
+              >
+                Next: Select Table
+              </button>
             </div>
-          )}
+          </form>
+        )}
 
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              disabled={checkWalkInMutation.isPending}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              disabled={checkWalkInMutation.isPending}
-            >
-              {checkWalkInMutation.isPending ? 'Checking...' : 'Find Tables'}
-            </button>
-          </div>
-        </form>
+        {/* Step 2: Table Selection */}
+        {step === 2 && (
+          <>
+            {/* Customer Info Summary */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-gray-600">Customer</div>
+                  <div className="font-semibold text-gray-900">{formData.customer_name}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600">Party Size</div>
+                  <div className="font-semibold text-gray-900">{formData.party_size} guests</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Table Combination Selector */}
+            <TableCombinationSelector
+              availableTables={filteredTables}
+              partySize={parseInt(formData.party_size)}
+              onSelect={setSelectedTableIds}
+              selectedTableIds={selectedTableIds}
+            />
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-4">
+              <button
+                onClick={handleBack}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50"
+              >
+                Back
+              </button>
+              <button
+                onClick={handleProceedToSeat}
+                className="flex-1 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                disabled={selectedTableIds.length === 0}
+              >
+                Proceed to Seat
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

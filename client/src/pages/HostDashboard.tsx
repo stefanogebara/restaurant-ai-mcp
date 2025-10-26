@@ -192,6 +192,7 @@ export default function HostDashboard() {
           setSeatPartyData(data);
           setIsWalkInModalOpen(false);
         }}
+        availableTables={data.tables || []}
       />
 
       <CheckInModal
@@ -202,6 +203,7 @@ export default function HostDashboard() {
           setSeatPartyData(data);
           setCheckInReservation(null);
         }}
+        availableTables={data.tables || []}
       />
 
       <WaitlistSeatModal

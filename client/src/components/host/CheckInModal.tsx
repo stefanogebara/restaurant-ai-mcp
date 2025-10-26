@@ -1,38 +1,21 @@
-import { useMutation } from '@tanstack/react-query';
-import type { UpcomingReservation, TableRecommendation } from '../../types/host.types';
-import { hostAPI } from '../../services/api';
 import { useState } from 'react';
+import type { UpcomingReservation, Table } from '../../types/host.types';
+import TableCombinationSelector from './TableCombinationSelector';
 
 interface CheckInModalProps {
   isOpen: boolean;
   reservation: UpcomingReservation | null;
   onClose: () => void;
   onSuccess: (data: any) => void;
+  availableTables: Table[];
 }
 
-export default function CheckInModal({ isOpen, reservation, onClose, onSuccess }: CheckInModalProps) {
-  const [recommendations, setRecommendations] = useState<TableRecommendation[] | null>(null);
-  const [selectedTables, setSelectedTables] = useState<string[]>([]);
-
-  const checkInMutation = useMutation({
-    mutationFn: (reservationId: string) => hostAPI.checkIn(reservationId),
-    onSuccess: (response) => {
-      const data = response.data;
-      setRecommendations([data.recommendation, ...data.all_options]);
-      if (data.recommendation?.tables) {
-        setSelectedTables(data.recommendation.tables);
-      }
-    },
-  });
+export default function CheckInModal({ isOpen, reservation, onClose, onSuccess, availableTables }: CheckInModalProps) {
+  const [showTableSelection, setShowTableSelection] = useState(false);
+  const [selectedTableIds, setSelectedTableIds] = useState<string[]>([]);
 
   const handleCheckIn = () => {
-    if (reservation) {
-      checkInMutation.mutate(reservation.reservation_id);
-    }
-  };
-
-  const handleSelectOption = (option: TableRecommendation) => {
-    setSelectedTables(option.tables);
+    setShowTableSelection(true);
   };
 
   const handleProceedToSeat = () => {
@@ -44,9 +27,20 @@ export default function CheckInModal({ isOpen, reservation, onClose, onSuccess }
         customer_phone: reservation.customer_phone,
         party_size: reservation.party_size,
         special_requests: reservation.special_requests,
-        table_ids: selectedTables,
+        table_ids: selectedTableIds,
       });
     }
+  };
+
+  const handleClose = () => {
+    setShowTableSelection(false);
+    setSelectedTableIds([]);
+    onClose();
+  };
+
+  const handleBack = () => {
+    setShowTableSelection(false);
+    setSelectedTableIds([]);
   };
 
   if (!isOpen || !reservation) return null;
@@ -85,88 +79,50 @@ export default function CheckInModal({ isOpen, reservation, onClose, onSuccess }
         </div>
 
         {/* Step 1: Check In */}
-        {!recommendations && (
+        {!showTableSelection && (
           <div className="flex gap-3">
             <button
-              onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 disabled:opacity-50"
-              disabled={checkInMutation.isPending}
+              onClick={handleClose}
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               onClick={handleCheckIn}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-blue-400"
-              disabled={checkInMutation.isPending}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700"
             >
-              {checkInMutation.isPending ? 'Checking...' : 'Check In & Find Tables'}
+              Check In & Find Tables
             </button>
           </div>
         )}
 
-        {/* Step 2: Table Recommendations */}
-        {recommendations && (
+        {/* Step 2: Table Selection */}
+        {showTableSelection && (
           <>
-            <h3 className="font-semibold text-gray-900 text-lg mb-3">Available Table Options</h3>
-            <div className="space-y-3 mb-4">
-              {recommendations.map((option, index) => (
-                <div
-                  key={index}
-                  onClick={() => handleSelectOption(option)}
-                  className={`
-                    border-2 rounded-lg p-4 cursor-pointer transition
-                    ${
-                      selectedTables.join(',') === option.tables.join(',')
-                        ? 'border-blue-600 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                    }
-                  `}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <div className="font-bold text-lg text-gray-900">
-                        Tables: {option.tables.join(', ')}
-                      </div>
-                      <div className="text-sm text-gray-600 font-medium mt-1">
-                        Total Capacity: {option.total_capacity} seats
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-base font-bold text-blue-600">
-                        Score: {option.score}
-                      </div>
-                      <div className="text-xs text-gray-600 capitalize font-medium">
-                        {option.match_quality}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-700 font-medium">{option.reason}</div>
-                </div>
-              ))}
-            </div>
+            {/* Table Combination Selector */}
+            <TableCombinationSelector
+              availableTables={availableTables}
+              partySize={reservation.party_size}
+              onSelect={setSelectedTableIds}
+              selectedTableIds={selectedTableIds}
+            />
 
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-3 pt-4">
               <button
-                onClick={onClose}
+                onClick={handleBack}
                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50"
               >
-                Cancel
+                Back
               </button>
               <button
                 onClick={handleProceedToSeat}
                 className="flex-1 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                disabled={selectedTables.length === 0}
+                disabled={selectedTableIds.length === 0}
               >
                 Proceed to Seat
               </button>
             </div>
           </>
-        )}
-
-        {checkInMutation.isError && (
-          <div className="text-sm text-red-600 bg-red-50 p-3 rounded mt-3">
-            Error checking in reservation. Please try again.
-          </div>
         )}
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { useToast } from '../../contexts/ToastContext';
@@ -33,6 +33,26 @@ function DraggablePartyCard({ party, children }: DraggablePartyCardProps) {
     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
       {children}
     </div>
+  );
+}
+
+function LiveCountdown({ seatedMinutesAgo, estimatedDurationMinutes }: { seatedMinutesAgo: number; estimatedDurationMinutes: number }) {
+  const [elapsedMinutes, setElapsedMinutes] = useState(seatedMinutesAgo);
+  const remainingMinutes = estimatedDurationMinutes - elapsedMinutes;
+  const isOverdue = remainingMinutes < 0;
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setElapsedMinutes((prev) => prev + 1);
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <span className={`font-semibold ${isOverdue ? 'text-red-400' : 'text-emerald-400'}`}>
+      {isOverdue ? `⚠️ ${Math.abs(remainingMinutes)} min OVERDUE` : `${remainingMinutes} min left`}
+    </span>
   );
 }
 
@@ -94,13 +114,10 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
               </svg>
               <span>Seated {party.time_elapsed_minutes} min ago</span>
             </div>
-            <span
-              className={`font-semibold ${
-                party.is_overdue ? 'text-red-400' : 'text-emerald-400'
-              }`}
-            >
-              {party.is_overdue ? '⚠️ OVERDUE' : `${party.time_remaining_minutes} min left`}
-            </span>
+            <LiveCountdown
+              seatedMinutesAgo={party.time_elapsed_minutes}
+              estimatedDurationMinutes={party.time_elapsed_minutes + party.time_remaining_minutes}
+            />
           </div>
 
           {confirmingServiceId === party.service_id ? (
