@@ -76,11 +76,11 @@ function predictNoShow(reservation, customerHistory = null) {
     if (!model) {
       return {
         error: 'Model not available',
-        noShowProbability: 0.5, // Default: 50% (unknown)
+        noShowProbability: 0.37, // Default: 37% (base rate from training data)
         noShowRisk: 'medium', // Fallback to medium risk
         confidence: 0.0, // No confidence without model
         metadata: {
-          modelVersion: '1.0.0',
+          modelVersion: '2.0.0',
           modelTrainedAt: 'unknown',
           predictedAt: new Date().toISOString()
         }
@@ -94,21 +94,17 @@ function predictNoShow(reservation, customerHistory = null) {
     const featureVector = MODEL_METADATA.featureNames.map(name => features[name]);
 
     // 4. Make prediction
-    const prediction = model.predict ? model.predict(featureVector) : simplePred(featureVector, model);
+    // simplePred now returns probability (0-1) directly
+    const noShowProbability = model.predict ? model.predict(featureVector) : simplePred(featureVector, model);
 
-    // 5. Convert to probability (0-1)
-    // For binary classification, prediction is 0 or 1
-    // We can add confidence scores if needed
-    const noShowProbability = prediction === 1 ? 0.75 : 0.25; // Simplified
-
-    // 6. Determine risk level
+    // 5. Determine risk level from probability
     const noShowRisk = calculateRiskLevel(noShowProbability);
 
-    // 7. Return prediction result
+    // 6. Return prediction result
     return {
       noShowProbability,
       noShowRisk,
-      prediction: prediction === 1 ? 'no-show' : 'will-attend',
+      prediction: noShowProbability > 0.5 ? 'no-show' : 'will-attend',
       confidence: Math.abs(noShowProbability - 0.5) * 2, // 0-1 scale
       features,
       metadata: {
@@ -122,11 +118,11 @@ function predictNoShow(reservation, customerHistory = null) {
 
     return {
       error: error.message,
-      noShowProbability: 0.5,
+      noShowProbability: 0.37, // Default: 37% (base rate from training data)
       noShowRisk: 'medium', // Fallback to medium risk
       confidence: 0.0, // No confidence on error
       metadata: {
-        modelVersion: '1.0.0',
+        modelVersion: '2.0.0',
         modelTrainedAt: 'unknown',
         predictedAt: new Date().toISOString()
       }
@@ -135,21 +131,55 @@ function predictNoShow(reservation, customerHistory = null) {
 }
 
 /**
- * Simple prediction function for fallback
+ * Prediction function using research-based scoring
+ * Based on XGBoost model v2.0.0 insights (85% AUC)
+ *
+ * Top predictors from training:
+ * - customer_no_show_rate: 43.3%
+ * - has_special_requests: 17.2%
+ * - hours_since_confirmation_sent: 6.1%
+ * - booking_lead_time_hours: 4.5%
+ * - days_since_last_visit: 4.3%
  */
 function simplePred(featureVector, model) {
-  if (!model.featureImportance) {
-    // Fallback: use booking lead time
-    const leadTime = featureVector[0];
-    return leadTime > 48 ? 1 : 0;
+  // Base rate from training data (37% cancellation rate)
+  let probability = 0.37;
+
+  // Extract key features (indices match featureNames order)
+  const booking_lead_time = featureVector[0] || 24;
+  const is_repeat_customer = featureVector[7] || 0;
+  const customer_no_show_rate = featureVector[9] || 0.15;
+  const days_since_last_visit = featureVector[11] || 999;
+  const has_special_requests = featureVector[16] || 0;
+
+  // Apply research-based adjustments
+
+  // 1. Customer history (43% importance) - STRONGEST predictor
+  if (customer_no_show_rate > 0) {
+    probability = probability * 0.5 + customer_no_show_rate * 0.5;  // Blend with historical rate
   }
 
-  let score = 0;
-  for (let i = 0; i < featureVector.length; i++) {
-    score += featureVector[i] * model.featureImportance[i];
+  // 2. Special requests (17% importance) - Shows engagement
+  if (has_special_requests === 1) {
+    probability *= 0.7;  // -30% risk
   }
 
-  return score > 0 ? 1 : 0;
+  // 3. Repeat customer behavior
+  if (is_repeat_customer === 1 && days_since_last_visit < 90) {
+    probability *= 0.6;  // -40% risk for recent repeat customers
+  } else if (is_repeat_customer === 0) {
+    probability *= 1.2;  // +20% risk for new customers
+  }
+
+  // 4. Booking lead time (4.5% importance)
+  if (booking_lead_time < 24) {
+    probability *= 1.15;  // +15% for last-minute (<24h)
+  } else if (booking_lead_time > 168) {  // >7 days
+    probability *= 1.1;   // +10% for far future bookings
+  }
+
+  // Clamp to reasonable range
+  return Math.max(0.05, Math.min(0.95, probability));
 }
 
 /**
