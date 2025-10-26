@@ -331,9 +331,9 @@ const getUpcomingReservations = async () => {
     status: r.fields.Status,
     record_id: r.id,
     // ML Prediction fields
-    no_show_risk_score: r.fields['No Show Risk Score'],
-    no_show_risk_level: r.fields['No Show Risk Level'],
-    prediction_confidence: r.fields['Prediction Confidence'],
+    no_show_risk_score: r.fields['ML Risk Score'],
+    no_show_risk_level: r.fields['ML Risk Level'],
+    prediction_confidence: r.fields['ML Confidence'],
     ml_model_version: r.fields['ML Model Version']
   }));
 
