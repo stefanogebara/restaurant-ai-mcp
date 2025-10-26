@@ -13,6 +13,7 @@ const {
 } = require('./_lib/customer-history');
 
 const { predictNoShow } = require('./ml/predict');
+const { logReservationCreated, logCustomerCancelled } = require('./ml/data-logger');
 
 module.exports = async (req, res) => {
   // Enable CORS
@@ -170,6 +171,14 @@ async function handleCreate(req, res) {
 
       await updateReservation(result.data.id, mlFields);
       console.log('[MLPrediction] Updated reservation with ML predictions');
+
+      // Log to training dataset for future model retraining
+      const reservationWithId = {
+        ...reservationForPrediction,
+        reservation_id: result.data.fields['Reservation ID'],
+        created_at: reservationForPrediction.booking_created_at
+      };
+      await logReservationCreated(reservationWithId, prediction, customerHistory);
     }
   } catch (error) {
     // Don't fail the reservation if ML prediction fails
@@ -273,6 +282,9 @@ async function handleCancel(req, res) {
       message: 'I couldn\'t cancel your reservation. Please try again or call us directly.'
     });
   }
+
+  // Log cancellation for ML training data
+  await logCustomerCancelled(reservation_id);
 
   return res.status(200).json({
     message: `Your reservation has been cancelled. We're sorry we won't see you this time, but we hope you'll visit us in the future!`

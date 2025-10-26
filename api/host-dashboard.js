@@ -10,6 +10,8 @@ const {
   findBestTableCombination
 } = require('./_lib/airtable');
 
+const { logCustomerShowedUp, logCustomerCancelled } = require('./ml/data-logger');
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -341,6 +343,13 @@ async function handleCompleteService(req, res) {
       success: false,
       error: 'Failed to complete service'
     });
+  }
+
+  // Log that customer showed up (for ML training data)
+  const reservationId = updateResult.service_record.reservation_id;
+  const seatedAt = updateResult.service_record.seated_at;
+  if (reservationId) {
+    await logCustomerShowedUp(reservationId, seatedAt, departedAt);
   }
 
   const tableIdsRaw = updateResult.service_record.table_ids;
