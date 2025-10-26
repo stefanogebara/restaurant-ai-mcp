@@ -75,38 +75,52 @@ async function predictNoShowRisks() {
     const partySize = r.fields['Party Size'] || 2;
     const daysAhead = Math.ceil((resDate - now) / (1000 * 60 * 60 * 24));
 
-    // Risk factors
-    let riskScore = historicalNoShowRate;
+    // Try to use ML predictions first, fall back to heuristics
+    const mlRiskScore = r.fields['ML Risk Score']; // 0-100
+    const mlRiskLevel = r.fields['ML Risk Level']; // low, medium, high, very-high
 
-    // Last-minute bookings (< 24 hours) are higher risk
-    if (daysAhead === 0) {
-      riskScore += 0.15;
+    let riskScore;
+    let riskLevel;
+
+    if (mlRiskScore !== undefined && mlRiskScore !== null && mlRiskLevel) {
+      // Use ML predictions (already 0-100 scale)
+      riskScore = parseFloat(mlRiskScore);
+      // Map very-high to high for frontend compatibility
+      riskLevel = mlRiskLevel === 'very-high' ? 'high' : mlRiskLevel;
+    } else {
+      // Fall back to heuristic calculation
+      riskScore = historicalNoShowRate;
+
+      // Last-minute bookings (< 24 hours) are higher risk
+      if (daysAhead === 0) {
+        riskScore += 0.15;
+      }
+
+      // Large parties are slightly higher risk
+      if (partySize >= 6) {
+        riskScore += 0.10;
+      }
+
+      // Prime time slots (7-9 PM) are lower risk
+      const hour = parseInt(resTime.split(':')[0]);
+      if (hour >= 19 && hour <= 21) {
+        riskScore -= 0.05;
+      }
+
+      // Weekend bookings are lower risk
+      const dayOfWeek = resDate.getDay();
+      if (dayOfWeek === 5 || dayOfWeek === 6) { // Friday or Saturday
+        riskScore -= 0.05;
+      }
+
+      // Cap between 0 and 1, then convert to 0-100
+      riskScore = Math.max(0, Math.min(1, riskScore)) * 100;
+
+      // Determine risk level
+      riskLevel = 'low';
+      if (riskScore > 40) riskLevel = 'high';
+      else if (riskScore > 20) riskLevel = 'medium';
     }
-
-    // Large parties are slightly higher risk
-    if (partySize >= 6) {
-      riskScore += 0.10;
-    }
-
-    // Prime time slots (7-9 PM) are lower risk
-    const hour = parseInt(resTime.split(':')[0]);
-    if (hour >= 19 && hour <= 21) {
-      riskScore -= 0.05;
-    }
-
-    // Weekend bookings are lower risk
-    const dayOfWeek = resDate.getDay();
-    if (dayOfWeek === 5 || dayOfWeek === 6) { // Friday or Saturday
-      riskScore -= 0.05;
-    }
-
-    // Cap between 0 and 1
-    riskScore = Math.max(0, Math.min(1, riskScore));
-
-    // Determine risk level
-    let riskLevel = 'low';
-    if (riskScore > 0.4) riskLevel = 'high';
-    else if (riskScore > 0.2) riskLevel = 'medium';
 
     // Recommendations based on risk
     const recommendations = [];
@@ -125,7 +139,7 @@ async function predictNoShowRisks() {
       party_size: partySize,
       date: r.fields.Date,
       time: resTime,
-      risk_score: parseFloat((riskScore * 100).toFixed(1)),
+      risk_score: parseFloat(riskScore.toFixed(1)), // Already 0-100 scale
       risk_level: riskLevel,
       days_until: daysAhead,
       recommendations
