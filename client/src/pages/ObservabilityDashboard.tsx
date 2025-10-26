@@ -52,6 +52,36 @@ interface TrendData {
 export default function ObservabilityDashboard() {
   const [timeWindow, setTimeWindow] = useState(3600000); // 1 hour default
 
+  // Fetch system health
+  const { data: health } = useQuery<SystemHealth>({
+    queryKey: ['observability', 'health'],
+    queryFn: async () => {
+      const res = await axios.get(`${API_BASE}/observability/health`);
+      return res.data;
+    },
+    refetchInterval: 5000 // Refresh every 5 seconds
+  });
+
+  // Fetch metrics
+  const { data: metrics, isLoading } = useQuery<ObservabilityData>({
+    queryKey: ['observability', 'metrics', timeWindow],
+    queryFn: async () => {
+      const res = await axios.get(`${API_BASE}/observability/metrics?timeWindow=${timeWindow}`);
+      return res.data;
+    },
+    refetchInterval: 10000 // Refresh every 10 seconds
+  });
+
+  // Fetch trends
+  const { data: trends } = useQuery<TrendData>({
+    queryKey: ['observability', 'trends', timeWindow],
+    queryFn: async () => {
+      const res = await axios.get(`${API_BASE}/observability/trends?timeWindow=${timeWindow}`);
+      return res.data;
+    },
+    refetchInterval: 10000 // Refresh every 10 seconds
+  });
+
   // Export metrics as CSV
   const exportAsCSV = () => {
     if (!metrics) return;
@@ -113,36 +143,6 @@ export default function ObservabilityDashboard() {
     a.click();
     window.URL.revokeObjectURL(url);
   };
-
-  // Fetch system health
-  const { data: health } = useQuery<SystemHealth>({
-    queryKey: ['observability', 'health'],
-    queryFn: async () => {
-      const res = await axios.get(`${API_BASE}/observability/health`);
-      return res.data;
-    },
-    refetchInterval: 5000 // Refresh every 5 seconds
-  });
-
-  // Fetch metrics
-  const { data: metrics, isLoading } = useQuery<ObservabilityData>({
-    queryKey: ['observability', 'metrics', timeWindow],
-    queryFn: async () => {
-      const res = await axios.get(`${API_BASE}/observability/metrics?timeWindow=${timeWindow}`);
-      return res.data;
-    },
-    refetchInterval: 10000 // Refresh every 10 seconds
-  });
-
-  // Fetch trends
-  const { data: trends } = useQuery<TrendData>({
-    queryKey: ['observability', 'trends', timeWindow],
-    queryFn: async () => {
-      const res = await axios.get(`${API_BASE}/observability/trends?timeWindow=${timeWindow}`);
-      return res.data;
-    },
-    refetchInterval: 10000 // Refresh every 10 seconds
-  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
