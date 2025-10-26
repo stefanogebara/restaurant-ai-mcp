@@ -11,6 +11,12 @@
  * - POST - Log an event
  */
 
+const { initSentry, captureException } = require('./_lib/sentry');
+const { analyzeMetrics, checkSystemHealth } = require('./_lib/alerts');
+
+// Initialize Sentry error tracking
+initSentry();
+
 // In-memory metrics storage (would use database/Redis in production)
 const metrics = {
   agentCalls: [],
@@ -27,12 +33,22 @@ function trimLogs(logs) {
   }
 }
 
-function calculateMetrics(timeWindow = 3600000) {
-  const cutoff = new Date(Date.now() - timeWindow);
+function calculateMetrics(timeWindow = 3600000, endTime = Date.now()) {
+  const cutoffStart = new Date(endTime - timeWindow);
+  const cutoffEnd = new Date(endTime);
 
-  const recentCalls = metrics.agentCalls.filter(c => new Date(c.timestamp) >= cutoff);
-  const recentToolUsage = metrics.toolUsage.filter(t => new Date(t.timestamp) >= cutoff);
-  const recentErrors = metrics.errors.filter(e => new Date(e.timestamp) >= cutoff);
+  const recentCalls = metrics.agentCalls.filter(c => {
+    const timestamp = new Date(c.timestamp);
+    return timestamp >= cutoffStart && timestamp <= cutoffEnd;
+  });
+  const recentToolUsage = metrics.toolUsage.filter(t => {
+    const timestamp = new Date(t.timestamp);
+    return timestamp >= cutoffStart && timestamp <= cutoffEnd;
+  });
+  const recentErrors = metrics.errors.filter(e => {
+    const timestamp = new Date(e.timestamp);
+    return timestamp >= cutoffStart && timestamp <= cutoffEnd;
+  });
 
   const totalCalls = recentCalls.length;
   const successfulCalls = recentCalls.filter(c => c.success).length;
@@ -161,11 +177,19 @@ module.exports = async (req, res) => {
         case 'metrics': {
           const timeWindow = parseInt(req.query.timeWindow) || 3600000;
           const data = calculateMetrics(timeWindow);
+
+          // Analyze metrics and trigger alerts
+          analyzeMetrics(data);
+
           return res.status(200).json(data);
         }
 
         case 'health': {
           const health = getSystemHealth();
+
+          // Check system health and trigger alerts
+          checkSystemHealth(health);
+
           return res.status(200).json(health);
         }
 
@@ -175,8 +199,48 @@ module.exports = async (req, res) => {
           return res.status(200).json(errors);
         }
 
+        case 'trends': {
+          const timeWindow = parseInt(req.query.timeWindow) || 3600000;
+          const currentMetrics = calculateMetrics(timeWindow);
+          const previousMetrics = calculateMetrics(timeWindow, Date.now() - timeWindow);
+
+          const trends = {
+            totalCalls: {
+              current: currentMetrics.summary.totalCalls,
+              previous: previousMetrics.summary.totalCalls,
+              change: currentMetrics.summary.totalCalls - previousMetrics.summary.totalCalls,
+              percentChange: previousMetrics.summary.totalCalls > 0
+                ? ((currentMetrics.summary.totalCalls - previousMetrics.summary.totalCalls) / previousMetrics.summary.totalCalls * 100).toFixed(1)
+                : '0'
+            },
+            successRate: {
+              current: parseFloat(currentMetrics.summary.successRate),
+              previous: parseFloat(previousMetrics.summary.successRate),
+              change: (parseFloat(currentMetrics.summary.successRate) - parseFloat(previousMetrics.summary.successRate)).toFixed(2),
+              trend: parseFloat(currentMetrics.summary.successRate) >= parseFloat(previousMetrics.summary.successRate) ? 'up' : 'down'
+            },
+            avgResponseTime: {
+              current: currentMetrics.summary.avgResponseTime,
+              previous: previousMetrics.summary.avgResponseTime,
+              change: currentMetrics.summary.avgResponseTime - previousMetrics.summary.avgResponseTime,
+              percentChange: previousMetrics.summary.avgResponseTime > 0
+                ? ((currentMetrics.summary.avgResponseTime - previousMetrics.summary.avgResponseTime) / previousMetrics.summary.avgResponseTime * 100).toFixed(1)
+                : '0',
+              trend: currentMetrics.summary.avgResponseTime <= previousMetrics.summary.avgResponseTime ? 'up' : 'down'
+            },
+            errorRate: {
+              current: currentMetrics.summary.failedCalls,
+              previous: previousMetrics.summary.failedCalls,
+              change: currentMetrics.summary.failedCalls - previousMetrics.summary.failedCalls,
+              trend: currentMetrics.summary.failedCalls <= previousMetrics.summary.failedCalls ? 'up' : 'down'
+            }
+          };
+
+          return res.status(200).json(trends);
+        }
+
         default:
-          return res.status(400).json({ error: 'Invalid action. Use: metrics, health, or errors' });
+          return res.status(400).json({ error: 'Invalid action. Use: metrics, health, errors, or trends' });
       }
     }
 
@@ -220,6 +284,14 @@ module.exports = async (req, res) => {
 
   } catch (error) {
     console.error('Observability API error:', error);
+
+    // Capture error in Sentry
+    captureException(error, {
+      action: req.query.action,
+      method: req.method,
+      url: req.url
+    });
+
     return res.status(500).json({
       success: false,
       error: error.message || 'Internal server error'

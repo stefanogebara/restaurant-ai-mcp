@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@google-cloud/vertexai": "^1.10.0",
+    "@sentry/node": "^10.22.0",
+    "@sentry/react": "^10.22.0",
     "axios": "^1.12.2",
     "dotenv": "^17.2.3",
     "twilio": "^5.10.3"

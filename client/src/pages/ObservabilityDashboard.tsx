@@ -42,8 +42,77 @@ interface ObservabilityData {
   topErrors: Array<{ error: string; count: number }>;
 }
 
+interface TrendData {
+  totalCalls: { current: number; previous: number; change: number; percentChange: string };
+  successRate: { current: number; previous: number; change: string; trend: 'up' | 'down' };
+  avgResponseTime: { current: number; previous: number; change: number; percentChange: string; trend: 'up' | 'down' };
+  errorRate: { current: number; previous: number; change: number; trend: 'up' | 'down' };
+}
+
 export default function ObservabilityDashboard() {
   const [timeWindow, setTimeWindow] = useState(3600000); // 1 hour default
+
+  // Export metrics as CSV
+  const exportAsCSV = () => {
+    if (!metrics) return;
+
+    const csvRows = [];
+
+    // Headers
+    csvRows.push('Metric,Value');
+
+    // Summary metrics
+    csvRows.push(`Total Calls,${metrics.summary.totalCalls}`);
+    csvRows.push(`Success Rate,${metrics.summary.successRate}%`);
+    csvRows.push(`Average Response Time,${metrics.summary.avgResponseTime}ms`);
+    csvRows.push(`P95 Response Time,${metrics.summary.p95ResponseTime}ms`);
+    csvRows.push(`P99 Response Time,${metrics.summary.p99ResponseTime}ms`);
+
+    // Agent stats
+    csvRows.push('');
+    csvRows.push('Agent Name,Total Calls,Success Rate,Avg Response Time');
+    Object.entries(metrics.agentStats).forEach(([name, stats]) => {
+      csvRows.push(`${name},${stats.totalCalls},${stats.successRate}%,${stats.avgResponseTime}ms`);
+    });
+
+    // Top errors
+    if (metrics.topErrors.length > 0) {
+      csvRows.push('');
+      csvRows.push('Error,Count');
+      metrics.topErrors.forEach(err => {
+        csvRows.push(`"${err.error}",${err.count}`);
+      });
+    }
+
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `metrics-${new Date().toISOString()}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  // Export metrics as JSON
+  const exportAsJSON = () => {
+    if (!metrics) return;
+
+    const jsonContent = JSON.stringify({
+      exportedAt: new Date().toISOString(),
+      timeWindow,
+      health,
+      metrics
+    }, null, 2);
+
+    const blob = new Blob([jsonContent], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `metrics-${new Date().toISOString()}.json`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
 
   // Fetch system health
   const { data: health } = useQuery<SystemHealth>({
@@ -60,6 +129,16 @@ export default function ObservabilityDashboard() {
     queryKey: ['observability', 'metrics', timeWindow],
     queryFn: async () => {
       const res = await axios.get(`${API_BASE}/observability/metrics?timeWindow=${timeWindow}`);
+      return res.data;
+    },
+    refetchInterval: 10000 // Refresh every 10 seconds
+  });
+
+  // Fetch trends
+  const { data: trends } = useQuery<TrendData>({
+    queryKey: ['observability', 'trends', timeWindow],
+    queryFn: async () => {
+      const res = await axios.get(`${API_BASE}/observability/trends?timeWindow=${timeWindow}`);
       return res.data;
     },
     refetchInterval: 10000 // Refresh every 10 seconds
@@ -84,6 +163,24 @@ export default function ObservabilityDashboard() {
     return `${hours}h ${minutes}m`;
   };
 
+  // Trend indicator component
+  const TrendIndicator = ({ trend, change, isGood }: { trend?: 'up' | 'down'; change?: string | number; isGood?: boolean }) => {
+    if (!trend || change === undefined) return null;
+
+    const isPositive = isGood === undefined
+      ? trend === 'up'
+      : (trend === 'up' && isGood) || (trend === 'down' && !isGood);
+
+    const arrow = trend === 'up' ? '↑' : '↓';
+    const color = isPositive ? 'text-emerald-400' : 'text-red-400';
+
+    return (
+      <span className={`text-xs ${color} ml-2`}>
+        {arrow} {typeof change === 'number' ? Math.abs(change) : change}%
+      </span>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -106,6 +203,27 @@ export default function ObservabilityDashboard() {
                 <option value={14400000}>Last 4 hours</option>
                 <option value={86400000}>Last 24 hours</option>
               </select>
+
+              {/* Export buttons */}
+              {!isLoading && metrics && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={exportAsCSV}
+                    className="px-4 py-2 border border-border rounded-lg bg-background text-foreground hover:bg-muted transition-colors"
+                    title="Export as CSV"
+                  >
+                    Export CSV
+                  </button>
+                  <button
+                    onClick={exportAsJSON}
+                    className="px-4 py-2 border border-border rounded-lg bg-background text-foreground hover:bg-muted transition-colors"
+                    title="Export as JSON"
+                  >
+                    Export JSON
+                  </button>
+                </div>
+              )}
+
               <a
                 href="/host-dashboard"
                 className="px-5 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-all shadow-md hover:shadow-lg"
@@ -169,7 +287,10 @@ export default function ObservabilityDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-card border border-border rounded-lg p-6">
                   <div className="text-sm text-muted-foreground mb-2">Total Calls</div>
-                  <div className="text-3xl font-bold text-foreground">{metrics.summary.totalCalls}</div>
+                  <div className="text-3xl font-bold text-foreground">
+                    {metrics.summary.totalCalls}
+                    {trends && <TrendIndicator trend={trends.totalCalls.change > 0 ? 'up' : 'down'} change={trends.totalCalls.percentChange} />}
+                  </div>
                 </div>
 
                 <div className="bg-card border border-border rounded-lg p-6">
@@ -178,12 +299,16 @@ export default function ObservabilityDashboard() {
                     parseFloat(metrics.summary.successRate) >= 95 ? 'text-emerald-400' : 'text-yellow-400'
                   }`}>
                     {metrics.summary.successRate}%
+                    {trends && <TrendIndicator trend={trends.successRate.trend} change={trends.successRate.change} isGood={true} />}
                   </div>
                 </div>
 
                 <div className="bg-card border border-border rounded-lg p-6">
                   <div className="text-sm text-muted-foreground mb-2">Avg Response Time</div>
-                  <div className="text-3xl font-bold text-foreground">{metrics.summary.avgResponseTime}ms</div>
+                  <div className="text-3xl font-bold text-foreground">
+                    {metrics.summary.avgResponseTime}ms
+                    {trends && <TrendIndicator trend={trends.avgResponseTime.trend} change={trends.avgResponseTime.percentChange} isGood={false} />}
+                  </div>
                 </div>
 
                 <div className="bg-card border border-border rounded-lg p-6">
