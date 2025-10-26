@@ -84,7 +84,13 @@ function predictNoShow(reservation, customerHistory = null) {
       return {
         error: 'Model not available',
         noShowProbability: 0.5, // Default: 50% (unknown)
-        noShowRisk: 'unknown'
+        noShowRisk: 'medium', // Fallback to medium risk
+        confidence: 0.0, // No confidence without model
+        metadata: {
+          modelVersion: '1.0.0',
+          modelTrainedAt: 'unknown',
+          predictedAt: new Date().toISOString()
+        }
       };
     }
 
@@ -124,7 +130,13 @@ function predictNoShow(reservation, customerHistory = null) {
     return {
       error: error.message,
       noShowProbability: 0.5,
-      noShowRisk: 'unknown'
+      noShowRisk: 'medium', // Fallback to medium risk
+      confidence: 0.0, // No confidence on error
+      metadata: {
+        modelVersion: '1.0.0',
+        modelTrainedAt: 'unknown',
+        predictedAt: new Date().toISOString()
+      }
     };
   }
 }
