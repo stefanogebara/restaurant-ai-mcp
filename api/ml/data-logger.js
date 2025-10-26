@@ -24,44 +24,61 @@ const writeFileAsync = promisify(fs.writeFile);
 const TRAINING_DATA_DIR = path.join(__dirname, '../../ml-training-data');
 const TRAINING_LOG_FILE = path.join(TRAINING_DATA_DIR, 'restaurant_training_data.csv');
 
-// Ensure directory exists
-if (!fs.existsSync(TRAINING_DATA_DIR)) {
-  fs.mkdirSync(TRAINING_DATA_DIR, { recursive: true });
-}
+// Check if we're in a writable environment (local dev) vs read-only (Vercel production)
+let isFileSystemWritable = false;
 
-// Initialize CSV with headers if it doesn't exist
-if (!fs.existsSync(TRAINING_LOG_FILE)) {
-  const headers = [
-    'reservation_id',
-    'created_at',
-    'reservation_date',
-    'reservation_time',
-    'customer_email',
-    'customer_phone',
-    'customer_name',
-    'party_size',
-    'special_requests',
-    'booking_lead_time_hours',
-    'is_repeat_customer',
-    'customer_visit_count',
-    'customer_no_show_rate',
-    'days_since_last_visit',
-    'ml_predicted_probability',
-    'ml_predicted_risk_level',
-    'actual_outcome', // 'showed_up', 'no_show', 'cancelled'
-    'outcome_timestamp',
-    'seated_at',
-    'completed_at'
-  ].join(',') + '\n';
+try {
+  // Ensure directory exists
+  if (!fs.existsSync(TRAINING_DATA_DIR)) {
+    fs.mkdirSync(TRAINING_DATA_DIR, { recursive: true });
+  }
 
-  fs.writeFileSync(TRAINING_LOG_FILE, headers);
-  console.log('[DataLogger] Initialized training data log:', TRAINING_LOG_FILE);
+  // Initialize CSV with headers if it doesn't exist
+  if (!fs.existsSync(TRAINING_LOG_FILE)) {
+    const headers = [
+      'reservation_id',
+      'created_at',
+      'reservation_date',
+      'reservation_time',
+      'customer_email',
+      'customer_phone',
+      'customer_name',
+      'party_size',
+      'special_requests',
+      'booking_lead_time_hours',
+      'is_repeat_customer',
+      'customer_visit_count',
+      'customer_no_show_rate',
+      'days_since_last_visit',
+      'ml_predicted_probability',
+      'ml_predicted_risk_level',
+      'actual_outcome', // 'showed_up', 'no_show', 'cancelled'
+      'outcome_timestamp',
+      'seated_at',
+      'completed_at'
+    ].join(',') + '\n';
+
+    fs.writeFileSync(TRAINING_LOG_FILE, headers);
+    console.log('[DataLogger] Initialized training data log:', TRAINING_LOG_FILE);
+  }
+
+  isFileSystemWritable = true;
+  console.log('[DataLogger] File system is writable - data collection enabled');
+} catch (error) {
+  console.warn('[DataLogger] File system is read-only (Vercel production) - data collection disabled');
+  console.warn('[DataLogger] Training data will only be collected in local development');
 }
 
 /**
  * Log a new reservation (at creation time)
  */
 async function logReservationCreated(reservation, mlPrediction, customerHistory = null) {
+  // Skip logging if filesystem is read-only (Vercel production)
+  if (!isFileSystemWritable) {
+    console.warn('[DataLogger] Skipping reservation log - filesystem read-only');
+    return { success: false, reason: 'filesystem_read_only' };
+  }
+
   try {
     const row = [
       reservation.reservation_id || '',
@@ -122,6 +139,12 @@ async function logCustomerCancelled(reservationId, cancelledAt) {
  * Note: For production, consider using a database instead of CSV for easier updates
  */
 async function updateOutcome(reservationId, outcome, outcomeTimestamp, seatedAt = '', completedAt = '') {
+  // Skip updating if filesystem is read-only (Vercel production)
+  if (!isFileSystemWritable) {
+    console.warn('[DataLogger] Skipping outcome update - filesystem read-only');
+    return { success: false, reason: 'filesystem_read_only' };
+  }
+
   try {
     // Read entire file
     const fileContent = fs.readFileSync(TRAINING_LOG_FILE, 'utf-8');
@@ -162,6 +185,23 @@ async function updateOutcome(reservationId, outcome, outcomeTimestamp, seatedAt 
  */
 function getTrainingDataStats() {
   try {
+    // If filesystem is read-only, return empty stats with helpful message
+    if (!isFileSystemWritable) {
+      return {
+        totalSamples: 0,
+        showedUp: 0,
+        noShows: 0,
+        cancelled: 0,
+        pending: 0,
+        completedSamples: 0,
+        noShowRate: 'N/A',
+        readyForRetraining: false,
+        samplesNeeded: 100,
+        environment: 'production',
+        note: 'Data collection only available in local development. Consider using Airtable or Supabase for production data storage.'
+      };
+    }
+
     if (!fs.existsSync(TRAINING_LOG_FILE)) {
       return {
         totalSamples: 0,
@@ -169,7 +209,10 @@ function getTrainingDataStats() {
         noShows: 0,
         cancelled: 0,
         pending: 0,
-        readyForRetraining: false
+        completedSamples: 0,
+        noShowRate: 'N/A',
+        readyForRetraining: false,
+        samplesNeeded: 100
       };
     }
 
