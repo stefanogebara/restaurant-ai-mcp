@@ -87,10 +87,10 @@ module.exports = async (req, res) => {
 
         // Update reservation with ML fields
         const mlFields = {
-          'ML Risk Score': Math.round(prediction.probability * 100),
-          'ML Risk Level': prediction.riskLevel,
+          'ML Risk Score': Math.round(prediction.noShowProbability * 100),
+          'ML Risk Level': prediction.noShowRisk,
           'ML Confidence': Math.round(prediction.confidence * 100),
-          'ML Model Version': prediction.modelInfo?.version || '1.0.0'
+          'ML Model Version': prediction.metadata?.modelVersion || '1.0.0'
         };
 
         await updateReservation(reservation.record_id, mlFields);

@@ -162,10 +162,10 @@ async function handleCreate(req, res) {
     // Update reservation with ML predictions
     if (result.data && result.data.id && prediction) {
       const mlFields = {
-        'ML Risk Score': Math.round(prediction.probability * 100), // Store as percentage (0-100)
-        'ML Risk Level': prediction.riskLevel, // low, medium, high, very-high
+        'ML Risk Score': Math.round(prediction.noShowProbability * 100), // Store as percentage (0-100)
+        'ML Risk Level': prediction.noShowRisk, // low, medium, high, very-high
         'ML Confidence': Math.round(prediction.confidence * 100), // Store as percentage
-        'ML Model Version': prediction.modelInfo?.version || '1.0.0'
+        'ML Model Version': prediction.metadata?.modelVersion || '1.0.0'
       };
 
       await updateReservation(result.data.id, mlFields);
