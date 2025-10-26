@@ -4,9 +4,10 @@
  * Loads trained model and makes predictions on new reservations
  */
 
-const fs = require('fs');
-const path = require('path');
 const { extractAllFeatures } = require('./features');
+
+// Import inline model data (serverless-compatible)
+const MODEL_DATA = require('./model-data');
 
 // ============================================================================
 // MODEL LOADING
@@ -15,10 +16,8 @@ const { extractAllFeatures } = require('./features');
 let MODEL = null;
 let MODEL_METADATA = null;
 
-const MODEL_PATH = path.join(__dirname, '..', '..', 'ml-models', 'no_show_model.json');
-
 /**
- * Load trained model from disk
+ * Load trained model (from inline data)
  */
 function loadModel() {
   if (MODEL) {
@@ -28,23 +27,17 @@ function loadModel() {
   try {
     console.log('[ML] Loading no-show prediction model...');
 
-    if (!fs.existsSync(MODEL_PATH)) {
-      console.error('[ML] Model file not found:', MODEL_PATH);
-      return null;
-    }
-
-    const modelData = JSON.parse(fs.readFileSync(MODEL_PATH, 'utf-8'));
-
+    // Use inline model data (no file system access needed)
     MODEL_METADATA = {
-      trainedAt: modelData.trainedAt,
-      version: modelData.version,
-      featureNames: modelData.featureNames,
-      type: modelData.type
+      trainedAt: MODEL_DATA.trainedAt,
+      version: MODEL_DATA.version,
+      featureNames: MODEL_DATA.featureNames,
+      type: MODEL_DATA.type
     };
 
-    MODEL = modelData.model;
+    MODEL = MODEL_DATA.model;
 
-    console.log('[ML] Model loaded successfully');
+    console.log('[ML] Model loaded successfully (inline data)');
     console.log(`[ML] Version: ${MODEL_METADATA.version}`);
     console.log(`[ML] Trained: ${MODEL_METADATA.trainedAt}`);
 
