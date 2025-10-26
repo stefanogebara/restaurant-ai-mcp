@@ -4,7 +4,7 @@
  * Check how much training data has been collected and when to retrain
  */
 
-const { getTrainingDataStats } = require('../ml/data-logger');
+const { getTrainingDataStats } = require('./ml/data-logger');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
