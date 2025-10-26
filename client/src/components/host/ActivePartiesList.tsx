@@ -1,10 +1,39 @@
 import { useState } from 'react';
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import { useToast } from '../../contexts/ToastContext';
 import type { ActiveParty } from '../../types/host.types';
 import { useCompleteService } from '../../hooks/useCompleteService';
 
 interface ActivePartiesListProps {
   parties: ActiveParty[];
+}
+
+interface DraggablePartyCardProps {
+  party: ActiveParty;
+  children: React.ReactNode;
+}
+
+function DraggablePartyCard({ party, children }: DraggablePartyCardProps) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: party.service_id,
+    data: {
+      type: 'party',
+      party
+    }
+  });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    opacity: isDragging ? 0.5 : 1,
+    cursor: isDragging ? 'grabbing' : 'grab'
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+      {children}
+    </div>
+  );
 }
 
 export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
@@ -36,10 +65,15 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
   return (
     <div className="space-y-3">
       {parties.map((party) => (
-        <div
-          key={party.service_id}
-          className="bg-[#252525] border border-gray-800 rounded-xl p-4 hover:bg-[#2A2A2A] transition-all"
-        >
+        <DraggablePartyCard key={party.service_id} party={party}>
+          <div className="bg-[#252525] border border-gray-800 rounded-xl p-4 hover:bg-[#2A2A2A] transition-all relative">
+            {/* Drag handle indicator */}
+            <div className="absolute top-2 right-2 text-gray-600 text-xs flex items-center gap-1">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+              </svg>
+              <span>Drag to table</span>
+            </div>
           <div className="flex justify-between items-start mb-3">
             <div>
               <div className="font-semibold text-white text-lg">{party.customer_name}</div>
@@ -97,7 +131,8 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
               Complete Service
             </button>
           )}
-        </div>
+          </div>
+        </DraggablePartyCard>
       ))}
     </div>
   );

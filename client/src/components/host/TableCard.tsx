@@ -1,6 +1,9 @@
 import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '../../contexts/ToastContext';
 import type { Table } from '../../types/host.types';
 import TableActionMenu from './TableActionMenu';
+import { hostAPI } from '../../services/api';
 
 interface TableCardProps {
   table: Table;
@@ -8,6 +11,9 @@ interface TableCardProps {
 
 export default function TableCard({ table }: TableCardProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const queryClient = useQueryClient();
+  const { success, error: showError } = useToast();
 
   const getStatusConfig = () => {
     switch (table.status) {
@@ -61,17 +67,80 @@ export default function TableCard({ table }: TableCardProps) {
 
   const config = getStatusConfig();
 
+  const quickActionMutation = useMutation({
+    mutationFn: ({ status }: { status: 'Available' | 'Occupied' | 'Being Cleaned' | 'Reserved' }) => {
+      return hostAPI.updateTableStatus(table.id, status);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['hostDashboard'] });
+      const statusText = variables.status === 'Available' ? 'free' : variables.status.toLowerCase();
+      success(`Table ${table.table_number} marked as ${statusText}`);
+    },
+    onError: () => {
+      showError(`Failed to update table ${table.table_number}`);
+    },
+  });
+
+  const getQuickActions = () => {
+    const actions = [];
+
+    if (table.status === 'Occupied') {
+      actions.push({
+        icon: '✅',
+        label: 'Mark Free',
+        color: 'bg-emerald-500 hover:bg-emerald-600',
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          quickActionMutation.mutate({ status: 'Available' });
+        }
+      });
+    }
+
+    if (table.status === 'Available') {
+      actions.push({
+        icon: '🔴',
+        label: 'Mark Occupied',
+        color: 'bg-red-500 hover:bg-red-600',
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          quickActionMutation.mutate({ status: 'Occupied' });
+        }
+      });
+    }
+
+    if (table.status !== 'Reserved') {
+      actions.push({
+        icon: '📅',
+        label: 'Reserve',
+        color: 'bg-blue-500 hover:bg-blue-600',
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          quickActionMutation.mutate({ status: 'Reserved' });
+        }
+      });
+    }
+
+    return actions;
+  };
+
+  const quickActions = getQuickActions();
+
   return (
     <>
-      <button
-        onClick={() => setShowMenu(true)}
-        className={`
-          w-full p-4 rounded-xl border-2 transition-all duration-300
-          ${config.bg} ${config.glow}
-          shadow-lg hover:shadow-xl hover:-translate-y-1
-          cursor-pointer group
-        `}
+      <div
+        className="relative"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
+        <button
+          onClick={() => setShowMenu(true)}
+          className={`
+            w-full p-4 rounded-xl border-2 transition-all duration-300
+            ${config.bg} ${config.glow}
+            shadow-lg hover:shadow-xl hover:-translate-y-1
+            cursor-pointer group
+          `}
+        >
         {/* Table Number */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -112,6 +181,47 @@ export default function TableCard({ table }: TableCardProps) {
           {table.status}
         </div>
       </button>
+
+        {/* Quick Action Buttons (hover overlay) */}
+        {isHovered && quickActions.length > 0 && (
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm rounded-xl flex items-center justify-center gap-2 p-2 pointer-events-none">
+            <div className="flex flex-col gap-2 pointer-events-auto">
+              {quickActions.map((action, index) => (
+                <button
+                  key={index}
+                  onClick={action.onClick}
+                  disabled={quickActionMutation.isPending}
+                  className={`
+                    px-3 py-2 rounded-lg text-white text-sm font-semibold
+                    transition-all shadow-lg
+                    ${action.color}
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    flex items-center gap-2 min-w-[140px]
+                  `}
+                  title={action.label}
+                >
+                  {quickActionMutation.isPending ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <span className="text-base">{action.icon}</span>
+                  )}
+                  <span>{action.label}</span>
+                </button>
+              ))}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMenu(true);
+                }}
+                className="px-3 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold transition-all shadow-lg flex items-center gap-2 min-w-[140px]"
+              >
+                <span>⋮</span>
+                <span>More Options</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {showMenu && (
         <TableActionMenu
