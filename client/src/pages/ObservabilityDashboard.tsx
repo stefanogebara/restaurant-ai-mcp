@@ -251,17 +251,17 @@ export default function ObservabilityDashboard() {
             <div className="bg-card border border-border rounded-lg p-6">
               <div className="text-sm text-muted-foreground mb-2">Uptime</div>
               <div className="text-2xl font-bold text-foreground">
-                {health ? formatUptime(health.uptime) : '-'}
+                {health?.uptime !== undefined ? formatUptime(health.uptime) : '-'}
               </div>
             </div>
 
             <div className="bg-card border border-border rounded-lg p-6">
               <div className="text-sm text-muted-foreground mb-2">Memory Usage</div>
               <div className="text-2xl font-bold text-foreground">
-                {health ? `${health.memory.used}MB` : '-'}
+                {health?.memory?.used ? `${health.memory.used}MB` : '-'}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                of {health?.memory.total}MB
+                of {health?.memory?.total || '-'}MB
               </div>
             </div>
 
