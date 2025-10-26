@@ -329,7 +329,12 @@ const getUpcomingReservations = async () => {
     checked_in: !!r.fields['Checked In At'],
     checked_in_at: r.fields['Checked In At'] || null,
     status: r.fields.Status,
-    record_id: r.id
+    record_id: r.id,
+    // ML Prediction fields
+    no_show_risk_score: r.fields['No Show Risk Score'],
+    no_show_risk_level: r.fields['No Show Risk Level'],
+    prediction_confidence: r.fields['Prediction Confidence'],
+    ml_model_version: r.fields['ML Model Version']
   }));
 
   // Sort by date and time (earliest first)

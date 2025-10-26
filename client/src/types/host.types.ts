@@ -35,6 +35,11 @@ export interface UpcomingReservation {
   checked_in_at?: string;
   status?: string;
   record_id?: string;
+  // ML Prediction fields
+  no_show_risk_score?: number;  // 0-100 percentage
+  no_show_risk_level?: 'low' | 'medium' | 'high' | 'very-high';
+  prediction_confidence?: number;  // 0-100 percentage
+  ml_model_version?: string;
 }
 
 export interface DashboardSummary {

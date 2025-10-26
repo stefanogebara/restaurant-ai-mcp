@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { UpcomingReservation } from '../../types/host.types';
 import ReservationDetailsModal from './ReservationDetailsModal';
+import RiskBadge from './RiskBadge';
 
 interface ReservationsCalendarProps {
   reservations: UpcomingReservation[];
@@ -150,13 +151,18 @@ export default function ReservationsCalendar({ reservations, onCheckIn }: Reserv
                     >
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-semibold text-white">{reservation.customer_name}</span>
                             {reservation.checked_in && (
                               <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full">
                                 ✓ Checked In
                               </span>
                             )}
+                            <RiskBadge
+                              riskLevel={reservation.no_show_risk_level}
+                              riskScore={reservation.no_show_risk_score}
+                              size="sm"
+                            />
                           </div>
                           <div className="text-sm text-gray-400 mt-1">
                             Party of {reservation.party_size} · {formatTime(reservation.time || '')}
