@@ -12,6 +12,8 @@ const {
   getCustomerStats
 } = require('./_lib/customer-history');
 
+const { predictNoShow } = require('./ml/predict');
+
 module.exports = async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -121,6 +123,57 @@ async function handleCreate(req, res) {
   } catch (error) {
     // Don't fail the reservation if customer tracking fails
     console.error('[CustomerTracking] Error tracking customer:', error);
+  }
+
+  // ============================================================================
+  // ML PREDICTION - NO-SHOW RISK SCORING (Day 13)
+  // ============================================================================
+  try {
+    console.log('[MLPrediction] Starting no-show prediction...');
+
+    // Get customer history for feature extraction
+    const customerHistory = await getCustomerStats(customer_email, customer_phone);
+
+    // Create reservation object for prediction
+    const reservationForPrediction = {
+      reservation_id: reservationId,
+      date: date,
+      time: time,
+      party_size: parseInt(party_size),
+      customer_name: customer_name,
+      customer_phone: customer_phone,
+      customer_email: customer_email || '',
+      special_requests: special_requests || '',
+      booking_created_at: new Date().toISOString(),
+      is_special_occasion: false, // TODO: Extract from special_requests
+      confirmation_sent_at: new Date().toISOString(),
+      confirmation_clicked: false
+    };
+
+    // Get no-show prediction
+    const prediction = await predictNoShow(reservationForPrediction, customerHistory);
+
+    console.log('[MLPrediction] Prediction result:', {
+      probability: prediction.probability,
+      riskLevel: prediction.riskLevel,
+      confidence: prediction.confidence
+    });
+
+    // Update reservation with ML predictions
+    if (result.data && result.data.id && prediction) {
+      const mlFields = {
+        'No Show Risk Score': Math.round(prediction.probability * 100), // Store as percentage (0-100)
+        'No Show Risk Level': prediction.riskLevel, // low, medium, high, very-high
+        'Prediction Confidence': Math.round(prediction.confidence * 100), // Store as percentage
+        'ML Model Version': prediction.modelInfo?.version || '1.0.0'
+      };
+
+      await updateReservation(result.data.id, mlFields);
+      console.log('[MLPrediction] Updated reservation with ML predictions');
+    }
+  } catch (error) {
+    // Don't fail the reservation if ML prediction fails
+    console.error('[MLPrediction] Error predicting no-show risk:', error);
   }
 
   return res.status(200).json({
