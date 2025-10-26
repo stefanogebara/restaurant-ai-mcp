@@ -216,7 +216,7 @@ cat /c/Users/stefa/restaurant-ai-mcp/mcp-server/.env
 
 # Test Airtable API directly
 curl -s "https://api.airtable.com/v0/appm7zo5vOf3c3rqm/tbl0r7fkhuoasis56" \
-  -H "Authorization: Bearer patAvc1iw5cPE146l.6450b0bd5b8ffa2186708971d294c23f29011e5e849d55124e1a0552753d07bf"
+  -H "Authorization: Bearer YOUR_AIRTABLE_API_KEY"
 
 # Test production API
 curl -s "https://restaurant-ai-mcp.vercel.app/api/host-dashboard?action=dashboard"
