@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useDroppable } from '@dnd-kit/core';
 import { useToast } from '../../contexts/ToastContext';
 import type { Table } from '../../types/host.types';
 import TableActionMenu from './TableActionMenu';
@@ -14,6 +15,16 @@ export default function TableCard({ table }: TableCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const queryClient = useQueryClient();
   const { success, error: showError } = useToast();
+
+  // Make table droppable for drag-and-drop
+  const { setNodeRef, isOver } = useDroppable({
+    id: table.id,
+    data: {
+      type: 'table',
+      table
+    },
+    disabled: table.status !== 'Available' // Only allow drops on available tables
+  });
 
   const getStatusConfig = () => {
     switch (table.status) {
@@ -128,6 +139,7 @@ export default function TableCard({ table }: TableCardProps) {
   return (
     <>
       <div
+        ref={setNodeRef}
         className="relative"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -139,6 +151,7 @@ export default function TableCard({ table }: TableCardProps) {
             ${config.bg} ${config.glow}
             shadow-lg hover:shadow-xl hover:-translate-y-1
             cursor-pointer group
+            ${isOver && table.status === 'Available' ? 'ring-4 ring-purple-500 ring-opacity-50 scale-105 border-purple-400' : ''}
           `}
         >
         {/* Table Number */}
@@ -182,8 +195,17 @@ export default function TableCard({ table }: TableCardProps) {
         </div>
       </button>
 
+        {/* Drop Zone Indicator (drag overlay) */}
+        {isOver && table.status === 'Available' && (
+          <div className="absolute inset-0 bg-purple-600/30 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center gap-3 pointer-events-none border-4 border-purple-400 border-dashed">
+            <div className="text-5xl">⬇️</div>
+            <div className="text-white font-bold text-lg">Drop to Assign</div>
+            <div className="text-purple-200 text-sm">Table {table.table_number}</div>
+          </div>
+        )}
+
         {/* Quick Action Buttons (hover overlay) */}
-        {isHovered && quickActions.length > 0 && (
+        {isHovered && quickActions.length > 0 && !isOver && (
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm rounded-xl flex items-center justify-center gap-2 p-2 pointer-events-none">
             <div className="flex flex-col gap-2 pointer-events-auto">
               {quickActions.map((action, index) => (

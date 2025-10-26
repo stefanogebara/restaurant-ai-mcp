@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { DndContext } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
 import { useHostDashboard } from '../hooks/useHostDashboard';
 import { useToast } from '../contexts/ToastContext';
 import TableGrid from '../components/host/TableGrid';
@@ -21,6 +23,32 @@ export default function HostDashboard() {
   const [waitlistEntry, setWaitlistEntry] = useState<any>(null);
   const [seatPartyData, setSeatPartyData] = useState<any>(null);
   const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over) return; // Dropped outside a drop zone
+
+    const draggedParty = active.data.current?.party;
+    const targetTable = over.data.current?.table;
+
+    if (!draggedParty || !targetTable) return;
+
+    // Check if table is available
+    if (targetTable.status !== 'Available') {
+      return; // Can't drop on occupied/reserved tables
+    }
+
+    // Open SeatPartyModal with the party data and selected table
+    setSeatPartyData({
+      type: 'drag-drop',
+      customer_name: draggedParty.customer_name,
+      party_size: draggedParty.party_size,
+      special_requests: draggedParty.special_requests || '',
+      table_ids: [targetTable.id],
+      service_id: draggedParty.service_id, // Include existing service ID for reassignment
+    });
+  };
 
   if (isLoading) {
     return (
@@ -59,9 +87,10 @@ export default function HostDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-40 backdrop-blur-sm bg-opacity-95">
+    <DndContext onDragEnd={handleDragEnd}>
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <header className="bg-card border-b border-border sticky top-0 z-40 backdrop-blur-sm bg-opacity-95">
         <div className="max-w-[1400px] mx-auto px-6 py-5">
           <div className="flex justify-between items-center">
             <div>
@@ -254,6 +283,7 @@ export default function HostDashboard() {
           onClick={() => setIsWaitlistOpen(false)}
         />
       )}
-    </div>
+      </div>
+    </DndContext>
   );
 }

@@ -21,7 +21,7 @@ export default function CustomerPortal() {
   const [isLoading, setIsLoading] = useState(false);
   const [isModifying, setIsModifying] = useState(false);
   const [modifiedData, setModifiedData] = useState<Partial<Reservation>>({});
-  const { success, error: showError, info } = useToast();
+  const { success, error: showError } = useToast();
 
   const handleLookup = async () => {
     if (lookupMethod === 'id' && !reservationId.trim()) {
