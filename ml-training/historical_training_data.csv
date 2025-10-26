@@ -1,0 +1,8 @@
+booking_lead_time_hours,hour_of_day,day_of_week,is_weekend,is_prime_time,month_of_year,days_until_reservation,is_repeat_customer,customer_visit_count,customer_no_show_rate,customer_avg_party_size,days_since_last_visit,customer_lifetime_value,party_size,party_size_category,is_large_party,has_special_requests,confirmation_sent,confirmation_clicked,hours_since_confirmation_sent,historical_no_show_rate_for_day,historical_no_show_rate_for_time,occupancy_rate_for_slot,actual_status,no_show
+24,18,0,1,1,10,1,0,0,0.15,2.5,999,0,2,0,0,1,0,0,0,0.18,0.12,0.85,"Cancelled",1
+24,21,1,0,1,10,1,0,0,0.15,2.5,999,0,4,1,0,1,0,0,0,0.12,0.22,0.6,"Cancelled",1
+24,18,0,1,1,10,1,0,0,0.15,2.5,999,0,2,0,0,1,0,0,0,0.18,0.12,0.85,"Cancelled",1
+24,20,5,1,1,10,1,0,0,0.15,2.5,999,0,6,2,1,1,0,0,0,0.16,0.12,0.85,"Cancelled",1
+24,18,0,1,1,10,1,0,0,0.15,2.5,999,0,2,0,0,1,0,0,0,0.18,0.12,0.85,"Cancelled",1
+24,21,1,0,1,10,1,1,1,0.15,3,19,0,3,1,0,0,0,0,0,0.12,0.22,0.6,"Completed",0
+24,18,0,1,1,10,1,0,0,0.15,2.5,999,0,2,0,0,1,0,0,0,0.18,0.12,0.85,"Cancelled",1

@@ -5,7 +5,10 @@
   "main": "api/index.js",
   "scripts": {
     "dev": "vercel dev",
-    "deploy": "vercel --prod"
+    "deploy": "vercel --prod",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "@google-cloud/vertexai": "^1.10.0",
@@ -15,5 +18,12 @@
   },
   "engines": {
     "node": ">=18.x"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.2.0",
+    "ml-cart": "^2.1.1",
+    "ml-matrix": "^6.12.1",
+    "random-forest-classifier": "^0.6.0"
   }
 }

@@ -1,0 +1,16 @@
+{
+  "evaluatedAt": "2025-10-25T12:33:01.166Z",
+  "metrics": {
+    "accuracy": 1,
+    "precision": 1,
+    "recall": 1,
+    "f1Score": 1,
+    "confusionMatrix": {
+      "tp": 2,
+      "tn": 0,
+      "fp": 0,
+      "fn": 0
+    }
+  },
+  "notes": "Small test set (2 samples). Not representative of production performance."
+}

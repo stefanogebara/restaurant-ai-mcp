@@ -49,6 +49,7 @@ function calculateHourOfDay(reservation) {
   try {
     const time = reservation.time || '19:00'; // Default to 7 PM
     const hour = parseInt(time.split(':')[0]);
+    if (isNaN(hour)) return 19; // Invalid time
     return Math.max(0, Math.min(23, hour));
   } catch (error) {
     return 19; // Default to 7 PM
@@ -61,6 +62,7 @@ function calculateHourOfDay(reservation) {
 function calculateDayOfWeek(reservation) {
   try {
     const date = new Date(reservation.date);
+    if (isNaN(date.getTime())) return 5; // Invalid date
     return date.getDay(); // 0-6
   } catch (error) {
     return 5; // Default to Friday
@@ -89,6 +91,7 @@ function calculateIsPrimeTime(reservation) {
 function calculateMonthOfYear(reservation) {
   try {
     const date = new Date(reservation.date);
+    if (isNaN(date.getTime())) return 1; // Invalid date
     return date.getMonth() + 1; // 1-12
   } catch (error) {
     return 1; // Default to January
