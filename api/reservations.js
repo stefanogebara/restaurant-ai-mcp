@@ -3,7 +3,8 @@ const {
   generateReservationId,
   findReservation,
   updateReservation,
-  cancelReservation: airtableCancelReservation
+  cancelReservation: airtableCancelReservation,
+  getReservations
 } = require('./_lib/airtable');
 
 const {
@@ -33,13 +34,15 @@ module.exports = async (req, res) => {
         return await handleCreate(req, res);
       case 'lookup':
         return await handleLookup(req, res);
+      case 'list':
+        return await handleList(req, res);
       case 'modify':
         return await handleModify(req, res);
       case 'cancel':
         return await handleCancel(req, res);
       default:
         return res.status(400).json({
-          message: 'Invalid action requested. Please specify whether you want to create, lookup, modify, or cancel a reservation.'
+          message: 'Invalid action requested. Please specify whether you want to create, lookup, list, modify, or cancel a reservation.'
         });
     }
   } catch (error) {
@@ -220,6 +223,57 @@ async function handleLookup(req, res) {
   return res.status(200).json({
     message: `I found your reservation! ${r.customer_name}, party of ${r.party_size}, scheduled for ${r.reservation_time}. Confirmation number: ${r.reservation_id}. Status: ${r.status}.${specialReqs}`
   });
+}
+
+async function handleList(req, res) {
+  const { limit = 5, sort = 'created_at_desc' } = req.query;
+
+  try {
+    // Fetch all reservations sorted by created date (most recent first)
+    const result = await getReservations('');
+
+    if (!result.success || !result.data || !result.data.records) {
+      return res.status(200).json({
+        reservations: [],
+        total: 0
+      });
+    }
+
+    // Convert Airtable records to simplified format
+    const reservations = result.data.records
+      .map(record => ({
+        reservation_id: record.fields['Reservation ID'],
+        customer_name: record.fields['Customer Name'],
+        customer_phone: record.fields['Customer Phone'],
+        customer_email: record.fields['Customer Email'] || '',
+        party_size: record.fields['Party Size'],
+        date: record.fields['Date'],
+        time: record.fields['Time'],
+        special_requests: record.fields['Special Requests'] || '',
+        status: record.fields['Status'] || 'Confirmed',
+        created_at: record.fields['Created At'] || record.createdTime
+      }))
+      // Sort by created date (most recent first)
+      .sort((a, b) => {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        return sort === 'created_at_desc' ? dateB - dateA : dateA - dateB;
+      })
+      // Limit results
+      .slice(0, parseInt(limit));
+
+    return res.status(200).json({
+      reservations,
+      total: result.data.records.length
+    });
+  } catch (error) {
+    console.error('Error listing reservations:', error);
+    return res.status(500).json({
+      message: 'Error fetching reservations',
+      reservations: [],
+      total: 0
+    });
+  }
 }
 
 async function handleModify(req, res) {

@@ -1,6 +1,7 @@
 /// <reference path="../types/elevenlabs.d.ts" />
 import { useEffect } from 'react';
 import ElevenLabsWidget from '../components/ElevenLabsWidget';
+import RecentReservations from '../components/RecentReservations';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Phone, MessageSquare, Mic, Volume2, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -261,6 +262,16 @@ export default function LiveAIDemo() {
             </div>
           </motion.div>
         </div>
+
+        {/* Recent Reservations Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="mt-12"
+        >
+          <RecentReservations />
+        </motion.div>
 
         {/* Bottom CTA */}
         <motion.div
