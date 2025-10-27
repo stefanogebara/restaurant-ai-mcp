@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './contexts/ToastContext';
 import LandingPage from './landing/pages/LandingPage';
+import LiveAIDemo from './pages/LiveAIDemo';
 import HostDashboard from './pages/HostDashboard';
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
 import ObservabilityDashboard from './pages/ObservabilityDashboard';
@@ -24,6 +25,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/live-demo" element={<LiveAIDemo />} />
             <Route path="/host-dashboard" element={<HostDashboard />} />
             <Route path="/analytics" element={<AnalyticsDashboard />} />
             <Route path="/observability" element={<ObservabilityDashboard />} />

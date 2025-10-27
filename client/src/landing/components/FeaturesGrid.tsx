@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { Bot, LayoutDashboard, Users, Clock, Bell, BarChart3 } from 'lucide-react';
 import { FEATURES } from '../data/demoData';
 
@@ -12,6 +13,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 export default function FeaturesGrid() {
+  const navigate = useNavigate();
   return (
     <section id="features" className="relative py-24 bg-[#0a0a0f] overflow-hidden">
       {/* Background gradient */}
@@ -20,10 +22,6 @@ export default function FeaturesGrid() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
@@ -43,10 +41,6 @@ export default function FeaturesGrid() {
             return (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="glass-card p-6 group cursor-pointer"
               >
                 {/* Icon with gradient background */}
@@ -83,17 +77,10 @@ export default function FeaturesGrid() {
 
         {/* Bottom CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.6 }}
           className="text-center mt-16"
         >
           <button
-            onClick={() => {
-              const element = document.getElementById('demo');
-              if (element) element.scrollIntoView({ behavior: 'smooth' });
-            }}
+            onClick={() => navigate('/live-demo')}
             className="px-8 py-4 glass-button-primary text-white font-semibold text-lg inline-flex items-center gap-2"
           >
             See It In Action

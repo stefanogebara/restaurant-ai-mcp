@@ -1,15 +1,12 @@
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Sparkles, CheckCircle } from 'lucide-react';
 import { DEMO_RESTAURANT, STATS } from '../data/demoData';
 
 export default function HeroSection() {
-  const scrollToDemo = () => {
-    const element = document.getElementById('demo');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  const navigate = useNavigate();
 
+  // Remove scrollToDemo function - now using navigate('/live-demo')
   const scrollToContact = () => {
     const element = document.getElementById('contact');
     if (element) {
@@ -109,7 +106,7 @@ export default function HeroSection() {
               className="flex flex-col sm:flex-row gap-4"
             >
               <button
-                onClick={scrollToDemo}
+                onClick={() => navigate('/live-demo')}
                 className="px-8 py-4 glass-button-primary text-white font-semibold text-lg flex items-center justify-center gap-2 group"
               >
                 Try Live Demo
