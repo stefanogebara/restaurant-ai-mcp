@@ -1,6 +1,7 @@
 const airtable = require('./_lib/airtable');
 const twilio = require('twilio'); // Force redeploy to fix Vercel dependency bundling
 const { Resend } = require('resend');
+const { validateWaitlistEntry, sanitizeInput } = require('./_lib/validation');
 
 /**
  * Waitlist Management API
@@ -197,18 +198,26 @@ async function handleAddToWaitlist(req, res) {
     estimated_wait
   } = req.body;
 
-  // Validation
-  if (!customer_name || !customer_phone || !party_size) {
+  // Comprehensive validation using centralized utility
+  const validation = validateWaitlistEntry({
+    customer_name,
+    customer_phone,
+    customer_email,
+    party_size
+  });
+
+  if (!validation.valid) {
     return res.status(400).json({
-      error: 'Missing required fields: customer_name, customer_phone, party_size'
+      error: 'Validation failed',
+      details: validation.errors
     });
   }
 
-  if (party_size < 1 || party_size > 20) {
-    return res.status(400).json({
-      error: 'Party size must be between 1 and 20'
-    });
-  }
+  // Sanitize inputs to prevent injection attacks
+  const sanitizedName = sanitizeInput(customer_name);
+  const sanitizedPhone = sanitizeInput(customer_phone);
+  const sanitizedEmail = customer_email ? sanitizeInput(customer_email) : '';
+  const sanitizedRequests = special_requests ? sanitizeInput(special_requests) : '';
 
   const tableId = process.env.WAITLIST_TABLE_ID;
   if (!tableId) {
@@ -241,14 +250,14 @@ async function handleAddToWaitlist(req, res) {
       body: JSON.stringify({
         fields: {
           'Waitlist ID': waitlist_id,
-          'Customer Name': customer_name,
-          'Customer Phone': customer_phone,
-          'Customer Email': customer_email || '',
-          'Party Size': party_size,
+          'Customer Name': sanitizedName,
+          'Customer Phone': sanitizedPhone,
+          'Customer Email': sanitizedEmail,
+          'Party Size': parseInt(party_size),
           'Estimated Wait': calculatedWait,
           'Status': 'Todo',  // Using existing option name (will need to rename in Airtable UI)
           'Priority': nextPriority,
-          'Special Requests': special_requests || '',
+          'Special Requests': sanitizedRequests,
         }
       }),
     });

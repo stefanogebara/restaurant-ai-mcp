@@ -11,6 +11,7 @@ const {
 } = require('./_lib/airtable');
 
 const { logCustomerShowedUp, logCustomerCancelled } = require('./ml/data-logger');
+const { validateServiceRecord, sanitizeInput } = require('./_lib/validation');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -247,12 +248,26 @@ async function handleSeatParty(req, res) {
     special_requests
   } = req.body;
 
-  if (!customer_name || !customer_phone || !party_size || !table_ids || table_ids.length === 0) {
+  // Comprehensive validation using centralized utility
+  const validation = validateServiceRecord({
+    customer_name,
+    customer_phone,
+    party_size,
+    table_ids
+  });
+
+  if (!validation.valid) {
     return res.status(400).json({
       success: false,
-      error: 'Missing required fields'
+      error: 'Validation failed',
+      details: validation.errors
     });
   }
+
+  // Sanitize inputs to prevent injection attacks
+  const sanitizedName = sanitizeInput(customer_name);
+  const sanitizedPhone = sanitizeInput(customer_phone);
+  const sanitizedRequests = special_requests ? sanitizeInput(special_requests) : '';
 
   const serviceId = generateServiceId();
   const seatedAt = new Date().toISOString();
@@ -261,13 +276,13 @@ async function handleSeatParty(req, res) {
   const serviceFields = {
     'Service ID': serviceId,
     'Reservation ID': reservation_id || '',
-    'Customer Name': customer_name,
-    'Customer Phone': customer_phone,
+    'Customer Name': sanitizedName,
+    'Customer Phone': sanitizedPhone,
     'Party Size': parseInt(party_size),
     'Table IDs': table_ids.join(', '),
     'Seated At': seatedAt,
     'Estimated Departure': estimatedDeparture,
-    'Special Requests': special_requests || '',
+    'Special Requests': sanitizedRequests,
     'Status': 'Active'
   };
 
