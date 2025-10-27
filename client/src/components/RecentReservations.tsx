@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Calendar, Clock, Users, Phone, Mail, MessageSquare, Sparkles } from 'lucide-react';
 
@@ -19,6 +19,33 @@ export default function RecentReservations() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [latestId, setLatestId] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const sessionStartTime = useRef<number>(Date.now());
+  const autoHideTimer = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    // Initialize session start time in sessionStorage
+    const storedSessionStart = sessionStorage.getItem('reservationSessionStart');
+    if (!storedSessionStart) {
+      sessionStorage.setItem('reservationSessionStart', sessionStartTime.current.toString());
+    } else {
+      sessionStartTime.current = parseInt(storedSessionStart);
+    }
+
+    // Clear reservations on page unload
+    const handleUnload = () => {
+      sessionStorage.removeItem('reservationSessionStart');
+      setReservations([]);
+    };
+
+    window.addEventListener('beforeunload', handleUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleUnload);
+      if (autoHideTimer.current) {
+        clearTimeout(autoHideTimer.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     // Poll for new reservations every 5 seconds
@@ -32,16 +59,34 @@ export default function RecentReservations() {
           const data = await response.json();
 
           if (data.reservations && data.reservations.length > 0) {
-            const newest = data.reservations[0];
+            // Filter reservations to only show those created during current session
+            const sessionReservations = data.reservations.filter((res: Reservation) => {
+              const resCreatedTime = new Date(res.created_at).getTime();
+              return resCreatedTime >= sessionStartTime.current;
+            });
 
-            // Check if there's a new reservation
-            if (newest.reservation_id !== latestId) {
-              setReservations(data.reservations);
-              setLatestId(newest.reservation_id);
-              setShowSuccess(true);
+            if (sessionReservations.length > 0) {
+              const newest = sessionReservations[0];
 
-              // Hide success message after 5 seconds
-              setTimeout(() => setShowSuccess(false), 5000);
+              // Check if there's a new reservation
+              if (newest.reservation_id !== latestId) {
+                setReservations(sessionReservations);
+                setLatestId(newest.reservation_id);
+                setShowSuccess(true);
+
+                // Hide success message after 5 seconds
+                setTimeout(() => setShowSuccess(false), 5000);
+
+                // Auto-hide reservation details after 5 minutes
+                if (autoHideTimer.current) {
+                  clearTimeout(autoHideTimer.current);
+                }
+                autoHideTimer.current = setTimeout(() => {
+                  setReservations([]);
+                  setLatestId(null);
+                  sessionStorage.removeItem('reservationSessionStart');
+                }, 5 * 60 * 1000); // 5 minutes
+              }
             }
           }
         }
@@ -55,8 +100,16 @@ export default function RecentReservations() {
       .then(res => res.json())
       .then(data => {
         if (data.reservations && data.reservations.length > 0) {
-          setReservations(data.reservations);
-          setLatestId(data.reservations[0].reservation_id);
+          // Filter to only show reservations from current session
+          const sessionReservations = data.reservations.filter((res: Reservation) => {
+            const resCreatedTime = new Date(res.created_at).getTime();
+            return resCreatedTime >= sessionStartTime.current;
+          });
+
+          if (sessionReservations.length > 0) {
+            setReservations(sessionReservations);
+            setLatestId(sessionReservations[0].reservation_id);
+          }
         }
       })
       .catch(console.error);
