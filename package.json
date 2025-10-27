@@ -16,6 +16,8 @@
     "@sentry/react": "^10.22.0",
     "axios": "^1.12.2",
     "dotenv": "^17.2.3",
+    "framer-motion": "^12.23.24",
+    "lucide-react": "^0.548.0",
     "twilio": "^5.10.3"
   },
   "engines": {
