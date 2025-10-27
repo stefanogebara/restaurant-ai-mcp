@@ -8,6 +8,8 @@ import AnalyticsDashboard from './pages/AnalyticsDashboard';
 import ObservabilityDashboard from './pages/ObservabilityDashboard';
 import WaitlistPage from './pages/WaitlistPage';
 import CustomerPortal from './pages/CustomerPortal';
+import SubscriptionSuccess from './pages/SubscriptionSuccess';
+import SubscriptionManage from './pages/SubscriptionManage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,6 +33,8 @@ function App() {
             <Route path="/observability" element={<ObservabilityDashboard />} />
             <Route path="/waitlist" element={<WaitlistPage />} />
             <Route path="/customer" element={<CustomerPortal />} />
+            <Route path="/subscription/success" element={<SubscriptionSuccess />} />
+            <Route path="/subscription/manage" element={<SubscriptionManage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>

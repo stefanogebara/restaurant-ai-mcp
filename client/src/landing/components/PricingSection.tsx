@@ -1,12 +1,46 @@
 import { motion } from 'framer-motion';
-import { CheckCircle, ArrowRight } from 'lucide-react';
+import { CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
 import { PRICING_TIERS } from '../data/demoData';
+import { useState } from 'react';
 
 export default function PricingSection() {
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
   const scrollToContact = () => {
     const element = document.getElementById('contact');
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleSubscribe = async (priceId: string, planName: string) => {
+    try {
+      setLoadingPlan(planName);
+
+      // Call API to create Stripe checkout session
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          priceId,
+          planName,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session');
+      }
+
+      const { url } = await response.json();
+
+      // Redirect to Stripe Checkout
+      window.location.href = url;
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      alert('Failed to start checkout. Please try again.');
+      setLoadingPlan(null);
     }
   };
 
@@ -80,13 +114,23 @@ export default function PricingSection() {
 
               {/* CTA Button */}
               <button
-                onClick={scrollToContact}
+                onClick={() => tier.priceId ? handleSubscribe(tier.priceId, tier.name) : scrollToContact()}
+                disabled={loadingPlan === tier.name}
                 className={`w-full px-6 py-3 ${
                   tier.highlighted ? 'glass-button-primary' : 'glass-button'
-                } text-white font-semibold flex items-center justify-center gap-2 group`}
+                } text-white font-semibold flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                {tier.cta}
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                {loadingPlan === tier.name ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    {tier.cta}
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
               </button>
 
               {/* Decorative glow for highlighted tier */}
