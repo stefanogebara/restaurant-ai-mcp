@@ -4,6 +4,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useToast } from '../../contexts/ToastContext';
 import type { ActiveParty } from '../../types/host.types';
 import { useCompleteService } from '../../hooks/useCompleteService';
+import { formatTimeAgo } from '../../utils/timeFormatting';
 
 interface ActivePartiesListProps {
   parties: ActiveParty[];
@@ -40,6 +41,7 @@ function LiveCountdown({ seatedMinutesAgo, estimatedDurationMinutes }: { seatedM
   const [elapsedMinutes, setElapsedMinutes] = useState(seatedMinutesAgo);
   const remainingMinutes = estimatedDurationMinutes - elapsedMinutes;
   const isOverdue = remainingMinutes < 0;
+  const overdueAmount = Math.abs(remainingMinutes);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -49,9 +51,31 @@ function LiveCountdown({ seatedMinutesAgo, estimatedDurationMinutes }: { seatedM
     return () => clearInterval(interval);
   }, []);
 
+  // Format overdue time intelligently
+  const formatOverdue = (minutes: number): string => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+
+    if (hours >= 1) {
+      return `⚠️ ${hours}h ${mins}m OVERDUE`;
+    }
+    return `⚠️ ${minutes}m OVERDUE`;
+  };
+
+  // Format remaining time intelligently
+  const formatRemaining = (minutes: number): string => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+
+    if (hours >= 1) {
+      return `${hours}h ${mins}m left`;
+    }
+    return `${minutes}m left`;
+  };
+
   return (
     <span className={`font-semibold ${isOverdue ? 'text-red-400' : 'text-emerald-400'}`}>
-      {isOverdue ? `⚠️ ${Math.abs(remainingMinutes)} min OVERDUE` : `${remainingMinutes} min left`}
+      {isOverdue ? formatOverdue(overdueAmount) : formatRemaining(remainingMinutes)}
     </span>
   );
 }
@@ -112,7 +136,7 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
               <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
               </svg>
-              <span>Seated {party.time_elapsed_minutes} min ago</span>
+              <span>Seated {formatTimeAgo(new Date(Date.now() - party.time_elapsed_minutes * 60000))}</span>
             </div>
             <LiveCountdown
               seatedMinutesAgo={party.time_elapsed_minutes}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DndContext } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { useHostDashboard } from '../hooks/useHostDashboard';
@@ -16,13 +16,21 @@ import WaitlistSeatModal from '../components/host/WaitlistSeatModal';
 import type { UpcomingReservation } from '../types/host.types';
 
 export default function HostDashboard() {
-  const { data, isLoading, error, refetch } = useHostDashboard();
+  const { data, isLoading, error, refetch, isFetching } = useHostDashboard();
   const { success } = useToast();
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
   const [checkInReservation, setCheckInReservation] = useState<UpcomingReservation | null>(null);
   const [waitlistEntry, setWaitlistEntry] = useState<any>(null);
   const [seatPartyData, setSeatPartyData] = useState<any>(null);
   const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState(new Date());
+
+  // Update last refresh timestamp when data changes
+  useEffect(() => {
+    if (data && !isFetching) {
+      setLastRefresh(new Date());
+    }
+  }, [data, isFetching]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -95,7 +103,20 @@ export default function HostDashboard() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-foreground mb-1">Host Dashboard</h1>
-              <p className="text-muted-foreground text-sm">Manage your restaurant floor in real-time</p>
+              <div className="flex items-center gap-3">
+                <p className="text-muted-foreground text-sm">Manage your restaurant floor in real-time</p>
+                {isFetching && (
+                  <div className="flex items-center gap-1.5 text-xs text-primary">
+                    <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></div>
+                    <span>Refreshing...</span>
+                  </div>
+                )}
+                {!isFetching && (
+                  <div className="text-xs text-muted-foreground">
+                    Updated {Math.floor((new Date().getTime() - lastRefresh.getTime()) / 1000)}s ago
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <a

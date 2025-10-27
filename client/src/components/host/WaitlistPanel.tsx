@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatTimeAgo, formatWaitTime } from '../../utils/timeFormatting';
 
 interface WaitlistEntry {
   id: string;
@@ -73,18 +74,6 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
 
   const waitlist = data?.waitlist || [];
   const waitingCount = waitlist.filter(e => e.status === 'Waiting').length;
-
-  // Format time since added
-  const formatTimeSince = (addedAt: string) => {
-    const now = new Date();
-    const added = new Date(addedAt);
-    const diffMinutes = Math.floor((now.getTime() - added.getTime()) / 60000);
-
-    if (diffMinutes < 1) return 'Just now';
-    if (diffMinutes < 60) return `${diffMinutes}m ago`;
-    const hours = Math.floor(diffMinutes / 60);
-    return `${hours}h ${diffMinutes % 60}m ago`;
-  };
 
   // Status badge color (dark theme)
   const getStatusColor = (status: string) => {
@@ -198,14 +187,16 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
                 <div className="flex items-center gap-4 text-sm text-gray-400 mb-3 ml-14">
                   <div className="flex items-center gap-1.5">
                     <span>👥</span>
-                    <span className="font-medium">{entry.party_size || '?'} guests</span>
+                    <span className="font-medium">
+                      {entry.party_size != null ? `${entry.party_size} guests` : 'Party size unknown'}
+                    </span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span>⏱️</span>
-                    <span>~{entry.estimated_wait || '?'} min wait</span>
+                    <span>{formatWaitTime(entry.estimated_wait)}</span>
                   </div>
                   <div className="text-gray-500">
-                    Added {formatTimeSince(entry.added_at)}
+                    Added {formatTimeAgo(entry.added_at)}
                   </div>
                 </div>
 
@@ -219,7 +210,7 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
                 {/* Notified timestamp for notified status */}
                 {entry.status === 'Notified' && entry.notified_at && (
                   <div className="text-xs text-yellow-400/80 ml-14 mb-3">
-                    🔔 Notified {formatTimeSince(entry.notified_at)}
+                    🔔 Notified {formatTimeAgo(entry.notified_at)}
                   </div>
                 )}
 
