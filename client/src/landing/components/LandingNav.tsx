@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, X, Phone } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function LandingNav() {
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -63,7 +65,7 @@ export default function LandingNav() {
               Features
             </button>
             <button
-              onClick={() => scrollToSection('demo')}
+              onClick={() => navigate('/live-demo')}
               className="text-gray-300 hover:text-white transition-colors"
             >
               Live Demo
@@ -117,7 +119,10 @@ export default function LandingNav() {
               Features
             </button>
             <button
-              onClick={() => scrollToSection('demo')}
+              onClick={() => {
+                navigate('/live-demo');
+                setIsMobileMenuOpen(false);
+              }}
               className="block w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-all"
             >
               Live Demo
