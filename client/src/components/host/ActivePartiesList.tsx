@@ -41,7 +41,6 @@ function LiveCountdown({ seatedMinutesAgo, estimatedDurationMinutes }: { seatedM
   const [elapsedMinutes, setElapsedMinutes] = useState(seatedMinutesAgo);
   const remainingMinutes = estimatedDurationMinutes - elapsedMinutes;
   const isOverdue = remainingMinutes < 0;
-  const overdueAmount = Math.abs(remainingMinutes);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -51,31 +50,28 @@ function LiveCountdown({ seatedMinutesAgo, estimatedDurationMinutes }: { seatedM
     return () => clearInterval(interval);
   }, []);
 
-  // Format overdue time intelligently
-  const formatOverdue = (minutes: number): string => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
+  // Format time using consistent utility pattern
+  const formatTime = (minutes: number, isOverdue: boolean): string => {
+    const absMinutes = Math.abs(minutes);
+    const hours = Math.floor(absMinutes / 60);
+    const mins = absMinutes % 60;
+
+    if (isOverdue) {
+      if (hours >= 1) {
+        return mins === 0 ? `⚠️ ${hours}h OVERDUE` : `⚠️ ${hours}h ${mins}m OVERDUE`;
+      }
+      return `⚠️ ${absMinutes}m OVERDUE`;
+    }
 
     if (hours >= 1) {
-      return `⚠️ ${hours}h ${mins}m OVERDUE`;
+      return mins === 0 ? `${hours}h left` : `${hours}h ${mins}m left`;
     }
-    return `⚠️ ${minutes}m OVERDUE`;
-  };
-
-  // Format remaining time intelligently
-  const formatRemaining = (minutes: number): string => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-
-    if (hours >= 1) {
-      return `${hours}h ${mins}m left`;
-    }
-    return `${minutes}m left`;
+    return `${absMinutes}m left`;
   };
 
   return (
     <span className={`font-semibold ${isOverdue ? 'text-red-400' : 'text-emerald-400'}`}>
-      {isOverdue ? formatOverdue(overdueAmount) : formatRemaining(remainingMinutes)}
+      {formatTime(remainingMinutes, isOverdue)}
     </span>
   );
 }
