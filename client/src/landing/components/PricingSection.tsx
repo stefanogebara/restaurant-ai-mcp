@@ -18,7 +18,11 @@ export default function PricingSection() {
       setLoadingPlan(planName);
 
       // Call API to create Stripe checkout session
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/create-checkout-session`, {
+      const apiUrl = import.meta.env.VITE_API_URL
+        ? `${import.meta.env.VITE_API_URL}/api/create-checkout-session`
+        : '/api/create-checkout-session'; // Use relative URL in production
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
