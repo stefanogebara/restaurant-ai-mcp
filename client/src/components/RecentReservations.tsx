@@ -20,7 +20,7 @@ export default function RecentReservations() {
   const [latestId, setLatestId] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const sessionStartTime = useRef<number>(Date.now());
-  const autoHideTimer = useRef<NodeJS.Timeout | null>(null);
+  const autoHideTimer = useRef<number | null>(null);
 
   useEffect(() => {
     // Initialize session start time in sessionStorage

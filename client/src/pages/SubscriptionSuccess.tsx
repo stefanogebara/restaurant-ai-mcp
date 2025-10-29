@@ -7,7 +7,6 @@ export default function SubscriptionSuccess() {
   const navigate = useNavigate();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [customerEmail, setCustomerEmail] = useState<string | null>(null);
 
   useEffect(() => {
     const verifySession = async () => {
@@ -34,8 +33,6 @@ export default function SubscriptionSuccess() {
           if (data.customer_id) {
             localStorage.setItem('stripe_customer_id', data.customer_id);
           }
-
-          setCustomerEmail(data.customer_email);
         }
       } catch (error) {
         console.error('Error verifying session:', error);
