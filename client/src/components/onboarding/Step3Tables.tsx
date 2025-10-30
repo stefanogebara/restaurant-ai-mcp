@@ -17,7 +17,6 @@ const TABLE_CAPACITIES = [2, 4, 6, 8];
 
 export default function Step3Tables({ data, updateData, onNext, onBack }: OnboardingStepProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Calculate total tables and capacity
   const calculateTotals = () => {
@@ -56,7 +55,6 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
 
     const planLimit = getPlanLimit();
     if (totalTables > planLimit) {
-      setShowUpgradePrompt(true);
       newErrors.tables = `Basic plan supports up to ${planLimit} tables. You've configured ${totalTables} tables.`;
     }
 
