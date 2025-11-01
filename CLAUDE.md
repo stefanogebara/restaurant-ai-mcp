@@ -13,7 +13,7 @@ Enable customers to make restaurant reservations through natural conversation (v
 ### Tech Stack
 - **Frontend**: React 18, TypeScript, Vite, Tailwind CSS
 - **Backend**: Node.js, Express (Vercel Serverless Functions)
-- **Database**: Airtable (No-code database with REST API)
+- **Database**: Supabase PostgreSQL (migrated from Airtable on Nov 1, 2025)
 - **AI Services**:
   - Anthropic Claude (conversation & intelligent decision-making)
   - OpenAI (fallback/alternative)
@@ -24,42 +24,51 @@ Enable customers to make restaurant reservations through natural conversation (v
 ### Key URLs
 - **Production**: https://restaurant-ai-mcp.vercel.app
 - **GitHub**: https://github.com/stefanogebara/restaurant-ai-mcp
-- **Airtable Base**: https://airtable.com/appm7zo5vOf3c3rqm
+- **Supabase Dashboard**: https://app.supabase.com/project/lurebwaudisfilhuhmnj
+- **Legacy Airtable Base**: https://airtable.com/appm7zo5vOf3c3rqm (deprecated, use Supabase)
 
-## 📊 Airtable Database Schema
+## 📊 Supabase Database Schema
 
-**Base ID**: `appm7zo5vOf3c3rqm`
+**Project URL**: `https://lurebwaudisfilhuhmnj.supabase.co`
 
-### Tables Overview
+### Tables Overview (8 tables)
 
-1. **Restaurant Info** (`tblI0DfPZrZbLC8fz`)
+1. **restaurant_info**
    - Single record with restaurant configuration
    - Business hours, contact info, policies
    - Average dining duration (for time estimates)
 
-2. **Tables** (`tbl0r7fkhuoasis56`) ⚠️ PRIMARY TABLE FOR TABLE MANAGEMENT
+2. **tables** ⚠️ PRIMARY TABLE FOR TABLE MANAGEMENT
    - Restaurant's physical table inventory
-   - Fields: table_number, capacity, location, is_available, current_reservation_id
+   - Fields: table_number, capacity, location, status, is_active, current_service_id
    - **CRITICAL**: This is the main table for availability and assignments
 
-3. **Restaurant Tables** (`tbl4p7Nyz2ZaSCUaX`)
-   - Duplicate/legacy table (exists but not primary)
-   - Use "Tables" instead
-
-4. **Reservations** (`tbloL2huXFYQluomn`)
+3. **reservations**
    - Customer reservation records
-   - Fields: name, email, phone, party_size, date, time, status, table_ids
-   - Status values: pending, confirmed, seated, completed, cancelled
+   - Fields: reservation_id, customer_name, customer_email, customer_phone, party_size, date, time, status, special_requests, checked_in, checked_in_at
+   - Status values (enum): pending, confirmed, seated, completed, cancelled
 
-5. **Service Records** (`tblEEHaoicXQA7NcL`) ⚠️ PARTIALLY CONFIGURED
+4. **service_records**
    - Active dining sessions (both walk-ins and reservations)
    - Tracks seated parties from arrival to departure
-   - **Status**: Only 3 of 11 fields configured (see SERVICE_RECORDS_SETUP.md)
-   - Required fields: Service ID, Reservation ID, Customer Name, Customer Phone, Party Size, Table IDs, Seated At, Estimated Departure, Departed At, Special Requests, Status
+   - Fields: service_id, reservation_id, customer_name, customer_phone, party_size, table_ids, seated_at, estimated_departure, departed_at, special_requests, status
 
-6. **Menu Items** (`tblEcqE5b5kSYzlaf`)
-   - Restaurant menu for AI to reference in conversations
-   - Fields: name, category, description, price, is_available
+5. **waitlist**
+   - Waitlist management for customers waiting for tables
+   - Fields: waitlist_id, customer_name, customer_phone, party_size, priority, wait_time_estimate, status, created_at
+
+6. **customer_history**
+   - Historical customer behavior tracking
+   - 14 fields including: customer_id, name, phone, email, total_visits, total_no_shows, average_party_size, preferred_tables, dietary_restrictions, etc.
+
+7. **ml_interventions** 🌟 NEW - Phase 2 ML ROI Tracking
+   - ML-driven intervention tracking with ROI calculation
+   - 12 fields: intervention_id, reservation_id, ml_risk_score, ml_risk_level, intervention_type, action_taken, actual_outcome, cost_of_intervention, value_saved, etc.
+   - **Target ROI**: 300-500% (€3-€5 saved per €1 spent)
+
+8. **subscriptions**
+   - Stripe subscription tracking
+   - Fields: subscription_id, restaurant_id, plan_type, stripe_subscription_id, stripe_customer_id, status, current_period_end
 
 ## 🚀 Development Phases
 
@@ -117,14 +126,18 @@ All host dashboard functionality is fully operational in production.
   - `handleSeatParty`: Seats a party and creates service record
   - `handleCompleteService`: Marks service complete, updates tables
   - `handleMarkTableClean`: Returns table to available status
-  - ⚠️ Key fix applied: Maps table numbers to Airtable record IDs
+  - Uses Supabase service layer for all database operations
 
-- **`api/services/airtable.js`**: Core Airtable CRUD operations
+- **`api/_lib/supabase.js`**: Core Supabase service layer (1,000+ lines)
+  - Drop-in replacement for Airtable with same function signatures
   - `getAllTables()`, `updateTable()`, `createServiceRecord()`
-  - Uses Airtable REST API with Bearer token auth
+  - Uses Supabase PostgreSQL client with anon key auth
+  - Full CRUD operations for all 8 tables
 
 - **`api/routes/reservations.js`**: Customer reservation endpoints
 - **`api/routes/chat.js`**: AI conversation handling
+- **`scripts/migrate-data-live.js`**: Airtable to Supabase data migration script
+- **`scripts/insert-to-supabase.js`**: Batch data insertion script
 
 ### Frontend (`client/src/`)
 - **`client/src/pages/HostDashboard.tsx`**: Main host interface
@@ -148,19 +161,25 @@ NODE_ENV=production
 PORT=3001
 CLIENT_URL=https://restaurant-ai-mcp.vercel.app
 
-# Airtable
-AIRTABLE_API_KEY=patAvc1iw5cPE146l.***  # Write access required
-AIRTABLE_BASE_ID=appm7zo5vOf3c3rqm
-TABLES_TABLE_ID=tbl0r7fkhuoasis56
-RESERVATIONS_TABLE_ID=tbloL2huXFYQluomn
-RESTAURANT_INFO_TABLE_ID=tblI0DfPZrZbLC8fz
-MENU_ITEMS_TABLE_ID=tblEcqE5b5kSYzlaf
-SERVICE_RECORDS_TABLE_ID=tblEEHaoicXQA7NcL  # ⚠️ Needs to be added to Vercel
+# Supabase (PostgreSQL) - PRIMARY DATABASE
+SUPABASE_URL=https://lurebwaudisfilhuhmnj.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_SERVICE_ROLE_KEY=***  # Optional: For admin operations
 
 # AI Services
 ANTHROPIC_API_KEY=sk-ant-***
 OPENAI_API_KEY=sk-***
 ELEVENLABS_API_KEY=***
+
+# ⚠️ LEGACY - Airtable (Deprecated as of Nov 1, 2025)
+# These are kept for reference but no longer used in production
+AIRTABLE_API_KEY=patAvc1iw5cPE146l.***
+AIRTABLE_BASE_ID=appm7zo5vOf3c3rqm
+TABLES_TABLE_ID=tbl0r7fkhuoasis56
+RESERVATIONS_TABLE_ID=tbloL2huXFYQluomn
+RESTAURANT_INFO_TABLE_ID=tblI0DfPZrZbLC8fz
+MENU_ITEMS_TABLE_ID=tblEcqE5b5kSYzlaf
+SERVICE_RECORDS_TABLE_ID=tblEEHaoicXQA7NcL
 ```
 
 ## 🐛 Known Issues & Fixes
@@ -352,9 +371,45 @@ export interface UpcomingReservation {
    - "Restaurant Tables" = duplicate/legacy
    - "Service Records" = active dining sessions
 
+## 🔄 Supabase Migration (Nov 1, 2025)
+
+### Migration Complete ✅
+
+The platform successfully migrated from Airtable to Supabase PostgreSQL on November 1, 2025.
+
+**What Was Migrated:**
+- 8 complete database tables with proper schema
+- 58 reservations from Airtable
+- 5 physical tables inventory
+- All API endpoints (13 files updated)
+- Service layer with backward compatibility
+
+**Key Benefits:**
+- Full SQL power for complex queries
+- No API rate limits
+- Better performance with native indexes
+- Row Level Security (RLS) enabled
+- Programmatic schema changes via migrations
+- Support for ML ROI tracking (ml_interventions table)
+
+**Migration Files:**
+- `api/_lib/supabase.js` - Service layer (1,000+ lines)
+- `scripts/migrate-data-live.js` - Data extraction script
+- `scripts/insert-to-supabase.js` - Batch insertion script
+- `SUPABASE_MIGRATION_COMPLETE.md` - Full migration documentation
+
+**Production Status:**
+- ✅ All APIs migrated and tested
+- ✅ Row Level Security enabled with proper policies
+- ✅ Vercel environment variables configured
+- ✅ End-to-end platform verified operational
+- ✅ Dashboard stats: 86% occupancy, 12 tables, 2 active parties
+
+**Target ROI for ML Interventions:** 300-500% (€3-€5 saved per €1 spent)
+
 ## 🎯 Current Session Context
 
-**Current Session Summary** (Oct 18, 2025 - Calendar & Dashboard Stats Complete):
+**Current Session Summary** (Nov 1, 2025 - Supabase Migration Complete):
 - 🎉 **RESERVATIONS CALENDAR FULLY FUNCTIONAL!**
 - Fixed TypeScript build error that was blocking all deployments since commit `2d21783`
 - Discovered Vercel "Redeploy" feature only redeploys same commit, not latest code
