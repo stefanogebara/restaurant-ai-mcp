@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { DndContext } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { useHostDashboard } from '../hooks/useHostDashboard';
+import { useAnalytics } from '../hooks/useAnalytics';
 import { useToast } from '../contexts/ToastContext';
 import TableGrid from '../components/host/TableGrid';
 import ActivePartiesList from '../components/host/ActivePartiesList';
 import ReservationsCalendar from '../components/host/ReservationsCalendar';
 import DashboardStats from '../components/host/DashboardStats';
+import QuickStats from '../components/host/QuickStats';
 import WalkInModal from '../components/host/WalkInModal';
 import CheckInModal from '../components/host/CheckInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
@@ -17,6 +19,7 @@ import type { UpcomingReservation } from '../types/host.types';
 
 export default function HostDashboard() {
   const { data, isLoading, error, refetch, isFetching } = useHostDashboard();
+  const { data: analyticsData, isLoading: analyticsLoading } = useAnalytics();
   const { success } = useToast();
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
   const [checkInReservation, setCheckInReservation] = useState<UpcomingReservation | null>(null);
@@ -119,15 +122,7 @@ export default function HostDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <a
-                href="/analytics"
-                className="px-5 py-2.5 bg-accent hover:bg-accent/90 text-accent-foreground font-medium rounded-lg transition-all shadow-md hover:shadow-lg flex items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                Analytics
-              </a>
+              {/* Analytics button removed - planning to integrate key stats directly into dashboard */}
               <button
                 onClick={() => setIsWalkInModalOpen(true)}
                 className="px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-2"
@@ -201,6 +196,9 @@ export default function HostDashboard() {
                 onCheckIn={(reservation) => setCheckInReservation(reservation)}
               />
             </div>
+
+            {/* Quick Stats Widget */}
+            <QuickStats analyticsData={analyticsData} isLoading={analyticsLoading} />
           </div>
         </div>
       </div>

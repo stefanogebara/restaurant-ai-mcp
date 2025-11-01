@@ -49,6 +49,7 @@ export interface DashboardSummary {
   occupancy_percentage: number;
   active_parties: number;
   upcoming_reservations: number;
+  estimated_wait_time?: number; // Minutes until next table available (0 if seats available)
 }
 
 export interface DashboardData {

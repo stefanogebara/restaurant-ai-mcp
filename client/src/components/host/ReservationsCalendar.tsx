@@ -79,6 +79,42 @@ export default function ReservationsCalendar({ reservations, onCheckIn }: Reserv
     return reservationsByDate[date]?.length || 0;
   };
 
+  // Export reservations to CSV
+  const exportToCSV = () => {
+    // CSV headers
+    const headers = ['Date', 'Time', 'Customer Name', 'Phone', 'Party Size', 'Status', 'Special Requests'];
+
+    // CSV rows
+    const rows = reservations.map(r => [
+      r.date || r.reservation_time?.split(' ')[0] || '',
+      r.time || r.reservation_time?.split(' ')[1] || '',
+      r.customer_name,
+      r.customer_phone || '',
+      r.party_size.toString(),
+      r.checked_in ? 'Checked In' : r.status || 'Confirmed',
+      r.special_requests || ''
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    const dateStr = new Date().toISOString().split('T')[0];
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `reservations-${dateStr}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (sortedDates.length === 0) {
     return (
       <div className="text-center py-12">
@@ -216,6 +252,17 @@ export default function ReservationsCalendar({ reservations, onCheckIn }: Reserv
           );
         })}
       </div>
+
+      {/* Export Button */}
+      <button
+        onClick={exportToCSV}
+        className="w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-emerald-500/30 flex items-center justify-center gap-2"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        Export to CSV ({reservations.length} reservations)
+      </button>
 
       {/* Summary Stats */}
       <div className="bg-[#1E1E1E]/50 rounded-xl p-4 border border-gray-800">

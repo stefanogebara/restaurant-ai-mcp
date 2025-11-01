@@ -5,7 +5,7 @@ const {
   updateReservation,
   cancelReservation: airtableCancelReservation,
   getReservations
-} = require('./_lib/airtable');
+} = require('./_lib/supabase');
 
 const {
   findOrCreateCustomer,

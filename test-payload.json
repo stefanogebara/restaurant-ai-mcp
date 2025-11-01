@@ -1,0 +1,71 @@
+{
+  "customer_email": "finaltest@example.com",
+  "restaurant_name": "Final Test Restaurant",
+  "restaurant_type": "Casual Dining",
+  "city": "New York",
+  "country": "USA",
+  "phone_number": "+1234567890",
+  "email": "finaltest@restaurant.com",
+  "website": "https://finaltest.com",
+  "business_hours": [
+    {
+      "day": "Monday",
+      "is_open": true,
+      "open_time": "09:00",
+      "close_time": "22:00"
+    },
+    {
+      "day": "Tuesday",
+      "is_open": true,
+      "open_time": "09:00",
+      "close_time": "22:00"
+    },
+    {
+      "day": "Wednesday",
+      "is_open": true,
+      "open_time": "09:00",
+      "close_time": "22:00"
+    },
+    {
+      "day": "Thursday",
+      "is_open": true,
+      "open_time": "09:00",
+      "close_time": "22:00"
+    },
+    {
+      "day": "Friday",
+      "is_open": true,
+      "open_time": "09:00",
+      "close_time": "23:00"
+    },
+    {
+      "day": "Saturday",
+      "is_open": true,
+      "open_time": "09:00",
+      "close_time": "23:00"
+    },
+    {
+      "day": "Sunday",
+      "is_open": true,
+      "open_time": "10:00",
+      "close_time": "21:00"
+    }
+  ],
+  "average_dining_duration": 90,
+  "areas": [
+    {
+      "name": "Indoor",
+      "is_active": true,
+      "tables": [
+        {
+          "capacity": 4,
+          "count": 5
+        }
+      ]
+    }
+  ],
+  "advance_booking_days": 30,
+  "buffer_time": 15,
+  "cancellation_policy": "Free cancellation up to 2 hours before reservation",
+  "special_notes": "Final test of onboarding system!"
+}

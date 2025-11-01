@@ -115,8 +115,19 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
               <span>Drag to table</span>
             </div>
           <div className="flex justify-between items-start mb-3">
-            <div>
-              <div className="font-semibold text-white text-lg">{party.customer_name}</div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <div className="font-semibold text-white text-lg">{party.customer_name}</div>
+                {/* Running Late indicator - shows when less than 10 minutes remaining */}
+                {!party.is_overdue && party.time_remaining_minutes > 0 && party.time_remaining_minutes <= 10 && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 text-amber-400 text-xs font-semibold rounded-full border border-amber-500/30 animate-pulse">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                    </svg>
+                    Running Late
+                  </span>
+                )}
+              </div>
               <div className="text-sm text-gray-400 mt-0.5">Party of {party.party_size}</div>
             </div>
             <div className="text-right">

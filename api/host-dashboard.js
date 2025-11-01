@@ -8,7 +8,7 @@ const {
   updateTable,
   generateServiceId,
   findBestTableCombination
-} = require('./_lib/airtable');
+} = require('./_lib/supabase');
 
 const { logCustomerShowedUp, logCustomerCancelled } = require('./ml/data-logger');
 const { validateServiceRecord, sanitizeInput } = require('./_lib/validation');
@@ -108,6 +108,20 @@ async function handleDashboard(req, res) {
 
   const availableSeats = totalCapacity - occupiedSeats;
 
+  // Calculate estimated wait time based on earliest expected table opening
+  let estimatedWaitMinutes = 0;
+  if (availableSeats === 0 && activeParties.length > 0) {
+    // Find the party that will finish soonest
+    const now = new Date();
+    const upcomingDepartures = activeParties.map(party => {
+      const estimatedDeparture = new Date(party.estimated_departure);
+      return estimatedDeparture.getTime() - now.getTime();
+    });
+
+    const soonestDeparture = Math.min(...upcomingDepartures);
+    estimatedWaitMinutes = Math.max(0, Math.ceil(soonestDeparture / 60000)); // Convert ms to minutes
+  }
+
   return res.status(200).json({
     summary: {
       total_capacity: totalCapacity,
@@ -115,7 +129,8 @@ async function handleDashboard(req, res) {
       occupied_seats: occupiedSeats,
       occupancy_percentage: Math.round((occupiedSeats / totalCapacity) * 100),
       active_parties: activeParties.length,
-      upcoming_reservations: upcomingReservationsResult.reservations.length
+      upcoming_reservations: upcomingReservationsResult.reservations.length,
+      estimated_wait_time: estimatedWaitMinutes
     },
     tables: tables.map(t => ({
       id: t.id,

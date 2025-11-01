@@ -1,7 +1,7 @@
 const {
   getAllTables,
   getActiveServiceRecords
-} = require('./_lib/airtable');
+} = require('./_lib/supabase');
 
 const axios = require('axios');
 

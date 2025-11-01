@@ -10,6 +10,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
+import '../../landing/styles/glass-morphism.css';
 
 const RESTAURANT_TYPES = [
   'Fine Dining',
@@ -62,7 +63,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
     >
       <div>
         <h2 className="text-2xl font-bold text-white mb-2">What's your restaurant called?</h2>
-        <p className="text-purple-200 text-sm">Let's start with the basics</p>
+        <p className="text-gray-300 text-sm">Let's start with the basics</p>
       </div>
 
       {/* Restaurant Name */}
@@ -76,10 +77,10 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
           value={data.restaurant_name}
           onChange={(e) => updateData({ restaurant_name: e.target.value })}
           placeholder="La Bella Vista"
-          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-purple-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent backdrop-blur-sm"
+          className="glass-input w-full px-4 py-3 text-white placeholder-gray-400"
         />
         {errors.restaurant_name && (
-          <p className="mt-1 text-sm text-red-300">{errors.restaurant_name}</p>
+          <p className="mt-1 text-sm text-red-400">{errors.restaurant_name}</p>
         )}
       </div>
 
@@ -92,7 +93,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
           id="restaurant_type"
           value={data.restaurant_type}
           onChange={(e) => updateData({ restaurant_type: e.target.value })}
-          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent backdrop-blur-sm appearance-none cursor-pointer"
+          className="glass-input w-full px-4 py-3 text-white appearance-none cursor-pointer"
         >
           <option value="" className="bg-gray-900">Select a type...</option>
           {RESTAURANT_TYPES.map((type) => (
@@ -102,7 +103,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
           ))}
         </select>
         {errors.restaurant_type && (
-          <p className="mt-1 text-sm text-red-300">{errors.restaurant_type}</p>
+          <p className="mt-1 text-sm text-red-400">{errors.restaurant_type}</p>
         )}
       </div>
 
@@ -118,10 +119,10 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
             value={data.city}
             onChange={(e) => updateData({ city: e.target.value })}
             placeholder="Madrid"
-            className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-purple-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent backdrop-blur-sm"
+            className="glass-input w-full px-4 py-3 text-white placeholder-gray-400"
           />
           {errors.city && (
-            <p className="mt-1 text-sm text-red-300">{errors.city}</p>
+            <p className="mt-1 text-sm text-red-400">{errors.city}</p>
           )}
         </div>
 
@@ -135,10 +136,10 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
             value={data.country}
             onChange={(e) => updateData({ country: e.target.value })}
             placeholder="Spain"
-            className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-purple-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent backdrop-blur-sm"
+            className="glass-input w-full px-4 py-3 text-white placeholder-gray-400"
           />
           {errors.country && (
-            <p className="mt-1 text-sm text-red-300">{errors.country}</p>
+            <p className="mt-1 text-sm text-red-400">{errors.country}</p>
           )}
         </div>
       </div>
@@ -147,7 +148,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
       <div className="flex justify-end pt-4">
         <button
           onClick={handleContinue}
-          className="px-8 py-3 bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 text-gray-900 font-bold rounded-lg transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-2"
+          className="glass-button-primary px-8 py-3 text-white font-bold rounded-lg flex items-center gap-2"
         >
           Continue
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

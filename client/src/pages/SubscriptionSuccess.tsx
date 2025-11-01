@@ -7,6 +7,8 @@ export default function SubscriptionSuccess() {
   const navigate = useNavigate();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [customerEmail, setCustomerEmail] = useState<string>('');
+  const [plan, setPlan] = useState<string>('Basic');
 
   useEffect(() => {
     const verifySession = async () => {
@@ -29,9 +31,25 @@ export default function SubscriptionSuccess() {
         if (response.ok) {
           const data = await response.json();
 
-          // Store customer ID in localStorage for later use
+          // Store customer data in localStorage
           if (data.customer_id) {
             localStorage.setItem('stripe_customer_id', data.customer_id);
+          }
+          if (data.plan) {
+            setPlan(data.plan);
+            localStorage.setItem('subscription_plan', data.plan);
+          }
+          if (data.customer_email) {
+            setCustomerEmail(data.customer_email);
+            localStorage.setItem('customer_email', data.customer_email);
+
+            // Check if onboarding is complete
+            // For new customers, redirect to onboarding
+            // This will be a new subscription, so redirect to onboarding
+            console.log('New subscription - redirecting to onboarding');
+            setTimeout(() => {
+              navigate(`/onboarding?email=${encodeURIComponent(data.customer_email)}&plan=${encodeURIComponent(data.plan || 'Basic')}`);
+            }, 3000); // Give user 3 seconds to see success message
           }
         }
       } catch (error) {
@@ -42,7 +60,7 @@ export default function SubscriptionSuccess() {
     };
 
     verifySession();
-  }, []);
+  }, [navigate]);
 
   if (loading) {
     return (
@@ -89,10 +107,21 @@ export default function SubscriptionSuccess() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="text-xl text-gray-300 mb-8"
+            className="text-xl text-gray-300 mb-4"
           >
             Your subscription is now active. Your 14-day free trial has started!
           </motion.p>
+
+          {customerEmail && (
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="text-lg text-emerald-400 mb-8"
+            >
+              Redirecting you to onboarding in 3 seconds...
+            </motion.p>
+          )}
 
           {/* Session Info */}
           {sessionId && (

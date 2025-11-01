@@ -44,6 +44,7 @@ module.exports = async (req, res) => {
       cancellation_policy,
       special_notes,
       team_members,
+      plan, // Subscription plan from Stripe
     } = req.body;
 
     // Validate required fields
@@ -54,7 +55,32 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Validate plan limits for team members
+    const planLimits = {
+      'Basic': 1,
+      'Professional': 5,
+      'Enterprise': -1, // unlimited
+    };
+
+    const teamMemberLimit = planLimits[plan] || 1; // Default to Basic if plan not specified
+
+    if (team_members && team_members.length > 0) {
+      const requestedTeamCount = team_members.length;
+
+      // Enterprise plan has unlimited (-1)
+      if (teamMemberLimit !== -1 && requestedTeamCount > teamMemberLimit) {
+        return res.status(403).json({
+          error: 'Team member limit exceeded',
+          message: `Your ${plan || 'Basic'} plan allows up to ${teamMemberLimit} team member(s). You are trying to add ${requestedTeamCount} members.`,
+          plan: plan || 'Basic',
+          limit: teamMemberLimit,
+          requested: requestedTeamCount,
+        });
+      }
+    }
+
     console.log('[Onboarding] Starting onboarding for:', customer_email);
+    console.log('[Onboarding] Plan:', plan || 'Basic', '| Team limit:', teamMemberLimit === -1 ? 'Unlimited' : teamMemberLimit);
 
     const axios = require('axios');
     const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
@@ -95,9 +121,10 @@ module.exports = async (req, res) => {
       'Buffer Time': buffer_time,
       'Cancellation Policy': cancellation_policy,
       'Special Notes': special_notes || '',
+      'Plan': plan || 'Basic', // Store subscription plan
       'Onboarding Completed': true,
       'Created At': new Date().toISOString().split('T')[0],
-      'Status': 'active',
+      // 'Status' field removed - it's a Single Select field that requires predefined options
     };
 
     const restaurantResult = await airtableRequest(
@@ -166,7 +193,7 @@ module.exports = async (req, res) => {
                 fields: {
                   'Table Number': tableNumber,
                   'Capacity': tableConfig.capacity,
-                  'Status': 'Available',
+                  // 'Status' field removed - it's a Single Select field that requires predefined options
                   'Is Active': true,
                   'Location': areaData.name,
                   'Restaurant ID': [restaurantResult.id], // Link to restaurant

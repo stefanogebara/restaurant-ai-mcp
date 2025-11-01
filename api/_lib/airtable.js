@@ -6,6 +6,7 @@ const RESERVATIONS_TABLE_ID = process.env.RESERVATIONS_TABLE_ID;
 const RESTAURANT_INFO_TABLE_ID = process.env.RESTAURANT_INFO_TABLE_ID;
 const TABLES_TABLE_ID = process.env.TABLES_TABLE_ID || 'tblTables'; // Default for testing
 const SERVICE_RECORDS_TABLE_ID = process.env.SERVICE_RECORDS_TABLE_ID || 'tblServiceRecords';
+const SUBSCRIPTIONS_TABLE_ID = process.env.SUBSCRIPTIONS_TABLE_ID;
 
 const airtableRequest = async (method, endpoint, data = null) => {
   try {
@@ -193,6 +194,105 @@ const completeServiceRecord = async (recordId) => {
 
 const getRestaurantInfo = async () => {
   return airtableRequest('GET', RESTAURANT_INFO_TABLE_ID);
+};
+
+// ============ SUBSCRIPTIONS ============
+
+const getSubscriptions = async (filter = '') => {
+  const filterQuery = filter ? `?filterByFormula=${encodeURIComponent(filter)}` : '';
+  return airtableRequest('GET', `${SUBSCRIPTIONS_TABLE_ID}${filterQuery}`);
+};
+
+const getSubscriptionByCustomerId = async (customerId) => {
+  const filter = `{Customer ID} = '${customerId}'`;
+  const result = await getSubscriptions(filter);
+
+  if (result.success && result.data.records && result.data.records.length > 0) {
+    const subscription = result.data.records[0];
+    return {
+      success: true,
+      subscription: {
+        subscription_id: subscription.fields['Subscription ID'],
+        customer_id: subscription.fields['Customer ID'],
+        customer_email: subscription.fields['Customer Email'],
+        plan_name: subscription.fields['Plan Name'],
+        price_id: subscription.fields['Price ID'],
+        status: subscription.fields['Status'],
+        current_period_start: subscription.fields['Current Period Start'],
+        current_period_end: subscription.fields['Current Period End'],
+        trial_end: subscription.fields['Trial End'],
+        canceled_at: subscription.fields['Canceled At'],
+        created_at: subscription.fields['Created At'],
+        record_id: subscription.id
+      }
+    };
+  }
+
+  return {
+    success: false,
+    error: true,
+    message: 'Subscription not found'
+  };
+};
+
+const getSubscriptionByEmail = async (email) => {
+  const filter = `{Customer Email} = '${email}'`;
+  const result = await getSubscriptions(filter);
+
+  if (result.success && result.data.records && result.data.records.length > 0) {
+    const subscription = result.data.records[0];
+    return {
+      success: true,
+      subscription: {
+        subscription_id: subscription.fields['Subscription ID'],
+        customer_id: subscription.fields['Customer ID'],
+        customer_email: subscription.fields['Customer Email'],
+        plan_name: subscription.fields['Plan Name'],
+        price_id: subscription.fields['Price ID'],
+        status: subscription.fields['Status'],
+        current_period_start: subscription.fields['Current Period Start'],
+        current_period_end: subscription.fields['Current Period End'],
+        trial_end: subscription.fields['Trial End'],
+        canceled_at: subscription.fields['Canceled At'],
+        created_at: subscription.fields['Created At'],
+        record_id: subscription.id
+      }
+    };
+  }
+
+  return {
+    success: false,
+    error: true,
+    message: 'Subscription not found'
+  };
+};
+
+const createSubscription = async (fields) => {
+  return airtableRequest('POST', SUBSCRIPTIONS_TABLE_ID, { fields });
+};
+
+const updateSubscription = async (subscriptionId, fields) => {
+  // Find subscription by Subscription ID
+  const filter = `{Subscription ID} = '${subscriptionId}'`;
+  const findResult = await getSubscriptions(filter);
+
+  if (!findResult.success || !findResult.data.records || findResult.data.records.length === 0) {
+    return {
+      success: false,
+      error: true,
+      message: 'Subscription not found'
+    };
+  }
+
+  const recordId = findResult.data.records[0].id;
+  return airtableRequest('PATCH', `${SUBSCRIPTIONS_TABLE_ID}/${recordId}`, { fields });
+};
+
+const cancelSubscription = async (subscriptionId) => {
+  return updateSubscription(subscriptionId, {
+    'Status': 'canceled',
+    'Canceled At': new Date().toISOString().split('T')[0]
+  });
 };
 
 // ============ UTILITIES ============
@@ -458,6 +558,14 @@ module.exports = {
 
   // Restaurant Info
   getRestaurantInfo,
+
+  // Subscriptions
+  getSubscriptions,
+  getSubscriptionByCustomerId,
+  getSubscriptionByEmail,
+  createSubscription,
+  updateSubscription,
+  cancelSubscription,
 
   // Utilities
   generateReservationId,

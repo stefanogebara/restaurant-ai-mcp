@@ -1,4 +1,4 @@
-const { getReservations, getRestaurantInfo } = require('./_lib/airtable');
+const { getReservations, getRestaurantInfo } = require('./_lib/supabase');
 const { checkTimeSlotAvailability, getSuggestedTimes } = require('./_lib/availability-calculator');
 
 module.exports = async (req, res) => {

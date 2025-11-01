@@ -19,7 +19,6 @@ import Step3Tables from '../components/onboarding/Step3Tables';
 import Step4Settings from '../components/onboarding/Step4Settings';
 import Step5Team from '../components/onboarding/Step5Team';
 import type { OnboardingData } from '../types/onboarding.types';
-import '../landing/styles/glass-morphism.css';
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -27,11 +26,10 @@ export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Get customer email and plan from subscription (passed via URL params after Stripe checkout)
+  // Get customer email from subscription (passed via URL params after Stripe checkout)
   const urlParams = new URLSearchParams(window.location.search);
   const customerEmail = urlParams.get('email') || localStorage.getItem('customer_email') || '';
   const restaurantId = urlParams.get('restaurant_id') || localStorage.getItem('restaurant_id') || '';
-  const subscriptionPlan = urlParams.get('plan') || localStorage.getItem('subscription_plan') || 'Basic';
 
   // Onboarding data state
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
@@ -58,16 +56,7 @@ export default function Onboarding() {
     average_dining_duration: 90,
     // Step 3: Table Configuration
     areas: [
-      {
-        name: 'Indoor',
-        is_active: true,
-        tables: [
-          { capacity: 2, count: 0 },
-          { capacity: 4, count: 0 },
-          { capacity: 6, count: 0 },
-          { capacity: 8, count: 0 }
-        ]
-      }
+      { name: 'Indoor', is_active: true, tables: [] }
     ],
     // Step 4: Reservation Settings
     advance_booking_days: 30,
@@ -139,12 +128,8 @@ export default function Onboarding() {
   const progressPercentage = (currentStep / 5) * 100;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Subtle background gradients */}
-      <div className="absolute inset-0 section-gradient-1" />
-      <div className="absolute inset-0 section-gradient-2" />
-
-      <div className="w-full max-w-4xl relative z-10">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center p-6">
+      <div className="w-full max-w-4xl">
         {/* Header */}
         <div className="text-center mb-8">
           <motion.h1
@@ -152,13 +137,13 @@ export default function Onboarding() {
             animate={{ opacity: 1, y: 0 }}
             className="text-4xl font-bold text-white mb-2"
           >
-            Welcome to <span className="gradient-text">HostGenius</span>
+            Welcome to HostGenius
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-lg text-gray-300"
+            className="text-lg text-purple-200"
           >
             Let's set up your restaurant in under 5 minutes!
           </motion.p>
@@ -167,16 +152,16 @@ export default function Onboarding() {
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-gray-300">
+            <span className="text-sm font-semibold text-purple-200">
               Step {currentStep} of 5
             </span>
-            <span className="text-sm font-semibold text-gray-300">
+            <span className="text-sm font-semibold text-purple-200">
               {Math.round(progressPercentage)}% Complete
             </span>
           </div>
-          <div className="h-3 bg-white/5 rounded-full overflow-hidden backdrop-blur-sm border border-white/10">
+          <div className="h-3 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm">
             <motion.div
-              className="h-full bg-gradient-to-r from-indigo-500 to-purple-500"
+              className="h-full bg-gradient-to-r from-emerald-400 to-cyan-400"
               initial={{ width: 0 }}
               animate={{ width: `${progressPercentage}%` }}
               transition={{ duration: 0.5 }}
@@ -186,7 +171,7 @@ export default function Onboarding() {
 
         {/* Step Content */}
         <motion.div
-          className="glass-card p-8"
+          className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 shadow-2xl"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
         >
@@ -241,9 +226,9 @@ export default function Onboarding() {
 
         {/* Help Text */}
         <div className="text-center mt-6">
-          <p className="text-sm text-gray-400">
-            Need help?{' '}
-            <a href="mailto:support@hostgenius.com" className="text-indigo-400 hover:text-indigo-300 font-semibold underline transition-colors">
+          <p className="text-sm text-purple-200">
+            Need help? {' '}
+            <a href="mailto:support@hostgenius.com" className="text-cyan-300 hover:text-cyan-200 font-semibold underline">
               Contact Support
             </a>
           </p>

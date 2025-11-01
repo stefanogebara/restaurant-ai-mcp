@@ -5,11 +5,14 @@ import LandingPage from './landing/pages/LandingPage';
 import LiveAIDemo from './pages/LiveAIDemo';
 import HostDashboard from './pages/HostDashboard';
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
-import ObservabilityDashboard from './pages/ObservabilityDashboard';
-import WaitlistPage from './pages/WaitlistPage';
+// Observability moved to admin-only access (not for restaurant users)
+// import ObservabilityDashboard from './pages/ObservabilityDashboard';
+// Waitlist page removed - feature integrated into Host Dashboard sidebar
+// import WaitlistPage from './pages/WaitlistPage';
 import CustomerPortal from './pages/CustomerPortal';
 import SubscriptionSuccess from './pages/SubscriptionSuccess';
 import SubscriptionManage from './pages/SubscriptionManage';
+import Onboarding from './pages/Onboarding';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,11 +33,14 @@ function App() {
             <Route path="/live-demo" element={<LiveAIDemo />} />
             <Route path="/host-dashboard" element={<HostDashboard />} />
             <Route path="/analytics" element={<AnalyticsDashboard />} />
-            <Route path="/observability" element={<ObservabilityDashboard />} />
-            <Route path="/waitlist" element={<WaitlistPage />} />
+            {/* Observability removed - developer-only metrics, not for restaurant users */}
+            {/* <Route path="/observability" element={<ObservabilityDashboard />} /> */}
+            {/* Waitlist page removed - feature fully integrated into Host Dashboard sidebar */}
+            {/* <Route path="/waitlist" element={<WaitlistPage />} /> */}
             <Route path="/customer" element={<CustomerPortal />} />
             <Route path="/subscription/success" element={<SubscriptionSuccess />} />
             <Route path="/subscription/manage" element={<SubscriptionManage />} />
+            <Route path="/onboarding" element={<Onboarding />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>

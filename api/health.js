@@ -14,7 +14,7 @@
  * - Meaningful thresholds for alerts
  */
 
-const airtable = require('./_lib/airtable');
+const airtable = require('./_lib/supabase');
 
 // Thresholds for stale data detection
 const THRESHOLDS = {

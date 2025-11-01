@@ -11,6 +11,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
+import '../../landing/styles/glass-morphism.css';
 
 const CANCELLATION_POLICIES = [
   'Free cancellation up to 2 hours before reservation',
@@ -49,7 +50,7 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
     >
       <div>
         <h2 className="text-2xl font-bold text-white mb-2">Reservation preferences</h2>
-        <p className="text-purple-200 text-sm">Set your booking rules and policies</p>
+        <p className="text-gray-300 text-sm">Set your booking rules and policies</p>
       </div>
 
       {/* Advance Booking Days */}
@@ -61,7 +62,7 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
           id="advance_booking_days"
           value={data.advance_booking_days}
           onChange={(e) => updateData({ advance_booking_days: parseInt(e.target.value) })}
-          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent backdrop-blur-sm appearance-none cursor-pointer"
+          className="glass-input w-full px-4 py-3 text-white appearance-none cursor-pointer"
         >
           <option value={7} className="bg-gray-900">7 days</option>
           <option value={14} className="bg-gray-900">14 days</option>
@@ -80,7 +81,7 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
           id="buffer_time"
           value={data.buffer_time}
           onChange={(e) => updateData({ buffer_time: parseInt(e.target.value) })}
-          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent backdrop-blur-sm appearance-none cursor-pointer"
+          className="glass-input w-full px-4 py-3 text-white appearance-none cursor-pointer"
         >
           <option value={0} className="bg-gray-900">0 minutes (No buffer)</option>
           <option value={15} className="bg-gray-900">15 minutes (Recommended)</option>
@@ -88,7 +89,7 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
           <option value={45} className="bg-gray-900">45 minutes</option>
           <option value={60} className="bg-gray-900">60 minutes</option>
         </select>
-        <p className="mt-1 text-xs text-purple-200">💡 Buffer time to clean tables between parties</p>
+        <p className="mt-1 text-xs text-gray-400">Buffer time to clean tables between parties</p>
       </div>
 
       {/* Cancellation Policy */}
@@ -100,7 +101,7 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
           id="cancellation_policy"
           value={data.cancellation_policy}
           onChange={(e) => updateData({ cancellation_policy: e.target.value })}
-          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent backdrop-blur-sm appearance-none cursor-pointer"
+          className="glass-input w-full px-4 py-3 text-white appearance-none cursor-pointer"
         >
           {CANCELLATION_POLICIES.map((policy) => (
             <option key={policy} value={policy} className="bg-gray-900">
@@ -109,7 +110,7 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
           ))}
         </select>
         {errors.cancellation_policy && (
-          <p className="mt-1 text-sm text-red-300">{errors.cancellation_policy}</p>
+          <p className="mt-1 text-sm text-red-400">{errors.cancellation_policy}</p>
         )}
       </div>
 
@@ -125,7 +126,7 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
             value={data.cancellation_policy === 'Custom policy' ? '' : data.cancellation_policy}
             onChange={(e) => updateData({ cancellation_policy: e.target.value })}
             placeholder="Example: Full refund if cancelled 24 hours before. 50% refund if cancelled within 24 hours."
-            className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-purple-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent backdrop-blur-sm resize-none"
+            className="glass-input w-full px-4 py-3 text-white placeholder-gray-400 resize-none"
           />
         </div>
       )}
@@ -141,9 +142,9 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
           value={data.special_notes || ''}
           onChange={(e) => updateData({ special_notes: e.target.value })}
           placeholder="Example: Vegan options available, outdoor seating seasonal, live music on weekends"
-          className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-purple-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent backdrop-blur-sm resize-none"
+          className="glass-input w-full px-4 py-3 text-white placeholder-gray-400 resize-none"
         />
-        <p className="mt-1 text-xs text-purple-200">
+        <p className="mt-1 text-xs text-gray-400">
           This will be shown to customers when they make reservations
         </p>
       </div>
@@ -151,16 +152,16 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
       {/* Preview Card */}
       <div className="bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-white/30 rounded-lg p-5">
         <div className="flex items-start gap-3 mb-3">
-          <svg className="w-6 h-6 text-cyan-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 text-indigo-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div>
             <p className="text-white font-semibold text-sm mb-2">Preview: What customers will see</p>
-            <div className="space-y-1 text-purple-200 text-sm">
-              <p>📅 Book up to {data.advance_booking_days} days in advance</p>
-              <p>⏱️ {data.buffer_time} minute buffer between reservations</p>
-              <p>❌ {data.cancellation_policy}</p>
-              {data.special_notes && <p>ℹ️ {data.special_notes}</p>}
+            <div className="space-y-1 text-gray-300 text-sm">
+              <p>Book up to {data.advance_booking_days} days in advance</p>
+              <p>{data.buffer_time} minute buffer between reservations</p>
+              <p>{data.cancellation_policy}</p>
+              {data.special_notes && <p>{data.special_notes}</p>}
             </div>
           </div>
         </div>
@@ -179,7 +180,7 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
         </button>
         <button
           onClick={handleContinue}
-          className="px-8 py-3 bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 text-gray-900 font-bold rounded-lg transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-2"
+          className="glass-button-primary px-8 py-3 text-white font-bold rounded-lg flex items-center gap-2"
         >
           Continue
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

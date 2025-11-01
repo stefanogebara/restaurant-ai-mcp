@@ -167,7 +167,7 @@ async function handleGetDateTime(req, res) {
 }
 
 async function handleCheckAvailability(req, res) {
-  const { getReservations, getRestaurantInfo, getAllTables } = require('./_lib/airtable');
+  const { getReservations, getRestaurantInfo, getAllTables } = require('./_lib/supabase');
   const { checkTimeSlotAvailability, getSuggestedTimes } = require('./_lib/availability-calculator');
 
   const data = req.method === 'POST' ? req.body : req.query;
@@ -182,7 +182,7 @@ async function handleCheckAvailability(req, res) {
   }
 
   try {
-    const { getTables } = require('./_lib/airtable');
+    const { getTables } = require('./_lib/supabase');
 
     // Get restaurant info AND real-time table status
     console.log('[ElevenLabs] ===== AVAILABILITY CHECK v3.0 - FRESH DATA =====');
@@ -338,7 +338,7 @@ async function handleCreateReservation(req, res) {
 }
 
 async function handleLookupReservation(req, res) {
-  const { getReservations } = require('./_lib/airtable');
+  const { getReservations } = require('./_lib/supabase');
 
   const data = req.method === 'POST' ? req.body : req.query;
   const { phone, name } = data;

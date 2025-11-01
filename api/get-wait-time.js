@@ -1,4 +1,4 @@
-const { getReservations, getRestaurantInfo } = require('./_lib/airtable');
+const { getReservations, getRestaurantInfo } = require('./_lib/supabase');
 
 module.exports = async (req, res) => {
   // Enable CORS

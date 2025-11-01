@@ -1,4 +1,4 @@
-const airtable = require('./_lib/airtable');
+const airtable = require('./_lib/supabase');
 const twilio = require('twilio'); // Force redeploy to fix Vercel dependency bundling
 const { Resend } = require('resend');
 const { validateWaitlistEntry, sanitizeInput } = require('./_lib/validation');

@@ -15,6 +15,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { OnboardingStepProps, TeamMember } from '../../types/onboarding.types';
+import '../../landing/styles/glass-morphism.css';
 
 const ROLES = [
   { value: 'Owner', description: 'Full access to everything' },
@@ -117,7 +118,7 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
     >
       <div>
         <h2 className="text-2xl font-bold text-white mb-2">Invite your team</h2>
-        <p className="text-purple-200 text-sm">
+        <p className="text-gray-300 text-sm">
           {isBasicPlan
             ? 'Team management is available on Professional and Enterprise plans'
             : 'Add team members who will manage reservations'}
@@ -126,33 +127,33 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
 
       {/* Basic Plan Upgrade Prompt */}
       {isBasicPlan && (
-        <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-white/30 rounded-lg p-6">
+        <div className="bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-white/30 rounded-lg p-6">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center flex-shrink-0">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
             <div className="flex-1">
-              <h3 className="text-white font-bold text-lg mb-2">🔒 Team Management (Professional Plan)</h3>
-              <p className="text-purple-200 text-sm mb-4">
+              <h3 className="text-white font-bold text-lg mb-2">Team Management (Professional Plan)</h3>
+              <p className="text-gray-300 text-sm mb-4">
                 Upgrade to Professional to:
               </p>
-              <ul className="space-y-2 text-purple-200 text-sm mb-4">
+              <ul className="space-y-2 text-gray-300 text-sm mb-4">
                 <li className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                   Add up to 5 team members
                 </li>
                 <li className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                   Set role-based permissions
                 </li>
                 <li className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                   Track who made changes
@@ -161,7 +162,7 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
               <div className="flex gap-3">
                 <button
                   onClick={() => window.location.href = '/#pricing'}
-                  className="px-6 py-2.5 bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 text-gray-900 font-bold rounded-lg transition-all shadow-lg"
+                  className="px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-bold rounded-lg transition-all shadow-lg"
                 >
                   Upgrade Now
                 </button>
@@ -191,10 +192,10 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
                   onChange={(e) => setNewMemberEmail(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addTeamMember()}
                   placeholder="team@restaurant.com"
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-purple-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent backdrop-blur-sm"
+                  className="glass-input w-full px-4 py-3 text-white placeholder-gray-400"
                 />
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-300">{errors.email}</p>
+                  <p className="mt-1 text-sm text-red-400">{errors.email}</p>
                 )}
               </div>
 
@@ -202,7 +203,7 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
                 <select
                   value={newMemberRole}
                   onChange={(e) => setNewMemberRole(e.target.value as any)}
-                  className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent backdrop-blur-sm appearance-none cursor-pointer"
+                  className="glass-input flex-1 px-4 py-3 text-white appearance-none cursor-pointer"
                 >
                   {ROLES.map((role) => (
                     <option key={role.value} value={role.value} className="bg-gray-900">
@@ -214,14 +215,14 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
                 <button
                   onClick={addTeamMember}
                   disabled={!canAddMoreMembers()}
-                  className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all"
+                  className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all"
                 >
                   Add
                 </button>
               </div>
             </div>
 
-            <div className="mt-3 flex items-center justify-between text-xs text-purple-200">
+            <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
               <span>
                 {data.team_members.length} / {teamLimit === -1 ? '∞' : teamLimit} team members
               </span>
@@ -242,12 +243,12 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
                   className="flex items-center justify-between p-4 bg-white/5 border border-white/20 rounded-lg"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white font-semibold">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-semibold">
                       {member.email.charAt(0).toUpperCase()}
                     </div>
                     <div>
                       <p className="text-white font-medium">{member.email}</p>
-                      <p className="text-purple-200 text-sm">{member.role}</p>
+                      <p className="text-gray-400 text-sm">{member.role}</p>
                     </div>
                   </div>
                   <button
@@ -267,10 +268,10 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
           {/* Role Descriptions */}
           <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-white/20 rounded-lg p-4">
             <p className="text-white font-semibold text-sm mb-2">Available roles:</p>
-            <ul className="space-y-1 text-purple-200 text-sm">
+            <ul className="space-y-1 text-gray-300 text-sm">
               {ROLES.map((role) => (
                 <li key={role.value}>
-                  <span className="font-semibold text-cyan-300">{role.value}</span> - {role.description}
+                  <span className="font-semibold text-indigo-300">{role.value}</span> - {role.description}
                 </li>
               ))}
             </ul>
@@ -293,7 +294,7 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
         <button
           onClick={handleComplete}
           disabled={isSubmitting}
-          className="px-8 py-3 bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 font-bold rounded-lg transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center gap-2"
+          className="glass-button-primary px-8 py-3 text-white font-bold rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? (
             <>

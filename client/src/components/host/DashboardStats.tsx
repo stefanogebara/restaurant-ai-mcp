@@ -5,8 +5,15 @@ interface DashboardStatsProps {
 }
 
 export default function DashboardStats({ summary }: DashboardStatsProps) {
+  // Format wait time display
+  const waitTimeDisplay = summary.estimated_wait_time !== undefined
+    ? summary.estimated_wait_time === 0
+      ? 'No Wait'
+      : `${summary.estimated_wait_time} min`
+    : 'N/A';
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
       <StatCard
         label="Total Capacity"
         value={summary.total_capacity}
@@ -37,6 +44,12 @@ export default function DashboardStats({ summary }: DashboardStatsProps) {
         icon="🍽️"
         color="purple"
       />
+      <StatCard
+        label="Est. Wait Time"
+        value={waitTimeDisplay}
+        icon="⏱️"
+        color="amber"
+      />
     </div>
   );
 }
@@ -45,7 +58,7 @@ interface StatCardProps {
   label: string;
   value: number | string;
   icon: string;
-  color: 'gray' | 'emerald' | 'red' | 'blue' | 'purple';
+  color: 'gray' | 'emerald' | 'red' | 'blue' | 'purple' | 'amber';
 }
 
 function StatCard({ label, value, icon, color }: StatCardProps) {
@@ -77,6 +90,12 @@ function StatCard({ label, value, icon, color }: StatCardProps) {
     purple: {
       bg: 'bg-primary/10 border-primary/30 hover:border-primary/50',
       icon: 'bg-primary/20 text-primary',
+      text: 'text-foreground',
+      label: 'text-muted-foreground',
+    },
+    amber: {
+      bg: 'bg-amber-500/10 border-amber-500/20 hover:border-amber-500/40',
+      icon: 'bg-amber-500/20 text-amber-600',
       text: 'text-foreground',
       label: 'text-muted-foreground',
     },

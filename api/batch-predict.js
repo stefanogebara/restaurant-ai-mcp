@@ -5,7 +5,7 @@
  * Useful for populating ML fields for existing reservations
  */
 
-const { getUpcomingReservations, updateReservation } = require('./_lib/airtable');
+const { getUpcomingReservations, updateReservation } = require('./_lib/supabase');
 const { getCustomerStats } = require('./_lib/customer-history');
 const { predictNoShow } = require('./ml/predict');
 
@@ -90,7 +90,8 @@ module.exports = async (req, res) => {
           'ML Risk Score': Math.round(prediction.noShowProbability * 100),
           'ML Risk Level': prediction.noShowRisk,
           'ML Confidence': Math.round(prediction.confidence * 100),
-          'ML Model Version': prediction.metadata?.modelVersion || '1.0.0'
+          'ML Model Version': prediction.metadata?.modelVersion || '1.0.0',
+          'ML Prediction Timestamp': new Date().toISOString()
         };
 
         await updateReservation(reservation.record_id, mlFields);
@@ -98,12 +99,12 @@ module.exports = async (req, res) => {
         results.push({
           reservation_id: reservation.reservation_id,
           customer_name: reservation.customer_name,
-          risk_score: mlFields['No Show Risk Score'],
-          risk_level: mlFields['No Show Risk Level'],
+          risk_score: mlFields['ML Risk Score'],
+          risk_level: mlFields['ML Risk Level'],
           success: true
         });
 
-        console.log(`  ✅ Predicted: ${reservation.customer_name} - ${mlFields['No Show Risk Level']} (${mlFields['No Show Risk Score']}%)`);
+        console.log(`  ✅ Predicted: ${reservation.customer_name} - ${mlFields['ML Risk Level']} (${mlFields['ML Risk Score']}%)`);
 
       } catch (error) {
         console.error(`  ❌ Error predicting ${reservation.reservation_id}:`, error);
