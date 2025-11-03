@@ -2,16 +2,38 @@ import { useState, useMemo } from 'react';
 import type { UpcomingReservation } from '../../types/host.types';
 import ReservationDetailsModal from './ReservationDetailsModal';
 import RiskBadge from './RiskBadge';
+import { hostAPI } from '../../services/api';
 
 interface ReservationsCalendarProps {
   reservations: UpcomingReservation[];
   onCheckIn: (reservation: UpcomingReservation) => void;
   onRecordOutcome?: (reservation: UpcomingReservation) => void;
+  onReservationUpdated?: () => void;
 }
 
-export default function ReservationsCalendar({ reservations, onCheckIn, onRecordOutcome }: ReservationsCalendarProps) {
+export default function ReservationsCalendar({ reservations, onCheckIn, onRecordOutcome, onReservationUpdated }: ReservationsCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [detailsReservation, setDetailsReservation] = useState<UpcomingReservation | null>(null);
+
+  const handleUpdateReservation = async (updates: Partial<UpcomingReservation>) => {
+    if (!detailsReservation) return;
+
+    try {
+      await hostAPI.updateReservation({
+        reservation_id: detailsReservation.reservation_id,
+        ...updates,
+      });
+
+      // Close modal and refresh data
+      setDetailsReservation(null);
+      if (onReservationUpdated) {
+        onReservationUpdated();
+      }
+    } catch (error) {
+      console.error('Failed to update reservation:', error);
+      alert('Failed to update reservation notes. Please try again.');
+    }
+  };
 
   // Group reservations by date
   const reservationsByDate = useMemo(() => {
@@ -302,6 +324,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
         isOpen={detailsReservation !== null}
         reservation={detailsReservation}
         onClose={() => setDetailsReservation(null)}
+        onUpdate={handleUpdateReservation}
       />
     </div>
   );

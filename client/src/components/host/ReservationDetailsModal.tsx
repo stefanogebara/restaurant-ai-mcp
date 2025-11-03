@@ -1,13 +1,26 @@
+import { useState } from 'react';
 import type { UpcomingReservation } from '../../types/host.types';
+import ReservationNotesEditor from './ReservationNotesEditor';
+import { Edit2, Utensils, Languages, MapPin, Calendar, Users as UsersIcon, Accessibility, FileText } from 'lucide-react';
 
 interface ReservationDetailsModalProps {
   isOpen: boolean;
   reservation: UpcomingReservation | null;
   onClose: () => void;
+  onUpdate?: (updates: Partial<UpcomingReservation>) => void;
 }
 
-export default function ReservationDetailsModal({ isOpen, reservation, onClose }: ReservationDetailsModalProps) {
+export default function ReservationDetailsModal({ isOpen, reservation, onClose, onUpdate }: ReservationDetailsModalProps) {
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+
   if (!isOpen || !reservation) return null;
+
+  const handleSaveNotes = async (updates: Partial<UpcomingReservation>) => {
+    if (onUpdate) {
+      await onUpdate(updates);
+    }
+    setIsEditingNotes(false);
+  };
 
   // Format time for display
   const formatTime = (timeStr: string) => {
@@ -144,6 +157,126 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose }
           </div>
         )}
 
+        {/* Enhanced Notes Section */}
+        <div className="mb-6 bg-[#0A0A0A] rounded-lg p-5 border border-gray-800">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-white">Customer Notes</h3>
+            <button
+              onClick={() => setIsEditingNotes(true)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition"
+            >
+              <Edit2 className="w-4 h-4" />
+              Edit Notes
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* Customer Type */}
+            {reservation.customer_type && (
+              <div className="flex items-start gap-3">
+                <UsersIcon className="w-5 h-5 text-blue-400 mt-0.5" />
+                <div>
+                  <div className="text-xs text-gray-500">Customer Type</div>
+                  <div className="text-white font-medium">{reservation.customer_type}</div>
+                  {reservation.first_time_visitor && (
+                    <div className="text-xs text-yellow-400 mt-1">⭐ First Time Visitor</div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Dietary Restrictions */}
+            {reservation.dietary_restrictions && reservation.dietary_restrictions.length > 0 && (
+              <div className="flex items-start gap-3">
+                <Utensils className="w-5 h-5 text-emerald-400 mt-0.5" />
+                <div>
+                  <div className="text-xs text-gray-500">Dietary Restrictions</div>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {reservation.dietary_restrictions.map((restriction) => (
+                      <span
+                        key={restriction}
+                        className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs rounded-full"
+                      >
+                        {restriction}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Language Preference */}
+            {reservation.language_preference && (
+              <div className="flex items-start gap-3">
+                <Languages className="w-5 h-5 text-purple-400 mt-0.5" />
+                <div>
+                  <div className="text-xs text-gray-500">Language</div>
+                  <div className="text-white font-medium">{reservation.language_preference}</div>
+                </div>
+              </div>
+            )}
+
+            {/* Seating Preference */}
+            {reservation.seating_preference && (
+              <div className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-amber-400 mt-0.5" />
+                <div>
+                  <div className="text-xs text-gray-500">Seating Preference</div>
+                  <div className="text-white font-medium">{reservation.seating_preference}</div>
+                </div>
+              </div>
+            )}
+
+            {/* Special Occasion */}
+            {reservation.special_occasion && (
+              <div className="flex items-start gap-3">
+                <Calendar className="w-5 h-5 text-pink-400 mt-0.5" />
+                <div>
+                  <div className="text-xs text-gray-500">Special Occasion</div>
+                  <div className="text-white font-medium">{reservation.special_occasion}</div>
+                </div>
+              </div>
+            )}
+
+            {/* Accessibility Needs */}
+            {reservation.accessibility_needs && reservation.accessibility_needs !== 'None' && (
+              <div className="flex items-start gap-3">
+                <Accessibility className="w-5 h-5 text-cyan-400 mt-0.5" />
+                <div>
+                  <div className="text-xs text-gray-500">Accessibility</div>
+                  <div className="text-white font-medium">{reservation.accessibility_needs}</div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Internal Notes */}
+          {reservation.internal_notes && (
+            <div className="mt-4 pt-4 border-t border-gray-800">
+              <div className="flex items-start gap-3">
+                <FileText className="w-5 h-5 text-gray-400 mt-0.5" />
+                <div className="flex-1">
+                  <div className="text-xs text-gray-500 mb-1">Internal Notes (Staff Only)</div>
+                  <div className="text-gray-300 text-sm">{reservation.internal_notes}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!reservation.customer_type &&
+           !reservation.dietary_restrictions?.length &&
+           !reservation.language_preference &&
+           !reservation.seating_preference &&
+           !reservation.special_occasion &&
+           !reservation.internal_notes && (
+            <div className="text-center py-4 text-gray-500">
+              <p className="text-sm">No additional notes yet.</p>
+              <p className="text-xs mt-1">Click "Edit Notes" to add customer information.</p>
+            </div>
+          )}
+        </div>
+
         {/* Action Buttons */}
         <div className="flex gap-3">
           <button
@@ -154,6 +287,15 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose }
           </button>
         </div>
       </div>
+
+      {/* Notes Editor Modal */}
+      {isEditingNotes && (
+        <ReservationNotesEditor
+          reservation={reservation}
+          onSave={handleSaveNotes}
+          onCancel={() => setIsEditingNotes(false)}
+        />
+      )}
     </div>
   );
 }

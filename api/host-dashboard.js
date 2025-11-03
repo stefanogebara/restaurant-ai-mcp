@@ -3,6 +3,7 @@ const {
   getActiveServiceRecords,
   getUpcomingReservations,
   findReservation,
+  updateReservation,
   createServiceRecord,
   updateServiceRecord,
   updateTable,
@@ -40,10 +41,12 @@ module.exports = async (req, res) => {
         return await handleMarkTableClean(req, res);
       case 'update-table-status':
         return await handleUpdateTableStatus(req, res);
+      case 'update-reservation':
+        return await handleUpdateReservation(req, res);
       default:
         return res.status(400).json({
           success: false,
-          error: 'Invalid action. Use: dashboard, check-in, check-walk-in, seat-party, complete-service, mark-table-clean, or update-table-status'
+          error: 'Invalid action. Use: dashboard, check-in, check-walk-in, seat-party, complete-service, mark-table-clean, update-table-status, or update-reservation'
         });
     }
   } catch (error) {
@@ -488,6 +491,83 @@ async function handleUpdateTableStatus(req, res) {
       id: table_id,
       table_number: updateResult.data.fields['Table Number'],
       status: status
+    }
+  });
+}
+
+/**
+ * Update Reservation Notes (Segovia Enhanced Notes Feature)
+ *
+ * Updates reservation with enhanced notes fields:
+ * - Dietary restrictions (vegetarian alternatives to cochinillo)
+ * - Language preference (Spanish, English, Chinese, French)
+ * - Seating preference (Terrace, Window, Indoor, Bar)
+ * - Special occasion (Birthday, Anniversary, Business, Tourism)
+ * - Customer type (Tourist, Local)
+ * - Accessibility needs
+ * - Internal staff notes
+ * - First-time visitor flag
+ */
+async function handleUpdateReservation(req, res) {
+  const {
+    reservation_id,
+    dietary_restrictions,
+    language_preference,
+    seating_preference,
+    special_occasion,
+    customer_type,
+    accessibility_needs,
+    internal_notes,
+    first_time_visitor,
+  } = req.body;
+
+  if (!reservation_id) {
+    return res.status(400).json({
+      success: false,
+      error: 'reservation_id is required'
+    });
+  }
+
+  // Find the reservation
+  const findResult = await findReservation(reservation_id);
+
+  if (!findResult.success || !findResult.reservation) {
+    return res.status(404).json({
+      success: false,
+      error: 'Reservation not found'
+    });
+  }
+
+  // Build update object with only provided fields
+  const updates = {
+    updated_at: new Date().toISOString()
+  };
+
+  if (dietary_restrictions !== undefined) updates.dietary_restrictions = dietary_restrictions;
+  if (language_preference !== undefined) updates.language_preference = language_preference;
+  if (seating_preference !== undefined) updates.seating_preference = seating_preference;
+  if (special_occasion !== undefined) updates.special_occasion = special_occasion;
+  if (customer_type !== undefined) updates.customer_type = customer_type;
+  if (accessibility_needs !== undefined) updates.accessibility_needs = accessibility_needs;
+  if (internal_notes !== undefined) updates.internal_notes = internal_notes;
+  if (first_time_visitor !== undefined) updates.first_time_visitor = first_time_visitor;
+
+  // Update the reservation
+  const updateResult = await updateReservation(findResult.reservation.record_id, updates);
+
+  if (!updateResult.success) {
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to update reservation notes'
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: 'Reservation notes updated successfully',
+    reservation: {
+      reservation_id,
+      ...updates
     }
   });
 }

@@ -40,6 +40,15 @@ export interface UpcomingReservation {
   no_show_risk_level?: 'low' | 'medium' | 'high' | 'very-high';
   prediction_confidence?: number;  // 0-100 percentage
   ml_model_version?: string;
+  // Segovia-specific enhanced notes fields
+  dietary_restrictions?: string[];  // ['vegetarian', 'gluten-free', 'vegan', etc.]
+  language_preference?: string;     // 'Spanish', 'English', 'Chinese', 'French'
+  seating_preference?: string;      // 'Terrace', 'Window', 'Indoor', 'Bar'
+  special_occasion?: string;        // 'Birthday', 'Anniversary', 'Business', 'Tourism'
+  customer_type?: string;           // 'Tourist', 'Local'
+  accessibility_needs?: string;     // 'Wheelchair', 'High Chair', 'None'
+  internal_notes?: string;          // Staff-only notes
+  first_time_visitor?: boolean;     // Flag for first-time customers
 }
 
 export interface DashboardSummary {

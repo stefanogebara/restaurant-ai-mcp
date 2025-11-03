@@ -40,4 +40,16 @@ export const hostAPI = {
 
   updateTableStatus: (tableId: string, status: 'Available' | 'Occupied' | 'Being Cleaned' | 'Reserved') =>
     api.post('/host-dashboard?action=update-table-status', { table_id: tableId, status }),
+
+  updateReservation: (data: {
+    reservation_id: string;
+    dietary_restrictions?: string[];
+    language_preference?: string;
+    seating_preference?: string;
+    special_occasion?: string;
+    customer_type?: string;
+    accessibility_needs?: string;
+    internal_notes?: string;
+    first_time_visitor?: boolean;
+  }) => api.post('/host-dashboard?action=update-reservation', data),
 };
