@@ -9,7 +9,7 @@
  * - Customer type (Tourist vs Local)
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { UpcomingReservation } from '../../types/host.types';
 import {
   Utensils,
