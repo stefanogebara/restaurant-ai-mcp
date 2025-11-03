@@ -349,6 +349,208 @@ async function handleGetEvents(req, res) {
 }
 
 /**
+ * Get comprehensive pricing analytics
+ */
+async function handleGetAnalytics(req, res) {
+  try {
+    const { start_date, end_date } = req.query;
+
+    let query = supabase
+      .from('pricing_events')
+      .select('*');
+
+    // Filter by date range
+    if (start_date) {
+      query = query.gte('date', start_date);
+    }
+    if (end_date) {
+      query = query.lte('date', end_date);
+    }
+
+    const { data: events, error } = await query;
+
+    if (error) throw error;
+
+    if (!events || events.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          summary: {
+            total_events: 0,
+            total_revenue_lift: 0,
+            total_discount_given: 0,
+            net_revenue_impact: 0,
+            avg_price_increase_pct: 0
+          },
+          by_rule_type: {},
+          by_demand_level: {},
+          by_time_slot: {},
+          most_effective_rules: [],
+          timeline: []
+        }
+      });
+    }
+
+    // Calculate summary metrics
+    const totalRevenueLift = events.reduce((sum, e) => {
+      const modifier = parseFloat(e.modifier_applied) || 0;
+      return sum + (modifier > 0 ? modifier : 0);
+    }, 0);
+
+    const totalDiscountGiven = events.reduce((sum, e) => {
+      const modifier = parseFloat(e.modifier_applied) || 0;
+      return sum + (modifier < 0 ? Math.abs(modifier) : 0);
+    }, 0);
+
+    const netRevenueImpact = totalRevenueLift - totalDiscountGiven;
+
+    const totalBaseRevenue = events.reduce((sum, e) => sum + (parseFloat(e.base_price) || 0), 0);
+    const avgPriceIncreasePct = totalBaseRevenue > 0 ? (netRevenueImpact / totalBaseRevenue) * 100 : 0;
+
+    // Group by rule type
+    const byRuleType = {};
+    events.forEach(e => {
+      const ruleType = e.pricing_rule_name ? (e.pricing_rule_name.includes('Surge') || e.pricing_rule_name.includes('Premium') ? 'surge' :
+                        e.pricing_rule_name.includes('Discount') || e.pricing_rule_name.includes('Special') ? 'discount' : 'standard') : 'unknown';
+
+      if (!byRuleType[ruleType]) {
+        byRuleType[ruleType] = {
+          count: 0,
+          revenue_lift: 0,
+          discount_given: 0,
+          net_impact: 0
+        };
+      }
+
+      const modifier = parseFloat(e.modifier_applied) || 0;
+      byRuleType[ruleType].count++;
+      if (modifier > 0) {
+        byRuleType[ruleType].revenue_lift += modifier;
+      } else {
+        byRuleType[ruleType].discount_given += Math.abs(modifier);
+      }
+      byRuleType[ruleType].net_impact = byRuleType[ruleType].revenue_lift - byRuleType[ruleType].discount_given;
+    });
+
+    // Group by demand level
+    const byDemandLevel = {};
+    ['low', 'medium', 'high', 'surge'].forEach(level => {
+      const levelEvents = events.filter(e => e.demand_level === level);
+      if (levelEvents.length > 0) {
+        const lift = levelEvents.reduce((sum, e) => sum + Math.max(0, parseFloat(e.modifier_applied) || 0), 0);
+        const discount = levelEvents.reduce((sum, e) => sum + Math.abs(Math.min(0, parseFloat(e.modifier_applied) || 0)), 0);
+
+        byDemandLevel[level] = {
+          count: levelEvents.length,
+          revenue_lift: lift,
+          discount_given: discount,
+          net_impact: lift - discount,
+          avg_modifier: levelEvents.reduce((sum, e) => sum + (parseFloat(e.modifier_applied) || 0), 0) / levelEvents.length
+        };
+      }
+    });
+
+    // Group by time slot
+    const byTimeSlot = {};
+    events.forEach(e => {
+      const timeSlot = e.time_slot || 'unknown';
+      if (!byTimeSlot[timeSlot]) {
+        byTimeSlot[timeSlot] = {
+          count: 0,
+          revenue_lift: 0,
+          discount_given: 0,
+          net_impact: 0
+        };
+      }
+
+      const modifier = parseFloat(e.modifier_applied) || 0;
+      byTimeSlot[timeSlot].count++;
+      if (modifier > 0) {
+        byTimeSlot[timeSlot].revenue_lift += modifier;
+      } else {
+        byTimeSlot[timeSlot].discount_given += Math.abs(modifier);
+      }
+      byTimeSlot[timeSlot].net_impact = byTimeSlot[timeSlot].revenue_lift - byTimeSlot[timeSlot].discount_given;
+    });
+
+    // Most effective rules (top 5 by net impact)
+    const ruleImpacts = {};
+    events.forEach(e => {
+      if (e.pricing_rule_name) {
+        if (!ruleImpacts[e.pricing_rule_name]) {
+          ruleImpacts[e.pricing_rule_name] = {
+            rule_name: e.pricing_rule_name,
+            applications: 0,
+            total_impact: 0
+          };
+        }
+        ruleImpacts[e.pricing_rule_name].applications++;
+        ruleImpacts[e.pricing_rule_name].total_impact += (parseFloat(e.modifier_applied) || 0);
+      }
+    });
+
+    const mostEffectiveRules = Object.values(ruleImpacts)
+      .sort((a, b) => b.total_impact - a.total_impact)
+      .slice(0, 5)
+      .map(rule => ({
+        ...rule,
+        avg_impact: rule.total_impact / rule.applications
+      }));
+
+    // Timeline (group by date)
+    const timeline = {};
+    events.forEach(e => {
+      const date = e.date || 'unknown';
+      if (!timeline[date]) {
+        timeline[date] = {
+          date,
+          events: 0,
+          revenue_lift: 0,
+          discount_given: 0,
+          net_impact: 0
+        };
+      }
+
+      const modifier = parseFloat(e.modifier_applied) || 0;
+      timeline[date].events++;
+      if (modifier > 0) {
+        timeline[date].revenue_lift += modifier;
+      } else {
+        timeline[date].discount_given += Math.abs(modifier);
+      }
+      timeline[date].net_impact = timeline[date].revenue_lift - timeline[date].discount_given;
+    });
+
+    const timelineArray = Object.values(timeline).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        summary: {
+          total_events: events.length,
+          total_revenue_lift: Math.round(totalRevenueLift * 100) / 100,
+          total_discount_given: Math.round(totalDiscountGiven * 100) / 100,
+          net_revenue_impact: Math.round(netRevenueImpact * 100) / 100,
+          avg_price_increase_pct: Math.round(avgPriceIncreasePct * 100) / 100
+        },
+        by_rule_type: byRuleType,
+        by_demand_level: byDemandLevel,
+        by_time_slot: byTimeSlot,
+        most_effective_rules: mostEffectiveRules,
+        timeline: timelineArray
+      }
+    });
+
+  } catch (error) {
+    console.error('Error calculating pricing analytics:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to calculate pricing analytics'
+    });
+  }
+}
+
+/**
  * Get pricing statistics
  */
 async function handleGetStats(req, res) {
@@ -448,7 +650,8 @@ module.exports = async (req, res) => {
         'delete-rule',
         'create-defaults',
         'events',
-        'stats'
+        'stats',
+        'analytics'
       ]
     });
   }
@@ -509,6 +712,9 @@ module.exports = async (req, res) => {
       case 'stats':
         return await handleGetStats(req, res);
 
+      case 'analytics':
+        return await handleGetAnalytics(req, res);
+
       default:
         return res.status(400).json({
           success: false,
@@ -521,7 +727,8 @@ module.exports = async (req, res) => {
             'delete-rule',
             'create-defaults',
             'events',
-            'stats'
+            'stats',
+            'analytics'
           ]
         });
     }
