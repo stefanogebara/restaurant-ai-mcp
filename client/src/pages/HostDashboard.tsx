@@ -10,6 +10,7 @@ import DashboardStats from '../components/host/DashboardStats';
 import MLROIWidget from '../components/host/MLROIWidget';
 import LTVDashboard from '../components/host/LTVDashboard';
 import PricingRulesManager from '../components/host/PricingRulesManager';
+import CustomerDNADashboard from '../components/host/CustomerDNADashboard';
 import WalkInModal from '../components/host/WalkInModal';
 import CheckInModal from '../components/host/CheckInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
@@ -258,6 +259,9 @@ export default function HostDashboard() {
 
             {/* Dynamic Pricing Rules Manager */}
             <PricingRulesManager />
+
+            {/* Customer DNA Profiling Dashboard */}
+            <CustomerDNADashboard />
           </div>
         </div>
       </div>
