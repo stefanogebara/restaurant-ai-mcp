@@ -11,7 +11,6 @@ import {
   TrendingUp,
   Clock,
   Calendar,
-  MapPin,
   Coffee,
   Sun,
   Moon,

@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Power, Clock, TrendingUp, Calendar, DollarSign, BarChart3 } from 'lucide-react';
+import { Plus, Trash2, Power, Clock, TrendingUp, Calendar, DollarSign, BarChart3 } from 'lucide-react';
 
 interface PricingRule {
   id: string;
@@ -45,7 +45,6 @@ export default function PricingRulesManager() {
   const [stats, setStats] = useState<PricingStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(true);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     fetchPricingData();
