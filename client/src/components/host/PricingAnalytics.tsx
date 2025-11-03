@@ -15,6 +15,7 @@ import {
   Clock,
   Activity
 } from 'lucide-react';
+import HelpTooltip from '../common/HelpTooltip';
 
 interface PricingAnalytics {
   summary: {
@@ -146,7 +147,23 @@ export default function PricingAnalytics() {
           {/* Summary Metrics */}
           <div className="grid grid-cols-4 gap-3">
             <div className="p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-              <div className="text-xs text-muted-foreground mb-1">Revenue Lift</div>
+              <div className="flex items-center gap-1 mb-1">
+                <div className="text-xs text-muted-foreground">Revenue Lift</div>
+                <HelpTooltip
+                  title="Revenue Lift"
+                  content="Additional money earned from surge pricing vs. base prices.
+
+Example:
+• Base price: €50 per person
+• Surge price: €60 per person
+• Revenue lift: €10 per person
+
+Monthly impact:
+100 surge reservations × €10 = €1,000 extra revenue"
+                  position="bottom"
+                  size="sm"
+                />
+              </div>
               <div className="text-2xl font-bold text-green-400">{formatCurrency(summary.total_revenue_lift)}</div>
               <div className="text-xs text-muted-foreground mt-1">From surges</div>
             </div>
@@ -156,7 +173,29 @@ export default function PricingAnalytics() {
               <div className="text-xs text-muted-foreground mt-1">From specials</div>
             </div>
             <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
-              <div className="text-xs text-muted-foreground mb-1">Net Impact</div>
+              <div className="flex items-center gap-1 mb-1">
+                <div className="text-xs text-muted-foreground">Net Impact</div>
+                <HelpTooltip
+                  title="Net Impact"
+                  content="Revenue Lift minus Discount Cost
+
+Formula: Net Impact = Revenue Lift - Discounts
+
+Target: Positive (ideally 3:1 ratio)
+
+Good example:
+• Revenue Lift: €3,000
+• Discounts Given: €1,000
+• Net Impact: +€2,000 (3:1 ratio)
+
+Bad example:
+• Revenue Lift: €1,000
+• Discounts Given: €2,000
+• Net Impact: -€1,000 (losing money)"
+                  position="bottom"
+                  size="sm"
+                />
+              </div>
               <div className="text-2xl font-bold text-blue-400">{formatCurrency(summary.net_revenue_impact)}</div>
               <div className="text-xs text-muted-foreground mt-1">{formatPercent(summary.avg_price_increase_pct)} vs base</div>
             </div>

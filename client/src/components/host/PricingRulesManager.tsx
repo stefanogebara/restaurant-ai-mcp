@@ -5,7 +5,8 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Power, Clock, TrendingUp, Calendar, DollarSign, BarChart3 } from 'lucide-react';
+import { Plus, Trash2, Power, Clock, TrendingUp, Calendar, DollarSign, BarChart3, Edit2 } from 'lucide-react';
+import PricingRuleModal from './PricingRuleModal';
 
 interface PricingRule {
   id: string;
@@ -45,6 +46,8 @@ export default function PricingRulesManager() {
   const [stats, setStats] = useState<PricingStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingRule, setEditingRule] = useState<PricingRule | undefined>(undefined);
 
   useEffect(() => {
     fetchPricingData();
@@ -311,6 +314,16 @@ export default function PricingRulesManager() {
                           {formatModifier(rule.price_modifier_type, rule.price_modifier_value)}
                         </div>
                         <button
+                          onClick={() => {
+                            setEditingRule(rule);
+                            setIsModalOpen(true);
+                          }}
+                          className="p-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors"
+                          title="Edit Rule"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => toggleRuleStatus(rule.id, rule.is_active)}
                           className={`p-2 rounded-lg transition-colors ${
                             rule.is_active
@@ -338,7 +351,10 @@ export default function PricingRulesManager() {
           {/* Action Buttons */}
           <div className="flex gap-3">
             <button
-              onClick={() => alert('Create rule modal coming soon!')}
+              onClick={() => {
+                setEditingRule(undefined);
+                setIsModalOpen(true);
+              }}
               className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-blue-500/30 flex items-center justify-center gap-2"
             >
               <Plus className="w-5 h-5" />
@@ -356,6 +372,19 @@ export default function PricingRulesManager() {
           </div>
         </div>
       )}
+
+      {/* Pricing Rule Modal */}
+      <PricingRuleModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingRule(undefined);
+        }}
+        onSuccess={() => {
+          fetchPricingData(); // Refresh rules list
+        }}
+        editRule={editingRule}
+      />
     </div>
   );
 }

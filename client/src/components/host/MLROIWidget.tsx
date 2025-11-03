@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { TrendingUp, Target, Zap, DollarSign, AlertTriangle, ArrowRight } from 'lucide-react';
+import HelpTooltip from '../common/HelpTooltip';
 
 interface MLROIData {
   summary: {
@@ -120,6 +121,18 @@ export default function MLROIWidget() {
               <div className="flex items-center gap-2">
                 <DollarSign className={`w-6 h-6 ${meetsTarget ? 'text-emerald-500' : 'text-amber-500'}`} />
                 <div className="text-sm font-semibold text-muted-foreground">Return on Investment</div>
+                <HelpTooltip
+                  title="What is ROI?"
+                  content="For every €1 you spend on interventions (calls, emails), how much money do you save from prevented no-shows?
+
+Target: 300-500% (€3-€5 saved per €1 spent)
+
+Example:
+• Spent: €214 on confirmation calls
+• Saved: €1,720 from prevented no-shows
+• ROI: 704% (€7.04 saved per €1 spent)"
+                  position="bottom"
+                />
               </div>
               {meetsTarget && (
                 <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded-full font-semibold">
@@ -147,7 +160,23 @@ export default function MLROIWidget() {
                 <Target className="w-5 h-5 text-blue-400" />
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Success Rate</div>
+                <div className="flex items-center gap-1">
+                  <div className="text-xs text-muted-foreground">Success Rate</div>
+                  <HelpTooltip
+                    title="Success Rate Explained"
+                    content="Percentage of interventions that successfully prevented a no-show.
+
+Calculation:
+(Customers who showed up after intervention) ÷ (Total interventions)
+
+Example:
+• 34 interventions (calls made)
+• 23 customers showed up
+• Success Rate: 67.6%"
+                    position="right"
+                    size="sm"
+                  />
+                </div>
                 <div className="text-sm text-muted-foreground">Interventions worked</div>
               </div>
             </div>
@@ -163,7 +192,23 @@ export default function MLROIWidget() {
                 <Zap className="w-5 h-5 text-purple-400" />
               </div>
               <div>
-                <div className="text-xs text-muted-foreground">Total Interventions</div>
+                <div className="flex items-center gap-1">
+                  <div className="text-xs text-muted-foreground">Total Interventions</div>
+                  <HelpTooltip
+                    title="What are Interventions?"
+                    content="Actions taken to prevent no-shows based on ML risk predictions.
+
+Types of Interventions:
+• Confirmation calls
+• Reminder emails/SMS
+• Deposit requests
+• Premium table upgrades
+
+Each intervention has a cost and potential value saved."
+                    position="right"
+                    size="sm"
+                  />
+                </div>
                 <div className="text-sm text-muted-foreground">Actions taken</div>
               </div>
             </div>

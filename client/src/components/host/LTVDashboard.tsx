@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { Users, TrendingUp, TrendingDown, AlertTriangle, Star, DollarSign, Calendar, Activity } from 'lucide-react';
+import HelpTooltip from '../common/HelpTooltip';
 
 interface Customer {
   customer_id: string;
@@ -195,7 +196,24 @@ export default function LTVDashboard() {
                 <TrendingUp className="w-5 h-5 text-emerald-400" />
                 <span className="text-2xl font-bold text-foreground">{formatCurrency(stats.avg_ltv)}</span>
               </div>
-              <div className="text-xs text-muted-foreground">Avg Lifetime Value</div>
+              <div className="flex items-center gap-1">
+                <div className="text-xs text-muted-foreground">Avg Lifetime Value</div>
+                <HelpTooltip
+                  title="What is LTV?"
+                  content="Total revenue a customer generates over their relationship with you.
+
+Components:
+• Average spend per visit: €45
+• Visit frequency: 3x per year
+• Customer lifespan: 3 years
+• LTV = €45 × 3 × 3 = €405
+
+Why it matters:
+Focus retention efforts on high-LTV customers"
+                  position="bottom"
+                  size="sm"
+                />
+              </div>
             </div>
 
             {/* Total LTV */}
@@ -211,7 +229,19 @@ export default function LTVDashboard() {
           {/* Customer Tiers Breakdown */}
           <div className="p-4 bg-muted/30 rounded-lg">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-foreground">Customer Segments</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-foreground">Customer Segments</h3>
+                <HelpTooltip
+                  title="Customer Segments"
+                  content="VIP (€500+): Top 10% - Priority reservations, special offers
+Regular (€200-€500): Core customers - Loyalty rewards
+Occasional (€50-€200): Potential for growth - Engagement campaigns
+New (<€50): First-time diners - Welcome offers
+At Risk: Haven't visited in 90+ days - Win-back campaigns"
+                  position="right"
+                  size="sm"
+                />
+              </div>
               <span className="text-xs text-muted-foreground">{totalTierCustomers} total</span>
             </div>
             <div className="space-y-2">
