@@ -1,0 +1,81 @@
+[dotenv@17.2.3] injecting env (29) from .env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+🚀 Fetching data from Airtable...
+
+✅ Found 8 tables
+
+✅ Found 52 reservations
+
+-- ============================================
+-- TABLES DATA
+-- ============================================
+
+INSERT INTO tables (table_number, capacity, location, status, is_active) VALUES (3, 4, 'Indoor', 'available', true);
+INSERT INTO tables (table_number, capacity, location, status, is_active) VALUES (2, 4, 'Indoor', 'available', true);
+INSERT INTO tables (table_number, capacity, location, status, is_active) VALUES (5, 4, 'Indoor', 'available', true);
+INSERT INTO tables (table_number, capacity, location, status, is_active) VALUES (4, 4, 'Indoor', 'available', true);
+INSERT INTO tables (table_number, capacity, location, status, is_active) VALUES (1, 4, 'Indoor', 'available', true);
+
+-- ============================================
+-- RESERVATIONS DATA
+-- ============================================
+
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251026-6676', 'MCP Test Customer', '+1 555 999 0000', 'mcp.test@example.com', 2, '2025-10-26', '18:30', 'cancelled', 'Testing MCP server tool');
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251011-3684', 'Jane Doe', '+15559876543', 'jane@example.com', 4, '2025-10-20', '21:00', 'cancelled', 'Window seat please');
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251012-3119', 'Maria Garcia', '+1234567891', 'maria@example.com', 2, '2025-10-12', '02:00', 'confirmed', 'Birthday celebration - dessert surprise');
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251011-8809', 'Test User', '+15551234567', 'test@example.com', 2, '2025-10-15', '19:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251026-6908', 'Test Family Chen', '555-9999', 'chen.family.test@example.com', 6, '2025-10-27', '19:30', 'confirmed', 'Birthday celebration for grandmother, need quiet corner table');
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251007-0002', 'Priya Shah', '+15559876543', 'priya.shah@company079d.ai', 2, '2025-10-07', '20:30', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251020-6660', 'Edgard', '111 111', 'Edgard@yahoo', 3, '2025-10-20', '21:30', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251026-4897', 'MCP Test Customer', '+1 555 999 0000', 'mcp.test@example.com', 2, '2025-10-26', '18:30', 'cancelled', 'Testing MCP server tool');
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251025-4450', 'Test ML Customer 2', '+1-555-TEST-002', 'ml.test2@example.com', 2, '2025-10-26', '19:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251015-7005', 'Test User', '+15551234567', 'test@example.com', 4, '2025-10-20', '19:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251024-0997', 'Test Customer', '+1234567890', NULL, 2, '2025-10-28', '19:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251025-4906', 'Test ML Customer', '+1-555-TEST-001', 'ml.test@example.com', 2, '2025-10-30', '19:00', 'confirmed', 'Testing ML customer tracking');
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251007-0005', 'John Smith', '+15551239876', 'john.smith@openaibbb6.com', 2, '2025-10-07', '17:30', 'seated', 'Quiet table, allergy to peanuts');
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251015-9195', 'Test Customer', '555-1234', NULL, 3, '2025-10-16', '19:30', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251023-0354', 'Stefano', '1919191919', 'stefano@test.com', 2, '2025-10-24', '19:30', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251012-0288', 'David Chen', '+1234567892', 'david@example.com', 6, '2025-10-12', '02:30', 'confirmed', 'Vegetarian options needed');
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251008-0003', 'Michael Chen', '+15557654321', 'michael.chen@aiinnovateb492.com', 6, '2025-10-08', '18:00', 'confirmed', 'High chair needed, vegan options');
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251011-4521', 'José', '2468-642', NULL, 2, '2025-10-12', '19:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251024-8977', 'Claude Test', '+15551234567', 'claude@test.com', 6, '2025-10-24', '20:00', 'cancelled', 'Window seat preferred');
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251015-3649', 'Test User', '555-1234', NULL, 2, '2025-10-20', '19:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251011-3936', 'Test Customer', '+15551234567', 'test@example.com', 2, '2025-10-15', '19:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251025-4356', 'Final Test Customer', '+1-555-FINAL-01', 'final.test@example.com', 4, '2025-10-27', '20:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251007-0001', 'Alex Kim', '+15551234567', 'alex.kim@email0a44.com', 4, '2025-10-07', '19:00', 'confirmed', 'Window seat, birthday celebration');
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251017-4836', 'Jonas', '111-1-111-2', NULL, 3, '2025-10-19', '20:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251026-6107', 'MCP Test Customer', '+1 555 999 0000', 'mcp.test@example.com', 2, '2025-10-26', '18:30', 'cancelled', 'Testing MCP server tool');
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251017-8353', 'Luis Miguel', '999999999', NULL, 4, '2025-10-19', '19:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251020-6131', 'Arda', '123-456-7', 'arda@guler.br', 2, '2025-10-20', '19:30', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251015-6911', 'Test User', '555-1234', NULL, 2, '2025-10-20', '19:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251011-TEST', 'Test Customer', '+15555551234', 'test@example.com', 4, '2025-10-15', '19:00', 'confirmed', 'Window seat preferred');
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251006-0004', 'Sara Lopez', '+15553456789', 'sara.lopez@aitech5b20.com', 3, '2025-10-06', '21:00', 'completed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251025-5854', 'Complete Test Customer', '+1-555-COMPLETE-1', 'complete.test@example.com', 3, '2025-10-28', '19:30', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251017-2490', 'John Smith', '555-123-4567', NULL, 2, '2025-10-18', '19:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251015-3364', 'Test User', '+1234567890', 'test@example.com', 2, '2025-10-16', '19:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251026-1546', 'Gabriel Crotty', '11111111', 'gabriel@test.com', 2, '2025-10-26', '21:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251007-0006', 'Emily Zhang', '+15552345678', 'emily.zhang@futureai4c09.com', 5, '2025-10-07', '18:45', 'confirmed', 'Anniversary, gluten-free meal');
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251020-0713', 'Ronaldo', '000000', 'Ronaldo@RealMadrid.com', 6, '2025-10-20', '20:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251026-3308', 'Debug Test Customer', '+1-555-DEBUG-001', 'debug@test.com', 4, '2025-10-30', '20:00', 'confirmed', 'Testing ML fields');
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251026-1797', 'Final Test Customer', '+15559998888', 'finaltest@example.com', 2, '2025-10-29', '20:00', 'confirmed', 'Testing ML after Airtable fix');
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251027-9813', 'Luciana', '11111111', 'luciana@test.com', 2, '2025-10-28', '20:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251015-4090', 'Test User', '+1234567890', 'test@example.com', 2, '2025-01-20', '19:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251015-0090', 'Test User', '555-1234', 'test@example.com', 4, '2025-01-20', '19:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251017-9854', 'Test Stefano', '111-111-1111', NULL, 2, '2025-10-18', '20:30', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251015-3336', 'Test', ' 1234567890', NULL, 4, '2025-10-16', '19:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251017-6550', 'Stefano', '222-222-222', NULL, 2, '2025-10-18', '20:30', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251026-8243', 'ML Test Customer', '+15551112222', 'mltest@example.com', 4, '2025-10-28', '19:30', 'confirmed', 'Testing ML predictions');
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251015-3726', 'Test User', '+1234567890', 'test@example.com', 2, '2025-01-20', '19:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251012-4381', 'John Smith', '555-123-4567', NULL, 4, '2025-10-12', '19:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251027-9272', 'Stefano', '000 0000', 'stefanogliabara@gmail.com', 2, '2025-10-28', '19:30', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251012-8642', 'John Smith', '+1234567890', 'john@example.com', 4, '2025-10-12', '01:37', 'confirmed', 'Window seat please');
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251026-1516', 'MCP Test Customer', '+1 555 999 0000', 'mcp.test@example.com', 2, '2025-10-26', '18:30', 'cancelled', 'Testing MCP server tool');
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251015-3091', 'Test User', '555-1234', NULL, 2, '2025-10-20', '19:00', 'confirmed', NULL);
+INSERT INTO reservations (reservation_id, customer_name, customer_phone, customer_email, party_size, date, time, status, special_requests) VALUES ('RES-20251027-1613', 'Eduardo', '12538272', 'stefanoeduardo@gmail.com', 3, '2025-10-28', '19:00', 'confirmed', 'Lactose intolerant');
+
+✅ SQL generation complete!
+
+📊 Summary:
+   - Tables: 5 valid records
+   - Reservations: 52 valid records
+
+💡 Copy the SQL above and execute via Supabase MCP execute_sql tool

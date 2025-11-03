@@ -21,8 +21,6 @@ export default function UpgradePrompt({
   currentPlan = 'Basic',
   size = 'medium',
 }: UpgradePromptProps) {
-  const navigate = useNavigate();
-
   const handleUpgrade = () => {
     // Navigate to pricing section
     window.location.href = '/#pricing';

@@ -26,6 +26,7 @@ const hostDashboard = require('./api/host-dashboard.js');
 const analytics = require('./api/analytics.js');
 const waitlist = require('./api/waitlist.js');
 const batchPredict = require('./api/batch-predict.js');
+const mlOutcomes = require('./api/routes/ml-outcomes.js');
 
 // Create mock req/res wrappers for Vercel functions
 const createHandler = (handler) => {
@@ -63,6 +64,9 @@ app.delete('/api/waitlist', createHandler(waitlist));
 // ML Batch Prediction endpoint
 app.get('/api/batch-predict', createHandler(batchPredict));
 app.post('/api/batch-predict', createHandler(batchPredict));
+
+// ML Outcomes endpoints (Express router, not Vercel function)
+app.use('/api/ml-outcomes', mlOutcomes);
 
 // Health check
 app.get('/api/health', (req, res) => {

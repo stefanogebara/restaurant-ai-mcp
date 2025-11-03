@@ -49,7 +49,7 @@ export default function PlanBadge({
     }
   };
 
-  const { bg, icon: Icon, color } = getPlanStyle();
+  const { bg, icon: Icon } = getPlanStyle();
 
   // Size variants
   const sizeClasses = {

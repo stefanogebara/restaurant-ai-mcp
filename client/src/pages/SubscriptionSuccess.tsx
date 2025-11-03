@@ -8,7 +8,7 @@ export default function SubscriptionSuccess() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [customerEmail, setCustomerEmail] = useState<string>('');
-  const [plan, setPlan] = useState<string>('Basic');
+  const [_plan, setPlan] = useState<string>('Basic');
 
   useEffect(() => {
     const verifySession = async () => {

@@ -31,7 +31,7 @@ export default function Onboarding() {
   const urlParams = new URLSearchParams(window.location.search);
   const customerEmail = urlParams.get('email') || localStorage.getItem('customer_email') || '';
   const restaurantId = urlParams.get('restaurant_id') || localStorage.getItem('restaurant_id') || '';
-  const subscriptionPlan = urlParams.get('plan') || localStorage.getItem('subscription_plan') || 'Basic';
+  const _subscriptionPlan = urlParams.get('plan') || localStorage.getItem('subscription_plan') || 'Basic';
 
   // Onboarding data state
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
