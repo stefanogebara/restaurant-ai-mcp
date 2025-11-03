@@ -27,6 +27,8 @@ const analytics = require('./api/analytics.js');
 const waitlist = require('./api/waitlist.js');
 const batchPredict = require('./api/batch-predict.js');
 const mlOutcomes = require('./api/routes/ml-outcomes.js');
+const ltv = require('./api/ltv.js');
+const pricing = require('./api/pricing.js');
 
 // Create mock req/res wrappers for Vercel functions
 const createHandler = (handler) => {
@@ -67,6 +69,17 @@ app.post('/api/batch-predict', createHandler(batchPredict));
 
 // ML Outcomes endpoints (Express router, not Vercel function)
 app.use('/api/ml-outcomes', mlOutcomes);
+
+// LTV endpoints
+app.get('/api/ltv', createHandler(ltv));
+app.post('/api/ltv', createHandler(ltv));
+
+// Pricing endpoints
+app.get('/api/pricing', createHandler(pricing));
+app.post('/api/pricing', createHandler(pricing));
+app.put('/api/pricing', createHandler(pricing));
+app.patch('/api/pricing', createHandler(pricing));
+app.delete('/api/pricing', createHandler(pricing));
 
 // Health check
 app.get('/api/health', (req, res) => {
