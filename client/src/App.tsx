@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './contexts/ToastContext';
+import { SidebarProvider } from './contexts/SidebarContext';
 import LandingPage from './landing/pages/LandingPage';
 import LiveAIDemo from './pages/LiveAIDemo';
 import HostDashboard from './pages/HostDashboard';
@@ -32,7 +33,8 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
-        <BrowserRouter>
+        <SidebarProvider>
+          <BrowserRouter>
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/live-demo" element={<LiveAIDemo />} />
@@ -54,6 +56,7 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
+        </SidebarProvider>
       </ToastProvider>
     </QueryClientProvider>
   );

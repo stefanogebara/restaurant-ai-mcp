@@ -10,6 +10,7 @@ import {
   Menu
 } from 'lucide-react';
 import { useState } from 'react';
+import { useSidebar } from '../../contexts/SidebarContext';
 
 interface NavItem {
   path: string;
@@ -59,7 +60,7 @@ const navItems: NavItem[] = [
 
 export default function Sidebar() {
   const location = useLocation();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const { isCollapsed, setIsCollapsed } = useSidebar();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const isActive = (path: string) => {
