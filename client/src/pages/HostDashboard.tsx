@@ -15,18 +15,21 @@ import SeatPartyModal from '../components/host/SeatPartyModal';
 import TableStatusLegend from '../components/host/TableStatusLegend';
 import WaitlistPanel from '../components/host/WaitlistPanel';
 import WaitlistSeatModal from '../components/host/WaitlistSeatModal';
+import InterventionPanel from '../components/host/InterventionPanel';
+import RecordOutcomeModal, { type OutcomeData } from '../components/host/RecordOutcomeModal';
 import type { UpcomingReservation } from '../types/host.types';
 
 export default function HostDashboard() {
   const { data, isLoading, error, refetch, isFetching } = useHostDashboard();
   const { data: analyticsData, isLoading: analyticsLoading } = useAnalytics();
-  const { success } = useToast();
+  const { success, error: showError } = useToast();
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
   const [checkInReservation, setCheckInReservation] = useState<UpcomingReservation | null>(null);
   const [waitlistEntry, setWaitlistEntry] = useState<any>(null);
   const [seatPartyData, setSeatPartyData] = useState<any>(null);
   const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [outcomeReservation, setOutcomeReservation] = useState<UpcomingReservation | null>(null);
 
   // Update last refresh timestamp when data changes
   useEffect(() => {
@@ -34,6 +37,49 @@ export default function HostDashboard() {
       setLastRefresh(new Date());
     }
   }, [data, isFetching]);
+
+  // Handle intervention recording
+  const handleRecordIntervention = async (reservation: UpcomingReservation, interventionType: string) => {
+    try {
+      // Show confirmation toast
+      success(`📞 Action recorded: ${interventionType.replace('_', ' ')}`);
+
+      // Open outcome modal to record full details later
+      // For now, just log the intervention
+      console.log('Intervention recorded:', {
+        reservation: reservation.reservation_id,
+        type: interventionType,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error recording intervention:', error);
+      showError('Failed to record intervention');
+    }
+  };
+
+  // Handle outcome submission
+  const handleOutcomeSubmit = async (outcomeData: OutcomeData) => {
+    try {
+      const response = await fetch('/api/ml-outcomes?action=record-outcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(outcomeData)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        success(`✅ Outcome recorded! ROI: ${result.data.roi_multiplier}`);
+        refetch(); // Refresh dashboard data
+      } else {
+        throw new Error(result.error || 'Failed to record outcome');
+      }
+    } catch (error) {
+      console.error('Error submitting outcome:', error);
+      showError('Failed to record outcome. Please try again.');
+      throw error;
+    }
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -172,6 +218,12 @@ export default function HostDashboard() {
 
           {/* Right Panel - 40% width on desktop */}
           <div className="space-y-6">
+            {/* ML Intervention Panel */}
+            <InterventionPanel
+              reservations={data.upcoming_reservations || []}
+              onRecordIntervention={handleRecordIntervention}
+            />
+
             {/* Active Parties */}
             <div className="bg-card rounded-lg shadow-lg p-6 border border-border">
               <div className="flex items-center justify-between mb-6">
@@ -194,6 +246,7 @@ export default function HostDashboard() {
               <ReservationsCalendar
                 reservations={data.upcoming_reservations || []}
                 onCheckIn={(reservation) => setCheckInReservation(reservation)}
+                onRecordOutcome={(reservation) => setOutcomeReservation(reservation)}
               />
             </div>
 
@@ -255,6 +308,12 @@ export default function HostDashboard() {
           success('Party seated successfully!');
           refetch(); // Refresh dashboard data
         }}
+      />
+
+      <RecordOutcomeModal
+        reservation={outcomeReservation}
+        onClose={() => setOutcomeReservation(null)}
+        onSubmit={handleOutcomeSubmit}
       />
 
       {/* Floating Waitlist Toggle Button */}

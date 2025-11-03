@@ -6,9 +6,10 @@ import RiskBadge from './RiskBadge';
 interface ReservationsCalendarProps {
   reservations: UpcomingReservation[];
   onCheckIn: (reservation: UpcomingReservation) => void;
+  onRecordOutcome?: (reservation: UpcomingReservation) => void;
 }
 
-export default function ReservationsCalendar({ reservations, onCheckIn }: ReservationsCalendarProps) {
+export default function ReservationsCalendar({ reservations, onCheckIn, onRecordOutcome }: ReservationsCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [detailsReservation, setDetailsReservation] = useState<UpcomingReservation | null>(null);
 
@@ -232,6 +233,18 @@ export default function ReservationsCalendar({ reservations, onCheckIn }: Reserv
                             className="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
                           >
                             Check In
+                          </button>
+                        )}
+                        {reservation.no_show_risk_score && onRecordOutcome && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onRecordOutcome(reservation);
+                            }}
+                            className="px-3 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium"
+                            title="Record actual outcome for ML training"
+                          >
+                            📊 Outcome
                           </button>
                         )}
                         <button
