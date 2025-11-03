@@ -4,6 +4,11 @@ import { ToastProvider } from './contexts/ToastContext';
 import LandingPage from './landing/pages/LandingPage';
 import LiveAIDemo from './pages/LiveAIDemo';
 import HostDashboard from './pages/HostDashboard';
+import MLPerformancePage from './pages/MLPerformancePage';
+import CustomerLTVPage from './pages/CustomerLTVPage';
+import PricingRulesPage from './pages/PricingRulesPage';
+import PricingAnalyticsPage from './pages/PricingAnalyticsPage';
+import CustomerDNAPage from './pages/CustomerDNAPage';
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
 // Observability moved to admin-only access (not for restaurant users)
 // import ObservabilityDashboard from './pages/ObservabilityDashboard';
@@ -32,6 +37,11 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/live-demo" element={<LiveAIDemo />} />
             <Route path="/host-dashboard" element={<HostDashboard />} />
+            <Route path="/host-dashboard/ml" element={<MLPerformancePage />} />
+            <Route path="/host-dashboard/ltv" element={<CustomerLTVPage />} />
+            <Route path="/host-dashboard/pricing" element={<PricingRulesPage />} />
+            <Route path="/host-dashboard/analytics" element={<PricingAnalyticsPage />} />
+            <Route path="/host-dashboard/dna" element={<CustomerDNAPage />} />
             <Route path="/analytics" element={<AnalyticsDashboard />} />
             {/* Observability removed - developer-only metrics, not for restaurant users */}
             {/* <Route path="/observability" element={<ObservabilityDashboard />} /> */}
