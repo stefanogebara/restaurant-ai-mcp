@@ -5,6 +5,7 @@ import { SidebarProvider } from './contexts/SidebarContext';
 import LandingPage from './landing/pages/LandingPage';
 import LiveAIDemo from './pages/LiveAIDemo';
 import HostDashboard from './pages/HostDashboard';
+import WeeklyReport from './pages/WeeklyReport';
 import MLPerformancePage from './pages/MLPerformancePage';
 import CustomerLTVPage from './pages/CustomerLTVPage';
 import PricingRulesPage from './pages/PricingRulesPage';
@@ -39,6 +40,7 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/live-demo" element={<LiveAIDemo />} />
             <Route path="/host-dashboard" element={<HostDashboard />} />
+            <Route path="/host-dashboard/reports" element={<WeeklyReport />} />
             <Route path="/host-dashboard/ml" element={<MLPerformancePage />} />
             <Route path="/host-dashboard/ltv" element={<CustomerLTVPage />} />
             <Route path="/host-dashboard/pricing" element={<PricingRulesPage />} />
