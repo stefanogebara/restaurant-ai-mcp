@@ -8,6 +8,8 @@ import ActivePartiesList from '../components/host/ActivePartiesList';
 import ReservationsCalendar from '../components/host/ReservationsCalendar';
 import DashboardStats from '../components/host/DashboardStats';
 import MLROIWidget from '../components/host/MLROIWidget';
+import LTVDashboard from '../components/host/LTVDashboard';
+import PricingRulesManager from '../components/host/PricingRulesManager';
 import WalkInModal from '../components/host/WalkInModal';
 import CheckInModal from '../components/host/CheckInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
@@ -250,6 +252,12 @@ export default function HostDashboard() {
 
             {/* ML ROI Widget */}
             <MLROIWidget />
+
+            {/* Customer Lifetime Value Dashboard */}
+            <LTVDashboard />
+
+            {/* Dynamic Pricing Rules Manager */}
+            <PricingRulesManager />
           </div>
         </div>
       </div>
