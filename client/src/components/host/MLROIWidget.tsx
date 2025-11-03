@@ -87,7 +87,6 @@ export default function MLROIWidget() {
   }
 
   const roiValue = parseInt(data.summary.total_roi);
-  const targetValue = parseInt(data.summary.target_roi.split('-')[0]); // Get 300 from "300-500%"
   const meetsTarget = data.summary.meets_target;
 
   return (
