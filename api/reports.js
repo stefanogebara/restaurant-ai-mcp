@@ -10,7 +10,11 @@
  * - Language distribution
  */
 
-const { getSupabaseClient } = require('./_lib/supabase');
+const { createClient } = require('@supabase/supabase-js');
+
+// Initialize Supabase client
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -49,7 +53,7 @@ module.exports = async (req, res) => {
  * for the specified week vs previous week comparison
  */
 async function handleWeeklyReport(req, res) {
-  const supabase = getSupabaseClient();
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
   // Parse date range from query params
   const { start_date, end_date } = req.query;
