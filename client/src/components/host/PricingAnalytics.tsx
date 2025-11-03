@@ -11,13 +11,9 @@
 import { useState, useEffect } from 'react';
 import {
   TrendingUp,
-  TrendingDown,
-  DollarSign,
   BarChart3,
   Clock,
-  Activity,
-  ChevronDown,
-  ChevronUp
+  Activity
 } from 'lucide-react';
 
 interface PricingAnalytics {
