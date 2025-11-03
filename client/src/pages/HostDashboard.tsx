@@ -2,13 +2,12 @@ import { useState, useEffect } from 'react';
 import { DndContext } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { useHostDashboard } from '../hooks/useHostDashboard';
-import { useAnalytics } from '../hooks/useAnalytics';
 import { useToast } from '../contexts/ToastContext';
 import TableGrid from '../components/host/TableGrid';
 import ActivePartiesList from '../components/host/ActivePartiesList';
 import ReservationsCalendar from '../components/host/ReservationsCalendar';
 import DashboardStats from '../components/host/DashboardStats';
-import QuickStats from '../components/host/QuickStats';
+import MLROIWidget from '../components/host/MLROIWidget';
 import WalkInModal from '../components/host/WalkInModal';
 import CheckInModal from '../components/host/CheckInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
@@ -21,7 +20,6 @@ import type { UpcomingReservation } from '../types/host.types';
 
 export default function HostDashboard() {
   const { data, isLoading, error, refetch, isFetching } = useHostDashboard();
-  const { data: analyticsData, isLoading: analyticsLoading } = useAnalytics();
   const { success, error: showError } = useToast();
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
   const [checkInReservation, setCheckInReservation] = useState<UpcomingReservation | null>(null);
@@ -250,8 +248,8 @@ export default function HostDashboard() {
               />
             </div>
 
-            {/* Quick Stats Widget */}
-            <QuickStats analyticsData={analyticsData} isLoading={analyticsLoading} />
+            {/* ML ROI Widget */}
+            <MLROIWidget />
           </div>
         </div>
       </div>
