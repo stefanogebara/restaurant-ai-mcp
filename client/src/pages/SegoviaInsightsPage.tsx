@@ -1,5 +1,4 @@
 import DashboardLayout from '../components/layout/DashboardLayout';
-import AnalyticsGuide from '../components/common/AnalyticsGuide';
 import { useQuery } from '@tanstack/react-query';
 
 export default function SegoviaInsightsPage() {
