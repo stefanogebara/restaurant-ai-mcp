@@ -13,8 +13,7 @@
     },
     "api/ml-predict.py": {
       "maxDuration": 10,
-      "memory": 1024,
-      "runtime": "python3.9"
+      "memory": 1024
     },
     "api/predictive-analytics.js": {
       "maxDuration": 30,

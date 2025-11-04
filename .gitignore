@@ -6,3 +6,4 @@ node_modules
 .claude/settings.local.json
 gcp-credentials.json
 *-credentials.json
+hotel_bookings.csv
