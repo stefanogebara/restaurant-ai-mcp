@@ -1,7 +1,17 @@
 {
-  "installCommand": "npm install",
+  "installCommand": "npm install && pip install -r requirements.txt",
   "buildCommand": "cd client && rm -rf dist node_modules/.vite && npm install && npm run build",
   "outputDirectory": "client/dist",
+  "functions": {
+    "api/ml-predict.js": {
+      "maxDuration": 10,
+      "memory": 1024
+    },
+    "api/predictive-analytics.js": {
+      "maxDuration": 30,
+      "memory": 1024
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",

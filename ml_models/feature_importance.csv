@@ -1,0 +1,17 @@
+feature,importance
+has_deposit,0.80904424
+customer_no_show_rate,0.059437007
+is_tourist,0.021269964
+has_special_requests,0.019015552
+is_travel_agency,0.0136403665
+booking_changes_count,0.013580447
+special_request_count,0.012477475
+booking_lead_time_hours,0.011128575
+has_waiting_list,0.007545832
+is_repeat_customer,0.0072177732
+party_size,0.0070304605
+month_num,0.0046600145
+stays_in_week_nights,0.0039541204
+is_prime_time,0.003420419
+stays_in_weekend_nights,0.0034003656
+is_weekend,0.0031773956

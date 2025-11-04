@@ -1,6 +1,7 @@
 /**
  * Predictive Analytics API
- * Provides no-show predictions and revenue optimization insights using Gemini 2.5
+ * Provides no-show predictions and revenue optimization insights
+ * Uses XGBoost ML model (v2.0) with fallback to heuristic scoring
  */
 
 const {
@@ -8,6 +9,7 @@ const {
   getActiveServiceRecords
 } = require('./_lib/supabase');
 
+const { getPrediction, isModelAvailable } = require('./_lib/ml-service');
 const axios = require('axios');
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
@@ -68,55 +70,52 @@ async function predictNoShowRisks() {
 
   const historicalNoShowRate = totalPast > 0 ? (cancelledOrNoShow / totalPast) : 0.15;
 
+  // Check if ML model is available
+  const mlAvailable = isModelAvailable();
+  console.log(`ML Model ${mlAvailable ? 'available' : 'not available'} - using ${mlAvailable ? 'XGBoost v2.0' : 'heuristic v1.1'}`);
+
   // Predict risk for each upcoming reservation
-  const predictions = upcomingReservations.map(r => {
+  const predictions = await Promise.all(upcomingReservations.map(async (r) => {
     const resDate = new Date(r.fields.Date);
     const resTime = r.fields.Time || '19:00';
     const partySize = r.fields['Party Size'] || 2;
     const daysAhead = Math.ceil((resDate - now) / (1000 * 60 * 60 * 24));
 
-    // Try to use ML predictions first, fall back to heuristics
-    const mlRiskScore = r.fields['ML Risk Score']; // 0-100
-    const mlRiskLevel = r.fields['ML Risk Level']; // low, medium, high, very-high
-
     let riskScore;
     let riskLevel;
+    let predictionMethod = 'heuristic';
 
-    if (mlRiskScore !== undefined && mlRiskScore !== null && mlRiskLevel) {
-      // Use ML predictions (already 0-100 scale)
-      riskScore = parseFloat(mlRiskScore);
+    try {
+      // Get ML prediction with automatic fallback
+      const prediction = await getPrediction(r, {
+        useML: true,
+        fallbackToHeuristic: true
+      });
+
+      riskScore = prediction.risk_score; // Already 0-100 scale
+      riskLevel = prediction.risk_level;
+      predictionMethod = prediction.method;
+
       // Map very-high to high for frontend compatibility
-      riskLevel = mlRiskLevel === 'very-high' ? 'high' : mlRiskLevel;
-    } else {
-      // Fall back to heuristic calculation
+      if (riskLevel === 'very-high') {
+        riskLevel = 'high';
+      }
+    } catch (error) {
+      console.error('Prediction error for reservation:', r.fields['Reservation ID'], error.message);
+
+      // Emergency fallback to simple heuristic
       riskScore = historicalNoShowRate;
+      if (daysAhead === 0) riskScore += 0.15;
+      if (partySize >= 6) riskScore += 0.10;
 
-      // Last-minute bookings (< 24 hours) are higher risk
-      if (daysAhead === 0) {
-        riskScore += 0.15;
-      }
-
-      // Large parties are slightly higher risk
-      if (partySize >= 6) {
-        riskScore += 0.10;
-      }
-
-      // Prime time slots (7-9 PM) are lower risk
       const hour = parseInt(resTime.split(':')[0]);
-      if (hour >= 19 && hour <= 21) {
-        riskScore -= 0.05;
-      }
+      if (hour >= 19 && hour <= 21) riskScore -= 0.05;
 
-      // Weekend bookings are lower risk
       const dayOfWeek = resDate.getDay();
-      if (dayOfWeek === 5 || dayOfWeek === 6) { // Friday or Saturday
-        riskScore -= 0.05;
-      }
+      if (dayOfWeek === 5 || dayOfWeek === 6) riskScore -= 0.05;
 
-      // Cap between 0 and 1, then convert to 0-100
       riskScore = Math.max(0, Math.min(1, riskScore)) * 100;
 
-      // Determine risk level
       riskLevel = 'low';
       if (riskScore > 40) riskLevel = 'high';
       else if (riskScore > 20) riskLevel = 'medium';
@@ -142,9 +141,11 @@ async function predictNoShowRisks() {
       risk_score: parseFloat(riskScore.toFixed(1)), // Already 0-100 scale
       risk_level: riskLevel,
       days_until: daysAhead,
-      recommendations
+      recommendations,
+      prediction_method: predictionMethod, // 'ml' or 'heuristic'
+      model_version: predictionMethod === 'ml' ? 'v2.0-xgboost' : 'v1.1-heuristic'
     };
-  });
+  }));
 
   // Sort by risk score (highest first)
   predictions.sort((a, b) => b.risk_score - a.risk_score);
