@@ -1,5 +1,6 @@
 import DashboardLayout from '../components/layout/DashboardLayout';
 import LTVDashboard from '../components/host/LTVDashboard';
+import AnalyticsGuide from '../components/common/AnalyticsGuide';
 
 export default function CustomerLTVPage() {
   return (
@@ -11,6 +12,11 @@ export default function CustomerLTVPage() {
           <p className="text-muted-foreground">
             Understand your most valuable customers and identify churn risks
           </p>
+        </div>
+
+        {/* Simple Guide - First! */}
+        <div className="max-w-7xl mb-8">
+          <AnalyticsGuide page="ltv" />
         </div>
 
         {/* LTV Dashboard - Full Width */}

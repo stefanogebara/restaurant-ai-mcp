@@ -1,5 +1,6 @@
 import DashboardLayout from '../components/layout/DashboardLayout';
 import MLROIWidget from '../components/host/MLROIWidget';
+import AnalyticsGuide from '../components/common/AnalyticsGuide';
 
 export default function MLPerformancePage() {
   return (
@@ -11,6 +12,11 @@ export default function MLPerformancePage() {
           <p className="text-muted-foreground">
             Track your AI-powered interventions and return on investment
           </p>
+        </div>
+
+        {/* Simple Guide - First! */}
+        <div className="max-w-7xl mb-8">
+          <AnalyticsGuide page="ml" />
         </div>
 
         {/* ML ROI Widget - Full Width */}

@@ -1,5 +1,6 @@
 import DashboardLayout from '../components/layout/DashboardLayout';
 import PricingAnalytics from '../components/host/PricingAnalytics';
+import AnalyticsGuide from '../components/common/AnalyticsGuide';
 
 export default function PricingAnalyticsPage() {
   return (
@@ -11,6 +12,11 @@ export default function PricingAnalyticsPage() {
           <p className="text-muted-foreground">
             Measure the impact of your dynamic pricing strategies on revenue
           </p>
+        </div>
+
+        {/* Simple Guide - First! */}
+        <div className="max-w-7xl mb-8">
+          <AnalyticsGuide page="pricing" />
         </div>
 
         {/* Pricing Analytics - Full Width */}

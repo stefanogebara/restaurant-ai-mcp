@@ -123,19 +123,41 @@ async function handleWeeklyReport(req, res) {
     // CALCULATE METRICS
     // ============================================================================
 
-    // Total covers (party sizes from completed services)
-    const currentCovers = currentServices?.reduce((sum, s) => sum + (s.party_size || 0), 0) || 0;
-    const prevCovers = prevServices?.reduce((sum, s) => sum + (s.party_size || 0), 0) || 0;
+    // If no completed services, fall back to using reservations data
+    // This handles cases where restaurants don't mark services as completed
+    const useReservationsFallback = (!currentServices || currentServices.length === 0) && currentReservations?.length > 0;
+
+    let currentCovers, prevCovers, currentReservationCount, currentWalkInCount, avgPartySize;
+
+    if (useReservationsFallback) {
+      // Fallback: Use reservations data (exclude cancelled)
+      const validCurrentReservations = currentReservations?.filter(r => r.status !== 'cancelled') || [];
+      const validPrevReservations = prevReservations?.filter(r => r.status !== 'cancelled') || [];
+
+      currentCovers = validCurrentReservations.reduce((sum, r) => sum + (r.party_size || 0), 0);
+      prevCovers = validPrevReservations.reduce((sum, r) => sum + (r.party_size || 0), 0);
+
+      // All are reservations since we're using reservation data
+      currentReservationCount = validCurrentReservations.length;
+      currentWalkInCount = 0;
+
+      avgPartySize = validCurrentReservations.length > 0
+        ? currentCovers / validCurrentReservations.length
+        : 0;
+    } else {
+      // Normal path: Use service records
+      currentCovers = currentServices?.reduce((sum, s) => sum + (s.party_size || 0), 0) || 0;
+      prevCovers = prevServices?.reduce((sum, s) => sum + (s.party_size || 0), 0) || 0;
+
+      currentReservationCount = currentServices?.filter(s => s.reservation_id).length || 0;
+      currentWalkInCount = currentServices?.filter(s => !s.reservation_id).length || 0;
+
+      avgPartySize = currentServices?.length > 0
+        ? currentCovers / currentServices.length
+        : 0;
+    }
+
     const coversChange = prevCovers > 0 ? ((currentCovers - prevCovers) / prevCovers) * 100 : 0;
-
-    // Reservation vs Walk-in breakdown
-    const currentReservationCount = currentServices?.filter(s => s.reservation_id).length || 0;
-    const currentWalkInCount = currentServices?.filter(s => !s.reservation_id).length || 0;
-
-    // Average party size
-    const avgPartySize = currentServices?.length > 0
-      ? currentCovers / currentServices.length
-      : 0;
 
     // Cancellation rate
     const cancelledReservations = currentReservations?.filter(r => r.status === 'cancelled').length || 0;
@@ -150,11 +172,23 @@ async function handleWeeklyReport(req, res) {
 
     // Group by day of week
     const dayOfWeekCounts = {};
-    currentServices?.forEach(service => {
-      const date = new Date(service.seated_at);
-      const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
-      dayOfWeekCounts[dayName] = (dayOfWeekCounts[dayName] || 0) + (service.party_size || 0);
-    });
+
+    if (useReservationsFallback) {
+      // Use reservation dates
+      const validReservations = currentReservations?.filter(r => r.status !== 'cancelled') || [];
+      validReservations.forEach(reservation => {
+        const date = new Date(reservation.date);
+        const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+        dayOfWeekCounts[dayName] = (dayOfWeekCounts[dayName] || 0) + (reservation.party_size || 0);
+      });
+    } else {
+      // Use service seated times
+      currentServices?.forEach(service => {
+        const date = new Date(service.seated_at);
+        const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+        dayOfWeekCounts[dayName] = (dayOfWeekCounts[dayName] || 0) + (service.party_size || 0);
+      });
+    }
 
     const busiestDays = Object.entries(dayOfWeekCounts)
       .map(([day, covers]) => ({ day, covers }))
@@ -163,12 +197,30 @@ async function handleWeeklyReport(req, res) {
 
     // Group by hour
     const hourCounts = {};
-    currentServices?.forEach(service => {
-      const date = new Date(service.seated_at);
-      const hour = date.getHours();
-      const timeSlot = `${hour}:00`;
-      hourCounts[timeSlot] = (hourCounts[timeSlot] || 0) + (service.party_size || 0);
-    });
+
+    if (useReservationsFallback) {
+      // Use reservation times
+      const validReservations = currentReservations?.filter(r => r.status !== 'cancelled') || [];
+      validReservations.forEach(reservation => {
+        if (reservation.time) {
+          // Parse time string (e.g., "19:00" or "7:00 PM")
+          const timeParts = reservation.time.match(/(\d+):(\d+)/);
+          if (timeParts) {
+            const hour = parseInt(timeParts[1]);
+            const timeSlot = `${hour}:00`;
+            hourCounts[timeSlot] = (hourCounts[timeSlot] || 0) + (reservation.party_size || 0);
+          }
+        }
+      });
+    } else {
+      // Use service seated times
+      currentServices?.forEach(service => {
+        const date = new Date(service.seated_at);
+        const hour = date.getHours();
+        const timeSlot = `${hour}:00`;
+        hourCounts[timeSlot] = (hourCounts[timeSlot] || 0) + (service.party_size || 0);
+      });
+    }
 
     const busiestTimes = Object.entries(hourCounts)
       .map(([time, covers]) => ({ time, covers }))

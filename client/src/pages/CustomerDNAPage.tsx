@@ -1,5 +1,6 @@
 import DashboardLayout from '../components/layout/DashboardLayout';
 import CustomerDNADashboard from '../components/host/CustomerDNADashboard';
+import AnalyticsGuide from '../components/common/AnalyticsGuide';
 
 export default function CustomerDNAPage() {
   return (
@@ -11,6 +12,11 @@ export default function CustomerDNAPage() {
           <p className="text-muted-foreground">
             Deep behavioral insights into your customers' dining patterns and preferences
           </p>
+        </div>
+
+        {/* Simple Guide - First! */}
+        <div className="max-w-7xl mb-8">
+          <AnalyticsGuide page="dna" />
         </div>
 
         {/* Customer DNA Dashboard - Full Width */}
