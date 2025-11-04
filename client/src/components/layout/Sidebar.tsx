@@ -6,6 +6,7 @@ import {
   DollarSign,
   BarChart3,
   Dna,
+  Globe,
   ChevronLeft,
   Menu
 } from 'lucide-react';
@@ -55,6 +56,12 @@ const navItems: NavItem[] = [
     label: 'Customer DNA',
     icon: <Dna className="w-5 h-5" />,
     description: 'Behavioral Profiling'
+  },
+  {
+    path: '/host-dashboard/segovia',
+    label: 'Segovia Insights',
+    icon: <Globe className="w-5 h-5" />,
+    description: 'Tourism Analytics'
   }
 ];
 

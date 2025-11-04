@@ -11,6 +11,7 @@ import CustomerLTVPage from './pages/CustomerLTVPage';
 import PricingRulesPage from './pages/PricingRulesPage';
 import PricingAnalyticsPage from './pages/PricingAnalyticsPage';
 import CustomerDNAPage from './pages/CustomerDNAPage';
+import SegoviaInsightsPage from './pages/SegoviaInsightsPage';
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
 // Observability moved to admin-only access (not for restaurant users)
 // import ObservabilityDashboard from './pages/ObservabilityDashboard';
@@ -46,6 +47,7 @@ function App() {
             <Route path="/host-dashboard/pricing" element={<PricingRulesPage />} />
             <Route path="/host-dashboard/analytics" element={<PricingAnalyticsPage />} />
             <Route path="/host-dashboard/dna" element={<CustomerDNAPage />} />
+            <Route path="/host-dashboard/segovia" element={<SegoviaInsightsPage />} />
             <Route path="/analytics" element={<AnalyticsDashboard />} />
             {/* Observability removed - developer-only metrics, not for restaurant users */}
             {/* <Route path="/observability" element={<ObservabilityDashboard />} /> */}

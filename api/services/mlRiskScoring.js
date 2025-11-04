@@ -14,7 +14,7 @@ const supabase = createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
-const MODEL_VERSION = 'v1.0-heuristic';
+const MODEL_VERSION = 'v1.1-heuristic-segovia'; // Updated with Segovia-specific factors
 
 /**
  * Risk Factors (based on restaurant industry research):
@@ -117,6 +117,55 @@ async function calculateRiskScore(reservation) {
   if (!customer_email) {
     riskScore += 10;
     factors.push({ factor: 'no_email', impact: 10, description: 'Phone only contact' });
+  }
+
+  // === SEGOVIA-SPECIFIC RISK FACTORS (NEW!) ===
+
+  // Factor 6: Customer Type - Tourist vs Local (15 points)
+  if (reservation.customer_type === 'Tourist') {
+    riskScore += 15;
+    factors.push({ factor: 'tourist', impact: 15, description: 'International tourist (travel uncertainty)' });
+  } else if (reservation.customer_type === 'Local') {
+    riskScore -= 5;
+    factors.push({ factor: 'local', impact: -5, description: 'Local customer (more reliable)' });
+  }
+
+  // Factor 7: Language Barrier (10 points)
+  if (reservation.language_preference && reservation.language_preference !== 'Spanish') {
+    riskScore += 10;
+    factors.push({ factor: 'language_barrier', impact: 10, description: `${reservation.language_preference} speaker (communication risk)` });
+  }
+
+  // Factor 8: Special Occasion (Reduces Risk!) (-10 points)
+  if (reservation.special_occasion) {
+    const lowRiskOccasions = ['Birthday', 'Anniversary', 'Celebration'];
+    if (lowRiskOccasions.includes(reservation.special_occasion)) {
+      riskScore -= 10;
+      factors.push({ factor: 'special_occasion', impact: -10, description: `${reservation.special_occasion} (high commitment)` });
+    }
+  }
+
+  // Factor 9: Terrace Seating Weather Risk (12 points)
+  // Terrace requests are popular in Segovia but weather-dependent
+  if (reservation.seating_preference === 'Terrace') {
+    // Check if it's a last-minute booking (weather uncertainty)
+    if (leadTimeHours < 24) {
+      riskScore += 12;
+      factors.push({ factor: 'terrace_weather_risk', impact: 12, description: 'Last-minute terrace request (weather risk)' });
+    }
+  }
+
+  // Factor 10: Dietary Restrictions - Cochinillo Alternatives (5 points)
+  // Customers with dietary restrictions are more intentional
+  if (reservation.dietary_restrictions && reservation.dietary_restrictions.length > 0) {
+    riskScore -= 5;
+    factors.push({ factor: 'dietary_needs', impact: -5, description: `${reservation.dietary_restrictions.join(', ')} (intentional planning)` });
+  }
+
+  // Factor 11: First-Time Visitor (8 points)
+  if (reservation.first_time_visitor === true) {
+    riskScore += 8;
+    factors.push({ factor: 'first_timer', impact: 8, description: 'First visit to restaurant' });
   }
 
   // Normalize score to 0-100
