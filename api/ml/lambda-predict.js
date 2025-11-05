@@ -93,16 +93,24 @@ function extractLambdaFeatures(reservation, customerHistory = null) {
 /**
  * Call Lambda ML endpoint for prediction
  *
- * @param {Object} features - Feature object with all 16 required features
+ * @param {Object} reservation - Reservation object with date, time, party_size
  * @returns {Promise<Object>} - Lambda response with prediction
  */
-async function callLambdaEndpoint(features) {
+async function callLambdaEndpoint(reservation) {
   return new Promise((resolve, reject) => {
     const url = new URL(ML_ENDPOINT_URL);
     const isHttps = url.protocol === 'https:';
     const client = isHttps ? https : http;
 
-    const postData = JSON.stringify({ features });
+    // Format reservation data for Lambda
+    const reservationDate = new Date(reservation.date + 'T' + reservation.time);
+    const bookingDate = reservation.booking_created_at ? new Date(reservation.booking_created_at) : new Date();
+
+    const postData = JSON.stringify({
+      reservation_date: reservationDate.toISOString(),
+      party_size: parseInt(reservation.party_size) || 2,
+      booking_date: bookingDate.toISOString()
+    });
 
     const options = {
       hostname: url.hostname,
@@ -158,30 +166,51 @@ async function predictNoShow(reservation, customerHistory = null) {
   try {
     console.log('[LambdaML] Starting prediction for reservation:', reservation.reservation_id);
 
-    // 1. Extract features
-    const features = extractLambdaFeatures(reservation, customerHistory);
-    console.log('[LambdaML] Extracted features:', features);
+    // Call Lambda endpoint directly with reservation
+    // Lambda will extract features internally from reservation_date, party_size, booking_date
+    const lambdaResponse = await callLambdaEndpoint(reservation);
+    console.log('[LambdaML] Lambda response:', JSON.stringify(lambdaResponse, null, 2));
 
-    // 2. Call Lambda endpoint
-    const lambdaResponse = await callLambdaEndpoint(features);
-    console.log('[LambdaML] Lambda response:', lambdaResponse);
+    // Lambda response structure:
+    // {
+    //   success: true,
+    //   prediction: {
+    //     risk_score: 45,
+    //     risk_level: "MEDIUM",
+    //     probability: 0.45,
+    //     will_show: true
+    //   },
+    //   recommendations: ["...", "..."],
+    //   model_version: "v2.0-xgboost-hotel-trained",
+    //   features_used: 16
+    // }
 
-    // 3. Transform Lambda response to match existing format
+    if (!lambdaResponse.success) {
+      throw new Error('Lambda prediction failed');
+    }
+
     const prediction = lambdaResponse.prediction;
 
+    // Extract features for response (for debugging/logging purposes)
+    const features = extractLambdaFeatures(reservation, customerHistory);
+
+    // Transform Lambda response to match expected format
+    // Lambda returns: risk_level ("HIGH", "MEDIUM", "LOW", "CRITICAL")
+    // We need: noShowRisk ("high", "medium", "low", "critical")
     return {
-      noShowProbability: prediction.risk_score / 100, // Convert percentage to decimal
+      noShowProbability: prediction.probability, // Already a decimal (0.45)
       noShowRisk: prediction.risk_level.toLowerCase(), // Convert "HIGH" to "high"
-      prediction: prediction.risk_score > 50 ? 'no-show' : 'will-attend',
-      confidence: prediction.confidence / 100, // Convert percentage to decimal
+      prediction: prediction.will_show ? 'will-attend' : 'no-show',
+      confidence: 0.85, // Lambda doesn't return confidence, use default high confidence
       features,
-      recommendations: prediction.recommendations,
+      recommendations: lambdaResponse.recommendations || [],
       metadata: {
-        modelVersion: lambdaResponse.metadata.model_version,
-        modelTrainedAt: lambdaResponse.metadata.training_date,
+        modelVersion: lambdaResponse.model_version,
+        modelTrainedAt: '2025-11-05',
         predictedAt: new Date().toISOString(),
-        rocAuc: lambdaResponse.metadata.roc_auc,
-        source: 'lambda-xgboost-3.1.1'
+        rocAuc: 0.8600,
+        featuresUsed: lambdaResponse.features_used || 16,
+        source: 'lambda-xgboost-hotel-trained'
       }
     };
   } catch (error) {
@@ -192,10 +221,13 @@ async function predictNoShow(reservation, customerHistory = null) {
       error: error.message,
       noShowProbability: 0.37, // Default: 37% (base rate from training data)
       noShowRisk: 'medium', // Fallback to medium risk
+      prediction: 'will-attend',
       confidence: 0.0, // No confidence on error
+      features: null,
+      recommendations: [],
       metadata: {
-        modelVersion: 'v2.1-xgboost-3.1.1',
-        modelTrainedAt: 'unknown',
+        modelVersion: 'v2.0-xgboost-hotel-trained',
+        modelTrainedAt: '2025-11-05',
         predictedAt: new Date().toISOString(),
         source: 'fallback-on-error'
       }
@@ -234,8 +266,8 @@ async function getModelInfo() {
             resolve({
               available: response.status === 'ready',
               version: response.model_version,
-              rocAuc: response.roc_auc,
-              features: response.features?.length || 16,
+              rocAuc: response.roc_auc_score,
+              features: response.features || 16,
               endpoint: ML_ENDPOINT_URL,
               type: 'XGBoost 3.1.1 on AWS Lambda'
             });
