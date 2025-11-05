@@ -6,4 +6,12 @@ node_modules
 .claude/settings.local.json
 gcp-credentials.json
 *-credentials.json
+
+# Training data - exclude from git
 hotel_bookings.csv
+ml-training-data/
+ml-training/
+scripts/train-ml-model.py
+
+# Keep ml_models/ but it's tracked
+# Keep model_metadata.json, feature_importance.csv (small files)

@@ -1,0 +1,12 @@
+# Exclude training data and large files from Vercel deployments
+ml-training-data/
+ml-training/
+hotel_bookings.csv
+scripts/train-ml-model.py
+
+# Exclude development files
+*.log
+.env.local
+.claude/
+
+# Keep ml_models/ - we need the trained model for production
