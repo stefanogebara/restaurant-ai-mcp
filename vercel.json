@@ -11,11 +11,6 @@
     "api/**/*.js": {
       "runtime": "nodejs20.x"
     },
-    "api/ml-predict.py": {
-      "maxDuration": 10,
-      "memory": 1024,
-      "runtime": "@vercel/python@4.3.1"
-    },
     "api/predictive-analytics.js": {
       "maxDuration": 30,
       "memory": 1024,
