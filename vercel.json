@@ -8,13 +8,9 @@
     }
   },
   "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs20.x"
-    },
     "api/predictive-analytics.js": {
       "maxDuration": 30,
-      "memory": 1024,
-      "runtime": "nodejs20.x"
+      "memory": 1024
     }
   },
   "rewrites": [
