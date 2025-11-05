@@ -15,3 +15,8 @@ scripts/train-ml-model.py
 
 # Keep ml_models/ but it's tracked
 # Keep model_metadata.json, feature_importance.csv (small files)
+
+# Lambda deployment artifacts
+lambda/package/
+lambda/lambda-package.zip
+lambda/trust-policy.json
