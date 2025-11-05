@@ -5,11 +5,13 @@
  * - Restaurant name
  * - Restaurant type
  * - Location (city, country)
+ * - Preferred language
  */
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
+import LanguageSelector from '../common/LanguageSelector';
 import '../../landing/styles/glass-morphism.css';
 
 const RESTAURANT_TYPES = [
@@ -141,6 +143,28 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
           {errors.country && (
             <p className="mt-1 text-sm text-red-400">{errors.country}</p>
           )}
+        </div>
+      </div>
+
+      {/* Language Selection */}
+      <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-white mb-1">
+            Choose Your Language
+          </h3>
+          <p className="text-sm text-gray-300">
+            Select the language for your dashboard and customer communications
+          </p>
+        </div>
+        <div className="language-selector-onboarding">
+          <LanguageSelector
+            variant="buttons"
+            size="md"
+            showLabel={false}
+            onLanguageChange={(lang) => {
+              updateData({ language: lang });
+            }}
+          />
         </div>
       </div>
 

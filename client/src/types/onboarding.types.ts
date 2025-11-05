@@ -34,6 +34,7 @@ export interface OnboardingData {
   restaurant_type: string;
   city: string;
   country: string;
+  language?: string; // Preferred language (en, es, pt, fr, it)
   // Step 2: Contact & Business Hours
   phone_number: string;
   email: string;

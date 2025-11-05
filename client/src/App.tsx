@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import "./i18n/config";
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './contexts/ToastContext';
 import { SidebarProvider } from './contexts/SidebarContext';
@@ -21,6 +22,7 @@ import CustomerPortal from './pages/CustomerPortal';
 import SubscriptionSuccess from './pages/SubscriptionSuccess';
 import SubscriptionManage from './pages/SubscriptionManage';
 import Onboarding from './pages/Onboarding';
+import LanguageSettings from './pages/LanguageSettings';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -57,6 +59,7 @@ function App() {
             <Route path="/subscription/success" element={<SubscriptionSuccess />} />
             <Route path="/subscription/manage" element={<SubscriptionManage />} />
             <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/settings/language" element={<LanguageSettings />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
