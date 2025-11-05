@@ -13,7 +13,8 @@ const {
   getCustomerStats
 } = require('./_lib/customer-history');
 
-const { predictNoShow } = require('./ml/predict');
+// Use Lambda ML endpoint for production predictions (XGBoost 3.1.1 on AWS Lambda)
+const { predictNoShow } = require('./ml/lambda-predict');
 const { logReservationCreated, logCustomerCancelled } = require('./ml/data-logger');
 
 module.exports = async (req, res) => {
