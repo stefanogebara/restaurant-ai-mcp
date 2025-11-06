@@ -8,9 +8,13 @@
     }
   },
   "functions": {
+    "api/**/*.js": {
+      "excludeFiles": "lambda/**"
+    },
     "api/predictive-analytics.js": {
       "maxDuration": 30,
-      "memory": 1024
+      "memory": 1024,
+      "excludeFiles": "lambda/**"
     }
   },
   "rewrites": [
