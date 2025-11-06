@@ -2,6 +2,8 @@
  * Onboarding Types
  */
 
+import type { ProfileQuestionnaireData } from './profile.types';
+
 export interface BusinessHours {
   day: string;
   is_open: boolean;
@@ -34,7 +36,9 @@ export interface OnboardingData {
   restaurant_type: string;
   city: string;
   country: string;
-  language?: string; // Preferred language (en, es, pt, fr, it)
+  language?: string;
+  // Step 1.5: Restaurant Profile (Optional)
+  profile_data?: ProfileQuestionnaireData;
   // Step 2: Contact & Business Hours
   phone_number: string;
   email: string;

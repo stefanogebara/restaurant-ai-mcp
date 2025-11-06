@@ -1,12 +1,13 @@
 /**
  * Restaurant Onboarding Wizard
  *
- * 5-step onboarding flow for new restaurant customers:
+ * 6-step onboarding flow for new restaurant customers:
  * 1. Welcome & Restaurant Info
- * 2. Contact & Business Hours
- * 3. Table Configuration
- * 4. Reservation Settings
- * 5. Team Setup (Pro+ only)
+ * 2. Dashboard Profile (customize metrics & preferences)
+ * 3. Contact & Business Hours
+ * 4. Table Configuration
+ * 5. Reservation Settings
+ * 6. Team Setup (Pro+ only)
  */
 
 import { useState, useEffect } from 'react';
@@ -14,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import Step1Welcome from '../components/onboarding/Step1Welcome';
+import Step1_5Profile from '../components/onboarding/Step1_5Profile';
 import Step2Contact from '../components/onboarding/Step2Contact';
 import Step3Tables from '../components/onboarding/Step3Tables';
 import Step4Settings from '../components/onboarding/Step4Settings';
@@ -90,7 +92,7 @@ export default function Onboarding() {
 
   // Navigate to next step
   const nextStep = () => {
-    if (currentStep < 5) {
+    if (currentStep < 6) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -135,7 +137,7 @@ export default function Onboarding() {
   };
 
   // Progress bar percentage
-  const progressPercentage = (currentStep / 5) * 100;
+  const progressPercentage = (currentStep / 6) * 100;
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-6 relative overflow-hidden">
@@ -167,7 +169,7 @@ export default function Onboarding() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold text-gray-300">
-              Step {currentStep} of 5
+              Step {currentStep} of 6
             </span>
             <span className="text-sm font-semibold text-gray-300">
               {Math.round(progressPercentage)}% Complete
@@ -199,6 +201,15 @@ export default function Onboarding() {
               />
             )}
             {currentStep === 2 && (
+              <Step1_5Profile
+                key="step1.5"
+                data={onboardingData}
+                updateData={updateData}
+                onNext={nextStep}
+                onBack={prevStep}
+              />
+            )}
+            {currentStep === 3 && (
               <Step2Contact
                 key="step2"
                 data={onboardingData}
@@ -207,7 +218,7 @@ export default function Onboarding() {
                 onBack={prevStep}
               />
             )}
-            {currentStep === 3 && (
+            {currentStep === 4 && (
               <Step3Tables
                 key="step3"
                 data={onboardingData}
@@ -216,7 +227,7 @@ export default function Onboarding() {
                 onBack={prevStep}
               />
             )}
-            {currentStep === 4 && (
+            {currentStep === 5 && (
               <Step4Settings
                 key="step4"
                 data={onboardingData}
@@ -225,7 +236,7 @@ export default function Onboarding() {
                 onBack={prevStep}
               />
             )}
-            {currentStep === 5 && (
+            {currentStep === 6 && (
               <Step5Team
                 key="step5"
                 data={onboardingData}
