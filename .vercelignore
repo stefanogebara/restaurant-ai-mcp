@@ -8,6 +8,9 @@ scripts/train-ml-model.py
 # This directory contains 400+ MB of Python dependencies not needed for Vercel
 lambda/
 
+# Exclude Python dependencies (only needed for Lambda, not Vercel)
+requirements.txt
+
 # Exclude development files
 *.log
 .env.local
