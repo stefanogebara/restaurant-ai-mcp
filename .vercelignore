@@ -4,9 +4,17 @@ ml-training/
 hotel_bookings.csv
 scripts/train-ml-model.py
 
+# Exclude Lambda deployment packages (they're deployed separately to AWS Lambda)
+lambda/*.zip
+lambda/lambda-package-extracted/
+lambda/layer/
+lambda/python/
+lambda/.aws-sam/
+
 # Exclude development files
 *.log
 .env.local
 .claude/
 
 # Keep ml_models/ - we need the trained model for production
+# Keep lambda/*.py and lambda/*.js - we need the Lambda function code
