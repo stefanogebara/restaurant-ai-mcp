@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { hostAPI } from '../services/hostAPI';
+import { hostAPI } from '../services/api';
 import WalkInModal from '../components/host/WalkInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
@@ -92,7 +92,6 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
   const stats = dashboardData?.data || {};
   const tables = dashboardData?.data?.tables || [];
   const reservations = dashboardData?.data?.upcomingReservations || [];
-  const activeParties = dashboardData?.data?.activeParties || [];
 
   // Filter today's reservations
   const today = new Date().toISOString().split('T')[0];
@@ -101,6 +100,9 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
   // Calculate occupied tables
   const occupiedTables = tables.filter((t: any) => t.status === 'Occupied').length;
   const totalTables = tables.length;
+
+  // Get available tables for modals
+  const availableTables = tables.filter((t: any) => t.status === 'Available');
 
   const handleWalkInSuccess = (partyData: any) => {
     setSelectedParty(partyData);
@@ -255,31 +257,35 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
       {/* Modals */}
       {showWalkInModal && (
         <WalkInModal
+          isOpen={showWalkInModal}
           onClose={() => setShowWalkInModal(false)}
           onSuccess={handleWalkInSuccess}
+          availableTables={availableTables}
         />
       )}
 
       {showCheckInModal && selectedReservation && (
         <CheckInModal
+          isOpen={showCheckInModal}
           reservation={selectedReservation}
           onClose={() => {
             setShowCheckInModal(false);
             setSelectedReservation(null);
           }}
           onSuccess={handleCheckInSuccess}
+          availableTables={availableTables}
         />
       )}
 
       {showSeatModal && (selectedParty || selectedReservation) && (
         <SeatPartyModal
-          partyData={selectedParty || selectedReservation}
+          isOpen={showSeatModal}
+          data={selectedParty || selectedReservation}
           onClose={() => {
             setShowSeatModal(false);
             setSelectedParty(null);
             setSelectedReservation(null);
           }}
-          onSuccess={handleSeatSuccess}
         />
       )}
     </div>
