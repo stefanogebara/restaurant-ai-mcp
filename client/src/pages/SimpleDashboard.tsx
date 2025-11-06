@@ -21,9 +21,36 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
 
   // Load complexity preference from localStorage
   useEffect(() => {
+    // First priority: Explicit dashboard complexity preference
     const saved = localStorage.getItem('dashboard-complexity');
     if (saved && ['esencial', 'estándar', 'completo'].includes(saved)) {
       setComplexity(saved as ComplexityLevel);
+      return;
+    }
+
+    // Second priority: Onboarding template preference
+    try {
+      const onboardingData = localStorage.getItem('onboarding_data');
+      if (onboardingData) {
+        const data = JSON.parse(onboardingData);
+        const template = data?.profile_data?.template;
+
+        // Map onboarding template to complexity level
+        const templateMap: Record<string, ComplexityLevel> = {
+          'simple': 'esencial',
+          'balanced': 'estándar',
+          'advanced': 'completo',
+        };
+
+        if (template && templateMap[template]) {
+          setComplexity(templateMap[template]);
+          // Save the mapped preference for future visits
+          localStorage.setItem('dashboard-complexity', templateMap[template]);
+        }
+      }
+    } catch (error) {
+      // If parsing fails, just use default ('esencial')
+      console.error('Error loading onboarding template preference:', error);
     }
   }, []);
 
