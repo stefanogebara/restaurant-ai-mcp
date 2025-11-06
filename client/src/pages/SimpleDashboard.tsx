@@ -278,6 +278,7 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
             setShowSeatModal(false);
             setSelectedParty(null);
             setSelectedReservation(null);
+            refetch();
           }}
         />
       )}
