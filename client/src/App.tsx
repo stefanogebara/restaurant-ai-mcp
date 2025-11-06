@@ -5,6 +5,7 @@ import { ToastProvider } from './contexts/ToastContext';
 import { SidebarProvider } from './contexts/SidebarContext';
 import LandingPage from './landing/pages/LandingPage';
 import LiveAIDemo from './pages/LiveAIDemo';
+import SimpleDashboard from './pages/SimpleDashboard';
 import HostDashboard from './pages/HostDashboard';
 import WeeklyReport from './pages/WeeklyReport';
 import MLPerformancePage from './pages/MLPerformancePage';
@@ -14,10 +15,6 @@ import PricingAnalyticsPage from './pages/PricingAnalyticsPage';
 import CustomerDNAPage from './pages/CustomerDNAPage';
 import SegoviaInsightsPage from './pages/SegoviaInsightsPage';
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
-// Observability moved to admin-only access (not for restaurant users)
-// import ObservabilityDashboard from './pages/ObservabilityDashboard';
-// Waitlist page removed - feature integrated into Host Dashboard sidebar
-// import WaitlistPage from './pages/WaitlistPage';
 import CustomerPortal from './pages/CustomerPortal';
 import SubscriptionSuccess from './pages/SubscriptionSuccess';
 import SubscriptionManage from './pages/SubscriptionManage';
@@ -42,7 +39,11 @@ function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/live-demo" element={<LiveAIDemo />} />
-            <Route path="/host-dashboard" element={<HostDashboard />} />
+            {/* Simple Dashboard - Default for new users (Spanish) */}
+            <Route path="/host-dashboard" element={<Navigate to="/host-dashboard/simple" replace />} />
+            <Route path="/host-dashboard/simple" element={<SimpleDashboard language="es" />} />
+            {/* Advanced Dashboard - All features for power users */}
+            <Route path="/host-dashboard/advanced" element={<HostDashboard />} />
             <Route path="/host-dashboard/reports" element={<WeeklyReport />} />
             <Route path="/host-dashboard/ml" element={<MLPerformancePage />} />
             <Route path="/host-dashboard/ltv" element={<CustomerLTVPage />} />
@@ -51,10 +52,6 @@ function App() {
             <Route path="/host-dashboard/dna" element={<CustomerDNAPage />} />
             <Route path="/host-dashboard/segovia" element={<SegoviaInsightsPage />} />
             <Route path="/analytics" element={<AnalyticsDashboard />} />
-            {/* Observability removed - developer-only metrics, not for restaurant users */}
-            {/* <Route path="/observability" element={<ObservabilityDashboard />} /> */}
-            {/* Waitlist page removed - feature fully integrated into Host Dashboard sidebar */}
-            {/* <Route path="/waitlist" element={<WaitlistPage />} /> */}
             <Route path="/customer" element={<CustomerPortal />} />
             <Route path="/subscription/success" element={<SubscriptionSuccess />} />
             <Route path="/subscription/manage" element={<SubscriptionManage />} />
