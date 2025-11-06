@@ -5,7 +5,7 @@
  * enabling dashboard components to access and use customization settings.
  */
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { RestaurantProfile } from '../types/profile.types';
 import { TEMPLATE_CONFIGS } from '../types/profile.types';
 

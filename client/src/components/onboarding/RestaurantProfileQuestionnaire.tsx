@@ -299,7 +299,7 @@ export default function RestaurantProfileQuestionnaire({
     const toggleConcern = (concern: PrimaryConcern) => {
       const current = selectedConcerns;
       if (current.includes(concern)) {
-        setValue('primary_concerns', current.filter((c) => c !== concern));
+        setValue('primary_concerns', current.filter((c: PrimaryConcern) => c !== concern));
       } else {
         if (current.length < 5) {
           setValue('primary_concerns', [...current, concern]);
