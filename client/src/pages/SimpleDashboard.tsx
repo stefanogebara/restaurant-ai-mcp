@@ -1,20 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { hostAPI } from '../services/api';
 import WalkInModal from '../components/host/WalkInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
 
+type ComplexityLevel = 'esencial' | 'estándar' | 'completo';
+
 interface SimpleDashboardProps {
   language?: 'es' | 'en';
 }
 
 export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProps) {
+  const [complexity, setComplexity] = useState<ComplexityLevel>('esencial');
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [showSeatModal, setShowSeatModal] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [selectedParty, setSelectedParty] = useState<any>(null);
   const [selectedReservation, setSelectedReservation] = useState<any>(null);
+
+  // Load complexity preference from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('dashboard-complexity');
+    if (saved && ['esencial', 'estándar', 'completo'].includes(saved)) {
+      setComplexity(saved as ComplexityLevel);
+    }
+  }, []);
+
+  // Save complexity preference to localStorage
+  const handleComplexityChange = (level: ComplexityLevel) => {
+    setComplexity(level);
+    localStorage.setItem('dashboard-complexity', level);
+  };
 
   // Fetch dashboard data
   const { data: dashboardData, refetch } = useQuery({
@@ -39,6 +56,14 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
       people: 'personas',
       allClear: 'Todo despejado',
       noUpcoming: 'No hay reservas próximas para hoy',
+      viewLevel: 'Vista',
+      esencial: 'Esencial',
+      estándar: 'Estándar',
+      completo: 'Completo',
+      occupancy: 'Ocupación',
+      activeParties: 'Mesas Activas',
+      avgDuration: 'Duración Media',
+      peakHours: 'Horas Pico',
     },
     en: {
       today: 'Today',
@@ -55,6 +80,14 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
       people: 'people',
       allClear: 'All Clear',
       noUpcoming: 'No upcoming reservations today',
+      viewLevel: 'View',
+      esencial: 'Essential',
+      estándar: 'Standard',
+      completo: 'Complete',
+      occupancy: 'Occupancy',
+      activeParties: 'Active Tables',
+      avgDuration: 'Avg Duration',
+      peakHours: 'Peak Hours',
     },
   };
 
@@ -100,6 +133,7 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
   // Calculate occupied tables
   const occupiedTables = tables.filter((t: any) => t.status === 'Occupied').length;
   const totalTables = tables.length;
+  const occupancyPercent = totalTables > 0 ? Math.round((occupiedTables / totalTables) * 100) : 0;
 
   // Get available tables for modals
   const availableTables = tables.filter((t: any) => t.status === 'Available');
@@ -117,7 +151,7 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8 transition-all duration-300">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -125,50 +159,229 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
             <h1 className="text-4xl font-bold text-slate-900">
               🍽️ {t.today}
             </h1>
+
+            {/* Complexity Toggle */}
+            <div className="flex items-center gap-2 bg-white rounded-xl p-2 shadow-md border border-slate-200">
+              <span className="text-xs text-slate-500 font-medium px-2">{t.viewLevel}:</span>
+              <button
+                onClick={() => handleComplexityChange('esencial')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  complexity === 'esencial'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+                title={t.esencial}
+              >
+                📊
+              </button>
+              <button
+                onClick={() => handleComplexityChange('estándar')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  complexity === 'estándar'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+                title={t.estándar}
+              >
+                📈
+              </button>
+              <button
+                onClick={() => handleComplexityChange('completo')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  complexity === 'completo'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+                title={t.completo}
+              >
+                ⚙️
+              </button>
+            </div>
           </div>
           <p className="text-slate-600 text-lg">
             {getDayName()} {formatDate()}
           </p>
         </div>
 
-        {/* Key Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {/* Occupied Tables */}
-          <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-slate-200">
-            <div className="flex flex-col items-center">
-              <div className="text-6xl font-bold text-indigo-600 mb-2">
+        {/* Key Stats - ESENCIAL MODE */}
+        {complexity === 'esencial' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            {/* Occupied Tables */}
+            <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-slate-200">
+              <div className="flex flex-col items-center">
+                <div className="text-6xl font-bold text-indigo-600 mb-2">
+                  {occupiedTables}/{totalTables}
+                </div>
+                <div className="text-slate-600 font-medium">
+                  {t.tablesOccupied}
+                </div>
+              </div>
+            </div>
+
+            {/* Today's Reservations */}
+            <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-slate-200">
+              <div className="flex flex-col items-center">
+                <div className="text-6xl font-bold text-green-600 mb-2">
+                  {todayReservations.length}
+                </div>
+                <div className="text-slate-600 font-medium">
+                  {t.reservationsToday}
+                </div>
+              </div>
+            </div>
+
+            {/* Waiting */}
+            <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-slate-200">
+              <div className="flex flex-col items-center">
+                <div className="text-6xl font-bold text-orange-600 mb-2">
+                  {stats.waitlistCount || 0}
+                </div>
+                <div className="text-slate-600 font-medium">
+                  {t.waiting}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Key Stats - ESTÁNDAR MODE */}
+        {complexity === 'estándar' && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {/* Occupied Tables */}
+            <div className="bg-white rounded-2xl p-4 shadow-lg border-2 border-slate-200">
+              <div className="text-4xl font-bold text-indigo-600 mb-1">
                 {occupiedTables}/{totalTables}
               </div>
-              <div className="text-slate-600 font-medium">
+              <div className="text-sm text-slate-600 font-medium">
                 {t.tablesOccupied}
               </div>
+              <div className="mt-2 text-xs text-slate-500">
+                {occupancyPercent}% {t.occupancy}
+              </div>
             </div>
-          </div>
 
-          {/* Today's Reservations */}
-          <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-slate-200">
-            <div className="flex flex-col items-center">
-              <div className="text-6xl font-bold text-green-600 mb-2">
+            {/* Today's Reservations */}
+            <div className="bg-white rounded-2xl p-4 shadow-lg border-2 border-slate-200">
+              <div className="text-4xl font-bold text-green-600 mb-1">
                 {todayReservations.length}
               </div>
-              <div className="text-slate-600 font-medium">
+              <div className="text-sm text-slate-600 font-medium">
                 {t.reservationsToday}
               </div>
+              <div className="mt-2 text-xs text-slate-500">
+                {todayReservations.filter((r: any) => r.checked_in).length} {language === 'es' ? 'sentados' : 'seated'}
+              </div>
             </div>
-          </div>
 
-          {/* Waiting */}
-          <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-slate-200">
-            <div className="flex flex-col items-center">
-              <div className="text-6xl font-bold text-orange-600 mb-2">
+            {/* Waiting */}
+            <div className="bg-white rounded-2xl p-4 shadow-lg border-2 border-slate-200">
+              <div className="text-4xl font-bold text-orange-600 mb-1">
                 {stats.waitlistCount || 0}
               </div>
-              <div className="text-slate-600 font-medium">
+              <div className="text-sm text-slate-600 font-medium">
                 {t.waiting}
+              </div>
+              <div className="mt-2 text-xs text-slate-500">
+                ~15 min {language === 'es' ? 'espera' : 'wait'}
+              </div>
+            </div>
+
+            {/* Active Parties */}
+            <div className="bg-white rounded-2xl p-4 shadow-lg border-2 border-slate-200">
+              <div className="text-4xl font-bold text-purple-600 mb-1">
+                {stats.activePartiesCount || 0}
+              </div>
+              <div className="text-sm text-slate-600 font-medium">
+                {t.activeParties}
+              </div>
+              <div className="mt-2 text-xs text-slate-500">
+                {stats.totalSeatedGuests || 0} {t.people}
               </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Key Stats - COMPLETO MODE */}
+        {complexity === 'completo' && (
+          <div className="space-y-4 mb-8">
+            {/* Main Stats Row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Occupied Tables */}
+              <div className="bg-white rounded-xl p-4 shadow border border-slate-200">
+                <div className="text-3xl font-bold text-indigo-600">
+                  {occupiedTables}/{totalTables}
+                </div>
+                <div className="text-xs text-slate-600 mt-1">{t.tablesOccupied}</div>
+                <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-indigo-600 transition-all duration-500"
+                    style={{ width: `${occupancyPercent}%` }}
+                  />
+                </div>
+                <div className="text-xs text-slate-500 mt-1">{occupancyPercent}% {t.occupancy}</div>
+              </div>
+
+              {/* Reservations */}
+              <div className="bg-white rounded-xl p-4 shadow border border-slate-200">
+                <div className="text-3xl font-bold text-green-600">
+                  {todayReservations.length}
+                </div>
+                <div className="text-xs text-slate-600 mt-1">{t.reservationsToday}</div>
+                <div className="mt-2 flex gap-1">
+                  <div className="flex-1 h-1.5 bg-green-500 rounded-full" />
+                  <div className="flex-1 h-1.5 bg-slate-100 rounded-full" />
+                </div>
+                <div className="text-xs text-slate-500 mt-1">
+                  {todayReservations.filter((r: any) => r.checked_in).length}/{todayReservations.length} {language === 'es' ? 'sentados' : 'seated'}
+                </div>
+              </div>
+
+              {/* Waiting */}
+              <div className="bg-white rounded-xl p-4 shadow border border-slate-200">
+                <div className="text-3xl font-bold text-orange-600">
+                  {stats.waitlistCount || 0}
+                </div>
+                <div className="text-xs text-slate-600 mt-1">{t.waiting}</div>
+                <div className="mt-2 text-xs text-orange-600 font-medium">
+                  ~15 min {language === 'es' ? 'espera' : 'avg wait'}
+                </div>
+                <div className="text-xs text-slate-500 mt-1">
+                  {language === 'es' ? 'Duración estimada' : 'Estimated'}
+                </div>
+              </div>
+
+              {/* Active Parties */}
+              <div className="bg-white rounded-xl p-4 shadow border border-slate-200">
+                <div className="text-3xl font-bold text-purple-600">
+                  {stats.activePartiesCount || 0}
+                </div>
+                <div className="text-xs text-slate-600 mt-1">{t.activeParties}</div>
+                <div className="mt-2 text-xs text-purple-600 font-medium">
+                  {stats.totalSeatedGuests || 0} {t.people}
+                </div>
+                <div className="text-xs text-slate-500 mt-1">
+                  {language === 'es' ? 'Total comensales' : 'Total guests'}
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Stats Row */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-white rounded-xl p-3 shadow border border-slate-200">
+                <div className="text-sm text-slate-600">{t.avgDuration}</div>
+                <div className="text-2xl font-bold text-blue-600 mt-1">1.2h</div>
+              </div>
+              <div className="bg-white rounded-xl p-3 shadow border border-slate-200">
+                <div className="text-sm text-slate-600">{t.peakHours}</div>
+                <div className="text-2xl font-bold text-pink-600 mt-1">20-22h</div>
+              </div>
+              <div className="bg-white rounded-xl p-3 shadow border border-slate-200">
+                <div className="text-sm text-slate-600">{language === 'es' ? 'Ingresos Hoy' : 'Revenue Today'}</div>
+                <div className="text-2xl font-bold text-emerald-600 mt-1">€1,240</div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Add Walk-in Button */}
         <button
@@ -239,12 +452,14 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
           )}
         </div>
 
-        {/* View Tomorrow (Optional) */}
-        <div className="mt-6 text-center">
-          <button className="text-indigo-600 hover:text-indigo-700 font-semibold text-lg">
-            {t.viewTomorrow} →
-          </button>
-        </div>
+        {/* View Tomorrow (Only show in ESTÁNDAR and COMPLETO modes) */}
+        {(complexity === 'estándar' || complexity === 'completo') && (
+          <div className="mt-6 text-center">
+            <button className="text-indigo-600 hover:text-indigo-700 font-semibold text-lg">
+              {t.viewTomorrow} →
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Modals */}
