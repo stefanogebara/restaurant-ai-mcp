@@ -116,13 +116,6 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
     setShowSeatModal(true);
   };
 
-  const handleSeatSuccess = () => {
-    setShowSeatModal(false);
-    setSelectedParty(null);
-    setSelectedReservation(null);
-    refetch();
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
