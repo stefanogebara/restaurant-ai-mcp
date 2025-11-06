@@ -4,12 +4,9 @@ ml-training/
 hotel_bookings.csv
 scripts/train-ml-model.py
 
-# Exclude Lambda deployment packages (they're deployed separately to AWS Lambda)
-lambda/*.zip
-lambda/lambda-package-extracted/
-lambda/layer/
-lambda/python/
-lambda/.aws-sam/
+# Exclude ENTIRE Lambda directory (deployed separately to AWS Lambda)
+# This directory contains 400+ MB of Python dependencies not needed for Vercel
+lambda/
 
 # Exclude development files
 *.log
@@ -17,4 +14,3 @@ lambda/.aws-sam/
 .claude/
 
 # Keep ml_models/ - we need the trained model for production
-# Keep lambda/*.py and lambda/*.js - we need the Lambda function code
