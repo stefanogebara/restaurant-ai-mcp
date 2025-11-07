@@ -4,6 +4,8 @@ import { hostAPI } from '../services/api';
 import WalkInModal from '../components/host/WalkInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
+import TableGrid from '../components/host/TableGrid';
+import TableStatusLegend from '../components/host/TableStatusLegend';
 
 type ComplexityLevel = 'estándar' | 'completo' | 'avanzado';
 
@@ -147,6 +149,16 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const hour12 = hour % 12 || 12;
     return `${hour12}:${minutes} ${ampm}`;
+  };
+
+  // Format timestamp for active parties
+  const formatTimestamp = (timestamp: string) => {
+    if (!timestamp) return '--:--';
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString(language === 'es' ? 'es-ES' : 'en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
   };
 
   const stats = dashboardData?.data || {};
@@ -377,6 +389,117 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
         >
           + {t.addWalkIn}
         </button>
+
+        {/* Enhanced Panels - COMPLETO MODE ONLY */}
+        {complexity === 'completo' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            
+            {/* Left: Table Grid (60% on desktop) */}
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-slate-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-slate-900">
+                    {language === 'es' ? 'Disposición de Mesas' : 'Table Layout'}
+                  </h2>
+                  <span className="text-xs text-slate-500">
+                    {language === 'es' ? 'Solo lectura' : 'Read-only'}
+                  </span>
+                </div>
+                
+                {/* Table Status Legend */}
+                <div className="mb-4">
+                  <TableStatusLegend />
+                </div>
+                
+                {/* Table Grid - Read-only mode */}
+                <div className="pointer-events-none opacity-90">
+                  <TableGrid tables={tables} />
+                </div>
+                
+                <p className="text-xs text-slate-400 mt-4 text-center">
+                  {language === 'es' 
+                    ? 'Toca cualquier mesa para ver detalles. Upgrade a Pro para asignar mesas.'
+                    : 'Tap any table to view details. Upgrade to Pro to assign tables.'}
+                </p>
+              </div>
+            </div>
+            
+            {/* Right: Active Parties + Waitlist (40% on desktop) */}
+            <div className="space-y-6">
+              
+              {/* Active Parties Panel */}
+              <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-slate-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-slate-900">
+                    {language === 'es' ? 'Mesas Activas' : 'Active Parties'}
+                  </h2>
+                  <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
+                    {stats.activePartiesCount || 0}
+                  </span>
+                </div>
+                
+                {stats.activePartiesCount > 0 ? (
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                    {dashboardData?.data?.activeParties?.map((party: any) => (
+                      <div 
+                        key={party.service_id}
+                        className="p-3 bg-slate-50 rounded-lg border border-slate-200"
+                      >
+                        <div className="font-semibold text-slate-900">
+                          {party.customer_name}
+                        </div>
+                        <div className="text-sm text-slate-600 mt-1">
+                          {party.party_size} {language === 'es' ? 'personas' : 'guests'} • 
+                          {language === 'es' ? 'Mesa' : 'Table'} {party.table_ids?.join(', ')}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-1">
+                          {language === 'es' ? 'Sentado:' : 'Seated:'} {formatTimestamp(party.seated_at)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-slate-400">
+                    <div className="text-3xl mb-2">🍽️</div>
+                    <p>{language === 'es' ? 'No hay mesas activas' : 'No active parties'}</p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Waitlist Panel */}
+              <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-slate-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-slate-900">
+                    {language === 'es' ? 'Lista de Espera' : 'Waitlist'}
+                  </h2>
+                  <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
+                    {stats.waitlistCount || 0}
+                  </span>
+                </div>
+                
+                <div className="text-center py-8 text-slate-400">
+                  <div className="text-3xl mb-2">⏱️</div>
+                  <p className="text-sm">
+                    {language === 'es' ? 'La lista de espera está vacía' : 'Waitlist is empty'}
+                  </p>
+                  <p className="text-xs mt-2">
+                    {language === 'es' 
+                      ? 'Los clientes pueden agregar sus nombres cuando lleguen'
+                      : 'Customers can add their names when they arrive'}
+                  </p>
+                </div>
+                
+                <p className="text-xs text-slate-400 mt-3 text-center">
+                  {language === 'es' 
+                    ? 'Upgrade a Pro para gestión de prioridades y notificaciones SMS'
+                    : 'Upgrade to Pro for priority management and SMS notifications'}
+                </p>
+              </div>
+              
+            </div>
+          </div>
+        )}
+
 
         {/* Upcoming Reservations */}
         <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-slate-200">
