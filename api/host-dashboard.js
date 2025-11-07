@@ -178,7 +178,7 @@ async function handleCheckIn(req, res) {
     });
   }
 
-  const availableTables = tablesResult.tables.filter(t => t.status === 'Available');
+  const availableTables = tablesResult.tables.filter(t => t.status === 'available');
   const recommendations = findBestTableCombination(availableTables, partySize);
 
   if (recommendations.length === 0) {
@@ -225,7 +225,7 @@ async function handleCheckWalkIn(req, res) {
     });
   }
 
-  let availableTables = tablesResult.tables.filter(t => t.status === 'Available');
+  let availableTables = tablesResult.tables.filter(t => t.status === 'available');
 
   if (preferred_location) {
     const preferredTables = availableTables.filter(t =>

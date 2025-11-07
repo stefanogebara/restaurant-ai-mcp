@@ -303,7 +303,7 @@ async function getDetailedMetrics() {
     return {
       tables: {
         total: tables.length,
-        available: tables.filter(t => t.status === 'Available').length,
+        available: tables.filter(t => t.status === 'available').length,
         occupied: tables.filter(t => t.status === 'Occupied').length,
         beingCleaned: tables.filter(t => t.status === 'Being Cleaned').length,
         reserved: tables.filter(t => t.status === 'Reserved').length
