@@ -279,7 +279,7 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
   }, [toast]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-indigo-50/40 to-blue-50 /* v2 */ p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-white via-indigo-100 to-blue-100 p-4 md:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 md:mb-10">
