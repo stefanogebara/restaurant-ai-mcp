@@ -8,9 +8,10 @@ import { hostAPI } from '../../services/api';
 
 interface TableCardProps {
   table: Table;
+  onClick?: () => void;
 }
 
-export default function TableCard({ table }: TableCardProps) {
+export default function TableCard({ table, onClick }: TableCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const queryClient = useQueryClient();
@@ -145,7 +146,13 @@ export default function TableCard({ table }: TableCardProps) {
         onMouseLeave={() => setIsHovered(false)}
       >
         <button
-          onClick={() => setShowMenu(true)}
+          onClick={() => {
+            if (onClick) {
+              onClick();
+            } else {
+              setShowMenu(true);
+            }
+          }}
           className={`
             w-full p-4 rounded-xl border-2 transition-all duration-300
             ${config.bg} ${config.glow}

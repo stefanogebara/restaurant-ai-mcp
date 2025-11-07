@@ -20,6 +20,11 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
   const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [selectedParty, setSelectedParty] = useState<any>(null);
   const [selectedReservation, setSelectedReservation] = useState<any>(null);
+  const [selectedTable, setSelectedTable] = useState<any>(null);
+  const [showTableActionsModal, setShowTableActionsModal] = useState(false);
+  const [showCompleteServiceModal, setShowCompleteServiceModal] = useState(false);
+  const [selectedServiceToComplete, setSelectedServiceToComplete] = useState<any>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Load complexity preference from localStorage
   useEffect(() => {
@@ -188,6 +193,90 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
     setShowCheckInModal(false);
     setShowSeatModal(true);
   };
+
+  // Table click handler (COMPLETO mode only)
+  const handleTableClick = (table: any) => {
+    if (complexity !== 'completo') return; // Only interactive in COMPLETO mode
+    setSelectedTable(table);
+    setShowTableActionsModal(true);
+  };
+
+  // Complete Service Handler
+  const handleCompleteService = async (serviceId: string) => {
+    try {
+      const response = await fetch(`/api/host-dashboard?action=complete-service`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service_id: serviceId }),
+      });
+
+      if (response.ok) {
+        setToast({ message: language === 'es' ? 'Servicio completado exitosamente' : 'Service completed successfully', type: 'success' });
+        refetch(); // Refresh dashboard data
+        setShowCompleteServiceModal(false);
+        setSelectedServiceToComplete(null);
+      } else {
+        throw new Error('Failed to complete service');
+      }
+    } catch (error) {
+      console.error('Error completing service:', error);
+      setToast({ message: language === 'es' ? 'Error al completar servicio' : 'Error completing service', type: 'error' });
+    }
+  };
+
+  // Table Status Update Handler
+  const handleUpdateTableStatus = async (tableId: string, status: string) => {
+    try {
+      const response = await fetch(`/api/host-dashboard?action=update-table-status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table_id: tableId, status }),
+      });
+
+      if (response.ok) {
+        setToast({ message: language === 'es' ? 'Mesa actualizada exitosamente' : 'Table updated successfully', type: 'success' });
+        refetch();
+        setShowTableActionsModal(false);
+        setSelectedTable(null);
+      } else {
+        throw new Error('Failed to update table');
+      }
+    } catch (error) {
+      console.error('Error updating table status:', error);
+      setToast({ message: language === 'es' ? 'Error al actualizar mesa' : 'Error updating table', type: 'error' });
+    }
+  };
+
+  // Free Table Handler
+  const handleFreeTable = async (tableId: string) => {
+    try {
+      const response = await fetch(`/api/host-dashboard?action=free-table`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table_id: tableId }),
+      });
+
+      if (response.ok) {
+        setToast({ message: language === 'es' ? 'Mesa liberada exitosamente' : 'Table freed successfully', type: 'success' });
+        refetch();
+        setShowTableActionsModal(false);
+        setSelectedTable(null);
+      } else {
+        throw new Error('Failed to free table');
+      }
+    } catch (error) {
+      console.error('Error freeing table:', error);
+      setToast({ message: language === 'es' ? 'Error al liberar mesa' : 'Error freeing table', type: 'error' });
+    }
+  };
+
+  // Auto-hide toast after 3 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-slate-100 p-4 md:p-6 lg:p-8">
@@ -534,9 +623,12 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
                   <TableStatusLegend />
                 </div>
 
-                {/* Table Grid - Read-only mode */}
-                <div className="pointer-events-none opacity-90 bg-slate-50/50 rounded-xl p-4">
-                  <TableGrid tables={tables} />
+                {/* Table Grid - Interactive in COMPLETO mode */}
+                <div className={`bg-slate-50/50 rounded-xl p-4 ${complexity !== 'completo' ? 'pointer-events-none opacity-90' : ''}`}>
+                  <TableGrid
+                    tables={tables}
+                    onTableClick={complexity === 'completo' ? handleTableClick : undefined}
+                  />
                 </div>
 
                 <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400 bg-slate-50 p-3 rounded-lg">
@@ -545,8 +637,12 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
                   </svg>
                   <span>
                     {language === 'es'
-                      ? 'Toca cualquier mesa para ver detalles. Upgrade a Pro para asignar mesas.'
-                      : 'Tap any table to view details. Upgrade to Pro to assign tables.'}
+                      ? complexity === 'completo'
+                        ? 'Toca cualquier mesa para gestionar su estado'
+                        : 'Vista de solo lectura. Activa modo Completo para interactuar con mesas.'
+                      : complexity === 'completo'
+                        ? 'Tap any table to manage its status'
+                        : 'Read-only view. Enable Complete mode to interact with tables.'}
                   </span>
                 </div>
               </div>
@@ -602,6 +698,17 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
                             <span className="font-medium">{language === 'es' ? 'Mesa' : 'Table'} {party.table_ids?.join(', ')}</span>
                           </div>
                         </div>
+                        {complexity === 'completo' && (
+                          <button
+                            onClick={() => {
+                              setSelectedServiceToComplete(party);
+                              setShowCompleteServiceModal(true);
+                            }}
+                            className="mt-2 w-full px-3 py-1.5 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white text-xs font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
+                          >
+                            {language === 'es' ? 'Completar Servicio' : 'Complete Service'}
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -808,6 +915,240 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
             refetch();
           }}
         />
+      )}
+
+      {/* Table Actions Modal */}
+      {showTableActionsModal && selectedTable && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-100 rounded-lg">
+                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">
+                    {language === 'es' ? 'Mesa' : 'Table'} {selectedTable.table_number}
+                  </h3>
+                  <p className="text-sm text-slate-500">
+                    {selectedTable.capacity} {language === 'es' ? 'personas' : 'seats'} • {selectedTable.location}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowTableActionsModal(false);
+                  setSelectedTable(null);
+                }}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {selectedTable.status === 'Occupied' && (
+                <button
+                  onClick={() => handleFreeTable(selectedTable.record_id)}
+                  className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-green-100/50 hover:from-green-100 hover:to-green-200/50 rounded-xl border border-green-200 transition-all duration-200 group"
+                >
+                  <div className="p-2 bg-green-600 rounded-lg group-hover:scale-110 transition-transform">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div className="text-left flex-1">
+                    <div className="font-semibold text-green-900">
+                      {language === 'es' ? 'Liberar Mesa' : 'Free Table'}
+                    </div>
+                    <div className="text-xs text-green-700">
+                      {language === 'es' ? 'Marcar como disponible' : 'Mark as available'}
+                    </div>
+                  </div>
+                </button>
+              )}
+
+              {selectedTable.status !== 'Being Cleaned' && (
+                <button
+                  onClick={() => handleUpdateTableStatus(selectedTable.record_id, 'Being Cleaned')}
+                  className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-orange-50 to-orange-100/50 hover:from-orange-100 hover:to-orange-200/50 rounded-xl border border-orange-200 transition-all duration-200 group"
+                >
+                  <div className="p-2 bg-orange-600 rounded-lg group-hover:scale-110 transition-transform">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </div>
+                  <div className="text-left flex-1">
+                    <div className="font-semibold text-orange-900">
+                      {language === 'es' ? 'Marcar Limpieza' : 'Mark as Cleaning'}
+                    </div>
+                    <div className="text-xs text-orange-700">
+                      {language === 'es' ? 'Mesa en proceso de limpieza' : 'Table being cleaned'}
+                    </div>
+                  </div>
+                </button>
+              )}
+
+              {selectedTable.status !== 'Available' && (
+                <button
+                  onClick={() => handleUpdateTableStatus(selectedTable.record_id, 'Available')}
+                  className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-indigo-50 to-indigo-100/50 hover:from-indigo-100 hover:to-indigo-200/50 rounded-xl border border-indigo-200 transition-all duration-200 group"
+                >
+                  <div className="p-2 bg-indigo-600 rounded-lg group-hover:scale-110 transition-transform">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="text-left flex-1">
+                    <div className="font-semibold text-indigo-900">
+                      {language === 'es' ? 'Marcar Disponible' : 'Mark as Available'}
+                    </div>
+                    <div className="text-xs text-indigo-700">
+                      {language === 'es' ? 'Mesa lista para nuevos clientes' : 'Table ready for new guests'}
+                    </div>
+                  </div>
+                </button>
+              )}
+
+              {selectedTable.status === 'Available' && (
+                <button
+                  onClick={() => {
+                    setShowTableActionsModal(false);
+                    setShowSeatModal(true);
+                  }}
+                  className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-purple-100/50 hover:from-purple-100 hover:to-purple-200/50 rounded-xl border border-purple-200 transition-all duration-200 group"
+                >
+                  <div className="p-2 bg-purple-600 rounded-lg group-hover:scale-110 transition-transform">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <div className="text-left flex-1">
+                    <div className="font-semibold text-purple-900">
+                      {language === 'es' ? 'Asignar Clientes' : 'Seat Party'}
+                    </div>
+                    <div className="text-xs text-purple-700">
+                      {language === 'es' ? 'Sentar clientes en esta mesa' : 'Assign guests to this table'}
+                    </div>
+                  </div>
+                </button>
+              )}
+            </div>
+
+            <button
+              onClick={() => {
+                setShowTableActionsModal(false);
+                setSelectedTable(null);
+              }}
+              className="w-full mt-4 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-all duration-200"
+            >
+              {language === 'es' ? 'Cancelar' : 'Cancel'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Complete Service Confirmation Modal */}
+      {showCompleteServiceModal && selectedServiceToComplete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">
+                  {language === 'es' ? 'Completar Servicio' : 'Complete Service'}
+                </h3>
+              </div>
+              <button
+                onClick={() => {
+                  setShowCompleteServiceModal(false);
+                  setSelectedServiceToComplete(null);
+                }}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="font-semibold text-slate-900 mb-2">
+                {selectedServiceToComplete.customer_name}
+              </div>
+              <div className="space-y-1 text-sm text-slate-600">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <span>{selectedServiceToComplete.party_size} {language === 'es' ? 'personas' : 'guests'}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <span>{language === 'es' ? 'Mesa' : 'Table'} {selectedServiceToComplete.table_ids?.join(', ')}</span>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-slate-600 text-sm mb-6">
+              {language === 'es'
+                ? '¿Confirmas que el servicio ha finalizado? Las mesas serán marcadas como disponibles.'
+                : 'Confirm that the service is complete? Tables will be marked as available.'}
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowCompleteServiceModal(false);
+                  setSelectedServiceToComplete(null);
+                }}
+                className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-all duration-200"
+              >
+                {language === 'es' ? 'Cancelar' : 'Cancel'}
+              </button>
+              <button
+                onClick={() => handleCompleteService(selectedServiceToComplete.service_id)}
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
+              >
+                {language === 'es' ? 'Confirmar' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 animate-slide-up">
+          <div className={`px-6 py-4 rounded-xl shadow-2xl border-2 ${
+            toast.type === 'success'
+              ? 'bg-green-50 border-green-500 text-green-900'
+              : 'bg-red-50 border-red-500 text-red-900'
+          }`}>
+            <div className="flex items-center gap-3">
+              {toast.type === 'success' ? (
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              ) : (
+                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
+              <span className="font-semibold">{toast.message}</span>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
