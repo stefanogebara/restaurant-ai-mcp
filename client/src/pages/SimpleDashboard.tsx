@@ -190,25 +190,30 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8 transition-all duration-300">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-slate-100 p-4 md:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-4xl font-bold text-slate-900">
-              🍽️ {t.today}
-            </h1>
+        <div className="mb-8 md:mb-10">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-3">
+            <div>
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 tracking-tight mb-1">
+                🍽️ {t.today}
+              </h1>
+              <p className="text-slate-600 text-base md:text-lg font-medium">
+                {getDayName()}, {formatDate()}
+              </p>
+            </div>
 
-            {/* Complexity Toggle */}
-            <div className="flex items-center gap-2 bg-white rounded-xl p-2 shadow-md border border-slate-200">
-              <span className="text-xs text-slate-500 font-medium px-2">{t.viewLevel}:</span>
+            {/* Complexity Toggle - Enhanced Design */}
+            <div className="flex items-center gap-1.5 bg-white rounded-xl p-1.5 shadow-sm border border-slate-200/60 backdrop-blur-sm">
+              <span className="text-xs text-slate-500 font-semibold px-2 hidden sm:block">{t.viewLevel}</span>
 
               <button
                 onClick={() => handleComplexityChange('estándar')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                   complexity === 'estándar'
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-500/20 scale-105'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
                 title={t.estándar}
               >
@@ -216,10 +221,10 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
               </button>
               <button
                 onClick={() => handleComplexityChange('completo')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                   complexity === 'completo'
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-500/20 scale-105'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
                 title={t.completo}
               >
@@ -227,10 +232,10 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
               </button>
               <button
                 onClick={() => window.location.href = '/host-dashboard/advanced'}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                   complexity === 'avanzado'
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-500/20 scale-105'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
                 title={t.avanzado}
               >
@@ -238,63 +243,106 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
               </button>
             </div>
           </div>
-          <p className="text-slate-600 text-lg">
-            {getDayName()} {formatDate()}
-          </p>
         </div>
 
         {/* Key Stats - ESTÁNDAR MODE */}
         {complexity === 'estándar' && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 mb-8">
             {/* Occupied Tables */}
-            <div className="bg-white rounded-2xl p-4 shadow-lg border-2 border-slate-200">
-              <div className="text-4xl font-bold text-indigo-600 mb-1">
-                {occupiedTables}/{totalTables}
+            <div className="group bg-white rounded-2xl p-5 md:p-6 shadow-sm hover:shadow-xl border border-slate-200/60 hover:border-indigo-200 transition-all duration-300 hover:-translate-y-1">
+              <div className="flex items-start justify-between mb-3">
+                <div className="p-2.5 bg-indigo-50 rounded-xl group-hover:bg-indigo-100 transition-colors">
+                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <span className="text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">
+                  {occupancyPercent}%
+                </span>
               </div>
-              <div className="text-sm text-slate-600 font-medium">
+              <div className="text-4xl md:text-5xl font-bold text-slate-900 mb-2 tracking-tight">
+                {occupiedTables}<span className="text-slate-400">/{totalTables}</span>
+              </div>
+              <div className="text-sm font-semibold text-slate-600 mb-3">
                 {t.tablesOccupied}
               </div>
-              <div className="mt-2 text-xs text-slate-500">
-                {occupancyPercent}% {t.occupancy}
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full transition-all duration-500"
+                    style={{ width: `${occupancyPercent}%` }}
+                  />
+                </div>
+                <span className="font-medium">{t.occupancy}</span>
               </div>
             </div>
 
             {/* Today's Reservations */}
-            <div className="bg-white rounded-2xl p-4 shadow-lg border-2 border-slate-200">
-              <div className="text-4xl font-bold text-green-600 mb-1">
+            <div className="group bg-white rounded-2xl p-5 md:p-6 shadow-sm hover:shadow-xl border border-slate-200/60 hover:border-green-200 transition-all duration-300 hover:-translate-y-1">
+              <div className="flex items-start justify-between mb-3">
+                <div className="p-2.5 bg-green-50 rounded-xl group-hover:bg-green-100 transition-colors">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-lg">
+                  {todayReservations.filter((r: any) => r.checked_in).length}/{todayReservations.length}
+                </span>
+              </div>
+              <div className="text-4xl md:text-5xl font-bold text-slate-900 mb-2 tracking-tight">
                 {todayReservations.length}
               </div>
-              <div className="text-sm text-slate-600 font-medium">
+              <div className="text-sm font-semibold text-slate-600 mb-3">
                 {t.reservationsToday}
               </div>
-              <div className="mt-2 text-xs text-slate-500">
-                {todayReservations.filter((r: any) => r.checked_in).length} {language === 'es' ? 'sentados' : 'seated'}
+              <div className="text-xs text-slate-500 font-medium">
+                {todayReservations.filter((r: any) => r.checked_in).length} {language === 'es' ? 'ya sentados' : 'already seated'}
               </div>
             </div>
 
             {/* Waiting */}
-            <div className="bg-white rounded-2xl p-4 shadow-lg border-2 border-slate-200">
-              <div className="text-4xl font-bold text-orange-600 mb-1">
+            <div className="group bg-white rounded-2xl p-5 md:p-6 shadow-sm hover:shadow-xl border border-slate-200/60 hover:border-orange-200 transition-all duration-300 hover:-translate-y-1">
+              <div className="flex items-start justify-between mb-3">
+                <div className="p-2.5 bg-orange-50 rounded-xl group-hover:bg-orange-100 transition-colors">
+                  <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <span className="text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg">
+                  ~15 min
+                </span>
+              </div>
+              <div className="text-4xl md:text-5xl font-bold text-slate-900 mb-2 tracking-tight">
                 {stats.waitlistCount || 0}
               </div>
-              <div className="text-sm text-slate-600 font-medium">
+              <div className="text-sm font-semibold text-slate-600 mb-3">
                 {t.waiting}
               </div>
-              <div className="mt-2 text-xs text-slate-500">
-                ~15 min {language === 'es' ? 'espera' : 'wait'}
+              <div className="text-xs text-slate-500 font-medium">
+                {language === 'es' ? 'Tiempo promedio de espera' : 'Average wait time'}
               </div>
             </div>
 
             {/* Active Parties */}
-            <div className="bg-white rounded-2xl p-4 shadow-lg border-2 border-slate-200">
-              <div className="text-4xl font-bold text-purple-600 mb-1">
+            <div className="group bg-white rounded-2xl p-5 md:p-6 shadow-sm hover:shadow-xl border border-slate-200/60 hover:border-purple-200 transition-all duration-300 hover:-translate-y-1">
+              <div className="flex items-start justify-between mb-3">
+                <div className="p-2.5 bg-purple-50 rounded-xl group-hover:bg-purple-100 transition-colors">
+                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <span className="text-xs font-semibold text-purple-600 bg-purple-50 px-2 py-1 rounded-lg">
+                  {stats.totalSeatedGuests || 0}
+                </span>
+              </div>
+              <div className="text-4xl md:text-5xl font-bold text-slate-900 mb-2 tracking-tight">
                 {stats.activePartiesCount || 0}
               </div>
-              <div className="text-sm text-slate-600 font-medium">
+              <div className="text-sm font-semibold text-slate-600 mb-3">
                 {t.activeParties}
               </div>
-              <div className="mt-2 text-xs text-slate-500">
-                {stats.totalSeatedGuests || 0} {t.people}
+              <div className="text-xs text-slate-500 font-medium">
+                {stats.totalSeatedGuests || 0} {language === 'es' ? 'comensales totales' : 'total guests'}
               </div>
             </div>
           </div>
@@ -302,81 +350,144 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
 
         {/* Key Stats - COMPLETO MODE */}
         {complexity === 'completo' && (
-          <div className="space-y-4 mb-8">
+          <div className="space-y-4 md:space-y-5 mb-8">
             {/* Main Stats Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Occupied Tables */}
-              <div className="bg-white rounded-xl p-4 shadow border border-slate-200">
-                <div className="text-3xl font-bold text-indigo-600">
-                  {occupiedTables}/{totalTables}
+              <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm hover:shadow-md border border-slate-200/60 transition-all duration-200">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-3xl md:text-4xl font-bold text-indigo-600 tracking-tight">
+                    {occupiedTables}<span className="text-slate-400 text-2xl">/{totalTables}</span>
+                  </div>
+                  <div className="p-2 bg-indigo-50 rounded-lg">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </div>
                 </div>
-                <div className="text-xs text-slate-600 mt-1">{t.tablesOccupied}</div>
-                <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-indigo-600 transition-all duration-500"
-                    style={{ width: `${occupancyPercent}%` }}
-                  />
+                <div className="text-xs font-semibold text-slate-600 mb-3">{t.tablesOccupied}</div>
+                <div className="space-y-2">
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full transition-all duration-500"
+                      style={{ width: `${occupancyPercent}%` }}
+                    />
+                  </div>
+                  <div className="text-xs text-slate-500 font-medium">{occupancyPercent}% {t.occupancy}</div>
                 </div>
-                <div className="text-xs text-slate-500 mt-1">{occupancyPercent}% {t.occupancy}</div>
               </div>
 
               {/* Reservations */}
-              <div className="bg-white rounded-xl p-4 shadow border border-slate-200">
-                <div className="text-3xl font-bold text-green-600">
-                  {todayReservations.length}
+              <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm hover:shadow-md border border-slate-200/60 transition-all duration-200">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-3xl md:text-4xl font-bold text-green-600 tracking-tight">
+                    {todayReservations.length}
+                  </div>
+                  <div className="p-2 bg-green-50 rounded-lg">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
                 </div>
-                <div className="text-xs text-slate-600 mt-1">{t.reservationsToday}</div>
-                <div className="mt-2 flex gap-1">
-                  <div className="flex-1 h-1.5 bg-green-500 rounded-full" />
-                  <div className="flex-1 h-1.5 bg-slate-100 rounded-full" />
-                </div>
-                <div className="text-xs text-slate-500 mt-1">
-                  {todayReservations.filter((r: any) => r.checked_in).length}/{todayReservations.length} {language === 'es' ? 'sentados' : 'seated'}
+                <div className="text-xs font-semibold text-slate-600 mb-3">{t.reservationsToday}</div>
+                <div className="space-y-2">
+                  <div className="flex gap-1.5">
+                    <div className="flex-1 h-2 bg-green-500 rounded-full" style={{ width: `${(todayReservations.filter((r: any) => r.checked_in).length / Math.max(todayReservations.length, 1)) * 100}%` }} />
+                    <div className="flex-1 h-2 bg-slate-100 rounded-full" />
+                  </div>
+                  <div className="text-xs text-slate-500 font-medium">
+                    {todayReservations.filter((r: any) => r.checked_in).length}/{todayReservations.length} {language === 'es' ? 'sentados' : 'seated'}
+                  </div>
                 </div>
               </div>
 
               {/* Waiting */}
-              <div className="bg-white rounded-xl p-4 shadow border border-slate-200">
-                <div className="text-3xl font-bold text-orange-600">
-                  {stats.waitlistCount || 0}
+              <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm hover:shadow-md border border-slate-200/60 transition-all duration-200">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-3xl md:text-4xl font-bold text-orange-600 tracking-tight">
+                    {stats.waitlistCount || 0}
+                  </div>
+                  <div className="p-2 bg-orange-50 rounded-lg">
+                    <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
                 </div>
-                <div className="text-xs text-slate-600 mt-1">{t.waiting}</div>
-                <div className="mt-2 text-xs text-orange-600 font-medium">
-                  ~15 min {language === 'es' ? 'espera' : 'avg wait'}
-                </div>
-                <div className="text-xs text-slate-500 mt-1">
-                  {language === 'es' ? 'Duración estimada' : 'Estimated'}
+                <div className="text-xs font-semibold text-slate-600 mb-3">{t.waiting}</div>
+                <div className="space-y-1">
+                  <div className="text-sm font-bold text-orange-600">
+                    ~15 min
+                  </div>
+                  <div className="text-xs text-slate-500 font-medium">
+                    {language === 'es' ? 'Espera promedio' : 'Average wait'}
+                  </div>
                 </div>
               </div>
 
               {/* Active Parties */}
-              <div className="bg-white rounded-xl p-4 shadow border border-slate-200">
-                <div className="text-3xl font-bold text-purple-600">
-                  {stats.activePartiesCount || 0}
+              <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm hover:shadow-md border border-slate-200/60 transition-all duration-200">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-3xl md:text-4xl font-bold text-purple-600 tracking-tight">
+                    {stats.activePartiesCount || 0}
+                  </div>
+                  <div className="p-2 bg-purple-50 rounded-lg">
+                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
                 </div>
-                <div className="text-xs text-slate-600 mt-1">{t.activeParties}</div>
-                <div className="mt-2 text-xs text-purple-600 font-medium">
-                  {stats.totalSeatedGuests || 0} {t.people}
-                </div>
-                <div className="text-xs text-slate-500 mt-1">
-                  {language === 'es' ? 'Total comensales' : 'Total guests'}
+                <div className="text-xs font-semibold text-slate-600 mb-3">{t.activeParties}</div>
+                <div className="space-y-1">
+                  <div className="text-sm font-bold text-purple-600">
+                    {stats.totalSeatedGuests || 0} {t.people}
+                  </div>
+                  <div className="text-xs text-slate-500 font-medium">
+                    {language === 'es' ? 'Comensales totales' : 'Total guests'}
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Additional Stats Row */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="bg-white rounded-xl p-3 shadow border border-slate-200">
-                <div className="text-sm text-slate-600">{t.avgDuration}</div>
-                <div className="text-2xl font-bold text-blue-600 mt-1">1.2h</div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4 border border-blue-200/60 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-white rounded-lg shadow-sm">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-blue-700 mb-0.5">{t.avgDuration}</div>
+                    <div className="text-2xl font-bold text-blue-900 tracking-tight">1.2h</div>
+                  </div>
+                </div>
               </div>
-              <div className="bg-white rounded-xl p-3 shadow border border-slate-200">
-                <div className="text-sm text-slate-600">{t.peakHours}</div>
-                <div className="text-2xl font-bold text-pink-600 mt-1">20-22h</div>
+              <div className="bg-gradient-to-br from-pink-50 to-pink-100/50 rounded-xl p-4 border border-pink-200/60 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-white rounded-lg shadow-sm">
+                    <svg className="w-5 h-5 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-pink-700 mb-0.5">{t.peakHours}</div>
+                    <div className="text-2xl font-bold text-pink-900 tracking-tight">20-22h</div>
+                  </div>
+                </div>
               </div>
-              <div className="bg-white rounded-xl p-3 shadow border border-slate-200">
-                <div className="text-sm text-slate-600">{language === 'es' ? 'Ingresos Hoy' : 'Revenue Today'}</div>
-                <div className="text-2xl font-bold text-emerald-600 mt-1">€1,240</div>
+              <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4 border border-emerald-200/60 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-white rounded-lg shadow-sm">
+                    <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-emerald-700 mb-0.5">{language === 'es' ? 'Ingresos Hoy' : 'Revenue Today'}</div>
+                    <div className="text-2xl font-bold text-emerald-900 tracking-tight">€1,240</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -385,177 +496,265 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
         {/* Add Walk-in Button */}
         <button
           onClick={() => setShowWalkInModal(true)}
-          className="w-full mb-8 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-6 px-8 rounded-2xl shadow-lg transition-all duration-200 transform hover:scale-[1.02] text-xl"
+          className="group w-full mb-8 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold py-5 md:py-6 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border border-indigo-500/20"
         >
-          + {t.addWalkIn}
+          <div className="flex items-center justify-center gap-3">
+            <svg className="w-6 h-6 transition-transform group-hover:rotate-90 duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            <span className="text-lg md:text-xl">{t.addWalkIn}</span>
+          </div>
         </button>
 
         {/* Enhanced Panels - COMPLETO MODE ONLY */}
         {complexity === 'completo' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6 mb-8">
+
             {/* Left: Table Grid (60% on desktop) */}
             <div className="lg:col-span-2">
-              <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-slate-200">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-slate-900">
-                    {language === 'es' ? 'Disposición de Mesas' : 'Table Layout'}
-                  </h2>
-                  <span className="text-xs text-slate-500">
+              <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-200/60">
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-slate-100 rounded-lg">
+                      <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                      </svg>
+                    </div>
+                    <h2 className="text-lg md:text-xl font-bold text-slate-900">
+                      {language === 'es' ? 'Disposición de Mesas' : 'Table Layout'}
+                    </h2>
+                  </div>
+                  <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">
                     {language === 'es' ? 'Solo lectura' : 'Read-only'}
                   </span>
                 </div>
-                
+
                 {/* Table Status Legend */}
-                <div className="mb-4">
+                <div className="mb-5">
                   <TableStatusLegend />
                 </div>
-                
+
                 {/* Table Grid - Read-only mode */}
-                <div className="pointer-events-none opacity-90">
+                <div className="pointer-events-none opacity-90 bg-slate-50/50 rounded-xl p-4">
                   <TableGrid tables={tables} />
                 </div>
-                
-                <p className="text-xs text-slate-400 mt-4 text-center">
-                  {language === 'es' 
-                    ? 'Toca cualquier mesa para ver detalles. Upgrade a Pro para asignar mesas.'
-                    : 'Tap any table to view details. Upgrade to Pro to assign tables.'}
-                </p>
+
+                <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400 bg-slate-50 p-3 rounded-lg">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>
+                    {language === 'es'
+                      ? 'Toca cualquier mesa para ver detalles. Upgrade a Pro para asignar mesas.'
+                      : 'Tap any table to view details. Upgrade to Pro to assign tables.'}
+                  </span>
+                </div>
               </div>
             </div>
             
             {/* Right: Active Parties + Waitlist (40% on desktop) */}
-            <div className="space-y-6">
-              
+            <div className="space-y-5 md:space-y-6">
+
               {/* Active Parties Panel */}
-              <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-slate-200">
+              <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-200/60">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-slate-900">
-                    {language === 'es' ? 'Mesas Activas' : 'Active Parties'}
-                  </h2>
-                  <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-1.5 bg-purple-100 rounded-lg">
+                      <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </div>
+                    <h2 className="text-base md:text-lg font-bold text-slate-900">
+                      {language === 'es' ? 'Mesas Activas' : 'Active Parties'}
+                    </h2>
+                  </div>
+                  <span className="px-2.5 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs font-bold">
                     {stats.activePartiesCount || 0}
                   </span>
                 </div>
-                
+
                 {stats.activePartiesCount > 0 ? (
-                  <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                  <div className="space-y-2.5 max-h-[320px] overflow-y-auto custom-scrollbar">
                     {dashboardData?.data?.activeParties?.map((party: any) => (
-                      <div 
+                      <div
                         key={party.service_id}
-                        className="p-3 bg-slate-50 rounded-lg border border-slate-200"
+                        className="p-3.5 bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-xl border border-slate-200/60 hover:border-purple-200 transition-all duration-200"
                       >
-                        <div className="font-semibold text-slate-900">
-                          {party.customer_name}
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="font-semibold text-slate-900 text-sm">
+                            {party.customer_name}
+                          </div>
+                          <span className="text-xs font-medium text-slate-500 bg-white px-2 py-0.5 rounded-md">
+                            {formatTimestamp(party.seated_at)}
+                          </span>
                         </div>
-                        <div className="text-sm text-slate-600 mt-1">
-                          {party.party_size} {language === 'es' ? 'personas' : 'guests'} • 
-                          {language === 'es' ? 'Mesa' : 'Table'} {party.table_ids?.join(', ')}
-                        </div>
-                        <div className="text-xs text-slate-500 mt-1">
-                          {language === 'es' ? 'Sentado:' : 'Seated:'} {formatTimestamp(party.seated_at)}
+                        <div className="flex items-center gap-3 text-xs text-slate-600">
+                          <div className="flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            <span className="font-medium">{party.party_size} {language === 'es' ? 'pax' : 'guests'}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            <span className="font-medium">{language === 'es' ? 'Mesa' : 'Table'} {party.table_ids?.join(', ')}</span>
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-slate-400">
-                    <div className="text-3xl mb-2">🍽️</div>
-                    <p>{language === 'es' ? 'No hay mesas activas' : 'No active parties'}</p>
+                  <div className="text-center py-10 px-4">
+                    <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                      <span className="text-3xl">🍽️</span>
+                    </div>
+                    <p className="text-sm font-medium text-slate-600 mb-1">
+                      {language === 'es' ? 'No hay mesas activas' : 'No active parties'}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      {language === 'es' ? 'Las mesas aparecerán aquí al sentar clientes' : 'Tables will appear here when guests are seated'}
+                    </p>
                   </div>
                 )}
               </div>
-              
+
               {/* Waitlist Panel */}
-              <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-slate-200">
+              <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-200/60">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-slate-900">
-                    {language === 'es' ? 'Lista de Espera' : 'Waitlist'}
-                  </h2>
-                  <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-1.5 bg-orange-100 rounded-lg">
+                      <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <h2 className="text-base md:text-lg font-bold text-slate-900">
+                      {language === 'es' ? 'Lista de Espera' : 'Waitlist'}
+                    </h2>
+                  </div>
+                  <span className="px-2.5 py-1 bg-orange-100 text-orange-700 rounded-lg text-xs font-bold">
                     {stats.waitlistCount || 0}
                   </span>
                 </div>
-                
-                <div className="text-center py-8 text-slate-400">
-                  <div className="text-3xl mb-2">⏱️</div>
-                  <p className="text-sm">
+
+                <div className="text-center py-10 px-4">
+                  <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <span className="text-3xl">⏱️</span>
+                  </div>
+                  <p className="text-sm font-medium text-slate-600 mb-1">
                     {language === 'es' ? 'La lista de espera está vacía' : 'Waitlist is empty'}
                   </p>
-                  <p className="text-xs mt-2">
-                    {language === 'es' 
+                  <p className="text-xs text-slate-400 mb-4">
+                    {language === 'es'
                       ? 'Los clientes pueden agregar sus nombres cuando lleguen'
                       : 'Customers can add their names when they arrive'}
                   </p>
                 </div>
-                
-                <p className="text-xs text-slate-400 mt-3 text-center">
-                  {language === 'es' 
-                    ? 'Upgrade a Pro para gestión de prioridades y notificaciones SMS'
-                    : 'Upgrade to Pro for priority management and SMS notifications'}
-                </p>
+
+                <div className="flex items-start gap-2 text-xs text-slate-400 bg-orange-50/50 p-3 rounded-lg border border-orange-100">
+                  <svg className="w-4 h-4 flex-shrink-0 mt-0.5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>
+                    {language === 'es'
+                      ? 'Upgrade a Pro para gestión de prioridades y notificaciones SMS'
+                      : 'Upgrade to Pro for priority management and SMS notifications'}
+                  </span>
+                </div>
               </div>
-              
+
             </div>
           </div>
         )}
 
 
         {/* Upcoming Reservations */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-slate-200">
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">
-            📅 {t.upcomingReservations}
-          </h2>
+        <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-200/60">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-indigo-50 rounded-lg">
+              <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900">
+              {t.upcomingReservations}
+            </h2>
+          </div>
 
           {todayReservations.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">✨</div>
-              <p className="text-slate-600 text-lg">{t.allClear}</p>
-              <p className="text-slate-400 mt-2">{t.noUpcoming}</p>
+            <div className="text-center py-16 px-4">
+              <div className="w-20 h-20 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl flex items-center justify-center mx-auto mb-4">
+                <span className="text-5xl">✨</span>
+              </div>
+              <p className="text-slate-900 text-lg font-semibold mb-2">{t.allClear}</p>
+              <p className="text-slate-500 text-sm">{t.noUpcoming}</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {todayReservations.map((reservation: any) => (
                 <div
                   key={reservation.reservation_id}
-                  className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-slate-100 transition-colors"
+                  className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 md:p-5 bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-xl border border-slate-200/60 hover:border-indigo-200 hover:shadow-md transition-all duration-200"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="text-3xl font-bold text-indigo-600">
-                      {formatTime(reservation.time)}
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="flex-shrink-0">
+                      <div className="text-2xl md:text-3xl font-bold text-indigo-600 bg-white px-3 py-2 rounded-lg shadow-sm">
+                        {formatTime(reservation.time)}
+                      </div>
                     </div>
-                    <div className="border-l-2 border-slate-300 pl-4">
-                      <div className="font-semibold text-slate-900 text-lg">
+                    <div className="border-l-2 border-indigo-200 pl-4 flex-1 min-w-0">
+                      <div className="font-semibold text-slate-900 text-base md:text-lg mb-1 truncate">
                         {reservation.customer_name}
                       </div>
-                      <div className="text-slate-600">
-                        {reservation.party_size} {t.people}
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                        <div className="flex items-center gap-1">
+                          <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                          </svg>
+                          <span className="font-medium">{reservation.party_size} {t.people}</span>
+                        </div>
                         {reservation.special_requests && (
-                          <span className="ml-2 text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded">
-                            ⭐ {reservation.special_requests}
+                          <span className="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-lg font-medium">
+                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            {reservation.special_requests}
                           </span>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  {!reservation.checked_in && (
-                    <button
-                      onClick={() => {
-                        setSelectedReservation(reservation);
-                        setShowCheckInModal(true);
-                      }}
-                      className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
-                    >
-                      {t.checkIn}
-                    </button>
-                  )}
+                  <div className="flex-shrink-0">
+                    {!reservation.checked_in && (
+                      <button
+                        onClick={() => {
+                          setSelectedReservation(reservation);
+                          setShowCheckInModal(true);
+                        }}
+                        className="w-full sm:w-auto bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold px-5 py-2.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
+                      >
+                        <span className="flex items-center justify-center gap-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          {t.checkIn}
+                        </span>
+                      </button>
+                    )}
 
-                  {reservation.checked_in && (
-                    <div className="bg-green-100 text-green-800 font-semibold px-6 py-3 rounded-lg">
-                      ✓ {language === 'es' ? 'Sentado' : 'Seated'}
-                    </div>
-                  )}
+                    {reservation.checked_in && (
+                      <div className="w-full sm:w-auto bg-green-100 text-green-800 font-semibold px-5 py-2.5 rounded-lg border border-green-200">
+                        <span className="flex items-center justify-center gap-2">
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          {language === 'es' ? 'Sentado' : 'Seated'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -565,8 +764,11 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
         {/* View Tomorrow (Only show in ESTÁNDAR and COMPLETO modes) */}
         {(complexity === 'estándar' || complexity === 'completo') && (
           <div className="mt-6 text-center">
-            <button className="text-indigo-600 hover:text-indigo-700 font-semibold text-lg">
-              {t.viewTomorrow} →
+            <button className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-semibold text-base md:text-lg transition-colors group">
+              <span>{t.viewTomorrow}</span>
+              <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
             </button>
           </div>
         )}
