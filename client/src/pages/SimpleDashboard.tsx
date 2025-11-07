@@ -5,14 +5,14 @@ import WalkInModal from '../components/host/WalkInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
 
-type ComplexityLevel = 'esencial' | 'estándar' | 'completo';
+type ComplexityLevel = 'estándar' | 'completo' | 'avanzado';
 
 interface SimpleDashboardProps {
   language?: 'es' | 'en';
 }
 
 export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProps) {
-  const [complexity, setComplexity] = useState<ComplexityLevel>('esencial');
+  const [complexity, setComplexity] = useState<ComplexityLevel>('estándar');
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [showSeatModal, setShowSeatModal] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
@@ -23,7 +23,7 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
   useEffect(() => {
     // First priority: Explicit dashboard complexity preference
     const saved = localStorage.getItem('dashboard-complexity');
-    if (saved && ['esencial', 'estándar', 'completo'].includes(saved)) {
+    if (saved && ['estándar', 'completo', 'avanzado'].includes(saved)) {
       setComplexity(saved as ComplexityLevel);
       return;
     }
@@ -37,9 +37,9 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
 
         // Map onboarding template to complexity level
         const templateMap: Record<string, ComplexityLevel> = {
-          'simple': 'esencial',
-          'balanced': 'estándar',
-          'advanced': 'completo',
+          'simple': 'estándar',
+          'balanced': 'completo',
+          'advanced': 'avanzado',
         };
 
         if (template && templateMap[template]) {
@@ -49,7 +49,7 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
         }
       }
     } catch (error) {
-      // If parsing fails, just use default ('esencial')
+      // If parsing fails, just use default ('estándar')
       console.error('Error loading onboarding template preference:', error);
     }
   }, []);
@@ -84,7 +84,7 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
       allClear: 'Todo despejado',
       noUpcoming: 'No hay reservas próximas para hoy',
       viewLevel: 'Vista',
-      esencial: 'Esencial',
+      avanzado: 'Avanzado',
       estándar: 'Estándar',
       completo: 'Completo',
       occupancy: 'Ocupación',
@@ -108,7 +108,7 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
       allClear: 'All Clear',
       noUpcoming: 'No upcoming reservations today',
       viewLevel: 'View',
-      esencial: 'Essential',
+      avanzado: 'Advanced',
       estándar: 'Standard',
       completo: 'Complete',
       occupancy: 'Occupancy',
@@ -190,17 +190,7 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
             {/* Complexity Toggle */}
             <div className="flex items-center gap-2 bg-white rounded-xl p-2 shadow-md border border-slate-200">
               <span className="text-xs text-slate-500 font-medium px-2">{t.viewLevel}:</span>
-              <button
-                onClick={() => handleComplexityChange('esencial')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  complexity === 'esencial'
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-                title={t.esencial}
-              >
-                📊
-              </button>
+
               <button
                 onClick={() => handleComplexityChange('estándar')}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
@@ -223,53 +213,23 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
               >
                 ⚙️
               </button>
+              <button
+                onClick={() => window.location.href = '/host-dashboard/advanced'}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  complexity === 'avanzado'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+                title={t.avanzado}
+              >
+                🎯
+              </button>
             </div>
           </div>
           <p className="text-slate-600 text-lg">
             {getDayName()} {formatDate()}
           </p>
         </div>
-
-        {/* Key Stats - ESENCIAL MODE */}
-        {complexity === 'esencial' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            {/* Occupied Tables */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-slate-200">
-              <div className="flex flex-col items-center">
-                <div className="text-6xl font-bold text-indigo-600 mb-2">
-                  {occupiedTables}/{totalTables}
-                </div>
-                <div className="text-slate-600 font-medium">
-                  {t.tablesOccupied}
-                </div>
-              </div>
-            </div>
-
-            {/* Today's Reservations */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-slate-200">
-              <div className="flex flex-col items-center">
-                <div className="text-6xl font-bold text-green-600 mb-2">
-                  {todayReservations.length}
-                </div>
-                <div className="text-slate-600 font-medium">
-                  {t.reservationsToday}
-                </div>
-              </div>
-            </div>
-
-            {/* Waiting */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-slate-200">
-              <div className="flex flex-col items-center">
-                <div className="text-6xl font-bold text-orange-600 mb-2">
-                  {stats.waitlistCount || 0}
-                </div>
-                <div className="text-slate-600 font-medium">
-                  {t.waiting}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Key Stats - ESTÁNDAR MODE */}
         {complexity === 'estándar' && (
