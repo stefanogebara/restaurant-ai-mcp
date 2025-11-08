@@ -343,24 +343,8 @@ async function handleSeatParty(req, res) {
     });
   }
 
-  // Get all tables to map table numbers to Airtable record IDs
-  const tablesResult = await getAllTables();
-  if (!tablesResult.success) {
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to load tables for update'
-    });
-  }
-
-  // Map table numbers to Airtable record IDs
-  const tableRecordIds = table_ids.map(tableNum => {
-    // Convert to number for comparison since table_number could be string or number
-    const table = tablesResult.tables.find(t => Number(t.table_number) === Number(tableNum));
-    if (!table) {
-      console.error(`Table not found for number: ${tableNum}`, { available_tables: tablesResult.tables.map(t => t.table_number) });
-    }
-    return table ? table.id : null;
-  }).filter(id => id !== null);
+  // table_ids are already UUIDs (Supabase record IDs), use them directly for updates
+  const tableRecordIds = table_ids;
 
   const updatePromises = tableRecordIds.map(recordId =>
     updateTable(recordId, {
