@@ -291,13 +291,23 @@ async function handleSeatParty(req, res) {
   const seatedAt = new Date().toISOString();
   const estimatedDeparture = new Date(Date.now() + 90 * 60 * 1000).toISOString();
 
+  // Convert table UUIDs to table numbers (Supabase schema uses integer[])
+  const allTables = await getAllTables();
+  const tableNumbers = table_ids.map(uuid => {
+    const table = allTables.find(t => t.id === uuid);
+    if (!table) {
+      throw new Error(`Table with UUID ${uuid} not found`);
+    }
+    return table.table_number;
+  });
+
   const serviceFields = {
     'Service ID': serviceId,
     'Reservation ID': reservation_id || '',
     'Customer Name': sanitizedName,
     'Customer Phone': sanitizedPhone,
     'Party Size': parseInt(party_size),
-    'Table IDs': table_ids,  // Supabase expects array, not comma-separated string
+    'Table IDs': tableNumbers,  // Pass table numbers (integers), not UUIDs
     'Seated At': seatedAt,
     'Estimated Departure': estimatedDeparture,
     'Special Requests': sanitizedRequests,
