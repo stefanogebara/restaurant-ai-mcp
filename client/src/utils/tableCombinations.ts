@@ -20,7 +20,7 @@ export function suggestTableCombinations(
   maxCombinations: number = 3
 ): TableCombination[] {
   // Only consider available tables
-  const availableTables = tables.filter(t => t.status === 'available');
+  const availableTables = tables.filter(t => t.status === 'Available');
 
   if (availableTables.length === 0) {
     return [];

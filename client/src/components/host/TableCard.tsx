@@ -85,7 +85,7 @@ export default function TableCard({ table, onClick }: TableCardProps) {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['hostDashboard'] });
-      const statusText = variables.status === 'available' ? 'free' : variables.status.toLowerCase();
+      const statusText = variables.status === 'Available' ? 'free' : variables.status.toLowerCase();
       success(`Table ${table.table_number} marked as ${statusText}`);
     },
     onError: () => {
@@ -108,7 +108,7 @@ export default function TableCard({ table, onClick }: TableCardProps) {
       });
     }
 
-    if (table.status === 'available') {
+    if (table.status === 'Available') {
       actions.push({
         icon: '🔴',
         label: 'Mark Occupied',
@@ -158,7 +158,7 @@ export default function TableCard({ table, onClick }: TableCardProps) {
             ${config.bg} ${config.glow}
             shadow-lg hover:shadow-xl hover:-translate-y-1
             cursor-pointer group
-            ${isOver && table.status === 'available' ? 'ring-4 ring-purple-500 ring-opacity-50 scale-105 border-purple-400' : ''}
+            ${isOver && table.status === 'Available' ? 'ring-4 ring-purple-500 ring-opacity-50 scale-105 border-purple-400' : ''}
           `}
         >
         {/* Table Number */}
@@ -203,7 +203,7 @@ export default function TableCard({ table, onClick }: TableCardProps) {
       </button>
 
         {/* Drop Zone Indicator (drag overlay) */}
-        {isOver && table.status === 'available' && (
+        {isOver && table.status === 'Available' && (
           <div className="absolute inset-0 bg-purple-600/30 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center gap-3 pointer-events-none border-4 border-purple-400 border-dashed">
             <div className="text-5xl">⬇️</div>
             <div className="text-white font-bold text-lg">Drop to Assign</div>
