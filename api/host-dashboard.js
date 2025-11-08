@@ -300,7 +300,8 @@ async function handleSeatParty(req, res) {
     });
   }
 
-  const tableNumbers = table_ids.map(uuid => {
+  // Validate all table UUIDs exist before converting
+  for (const uuid of table_ids) {
     const table = tablesResult.tables.find(t => t.id === uuid);
     if (!table) {
       return res.status(400).json({
@@ -308,6 +309,11 @@ async function handleSeatParty(req, res) {
         error: `Table with UUID ${uuid} not found`
       });
     }
+  }
+
+  // Convert UUIDs to table numbers
+  const tableNumbers = table_ids.map(uuid => {
+    const table = tablesResult.tables.find(t => t.id === uuid);
     return table.table_number;
   });
 
