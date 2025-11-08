@@ -24,8 +24,9 @@ function validatePhoneNumber(phone) {
     return { valid: false, error: 'Phone number must have at least 10 digits' };
   }
 
-  // Check if it's a valid phone pattern (allows international formats)
-  const phonePattern = /^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/;
+  // Allow flexible phone formats: spaces, dashes, dots, parentheses
+  // Examples: +34 611 22 33 44, (555) 123-4567, +1-555-123-4567, +34600112233
+  const phonePattern = /^[\+]?[\d\s\-\(\)\.]+$/;
   if (!phonePattern.test(phone)) {
     return { valid: false, error: 'Invalid phone number format' };
   }
