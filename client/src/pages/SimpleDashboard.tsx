@@ -166,16 +166,16 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
     });
   };
 
-  const stats = dashboardData?.data || {};
+  const stats = dashboardData?.data?.summary || {};
   const tables = dashboardData?.data?.tables || [];
-  const reservations = dashboardData?.data?.upcomingReservations || [];
+  const reservations = dashboardData?.data?.upcoming_reservations || [];
 
   // Filter today's reservations
   const today = new Date().toISOString().split('T')[0];
   const todayReservations = reservations.filter((r: any) => r.date === today);
 
   // Calculate occupied tables
-  const occupiedTables = tables.filter((t: any) => t.status === 'Occupied').length;
+  const occupiedTables = tables.filter((t: any) => t.status === 'occupied').length;
   const totalTables = tables.length;
   const occupancyPercent = totalTables > 0 ? Math.round((occupiedTables / totalTables) * 100) : 0;
 
