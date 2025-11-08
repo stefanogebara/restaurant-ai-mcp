@@ -175,12 +175,12 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
   const todayReservations = reservations.filter((r: any) => r.date === today);
 
   // Calculate occupied tables
-  const occupiedTables = tables.filter((t: any) => t.status === 'occupied').length;
+  const occupiedTables = tables.filter((t: any) => t.status === 'Occupied').length;
   const totalTables = tables.length;
   const occupancyPercent = totalTables > 0 ? Math.round((occupiedTables / totalTables) * 100) : 0;
 
   // Get available tables for modals
-  const availableTables = tables.filter((t: any) => t.status === 'available');
+  const availableTables = tables.filter((t: any) => t.status === 'Available');
 
   const handleWalkInSuccess = (partyData: any) => {
     setSelectedParty(partyData);
