@@ -34,7 +34,7 @@ export default function SeatPartyModal({ isOpen, data, onClose }: SeatPartyModal
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <h2 className="text-xl font-bold mb-4">Confirm Seating</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Confirm Seating</h2>
 
         {seatPartyMutation.isSuccess ? (
           <div className="text-center py-8">
@@ -52,15 +52,15 @@ export default function SeatPartyModal({ isOpen, data, onClose }: SeatPartyModal
             <div className="bg-gray-50 rounded-lg p-4 mb-4 space-y-2">
               <div className="flex justify-between">
                 <span className="text-gray-600">Customer:</span>
-                <span className="font-semibold">{data.customer_name}</span>
+                <span className="font-semibold text-gray-900">{data.customer_name}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Party Size:</span>
-                <span className="font-semibold">{data.party_size} guests</span>
+                <span className="font-semibold text-gray-900">{data.party_size} guests</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Tables:</span>
-                <span className="font-semibold">{data.table_ids?.join(', ')}</span>
+                <span className="font-semibold text-gray-900">{data.table_ids?.join(', ')}</span>
               </div>
               {data.recommendations && (
                 <div className="flex justify-between">
