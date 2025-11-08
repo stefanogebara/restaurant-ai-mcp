@@ -292,11 +292,21 @@ async function handleSeatParty(req, res) {
   const estimatedDeparture = new Date(Date.now() + 90 * 60 * 1000).toISOString();
 
   // Convert table UUIDs to table numbers (Supabase schema uses integer[])
-  const allTables = await getAllTables();
+  const tablesResult = await getAllTables();
+  if (!tablesResult.success || !tablesResult.tables) {
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to load tables for UUID conversion'
+    });
+  }
+
   const tableNumbers = table_ids.map(uuid => {
-    const table = allTables.find(t => t.id === uuid);
+    const table = tablesResult.tables.find(t => t.id === uuid);
     if (!table) {
-      throw new Error(`Table with UUID ${uuid} not found`);
+      return res.status(400).json({
+        success: false,
+        error: `Table with UUID ${uuid} not found`
+      });
     }
     return table.table_number;
   });
