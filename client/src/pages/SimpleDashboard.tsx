@@ -1014,7 +1014,7 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
                 </button>
               )}
 
-              {selectedTable.status === 'Available' && (
+              {selectedTable.status === 'available' && (
                 <button
                   onClick={() => {
                     setShowTableActionsModal(false);

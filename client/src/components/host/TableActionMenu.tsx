@@ -18,7 +18,7 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['hostDashboard'] });
-      const statusText = variables.status === 'Available' ? 'free' : variables.status.toLowerCase();
+      const statusText = variables.status === 'available' ? 'free' : variables.status.toLowerCase();
       success(`Table ${table.table_number} marked as ${statusText}`);
       onClose();
     },
@@ -87,7 +87,7 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
               className={`
                 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold
                 ${
-                  table.status === 'Available'
+                  table.status === 'available'
                     ? 'bg-emerald-500/20 text-emerald-400'
                     : table.status === 'Occupied'
                     ? 'bg-red-500/20 text-red-400'
