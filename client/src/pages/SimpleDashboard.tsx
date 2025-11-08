@@ -180,7 +180,7 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
   const occupancyPercent = totalTables > 0 ? Math.round((occupiedTables / totalTables) * 100) : 0;
 
   // Get available tables for modals
-  const availableTables = tables.filter((t: any) => t.status === 'Available');
+  const availableTables = tables.filter((t: any) => t.status === 'available');
 
   const handleWalkInSuccess = (partyData: any) => {
     setSelectedParty(partyData);
