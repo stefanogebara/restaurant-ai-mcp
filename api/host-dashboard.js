@@ -348,7 +348,7 @@ async function handleSeatParty(req, res) {
 
   const updatePromises = tableRecordIds.map(recordId =>
     updateTable(recordId, {
-      'Status': 'Occupied',
+      'Status': 'occupied',
       'Current Service ID': serviceId
     })
   );
@@ -423,7 +423,7 @@ async function handleCompleteService(req, res) {
 
   const updatePromises = tableRecordIds.map(recordId =>
     updateTable(recordId, {
-      'Status': 'Available',
+      'Status': 'available',
       'Current Service ID': ''
     })
   );
@@ -448,7 +448,7 @@ async function handleMarkTableClean(req, res) {
   }
 
   const updateResult = await updateTable(table_id, {
-    'Status': 'Available'
+    'Status': 'available'
   });
 
   if (!updateResult.success) {
