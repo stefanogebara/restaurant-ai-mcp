@@ -297,7 +297,7 @@ async function handleSeatParty(req, res) {
     'Customer Name': sanitizedName,
     'Customer Phone': sanitizedPhone,
     'Party Size': parseInt(party_size),
-    'Table IDs': table_ids.join(', '),
+    'Table IDs': table_ids,  // Supabase expects array, not comma-separated string
     'Seated At': seatedAt,
     'Estimated Departure': estimatedDeparture,
     'Special Requests': sanitizedRequests,
