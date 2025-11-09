@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
 interface MetricCardProps {

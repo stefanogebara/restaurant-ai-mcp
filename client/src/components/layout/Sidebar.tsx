@@ -8,16 +8,20 @@ import {
   Dna,
   Globe,
   ChevronLeft,
-  Menu
+  Menu,
+  Lock
 } from 'lucide-react';
 import { useState } from 'react';
 import { useSidebar } from '../../contexts/SidebarContext';
+import { useSubscription } from '../../hooks/useSubscription';
+import { hasFeatureAccess, type PlanFeatures, type PlanType } from '../../config/planFeatures';
 
 interface NavItem {
   path: string;
   label: string;
   icon: React.ReactNode;
   description: string;
+  requiredFeature: keyof PlanFeatures;
 }
 
 const navItems: NavItem[] = [
@@ -25,49 +29,58 @@ const navItems: NavItem[] = [
     path: '/host-dashboard',
     label: 'Overview',
     icon: <LayoutDashboard className="w-5 h-5" />,
-    description: 'Tables & Active Parties'
+    description: 'Tables & Active Parties',
+    requiredFeature: 'overview'
   },
   {
     path: '/host-dashboard/ml',
     label: 'ML Performance',
     icon: <TrendingUp className="w-5 h-5" />,
-    description: 'ROI & Interventions'
+    description: 'ROI & Interventions',
+    requiredFeature: 'mlPerformance'
   },
   {
     path: '/host-dashboard/ltv',
     label: 'Customer LTV',
     icon: <Users className="w-5 h-5" />,
-    description: 'Lifetime Value'
+    description: 'Lifetime Value',
+    requiredFeature: 'customerLTV'
   },
   {
     path: '/host-dashboard/pricing',
     label: 'Pricing Rules',
     icon: <DollarSign className="w-5 h-5" />,
-    description: 'Dynamic Pricing'
+    description: 'Dynamic Pricing',
+    requiredFeature: 'pricingRules'
   },
   {
     path: '/host-dashboard/analytics',
     label: 'Pricing Analytics',
     icon: <BarChart3 className="w-5 h-5" />,
-    description: 'Revenue Insights'
+    description: 'Revenue Insights',
+    requiredFeature: 'pricingAnalytics'
   },
   {
     path: '/host-dashboard/dna',
     label: 'Customer DNA',
     icon: <Dna className="w-5 h-5" />,
-    description: 'Behavioral Profiling'
+    description: 'Behavioral Profiling',
+    requiredFeature: 'customerDNA'
   },
   {
     path: '/host-dashboard/segovia',
     label: 'Segovia Insights',
     icon: <Globe className="w-5 h-5" />,
-    description: 'Tourism Analytics'
+    description: 'Tourism Analytics',
+    requiredFeature: 'segoviaInsights'
   }
 ];
 
 export default function Sidebar() {
   const location = useLocation();
   const { isCollapsed, setIsCollapsed } = useSidebar();
+  const subscription = useSubscription();
+  const planType = subscription.data?.subscription?.plan.toLowerCase() as PlanType | undefined;
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const isActive = (path: string) => {
@@ -126,6 +139,44 @@ export default function Sidebar() {
           <nav className="flex-1 overflow-y-auto p-4 space-y-2">
             {navItems.map((item) => {
               const active = isActive(item.path);
+              const hasAccess = hasFeatureAccess(planType, item.requiredFeature);
+              const isLocked = !hasAccess;
+
+              // For locked items, don't navigate - just show as disabled
+              const itemContent = (
+                <>
+                  <span className={active ? 'scale-110' : ''}>{item.icon}</span>
+                  {!isCollapsed && (
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm flex items-center gap-2">
+                        {item.label}
+                        {isLocked && <Lock className="w-3 h-3" />}
+                      </div>
+                      <div className="text-xs opacity-70 truncate">{item.description}</div>
+                    </div>
+                  )}
+                </>
+              );
+
+              if (isLocked) {
+                // Locked item - show as disabled button
+                return (
+                  <button
+                    key={item.path}
+                    onClick={() => {/* Prevent navigation - could show upgrade modal */}}
+                    className={`
+                      flex items-center gap-3 px-4 py-3 rounded-lg transition-all w-full text-left
+                      opacity-50 cursor-not-allowed text-muted-foreground
+                      ${isCollapsed ? 'justify-center' : ''}
+                    `}
+                    title={isCollapsed ? `${item.label} (Locked)` : undefined}
+                    disabled
+                  >
+                    {itemContent}
+                  </button>
+                );
+              }
+
               return (
                 <Link
                   key={item.path}
@@ -141,13 +192,7 @@ export default function Sidebar() {
                   `}
                   title={isCollapsed ? item.label : undefined}
                 >
-                  <span className={active ? 'scale-110' : ''}>{item.icon}</span>
-                  {!isCollapsed && (
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm">{item.label}</div>
-                      <div className="text-xs opacity-70 truncate">{item.description}</div>
-                    </div>
-                  )}
+                  {itemContent}
                 </Link>
               );
             })}

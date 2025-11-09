@@ -3,7 +3,7 @@ import { TrendingUp, Target, AlertCircle, DollarSign, CheckCircle2, Sparkles } f
 import DashboardLayout from '../components/layout/DashboardLayout';
 import MetricCard from '../components/common/MetricCard';
 import TrendChart from '../components/common/TrendChart';
-import api from '../services/api';
+import { api } from '../services/api';
 
 interface MLPerformanceData {
   summary: {
