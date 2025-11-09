@@ -1,0 +1,152 @@
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend
+} from 'recharts';
+
+interface TrendChartProps {
+  data: any[];
+  type?: 'line' | 'bar';
+  dataKeys: {
+    key: string;
+    label: string;
+    color: string;
+  }[];
+  xAxisKey: string;
+  height?: number;
+  loading?: boolean;
+}
+
+export default function TrendChart({
+  data,
+  type = 'line',
+  dataKeys,
+  xAxisKey,
+  height = 300,
+  loading = false
+}: TrendChartProps) {
+  if (loading) {
+    return (
+      <div
+        className="bg-card border border-border rounded-xl p-6 flex items-center justify-center animate-pulse"
+        style={{ height }}
+      >
+        <div className="text-muted-foreground">Loading chart...</div>
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <div
+        className="bg-card border border-border rounded-xl p-6 flex items-center justify-center"
+        style={{ height }}
+      >
+        <div className="text-center">
+          <p className="text-muted-foreground">No data available</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Data will appear here once interventions are tracked
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+          <p className="text-sm font-semibold text-foreground mb-2">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <div key={index} className="flex items-center gap-2 text-sm">
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: entry.color }}
+              />
+              <span className="text-muted-foreground">{entry.name}:</span>
+              <span className="font-semibold text-foreground">{entry.value}</span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const chartConfig = {
+    margin: { top: 5, right: 30, left: 20, bottom: 5 },
+    className: 'bg-card border border-border rounded-xl p-6'
+  };
+
+  return (
+    <div className={chartConfig.className}>
+      <ResponsiveContainer width="100%" height={height}>
+        {type === 'line' ? (
+          <LineChart data={data} margin={chartConfig.margin}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis
+              dataKey={xAxisKey}
+              stroke="hsl(var(--muted-foreground))"
+              tick={{ fill: 'hsl(var(--muted-foreground))' }}
+            />
+            <YAxis
+              stroke="hsl(var(--muted-foreground))"
+              tick={{ fill: 'hsl(var(--muted-foreground))' }}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend
+              wrapperStyle={{ color: 'hsl(var(--foreground))' }}
+              iconType="circle"
+            />
+            {dataKeys.map((item) => (
+              <Line
+                key={item.key}
+                type="monotone"
+                dataKey={item.key}
+                name={item.label}
+                stroke={item.color}
+                strokeWidth={2}
+                dot={{ fill: item.color, r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+            ))}
+          </LineChart>
+        ) : (
+          <BarChart data={data} margin={chartConfig.margin}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis
+              dataKey={xAxisKey}
+              stroke="hsl(var(--muted-foreground))"
+              tick={{ fill: 'hsl(var(--muted-foreground))' }}
+            />
+            <YAxis
+              stroke="hsl(var(--muted-foreground))"
+              tick={{ fill: 'hsl(var(--muted-foreground))' }}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend
+              wrapperStyle={{ color: 'hsl(var(--foreground))' }}
+              iconType="square"
+            />
+            {dataKeys.map((item) => (
+              <Bar
+                key={item.key}
+                dataKey={item.key}
+                name={item.label}
+                fill={item.color}
+                radius={[4, 4, 0, 0]}
+              />
+            ))}
+          </BarChart>
+        )}
+      </ResponsiveContainer>
+    </div>
+  );
+}
