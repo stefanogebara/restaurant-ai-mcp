@@ -256,7 +256,7 @@ async function calculateAverageNoShowValue() {
       .select('total_bill')
       .eq('status', 'completed')
       .not('total_bill', 'is', null) // Only records with bill data
-      .gte('departed_at', thirtyDaysAgo.toISOString());
+      .gte('actual_departure', thirtyDaysAgo.toISOString());
 
     if (error) {
       console.error('[mlRiskScoring] Error fetching service records for avg revenue:', error);
