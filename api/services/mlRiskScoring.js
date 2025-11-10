@@ -14,24 +14,57 @@ const supabase = createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
-const MODEL_VERSION = 'v1.1-heuristic-segovia'; // Updated with Segovia-specific factors
+const MODEL_VERSION = 'v1.2-heuristic-segovia-fixed'; // Fixed lead time U-curve + configurable costs
+
+// ============================================================================
+// COST CONFIGURATION - Adjust these based on YOUR restaurant's actual costs
+// ============================================================================
+
+const INTERVENTION_COSTS = {
+  // Confirmation call: Staff time to make 5-10 min call
+  // Example: If staff makes €18/hr, 10 min = €3
+  // ADJUST THIS: Use your actual labor cost
+  confirmation_call: 3,
+
+  // Deposit processing: Payment processor fees + admin overhead
+  // Example: Stripe 2.9% + €0.30 = ~€0.88 per €20 deposit, rounded to €2
+  // ADJUST THIS: Use your actual payment processing fees
+  deposit_required: 2,
+
+  // SMS reminder: Per-message cost from Twilio/etc
+  sms_reminder: 0.05,
+
+  // Email reminder: Essentially free (automated)
+  email_reminder: 0,
+
+  // Premium seating: Goodwill gesture, no direct cost
+  premium_seating: 0
+};
+
+// Average revenue per no-show prevented
+// ADJUST THIS: Use your actual average table revenue
+const AVERAGE_NO_SHOW_VALUE = 50; // €50 per prevented no-show
 
 /**
- * Risk Factors (based on restaurant industry research):
+ * Risk Factors (based on 2023-2024 restaurant industry research):
  *
  * HIGH RISK:
  * - New customer (no history)
  * - Large party size (6+)
- * - Last-minute booking (< 2 hours)
+ * - Short notice booking (1-2 days) - impulsive
+ * - Far advance booking (>7 days) - plans change
  * - Prime time slots (7-9 PM Friday/Saturday)
- * - No deposit/credit card
+ * - No email contact
+ * - Tourist customers (travel uncertainty)
  *
  * LOW RISK:
  * - Repeat customer with good history
  * - Small party (1-2)
- * - Advance booking (> 7 days)
+ * - Same-day urgent booking (<4 hours) - committed customer
+ * - Sweet spot booking (2-7 days) - planned dining
  * - Off-peak times
- * - Credit card on file
+ * - Special occasions (birthday, anniversary)
+ * - Dietary restrictions (shows intentionality)
  */
 
 /**
@@ -84,21 +117,26 @@ async function calculateRiskScore(reservation) {
     factors.push({ factor: 'medium_party', impact: 5, description: `${party_size} people` });
   }
 
-  // Factor 3: Booking Lead Time (20 points)
+  // Factor 3: Booking Lead Time (20 points) - U-SHAPED CURVE
+  // Research shows: same-day urgent = LOW risk, short notice = HIGH risk, far future = HIGH risk
   const bookingDate = new Date(created_at);
   const reservationDate = new Date(`${date}T${time}`);
   const leadTimeHours = (reservationDate - bookingDate) / (1000 * 60 * 60);
 
-  if (leadTimeHours < 2) {
+  if (leadTimeHours < 4) {
+    // Same-day urgent (<4 hours): Customer is coming NOW - very committed
+    riskScore -= 10;
+    factors.push({ factor: 'same_day_urgent', impact: -10, description: '< 4 hours - urgent/committed' });
+  } else if (leadTimeHours < 48) {
+    // Short notice (1-2 days): Impulsive booking, plans may change
+    riskScore += 15;
+    factors.push({ factor: 'short_notice', impact: 15, description: '1-2 days - impulsive booking' });
+  } else if (leadTimeHours > 168) {
+    // Far future (>7 days): Plans change, may forget
     riskScore += 20;
-    factors.push({ factor: 'last_minute_booking', impact: 20, description: '< 2 hours notice' });
-  } else if (leadTimeHours < 24) {
-    riskScore += 10;
-    factors.push({ factor: 'short_notice', impact: 10, description: '< 1 day notice' });
-  } else if (leadTimeHours > 168) { // > 7 days
-    riskScore += 5;
-    factors.push({ factor: 'far_advance', impact: 5, description: '> 7 days advance' });
+    factors.push({ factor: 'far_advance', impact: 20, description: '> 7 days - plans may change' });
   }
+  // Sweet spot (2-7 days): Planned dining, no adjustment
 
   // Factor 4: Time Slot (15 points)
   const hour = parseInt(time.split(':')[0]);
@@ -293,19 +331,19 @@ async function processReservation(reservation) {
  * @returns {Object} Intervention recommendation
  */
 function getRecommendedIntervention(riskLevel, riskScore) {
-  if (riskLevel === 'very-high') {  // Fixed: Use hyphen to match enum
+  if (riskLevel === 'very-high') {
     return {
-      type: 'deposit_required',  // Fixed: Match Supabase enum
+      type: 'deposit_required',
       description: 'Require credit card deposit (€10-20 per person)',
-      estimatedCost: 2, // Cost of payment processing
-      estimatedValue: 50 // Average revenue per no-show prevented
+      estimatedCost: INTERVENTION_COSTS.deposit_required, // Configurable: payment processing fees
+      estimatedValue: AVERAGE_NO_SHOW_VALUE
     };
   } else if (riskLevel === 'high') {
     return {
-      type: 'confirmation_call',  // Fixed: Match Supabase enum
+      type: 'confirmation_call',
       description: 'Confirmation call 24 hours before',
-      estimatedCost: 3, // Staff time cost
-      estimatedValue: 50
+      estimatedCost: INTERVENTION_COSTS.confirmation_call, // Configurable: staff time cost
+      estimatedValue: AVERAGE_NO_SHOW_VALUE
     };
   }
   return null;
@@ -316,5 +354,7 @@ module.exports = {
   processReservation,
   updateReservationRiskScore,
   getRecommendedIntervention,
-  MODEL_VERSION
+  MODEL_VERSION,
+  INTERVENTION_COSTS, // Export for configuration/testing
+  AVERAGE_NO_SHOW_VALUE // Export for configuration/testing
 };
