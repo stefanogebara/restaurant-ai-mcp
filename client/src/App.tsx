@@ -39,9 +39,9 @@ function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/live-demo" element={<LiveAIDemo />} />
-            {/* Simple Dashboard - Default for new users (Spanish) */}
+            {/* Simple Dashboard - Default for new users (English default, switchable) */}
             <Route path="/host-dashboard" element={<Navigate to="/host-dashboard/simple" replace />} />
-            <Route path="/host-dashboard/simple" element={<SimpleDashboard language="es" />} />
+            <Route path="/host-dashboard/simple" element={<SimpleDashboard />} />
             {/* Advanced Dashboard - All features for power users */}
             <Route path="/host-dashboard/advanced" element={<HostDashboard />} />
             <Route path="/host-dashboard/reports" element={<WeeklyReport />} />
