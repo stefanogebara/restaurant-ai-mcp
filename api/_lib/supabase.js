@@ -757,11 +757,15 @@ const getUpcomingReservations = async () => {
     checked_in_at: r.checked_in_at || null,
     status: r.status,
     record_id: r.id,
-    // ML Prediction fields
+    // ML Prediction fields (modern format)
+    ml_risk_score: r.ml_risk_score,
+    ml_risk_level: r.ml_risk_level,
+    ml_confidence: r.ml_confidence,
+    ml_model_version: r.ml_model_version,
+    // Legacy field names (deprecated, kept for backwards compatibility)
     no_show_risk_score: r.ml_risk_score,
     no_show_risk_level: r.ml_risk_level,
-    prediction_confidence: r.ml_confidence,
-    ml_model_version: r.ml_model_version
+    prediction_confidence: r.ml_confidence
   }));
 
   return {

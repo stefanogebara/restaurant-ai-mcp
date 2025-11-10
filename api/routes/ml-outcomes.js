@@ -15,6 +15,82 @@ const supabase = createClient(
 );
 
 /**
+ * Mark intervention action as taken
+ * PATCH /api/ml-outcomes/mark-action-taken
+ *
+ * Body:
+ * {
+ *   reservation_id: "RES-20251101-1234",
+ *   intervention_type: "confirmation_call" | "deposit_required" | "sms_reminder",
+ *   notes: "Called customer to confirm reservation"
+ * }
+ */
+router.patch('/mark-action-taken', async (req, res) => {
+  try {
+    const { reservation_id, intervention_type = 'confirmation_call', notes = '' } = req.body;
+
+    if (!reservation_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required field: reservation_id'
+      });
+    }
+
+    console.log(`\n📞 Marking intervention action taken for ${reservation_id}`);
+
+    // Find intervention record for this reservation
+    const { data: intervention, error: findError } = await supabase
+      .from('ml_interventions')
+      .select('*')
+      .eq('reservation_id', reservation_id)
+      .single();
+
+    if (findError || !intervention) {
+      return res.status(404).json({
+        success: false,
+        error: 'Intervention record not found for this reservation'
+      });
+    }
+
+    // Update intervention record
+    const { data: updated, error: updateError } = await supabase
+      .from('ml_interventions')
+      .update({
+        action_taken: true,
+        action_timestamp: new Date().toISOString(),
+        intervention_type: intervention_type,
+        notes: notes
+      })
+      .eq('intervention_id', intervention.intervention_id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Error updating intervention:', updateError);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to update intervention record'
+      });
+    }
+
+    console.log(`✅ Intervention marked as taken: ${intervention_type}`);
+
+    return res.status(200).json({
+      success: true,
+      intervention: updated,
+      message: 'Intervention action marked as taken successfully'
+    });
+
+  } catch (error) {
+    console.error('Error marking intervention action:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+/**
  * Record reservation outcome
  * POST /api/ml-outcomes/record-outcome
  *

@@ -811,9 +811,88 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
                       </div>
                     </div>
                     <div className="border-l-2 border-indigo-200 pl-4 flex-1 min-w-0">
-                      <div className="font-semibold text-slate-900 text-base md:text-lg mb-1 truncate">
-                        {reservation.customer_name}
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="font-semibold text-slate-900 text-base md:text-lg truncate">
+                          {reservation.customer_name}
+                        </div>
+                        {/* ML Risk Badges */}
+                        {reservation.ml_risk_level === 'very-high' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-lg border border-red-300 shadow-sm flex-shrink-0">
+                            🔴 VERY HIGH RISK
+                          </span>
+                        )}
+                        {reservation.ml_risk_level === 'high' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 text-xs font-bold rounded-lg border border-orange-300 shadow-sm flex-shrink-0">
+                            ⚠️ HIGH RISK
+                          </span>
+                        )}
                       </div>
+                      {/* ML Intervention Actions */}
+                      {(reservation.ml_risk_level === 'high' || reservation.ml_risk_level === 'very-high') && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          <button
+                            onClick={async () => {
+                              if (!window.confirm(language === 'es' ? '¿Confirmar que se realizó la llamada?' : 'Confirm that call was made?')) return;
+                              try {
+                                const response = await fetch('/api/ml-outcomes/mark-action-taken', {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    reservation_id: reservation.reservation_id,
+                                    intervention_type: 'confirmation_call',
+                                    notes: 'Called customer to confirm reservation'
+                                  })
+                                });
+                                if (response.ok) {
+                                  setToast({ message: language === 'es' ? 'Intervención marcada' : 'Intervention marked', type: 'success' });
+                                  refetch();
+                                } else {
+                                  throw new Error('Failed to mark intervention');
+                                }
+                              } catch (error) {
+                                console.error('Error marking intervention:', error);
+                                setToast({ message: language === 'es' ? 'Error al marcar' : 'Error marking', type: 'error' });
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 hover:bg-indigo-200 text-indigo-800 text-xs font-semibold rounded-lg border border-indigo-300 transition-all duration-200"
+                          >
+                            📞 {language === 'es' ? 'Marcar Llamada Hecha' : 'Mark Call Made'}
+                          </button>
+                          <button
+                            onClick={async () => {
+                              const outcome = window.prompt(language === 'es'
+                                ? 'Resultado (showed_up/no_show/cancelled):'
+                                : 'Outcome (showed_up/no_show/cancelled):');
+                              if (!outcome || !['showed_up', 'no_show', 'cancelled'].includes(outcome)) return;
+                              try {
+                                const response = await fetch('/api/ml-outcomes/record-outcome', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    reservation_id: reservation.reservation_id,
+                                    actual_outcome: outcome,
+                                    intervention_taken: true,
+                                    intervention_type: 'confirmation_call',
+                                    intervention_cost: 3
+                                  })
+                                });
+                                if (response.ok) {
+                                  setToast({ message: language === 'es' ? 'Resultado registrado' : 'Outcome recorded', type: 'success' });
+                                  refetch();
+                                } else {
+                                  throw new Error('Failed to record outcome');
+                                }
+                              } catch (error) {
+                                console.error('Error recording outcome:', error);
+                                setToast({ message: language === 'es' ? 'Error al registrar' : 'Error recording', type: 'error' });
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 hover:bg-green-200 text-green-800 text-xs font-semibold rounded-lg border border-green-300 transition-all duration-200"
+                          >
+                            ✅ {language === 'es' ? 'Registrar Resultado' : 'Record Outcome'}
+                          </button>
+                        </div>
+                      )}
                       <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
                         <div className="flex items-center gap-1">
                           <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

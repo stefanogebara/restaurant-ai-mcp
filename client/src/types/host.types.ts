@@ -35,11 +35,15 @@ export interface UpcomingReservation {
   checked_in_at?: string;
   status?: string;
   record_id?: string;
-  // ML Prediction fields
+  // ML Prediction fields (from Supabase reservations table)
+  ml_risk_score?: number;  // 0-100 percentage
+  ml_risk_level?: 'low' | 'medium' | 'high' | 'very-high';
+  ml_confidence?: number;  // 0-100 percentage
+  ml_model_version?: string;
+  // Legacy field names (deprecated, use ml_* fields above)
   no_show_risk_score?: number;  // 0-100 percentage
   no_show_risk_level?: 'low' | 'medium' | 'high' | 'very-high';
   prediction_confidence?: number;  // 0-100 percentage
-  ml_model_version?: string;
   // Segovia-specific enhanced notes fields
   dietary_restrictions?: string[];  // ['vegetarian', 'gluten-free', 'vegan', etc.]
   language_preference?: string;     // 'Spanish', 'English', 'Chinese', 'French'
