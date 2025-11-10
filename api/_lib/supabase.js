@@ -421,6 +421,22 @@ const completeServiceRecord = async (serviceId) => {
   });
 };
 
+const deleteServiceRecord = async (serviceId) => {
+  const { data, error } = await supabase
+    .from('service_records')
+    .delete()
+    .eq('service_id', serviceId)
+    .select();
+
+  if (error) return handleSupabaseResponse(null, error, 'DELETE service record');
+
+  return {
+    success: true,
+    message: `Service record ${serviceId} deleted`,
+    deleted_count: data ? data.length : 0
+  };
+};
+
 // ============ RESTAURANT INFO ============
 
 const getRestaurantInfo = async () => {
@@ -858,6 +874,7 @@ module.exports = {
   createServiceRecord,
   updateServiceRecord,
   completeServiceRecord,
+  deleteServiceRecord,
 
   // Restaurant Info
   getRestaurantInfo,

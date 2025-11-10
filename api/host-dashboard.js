@@ -6,6 +6,7 @@ const {
   updateReservation,
   createServiceRecord,
   updateServiceRecord,
+  deleteServiceRecord,
   updateTable,
   generateServiceId,
   findBestTableCombination
@@ -330,38 +331,82 @@ async function handleSeatParty(req, res) {
     'Status': 'Active'
   };
 
-  const serviceResult = await createServiceRecord(serviceFields);
-  if (!serviceResult.success) {
-    console.error('Failed to create service record:', {
-      serviceFields,
-      error: serviceResult.message || serviceResult.error
+  // BEGIN TRANSACTION: Create service record and update tables atomically
+  let serviceCreated = false;
+  let tablesUpdated = [];
+
+  try {
+    // Step 1: Create service record
+    const serviceResult = await createServiceRecord(serviceFields);
+    if (!serviceResult.success) {
+      console.error('Failed to create service record:', {
+        serviceFields,
+        error: serviceResult.message || serviceResult.error
+      });
+      throw new Error(serviceResult.message || 'Failed to create service record');
+    }
+    serviceCreated = true;
+
+    // Step 2: Update all tables to occupied status
+    // table_ids are already UUIDs (Supabase record IDs), use them directly for updates
+    const tableRecordIds = table_ids;
+
+    const updatePromises = tableRecordIds.map(async (recordId) => {
+      const result = await updateTable(recordId, {
+        'Status': 'occupied',
+        'Current Service ID': serviceId
+      });
+      if (!result.success) {
+        throw new Error(`Failed to update table ${recordId}`);
+      }
+      tablesUpdated.push(recordId);
+      return result;
     });
+
+    await Promise.all(updatePromises);
+
+    // SUCCESS: Both operations completed
+    return res.status(200).json({
+      success: true,
+      service_record_id: serviceId,
+      tables_assigned: table_ids,
+      estimated_departure: estimatedDeparture,
+      message: `Party of ${party_size} seated successfully`
+    });
+
+  } catch (error) {
+    // ROLLBACK: Clean up on failure
+    console.error('Transaction failed during seat party:', error);
+
+    // If service record was created, delete it
+    if (serviceCreated) {
+      console.log(`Rolling back: Deleting service record ${serviceId}`);
+      try {
+        await deleteServiceRecord(serviceId);
+      } catch (rollbackError) {
+        console.error('Failed to rollback service record:', rollbackError);
+      }
+    }
+
+    // If any tables were updated, reset them
+    if (tablesUpdated.length > 0) {
+      console.log(`Rolling back: Resetting ${tablesUpdated.length} tables`);
+      const rollbackPromises = tablesUpdated.map(recordId =>
+        updateTable(recordId, {
+          'Status': 'available',
+          'Current Service ID': ''
+        }).catch(err => console.error(`Failed to rollback table ${recordId}:`, err))
+      );
+      await Promise.all(rollbackPromises);
+    }
+
     return res.status(500).json({
       success: false,
-      error: 'Failed to create service record',
-      details: serviceResult.message || 'Unknown error'
+      error: 'Failed to seat party',
+      details: error.message,
+      rollback_performed: true
     });
   }
-
-  // table_ids are already UUIDs (Supabase record IDs), use them directly for updates
-  const tableRecordIds = table_ids;
-
-  const updatePromises = tableRecordIds.map(recordId =>
-    updateTable(recordId, {
-      'Status': 'occupied',
-      'Current Service ID': serviceId
-    })
-  );
-
-  await Promise.all(updatePromises);
-
-  return res.status(200).json({
-    success: true,
-    service_record_id: serviceId,
-    tables_assigned: table_ids,
-    estimated_departure: estimatedDeparture,
-    message: `Party of ${party_size} seated successfully`
-  });
 }
 
 async function handleCompleteService(req, res) {
