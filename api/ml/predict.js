@@ -171,12 +171,19 @@ function simplePred(featureVector, model) {
     probability *= 1.2;  // +20% risk for new customers
   }
 
-  // 4. Booking lead time (4.5% importance)
-  if (booking_lead_time < 24) {
-    probability *= 1.15;  // +15% for last-minute (<24h)
-  } else if (booking_lead_time > 168) {  // >7 days
-    probability *= 1.1;   // +10% for far future bookings
+  // 4. Booking lead time (4.5% importance) - U-shaped curve
+  // Research shows: same-day urgent = LOW risk, short notice = HIGH risk, far future = HIGH risk
+  if (booking_lead_time < 4) {
+    // Same-day urgent (<4 hours): Customer is coming NOW - very committed
+    probability *= 0.80;  // -20% risk
+  } else if (booking_lead_time < 48) {
+    // Short notice (1-2 days): Impulsive booking, plans may change
+    probability *= 1.15;  // +15% risk
+  } else if (booking_lead_time > 168) {
+    // Far future (>7 days): Plans change, may forget
+    probability *= 1.25;  // +25% risk (up from +10% based on research)
   }
+  // Sweet spot (2-7 days): Planned dining, no adjustment needed
 
   // Clamp to reasonable range
   return Math.max(0.05, Math.min(0.95, probability));
