@@ -6,6 +6,7 @@ import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
 import TableGrid from '../components/host/TableGrid';
 import TableStatusLegend from '../components/host/TableStatusLegend';
+import { PlanType, hasFeatureAccess, PLAN_NAMES } from '../config/planFeatures';
 
 type ComplexityLevel = 'estándar' | 'completo' | 'avanzado';
 
@@ -13,8 +14,10 @@ interface SimpleDashboardProps {
   language?: 'es' | 'en';
 }
 
-export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProps) {
+export default function SimpleDashboard({ language: initialLanguage = 'en' }: SimpleDashboardProps) {
   const [complexity, setComplexity] = useState<ComplexityLevel>('estándar');
+  const [language, setLanguage] = useState<'es' | 'en'>(initialLanguage);
+  const [currentPlan, setCurrentPlan] = useState<PlanType>('professional'); // Default to professional for demo
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [showSeatModal, setShowSeatModal] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
@@ -66,6 +69,30 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
     setComplexity(level);
     localStorage.setItem('dashboard-complexity', level);
   };
+
+  // Load language preference from localStorage
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('dashboard-language');
+    if (savedLanguage === 'es' || savedLanguage === 'en') {
+      setLanguage(savedLanguage);
+    }
+  }, []);
+
+  // Handle language change
+  const handleLanguageChange = (newLanguage: 'es' | 'en') => {
+    setLanguage(newLanguage);
+    localStorage.setItem('dashboard-language', newLanguage);
+  };
+
+  // Load plan from URL parameter (for demo mode)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const planParam = params.get('plan');
+
+    if (planParam === 'basic' || planParam === 'professional' || planParam === 'enterprise' || planParam === 'trial') {
+      setCurrentPlan(planParam);
+    }
+  }, []);
 
   // Fetch dashboard data
   const { data: dashboardData, refetch } = useQuery({
@@ -293,9 +320,50 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
               </p>
             </div>
 
-            {/* Complexity Toggle - Enhanced Design */}
-            <div className="flex items-center gap-1.5 bg-white rounded-xl p-1.5 shadow-sm border border-slate-200/60 backdrop-blur-sm">
-              <span className="text-xs text-slate-500 font-semibold px-2 hidden sm:block">{t.viewLevel}</span>
+            {/* Controls: Subscription Badge + Language Switcher + Complexity Toggle */}
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Subscription Plan Badge */}
+              <div className={`px-4 py-2 rounded-xl font-semibold text-sm shadow-sm border ${
+                currentPlan === 'enterprise'
+                  ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white border-purple-500'
+                  : currentPlan === 'professional'
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white border-blue-500'
+                  : currentPlan === 'basic'
+                  ? 'bg-gradient-to-r from-slate-600 to-slate-700 text-white border-slate-500'
+                  : 'bg-gradient-to-r from-green-600 to-green-700 text-white border-green-500'
+              }`}>
+                {currentPlan === 'enterprise' ? '👑' : currentPlan === 'professional' ? '💎' : currentPlan === 'trial' ? '🎯' : '⭐'} {PLAN_NAMES[currentPlan]}
+              </div>
+
+              {/* Language Switcher */}
+              <div className="flex items-center gap-1 bg-white rounded-xl p-1.5 shadow-sm border border-slate-200/60 backdrop-blur-sm">
+                <button
+                  onClick={() => handleLanguageChange('en')}
+                  className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                    language === 'en'
+                      ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-md shadow-blue-500/20 scale-105'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                  title="English"
+                >
+                  🇬🇧 EN
+                </button>
+                <button
+                  onClick={() => handleLanguageChange('es')}
+                  className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                    language === 'es'
+                      ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-md shadow-blue-500/20 scale-105'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                  title="Español"
+                >
+                  🇪🇸 ES
+                </button>
+              </div>
+
+              {/* Complexity Toggle - Enhanced Design */}
+              <div className="flex items-center gap-1.5 bg-white rounded-xl p-1.5 shadow-sm border border-slate-200/60 backdrop-blur-sm">
+                <span className="text-xs text-slate-500 font-semibold px-2 hidden sm:block">{t.viewLevel}</span>
 
               <button
                 onClick={() => handleComplexityChange('estándar')}
@@ -320,16 +388,27 @@ export default function SimpleDashboard({ language = 'es' }: SimpleDashboardProp
                 ⚙️
               </button>
               <button
-                onClick={() => window.location.href = '/host-dashboard/advanced'}
+                onClick={() => {
+                  if (hasFeatureAccess(currentPlan, 'mlPerformance')) {
+                    window.location.href = '/host-dashboard/advanced';
+                  } else {
+                    alert(language === 'es'
+                      ? '⭐ Esta función requiere el Plan Professional.\n\nActualiza tu plan para acceder al Panel de ML Performance.'
+                      : '⭐ This feature requires the Professional Plan.\n\nUpgrade your plan to access the ML Performance Dashboard.');
+                  }
+                }}
                 className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                  complexity === 'avanzado'
+                  !hasFeatureAccess(currentPlan, 'mlPerformance')
+                    ? 'text-slate-400 hover:bg-slate-100 cursor-not-allowed opacity-60'
+                    : complexity === 'avanzado'
                     ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-500/20 scale-105'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
-                title={t.avanzado}
+                title={hasFeatureAccess(currentPlan, 'mlPerformance') ? t.avanzado : (language === 'es' ? 'Requiere Plan Professional' : 'Requires Professional Plan')}
               >
                 🎯
               </button>
+            </div>
             </div>
           </div>
         </div>
