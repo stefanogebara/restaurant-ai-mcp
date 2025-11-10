@@ -42,8 +42,11 @@ const INTERVENTION_COSTS = {
 };
 
 // Average revenue per no-show prevented
-// ADJUST THIS: Use your actual average table revenue
-const AVERAGE_NO_SHOW_VALUE = 50; // €50 per prevented no-show
+// AUTO-CALCULATED from actual service_records data
+// Falls back to €50 if no data available yet
+let AVERAGE_NO_SHOW_VALUE_CACHE = null;
+let CACHE_TIMESTAMP = null;
+const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // Refresh every 24 hours
 
 /**
  * Risk Factors (based on 2023-2024 restaurant industry research):
@@ -231,6 +234,58 @@ async function calculateRiskScore(reservation) {
 }
 
 /**
+ * Calculate average revenue per table from actual service records
+ * Uses last 30 days of completed services with total_bill data
+ * Caches result for 24 hours to reduce database load
+ * @returns {Promise<number>} Average revenue in euros
+ */
+async function calculateAverageNoShowValue() {
+  // Check cache first
+  const now = Date.now();
+  if (AVERAGE_NO_SHOW_VALUE_CACHE && CACHE_TIMESTAMP && (now - CACHE_TIMESTAMP) < CACHE_DURATION_MS) {
+    return AVERAGE_NO_SHOW_VALUE_CACHE;
+  }
+
+  try {
+    // Calculate from last 30 days of completed service records
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const { data, error } = await supabase
+      .from('service_records')
+      .select('total_bill')
+      .eq('status', 'completed')
+      .not('total_bill', 'is', null) // Only records with bill data
+      .gte('departed_at', thirtyDaysAgo.toISOString());
+
+    if (error) {
+      console.error('[mlRiskScoring] Error fetching service records for avg revenue:', error);
+      return 50; // Fallback default
+    }
+
+    if (!data || data.length === 0) {
+      console.log('[mlRiskScoring] No service records with total_bill found. Using default €50.');
+      return 50; // No data yet, use default
+    }
+
+    // Calculate average
+    const totalRevenue = data.reduce((sum, record) => sum + (record.total_bill || 0), 0);
+    const average = Math.round(totalRevenue / data.length);
+
+    // Update cache
+    AVERAGE_NO_SHOW_VALUE_CACHE = average;
+    CACHE_TIMESTAMP = now;
+
+    console.log(`[mlRiskScoring] Calculated avg revenue from ${data.length} records: €${average}`);
+    return average;
+
+  } catch (error) {
+    console.error('[mlRiskScoring] Exception calculating avg revenue:', error);
+    return 50; // Fallback on error
+  }
+}
+
+/**
  * Get customer history from database
  * @param {string} customerPhone
  * @returns {Object|null} Customer history record
@@ -315,12 +370,17 @@ async function processReservation(reservation) {
   await updateReservationRiskScore(reservation.reservation_id, riskData);
 
   // Determine if intervention is needed
-  const needsIntervention = riskData.riskLevel === 'high' || riskData.riskLevel === 'very-high';  // Fixed: Use hyphen
+  const needsIntervention = riskData.riskLevel === 'high' || riskData.riskLevel === 'very-high';
+
+  // Get recommended intervention (async - uses auto-calculated average revenue)
+  const recommendedIntervention = needsIntervention
+    ? await getRecommendedIntervention(riskData.riskLevel, riskData.riskScore)
+    : null;
 
   return {
     ...riskData,
     needsIntervention,
-    recommendedIntervention: needsIntervention ? getRecommendedIntervention(riskData.riskLevel, riskData.riskScore) : null
+    recommendedIntervention
   };
 }
 
@@ -328,22 +388,26 @@ async function processReservation(reservation) {
  * Get recommended intervention based on risk level
  * @param {string} riskLevel
  * @param {number} riskScore
- * @returns {Object} Intervention recommendation
+ * @param {number} avgRevenue - Auto-calculated average revenue (optional, will calculate if not provided)
+ * @returns {Promise<Object>} Intervention recommendation
  */
-function getRecommendedIntervention(riskLevel, riskScore) {
+async function getRecommendedIntervention(riskLevel, riskScore, avgRevenue = null) {
+  // Get average revenue (uses cache if available)
+  const estimatedValue = avgRevenue || await calculateAverageNoShowValue();
+
   if (riskLevel === 'very-high') {
     return {
       type: 'deposit_required',
       description: 'Require credit card deposit (€10-20 per person)',
       estimatedCost: INTERVENTION_COSTS.deposit_required, // Configurable: payment processing fees
-      estimatedValue: AVERAGE_NO_SHOW_VALUE
+      estimatedValue
     };
   } else if (riskLevel === 'high') {
     return {
       type: 'confirmation_call',
       description: 'Confirmation call 24 hours before',
       estimatedCost: INTERVENTION_COSTS.confirmation_call, // Configurable: staff time cost
-      estimatedValue: AVERAGE_NO_SHOW_VALUE
+      estimatedValue
     };
   }
   return null;
@@ -354,7 +418,7 @@ module.exports = {
   processReservation,
   updateReservationRiskScore,
   getRecommendedIntervention,
+  calculateAverageNoShowValue, // Export for testing/manual calculation
   MODEL_VERSION,
-  INTERVENTION_COSTS, // Export for configuration/testing
-  AVERAGE_NO_SHOW_VALUE // Export for configuration/testing
+  INTERVENTION_COSTS // Export for configuration/testing
 };
