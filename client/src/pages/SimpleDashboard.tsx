@@ -6,7 +6,8 @@ import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
 import TableGrid from '../components/host/TableGrid';
 import TableStatusLegend from '../components/host/TableStatusLegend';
-import { PlanType, hasFeatureAccess, PLAN_NAMES } from '../config/planFeatures';
+import type { PlanType } from '../config/planFeatures';
+import { hasFeatureAccess, PLAN_NAMES } from '../config/planFeatures';
 
 type ComplexityLevel = 'estándar' | 'completo' | 'avanzado';
 
