@@ -2,13 +2,20 @@
  * POST /api/onboarding/complete
  *
  * Completes the entire restaurant onboarding process:
- * 1. Creates restaurant record in Restaurants table
- * 2. Creates business hours (7 records)
- * 3. Creates restaurant areas
- * 4. Creates tables linked to areas
- * 5. Invites team members (if Pro+ plan)
- * 6. Marks onboarding as complete
+ * 1. Updates restaurant_info table with restaurant configuration
+ * 2. Creates tables in the tables table
+ * 3. Returns success response
+ *
+ * NOTE: Migrated from Airtable multi-restaurant architecture to
+ * Supabase single-restaurant architecture (Nov 2025)
  */
+
+const { createClient } = require('@supabase/supabase-js');
+
+// Initialize Supabase client
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 module.exports = async (req, res) => {
   // Set CORS headers
@@ -55,182 +62,122 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Validate plan limits for team members
-    const planLimits = {
-      'Basic': 1,
-      'Professional': 5,
-      'Enterprise': -1, // unlimited
-    };
-
-    const teamMemberLimit = planLimits[plan] || 1; // Default to Basic if plan not specified
-
-    if (team_members && team_members.length > 0) {
-      const requestedTeamCount = team_members.length;
-
-      // Enterprise plan has unlimited (-1)
-      if (teamMemberLimit !== -1 && requestedTeamCount > teamMemberLimit) {
-        return res.status(403).json({
-          error: 'Team member limit exceeded',
-          message: `Your ${plan || 'Basic'} plan allows up to ${teamMemberLimit} team member(s). You are trying to add ${requestedTeamCount} members.`,
-          plan: plan || 'Basic',
-          limit: teamMemberLimit,
-          requested: requestedTeamCount,
-        });
-      }
-    }
-
     console.log('[Onboarding] Starting onboarding for:', customer_email);
-    console.log('[Onboarding] Plan:', plan || 'Basic', '| Team limit:', teamMemberLimit === -1 ? 'Unlimited' : teamMemberLimit);
-
-    const axios = require('axios');
-    const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
-    const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
-
-    const airtableRequest = async (method, endpoint, data = null) => {
-      const config = {
-        method,
-        url: `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${endpoint}`,
-        headers: {
-          'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        timeout: 10000,
-      };
-      if (data) config.data = data;
-      const response = await axios(config);
-      return response.data;
-    };
+    console.log('[Onboarding] Restaurant:', restaurant_name);
 
     // Generate Restaurant ID
     const generatedRestaurantId = restaurant_id || `REST-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
-    // STEP 1: Create Restaurant Record
-    console.log('[Onboarding] Step 1: Creating restaurant record...');
-    const restaurantFields = {
-      'Restaurant ID': generatedRestaurantId,
-      'Customer Email': customer_email,
-      'Restaurant Name': restaurant_name,
-      'Restaurant Type': restaurant_type,
-      'City': city,
-      'Country': country,
-      'Phone Number': phone_number,
-      'Email': email,
-      'Website': website || '',
-      'Average Dining Duration': average_dining_duration,
-      'Advance Booking Days': advance_booking_days,
-      'Buffer Time': buffer_time,
-      'Cancellation Policy': cancellation_policy,
-      'Special Notes': special_notes || '',
-      'Plan': plan || 'Basic', // Store subscription plan
-      'Onboarding Completed': true,
-      'Created At': new Date().toISOString().split('T')[0],
-      // 'Status' field removed - it's a Single Select field that requires predefined options
+    // STEP 1: Update restaurant_info table
+    console.log('[Onboarding] Step 1: Updating restaurant_info...');
+
+    const restaurantInfoData = {
+      restaurant_name,
+      phone_number: phone_number,
+      email: email,
+      website: website || '',
+      address: `${city}, ${country}`,
+      cancellation_policy: cancellation_policy || 'Free cancellation up to 2 hours before reservation',
+      special_notes: special_notes || '',
+      average_dining_duration: average_dining_duration || 90,
+      advance_booking_days: advance_booking_days || 30,
+      buffer_time: buffer_time || 15,
+      // Store additional metadata in JSON fields if available
+      metadata: {
+        customer_email,
+        restaurant_id: generatedRestaurantId,
+        restaurant_type,
+        city,
+        country,
+        plan: plan || 'Basic',
+        onboarding_completed_at: new Date().toISOString(),
+        business_hours: business_hours || []
+      }
     };
 
-    const restaurantResult = await airtableRequest(
-      'POST',
-      process.env.RESTAURANTS_TABLE_ID || 'tblRestaurants',
-      { fields: restaurantFields }
-    );
-    console.log('[Onboarding] Restaurant created:', restaurantResult.id);
+    // Check if restaurant_info record exists
+    const { data: existingInfo, error: fetchError } = await supabase
+      .from('restaurant_info')
+      .select('*')
+      .limit(1)
+      .single();
 
-    // STEP 2: Create Business Hours
-    console.log('[Onboarding] Step 2: Creating business hours...');
-    const hoursPromises = business_hours.map((day, index) => {
-      return airtableRequest(
-        'POST',
-        process.env.BUSINESS_HOURS_TABLE_ID || 'tblBusinessHours',
-        {
-          fields: {
-            'Hours ID': `${generatedRestaurantId}-${day.day}`,
-            'Restaurant ID': [restaurantResult.id], // Link to restaurant
-            'Day of Week': day.day,
-            'Is Open': day.is_open,
-            'Open Time': day.open_time,
-            'Close Time': day.close_time,
-          },
-        }
-      );
-    });
-    await Promise.all(hoursPromises);
-    console.log('[Onboarding] Business hours created (7 days)');
+    let restaurantInfoResult;
+    if (existingInfo) {
+      // Update existing record
+      const { data, error } = await supabase
+        .from('restaurant_info')
+        .update(restaurantInfoData)
+        .eq('id', existingInfo.id)
+        .select()
+        .single();
 
-    // STEP 3: Create Restaurant Areas
-    console.log('[Onboarding] Step 3: Creating restaurant areas...');
-    const areaResults = [];
-    for (const [index, area] of areas.entries()) {
-      const areaResult = await airtableRequest(
-        'POST',
-        process.env.AREAS_TABLE_ID || 'tblAreas',
-        {
-          fields: {
-            'Area ID': `${generatedRestaurantId}-AREA-${index + 1}`,
-            'Restaurant ID': [restaurantResult.id], // Link to restaurant
-            'Area Name': area.name,
-            'Is Active': area.is_active,
-            'Display Order': index + 1,
-            'Created At': new Date().toISOString().split('T')[0],
-          },
-        }
-      );
-      areaResults.push({ ...area, recordId: areaResult.id });
-      console.log(`[Onboarding] Area created: ${area.name} (${areaResult.id})`);
+      if (error) throw error;
+      restaurantInfoResult = data;
+      console.log('[Onboarding] Restaurant info updated');
+    } else {
+      // Insert new record
+      const { data, error } = await supabase
+        .from('restaurant_info')
+        .insert(restaurantInfoData)
+        .select()
+        .single();
+
+      if (error) throw error;
+      restaurantInfoResult = data;
+      console.log('[Onboarding] Restaurant info created');
     }
 
-    // STEP 4: Create Tables
-    console.log('[Onboarding] Step 4: Creating tables...');
-    let tableNumber = 1;
-    const tablePromises = [];
+    // STEP 2: Create Tables
+    console.log('[Onboarding] Step 2: Creating tables...');
 
-    for (const areaData of areaResults) {
-      for (const tableConfig of areaData.tables) {
+    // First, deactivate all existing tables
+    const { error: deactivateError } = await supabase
+      .from('tables')
+      .update({ is_active: false })
+      .eq('is_active', true);
+
+    if (deactivateError) {
+      console.warn('[Onboarding] Warning: Could not deactivate existing tables:', deactivateError);
+    }
+
+    // Create new tables from areas configuration
+    let tableNumber = 1;
+    const tablesToInsert = [];
+
+    for (const area of areas || []) {
+      for (const tableConfig of area.tables || []) {
         for (let i = 0; i < tableConfig.count; i++) {
-          tablePromises.push(
-            airtableRequest(
-              'POST',
-              process.env.TABLES_TABLE_ID || 'tblTables',
-              {
-                fields: {
-                  'Table Number': tableNumber,
-                  'Capacity': tableConfig.capacity,
-                  // 'Status' field removed - it's a Single Select field that requires predefined options
-                  'Is Active': true,
-                  'Location': areaData.name,
-                  'Restaurant ID': [restaurantResult.id], // Link to restaurant
-                  'Area ID': [areaData.recordId], // Link to area
-                },
-              }
-            )
-          );
+          tablesToInsert.push({
+            table_number: tableNumber,
+            capacity: tableConfig.capacity,
+            location: area.name,
+            status: 'Available',
+            is_active: true,
+            current_service_id: null
+          });
           tableNumber++;
         }
       }
     }
 
-    await Promise.all(tablePromises);
-    console.log(`[Onboarding] Tables created: ${tableNumber - 1} tables`);
+    if (tablesToInsert.length > 0) {
+      const { data: tablesData, error: tablesError } = await supabase
+        .from('tables')
+        .insert(tablesToInsert)
+        .select();
 
-    // STEP 5: Invite Team Members (if any)
+      if (tablesError) throw tablesError;
+      console.log(`[Onboarding] Created ${tablesData.length} tables`);
+    } else {
+      console.log('[Onboarding] No tables to create');
+    }
+
+    // STEP 3: Log team members (store in metadata for now)
     if (team_members && team_members.length > 0) {
-      console.log('[Onboarding] Step 5: Inviting team members...');
-      const teamPromises = team_members.map((member) => {
-        return airtableRequest(
-          'POST',
-          process.env.TEAM_MEMBERS_TABLE_ID || 'tblTeamMembers',
-          {
-            fields: {
-              'Member ID': `${generatedRestaurantId}-${member.email}`,
-              'Restaurant ID': [restaurantResult.id], // Link to restaurant
-              'Email': member.email,
-              'Role': member.role,
-              'Status': 'pending',
-              'Invited At': new Date().toISOString().split('T')[0],
-            },
-          }
-        );
-      });
-      await Promise.all(teamPromises);
-      console.log(`[Onboarding] Team members invited: ${team_members.length}`);
+      console.log(`[Onboarding] Team members provided: ${team_members.length}`);
+      console.log('[Onboarding] Note: Team member creation not yet implemented in Supabase');
+      // TODO: Create team_members table and implement team member creation
     }
 
     console.log('[Onboarding] ✅ Onboarding complete!');
@@ -241,7 +188,8 @@ module.exports = async (req, res) => {
       restaurant: {
         restaurant_id: generatedRestaurantId,
         restaurant_name,
-        record_id: restaurantResult.id,
+        record_id: restaurantInfoResult.id,
+        tables_created: tablesToInsert.length
       },
     });
   } catch (error) {
@@ -249,6 +197,7 @@ module.exports = async (req, res) => {
     return res.status(500).json({
       error: 'Failed to complete onboarding',
       message: error.message,
+      details: error.details || error.hint || 'Unknown error'
     });
   }
 };

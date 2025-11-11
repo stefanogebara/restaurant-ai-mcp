@@ -114,23 +114,28 @@ export default function Onboarding() {
         body: JSON.stringify(onboardingData),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Failed to complete onboarding');
+        // Show actual API error message
+        const errorMessage = data.message || data.error || 'Failed to complete onboarding';
+        const errorDetails = data.details ? `\n\nDetails: ${data.details}` : '';
+        throw new Error(`${errorMessage}${errorDetails}`);
       }
 
       // Clear localStorage
       localStorage.removeItem('onboarding_data');
       localStorage.removeItem('onboarding_step');
 
-      success('🎉 Welcome to HostGenius! Your restaurant is all set up.');
+      success(`🎉 Welcome to HostGenius! Your restaurant is all set up. ${data.restaurant?.tables_created || 0} tables created.`);
 
       // Redirect to dashboard
       setTimeout(() => {
         navigate('/host-dashboard');
       }, 2000);
-    } catch (err) {
-      showError('Failed to complete onboarding. Please try again.');
-      console.error(err);
+    } catch (err: any) {
+      showError(err.message || 'Failed to complete onboarding. Please try again.');
+      console.error('[Onboarding Error]', err);
     } finally {
       setIsSubmitting(false);
     }

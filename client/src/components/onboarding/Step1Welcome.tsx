@@ -86,26 +86,31 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
         )}
       </div>
 
-      {/* Restaurant Type */}
+      {/* Restaurant Type - Card Selection */}
       <div>
-        <label htmlFor="restaurant_type" className="block text-sm font-semibold text-white mb-2">
+        <label className="block text-sm font-semibold text-white mb-3">
           What type of restaurant? *
         </label>
-        <select
-          id="restaurant_type"
-          value={data.restaurant_type}
-          onChange={(e) => updateData({ restaurant_type: e.target.value })}
-          className="glass-input w-full px-4 py-3 text-white appearance-none cursor-pointer"
-        >
-          <option value="" className="bg-gray-900">Select a type...</option>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {RESTAURANT_TYPES.map((type) => (
-            <option key={type} value={type} className="bg-gray-900">
+            <button
+              key={type}
+              type="button"
+              onClick={() => updateData({ restaurant_type: type })}
+              className={`
+                p-4 rounded-lg border-2 transition-all duration-200 text-center font-semibold text-sm
+                ${data.restaurant_type === type
+                  ? 'border-indigo-500 bg-indigo-500/20 text-white shadow-lg shadow-indigo-500/20 scale-105'
+                  : 'border-white/20 bg-white/5 text-gray-300 hover:border-white/40 hover:bg-white/10 hover:text-white'
+                }
+              `}
+            >
               {type}
-            </option>
+            </button>
           ))}
-        </select>
+        </div>
         {errors.restaurant_type && (
-          <p className="mt-1 text-sm text-red-400">{errors.restaurant_type}</p>
+          <p className="mt-2 text-sm text-red-400">{errors.restaurant_type}</p>
         )}
       </div>
 

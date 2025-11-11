@@ -23,6 +23,9 @@ const CANCELLATION_POLICIES = [
 
 export default function Step4Settings({ data, updateData, onNext, onBack }: OnboardingStepProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isCustomPolicy, setIsCustomPolicy] = useState(
+    !CANCELLATION_POLICIES.slice(0, -1).includes(data.cancellation_policy)
+  );
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -99,8 +102,17 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
         </label>
         <select
           id="cancellation_policy"
-          value={data.cancellation_policy}
-          onChange={(e) => updateData({ cancellation_policy: e.target.value })}
+          value={isCustomPolicy ? 'Custom policy' : data.cancellation_policy}
+          onChange={(e) => {
+            const selectedValue = e.target.value;
+            if (selectedValue === 'Custom policy') {
+              setIsCustomPolicy(true);
+              updateData({ cancellation_policy: '' });
+            } else {
+              setIsCustomPolicy(false);
+              updateData({ cancellation_policy: selectedValue });
+            }
+          }}
           className="glass-input w-full px-4 py-3 text-white appearance-none cursor-pointer"
         >
           {CANCELLATION_POLICIES.map((policy) => (
@@ -115,7 +127,7 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
       </div>
 
       {/* Custom Cancellation Policy Input */}
-      {data.cancellation_policy === 'Custom policy' && (
+      {isCustomPolicy && (
         <div>
           <label htmlFor="custom_policy" className="block text-sm font-semibold text-white mb-2">
             Enter your custom cancellation policy
@@ -123,7 +135,7 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
           <textarea
             id="custom_policy"
             rows={3}
-            value={data.cancellation_policy === 'Custom policy' ? '' : data.cancellation_policy}
+            value={data.cancellation_policy}
             onChange={(e) => updateData({ cancellation_policy: e.target.value })}
             placeholder="Example: Full refund if cancelled 24 hours before. 50% refund if cancelled within 24 hours."
             className="glass-input w-full px-4 py-3 text-white placeholder-gray-400 resize-none"
