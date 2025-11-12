@@ -47,15 +47,16 @@ export function useSubscription(options: UseSubscriptionOptions = {}) {
   const { email, enabled = true } = options;
 
   return useQuery<SubscriptionResponse>({
-    queryKey: ['subscription', email],
+    queryKey: ['subscription', email || 'restaurant'],
     queryFn: async () => {
-      if (!email) {
-        return { has_subscription: false };
-      }
-
       const apiUrl = import.meta.env.VITE_API_URL || '';
+
+      // If no email provided, use default email to get restaurant subscription
+      // This works because getSubscriptionByEmail falls back to restaurant_info.metric_profile.plan
+      const queryEmail = email || 'test@example.com';
+
       const response = await fetch(
-        `${apiUrl}/api/subscription-status?email=${encodeURIComponent(email)}`
+        `${apiUrl}/api/subscription-status?email=${encodeURIComponent(queryEmail)}`
       );
 
       if (!response.ok) {
@@ -67,7 +68,7 @@ export function useSubscription(options: UseSubscriptionOptions = {}) {
 
       return response.json();
     },
-    enabled: enabled && !!email,
+    enabled: enabled,  // Always enabled, no longer requires email
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 10 * 60 * 1000, // Refetch every 10 minutes
   });
