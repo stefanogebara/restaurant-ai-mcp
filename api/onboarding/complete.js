@@ -68,6 +68,16 @@ module.exports = async (req, res) => {
     // Generate Restaurant ID
     const generatedRestaurantId = restaurant_id || `REST-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
+    // Validate restaurant_type against allowed values
+    const ALLOWED_RESTAURANT_TYPES = ['traditional', 'modern', 'fast-casual', 'fine-dining'];
+    const validatedRestaurantType = ALLOWED_RESTAURANT_TYPES.includes(restaurant_type)
+      ? restaurant_type
+      : null;  // Set to null if invalid value provided
+
+    if (restaurant_type && !validatedRestaurantType) {
+      console.warn(`[Onboarding] Invalid restaurant_type "${restaurant_type}". Must be one of: ${ALLOWED_RESTAURANT_TYPES.join(', ')}. Setting to null.`);
+    }
+
     // STEP 1: Update restaurant_info table
     console.log('[Onboarding] Step 1: Updating restaurant_info...');
 
@@ -85,7 +95,7 @@ module.exports = async (req, res) => {
       metric_profile: {
         customer_email,
         restaurant_id: generatedRestaurantId,
-        restaurant_type,
+        restaurant_type: validatedRestaurantType,  // Use validated value
         city,
         country,
         plan: plan || 'Basic',
