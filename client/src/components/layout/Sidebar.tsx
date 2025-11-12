@@ -66,13 +66,6 @@ const navItems: NavItem[] = [
     icon: <Dna className="w-5 h-5" />,
     description: 'Behavioral Profiling',
     requiredFeature: 'customerDNA'
-  },
-  {
-    path: '/host-dashboard/segovia',
-    label: 'Segovia Insights',
-    icon: <Globe className="w-5 h-5" />,
-    description: 'Tourism Analytics',
-    requiredFeature: 'segoviaInsights'
   }
 ];
 
