@@ -538,25 +538,58 @@ const getSubscriptionByCustomerId = async (customerId) => {
 };
 
 const getSubscriptionByEmail = async (email) => {
-  const result = await getSubscriptions({ customer_email: email });
+  // First, try to get from subscriptions table
+  const { data: subscriptions, error: subError } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('customer_email', email)
+    .limit(1);
 
-  if (result.success && result.data.records && result.data.records.length > 0) {
-    const subscription = result.data.records[0];
+  if (!subError && subscriptions && subscriptions.length > 0) {
+    const sub = subscriptions[0];
     return {
       success: true,
       subscription: {
-        subscription_id: subscription.fields['Subscription ID'],
-        customer_id: subscription.fields['Customer ID'],
-        customer_email: subscription.fields['Customer Email'],
-        plan_name: subscription.fields['Plan Name'],
-        price_id: subscription.fields['Price ID'],
-        status: subscription.fields['Status'],
-        current_period_start: subscription.fields['Current Period Start'],
-        current_period_end: subscription.fields['Current Period End'],
-        trial_end: subscription.fields['Trial End'],
-        canceled_at: subscription.fields['Canceled At'],
-        created_at: subscription.fields['Created At'],
-        record_id: subscription.id
+        subscription_id: sub.subscription_id,
+        customer_id: sub.customer_id,
+        customer_email: sub.customer_email,
+        plan_name: sub.plan_type,
+        price_id: sub.stripe_price_id,
+        status: sub.status,
+        current_period_start: sub.current_period_start,
+        current_period_end: sub.current_period_end,
+        trial_end: sub.trial_end,
+        canceled_at: sub.canceled_at,
+        created_at: sub.created_at,
+        record_id: sub.id
+      }
+    };
+  }
+
+  // Fallback: Check restaurant_info.metric_profile.plan (set during onboarding)
+  const { data: restaurantInfo, error: infoError } = await supabase
+    .from('restaurant_info')
+    .select('id, metric_profile')
+    .limit(1)
+    .single();
+
+  if (!infoError && restaurantInfo && restaurantInfo.metric_profile?.plan) {
+    const plan = restaurantInfo.metric_profile.plan;
+    return {
+      success: true,
+      subscription: {
+        subscription_id: 'onboarding-plan',
+        customer_id: null,
+        customer_email: restaurantInfo.metric_profile.customer_email || email,
+        plan_name: plan,
+        price_id: null,
+        status: 'active',  // Assume active if set in onboarding
+        current_period_start: restaurantInfo.metric_profile.onboarding_completed_at,
+        current_period_end: null,  // No end date for onboarding plans
+        trial_end: null,
+        canceled_at: null,
+        created_at: restaurantInfo.metric_profile.onboarding_completed_at,
+        record_id: restaurantInfo.id
       }
     };
   }
