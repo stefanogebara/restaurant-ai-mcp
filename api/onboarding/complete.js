@@ -155,7 +155,7 @@ module.exports = async (req, res) => {
             table_number: tableNumber,
             capacity: tableConfig.capacity,
             location: area.name,
-            status: 'Available',
+            status: 'available',  // Must be lowercase to match database enum
             is_active: true,
             current_service_id: null
           });
