@@ -71,27 +71,30 @@ module.exports = async (req, res) => {
     // STEP 1: Update restaurant_info table
     console.log('[Onboarding] Step 1: Updating restaurant_info...');
 
+    // Map onboarding fields to actual database schema
     const restaurantInfoData = {
       restaurant_name,
-      phone_number: phone_number,
+      phone: phone_number,  // Schema uses 'phone' not 'phone_number'
       email: email,
-      website: website || '',
       address: `${city}, ${country}`,
-      cancellation_policy: cancellation_policy || 'Free cancellation up to 2 hours before reservation',
-      special_notes: special_notes || '',
-      average_dining_duration: average_dining_duration || 90,
-      advance_booking_days: advance_booking_days || 30,
-      buffer_time: buffer_time || 15,
-      // Store additional metadata in JSON fields if available
-      metadata: {
+      business_hours: business_hours || [],
+      avg_dining_duration_minutes: average_dining_duration || 90,  // Schema uses this name
+      timezone: 'America/New_York',  // Default timezone
+      language: 'en',
+      // Store additional metadata in metric_profile JSON field
+      metric_profile: {
         customer_email,
         restaurant_id: generatedRestaurantId,
         restaurant_type,
         city,
         country,
         plan: plan || 'Basic',
-        onboarding_completed_at: new Date().toISOString(),
-        business_hours: business_hours || []
+        website: website || '',
+        cancellation_policy: cancellation_policy || 'Free cancellation up to 2 hours before reservation',
+        special_notes: special_notes || '',
+        advance_booking_days: advance_booking_days || 30,
+        buffer_time: buffer_time || 15,
+        onboarding_completed_at: new Date().toISOString()
       }
     };
 
