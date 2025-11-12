@@ -134,14 +134,16 @@ module.exports = async (req, res) => {
     // STEP 2: Create Tables
     console.log('[Onboarding] Step 2: Creating tables...');
 
-    // First, deactivate all existing tables
-    const { error: deactivateError } = await supabase
+    // First, delete all existing tables (onboarding resets the restaurant)
+    const { error: deleteError } = await supabase
       .from('tables')
-      .update({ is_active: false })
-      .eq('is_active', true);
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000');  // Delete all (using impossible UUID)
 
-    if (deactivateError) {
-      console.warn('[Onboarding] Warning: Could not deactivate existing tables:', deactivateError);
+    if (deleteError) {
+      console.warn('[Onboarding] Warning: Could not delete existing tables:', deleteError);
+    } else {
+      console.log('[Onboarding] Cleared all existing tables');
     }
 
     // Create new tables from areas configuration
