@@ -9,7 +9,7 @@ export default {
     extend: {
       // Premium Restaurant Typography System
       fontFamily: {
-        display: ['Playfair Display', 'Cormorant Garamond', 'serif'],
+        display: ['Space Grotesk', 'sans-serif'],
         sans: ['IBM Plex Sans', 'Bricolage Grotesque', 'sans-serif'],
         mono: ['JetBrains Mono', 'IBM Plex Mono', 'monospace'],
       },
