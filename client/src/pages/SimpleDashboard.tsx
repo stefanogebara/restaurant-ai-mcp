@@ -101,8 +101,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
     if (dashboardData) {
       console.log('🔍 Dashboard API Response:', dashboardData);
       console.log('📊 Tables from data.tables:', dashboardData?.data?.tables);
-      console.log('📊 Tables from direct:', dashboardData?.tables);
-      console.log('📊 Tables count:', (dashboardData?.data?.tables || dashboardData?.tables || []).length);
+      console.log('📊 Tables from direct:', (dashboardData as any)?.tables);
+      console.log('📊 Tables count:', (dashboardData?.data?.tables || (dashboardData as any)?.tables || []).length);
     }
   }, [dashboardData]);
 
@@ -200,7 +200,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
   const stats = dashboardData?.data?.summary || {};
   // Handle both possible API response structures
-  const tables = dashboardData?.data?.tables || dashboardData?.tables || [];
+  const tables = dashboardData?.data?.tables || (dashboardData as any)?.tables || [];
   const reservations = dashboardData?.data?.upcoming_reservations || [];
 
   // Filter today's reservations
@@ -353,7 +353,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
         {/* Main Content - Only show when not loading and no error */}
         {!isLoading && !isError && (
-          <>
+          <div>
         {/* Header */}
         <div className="mb-8 md:mb-10 animate-fade-in-up">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-3">
@@ -1089,6 +1089,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
           </div>
         )}
       </div>
+        )}
+          </div>
 
       {/* Modals */}
       {showWalkInModal && (
@@ -1335,8 +1337,6 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
           </div>
         </div>
       )}
-          </>
-        )}
 
       {/* Toast Notification */}
       {toast && (

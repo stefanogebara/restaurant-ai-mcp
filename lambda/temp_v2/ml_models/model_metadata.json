@@ -1,0 +1,28 @@
+{
+  "model_version": "v2.1-xgboost-3.1.1-retrained",
+  "training_date": "2025-11-05T21:44:09.854173",
+  "xgboost_version": "3.1.1",
+  "dataset_size": 119390,
+  "train_size": 95512,
+  "test_size": 23878,
+  "no_show_rate": 0.37041628277075134,
+  "roc_auc_score": 0.8453662692030426,
+  "features": [
+    "booking_lead_time_hours",
+    "month_num",
+    "is_weekend",
+    "is_prime_time",
+    "party_size",
+    "is_tourist",
+    "is_travel_agency",
+    "is_repeat_customer",
+    "customer_no_show_rate",
+    "has_special_requests",
+    "special_request_count",
+    "booking_changes_count",
+    "has_deposit",
+    "has_waiting_list",
+    "stays_in_weekend_nights",
+    "stays_in_week_nights"
+  ]
+}

@@ -86,23 +86,23 @@ export default function LTVDashboard() {
 
   const getTierColor = (tier: string) => {
     switch (tier) {
-      case 'vip': return 'text-purple-400';
-      case 'regular': return 'text-blue-400';
-      case 'occasional': return 'text-green-400';
-      case 'new': return 'text-gray-400';
-      case 'at_risk': return 'text-red-400';
-      default: return 'text-gray-400';
+      case 'vip': return 'text-gold-700';
+      case 'regular': return 'text-burgundy-600';
+      case 'occasional': return 'text-success-600';
+      case 'new': return 'text-charcoal-600';
+      case 'at_risk': return 'text-error-700';
+      default: return 'text-charcoal-600';
     }
   };
 
   const getTierBgColor = (tier: string) => {
     switch (tier) {
-      case 'vip': return 'bg-purple-500/10 border-purple-500/30';
-      case 'regular': return 'bg-blue-500/10 border-blue-500/30';
-      case 'occasional': return 'bg-green-500/10 border-green-500/30';
-      case 'new': return 'bg-gray-500/10 border-gray-500/30';
-      case 'at_risk': return 'bg-red-500/10 border-red-500/30';
-      default: return 'bg-gray-500/10 border-gray-500/30';
+      case 'vip': return 'bg-gold-100 border-gold-400';
+      case 'regular': return 'bg-burgundy-100 border-burgundy-400';
+      case 'occasional': return 'bg-success-100 border-success-400';
+      case 'new': return 'bg-charcoal-100 border-charcoal-400';
+      case 'at_risk': return 'bg-error-100 border-error-400';
+      default: return 'bg-charcoal-100 border-charcoal-400';
     }
   };
 
@@ -128,14 +128,17 @@ export default function LTVDashboard() {
 
   if (isLoading) {
     return (
-      <div className="bg-card rounded-lg shadow-lg p-6 border border-border">
+      <div className="bg-cream-100 rounded-xl shadow-lg p-6 border-2 border-cream-300">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <Users className="w-5 h-5" />
+          <h2 className="font-display text-xl font-bold text-burgundy-900 flex items-center gap-2">
+            <Users className="w-5 h-5 text-burgundy-700" />
             Customer Lifetime Value
           </h2>
         </div>
-        <div className="text-center py-8 text-muted-foreground">Loading...</div>
+        <div className="flex flex-col items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-burgundy-200 border-t-burgundy-700 mb-4"></div>
+          <p className="font-sans text-charcoal-600 font-semibold">Loading analytics...</p>
+        </div>
       </div>
     );
   }

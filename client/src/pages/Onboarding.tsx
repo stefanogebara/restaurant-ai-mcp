@@ -27,7 +27,7 @@ import type { OnboardingData } from '../types/onboarding.types';
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const { success, error: showError } = useToast();
+  const { error: showError } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);

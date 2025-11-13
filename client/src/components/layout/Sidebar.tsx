@@ -6,7 +6,6 @@ import {
   DollarSign,
   BarChart3,
   Dna,
-  Globe,
   ChevronLeft,
   Menu,
   Lock

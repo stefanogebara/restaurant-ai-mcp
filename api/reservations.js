@@ -184,6 +184,64 @@ async function handleCreate(req, res) {
       };
       await logReservationCreated(reservationWithId, prediction, customerHistory);
     }
+
+    // ============================================================================
+    // CREATE INTERVENTION RECORD (For ROI Tracking)
+    // ============================================================================
+    // If reservation has high/very-high risk, create intervention record
+    if (prediction && (prediction.noShowRisk === 'high' || prediction.noShowRisk === 'very-high')) {
+      try {
+        const { processReservation } = require('./services/mlRiskScoring');
+
+        // Process reservation to get intervention recommendation
+        const interventionData = await processReservation({
+          reservation_id: reservationId,
+          customer_name,
+          customer_phone,
+          customer_email: customer_email || '',
+          party_size: parseInt(party_size),
+          date,
+          time,
+          created_at: new Date().toISOString(),
+          special_requests: special_requests || ''
+        });
+
+        // Create intervention record in ml_interventions table
+        if (interventionData && interventionData.recommendedIntervention) {
+          const { createClient } = require('@supabase/supabase-js');
+          const supabase = createClient(
+            process.env.SUPABASE_URL,
+            process.env.SUPABASE_ANON_KEY
+          );
+
+          const { data: intervention, error: interventionError } = await supabase
+            .from('ml_interventions')
+            .insert({
+              reservation_id: reservationId,
+              ml_risk_score: interventionData.riskScore,
+              ml_risk_level: interventionData.riskLevel,
+              intervention_type: interventionData.recommendedIntervention.type,
+              cost_of_intervention: interventionData.recommendedIntervention.estimatedCost,
+              estimated_value: interventionData.recommendedIntervention.estimatedValue,
+              action_taken: false, // Staff hasn't taken action yet
+              created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+          if (interventionError) {
+            console.error('[Intervention] Error creating intervention record:', interventionError);
+          } else {
+            console.log(`[Intervention] Created intervention ${intervention.intervention_id} for ${reservationId}`);
+            console.log(`   Type: ${intervention.intervention_type}`);
+            console.log(`   Risk: ${intervention.ml_risk_level} (${intervention.ml_risk_score}/100)`);
+            console.log(`   Estimated ROI: ${Math.round((intervention.estimated_value / intervention.cost_of_intervention) * 100)}%`);
+          }
+        }
+      } catch (error) {
+        console.error('[Intervention] Error processing intervention:', error);
+      }
+    }
   } catch (error) {
     // Don't fail the reservation if ML prediction fails
     console.error('[MLPrediction] Error predicting no-show risk:', error);

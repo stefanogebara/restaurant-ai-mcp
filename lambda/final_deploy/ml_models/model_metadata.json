@@ -1,0 +1,69 @@
+{
+  "model_version": "v2.0-xgboost-hotel-trained",
+  "training_date": "2025-11-05T00:11:03.386973",
+  "dataset_size": 119390,
+  "train_size": 95512,
+  "test_size": 23878,
+  "no_show_rate": 0.37041628277075134,
+  "roc_auc_score": 0.8599572517623468,
+  "features": [
+    "booking_lead_time_hours",
+    "month_num",
+    "is_weekend",
+    "is_prime_time",
+    "party_size",
+    "is_tourist",
+    "is_travel_agency",
+    "is_repeat_customer",
+    "customer_no_show_rate",
+    "has_special_requests",
+    "special_request_count",
+    "booking_changes_count",
+    "has_deposit",
+    "has_waiting_list",
+    "stays_in_weekend_nights",
+    "stays_in_week_nights"
+  ],
+  "top_features": [
+    {
+      "feature": "has_deposit",
+      "importance": 0.8090442419052124
+    },
+    {
+      "feature": "customer_no_show_rate",
+      "importance": 0.05943700671195984
+    },
+    {
+      "feature": "is_tourist",
+      "importance": 0.021269964054226875
+    },
+    {
+      "feature": "has_special_requests",
+      "importance": 0.01901555247604847
+    },
+    {
+      "feature": "is_travel_agency",
+      "importance": 0.013640366494655609
+    },
+    {
+      "feature": "booking_changes_count",
+      "importance": 0.013580447062849998
+    },
+    {
+      "feature": "special_request_count",
+      "importance": 0.012477475218474865
+    },
+    {
+      "feature": "booking_lead_time_hours",
+      "importance": 0.01112857460975647
+    },
+    {
+      "feature": "has_waiting_list",
+      "importance": 0.0075458320789039135
+    },
+    {
+      "feature": "is_repeat_customer",
+      "importance": 0.007217773236334324
+    }
+  ]
+}

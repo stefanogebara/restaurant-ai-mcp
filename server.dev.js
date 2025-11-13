@@ -27,6 +27,7 @@ const analytics = require('./api/analytics.js');
 const waitlist = require('./api/waitlist.js');
 const batchPredict = require('./api/batch-predict.js');
 const mlOutcomes = require('./api/routes/ml-outcomes.js');
+const mlPerformance = require('./api/ml-performance.js');
 const ltv = require('./api/ltv.js');
 const pricing = require('./api/pricing.js');
 
@@ -69,6 +70,9 @@ app.post('/api/batch-predict', createHandler(batchPredict));
 
 // ML Outcomes endpoints (Express router, not Vercel function)
 app.use('/api/ml-outcomes', mlOutcomes);
+
+// ML Performance Dashboard endpoints
+app.get('/api/ml-performance', createHandler(mlPerformance));
 
 // LTV endpoints
 app.get('/api/ltv', createHandler(ltv));
