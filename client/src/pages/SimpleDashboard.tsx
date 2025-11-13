@@ -8,6 +8,7 @@ import TableGrid from '../components/host/TableGrid';
 import TableStatusLegend from '../components/host/TableStatusLegend';
 import type { PlanType } from '../config/planFeatures';
 import { hasFeatureAccess, PLAN_NAMES } from '../config/planFeatures';
+import { useSubscription } from '../hooks/useSubscription';
 
 type ComplexityLevel = 'estándar' | 'completo' | 'avanzado';
 
@@ -18,7 +19,6 @@ interface SimpleDashboardProps {
 export default function SimpleDashboard({ language: initialLanguage = 'en' }: SimpleDashboardProps) {
   const [complexity, setComplexity] = useState<ComplexityLevel>('estándar');
   const [language, setLanguage] = useState<'es' | 'en'>(initialLanguage);
-  const [currentPlan, setCurrentPlan] = useState<PlanType>('professional'); // Default to professional for demo
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [showSeatModal, setShowSeatModal] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
@@ -29,6 +29,10 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   const [showCompleteServiceModal, setShowCompleteServiceModal] = useState(false);
   const [selectedServiceToComplete, setSelectedServiceToComplete] = useState<any>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // Get real subscription plan from API
+  const subscription = useSubscription();
+  const currentPlan = (subscription.data?.subscription?.plan?.toLowerCase() as PlanType) || 'basic';
 
   // Load complexity preference from localStorage
   useEffect(() => {
@@ -85,22 +89,22 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
     localStorage.setItem('dashboard-language', newLanguage);
   };
 
-  // Load plan from URL parameter (for demo mode)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const planParam = params.get('plan');
-
-    if (planParam === 'basic' || planParam === 'professional' || planParam === 'enterprise' || planParam === 'trial') {
-      setCurrentPlan(planParam);
-    }
-  }, []);
-
   // Fetch dashboard data
-  const { data: dashboardData, refetch } = useQuery({
+  const { data: dashboardData, refetch, isLoading, isError } = useQuery({
     queryKey: ['simpleDashboard'],
     queryFn: hostAPI.getDashboard,
     refetchInterval: 30000, // Refresh every 30 seconds
   });
+
+  // Debug: Log API response structure to help diagnose table visualization issues
+  useEffect(() => {
+    if (dashboardData) {
+      console.log('🔍 Dashboard API Response:', dashboardData);
+      console.log('📊 Tables from data.tables:', dashboardData?.data?.tables);
+      console.log('📊 Tables from direct:', dashboardData?.tables);
+      console.log('📊 Tables count:', (dashboardData?.data?.tables || dashboardData?.tables || []).length);
+    }
+  }, [dashboardData]);
 
   const translations = {
     es: {
@@ -195,7 +199,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   };
 
   const stats = dashboardData?.data?.summary || {};
-  const tables = dashboardData?.data?.tables || [];
+  // Handle both possible API response structures
+  const tables = dashboardData?.data?.tables || dashboardData?.tables || [];
   const reservations = dashboardData?.data?.upcoming_reservations || [];
 
   // Filter today's reservations
@@ -309,6 +314,46 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-indigo-100 to-blue-100 p-4 md:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center min-h-[60vh]">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-200 border-t-indigo-600 mb-4"></div>
+            <p className="text-slate-600 font-semibold">
+              {language === 'es' ? 'Cargando dashboard...' : 'Loading dashboard...'}
+            </p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {isError && !isLoading && (
+          <div className="flex flex-col items-center justify-center min-h-[60vh]">
+            <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8 max-w-md text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-red-900 mb-2">
+                {language === 'es' ? 'Error al cargar datos' : 'Error loading data'}
+              </h3>
+              <p className="text-sm text-red-700 mb-4">
+                {language === 'es'
+                  ? 'No se pudo conectar con el servidor. Por favor, intenta de nuevo.'
+                  : 'Could not connect to the server. Please try again.'}
+              </p>
+              <button
+                onClick={() => refetch()}
+                className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg"
+              >
+                {language === 'es' ? 'Reintentar' : 'Retry'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Main Content - Only show when not loading and no error */}
+        {!isLoading && !isError && (
+          <>
         {/* Header */}
         <div className="mb-8 md:mb-10">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-3">
@@ -478,7 +523,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   </svg>
                 </div>
                 <span className="text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg">
-                  ~15 min
+                  {stats.estimated_wait_time ? `~${stats.estimated_wait_time} min` : '-'}
                 </span>
               </div>
               <div className="text-4xl md:text-5xl font-bold text-slate-900 mb-2 tracking-tight">
@@ -585,7 +630,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                 <div className="text-xs font-semibold text-slate-600 mb-3">{t.waiting}</div>
                 <div className="space-y-1">
                   <div className="text-sm font-bold text-orange-600">
-                    ~15 min
+                    {stats.estimated_wait_time ? `~${stats.estimated_wait_time} min` : '-'}
                   </div>
                   <div className="text-xs text-slate-500 font-medium">
                     {language === 'es' ? 'Espera promedio' : 'Average wait'}
@@ -628,7 +673,9 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   </div>
                   <div>
                     <div className="text-xs font-semibold text-blue-700 mb-0.5">{t.avgDuration}</div>
-                    <div className="text-2xl font-bold text-blue-900 tracking-tight">1.2h</div>
+                    <div className="text-2xl font-bold text-blue-900 tracking-tight">
+                      {stats.avg_duration_minutes ? `${Math.round(stats.avg_duration_minutes / 60 * 10) / 10}h` : '-'}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -641,7 +688,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   </div>
                   <div>
                     <div className="text-xs font-semibold text-pink-700 mb-0.5">{t.peakHours}</div>
-                    <div className="text-2xl font-bold text-pink-900 tracking-tight">20-22h</div>
+                    <div className="text-2xl font-bold text-pink-900 tracking-tight">{stats.peak_hours || '-'}</div>
                   </div>
                 </div>
               </div>
@@ -654,7 +701,9 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   </div>
                   <div>
                     <div className="text-xs font-semibold text-emerald-700 mb-0.5">{language === 'es' ? 'Ingresos Hoy' : 'Revenue Today'}</div>
-                    <div className="text-2xl font-bold text-emerald-900 tracking-tight">€1,240</div>
+                    <div className="text-2xl font-bold text-emerald-900 tracking-tight">
+                      {stats.revenue_today ? `€${stats.revenue_today}` : '-'}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1285,6 +1334,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
           </div>
         </div>
       )}
+          </>
+        )}
 
       {/* Toast Notification */}
       {toast && (

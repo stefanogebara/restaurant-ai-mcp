@@ -9,8 +9,9 @@ interface TableGridProps {
 export default function TableGrid({ tables, onTableClick }: TableGridProps) {
   if (!tables || tables.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-500">
-        No tables configured. Please add tables in Airtable.
+      <div className="text-center py-12 text-muted-foreground">
+        <p className="font-semibold text-lg">No tables configured yet</p>
+        <p className="text-sm mt-2">Tables will appear here after onboarding</p>
       </div>
     );
   }
