@@ -312,13 +312,13 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   }, [toast]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-indigo-100 to-blue-100 p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-parchment-texture bg-cream-200 p-4 md:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Loading State */}
         {isLoading && (
-          <div className="flex flex-col items-center justify-center min-h-[60vh]">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-200 border-t-indigo-600 mb-4"></div>
-            <p className="text-slate-600 font-semibold">
+          <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in-up">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-burgundy-200 border-t-burgundy-800 mb-4"></div>
+            <p className="text-charcoal-800 font-sans font-semibold">
               {language === 'es' ? 'Cargando dashboard...' : 'Loading dashboard...'}
             </p>
           </div>
@@ -355,13 +355,13 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
         {!isLoading && !isError && (
           <>
         {/* Header */}
-        <div className="mb-8 md:mb-10">
+        <div className="mb-8 md:mb-10 animate-fade-in-up">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-3">
             <div>
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 tracking-tight mb-1">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-burgundy-900 tracking-tight mb-1">
                 🍽️ {t.today}
               </h1>
-              <p className="text-slate-600 text-base md:text-lg font-medium">
+              <p className="text-charcoal-700 text-base md:text-lg font-sans font-medium">
                 {getDayName()}, {formatDate()}
               </p>
             </div>
@@ -369,26 +369,26 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
             {/* Controls: Subscription Badge + Language Switcher + Complexity Toggle */}
             <div className="flex items-center gap-3 flex-wrap">
               {/* Subscription Plan Badge */}
-              <div className={`px-4 py-2 rounded-xl font-semibold text-sm shadow-sm border ${
+              <div className={`px-4 py-2 rounded-xl font-sans font-semibold text-sm shadow-md border transition-all duration-300 hover:scale-105 ${
                 currentPlan === 'enterprise'
-                  ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white border-purple-500'
+                  ? 'bg-gradient-to-r from-gold-500 to-gold-600 text-charcoal-900 border-gold-400 shadow-gold'
                   : currentPlan === 'professional'
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white border-blue-500'
+                  ? 'bg-gradient-to-r from-burgundy-700 to-burgundy-800 text-cream-50 border-burgundy-600'
                   : currentPlan === 'basic'
-                  ? 'bg-gradient-to-r from-slate-600 to-slate-700 text-white border-slate-500'
-                  : 'bg-gradient-to-r from-green-600 to-green-700 text-white border-green-500'
+                  ? 'bg-gradient-to-r from-charcoal-700 to-charcoal-800 text-cream-50 border-charcoal-600'
+                  : 'bg-gradient-to-r from-success-500 to-success-600 text-white border-success-400'
               }`}>
                 {currentPlan === 'enterprise' ? '👑' : currentPlan === 'professional' ? '💎' : currentPlan === 'trial' ? '🎯' : '⭐'} {PLAN_NAMES[currentPlan]}
               </div>
 
               {/* Language Switcher */}
-              <div className="flex items-center gap-1 bg-white rounded-xl p-1.5 shadow-sm border border-slate-200/60 backdrop-blur-sm">
+              <div className="flex items-center gap-1 bg-cream-50 rounded-xl p-1.5 shadow-sm border border-cream-400/60 backdrop-blur-sm">
                 <button
                   onClick={() => handleLanguageChange('en')}
-                  className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                  className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ease-out-expo ${
                     language === 'en'
-                      ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-md shadow-blue-500/20 scale-105'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      ? 'bg-gradient-to-br from-burgundy-700 to-burgundy-800 text-cream-50 shadow-burgundy scale-105'
+                      : 'text-charcoal-600 hover:bg-cream-100 hover:text-burgundy-800'
                   }`}
                   title="English"
                 >
@@ -396,10 +396,10 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                 </button>
                 <button
                   onClick={() => handleLanguageChange('es')}
-                  className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                  className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ease-out-expo ${
                     language === 'es'
-                      ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-md shadow-blue-500/20 scale-105'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      ? 'bg-gradient-to-br from-burgundy-700 to-burgundy-800 text-cream-50 shadow-burgundy scale-105'
+                      : 'text-charcoal-600 hover:bg-cream-100 hover:text-burgundy-800'
                   }`}
                   title="Español"
                 >
@@ -408,15 +408,15 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </div>
 
               {/* Complexity Toggle - Enhanced Design */}
-              <div className="flex items-center gap-1.5 bg-white rounded-xl p-1.5 shadow-sm border border-slate-200/60 backdrop-blur-sm">
-                <span className="text-xs text-slate-500 font-semibold px-2 hidden sm:block">{t.viewLevel}</span>
+              <div className="flex items-center gap-1.5 bg-cream-50 rounded-xl p-1.5 shadow-sm border border-cream-400/60 backdrop-blur-sm">
+                <span className="text-xs text-charcoal-500 font-sans font-semibold px-2 hidden sm:block">{t.viewLevel}</span>
 
               <button
                 onClick={() => handleComplexityChange('estándar')}
-                className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ease-out-expo ${
                   complexity === 'estándar'
-                    ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-500/20 scale-105'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    ? 'bg-gradient-to-br from-burgundy-700 to-burgundy-800 text-cream-50 shadow-burgundy scale-105'
+                    : 'text-charcoal-600 hover:bg-cream-100 hover:text-burgundy-800'
                 }`}
                 title={t.estándar}
               >
@@ -424,10 +424,10 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </button>
               <button
                 onClick={() => handleComplexityChange('completo')}
-                className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ease-out-expo ${
                   complexity === 'completo'
-                    ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-500/20 scale-105'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    ? 'bg-gradient-to-br from-burgundy-700 to-burgundy-800 text-cream-50 shadow-burgundy scale-105'
+                    : 'text-charcoal-600 hover:bg-cream-100 hover:text-burgundy-800'
                 }`}
                 title={t.completo}
               >
@@ -443,12 +443,12 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                       : '⭐ This feature requires the Professional Plan.\n\nUpgrade your plan to access the ML Performance Dashboard.');
                   }
                 }}
-                className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ease-out-expo ${
                   !hasFeatureAccess(currentPlan, 'mlPerformance')
-                    ? 'text-slate-400 hover:bg-slate-100 cursor-not-allowed opacity-60'
+                    ? 'text-charcoal-400 hover:bg-cream-100 cursor-not-allowed opacity-60'
                     : complexity === 'avanzado'
-                    ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-500/20 scale-105'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    ? 'bg-gradient-to-br from-gold-500 to-gold-600 text-charcoal-900 shadow-gold scale-105'
+                    : 'text-charcoal-600 hover:bg-cream-100 hover:text-burgundy-800'
                 }`}
                 title={hasFeatureAccess(currentPlan, 'mlPerformance') ? t.avanzado : (language === 'es' ? 'Requiere Plan Professional' : 'Requires Professional Plan')}
               >
@@ -463,99 +463,99 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
         {complexity === 'estándar' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 mb-8">
             {/* Occupied Tables */}
-            <div className="group bg-white rounded-2xl p-5 md:p-6 shadow-sm hover:shadow-xl border border-slate-200/60 hover:border-indigo-200 transition-all duration-300 hover:-translate-y-1">
+            <div className="group bg-cream-100 rounded-2xl p-5 md:p-6 shadow-md hover:shadow-burgundy border border-cream-400 hover:border-burgundy-400 transition-all duration-400 ease-out-expo hover:-translate-y-1 animate-fade-in-up" style={{ animationDelay: '0ms' }}>
               <div className="flex items-start justify-between mb-3">
-                <div className="p-2.5 bg-indigo-50 rounded-xl group-hover:bg-indigo-100 transition-colors">
-                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2.5 bg-burgundy-100 rounded-xl group-hover:bg-burgundy-200 transition-colors duration-300">
+                  <svg className="w-6 h-6 text-burgundy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <span className="text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">
+                <span className="text-xs font-sans font-semibold text-burgundy-700 bg-burgundy-50 px-2 py-1 rounded-lg">
                   {occupancyPercent}%
                 </span>
               </div>
-              <div className="text-4xl md:text-5xl font-bold text-slate-900 mb-2 tracking-tight">
-                {occupiedTables}<span className="text-slate-400">/{totalTables}</span>
+              <div className="text-4xl md:text-5xl font-mono font-bold text-burgundy-900 mb-2 tracking-tight">
+                {occupiedTables}<span className="text-charcoal-400">/{totalTables}</span>
               </div>
-              <div className="text-sm font-semibold text-slate-600 mb-3">
+              <div className="text-sm font-sans font-semibold text-charcoal-700 mb-3">
                 {t.tablesOccupied}
               </div>
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div className="flex items-center gap-2 text-xs text-charcoal-500">
+                <div className="flex-1 h-1.5 bg-cream-300 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full transition-all duration-500"
+                    className="h-full bg-gradient-to-r from-burgundy-600 to-burgundy-800 rounded-full transition-all duration-700 ease-out-expo"
                     style={{ width: `${occupancyPercent}%` }}
                   />
                 </div>
-                <span className="font-medium">{t.occupancy}</span>
+                <span className="font-sans font-medium">{t.occupancy}</span>
               </div>
             </div>
 
             {/* Today's Reservations */}
-            <div className="group bg-white rounded-2xl p-5 md:p-6 shadow-sm hover:shadow-xl border border-slate-200/60 hover:border-green-200 transition-all duration-300 hover:-translate-y-1">
+            <div className="group bg-cream-100 rounded-2xl p-5 md:p-6 shadow-md hover:shadow-burgundy border border-cream-400 hover:border-success-500 transition-all duration-400 ease-out-expo hover:-translate-y-1 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
               <div className="flex items-start justify-between mb-3">
-                <div className="p-2.5 bg-green-50 rounded-xl group-hover:bg-green-100 transition-colors">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2.5 bg-success-100 rounded-xl group-hover:bg-success-200 transition-colors duration-300">
+                  <svg className="w-6 h-6 text-success-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-lg">
+                <span className="text-xs font-sans font-semibold text-success-700 bg-success-50 px-2 py-1 rounded-lg">
                   {todayReservations.filter((r: any) => r.checked_in).length}/{todayReservations.length}
                 </span>
               </div>
-              <div className="text-4xl md:text-5xl font-bold text-slate-900 mb-2 tracking-tight">
+              <div className="text-4xl md:text-5xl font-mono font-bold text-success-900 mb-2 tracking-tight">
                 {todayReservations.length}
               </div>
-              <div className="text-sm font-semibold text-slate-600 mb-3">
+              <div className="text-sm font-sans font-semibold text-charcoal-700 mb-3">
                 {t.reservationsToday}
               </div>
-              <div className="text-xs text-slate-500 font-medium">
+              <div className="text-xs text-charcoal-500 font-sans font-medium">
                 {todayReservations.filter((r: any) => r.checked_in).length} {language === 'es' ? 'ya sentados' : 'already seated'}
               </div>
             </div>
 
             {/* Waiting */}
-            <div className="group bg-white rounded-2xl p-5 md:p-6 shadow-sm hover:shadow-xl border border-slate-200/60 hover:border-orange-200 transition-all duration-300 hover:-translate-y-1">
+            <div className="group bg-cream-100 rounded-2xl p-5 md:p-6 shadow-md hover:shadow-burgundy border border-cream-400 hover:border-warning-500 transition-all duration-400 ease-out-expo hover:-translate-y-1 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
               <div className="flex items-start justify-between mb-3">
-                <div className="p-2.5 bg-orange-50 rounded-xl group-hover:bg-orange-100 transition-colors">
-                  <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2.5 bg-warning-100 rounded-xl group-hover:bg-warning-200 transition-colors duration-300">
+                  <svg className="w-6 h-6 text-warning-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <span className="text-xs font-semibold text-orange-600 bg-orange-50 px-2 py-1 rounded-lg">
+                <span className="text-xs font-sans font-semibold text-warning-700 bg-warning-50 px-2 py-1 rounded-lg">
                   {stats.estimated_wait_time ? `~${stats.estimated_wait_time} min` : '-'}
                 </span>
               </div>
-              <div className="text-4xl md:text-5xl font-bold text-slate-900 mb-2 tracking-tight">
+              <div className="text-4xl md:text-5xl font-mono font-bold text-warning-900 mb-2 tracking-tight">
                 {stats.waitlistCount || 0}
               </div>
-              <div className="text-sm font-semibold text-slate-600 mb-3">
+              <div className="text-sm font-sans font-semibold text-charcoal-700 mb-3">
                 {t.waiting}
               </div>
-              <div className="text-xs text-slate-500 font-medium">
+              <div className="text-xs text-charcoal-500 font-sans font-medium">
                 {language === 'es' ? 'Tiempo promedio de espera' : 'Average wait time'}
               </div>
             </div>
 
             {/* Active Parties */}
-            <div className="group bg-white rounded-2xl p-5 md:p-6 shadow-sm hover:shadow-xl border border-slate-200/60 hover:border-purple-200 transition-all duration-300 hover:-translate-y-1">
+            <div className="group bg-cream-100 rounded-2xl p-5 md:p-6 shadow-md hover:shadow-gold border border-cream-400 hover:border-gold-500 transition-all duration-400 ease-out-expo hover:-translate-y-1 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
               <div className="flex items-start justify-between mb-3">
-                <div className="p-2.5 bg-purple-50 rounded-xl group-hover:bg-purple-100 transition-colors">
-                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2.5 bg-gold-100 rounded-xl group-hover:bg-gold-200 transition-colors duration-300">
+                  <svg className="w-6 h-6 text-gold-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
-                <span className="text-xs font-semibold text-purple-600 bg-purple-50 px-2 py-1 rounded-lg">
+                <span className="text-xs font-sans font-semibold text-gold-700 bg-gold-50 px-2 py-1 rounded-lg">
                   {stats.totalSeatedGuests || 0}
                 </span>
               </div>
-              <div className="text-4xl md:text-5xl font-bold text-slate-900 mb-2 tracking-tight">
+              <div className="text-4xl md:text-5xl font-mono font-bold text-gold-900 mb-2 tracking-tight">
                 {stats.activePartiesCount || 0}
               </div>
-              <div className="text-sm font-semibold text-slate-600 mb-3">
+              <div className="text-sm font-sans font-semibold text-charcoal-700 mb-3">
                 {t.activeParties}
               </div>
-              <div className="text-xs text-slate-500 font-medium">
+              <div className="text-xs text-charcoal-500 font-sans font-medium">
                 {stats.totalSeatedGuests || 0} {language === 'es' ? 'comensales totales' : 'total guests'}
               </div>
             </div>
@@ -714,10 +714,10 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
         {/* Add Walk-in Button */}
         <button
           onClick={() => setShowWalkInModal(true)}
-          className="group w-full mb-8 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold py-5 md:py-6 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] border border-indigo-500/20"
+          className="group w-full mb-8 bg-gradient-to-r from-burgundy-700 to-burgundy-800 hover:from-burgundy-800 hover:to-burgundy-900 text-cream-50 font-sans font-bold py-5 md:py-6 px-8 rounded-2xl shadow-burgundy hover:shadow-2xl transition-all duration-400 ease-out-expo transform hover:scale-[1.02] hover:-translate-y-1 active:scale-[0.98] active:translate-y-0 border-2 border-burgundy-600/40 animate-fade-in-up"
         >
           <div className="flex items-center justify-center gap-3">
-            <svg className="w-6 h-6 transition-transform group-hover:rotate-90 duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 transition-transform group-hover:rotate-90 duration-400 ease-out-back" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
             <span className="text-lg md:text-xl">{t.addWalkIn}</span>
@@ -906,42 +906,43 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
 
         {/* Upcoming Reservations */}
-        <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-200/60">
+        <div className="bg-cream-100 rounded-2xl p-5 md:p-6 shadow-md border-2 border-cream-400 animate-fade-in-up" style={{ animationDelay: '500ms' }}>
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-indigo-50 rounded-lg">
-              <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-2 bg-burgundy-100 rounded-lg">
+              <svg className="w-6 h-6 text-burgundy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <h2 className="text-xl md:text-2xl font-bold text-slate-900">
+            <h2 className="text-xl md:text-2xl font-display font-bold text-burgundy-900">
               {t.upcomingReservations}
             </h2>
           </div>
 
           {todayReservations.length === 0 ? (
             <div className="text-center py-16 px-4">
-              <div className="w-20 h-20 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl flex items-center justify-center mx-auto mb-4">
+              <div className="w-20 h-20 bg-gradient-to-br from-burgundy-50 to-gold-50 rounded-3xl flex items-center justify-center mx-auto mb-4">
                 <span className="text-5xl">✨</span>
               </div>
-              <p className="text-slate-900 text-lg font-semibold mb-2">{t.allClear}</p>
-              <p className="text-slate-500 text-sm">{t.noUpcoming}</p>
+              <p className="text-burgundy-900 text-lg font-display font-semibold mb-2">{t.allClear}</p>
+              <p className="text-charcoal-500 text-sm font-sans">{t.noUpcoming}</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {todayReservations.map((reservation: any) => (
+              {todayReservations.map((reservation: any, index: number) => (
                 <div
                   key={reservation.reservation_id}
-                  className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 md:p-5 bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-xl border border-slate-200/60 hover:border-indigo-200 hover:shadow-md transition-all duration-200"
+                  className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 md:p-5 bg-gradient-to-br from-cream-50 to-cream-100/50 rounded-xl border-2 border-cream-300 hover:border-burgundy-400 hover:shadow-burgundy transition-all duration-400 ease-out-expo hover:-translate-y-1 animate-fade-in-up"
+                  style={{ animationDelay: `${600 + (index * 100)}ms` }}
                 >
                   <div className="flex items-center gap-4 flex-1 min-w-0">
                     <div className="flex-shrink-0">
-                      <div className="text-2xl md:text-3xl font-bold text-indigo-600 bg-white px-3 py-2 rounded-lg shadow-sm">
+                      <div className="text-2xl md:text-3xl font-mono font-bold text-burgundy-800 bg-cream-50 px-3 py-2 rounded-lg shadow-sm border-2 border-burgundy-200">
                         {formatTime(reservation.time)}
                       </div>
                     </div>
-                    <div className="border-l-2 border-indigo-200 pl-4 flex-1 min-w-0">
+                    <div className="border-l-2 border-burgundy-300 pl-4 flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <div className="font-semibold text-slate-900 text-base md:text-lg truncate">
+                        <div className="font-display font-semibold text-burgundy-900 text-base md:text-lg truncate">
                           {reservation.customer_name}
                         </div>
                         {/* ML Risk Badges */}
@@ -1048,7 +1049,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                           setSelectedReservation(reservation);
                           setShowCheckInModal(true);
                         }}
-                        className="w-full sm:w-auto bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold px-5 py-2.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
+                        className="w-full sm:w-auto bg-gradient-to-r from-success-600 to-success-700 hover:from-success-700 hover:to-success-800 text-white font-sans font-semibold px-5 py-2.5 rounded-lg transition-all duration-300 ease-out-expo shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-95 active:translate-y-0"
                       >
                         <span className="flex items-center justify-center gap-2">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1060,7 +1061,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                     )}
 
                     {reservation.checked_in && (
-                      <div className="w-full sm:w-auto bg-green-100 text-green-800 font-semibold px-5 py-2.5 rounded-lg border border-green-200">
+                      <div className="w-full sm:w-auto bg-success-100 text-success-800 font-sans font-semibold px-5 py-2.5 rounded-lg border-2 border-success-300">
                         <span className="flex items-center justify-center gap-2">
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -1079,9 +1080,9 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
         {/* View Tomorrow (Only show in ESTÁNDAR and COMPLETO modes) */}
         {(complexity === 'estándar' || complexity === 'completo') && (
           <div className="mt-6 text-center">
-            <button className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-semibold text-base md:text-lg transition-colors group">
+            <button className="inline-flex items-center gap-2 text-burgundy-700 hover:text-burgundy-900 font-sans font-semibold text-base md:text-lg transition-all duration-300 ease-out-expo hover:gap-3 group">
               <span>{t.viewTomorrow}</span>
-              <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 transition-transform group-hover:translate-x-1 duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </button>
