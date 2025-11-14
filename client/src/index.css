@@ -40,41 +40,7 @@
     --sidebar-ring: oklch(0.6 0.25 275);
   }
 
-  .dark {
-    /* Sleek Dark Theme - Modern & Vibrant (HSL format for Tailwind) */
-    --background: 240 20% 9%;        /* Deep dark background */
-    --foreground: 0 0% 98%;          /* Almost white text */
-    --card: 240 15% 13%;             /* Elevated card surface */
-    --card-foreground: 0 0% 98%;
-    --popover: 240 15% 13%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 275 70% 65%;          /* Purple/violet primary */
-    --primary-foreground: 240 20% 9%;
-    --secondary: 240 20% 18%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 20% 18%;
-    --muted-foreground: 240 5% 65%;
-    --accent: 190 30% 22%;           /* Teal accent */
-    --accent-foreground: 0 0% 98%;
-    --destructive: 25 80% 50%;
-    --destructive-foreground: 240 20% 9%;
-    --border: 240 20% 22%;
-    --input: 240 20% 22%;
-    --ring: 275 70% 65%;
-    --chart-1: 275 70% 65%;
-    --chart-2: 190 70% 70%;
-    --chart-3: 310 60% 75%;
-    --chart-4: 150 65% 68%;
-    --chart-5: 50 65% 72%;
-    --sidebar: 240 18% 11%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 275 70% 65%;
-    --sidebar-primary-foreground: 240 20% 9%;
-    --sidebar-accent: 240 30% 22%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 240 20% 22%;
-    --sidebar-ring: 275 70% 65%;
-  }
+  /* Dark mode removed - site always uses light mode */
 }
 
 @layer base {
