@@ -91,6 +91,11 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
+  /* Dark mode body overrides */
+  .dark body {
+    @apply bg-ethos-gray-900 text-white;
+  }
+
   /* High contrast black text for readability */
   h1, h2, h3, h4, h5, h6 {
     @apply text-ethos-black font-sans;
