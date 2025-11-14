@@ -129,8 +129,8 @@ export default function MLPerformancePage() {
       <div className="p-8">
         {/* Page Header */}
         <div className="mb-8 animate-fade-in-up">
-          <h1 className="font-display text-4xl font-bold text-gray-200 mb-2">ML Performance Dashboard</h1>
-          <p className="font-sans text-lg text-gray-400">
+          <h1 className="font-display text-4xl font-bold text-slate-100 mb-2">ML Performance Dashboard</h1>
+          <p className="font-sans text-lg text-slate-400">
             Track AI-powered interventions and ROI over the last 30 days
           </p>
         </div>
@@ -139,89 +139,89 @@ export default function MLPerformancePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Total ROI - Primary Metric */}
           <div
-            className="bg-cream-100 border-2 border-cream-300 hover:border-burgundy-400 rounded-xl p-6 shadow-md hover:shadow-burgundy transition-all duration-300 ease-out-expo hover:-translate-y-1 animate-fade-in-up"
+            className="bg-slate-800 border-2 border-slate-700 hover:border-violet-500 rounded-xl p-6 shadow-lg hover:shadow-glow-violet transition-all duration-300 ease-out-expo hover:-translate-y-1 animate-fade-in-up"
             style={{ animationDelay: '0ms' }}
           >
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-burgundy-50 rounded-lg">
-                <Target className="w-6 h-6 text-burgundy-700" />
+              <div className="p-3 bg-violet-500/10 rounded-lg">
+                <Target className="w-6 h-6 text-violet-400" />
               </div>
               {mlData?.summary?.meets_target ? (
-                <span className="px-3 py-1 bg-gold-100 text-gold-800 font-sans font-bold text-xs rounded-full border border-gold-400 shadow-gold">
+                <span className="px-3 py-1 bg-violet-500/20 text-violet-300 font-sans font-bold text-xs rounded-full border border-violet-500/50 shadow-glow-violet">
                   ⭐ Target Met
                 </span>
               ) : (
-                <span className="font-mono text-xs text-charcoal-500">Target: 300-500%</span>
+                <span className="font-mono text-xs text-slate-400">Target: 300-500%</span>
               )}
             </div>
-            <div className="font-mono text-5xl font-bold text-burgundy-900 mb-2">
+            <div className="font-mono text-5xl font-bold text-violet-400 mb-2">
               {isLoading ? '-' : mlData?.summary ? `${mlData.summary.total_roi}%` : '-'}
             </div>
-            <div className="font-sans text-sm text-charcoal-600">Total ROI</div>
+            <div className="font-sans text-sm text-slate-300">Total ROI</div>
           </div>
 
           {/* Total Interventions */}
           <div
-            className="bg-cream-100 border-2 border-cream-300 hover:border-burgundy-400 rounded-xl p-6 shadow-md hover:shadow-xl transition-all duration-300 ease-out-expo hover:-translate-y-1 animate-fade-in-up"
+            className="bg-slate-800 border-2 border-slate-700 hover:border-ocean-500 rounded-xl p-6 shadow-lg hover:shadow-glow-ocean transition-all duration-300 ease-out-expo hover:-translate-y-1 animate-fade-in-up"
             style={{ animationDelay: '100ms' }}
           >
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-burgundy-50 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-burgundy-700" />
+              <div className="p-3 bg-ocean-500/10 rounded-lg">
+                <TrendingUp className="w-6 h-6 text-ocean-400" />
               </div>
-              <span className="font-mono text-xs text-charcoal-500">Last 30 days</span>
+              <span className="font-mono text-xs text-slate-400">Last 30 days</span>
             </div>
-            <div className="font-mono text-5xl font-bold text-burgundy-900 mb-2">
+            <div className="font-mono text-5xl font-bold text-ocean-400 mb-2">
               {isLoading ? '-' : mlData?.summary?.total_interventions || '-'}
             </div>
-            <div className="font-sans text-sm text-charcoal-600">Total Interventions</div>
+            <div className="font-sans text-sm text-slate-300">Total Interventions</div>
           </div>
 
           {/* Success Rate */}
           <div
-            className="bg-cream-100 border-2 border-cream-300 hover:border-success-500 rounded-xl p-6 shadow-md hover:shadow-xl transition-all duration-300 ease-out-expo hover:-translate-y-1 animate-fade-in-up"
+            className="bg-slate-800 border-2 border-slate-700 hover:border-success-500 rounded-xl p-6 shadow-lg hover:shadow-glow-success transition-all duration-300 ease-out-expo hover:-translate-y-1 animate-fade-in-up"
             style={{ animationDelay: '200ms' }}
           >
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-success-100 rounded-lg">
-                <CheckCircle2 className="w-6 h-6 text-success-700" />
+              <div className="p-3 bg-success-500/10 rounded-lg">
+                <CheckCircle2 className="w-6 h-6 text-success-400" />
               </div>
               {mlData?.summary && (
-                <span className="font-mono text-xs text-charcoal-500">
+                <span className="font-mono text-xs text-slate-400">
                   {mlData.summary.outcomes.showed_up}/{mlData.summary.intervention_effectiveness.interventions_with_action}
                 </span>
               )}
             </div>
-            <div className="font-mono text-5xl font-bold text-success-700 mb-2">
+            <div className="font-mono text-5xl font-bold text-success-400 mb-2">
               {isLoading ? '-' : mlData?.summary?.intervention_effectiveness?.success_rate || '-'}
             </div>
-            <div className="font-sans text-sm text-charcoal-600">Success Rate</div>
+            <div className="font-sans text-sm text-slate-300">Success Rate</div>
           </div>
 
           {/* Value Saved */}
           <div
-            className="bg-cream-100 border-2 border-cream-300 hover:border-gold-400 rounded-xl p-6 shadow-md hover:shadow-gold transition-all duration-300 ease-out-expo hover:-translate-y-1 animate-fade-in-up"
+            className="bg-slate-800 border-2 border-slate-700 hover:border-amber-500 rounded-xl p-6 shadow-lg hover:shadow-glow-amber transition-all duration-300 ease-out-expo hover:-translate-y-1 animate-fade-in-up"
             style={{ animationDelay: '300ms' }}
           >
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-gold-100 rounded-lg">
-                <DollarSign className="w-6 h-6 text-gold-700" />
+              <div className="p-3 bg-amber-500/10 rounded-lg">
+                <DollarSign className="w-6 h-6 text-amber-400" />
               </div>
               {mlData?.summary && (
-                <span className="font-mono text-xs text-charcoal-500">Cost: €{mlData.summary.total_cost}</span>
+                <span className="font-mono text-xs text-slate-400">Cost: €{mlData.summary.total_cost}</span>
               )}
             </div>
-            <div className="font-mono text-5xl font-bold text-gold-700 mb-2">
+            <div className="font-mono text-5xl font-bold text-amber-400 mb-2">
               {isLoading ? '-' : mlData?.summary ? `€${mlData.summary.total_value_saved}` : '-'}
             </div>
-            <div className="font-sans text-sm text-charcoal-600">Value Saved</div>
+            <div className="font-sans text-sm text-slate-300">Value Saved</div>
           </div>
         </div>
 
         {/* ROI Trend Chart */}
         <div className="mb-8 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
-          <h2 className="font-display text-2xl font-bold text-gray-200 mb-4">ROI Trend (Weekly)</h2>
-          <div className="bg-cream-100 border-2 border-cream-300 rounded-xl p-6 shadow-md">
+          <h2 className="font-display text-2xl font-bold text-slate-100 mb-4">ROI Trend (Weekly)</h2>
+          <div className="bg-slate-800 border-2 border-slate-700 rounded-xl p-6 shadow-lg">
             <TrendChart
               data={
                 mlData?.trend?.map((week) => ({
@@ -235,8 +235,8 @@ export default function MLPerformancePage() {
               }
               type="line"
               dataKeys={[
-                { key: 'ROI', label: 'ROI %', color: '#7D1128' },
-                { key: 'Interventions', label: 'Interventions', color: '#D4AF37' },
+                { key: 'ROI', label: 'ROI %', color: '#9333ea' },
+                { key: 'Interventions', label: 'Interventions', color: '#0284c7' },
               ]}
               xAxisKey="week"
               height={300}
