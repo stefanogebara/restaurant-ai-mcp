@@ -31,7 +31,7 @@ export default function ContactForm() {
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
     // Create mailto link with form data
-    const subject = `RestaurantAI Inquiry from ${formData.name}`;
+    const subject = `Restaurant AI MCP Inquiry from ${formData.name}`;
     const body = `
 Name: ${formData.name}
 Email: ${formData.email}
@@ -63,9 +63,9 @@ ${formData.message}
   };
 
   return (
-    <section id="contact" className="relative py-24 bg-cream-100 overflow-hidden">
-      {/* Background pattern */}
-      <div className="absolute inset-0 bg-parchment-texture opacity-20" />
+    <section id="contact" className="relative py-24 bg-[#0a0a0f] overflow-hidden">
+      {/* Background gradient */}
+      <div className="absolute inset-0 section-gradient-3 opacity-50" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
@@ -76,11 +76,12 @@ ${formData.message}
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="font-display text-4xl md:text-5xl font-bold text-burgundy-900 mb-4">
-            <span className="text-gold-600">Get Started</span> Today
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <span className="gradient-text">Get Started</span> Today
           </h2>
-          <p className="font-sans text-xl text-charcoal-600 max-w-3xl mx-auto">
-            Schedule a personalized demo and discover how RestaurantAI can transform your operations
+          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+            Schedule a personalized demo and discover how Restaurant AI MCP can transform your
+            operations
           </p>
         </motion.div>
 
@@ -93,20 +94,20 @@ ${formData.message}
             transition={{ duration: 0.6 }}
             className="space-y-6"
           >
-            <div className="bg-cream-50 border-2 border-cream-300 rounded-2xl p-8">
-              <h3 className="font-display text-2xl font-bold text-burgundy-900 mb-6">Contact Information</h3>
+            <div className="glass-card p-8">
+              <h3 className="text-2xl font-bold text-white mb-6">Contact Information</h3>
 
               <div className="space-y-6">
                 {/* Email */}
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-burgundy-600 to-burgundy-800 flex items-center justify-center flex-shrink-0 shadow-burgundy">
-                    <Mail className="w-6 h-6 text-cream-50" />
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <div className="font-sans text-sm text-charcoal-600 mb-1">Email</div>
+                    <div className="text-sm text-gray-400 mb-1">Email</div>
                     <a
                       href={`mailto:${CONTACT_INFO.email}`}
-                      className="font-sans text-burgundy-800 font-semibold hover:text-burgundy-600 transition-colors"
+                      className="text-white font-semibold hover:text-indigo-400 transition-colors"
                     >
                       {CONTACT_INFO.email}
                     </a>
@@ -115,20 +116,20 @@ ${formData.message}
 
                 {/* Response Time */}
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-success-500 to-success-600 flex items-center justify-center flex-shrink-0 shadow-lg">
-                    <CheckCircle className="w-6 h-6 text-cream-50" />
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center flex-shrink-0">
+                    <CheckCircle className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <div className="font-sans text-sm text-charcoal-600 mb-1">Response Time</div>
-                    <div className="font-sans text-burgundy-900 font-semibold">Within 24 hours</div>
+                    <div className="text-sm text-gray-400 mb-1">Response Time</div>
+                    <div className="text-white font-semibold">Within 24 hours</div>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* What to Expect */}
-            <div className="bg-cream-50 border-2 border-gold-300 p-6 rounded-2xl">
-              <h4 className="font-display text-lg font-bold text-burgundy-900 mb-4">What to Expect</h4>
+            <div className="glass-subtle p-6 rounded-2xl">
+              <h4 className="text-lg font-bold text-white mb-4">What to Expect</h4>
               <div className="space-y-3">
                 {[
                   'Personalized 30-minute demo call',
@@ -137,23 +138,23 @@ ${formData.message}
                   'Free trial to test the platform',
                 ].map((item, index) => (
                   <div key={index} className="flex items-start gap-2">
-                    <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-                    <span className="font-sans text-sm text-charcoal-700">{item}</span>
+                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-300 text-sm">{item}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Trust Indicators */}
-            <div className="bg-cream-50 border-2 border-cream-300 p-6 rounded-2xl">
+            <div className="glass-subtle p-6 rounded-2xl">
               <div className="grid grid-cols-2 gap-4 text-center">
                 <div>
-                  <div className="font-display text-3xl font-bold text-burgundy-900">99.9%</div>
-                  <div className="font-sans text-xs text-charcoal-600 mt-1">Uptime</div>
+                  <div className="text-3xl font-bold gradient-text">99.9%</div>
+                  <div className="text-xs text-gray-400 mt-1">Uptime</div>
                 </div>
                 <div>
-                  <div className="font-display text-3xl font-bold text-success-500">94%</div>
-                  <div className="font-sans text-xs text-charcoal-600 mt-1">Satisfaction</div>
+                  <div className="text-3xl font-bold gradient-text-emerald">94%</div>
+                  <div className="text-xs text-gray-400 mt-1">Satisfaction</div>
                 </div>
               </div>
             </div>
@@ -166,11 +167,11 @@ ${formData.message}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <form onSubmit={handleSubmit} className="bg-cream-50 border-2 border-cream-300 rounded-2xl p-8 space-y-6">
+            <form onSubmit={handleSubmit} className="glass-card p-8 space-y-6">
               {/* Name */}
               <div>
-                <label htmlFor="name" className="block font-sans text-sm font-medium text-charcoal-800 mb-2">
-                  Full Name <span className="text-error-700">*</span>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
+                  Full Name <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -179,15 +180,15 @@ ${formData.message}
                   required
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-cream-100 border-2 border-cream-300 rounded-xl text-charcoal-900 placeholder-charcoal-500 focus:border-burgundy-500 focus:outline-none transition-colors font-sans"
+                  className="w-full px-4 py-3 glass-input text-white placeholder-gray-500"
                   placeholder="John Smith"
                 />
               </div>
 
               {/* Email */}
               <div>
-                <label htmlFor="email" className="block font-sans text-sm font-medium text-charcoal-800 mb-2">
-                  Email Address <span className="text-error-700">*</span>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                  Email Address <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="email"
@@ -196,14 +197,14 @@ ${formData.message}
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-cream-100 border-2 border-cream-300 rounded-xl text-charcoal-900 placeholder-charcoal-500 focus:border-burgundy-500 focus:outline-none transition-colors font-sans"
+                  className="w-full px-4 py-3 glass-input text-white placeholder-gray-500"
                   placeholder="john@restaurant.com"
                 />
               </div>
 
               {/* Phone */}
               <div>
-                <label htmlFor="phone" className="block font-sans text-sm font-medium text-charcoal-800 mb-2">
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">
                   Phone Number
                 </label>
                 <input
@@ -212,15 +213,15 @@ ${formData.message}
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-cream-100 border-2 border-cream-300 rounded-xl text-charcoal-900 placeholder-charcoal-500 focus:border-burgundy-500 focus:outline-none transition-colors font-sans"
+                  className="w-full px-4 py-3 glass-input text-white placeholder-gray-500"
                   placeholder="+1 (555) 123-4567"
                 />
               </div>
 
               {/* Restaurant Name */}
               <div>
-                <label htmlFor="restaurant" className="block font-sans text-sm font-medium text-charcoal-800 mb-2">
-                  Restaurant Name <span className="text-error-700">*</span>
+                <label htmlFor="restaurant" className="block text-sm font-medium text-gray-300 mb-2">
+                  Restaurant Name <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -229,14 +230,14 @@ ${formData.message}
                   required
                   value={formData.restaurant}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-cream-100 border-2 border-cream-300 rounded-xl text-charcoal-900 placeholder-charcoal-500 focus:border-burgundy-500 focus:outline-none transition-colors font-sans"
+                  className="w-full px-4 py-3 glass-input text-white placeholder-gray-500"
                   placeholder="La Bella Vista"
                 />
               </div>
 
               {/* Number of Tables */}
               <div>
-                <label htmlFor="tables" className="block font-sans text-sm font-medium text-charcoal-800 mb-2">
+                <label htmlFor="tables" className="block text-sm font-medium text-gray-300 mb-2">
                   Number of Tables
                 </label>
                 <input
@@ -245,7 +246,7 @@ ${formData.message}
                   name="tables"
                   value={formData.tables}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-cream-100 border-2 border-cream-300 rounded-xl text-charcoal-900 placeholder-charcoal-500 focus:border-burgundy-500 focus:outline-none transition-colors font-sans"
+                  className="w-full px-4 py-3 glass-input text-white placeholder-gray-500"
                   placeholder="12"
                   min="1"
                 />
@@ -253,8 +254,8 @@ ${formData.message}
 
               {/* Message */}
               <div>
-                <label htmlFor="message" className="block font-sans text-sm font-medium text-charcoal-800 mb-2">
-                  Tell us about your needs <span className="text-error-700">*</span>
+                <label htmlFor="message" className="block text-sm font-medium text-gray-300 mb-2">
+                  Tell us about your needs <span className="text-red-400">*</span>
                 </label>
                 <textarea
                   id="message"
@@ -263,8 +264,8 @@ ${formData.message}
                   value={formData.message}
                   onChange={handleChange}
                   rows={4}
-                  className="w-full px-4 py-3 bg-cream-100 border-2 border-cream-300 rounded-xl text-charcoal-900 placeholder-charcoal-500 focus:border-burgundy-500 focus:outline-none transition-colors resize-none font-sans"
-                  placeholder="I'm interested in implementing RestaurantAI for my restaurant..."
+                  className="w-full px-4 py-3 glass-input text-white placeholder-gray-500 resize-none"
+                  placeholder="I'm interested in implementing Restaurant AI MCP for my restaurant..."
                 />
               </div>
 
@@ -272,7 +273,7 @@ ${formData.message}
               <button
                 type="submit"
                 disabled={isSubmitting || isSubmitted}
-                className="w-full px-6 py-4 font-sans font-semibold text-lg bg-gradient-to-r from-burgundy-700 to-burgundy-800 text-cream-50 rounded-xl shadow-burgundy hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="w-full px-6 py-4 glass-button-primary text-white font-semibold text-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitted ? (
                   <>
@@ -281,7 +282,7 @@ ${formData.message}
                   </>
                 ) : isSubmitting ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-cream-50 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     Sending...
                   </>
                 ) : (
@@ -293,7 +294,7 @@ ${formData.message}
               </button>
 
               {/* Privacy Note */}
-              <p className="font-sans text-xs text-charcoal-500 text-center">
+              <p className="text-xs text-gray-500 text-center">
                 By submitting this form, you agree to our Terms of Service and Privacy Policy
               </p>
             </form>

@@ -12,49 +12,50 @@ export default function Footer() {
   };
 
   return (
-    <footer className="relative bg-charcoal-900 text-cream-100 border-t border-charcoal-700">
+    <footer className="relative bg-[#0a0a0f] border-t border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Brand Column */}
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-burgundy-700 to-burgundy-900 flex items-center justify-center shadow-burgundy">
+              <div className="w-10 h-10 rounded-xl glass-strong flex items-center justify-center">
                 <span className="text-2xl">🍽️</span>
               </div>
               <div>
-                <h3 className="font-display text-xl font-bold text-gold-400">RestaurantAI</h3>
-                <p className="font-sans text-xs text-cream-400">MCP Platform</p>
+                <h3 className="text-xl font-bold text-white">Restaurant AI</h3>
+                <p className="text-xs text-gray-400">MCP Platform</p>
               </div>
             </div>
-            <p className="font-sans text-cream-300 text-sm leading-relaxed max-w-md">
-              Elevating restaurant management with AI-powered reservations and intelligent table management. Built for modern hospitality.
+            <p className="text-gray-400 text-sm leading-relaxed max-w-md">
+              Transform your restaurant with AI-powered reservations and intelligent table
+              management. Built for modern hospitality.
             </p>
             <div className="flex items-center gap-4 mt-4">
               <a
                 href={`mailto:${CONTACT_INFO.email}`}
-                className="w-10 h-10 bg-charcoal-800 border border-charcoal-700 rounded-lg flex items-center justify-center hover:bg-burgundy-800 hover:border-burgundy-700 transition-all group"
+                className="w-10 h-10 glass-subtle rounded-lg flex items-center justify-center hover:glass-strong transition-all group"
               >
-                <Mail className="w-5 h-5 text-cream-400 group-hover:text-cream-100" />
+                <Mail className="w-5 h-5 text-gray-400 group-hover:text-white" />
               </a>
               <a
                 href="https://github.com/stefanogebara/restaurant-ai-mcp"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-charcoal-800 border border-charcoal-700 rounded-lg flex items-center justify-center hover:bg-burgundy-800 hover:border-burgundy-700 transition-all group"
+                className="w-10 h-10 glass-subtle rounded-lg flex items-center justify-center hover:glass-strong transition-all group"
               >
-                <Github className="w-5 h-5 text-cream-400 group-hover:text-cream-100" />
+                <Github className="w-5 h-5 text-gray-400 group-hover:text-white" />
               </a>
             </div>
           </div>
 
           {/* Product Column */}
           <div>
-            <h4 className="font-display font-semibold text-lg text-gold-400 mb-4">Product</h4>
+            <h4 className="text-white font-semibold mb-4">Product</h4>
             <ul className="space-y-3">
               <li>
                 <button
                   onClick={() => scrollToSection('features')}
-                  className="font-sans text-cream-300 hover:text-cream-100 transition-colors text-sm"
+                  className="text-gray-400 hover:text-white transition-colors text-sm"
                 >
                   Features
                 </button>
@@ -62,7 +63,7 @@ export default function Footer() {
               <li>
                 <button
                   onClick={() => scrollToSection('demo')}
-                  className="font-sans text-cream-300 hover:text-cream-100 transition-colors text-sm"
+                  className="text-gray-400 hover:text-white transition-colors text-sm"
                 >
                   Live Demo
                 </button>
@@ -70,7 +71,7 @@ export default function Footer() {
               <li>
                 <button
                   onClick={() => scrollToSection('pricing')}
-                  className="font-sans text-cream-300 hover:text-cream-100 transition-colors text-sm"
+                  className="text-gray-400 hover:text-white transition-colors text-sm"
                 >
                   Pricing
                 </button>
@@ -78,7 +79,7 @@ export default function Footer() {
               <li>
                 <a
                   href="/host-dashboard"
-                  className="font-sans text-cream-300 hover:text-cream-100 transition-colors text-sm"
+                  className="text-gray-400 hover:text-white transition-colors text-sm"
                 >
                   Dashboard
                 </a>
@@ -88,12 +89,12 @@ export default function Footer() {
 
           {/* Support Column */}
           <div>
-            <h4 className="font-display font-semibold text-lg text-gold-400 mb-4">Support</h4>
+            <h4 className="text-white font-semibold mb-4">Support</h4>
             <ul className="space-y-3">
               <li>
                 <button
                   onClick={() => scrollToSection('faq')}
-                  className="font-sans text-cream-300 hover:text-cream-100 transition-colors text-sm"
+                  className="text-gray-400 hover:text-white transition-colors text-sm"
                 >
                   FAQ
                 </button>
@@ -101,7 +102,7 @@ export default function Footer() {
               <li>
                 <button
                   onClick={() => scrollToSection('contact')}
-                  className="font-sans text-cream-300 hover:text-cream-100 transition-colors text-sm"
+                  className="text-gray-400 hover:text-white transition-colors text-sm"
                 >
                   Contact Us
                 </button>
@@ -109,7 +110,7 @@ export default function Footer() {
               <li>
                 <a
                   href={`mailto:${CONTACT_INFO.email}`}
-                  className="font-sans text-cream-300 hover:text-cream-100 transition-colors text-sm"
+                  className="text-gray-400 hover:text-white transition-colors text-sm"
                 >
                   Email Support
                 </a>
@@ -119,7 +120,7 @@ export default function Footer() {
                   href="https://github.com/stefanogebara/restaurant-ai-mcp"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-sans text-cream-300 hover:text-cream-100 transition-colors text-sm"
+                  className="text-gray-400 hover:text-white transition-colors text-sm"
                 >
                   Documentation
                 </a>
@@ -129,19 +130,19 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-charcoal-700 pt-8">
+        <div className="border-t border-white/10 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="font-sans text-cream-400 text-sm">
-              © {currentYear} RestaurantAI. All rights reserved.
+            <p className="text-gray-400 text-sm">
+              © {currentYear} Restaurant AI MCP. All rights reserved.
             </p>
             <div className="flex gap-6">
-              <a href="#" className="font-sans text-cream-400 hover:text-cream-100 transition-colors text-sm">
+              <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">
                 Privacy Policy
               </a>
-              <a href="#" className="font-sans text-cream-400 hover:text-cream-100 transition-colors text-sm">
+              <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">
                 Terms of Service
               </a>
-              <a href="#" className="font-sans text-cream-400 hover:text-cream-100 transition-colors text-sm">
+              <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">
                 Cookie Policy
               </a>
             </div>
