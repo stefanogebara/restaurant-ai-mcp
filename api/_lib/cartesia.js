@@ -84,36 +84,35 @@ const VOICE_CONFIG = {
 
 /**
  * Output format configurations for different use cases
- * NOTE: Keys must be camelCase to match Cartesia SDK v2.2.9
+ * Format according to Cartesia SDK v2.2.9 API specification
  */
 const OUTPUT_FORMATS = {
   // For Twilio telephony (phone calls)
   twilio: {
     container: 'raw',
     encoding: 'pcm_mulaw',
-    sampleRate: 8000          // camelCase
+    sampleRate: 8000
   },
 
   // For web streaming (WebSocket)
   web: {
     container: 'raw',
     encoding: 'pcm_f32le',
-    sampleRate: 44100         // camelCase
+    sampleRate: 44100
   },
 
-  // For MP3 files
+  // For MP3 files (requires sampleRate and bitRate)
   file_mp3: {
     container: 'mp3',
-    encoding: 'mp3',
-    sampleRate: 44100,        // camelCase
-    bitRate: 128000           // Required for MP3: 128kbps (use 192000 for higher quality)
+    sampleRate: 44100,
+    bitRate: 128000           // 128kbps (use 192000 for higher quality)
   },
 
   // For WAV files
   file_wav: {
     container: 'wav',
     encoding: 'pcm_s16le',
-    sampleRate: 44100         // camelCase
+    sampleRate: 44100
   }
 };
 
@@ -138,7 +137,16 @@ async function textToSpeech(text, options = {}) {
   const voice = VOICE_CONFIG[voicePreset] || { id: voicePreset };
   const model = options.model || 'sonic-2';  // Default to sonic-2 (use 'sonic-turbo' for lower latency)
   const outputFormat = OUTPUT_FORMATS[options.outputFormat] || OUTPUT_FORMATS.web;
-  const speed = options.speed || 1.0;
+
+  // Convert numeric speed (0.5-2.0) to ModelSpeed enum ("slow", "normal", "fast")
+  let speedEnum = 'normal';
+  if (options.speed) {
+    if (options.speed < 0.85) {
+      speedEnum = 'slow';
+    } else if (options.speed > 1.15) {
+      speedEnum = 'fast';
+    }
+  }
   const emotion = options.emotion || '';
 
   console.log('[Cartesia] Generating speech:', {
@@ -146,28 +154,38 @@ async function textToSpeech(text, options = {}) {
     voice: voice.id,
     model,
     outputFormat: options.outputFormat || 'web',
-    speed,
+    speed: speedEnum,
+    numericSpeed: options.speed,
     emotion
   });
 
   try {
     // If streaming is enabled, use WebSocket
     if (options.streaming) {
-      return await streamTextToSpeech(text, { ...options, voice, model, outputFormat, speed, emotion });
+      return await streamTextToSpeech(text, { ...options, voice, model, outputFormat, speedEnum, emotion });
     }
 
-    // Otherwise use REST API (bytes endpoint)
-    const response = await client.tts.bytes({
-      modelId: model,          // Use camelCase
+    // Build TTS request according to SDK v2.2.9 specification
+    const ttsRequest = {
+      modelId: model,
       transcript: text,
       voice: {
         mode: 'id',
         id: voice.id
       },
-      outputFormat: outputFormat,  // Use camelCase
+      outputFormat: outputFormat,
       language: 'en'
-      // Note: speed and emotion parameters need to be verified in SDK docs
-    });
+    };
+
+    // Add optional speed parameter if specified
+    if (options.speed) {
+      ttsRequest.speed = speedEnum;
+    }
+
+    // Note: Emotion/controls parameter is not yet implemented in SDK v2.2.9
+    // See generationConfig for future emotion support
+
+    const response = await client.tts.bytes(ttsRequest);
 
     console.log('[Cartesia] Speech generated successfully');
 
@@ -177,7 +195,7 @@ async function textToSpeech(text, options = {}) {
       audioSize: response?.length || response?.byteLength || 0,
       outputFormat: options.outputFormat || 'web',
       voice: voice,
-      duration_estimate: estimateDuration(text, speed)
+      duration_estimate: estimateDuration(text, options.speed || 1.0)
     };
   } catch (error) {
     console.error('[Cartesia] TTS error:', error);
