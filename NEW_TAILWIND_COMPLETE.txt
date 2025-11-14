@@ -1,0 +1,32 @@
+This is the complete new tailwind.config.js file for your premium restaurant AI dashboard redesign.
+
+The new design system features:
+
+1. COLOR PALETTE
+   - Deep Slate (primary): Professional dark blues
+   - Warm Sage (secondary): Sophisticated greens  
+   - Electric Violet (accent): Premium purple for CTAs
+   - Ocean Blue: Trust and intelligence
+   - Amber: Energy and attention
+
+2. TYPOGRAPHY
+   - SF Pro Display/Text for clean, modern look
+   - Refined type scale from 12px to 68px
+   - Optimized line heights and letter spacing
+
+3. SHADOWS
+   - Subtle, layered shadows for depth
+   - Glow effects for premium elements
+   - Neumorphic options for special cases
+
+4. ANIMATIONS
+   - Spring-based timing functions
+   - Fade, scale, slide animations
+   - Shimmer and pulse effects for data
+
+5. SPACING
+   - 4px base grid system
+   - Consistent rhythm throughout
+
+The file has been saved to tailwind.config.js.backup for reference.
+To apply, copy the contents from the attached file.
