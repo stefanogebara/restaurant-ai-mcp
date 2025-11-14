@@ -58,26 +58,35 @@
   }
 
   .dark {
-    /* Ethos Dark Mode - Still minimal with grays */
-    --background: var(--ethos-gray-900);
-    --foreground: var(--ethos-white);
-    --card: var(--ethos-gray-800);
-    --card-foreground: var(--ethos-white);
-    --popover: var(--ethos-gray-800);
-    --popover-foreground: var(--ethos-white);
-    --primary: var(--ethos-orange);
-    --primary-foreground: var(--ethos-black);
-    --secondary: var(--ethos-gray-700);
-    --secondary-foreground: var(--ethos-white);
-    --muted: var(--ethos-gray-800);
-    --muted-foreground: var(--ethos-gray-300);
-    --accent: var(--ethos-orange);
-    --accent-foreground: var(--ethos-black);
-    --destructive: var(--ethos-red);
-    --destructive-foreground: var(--ethos-white);
-    --border: var(--ethos-gray-700);
-    --input: var(--ethos-gray-700);
-    --ring: var(--ethos-orange);
+    /* Twin AI Learn Dark Mode - Maximum Contrast Design */
+    /* True black background with pure white text for exceptional readability */
+    --background: 0 0% 12%;           /* oklch(0.12 0 0) - True black */
+    --foreground: 0 0% 98%;           /* oklch(0.98 0 0) - Pure white text */
+
+    --card: 0 0% 18%;                 /* oklch(0.18 0 0) - Slightly lighter black cards */
+    --card-foreground: 0 0% 98%;      /* Pure white text on cards */
+
+    --popover: 0 0% 18%;
+    --popover-foreground: 0 0% 98%;   /* Bright popover text */
+
+    --primary: 30 100% 47%;           /* oklch(0.65 0.15 30) - Bright orange/amber */
+    --primary-foreground: 0 0% 12%;   /* Dark text on bright primary */
+
+    --secondary: 0 0% 22%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 25%;
+    --muted-foreground: 0 0% 75%;     /* Brighter muted text */
+
+    --accent: 30 100% 47%;            /* Bright orange - same as primary */
+    --accent-foreground: 0 0% 12%;
+
+    --destructive: 25 70% 47%;        /* oklch(0.55 0.25 25) - Bright red */
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 30%;               /* Visible borders */
+    --input: 0 0% 20%;                /* Dark inputs */
+    --ring: 30 100% 47%;              /* Bright orange focus rings */
   }
 }
 
@@ -91,9 +100,10 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
-  /* Dark mode body overrides */
+  /* Dark mode body overrides - Twin AI Learn style */
   .dark body {
-    @apply bg-ethos-gray-900 text-white;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 
   /* High contrast black text for readability */
