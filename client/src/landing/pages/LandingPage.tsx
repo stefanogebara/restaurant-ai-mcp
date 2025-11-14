@@ -20,7 +20,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-[#0a0a0f] overflow-x-hidden">
       <LandingNav />
       <HeroSection />
       <FeaturesGrid />
