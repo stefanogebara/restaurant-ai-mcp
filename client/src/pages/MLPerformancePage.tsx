@@ -129,8 +129,8 @@ export default function MLPerformancePage() {
       <div className="p-8">
         {/* Page Header */}
         <div className="mb-8 animate-fade-in-up">
-          <h1 className="font-display text-4xl font-bold text-burgundy-900 mb-2">ML Performance Dashboard</h1>
-          <p className="font-sans text-lg text-charcoal-600">
+          <h1 className="font-display text-4xl font-bold text-gray-200 mb-2">ML Performance Dashboard</h1>
+          <p className="font-sans text-lg text-gray-400">
             Track AI-powered interventions and ROI over the last 30 days
           </p>
         </div>
@@ -220,7 +220,7 @@ export default function MLPerformancePage() {
 
         {/* ROI Trend Chart */}
         <div className="mb-8 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
-          <h2 className="font-display text-2xl font-bold text-burgundy-900 mb-4">ROI Trend (Weekly)</h2>
+          <h2 className="font-display text-2xl font-bold text-gray-200 mb-4">ROI Trend (Weekly)</h2>
           <div className="bg-cream-100 border-2 border-cream-300 rounded-xl p-6 shadow-md">
             <TrendChart
               data={
@@ -247,7 +247,7 @@ export default function MLPerformancePage() {
 
         {/* Intervention Type Breakdown */}
         <div className="mb-8 animate-fade-in-up" style={{ animationDelay: '500ms' }}>
-          <h2 className="font-display text-2xl font-bold text-burgundy-900 mb-4">Performance by Intervention Type</h2>
+          <h2 className="font-display text-2xl font-bold text-gray-200 mb-4">Performance by Intervention Type</h2>
           <div className="bg-cream-100 border-2 border-cream-300 rounded-xl p-6 shadow-md">
             <TrendChart
               data={
@@ -275,7 +275,7 @@ export default function MLPerformancePage() {
           <div className="mb-8 animate-fade-in-up" style={{ animationDelay: '600ms' }}>
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="w-5 h-5 text-gold-600" />
-              <h2 className="font-display text-2xl font-bold text-burgundy-900">Smart Recommendations</h2>
+              <h2 className="font-display text-2xl font-bold text-gray-200">Smart Recommendations</h2>
             </div>
             <div className="grid gap-4">
               {mlData.recommendations.map((rec, index) => (
@@ -320,28 +320,28 @@ export default function MLPerformancePage() {
 
         {/* Recent Interventions Timeline */}
         <div className="mb-8 animate-fade-in-up" style={{ animationDelay: '700ms' }}>
-          <h2 className="font-display text-2xl font-bold text-burgundy-900 mb-4">Recent Interventions</h2>
+          <h2 className="font-display text-2xl font-bold text-gray-200 mb-4">Recent Interventions</h2>
           <div className="bg-cream-100 border-2 border-cream-300 rounded-xl overflow-hidden shadow-md">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-burgundy-50 border-b-2 border-burgundy-200">
+                <thead className="bg-gray-100 border-b-2 border-gray-300">
                   <tr>
-                    <th className="text-left p-4 font-display font-semibold text-sm text-burgundy-900 uppercase tracking-wider">
+                    <th className="text-left p-4 font-display font-semibold text-sm text-gray-700 uppercase tracking-wider">
                       Date
                     </th>
-                    <th className="text-left p-4 font-display font-semibold text-sm text-burgundy-900 uppercase tracking-wider">
+                    <th className="text-left p-4 font-display font-semibold text-sm text-gray-700 uppercase tracking-wider">
                       Reservation
                     </th>
-                    <th className="text-left p-4 font-display font-semibold text-sm text-burgundy-900 uppercase tracking-wider">
+                    <th className="text-left p-4 font-display font-semibold text-sm text-gray-700 uppercase tracking-wider">
                       Risk
                     </th>
-                    <th className="text-left p-4 font-display font-semibold text-sm text-burgundy-900 uppercase tracking-wider">
+                    <th className="text-left p-4 font-display font-semibold text-sm text-gray-700 uppercase tracking-wider">
                       Type
                     </th>
-                    <th className="text-left p-4 font-display font-semibold text-sm text-burgundy-900 uppercase tracking-wider">
+                    <th className="text-left p-4 font-display font-semibold text-sm text-gray-700 uppercase tracking-wider">
                       Outcome
                     </th>
-                    <th className="text-right p-4 font-display font-semibold text-sm text-burgundy-900 uppercase tracking-wider">
+                    <th className="text-right p-4 font-display font-semibold text-sm text-gray-700 uppercase tracking-wider">
                       ROI
                     </th>
                   </tr>
