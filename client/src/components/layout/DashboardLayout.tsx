@@ -10,7 +10,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { isCollapsed } = useSidebar();
 
   return (
-    <div className="min-h-screen bg-parchment-texture bg-cream-200 flex">
+    <div className="min-h-screen bg-background flex">
       <Sidebar />
       <main className={`flex-1 transition-all duration-300 ${isCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
         {children}
