@@ -7,11 +7,11 @@ export default {
   ],
   theme: {
     extend: {
-      // Premium Restaurant Typography System
+      // Modern 2025 Typography System
       fontFamily: {
-        display: ['Space Grotesk', 'sans-serif'],
-        sans: ['IBM Plex Sans', 'Bricolage Grotesque', 'sans-serif'],
-        mono: ['JetBrains Mono', 'IBM Plex Mono', 'monospace'],
+        display: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'Inter', 'sans-serif'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'Inter', 'sans-serif'],
+        mono: ['SF Mono', 'JetBrains Mono', 'Menlo', 'Monaco', 'monospace'],
       },
 
       // Type Scale (3x ratio)
@@ -27,124 +27,145 @@ export default {
         'xs': ['12px', { lineHeight: '1.4', letterSpacing: '0' }],
       },
 
-      // Premium Restaurant Color Palette
+      // Modern Premium Restaurant 2025 Color Palette
       colors: {
-        // Deep Burgundy - Primary brand color
-        burgundy: {
-          50: '#fdf2f4',
-          100: '#fce7eb',
-          200: '#f9d0d9',
-          300: '#f4a8b8',
-          400: '#ec7591',
-          500: '#e0476d',
-          600: '#cc2a56',
-          700: '#ad1e47',
-          800: '#7D1128', // PRIMARY
-          900: '#6b0e21',
-          950: '#3d0312',
+        // Deep Slate - Professional & Modern base
+        slate: {
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b',
+          900: '#0f172a', // PRIMARY - Deep Slate
+          950: '#020617',
         },
 
-        // Warm Gold - Premium accent
-        gold: {
-          50: '#fefaec',
-          100: '#fdf3c9',
-          200: '#fce588',
-          300: '#fad24e',
-          400: '#D4AF37', // PRIMARY
-          500: '#d9a527',
-          600: '#c18020',
-          700: '#9b5d1d',
-          800: '#7f4a1d',
-          900: '#6c3e1d',
+        // Warm Sage - Sophisticated secondary
+        sage: {
+          50: '#f6f7f6',
+          100: '#e3e5e3',
+          200: '#c6cbc6',
+          300: '#a3aba3',
+          400: '#818a81',
+          500: '#5f6f5f', // PRIMARY - Warm Sage
+          600: '#4f5e4f',
+          700: '#3f4d3f',
+          800: '#343f34',
+          900: '#2b342b',
+          950: '#1a1f1a',
         },
 
-        // Charcoal - Dark mode & depth
-        charcoal: {
-          50: '#f6f6f6',
-          100: '#e7e7e7',
-          200: '#d1d1d1',
-          300: '#b0b0b0',
-          400: '#888888',
-          500: '#6d6d6d',
-          600: '#5d5d5d',
-          700: '#4f4f4f',
-          800: '#454545',
-          900: '#2B2B2B', // PRIMARY
-          950: '#1a1a1a',
+        // Electric Violet - Premium accent
+        violet: {
+          50: '#faf5ff',
+          100: '#f3e8ff',
+          200: '#e9d5ff',
+          300: '#d8b4fe',
+          400: '#c084fc',
+          500: '#a855f7',
+          600: '#9333ea', // PRIMARY - Electric Violet
+          700: '#7e22ce',
+          800: '#6b21a8',
+          900: '#581c87',
+          950: '#3b0764',
         },
 
-        // Cream - Elegant backgrounds
-        cream: {
-          50: '#fefdfb',
-          100: '#fdfcf6',
-          200: '#F5F5DC', // PRIMARY - Beige
-          300: '#ebe9d5',
-          400: '#ddd9c0',
-          500: '#cbc5a7',
-          600: '#b5ad8a',
-          700: '#989173',
-          800: '#7d7660',
-          900: '#676253',
+        // Ocean Blue - Trust & Intelligence
+        ocean: {
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0ea5e9',
+          600: '#0284c7', // PRIMARY - Ocean Blue
+          700: '#0369a1',
+          800: '#075985',
+          900: '#0c4a6e',
+          950: '#082f49',
         },
 
-        // Semantic Colors
-        success: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#4A7C59', // PRIMARY - Forest green
-          600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d',
-        },
-
-        warning: {
+        // Amber Glow - Energy & Attention
+        amber: {
           50: '#fffbeb',
           100: '#fef3c7',
           200: '#fde68a',
           300: '#fcd34d',
           400: '#fbbf24',
-          500: '#D97706', // PRIMARY - Amber
-          600: '#d97706',
+          500: '#f59e0b',
+          600: '#d97706', // PRIMARY - Amber Glow
           700: '#b45309',
           800: '#92400e',
           900: '#78350f',
+          950: '#451a03',
+        },
+
+        // Semantic Colors (Modern)
+        success: {
+          50: '#ecfdf5',
+          100: '#d1fae5',
+          200: '#a7f3d0',
+          300: '#6ee7b7',
+          400: '#34d399',
+          500: '#10b981',
+          600: '#059669', // PRIMARY - Emerald
+          700: '#047857',
+          800: '#065f46',
+          900: '#064e3b',
+          950: '#022c22',
+        },
+
+        warning: {
+          50: '#fff7ed',
+          100: '#ffedd5',
+          200: '#fed7aa',
+          300: '#fdba74',
+          400: '#fb923c',
+          500: '#f97316',
+          600: '#ea580c', // PRIMARY - Orange
+          700: '#c2410c',
+          800: '#9a3412',
+          900: '#7c2d12',
+          950: '#431407',
         },
 
         error: {
-          50: '#fef2f2',
-          100: '#fee2e2',
-          200: '#fecaca',
-          300: '#fca5a5',
-          400: '#f87171',
-          500: '#ef4444',
-          600: '#dc2626',
-          700: '#991B1B', // PRIMARY - Deep red
-          800: '#991b1b',
-          900: '#7f1d1d',
+          50: '#fff1f2',
+          100: '#ffe4e6',
+          200: '#fecdd3',
+          300: '#fda4af',
+          400: '#fb7185',
+          500: '#f43f5e',
+          600: '#e11d48', // PRIMARY - Rose
+          700: '#be123c',
+          800: '#9f1239',
+          900: '#881337',
+          950: '#4c0519',
         },
 
         info: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#1E40AF', // PRIMARY - Royal blue
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0ea5e9',
+          600: '#0284c7', // PRIMARY - Sky (same as ocean)
+          700: '#0369a1',
+          800: '#075985',
+          900: '#0c4a6e',
+          950: '#082f49',
         },
 
-        // Table Status Colors
-        'status-available': '#4A7C59',
-        'status-occupied': '#991B1B',
-        'status-reserved': '#1E40AF',
-        'status-cleaning': '#D97706',
+        // Table Status Colors (Updated)
+        'status-available': '#059669',  // Emerald
+        'status-occupied': '#e11d48',   // Rose
+        'status-reserved': '#0284c7',   // Ocean
+        'status-cleaning': '#d97706',   // Amber
 
         // Legacy compatibility (can be removed later)
         border: "hsl(var(--border))",
@@ -202,16 +223,19 @@ export default {
         full: "9999px",
       },
 
-      // Shadows & Depth
+      // Modern Shadow & Glow System
       boxShadow: {
-        'xs': '0 1px 2px rgba(43, 43, 43, 0.05)',
-        'sm': '0 1px 3px rgba(43, 43, 43, 0.1), 0 1px 2px rgba(43, 43, 43, 0.06)',
-        'md': '0 4px 6px -1px rgba(43, 43, 43, 0.1), 0 2px 4px -1px rgba(43, 43, 43, 0.06)',
-        'lg': '0 10px 15px -3px rgba(43, 43, 43, 0.1), 0 4px 6px -2px rgba(43, 43, 43, 0.05)',
-        'xl': '0 20px 25px -5px rgba(43, 43, 43, 0.1), 0 10px 10px -5px rgba(43, 43, 43, 0.04)',
-        '2xl': '0 25px 50px -12px rgba(125, 17, 40, 0.25)',
-        'burgundy': '0 20px 25px -5px rgba(125, 17, 40, 0.3), 0 10px 10px -5px rgba(125, 17, 40, 0.2)',
-        'gold': '0 20px 25px -5px rgba(212, 175, 55, 0.3), 0 10px 10px -5px rgba(212, 175, 55, 0.2)',
+        'xs': '0 1px 2px rgba(15, 23, 42, 0.04)',
+        'sm': '0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04)',
+        'md': '0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -1px rgba(15, 23, 42, 0.04)',
+        'lg': '0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04)',
+        'xl': '0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 10px 10px -5px rgba(15, 23, 42, 0.04)',
+        '2xl': '0 25px 50px -12px rgba(15, 23, 42, 0.25)',
+        // Premium glow effects
+        'glow-violet': '0 0 20px rgba(147, 51, 234, 0.4), 0 0 40px rgba(147, 51, 234, 0.2)',
+        'glow-ocean': '0 0 20px rgba(2, 132, 199, 0.4), 0 0 40px rgba(2, 132, 199, 0.2)',
+        'glow-success': '0 0 20px rgba(5, 150, 105, 0.4), 0 0 40px rgba(5, 150, 105, 0.2)',
+        'glow-amber': '0 0 20px rgba(217, 119, 6, 0.4), 0 0 40px rgba(217, 119, 6, 0.2)',
       },
 
       // Spacing System (8px grid)
@@ -246,7 +270,7 @@ export default {
         '700': '700ms',
       },
 
-      // Keyframe Animations
+      // Modern 2025 Animation Keyframes
       keyframes: {
         'fade-in-up': {
           '0%': {
@@ -296,6 +320,22 @@ export default {
             transform: 'translateX(0)',
           },
         },
+        'pulse-glow': {
+          '0%, 100%': {
+            boxShadow: '0 0 20px rgba(147, 51, 234, 0.4)',
+          },
+          '50%': {
+            boxShadow: '0 0 40px rgba(147, 51, 234, 0.6)',
+          },
+        },
+        'bounce-subtle': {
+          '0%, 100%': {
+            transform: 'translateY(0)',
+          },
+          '50%': {
+            transform: 'translateY(-4px)',
+          },
+        },
       },
 
       animation: {
@@ -304,6 +344,8 @@ export default {
         'shimmer': 'shimmer 2s infinite',
         'slide-in-right': 'slide-in-right 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         'slide-in-left': 'slide-in-left 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+        'bounce-subtle': 'bounce-subtle 1s ease-in-out infinite',
       },
 
       // Background Images & Patterns
