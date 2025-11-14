@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { TrendingUp, Target, AlertCircle, DollarSign, CheckCircle2, Sparkles, Zap, BarChart3, Activity } from 'lucide-react';
+import { TrendingUp, Target, AlertCircle, DollarSign, CheckCircle2, Sparkles, BarChart3, Activity } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import TrendChart from '../components/common/TrendChart';
