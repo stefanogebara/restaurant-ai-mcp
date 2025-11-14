@@ -1,79 +1,83 @@
+/* Ethos Design System - Minimal & Elegant */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --radius: 0.5rem;
-    /* Modern Light Theme - Clean & Professional */
-    --background: oklch(0.99 0 0);
-    --foreground: oklch(0.15 0.01 240);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.15 0.01 240);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.15 0.01 240);
-    --primary: oklch(0.6 0.25 275);
-    --primary-foreground: oklch(0.99 0 0);
-    --secondary: oklch(0.96 0.005 240);
-    --secondary-foreground: oklch(0.15 0.01 240);
-    --muted: oklch(0.96 0.005 240);
-    --muted-foreground: oklch(0.5 0.01 240);
-    --accent: oklch(0.94 0.015 240);
-    --accent-foreground: oklch(0.15 0.01 240);
-    --destructive: oklch(0.62 0.28 25);
-    --destructive-foreground: oklch(0.99 0 0);
-    --border: oklch(0.90 0.005 240);
-    --input: oklch(0.90 0.005 240);
-    --ring: oklch(0.6 0.25 275);
-    --chart-1: oklch(0.65 0.28 275);
-    --chart-2: oklch(0.7 0.25 190);
-    --chart-3: oklch(0.75 0.20 310);
-    --chart-4: oklch(0.68 0.25 150);
-    --chart-5: oklch(0.72 0.22 50);
-    --sidebar: oklch(0.98 0 0);
-    --sidebar-foreground: oklch(0.15 0.01 240);
-    --sidebar-primary: oklch(0.6 0.25 275);
-    --sidebar-primary-foreground: oklch(0.99 0 0);
-    --sidebar-accent: oklch(0.94 0.015 240);
-    --sidebar-accent-foreground: oklch(0.15 0.01 240);
-    --sidebar-border: oklch(0.90 0.005 240);
-    --sidebar-ring: oklch(0.6 0.25 275);
+    --radius: 6px;
+
+    /* Ethos Gray System (HSL for easy manipulation) */
+    --ethos-gray-50: 43 17% 90%;    /* #E8E7E1 */
+    --ethos-gray-100: 43 14% 88%;   /* #DEDCD5 */
+    --ethos-gray-200: 40 9% 82%;    /* #D5D4CD */
+    --ethos-gray-300: 40 6% 80%;    /* #CBCBC2 */
+    --ethos-gray-400: 40 6% 74%;    /* #C1C0B6 - Main BG */
+    --ethos-gray-500: 40 5% 74%;    /* #BFBFB8 */
+    --ethos-gray-600: 40 7% 60%;    /* #9B9A8F */
+    --ethos-gray-700: 40 6% 46%;    /* #7A7970 */
+    --ethos-gray-800: 30 3% 35%;    /* #5A5954 */
+    --ethos-gray-900: 30 3% 22%;    /* #3A3936 */
+
+    /* Ethos Black & White */
+    --ethos-black: 0 0% 0%;         /* #000000 */
+    --ethos-white: 0 0% 100%;       /* #FFFFFF */
+
+    /* Ethos Minimal Accents */
+    --ethos-blue: 239 73% 42%;      /* #1f21b6 */
+    --ethos-green: 145 79% 29%;     /* #127f31 */
+    --ethos-amber: 44 80% 46%;      /* #cc9a1a */
+    --ethos-red: 355 66% 44%;       /* #b72b38 */
+
+    /* Ethos Orange CTA */
+    --ethos-orange: 15 100% 50%;    /* #FF4000 */
+    --ethos-orange-hover: 16 100% 56%; /* #FF5A23 */
+
+    /* Component System - Ethos Style */
+    --background: var(--ethos-gray-400);
+    --foreground: var(--ethos-black);
+    --card: var(--ethos-gray-300);
+    --card-foreground: var(--ethos-black);
+    --popover: var(--ethos-gray-200);
+    --popover-foreground: var(--ethos-black);
+    --primary: var(--ethos-blue);
+    --primary-foreground: var(--ethos-white);
+    --secondary: var(--ethos-gray-600);
+    --secondary-foreground: var(--ethos-black);
+    --muted: var(--ethos-gray-500);
+    --muted-foreground: var(--ethos-gray-800);
+    --accent: var(--ethos-orange);
+    --accent-foreground: var(--ethos-white);
+    --destructive: var(--ethos-red);
+    --destructive-foreground: var(--ethos-white);
+    --border: var(--ethos-gray-600);
+    --input: var(--ethos-gray-300);
+    --ring: var(--ethos-orange);
   }
 
   .dark {
-    /* Sleek Dark Theme - Modern & Vibrant (HSL format for Tailwind) */
-    --background: 240 20% 9%;        /* Deep dark background */
-    --foreground: 0 0% 98%;          /* Almost white text */
-    --card: 240 15% 13%;             /* Elevated card surface */
-    --card-foreground: 0 0% 98%;
-    --popover: 240 15% 13%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 275 70% 65%;          /* Purple/violet primary */
-    --primary-foreground: 240 20% 9%;
-    --secondary: 240 20% 18%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 20% 18%;
-    --muted-foreground: 240 5% 65%;
-    --accent: 190 30% 22%;           /* Teal accent */
-    --accent-foreground: 0 0% 98%;
-    --destructive: 25 80% 50%;
-    --destructive-foreground: 240 20% 9%;
-    --border: 240 20% 22%;
-    --input: 240 20% 22%;
-    --ring: 275 70% 65%;
-    --chart-1: 275 70% 65%;
-    --chart-2: 190 70% 70%;
-    --chart-3: 310 60% 75%;
-    --chart-4: 150 65% 68%;
-    --chart-5: 50 65% 72%;
-    --sidebar: 240 18% 11%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 275 70% 65%;
-    --sidebar-primary-foreground: 240 20% 9%;
-    --sidebar-accent: 240 30% 22%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 240 20% 22%;
-    --sidebar-ring: 275 70% 65%;
+    /* Ethos Dark Mode - Still minimal with grays */
+    --background: var(--ethos-gray-900);
+    --foreground: var(--ethos-white);
+    --card: var(--ethos-gray-800);
+    --card-foreground: var(--ethos-white);
+    --popover: var(--ethos-gray-800);
+    --popover-foreground: var(--ethos-white);
+    --primary: var(--ethos-orange);
+    --primary-foreground: var(--ethos-black);
+    --secondary: var(--ethos-gray-700);
+    --secondary-foreground: var(--ethos-white);
+    --muted: var(--ethos-gray-800);
+    --muted-foreground: var(--ethos-gray-300);
+    --accent: var(--ethos-orange);
+    --accent-foreground: var(--ethos-black);
+    --destructive: var(--ethos-red);
+    --destructive-foreground: var(--ethos-white);
+    --border: var(--ethos-gray-700);
+    --input: var(--ethos-gray-700);
+    --ring: var(--ethos-orange);
   }
 }
 
@@ -83,44 +87,201 @@
   }
 
   body {
-    @apply bg-background text-foreground;
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
-    margin: 0;
-    min-width: 320px;
-    min-height: 100vh;
-    font-feature-settings: 'cv11' 1, 'ss01' 1;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
+    @apply bg-ethos-gray-400 text-ethos-black font-sans text-sm antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* High contrast black text for readability */
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-ethos-black font-sans;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Focus states - Orange ring */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    @apply outline-none ring-2 ring-ethos-orange ring-offset-2;
   }
 }
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(100px);
+@layer components {
+  /* ===== ETHOS BUTTON SYSTEM ===== */
+
+  /* Primary CTA Button - Orange with Glow */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3
+           bg-ethos-orange text-white font-medium rounded
+           transition-all duration-200
+           hover:bg-ethos-orange-hover hover:shadow-orange-glow
+           active:scale-95
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
-  to {
-    opacity: 1;
-    transform: translateX(0);
+
+  /* Secondary Button - Blue Action */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3
+           bg-ethos-blue text-white font-medium rounded
+           transition-all duration-200
+           hover:bg-ethos-blue/90 hover:shadow-sm
+           active:scale-95
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Ghost Button - Minimal Outline */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3
+           bg-transparent text-ethos-black font-medium rounded
+           border border-ethos-gray-600
+           transition-all duration-200
+           hover:bg-ethos-gray-300 hover:border-ethos-gray-700
+           active:scale-95
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* ===== ETHOS CARD SYSTEM ===== */
+
+  /* Standard Card */
+  .card {
+    @apply bg-ethos-gray-300 rounded border border-ethos-gray-600/20 shadow-sm
+           transition-all duration-200;
+  }
+
+  /* Hoverable Card */
+  .card-hover {
+    @apply card hover:shadow-md hover:-translate-y-0.5;
+  }
+
+  /* Elevated Card */
+  .card-elevated {
+    @apply bg-ethos-gray-500 rounded border border-ethos-gray-600/30 shadow-md;
+  }
+
+  /* ===== ETHOS INPUT SYSTEM ===== */
+
+  .input {
+    @apply w-full px-4 py-3 bg-ethos-gray-300 text-ethos-black
+           border border-ethos-gray-600/30 rounded
+           placeholder:text-ethos-gray-700
+           transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-ethos-orange focus:border-transparent
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .textarea {
+    @apply input resize-none;
+  }
+
+  .select {
+    @apply input cursor-pointer;
+  }
+
+  /* ===== ETHOS UTILITY CLASSES ===== */
+
+  /* Text Variants */
+  .text-primary {
+    @apply text-ethos-black;
+  }
+
+  .text-secondary {
+    @apply text-ethos-gray-800;
+  }
+
+  .text-subtle {
+    @apply text-ethos-gray-700;
+  }
+
+  /* Background Variants */
+  .bg-main {
+    @apply bg-ethos-gray-400;
+  }
+
+  .bg-card {
+    @apply bg-ethos-gray-300;
+  }
+
+  .bg-elevated {
+    @apply bg-ethos-gray-500;
+  }
+
+  /* Badge Component */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+           bg-ethos-gray-200 text-ethos-black border border-ethos-gray-600/20;
+  }
+
+  .badge-success {
+    @apply badge bg-ethos-green/10 text-ethos-green border-ethos-green/20;
+  }
+
+  .badge-warning {
+    @apply badge bg-ethos-amber/10 text-ethos-amber border-ethos-amber/20;
+  }
+
+  .badge-error {
+    @apply badge bg-ethos-red/10 text-ethos-red border-ethos-red/20;
+  }
+
+  /* Divider */
+  .divider {
+    @apply border-t border-ethos-gray-600/30;
+  }
+
+  /* Container */
+  .container-ethos {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Link Styles */
+  .link {
+    @apply text-ethos-blue underline-offset-4 hover:underline
+           transition-colors duration-200;
   }
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
+@layer utilities {
+  /* Scrollbar Styling - Minimal */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--ethos-gray-600)) hsl(var(--ethos-gray-400));
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
   }
-}
 
-.animate-slide-in {
-  animation: slideIn 0.3s ease-out;
-}
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-ethos-gray-400;
+  }
 
-.animate-slide-up {
-  animation: slideUp 0.3s ease-out;
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-ethos-gray-600 rounded hover:bg-ethos-gray-700;
+  }
+
+  /* Smooth Transitions */
+  .transition-smooth {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Text Truncation */
+  .truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .truncate-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 }
