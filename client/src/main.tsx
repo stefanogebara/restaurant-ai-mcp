@@ -7,9 +7,6 @@ import { initSentry } from './lib/sentry'
 // Initialize Sentry error tracking
 initSentry();
 
-// Enable dark mode by default
-document.documentElement.classList.add('dark')
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
