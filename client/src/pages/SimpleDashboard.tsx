@@ -11,14 +11,14 @@ import { hasFeatureAccess, PLAN_NAMES } from '../config/planFeatures';
 import { useSubscription } from '../hooks/useSubscription';
 import '../landing/styles/glass-morphism.css';
 
-type ComplexityLevel = 'estándar' | 'completo' | 'avanzado';
+type ComplexityLevel = 'completo' | 'avanzado';
 
 interface SimpleDashboardProps {
   language?: 'es' | 'en';
 }
 
 export default function SimpleDashboard({ language: initialLanguage = 'en' }: SimpleDashboardProps) {
-  const [complexity, setComplexity] = useState<ComplexityLevel>('estándar');
+  const [complexity, setComplexity] = useState<ComplexityLevel>('completo');
   const [language, setLanguage] = useState<'es' | 'en'>(initialLanguage);
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [showSeatModal, setShowSeatModal] = useState(false);
@@ -39,7 +39,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   useEffect(() => {
     // First priority: Explicit dashboard complexity preference
     const saved = localStorage.getItem('dashboard-complexity');
-    if (saved && ['estándar', 'completo', 'avanzado'].includes(saved)) {
+    if (saved && ['completo', 'avanzado'].includes(saved)) {
       setComplexity(saved as ComplexityLevel);
       return;
     }
@@ -53,7 +53,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
         // Map onboarding template to complexity level
         const templateMap: Record<string, ComplexityLevel> = {
-          'simple': 'estándar',
+          'simple': 'completo',    // Map 'simple' to 'completo' (was 'estándar')
           'balanced': 'completo',
           'advanced': 'avanzado',
         };
@@ -65,7 +65,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
         }
       }
     } catch (error) {
-      // If parsing fails, just use default ('estándar')
+      // If parsing fails, just use default ('completo')
       console.error('Error loading onboarding template preference:', error);
     }
   }, []);
@@ -419,17 +419,6 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                 <span className="text-xs text-charcoal-500 font-sans font-semibold px-2 hidden sm:block">{t.viewLevel}</span>
 
               <button
-                onClick={() => handleComplexityChange('estándar')}
-                className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ease-out-expo ${
-                  complexity === 'estándar'
-                    ? 'bg-gradient-to-br from-burgundy-700 to-burgundy-800 text-cream-50 shadow-burgundy scale-105'
-                    : 'text-charcoal-600 hover:bg-cream-100 hover:text-burgundy-800'
-                }`}
-                title={t.estándar}
-              >
-                📈
-              </button>
-              <button
                 onClick={() => handleComplexityChange('completo')}
                 className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ease-out-expo ${
                   complexity === 'completo'
@@ -438,7 +427,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                 }`}
                 title={t.completo}
               >
-                ⚙️
+                ⚙️ {t.completo}
               </button>
               <button
                 onClick={() => {
@@ -459,103 +448,13 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                 }`}
                 title={hasFeatureAccess(currentPlan, 'mlPerformance') ? t.avanzado : (language === 'es' ? 'Requiere Plan Professional' : 'Requires Professional Plan')}
               >
-                🎯
+                🎯 {t.avanzado}
               </button>
             </div>
             </div>
           </div>
         </div>
 
-        {/* Key Stats - ESTÁNDAR MODE */}
-        {complexity === 'estándar' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 mb-8">
-            {/* Occupied Tables */}
-            <div className="glass-card p-4 md:p-5 group hover:-translate-y-1">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-3xl md:text-4xl font-bold gradient-text tracking-tight">
-                  {occupiedTables}<span className="text-gray-400 text-2xl">/{totalTables}</span>
-                </div>
-                <div className="p-2 bg-indigo-500/10 rounded-lg">
-                  <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="text-sm font-medium text-gray-300 mb-3">
-                {t.tablesOccupied}
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
-                    style={{ width: `${occupancyPercent}%` }}
-                  />
-                </div>
-                <span className="text-xs font-medium text-gray-400">{occupancyPercent}%</span>
-              </div>
-            </div>
-
-            {/* Today's Reservations */}
-            <div className="glass-card p-4 md:p-5 group hover:-translate-y-1">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-3xl md:text-4xl font-bold gradient-text-emerald tracking-tight">
-                  {todayReservations.length}
-                </div>
-                <div className="p-2 bg-emerald-500/10 rounded-lg">
-                  <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="text-sm font-medium text-gray-300 mb-3">
-                {t.reservationsToday}
-              </div>
-              <div className="text-xs text-gray-400">
-                {todayReservations.filter((r: any) => r.checked_in).length}/{todayReservations.length} {language === 'es' ? 'sentados' : 'seated'}
-              </div>
-            </div>
-
-            {/* Waiting */}
-            <div className="glass-card p-4 md:p-5 group hover:-translate-y-1">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-3xl md:text-4xl font-bold text-amber-400 tracking-tight">
-                  {stats.waitlistCount || 0}
-                </div>
-                <div className="p-2 bg-amber-500/10 rounded-lg">
-                  <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="text-sm font-medium text-gray-300 mb-3">
-                {t.waiting}
-              </div>
-              <div className="text-xs text-gray-400">
-                {stats.estimated_wait_time ? `~${stats.estimated_wait_time} min` : '-'} {language === 'es' ? 'espera' : 'wait'}
-              </div>
-            </div>
-
-            {/* Active Parties */}
-            <div className="glass-card p-4 md:p-5 group hover:-translate-y-1">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-3xl md:text-4xl font-bold gradient-text tracking-tight">
-                  {stats.activePartiesCount || 0}
-                </div>
-                <div className="p-2 bg-purple-500/10 rounded-lg">
-                  <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="text-sm font-medium text-gray-300 mb-3">
-                {t.activeParties}
-              </div>
-              <div className="text-xs text-gray-400">
-                {stats.totalSeatedGuests || 0} {language === 'es' ? 'comensales' : 'guests'}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Key Stats - COMPLETO MODE */}
         {complexity === 'completo' && (
@@ -1072,8 +971,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
           )}
         </div>
 
-        {/* View Tomorrow (Only show in ESTÁNDAR and COMPLETO modes) */}
-        {(complexity === 'estándar' || complexity === 'completo') && (
+        {/* View Tomorrow (Only show in COMPLETO mode) */}
+        {complexity === 'completo' && (
           <div className="mt-6 text-center">
             <button className="inline-flex items-center gap-2 text-burgundy-700 hover:text-burgundy-900 font-sans font-semibold text-base md:text-lg transition-all duration-300 ease-out-expo hover:gap-3 group">
               <span>{t.viewTomorrow}</span>
