@@ -3,8 +3,6 @@ import {
   LayoutDashboard,
   TrendingUp,
   Users,
-  DollarSign,
-  BarChart3,
   Dna,
   ChevronLeft,
   Menu,
@@ -33,9 +31,9 @@ const navItems: NavItem[] = [
   },
   {
     path: '/host-dashboard/ml',
-    label: 'ML Performance',
+    label: 'No-Show Prevention',
     icon: <TrendingUp className="w-5 h-5" />,
-    description: 'ROI & Interventions',
+    description: 'Intervention ROI',
     requiredFeature: 'mlPerformance'
   },
   {
@@ -44,20 +42,6 @@ const navItems: NavItem[] = [
     icon: <Users className="w-5 h-5" />,
     description: 'Lifetime Value',
     requiredFeature: 'customerLTV'
-  },
-  {
-    path: '/host-dashboard/pricing',
-    label: 'Pricing Rules',
-    icon: <DollarSign className="w-5 h-5" />,
-    description: 'Dynamic Pricing',
-    requiredFeature: 'pricingRules'
-  },
-  {
-    path: '/host-dashboard/analytics',
-    label: 'Pricing Analytics',
-    icon: <BarChart3 className="w-5 h-5" />,
-    description: 'Revenue Insights',
-    requiredFeature: 'pricingAnalytics'
   },
   {
     path: '/host-dashboard/dna',

@@ -10,8 +10,6 @@ import HostDashboard from './pages/HostDashboard';
 import WeeklyReport from './pages/WeeklyReport';
 import MLPerformancePage from './pages/MLPerformancePage';
 import CustomerLTVPage from './pages/CustomerLTVPage';
-import PricingRulesPage from './pages/PricingRulesPage';
-import PricingAnalyticsPage from './pages/PricingAnalyticsPage';
 import CustomerDNAPage from './pages/CustomerDNAPage';
 import SegoviaInsightsPage from './pages/SegoviaInsightsPage';
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
@@ -47,8 +45,6 @@ function App() {
             <Route path="/host-dashboard/reports" element={<WeeklyReport />} />
             <Route path="/host-dashboard/ml" element={<MLPerformancePage />} />
             <Route path="/host-dashboard/ltv" element={<CustomerLTVPage />} />
-            <Route path="/host-dashboard/pricing" element={<PricingRulesPage />} />
-            <Route path="/host-dashboard/analytics" element={<PricingAnalyticsPage />} />
             <Route path="/host-dashboard/dna" element={<CustomerDNAPage />} />
             <Route path="/host-dashboard/segovia" element={<SegoviaInsightsPage />} />
             <Route path="/analytics" element={<AnalyticsDashboard />} />
