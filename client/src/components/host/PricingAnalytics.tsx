@@ -112,8 +112,23 @@ export default function PricingAnalytics() {
     );
   }
 
-  if (!analytics) {
-    return null;
+  // Show helpful message when no pricing data exists yet
+  if (!analytics || analytics.summary.total_events === 0) {
+    return (
+      <div className="bg-card rounded-lg shadow-lg p-8 border border-border text-center">
+        <BarChart3 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-xl font-bold text-foreground mb-2">No Pricing Data Yet</h3>
+        <p className="text-muted-foreground mb-4">
+          Create pricing rules first to start tracking effectiveness analytics
+        </p>
+        <a
+          href="/host-dashboard/pricing"
+          className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+        >
+          Go to Pricing Rules
+        </a>
+      </div>
+    );
   }
 
   const { summary, by_demand_level, by_time_slot, most_effective_rules, timeline } = analytics;

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { TrendingUp, Target, AlertCircle, DollarSign, CheckCircle2, Sparkles, BarChart3, Activity } from 'lucide-react';
+import { TrendingUp, Target, AlertCircle, DollarSign, CheckCircle2, BarChart3, Activity } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import TrendChart from '../components/common/TrendChart';
@@ -366,76 +366,29 @@ export default function MLPerformancePage() {
           </div>
         </div>
 
-        {/* Smart Recommendations */}
-        {mlData?.recommendations && mlData.recommendations.length > 0 && (
-          <div
-            className={`mb-12 transform transition-all duration-1000 ${
-              isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
-            }`}
-            style={{ transitionDelay: '600ms' }}
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-amber-50 rounded-lg">
-                <Sparkles className="w-5 h-5 text-amber-600" />
-              </div>
-              <h2 className="font-display text-2xl sm:text-3xl font-bold text-slate-900">
-                AI Recommendations
-              </h2>
-            </div>
-            <div className="grid gap-4">
-              {mlData.recommendations.map((rec, index) => (
-                <div
-                  key={index}
-                  className={`bg-white border-2 rounded-2xl p-6 transition-all duration-300 transform hover:-translate-y-1 cursor-pointer ${
-                    rec.priority === 'high'
-                      ? 'border-error-200 hover:border-error-400 hover:shadow-lg'
-                      : rec.priority === 'medium'
-                      ? 'border-warning-200 hover:border-warning-400 hover:shadow-lg'
-                      : 'border-slate-200 hover:border-slate-400 hover:shadow-lg'
-                  }`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="text-3xl">{rec.icon}</div>
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-3 mb-2">
-                        <h3 className="font-sans font-bold text-base sm:text-lg text-slate-900">{rec.message}</h3>
-                        <span className={`text-xs px-3 py-1.5 rounded-full font-sans font-bold ${
-                          rec.priority === 'high'
-                            ? 'bg-error-50 text-error-700 border-2 border-error-200'
-                            : rec.priority === 'medium'
-                            ? 'bg-warning-50 text-warning-700 border-2 border-warning-200'
-                            : 'bg-slate-50 text-slate-700 border-2 border-slate-200'
-                        }`}>
-                          {getPriorityIcon(rec.priority)} {rec.priority.toUpperCase()}
-                        </span>
-                      </div>
-                      {rec.intervention_type && (
-                        <p className="font-sans text-sm text-slate-600">
-                          <span className="font-semibold text-slate-700">Type:</span> {formatInterventionType(rec.intervention_type)}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* AI Recommendations Section Removed - Not actionable without real-time context */}
 
-        {/* Recent Interventions Timeline */}
+        {/* Recent Interventions Timeline - TOP 5 Most Impactful */}
         <div
           className={`transform transition-all duration-1000 ${
             isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
           }`}
           style={{ transitionDelay: '800ms' }}
         >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-slate-50 rounded-lg">
-              <TrendingUp className="w-5 h-5 text-slate-700" />
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-slate-50 rounded-lg">
+                <TrendingUp className="w-5 h-5 text-slate-700" />
+              </div>
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-slate-900">
+                Top 5 Most Impactful Interventions
+              </h2>
             </div>
-            <h2 className="font-display text-2xl sm:text-3xl font-bold text-slate-900">
-              Recent Activity
-            </h2>
+            {mlData?.timeline && mlData.timeline.length > 5 && (
+              <span className="text-sm text-slate-500 font-sans">
+                Showing 5 of {mlData.timeline.length} total
+              </span>
+            )}
           </div>
           <div className="bg-white border-2 border-slate-200 rounded-2xl overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
@@ -464,7 +417,7 @@ export default function MLPerformancePage() {
                       </td>
                     </tr>
                   ) : mlData?.timeline && mlData.timeline.length > 0 ? (
-                    mlData.timeline.slice(0, 15).map((intervention) => (
+                    mlData.timeline.slice(0, 5).map((intervention) => (
                       <tr
                         key={intervention.id}
                         className="border-b border-slate-100 hover:bg-slate-50 transition-colors duration-200"

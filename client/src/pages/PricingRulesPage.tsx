@@ -18,11 +18,11 @@ export default function PricingRulesPage() {
           <PricingRulesManager />
         </div>
 
-        {/* Rule Types Explanation */}
+        {/* Rule Types Explanation - Simplified for v1 */}
         <div className="mt-8 max-w-7xl">
           <div className="bg-card rounded-lg border border-border p-6">
             <h2 className="text-xl font-bold text-foreground mb-4">Pricing Rule Types</h2>
-            <div className="grid md:grid-cols-4 gap-6">
+            <div className="grid md:grid-cols-3 gap-6">
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
@@ -71,22 +71,11 @@ export default function PricingRulesPage() {
                   <li>• Local festival pricing</li>
                 </ul>
               </div>
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                    <span className="text-2xl">⭐</span>
-                  </div>
-                  <h3 className="font-semibold">Customer-Based</h3>
-                </div>
-                <p className="text-sm text-muted-foreground mb-2">
-                  Personalized pricing by segment
-                </p>
-                <ul className="text-xs text-muted-foreground space-y-1">
-                  <li>• VIP customer discounts</li>
-                  <li>• First-time visitor offers</li>
-                  <li>• Loyalty program pricing</li>
-                </ul>
-              </div>
+            </div>
+            <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <p className="text-sm text-blue-400">
+                💡 <strong>Pro Tip:</strong> Start with the 3 default rules (Weekend Prime Time, Weekday Lunch Special, Last-Minute Discount) to test the system before creating custom rules.
+              </p>
             </div>
           </div>
         </div>
