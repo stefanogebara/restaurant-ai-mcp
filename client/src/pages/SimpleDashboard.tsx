@@ -725,19 +725,19 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
             {/* Left: Table Grid (60% on desktop) */}
             <div className="lg:col-span-2">
-              <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-200/60">
+              <div className="glass-card p-5 md:p-6">
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-slate-100 rounded-lg">
-                      <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="p-2 bg-indigo-500/10 rounded-lg">
+                      <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
                       </svg>
                     </div>
-                    <h2 className="text-lg md:text-xl font-bold text-slate-900">
+                    <h2 className="text-lg md:text-xl font-bold text-gray-200">
                       {language === 'es' ? 'Disposición de Mesas' : 'Table Layout'}
                     </h2>
                   </div>
-                  <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">
+                  <span className="text-xs font-semibold text-gray-400 bg-white/5 px-2.5 py-1 rounded-lg">
                     {language === 'es' ? 'Solo lectura' : 'Read-only'}
                   </span>
                 </div>
@@ -748,14 +748,14 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                 </div>
 
                 {/* Table Grid - Interactive in COMPLETO mode */}
-                <div className={`bg-slate-50/50 rounded-xl p-4 ${complexity !== 'completo' ? 'pointer-events-none opacity-90' : ''}`}>
+                <div className={`bg-white/5 rounded-xl p-4 ${complexity !== 'completo' ? 'pointer-events-none opacity-90' : ''}`}>
                   <TableGrid
                     tables={tables}
                     onTableClick={complexity === 'completo' ? handleTableClick : undefined}
                   />
                 </div>
 
-                <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400 bg-slate-50 p-3 rounded-lg">
+                <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-400 bg-white/5 p-3 rounded-lg">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -776,19 +776,19 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
             <div className="space-y-5 md:space-y-6">
 
               {/* Active Parties Panel */}
-              <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-200/60">
+              <div className="glass-card p-5 md:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-1.5 bg-purple-100 rounded-lg">
-                      <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="p-1.5 bg-purple-500/10 rounded-lg">
+                      <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
                     </div>
-                    <h2 className="text-base md:text-lg font-bold text-slate-900">
+                    <h2 className="text-base md:text-lg font-bold text-gray-200">
                       {language === 'es' ? 'Mesas Activas' : 'Active Parties'}
                     </h2>
                   </div>
-                  <span className="px-2.5 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs font-bold">
+                  <span className="px-2.5 py-1 bg-purple-500/20 text-purple-300 rounded-lg text-xs font-bold">
                     {stats.activePartiesCount || 0}
                   </span>
                 </div>
@@ -798,25 +798,25 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                     {dashboardData?.data?.activeParties?.map((party: any) => (
                       <div
                         key={party.service_id}
-                        className="p-3.5 bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-xl border border-slate-200/60 hover:border-purple-200 transition-all duration-200"
+                        className="p-3.5 bg-white/5 rounded-xl border border-white/10 hover:border-purple-400/30 transition-all duration-200"
                       >
                         <div className="flex items-start justify-between mb-2">
-                          <div className="font-semibold text-slate-900 text-sm">
+                          <div className="font-semibold text-gray-200 text-sm">
                             {party.customer_name}
                           </div>
-                          <span className="text-xs font-medium text-slate-500 bg-white px-2 py-0.5 rounded-md">
+                          <span className="text-xs font-medium text-gray-400 bg-white/5 px-2 py-0.5 rounded-md">
                             {formatTimestamp(party.seated_at)}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-slate-600">
+                        <div className="flex items-center gap-3 text-xs text-gray-300">
                           <div className="flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                             <span className="font-medium">{party.party_size} {language === 'es' ? 'pax' : 'guests'}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
                             <span className="font-medium">{language === 'es' ? 'Mesa' : 'Table'} {party.table_ids?.join(', ')}</span>
@@ -828,7 +828,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                               setSelectedServiceToComplete(party);
                               setShowCompleteServiceModal(true);
                             }}
-                            className="mt-2 w-full px-3 py-1.5 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white text-xs font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
+                            className="mt-2 w-full px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white text-xs font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
                           >
                             {language === 'es' ? 'Completar Servicio' : 'Complete Service'}
                           </button>
@@ -838,13 +838,13 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   </div>
                 ) : (
                   <div className="text-center py-10 px-4">
-                    <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-3">
                       <span className="text-3xl">🍽️</span>
                     </div>
-                    <p className="text-sm font-medium text-slate-600 mb-1">
+                    <p className="text-sm font-medium text-gray-300 mb-1">
                       {language === 'es' ? 'No hay mesas activas' : 'No active parties'}
                     </p>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-gray-400">
                       {language === 'es' ? 'Las mesas aparecerán aquí al sentar clientes' : 'Tables will appear here when guests are seated'}
                     </p>
                   </div>
@@ -852,31 +852,31 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </div>
 
               {/* Waitlist Panel */}
-              <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-200/60">
+              <div className="glass-card p-5 md:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-1.5 bg-orange-100 rounded-lg">
-                      <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="p-1.5 bg-amber-500/10 rounded-lg">
+                      <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <h2 className="text-base md:text-lg font-bold text-slate-900">
+                    <h2 className="text-base md:text-lg font-bold text-gray-200">
                       {language === 'es' ? 'Lista de Espera' : 'Waitlist'}
                     </h2>
                   </div>
-                  <span className="px-2.5 py-1 bg-orange-100 text-orange-700 rounded-lg text-xs font-bold">
+                  <span className="px-2.5 py-1 bg-amber-500/20 text-amber-300 rounded-lg text-xs font-bold">
                     {stats.waitlistCount || 0}
                   </span>
                 </div>
 
                 <div className="text-center py-10 px-4">
-                  <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                  <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-3">
                     <span className="text-3xl">⏱️</span>
                   </div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">
+                  <p className="text-sm font-medium text-gray-300 mb-1">
                     {language === 'es' ? 'La lista de espera está vacía' : 'Waitlist is empty'}
                   </p>
-                  <p className="text-xs text-slate-400 mb-4">
+                  <p className="text-xs text-gray-400 mb-4">
                     {language === 'es'
                       ? 'Los clientes pueden agregar sus nombres cuando lleguen'
                       : 'Customers can add their names when they arrive'}
