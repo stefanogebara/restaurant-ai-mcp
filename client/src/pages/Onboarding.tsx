@@ -1,13 +1,14 @@
 /**
  * Restaurant Onboarding Wizard - Premium Restaurant Design
  *
- * 6-step onboarding flow for new restaurant customers:
+ * 7-step onboarding flow for new restaurant customers:
  * 1. Welcome & Restaurant Info
  * 2. Dashboard Profile (customize metrics & preferences)
  * 3. Contact & Business Hours
- * 4. Table Configuration
- * 5. Reservation Settings
- * 6. Team Setup (Pro+ only)
+ * 4. AI Voice Selection (choose Cartesia voice for phone agent)
+ * 5. Table Configuration
+ * 6. Reservation Settings
+ * 7. Team Setup (Pro+ only)
  *
  * Design: Premium restaurant aesthetic with burgundy/gold palette,
  * Playfair Display headings, and cream/parchment backgrounds
@@ -20,6 +21,7 @@ import { useToast } from '../contexts/ToastContext';
 import Step1Welcome from '../components/onboarding/Step1Welcome';
 import Step1_5Profile from '../components/onboarding/Step1_5Profile';
 import Step2Contact from '../components/onboarding/Step2Contact';
+import Step2_5VoiceSelection from '../components/onboarding/Step2_5VoiceSelection';
 import Step3Tables from '../components/onboarding/Step3Tables';
 import Step4Settings from '../components/onboarding/Step4Settings';
 import Step5Team from '../components/onboarding/Step5Team';
@@ -95,7 +97,7 @@ export default function Onboarding() {
 
   // Navigate to next step
   const nextStep = () => {
-    if (currentStep < 6) {
+    if (currentStep < 7) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -149,6 +151,7 @@ export default function Onboarding() {
     'Restaurant Info',
     'Dashboard Profile',
     'Contact & Hours',
+    'Voice Selection',
     'Tables',
     'Settings',
     'Team'
@@ -193,7 +196,7 @@ export default function Onboarding() {
                 </h1>
               </div>
               <div className="font-['IBM_Plex_Sans'] text-sm text-[#5d5d5d] font-medium">
-                Step {currentStep} of 6
+                Step {currentStep} of 7
               </div>
             </div>
 
@@ -280,6 +283,15 @@ export default function Onboarding() {
                   />
                 )}
                 {currentStep === 4 && (
+                  <Step2_5VoiceSelection
+                    key="step2.5"
+                    data={onboardingData}
+                    onUpdate={updateData}
+                    onNext={nextStep}
+                    onPrev={prevStep}
+                  />
+                )}
+                {currentStep === 5 && (
                   <Step3Tables
                     key="step3"
                     data={onboardingData}
@@ -288,7 +300,7 @@ export default function Onboarding() {
                     onBack={prevStep}
                   />
                 )}
-                {currentStep === 5 && (
+                {currentStep === 6 && (
                   <Step4Settings
                     key="step4"
                     data={onboardingData}
@@ -297,7 +309,7 @@ export default function Onboarding() {
                     onBack={prevStep}
                   />
                 )}
-                {currentStep === 6 && (
+                {currentStep === 7 && (
                   <Step5Team
                     key="step5"
                     data={onboardingData}

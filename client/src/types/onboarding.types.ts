@@ -45,6 +45,8 @@ export interface OnboardingData {
   website?: string;
   business_hours: BusinessHours[];
   average_dining_duration: number;
+  // Step 2.5: Voice Selection
+  selected_voice_id?: string;
   // Step 3: Table Configuration
   areas: RestaurantArea[];
   // Step 4: Reservation Settings
