@@ -9,6 +9,7 @@ import TableStatusLegend from '../components/host/TableStatusLegend';
 import type { PlanType } from '../config/planFeatures';
 import { hasFeatureAccess, PLAN_NAMES } from '../config/planFeatures';
 import { useSubscription } from '../hooks/useSubscription';
+import '../landing/styles/glass-morphism.css';
 
 type ComplexityLevel = 'estándar' | 'completo' | 'avanzado';
 
@@ -312,8 +313,14 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   }, [toast]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[#0a0a0f] p-4 md:p-6 lg:p-8 relative overflow-hidden">
+      {/* Animated Background Gradients */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl opacity-50" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl opacity-40" />
+      </div>
+
+      <div className="max-w-7xl mx-auto relative z-10">
         {/* Loading State */}
         {isLoading && (
           <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in-up">
@@ -463,87 +470,87 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
         {complexity === 'estándar' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 mb-8">
             {/* Occupied Tables */}
-            <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm hover:shadow-md border border-slate-200/60 transition-all duration-200">
+            <div className="glass-card p-4 md:p-5 group hover:-translate-y-1">
               <div className="flex items-center justify-between mb-3">
-                <div className="text-3xl md:text-4xl font-bold text-indigo-600 tracking-tight">
-                  {occupiedTables}<span className="text-slate-400 text-2xl">/{totalTables}</span>
+                <div className="text-3xl md:text-4xl font-bold gradient-text tracking-tight">
+                  {occupiedTables}<span className="text-gray-400 text-2xl">/{totalTables}</span>
                 </div>
-                <div className="p-2 bg-indigo-50 rounded-lg">
-                  <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2 bg-indigo-500/10 rounded-lg">
+                  <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
                 </div>
               </div>
-              <div className="text-sm font-medium text-slate-700 mb-3">
+              <div className="text-sm font-medium text-gray-300 mb-3">
                 {t.tablesOccupied}
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-indigo-600 rounded-full transition-all duration-500"
+                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
                     style={{ width: `${occupancyPercent}%` }}
                   />
                 </div>
-                <span className="text-xs font-medium text-slate-500">{occupancyPercent}%</span>
+                <span className="text-xs font-medium text-gray-400">{occupancyPercent}%</span>
               </div>
             </div>
 
             {/* Today's Reservations */}
-            <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm hover:shadow-md border border-slate-200/60 transition-all duration-200">
+            <div className="glass-card p-4 md:p-5 group hover:-translate-y-1">
               <div className="flex items-center justify-between mb-3">
-                <div className="text-3xl md:text-4xl font-bold text-green-600 tracking-tight">
+                <div className="text-3xl md:text-4xl font-bold gradient-text-emerald tracking-tight">
                   {todayReservations.length}
                 </div>
-                <div className="p-2 bg-green-50 rounded-lg">
-                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2 bg-emerald-500/10 rounded-lg">
+                  <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
               </div>
-              <div className="text-sm font-medium text-slate-700 mb-3">
+              <div className="text-sm font-medium text-gray-300 mb-3">
                 {t.reservationsToday}
               </div>
-              <div className="text-xs text-slate-500">
+              <div className="text-xs text-gray-400">
                 {todayReservations.filter((r: any) => r.checked_in).length}/{todayReservations.length} {language === 'es' ? 'sentados' : 'seated'}
               </div>
             </div>
 
             {/* Waiting */}
-            <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm hover:shadow-md border border-slate-200/60 transition-all duration-200">
+            <div className="glass-card p-4 md:p-5 group hover:-translate-y-1">
               <div className="flex items-center justify-between mb-3">
-                <div className="text-3xl md:text-4xl font-bold text-orange-600 tracking-tight">
+                <div className="text-3xl md:text-4xl font-bold text-amber-400 tracking-tight">
                   {stats.waitlistCount || 0}
                 </div>
-                <div className="p-2 bg-orange-50 rounded-lg">
-                  <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2 bg-amber-500/10 rounded-lg">
+                  <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
               </div>
-              <div className="text-sm font-medium text-slate-700 mb-3">
+              <div className="text-sm font-medium text-gray-300 mb-3">
                 {t.waiting}
               </div>
-              <div className="text-xs text-slate-500">
+              <div className="text-xs text-gray-400">
                 {stats.estimated_wait_time ? `~${stats.estimated_wait_time} min` : '-'} {language === 'es' ? 'espera' : 'wait'}
               </div>
             </div>
 
             {/* Active Parties */}
-            <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm hover:shadow-md border border-slate-200/60 transition-all duration-200">
+            <div className="glass-card p-4 md:p-5 group hover:-translate-y-1">
               <div className="flex items-center justify-between mb-3">
-                <div className="text-3xl md:text-4xl font-bold text-purple-600 tracking-tight">
+                <div className="text-3xl md:text-4xl font-bold gradient-text tracking-tight">
                   {stats.activePartiesCount || 0}
                 </div>
-                <div className="p-2 bg-purple-50 rounded-lg">
-                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2 bg-purple-500/10 rounded-lg">
+                  <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
               </div>
-              <div className="text-sm font-medium text-slate-700 mb-3">
+              <div className="text-sm font-medium text-gray-300 mb-3">
                 {t.activeParties}
               </div>
-              <div className="text-xs text-slate-500">
+              <div className="text-xs text-gray-400">
                 {stats.totalSeatedGuests || 0} {language === 'es' ? 'comensales' : 'guests'}
               </div>
             </div>
