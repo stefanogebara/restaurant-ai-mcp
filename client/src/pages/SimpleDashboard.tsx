@@ -312,7 +312,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   }, [toast]);
 
   return (
-    <div className="min-h-screen bg-parchment-texture bg-cream-200 p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Loading State */}
         {isLoading && (
@@ -463,100 +463,88 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
         {complexity === 'estándar' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 mb-8">
             {/* Occupied Tables */}
-            <div className="group bg-cream-100 rounded-2xl p-5 md:p-6 shadow-md hover:shadow-burgundy border border-cream-400 hover:border-burgundy-400 transition-all duration-400 ease-out-expo hover:-translate-y-1 animate-fade-in-up" style={{ animationDelay: '0ms' }}>
-              <div className="flex items-start justify-between mb-3">
-                <div className="p-2.5 bg-burgundy-100 rounded-xl group-hover:bg-burgundy-200 transition-colors duration-300">
-                  <svg className="w-6 h-6 text-burgundy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm hover:shadow-md border border-slate-200/60 transition-all duration-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-3xl md:text-4xl font-bold text-indigo-600 tracking-tight">
+                  {occupiedTables}<span className="text-slate-400 text-2xl">/{totalTables}</span>
+                </div>
+                <div className="p-2 bg-indigo-50 rounded-lg">
+                  <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <span className="text-xs font-sans font-semibold text-burgundy-700 bg-burgundy-50 px-2 py-1 rounded-lg">
-                  {occupancyPercent}%
-                </span>
               </div>
-              <div className="text-4xl md:text-5xl font-mono font-bold text-burgundy-900 mb-2 tracking-tight">
-                {occupiedTables}<span className="text-charcoal-400">/{totalTables}</span>
-              </div>
-              <div className="text-sm font-sans font-semibold text-charcoal-700 mb-3">
+              <div className="text-sm font-medium text-slate-700 mb-3">
                 {t.tablesOccupied}
               </div>
-              <div className="flex items-center gap-2 text-xs text-charcoal-500">
-                <div className="flex-1 h-1.5 bg-cream-300 rounded-full overflow-hidden">
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-burgundy-600 to-burgundy-800 rounded-full transition-all duration-700 ease-out-expo"
+                    className="h-full bg-indigo-600 rounded-full transition-all duration-500"
                     style={{ width: `${occupancyPercent}%` }}
                   />
                 </div>
-                <span className="font-sans font-medium">{t.occupancy}</span>
+                <span className="text-xs font-medium text-slate-500">{occupancyPercent}%</span>
               </div>
             </div>
 
             {/* Today's Reservations */}
-            <div className="group bg-cream-100 rounded-2xl p-5 md:p-6 shadow-md hover:shadow-burgundy border border-cream-400 hover:border-success-500 transition-all duration-400 ease-out-expo hover:-translate-y-1 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-              <div className="flex items-start justify-between mb-3">
-                <div className="p-2.5 bg-success-100 rounded-xl group-hover:bg-success-200 transition-colors duration-300">
-                  <svg className="w-6 h-6 text-success-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm hover:shadow-md border border-slate-200/60 transition-all duration-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-3xl md:text-4xl font-bold text-green-600 tracking-tight">
+                  {todayReservations.length}
+                </div>
+                <div className="p-2 bg-green-50 rounded-lg">
+                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <span className="text-xs font-sans font-semibold text-success-700 bg-success-50 px-2 py-1 rounded-lg">
-                  {todayReservations.filter((r: any) => r.checked_in).length}/{todayReservations.length}
-                </span>
               </div>
-              <div className="text-4xl md:text-5xl font-mono font-bold text-success-900 mb-2 tracking-tight">
-                {todayReservations.length}
-              </div>
-              <div className="text-sm font-sans font-semibold text-charcoal-700 mb-3">
+              <div className="text-sm font-medium text-slate-700 mb-3">
                 {t.reservationsToday}
               </div>
-              <div className="text-xs text-charcoal-500 font-sans font-medium">
-                {todayReservations.filter((r: any) => r.checked_in).length} {language === 'es' ? 'ya sentados' : 'already seated'}
+              <div className="text-xs text-slate-500">
+                {todayReservations.filter((r: any) => r.checked_in).length}/{todayReservations.length} {language === 'es' ? 'sentados' : 'seated'}
               </div>
             </div>
 
             {/* Waiting */}
-            <div className="group bg-cream-100 rounded-2xl p-5 md:p-6 shadow-md hover:shadow-burgundy border border-cream-400 hover:border-warning-500 transition-all duration-400 ease-out-expo hover:-translate-y-1 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-              <div className="flex items-start justify-between mb-3">
-                <div className="p-2.5 bg-warning-100 rounded-xl group-hover:bg-warning-200 transition-colors duration-300">
-                  <svg className="w-6 h-6 text-warning-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm hover:shadow-md border border-slate-200/60 transition-all duration-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-3xl md:text-4xl font-bold text-orange-600 tracking-tight">
+                  {stats.waitlistCount || 0}
+                </div>
+                <div className="p-2 bg-orange-50 rounded-lg">
+                  <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <span className="text-xs font-sans font-semibold text-warning-700 bg-warning-50 px-2 py-1 rounded-lg">
-                  {stats.estimated_wait_time ? `~${stats.estimated_wait_time} min` : '-'}
-                </span>
               </div>
-              <div className="text-4xl md:text-5xl font-mono font-bold text-warning-900 mb-2 tracking-tight">
-                {stats.waitlistCount || 0}
-              </div>
-              <div className="text-sm font-sans font-semibold text-charcoal-700 mb-3">
+              <div className="text-sm font-medium text-slate-700 mb-3">
                 {t.waiting}
               </div>
-              <div className="text-xs text-charcoal-500 font-sans font-medium">
-                {language === 'es' ? 'Tiempo promedio de espera' : 'Average wait time'}
+              <div className="text-xs text-slate-500">
+                {stats.estimated_wait_time ? `~${stats.estimated_wait_time} min` : '-'} {language === 'es' ? 'espera' : 'wait'}
               </div>
             </div>
 
             {/* Active Parties */}
-            <div className="group bg-cream-100 rounded-2xl p-5 md:p-6 shadow-md hover:shadow-gold border border-cream-400 hover:border-gold-500 transition-all duration-400 ease-out-expo hover:-translate-y-1 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
-              <div className="flex items-start justify-between mb-3">
-                <div className="p-2.5 bg-gold-100 rounded-xl group-hover:bg-gold-200 transition-colors duration-300">
-                  <svg className="w-6 h-6 text-gold-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm hover:shadow-md border border-slate-200/60 transition-all duration-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-3xl md:text-4xl font-bold text-purple-600 tracking-tight">
+                  {stats.activePartiesCount || 0}
+                </div>
+                <div className="p-2 bg-purple-50 rounded-lg">
+                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
-                <span className="text-xs font-sans font-semibold text-gold-700 bg-gold-50 px-2 py-1 rounded-lg">
-                  {stats.totalSeatedGuests || 0}
-                </span>
               </div>
-              <div className="text-4xl md:text-5xl font-mono font-bold text-gold-900 mb-2 tracking-tight">
-                {stats.activePartiesCount || 0}
-              </div>
-              <div className="text-sm font-sans font-semibold text-charcoal-700 mb-3">
+              <div className="text-sm font-medium text-slate-700 mb-3">
                 {t.activeParties}
               </div>
-              <div className="text-xs text-charcoal-500 font-sans font-medium">
-                {stats.totalSeatedGuests || 0} {language === 'es' ? 'comensales totales' : 'total guests'}
+              <div className="text-xs text-slate-500">
+                {stats.totalSeatedGuests || 0} {language === 'es' ? 'comensales' : 'guests'}
               </div>
             </div>
           </div>
