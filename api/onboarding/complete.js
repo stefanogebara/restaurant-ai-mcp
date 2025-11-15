@@ -52,6 +52,7 @@ module.exports = async (req, res) => {
       special_notes,
       team_members,
       plan, // Subscription plan from Stripe
+      selected_voice_id, // Voice selection from Step 2.5
     } = req.body;
 
     // Validate required fields
@@ -188,11 +189,178 @@ module.exports = async (req, res) => {
       console.log('[Onboarding] No tables to create');
     }
 
-    // STEP 3: Log team members (store in metadata for now)
-    if (team_members && team_members.length > 0) {
-      console.log(`[Onboarding] Team members provided: ${team_members.length}`);
-      console.log('[Onboarding] Note: Team member creation not yet implemented in Supabase');
-      // TODO: Create team_members table and implement team member creation
+    // STEP 3: Create/Update Restaurant Config (for AI Agent)
+    console.log('[Onboarding] Step 3: Creating restaurant_config for AI agent...');
+
+    // Get or create user for this email
+    let userId;
+    try {
+      // Check if user exists in auth.users
+      const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
+
+      if (listError) {
+        console.warn('[Onboarding] Could not list users:', listError.message);
+      }
+
+      const existingUser = users?.find(u => u.email === customer_email);
+
+      if (existingUser) {
+        userId = existingUser.id;
+        console.log('[Onboarding] Found existing user:', userId);
+      } else {
+        // Create a new user for this restaurant
+        const { data: newUser, error: createUserError } = await supabase.auth.admin.createUser({
+          email: customer_email,
+          email_confirm: true, // Auto-confirm email
+          user_metadata: {
+            restaurant_name,
+            onboarding_completed: true
+          }
+        });
+
+        if (createUserError) {
+          console.warn('[Onboarding] Could not create user:', createUserError.message);
+          // Continue without user - we'll use service role to insert
+        } else {
+          userId = newUser.user.id;
+          console.log('[Onboarding] Created new user:', userId);
+        }
+      }
+    } catch (authError) {
+      console.warn('[Onboarding] Auth error, continuing with service role:', authError.message);
+    }
+
+    // Prepare table configuration for restaurant_config
+    const tableConfiguration = areas.map(area => ({
+      area_name: area.name,
+      tables: []
+    }));
+
+    // Build table numbers array for each area
+    let currentTableNum = 1;
+    for (const area of areas) {
+      const areaConfig = tableConfiguration.find(a => a.area_name === area.name);
+      for (const tableConfig of area.tables) {
+        for (let i = 0; i < tableConfig.count; i++) {
+          areaConfig.tables.push({
+            table_number: String(currentTableNum),
+            capacity: tableConfig.capacity
+          });
+          currentTableNum++;
+        }
+      }
+    }
+
+    // Map restaurant_type to enum value
+    const typeMapping = {
+      'traditional': 'casual_dining',
+      'modern': 'fine_dining',
+      'fast-casual': 'fast_casual',
+      'fine-dining': 'fine_dining',
+      'italian': 'italian',
+      'japanese': 'japanese',
+      'mexican': 'mexican',
+      'steakhouse': 'steakhouse',
+      'cafe': 'cafe',
+      'bar': 'bar'
+    };
+    const mappedType = typeMapping[restaurant_type] || 'other';
+
+    // Prepare restaurant_config data
+    const restaurantConfigData = {
+      restaurant_name,
+      restaurant_type: mappedType,
+      city,
+      country,
+      email: email || customer_email,
+      phone: phone_number,
+      website: website || null,
+      voice_id: selected_voice_id || 'default_cartesia_voice',
+      business_hours: business_hours.reduce((acc, day) => {
+        acc[day.day.toLowerCase()] = {
+          is_open: day.is_open,
+          open_time: day.open_time,
+          close_time: day.close_time
+        };
+        return acc;
+      }, {}),
+      table_configuration: tableConfiguration,
+      reservation_settings: {
+        advance_booking_days: advance_booking_days || 30,
+        buffer_time_minutes: buffer_time || 15,
+        cancellation_policy: cancellation_policy || '24 hours notice required',
+        special_notes: special_notes || '',
+        max_party_size: 12,
+        min_party_size: 1,
+        require_credit_card: false,
+        allow_waitlist: true
+      },
+      average_dining_duration_minutes: average_dining_duration || 90,
+      max_concurrent_reservations: 50,
+      team_members: (team_members || []).map(tm => ({
+        email: tm.email,
+        role: tm.role.toLowerCase(),
+        status: tm.status || 'pending'
+      })),
+      ai_config: {
+        greeting_message: `Thank you for calling ${restaurant_name}! How may I assist you today?`,
+        farewell_message: 'Thank you for calling. Have a great day!',
+        language: 'en-US',
+        enable_voicemail: false,
+        max_call_duration_minutes: 10,
+        transfer_phone: phone_number
+      },
+      is_active: true,
+      onboarding_completed: true
+    };
+
+    // If we have a user_id, add it; otherwise use service role to insert
+    if (userId) {
+      restaurantConfigData.user_id = userId;
+    }
+
+    try {
+      // Check if config already exists for this user
+      let configResult;
+      if (userId) {
+        const { data: existingConfig } = await supabase
+          .from('restaurant_config')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+
+        if (existingConfig) {
+          // Update existing config
+          const { data, error } = await supabase
+            .from('restaurant_config')
+            .update(restaurantConfigData)
+            .eq('user_id', userId)
+            .select()
+            .single();
+
+          if (error) throw error;
+          configResult = data;
+          console.log('[Onboarding] Restaurant config updated');
+        } else {
+          // Insert new config
+          const { data, error } = await supabase
+            .from('restaurant_config')
+            .insert(restaurantConfigData)
+            .select()
+            .single();
+
+          if (error) throw error;
+          configResult = data;
+          console.log('[Onboarding] Restaurant config created');
+        }
+      } else {
+        // No user_id, skip restaurant_config creation
+        console.log('[Onboarding] Skipping restaurant_config creation (no user_id)');
+      }
+    } catch (configError) {
+      console.error('[Onboarding] Error saving restaurant_config:', configError);
+      // Don't fail the whole onboarding if config save fails
+      console.warn('[Onboarding] Continuing despite restaurant_config error');
     }
 
     console.log('[Onboarding] ✅ Onboarding complete!');
@@ -204,7 +372,8 @@ module.exports = async (req, res) => {
         restaurant_id: generatedRestaurantId,
         restaurant_name,
         record_id: restaurantInfoResult.id,
-        tables_created: tablesToInsert.length
+        tables_created: tablesToInsert.length,
+        ai_config_saved: !!userId
       },
     });
   } catch (error) {
