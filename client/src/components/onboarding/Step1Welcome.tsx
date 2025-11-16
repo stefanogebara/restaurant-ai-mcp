@@ -70,7 +70,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
 
       {/* Restaurant Name */}
       <div>
-        <label htmlFor="restaurant_name" className="block text-sm font-semibold text-white mb-2">
+        <label htmlFor="restaurant_name" className="block text-sm font-semibold text-gray-100 mb-2">
           Restaurant Name *
         </label>
         <input
@@ -79,7 +79,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
           value={data.restaurant_name}
           onChange={(e) => updateData({ restaurant_name: e.target.value })}
           placeholder="La Bella Vista"
-          className="glass-input w-full px-4 py-3 text-white placeholder-gray-400"
+          className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
         />
         {errors.restaurant_name && (
           <p className="mt-1 text-sm text-red-400">{errors.restaurant_name}</p>
@@ -88,7 +88,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
 
       {/* Restaurant Type - Card Selection */}
       <div>
-        <label className="block text-sm font-semibold text-white mb-3">
+        <label className="block text-sm font-semibold text-gray-100 mb-3">
           What type of restaurant? *
         </label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -100,8 +100,8 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
               className={`
                 p-4 rounded-lg border-2 transition-all duration-200 text-center font-semibold text-sm
                 ${data.restaurant_type === type
-                  ? 'border-indigo-500 bg-indigo-500/20 text-white shadow-lg shadow-indigo-500/20 scale-105'
-                  : 'border-white/20 bg-white/5 text-gray-300 hover:border-white/40 hover:bg-white/10 hover:text-white'
+                  ? 'border-violet-500 bg-violet-500/20 text-gray-100 shadow-lg shadow-violet-500/20 scale-105'
+                  : 'border-gray-700 bg-gray-800/30 text-gray-300 hover:border-gray-600 hover:bg-gray-800/50 hover:text-gray-100'
                 }
               `}
             >
@@ -117,7 +117,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
       {/* Location */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="city" className="block text-sm font-semibold text-white mb-2">
+          <label htmlFor="city" className="block text-sm font-semibold text-gray-100 mb-2">
             City *
           </label>
           <input
@@ -126,7 +126,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
             value={data.city}
             onChange={(e) => updateData({ city: e.target.value })}
             placeholder="Madrid"
-            className="glass-input w-full px-4 py-3 text-white placeholder-gray-400"
+            className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
           />
           {errors.city && (
             <p className="mt-1 text-sm text-red-400">{errors.city}</p>
@@ -134,7 +134,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
         </div>
 
         <div>
-          <label htmlFor="country" className="block text-sm font-semibold text-white mb-2">
+          <label htmlFor="country" className="block text-sm font-semibold text-gray-100 mb-2">
             Country *
           </label>
           <input
@@ -143,7 +143,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
             value={data.country}
             onChange={(e) => updateData({ country: e.target.value })}
             placeholder="Spain"
-            className="glass-input w-full px-4 py-3 text-white placeholder-gray-400"
+            className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
           />
           {errors.country && (
             <p className="mt-1 text-sm text-red-400">{errors.country}</p>
@@ -152,12 +152,12 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
       </div>
 
       {/* Language Selection */}
-      <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+      <div className="bg-gray-800/30 backdrop-blur-md rounded-xl p-6 border border-gray-700">
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-white mb-1">
+          <h3 className="text-lg font-semibold text-gray-100 mb-1">
             Choose Your Language
           </h3>
-          <p className="text-sm text-gray-300">
+          <p className="text-sm text-gray-400">
             Select the language for your dashboard and customer communications
           </p>
         </div>
@@ -177,7 +177,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
       <div className="flex justify-end pt-4">
         <button
           onClick={handleContinue}
-          className="glass-button-primary px-8 py-3 text-white font-bold rounded-lg flex items-center gap-2"
+          className="px-8 py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold rounded-lg flex items-center gap-2 shadow-lg shadow-purple-500/30 transition-all duration-300 hover:scale-105 active:scale-95"
         >
           Continue
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

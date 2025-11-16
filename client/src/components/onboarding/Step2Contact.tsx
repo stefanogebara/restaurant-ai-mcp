@@ -70,7 +70,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
 
       {/* Phone Number */}
       <div>
-        <label htmlFor="phone_number" className="block text-sm font-semibold text-white mb-2">
+        <label htmlFor="phone_number" className="block text-sm font-semibold text-gray-100 mb-2">
           Restaurant Phone Number *
         </label>
         <input
@@ -79,7 +79,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
           value={data.phone_number}
           onChange={(e) => updateData({ phone_number: e.target.value })}
           placeholder="+34 639 67 29 63"
-          className="glass-input w-full px-4 py-3 text-white placeholder-gray-400"
+          className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
         />
         <p className="mt-1 text-xs text-gray-400">This will be your AI assistant's number</p>
         {errors.phone_number && (
@@ -89,7 +89,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
 
       {/* Email */}
       <div>
-        <label htmlFor="email" className="block text-sm font-semibold text-white mb-2">
+        <label htmlFor="email" className="block text-sm font-semibold text-gray-100 mb-2">
           Business Email *
         </label>
         <input
@@ -98,7 +98,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
           value={data.email}
           onChange={(e) => updateData({ email: e.target.value })}
           placeholder="contact@restaurant.com"
-          className="glass-input w-full px-4 py-3 text-white placeholder-gray-400"
+          className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
         />
         {errors.email && (
           <p className="mt-1 text-sm text-red-400">{errors.email}</p>
@@ -107,7 +107,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
 
       {/* Website (Optional) */}
       <div>
-        <label htmlFor="website" className="block text-sm font-semibold text-white mb-2">
+        <label htmlFor="website" className="block text-sm font-semibold text-gray-100 mb-2">
           Website (Optional)
         </label>
         <input
@@ -116,18 +116,18 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
           value={data.website || ''}
           onChange={(e) => updateData({ website: e.target.value })}
           placeholder="https://yourrestaurant.com"
-          className="glass-input w-full px-4 py-3 text-white placeholder-gray-400"
+          className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
         />
       </div>
 
       {/* Business Hours */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <label className="block text-sm font-semibold text-white">Business Hours *</label>
+          <label className="block text-sm font-semibold text-gray-100">Business Hours *</label>
           <button
             type="button"
             onClick={copyHoursToAll}
-            className="px-3 py-1 text-xs bg-white/10 hover:bg-white/20 text-white rounded-md transition-colors"
+            className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-100 rounded-md transition-colors"
           >
             Copy Monday to all days
           </button>
@@ -135,18 +135,18 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
 
         <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
           {data.business_hours.map((day, index) => (
-            <div key={day.day} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10">
+            <div key={day.day} className="flex items-center gap-3 p-3 bg-gray-800/30 rounded-lg border border-gray-700">
               <div className="w-24">
-                <span className="text-white font-medium text-sm">{day.day}</span>
+                <span className="text-gray-100 font-medium text-sm">{day.day}</span>
               </div>
               <label className="flex items-center">
                 <input
                   type="checkbox"
                   checked={day.is_open}
                   onChange={(e) => updateDayHours(index, 'is_open', e.target.checked)}
-                  className="w-4 h-4 text-indigo-500 bg-white/10 border-white/20 rounded focus:ring-2 focus:ring-indigo-400"
+                  className="w-4 h-4 text-violet-500 bg-gray-800 border-gray-600 rounded focus:ring-2 focus:ring-violet-400"
                 />
-                <span className="ml-2 text-white text-sm">Open</span>
+                <span className="ml-2 text-gray-100 text-sm">Open</span>
               </label>
               {day.is_open && (
                 <>
@@ -154,14 +154,14 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
                     type="time"
                     value={day.open_time}
                     onChange={(e) => updateDayHours(index, 'open_time', e.target.value)}
-                    className="px-3 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="px-3 py-1.5 bg-gray-800 border border-gray-600 rounded text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
                   />
-                  <span className="text-white text-sm">to</span>
+                  <span className="text-gray-100 text-sm">to</span>
                   <input
                     type="time"
                     value={day.close_time}
                     onChange={(e) => updateDayHours(index, 'close_time', e.target.value)}
-                    className="px-3 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="px-3 py-1.5 bg-gray-800 border border-gray-600 rounded text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
                   />
                 </>
               )}
@@ -172,14 +172,14 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
 
       {/* Average Dining Duration */}
       <div>
-        <label htmlFor="average_dining_duration" className="block text-sm font-semibold text-white mb-2">
+        <label htmlFor="average_dining_duration" className="block text-sm font-semibold text-gray-100 mb-2">
           Average Dining Duration (minutes)
         </label>
         <select
           id="average_dining_duration"
           value={data.average_dining_duration}
           onChange={(e) => updateData({ average_dining_duration: parseInt(e.target.value) })}
-          className="glass-input w-full px-4 py-3 text-white appearance-none cursor-pointer"
+          className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-100 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
         >
           <option value={60} className="bg-gray-900">60 minutes (Fast dining)</option>
           <option value={90} className="bg-gray-900">90 minutes (Standard)</option>
@@ -193,7 +193,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
       <div className="flex justify-between pt-4">
         <button
           onClick={onBack}
-          className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg transition-all flex items-center gap-2"
+          className="px-6 py-3 bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 text-gray-100 font-semibold rounded-lg transition-all flex items-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -202,7 +202,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
         </button>
         <button
           onClick={handleContinue}
-          className="glass-button-primary px-8 py-3 text-white font-bold rounded-lg flex items-center gap-2"
+          className="px-8 py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold rounded-lg flex items-center gap-2 shadow-lg shadow-purple-500/30 transition-all duration-300 hover:scale-105 active:scale-95"
         >
           Continue
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

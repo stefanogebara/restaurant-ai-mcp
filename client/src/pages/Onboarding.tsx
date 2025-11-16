@@ -158,44 +158,28 @@ export default function Onboarding() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F5F5DC] relative overflow-hidden">
-      {/* Parchment texture background */}
-      <div
-        className="absolute inset-0 opacity-40"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ebe9d5' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-        }}
-      />
-
-      {/* Mesh gradient overlay */}
-      <div
-        className="absolute inset-0 opacity-20"
-        style={{
-          backgroundImage: `
-            radial-gradient(at 40% 20%, rgba(125, 17, 40, 0.3) 0px, transparent 50%),
-            radial-gradient(at 80% 0%, rgba(212, 175, 55, 0.3) 0px, transparent 50%),
-            radial-gradient(at 0% 50%, rgba(43, 43, 43, 0.2) 0px, transparent 50%),
-            radial-gradient(at 80% 50%, rgba(125, 17, 40, 0.2) 0px, transparent 50%),
-            radial-gradient(at 0% 100%, rgba(212, 175, 55, 0.3) 0px, transparent 50%),
-            radial-gradient(at 80% 100%, rgba(125, 17, 40, 0.2) 0px, transparent 50%)
-          `
-        }}
-      />
+    <div className="min-h-screen bg-[#0a0a1f] relative overflow-hidden">
+      {/* Animated background gradients */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-violet-500/20 rounded-full blur-3xl opacity-50" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl opacity-40" />
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-3xl opacity-30" />
+      </div>
 
       {/* Content Container */}
       <div className="relative z-10">
         {/* Header with Progress Bar */}
-        <div className="fixed top-0 left-0 right-0 z-50 bg-[#fdfcf6]/80 backdrop-blur-xl border-b-2 border-[#ebe9d5]">
+        <div className="fixed top-0 left-0 right-0 z-50 bg-gray-900/80 backdrop-blur-xl border-b border-gray-800">
           <div className="max-w-4xl mx-auto px-6 py-4">
             {/* Logo and Step Counter */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">🍽️</span>
-                <h1 className="font-['Playfair_Display'] font-bold text-xl text-[#7D1128]">
+                <h1 className="font-bold text-xl text-gray-100">
                   RestaurantAI Setup
                 </h1>
               </div>
-              <div className="font-['IBM_Plex_Sans'] text-sm text-[#5d5d5d] font-medium">
+              <div className="text-sm text-gray-400 font-medium">
                 Step {currentStep} of 7
               </div>
             </div>
@@ -213,16 +197,16 @@ export default function Onboarding() {
                       className={`
                         h-2 rounded-full transition-all duration-500 ease-out
                         ${isCompleted || isActive
-                          ? 'bg-gradient-to-r from-[#ad1e47] to-[#7D1128] shadow-lg shadow-[#7D1128]/30'
-                          : 'bg-[#ddd9c0]'
+                          ? 'bg-gradient-to-r from-violet-600 to-purple-600 shadow-lg shadow-purple-500/30'
+                          : 'bg-gray-800'
                         }
                       `}
                     />
                     {/* Step label on desktop */}
                     <span
                       className={`
-                        hidden md:block text-[10px] font-['IBM_Plex_Sans'] font-medium transition-colors duration-300
-                        ${isActive ? 'text-[#7D1128]' : isCompleted ? 'text-[#4A7C59]' : 'text-[#888888]'}
+                        hidden md:block text-[10px] font-medium transition-colors duration-300
+                        ${isActive ? 'text-violet-400' : isCompleted ? 'text-cyan-400' : 'text-gray-500'}
                       `}
                     >
                       {name}
@@ -245,15 +229,13 @@ export default function Onboarding() {
             className="max-w-4xl mx-auto"
           >
             <div className="
-              bg-[#fefdfb]
-              border-2 border-[#ddd9c0]
+              bg-gray-900/50
+              backdrop-blur-xl
+              border border-gray-800
               rounded-2xl
               p-8 md:p-12
-              shadow-2xl
+              shadow-2xl shadow-purple-500/10
             "
-            style={{
-              boxShadow: '0 25px 50px -12px rgba(125, 17, 40, 0.25)'
-            }}
             >
               <AnimatePresence mode="wait">
                 {currentStep === 1 && (
@@ -325,11 +307,11 @@ export default function Onboarding() {
 
           {/* Help Text */}
           <div className="text-center mt-6 max-w-4xl mx-auto">
-            <p className="font-['IBM_Plex_Sans'] text-sm text-[#6d6d6d]">
+            <p className="text-sm text-gray-400">
               Need help?{' '}
               <a
                 href="mailto:support@hostgenius.com"
-                className="text-[#7D1128] hover:text-[#ad1e47] font-semibold underline transition-colors"
+                className="text-violet-400 hover:text-violet-300 font-semibold underline transition-colors"
               >
                 Contact Support
               </a>
@@ -345,7 +327,7 @@ export default function Onboarding() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-[#2B2B2B]/50 backdrop-blur-sm z-50 flex items-center justify-center p-6"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-6"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -353,17 +335,15 @@ export default function Onboarding() {
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
               className="
-                bg-[#fefdfb]
-                border-2 border-[#D4AF37]
+                bg-gray-900/90
+                backdrop-blur-xl
+                border border-purple-500/50
                 rounded-2xl
                 p-12
                 max-w-md
                 w-full
-                shadow-2xl
+                shadow-2xl shadow-purple-500/20
               "
-              style={{
-                boxShadow: '0 20px 25px -5px rgba(212, 175, 55, 0.3), 0 10px 10px -5px rgba(212, 175, 55, 0.2)'
-              }}
             >
               <div className="text-center">
                 {/* Success Icon */}
@@ -373,14 +353,12 @@ export default function Onboarding() {
                   transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
                   className="
                     w-20 h-20
-                    bg-gradient-to-br from-[#fad24e] to-[#D4AF37]
+                    bg-gradient-to-br from-violet-500 to-purple-600
                     rounded-full
                     flex items-center justify-center
                     mx-auto mb-6
+                    shadow-lg shadow-purple-500/30
                   "
-                  style={{
-                    boxShadow: '0 20px 25px -5px rgba(212, 175, 55, 0.3), 0 10px 10px -5px rgba(212, 175, 55, 0.2)'
-                  }}
                 >
                   <span className="text-5xl">🎉</span>
                 </motion.div>
@@ -391,8 +369,8 @@ export default function Onboarding() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
                   className="
-                    font-['Playfair_Display'] font-bold text-3xl
-                    text-[#7D1128]
+                    font-bold text-3xl
+                    text-gray-100
                     mb-3
                   "
                 >
@@ -404,8 +382,8 @@ export default function Onboarding() {
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.4 }}
                   className="
-                    font-['IBM_Plex_Sans'] text-base
-                    text-[#4f4f4f]
+                    text-base
+                    text-gray-300
                     mb-6
                   "
                 >
@@ -419,8 +397,8 @@ export default function Onboarding() {
                   transition={{ delay: 0.5 }}
                   className="flex items-center justify-center gap-2"
                 >
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#ddd9c0] border-t-[#7D1128]"></div>
-                  <span className="font-['IBM_Plex_Sans'] text-sm text-[#6d6d6d]">
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-700 border-t-violet-500"></div>
+                  <span className="text-sm text-gray-400">
                     Redirecting to dashboard...
                   </span>
                 </motion.div>
