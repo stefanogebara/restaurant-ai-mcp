@@ -126,9 +126,11 @@ module.exports = async (req, res) => {
     console.log(`[Cartesia] Received ${data.length || 0} total voices`);
 
     // Filter voices by language and public availability
-    let filteredVoices = data.filter(voice =>
-      voice.language === targetLanguage && voice.is_public === true
-    );
+    // Use startsWith() to match language variants (e.g., 'pt' matches 'pt-BR' and 'pt-PT')
+    let filteredVoices = data.filter(voice => {
+      const voiceLang = voice.language || '';
+      return voiceLang.startsWith(targetLanguage) && voice.is_public === true;
+    });
 
     console.log(`[Cartesia] Filtered to ${filteredVoices.length} voices for language ${targetLanguage}`);
 

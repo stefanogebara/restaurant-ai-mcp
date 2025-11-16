@@ -5,11 +5,13 @@
  * - Restaurant name
  * - Restaurant type
  * - Location (city, country)
+ * - Preferred language
  */
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
+import LanguageSelector from '../common/LanguageSelector';
 import '../../landing/styles/glass-morphism.css';
 
 const RESTAURANT_TYPES = [
@@ -68,7 +70,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
 
       {/* Restaurant Name */}
       <div>
-        <label htmlFor="restaurant_name" className="block text-sm font-semibold text-white mb-2">
+        <label htmlFor="restaurant_name" className="block text-sm font-semibold text-gray-100 mb-2">
           Restaurant Name *
         </label>
         <input
@@ -77,40 +79,45 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
           value={data.restaurant_name}
           onChange={(e) => updateData({ restaurant_name: e.target.value })}
           placeholder="La Bella Vista"
-          className="glass-input w-full px-4 py-3 text-white placeholder-gray-400"
+          className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
         />
         {errors.restaurant_name && (
           <p className="mt-1 text-sm text-red-400">{errors.restaurant_name}</p>
         )}
       </div>
 
-      {/* Restaurant Type */}
+      {/* Restaurant Type - Card Selection */}
       <div>
-        <label htmlFor="restaurant_type" className="block text-sm font-semibold text-white mb-2">
+        <label className="block text-sm font-semibold text-gray-100 mb-3">
           What type of restaurant? *
         </label>
-        <select
-          id="restaurant_type"
-          value={data.restaurant_type}
-          onChange={(e) => updateData({ restaurant_type: e.target.value })}
-          className="glass-input w-full px-4 py-3 text-white appearance-none cursor-pointer"
-        >
-          <option value="" className="bg-gray-900">Select a type...</option>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {RESTAURANT_TYPES.map((type) => (
-            <option key={type} value={type} className="bg-gray-900">
+            <button
+              key={type}
+              type="button"
+              onClick={() => updateData({ restaurant_type: type })}
+              className={`
+                p-4 rounded-lg border-2 transition-all duration-200 text-center font-semibold text-sm
+                ${data.restaurant_type === type
+                  ? 'border-violet-500 bg-violet-500/20 text-gray-100 shadow-lg shadow-violet-500/20 scale-105'
+                  : 'border-gray-700 bg-gray-800/30 text-gray-300 hover:border-gray-600 hover:bg-gray-800/50 hover:text-gray-100'
+                }
+              `}
+            >
               {type}
-            </option>
+            </button>
           ))}
-        </select>
+        </div>
         {errors.restaurant_type && (
-          <p className="mt-1 text-sm text-red-400">{errors.restaurant_type}</p>
+          <p className="mt-2 text-sm text-red-400">{errors.restaurant_type}</p>
         )}
       </div>
 
       {/* Location */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="city" className="block text-sm font-semibold text-white mb-2">
+          <label htmlFor="city" className="block text-sm font-semibold text-gray-100 mb-2">
             City *
           </label>
           <input
@@ -119,7 +126,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
             value={data.city}
             onChange={(e) => updateData({ city: e.target.value })}
             placeholder="Madrid"
-            className="glass-input w-full px-4 py-3 text-white placeholder-gray-400"
+            className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
           />
           {errors.city && (
             <p className="mt-1 text-sm text-red-400">{errors.city}</p>
@@ -127,7 +134,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
         </div>
 
         <div>
-          <label htmlFor="country" className="block text-sm font-semibold text-white mb-2">
+          <label htmlFor="country" className="block text-sm font-semibold text-gray-100 mb-2">
             Country *
           </label>
           <input
@@ -136,7 +143,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
             value={data.country}
             onChange={(e) => updateData({ country: e.target.value })}
             placeholder="Spain"
-            className="glass-input w-full px-4 py-3 text-white placeholder-gray-400"
+            className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
           />
           {errors.country && (
             <p className="mt-1 text-sm text-red-400">{errors.country}</p>
@@ -144,11 +151,33 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
         </div>
       </div>
 
+      {/* Language Selection */}
+      <div className="bg-gray-800/30 backdrop-blur-md rounded-xl p-6 border border-gray-700">
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-gray-100 mb-1">
+            Choose Your Language
+          </h3>
+          <p className="text-sm text-gray-400">
+            Select the language for your dashboard and customer communications
+          </p>
+        </div>
+        <div className="language-selector-onboarding">
+          <LanguageSelector
+            variant="buttons"
+            size="md"
+            showLabel={false}
+            onLanguageChange={(lang) => {
+              updateData({ language: lang });
+            }}
+          />
+        </div>
+      </div>
+
       {/* Actions */}
       <div className="flex justify-end pt-4">
         <button
           onClick={handleContinue}
-          className="glass-button-primary px-8 py-3 text-white font-bold rounded-lg flex items-center gap-2"
+          className="px-8 py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold rounded-lg flex items-center gap-2 shadow-lg shadow-purple-500/30 transition-all duration-300 hover:scale-105 active:scale-95"
         >
           Continue
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

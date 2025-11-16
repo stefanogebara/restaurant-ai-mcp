@@ -36,7 +36,6 @@ export interface OnboardingData {
   restaurant_type: string;
   city: string;
   country: string;
-  country_code?: string; // ISO country code (e.g., 'ES', 'US', 'FR')
   language?: string;
   // Step 1.5: Restaurant Profile (Optional)
   profile_data?: ProfileQuestionnaireData;
