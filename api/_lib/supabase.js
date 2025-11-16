@@ -886,6 +886,9 @@ const findBestTableCombination = (availableTables, partySize) => {
 };
 
 module.exports = {
+  // Raw Supabase client for advanced queries
+  query: supabase,
+
   // Reservations
   getReservations,
   getReservationById,
