@@ -1,22 +1,29 @@
 /**
- * ElevenLabs Webhook Handler
+ * ElevenLabs Webhook Handler - Multi-Restaurant Support
  *
  * This is a wrapper endpoint specifically designed for ElevenLabs Conversational AI
- * to ensure proper response formatting and error handling.
+ * with support for multiple restaurants, each with their own configuration.
  *
  * ElevenLabs expects:
  * - Content-Type: application/json
  * - Valid JSON response (never empty)
  * - HTTP 200 status for success
  * - Proper CORS headers
+ *
+ * Restaurant Routing:
+ * - Uses X-Called-Number header or phone query param to identify restaurant
+ * - Loads restaurant-specific voice, greeting, hours, and table configuration
+ * - Each restaurant can have different language, voice, and settings
  */
+
+const { getRestaurantByPhone, getRestaurantById } = require('./_lib/restaurant-loader');
 
 module.exports = async (req, res) => {
   // Set CORS headers for ElevenLabs
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Called-Number, X-Caller-Number');
   res.setHeader('Content-Type', 'application/json');
 
   // Handle OPTIONS preflight
@@ -35,6 +42,49 @@ module.exports = async (req, res) => {
   });
 
   try {
+    // ===== RESTAURANT ROUTING =====
+    // Try multiple methods to identify which restaurant is being called
+    const calledNumber = req.headers['x-called-number'] || req.query.phone || req.body?.phone;
+    const restaurantId = req.query.restaurant_id || req.body?.restaurant_id;
+
+    let restaurant = null;
+
+    // Method 1: Look up by phone number (preferred)
+    if (calledNumber) {
+      try {
+        console.log(`[ElevenLabs] Looking up restaurant by phone: ${calledNumber}`);
+        restaurant = await getRestaurantByPhone(calledNumber);
+        console.log(`[ElevenLabs] ✅ Loaded restaurant: ${restaurant.name} (${restaurant.language})`);
+      } catch (error) {
+        console.error(`[ElevenLabs] ❌ Restaurant not found for phone ${calledNumber}:`, error.message);
+      }
+    }
+
+    // Method 2: Look up by restaurant ID (fallback)
+    if (!restaurant && restaurantId) {
+      try {
+        console.log(`[ElevenLabs] Looking up restaurant by ID: ${restaurantId}`);
+        restaurant = await getRestaurantById(restaurantId);
+        console.log(`[ElevenLabs] ✅ Loaded restaurant: ${restaurant.name}`);
+      } catch (error) {
+        console.error(`[ElevenLabs] ❌ Restaurant not found for ID ${restaurantId}:`, error.message);
+      }
+    }
+
+    // If no restaurant found, return error
+    if (!restaurant) {
+      console.log('[ElevenLabs] ⚠️ No restaurant identified - please provide phone number or restaurant_id');
+      return res.status(200).json({
+        success: false,
+        error: 'Restaurant not identified',
+        message: 'Unable to determine which restaurant you are calling. Please check your configuration.',
+        help: 'Provide either X-Called-Number header, phone query param, or restaurant_id'
+      });
+    }
+
+    // Store restaurant in request for use in handlers
+    req.restaurant = restaurant;
+
     // Extract the action from query or body
     const action = req.query.action || req.body?.action;
 
@@ -167,7 +217,7 @@ async function handleGetDateTime(req, res) {
 }
 
 async function handleCheckAvailability(req, res) {
-  const { getReservations, getRestaurantInfo, getAllTables } = require('./_lib/supabase');
+  const { getReservations, getAllTables } = require('./_lib/supabase');
   const { checkTimeSlotAvailability, getSuggestedTimes } = require('./_lib/availability-calculator');
 
   const data = req.method === 'POST' ? req.body : req.query;
@@ -182,37 +232,55 @@ async function handleCheckAvailability(req, res) {
   }
 
   try {
+    // ===== USE RESTAURANT-SPECIFIC CONFIGURATION =====
+    const restaurant = req.restaurant; // Loaded by webhook router
+
+    console.log(`[ElevenLabs] ===== AVAILABILITY CHECK for ${restaurant.name} =====`);
+    console.log(`[ElevenLabs] Language: ${restaurant.language}`);
+    console.log(`[ElevenLabs] Voice: ${restaurant.voice_id}`);
+
+    // Calculate total capacity from table configuration
+    let totalCapacity = 0;
+    if (restaurant.table_configuration && Array.isArray(restaurant.table_configuration)) {
+      restaurant.table_configuration.forEach(area => {
+        if (area.tables && Array.isArray(area.tables)) {
+          area.tables.forEach(table => {
+            totalCapacity += table.capacity || 0;
+          });
+        }
+      });
+    }
+
+    console.log(`[ElevenLabs] Total capacity: ${totalCapacity} seats`);
+
+    // Get business hours for the requested date
+    const requestedDate = new Date(date);
+    const dayOfWeek = requestedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    const dayHours = restaurant.business_hours?.[dayOfWeek];
+
+    const openTime = dayHours?.open_time || '17:00';
+    const closeTime = dayHours?.close_time || '22:00';
+    const isOpen = dayHours?.is_open !== false;
+
+    // Check if restaurant is closed on this day
+    if (!isOpen) {
+      const restaurantName = restaurant.name;
+      return res.status(200).json({
+        success: true,
+        available: false,
+        message: `Sorry, ${restaurantName} is closed on ${dayOfWeek}s. Please choose another day.`,
+        details: {
+          day: dayOfWeek,
+          is_closed: true
+        }
+      });
+    }
+
+    // Get real-time table status from Supabase
     const { getTables } = require('./_lib/supabase');
+    const rawTablesResult = await getTables();
 
-    // Get restaurant info AND real-time table status
-    console.log('[ElevenLabs] ===== AVAILABILITY CHECK v3.0 - FRESH DATA =====');
-    const [restaurantResult, rawTablesResult] = await Promise.all([
-      getRestaurantInfo(),
-      getTables() // Get RAW tables data directly
-    ]);
-
-    if (!restaurantResult.success) {
-      return res.status(200).json({
-        success: false,
-        error: true,
-        message: 'Unable to check availability at this time. Please call us directly.'
-      });
-    }
-
-    const restaurant = restaurantResult.data.records[0];
-    if (!restaurant) {
-      return res.status(200).json({
-        success: false,
-        error: true,
-        message: 'Restaurant configuration not found'
-      });
-    }
-
-    const totalCapacity = restaurant.fields.Capacity || 60;
-    const openTime = restaurant.fields['Opening Time'] || '17:00';
-    const closeTime = restaurant.fields['Closing Time'] || '22:00';
-
-    // Calculate REAL-TIME occupied seats from Tables table - DIRECTLY FROM AIRTABLE
+    // Calculate REAL-TIME occupied seats from Tables table
     let currentlyOccupiedSeats = 0;
     const allTables = rawTablesResult.success ? (rawTablesResult.data.records || []) : [];
 
