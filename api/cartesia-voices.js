@@ -132,8 +132,8 @@ module.exports = async (req, res) => {
 
     console.log(`[Cartesia] Filtered to ${filteredVoices.length} voices for language ${targetLanguage}`);
 
-    // Return top 12 voices (enough for 2 rows of 6)
-    const voicesToReturn = filteredVoices.slice(0, 12);
+    // Return top 6 voices (one row)
+    const voicesToReturn = filteredVoices.slice(0, 6);
 
     // Add preview phrase for each voice
     const previewPhrase = PREVIEW_PHRASES[targetLanguage] || PREVIEW_PHRASES['en'];

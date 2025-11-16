@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { voice_id, text } = req.body;
+    const { voice_id, text, language } = req.body;
 
     // Validate input
     if (!voice_id) {
@@ -45,7 +45,10 @@ module.exports = async (req, res) => {
 
     const previewText = text || "Welcome to our restaurant! I'd be happy to help you make a reservation.";
 
-    console.log(`[Cartesia] Generating preview for voice ${voice_id}`);
+    // Use multilingual model for all languages (supports all languages)
+    const model_id = 'sonic-multilingual';
+
+    console.log(`[Cartesia] Generating preview for voice ${voice_id} using model ${model_id}`);
 
     // Generate TTS preview using Cartesia
     const response = await fetch('https://api.cartesia.ai/tts/bytes', {
@@ -56,7 +59,7 @@ module.exports = async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model_id: 'sonic-english',
+        model_id: model_id,
         transcript: previewText,
         voice: {
           mode: 'id',
@@ -65,7 +68,7 @@ module.exports = async (req, res) => {
         output_format: {
           container: 'mp3',
           encoding: 'mp3',
-          sample_rate: 22050
+          sample_rate: 44100  // High quality audio
         }
       })
     });
