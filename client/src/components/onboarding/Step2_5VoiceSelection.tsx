@@ -50,7 +50,12 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
           setVoices(result.data.voices);
           // Auto-select first voice if none selected
           if (!selectedVoiceId && result.data.voices.length > 0) {
-            setSelectedVoiceId(result.data.voices[0].id);
+            const firstVoice = result.data.voices[0];
+            setSelectedVoiceId(firstVoice.id);
+            onUpdate({
+              selected_voice_id: firstVoice.id,
+              selected_voice_language: firstVoice.language || 'en'
+            });
           }
         }
       } catch (error) {
@@ -128,7 +133,12 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
   // Handle voice selection
   const handleSelectVoice = (voiceId: string) => {
     setSelectedVoiceId(voiceId);
-    onUpdate({ selected_voice_id: voiceId });
+    // Find the selected voice to get its language
+    const selectedVoice = voices.find(v => v.id === voiceId);
+    onUpdate({
+      selected_voice_id: voiceId,
+      selected_voice_language: selectedVoice?.language || 'en'
+    });
   };
 
   // Handle continue

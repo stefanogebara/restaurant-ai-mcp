@@ -47,6 +47,7 @@ export interface OnboardingData {
   average_dining_duration: number;
   // Step 2.5: Voice Selection
   selected_voice_id?: string;
+  selected_voice_language?: string;  // Language code from selected voice (e.g., 'es', 'fr', 'en')
   // Step 3: Table Configuration
   areas: RestaurantArea[];
   // Step 4: Reservation Settings

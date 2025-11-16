@@ -53,6 +53,7 @@ module.exports = async (req, res) => {
       team_members,
       plan, // Subscription plan from Stripe
       selected_voice_id, // Voice selection from Step 2.5
+      selected_voice_language, // Language code from selected voice (e.g., 'es', 'fr', 'en')
     } = req.body;
 
     // Validate required fields
@@ -266,6 +267,69 @@ module.exports = async (req, res) => {
     };
     const mappedType = typeMapping[restaurant_type] || 'other';
 
+    // Language code to locale mapping (e.g., 'es' → 'es-ES')
+    const languageToLocale = {
+      'en': 'en-US',
+      'es': 'es-ES',
+      'fr': 'fr-FR',
+      'de': 'de-DE',
+      'it': 'it-IT',
+      'pt': 'pt-PT',
+      'pl': 'pl-PL',
+      'tr': 'tr-TR',
+      'ru': 'ru-RU',
+      'nl': 'nl-NL',
+      'sv': 'sv-SE',
+      'da': 'da-DK',
+      'no': 'no-NO',
+      'fi': 'fi-FI',
+      'ja': 'ja-JP'
+    };
+
+    // Multilingual greeting messages
+    const greetingMessages = {
+      'en': `Thank you for calling ${restaurant_name}! How may I assist you today?`,
+      'es': `¡Gracias por llamar a ${restaurant_name}! ¿Cómo puedo ayudarle hoy?`,
+      'fr': `Merci d'appeler ${restaurant_name}! Comment puis-je vous aider aujourd'hui?`,
+      'de': `Vielen Dank für Ihren Anruf bei ${restaurant_name}! Wie kann ich Ihnen heute helfen?`,
+      'it': `Grazie per aver chiamato ${restaurant_name}! Come posso aiutarla oggi?`,
+      'pt': `Obrigado por ligar para ${restaurant_name}! Como posso ajudá-lo hoje?`,
+      'pl': `Dziękujemy za telefon do ${restaurant_name}! Jak mogę Ci dzisiaj pomóc?`,
+      'tr': `${restaurant_name}'i aradığınız için teşekkür ederiz! Bugün size nasıl yardımcı olabilirim?`,
+      'ru': `Спасибо, что позвонили в ${restaurant_name}! Чем я могу вам помочь сегодня?`,
+      'nl': `Bedankt voor het bellen naar ${restaurant_name}! Hoe kan ik u vandaag helpen?`,
+      'sv': `Tack för att du ringer ${restaurant_name}! Hur kan jag hjälpa dig idag?`,
+      'da': `Tak fordi du ringer til ${restaurant_name}! Hvordan kan jeg hjælpe dig i dag?`,
+      'no': `Takk for at du ringer ${restaurant_name}! Hvordan kan jeg hjelpe deg i dag?`,
+      'fi': `Kiitos kun soitit ${restaurant_name}! Kuinka voin auttaa sinua tänään?`,
+      'ja': `${restaurant_name}にお電話いただきありがとうございます！本日はどのようにお手伝いできますか？`
+    };
+
+    // Multilingual farewell messages
+    const farewellMessages = {
+      'en': 'Thank you for calling. Have a great day!',
+      'es': '¡Gracias por llamar. Que tenga un gran día!',
+      'fr': 'Merci d\'avoir appelé. Passez une excellente journée!',
+      'de': 'Vielen Dank für Ihren Anruf. Haben Sie einen schönen Tag!',
+      'it': 'Grazie per aver chiamato. Buona giornata!',
+      'pt': 'Obrigado por ligar. Tenha um ótimo dia!',
+      'pl': 'Dziękujemy za telefon. Miłego dnia!',
+      'tr': 'Aradığınız için teşekkür ederiz. İyi günler!',
+      'ru': 'Спасибо за звонок. Хорошего дня!',
+      'nl': 'Bedankt voor het bellen. Fijne dag nog!',
+      'sv': 'Tack för att du ringde. Ha en bra dag!',
+      'da': 'Tak for dit opkald. Ha en god dag!',
+      'no': 'Takk for at du ringte. Ha en fin dag!',
+      'fi': 'Kiitos soitosta. Mukavaa päivänjatkoa!',
+      'ja': 'お電話ありがとうございました。良い一日をお過ごしください！'
+    };
+
+    // Get language-specific messages
+    const voiceLanguage = selected_voice_language || 'en';
+    const locale = languageToLocale[voiceLanguage] || 'en-US';
+    const greetingMessage = greetingMessages[voiceLanguage] || greetingMessages['en'];
+    const farewellMessage = farewellMessages[voiceLanguage] || farewellMessages['en'];
+
     // Prepare restaurant_config data
     const restaurantConfigData = {
       restaurant_name,
@@ -303,9 +367,9 @@ module.exports = async (req, res) => {
         status: tm.status || 'pending'
       })),
       ai_config: {
-        greeting_message: `Thank you for calling ${restaurant_name}! How may I assist you today?`,
-        farewell_message: 'Thank you for calling. Have a great day!',
-        language: 'en-US',
+        greeting_message: greetingMessage,
+        farewell_message: farewellMessage,
+        language: locale,
         enable_voicemail: false,
         max_call_duration_minutes: 10,
         transfer_phone: phone_number
