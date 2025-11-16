@@ -42,51 +42,64 @@ module.exports = async (req, res) => {
   });
 
   try {
+    // Extract the action from query or body FIRST
+    const action = req.query.action || req.body?.action;
+
     // ===== RESTAURANT ROUTING =====
-    // Try multiple methods to identify which restaurant is being called
-    const calledNumber = req.headers['x-called-number'] || req.query.phone || req.body?.phone;
-    const restaurantId = req.query.restaurant_id || req.body?.restaurant_id;
+    // Some actions (like get_current_datetime) don't need restaurant context
+    const actionsRequiringRestaurant = [
+      'check_availability',
+      'create_reservation',
+      'lookup_reservation',
+      'modify_reservation',
+      'cancel_reservation',
+      'get_wait_time'
+    ];
 
     let restaurant = null;
 
-    // Method 1: Look up by phone number (preferred)
-    if (calledNumber) {
-      try {
-        console.log(`[ElevenLabs] Looking up restaurant by phone: ${calledNumber}`);
-        restaurant = await getRestaurantByPhone(calledNumber);
-        console.log(`[ElevenLabs] ✅ Loaded restaurant: ${restaurant.name} (${restaurant.language})`);
-      } catch (error) {
-        console.error(`[ElevenLabs] ❌ Restaurant not found for phone ${calledNumber}:`, error.message);
+    // Only look up restaurant if action requires it
+    if (action && actionsRequiringRestaurant.includes(action)) {
+      // Try multiple methods to identify which restaurant is being called
+      const calledNumber = req.headers['x-called-number'] || req.query.phone || req.body?.phone;
+      const restaurantId = req.query.restaurant_id || req.body?.restaurant_id;
+
+      // Method 1: Look up by phone number (preferred)
+      if (calledNumber) {
+        try {
+          console.log(`[ElevenLabs] Looking up restaurant by phone: ${calledNumber}`);
+          restaurant = await getRestaurantByPhone(calledNumber);
+          console.log(`[ElevenLabs] ✅ Loaded restaurant: ${restaurant.name} (${restaurant.language})`);
+        } catch (error) {
+          console.error(`[ElevenLabs] ❌ Restaurant not found for phone ${calledNumber}:`, error.message);
+        }
       }
-    }
 
-    // Method 2: Look up by restaurant ID (fallback)
-    if (!restaurant && restaurantId) {
-      try {
-        console.log(`[ElevenLabs] Looking up restaurant by ID: ${restaurantId}`);
-        restaurant = await getRestaurantById(restaurantId);
-        console.log(`[ElevenLabs] ✅ Loaded restaurant: ${restaurant.name}`);
-      } catch (error) {
-        console.error(`[ElevenLabs] ❌ Restaurant not found for ID ${restaurantId}:`, error.message);
+      // Method 2: Look up by restaurant ID (fallback)
+      if (!restaurant && restaurantId) {
+        try {
+          console.log(`[ElevenLabs] Looking up restaurant by ID: ${restaurantId}`);
+          restaurant = await getRestaurantById(restaurantId);
+          console.log(`[ElevenLabs] ✅ Loaded restaurant: ${restaurant.name}`);
+        } catch (error) {
+          console.error(`[ElevenLabs] ❌ Restaurant not found for ID ${restaurantId}:`, error.message);
+        }
       }
+
+      // If no restaurant found, return error
+      if (!restaurant) {
+        console.log('[ElevenLabs] ⚠️ No restaurant identified - please provide phone number or restaurant_id');
+        return res.status(200).json({
+          success: false,
+          error: 'Restaurant not identified',
+          message: 'Unable to determine which restaurant you are calling. Please check your configuration.',
+          help: 'Provide either X-Called-Number header, phone query param, or restaurant_id'
+        });
+      }
+
+      // Store restaurant in request for use in handlers
+      req.restaurant = restaurant;
     }
-
-    // If no restaurant found, return error
-    if (!restaurant) {
-      console.log('[ElevenLabs] ⚠️ No restaurant identified - please provide phone number or restaurant_id');
-      return res.status(200).json({
-        success: false,
-        error: 'Restaurant not identified',
-        message: 'Unable to determine which restaurant you are calling. Please check your configuration.',
-        help: 'Provide either X-Called-Number header, phone query param, or restaurant_id'
-      });
-    }
-
-    // Store restaurant in request for use in handlers
-    req.restaurant = restaurant;
-
-    // Extract the action from query or body
-    const action = req.query.action || req.body?.action;
 
     if (!action) {
       console.log('[ElevenLabs] No action specified');
