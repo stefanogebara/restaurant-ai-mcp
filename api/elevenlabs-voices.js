@@ -165,15 +165,19 @@ module.exports = async (req, res) => {
       ) || (isMultilingual && targetLanguage === 'en');
     });
 
+    // Track if we're using fallback (multilingual) voices
+    let usingMultilingualFallback = false;
+
     // If no language-specific voices found, return general high-quality voices
     if (filteredVoices.length === 0) {
-      console.log(`[ElevenLabs] No voices found for ${targetLanguage}, returning top quality voices`);
+      console.log(`[ElevenLabs] No voices found for ${targetLanguage}, returning multilingual voices`);
+      usingMultilingualFallback = true;
       filteredVoices = voices.filter(voice =>
         voice.category === 'premade' || voice.category === 'professional'
       );
     }
 
-    console.log(`[ElevenLabs] Filtered to ${filteredVoices.length} voices for language ${targetLanguage}`);
+    console.log(`[ElevenLabs] Filtered to ${filteredVoices.length} voices for language ${targetLanguage} (multilingual: ${usingMultilingualFallback})`);
 
     // Sort by quality/popularity and return top 6 voices
     const sortedVoices = filteredVoices.sort((a, b) => {
@@ -186,16 +190,36 @@ module.exports = async (req, res) => {
 
     // Add preview phrase for each voice
     const previewPhrase = PREVIEW_PHRASES[targetLanguage] || PREVIEW_PHRASES['en'];
-    const voicesWithPhrases = voicesToReturn.map(voice => ({
-      id: voice.voice_id,
-      name: voice.name,
-      description: voice.description || voice.labels?.description || '',
-      language: voice.fine_tuning?.language || voice.labels?.language || targetLanguage,
-      gender: voice.labels?.gender || 'neutral',
-      preview_phrase: previewPhrase,
-      preview_url: voice.preview_url || null,
-      category: voice.category
-    }));
+    const voicesWithPhrases = voicesToReturn.map(voice => {
+      // Get the voice's native language
+      const nativeLanguage = voice.fine_tuning?.language || voice.labels?.language || '';
+
+      // For multilingual fallback voices, use target language and note multilingual support
+      let displayLanguage = targetLanguage;
+      let description = voice.description || voice.labels?.description || '';
+
+      if (usingMultilingualFallback && nativeLanguage && nativeLanguage.toLowerCase().startsWith('en')) {
+        // Add multilingual note if not already present
+        if (!description.toLowerCase().includes('multilingual')) {
+          description = description ? `${description} (Multilingual voice)` : 'Multilingual voice - supports all languages';
+        }
+      } else if (nativeLanguage) {
+        // Use native language if available and not in fallback mode
+        displayLanguage = nativeLanguage;
+      }
+
+      return {
+        id: voice.voice_id,
+        name: voice.name,
+        description: description,
+        language: displayLanguage,
+        gender: voice.labels?.gender || 'neutral',
+        preview_phrase: previewPhrase,
+        preview_url: voice.preview_url || null,
+        category: voice.category,
+        is_multilingual: usingMultilingualFallback
+      };
+    });
 
     return res.status(200).json({
       success: true,
