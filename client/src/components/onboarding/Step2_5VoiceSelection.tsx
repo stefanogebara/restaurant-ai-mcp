@@ -7,14 +7,14 @@ import { useState, useEffect } from 'react';
 import { Volume2, Play, Pause, Loader, CheckCircle2 } from 'lucide-react';
 import type { OnboardingData } from '../../types/onboarding.types';
 
-interface CartesiaVoice {
+interface ElevenLabsVoice {
   id: string;
   name: string;
   description: string;
   language: string;
   gender: string;
   preview_phrase: string;
-  is_starred: boolean;
+  preview_url?: string; category?: string;
 }
 
 interface Step2_5Props {
@@ -25,7 +25,7 @@ interface Step2_5Props {
 }
 
 export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }: Step2_5Props) {
-  const [voices, setVoices] = useState<CartesiaVoice[]>([]);
+  const [voices, setVoices] = useState<ElevenLabsVoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>(data.selected_voice_id || '');
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
@@ -38,7 +38,7 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
       setIsLoading(true);
       try {
         const country = data.country || 'United States';
-        const response = await fetch(`/api/cartesia-voices?country=${encodeURIComponent(country)}`);
+        const response = await fetch(`/api/elevenlabs-voices?country=${encodeURIComponent(country)}`);
 
         if (!response.ok) {
           throw new Error('Failed to fetch voices');
@@ -92,7 +92,7 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
     // Generate new audio
     setLoadingAudio(voiceId);
     try {
-      const response = await fetch('/api/cartesia-preview', {
+      const response = await fetch('/api/elevenlabs-preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
