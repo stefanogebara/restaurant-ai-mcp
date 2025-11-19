@@ -354,7 +354,7 @@ async function handleSeatParty(req, res) {
     const updatePromises = tableRecordIds.map(async (recordId) => {
       const result = await updateTable(recordId, {
         'Status': 'occupied',
-        'Current Service ID': serviceId
+        'Current Service ID': null  // Don't set service ID - link is in service_records.table_ids
       });
       if (!result.success) {
         throw new Error(`Failed to update table ${recordId}`);
