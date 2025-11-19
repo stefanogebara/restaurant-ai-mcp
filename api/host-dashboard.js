@@ -422,8 +422,8 @@ async function handleCompleteService(req, res) {
   const departedAt = new Date().toISOString();
 
   const updateResult = await updateServiceRecord(service_record_id, {
-    'Departed At': departedAt,
-    'Status': 'Completed'
+    'Actual Departure': departedAt,
+    'Status': 'completed'
   });
 
   if (!updateResult.success) {
@@ -468,8 +468,8 @@ async function handleCompleteService(req, res) {
 
   const updatePromises = tableRecordIds.map(recordId =>
     updateTable(recordId, {
-      'Status': 'available',
-      'Current Service ID': ''
+      'Status': 'Available',
+      'Current Service ID': null
     })
   );
 
