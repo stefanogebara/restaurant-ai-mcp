@@ -468,7 +468,7 @@ async function handleCompleteService(req, res) {
 
   const updatePromises = tableRecordIds.map(recordId =>
     updateTable(recordId, {
-      'Status': 'Available',
+      'Status': 'available',
       'Current Service ID': null
     })
   );
