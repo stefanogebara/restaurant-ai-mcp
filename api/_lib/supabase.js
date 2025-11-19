@@ -267,6 +267,8 @@ const updateTable = async (recordId, fields) => {
   if (fields['Status']) updates.status = fields['Status'];
   if (fields['Current Service ID'] !== undefined) updates.current_service_id = fields['Current Service ID'];
 
+  console.log(`[updateTable] Updating table ${recordId} with:`, updates);
+
   const { data, error } = await supabase
     .from('tables')
     .update(updates)
@@ -274,7 +276,19 @@ const updateTable = async (recordId, fields) => {
     .select()
     .single();
 
-  if (error) return handleSupabaseResponse(null, error, 'UPDATE table');
+  if (error) {
+    console.error(`[updateTable] Error updating table ${recordId}:`, error);
+    return handleSupabaseResponse(null, error, 'UPDATE table');
+  }
+
+  if (!data) {
+    console.error(`[updateTable] No data returned for table ${recordId}`);
+    return {
+      success: false,
+      error: true,
+      message: `No table found with id ${recordId}`
+    };
+  }
 
   return {
     success: true,
