@@ -409,6 +409,8 @@ const updateServiceRecord = async (serviceId, fields) => {
   if (fields['Status']) updates.status = fields['Status'];
   if (fields['Actual Departure']) updates.actual_departure = fields['Actual Departure'];
 
+  console.log(`[updateServiceRecord] Updating service ${serviceId} with:`, updates);
+
   const { data, error } = await supabase
     .from('service_records')
     .update(updates)
@@ -416,7 +418,12 @@ const updateServiceRecord = async (serviceId, fields) => {
     .select()
     .single();
 
-  if (error) return handleSupabaseResponse(null, error, 'UPDATE service record');
+  if (error) {
+    console.error(`[updateServiceRecord] Error updating service ${serviceId}:`, error);
+    return handleSupabaseResponse(null, error, 'UPDATE service record');
+  }
+
+  console.log(`[updateServiceRecord] Success for ${serviceId}:`, data);
 
   return {
     success: true,
