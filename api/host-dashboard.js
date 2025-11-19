@@ -312,10 +312,10 @@ async function handleSeatParty(req, res) {
     }
   }
 
-  // Convert UUIDs to table numbers
+  // Convert UUIDs to table numbers (ensure integers for Supabase integer[] column)
   const tableNumbers = table_ids.map(uuid => {
     const table = allTablesForConversion.tables.find(t => t.id === uuid);
-    return table.table_number;
+    return parseInt(table.table_number, 10);
   });
 
   const serviceFields = {
@@ -519,9 +519,10 @@ async function handleUpdateTableStatus(req, res) {
     });
   }
 
-  // Validate status
-  const validStatuses = ['Available', 'Occupied', 'Being Cleaned', 'Reserved'];
-  if (!validStatuses.includes(status)) {
+  // Validate status (case-insensitive)
+  const validStatuses = ['available', 'occupied', 'being cleaned', 'reserved'];
+  const normalizedStatus = status.toLowerCase();
+  if (!validStatuses.includes(normalizedStatus)) {
     return res.status(400).json({
       success: false,
       error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
@@ -529,7 +530,7 @@ async function handleUpdateTableStatus(req, res) {
   }
 
   const updateResult = await updateTable(table_id, {
-    'Status': status
+    'Status': normalizedStatus
   });
 
   if (!updateResult.success) {
@@ -541,11 +542,11 @@ async function handleUpdateTableStatus(req, res) {
 
   return res.status(200).json({
     success: true,
-    message: `Table ${updateResult.data.fields['Table Number']} status updated to ${status}`,
+    message: `Table ${updateResult.data.fields['Table Number']} status updated to ${normalizedStatus}`,
     table: {
       id: table_id,
       table_number: updateResult.data.fields['Table Number'],
-      status: status
+      status: normalizedStatus
     }
   });
 }

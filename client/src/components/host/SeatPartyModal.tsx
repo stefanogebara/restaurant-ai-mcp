@@ -43,7 +43,7 @@ export default function SeatPartyModal({ isOpen, data, onClose }: SeatPartyModal
               Party Seated Successfully!
             </div>
             <div className="text-sm text-gray-600">
-              {data.customer_name} has been seated at tables {data.table_ids.join(', ')}
+              {data.customer_name} has been seated at Table {(data.table_numbers || data.table_ids).join(', ')}
             </div>
           </div>
         ) : (
@@ -60,7 +60,7 @@ export default function SeatPartyModal({ isOpen, data, onClose }: SeatPartyModal
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Tables:</span>
-                <span className="font-semibold text-gray-900">{data.table_ids?.join(', ')}</span>
+                <span className="font-semibold text-gray-900">Table {(data.table_numbers || data.table_ids)?.join(', ')}</span>
               </div>
               {data.recommendations && (
                 <div className="flex justify-between">

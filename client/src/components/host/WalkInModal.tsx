@@ -25,12 +25,19 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
   };
 
   const handleProceedToSeat = () => {
+    // Get table numbers for display (map UUIDs to table numbers)
+    const tableNumbers = selectedTableIds.map(id => {
+      const table = availableTables.find(t => t.id === id);
+      return table ? table.table_number : id;
+    });
+
     onSuccess({
       type: 'walk-in',
       customer_name: formData.customer_name,
       customer_phone: formData.customer_phone,
       party_size: parseInt(formData.party_size),
       table_ids: selectedTableIds,
+      table_numbers: tableNumbers, // For display purposes
       special_requests: '',
     });
   };
