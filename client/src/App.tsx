@@ -14,6 +14,7 @@ import CustomerLTVPage from './pages/CustomerLTVPage';
 import CustomerDNAPage from './pages/CustomerDNAPage';
 import SegoviaInsightsPage from './pages/SegoviaInsightsPage';
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
+import CallTrackingDashboard from './pages/CallTrackingDashboard';
 import CustomerPortal from './pages/CustomerPortal';
 import SubscriptionSuccess from './pages/SubscriptionSuccess';
 import SubscriptionManage from './pages/SubscriptionManage';
@@ -52,6 +53,7 @@ function App() {
               <Route path="/host-dashboard/ltv" element={<CustomerLTVPage />} />
               <Route path="/host-dashboard/dna" element={<CustomerDNAPage />} />
               <Route path="/host-dashboard/segovia" element={<SegoviaInsightsPage />} />
+              <Route path="/host-dashboard/calls" element={<CallTrackingDashboard />} />
               <Route path="/analytics" element={<AnalyticsDashboard />} />
               <Route path="/customer" element={<CustomerPortal />} />
               <Route path="/subscription/success" element={<SubscriptionSuccess />} />
