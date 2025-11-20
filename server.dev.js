@@ -30,6 +30,7 @@ const mlOutcomes = require('./api/routes/ml-outcomes.js');
 const mlPerformance = require('./api/ml-performance.js');
 const ltv = require('./api/ltv.js');
 const pricing = require('./api/pricing.js');
+const agentConversations = require('./api/agent-conversations.js');
 
 // Create mock req/res wrappers for Vercel functions
 const createHandler = (handler) => {
@@ -73,6 +74,9 @@ app.use('/api/ml-outcomes', mlOutcomes);
 
 // ML Performance Dashboard endpoints
 app.get('/api/ml-performance', createHandler(mlPerformance));
+
+// Agent Conversations endpoints (Call Tracking Dashboard)
+app.get('/api/agent-conversations', createHandler(agentConversations));
 
 // LTV endpoints
 app.get('/api/ltv', createHandler(ltv));
