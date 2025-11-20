@@ -249,7 +249,7 @@ export function hasFeatureAccess(
 
   // Handle boolean, string, and complex value types
   if (typeof value === 'boolean') return value;
-  if (typeof value === 'string') return value !== 'none' && value !== false;
+  if (typeof value === 'string') return value !== 'none';
   return !!value;
 }
 
