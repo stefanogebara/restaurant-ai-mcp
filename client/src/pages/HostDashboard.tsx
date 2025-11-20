@@ -17,6 +17,7 @@ import WaitlistPanel from '../components/host/WaitlistPanel';
 import WaitlistSeatModal from '../components/host/WaitlistSeatModal';
 import InterventionPanel from '../components/host/InterventionPanel';
 import RecordOutcomeModal, { type OutcomeData } from '../components/host/RecordOutcomeModal';
+import QuickStatsWidget from '../components/host/QuickStatsWidget';
 import type { UpcomingReservation } from '../types/host.types';
 
 export default function HostDashboard() {
@@ -227,6 +228,9 @@ export default function HostDashboard() {
 
           {/* Right Panel - 40% width on desktop */}
           <div className="space-y-6">
+            {/* Quick Stats Widget */}
+            <QuickStatsWidget />
+
             {/* ML Intervention Panel */}
             <InterventionPanel
               reservations={data.upcoming_reservations || []}

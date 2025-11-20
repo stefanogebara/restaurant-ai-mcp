@@ -202,6 +202,96 @@ async function getROITrend(days) {
 }
 
 /**
+ * Get quick stats for dashboard widget
+ */
+async function getQuickStats() {
+  try {
+    // Today's interventions
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const { data: todayData, error: todayError } = await supabase
+      .from('ml_interventions')
+      .select('*')
+      .gte('created_at', today.toISOString());
+
+    if (todayError) throw todayError;
+
+    // Yesterday's interventions for comparison
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const { data: yesterdayData, error: yesterdayError } = await supabase
+      .from('ml_interventions')
+      .select('intervention_id')
+      .gte('created_at', yesterday.toISOString())
+      .lt('created_at', today.toISOString());
+
+    if (yesterdayError) throw yesterdayError;
+
+    const todayCount = todayData.length;
+    const yesterdayCount = yesterdayData.length;
+    const change = yesterdayCount > 0
+      ? todayCount - yesterdayCount
+      : todayCount;
+    const changeStr = change > 0 ? `+${change} from yesterday` : change < 0 ? `${change} from yesterday` : 'Same as yesterday';
+
+    // Get 7-day summary for ROI
+    const weekSummary = await getROISummary(7);
+    const weeklyRoi = parseInt(weekSummary.total_roi || 0);
+
+    let roiStatus: 'exceeds' | 'meets' | 'below' = 'below';
+    if (weeklyRoi >= 500) roiStatus = 'exceeds';
+    else if (weeklyRoi >= 300) roiStatus = 'meets';
+
+    // Get 30-day summary for value saved
+    const monthSummary = await getROISummary(30);
+    const valueSaved30d = parseFloat(monthSummary.total_value_saved || 0);
+
+    // Calculate 30d trend (compare to previous 30 days)
+    const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    const { data: prevMonthData, error: prevMonthError } = await supabase
+      .from('ml_interventions')
+      .select('value_saved')
+      .gte('created_at', sixtyDaysAgo.toISOString())
+      .lt('created_at', thirtyDaysAgo.toISOString());
+
+    let trendStr = 'First month';
+    if (!prevMonthError && prevMonthData.length > 0) {
+      const prevMonthSaved = prevMonthData.reduce((sum, i) => sum + parseFloat(i.value_saved || 0), 0);
+      if (prevMonthSaved > 0) {
+        const percentChange = Math.round(((valueSaved30d - prevMonthSaved) / prevMonthSaved) * 100);
+        trendStr = percentChange > 0 ? `+${percentChange}%` : `${percentChange}%`;
+      }
+    }
+
+    // Success rate from 30d data
+    const successRateStr = monthSummary.intervention_effectiveness?.success_rate || '0%';
+    const successRate = parseFloat(successRateStr);
+
+    let successStatus: 'good' | 'fair' | 'needs_improvement' = 'needs_improvement';
+    if (successRate >= 80) successStatus = 'good';
+    else if (successRate >= 60) successStatus = 'fair';
+
+    return {
+      today_interventions: todayCount,
+      today_change: changeStr,
+      weekly_roi: weeklyRoi,
+      roi_status: roiStatus,
+      value_saved_30d: valueSaved30d,
+      value_saved_trend: trendStr,
+      success_rate: successRate,
+      success_status: successStatus
+    };
+  } catch (error) {
+    console.error('Error calculating quick stats:', error);
+    throw error;
+  }
+}
+
+/**
  * Generate smart recommendations based on data
  */
 function generateRecommendations(breakdown, summary) {
@@ -345,6 +435,10 @@ module.exports = async (req, res) => {
 
       case 'trend':
         result = await getROITrend(days);
+        break;
+
+      case 'quick-stats':
+        result = await getQuickStats();
         break;
 
       case 'all':
