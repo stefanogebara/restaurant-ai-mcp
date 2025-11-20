@@ -240,7 +240,7 @@ async function getQuickStats() {
     const weekSummary = await getROISummary(7);
     const weeklyRoi = parseInt(weekSummary.total_roi || 0);
 
-    let roiStatus: 'exceeds' | 'meets' | 'below' = 'below';
+    let roiStatus = 'below';
     if (weeklyRoi >= 500) roiStatus = 'exceeds';
     else if (weeklyRoi >= 300) roiStatus = 'meets';
 
@@ -271,7 +271,7 @@ async function getQuickStats() {
     const successRateStr = monthSummary.intervention_effectiveness?.success_rate || '0%';
     const successRate = parseFloat(successRateStr);
 
-    let successStatus: 'good' | 'fair' | 'needs_improvement' = 'needs_improvement';
+    let successStatus = 'needs_improvement';
     if (successRate >= 80) successStatus = 'good';
     else if (successRate >= 60) successStatus = 'fair';
 
