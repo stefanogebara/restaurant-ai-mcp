@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { AlertTriangle, Phone, CreditCard, Star, ChevronDown, ChevronUp, Mail, Clock } from 'lucide-react';
 import type { UpcomingReservation } from '../../types/host.types';
 import RiskScoreBadge from './RiskScoreBadge';
+import RiskExplanationModal from './RiskExplanationModal';
 
 interface InterventionPanelProps {
   reservations: UpcomingReservation[];
@@ -22,6 +23,8 @@ export default function InterventionPanel({
 }: InterventionPanelProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [actedReservations, setActedReservations] = useState<Set<string>>(new Set());
+  const [selectedReservation, setSelectedReservation] = useState<UpcomingReservation | null>(null);
+  const [showExplanation, setShowExplanation] = useState(false);
 
   // Filter to high and very-high risk reservations
   const highRiskReservations = reservations.filter(
@@ -149,12 +152,21 @@ export default function InterventionPanel({
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2 flex-wrap">
                       <h4 className="font-semibold text-foreground">{reservation.customer_name}</h4>
-                      <RiskScoreBadge
-                        riskScore={reservation.no_show_risk_score}
-                        riskLevel={reservation.no_show_risk_level}
-                        confidence={reservation.prediction_confidence}
-                        size="small"
-                      />
+                      <button
+                        onClick={() => {
+                          setSelectedReservation(reservation);
+                          setShowExplanation(true);
+                        }}
+                        className="hover:scale-105 transition-transform"
+                        title="Click to see why this reservation is flagged"
+                      >
+                        <RiskScoreBadge
+                          riskScore={reservation.no_show_risk_score}
+                          riskLevel={reservation.no_show_risk_level}
+                          confidence={reservation.prediction_confidence}
+                          size="small"
+                        />
+                      </button>
                       {hasActed && (
                         <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium rounded-full">
                           ✓ Contacted
@@ -241,6 +253,27 @@ export default function InterventionPanel({
             );
           })}
         </div>
+      )}
+
+      {/* Risk Explanation Modal */}
+      {selectedReservation && (
+        <RiskExplanationModal
+          isOpen={showExplanation}
+          onClose={() => {
+            setShowExplanation(false);
+            setSelectedReservation(null);
+          }}
+          reservation={{
+            customer_name: selectedReservation.customer_name,
+            party_size: selectedReservation.party_size,
+            date: selectedReservation.date,
+            time: selectedReservation.time,
+            ml_risk_score: selectedReservation.no_show_risk_score,
+            ml_risk_level: selectedReservation.no_show_risk_level,
+            ml_confidence: selectedReservation.prediction_confidence
+          }}
+          riskFactors={selectedReservation.ml_risk_factors || []}
+        />
       )}
     </div>
   );

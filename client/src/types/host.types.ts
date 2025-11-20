@@ -40,6 +40,11 @@ export interface UpcomingReservation {
   ml_risk_level?: 'low' | 'medium' | 'high' | 'very-high';
   ml_confidence?: number;  // 0-100 percentage
   ml_model_version?: string;
+  ml_risk_factors?: Array<{  // Detailed risk factor breakdown for staff explanations
+    factor: string;          // e.g., 'new_customer', 'large_party', 'far_advance'
+    impact: number;          // +/- points
+    description: string;     // Human-readable description
+  }>;
   // Legacy field names (deprecated, use ml_* fields above)
   no_show_risk_score?: number;  // 0-100 percentage
   no_show_risk_level?: 'low' | 'medium' | 'high' | 'very-high';

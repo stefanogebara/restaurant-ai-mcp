@@ -328,7 +328,8 @@ async function updateReservationRiskScore(reservationId, riskData) {
         ml_risk_level: riskData.riskLevel,
         ml_confidence: riskData.confidence,
         ml_model_version: riskData.modelVersion,
-        ml_prediction_timestamp: new Date().toISOString()
+        ml_prediction_timestamp: new Date().toISOString(),
+        ml_risk_factors: riskData.factors // Store detailed factors for staff explanations
       })
       .eq('reservation_id', reservationId)
       .select()
