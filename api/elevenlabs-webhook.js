@@ -17,6 +17,7 @@
  */
 
 const { getRestaurantByPhone, getRestaurantById } = require('./_lib/restaurant-loader');
+const conversationLogger = require('./services/conversationLogger');
 
 module.exports = async (req, res) => {
   // Set CORS headers for ElevenLabs
@@ -44,6 +45,29 @@ module.exports = async (req, res) => {
   try {
     // Extract the action from query or body FIRST
     const action = req.query.action || req.body?.action;
+
+    // ===== CONVERSATION LOGGING =====
+    // Extract conversation metadata from ElevenLabs webhook
+    const conversationId = req.body?.conversation_id || req.headers['x-conversation-id'];
+    const callerPhone = req.headers['x-caller-number'] || req.body?.caller_phone;
+    const calledPhone = req.headers['x-called-number'] || req.body?.called_phone;
+
+    // Start conversation logging if this is the first action
+    if (conversationId && action && !req.body?.conversation_started) {
+      await conversationLogger.startConversation({
+        conversation_id: conversationId,
+        caller_phone: callerPhone,
+        called_phone: calledPhone,
+        language: req.body?.language || 'en',
+        agent_version: 'v1.0'
+      });
+      // Mark as started to prevent duplicate logs
+      req.body = req.body || {};
+      req.body.conversation_started = true;
+    }
+
+    // Store conversation ID in request for use in handlers
+    req.conversation_id = conversationId;
 
     // ===== RESTAURANT ROUTING =====
     // Some actions (like get_current_datetime) don't need restaurant context
@@ -230,11 +254,22 @@ async function handleGetDateTime(req, res) {
 }
 
 async function handleCheckAvailability(req, res) {
+  const conversationId = req.conversation_id;
+
   const { getReservations, getAllTables } = require('./_lib/supabase');
   const { checkTimeSlotAvailability, getSuggestedTimes } = require('./_lib/availability-calculator');
 
   const data = req.method === 'POST' ? req.body : req.query;
   const { date, time, party_size } = data;
+
+  // Log tool call
+  if (conversationId) {
+    await conversationLogger.logToolCall(conversationId, {
+      tool_name: 'check_availability',
+      parameters: { date, time, party_size },
+      success: null
+    });
+  }
 
   if (!date || !time || !party_size) {
     return res.status(200).json({
@@ -413,9 +448,86 @@ async function handleCheckAvailability(req, res) {
 }
 
 async function handleCreateReservation(req, res) {
-  // Delegate to the reservations endpoint
-  const reservationsHandler = require('./reservations');
-  return reservationsHandler(req, res);
+  const conversationId = req.conversation_id;
+  const startTime = Date.now();
+
+  try {
+    // Log tool call start
+    if (conversationId) {
+      await conversationLogger.logToolCall(conversationId, {
+        tool_name: 'create_reservation',
+        parameters: req.body,
+        success: null, // Will update after completion
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Delegate to the reservations endpoint
+    const reservationsHandler = require('./reservations');
+
+    // Intercept response to log outcome
+    const originalJson = res.json.bind(res);
+    res.json = async function(data) {
+      const success = data.success === true;
+      const duration = Math.floor((Date.now() - startTime) / 1000);
+
+      // Log tool call result
+      if (conversationId) {
+        await conversationLogger.logToolCall(conversationId, {
+          tool_name: 'create_reservation',
+          parameters: req.body,
+          success,
+          result: success ? data : undefined,
+          error_message: success ? undefined : data.error || data.message
+        });
+
+        // If reservation successful, update conversation with reservation details
+        if (success && data.reservation_id) {
+          await conversationLogger.updateConversation(conversationId, {
+            outcome: 'reservation_created',
+            reservation_id: data.reservation_id,
+            customer_name: req.body.customer_name,
+            customer_email: req.body.customer_email,
+            party_size: req.body.party_size,
+            requested_date: req.body.date,
+            requested_time: req.body.time,
+            successful_booking: true
+          });
+
+          // End conversation (reservation created = conversation complete)
+          await conversationLogger.endConversation(conversationId, {
+            outcome: 'reservation_created',
+            reservation_id: data.reservation_id,
+            customer_name: req.body.customer_name,
+            customer_email: req.body.customer_email,
+            party_size: req.body.party_size,
+            requested_date: req.body.date,
+            requested_time: req.body.time,
+            successful_booking: true,
+            customer_sentiment: 'positive',
+            duration_seconds: duration,
+            summary: `Reservation created for ${req.body.customer_name}, party of ${req.body.party_size} on ${req.body.date} at ${req.body.time}`
+          });
+        }
+      }
+
+      return originalJson(data);
+    };
+
+    return reservationsHandler(req, res);
+
+  } catch (error) {
+    // Log error
+    if (conversationId) {
+      await conversationLogger.logToolCall(conversationId, {
+        tool_name: 'create_reservation',
+        parameters: req.body,
+        success: false,
+        error_message: error.message
+      });
+    }
+    throw error;
+  }
 }
 
 async function handleLookupReservation(req, res) {
