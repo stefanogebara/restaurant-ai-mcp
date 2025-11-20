@@ -1,4 +1,3 @@
-import React from 'react';
 import { X, AlertTriangle, TrendingUp, TrendingDown, Info } from 'lucide-react';
 
 interface RiskFactor {

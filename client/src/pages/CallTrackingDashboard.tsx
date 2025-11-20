@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Phone, Calendar, Clock, CheckCircle, XCircle, TrendingUp, MessageSquare, Globe, BarChart3 } from 'lucide-react';
+import { Phone, Calendar, Clock, CheckCircle, XCircle, TrendingUp, MessageSquare, Globe } from 'lucide-react';
 
 interface Conversation {
   id: string;
