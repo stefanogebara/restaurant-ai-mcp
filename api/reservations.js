@@ -82,7 +82,7 @@ async function handleCreate(req, res) {
     'Customer Phone': customer_phone,
     'Customer Email': customer_email || '',
     'Special Requests': special_requests || '',
-    'Status': 'Confirmed',
+    'Status': 'confirmed',
     'Created At': new Date().toISOString().split('T')[0],
     'Updated At': new Date().toISOString().split('T')[0],
     'Confirmation Sent': true,
