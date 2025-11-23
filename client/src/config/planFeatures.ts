@@ -3,7 +3,7 @@
  * Defines which features are available for each subscription tier
  */
 
-export type PlanType = 'basic' | 'professional' | 'enterprise' | 'trial';
+export type PlanType = 'basic' | 'professional' | 'trial';
 
 export interface PlanFeatures {
   // Core Dashboard
@@ -126,46 +126,6 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     segoviaInsights: false,
   },
 
-  enterprise: {
-    // Core Dashboard
-    overview: true,
-
-    // ML & Intelligence - Unlimited
-    mlPerformance: true,
-    quickStatsWidget: true,
-    interventionPanel: true,
-    interventionActions: 'unlimited',
-
-    // Analytics & Reporting - Full Suite
-    advancedAnalytics: true,
-    weeklyReports: 'pdf',  // Full PDF export capability
-    customReportScheduling: true,
-    revenueOpportunities: true,
-
-    // Customer Intelligence - Complete
-    customerLTV: true,
-    customerDNA: true,
-    customerHistory: true,
-
-    // Waitlist - Advanced
-    waitlistManagement: true,
-    waitlistPriorityTiers: true,
-    waitlistSMSNotifications: true,
-    smartWaitTimePredictions: true,
-
-    // Enterprise Features - Full Suite
-    multiLocation: true,
-    whiteLabel: true,
-    apiAccess: true,
-    systemObservability: true,
-    prioritySupport: true,
-
-    // Deprecated (kept for backwards compatibility)
-    pricingRules: true,
-    pricingAnalytics: true,
-    segoviaInsights: false,  // Removed feature
-  },
-
   trial: {
     // Trial gets all Professional features for 14 days
     overview: true,
@@ -210,20 +170,17 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
 export const PLAN_PRICES = {
   basic: 49.99,
   professional: 99.99,
-  enterprise: 199.99,
 } as const;
 
 export const PLAN_NAMES = {
   basic: 'Basic',
   professional: 'Professional',
-  enterprise: 'Enterprise',
   trial: 'Trial',
 } as const;
 
 export const PLAN_DESCRIPTIONS = {
   basic: 'Perfect for single-location restaurants getting started',
   professional: 'Advanced features for growing restaurants',
-  enterprise: 'Complete suite for restaurant groups and multi-location operations',
   trial: '14-day trial with Professional features',
 } as const;
 
@@ -233,7 +190,6 @@ export const PLAN_DESCRIPTIONS = {
 export const INTERVENTION_LIMITS = {
   basic: 0,
   professional: 5,
-  enterprise: Infinity,
   trial: 5,
 } as const;
 
@@ -259,7 +215,6 @@ export function hasFeatureAccess(
 export function getRequiredPlan(feature: keyof PlanFeatures): PlanType | null {
   if (hasFeatureAccess('basic', feature)) return 'basic';
   if (hasFeatureAccess('professional', feature)) return 'professional';
-  if (hasFeatureAccess('enterprise', feature)) return 'enterprise';
   return null;
 }
 

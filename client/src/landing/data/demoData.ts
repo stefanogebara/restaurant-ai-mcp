@@ -193,25 +193,7 @@ export const PRICING_TIERS = [
     ],
     cta: "Start Free Trial",
     highlighted: true,
-  },
-  {
-    name: "Enterprise",
-    price: "€199.99",
-    period: "/month",
-    description: "For restaurant chains",
-    priceId: "price_1SMyHPKf4yCMjmH5t2Jig9cU",
-    features: [
-      "Everything in Professional",
-      "Multi-location support",
-      "Custom integrations",
-      "Dedicated account manager",
-      "White-label options",
-      "24/7 phone support",
-      "SLA guarantee",
-    ],
-    cta: "Start Free Trial",
-    highlighted: false,
-  },
+  }
 ];
 
 export const FAQS = [
