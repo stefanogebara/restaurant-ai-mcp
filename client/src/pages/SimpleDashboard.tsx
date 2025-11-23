@@ -377,15 +377,13 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
             <div className="flex items-center gap-3 flex-wrap">
               {/* Subscription Plan Badge */}
               <div className={`px-4 py-2 rounded-xl font-sans font-semibold text-sm shadow-md border transition-all duration-300 hover:scale-105 ${
-                currentPlan === 'enterprise'
-                  ? 'bg-gradient-to-r from-gold-500 to-gold-600 text-charcoal-900 border-gold-400 shadow-gold'
-                  : currentPlan === 'professional'
+                currentPlan === 'professional'
                   ? 'bg-gradient-to-r from-burgundy-700 to-burgundy-800 text-cream-50 border-burgundy-600'
                   : currentPlan === 'basic'
                   ? 'bg-gradient-to-r from-charcoal-700 to-charcoal-800 text-cream-50 border-charcoal-600'
                   : 'bg-gradient-to-r from-success-500 to-success-600 text-white border-success-400'
               }`}>
-                {currentPlan === 'enterprise' ? '👑' : currentPlan === 'professional' ? '💎' : currentPlan === 'trial' ? '🎯' : '⭐'} {PLAN_NAMES[currentPlan]}
+                {currentPlan === 'professional' ? '💎' : currentPlan === 'trial' ? '🎯' : '⭐'} {PLAN_NAMES[currentPlan]}
               </div>
 
               {/* Language Switcher */}

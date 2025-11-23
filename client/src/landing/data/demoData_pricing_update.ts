@@ -1,0 +1,35 @@
+export const PRICING_TIERS = [
+  {
+    name: "Basic",
+    price: "€49.99",
+    period: "/month",
+    description: "Perfect for small restaurants",
+    priceId: "price_1SMyEOKf4yCMjmH5kXx1RUyo",
+    features: [
+      "AI reservations",
+      "Host dashboard",
+      "Basic analytics",
+      "Email support",
+      "Up to 50 reservations/month",
+    ],
+    cta: "Start Free Trial",
+    highlighted: false,
+  },
+  {
+    name: "Professional",
+    price: "€99.99",
+    period: "/month",
+    description: "For growing restaurants",
+    priceId: "price_1SMyFUKf4yCMjmH5jh4mReyI",
+    features: [
+      "Everything in Basic",
+      "Advanced analytics",
+      "Waitlist management",
+      "Priority support",
+      "Unlimited reservations",
+      "SMS notifications",
+    ],
+    cta: "Start Free Trial",
+    highlighted: true,
+  },
+];

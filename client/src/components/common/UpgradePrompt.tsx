@@ -65,26 +65,6 @@ export default function UpgradePrompt({ requiredPlan, feature, description }: Up
                 </li>
               </ul>
             )}
-            {requiredPlan === 'enterprise' && (
-              <ul className="space-y-2">
-                <li className="flex items-start gap-2 text-muted-foreground">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                  <span>Everything in Professional</span>
-                </li>
-                <li className="flex items-start gap-2 text-muted-foreground">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                  <span>Segovia tourism analytics and insights</span>
-                </li>
-                <li className="flex items-start gap-2 text-muted-foreground">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                  <span>Multi-location support</span>
-                </li>
-                <li className="flex items-start gap-2 text-muted-foreground">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                  <span>Dedicated account manager & 24/7 support</span>
-                </li>
-              </ul>
-            )}
           </div>
 
           {/* CTA Buttons */}
