@@ -434,7 +434,7 @@ module.exports = async (req, res) => {
 
     let agentId = null;
     try {
-      const agentCreateEndpoint = `${process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app'}/api/routes/elevenlabs-agent-create`;
+      const agentCreateEndpoint = `${process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app'}/api/elevenlabs-agent-create`;
 
       const agentResponse = await fetch(agentCreateEndpoint, {
         method: 'POST',
