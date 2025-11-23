@@ -69,13 +69,15 @@ module.exports = async (req, res) => {
         conversation_config: {
           agent: {
             prompt: {
-              prompt: systemPrompt
+              prompt: systemPrompt,
+              llm: 'eleven_flash_v2_5'  // Required for non-English agents
             },
             first_message: firstMessage,
             language: language
           },
           tts: {
-            voice_id: voice_id
+            voice_id: voice_id,
+            model_id: 'eleven_turbo_v2'  // Use turbo v2 for better quality
           }
         },
         platform_settings: {
