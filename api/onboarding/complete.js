@@ -11,6 +11,7 @@
  */
 
 const { createClient } = require('@supabase/supabase-js');
+const fetch = require('node-fetch');
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -425,6 +426,55 @@ module.exports = async (req, res) => {
       console.error('[Onboarding] Error saving restaurant_config:', configError);
       // Don't fail the whole onboarding if config save fails
       console.warn('[Onboarding] Continuing despite restaurant_config error');
+    }
+
+    
+    // STEP 4: Create ElevenLabs Agent
+    console.log('[Onboarding] Step 4: Creating ElevenLabs agent...');
+
+    let agentId = null;
+    try {
+      const agentCreateEndpoint = `${process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app'}/api/routes/elevenlabs-agent-create`;
+
+      const agentResponse = await fetch(agentCreateEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          restaurant_id: generatedRestaurantId,
+          restaurant_name,
+          voice_id: selected_voice_id || 'default_voice',
+          language: selected_voice_language || 'en',
+          business_hours: business_hours || {},
+          phone: phone_number,
+          address: `${city}, ${country}`
+        })
+      });
+
+      if (agentResponse.ok) {
+        const agentData = await agentResponse.json();
+        agentId = agentData.agent_id;
+
+        // Update restaurant_info with agent details
+        await supabase
+          .from('restaurant_info')
+          .update({
+            elevenlabs_agent_id: agentId,
+            agent_voice_id: selected_voice_id,
+            agent_language: selected_voice_language || 'en',
+            agent_created_at: new Date().toISOString()
+          })
+          .eq('id', restaurantInfoResult.id);
+
+        console.log('[Onboarding] ✅ ElevenLabs agent created:', agentId);
+      } else {
+        const errorText = await agentResponse.text();
+        console.warn('[Onboarding] Failed to create agent:', errorText);
+      }
+    } catch (agentError) {
+      console.error('[Onboarding] Error creating ElevenLabs agent:', agentError);
+      console.warn('[Onboarding] Continuing without agent creation');
     }
 
     console.log('[Onboarding] ✅ Onboarding complete!');
