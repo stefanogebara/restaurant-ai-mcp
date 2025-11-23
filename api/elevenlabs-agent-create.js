@@ -70,14 +70,14 @@ module.exports = async (req, res) => {
           agent: {
             prompt: {
               prompt: systemPrompt,
-              llm: 'eleven_flash_v2_5'  // Required for non-English agents
+              llm: 'gemini-2.5-flash'  // Supports multilingual agents
             },
             first_message: firstMessage,
             language: language
           },
           tts: {
             voice_id: voice_id,
-            model_id: 'eleven_turbo_v2'  // Use turbo v2 for better quality
+            model_id: 'eleven_turbo_v2_5'  // Required for non-English TTS
           }
         },
         platform_settings: {
