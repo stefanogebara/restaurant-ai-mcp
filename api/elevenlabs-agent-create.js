@@ -66,6 +66,7 @@ module.exports = async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
+        name: `${restaurant_name} AI Receptionist`,  // Custom agent name
         conversation_config: {
           agent: {
             prompt: {
