@@ -432,6 +432,21 @@ module.exports = async (req, res) => {
     // STEP 4: Create ElevenLabs Agent
     console.log('[Onboarding] Step 4: Creating ElevenLabs agent...');
 
+    // Transform business_hours array to object format for agent API
+    // From: [{ day: "Monday", is_open: true, open_time: "12:00", close_time: "23:00" }]
+    // To: { monday: { isOpen: true, open: "12:00", close: "23:00" } }
+    const agentBusinessHours = {};
+    if (Array.isArray(business_hours)) {
+      business_hours.forEach(dayConfig => {
+        const dayKey = dayConfig.day.toLowerCase();
+        agentBusinessHours[dayKey] = {
+          isOpen: dayConfig.is_open,
+          open: dayConfig.open_time,
+          close: dayConfig.close_time
+        };
+      });
+    }
+
     let agentId = null;
     try {
       const agentCreateEndpoint = `${process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app'}/api/elevenlabs-agent-create`;
@@ -446,7 +461,7 @@ module.exports = async (req, res) => {
           restaurant_name,
           voice_id: selected_voice_id || 'default_voice',
           language: selected_voice_language || 'en',
-          business_hours: business_hours || {},
+          business_hours: agentBusinessHours,
           phone: phone_number,
           address: `${city}, ${country}`
         })
