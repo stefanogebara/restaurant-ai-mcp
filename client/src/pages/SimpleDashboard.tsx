@@ -199,10 +199,19 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
     });
   };
 
-  const stats = dashboardData?.data?.summary || {};
+  const rawStats = dashboardData?.data?.summary || {};
+  // Map snake_case API response to camelCase for frontend
+  const stats = {
+    ...rawStats,
+    activePartiesCount: rawStats.active_parties || 0,
+    totalSeatedGuests: dashboardData?.data?.active_parties?.reduce((sum: number, p: any) => sum + (p.party_size || 0), 0) || 0,
+    waitlistCount: rawStats.waitlist_count || 0,
+  };
   // Handle both possible API response structures
   const tables = dashboardData?.data?.tables || (dashboardData as any)?.tables || [];
   const reservations = dashboardData?.data?.upcoming_reservations || [];
+  // Map active_parties from snake_case
+  const activeParties = dashboardData?.data?.active_parties || [];
 
   // Filter today's reservations
   const today = new Date().toISOString().split('T')[0];
@@ -692,7 +701,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
                 {stats.activePartiesCount > 0 ? (
                   <div className="space-y-2.5 max-h-[320px] overflow-y-auto custom-scrollbar">
-                    {dashboardData?.data?.activeParties?.map((party: any) => (
+                    {activeParties?.map((party: any) => (
                       <div
                         key={party.service_id}
                         className="p-3.5 bg-white/5 rounded-xl border border-white/10 hover:border-purple-400/30 transition-all duration-200"
