@@ -32,6 +32,10 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
   const [loadingAudio, setLoadingAudio] = useState<string | null>(null);
   const [audioElements, setAudioElements] = useState<Record<string, HTMLAudioElement>>({});
 
+  // Default voice fallback when API fails
+  const DEFAULT_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel - ElevenLabs default
+  const DEFAULT_VOICE_LANGUAGE = 'en';
+
   // Fetch voices on mount
   useEffect(() => {
     const fetchVoices = async () => {
@@ -46,7 +50,7 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
 
         const result = await response.json();
 
-        if (result.success && result.data.voices) {
+        if (result.success && result.data.voices && result.data.voices.length > 0) {
           setVoices(result.data.voices);
           // Auto-select first voice if none selected
           if (!selectedVoiceId && result.data.voices.length > 0) {
@@ -57,9 +61,22 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
               selected_voice_language: firstVoice.language || 'en'
             });
           }
+        } else {
+          // No voices available - use default
+          setSelectedVoiceId(DEFAULT_VOICE_ID);
+          onUpdate({
+            selected_voice_id: DEFAULT_VOICE_ID,
+            selected_voice_language: DEFAULT_VOICE_LANGUAGE
+          });
         }
       } catch (error) {
         console.error('Error fetching voices:', error);
+        // On error, use default voice so user can continue
+        setSelectedVoiceId(DEFAULT_VOICE_ID);
+        onUpdate({
+          selected_voice_id: DEFAULT_VOICE_ID,
+          selected_voice_language: DEFAULT_VOICE_LANGUAGE
+        });
       } finally {
         setIsLoading(false);
       }
@@ -264,9 +281,15 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
       {/* No Voices Message */}
       {!isLoading && voices.length === 0 && (
         <div className="text-center py-20">
-          <p className="text-lg text-gray-400">
-            No voices available for your selected country. Using default voice.
-          </p>
+          <div className="bg-violet-500/10 border border-violet-500/30 rounded-lg p-8 max-w-lg mx-auto">
+            <Volume2 className="w-12 h-12 text-violet-400 mx-auto mb-4" />
+            <p className="text-lg text-gray-300 mb-2">
+              Using default voice for your AI assistant
+            </p>
+            <p className="text-sm text-gray-400">
+              You can customize the voice later in Settings after setup is complete.
+            </p>
+          </div>
         </div>
       )}
 
