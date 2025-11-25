@@ -428,9 +428,14 @@ module.exports = async (req, res) => {
       console.warn('[Onboarding] Continuing despite restaurant_config error');
     }
 
-    
+
     // STEP 4: Create ElevenLabs Agent
     console.log('[Onboarding] Step 4: Creating ElevenLabs agent...');
+    console.log('[Onboarding] Voice config:', {
+      selected_voice_id,
+      selected_voice_language,
+      restaurant_name
+    });
 
     // Transform business_hours array to object format for agent API
     // From: [{ day: "Monday", is_open: true, open_time: "12:00", close_time: "23:00" }]
@@ -459,7 +464,7 @@ module.exports = async (req, res) => {
         body: JSON.stringify({
           restaurant_id: generatedRestaurantId,
           restaurant_name,
-          voice_id: selected_voice_id || 'default_voice',
+          voice_id: selected_voice_id || '21m00Tcm4TlvDq8ikWAM', // Rachel - ElevenLabs default
           language: selected_voice_language || 'en',
           business_hours: agentBusinessHours,
           phone: phone_number,
@@ -467,28 +472,39 @@ module.exports = async (req, res) => {
         })
       });
 
+      console.log('[Onboarding] Agent API response status:', agentResponse.status);
+
       if (agentResponse.ok) {
         const agentData = await agentResponse.json();
         agentId = agentData.agent_id;
 
         // Update restaurant_info with agent details
+        const voiceIdToSave = selected_voice_id || '21m00Tcm4TlvDq8ikWAM';
         await supabase
           .from('restaurant_info')
           .update({
             elevenlabs_agent_id: agentId,
-            agent_voice_id: selected_voice_id,
+            agent_voice_id: voiceIdToSave,
             agent_language: selected_voice_language || 'en',
             agent_created_at: new Date().toISOString()
           })
           .eq('id', restaurantInfoResult.id);
 
         console.log('[Onboarding] ✅ ElevenLabs agent created:', agentId);
+        console.log('[Onboarding] Agent URL: https://elevenlabs.io/app/conversational-ai/' + agentId);
       } else {
         const errorText = await agentResponse.text();
-        console.warn('[Onboarding] Failed to create agent:', errorText);
+        console.error('[Onboarding] ❌ Failed to create agent:', {
+          status: agentResponse.status,
+          statusText: agentResponse.statusText,
+          error: errorText
+        });
       }
     } catch (agentError) {
-      console.error('[Onboarding] Error creating ElevenLabs agent:', agentError);
+      console.error('[Onboarding] ❌ Error creating ElevenLabs agent:', {
+        message: agentError.message,
+        stack: agentError.stack
+      });
       console.warn('[Onboarding] Continuing without agent creation');
     }
 
