@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Phone, Calendar, Clock, CheckCircle, XCircle, TrendingUp, MessageSquare, Globe } from 'lucide-react';
+import { Phone, Calendar, Clock, CheckCircle, XCircle, TrendingUp, MessageSquare, Globe, Settings, PhoneCall, AlertCircle, Loader2 } from 'lucide-react';
 
 interface Conversation {
   id: string;
@@ -45,6 +45,16 @@ interface Stats {
   top_errors: Array<{ error_type: string; count: number }>;
 }
 
+interface PhoneStatus {
+  has_agent: boolean;
+  agent_id: string | null;
+  phone_number: string | null;
+  phone_number_id: string | null;
+  status: 'not_configured' | 'pending' | 'active' | 'error';
+  error: string | null;
+  configured_at: string | null;
+}
+
 export default function CallTrackingDashboard() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -56,10 +66,94 @@ export default function CallTrackingDashboard() {
     language: 'all'
   });
 
+  // Phone integration state
+  const [phoneStatus, setPhoneStatus] = useState<PhoneStatus | null>(null);
+  const [showPhoneSettings, setShowPhoneSettings] = useState(false);
+  const [phoneForm, setPhoneForm] = useState({
+    twilio_account_sid: '',
+    twilio_auth_token: '',
+    twilio_phone_number: ''
+  });
+  const [phoneLoading, setPhoneLoading] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+
+  // TODO: Get restaurant_id from auth context or URL params
+  const restaurant_id = 'default'; // Replace with actual restaurant ID from context
+
   // Fetch conversations and stats
   useEffect(() => {
     fetchData();
   }, [filter]);
+
+  // Fetch phone integration status
+  useEffect(() => {
+    fetchPhoneStatus();
+  }, []);
+
+  async function fetchPhoneStatus() {
+    try {
+      const res = await fetch(`/api/phone-integration?action=status&restaurant_id=${restaurant_id}`);
+      const data = await res.json();
+      if (data.success) {
+        setPhoneStatus(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching phone status:', error);
+    }
+  }
+
+  async function handleRegisterPhone(e: React.FormEvent) {
+    e.preventDefault();
+    setPhoneLoading(true);
+    setPhoneError(null);
+
+    try {
+      const res = await fetch('/api/phone-integration?action=register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          restaurant_id,
+          ...phoneForm
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setShowPhoneSettings(false);
+        setPhoneForm({ twilio_account_sid: '', twilio_auth_token: '', twilio_phone_number: '' });
+        fetchPhoneStatus();
+      } else {
+        setPhoneError(data.error || 'Failed to register phone number');
+      }
+    } catch (error) {
+      setPhoneError('Network error. Please try again.');
+    } finally {
+      setPhoneLoading(false);
+    }
+  }
+
+  async function handleUnregisterPhone() {
+    if (!confirm('Are you sure you want to disconnect this phone number?')) return;
+
+    setPhoneLoading(true);
+    try {
+      const res = await fetch('/api/phone-integration?action=unregister', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurant_id })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        fetchPhoneStatus();
+      }
+    } catch (error) {
+      console.error('Error unregistering phone:', error);
+    } finally {
+      setPhoneLoading(false);
+    }
+  }
 
   async function fetchData() {
     setLoading(true);
@@ -153,8 +247,8 @@ export default function CallTrackingDashboard() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Call Tracking Dashboard</h1>
-            <p className="text-muted-foreground mt-1">Monitor AI agent performance and conversation history</p>
+            <h1 className="text-3xl font-bold text-foreground">AI Agent Dashboard</h1>
+            <p className="text-muted-foreground mt-1">Monitor AI agent performance, calls, and phone settings</p>
           </div>
           <button
             onClick={fetchData}
@@ -162,6 +256,75 @@ export default function CallTrackingDashboard() {
           >
             Refresh
           </button>
+        </div>
+
+        {/* Phone Integration Status Card */}
+        <div className="bg-card rounded-lg border border-border p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                phoneStatus?.status === 'active'
+                  ? 'bg-green-500/10'
+                  : phoneStatus?.status === 'error'
+                    ? 'bg-red-500/10'
+                    : 'bg-gray-500/10'
+              }`}>
+                <PhoneCall className={`w-6 h-6 ${
+                  phoneStatus?.status === 'active'
+                    ? 'text-green-600 dark:text-green-400'
+                    : phoneStatus?.status === 'error'
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-gray-600 dark:text-gray-400'
+                }`} />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Phone Integration</h2>
+                {phoneStatus?.status === 'active' ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-green-600 dark:text-green-400 font-medium">{phoneStatus.phone_number}</span>
+                    <span className="px-2 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400 text-xs rounded-full">Active</span>
+                  </div>
+                ) : phoneStatus?.status === 'error' ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                    <span className="text-red-600 dark:text-red-400 text-sm">{phoneStatus.error || 'Configuration error'}</span>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm mt-1">
+                    Connect a phone number so customers can call your AI agent directly
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {phoneStatus?.status === 'active' ? (
+                <>
+                  <button
+                    onClick={handleUnregisterPhone}
+                    disabled={phoneLoading}
+                    className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                  >
+                    Disconnect
+                  </button>
+                  <button
+                    onClick={() => setShowPhoneSettings(true)}
+                    className="px-4 py-2 bg-muted hover:bg-muted/80 text-foreground rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                  >
+                    <Settings className="w-4 h-4" />
+                    Settings
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setShowPhoneSettings(true)}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
+                >
+                  <Phone className="w-4 h-4" />
+                  Connect Phone Number
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Filters */}
@@ -351,6 +514,114 @@ export default function CallTrackingDashboard() {
             </table>
           </div>
         </div>
+
+        {/* Phone Settings Modal */}
+        {showPhoneSettings && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-card rounded-xl border border-border shadow-2xl max-w-md w-full">
+              <div className="p-6 border-b border-border">
+                <h2 className="text-xl font-semibold text-foreground">Connect Phone Number</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Connect your Twilio phone number to receive customer calls
+                </p>
+              </div>
+
+              <form onSubmit={handleRegisterPhone} className="p-6 space-y-4">
+                {phoneError && (
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-start gap-2">
+                    <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                    <p className="text-sm text-red-600 dark:text-red-400">{phoneError}</p>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="+1234567890"
+                    value={phoneForm.twilio_phone_number}
+                    onChange={(e) => setPhoneForm({ ...phoneForm, twilio_phone_number: e.target.value })}
+                    className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">E.164 format (e.g., +1234567890)</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    Twilio Account SID
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                    value={phoneForm.twilio_account_sid}
+                    onChange={(e) => setPhoneForm({ ...phoneForm, twilio_account_sid: e.target.value })}
+                    className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    Twilio Auth Token
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="Your Twilio Auth Token"
+                    value={phoneForm.twilio_auth_token}
+                    onChange={(e) => setPhoneForm({ ...phoneForm, twilio_auth_token: e.target.value })}
+                    className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                  />
+                </div>
+
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                  <p className="text-xs text-muted-foreground">
+                    Find your Account SID and Auth Token in the{' '}
+                    <a
+                      href="https://console.twilio.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      Twilio Console
+                    </a>
+                  </p>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPhoneSettings(false);
+                      setPhoneError(null);
+                      setPhoneForm({ twilio_account_sid: '', twilio_auth_token: '', twilio_phone_number: '' });
+                    }}
+                    className="flex-1 px-4 py-2 bg-muted hover:bg-muted/80 text-foreground rounded-lg font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={phoneLoading}
+                    className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {phoneLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Connecting...
+                      </>
+                    ) : (
+                      'Connect Phone'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Conversation Detail Modal */}
         {selectedConversation && (

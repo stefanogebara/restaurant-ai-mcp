@@ -26,6 +26,9 @@ export interface PlanFeatures {
   customerDNA: boolean;              // Behavioral profiling & segmentation
   customerHistory: boolean | 'basic';  // Customer history depth
 
+  // AI Agent Features
+  aiAgentTracking: boolean;              // AI Agent call tracking & analytics
+
   // Waitlist Features
   waitlistManagement: boolean | 'basic';  // Waitlist management
   waitlistPriorityTiers: boolean;    // Priority tiering system
@@ -67,6 +70,9 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     customerDNA: false,
     customerHistory: 'basic',
 
+    // AI Agent - All plans get access
+    aiAgentTracking: true,
+
     // Waitlist - Basic
     waitlistManagement: 'basic',
     waitlistPriorityTiers: false,
@@ -107,6 +113,9 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     customerDNA: false,
     customerHistory: true,
 
+    // AI Agent - All plans get access
+    aiAgentTracking: true,
+
     // Waitlist - Standard
     waitlistManagement: true,
     waitlistPriorityTiers: false,
@@ -146,6 +155,9 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     customerLTV: true,
     customerDNA: false,
     customerHistory: true,
+
+    // AI Agent - All plans get access
+    aiAgentTracking: true,
 
     // Waitlist
     waitlistManagement: true,

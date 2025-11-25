@@ -6,7 +6,8 @@ import {
   Dna,
   ChevronLeft,
   Menu,
-  Lock
+  Lock,
+  Phone
 } from 'lucide-react';
 import { useState } from 'react';
 import { useSidebar } from '../../contexts/SidebarContext';
@@ -28,6 +29,13 @@ const navItems: NavItem[] = [
     icon: <LayoutDashboard className="w-5 h-5" />,
     description: 'Tables & Active Parties',
     requiredFeature: 'overview'
+  },
+  {
+    path: '/host-dashboard/calls',
+    label: 'AI Agent',
+    icon: <Phone className="w-5 h-5" />,
+    description: 'Call Tracking & Analytics',
+    requiredFeature: 'aiAgentTracking'
   },
   {
     path: '/host-dashboard/ml',
