@@ -58,6 +58,13 @@ module.exports = async (req, res) => {
       custom_greeting
     });
 
+    // Build tools configuration for the agent
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'https://restaurant-ai-mcp.vercel.app';
+
+    const tools = buildAgentTools(baseUrl, restaurant_id);
+
     // Create agent via ElevenLabs API
     const agentResponse = await fetch('https://api.elevenlabs.io/v1/convai/agents/create', {
       method: 'POST',
@@ -74,7 +81,8 @@ module.exports = async (req, res) => {
               llm: 'gemini-2.5-flash'  // Supports multilingual agents
             },
             first_message: firstMessage,
-            language: language
+            language: language,
+            tools: tools  // Add tools to agent
           },
           tts: {
             voice_id: voice_id,
@@ -213,4 +221,184 @@ function buildFirstMessage({ restaurant_name, language, custom_greeting }) {
   };
 
   return defaultGreetings[language] || defaultGreetings.en;
+}
+
+/**
+ * Build agent tools configuration
+ * These webhook-based tools allow the agent to interact with our reservation system
+ */
+function buildAgentTools(baseUrl, restaurant_id) {
+  return [
+    {
+      type: 'webhook',
+      name: 'get_current_datetime',
+      description: 'Get the current date and time. Use this at the start of conversations to know what "today" and "tomorrow" mean. Returns current date, time, day of week, and relative dates.',
+      webhook: {
+        url: `${baseUrl}/api/elevenlabs-webhook?action=get_current_datetime`,
+        method: 'GET'
+      },
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: []
+      }
+    },
+    {
+      type: 'webhook',
+      name: 'check_availability',
+      description: 'Check table availability for a specific date, time, and party size. Use this before creating a reservation to verify availability.',
+      webhook: {
+        url: `${baseUrl}/api/elevenlabs-webhook?action=check_availability&restaurant_id=${restaurant_id}`,
+        method: 'POST'
+      },
+      parameters: {
+        type: 'object',
+        properties: {
+          date: {
+            type: 'string',
+            description: 'The date for the reservation in YYYY-MM-DD format (e.g., 2025-11-26)'
+          },
+          time: {
+            type: 'string',
+            description: 'The time for the reservation in HH:MM format (e.g., 19:00)'
+          },
+          party_size: {
+            type: 'number',
+            description: 'Number of people dining (e.g., 2, 4, 6). This must be a NUMBER, not a date.'
+          }
+        },
+        required: ['date', 'time', 'party_size']
+      }
+    },
+    {
+      type: 'webhook',
+      name: 'create_reservation',
+      description: 'Create a new reservation after confirming all details with the customer. Only use after checking availability and getting customer name, phone, and email.',
+      webhook: {
+        url: `${baseUrl}/api/elevenlabs-webhook?action=create_reservation&restaurant_id=${restaurant_id}`,
+        method: 'POST'
+      },
+      parameters: {
+        type: 'object',
+        properties: {
+          customer_name: {
+            type: 'string',
+            description: 'Full name of the customer making the reservation'
+          },
+          customer_phone: {
+            type: 'string',
+            description: 'Phone number of the customer'
+          },
+          customer_email: {
+            type: 'string',
+            description: 'Email address of the customer (optional)'
+          },
+          date: {
+            type: 'string',
+            description: 'The date for the reservation in YYYY-MM-DD format'
+          },
+          time: {
+            type: 'string',
+            description: 'The time for the reservation in HH:MM format'
+          },
+          party_size: {
+            type: 'number',
+            description: 'Number of people dining. This must be a NUMBER, not a date.'
+          },
+          special_requests: {
+            type: 'string',
+            description: 'Any special requests or dietary requirements (optional)'
+          }
+        },
+        required: ['customer_name', 'customer_phone', 'date', 'time', 'party_size']
+      }
+    },
+    {
+      type: 'webhook',
+      name: 'lookup_reservation',
+      description: 'Find an existing reservation by customer phone number or name. Use this to help customers find their reservation details or before modifying/canceling.',
+      webhook: {
+        url: `${baseUrl}/api/reservations?action=lookup&restaurant_id=${restaurant_id}`,
+        method: 'POST'
+      },
+      parameters: {
+        type: 'object',
+        properties: {
+          customer_phone: {
+            type: 'string',
+            description: 'Phone number used for the reservation'
+          },
+          customer_name: {
+            type: 'string',
+            description: 'Name used for the reservation (optional if phone provided)'
+          }
+        },
+        required: []
+      }
+    },
+    {
+      type: 'webhook',
+      name: 'cancel_reservation',
+      description: 'Cancel an existing reservation. First use lookup_reservation to get the Reservation ID, then call this tool to cancel it.',
+      webhook: {
+        url: `${baseUrl}/api/reservations?action=cancel&restaurant_id=${restaurant_id}`,
+        method: 'POST'
+      },
+      parameters: {
+        type: 'object',
+        properties: {
+          reservation_id: {
+            type: 'string',
+            description: 'The unique reservation ID to cancel'
+          }
+        },
+        required: ['reservation_id']
+      }
+    },
+    {
+      type: 'webhook',
+      name: 'modify_reservation',
+      description: 'Change the date, time, or party size of an existing reservation. First use lookup_reservation to get the Reservation ID.',
+      webhook: {
+        url: `${baseUrl}/api/reservations?action=modify&restaurant_id=${restaurant_id}`,
+        method: 'POST'
+      },
+      parameters: {
+        type: 'object',
+        properties: {
+          reservation_id: {
+            type: 'string',
+            description: 'The unique reservation ID to modify'
+          },
+          new_date: {
+            type: 'string',
+            description: 'New date in YYYY-MM-DD format (optional)'
+          },
+          new_time: {
+            type: 'string',
+            description: 'New time in HH:MM format (optional)'
+          },
+          new_party_size: {
+            type: 'number',
+            description: 'New party size (optional)'
+          }
+        },
+        required: ['reservation_id']
+      }
+    },
+    {
+      type: 'webhook',
+      name: 'get_wait_time',
+      description: 'Get the current estimated wait time for walk-in customers. Use when someone asks about wait times or walk-in availability today.',
+      webhook: {
+        url: `${baseUrl}/api/get-wait-time?restaurant_id=${restaurant_id}`,
+        method: 'GET'
+      },
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: []
+      }
+    }
+  ];
 }
