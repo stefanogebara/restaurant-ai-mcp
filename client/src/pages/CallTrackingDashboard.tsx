@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { Phone, Calendar, Clock, CheckCircle, XCircle, TrendingUp, MessageSquare, Globe, Settings, PhoneCall, AlertCircle, Loader2 } from 'lucide-react';
+import DashboardLayout from '../components/layout/DashboardLayout';
 
 interface Conversation {
   id: string;
@@ -232,18 +233,21 @@ export default function CallTrackingDashboard() {
 
   if (loading && !stats) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading call data...</p>
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading call data...</p>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <DashboardLayout>
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -757,7 +761,8 @@ export default function CallTrackingDashboard() {
             </div>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
