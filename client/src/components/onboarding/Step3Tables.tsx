@@ -89,6 +89,17 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
   const [errors, setErrors] = useState<Record<string, string>>({});
   const hasInitialized = useRef(false);
 
+  // Clear errors when table configuration changes
+  useEffect(() => {
+    // Clear the tables error when areas data changes
+    if (errors.tables) {
+      setErrors((prev) => {
+        const { tables, ...rest } = prev;
+        return rest;
+      });
+    }
+  }, [data.areas]);
+
   // Pre-populate tables from profile data
   useEffect(() => {
     // Only run once and if profile data exists

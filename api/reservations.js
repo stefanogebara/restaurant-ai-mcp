@@ -280,6 +280,8 @@ async function handleLookup(req, res) {
   const r = result.reservation;
   const specialReqs = r.special_requests ? ` Special requests: ${r.special_requests}.` : '';
   return res.status(200).json({
+    success: true,
+    reservation: r,
     message: `I found your reservation! ${r.customer_name}, party of ${r.party_size}, scheduled for ${r.reservation_time}. Confirmation number: ${r.reservation_id}. Status: ${r.status}.${specialReqs}`
   });
 }

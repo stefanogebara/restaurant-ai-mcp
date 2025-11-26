@@ -129,7 +129,7 @@ export default function InteractiveDemoSection() {
                     Or try making a reservation via our text-based chat interface
                   </p>
                   <a
-                    href="/"
+                    href="/live-demo"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-6 py-3 glass-button text-white font-semibold inline-flex items-center gap-2"
