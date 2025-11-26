@@ -30,6 +30,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   const [showCompleteServiceModal, setShowCompleteServiceModal] = useState(false);
   const [selectedServiceToComplete, setSelectedServiceToComplete] = useState<any>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [showTomorrow, setShowTomorrow] = useState(false);
 
   // Get real subscription plan from API
   const subscription = useSubscription();
@@ -213,9 +214,12 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   // Map active_parties from snake_case
   const activeParties = dashboardData?.data?.active_parties || [];
 
-  // Filter today's reservations
+  // Filter today's and tomorrow's reservations
   const today = new Date().toISOString().split('T')[0];
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
   const todayReservations = reservations.filter((r: any) => r.date === today);
+  const tomorrowReservations = reservations.filter((r: any) => r.date === tomorrow);
+  const displayedReservations = showTomorrow ? tomorrowReservations : todayReservations;
 
   // Calculate occupied tables
   const occupiedTables = tables.filter((t: any) => t.status === 'Occupied').length;
@@ -828,20 +832,25 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
             </div>
             <h2 className="text-xl md:text-2xl font-display font-bold text-burgundy-900">
               {t.upcomingReservations}
+              {showTomorrow && (
+                <span className="ml-2 text-sm font-sans font-normal text-burgundy-600">
+                  ({language === 'es' ? 'Mañana' : 'Tomorrow'})
+                </span>
+              )}
             </h2>
           </div>
 
-          {todayReservations.length === 0 ? (
+          {displayedReservations.length === 0 ? (
             <div className="text-center py-16 px-4">
               <div className="w-20 h-20 bg-gradient-to-br from-burgundy-50 to-gold-50 rounded-3xl flex items-center justify-center mx-auto mb-4">
                 <span className="text-5xl">✨</span>
               </div>
               <p className="text-burgundy-900 text-lg font-display font-semibold mb-2">{t.allClear}</p>
-              <p className="text-charcoal-500 text-sm font-sans">{t.noUpcoming}</p>
+              <p className="text-charcoal-500 text-sm font-sans">{showTomorrow ? (language === 'es' ? 'Sin reservas mañana' : 'No reservations tomorrow') : t.noUpcoming}</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {todayReservations.map((reservation: any, index: number) => (
+              {displayedReservations.map((reservation: any, index: number) => (
                 <div
                   key={reservation.reservation_id}
                   className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 md:p-5 bg-gradient-to-br from-cream-50 to-cream-100/50 rounded-xl border-2 border-cream-300 hover:border-burgundy-400 hover:shadow-burgundy transition-all duration-400 ease-out-expo hover:-translate-y-1 animate-fade-in-up"
@@ -990,12 +999,19 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
           )}
         </div>
 
-        {/* View Tomorrow (Only show in COMPLETO mode) */}
+        {/* View Tomorrow Toggle (Only show in COMPLETO mode) */}
         {complexity === 'completo' && (
           <div className="mt-6 text-center">
-            <button className="inline-flex items-center gap-2 text-burgundy-700 hover:text-burgundy-900 font-sans font-semibold text-base md:text-lg transition-all duration-300 ease-out-expo hover:gap-3 group">
-              <span>{t.viewTomorrow}</span>
-              <svg className="w-5 h-5 transition-transform group-hover:translate-x-1 duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button
+              onClick={() => setShowTomorrow(!showTomorrow)}
+              className={`inline-flex items-center gap-2 font-sans font-semibold text-base md:text-lg transition-all duration-300 ease-out-expo hover:gap-3 group px-4 py-2 rounded-lg ${
+                showTomorrow
+                  ? 'bg-burgundy-100 text-burgundy-900 border-2 border-burgundy-400'
+                  : 'text-burgundy-700 hover:text-burgundy-900 hover:bg-burgundy-50'
+              }`}
+            >
+              <span>{showTomorrow ? (language === 'es' ? 'Ver Hoy' : 'View Today') : t.viewTomorrow}</span>
+              <svg className={`w-5 h-5 transition-transform duration-300 ${showTomorrow ? 'rotate-180' : 'group-hover:translate-x-1'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </button>
