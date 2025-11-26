@@ -141,7 +141,7 @@ async function handleDashboard(req, res) {
       table_number: t.table_number,
       capacity: t.capacity,
       location: t.location,
-      status: t.status ? t.status.charAt(0).toUpperCase() + t.status.slice(1) : t.status,
+      status: t.status ? t.status.replace(/_/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : t.status,
       current_service_id: t.current_service_id
     })),
     active_parties: activeParties,
