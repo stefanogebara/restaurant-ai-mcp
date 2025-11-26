@@ -519,18 +519,27 @@ async function handleUpdateTableStatus(req, res) {
     });
   }
 
-  // Validate status (case-insensitive)
-  const validStatuses = ['available', 'occupied', 'being cleaned', 'reserved'];
+  // Validate status (case-insensitive) and map to database enum values
+  const statusMap = {
+    'available': 'available',
+    'occupied': 'occupied',
+    'reserved': 'reserved',
+    'being cleaned': 'being_cleaned',  // Frontend uses space, DB uses underscore
+    'being_cleaned': 'being_cleaned',
+    'out_of_service': 'out_of_service'
+  };
   const normalizedStatus = status.toLowerCase();
-  if (!validStatuses.includes(normalizedStatus)) {
+  const dbStatus = statusMap[normalizedStatus];
+
+  if (!dbStatus) {
     return res.status(400).json({
       success: false,
-      error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+      error: `Invalid status. Must be one of: ${Object.keys(statusMap).join(', ')}`
     });
   }
 
   const updateResult = await updateTable(table_id, {
-    'Status': normalizedStatus
+    'Status': dbStatus
   });
 
   if (!updateResult.success) {
