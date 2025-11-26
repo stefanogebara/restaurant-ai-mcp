@@ -877,7 +877,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                             onClick={async () => {
                               if (!window.confirm(language === 'es' ? '¿Confirmar que se realizó la llamada?' : 'Confirm that call was made?')) return;
                               try {
-                                const response = await fetch('/api/ml-outcomes/mark-action-taken', {
+                                const response = await fetch('/api/ml-outcomes?action=mark-action-taken', {
                                   method: 'PATCH',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({
@@ -908,7 +908,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                                 : 'Outcome (showed_up/no_show/cancelled):');
                               if (!outcome || !['showed_up', 'no_show', 'cancelled'].includes(outcome)) return;
                               try {
-                                const response = await fetch('/api/ml-outcomes/record-outcome', {
+                                const response = await fetch('/api/ml-outcomes?action=record-outcome', {
                                   method: 'POST',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({

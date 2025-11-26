@@ -15,7 +15,7 @@ const supabase = createClient(
 module.exports = async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
@@ -38,12 +38,19 @@ module.exports = async (req, res) => {
         }
         return await handleROISummary(req, res);
 
+      case 'mark-action-taken':
+        if (req.method !== 'PATCH' && req.method !== 'POST') {
+          return res.status(405).json({ error: 'Method not allowed. Use PATCH or POST' });
+        }
+        return await handleMarkActionTaken(req, res);
+
       default:
         return res.status(400).json({
           error: 'Invalid action',
           available_actions: {
             'record-outcome': 'POST /api/ml-outcomes?action=record-outcome',
-            'roi-summary': 'GET /api/ml-outcomes?action=roi-summary'
+            'roi-summary': 'GET /api/ml-outcomes?action=roi-summary',
+            'mark-action-taken': 'PATCH /api/ml-outcomes?action=mark-action-taken'
           }
         });
     }
@@ -302,6 +309,93 @@ async function handleROISummary(req, res) {
     return res.status(500).json({
       success: false,
       error: 'Failed to fetch ROI summary',
+      details: error.message
+    });
+  }
+}
+
+/**
+ * Mark that an action was taken (e.g., confirmation call made)
+ * PATCH /api/ml-outcomes?action=mark-action-taken
+ *
+ * Body:
+ * {
+ *   reservation_id: "RES-20251101-1234",
+ *   intervention_type: "confirmation_call" | "sms_reminder" | "email_reminder",
+ *   notes: "Called customer to confirm reservation"
+ * }
+ */
+async function handleMarkActionTaken(req, res) {
+  try {
+    const {
+      reservation_id,
+      intervention_type = 'confirmation_call',
+      notes = ''
+    } = req.body;
+
+    // Validate required fields
+    if (!reservation_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required field: reservation_id'
+      });
+    }
+
+    console.log(`\n📞 Marking action taken for ${reservation_id}: ${intervention_type}`);
+
+    // Fetch reservation to verify it exists and get ML data
+    const { data: reservation, error: fetchError } = await supabase
+      .from('reservations')
+      .select('*')
+      .eq('reservation_id', reservation_id)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching reservation:', fetchError);
+      return res.status(404).json({
+        success: false,
+        error: 'Reservation not found'
+      });
+    }
+
+    // Update reservation to mark that intervention was taken
+    const { error: updateError } = await supabase
+      .from('reservations')
+      .update({
+        intervention_taken: true,
+        intervention_type: intervention_type,
+        intervention_notes: notes,
+        intervention_timestamp: new Date().toISOString()
+      })
+      .eq('reservation_id', reservation_id);
+
+    if (updateError) {
+      console.error('Error updating reservation:', updateError);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to update reservation',
+        details: updateError.message
+      });
+    }
+
+    console.log(`✅ Marked action taken for ${reservation_id}`);
+
+    return res.json({
+      success: true,
+      data: {
+        reservation_id,
+        intervention_type,
+        notes,
+        timestamp: new Date().toISOString()
+      },
+      message: `Action "${intervention_type}" marked for reservation ${reservation_id}`
+    });
+
+  } catch (error) {
+    console.error('Error marking action taken:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error',
       details: error.message
     });
   }
