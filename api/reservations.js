@@ -17,6 +17,69 @@ const {
 const { predictNoShow } = require('./ml/lambda-predict');
 const { logReservationCreated, logCustomerCancelled } = require('./ml/data-logger');
 
+// Twilio for SMS confirmations
+const twilio = require('twilio');
+
+/**
+ * Send SMS confirmation with reservation details
+ * @param {Object} reservationDetails - Reservation information
+ * @returns {Promise<boolean>} - True if SMS sent successfully
+ */
+async function sendReservationConfirmationSMS(reservationDetails) {
+  // Skip if Twilio credentials not configured
+  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
+    console.warn('[SMS] Twilio credentials not configured - SMS confirmation skipped');
+    return false;
+  }
+
+  const { reservationId, customerName, customerPhone, date, time, partySize } = reservationDetails;
+
+  // Skip if no phone number
+  if (!customerPhone) {
+    console.warn('[SMS] No phone number provided - SMS confirmation skipped');
+    return false;
+  }
+
+  try {
+    const twilioClient = twilio(
+      process.env.TWILIO_ACCOUNT_SID,
+      process.env.TWILIO_AUTH_TOKEN
+    );
+
+    // Format the date nicely
+    const formattedDate = new Date(date).toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    });
+
+    // Create customer-friendly SMS message
+    const message = `Hi ${customerName}! Your reservation is confirmed:
+
+📅 ${formattedDate} at ${time}
+👥 Party of ${partySize}
+🎫 Confirmation #: ${reservationId}
+
+To modify or cancel, visit:
+https://restaurant-ai-mcp.vercel.app/customer-portal
+
+Or call us anytime. See you soon!`;
+
+    await twilioClient.messages.create({
+      body: message,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: customerPhone,
+    });
+
+    console.log(`[SMS] Confirmation sent to ${customerPhone} for reservation ${reservationId}`);
+    return true;
+  } catch (error) {
+    console.error('[SMS] Failed to send confirmation:', error.message);
+    // Don't throw - SMS failure shouldn't break reservation creation
+    return false;
+  }
+}
+
 module.exports = async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -85,7 +148,7 @@ async function handleCreate(req, res) {
     'Status': 'confirmed',
     'Created At': new Date().toISOString().split('T')[0],
     'Updated At': new Date().toISOString().split('T')[0],
-    'Confirmation Sent': true,
+    'Confirmation Sent': false, // Will be set to true after SMS is sent
     'Reminder Sent': false,
     'Notes': 'Created via AI Phone System'
   };
@@ -96,6 +159,30 @@ async function handleCreate(req, res) {
     return res.status(500).json({
       message: 'I apologize, but I encountered an issue creating your reservation. Please try again or call us directly at the restaurant.'
     });
+  }
+
+  // ============================================================================
+  // SMS CONFIRMATION (Send reservation details to customer)
+  // ============================================================================
+  try {
+    const smsSent = await sendReservationConfirmationSMS({
+      reservationId,
+      customerName: customer_name,
+      customerPhone: customer_phone,
+      date,
+      time,
+      partySize: parseInt(party_size)
+    });
+
+    // Update the Confirmation Sent field based on actual SMS result
+    if (result.data && result.data.id) {
+      await updateReservation(result.data.id, {
+        'Confirmation Sent': smsSent
+      });
+    }
+  } catch (error) {
+    // Don't fail the reservation if SMS fails
+    console.error('[SMS] Error in confirmation flow:', error);
   }
 
   // ============================================================================
