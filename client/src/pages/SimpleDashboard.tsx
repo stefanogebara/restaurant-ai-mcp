@@ -1077,7 +1077,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
             <div className="space-y-3">
               {selectedTable.status === 'Occupied' && (
                 <button
-                  onClick={() => handleFreeTable(selectedTable.record_id)}
+                  onClick={() => handleFreeTable(selectedTable.id)}
                   className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-green-100/50 hover:from-green-100 hover:to-green-200/50 rounded-xl border border-green-200 transition-all duration-200 group"
                 >
                   <div className="p-2 bg-green-600 rounded-lg group-hover:scale-110 transition-transform">
@@ -1098,7 +1098,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
               {selectedTable.status !== 'Being Cleaned' && (
                 <button
-                  onClick={() => handleUpdateTableStatus(selectedTable.record_id, 'Being Cleaned')}
+                  onClick={() => handleUpdateTableStatus(selectedTable.id, 'Being Cleaned')}
                   className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-orange-50 to-orange-100/50 hover:from-orange-100 hover:to-orange-200/50 rounded-xl border border-orange-200 transition-all duration-200 group"
                 >
                   <div className="p-2 bg-orange-600 rounded-lg group-hover:scale-110 transition-transform">
@@ -1119,7 +1119,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
               {selectedTable.status !== 'Available' && (
                 <button
-                  onClick={() => handleUpdateTableStatus(selectedTable.record_id, 'Available')}
+                  onClick={() => handleUpdateTableStatus(selectedTable.id, 'Available')}
                   className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-indigo-50 to-indigo-100/50 hover:from-indigo-100 hover:to-indigo-200/50 rounded-xl border border-indigo-200 transition-all duration-200 group"
                 >
                   <div className="p-2 bg-indigo-600 rounded-lg group-hover:scale-110 transition-transform">

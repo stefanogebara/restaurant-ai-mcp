@@ -58,11 +58,7 @@ function App() {
               <Route path="/customer" element={<CustomerPortal />} />
               <Route path="/subscription/success" element={<SubscriptionSuccess />} />
               <Route path="/subscription/manage" element={<SubscriptionManage />} />
-              <Route path="/onboarding" element={
-                <ProtectedRoute>
-                  <Onboarding />
-                </ProtectedRoute>
-              } />
+              <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
               <Route path="/settings/language" element={<LanguageSettings />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

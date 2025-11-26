@@ -6,18 +6,130 @@
  * - Table counts by capacity (2, 4, 6, 8+ person tables)
  * - Real-time capacity calculation
  * - Plan limit enforcement (Basic: max 10 tables)
+ * - Auto-populate from profile (size/seat_count)
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { OnboardingStepProps, RestaurantArea } from '../../types/onboarding.types';
+import type { RestaurantSize } from '../../types/profile.types';
 import '../../landing/styles/glass-morphism.css';
 
 const AREA_TEMPLATES = ['Indoor', 'Patio', 'Bar', 'Private Room', 'Custom'];
 const TABLE_CAPACITIES = [2, 4, 6, 8];
 
+/**
+ * Calculate recommended table distribution based on restaurant size and total seats
+ */
+function calculateTableDistribution(size: RestaurantSize, totalSeats: number): { capacity: number; count: number }[] {
+  // Distribution ratios based on restaurant size
+  const distributions: Record<RestaurantSize, { capacity: number; ratio: number }[]> = {
+    small: [
+      { capacity: 2, ratio: 0.50 },  // 50% of tables are 2-tops
+      { capacity: 4, ratio: 0.35 },  // 35% are 4-tops
+      { capacity: 6, ratio: 0.15 },  // 15% are 6-tops
+    ],
+    medium: [
+      { capacity: 2, ratio: 0.35 },
+      { capacity: 4, ratio: 0.35 },
+      { capacity: 6, ratio: 0.20 },
+      { capacity: 8, ratio: 0.10 },
+    ],
+    large: [
+      { capacity: 2, ratio: 0.25 },
+      { capacity: 4, ratio: 0.35 },
+      { capacity: 6, ratio: 0.25 },
+      { capacity: 8, ratio: 0.15 },
+    ],
+  };
+
+  const dist = distributions[size] || distributions.medium;
+
+  // Calculate average seats per table based on distribution
+  const avgSeatsPerTable = dist.reduce((sum, d) => sum + d.capacity * d.ratio, 0);
+
+  // Estimate total tables needed
+  const estimatedTables = Math.ceil(totalSeats / avgSeatsPerTable);
+
+  // Calculate table counts for each capacity
+  let remainingSeats = totalSeats;
+  const result: { capacity: number; count: number }[] = [];
+
+  for (let i = 0; i < dist.length; i++) {
+    const d = dist[i];
+    const isLast = i === dist.length - 1;
+
+    if (isLast) {
+      // Last capacity type gets remaining tables
+      const count = Math.max(0, Math.ceil(remainingSeats / d.capacity));
+      result.push({ capacity: d.capacity, count });
+    } else {
+      // Calculate count based on ratio
+      const count = Math.round(estimatedTables * d.ratio);
+      const seatsUsed = count * d.capacity;
+      remainingSeats -= seatsUsed;
+      result.push({ capacity: d.capacity, count: Math.max(0, count) });
+    }
+  }
+
+  // Ensure all capacities are represented
+  TABLE_CAPACITIES.forEach(cap => {
+    if (!result.find(r => r.capacity === cap)) {
+      result.push({ capacity: cap, count: 0 });
+    }
+  });
+
+  // Sort by capacity
+  result.sort((a, b) => a.capacity - b.capacity);
+
+  return result;
+}
+
 export default function Step3Tables({ data, updateData, onNext, onBack }: OnboardingStepProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const hasInitialized = useRef(false);
+
+  // Pre-populate tables from profile data
+  useEffect(() => {
+    // Only run once and if profile data exists
+    if (hasInitialized.current) return;
+
+    const profileData = data.profile_data;
+    if (!profileData?.size || !profileData?.seat_count) return;
+
+    // Check if tables are already configured (not all zeros)
+    const hasExistingTables = data.areas.some(area =>
+      area.tables.some(t => t.count > 0)
+    );
+
+    if (hasExistingTables) {
+      hasInitialized.current = true;
+      return;
+    }
+
+    // Calculate recommended table distribution
+    const distribution = calculateTableDistribution(
+      profileData.size as RestaurantSize,
+      profileData.seat_count
+    );
+
+    // Update the Indoor area with the calculated distribution
+    const updatedAreas = data.areas.map(area => {
+      if (area.name === 'Indoor') {
+        return {
+          ...area,
+          tables: TABLE_CAPACITIES.map(cap => ({
+            capacity: cap,
+            count: distribution.find(d => d.capacity === cap)?.count || 0
+          }))
+        };
+      }
+      return area;
+    });
+
+    updateData({ areas: updatedAreas });
+    hasInitialized.current = true;
+  }, [data.profile_data, data.areas, updateData]);
 
   // Calculate total tables and capacity
   const calculateTotals = () => {
@@ -109,18 +221,46 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
       </div>
 
       {/* Total Capacity Summary */}
-      <div className="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-white/30 rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-white font-semibold text-lg">Total Capacity</p>
-            <p className="text-gray-300 text-sm">Across all areas</p>
+      {(() => {
+        const targetSeats = data.profile_data?.seat_count;
+        const isMatch = targetSeats && Math.abs(totalCapacity - targetSeats) <= 2;
+        const isOver = targetSeats && totalCapacity > targetSeats + 2;
+        const isUnder = targetSeats && totalCapacity < targetSeats - 2;
+
+        return (
+          <div className={`bg-gradient-to-r ${isMatch ? 'from-green-500/20 to-emerald-500/20 border-green-400/50' : 'from-indigo-500/20 to-purple-500/20 border-white/30'} border rounded-lg p-4`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-white font-semibold text-lg">Total Capacity</p>
+                <p className="text-gray-300 text-sm">Across all areas</p>
+                {targetSeats && (
+                  <p className={`text-sm mt-1 ${isMatch ? 'text-green-400' : isOver ? 'text-amber-400' : isUnder ? 'text-amber-400' : 'text-gray-400'}`}>
+                    {isMatch ? '✓ Matches your profile!' : `Target: ${targetSeats} seats`}
+                  </p>
+                )}
+              </div>
+              <div className="text-right">
+                <p className={`text-3xl font-bold ${isMatch ? 'text-green-400' : 'text-white'}`}>{totalCapacity} seats</p>
+                <p className="text-indigo-300 text-sm">{totalTables} tables</p>
+              </div>
+            </div>
           </div>
-          <div className="text-right">
-            <p className="text-3xl font-bold text-white">{totalCapacity} seats</p>
-            <p className="text-indigo-300 text-sm">{totalTables} tables</p>
+        );
+      })()}
+
+      {/* Pre-configured notice */}
+      {data.profile_data?.size && data.profile_data?.seat_count && totalTables > 0 && (
+        <div className="bg-indigo-500/10 border border-indigo-400/30 rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-sm text-indigo-200">
+              Tables pre-configured based on your {data.profile_data.size} restaurant profile ({data.profile_data.seat_count} seats). Adjust as needed.
+            </p>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Plan Limit Warning */}
       {totalTables > getPlanLimit() && (

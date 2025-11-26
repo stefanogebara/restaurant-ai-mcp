@@ -121,7 +121,7 @@ export interface ProfileQuestionnaireData {
 
   // Step 2: Size & Location
   size?: RestaurantSize;
-  seat_count?: number;
+  seat_count?: number;  // Required in form validation, optional in type for initial state
   location_type?: LocationType;
 
   // Step 3: Primary Concerns

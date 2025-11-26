@@ -45,9 +45,27 @@ export default function RestaurantProfileQuestionnaire({
   const [currentStep, setCurrentStep] = useState(1);
   const { register, watch, setValue, handleSubmit } = useForm<ProfileQuestionnaireData>({
     defaultValues: initialData,
+    mode: 'onChange', // Ensure form updates on change
   });
 
-  const watchedValues = watch();
+  // Watch specific fields to ensure re-renders when values change
+  const restaurant_type = watch('restaurant_type');
+  const size = watch('size');
+  const seat_count = watch('seat_count');
+  const location_type = watch('location_type');
+  const primary_concerns = watch('primary_concerns') || [];
+  const template = watch('template');
+
+  // Create watchedValues object for backward compatibility
+  const watchedValues = {
+    restaurant_type,
+    size,
+    seat_count,
+    location_type,
+    primary_concerns,
+    template,
+  };
+
   const totalSteps = 4;
 
   // ===========================
@@ -204,20 +222,23 @@ export default function RestaurantProfileQuestionnaire({
         </div>
       </div>
 
-      {/* Optional: Exact Seat Count */}
+      {/* Exact Seat Count - Required */}
       <div>
         <label htmlFor="seat_count" className="block text-sm font-semibold text-white mb-2">
-          Number of Seats (Optional)
+          Total Number of Seats <span className="text-red-400">*</span>
         </label>
         <input
           id="seat_count"
           type="number"
-          {...register('seat_count')}
+          {...register('seat_count', { required: 'Number of seats is required', min: 1, max: 500 })}
           placeholder="e.g., 45"
           className="glass-input w-full px-4 py-3 text-white placeholder-gray-400"
           min="1"
           max="500"
         />
+        <p className="text-xs text-gray-400 mt-1">
+          This will help pre-configure your table layout
+        </p>
       </div>
 
       {/* Location Type */}
@@ -277,7 +298,7 @@ export default function RestaurantProfileQuestionnaire({
         <button
           type="button"
           onClick={goToNextStep}
-          disabled={!watchedValues.size || !watchedValues.location_type}
+          disabled={!watchedValues.size || !watchedValues.location_type || !watchedValues.seat_count}
           className="glass-button-primary px-8 py-3 text-white font-bold rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Continue
