@@ -250,7 +250,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
       const response = await fetch(`/api/host-dashboard?action=complete-service`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ service_id: serviceId }),
+        body: JSON.stringify({ service_record_id: serviceId }),
       });
 
       if (response.ok) {
