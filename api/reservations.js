@@ -20,14 +20,22 @@ const { logReservationCreated, logCustomerCancelled } = require('./ml/data-logge
 // Twilio for SMS confirmations
 const twilio = require('twilio');
 
-/**
- * Send SMS confirmation to customer after reservation is created
- */
-async function sendReservationConfirmationSMS(customerName, customerPhone, reservationId, date, time, partySize) {
-  // Skip if Twilio credentials not configured
+// ============================================================================
+// SMS CONFIRMATION HELPER
+// ============================================================================
+async function sendReservationConfirmationSMS(customerPhone, reservationDetails) {
+  const { reservationId, customerName, partySize, date, time } = reservationDetails;
+
+  // Skip if Twilio not configured
   if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
-    console.warn('[SMS] Twilio credentials not configured - SMS confirmation skipped');
-    return false;
+    console.log('[SMS] Twilio not configured, skipping SMS confirmation');
+    return { success: false, reason: 'twilio_not_configured' };
+  }
+
+  // Validate phone number (basic check)
+  if (!customerPhone || customerPhone.length < 10) {
+    console.log('[SMS] Invalid phone number, skipping SMS:', customerPhone);
+    return { success: false, reason: 'invalid_phone' };
   }
 
   try {
@@ -36,35 +44,30 @@ async function sendReservationConfirmationSMS(customerName, customerPhone, reser
       process.env.TWILIO_AUTH_TOKEN
     );
 
-    // Format date for display
-    const dateObj = new Date(date + 'T00:00:00');
-    const formattedDate = dateObj.toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric'
-    });
+    // Format phone number (ensure it starts with +)
+    let formattedPhone = customerPhone.replace(/\D/g, ''); // Remove non-digits
+    if (!formattedPhone.startsWith('+')) {
+      // Assume US number if no country code
+      if (formattedPhone.length === 10) {
+        formattedPhone = '+1' + formattedPhone;
+      } else if (!formattedPhone.startsWith('1') && formattedPhone.length === 11) {
+        formattedPhone = '+' + formattedPhone;
+      } else {
+        formattedPhone = '+' + formattedPhone;
+      }
+    }
 
-    // Format time for display (convert 24h to 12h)
-    const [hours, minutes] = time.split(':');
-    const hour12 = hours % 12 || 12;
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    const formattedTime = `${hour12}:${minutes} ${ampm}`;
-
-    // Keep message short for Twilio trial (no emojis - reduces limit from 160 to 70)
-    const message = `Hi ${customerName}! Reservation confirmed: ${formattedDate} at ${formattedTime}, party of ${partySize}. Confirmation: ${reservationId}. See you soon!`;
-
-    await twilioClient.messages.create({
-      body: message,
+    const message = await twilioClient.messages.create({
+      body: `Chez Ambiance Reservation Confirmed! ID: ${reservationId}. ${customerName}, party of ${partySize}, on ${date} at ${time}. View/modify: https://restaurant-ai-mcp.vercel.app/customer-portal`,
       from: process.env.TWILIO_PHONE_NUMBER,
-      to: customerPhone,
+      to: formattedPhone
     });
 
-    console.log(`[SMS] Confirmation sent to ${customerPhone} for reservation ${reservationId}`);
-    return true;
+    console.log(`[SMS] Confirmation sent to ${formattedPhone}: ${message.sid}`);
+    return { success: true, messageSid: message.sid };
   } catch (error) {
-    console.error('[SMS] Failed to send confirmation:', error);
-    // Don't throw - we don't want SMS failure to break the reservation
-    return false;
+    console.error('[SMS] Error sending confirmation:', error.message);
+    return { success: false, reason: error.message };
   }
 }
 
@@ -299,23 +302,29 @@ async function handleCreate(req, res) {
   }
 
   // ============================================================================
-  // SEND SMS CONFIRMATION
+  // SMS CONFIRMATION (Send reservation details to customer)
   // ============================================================================
-  const smsSent = await sendReservationConfirmationSMS(
-    customer_name,
-    customer_phone,
-    reservationId,
-    date,
-    time,
-    parseInt(party_size)
-  );
+  try {
+    const smsResult = await sendReservationConfirmationSMS(customer_phone, {
+      reservationId,
+      customerName: customer_name,
+      partySize: party_size,
+      date,
+      time
+    });
 
-  const smsNote = smsSent
-    ? ' A confirmation has been sent to your phone.'
-    : '';
+    if (smsResult.success) {
+      console.log(`[Reservation] SMS confirmation sent for ${reservationId}`);
+    } else {
+      console.log(`[Reservation] SMS not sent: ${smsResult.reason}`);
+    }
+  } catch (error) {
+    // Don't fail the reservation if SMS fails
+    console.error('[Reservation] Error sending SMS confirmation:', error);
+  }
 
   return res.status(200).json({
-    message: `Perfect! Your reservation is confirmed for ${customer_name}, party of ${party_size}, on ${date} at ${time}.${smsNote} We look forward to seeing you!`
+    message: `Perfect! Your reservation is confirmed for ${customer_name}, party of ${party_size}, on ${date} at ${time}. Your confirmation number is ${reservationId}. We've sent you a text message with the details. We look forward to seeing you!`
   });
 }
 
