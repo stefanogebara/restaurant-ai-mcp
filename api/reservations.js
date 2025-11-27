@@ -46,24 +46,15 @@ async function sendReservationConfirmationSMS(reservationDetails) {
       process.env.TWILIO_AUTH_TOKEN
     );
 
-    // Format the date nicely
+    // Format the date nicely (short format for SMS)
     const formattedDate = new Date(date).toLocaleDateString('en-US', {
-      weekday: 'short',
       month: 'short',
       day: 'numeric'
     });
 
-    // Create customer-friendly SMS message
-    const message = `Hi ${customerName}! Your reservation is confirmed:
-
-📅 ${formattedDate} at ${time}
-👥 Party of ${partySize}
-🎫 Confirmation #: ${reservationId}
-
-To modify or cancel, visit:
-https://restaurant-ai-mcp.vercel.app/customer-portal
-
-Or call us anytime. See you soon!`;
+    // Create SHORT SMS message (trial accounts have length limits)
+    // Avoid emojis - they use Unicode which reduces SMS character limit from 160 to 70
+    const message = `Reservation confirmed! ${customerName}, party of ${partySize}, ${formattedDate} at ${time}. Confirmation: ${reservationId}`;
 
     await twilioClient.messages.create({
       body: message,
