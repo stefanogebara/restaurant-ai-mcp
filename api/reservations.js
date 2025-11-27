@@ -50,17 +50,8 @@ async function sendReservationConfirmationSMS(customerName, customerPhone, reser
     const ampm = hours >= 12 ? 'PM' : 'AM';
     const formattedTime = `${hour12}:${minutes} ${ampm}`;
 
-    const message = `Hi ${customerName}! Your reservation is confirmed:
-
-📅 ${formattedDate}
-🕐 ${formattedTime}
-👥 Party of ${partySize}
-🎫 Confirmation: ${reservationId}
-
-To view or modify your reservation, visit:
-https://restaurant-ai-mcp.vercel.app/customer
-
-See you soon! 🍽️`;
+    // Keep message short for Twilio trial (no emojis - reduces limit from 160 to 70)
+    const message = `Hi ${customerName}! Reservation confirmed: ${formattedDate} at ${formattedTime}, party of ${partySize}. Confirmation: ${reservationId}. See you soon!`;
 
     await twilioClient.messages.create({
       body: message,
