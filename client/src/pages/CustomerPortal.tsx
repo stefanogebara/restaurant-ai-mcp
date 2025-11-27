@@ -6,11 +6,23 @@ interface Reservation {
   customer_name: string;
   customer_email: string;
   customer_phone: string;
-  date: string;
-  time: string;
+  date?: string;
+  time?: string;
+  reservation_time?: string; // API returns combined date-time
   party_size: number;
   special_requests?: string;
   status: string;
+}
+
+// Helper to parse reservation_time into date and time
+function parseReservationDateTime(reservation: Reservation) {
+  // If we have reservation_time (API format), parse it
+  if (reservation.reservation_time) {
+    const [datePart, timePart] = reservation.reservation_time.split(' ');
+    return { date: datePart, time: timePart?.slice(0, 5) || '' }; // Remove seconds from time
+  }
+  // Otherwise use separate fields
+  return { date: reservation.date || '', time: reservation.time || '' };
 }
 
 export default function CustomerPortal() {
@@ -48,7 +60,9 @@ export default function CustomerPortal() {
 
       if (data.success && data.reservation) {
         setReservation(data.reservation);
-        setModifiedData(data.reservation);
+        // Parse reservation_time into separate date/time for the modify form
+        const { date, time } = parseReservationDateTime(data.reservation);
+        setModifiedData({ ...data.reservation, date, time });
         success('Reservation found!');
       } else {
         showError(data.message || 'Reservation not found');
@@ -269,36 +283,43 @@ export default function CustomerPortal() {
                   <>
                     {/* View Mode */}
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <div className="text-xs text-muted-foreground">Date</div>
-                          <div className="font-semibold text-foreground">
-                            {new Date(reservation.date).toLocaleDateString('en-US', {
-                              weekday: 'long',
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })}
-                          </div>
-                        </div>
-                      </div>
+                      {(() => {
+                        const { date, time } = parseReservationDateTime(reservation);
+                        return (
+                          <>
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                              </div>
+                              <div>
+                                <div className="text-xs text-muted-foreground">Date</div>
+                                <div className="font-semibold text-foreground">
+                                  {date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
+                                    weekday: 'long',
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                  }) : 'Not set'}
+                                </div>
+                              </div>
+                            </div>
 
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <div className="text-xs text-muted-foreground">Time</div>
-                          <div className="font-semibold text-foreground">{reservation.time}</div>
-                        </div>
-                      </div>
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              </div>
+                              <div>
+                                <div className="text-xs text-muted-foreground">Time</div>
+                                <div className="font-semibold text-foreground">{time || 'Not set'}</div>
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
 
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">

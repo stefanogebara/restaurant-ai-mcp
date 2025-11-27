@@ -32,6 +32,38 @@ const handleSupabaseResponse = (data, error, operation = 'query') => {
   return { success: true, data };
 };
 
+/**
+ * Normalize date to YYYY-MM-DD format
+ * Handles various input formats from Supabase (ISO strings, Date objects, etc.)
+ */
+const normalizeDate = (dateValue) => {
+  if (!dateValue) return '';
+  // If already in YYYY-MM-DD format, return as-is
+  if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    return dateValue;
+  }
+  // Handle ISO strings or Date objects
+  try {
+    const date = new Date(dateValue);
+    if (isNaN(date.getTime())) return '';
+    return date.toISOString().split('T')[0];
+  } catch {
+    return '';
+  }
+};
+
+/**
+ * Normalize time to HH:MM:SS format
+ */
+const normalizeTime = (timeValue) => {
+  if (!timeValue) return '';
+  // If already in HH:MM:SS or HH:MM format, return as-is
+  if (typeof timeValue === 'string' && /^\d{2}:\d{2}(:\d{2})?$/.test(timeValue)) {
+    return timeValue;
+  }
+  return timeValue.toString();
+};
+
 // ============ RESERVATIONS ============
 
 const getReservations = async (filter = {}) => {
@@ -158,13 +190,6 @@ const updateReservation = async (recordId, fields) => {
   if (fields['ML Confidence']) updates.ml_confidence = fields['ML Confidence'];
   if (fields['ML Model Version']) updates.ml_model_version = fields['ML Model Version'];
   if (fields['ML Prediction Timestamp']) updates.ml_prediction_timestamp = fields['ML Prediction Timestamp'];
-  // SMS confirmation tracking
-  if (fields['Confirmation Sent'] !== undefined) {
-    updates.confirmation_sent = fields['Confirmation Sent'];
-    if (fields['Confirmation Sent'] === true) {
-      updates.confirmation_sent_at = new Date().toISOString();
-    }
-  }
 
   const { data, error } = await supabase
     .from('reservations')
@@ -743,7 +768,9 @@ const findReservation = async ({ reservation_id, customer_phone, customer_name }
       customer_phone: data.customer_phone,
       customer_email: data.customer_email || '',
       party_size: data.party_size,
-      reservation_time: `${data.date} ${data.time}`,
+      date: normalizeDate(data.date),
+      time: normalizeTime(data.time),
+      reservation_time: `${normalizeDate(data.date)} ${normalizeTime(data.time)}`,
       special_requests: data.special_requests || '',
       status: data.status,
       record_id: data.id
@@ -810,9 +837,9 @@ const getUpcomingReservations = async () => {
     customer_phone: r.customer_phone,
     customer_email: r.customer_email || '',
     party_size: r.party_size,
-    date: r.date,
-    time: r.time,
-    reservation_time: `${r.date} ${r.time}`,
+    date: normalizeDate(r.date),
+    time: normalizeTime(r.time),
+    reservation_time: `${normalizeDate(r.date)} ${normalizeTime(r.time)}`,
     special_requests: r.special_requests || '',
     checked_in: !!r.checked_in_at,
     checked_in_at: r.checked_in_at || null,
