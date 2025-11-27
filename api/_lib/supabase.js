@@ -158,6 +158,13 @@ const updateReservation = async (recordId, fields) => {
   if (fields['ML Confidence']) updates.ml_confidence = fields['ML Confidence'];
   if (fields['ML Model Version']) updates.ml_model_version = fields['ML Model Version'];
   if (fields['ML Prediction Timestamp']) updates.ml_prediction_timestamp = fields['ML Prediction Timestamp'];
+  // SMS confirmation tracking
+  if (fields['Confirmation Sent'] !== undefined) {
+    updates.confirmation_sent = fields['Confirmation Sent'];
+    if (fields['Confirmation Sent'] === true) {
+      updates.confirmation_sent_at = new Date().toISOString();
+    }
+  }
 
   const { data, error } = await supabase
     .from('reservations')
