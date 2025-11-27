@@ -58,7 +58,7 @@ async function sendReservationConfirmationSMS(customerPhone, reservationDetails)
     }
 
     const message = await twilioClient.messages.create({
-      body: `Chez Ambiance Reservation Confirmed! ID: ${reservationId}. ${customerName}, party of ${partySize}, on ${date} at ${time}. View/modify: https://restaurant-ai-mcp.vercel.app/customer-portal`,
+      body: `Chez Ambiance: ${customerName}, ${partySize}p on ${date} at ${time}. Conf# ${reservationId}`,
       from: process.env.TWILIO_PHONE_NUMBER,
       to: formattedPhone
     });
