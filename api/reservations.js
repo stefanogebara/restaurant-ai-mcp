@@ -242,41 +242,38 @@ async function handleCreate(req, res) {
     // ============================================================================
     // CREATE INTERVENTION RECORD (For ROI Tracking)
     // ============================================================================
-    // If reservation has high/very-high risk, create intervention record
-    if (prediction && (prediction.noShowRisk === 'high' || prediction.noShowRisk === 'very-high')) {
+    // If reservation has high/very-high/critical risk, create intervention record
+    // Note: Lambda ML returns 'critical' for very-high risk
+    const highRiskLevels = ['high', 'very-high', 'critical'];
+    if (prediction && highRiskLevels.includes(prediction.noShowRisk)) {
       try {
-        const { processReservation } = require('./services/mlRiskScoring');
+        const { getRecommendedIntervention } = require('./services/mlRiskScoring');
+        const { createClient } = require('@supabase/supabase-js');
+        const supabase = createClient(
+          process.env.SUPABASE_URL,
+          process.env.SUPABASE_ANON_KEY
+        );
 
-        // Process reservation to get intervention recommendation
-        const interventionData = await processReservation({
-          reservation_id: reservationId,
-          customer_name,
-          customer_phone,
-          customer_email: customer_email || '',
-          party_size: parseInt(party_size),
-          date,
-          time,
-          created_at: new Date().toISOString(),
-          special_requests: special_requests || ''
-        });
+        // Map 'critical' to 'very-high' for intervention recommendation
+        const mappedRiskLevel = prediction.noShowRisk === 'critical' ? 'very-high' : prediction.noShowRisk;
+
+        // Get intervention recommendation using Lambda's prediction directly
+        const riskScore = Math.round(prediction.noShowProbability * 100);
+        const recommendedIntervention = await getRecommendedIntervention(mappedRiskLevel, riskScore);
+
+        console.log(`[Intervention] Lambda risk: ${prediction.noShowRisk} (${riskScore}%), intervention: ${recommendedIntervention?.type || 'none'}`);
 
         // Create intervention record in ml_interventions table
-        if (interventionData && interventionData.recommendedIntervention) {
-          const { createClient } = require('@supabase/supabase-js');
-          const supabase = createClient(
-            process.env.SUPABASE_URL,
-            process.env.SUPABASE_ANON_KEY
-          );
-
+        if (recommendedIntervention) {
           const { data: intervention, error: interventionError } = await supabase
             .from('ml_interventions')
             .insert({
               reservation_id: reservationId,
-              ml_risk_score: interventionData.riskScore,
-              ml_risk_level: interventionData.riskLevel,
-              intervention_type: interventionData.recommendedIntervention.type,
-              cost_of_intervention: interventionData.recommendedIntervention.estimatedCost,
-              estimated_value: interventionData.recommendedIntervention.estimatedValue,
+              ml_risk_score: riskScore,
+              ml_risk_level: prediction.noShowRisk,
+              intervention_type: recommendedIntervention.type,
+              cost_of_intervention: recommendedIntervention.estimatedCost,
+              estimated_value: recommendedIntervention.estimatedValue,
               action_taken: false, // Staff hasn't taken action yet
               created_at: new Date().toISOString()
             })
