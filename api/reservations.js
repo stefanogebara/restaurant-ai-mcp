@@ -242,10 +242,10 @@ async function handleCreate(req, res) {
     // ============================================================================
     // CREATE INTERVENTION RECORD (For ROI Tracking)
     // ============================================================================
-    // If reservation has high/very-high/critical risk, create intervention record
-    // Note: Lambda ML returns 'critical' for very-high risk
-    const highRiskLevels = ['high', 'very-high', 'critical'];
-    if (prediction && highRiskLevels.includes(prediction.noShowRisk)) {
+    // Create intervention for medium, high, very-high, or critical risk
+    // Lambda XGBoost model is conservative - medium risk (~37%) warrants intervention
+    const interventionRiskLevels = ['medium', 'high', 'very-high', 'critical'];
+    if (prediction && interventionRiskLevels.includes(prediction.noShowRisk)) {
       try {
         const { getRecommendedIntervention } = require('./services/mlRiskScoring');
         const { createClient } = require('@supabase/supabase-js');
@@ -254,8 +254,11 @@ async function handleCreate(req, res) {
           process.env.SUPABASE_ANON_KEY
         );
 
-        // Map 'critical' to 'very-high' for intervention recommendation
-        const mappedRiskLevel = prediction.noShowRisk === 'critical' ? 'very-high' : prediction.noShowRisk;
+        // Map risk levels for intervention recommendation
+        // critical -> very-high (deposit), medium -> high (confirmation call)
+        let mappedRiskLevel = prediction.noShowRisk;
+        if (prediction.noShowRisk === 'critical') mappedRiskLevel = 'very-high';
+        if (prediction.noShowRisk === 'medium') mappedRiskLevel = 'high'; // Treat medium as high for intervention
 
         // Get intervention recommendation using Lambda's prediction directly
         const riskScore = Math.round(prediction.noShowProbability * 100);
