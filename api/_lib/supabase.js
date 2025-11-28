@@ -32,38 +32,6 @@ const handleSupabaseResponse = (data, error, operation = 'query') => {
   return { success: true, data };
 };
 
-/**
- * Normalize date to YYYY-MM-DD format
- * Handles various input formats from Supabase (ISO strings, Date objects, etc.)
- */
-const normalizeDate = (dateValue) => {
-  if (!dateValue) return '';
-  // If already in YYYY-MM-DD format, return as-is
-  if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
-    return dateValue;
-  }
-  // Handle ISO strings or Date objects
-  try {
-    const date = new Date(dateValue);
-    if (isNaN(date.getTime())) return '';
-    return date.toISOString().split('T')[0];
-  } catch {
-    return '';
-  }
-};
-
-/**
- * Normalize time to HH:MM:SS format
- */
-const normalizeTime = (timeValue) => {
-  if (!timeValue) return '';
-  // If already in HH:MM:SS or HH:MM format, return as-is
-  if (typeof timeValue === 'string' && /^\d{2}:\d{2}(:\d{2})?$/.test(timeValue)) {
-    return timeValue;
-  }
-  return timeValue.toString();
-};
-
 // ============ RESERVATIONS ============
 
 const getReservations = async (filter = {}) => {
@@ -181,20 +149,35 @@ const createReservation = async (fields) => {
 const updateReservation = async (recordId, fields) => {
   const updates = {};
 
+  // Core reservation fields
+  if (fields['Date']) updates.date = fields['Date'];
+  if (fields['Time']) updates.time = fields['Time'];
+  if (fields['Party Size']) updates.party_size = fields['Party Size'];
+  if (fields['Special Requests'] !== undefined) updates.special_requests = fields['Special Requests'];
+  if (fields['Updated At']) updates.updated_at = fields['Updated At'];
+
+  // Status and tracking fields
   if (fields['Status']) updates.status = fields['Status'];
   if (fields['Checked In At']) updates.checked_in_at = fields['Checked In At'];
   if (fields['Table IDs']) updates.table_ids = fields['Table IDs'];
   if (fields['Notes']) updates.notes = fields['Notes'];
+  if (fields['Customer History']) updates.customer_history = fields['Customer History'];
+
+  // ML prediction fields
   if (fields['ML Risk Score']) updates.ml_risk_score = fields['ML Risk Score'];
   if (fields['ML Risk Level']) updates.ml_risk_level = fields['ML Risk Level'];
   if (fields['ML Confidence']) updates.ml_confidence = fields['ML Confidence'];
   if (fields['ML Model Version']) updates.ml_model_version = fields['ML Model Version'];
   if (fields['ML Prediction Timestamp']) updates.ml_prediction_timestamp = fields['ML Prediction Timestamp'];
 
+  // Determine if recordId is a UUID or reservation_id
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(recordId);
+  const filterColumn = isUUID ? 'id' : 'reservation_id';
+
   const { data, error } = await supabase
     .from('reservations')
     .update(updates)
-    .eq('id', recordId)
+    .eq(filterColumn, recordId)
     .select()
     .single();
 
@@ -768,9 +751,7 @@ const findReservation = async ({ reservation_id, customer_phone, customer_name }
       customer_phone: data.customer_phone,
       customer_email: data.customer_email || '',
       party_size: data.party_size,
-      date: normalizeDate(data.date),
-      time: normalizeTime(data.time),
-      reservation_time: `${normalizeDate(data.date)} ${normalizeTime(data.time)}`,
+      reservation_time: `${data.date} ${data.time}`,
       special_requests: data.special_requests || '',
       status: data.status,
       record_id: data.id
@@ -837,9 +818,9 @@ const getUpcomingReservations = async () => {
     customer_phone: r.customer_phone,
     customer_email: r.customer_email || '',
     party_size: r.party_size,
-    date: normalizeDate(r.date),
-    time: normalizeTime(r.time),
-    reservation_time: `${normalizeDate(r.date)} ${normalizeTime(r.time)}`,
+    date: r.date,
+    time: r.time,
+    reservation_time: `${r.date} ${r.time}`,
     special_requests: r.special_requests || '',
     checked_in: !!r.checked_in_at,
     checked_in_at: r.checked_in_at || null,
