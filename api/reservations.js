@@ -13,8 +13,8 @@ const {
   getCustomerStats
 } = require('./_lib/customer-history');
 
-// Use Lambda ML endpoint for production predictions (XGBoost 3.1.1 on AWS Lambda)
-const { predictNoShow } = require('./ml/lambda-predict');
+// Use heuristic model for restaurant-specific predictions (more accurate than hotel-trained Lambda)
+const { calculateRiskScore, getRecommendedIntervention } = require('./services/mlRiskScoring');
 const { logReservationCreated, logCustomerCancelled } = require('./ml/data-logger');
 
 // Twilio for SMS confirmations
@@ -185,10 +185,10 @@ async function handleCreate(req, res) {
   }
 
   // ============================================================================
-  // ML PREDICTION - NO-SHOW RISK SCORING (Day 13)
+  // ML PREDICTION - NO-SHOW RISK SCORING (Heuristic Model)
   // ============================================================================
   try {
-    console.log('[MLPrediction] Starting no-show prediction...');
+    console.log('[MLPrediction] Starting no-show prediction with heuristic model...');
 
     // Get customer history for feature extraction
     const customerHistory = await getCustomerStats(customer_email, customer_phone);
@@ -203,28 +203,35 @@ async function handleCreate(req, res) {
       customer_phone: customer_phone,
       customer_email: customer_email || '',
       special_requests: special_requests || '',
-      booking_created_at: new Date().toISOString(),
-      is_special_occasion: false, // TODO: Extract from special_requests
-      confirmation_sent_at: new Date().toISOString(),
-      confirmation_clicked: false
+      created_at: new Date().toISOString()
     };
 
-    // Get no-show prediction
-    const prediction = await predictNoShow(reservationForPrediction, customerHistory);
+    // Get no-show prediction using heuristic model (restaurant-specific)
+    const riskData = await calculateRiskScore(reservationForPrediction);
+
+    // Map to expected format for compatibility
+    const prediction = {
+      noShowProbability: riskData.riskScore / 100, // Convert 0-100 to 0-1
+      noShowRisk: riskData.riskLevel, // low, medium, high, very-high
+      confidence: riskData.confidence,
+      factors: riskData.factors,
+      metadata: { modelVersion: riskData.modelVersion }
+    };
 
     console.log('[MLPrediction] Prediction result:', {
-      probability: prediction.probability,
-      riskLevel: prediction.riskLevel,
-      confidence: prediction.confidence
+      riskScore: riskData.riskScore,
+      riskLevel: riskData.riskLevel,
+      confidence: riskData.confidence,
+      factors: riskData.factors.map(f => f.description)
     });
 
     // Update reservation with ML predictions
     if (result.data && result.data.id && prediction) {
       const mlFields = {
-        'ML Risk Score': Math.round(prediction.noShowProbability * 100), // Store as percentage (0-100)
-        'ML Risk Level': prediction.noShowRisk, // low, medium, high, very-high
-        'ML Confidence': Math.round(prediction.confidence * 100), // Store as percentage
-        'ML Model Version': prediction.metadata?.modelVersion || '1.0.0'
+        'ML Risk Score': riskData.riskScore, // Already 0-100
+        'ML Risk Level': riskData.riskLevel, // low, medium, high, very-high
+        'ML Confidence': riskData.confidence, // Already percentage
+        'ML Model Version': riskData.modelVersion
       };
 
       await updateReservation(result.data.id, mlFields);
@@ -234,7 +241,7 @@ async function handleCreate(req, res) {
       const reservationWithId = {
         ...reservationForPrediction,
         reservation_id: result.data.fields['Reservation ID'],
-        created_at: reservationForPrediction.booking_created_at
+        created_at: reservationForPrediction.created_at
       };
       await logReservationCreated(reservationWithId, prediction, customerHistory);
     }
@@ -242,29 +249,24 @@ async function handleCreate(req, res) {
     // ============================================================================
     // CREATE INTERVENTION RECORD (For ROI Tracking)
     // ============================================================================
-    // Create intervention for medium, high, very-high, or critical risk
-    // Lambda XGBoost model is conservative - medium risk (~37%) warrants intervention
-    const interventionRiskLevels = ['medium', 'high', 'very-high', 'critical'];
+    // Create intervention for medium, high, or very-high risk reservations
+    const interventionRiskLevels = ['medium', 'high', 'very-high'];
     if (prediction && interventionRiskLevels.includes(prediction.noShowRisk)) {
       try {
-        const { getRecommendedIntervention } = require('./services/mlRiskScoring');
         const { createClient } = require('@supabase/supabase-js');
         const supabase = createClient(
           process.env.SUPABASE_URL,
           process.env.SUPABASE_ANON_KEY
         );
 
-        // Map risk levels for intervention recommendation
-        // critical -> very-high (deposit), medium -> high (confirmation call)
-        let mappedRiskLevel = prediction.noShowRisk;
-        if (prediction.noShowRisk === 'critical') mappedRiskLevel = 'very-high';
-        if (prediction.noShowRisk === 'medium') mappedRiskLevel = 'high'; // Treat medium as high for intervention
+        // Map medium to high for intervention type (confirmation call)
+        const mappedRiskLevel = prediction.noShowRisk === 'medium' ? 'high' : prediction.noShowRisk;
 
-        // Get intervention recommendation using Lambda's prediction directly
-        const riskScore = Math.round(prediction.noShowProbability * 100);
+        // Get intervention recommendation
+        const riskScore = riskData.riskScore;
         const recommendedIntervention = await getRecommendedIntervention(mappedRiskLevel, riskScore);
 
-        console.log(`[Intervention] Lambda risk: ${prediction.noShowRisk} (${riskScore}%), intervention: ${recommendedIntervention?.type || 'none'}`);
+        console.log(`[Intervention] Risk: ${prediction.noShowRisk} (${riskScore}%), intervention: ${recommendedIntervention?.type || 'none'}`);
 
         // Create intervention record in ml_interventions table
         if (recommendedIntervention) {
