@@ -278,9 +278,8 @@ async function handleCreate(req, res) {
               ml_risk_level: prediction.noShowRisk,
               intervention_type: recommendedIntervention.type,
               cost_of_intervention: recommendedIntervention.estimatedCost,
-              estimated_value: recommendedIntervention.estimatedValue,
-              action_taken: false, // Staff hasn't taken action yet
-              created_at: new Date().toISOString()
+              value_saved: recommendedIntervention.estimatedValue, // Column is value_saved, not estimated_value
+              action_taken: false
             })
             .select()
             .single();
@@ -291,7 +290,7 @@ async function handleCreate(req, res) {
             console.log(`[Intervention] Created intervention ${intervention.intervention_id} for ${reservationId}`);
             console.log(`   Type: ${intervention.intervention_type}`);
             console.log(`   Risk: ${intervention.ml_risk_level} (${intervention.ml_risk_score}/100)`);
-            console.log(`   Estimated ROI: ${Math.round((intervention.estimated_value / intervention.cost_of_intervention) * 100)}%`);
+            console.log(`   Estimated ROI: ${Math.round((intervention.value_saved / intervention.cost_of_intervention) * 100)}%`);
           }
         }
       } catch (error) {
