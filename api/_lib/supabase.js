@@ -884,6 +884,7 @@ const findBestTableCombination = (availableTables, partySize) => {
 
       recommendations.push({
         tables: [table.table_number],
+        table_ids: [table.id],  // UUIDs for API operations
         total_capacity: table.capacity,
         match_quality: matchQuality,
         score: waste === 0 ? 100 : Math.max(0, 100 - waste * 10),
@@ -906,6 +907,7 @@ const findBestTableCombination = (availableTables, partySize) => {
 
         recommendations.push({
           tables: [availableTables[i].table_number, availableTables[j].table_number],
+          table_ids: [availableTables[i].id, availableTables[j].id],  // UUIDs for API operations
           total_capacity: totalCapacity,
           match_quality: matchQuality,
           score: waste === 0 ? 95 : Math.max(0, 95 - waste * 10),

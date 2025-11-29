@@ -10,7 +10,7 @@ import {
 interface TableCombinationSelectorProps {
   availableTables: Table[];
   partySize: number;
-  onSelect: (tableIds: string[]) => void;
+  onSelect: (tableIds: string[], tableNumbers: string[]) => void;
   selectedTableIds?: string[];
 }
 
@@ -30,13 +30,19 @@ export default function TableCombinationSelector({
     // Auto-select best combination if none selected
     if (suggested.length > 0 && selectedTableIds.length === 0) {
       setSelectedCombination(suggested[0]);
-      onSelect(suggested[0].tables.map(t => t.id));
+      onSelect(
+        suggested[0].tables.map(t => t.id),
+        suggested[0].tables.map(t => t.table_number)
+      );
     }
   }, [availableTables, partySize]);
 
   const handleSelectCombination = (combination: TableCombination) => {
     setSelectedCombination(combination);
-    onSelect(combination.tables.map(t => t.id));
+    onSelect(
+      combination.tables.map(t => t.id),
+      combination.tables.map(t => t.table_number)
+    );
   };
 
   if (combinations.length === 0) {

@@ -18,26 +18,26 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
     preferred_location: '',
   });
   const [selectedTableIds, setSelectedTableIds] = useState<string[]>([]);
+  const [selectedTableNumbers, setSelectedTableNumbers] = useState<string[]>([]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setStep(2); // Move to table selection step
   };
 
-  const handleProceedToSeat = () => {
-    // Get table numbers for display (map UUIDs to table numbers)
-    const tableNumbers = selectedTableIds.map(id => {
-      const table = availableTables.find(t => t.id === id);
-      return table ? table.table_number : id;
-    });
+  const handleTableSelect = (tableIds: string[], tableNumbers: string[]) => {
+    setSelectedTableIds(tableIds);
+    setSelectedTableNumbers(tableNumbers);
+  };
 
+  const handleProceedToSeat = () => {
     onSuccess({
       type: 'walk-in',
       customer_name: formData.customer_name,
       customer_phone: formData.customer_phone,
       party_size: parseInt(formData.party_size),
       table_ids: selectedTableIds,
-      table_numbers: tableNumbers, // For display purposes
+      table_numbers: selectedTableNumbers, // For display purposes
       special_requests: '',
     });
   };
@@ -45,12 +45,14 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
   const handleBack = () => {
     setStep(1);
     setSelectedTableIds([]);
+    setSelectedTableNumbers([]);
   };
 
   const handleClose = () => {
     setStep(1);
     setFormData({ party_size: '', customer_name: '', customer_phone: '', preferred_location: '' });
     setSelectedTableIds([]);
+    setSelectedTableNumbers([]);
     onClose();
   };
 
@@ -168,7 +170,7 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
             <TableCombinationSelector
               availableTables={filteredTables}
               partySize={parseInt(formData.party_size)}
-              onSelect={setSelectedTableIds}
+              onSelect={handleTableSelect}
               selectedTableIds={selectedTableIds}
             />
 

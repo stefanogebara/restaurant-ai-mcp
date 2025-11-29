@@ -13,6 +13,7 @@ interface CheckInModalProps {
 export default function CheckInModal({ isOpen, reservation, onClose, onSuccess, availableTables }: CheckInModalProps) {
   const [showTableSelection, setShowTableSelection] = useState(false);
   const [selectedTableIds, setSelectedTableIds] = useState<string[]>([]);
+  const [selectedTableNumbers, setSelectedTableNumbers] = useState<string[]>([]);
 
   const handleCheckIn = () => {
     setShowTableSelection(true);
@@ -28,6 +29,7 @@ export default function CheckInModal({ isOpen, reservation, onClose, onSuccess, 
         party_size: reservation.party_size,
         special_requests: reservation.special_requests,
         table_ids: selectedTableIds,
+        table_numbers: selectedTableNumbers,
       });
     }
   };
@@ -35,12 +37,19 @@ export default function CheckInModal({ isOpen, reservation, onClose, onSuccess, 
   const handleClose = () => {
     setShowTableSelection(false);
     setSelectedTableIds([]);
+    setSelectedTableNumbers([]);
     onClose();
   };
 
   const handleBack = () => {
     setShowTableSelection(false);
     setSelectedTableIds([]);
+    setSelectedTableNumbers([]);
+  };
+
+  const handleTableSelect = (tableIds: string[], tableNumbers: string[]) => {
+    setSelectedTableIds(tableIds);
+    setSelectedTableNumbers(tableNumbers);
   };
 
   if (!isOpen || !reservation) return null;
@@ -103,7 +112,7 @@ export default function CheckInModal({ isOpen, reservation, onClose, onSuccess, 
             <TableCombinationSelector
               availableTables={availableTables}
               partySize={reservation.party_size}
-              onSelect={setSelectedTableIds}
+              onSelect={handleTableSelect}
               selectedTableIds={selectedTableIds}
             />
 
