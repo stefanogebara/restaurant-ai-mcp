@@ -6,18 +6,19 @@
 
 // Language mapping for countries
 const COUNTRY_LANGUAGE_MAP = {
-  // Spanish-speaking countries
-  'Spain': 'es', 'España': 'es',
-  'Mexico': 'es', 'México': 'es',
-  'Argentina': 'es', 'Colombia': 'es',
-  'Chile': 'es', 'Peru': 'es', 'Perú': 'es',
-  'Venezuela': 'es', 'Ecuador': 'es',
-  'Guatemala': 'es', 'Cuba': 'es',
-  'Bolivia': 'es', 'Dominican Republic': 'es',
-  'Honduras': 'es', 'Paraguay': 'es',
-  'El Salvador': 'es', 'Nicaragua': 'es',
-  'Costa Rica': 'es', 'Panama': 'es', 'Panamá': 'es',
-  'Uruguay': 'es', 'Puerto Rico': 'es',
+  // Spanish-speaking countries - Spain gets special treatment (es-ES)
+  'Spain': 'es-ES', 'España': 'es-ES',
+  // Latin American Spanish (es-LATAM)
+  'Mexico': 'es-LATAM', 'México': 'es-LATAM',
+  'Argentina': 'es-LATAM', 'Colombia': 'es-LATAM',
+  'Chile': 'es-LATAM', 'Peru': 'es-LATAM', 'Perú': 'es-LATAM',
+  'Venezuela': 'es-LATAM', 'Ecuador': 'es-LATAM',
+  'Guatemala': 'es-LATAM', 'Cuba': 'es-LATAM',
+  'Bolivia': 'es-LATAM', 'Dominican Republic': 'es-LATAM',
+  'Honduras': 'es-LATAM', 'Paraguay': 'es-LATAM',
+  'El Salvador': 'es-LATAM', 'Nicaragua': 'es-LATAM',
+  'Costa Rica': 'es-LATAM', 'Panama': 'es-LATAM', 'Panamá': 'es-LATAM',
+  'Uruguay': 'es-LATAM', 'Puerto Rico': 'es-LATAM',
 
   // English-speaking countries
   'United Kingdom': 'en', 'UK': 'en', 'England': 'en',
@@ -37,8 +38,9 @@ const COUNTRY_LANGUAGE_MAP = {
   // Italian-speaking countries
   'Italy': 'it',
 
-  // Portuguese-speaking countries
-  'Portugal': 'pt', 'Brazil': 'pt',
+  // Portuguese-speaking countries - Portugal gets European Portuguese
+  'Portugal': 'pt-PT',
+  'Brazil': 'pt-BR',
 
   // Other languages
   'China': 'zh', 'Japan': 'ja',
@@ -46,6 +48,34 @@ const COUNTRY_LANGUAGE_MAP = {
   'Netherlands': 'nl', 'Poland': 'pl',
   'Russia': 'ru', 'Sweden': 'sv',
   'Turkey': 'tr', 'India': 'hi'
+};
+
+// CURATED VOICE LISTS - High-quality voices for each language/region
+// These are hand-picked ElevenLabs voices that sound professional and native
+const CURATED_VOICES = {
+  // Spanish (Spain) - Castilian accent voices
+  'es-ES': [
+    { id: 'PBaBRSRTvwmnK1PAq9e0', name: 'JeiJo', description: 'Professional male voice with Castilian accent from Madrid', gender: 'male' },
+    { id: 'CAEve7xpu0AvVWiKm2px', name: 'Javier España', description: 'Warm middle-aged Spanish male, perfect for hospitality', gender: 'male' },
+    { id: 'dHdIIFZMLzs6XfsGtmIP', name: 'Sheila España', description: 'Dynamic middle-aged female voice with Peninsular accent', gender: 'female' },
+    { id: 'nMPrFLO7QElx9wTR0JGo', name: 'Ginyin', description: 'Young male voice from Spain with neutral Castilian accent', gender: 'male' },
+    { id: 'BPoDAH7n4gFrnGY27Jkj', name: 'Frankie San Juan', description: 'Middle aged male voice from Spain with neutral accent', gender: 'male' },
+    { id: 'syjZiIvIUSwKREBfMpKZ', name: 'Jacobo Montoro', description: 'Warm middle-aged male voice from southern Spain', gender: 'male' }
+  ],
+
+  // Portuguese (Portugal) - European Portuguese voices
+  'pt-PT': [
+    { id: 'aLFUti4k8YKvtQGXv0UO', name: 'Paulo PT', description: 'Professional male voice with Lisbon accent', gender: 'male' },
+    { id: 'WsQeRzWJvoDvhPPJj5r7', name: 'Francisco', description: 'Conversational 30-year-old Portuguese male voice', gender: 'male' },
+    { id: 'NdHRjGnnDKGnnm2c19le', name: 'Tiago', description: 'Young Portuguese male with calm and professional tone', gender: 'male' },
+    { id: 'WgE8iWzGVoJYLb5V7l2d', name: 'Hugo Mendonça', description: 'Middle aged Portuguese male, perfect for narration', gender: 'male' }
+  ],
+
+  // Portuguese (Brazil) - Brazilian Portuguese voices (fallback to API)
+  'pt-BR': null, // Will use API filtering
+
+  // Spanish (Latin America) - Will use API filtering
+  'es-LATAM': null
 };
 
 // Sample phrases for voice preview (language-specific)
@@ -122,6 +152,43 @@ module.exports = async (req, res) => {
 
     console.log(`[ElevenLabs] Fetching voices for language: ${targetLanguage} (country: ${country})`);
 
+    // Check if we have curated voices for this language/region
+    const curatedVoices = CURATED_VOICES[targetLanguage];
+    if (curatedVoices && curatedVoices.length > 0) {
+      console.log(`[ElevenLabs] Using ${curatedVoices.length} curated voices for ${targetLanguage}`);
+
+      // Get the base language code for preview phrase (es-ES -> es, pt-PT -> pt)
+      const baseLanguage = targetLanguage.split('-')[0];
+      const previewPhrase = PREVIEW_PHRASES[baseLanguage] || PREVIEW_PHRASES['en'];
+
+      const voicesWithPhrases = curatedVoices.map(voice => ({
+        id: voice.id,
+        name: voice.name,
+        description: voice.description,
+        language: targetLanguage,
+        gender: voice.gender,
+        preview_phrase: previewPhrase,
+        preview_url: null,
+        category: 'curated',
+        is_multilingual: false
+      }));
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          voices: voicesWithPhrases,
+          language: targetLanguage,
+          country: country,
+          total_count: voicesWithPhrases.length,
+          returned_count: voicesWithPhrases.length,
+          source: 'curated'
+        }
+      });
+    }
+
+    // For non-curated languages, normalize language code (es-LATAM -> es, pt-BR -> pt)
+    const normalizedLanguage = targetLanguage.split('-')[0];
+
     // Fetch voices from ElevenLabs API
     const response = await fetch('https://api.elevenlabs.io/v1/voices', {
       method: 'GET',
@@ -144,8 +211,8 @@ module.exports = async (req, res) => {
     const voices = data.voices || [];
     console.log(`[ElevenLabs] Received ${voices.length} total voices`);
 
-    // Get language codes to match
-    const languageCodes = ELEVENLABS_LANGUAGE_MAP[targetLanguage] || [targetLanguage];
+    // Get language codes to match (use normalized language for API filtering)
+    const languageCodes = ELEVENLABS_LANGUAGE_MAP[normalizedLanguage] || [normalizedLanguage];
 
     // Filter voices by language
     // ElevenLabs voices have fine_tuning.language or labels.language
@@ -162,7 +229,7 @@ module.exports = async (req, res) => {
       // Match if language matches or if it's a high-quality multilingual voice
       return languageCodes.some(code =>
         voiceLanguage.toLowerCase().startsWith(code.toLowerCase())
-      ) || (isMultilingual && targetLanguage === 'en');
+      ) || (isMultilingual && normalizedLanguage === 'en');
     });
 
     // Track if we're using fallback (multilingual) voices
@@ -177,7 +244,7 @@ module.exports = async (req, res) => {
       );
     }
 
-    console.log(`[ElevenLabs] Filtered to ${filteredVoices.length} voices for language ${targetLanguage} (multilingual: ${usingMultilingualFallback})`);
+    console.log(`[ElevenLabs] Filtered to ${filteredVoices.length} voices for language ${normalizedLanguage} (multilingual: ${usingMultilingualFallback})`);
 
     // Sort by quality/popularity and return top 6 voices
     const sortedVoices = filteredVoices.sort((a, b) => {
@@ -188,8 +255,8 @@ module.exports = async (req, res) => {
 
     const voicesToReturn = sortedVoices.slice(0, 6);
 
-    // Add preview phrase for each voice
-    const previewPhrase = PREVIEW_PHRASES[targetLanguage] || PREVIEW_PHRASES['en'];
+    // Add preview phrase for each voice (use normalized language)
+    const previewPhrase = PREVIEW_PHRASES[normalizedLanguage] || PREVIEW_PHRASES['en'];
     const voicesWithPhrases = voicesToReturn.map(voice => {
       // Get the voice's native language
       const nativeLanguage = voice.fine_tuning?.language || voice.labels?.language || '';
