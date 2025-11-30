@@ -4,11 +4,18 @@
 
 import type { ProfileQuestionnaireData } from './profile.types';
 
+export interface ServicePeriod {
+  open: string;
+  close: string;
+}
+
 export interface BusinessHours {
   day: string;
   is_open: boolean;
   open_time: string;
   close_time: string;
+  // Optional: For restaurants with breaks (e.g., lunch 12-15:30, dinner 19-23)
+  periods?: ServicePeriod[];
 }
 
 export interface TableConfiguration {

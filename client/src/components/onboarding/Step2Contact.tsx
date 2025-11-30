@@ -5,17 +5,97 @@
  * - Phone number
  * - Email
  * - Website (optional)
- * - Business hours (7 days)
+ * - Service type selection (breakfast, lunch, dinner)
+ * - Business hours with multi-period support
  * - Average dining duration
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
 import '../../landing/styles/glass-morphism.css';
 
+// Service type presets with recommended hours
+const SERVICE_PRESETS = {
+  breakfast_lunch: {
+    label: 'Breakfast & Lunch',
+    icon: '🌅',
+    description: 'Opens early, closes afternoon',
+    defaultHours: { open: '07:00', close: '15:00' },
+    periods: [{ open: '07:00', close: '15:00' }]
+  },
+  lunch_only: {
+    label: 'Lunch Only',
+    icon: '☀️',
+    description: 'Lunch service only',
+    defaultHours: { open: '11:30', close: '15:30' },
+    periods: [{ open: '11:30', close: '15:30' }]
+  },
+  lunch_dinner: {
+    label: 'Lunch & Dinner',
+    icon: '🍽️',
+    description: 'Classic two-service restaurant',
+    defaultHours: { open: '12:00', close: '23:00' },
+    periods: [
+      { open: '12:00', close: '15:30' },
+      { open: '19:00', close: '23:00' }
+    ]
+  },
+  dinner_only: {
+    label: 'Dinner Only',
+    icon: '🌙',
+    description: 'Evening service only',
+    defaultHours: { open: '18:00', close: '23:00' },
+    periods: [{ open: '18:00', close: '23:00' }]
+  },
+  all_day: {
+    label: 'All Day',
+    icon: '🕐',
+    description: 'Continuous service all day',
+    defaultHours: { open: '08:00', close: '23:00' },
+    periods: [{ open: '08:00', close: '23:00' }]
+  },
+  custom: {
+    label: 'Custom Hours',
+    icon: '⚙️',
+    description: 'Set your own schedule',
+    defaultHours: { open: '12:00', close: '22:00' },
+    periods: [{ open: '12:00', close: '22:00' }]
+  }
+};
+
+type ServiceType = keyof typeof SERVICE_PRESETS;
+
 export default function Step2Contact({ data, updateData, onNext, onBack }: OnboardingStepProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedServiceType, setSelectedServiceType] = useState<ServiceType>('lunch_dinner');
+  const [useMultiplePeriods, setUseMultiplePeriods] = useState(false);
+
+  // Apply service preset when selected
+  const applyServicePreset = (serviceType: ServiceType) => {
+    setSelectedServiceType(serviceType);
+    const preset = SERVICE_PRESETS[serviceType];
+
+    // Determine if this preset uses multiple periods
+    const hasMultiplePeriods = preset.periods.length > 1;
+    setUseMultiplePeriods(hasMultiplePeriods);
+
+    // Update all days with the preset hours
+    const updatedHours = data.business_hours.map((day) => ({
+      ...day,
+      open_time: preset.defaultHours.open,
+      close_time: preset.defaultHours.close,
+      periods: preset.periods, // Store periods for multi-service restaurants
+    }));
+    updateData({ business_hours: updatedHours });
+  };
+
+  // Initialize with lunch_dinner preset on first render
+  useEffect(() => {
+    if (data.business_hours[0]?.open_time === '09:00') {
+      applyServicePreset('lunch_dinner');
+    }
+  }, []);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -120,6 +200,55 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
         />
       </div>
 
+      {/* Service Type Selection */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-100 mb-3">
+          What type of service does your restaurant offer?
+        </label>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+          {(Object.keys(SERVICE_PRESETS) as ServiceType[]).map((type) => {
+            const preset = SERVICE_PRESETS[type];
+            const isSelected = selectedServiceType === type;
+            return (
+              <button
+                key={type}
+                type="button"
+                onClick={() => applyServicePreset(type)}
+                className={`
+                  p-3 rounded-lg border-2 text-left transition-all
+                  ${isSelected
+                    ? 'border-violet-500 bg-violet-500/10'
+                    : 'border-gray-700 bg-gray-800/30 hover:border-gray-600'
+                  }
+                `}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xl">{preset.icon}</span>
+                  <span className="text-sm font-semibold text-gray-100">{preset.label}</span>
+                </div>
+                <p className="text-xs text-gray-400">{preset.description}</p>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Multi-period info banner */}
+        {useMultiplePeriods && (
+          <div className="mb-4 p-3 bg-violet-500/10 border border-violet-500/30 rounded-lg">
+            <div className="flex items-start gap-2">
+              <span className="text-violet-400">ℹ️</span>
+              <div>
+                <p className="text-sm text-violet-300 font-medium">Split Service Hours</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Your restaurant has a break between lunch and dinner service.
+                  The AI will know not to accept reservations during closed periods.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Business Hours */}
       <div>
         <div className="flex items-center justify-between mb-3">
@@ -168,6 +297,24 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
             </div>
           ))}
         </div>
+
+        {/* Service periods summary */}
+        {selectedServiceType === 'lunch_dinner' && (
+          <div className="mt-3 p-3 bg-gray-800/30 rounded-lg border border-gray-700">
+            <p className="text-xs text-gray-400 mb-2">Service Periods (based on first open day):</p>
+            <div className="flex flex-wrap gap-2">
+              <span className="px-2 py-1 text-xs bg-green-500/20 text-green-400 rounded">
+                Lunch: 12:00 - 15:30
+              </span>
+              <span className="px-2 py-1 text-xs bg-gray-700 text-gray-400 rounded">
+                Break: 15:30 - 19:00
+              </span>
+              <span className="px-2 py-1 text-xs bg-violet-500/20 text-violet-400 rounded">
+                Dinner: 19:00 - 23:00
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Average Dining Duration */}

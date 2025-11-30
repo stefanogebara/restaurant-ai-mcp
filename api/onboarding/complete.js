@@ -95,6 +95,9 @@ module.exports = async (req, res) => {
       timezone: 'America/New_York',  // Default timezone
       language: 'en',
       // Store additional metadata in metric_profile JSON field
+      // Template is auto-derived from subscription plan:
+      // - Basic/Free → simple template
+      // - Professional/Pro → advanced template
       metric_profile: {
         customer_email,
         restaurant_id: generatedRestaurantId,
@@ -102,6 +105,7 @@ module.exports = async (req, res) => {
         city,
         country,
         plan: plan || 'Basic',
+        template: (plan === 'professional' || plan === 'Professional' || plan === 'pro' || plan === 'Pro') ? 'advanced' : 'simple',
         website: website || '',
         cancellation_policy: cancellation_policy || 'Free cancellation up to 2 hours before reservation',
         special_notes: special_notes || '',

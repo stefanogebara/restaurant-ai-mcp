@@ -503,6 +503,45 @@ const getRestaurantInfo = async () => {
   };
 };
 
+const updateRestaurantPlan = async (plan, customerEmail = null) => {
+  // Get current restaurant info
+  const { data: current, error: fetchError } = await supabase
+    .from('restaurant_info')
+    .select('id, metric_profile')
+    .limit(1)
+    .single();
+
+  if (fetchError) return handleSupabaseResponse(null, fetchError, 'FETCH restaurant info for plan update');
+
+  // Merge with existing metric_profile
+  const updatedProfile = {
+    ...(current.metric_profile || {}),
+    plan: plan,
+    plan_updated_at: new Date().toISOString()
+  };
+
+  if (customerEmail) {
+    updatedProfile.customer_email = customerEmail;
+  }
+
+  const { data, error } = await supabase
+    .from('restaurant_info')
+    .update({ metric_profile: updatedProfile })
+    .eq('id', current.id)
+    .select()
+    .single();
+
+  if (error) return handleSupabaseResponse(null, error, 'UPDATE restaurant plan');
+
+  return {
+    success: true,
+    data: {
+      id: data.id,
+      plan: plan
+    }
+  };
+};
+
 // ============ SUBSCRIPTIONS ============
 
 const getSubscriptions = async (filter = {}) => {
@@ -589,8 +628,8 @@ const getSubscriptionByEmail = async (email) => {
         subscription_id: sub.subscription_id,
         customer_id: sub.customer_id,
         customer_email: sub.customer_email,
-        plan_name: sub.plan_type,
-        price_id: sub.stripe_price_id,
+        plan_name: sub.plan_name,
+        price_id: sub.price_id,
         status: sub.status,
         current_period_start: sub.current_period_start,
         current_period_end: sub.current_period_end,
@@ -956,6 +995,7 @@ module.exports = {
 
   // Restaurant Info
   getRestaurantInfo,
+  updateRestaurantPlan,
 
   // Subscriptions
   getSubscriptions,

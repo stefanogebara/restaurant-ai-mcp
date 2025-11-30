@@ -5,6 +5,7 @@ const {
   createSubscription,
   updateSubscription,
   getSubscriptionByCustomerId,
+  updateRestaurantPlan,
 } = require('./_lib/supabase');
 
 // This is your Stripe webhook secret for verifying webhook signatures
@@ -79,6 +80,14 @@ module.exports = async (req, res) => {
           console.log('Subscription saved to database:', subscriptionCreated.id);
         }
 
+        // Also update restaurant_info.metric_profile.plan as fallback
+        const planUpdateResult = await updateRestaurantPlan(planName, customer.email);
+        if (!planUpdateResult.success) {
+          console.error('Failed to update restaurant plan:', planUpdateResult.message);
+        } else {
+          console.log('Restaurant plan updated to:', planName);
+        }
+
         break;
 
       case 'customer.subscription.updated':
@@ -104,6 +113,11 @@ module.exports = async (req, res) => {
           console.log('Subscription updated in database:', subscriptionUpdated.id);
         }
 
+        // Also update restaurant_info.metric_profile.plan
+        if (updatedPlanName) {
+          await updateRestaurantPlan(updatedPlanName);
+        }
+
         break;
 
       case 'customer.subscription.deleted':
@@ -121,6 +135,9 @@ module.exports = async (req, res) => {
         } else {
           console.log('Subscription canceled in database:', subscriptionDeleted.id);
         }
+
+        // Downgrade restaurant plan to Basic when subscription is cancelled
+        await updateRestaurantPlan('Basic');
 
         break;
 

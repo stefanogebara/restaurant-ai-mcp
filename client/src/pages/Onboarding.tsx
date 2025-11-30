@@ -1,14 +1,17 @@
 /**
  * Restaurant Onboarding Wizard - Premium Restaurant Design
  *
- * 7-step onboarding flow for new restaurant customers:
+ * 6-step onboarding flow for new restaurant customers:
  * 1. Welcome & Restaurant Info
- * 2. Dashboard Profile (customize metrics & preferences)
- * 3. Contact & Business Hours
- * 4. AI Voice Selection (choose Cartesia voice for phone agent)
- * 5. Table Configuration
- * 6. Reservation Settings
- * 7. Team Setup (Pro+ only)
+ * 2. Contact & Business Hours
+ * 3. AI Voice Selection (choose Cartesia voice for phone agent)
+ * 4. Table Configuration
+ * 5. Reservation Settings
+ * 6. Team Setup (Pro+ only)
+ *
+ * Note: Dashboard template is auto-detected based on subscription plan:
+ * - Basic plan = "simple" template
+ * - Professional plan = "advanced" template
  *
  * Design: Premium restaurant aesthetic with burgundy/gold palette,
  * Playfair Display headings, and cream/parchment backgrounds
@@ -19,7 +22,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import Step1Welcome from '../components/onboarding/Step1Welcome';
-import Step1_5Profile from '../components/onboarding/Step1_5Profile';
 import Step2Contact from '../components/onboarding/Step2Contact';
 import Step2_5VoiceSelection from '../components/onboarding/Step2_5VoiceSelection';
 import Step3Tables from '../components/onboarding/Step3Tables';
@@ -52,14 +54,15 @@ export default function Onboarding() {
     phone_number: '',
     email: '',
     website: '',
+    // Default: Lunch & Dinner service (most common restaurant schedule)
     business_hours: [
-      { day: 'Monday', is_open: true, open_time: '09:00', close_time: '22:00' },
-      { day: 'Tuesday', is_open: true, open_time: '09:00', close_time: '22:00' },
-      { day: 'Wednesday', is_open: true, open_time: '09:00', close_time: '22:00' },
-      { day: 'Thursday', is_open: true, open_time: '09:00', close_time: '22:00' },
-      { day: 'Friday', is_open: true, open_time: '09:00', close_time: '23:00' },
-      { day: 'Saturday', is_open: true, open_time: '09:00', close_time: '23:00' },
-      { day: 'Sunday', is_open: true, open_time: '10:00', close_time: '21:00' },
+      { day: 'Monday', is_open: true, open_time: '12:00', close_time: '23:00' },
+      { day: 'Tuesday', is_open: true, open_time: '12:00', close_time: '23:00' },
+      { day: 'Wednesday', is_open: true, open_time: '12:00', close_time: '23:00' },
+      { day: 'Thursday', is_open: true, open_time: '12:00', close_time: '23:00' },
+      { day: 'Friday', is_open: true, open_time: '12:00', close_time: '23:30' },
+      { day: 'Saturday', is_open: true, open_time: '12:00', close_time: '23:30' },
+      { day: 'Sunday', is_open: true, open_time: '12:00', close_time: '22:00' },
     ],
     average_dining_duration: 90,
     // Step 3: Table Configuration
@@ -97,7 +100,7 @@ export default function Onboarding() {
 
   // Navigate to next step
   const nextStep = () => {
-    if (currentStep < 7) {
+    if (currentStep < 6) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -149,7 +152,6 @@ export default function Onboarding() {
   // Step metadata for progress bar
   const stepNames = [
     'Restaurant Info',
-    'Dashboard Profile',
     'Contact & Hours',
     'Voice Selection',
     'Tables',
@@ -180,7 +182,7 @@ export default function Onboarding() {
                 </h1>
               </div>
               <div className="text-sm text-gray-400 font-medium">
-                Step {currentStep} of 7
+                Step {currentStep} of 6
               </div>
             </div>
 
@@ -247,15 +249,6 @@ export default function Onboarding() {
                   />
                 )}
                 {currentStep === 2 && (
-                  <Step1_5Profile
-                    key="step1.5"
-                    data={onboardingData}
-                    updateData={updateData}
-                    onNext={nextStep}
-                    onBack={prevStep}
-                  />
-                )}
-                {currentStep === 3 && (
                   <Step2Contact
                     key="step2"
                     data={onboardingData}
@@ -264,7 +257,7 @@ export default function Onboarding() {
                     onBack={prevStep}
                   />
                 )}
-                {currentStep === 4 && (
+                {currentStep === 3 && (
                   <Step2_5VoiceSelection
                     key="step2.5"
                     data={onboardingData}
@@ -273,7 +266,7 @@ export default function Onboarding() {
                     onPrev={prevStep}
                   />
                 )}
-                {currentStep === 5 && (
+                {currentStep === 4 && (
                   <Step3Tables
                     key="step3"
                     data={onboardingData}
@@ -282,7 +275,7 @@ export default function Onboarding() {
                     onBack={prevStep}
                   />
                 )}
-                {currentStep === 6 && (
+                {currentStep === 5 && (
                   <Step4Settings
                     key="step4"
                     data={onboardingData}
@@ -291,7 +284,7 @@ export default function Onboarding() {
                     onBack={prevStep}
                   />
                 )}
-                {currentStep === 7 && (
+                {currentStep === 6 && (
                   <Step5Team
                     key="step5"
                     data={onboardingData}
