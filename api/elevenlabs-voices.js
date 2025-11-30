@@ -63,16 +63,25 @@ const CURATED_VOICES = {
     { id: 'syjZiIvIUSwKREBfMpKZ', name: 'Jacobo Montoro', description: 'Warm middle-aged male voice from southern Spain', gender: 'male' }
   ],
 
-  // Portuguese (Portugal) - European Portuguese voices
+  // Portuguese (Portugal) - Now using Brazilian Portuguese voices (user preference)
   'pt-PT': [
-    { id: 'aLFUti4k8YKvtQGXv0UO', name: 'Paulo PT', description: 'Professional male voice with Lisbon accent', gender: 'male' },
-    { id: 'WsQeRzWJvoDvhPPJj5r7', name: 'Francisco', description: 'Conversational 30-year-old Portuguese male voice', gender: 'male' },
-    { id: 'NdHRjGnnDKGnnm2c19le', name: 'Tiago', description: 'Young Portuguese male with calm and professional tone', gender: 'male' },
-    { id: 'WgE8iWzGVoJYLb5V7l2d', name: 'Hugo Mendonça', description: 'Middle aged Portuguese male, perfect for narration', gender: 'male' }
+    { id: 'qarDw4DEvUqP3FBlpO0T', name: 'JonOliveira', description: 'Young professional Brazilian male voice, great for hospitality', gender: 'male' },
+    { id: '29Pm0vQJJRoVfMCsUKB6', name: 'Márcio', description: 'Brazilian male with deep, masculine voice, perfect for storytelling', gender: 'male' },
+    { id: 'tlcdlAx9D2VUpCZ2etQ7', name: 'Guilherme', description: 'Deep masculine Brazilian voice with spontaneous characteristics', gender: 'male' },
+    { id: 'PZIBrGsMjLyYasEz50bI', name: 'Jennifer', description: 'Hyper-realistic Brazilian female voice, natural reading style', gender: 'female' },
+    { id: 'cQAY19cNx1hXYCYZV4ae', name: 'Deluca', description: 'Native Brazilian voice, suited for e-learning and narration', gender: 'male' },
+    { id: 'xWdpADtEio43ew1zGxUQ', name: 'Matheus Santos', description: 'Brazilian young adult, suitable for content production', gender: 'male' }
   ],
 
-  // Portuguese (Brazil) - Brazilian Portuguese voices (fallback to API)
-  'pt-BR': null, // Will use API filtering
+  // Portuguese (Brazil) - Also use curated Brazilian voices
+  'pt-BR': [
+    { id: 'qarDw4DEvUqP3FBlpO0T', name: 'JonOliveira', description: 'Young professional Brazilian male voice, great for hospitality', gender: 'male' },
+    { id: '29Pm0vQJJRoVfMCsUKB6', name: 'Márcio', description: 'Brazilian male with deep, masculine voice, perfect for storytelling', gender: 'male' },
+    { id: 'tlcdlAx9D2VUpCZ2etQ7', name: 'Guilherme', description: 'Deep masculine Brazilian voice with spontaneous characteristics', gender: 'male' },
+    { id: 'PZIBrGsMjLyYasEz50bI', name: 'Jennifer', description: 'Hyper-realistic Brazilian female voice, natural reading style', gender: 'female' },
+    { id: 'cQAY19cNx1hXYCYZV4ae', name: 'Deluca', description: 'Native Brazilian voice, suited for e-learning and narration', gender: 'male' },
+    { id: 'xWdpADtEio43ew1zGxUQ', name: 'Matheus Santos', description: 'Brazilian young adult, suitable for content production', gender: 'male' }
+  ],
 
   // Spanish (Latin America) - Will use API filtering
   'es-LATAM': null
