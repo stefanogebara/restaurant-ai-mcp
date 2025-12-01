@@ -3,7 +3,7 @@
  * Allows users to preview and select AI voice for their restaurant's conversational agent
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Volume2, Play, Pause, Loader, CheckCircle2 } from 'lucide-react';
 import type { OnboardingData } from '../../types/onboarding.types';
 
@@ -32,16 +32,43 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
   const [loadingAudio, setLoadingAudio] = useState<string | null>(null);
   const [audioElements, setAudioElements] = useState<Record<string, HTMLAudioElement>>({});
 
+  // Track previous country to detect changes and reset voice selection
+  const previousCountryRef = useRef<string>(data.country || '');
+
   // Default voice fallback when API fails
   const DEFAULT_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel - ElevenLabs default
   const DEFAULT_VOICE_LANGUAGE = 'en';
 
-  // Fetch voices on mount
+  // Fetch voices on mount and when country changes
   useEffect(() => {
     const fetchVoices = async () => {
       setIsLoading(true);
+
+      const country = data.country || 'United States';
+
+      // Check if country changed - if so, reset voice selection
+      let shouldAutoSelect = !selectedVoiceId; // Track if we need to auto-select
+
+      if (previousCountryRef.current && previousCountryRef.current !== country) {
+        console.log('[VoiceSelection] Country changed from', previousCountryRef.current, 'to', country, '- resetting voice selection');
+        setSelectedVoiceId('');
+        shouldAutoSelect = true; // Force auto-select for new country
+        // Clear cached audio elements since they're for the old language
+        Object.values(audioElements).forEach(audio => {
+          audio.pause();
+          audio.src = '';
+        });
+        setAudioElements({});
+        setPlayingVoiceId(null);
+        // Clear parent state
+        onUpdate({
+          selected_voice_id: '',
+          selected_voice_language: ''
+        });
+      }
+      previousCountryRef.current = country;
+
       try {
-        const country = data.country || 'United States';
         const response = await fetch(`/api/elevenlabs-voices?country=${encodeURIComponent(country)}`);
 
         if (!response.ok) {
@@ -52,9 +79,10 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
 
         if (result.success && result.data.voices && result.data.voices.length > 0) {
           setVoices(result.data.voices);
-          // Auto-select first voice if none selected
-          if (!selectedVoiceId && result.data.voices.length > 0) {
+          // Auto-select first voice if none selected OR if country just changed
+          if (shouldAutoSelect && result.data.voices.length > 0) {
             const firstVoice = result.data.voices[0];
+            console.log('[VoiceSelection] Auto-selecting voice:', firstVoice.name, firstVoice.id, 'language:', firstVoice.language);
             setSelectedVoiceId(firstVoice.id);
             onUpdate({
               selected_voice_id: firstVoice.id,
