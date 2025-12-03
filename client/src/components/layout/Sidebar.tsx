@@ -107,8 +107,8 @@ export default function Sidebar() {
           <div className="p-6 border-b border-border flex items-center justify-between">
             {!isCollapsed && (
               <div>
-                <h1 className="text-xl font-bold text-foreground">Restaurant AI</h1>
-                <p className="text-xs text-muted-foreground mt-1">Management Platform</p>
+                <h1 className="text-xl font-bold text-foreground">Seatable</h1>
+                <p className="text-xs text-muted-foreground mt-1">AI Restaurant Management</p>
               </div>
             )}
             <button

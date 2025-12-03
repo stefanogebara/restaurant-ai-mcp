@@ -28,7 +28,7 @@ export default function FAQSection() {
             <span className="gradient-text">Frequently Asked</span> Questions
           </h2>
           <p className="text-xl text-gray-400">
-            Everything you need to know about Restaurant AI MCP
+            Everything you need to know about Seatable
           </p>
         </motion.div>
 

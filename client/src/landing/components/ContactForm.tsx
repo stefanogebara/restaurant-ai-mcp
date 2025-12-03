@@ -31,7 +31,7 @@ export default function ContactForm() {
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
     // Create mailto link with form data
-    const subject = `Restaurant AI MCP Inquiry from ${formData.name}`;
+    const subject = `Seatable Inquiry from ${formData.name}`;
     const body = `
 Name: ${formData.name}
 Email: ${formData.email}
@@ -80,7 +80,7 @@ ${formData.message}
             <span className="gradient-text">Get Started</span> Today
           </h2>
           <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-            Schedule a personalized demo and discover how Restaurant AI MCP can transform your
+            Schedule a personalized demo and discover how Seatable can transform your
             operations
           </p>
         </motion.div>
@@ -265,7 +265,7 @@ ${formData.message}
                   onChange={handleChange}
                   rows={4}
                   className="w-full px-4 py-3 glass-input text-white placeholder-gray-500 resize-none"
-                  placeholder="I'm interested in implementing Restaurant AI MCP for my restaurant..."
+                  placeholder="I'm interested in implementing Seatable for my restaurant..."
                 />
               </div>
 

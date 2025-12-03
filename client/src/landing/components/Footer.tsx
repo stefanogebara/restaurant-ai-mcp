@@ -22,8 +22,8 @@ export default function Footer() {
                 <span className="text-2xl">🍽️</span>
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white">Restaurant AI</h3>
-                <p className="text-xs text-gray-400">MCP Platform</p>
+                <h3 className="text-xl font-bold text-white">Seatable</h3>
+                <p className="text-xs text-gray-400">AI Restaurant Management</p>
               </div>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed max-w-md">
@@ -133,7 +133,7 @@ export default function Footer() {
         <div className="border-t border-white/10 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-gray-400 text-sm">
-              © {currentYear} Restaurant AI MCP. All rights reserved.
+              © {currentYear} Seatable. All rights reserved.
             </p>
             <div className="flex gap-6">
               <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">

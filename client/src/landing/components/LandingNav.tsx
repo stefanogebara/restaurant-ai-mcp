@@ -46,8 +46,8 @@ export default function LandingNav() {
               <span className="text-2xl">🍽️</span>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">Restaurant AI</h1>
-              <p className="text-xs text-gray-400">MCP Platform</p>
+              <h1 className="text-xl font-bold text-white">Seatable</h1>
+              <p className="text-xs text-gray-400">AI Restaurant Management</p>
             </div>
           </motion.div>
 

@@ -178,7 +178,7 @@ export default function Onboarding() {
               <div className="flex items-center gap-3">
                 <span className="text-2xl">🍽️</span>
                 <h1 className="font-bold text-xl text-gray-100">
-                  RestaurantAI Setup
+                  Seatable Setup
                 </h1>
               </div>
               <div className="text-sm text-gray-400 font-medium">

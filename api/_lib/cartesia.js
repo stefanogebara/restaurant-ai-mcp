@@ -77,7 +77,7 @@ const VOICE_CONFIG = {
   // Default voice (recommended for restaurants)
   default: {
     id: 'a0e99841-438c-4a64-b679-ae501e7d6091',
-    name: 'Restaurant AI',
+    name: 'Seatable AI',
     description: 'Warm, professional, clear'
   }
 };

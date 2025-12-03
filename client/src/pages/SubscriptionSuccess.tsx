@@ -99,7 +99,7 @@ export default function SubscriptionSuccess() {
             transition={{ delay: 0.3 }}
             className="text-4xl font-bold mb-4"
           >
-            <span className="gradient-text">Welcome to Restaurant AI!</span>
+            <span className="gradient-text">Welcome to Seatable!</span>
           </motion.h1>
 
           {/* Description */}
@@ -198,7 +198,7 @@ export default function SubscriptionSuccess() {
           >
             Need help getting started?{' '}
             <a
-              href="mailto:support@restaurant-ai-mcp.com"
+              href="mailto:support@seatable.io"
               className="text-indigo-400 hover:text-indigo-300"
             >
               Contact our support team

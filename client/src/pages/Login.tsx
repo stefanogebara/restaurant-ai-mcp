@@ -55,7 +55,7 @@ export default function Login() {
               <span className="text-4xl">🍽️</span>
             </div>
             <h1 className="text-2xl font-bold text-white mb-2">
-              Welcome to RestaurantAI
+              Welcome to Seatable
             </h1>
             <p className="text-gray-400">
               Sign in to set up your restaurant

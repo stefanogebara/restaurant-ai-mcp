@@ -170,7 +170,7 @@ export default function SubscriptionManage() {
           <h1 className="text-4xl font-bold mb-2">
             <span className="gradient-text">Subscription Management</span>
           </h1>
-          <p className="text-gray-400">Manage your Restaurant AI subscription</p>
+          <p className="text-gray-400">Manage your Seatable subscription</p>
         </motion.div>
 
         {/* Current Subscription Card */}
@@ -284,7 +284,7 @@ export default function SubscriptionManage() {
           <p className="text-sm text-gray-400">
             Need help?{' '}
             <a
-              href="mailto:support@restaurant-ai-mcp.com"
+              href="mailto:support@seatable.io"
               className="text-indigo-400 hover:text-indigo-300"
             >
               Contact our support team
