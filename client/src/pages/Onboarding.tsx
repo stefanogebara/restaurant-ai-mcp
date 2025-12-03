@@ -303,7 +303,7 @@ export default function Onboarding() {
             <p className="text-sm text-gray-400">
               Need help?{' '}
               <a
-                href="mailto:support@hostgenius.com"
+                href="mailto:support@seatable.io"
                 className="text-violet-400 hover:text-violet-300 font-semibold underline transition-colors"
               >
                 Contact Support
