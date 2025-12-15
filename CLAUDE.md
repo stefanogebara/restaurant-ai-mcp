@@ -1,8 +1,8 @@
-# Restaurant AI Management & Conversational Platform (MCP)
+# Seatable - AI Restaurant Management Platform
 
 ## Project Overview
 
-This is a **restaurant management system** with an AI-powered conversational interface for handling reservations, table management, and customer service. The system consists of a customer-facing reservation bot and a host dashboard for restaurant staff.
+**Seatable** is a **restaurant management system** with an AI-powered conversational interface for handling reservations, table management, and customer service. The system consists of a customer-facing reservation bot and a host dashboard for restaurant staff.
 
 ## 🎯 Core Purpose
 

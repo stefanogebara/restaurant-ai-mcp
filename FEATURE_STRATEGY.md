@@ -1,4 +1,4 @@
-# HostGenius Feature Gating & Onboarding Strategy
+# Seatable Feature Gating & Onboarding Strategy
 
 ## 🎯 Product Philosophy
 
@@ -58,7 +58,7 @@
 **What's LOCKED:**
 - ❌ Multi-location management
 - ❌ API access for custom integrations
-- ❌ White-label (remove "Powered by HostGenius")
+- ❌ White-label (remove "Powered by Seatable")
 - ❌ Dedicated account manager
 - ❌ SLA guarantees
 
@@ -76,7 +76,7 @@
 - ✅ **Multi-location management** (manage all locations from one dashboard)
 - ✅ **Unlimited team members** with role-based permissions
 - ✅ **Full API access** (integrate with POS, CRM, accounting systems)
-- ✅ **White-label** (completely remove HostGenius branding)
+- ✅ **White-label** (completely remove Seatable branding)
 - ✅ **Custom integrations** (we build custom connectors for you)
 - ✅ **Dedicated account manager** (personal support contact)
 - ✅ **24/7 phone support** (call anytime)
@@ -91,7 +91,7 @@
 
 ### **Step 1: Welcome & Quick Setup (2 minutes)**
 
-**Screen: Welcome to HostGenius**
+**Screen: Welcome to Seatable**
 ```
 "Let's set up your restaurant in under 5 minutes!"
 
@@ -281,7 +281,7 @@ Upgrade to Professional to:
    [Go to dashboard →]
 
 4. 📚 Watch 3-minute tutorial
-   Learn the basics of HostGenius
+   Learn the basics of Seatable
    [Watch video]
 
 Need help? [Live chat] [Email support] [Help center]

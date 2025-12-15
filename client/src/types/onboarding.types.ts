@@ -38,6 +38,7 @@ export interface TeamMember {
 export interface OnboardingData {
   customer_email: string;
   restaurant_id: string;
+  plan?: string;  // Subscription plan (Basic, Professional, Enterprise)
   // Step 1: Welcome & Restaurant Info
   restaurant_name: string;
   restaurant_type: string;

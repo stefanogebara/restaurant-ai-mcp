@@ -40,11 +40,13 @@ export default function Onboarding() {
   const urlParams = new URLSearchParams(window.location.search);
   const customerEmail = urlParams.get('email') || localStorage.getItem('customer_email') || '';
   const restaurantId = urlParams.get('restaurant_id') || localStorage.getItem('restaurant_id') || '';
+  const subscriptionPlan = urlParams.get('plan') || localStorage.getItem('subscription_plan') || 'Basic';
 
   // Onboarding data state
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
     customer_email: customerEmail,
     restaurant_id: restaurantId,
+    plan: subscriptionPlan,
     // Step 1: Welcome & Restaurant Info
     restaurant_name: '',
     restaurant_type: '',
@@ -91,6 +93,10 @@ export default function Onboarding() {
   useEffect(() => {
     localStorage.setItem('onboarding_data', JSON.stringify(onboardingData));
     localStorage.setItem('onboarding_step', currentStep.toString());
+    // Also save subscription plan for persistence
+    if (onboardingData.plan) {
+      localStorage.setItem('subscription_plan', onboardingData.plan);
+    }
   }, [onboardingData, currentStep]);
 
   // Update onboarding data

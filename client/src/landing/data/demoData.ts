@@ -7,7 +7,7 @@ export const DEMO_RESTAURANT = {
   name: "La Bella Vista",
   tagline: "Fine Italian Dining Experience",
   phone: "+1 (555) 123-DEMO",
-  email: "demo@restaurant-ai-mcp.com",
+  email: "demo@seatable.io",
   address: "123 Vista Avenue, Downtown District",
   tables: 12,
   capacity: 48,

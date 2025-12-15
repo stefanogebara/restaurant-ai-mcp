@@ -1,6 +1,6 @@
-# Restaurant AI Phone Receptionist - MCP Server
+# Seatable - AI Restaurant Management Platform
 
-AI-powered phone receptionist system for restaurants that handles reservations 24/7 through ElevenLabs voice agents.
+AI-powered restaurant management platform that handles reservations 24/7 through ElevenLabs voice agents.
 
 ## Features
 

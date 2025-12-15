@@ -1,7 +1,7 @@
 {
-  "name": "restaurant-ai-mcp",
+  "name": "seatable",
   "version": "1.0.0",
-  "description": "AI Restaurant Phone Receptionist MCP Server",
+  "description": "Seatable - AI Restaurant Management Platform",
   "main": "api/index.js",
   "scripts": {
     "dev": "vercel dev",
