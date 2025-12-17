@@ -354,6 +354,94 @@ function sanitizeInput(input) {
     .substring(0, 500); // Limit length
 }
 
+/**
+ * Sanitize string with HTML entity encoding to prevent XSS
+ *
+ * @param {string} input - Input string to sanitize
+ * @param {object} options - Sanitization options
+ * @returns {string} - Sanitized string
+ */
+function sanitizeStringXSS(input, options = {}) {
+  if (typeof input !== 'string') return '';
+
+  const {
+    maxLength = 1000,
+    trim = true,
+  } = options;
+
+  let result = input;
+
+  if (trim) {
+    result = result.trim();
+  }
+
+  if (result.length > maxLength) {
+    result = result.substring(0, maxLength);
+  }
+
+  // HTML entity encoding
+  result = result
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;');
+
+  // Remove null bytes and other dangerous characters
+  result = result.replace(/\0/g, '');
+
+  return result;
+}
+
+/**
+ * Sanitize object recursively for safe logging/output
+ *
+ * @param {object} obj - Object to sanitize
+ * @param {Set} seen - Set of seen objects (circular reference detection)
+ * @returns {object} - Sanitized object
+ */
+function sanitizeObject(obj, seen = new Set()) {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj !== 'object') return obj;
+
+  if (seen.has(obj)) return '[Circular]';
+  seen.add(obj);
+
+  if (Array.isArray(obj)) {
+    return obj.map(item => sanitizeObject(item, seen));
+  }
+
+  const sanitized = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value === 'string') {
+      sanitized[key] = sanitizeInput(value);
+    } else if (typeof value === 'object' && value !== null) {
+      sanitized[key] = sanitizeObject(value, seen);
+    } else {
+      sanitized[key] = value;
+    }
+  }
+
+  return sanitized;
+}
+
+/**
+ * Validate and sanitize SQL-like input (for search queries)
+ *
+ * @param {string} input - Input that might be used in queries
+ * @returns {string} - Sanitized input
+ */
+function sanitizeSearchQuery(input) {
+  if (typeof input !== 'string') return '';
+
+  return input
+    .trim()
+    .replace(/[;'"\\%_]/g, '') // Remove SQL injection characters
+    .replace(/--/g, '') // Remove SQL comments
+    .substring(0, 100);
+}
+
 module.exports = {
   validatePhoneNumber,
   validateEmail,
@@ -365,5 +453,8 @@ module.exports = {
   validateWaitlistEntry,
   validateServiceRecord,
   validateReservation,
-  sanitizeInput
+  sanitizeInput,
+  sanitizeStringXSS,
+  sanitizeObject,
+  sanitizeSearchQuery,
 };

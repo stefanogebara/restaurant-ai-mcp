@@ -4,6 +4,8 @@ import { DndContext } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { useHostDashboard } from '../hooks/useHostDashboard';
 import { useToast } from '../contexts/ToastContext';
+import { useSubscription } from '../hooks/useSubscription';
+import { hasFeatureAccess, type PlanType } from '../config/planFeatures';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import TableGrid from '../components/host/TableGrid';
 import ActivePartiesList from '../components/host/ActivePartiesList';
@@ -18,12 +20,20 @@ import WaitlistSeatModal from '../components/host/WaitlistSeatModal';
 import InterventionPanel from '../components/host/InterventionPanel';
 import RecordOutcomeModal, { type OutcomeData } from '../components/host/RecordOutcomeModal';
 import QuickStatsWidget from '../components/host/QuickStatsWidget';
+import UpgradePromptInline from '../components/host/UpgradePromptInline';
 import type { UpcomingReservation } from '../types/host.types';
 
 export default function HostDashboard() {
   const navigate = useNavigate();
   const { data, isLoading, error, refetch, isFetching } = useHostDashboard();
   const { success, error: showError } = useToast();
+
+  // Get subscription plan for feature access control
+  const subscription = useSubscription();
+  const currentPlan = (subscription.data?.subscription?.plan?.toLowerCase() as PlanType) || 'basic';
+  const hasQuickStats = hasFeatureAccess(currentPlan, 'quickStatsWidget');
+  const hasInterventionPanel = hasFeatureAccess(currentPlan, 'interventionPanel');
+
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
   const [checkInReservation, setCheckInReservation] = useState<UpcomingReservation | null>(null);
   const [waitlistEntry, setWaitlistEntry] = useState<any>(null);
@@ -228,14 +238,30 @@ export default function HostDashboard() {
 
           {/* Right Panel - 40% width on desktop */}
           <div className="space-y-6">
-            {/* Quick Stats Widget */}
-            <QuickStatsWidget />
+            {/* Quick Stats Widget - Pro Feature */}
+            {hasQuickStats ? (
+              <QuickStatsWidget />
+            ) : (
+              <UpgradePromptInline
+                feature="Quick Stats Widget"
+                description="Get instant insights into daily performance, revenue tracking, and real-time metrics."
+                requiredPlan="Professional"
+              />
+            )}
 
-            {/* ML Intervention Panel */}
-            <InterventionPanel
-              reservations={data.upcoming_reservations || []}
-              onRecordIntervention={handleRecordIntervention}
-            />
+            {/* ML Intervention Panel - Pro Feature */}
+            {hasInterventionPanel ? (
+              <InterventionPanel
+                reservations={data.upcoming_reservations || []}
+                onRecordIntervention={handleRecordIntervention}
+              />
+            ) : (
+              <UpgradePromptInline
+                feature="ML Intervention Panel"
+                description="AI-powered no-show prevention with risk scoring and automated intervention recommendations."
+                requiredPlan="Professional"
+              />
+            )}
 
             {/* Active Parties */}
             <div className="bg-card rounded-lg shadow-lg p-6 border border-border">
