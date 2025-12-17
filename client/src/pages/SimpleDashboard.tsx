@@ -14,12 +14,12 @@ import '../landing/styles/glass-morphism.css';
 type ComplexityLevel = 'completo' | 'avanzado';
 
 interface SimpleDashboardProps {
-  language?: 'es' | 'en';
+  language?: 'es' | 'en' | 'pt' | 'fr' | 'it' | 'de';
 }
 
 export default function SimpleDashboard({ language: initialLanguage = 'en' }: SimpleDashboardProps) {
   const [complexity, setComplexity] = useState<ComplexityLevel>('completo');
-  const [language, setLanguage] = useState<'es' | 'en'>(initialLanguage);
+  const [language, setLanguage] = useState<'es' | 'en' | 'pt' | 'fr' | 'it' | 'de'>(initialLanguage);
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [showSeatModal, setShowSeatModal] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
@@ -77,16 +77,44 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
     localStorage.setItem('dashboard-complexity', level);
   };
 
-  // Load language preference from localStorage
+  // Load language preference from localStorage or detect from onboarding
   useEffect(() => {
+    // First check dashboard language preference
     const savedLanguage = localStorage.getItem('dashboard-language');
-    if (savedLanguage === 'es' || savedLanguage === 'en') {
-      setLanguage(savedLanguage);
+    if (savedLanguage && ['es', 'en', 'pt', 'fr', 'it', 'de'].includes(savedLanguage)) {
+      setLanguage(savedLanguage as 'es' | 'en' | 'pt' | 'fr' | 'it' | 'de');
+      return;
+    }
+
+    // Try to get language from onboarding data (country-based)
+    try {
+      const onboardingData = localStorage.getItem('onboarding_data');
+      if (onboardingData) {
+        const data = JSON.parse(onboardingData);
+        const countryLanguage = data?.country_language || data?.profile_data?.language;
+
+        // Map country language codes to simple language codes
+        const langMap: Record<string, 'es' | 'en' | 'pt' | 'fr' | 'it' | 'de'> = {
+          'pt-BR': 'pt', 'pt-PT': 'pt',
+          'es-ES': 'es', 'es-MX': 'es', 'es-AR': 'es', 'es-CO': 'es', 'es-CL': 'es', 'es-PE': 'es',
+          'en-US': 'en', 'en-GB': 'en', 'en-CA': 'en', 'en-AU': 'en',
+          'fr-FR': 'fr', 'fr-BE': 'fr', 'fr-CH': 'fr',
+          'it-IT': 'it',
+          'de-DE': 'de', 'de-AT': 'de',
+        };
+
+        if (countryLanguage && langMap[countryLanguage]) {
+          setLanguage(langMap[countryLanguage]);
+          localStorage.setItem('dashboard-language', langMap[countryLanguage]);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading language preference:', error);
     }
   }, []);
 
   // Handle language change
-  const handleLanguageChange = (newLanguage: 'es' | 'en') => {
+  const handleLanguageChange = (newLanguage: 'es' | 'en' | 'pt' | 'fr' | 'it' | 'de') => {
     setLanguage(newLanguage);
     localStorage.setItem('dashboard-language', newLanguage);
   };
@@ -157,31 +185,137 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
       avgDuration: 'Avg Duration',
       peakHours: 'Peak Hours',
     },
+    pt: {
+      today: 'Hoje',
+      tomorrow: 'Amanhã',
+      tablesOccupied: 'Mesas Ocupadas',
+      reservationsToday: 'Reservas Hoje',
+      waiting: 'Em espera',
+      upcomingReservations: 'Próximas Reservas',
+      addWalkIn: 'Adicionar Walk-in',
+      viewTomorrow: 'Ver Amanhã',
+      noReservations: 'Sem reservas',
+      checkIn: 'Check In',
+      table: 'Mesa',
+      people: 'pessoas',
+      allClear: 'Tudo livre',
+      noUpcoming: 'Sem reservas para hoje',
+      viewLevel: 'Visualização',
+      avanzado: 'Avançado',
+      estándar: 'Padrão',
+      completo: 'Completo',
+      occupancy: 'Ocupação',
+      activeParties: 'Mesas Ativas',
+      avgDuration: 'Duração Média',
+      peakHours: 'Horário de Pico',
+    },
+    fr: {
+      today: "Aujourd'hui",
+      tomorrow: 'Demain',
+      tablesOccupied: 'Tables Occupées',
+      reservationsToday: "Réservations Aujourd'hui",
+      waiting: 'En attente',
+      upcomingReservations: 'Prochaines Réservations',
+      addWalkIn: 'Ajouter Walk-in',
+      viewTomorrow: 'Voir Demain',
+      noReservations: 'Pas de réservations',
+      checkIn: 'Check In',
+      table: 'Table',
+      people: 'personnes',
+      allClear: 'Tout libre',
+      noUpcoming: "Pas de réservations aujourd'hui",
+      viewLevel: 'Affichage',
+      avanzado: 'Avancé',
+      estándar: 'Standard',
+      completo: 'Complet',
+      occupancy: 'Occupation',
+      activeParties: 'Tables Actives',
+      avgDuration: 'Durée Moyenne',
+      peakHours: 'Heures de Pointe',
+    },
+    it: {
+      today: 'Oggi',
+      tomorrow: 'Domani',
+      tablesOccupied: 'Tavoli Occupati',
+      reservationsToday: 'Prenotazioni Oggi',
+      waiting: 'In attesa',
+      upcomingReservations: 'Prossime Prenotazioni',
+      addWalkIn: 'Aggiungi Walk-in',
+      viewTomorrow: 'Vedi Domani',
+      noReservations: 'Nessuna prenotazione',
+      checkIn: 'Check In',
+      table: 'Tavolo',
+      people: 'persone',
+      allClear: 'Tutto libero',
+      noUpcoming: 'Nessuna prenotazione per oggi',
+      viewLevel: 'Visualizzazione',
+      avanzado: 'Avanzato',
+      estándar: 'Standard',
+      completo: 'Completo',
+      occupancy: 'Occupazione',
+      activeParties: 'Tavoli Attivi',
+      avgDuration: 'Durata Media',
+      peakHours: 'Ore di Punta',
+    },
+    de: {
+      today: 'Heute',
+      tomorrow: 'Morgen',
+      tablesOccupied: 'Besetzte Tische',
+      reservationsToday: 'Reservierungen Heute',
+      waiting: 'Wartend',
+      upcomingReservations: 'Kommende Reservierungen',
+      addWalkIn: 'Walk-in Hinzufügen',
+      viewTomorrow: 'Morgen Ansehen',
+      noReservations: 'Keine Reservierungen',
+      checkIn: 'Check In',
+      table: 'Tisch',
+      people: 'Personen',
+      allClear: 'Alles frei',
+      noUpcoming: 'Keine Reservierungen für heute',
+      viewLevel: 'Ansicht',
+      avanzado: 'Erweitert',
+      estándar: 'Standard',
+      completo: 'Komplett',
+      occupancy: 'Auslastung',
+      activeParties: 'Aktive Tische',
+      avgDuration: 'Durchschn. Dauer',
+      peakHours: 'Stoßzeiten',
+    },
   };
 
   const t = translations[language];
 
   // Get current day name
   const getDayName = () => {
-    const days = language === 'es'
-      ? ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
-      : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    return days[new Date().getDay()];
+    const daysByLang: Record<string, string[]> = {
+      es: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
+      en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+      pt: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'],
+      fr: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
+      it: ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'],
+      de: ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'],
+    };
+    return (daysByLang[language] || daysByLang.en)[new Date().getDay()];
   };
 
   // Format date
   const formatDate = () => {
     const date = new Date();
     const day = date.getDate();
-    const months = language === 'es'
-      ? ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
-      : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${day} ${months[date.getMonth()]}`;
+    const monthsByLang: Record<string, string[]> = {
+      es: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+      en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      pt: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+      fr: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'],
+      it: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'],
+      de: ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'],
+    };
+    return `${day} ${(monthsByLang[language] || monthsByLang.en)[date.getMonth()]}`;
   };
 
-  // Format time (24h for Spanish, 12h for English)
+  // Format time (24h for non-English, 12h for English)
   const formatTime = (time: string) => {
-    if (language === 'es') return time; // Already in 24h format
+    if (language !== 'en') return time; // 24h format for most languages
 
     const [hours, minutes] = time.split(':');
     const hour = parseInt(hours);
@@ -194,9 +328,12 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   const formatTimestamp = (timestamp: string) => {
     if (!timestamp) return '--:--';
     const date = new Date(timestamp);
-    return date.toLocaleTimeString(language === 'es' ? 'es-ES' : 'en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    const localeMap: Record<string, string> = {
+      es: 'es-ES', en: 'en-US', pt: 'pt-BR', fr: 'fr-FR', it: 'it-IT', de: 'de-DE'
+    };
+    return date.toLocaleTimeString(localeMap[language] || 'en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
