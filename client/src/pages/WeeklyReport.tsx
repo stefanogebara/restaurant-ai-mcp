@@ -10,7 +10,6 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   TrendingUp,
   TrendingDown,
@@ -20,10 +19,10 @@ import {
   Utensils,
   Languages,
   MapPin,
-  ArrowLeft,
   Download,
   RefreshCw
 } from 'lucide-react';
+import Breadcrumb, { breadcrumbConfigs } from '../components/common/Breadcrumb';
 
 interface WeeklyReportData {
   period: {
@@ -62,7 +61,6 @@ interface WeeklyReportData {
 }
 
 export default function WeeklyReport() {
-  const navigate = useNavigate();
   const [report, setReport] = useState<WeeklyReportData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [startDate, setStartDate] = useState('');
@@ -136,19 +134,14 @@ export default function WeeklyReport() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
+        {/* Breadcrumb Navigation */}
+        <Breadcrumb items={breadcrumbConfigs.reports} className="mb-4 print:hidden" />
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8 print:mb-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate('/host-dashboard')}
-              className="p-2 hover:bg-muted rounded-lg transition print:hidden"
-            >
-              <ArrowLeft className="w-6 h-6 text-foreground" />
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Weekly Report</h1>
-              <p className="text-muted-foreground">{report.period.label}</p>
-            </div>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Weekly Report</h1>
+            <p className="text-muted-foreground">{report.period.label}</p>
           </div>
 
           <div className="flex gap-3 print:hidden">

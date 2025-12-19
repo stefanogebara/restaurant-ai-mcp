@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react';
 import { Phone, Calendar, Clock, CheckCircle, XCircle, TrendingUp, MessageSquare, Globe, Settings, PhoneCall, AlertCircle, Loader2 } from 'lucide-react';
 import DashboardLayout from '../components/layout/DashboardLayout';
+import Breadcrumb, { breadcrumbConfigs } from '../components/common/Breadcrumb';
 
 interface Conversation {
   id: string;
@@ -248,6 +249,9 @@ export default function CallTrackingDashboard() {
     <DashboardLayout>
       <div className="min-h-screen bg-background p-6">
         <div className="max-w-7xl mx-auto space-y-6">
+        {/* Breadcrumb Navigation */}
+        <Breadcrumb items={breadcrumbConfigs.calls} />
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

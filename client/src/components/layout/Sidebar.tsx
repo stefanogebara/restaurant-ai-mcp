@@ -79,9 +79,11 @@ export default function Sidebar() {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card rounded-lg shadow-lg border border-border"
+        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-card rounded-lg shadow-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+        aria-label={isMobileOpen ? "Close navigation menu" : "Open navigation menu"}
+        aria-expanded={isMobileOpen}
       >
-        <Menu className="w-6 h-6" />
+        <Menu className="w-6 h-6" aria-hidden="true" />
       </button>
 
       {/* Mobile Overlay */}
@@ -113,9 +115,11 @@ export default function Sidebar() {
             )}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hidden lg:block p-2 hover:bg-muted rounded-lg transition-colors"
+              className="hidden lg:block p-2 hover:bg-muted rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+              aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              <ChevronLeft className={`w-5 h-5 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
+              <ChevronLeft className={`w-5 h-5 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} aria-hidden="true" />
             </button>
           </div>
 
@@ -143,7 +147,10 @@ export default function Sidebar() {
               );
 
               if (isLocked) {
-                // Locked item - show as disabled button
+                // Locked item - show as disabled button with upgrade info
+                const tooltipText = isCollapsed
+                  ? `${item.label} - Upgrade to Professional to unlock`
+                  : 'Upgrade to Professional plan to unlock this feature';
                 return (
                   <button
                     key={item.path}
@@ -153,8 +160,9 @@ export default function Sidebar() {
                       opacity-50 cursor-not-allowed text-muted-foreground
                       ${isCollapsed ? 'justify-center' : ''}
                     `}
-                    title={isCollapsed ? `${item.label} (Locked)` : undefined}
-                    disabled
+                    title={tooltipText}
+                    aria-label={`${item.label} - Locked feature`}
+                    aria-disabled="true"
                   >
                     {itemContent}
                   </button>

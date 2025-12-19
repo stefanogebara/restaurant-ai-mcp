@@ -1,11 +1,15 @@
 import DashboardLayout from '../components/layout/DashboardLayout';
 import LTVDashboard from '../components/host/LTVDashboard';
 import AnalyticsGuide from '../components/common/AnalyticsGuide';
+import Breadcrumb, { breadcrumbConfigs } from '../components/common/Breadcrumb';
 
 export default function CustomerLTVPage() {
   return (
     <DashboardLayout>
       <div className="p-8">
+        {/* Breadcrumb Navigation */}
+        <Breadcrumb items={breadcrumbConfigs.ltv} className="mb-4" />
+
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Customer Lifetime Value</h1>

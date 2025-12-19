@@ -1,10 +1,12 @@
 import type { DashboardSummary } from '../../types/host.types';
+import { SkeletonStatCard } from '../common/Skeleton';
 
 interface DashboardStatsProps {
   summary: DashboardSummary;
+  isLoading?: boolean;
 }
 
-export default function DashboardStats({ summary }: DashboardStatsProps) {
+export default function DashboardStats({ summary, isLoading }: DashboardStatsProps) {
   // Format wait time display
   const waitTimeDisplay = summary.estimated_wait_time !== undefined
     ? summary.estimated_wait_time === 0
@@ -12,8 +14,19 @@ export default function DashboardStats({ summary }: DashboardStatsProps) {
       : `${summary.estimated_wait_time} min`
     : 'N/A';
 
+  // Show skeleton loading state
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4" role="status" aria-label="Loading statistics...">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <SkeletonStatCard key={i} />
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
       <StatCard
         label="Total Capacity"
         value={summary.total_capacity}

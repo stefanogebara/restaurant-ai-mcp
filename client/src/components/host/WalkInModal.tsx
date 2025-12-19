@@ -108,10 +108,14 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
             <input
               type="tel"
               required
+              pattern="[0-9\-\(\)\s\+]{7,20}"
+              title="Please enter a valid phone number (7-20 digits, may include +, -, (), spaces)"
+              placeholder="+1 (555) 123-4567"
               value={formData.customer_phone}
               onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            <p className="text-xs text-gray-500 mt-1">Format: +1 (555) 123-4567</p>
           </div>
 
           <div>
@@ -135,13 +139,13 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
               <button
                 type="button"
                 onClick={handleClose}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50"
+                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700"
+                className="flex-1 px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 Next: Select Table
               </button>
@@ -178,13 +182,13 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
             <div className="flex gap-3 pt-4">
               <button
                 onClick={handleBack}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50"
+                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
               >
                 Back
               </button>
               <button
                 onClick={handleProceedToSeat}
-                className="flex-1 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                 disabled={selectedTableIds.length === 0}
               >
                 Proceed to Seat

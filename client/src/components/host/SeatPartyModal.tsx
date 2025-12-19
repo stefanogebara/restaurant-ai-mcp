@@ -4,9 +4,10 @@ interface SeatPartyModalProps {
   isOpen: boolean;
   data: any;
   onClose: () => void;
+  onRetryTableSelection?: () => void;
 }
 
-export default function SeatPartyModal({ isOpen, data, onClose }: SeatPartyModalProps) {
+export default function SeatPartyModal({ isOpen, data, onClose, onRetryTableSelection }: SeatPartyModalProps) {
   const seatPartyMutation = useSeatParty();
 
   if (!isOpen || !data) return null;
@@ -29,6 +30,15 @@ export default function SeatPartyModal({ isOpen, data, onClose }: SeatPartyModal
         }, 2000);
       },
     });
+  };
+
+  const handleRetry = () => {
+    seatPartyMutation.reset();
+    if (onRetryTableSelection) {
+      onRetryTableSelection();
+    } else {
+      onClose();
+    }
   };
 
   return (
@@ -79,22 +89,38 @@ export default function SeatPartyModal({ isOpen, data, onClose }: SeatPartyModal
             </div>
 
             {seatPartyMutation.isError && (
-              <div className="text-sm text-red-600 bg-red-50 p-3 rounded mb-4">
-                Error seating party. The tables may no longer be available. Please try again.
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">⚠️</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-red-800 mb-1">
+                      Unable to seat party
+                    </p>
+                    <p className="text-sm text-red-600 mb-3">
+                      The selected tables may no longer be available. Please choose different tables.
+                    </p>
+                    <button
+                      onClick={handleRetry}
+                      className="text-sm font-medium text-red-700 hover:text-red-800 underline focus:outline-none focus:ring-2 focus:ring-red-500 rounded"
+                    >
+                      ← Select Different Tables
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
                 disabled={seatPartyMutation.isPending}
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirm}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 disabled={seatPartyMutation.isPending}
               >
                 {seatPartyMutation.isPending ? 'Seating...' : 'Confirm Seating'}

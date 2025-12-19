@@ -1,11 +1,15 @@
 import DashboardLayout from '../components/layout/DashboardLayout';
 import CustomerDNADashboard from '../components/host/CustomerDNADashboard';
 import AnalyticsGuide from '../components/common/AnalyticsGuide';
+import Breadcrumb, { breadcrumbConfigs } from '../components/common/Breadcrumb';
 
 export default function CustomerDNAPage() {
   return (
     <DashboardLayout>
       <div className="p-8">
+        {/* Breadcrumb Navigation */}
+        <Breadcrumb items={breadcrumbConfigs.dna} className="mb-4" />
+
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Customer DNA Profiling</h1>

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { TrendingUp, Target, AlertCircle, DollarSign, CheckCircle2, BarChart3 } from 'lucide-react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import TrendChart from '../components/common/TrendChart';
+import Breadcrumb, { breadcrumbConfigs } from '../components/common/Breadcrumb';
 import { api } from '../services/api';
 
 interface MLPerformanceData {
@@ -122,6 +123,9 @@ export default function MLPerformancePage() {
   return (
     <DashboardLayout>
       <div className="p-8">
+        {/* Breadcrumb Navigation */}
+        <Breadcrumb items={breadcrumbConfigs.ml} className="mb-4" />
+
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">No-Show Prevention & ROI</h1>
