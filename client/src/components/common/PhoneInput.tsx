@@ -115,7 +115,7 @@ export default function PhoneInput({
     // Emit full international number
     const fullNumber = cleanNumber ? `${selectedCountry.dial} ${cleanNumber}` : '';
     onChange(fullNumber, valid);
-  }, [localNumber, selectedCountry]);
+  }, [localNumber, selectedCountry, onChange]);
 
   const handleCountrySelect = (country: typeof COUNTRIES[number]) => {
     setSelectedCountry(country);

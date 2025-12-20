@@ -21,6 +21,7 @@ import SubscriptionManage from './pages/SubscriptionManage';
 import Login from './pages/Login';
 import Onboarding from './pages/Onboarding';
 import LanguageSettings from './pages/LanguageSettings';
+import TestPhoneInput from './pages/TestPhoneInput';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const queryClient = new QueryClient({
@@ -60,6 +61,7 @@ function App() {
               <Route path="/subscription/manage" element={<SubscriptionManage />} />
               <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
               <Route path="/settings/language" element={<LanguageSettings />} />
+              <Route path="/test-phone-input" element={<TestPhoneInput />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>

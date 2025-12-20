@@ -10,7 +10,7 @@
  * - Average dining duration
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
 import PhoneInput from '../common/PhoneInput';
@@ -72,6 +72,11 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
   const [selectedServiceType, setSelectedServiceType] = useState<ServiceType>('lunch_dinner');
   const [useMultiplePeriods, setUseMultiplePeriods] = useState(false);
   const phoneValidityRef = useRef(false);
+
+  const handlePhoneChange = useCallback((fullNumber: string, isValid: boolean) => {
+    updateData({ phone_number: fullNumber });
+    phoneValidityRef.current = isValid;
+  }, [updateData]);
 
   // Apply service preset when selected
   const applyServicePreset = (serviceType: ServiceType) => {
@@ -155,10 +160,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
       {/* Phone Number with Country Code */}
       <PhoneInput
         value={data.phone_number}
-        onChange={(fullNumber, isValid) => {
-          updateData({ phone_number: fullNumber });
-          phoneValidityRef.current = isValid;
-        }}
+        onChange={handlePhoneChange}
         defaultCountry="ES"
         label="Restaurant Phone Number"
         required
