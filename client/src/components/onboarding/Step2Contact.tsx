@@ -10,9 +10,10 @@
  * - Average dining duration
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
+import PhoneInput from '../common/PhoneInput';
 import '../../landing/styles/glass-morphism.css';
 
 // Service type presets with recommended hours
@@ -70,6 +71,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedServiceType, setSelectedServiceType] = useState<ServiceType>('lunch_dinner');
   const [useMultiplePeriods, setUseMultiplePeriods] = useState(false);
+  const phoneValidityRef = useRef(false);
 
   // Apply service preset when selected
   const applyServicePreset = (serviceType: ServiceType) => {
@@ -102,6 +104,8 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
 
     if (!data.phone_number.trim()) {
       newErrors.phone_number = 'Phone number is required';
+    } else if (!phoneValidityRef.current) {
+      newErrors.phone_number = 'Please enter a valid phone number';
     }
     if (!data.email.trim()) {
       newErrors.email = 'Email is required';
@@ -148,24 +152,18 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
         <p className="text-gray-300 text-sm">Contact information and operating hours</p>
       </div>
 
-      {/* Phone Number */}
-      <div>
-        <label htmlFor="phone_number" className="block text-sm font-semibold text-gray-100 mb-2">
-          Restaurant Phone Number *
-        </label>
-        <input
-          id="phone_number"
-          type="tel"
-          value={data.phone_number}
-          onChange={(e) => updateData({ phone_number: e.target.value })}
-          placeholder="+34 639 67 29 63"
-          className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
-        />
-        <p className="mt-1 text-xs text-gray-400">This will be your AI assistant's number</p>
-        {errors.phone_number && (
-          <p className="mt-1 text-sm text-red-400">{errors.phone_number}</p>
-        )}
-      </div>
+      {/* Phone Number with Country Code */}
+      <PhoneInput
+        value={data.phone_number}
+        onChange={(fullNumber, isValid) => {
+          updateData({ phone_number: fullNumber });
+          phoneValidityRef.current = isValid;
+        }}
+        defaultCountry="ES"
+        label="Restaurant Phone Number"
+        required
+        error={errors.phone_number}
+      />
 
       {/* Email */}
       <div>
