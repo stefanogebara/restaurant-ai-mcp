@@ -24,7 +24,7 @@ export default function FeaturesGrid() {
         <motion.div
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
             <span className="gradient-text">Everything You Need</span> in One Platform
           </h2>
           <p className="text-xl text-gray-400 max-w-3xl mx-auto">

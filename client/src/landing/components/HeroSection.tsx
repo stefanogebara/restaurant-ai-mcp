@@ -62,7 +62,7 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight"
+              className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-white"
             >
               <span className="gradient-text">Transform</span> Your Restaurant with{' '}
               <span className="gradient-text">AI</span>
