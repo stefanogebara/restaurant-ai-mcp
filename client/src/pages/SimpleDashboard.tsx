@@ -7,7 +7,7 @@ import CheckInModal from '../components/host/CheckInModal';
 import TableGrid from '../components/host/TableGrid';
 import TableStatusLegend from '../components/host/TableStatusLegend';
 import type { PlanType } from '../config/planFeatures';
-import { hasFeatureAccess, PLAN_NAMES } from '../config/planFeatures';
+import { hasFeatureAccess } from '../config/planFeatures';
 import { useSubscription } from '../hooks/useSubscription';
 import '../landing/styles/glass-morphism.css';
 
@@ -516,33 +516,22 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-3">
             <div>
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-white tracking-tight mb-1">
-                🍽️ {t.today}
+                {t.today}
               </h1>
               <p className="text-gray-300 text-base md:text-lg font-sans font-medium">
                 {getDayName()}, {formatDate()}
               </p>
             </div>
 
-            {/* Controls: Subscription Badge + Language Switcher + Complexity Toggle */}
+            {/* Controls: Language Switcher + Complexity Toggle */}
             <div className="flex items-center gap-3 flex-wrap">
-              {/* Subscription Plan Badge */}
-              <div className={`px-4 py-2 rounded-xl font-sans font-semibold text-sm shadow-md border transition-all duration-300 hover:scale-105 ${
-                currentPlan === 'professional'
-                  ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white border-purple-500'
-                  : currentPlan === 'basic'
-                  ? 'bg-gradient-to-r from-gray-600 to-gray-700 text-white border-gray-500'
-                  : 'bg-gradient-to-r from-success-500 to-success-600 text-white border-success-400'
-              }`}>
-                {currentPlan === 'professional' ? '💎' : currentPlan === 'trial' ? '🎯' : '⭐'} {PLAN_NAMES[currentPlan]}
-              </div>
-
               {/* Language Switcher */}
               <div className="flex items-center gap-1 bg-white/10 rounded-xl p-1.5 shadow-sm border border-white/20 backdrop-blur-sm">
                 <button
                   onClick={() => handleLanguageChange('en')}
-                  className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ease-out-expo ${
+                  className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-colors duration-200 ${
                     language === 'en'
-                      ? 'bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-purple-500/30 scale-105'
+                      ? 'bg-purple-600 text-white shadow-sm'
                       : 'text-gray-400 hover:bg-white/10 hover:text-white'
                   }`}
                   title="English"
@@ -551,9 +540,9 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                 </button>
                 <button
                   onClick={() => handleLanguageChange('es')}
-                  className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ease-out-expo ${
+                  className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-colors duration-200 ${
                     language === 'es'
-                      ? 'bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-purple-500/30 scale-105'
+                      ? 'bg-purple-600 text-white shadow-sm'
                       : 'text-gray-400 hover:bg-white/10 hover:text-white'
                   }`}
                   title="Español"
@@ -565,7 +554,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               {/* AI Agent Button */}
               <button
                 onClick={() => window.location.href = '/host-dashboard/calls'}
-                className="flex items-center gap-2 px-3 py-2 bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-xl text-sm font-sans font-semibold transition-all duration-300 ease-out-expo shadow-sm hover:shadow-md hover:scale-105"
+                className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-sans font-semibold transition-all duration-300 shadow-sm hover:shadow-md"
                 title={language === 'es' ? 'Panel del Agente AI' : 'AI Agent Dashboard'}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -580,14 +569,14 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
               <button
                 onClick={() => handleComplexityChange('completo')}
-                className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ease-out-expo ${
+                className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ${
                   complexity === 'completo'
-                    ? 'bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-purple-500/30 scale-105'
+                    ? 'bg-purple-600 text-white shadow-sm'
                     : 'text-gray-400 hover:bg-white/10 hover:text-white'
                 }`}
                 title={t.completo}
               >
-                ⚙️ {t.completo}
+                {t.completo}
               </button>
               <button
                 onClick={() => {
@@ -595,20 +584,20 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                     window.location.href = '/host-dashboard/advanced';
                   } else {
                     alert(language === 'es'
-                      ? '⭐ Esta función requiere el Plan Professional.\n\nActualiza tu plan para acceder al Panel de ML Performance.'
-                      : '⭐ This feature requires the Professional Plan.\n\nUpgrade your plan to access the ML Performance Dashboard.');
+                      ? 'Esta función requiere el Plan Professional.\n\nActualiza tu plan para acceder al Panel de ML Performance.'
+                      : 'This feature requires the Professional Plan.\n\nUpgrade your plan to access the ML Performance Dashboard.');
                   }
                 }}
-                className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ease-out-expo ${
+                className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ${
                   !hasFeatureAccess(currentPlan, 'mlPerformance')
                     ? 'text-gray-500 hover:bg-white/10 cursor-not-allowed opacity-60'
                     : complexity === 'avanzado'
-                    ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-amber-500/30 scale-105'
+                    ? 'bg-amber-500 text-white shadow-sm'
                     : 'text-gray-400 hover:bg-white/10 hover:text-white'
                 }`}
                 title={hasFeatureAccess(currentPlan, 'mlPerformance') ? t.avanzado : (language === 'es' ? 'Requiere Plan Professional' : 'Requires Professional Plan')}
               >
-                🎯 {t.avanzado}
+                {t.avanzado}
               </button>
             </div>
             </div>
@@ -622,10 +611,10 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
             {/* Main Stats Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Occupied Tables */}
-              <div className="glass-card p-4 md:p-5 group hover:-translate-y-1">
+              <div className="glass-card p-4 md:p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="text-3xl md:text-4xl font-bold gradient-text tracking-tight">
-                    {occupiedTables}<span className="text-gray-400 text-2xl">/{totalTables}</span>
+                  <div className="text-3xl md:text-4xl font-bold text-indigo-400 tracking-tight">
+                    {occupiedTables}<span className="text-gray-500 text-2xl">/{totalTables}</span>
                   </div>
                   <div className="p-2 bg-indigo-500/10 rounded-lg">
                     <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -646,9 +635,9 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </div>
 
               {/* Reservations */}
-              <div className="glass-card p-4 md:p-5 group hover:-translate-y-1">
+              <div className="glass-card p-4 md:p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="text-3xl md:text-4xl font-bold gradient-text-emerald tracking-tight">
+                  <div className="text-3xl md:text-4xl font-bold text-emerald-400 tracking-tight">
                     {todayReservations.length}
                   </div>
                   <div className="p-2 bg-emerald-500/10 rounded-lg">
@@ -670,7 +659,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </div>
 
               {/* Waiting */}
-              <div className="glass-card p-4 md:p-5 group hover:-translate-y-1">
+              <div className="glass-card p-4 md:p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="text-3xl md:text-4xl font-bold text-amber-400 tracking-tight">
                     {stats.waitlistCount || 0}
@@ -693,9 +682,9 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </div>
 
               {/* Active Parties */}
-              <div className="glass-card p-4 md:p-5 group hover:-translate-y-1">
+              <div className="glass-card p-4 md:p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="text-3xl md:text-4xl font-bold gradient-text tracking-tight">
+                  <div className="text-3xl md:text-4xl font-bold text-purple-400 tracking-tight">
                     {stats.activePartiesCount || 0}
                   </div>
                   <div className="p-2 bg-purple-500/10 rounded-lg">
@@ -706,7 +695,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                 </div>
                 <div className="text-xs font-semibold text-gray-300 mb-3">{t.activeParties}</div>
                 <div className="space-y-1">
-                  <div className="text-sm font-bold gradient-text">
+                  <div className="text-sm font-bold text-purple-400">
                     {stats.totalSeatedGuests || 0} {t.people}
                   </div>
                   <div className="text-xs text-gray-400 font-medium">
@@ -718,7 +707,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
             {/* Additional Stats Row */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="glass-card p-4 hover:-translate-y-1">
+              <div className="glass-card p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-blue-500/10 rounded-lg">
                     <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -733,7 +722,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   </div>
                 </div>
               </div>
-              <div className="glass-card p-4 hover:-translate-y-1">
+              <div className="glass-card p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-pink-500/10 rounded-lg">
                     <svg className="w-5 h-5 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -746,7 +735,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   </div>
                 </div>
               </div>
-              <div className="glass-card p-4 hover:-translate-y-1">
+              <div className="glass-card p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-emerald-500/10 rounded-lg">
                     <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -755,7 +744,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   </div>
                   <div>
                     <div className="text-xs font-semibold text-gray-300 mb-0.5">{language === 'es' ? 'Ingresos Hoy' : 'Revenue Today'}</div>
-                    <div className="text-2xl font-bold gradient-text-emerald tracking-tight">
+                    <div className="text-2xl font-bold text-emerald-400 tracking-tight">
                       {stats.revenue_today ? `€${stats.revenue_today}` : '-'}
                     </div>
                   </div>
@@ -768,10 +757,10 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
         {/* Add Walk-in Button */}
         <button
           onClick={() => setShowWalkInModal(true)}
-          className="group w-full mb-8 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-sans font-bold py-5 md:py-6 px-8 rounded-2xl shadow-purple-500/30 hover:shadow-2xl transition-all duration-400 ease-out-expo transform hover:scale-[1.02] hover:-translate-y-1 active:scale-[0.98] active:translate-y-0 border-2 border-purple-500/40 animate-fade-in-up"
+          className="w-full mb-8 bg-purple-600 hover:bg-purple-700 text-white font-sans font-bold py-5 md:py-6 px-8 rounded-2xl shadow-md hover:shadow-lg transition-colors duration-200 border border-purple-500/30"
         >
           <div className="flex items-center justify-center gap-3">
-            <svg className="w-6 h-6 transition-transform group-hover:rotate-90 duration-400 ease-out-back" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
             <span className="text-lg md:text-xl">{t.addWalkIn}</span>
@@ -887,7 +876,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                               setSelectedServiceToComplete(party);
                               setShowCompleteServiceModal(true);
                             }}
-                            className="mt-2 w-full px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white text-xs font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
+                            className="mt-2 w-full px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
                           >
                             {language === 'es' ? 'Completar Servicio' : 'Complete Service'}
                           </button>
@@ -990,7 +979,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               {displayedReservations.map((reservation: any, index: number) => (
                 <div
                   key={reservation.reservation_id}
-                  className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 md:p-5 bg-gradient-to-br from-white/5 to-white/10 rounded-xl border-2 border-white/20 hover:border-purple-500/50 hover:shadow-purple-500/20 transition-all duration-400 ease-out-expo hover:-translate-y-1 animate-fade-in-up"
+                  className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 md:p-5 bg-white/5 rounded-xl border border-white/20 hover:border-purple-500/40 transition-colors duration-200"
                   style={{ animationDelay: `${600 + (index * 100)}ms` }}
                 >
                   <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -1108,7 +1097,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                           setSelectedReservation(reservation);
                           setShowCheckInModal(true);
                         }}
-                        className="w-full sm:w-auto bg-gradient-to-r from-success-600 to-success-700 hover:from-success-700 hover:to-success-800 text-white font-sans font-semibold px-5 py-2.5 rounded-lg transition-all duration-300 ease-out-expo shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-95 active:translate-y-0"
+                        className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-sans font-semibold px-5 py-2.5 rounded-lg transition-all duration-300 shadow-sm hover:shadow-md active:scale-95"
                       >
                         <span className="flex items-center justify-center gap-2">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1141,10 +1130,10 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
           <div className="mt-6 text-center">
             <button
               onClick={() => setShowTomorrow(!showTomorrow)}
-              className={`inline-flex items-center gap-2 font-sans font-semibold text-base md:text-lg transition-all duration-300 ease-out-expo hover:gap-3 group px-4 py-2 rounded-lg ${
+              className={`inline-flex items-center gap-2 font-sans font-semibold text-base md:text-lg transition-colors duration-200 group px-4 py-2 rounded-lg ${
                 showTomorrow
-                  ? 'bg-purple-500/20 text-white border-2 border-purple-400'
-                  : 'text-purple-400 hover:text-white hover:bg-purple-500/10'
+                  ? 'bg-purple-600 text-white'
+                  : 'text-purple-400 hover:text-white hover:bg-purple-500/20'
               }`}
             >
               <span>{showTomorrow ? (language === 'es' ? 'Ver Hoy' : 'View Today') : t.viewTomorrow}</span>
@@ -1231,9 +1220,9 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               {selectedTable.status === 'Occupied' && (
                 <button
                   onClick={() => handleFreeTable(selectedTable.id)}
-                  className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-green-100/50 hover:from-green-100 hover:to-green-200/50 rounded-xl border border-green-200 transition-all duration-200 group"
+                  className="w-full flex items-center gap-3 p-4 bg-green-50 hover:bg-green-100 rounded-xl border border-green-200 transition-colors duration-200"
                 >
-                  <div className="p-2 bg-green-600 rounded-lg group-hover:scale-110 transition-transform">
+                  <div className="p-2 bg-green-600 rounded-lg">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
@@ -1252,9 +1241,9 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               {selectedTable.status !== 'Being Cleaned' && (
                 <button
                   onClick={() => handleUpdateTableStatus(selectedTable.id, 'Being Cleaned')}
-                  className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-orange-50 to-orange-100/50 hover:from-orange-100 hover:to-orange-200/50 rounded-xl border border-orange-200 transition-all duration-200 group"
+                  className="w-full flex items-center gap-3 p-4 bg-orange-50 hover:bg-orange-100 rounded-xl border border-orange-200 transition-colors duration-200"
                 >
-                  <div className="p-2 bg-orange-600 rounded-lg group-hover:scale-110 transition-transform">
+                  <div className="p-2 bg-orange-600 rounded-lg">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
@@ -1273,9 +1262,9 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               {selectedTable.status !== 'Available' && (
                 <button
                   onClick={() => handleUpdateTableStatus(selectedTable.id, 'Available')}
-                  className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-indigo-50 to-indigo-100/50 hover:from-indigo-100 hover:to-indigo-200/50 rounded-xl border border-indigo-200 transition-all duration-200 group"
+                  className="w-full flex items-center gap-3 p-4 bg-indigo-50 hover:bg-indigo-100 rounded-xl border border-indigo-200 transition-colors duration-200"
                 >
-                  <div className="p-2 bg-indigo-600 rounded-lg group-hover:scale-110 transition-transform">
+                  <div className="p-2 bg-indigo-600 rounded-lg">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -1297,9 +1286,9 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                     setShowTableActionsModal(false);
                     setShowSeatModal(true);
                   }}
-                  className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-purple-100/50 hover:from-purple-100 hover:to-purple-200/50 rounded-xl border border-purple-200 transition-all duration-200 group"
+                  className="w-full flex items-center gap-3 p-4 bg-purple-50 hover:bg-purple-100 rounded-xl border border-purple-200 transition-colors duration-200"
                 >
-                  <div className="p-2 bg-purple-600 rounded-lg group-hover:scale-110 transition-transform">
+                  <div className="p-2 bg-purple-600 rounded-lg">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
@@ -1395,7 +1384,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </button>
               <button
                 onClick={() => handleCompleteService(selectedServiceToComplete.service_id)}
-                className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
+                className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
               >
                 {language === 'es' ? 'Confirmar' : 'Confirm'}
               </button>
