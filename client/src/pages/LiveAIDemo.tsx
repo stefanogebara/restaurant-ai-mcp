@@ -55,7 +55,7 @@ export default function LiveAIDemo() {
             <span className="text-sm text-gray-300">Live AI Demonstration</span>
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-bold mb-6">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 text-white">
             <span className="gradient-text">Talk to Our AI</span> Restaurant Assistant
           </h1>
 

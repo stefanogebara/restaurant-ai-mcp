@@ -474,8 +474,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
         {/* Loading State */}
         {isLoading && (
           <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in-up">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-burgundy-200 border-t-burgundy-800 mb-4"></div>
-            <p className="text-charcoal-800 font-sans font-semibold">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-200 border-t-purple-600 mb-4"></div>
+            <p className="text-gray-200 font-sans font-semibold">
               {language === 'es' ? 'Cargando dashboard...' : 'Loading dashboard...'}
             </p>
           </div>
@@ -515,10 +515,10 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
         <div className="mb-8 md:mb-10 animate-fade-in-up">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-3">
             <div>
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-burgundy-900 tracking-tight mb-1">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-white tracking-tight mb-1">
                 🍽️ {t.today}
               </h1>
-              <p className="text-charcoal-700 text-base md:text-lg font-sans font-medium">
+              <p className="text-gray-300 text-base md:text-lg font-sans font-medium">
                 {getDayName()}, {formatDate()}
               </p>
             </div>
@@ -528,22 +528,22 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               {/* Subscription Plan Badge */}
               <div className={`px-4 py-2 rounded-xl font-sans font-semibold text-sm shadow-md border transition-all duration-300 hover:scale-105 ${
                 currentPlan === 'professional'
-                  ? 'bg-gradient-to-r from-burgundy-700 to-burgundy-800 text-cream-50 border-burgundy-600'
+                  ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white border-purple-500'
                   : currentPlan === 'basic'
-                  ? 'bg-gradient-to-r from-charcoal-700 to-charcoal-800 text-cream-50 border-charcoal-600'
+                  ? 'bg-gradient-to-r from-gray-600 to-gray-700 text-white border-gray-500'
                   : 'bg-gradient-to-r from-success-500 to-success-600 text-white border-success-400'
               }`}>
                 {currentPlan === 'professional' ? '💎' : currentPlan === 'trial' ? '🎯' : '⭐'} {PLAN_NAMES[currentPlan]}
               </div>
 
               {/* Language Switcher */}
-              <div className="flex items-center gap-1 bg-cream-50 rounded-xl p-1.5 shadow-sm border border-cream-400/60 backdrop-blur-sm">
+              <div className="flex items-center gap-1 bg-white/10 rounded-xl p-1.5 shadow-sm border border-white/20 backdrop-blur-sm">
                 <button
                   onClick={() => handleLanguageChange('en')}
                   className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ease-out-expo ${
                     language === 'en'
-                      ? 'bg-gradient-to-br from-burgundy-700 to-burgundy-800 text-cream-50 shadow-burgundy scale-105'
-                      : 'text-charcoal-600 hover:bg-cream-100 hover:text-burgundy-800'
+                      ? 'bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-purple-500/30 scale-105'
+                      : 'text-gray-400 hover:bg-white/10 hover:text-white'
                   }`}
                   title="English"
                 >
@@ -553,8 +553,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   onClick={() => handleLanguageChange('es')}
                   className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ease-out-expo ${
                     language === 'es'
-                      ? 'bg-gradient-to-br from-burgundy-700 to-burgundy-800 text-cream-50 shadow-burgundy scale-105'
-                      : 'text-charcoal-600 hover:bg-cream-100 hover:text-burgundy-800'
+                      ? 'bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-purple-500/30 scale-105'
+                      : 'text-gray-400 hover:bg-white/10 hover:text-white'
                   }`}
                   title="Español"
                 >
@@ -575,15 +575,15 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </button>
 
               {/* Complexity Toggle - Enhanced Design */}
-              <div className="flex items-center gap-1.5 bg-cream-50 rounded-xl p-1.5 shadow-sm border border-cream-400/60 backdrop-blur-sm">
-                <span className="text-xs text-charcoal-500 font-sans font-semibold px-2 hidden sm:block">{t.viewLevel}</span>
+              <div className="flex items-center gap-1.5 bg-white/10 rounded-xl p-1.5 shadow-sm border border-white/20 backdrop-blur-sm">
+                <span className="text-xs text-gray-400 font-sans font-semibold px-2 hidden sm:block">{t.viewLevel}</span>
 
               <button
                 onClick={() => handleComplexityChange('completo')}
                 className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ease-out-expo ${
                   complexity === 'completo'
-                    ? 'bg-gradient-to-br from-burgundy-700 to-burgundy-800 text-cream-50 shadow-burgundy scale-105'
-                    : 'text-charcoal-600 hover:bg-cream-100 hover:text-burgundy-800'
+                    ? 'bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-purple-500/30 scale-105'
+                    : 'text-gray-400 hover:bg-white/10 hover:text-white'
                 }`}
                 title={t.completo}
               >
@@ -601,10 +601,10 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                 }}
                 className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ease-out-expo ${
                   !hasFeatureAccess(currentPlan, 'mlPerformance')
-                    ? 'text-charcoal-400 hover:bg-cream-100 cursor-not-allowed opacity-60'
+                    ? 'text-gray-500 hover:bg-white/10 cursor-not-allowed opacity-60'
                     : complexity === 'avanzado'
-                    ? 'bg-gradient-to-br from-gold-500 to-gold-600 text-charcoal-900 shadow-gold scale-105'
-                    : 'text-charcoal-600 hover:bg-cream-100 hover:text-burgundy-800'
+                    ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-amber-500/30 scale-105'
+                    : 'text-gray-400 hover:bg-white/10 hover:text-white'
                 }`}
                 title={hasFeatureAccess(currentPlan, 'mlPerformance') ? t.avanzado : (language === 'es' ? 'Requiere Plan Professional' : 'Requires Professional Plan')}
               >
@@ -768,7 +768,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
         {/* Add Walk-in Button */}
         <button
           onClick={() => setShowWalkInModal(true)}
-          className="group w-full mb-8 bg-gradient-to-r from-burgundy-700 to-burgundy-800 hover:from-burgundy-800 hover:to-burgundy-900 text-cream-50 font-sans font-bold py-5 md:py-6 px-8 rounded-2xl shadow-burgundy hover:shadow-2xl transition-all duration-400 ease-out-expo transform hover:scale-[1.02] hover:-translate-y-1 active:scale-[0.98] active:translate-y-0 border-2 border-burgundy-600/40 animate-fade-in-up"
+          className="group w-full mb-8 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-sans font-bold py-5 md:py-6 px-8 rounded-2xl shadow-purple-500/30 hover:shadow-2xl transition-all duration-400 ease-out-expo transform hover:scale-[1.02] hover:-translate-y-1 active:scale-[0.98] active:translate-y-0 border-2 border-purple-500/40 animate-fade-in-up"
         >
           <div className="flex items-center justify-center gap-3">
             <svg className="w-6 h-6 transition-transform group-hover:rotate-90 duration-400 ease-out-back" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -960,17 +960,17 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
 
         {/* Upcoming Reservations */}
-        <div className="bg-cream-100 rounded-2xl p-5 md:p-6 shadow-md border-2 border-cream-400 animate-fade-in-up" style={{ animationDelay: '500ms' }}>
+        <div className="glass-card rounded-2xl p-5 md:p-6 shadow-md border-2 border-white/20 animate-fade-in-up" style={{ animationDelay: '500ms' }}>
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-burgundy-100 rounded-lg">
-              <svg className="w-6 h-6 text-burgundy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-2 bg-purple-500/20 rounded-lg">
+              <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <h2 className="text-xl md:text-2xl font-display font-bold text-burgundy-900">
+            <h2 className="text-xl md:text-2xl font-display font-bold text-white">
               {t.upcomingReservations}
               {showTomorrow && (
-                <span className="ml-2 text-sm font-sans font-normal text-burgundy-600">
+                <span className="ml-2 text-sm font-sans font-normal text-gray-400">
                   ({language === 'es' ? 'Mañana' : 'Tomorrow'})
                 </span>
               )}
@@ -979,29 +979,29 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
           {displayedReservations.length === 0 ? (
             <div className="text-center py-16 px-4">
-              <div className="w-20 h-20 bg-gradient-to-br from-burgundy-50 to-gold-50 rounded-3xl flex items-center justify-center mx-auto mb-4">
+              <div className="w-20 h-20 bg-gradient-to-br from-purple-500/20 to-amber-500/20 rounded-3xl flex items-center justify-center mx-auto mb-4">
                 <span className="text-5xl">✨</span>
               </div>
-              <p className="text-burgundy-900 text-lg font-display font-semibold mb-2">{t.allClear}</p>
-              <p className="text-charcoal-500 text-sm font-sans">{showTomorrow ? (language === 'es' ? 'Sin reservas mañana' : 'No reservations tomorrow') : t.noUpcoming}</p>
+              <p className="text-white text-lg font-display font-semibold mb-2">{t.allClear}</p>
+              <p className="text-gray-400 text-sm font-sans">{showTomorrow ? (language === 'es' ? 'Sin reservas mañana' : 'No reservations tomorrow') : t.noUpcoming}</p>
             </div>
           ) : (
             <div className="space-y-3">
               {displayedReservations.map((reservation: any, index: number) => (
                 <div
                   key={reservation.reservation_id}
-                  className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 md:p-5 bg-gradient-to-br from-cream-50 to-cream-100/50 rounded-xl border-2 border-cream-300 hover:border-burgundy-400 hover:shadow-burgundy transition-all duration-400 ease-out-expo hover:-translate-y-1 animate-fade-in-up"
+                  className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 md:p-5 bg-gradient-to-br from-white/5 to-white/10 rounded-xl border-2 border-white/20 hover:border-purple-500/50 hover:shadow-purple-500/20 transition-all duration-400 ease-out-expo hover:-translate-y-1 animate-fade-in-up"
                   style={{ animationDelay: `${600 + (index * 100)}ms` }}
                 >
                   <div className="flex items-center gap-4 flex-1 min-w-0">
                     <div className="flex-shrink-0">
-                      <div className="text-2xl md:text-3xl font-mono font-bold text-burgundy-800 bg-cream-50 px-3 py-2 rounded-lg shadow-sm border-2 border-burgundy-200">
+                      <div className="text-2xl md:text-3xl font-mono font-bold text-purple-300 bg-white/10 px-3 py-2 rounded-lg shadow-sm border-2 border-purple-500/30">
                         {formatTime(reservation.time)}
                       </div>
                     </div>
-                    <div className="border-l-2 border-burgundy-300 pl-4 flex-1 min-w-0">
+                    <div className="border-l-2 border-purple-500/40 pl-4 flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <div className="font-display font-semibold text-burgundy-900 text-base md:text-lg truncate">
+                        <div className="font-display font-semibold text-white text-base md:text-lg truncate">
                           {reservation.customer_name}
                         </div>
                         {/* ML Risk Badges */}
@@ -1143,8 +1143,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               onClick={() => setShowTomorrow(!showTomorrow)}
               className={`inline-flex items-center gap-2 font-sans font-semibold text-base md:text-lg transition-all duration-300 ease-out-expo hover:gap-3 group px-4 py-2 rounded-lg ${
                 showTomorrow
-                  ? 'bg-burgundy-100 text-burgundy-900 border-2 border-burgundy-400'
-                  : 'text-burgundy-700 hover:text-burgundy-900 hover:bg-burgundy-50'
+                  ? 'bg-purple-500/20 text-white border-2 border-purple-400'
+                  : 'text-purple-400 hover:text-white hover:bg-purple-500/10'
               }`}
             >
               <span>{showTomorrow ? (language === 'es' ? 'Ver Hoy' : 'View Today') : t.viewTomorrow}</span>

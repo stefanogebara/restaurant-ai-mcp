@@ -161,8 +161,11 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
 
   // Check plan limits (Basic: 10 tables, Pro: unlimited)
   const getPlanLimit = () => {
-    // This would come from subscription data in production
-    // For now, assume Basic plan
+    // Check the actual plan from onboarding data
+    const plan = data.plan?.toLowerCase() || 'basic';
+    if (plan === 'professional' || plan === 'pro' || plan === 'enterprise') {
+      return Infinity; // Pro+ plans have unlimited tables
+    }
     return 10; // Basic plan limit
   };
 
@@ -332,9 +335,10 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
                   <input
                     type="number"
                     min="0"
-                    value={tableConfig.count}
+                    value={tableConfig.count === 0 ? '' : tableConfig.count}
+                    placeholder="0"
                     onChange={(e) => updateTableCount(areaIndex, tableIndex, parseInt(e.target.value) || 0)}
-                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                   />
                   <p className="text-xs text-gray-400 mt-1">
                     {tableConfig.count * tableConfig.capacity} seats
