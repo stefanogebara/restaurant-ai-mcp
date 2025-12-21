@@ -1,6 +1,7 @@
 /**
  * Protected Route Component
  * Redirects to login if user is not authenticated
+ * Modern Elegant Design
  */
 
 import { Navigate, useLocation } from 'react-router-dom';
@@ -16,8 +17,11 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a1f] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-violet-500"></div>
+      <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-[#9F1239] border-t-transparent mx-auto mb-4"></div>
+          <p className="text-[#57534E] font-light text-sm">Loading...</p>
+        </div>
       </div>
     );
   }

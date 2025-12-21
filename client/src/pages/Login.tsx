@@ -1,11 +1,14 @@
 /**
  * Login Page
  * Google OAuth sign-in for restaurant onboarding
+ * Modern Elegant Design
  */
 
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { ArrowLeft } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function Login() {
   const { user, loading, signInWithGoogle } = useAuth();
@@ -31,42 +34,61 @@ export default function Login() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a1f] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-violet-500"></div>
+      <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-[#9F1239] border-t-transparent"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a1f] relative overflow-hidden flex items-center justify-center">
-      {/* Animated background gradients */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-violet-500/20 rounded-full blur-3xl opacity-50" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl opacity-40" />
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-3xl opacity-30" />
-      </div>
+    <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center px-6 py-12">
+      {/* Back Button */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="fixed top-6 left-6"
+      >
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-[#57534E] hover:text-[#1C1917] transition-colors text-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Home
+        </Link>
+      </motion.div>
 
       {/* Login Card */}
-      <div className="relative z-10 w-full max-w-md px-6">
-        <div className="bg-gray-900/80 backdrop-blur-xl border border-gray-800 rounded-2xl p-8 shadow-2xl">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md"
+      >
+        <div className="bg-white border border-[#E7E5E4] rounded-[2rem] p-10 shadow-xl">
           {/* Logo and Title */}
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <span className="text-4xl">🍽️</span>
-            </div>
-            <h1 className="text-2xl font-bold text-white mb-2">
-              Welcome to Seatable
+          <div className="text-center mb-10">
+            <Link to="/" className="inline-block mb-6">
+              <span className="font-serif text-3xl tracking-tight text-[#1C1917]">
+                Seatable<span className="text-[#9F1239]">.</span>
+              </span>
+            </Link>
+            <h1 className="font-serif text-2xl text-[#1C1917] mb-2">
+              Welcome back
             </h1>
-            <p className="text-gray-400">
-              Sign in to set up your restaurant
+            <p className="text-[#57534E] font-light">
+              Sign in to manage your restaurant
             </p>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm"
+            >
               {error}
-            </div>
+            </motion.div>
           )}
 
           {/* Google Sign In Button */}
@@ -75,18 +97,18 @@ export default function Login() {
             disabled={isSigningIn}
             className={`
               w-full flex items-center justify-center gap-3 px-6 py-4
-              bg-white hover:bg-gray-100
-              text-gray-900 font-semibold rounded-xl
-              transition-all duration-200
-              ${isSigningIn ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-lg hover:scale-[1.02]'}
+              bg-[#1C1917] hover:bg-[#9F1239]
+              text-white font-bold text-sm tracking-widest uppercase rounded-2xl
+              transition-all duration-300 shadow-lg
+              ${isSigningIn ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-xl hover:shadow-[#9F1239]/20'}
             `}
           >
             {isSigningIn ? (
-              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-gray-900"></div>
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
             ) : (
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
-                  fill="currentColor"
+                  fill="#4285F4"
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                 />
                 <path
@@ -106,29 +128,58 @@ export default function Login() {
             <span>{isSigningIn ? 'Signing in...' : 'Continue with Google'}</span>
           </button>
 
+          {/* Divider */}
+          <div className="flex items-center gap-4 my-8">
+            <div className="flex-1 h-px bg-[#E7E5E4]"></div>
+            <span className="text-xs text-[#A8A29E] uppercase tracking-wider">or</span>
+            <div className="flex-1 h-px bg-[#E7E5E4]"></div>
+          </div>
+
+          {/* Alternative Actions */}
+          <div className="text-center">
+            <p className="text-[#57534E] text-sm mb-4">
+              New to Seatable?
+            </p>
+            <button
+              onClick={handleGoogleSignIn}
+              disabled={isSigningIn}
+              className="w-full px-6 py-4 border border-[#1C1917] text-[#1C1917] font-bold text-sm tracking-widest uppercase rounded-2xl hover:bg-[#1C1917] hover:text-white transition-all duration-300"
+            >
+              Create Account
+            </button>
+          </div>
+
           {/* Terms */}
-          <p className="mt-6 text-center text-xs text-gray-500">
+          <p className="mt-8 text-center text-xs text-[#A8A29E] font-light">
             By continuing, you agree to our{' '}
-            <a href="#" className="text-violet-400 hover:underline">
+            <a href="#" className="text-[#9F1239] hover:underline">
               Terms of Service
             </a>{' '}
             and{' '}
-            <a href="#" className="text-violet-400 hover:underline">
+            <a href="#" className="text-[#9F1239] hover:underline">
               Privacy Policy
             </a>
           </p>
         </div>
 
-        {/* Back to Home */}
-        <div className="mt-6 text-center">
-          <a
-            href="/"
-            className="text-gray-400 hover:text-white text-sm transition-colors"
-          >
-            Back to Home
-          </a>
+        {/* Trust Indicators */}
+        <div className="mt-8 flex justify-center gap-8 text-center">
+          <div>
+            <div className="text-xl font-serif font-bold text-[#1C1917]">500+</div>
+            <div className="text-xs text-[#57534E] uppercase tracking-wider">Restaurants</div>
+          </div>
+          <div className="w-px bg-[#E7E5E4]"></div>
+          <div>
+            <div className="text-xl font-serif font-bold text-[#1C1917]">99.9%</div>
+            <div className="text-xs text-[#57534E] uppercase tracking-wider">Uptime</div>
+          </div>
+          <div className="w-px bg-[#E7E5E4]"></div>
+          <div>
+            <div className="text-xl font-serif font-bold text-[#1C1917]">24/7</div>
+            <div className="text-xs text-[#57534E] uppercase tracking-wider">Support</div>
+          </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

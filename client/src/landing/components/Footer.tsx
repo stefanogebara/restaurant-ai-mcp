@@ -42,7 +42,7 @@ export default function Footer() {
           <a href="/live-demo" className="hover:text-white transition-colors">
             Live Demo
           </a>
-          <a href="/onboarding" className="hover:text-white transition-colors">
+          <a href="/login" className="hover:text-white transition-colors">
             Get Started
           </a>
           <a href="/login" className="hover:text-white transition-colors">
