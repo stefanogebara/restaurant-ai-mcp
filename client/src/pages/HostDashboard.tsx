@@ -132,7 +132,7 @@ export default function HostDashboard() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background">
-        <div className="bg-card rounded-lg p-8 border border-destructive/30 max-w-md">
+        <div className="bg-card rounded-xl p-8 shadow-lg max-w-md">
           <div className="text-6xl mb-4 text-center">⚠️</div>
           <div className="text-xl text-destructive mb-6 text-center font-semibold">Error loading dashboard</div>
           <button
@@ -159,7 +159,7 @@ export default function HostDashboard() {
       <DndContext onDragEnd={handleDragEnd}>
         <div className="min-h-screen bg-background">
           {/* Header */}
-          <header className="bg-card border-b border-border sticky top-0 z-40 backdrop-blur-sm bg-opacity-95">
+          <header className="bg-card sticky top-0 z-40 shadow-md">
           <div className="max-w-[1400px] mx-auto px-6 py-5">
             <div className="flex justify-between items-center">
               <div>
@@ -219,7 +219,7 @@ export default function HostDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Table Grid - 60% width on desktop */}
           <div className="lg:col-span-2">
-            <div className="bg-card rounded-lg shadow-lg p-8 border border-border">
+            <div className="bg-card rounded-xl shadow-lg p-8">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold text-foreground">Table Layout</h2>
                 <div className="flex items-center gap-2 text-sm">
@@ -264,7 +264,7 @@ export default function HostDashboard() {
             )}
 
             {/* Active Parties */}
-            <div className="bg-card rounded-lg shadow-lg p-6 border border-border">
+            <div className="bg-card rounded-xl shadow-lg p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-foreground">Active Parties</h2>
                 <span className="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm font-semibold">
@@ -275,7 +275,7 @@ export default function HostDashboard() {
             </div>
 
             {/* Reservations Calendar */}
-            <div className="bg-card rounded-lg shadow-lg p-6 border border-border">
+            <div className="bg-card rounded-xl shadow-lg p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-foreground">📅 Reservations Calendar</h2>
                 <span className="px-3 py-1 bg-accent text-accent-foreground rounded-full text-sm font-semibold">
@@ -364,10 +364,10 @@ export default function HostDashboard() {
       </button>
 
       {/* Waitlist Sidebar */}
-      <div className={`fixed top-0 right-0 h-full w-[500px] bg-card shadow-2xl border-l border-border transform transition-transform duration-300 ease-in-out z-50 ${isWaitlistOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div className={`fixed top-0 right-0 h-full w-[500px] bg-card shadow-2xl transform transition-transform duration-300 ease-in-out z-50 ${isWaitlistOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="h-full flex flex-col">
           {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-6 border-b border-border">
+          <div className="flex items-center justify-between p-6 shadow-sm">
             <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />

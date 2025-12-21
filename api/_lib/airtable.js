@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { generateSecureReservationId, generateSecureServiceId } = require('./secure-id');
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
@@ -297,19 +298,10 @@ const cancelSubscription = async (subscriptionId) => {
 
 // ============ UTILITIES ============
 
-const generateReservationId = () => {
-  const today = new Date();
-  const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
-  const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-  return `RES-${dateStr}-${randomNum}`;
-};
-
-const generateServiceId = () => {
-  const today = new Date();
-  const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
-  const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-  return `SVC-${dateStr}-${randomNum}`;
-};
+// Use cryptographically secure ID generators from secure-id.js
+// These replace the insecure Math.random() versions to prevent ID enumeration attacks
+const generateReservationId = generateSecureReservationId;
+const generateServiceId = generateSecureServiceId;
 
 // ============ RESERVATION HELPERS ============
 

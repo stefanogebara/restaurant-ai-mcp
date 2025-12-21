@@ -9,7 +9,7 @@ import TableStatusLegend from '../components/host/TableStatusLegend';
 import type { PlanType } from '../config/planFeatures';
 import { hasFeatureAccess } from '../config/planFeatures';
 import { useSubscription } from '../hooks/useSubscription';
-import '../landing/styles/glass-morphism.css';
+// Professional dark theme - no glass effects
 
 type ComplexityLevel = 'completo' | 'avanzado';
 
@@ -471,14 +471,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   }, [toast]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] p-4 md:p-6 lg:p-8 relative overflow-hidden">
-      {/* Animated Background Gradients */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl opacity-50" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl opacity-40" />
-      </div>
-
-      <div className="max-w-7xl mx-auto relative z-10">
+    <div className="min-h-screen bg-slate-900 p-4 md:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
         {/* Loading State */}
         {isLoading && (
           <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in-up">
@@ -534,7 +528,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
             {/* Controls: Language Switcher + Complexity Toggle */}
             <div className="flex items-center gap-3 flex-wrap">
               {/* Language Switcher */}
-              <div className="flex items-center gap-1 bg-white/10 rounded-xl p-1.5 shadow-sm border border-white/20 backdrop-blur-sm">
+              <div className="flex items-center gap-1 bg-slate-800 rounded-xl p-1.5 shadow-sm">
                 <button
                   onClick={() => handleLanguageChange('en')}
                   className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-colors duration-200 ${
@@ -572,7 +566,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </button>
 
               {/* Complexity Toggle - Enhanced Design */}
-              <div className="flex items-center gap-1.5 bg-white/10 rounded-xl p-1.5 shadow-sm border border-white/20 backdrop-blur-sm">
+              <div className="flex items-center gap-1.5 bg-slate-800 rounded-xl p-1.5 shadow-sm">
                 <span className="text-xs text-gray-400 font-sans font-semibold px-2 hidden sm:block">{t.viewLevel}</span>
 
               <button
@@ -619,7 +613,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
             {/* Main Stats Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Occupied Tables */}
-              <div className="glass-card p-4 md:p-5">
+              <div className="bg-slate-800 rounded-xl shadow-md p-4 md:p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="text-3xl md:text-4xl font-bold text-indigo-400 tracking-tight">
                     {occupiedTables}<span className="text-gray-500 text-2xl">/{totalTables}</span>
@@ -643,7 +637,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </div>
 
               {/* Reservations */}
-              <div className="glass-card p-4 md:p-5">
+              <div className="bg-slate-800 rounded-xl shadow-md p-4 md:p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="text-3xl md:text-4xl font-bold text-emerald-400 tracking-tight">
                     {todayReservations.length}
@@ -667,7 +661,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </div>
 
               {/* Waiting */}
-              <div className="glass-card p-4 md:p-5">
+              <div className="bg-slate-800 rounded-xl shadow-md p-4 md:p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="text-3xl md:text-4xl font-bold text-amber-400 tracking-tight">
                     {stats.waitlistCount || 0}
@@ -690,7 +684,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </div>
 
               {/* Active Parties */}
-              <div className="glass-card p-4 md:p-5">
+              <div className="bg-slate-800 rounded-xl shadow-md p-4 md:p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="text-3xl md:text-4xl font-bold text-purple-400 tracking-tight">
                     {stats.activePartiesCount || 0}
@@ -715,7 +709,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
             {/* Additional Stats Row */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="glass-card p-4">
+              <div className="bg-slate-800 rounded-xl shadow-md p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-blue-500/10 rounded-lg">
                     <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -730,7 +724,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   </div>
                 </div>
               </div>
-              <div className="glass-card p-4">
+              <div className="bg-slate-800 rounded-xl shadow-md p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-pink-500/10 rounded-lg">
                     <svg className="w-5 h-5 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -743,7 +737,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   </div>
                 </div>
               </div>
-              <div className="glass-card p-4">
+              <div className="bg-slate-800 rounded-xl shadow-md p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-emerald-500/10 rounded-lg">
                     <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -765,7 +759,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
         {/* Add Walk-in Button */}
         <button
           onClick={() => setShowWalkInModal(true)}
-          className="w-full mb-8 bg-purple-600 hover:bg-purple-700 text-white font-sans font-bold py-5 md:py-6 px-8 rounded-2xl shadow-md hover:shadow-lg transition-colors duration-200 border border-purple-500/30"
+          className="w-full mb-8 bg-violet-600 hover:bg-violet-700 text-white font-sans font-bold py-5 md:py-6 px-8 rounded-2xl shadow-md hover:shadow-lg transition-colors duration-200"
         >
           <div className="flex items-center justify-center gap-3">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -781,7 +775,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
             {/* Left: Table Grid (60% on desktop) */}
             <div className="lg:col-span-2">
-              <div className="glass-card p-5 md:p-6">
+              <div className="bg-slate-800 rounded-xl shadow-md p-5 md:p-6">
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-indigo-500/10 rounded-lg">
@@ -832,7 +826,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
             <div className="space-y-5 md:space-y-6">
 
               {/* Active Parties Panel */}
-              <div className="glass-card p-5 md:p-6">
+              <div className="bg-slate-800 rounded-xl shadow-md p-5 md:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2.5">
                     <div className="p-1.5 bg-purple-500/10 rounded-lg">
@@ -854,7 +848,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                     {activeParties?.map((party: any) => (
                       <div
                         key={party.service_id}
-                        className="p-3.5 bg-white/5 rounded-xl border border-white/10 hover:border-purple-400/30 transition-all duration-200"
+                        className="p-3.5 bg-slate-700/50 rounded-xl shadow-sm hover:bg-slate-700 transition-all duration-200"
                       >
                         <div className="flex items-start justify-between mb-2">
                           <div className="font-semibold text-gray-200 text-sm">
@@ -908,7 +902,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </div>
 
               {/* Waitlist Panel */}
-              <div className="glass-card p-5 md:p-6">
+              <div className="bg-slate-800 rounded-xl shadow-md p-5 md:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2.5">
                     <div className="p-1.5 bg-amber-500/10 rounded-lg">
@@ -957,7 +951,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
 
         {/* Upcoming Reservations */}
-        <div className="glass-card rounded-2xl p-5 md:p-6 shadow-md border-2 border-white/20 animate-fade-in-up" style={{ animationDelay: '500ms' }}>
+        <div className="bg-slate-800 rounded-2xl p-5 md:p-6 shadow-lg animate-fade-in-up" style={{ animationDelay: '500ms' }}>
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-purple-500/20 rounded-lg">
               <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -987,7 +981,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               {displayedReservations.map((reservation: any, index: number) => (
                 <div
                   key={reservation.reservation_id}
-                  className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 md:p-5 bg-white/5 rounded-xl border border-white/20 hover:border-purple-500/40 transition-colors duration-200"
+                  className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 md:p-5 bg-slate-700/50 rounded-xl shadow-sm hover:bg-slate-700 transition-colors duration-200"
                   style={{ animationDelay: `${600 + (index * 100)}ms` }}
                 >
                   <div className="flex items-center gap-4 flex-1 min-w-0">

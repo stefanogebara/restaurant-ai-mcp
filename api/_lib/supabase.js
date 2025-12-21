@@ -5,6 +5,7 @@
  */
 
 const { createClient } = require('@supabase/supabase-js');
+const { generateSecureReservationId, generateSecureServiceId } = require('./secure-id');
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -745,19 +746,10 @@ const cancelSubscription = async (subscriptionId) => {
 
 // ============ UTILITIES ============
 
-const generateReservationId = () => {
-  const today = new Date();
-  const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
-  const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-  return `RES-${dateStr}-${randomNum}`;
-};
-
-const generateServiceId = () => {
-  const today = new Date();
-  const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
-  const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-  return `SVC-${dateStr}-${randomNum}`;
-};
+// Use cryptographically secure ID generators from secure-id.js
+// These replace the insecure Math.random() versions to prevent ID enumeration attacks
+const generateReservationId = generateSecureReservationId;
+const generateServiceId = generateSecureServiceId;
 
 // ============ RESERVATION HELPERS ============
 

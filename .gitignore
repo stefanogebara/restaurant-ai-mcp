@@ -2,10 +2,25 @@ node_modules
 .vercel
 .env
 .env.local
+.env.*
 *.log
 .claude/settings.local.json
 gcp-credentials.json
 *-credentials.json
+
+# Test/debug files with potential sensitive data
+check-*.js
+check-*.py
+test-*.js
+debug-*.js
+*-debug.js
+*-test.js
+
+# Security - never commit these
+*.pem
+*.key
+secrets.json
+credentials.json
 
 # Training data - exclude from git
 hotel_bookings.csv
