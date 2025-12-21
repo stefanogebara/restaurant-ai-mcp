@@ -81,8 +81,15 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   useEffect(() => {
     // First check dashboard language preference
     const savedLanguage = localStorage.getItem('dashboard-language');
-    if (savedLanguage && ['es', 'en', 'pt', 'fr', 'it', 'de'].includes(savedLanguage)) {
+    // Only allow EN/ES since those are the only UI toggle options
+    if (savedLanguage && ['es', 'en'].includes(savedLanguage)) {
       setLanguage(savedLanguage as 'es' | 'en' | 'pt' | 'fr' | 'it' | 'de');
+      return;
+    }
+    // If saved language is not EN/ES, reset to EN
+    if (savedLanguage && !['es', 'en'].includes(savedLanguage)) {
+      localStorage.setItem('dashboard-language', 'en');
+      setLanguage('en');
       return;
     }
 
@@ -93,14 +100,15 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
         const data = JSON.parse(onboardingData);
         const countryLanguage = data?.country_language || data?.profile_data?.language;
 
-        // Map country language codes to simple language codes
-        const langMap: Record<string, 'es' | 'en' | 'pt' | 'fr' | 'it' | 'de'> = {
-          'pt-BR': 'pt', 'pt-PT': 'pt',
+        // Map country language codes to EN/ES only (the supported UI languages)
+        const langMap: Record<string, 'es' | 'en'> = {
           'es-ES': 'es', 'es-MX': 'es', 'es-AR': 'es', 'es-CO': 'es', 'es-CL': 'es', 'es-PE': 'es',
           'en-US': 'en', 'en-GB': 'en', 'en-CA': 'en', 'en-AU': 'en',
-          'fr-FR': 'fr', 'fr-BE': 'fr', 'fr-CH': 'fr',
-          'it-IT': 'it',
-          'de-DE': 'de', 'de-AT': 'de',
+          // Other languages default to English
+          'pt-BR': 'en', 'pt-PT': 'en',
+          'fr-FR': 'en', 'fr-BE': 'en', 'fr-CH': 'en',
+          'it-IT': 'en',
+          'de-DE': 'en', 'de-AT': 'en',
         };
 
         if (countryLanguage && langMap[countryLanguage]) {
