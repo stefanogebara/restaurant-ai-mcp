@@ -5,39 +5,39 @@
 @layer base {
   :root {
     --radius: 0.5rem;
-    /* Professional Dark Theme - Slate-based (Linear/Notion style) */
-    --background: #0f172a;           /* slate-900 */
-    --foreground: #f8fafc;           /* slate-50 */
-    --card: #1e293b;                 /* slate-800 */
-    --card-foreground: #f8fafc;      /* slate-50 */
-    --popover: #1e293b;              /* slate-800 */
-    --popover-foreground: #f8fafc;   /* slate-50 */
-    --primary: #8b5cf6;              /* violet-500 */
-    --primary-foreground: #f8fafc;   /* slate-50 */
-    --secondary: #334155;            /* slate-700 */
-    --secondary-foreground: #f8fafc; /* slate-50 */
-    --muted: #334155;                /* slate-700 */
-    --muted-foreground: #94a3b8;     /* slate-400 */
-    --accent: #334155;               /* slate-700 */
-    --accent-foreground: #f8fafc;    /* slate-50 */
-    --destructive: #ef4444;          /* red-500 */
-    --destructive-foreground: #f8fafc;
-    --border: #334155;               /* slate-700 - subtle, not harsh */
-    --input: #334155;                /* slate-700 */
-    --ring: #8b5cf6;                 /* violet-500 */
-    --chart-1: #8b5cf6;
-    --chart-2: #06b6d4;
-    --chart-3: #ec4899;
-    --chart-4: #10b981;
-    --chart-5: #f59e0b;
-    --sidebar: #0f172a;              /* slate-900 */
-    --sidebar-foreground: #f8fafc;   /* slate-50 */
-    --sidebar-primary: #8b5cf6;      /* violet-500 */
-    --sidebar-primary-foreground: #f8fafc;
-    --sidebar-accent: #1e293b;       /* slate-800 */
-    --sidebar-accent-foreground: #f8fafc;
-    --sidebar-border: #334155;       /* slate-700 */
-    --sidebar-ring: #8b5cf6;         /* violet-500 */
+    /* Modern Elegant Theme - Soft Luxurious Minimalist */
+    --background: #FAFAF9;           /* Warm White */
+    --foreground: #1C1917;           /* Deep Charcoal */
+    --card: #FFFFFF;                 /* White */
+    --card-foreground: #1C1917;      /* Deep Charcoal */
+    --popover: #FFFFFF;              /* White */
+    --popover-foreground: #1C1917;   /* Deep Charcoal */
+    --primary: #9F1239;              /* Muted Burgundy */
+    --primary-foreground: #FFFFFF;   /* White */
+    --secondary: #F5F5F4;            /* Soft Gray */
+    --secondary-foreground: #1C1917; /* Deep Charcoal */
+    --muted: #F5F5F4;                /* Soft Gray */
+    --muted-foreground: #57534E;     /* Stone Gray */
+    --accent: #F5F5F4;               /* Soft Gray */
+    --accent-foreground: #1C1917;    /* Deep Charcoal */
+    --destructive: #DC2626;          /* Red */
+    --destructive-foreground: #FFFFFF;
+    --border: #E7E5E4;               /* Border Gray */
+    --input: #E7E5E4;                /* Border Gray */
+    --ring: #9F1239;                 /* Muted Burgundy */
+    --chart-1: #9F1239;
+    --chart-2: #1C1917;
+    --chart-3: #57534E;
+    --chart-4: #A8A29E;
+    --chart-5: #E7E5E4;
+    --sidebar: #FAFAF9;              /* Warm White */
+    --sidebar-foreground: #1C1917;   /* Deep Charcoal */
+    --sidebar-primary: #9F1239;      /* Muted Burgundy */
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: #F5F5F4;       /* Soft Gray */
+    --sidebar-accent-foreground: #1C1917;
+    --sidebar-border: #E7E5E4;       /* Border Gray */
+    --sidebar-ring: #9F1239;         /* Muted Burgundy */
   }
 }
 
@@ -48,14 +48,17 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+    font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
     margin: 0;
     min-width: 320px;
     min-height: 100vh;
-    font-feature-settings: 'cv11' 1, 'ss01' 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', Georgia, serif;
   }
 }
 
@@ -81,10 +84,32 @@
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .animate-slide-in {
   animation: slideIn 0.3s ease-out;
 }
 
 .animate-slide-up {
   animation: slideUp 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Typography utilities */
+.font-serif {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.font-sans {
+  font-family: 'Lato', -apple-system, BlinkMacSystemFont, sans-serif;
 }

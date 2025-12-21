@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: 'class', // Use class strategy but never apply .dark class = light mode only
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -8,9 +8,19 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['DM Sans', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'sans-serif'],
+        sans: ['Lato', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        serif: ['Playfair Display', 'Georgia', 'serif'],
       },
       colors: {
+        // Modern Elegant Theme Colors
+        'warm-white': '#FAFAF9',
+        'soft-gray': '#F5F5F4',
+        'deep-charcoal': '#1C1917',
+        'stone-gray': '#57534E',
+        'burgundy': '#9F1239',
+        'burgundy-dark': '#881337',
+        'border-gray': '#E7E5E4',
+        // CSS Variable Colors
         border: "var(--border)",
         input: "var(--input)",
         ring: "var(--ring)",
@@ -64,6 +74,9 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        '2xl': '1rem',
+        '3xl': '1.5rem',
+        '4xl': '2rem',
       },
     },
   },

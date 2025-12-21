@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ArrowRight } from 'lucide-react';
 import { FAQS } from '../data/demoData';
 
 export default function FAQSection() {
@@ -10,12 +10,16 @@ export default function FAQSection() {
     setOpenIndex(openIndex === index ? null : index);
   };
 
-  return (
-    <section id="faq" className="relative py-24 bg-[#0a0a0f] overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 section-gradient-2 opacity-50" />
+  const scrollToContact = () => {
+    const element = document.getElementById('contact');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
-      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+  return (
+    <section id="faq" className="py-24 px-6 bg-white">
+      <div className="max-w-3xl mx-auto">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -24,10 +28,11 @@ export default function FAQSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
-            <span className="gradient-text">Frequently Asked</span> Questions
+          <h2 className="font-serif text-3xl md:text-4xl italic mb-4 text-[#1C1917]">
+            Frequently Asked Questions
           </h2>
-          <p className="text-xl text-gray-400">
+          <div className="w-16 h-0.5 bg-[#9F1239] mx-auto opacity-50 mb-6"></div>
+          <p className="text-lg text-[#57534E] font-light">
             Everything you need to know about Seatable
           </p>
         </motion.div>
@@ -41,18 +46,19 @@ export default function FAQSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="glass-card overflow-hidden"
+              className="bg-[#FAFAF9] rounded-2xl border border-[#E7E5E4] overflow-hidden"
             >
               <button
                 onClick={() => toggleFAQ(index)}
-                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/5 transition-colors"
+                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-[#F5F5F4] transition-colors"
               >
-                <span className="text-lg font-semibold text-white pr-8">{faq.question}</span>
+                <span className="text-lg font-serif text-[#1C1917] pr-8">{faq.question}</span>
                 <motion.div
                   animate={{ rotate: openIndex === index ? 180 : 0 }}
                   transition={{ duration: 0.3 }}
+                  className="flex-shrink-0"
                 >
-                  <ChevronDown className="w-6 h-6 text-gray-400 flex-shrink-0" />
+                  <ChevronDown className="w-5 h-5 text-[#9F1239]" />
                 </motion.div>
               </button>
 
@@ -65,7 +71,7 @@ export default function FAQSection() {
                     transition={{ duration: 0.3 }}
                     className="overflow-hidden"
                   >
-                    <div className="px-6 pb-5 text-gray-400 leading-relaxed border-t border-white/5 pt-4">
+                    <div className="px-6 pb-5 text-[#57534E] leading-relaxed border-t border-[#E7E5E4] pt-4 font-light">
                       {faq.answer}
                     </div>
                   </motion.div>
@@ -81,21 +87,19 @@ export default function FAQSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.6 }}
-          className="text-center mt-12"
+          className="text-center mt-16"
         >
-          <div className="glass-subtle p-8 rounded-2xl inline-block">
-            <h3 className="text-xl font-bold text-white mb-2">Still have questions?</h3>
-            <p className="text-gray-400 mb-4">
+          <div className="bg-[#1C1917] p-10 rounded-[2rem]">
+            <h3 className="font-serif text-2xl text-white mb-3">Still have questions?</h3>
+            <p className="text-gray-400 mb-6 font-light">
               We're here to help. Reach out to our team anytime.
             </p>
             <button
-              onClick={() => {
-                const element = document.getElementById('contact');
-                if (element) element.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="px-6 py-3 glass-button-primary text-white font-semibold"
+              onClick={scrollToContact}
+              className="bg-[#9F1239] text-white px-8 py-4 text-sm tracking-widest uppercase font-bold hover:bg-[#881337] transition-all duration-300 rounded-2xl inline-flex items-center gap-2"
             >
               Contact Support
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </motion.div>

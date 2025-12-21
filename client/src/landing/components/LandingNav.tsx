@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Menu, X, Phone } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function LandingNav() {
@@ -12,95 +12,101 @@ export default function LandingNav() {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
-      setIsMobileMenuOpen(false);
     }
+    setIsMobileMenuOpen(false);
   };
 
   return (
     <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? 'glass-nav' : 'bg-transparent'
+      className={`fixed w-full top-0 z-50 transition-all duration-300 ${
+        isScrolled
+          ? 'bg-[#FAFAF9]/95 backdrop-blur-md border-b border-[#E7E5E4] py-4'
+          : 'bg-transparent py-6'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="flex items-center space-x-2"
-          >
-            <div className="w-10 h-10 rounded-xl glass-strong flex items-center justify-center">
-              <span className="text-2xl">🍽️</span>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">Seatable</h1>
-              <p className="text-xs text-gray-400">AI Restaurant Management</p>
-            </div>
-          </motion.div>
+      <div className="max-w-7xl mx-auto px-6 md:px-12 flex justify-between items-center">
+        {/* Logo */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+          className="font-serif text-2xl font-bold tracking-tight text-[#1C1917] cursor-pointer"
+          onClick={() => navigate('/')}
+        >
+          Seatable<span className="text-[#9F1239]">.</span>
+        </motion.div>
 
-          {/* Desktop Navigation */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="hidden md:flex items-center space-x-8"
+        {/* Desktop Navigation */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="hidden md:flex gap-8 text-sm font-medium tracking-wide text-[#57534E] uppercase"
+        >
+          <button
+            onClick={() => navigate('/live-demo')}
+            className="hover:text-[#9F1239] transition-colors"
           >
-            <button
-              onClick={() => scrollToSection('features')}
-              className="text-gray-300 hover:text-white transition-colors"
-            >
-              Features
-            </button>
-            <button
-              onClick={() => navigate('/live-demo')}
-              className="text-gray-300 hover:text-white transition-colors"
-            >
-              Live Demo
-            </button>
-            <button
-              onClick={() => scrollToSection('pricing')}
-              className="text-gray-300 hover:text-white transition-colors"
-            >
-              Pricing
-            </button>
-            <button
-              onClick={() => scrollToSection('faq')}
-              className="text-gray-300 hover:text-white transition-colors"
-            >
-              FAQ
-            </button>
-            <button
-              onClick={() => scrollToSection('contact')}
-              className="px-6 py-2 glass-button-primary text-white font-semibold flex items-center gap-2"
-            >
-              <Phone className="w-4 h-4" />
-              Contact Sales
-            </button>
-          </motion.div>
+            Live Demo
+          </button>
+          <button
+            onClick={() => scrollToSection('features')}
+            className="hover:text-[#9F1239] transition-colors"
+          >
+            Features
+          </button>
+          <button
+            onClick={() => scrollToSection('pricing')}
+            className="hover:text-[#9F1239] transition-colors"
+          >
+            Pricing
+          </button>
+          <button
+            onClick={() => scrollToSection('faq')}
+            className="hover:text-[#9F1239] transition-colors"
+          >
+            FAQ
+          </button>
+        </motion.div>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-gray-300 hover:text-white p-2 glass rounded-lg"
-            >
-              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-        </div>
+        {/* Desktop CTA Buttons */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4 }}
+          className="hidden md:flex gap-6 items-center"
+        >
+          <button
+            onClick={() => navigate('/login')}
+            className="text-[#1C1917] text-sm font-bold tracking-widest uppercase hover:text-[#9F1239] transition-colors"
+          >
+            Login
+          </button>
+          <button
+            onClick={() => navigate('/onboarding')}
+            className="bg-[#1C1917] text-[#FAFAF9] px-6 py-2.5 rounded-none hover:bg-[#9F1239] transition-colors duration-300 text-sm tracking-widest font-bold uppercase"
+          >
+            Get Started
+          </button>
+        </motion.div>
+
+        {/* Mobile Menu Button */}
+        <button
+          className="md:hidden text-[#1C1917]"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
       </div>
 
       {/* Mobile Menu */}
@@ -109,42 +115,44 @@ export default function LandingNav() {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className="md:hidden glass-strong border-t border-white/10"
+          className="md:hidden bg-[#FAFAF9] border-t border-[#E7E5E4] px-6 py-6 space-y-4"
         >
-          <div className="px-4 py-6 space-y-4">
+          <button
+            onClick={() => { navigate('/live-demo'); setIsMobileMenuOpen(false); }}
+            className="block w-full text-left text-sm font-medium tracking-wide text-[#57534E] uppercase hover:text-[#9F1239] transition-colors py-2"
+          >
+            Live Demo
+          </button>
+          <button
+            onClick={() => scrollToSection('features')}
+            className="block w-full text-left text-sm font-medium tracking-wide text-[#57534E] uppercase hover:text-[#9F1239] transition-colors py-2"
+          >
+            Features
+          </button>
+          <button
+            onClick={() => scrollToSection('pricing')}
+            className="block w-full text-left text-sm font-medium tracking-wide text-[#57534E] uppercase hover:text-[#9F1239] transition-colors py-2"
+          >
+            Pricing
+          </button>
+          <button
+            onClick={() => scrollToSection('faq')}
+            className="block w-full text-left text-sm font-medium tracking-wide text-[#57534E] uppercase hover:text-[#9F1239] transition-colors py-2"
+          >
+            FAQ
+          </button>
+          <div className="pt-4 border-t border-[#E7E5E4] space-y-3">
             <button
-              onClick={() => scrollToSection('features')}
-              className="block w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+              onClick={() => { navigate('/login'); setIsMobileMenuOpen(false); }}
+              className="block w-full text-center text-sm font-bold tracking-widest uppercase text-[#1C1917] py-2"
             >
-              Features
+              Login
             </button>
             <button
-              onClick={() => {
-                navigate('/live-demo');
-                setIsMobileMenuOpen(false);
-              }}
-              className="block w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+              onClick={() => { navigate('/onboarding'); setIsMobileMenuOpen(false); }}
+              className="block w-full bg-[#9F1239] text-white text-center px-6 py-3 text-sm tracking-widest font-bold uppercase"
             >
-              Live Demo
-            </button>
-            <button
-              onClick={() => scrollToSection('pricing')}
-              className="block w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-all"
-            >
-              Pricing
-            </button>
-            <button
-              onClick={() => scrollToSection('faq')}
-              className="block w-full text-left px-4 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-all"
-            >
-              FAQ
-            </button>
-            <button
-              onClick={() => scrollToSection('contact')}
-              className="w-full px-6 py-3 glass-button-primary text-white font-semibold flex items-center justify-center gap-2"
-            >
-              <Phone className="w-4 h-4" />
-              Contact Sales
+              Get Started
             </button>
           </div>
         </motion.div>

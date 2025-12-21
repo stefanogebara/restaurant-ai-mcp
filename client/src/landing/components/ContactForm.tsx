@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Mail, CheckCircle } from 'lucide-react';
+import { Send, Mail, CheckCircle, Clock } from 'lucide-react';
 import { CONTACT_INFO } from '../data/demoData';
 
 export default function ContactForm() {
@@ -63,11 +63,8 @@ ${formData.message}
   };
 
   return (
-    <section id="contact" className="relative py-24 bg-[#0a0a0f] overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 section-gradient-3 opacity-50" />
-
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="contact" className="py-24 px-6 bg-white">
+      <div className="max-w-6xl mx-auto">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -76,12 +73,12 @@ ${formData.message}
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
-            <span className="gradient-text">Get Started</span> Today
+          <h2 className="font-serif text-3xl md:text-4xl italic mb-4 text-[#1C1917]">
+            Get Started Today
           </h2>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-            Schedule a personalized demo and discover how Seatable can transform your
-            operations
+          <div className="w-16 h-0.5 bg-[#9F1239] mx-auto opacity-50 mb-6"></div>
+          <p className="text-lg text-[#57534E] max-w-2xl mx-auto font-light">
+            Schedule a personalized demo and discover how Seatable can transform your operations
           </p>
         </motion.div>
 
@@ -94,20 +91,20 @@ ${formData.message}
             transition={{ duration: 0.6 }}
             className="space-y-6"
           >
-            <div className="glass-card p-8">
-              <h3 className="text-2xl font-bold text-white mb-6">Contact Information</h3>
+            <div className="bg-[#1C1917] p-8 rounded-[2rem]">
+              <h3 className="font-serif text-2xl text-white mb-6">Contact Information</h3>
 
               <div className="space-y-6">
                 {/* Email */}
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center flex-shrink-0">
-                    <Mail className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 rounded-2xl bg-[#9F1239] flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <div className="text-sm text-gray-400 mb-1">Email</div>
+                    <div className="text-sm text-gray-400 mb-1 font-light">Email</div>
                     <a
                       href={`mailto:${CONTACT_INFO.email}`}
-                      className="text-white font-semibold hover:text-indigo-400 transition-colors"
+                      className="text-white font-medium hover:text-[#9F1239] transition-colors"
                     >
                       {CONTACT_INFO.email}
                     </a>
@@ -116,20 +113,20 @@ ${formData.message}
 
                 {/* Response Time */}
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center flex-shrink-0">
-                    <CheckCircle className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                    <Clock className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <div className="text-sm text-gray-400 mb-1">Response Time</div>
-                    <div className="text-white font-semibold">Within 24 hours</div>
+                    <div className="text-sm text-gray-400 mb-1 font-light">Response Time</div>
+                    <div className="text-white font-medium">Within 24 hours</div>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* What to Expect */}
-            <div className="glass-subtle p-6 rounded-2xl">
-              <h4 className="text-lg font-bold text-white mb-4">What to Expect</h4>
+            <div className="bg-[#FAFAF9] p-6 rounded-[2rem] border border-[#E7E5E4]">
+              <h4 className="font-serif text-lg text-[#1C1917] mb-4">What to Expect</h4>
               <div className="space-y-3">
                 {[
                   'Personalized 30-minute demo call',
@@ -137,24 +134,26 @@ ${formData.message}
                   'Technical consultation with our team',
                   'Free trial to test the platform',
                 ].map((item, index) => (
-                  <div key={index} className="flex items-start gap-2">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-300 text-sm">{item}</span>
+                  <div key={index} className="flex items-start gap-3">
+                    <div className="w-5 h-5 rounded-full bg-[#9F1239]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <CheckCircle className="w-3 h-3 text-[#9F1239]" />
+                    </div>
+                    <span className="text-[#57534E] text-sm font-light">{item}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Trust Indicators */}
-            <div className="glass-subtle p-6 rounded-2xl">
-              <div className="grid grid-cols-2 gap-4 text-center">
+            <div className="bg-[#FAFAF9] p-6 rounded-[2rem] border border-[#E7E5E4]">
+              <div className="grid grid-cols-2 gap-6 text-center">
                 <div>
-                  <div className="text-3xl font-bold gradient-text">99.9%</div>
-                  <div className="text-xs text-gray-400 mt-1">Uptime</div>
+                  <div className="text-3xl font-serif font-bold text-[#9F1239]">99.9%</div>
+                  <div className="text-xs text-[#57534E] mt-1 uppercase tracking-wider">Uptime</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold gradient-text-emerald">94%</div>
-                  <div className="text-xs text-gray-400 mt-1">Satisfaction</div>
+                  <div className="text-3xl font-serif font-bold text-[#1C1917]">94%</div>
+                  <div className="text-xs text-[#57534E] mt-1 uppercase tracking-wider">Satisfaction</div>
                 </div>
               </div>
             </div>
@@ -167,11 +166,11 @@ ${formData.message}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <form onSubmit={handleSubmit} className="glass-card p-8 space-y-6">
+            <form onSubmit={handleSubmit} className="bg-[#FAFAF9] p-8 rounded-[2rem] border border-[#E7E5E4] space-y-5">
               {/* Name */}
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
-                  Full Name <span className="text-red-400">*</span>
+                <label htmlFor="name" className="block text-sm font-medium text-[#1C1917] mb-2">
+                  Full Name <span className="text-[#9F1239]">*</span>
                 </label>
                 <input
                   type="text"
@@ -180,15 +179,15 @@ ${formData.message}
                   required
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 glass-input text-white placeholder-gray-500"
+                  className="w-full px-4 py-3 bg-white border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-all"
                   placeholder="John Smith"
                 />
               </div>
 
               {/* Email */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                  Email Address <span className="text-red-400">*</span>
+                <label htmlFor="email" className="block text-sm font-medium text-[#1C1917] mb-2">
+                  Email Address <span className="text-[#9F1239]">*</span>
                 </label>
                 <input
                   type="email"
@@ -197,14 +196,14 @@ ${formData.message}
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 glass-input text-white placeholder-gray-500"
+                  className="w-full px-4 py-3 bg-white border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-all"
                   placeholder="john@restaurant.com"
                 />
               </div>
 
               {/* Phone */}
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">
+                <label htmlFor="phone" className="block text-sm font-medium text-[#1C1917] mb-2">
                   Phone Number
                 </label>
                 <input
@@ -213,15 +212,15 @@ ${formData.message}
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 glass-input text-white placeholder-gray-500"
+                  className="w-full px-4 py-3 bg-white border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-all"
                   placeholder="+1 (555) 123-4567"
                 />
               </div>
 
               {/* Restaurant Name */}
               <div>
-                <label htmlFor="restaurant" className="block text-sm font-medium text-gray-300 mb-2">
-                  Restaurant Name <span className="text-red-400">*</span>
+                <label htmlFor="restaurant" className="block text-sm font-medium text-[#1C1917] mb-2">
+                  Restaurant Name <span className="text-[#9F1239]">*</span>
                 </label>
                 <input
                   type="text"
@@ -230,14 +229,14 @@ ${formData.message}
                   required
                   value={formData.restaurant}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 glass-input text-white placeholder-gray-500"
+                  className="w-full px-4 py-3 bg-white border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-all"
                   placeholder="La Bella Vista"
                 />
               </div>
 
               {/* Number of Tables */}
               <div>
-                <label htmlFor="tables" className="block text-sm font-medium text-gray-300 mb-2">
+                <label htmlFor="tables" className="block text-sm font-medium text-[#1C1917] mb-2">
                   Number of Tables
                 </label>
                 <input
@@ -246,7 +245,7 @@ ${formData.message}
                   name="tables"
                   value={formData.tables}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 glass-input text-white placeholder-gray-500"
+                  className="w-full px-4 py-3 bg-white border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-all"
                   placeholder="12"
                   min="1"
                 />
@@ -254,8 +253,8 @@ ${formData.message}
 
               {/* Message */}
               <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-300 mb-2">
-                  Tell us about your needs <span className="text-red-400">*</span>
+                <label htmlFor="message" className="block text-sm font-medium text-[#1C1917] mb-2">
+                  Tell us about your needs <span className="text-[#9F1239]">*</span>
                 </label>
                 <textarea
                   id="message"
@@ -264,7 +263,7 @@ ${formData.message}
                   value={formData.message}
                   onChange={handleChange}
                   rows={4}
-                  className="w-full px-4 py-3 glass-input text-white placeholder-gray-500 resize-none"
+                  className="w-full px-4 py-3 bg-white border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-all resize-none"
                   placeholder="I'm interested in implementing Seatable for my restaurant..."
                 />
               </div>
@@ -273,7 +272,7 @@ ${formData.message}
               <button
                 type="submit"
                 disabled={isSubmitting || isSubmitted}
-                className="w-full px-6 py-4 glass-button-primary text-white font-semibold text-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-4 bg-[#9F1239] text-white text-sm tracking-widest uppercase font-bold hover:bg-[#881337] transition-all duration-300 rounded-2xl shadow-xl shadow-[#9F1239]/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitted ? (
                   <>
@@ -294,7 +293,7 @@ ${formData.message}
               </button>
 
               {/* Privacy Note */}
-              <p className="text-xs text-gray-500 text-center">
+              <p className="text-xs text-[#A8A29E] text-center font-light">
                 By submitting this form, you agree to our Terms of Service and Privacy Policy
               </p>
             </form>

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
+import { Check, ArrowRight, Loader2 } from 'lucide-react';
 import { PRICING_TIERS } from '../data/demoData';
 import { useState } from 'react';
 
@@ -17,10 +17,9 @@ export default function PricingSection() {
     try {
       setLoadingPlan(planName);
 
-      // Call API to create Stripe checkout session
       const apiUrl = import.meta.env.VITE_API_URL
         ? `${import.meta.env.VITE_API_URL}/api/create-checkout-session`
-        : '/api/create-checkout-session'; // Use relative URL in production
+        : '/api/create-checkout-session';
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -38,8 +37,6 @@ export default function PricingSection() {
       }
 
       const { url } = await response.json();
-
-      // Redirect to Stripe Checkout
       window.location.href = url;
     } catch (error) {
       console.error('Error creating checkout session:', error);
@@ -49,11 +46,8 @@ export default function PricingSection() {
   };
 
   return (
-    <section id="pricing" className="relative py-24 bg-[#0a0a0f] overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 section-gradient-1 opacity-50" />
-
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="pricing" className="py-24 px-6 bg-[#FAFAF9]">
+      <div className="max-w-5xl mx-auto">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -62,16 +56,17 @@ export default function PricingSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
-            <span className="gradient-text">Simple</span>, Transparent Pricing
+          <h2 className="font-serif text-3xl md:text-4xl italic mb-4 text-[#1C1917]">
+            Simple, Transparent Pricing
           </h2>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+          <div className="w-16 h-0.5 bg-[#9F1239] mx-auto opacity-50 mb-6"></div>
+          <p className="text-lg text-[#57534E] max-w-2xl mx-auto font-light">
             Choose the plan that fits your restaurant. All plans include a 14-day free trial.
           </p>
         </motion.div>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {PRICING_TIERS.map((tier, index) => (
             <motion.div
               key={index}
@@ -79,30 +74,30 @@ export default function PricingSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className={`relative ${
+              className={`relative bg-white p-8 md:p-10 rounded-[2rem] border transition-all duration-500 hover:shadow-2xl ${
                 tier.highlighted
-                  ? 'glass-strong border-2 border-indigo-500/50 scale-105'
-                  : 'glass-card'
-              } p-8 ${tier.highlighted ? 'md:-mt-4 md:mb-4' : ''}`}
+                  ? 'border-[#9F1239] shadow-xl'
+                  : 'border-[#E7E5E4]'
+              }`}
             >
               {/* Best Value Badge */}
               {tier.highlighted && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <div className="px-4 py-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full text-xs font-bold text-white">
-                    MOST POPULAR
+                  <div className="px-4 py-1.5 bg-[#9F1239] text-white rounded-full text-xs font-bold uppercase tracking-wider">
+                    Most Popular
                   </div>
                 </div>
               )}
 
               {/* Plan Name */}
-              <h3 className="text-2xl font-bold text-white mb-2">{tier.name}</h3>
-              <p className="text-gray-400 text-sm mb-6">{tier.description}</p>
+              <h3 className="font-serif text-2xl text-[#1C1917] mb-2">{tier.name}</h3>
+              <p className="text-[#57534E] text-sm mb-6 font-light">{tier.description}</p>
 
               {/* Price */}
               <div className="mb-8">
                 <div className="flex items-baseline">
-                  <span className="text-5xl font-bold gradient-text">{tier.price}</span>
-                  {tier.period && <span className="text-gray-400 ml-2">{tier.period}</span>}
+                  <span className="text-5xl font-serif font-bold text-[#1C1917]">{tier.price}</span>
+                  {tier.period && <span className="text-[#57534E] ml-2 text-sm">{tier.period}</span>}
                 </div>
               </div>
 
@@ -110,8 +105,10 @@ export default function PricingSection() {
               <ul className="space-y-4 mb-8">
                 {tier.features.map((feature, featureIndex) => (
                   <li key={featureIndex} className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-300 text-sm">{feature}</span>
+                    <div className="w-5 h-5 rounded-full bg-[#9F1239]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Check className="w-3 h-3 text-[#9F1239]" />
+                    </div>
+                    <span className="text-[#57534E] text-sm">{feature}</span>
                   </li>
                 ))}
               </ul>
@@ -120,9 +117,11 @@ export default function PricingSection() {
               <button
                 onClick={() => tier.priceId ? handleSubscribe(tier.priceId, tier.name) : scrollToContact()}
                 disabled={loadingPlan === tier.name}
-                className={`w-full px-6 py-3 ${
-                  tier.highlighted ? 'glass-button-primary' : 'glass-button'
-                } text-white font-semibold flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`w-full px-6 py-4 font-bold text-sm tracking-widest uppercase transition-all duration-300 rounded-2xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  tier.highlighted
+                    ? 'bg-[#9F1239] text-white hover:bg-[#881337] shadow-xl shadow-[#9F1239]/20'
+                    : 'border border-[#1C1917] text-[#1C1917] hover:bg-[#1C1917] hover:text-white'
+                }`}
               >
                 {loadingPlan === tier.name ? (
                   <>
@@ -132,15 +131,10 @@ export default function PricingSection() {
                 ) : (
                   <>
                     {tier.cta}
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-4 h-4" />
                   </>
                 )}
               </button>
-
-              {/* Decorative glow for highlighted tier */}
-              {tier.highlighted && (
-                <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-2xl blur-2xl -z-10" />
-              )}
             </motion.div>
           ))}
         </div>
@@ -153,13 +147,12 @@ export default function PricingSection() {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="text-center mt-16"
         >
-          <p className="text-gray-400 mb-4">
-            Need a custom solution? We offer flexible enterprise plans for multi-location
-            restaurants.
+          <p className="text-[#57534E] mb-4 font-light">
+            Need a custom solution? We offer flexible enterprise plans for multi-location restaurants.
           </p>
           <button
             onClick={scrollToContact}
-            className="text-indigo-400 hover:text-indigo-300 font-semibold inline-flex items-center gap-2"
+            className="text-[#9F1239] hover:text-[#881337] font-bold text-sm uppercase tracking-widest inline-flex items-center gap-2 transition-colors"
           >
             Contact us for enterprise pricing
             <ArrowRight className="w-4 h-4" />
