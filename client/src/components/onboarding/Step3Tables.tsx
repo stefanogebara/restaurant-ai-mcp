@@ -1,5 +1,5 @@
 /**
- * Step 3: Table Configuration
+ * Step 3: Table Configuration - Modern Elegant Design
  *
  * Allows restaurants to configure:
  * - Multiple dining areas (Indoor, Patio, Bar, Private Room)
@@ -13,7 +13,6 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { OnboardingStepProps, RestaurantArea } from '../../types/onboarding.types';
 import type { RestaurantSize } from '../../types/profile.types';
-import '../../landing/styles/glass-morphism.css';
 
 const AREA_TEMPLATES = ['Indoor', 'Patio', 'Bar', 'Private Room', 'Custom'];
 const TABLE_CAPACITIES = [2, 4, 6, 8];
@@ -230,32 +229,30 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
       className="space-y-6"
     >
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Let's set up your tables</h2>
-        <p className="text-gray-300 text-sm">Configure your dining areas and table layout</p>
+        <h2 className="font-serif text-2xl font-bold text-[#1C1917] mb-2">Let's set up your tables</h2>
+        <p className="text-[#57534E] text-sm">Configure your dining areas and table layout</p>
       </div>
 
       {/* Total Capacity Summary */}
       {(() => {
         const targetSeats = data.profile_data?.seat_count;
         const isMatch = targetSeats && Math.abs(totalCapacity - targetSeats) <= 2;
-        const isOver = targetSeats && totalCapacity > targetSeats + 2;
-        const isUnder = targetSeats && totalCapacity < targetSeats - 2;
 
         return (
-          <div className={`bg-gradient-to-r ${isMatch ? 'from-green-500/20 to-emerald-500/20 border-green-400/50' : 'from-indigo-500/20 to-purple-500/20 border-white/30'} border rounded-lg p-4`}>
+          <div className={`bg-[#F5F5F4] border ${isMatch ? 'border-green-300' : 'border-[#E7E5E4]'} rounded-xl p-4`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-white font-semibold text-lg">Total Capacity</p>
-                <p className="text-gray-300 text-sm">Across all areas</p>
+                <p className="text-[#1C1917] font-semibold text-lg">Total Capacity</p>
+                <p className="text-[#57534E] text-sm">Across all areas</p>
                 {targetSeats && (
-                  <p className={`text-sm mt-1 ${isMatch ? 'text-green-400' : isOver ? 'text-amber-400' : isUnder ? 'text-amber-400' : 'text-gray-400'}`}>
+                  <p className={`text-sm mt-1 ${isMatch ? 'text-green-600' : 'text-[#9F1239]'}`}>
                     {isMatch ? '✓ Matches your profile!' : `Target: ${targetSeats} seats`}
                   </p>
                 )}
               </div>
               <div className="text-right">
-                <p className={`text-3xl font-bold ${isMatch ? 'text-green-400' : 'text-white'}`}>{totalCapacity} seats</p>
-                <p className="text-indigo-300 text-sm">{totalTables} tables</p>
+                <p className={`text-3xl font-bold ${isMatch ? 'text-green-600' : 'text-[#1C1917]'}`}>{totalCapacity} seats</p>
+                <p className="text-[#9F1239] text-sm font-medium">{totalTables} tables</p>
               </div>
             </div>
           </div>
@@ -264,12 +261,12 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
 
       {/* Pre-configured notice */}
       {data.profile_data?.size && data.profile_data?.seat_count && totalTables > 0 && (
-        <div className="bg-indigo-500/10 border border-indigo-400/30 rounded-lg p-3">
+        <div className="bg-[#9F1239]/5 border border-[#9F1239]/20 rounded-xl p-3">
           <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p className="text-sm text-indigo-200">
+            <p className="text-sm text-[#57534E]">
               Tables pre-configured based on your {data.profile_data.size} restaurant profile ({data.profile_data.seat_count} seats). Adjust as needed.
             </p>
           </div>
@@ -278,24 +275,24 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
 
       {/* Plan Limit Warning */}
       {totalTables > getPlanLimit() && (
-        <div className="bg-amber-500/20 border border-amber-400/50 rounded-lg p-4">
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
           <div className="flex items-start gap-3">
-            <svg className="w-6 h-6 text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
             <div>
-              <p className="text-white font-semibold">Basic Plan Limit</p>
-              <p className="text-amber-200 text-sm mt-1">
+              <p className="text-[#1C1917] font-semibold">Basic Plan Limit</p>
+              <p className="text-amber-700 text-sm mt-1">
                 You've configured {totalTables} tables, but Basic plan supports up to {getPlanLimit()} tables.
               </p>
               <div className="mt-3 space-x-3">
                 <button
                   onClick={() => window.location.href = '/#pricing'}
-                  className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold rounded-lg text-sm hover:opacity-90"
+                  className="px-4 py-2 bg-[#9F1239] text-white font-semibold rounded-lg text-sm hover:bg-[#881337]"
                 >
                   Upgrade to Professional
                 </button>
-                <span className="text-gray-300 text-sm">or remove {totalTables - getPlanLimit()} tables</span>
+                <span className="text-[#57534E] text-sm">or remove {totalTables - getPlanLimit()} tables</span>
               </div>
             </div>
           </div>
@@ -305,18 +302,18 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
       {/* Areas Configuration */}
       <div className="space-y-4">
         {data.areas.map((area, areaIndex) => (
-          <div key={areaIndex} className="bg-white/5 border border-white/20 rounded-lg p-5">
+          <div key={areaIndex} className="bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl p-5">
             <div className="flex items-center justify-between mb-4">
               <input
                 type="text"
                 value={area.name}
                 onChange={(e) => updateAreaName(areaIndex, e.target.value)}
-                className="text-lg font-semibold bg-transparent border-none text-white focus:outline-none focus:ring-2 focus:ring-indigo-400 rounded px-2 py-1"
+                className="text-lg font-semibold bg-transparent border-none text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#9F1239] rounded px-2 py-1"
               />
               {data.areas.length > 1 && (
                 <button
                   onClick={() => removeArea(areaIndex)}
-                  className="p-2 hover:bg-red-500/20 text-red-300 rounded-lg transition-colors"
+                  className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors"
                   title="Remove area"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -328,8 +325,8 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
 
             <div className="grid grid-cols-2 gap-3">
               {area.tables.map((tableConfig, tableIndex) => (
-                <div key={tableIndex} className="bg-white/10 rounded-lg p-3">
-                  <label className="block text-sm font-medium text-white mb-2">
+                <div key={tableIndex} className="bg-white rounded-xl p-3 border border-[#E7E5E4]">
+                  <label className="block text-sm font-medium text-[#1C1917] mb-2">
                     {tableConfig.capacity}-person tables
                   </label>
                   <input
@@ -338,9 +335,9 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
                     value={tableConfig.count === 0 ? '' : tableConfig.count}
                     placeholder="0"
                     onChange={(e) => updateTableCount(areaIndex, tableIndex, parseInt(e.target.value) || 0)}
-                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="w-full px-3 py-2 bg-[#F5F5F4] border border-[#E7E5E4] rounded-lg text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239]"
                   />
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-[#57534E] mt-1">
                     {tableConfig.count * tableConfig.capacity} seats
                   </p>
                 </div>
@@ -352,14 +349,14 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
 
       {/* Add Area Buttons */}
       <div>
-        <p className="text-sm font-semibold text-white mb-2">Add another area:</p>
+        <p className="text-sm font-semibold text-[#1C1917] mb-2">Add another area:</p>
         <div className="flex flex-wrap gap-2">
           {AREA_TEMPLATES.map((template) => (
             <button
               key={template}
               onClick={() => addArea(template)}
               disabled={template !== 'Custom' && data.areas.some((a) => a.name === template)}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 disabled:bg-white/5 disabled:text-gray-500 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm"
+              className="px-4 py-2 bg-white hover:bg-[#F5F5F4] disabled:bg-[#F5F5F4] disabled:text-[#A8A29E] disabled:cursor-not-allowed text-[#1C1917] border border-[#E7E5E4] rounded-lg transition-colors text-sm"
             >
               + {template}
             </button>
@@ -368,13 +365,13 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
       </div>
 
       {errors.areas && (
-        <p className="text-sm text-red-400">{errors.areas}</p>
+        <p className="text-sm text-[#9F1239]">{errors.areas}</p>
       )}
       {errors.tables && (
-        <p className="text-sm text-red-400">{errors.tables}</p>
+        <p className="text-sm text-[#9F1239]">{errors.tables}</p>
       )}
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-[#57534E]">
         Pro tip: You can always adjust this later in Settings
       </p>
 
@@ -382,7 +379,7 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
       <div className="flex justify-between pt-4">
         <button
           onClick={onBack}
-          className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg transition-all flex items-center gap-2"
+          className="px-6 py-3 bg-white hover:bg-[#F5F5F4] border border-[#E7E5E4] text-[#1C1917] font-semibold rounded-xl transition-all flex items-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -391,7 +388,7 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
         </button>
         <button
           onClick={handleContinue}
-          className="glass-button-primary px-8 py-3 text-white font-bold rounded-lg flex items-center gap-2"
+          className="px-8 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300"
         >
           Continue
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

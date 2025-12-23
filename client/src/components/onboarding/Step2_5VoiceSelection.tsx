@@ -1,5 +1,5 @@
 /**
- * Voice Selection Step - Onboarding Step 2.5
+ * Voice Selection Step - Onboarding Step 2.5 - Modern Elegant Design
  * Allows users to preview and select AI voice for their restaurant's conversational agent
  */
 
@@ -198,13 +198,13 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
     <div className="max-w-5xl mx-auto">
       {/* Header */}
       <div className="text-center mb-12">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-violet-500/10 rounded-full mb-6">
-          <Volume2 className="w-8 h-8 text-violet-400" />
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-[#9F1239]/10 rounded-full mb-6">
+          <Volume2 className="w-8 h-8 text-[#9F1239]" />
         </div>
-        <h2 className="text-4xl font-bold text-gray-100 mb-4">
+        <h2 className="font-serif text-3xl font-bold text-[#1C1917] mb-4">
           Choose Your AI Voice
         </h2>
-        <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+        <p className="text-lg text-[#57534E] max-w-2xl mx-auto">
           Select the voice that will represent your restaurant in phone conversations with customers.
           Click the play button to hear a preview of each voice.
         </p>
@@ -214,10 +214,10 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
       {isLoading && (
         <div className="flex flex-col items-center justify-center py-20">
           <div className="relative w-16 h-16 mb-6">
-            <div className="absolute inset-0 rounded-full border-4 border-gray-800"></div>
-            <div className="absolute inset-0 rounded-full border-4 border-t-violet-500 animate-spin"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-[#E7E5E4]"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-t-[#9F1239] animate-spin"></div>
           </div>
-          <p className="text-gray-400 text-lg">Loading voices...</p>
+          <p className="text-[#57534E] text-lg">Loading voices...</p>
         </div>
       )}
 
@@ -234,33 +234,33 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
                 key={voice.id}
                 onClick={() => handleSelectVoice(voice.id)}
                 className={`
-                  relative bg-gray-800/50 backdrop-blur-sm border-2 rounded-lg p-6 cursor-pointer
-                  transition-all duration-200 hover:shadow-lg hover:shadow-violet-500/10
+                  relative bg-white border-2 rounded-xl p-6 cursor-pointer
+                  transition-all duration-200 hover:shadow-lg
                   ${isSelected
-                    ? 'border-violet-500 shadow-md shadow-violet-500/20 bg-violet-500/10'
-                    : 'border-gray-700 hover:border-violet-500/50'
+                    ? 'border-[#9F1239] shadow-md bg-[#9F1239]/5'
+                    : 'border-[#E7E5E4] hover:border-[#9F1239]/50'
                   }
                 `}
               >
                 {/* Selected Indicator */}
                 {isSelected && (
                   <div className="absolute top-4 right-4">
-                    <CheckCircle2 className="w-6 h-6 text-violet-400" />
+                    <CheckCircle2 className="w-6 h-6 text-[#9F1239]" />
                   </div>
                 )}
 
                 {/* Voice Info */}
                 <div className="mb-4">
-                  <h3 className="text-lg font-bold text-gray-100 mb-1">
+                  <h3 className="text-lg font-bold text-[#1C1917] mb-1">
                     {voice.name}
                   </h3>
-                  <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
+                  <div className="flex items-center gap-2 text-sm text-[#57534E] mb-2">
                     <span className="capitalize">{voice.gender}</span>
-                    <span>•</span>
+                    <span>-</span>
                     <span>{voice.language.toUpperCase()}</span>
                   </div>
                   {voice.description && (
-                    <p className="text-sm text-gray-400 line-clamp-2">
+                    <p className="text-sm text-[#57534E] line-clamp-2">
                       {voice.description}
                     </p>
                   )}
@@ -274,11 +274,11 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
                   }}
                   disabled={isLoadingAudio}
                   className={`
-                    w-full py-3 px-4 rounded-lg font-semibold transition-all
+                    w-full py-3 px-4 rounded-xl font-semibold transition-all
                     flex items-center justify-center gap-2
                     ${isPlaying
-                      ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-700 hover:to-purple-700'
-                      : 'bg-gray-700 hover:bg-gray-600 text-gray-100'
+                      ? 'bg-[#9F1239] text-white hover:bg-[#881337]'
+                      : 'bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#1C1917]'
                     }
                     disabled:opacity-50 disabled:cursor-not-allowed
                   `}
@@ -309,12 +309,12 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
       {/* No Voices Message */}
       {!isLoading && voices.length === 0 && (
         <div className="text-center py-20">
-          <div className="bg-violet-500/10 border border-violet-500/30 rounded-lg p-8 max-w-lg mx-auto">
-            <Volume2 className="w-12 h-12 text-violet-400 mx-auto mb-4" />
-            <p className="text-lg text-gray-300 mb-2">
+          <div className="bg-[#9F1239]/5 border border-[#9F1239]/20 rounded-xl p-8 max-w-lg mx-auto">
+            <Volume2 className="w-12 h-12 text-[#9F1239] mx-auto mb-4" />
+            <p className="text-lg text-[#1C1917] mb-2">
               Using default voice for your AI assistant
             </p>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-[#57534E]">
               You can customize the voice later in Settings after setup is complete.
             </p>
           </div>
@@ -322,11 +322,11 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
       )}
 
       {/* Navigation Buttons */}
-      <div className="flex items-center justify-between pt-8 border-t border-gray-800">
+      <div className="flex items-center justify-between pt-8 border-t border-[#E7E5E4]">
         <button
           type="button"
           onClick={onPrev}
-          className="px-8 py-3 bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 text-gray-100 font-semibold rounded-lg transition-all flex items-center gap-2"
+          className="px-6 py-3 bg-white hover:bg-[#F5F5F4] border border-[#E7E5E4] text-[#1C1917] font-semibold rounded-xl transition-all flex items-center gap-2"
         >
           Back
         </button>
@@ -334,7 +334,7 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
           type="button"
           onClick={handleContinue}
           disabled={!selectedVoiceId}
-          className="px-8 py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold rounded-lg shadow-lg shadow-purple-500/30 transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="px-8 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-bold rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Continue
         </button>

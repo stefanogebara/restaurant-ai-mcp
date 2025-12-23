@@ -142,8 +142,8 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
     return (
       <div className="text-center py-12">
         <div className="text-6xl mb-4">📅</div>
-        <div className="text-gray-400 text-lg">No upcoming reservations</div>
-        <div className="text-gray-500 text-sm mt-2">Reservations will appear here when customers book</div>
+        <div className="text-[#57534E] text-lg">No upcoming reservations</div>
+        <div className="text-[#A8A29E] text-sm mt-2">Reservations will appear here when customers book</div>
       </div>
     );
   }
@@ -164,10 +164,10 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
               className={`
                 w-full p-4 rounded-xl border-2 transition-all text-left
                 ${isSelected
-                  ? 'border-purple-500 bg-purple-500/10'
+                  ? 'border-[#9F1239] bg-[#9F1239]/5'
                   : isToday
-                  ? 'border-blue-500/50 bg-blue-500/5 hover:bg-blue-500/10'
-                  : 'border-gray-700 hover:border-gray-600 bg-[#1E1E1E]/50'
+                  ? 'border-[#9F1239]/50 bg-[#9F1239]/5 hover:bg-[#9F1239]/10'
+                  : 'border-[#E7E5E4] hover:border-[#9F1239]/30 bg-white'
                 }
               `}
             >
@@ -176,25 +176,25 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
                   <div className={`
                     w-12 h-12 rounded-lg flex items-center justify-center font-bold text-xl
                     ${isSelected
-                      ? 'bg-purple-500 text-white'
+                      ? 'bg-[#9F1239] text-white'
                       : isToday
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-700 text-gray-300'
+                      ? 'bg-[#9F1239] text-white'
+                      : 'bg-[#F5F5F4] text-[#1C1917]'
                     }
                   `}>
                     {new Date(date + 'T00:00:00').getDate()}
                   </div>
                   <div>
-                    <div className={`font-semibold ${isSelected ? 'text-purple-400' : isToday ? 'text-blue-400' : 'text-white'}`}>
+                    <div className={`font-semibold ${isSelected ? 'text-[#9F1239]' : isToday ? 'text-[#9F1239]' : 'text-[#1C1917]'}`}>
                       {formatDate(date)}
                     </div>
-                    <div className="text-sm text-gray-400">
+                    <div className="text-sm text-[#57534E]">
                       {count} {count === 1 ? 'reservation' : 'reservations'}
                     </div>
                   </div>
                 </div>
                 <div className={`transform transition-transform ${isSelected ? 'rotate-180' : ''}`}>
-                  <svg className={`w-5 h-5 ${isSelected ? 'text-purple-400' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`w-5 h-5 ${isSelected ? 'text-[#9F1239]' : 'text-[#57534E]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
@@ -202,18 +202,18 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
 
               {/* Expanded Reservations List */}
               {isSelected && (
-                <div className="mt-4 space-y-2 border-t border-gray-700 pt-4">
+                <div className="mt-4 space-y-2 border-t border-[#E7E5E4] pt-4">
                   {reservationsByDate[date].map((reservation) => (
                     <div
                       key={reservation.reservation_id}
-                      className="bg-[#0A0A0A] rounded-lg p-3 border border-gray-800"
+                      className="bg-[#F5F5F4] rounded-lg p-3 border border-[#E7E5E4]"
                     >
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-semibold text-white">{reservation.customer_name}</span>
+                            <span className="font-semibold text-[#1C1917]">{reservation.customer_name}</span>
                             {reservation.checked_in && (
-                              <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full">
+                              <span className="px-2 py-0.5 bg-[#16a34a]/10 text-[#16a34a] text-xs rounded-full">
                                 ✓ Checked In
                               </span>
                             )}
@@ -223,25 +223,25 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
                               size="sm"
                             />
                           </div>
-                          <div className="text-sm text-gray-400 mt-1">
+                          <div className="text-sm text-[#57534E] mt-1">
                             Party of {reservation.party_size} · {formatTime(reservation.time || '')}
                           </div>
                           {reservation.customer_phone && (
-                            <div className="text-xs text-gray-500 mt-1">
+                            <div className="text-xs text-[#A8A29E] mt-1">
                               📞 {reservation.customer_phone}
                             </div>
                           )}
                         </div>
                         <div className="text-right">
-                          <div className="text-lg font-bold text-purple-400">
+                          <div className="text-lg font-bold text-[#9F1239]">
                             {formatTime(reservation.time || '')}
                           </div>
                         </div>
                       </div>
 
                       {reservation.special_requests && (
-                        <div className="text-xs text-gray-400 bg-gray-800/50 rounded p-2 mb-2">
-                          <span className="text-gray-500">Note:</span> {reservation.special_requests}
+                        <div className="text-xs text-[#57534E] bg-white rounded p-2 mb-2 border border-[#E7E5E4]">
+                          <span className="text-[#A8A29E]">Note:</span> {reservation.special_requests}
                         </div>
                       )}
 
@@ -252,7 +252,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
                               e.stopPropagation();
                               onCheckIn(reservation);
                             }}
-                            className="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                            className="flex-1 px-3 py-2 text-sm bg-[#9F1239] text-white rounded-lg hover:bg-[#881337] transition font-medium"
                           >
                             Check In
                           </button>
@@ -263,7 +263,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
                               e.stopPropagation();
                               onRecordOutcome(reservation);
                             }}
-                            className="px-3 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium"
+                            className="px-3 py-2 text-sm bg-[#7c3aed] text-white rounded-lg hover:bg-[#6d28d9] transition font-medium"
                             title="Record actual outcome for ML training"
                           >
                             📊 Outcome
@@ -274,7 +274,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
                             e.stopPropagation();
                             setDetailsReservation(reservation);
                           }}
-                          className="px-3 py-2 text-sm bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition"
+                          className="px-3 py-2 text-sm bg-white text-[#57534E] border border-[#E7E5E4] rounded-lg hover:bg-[#E7E5E4] transition"
                         >
                           Details
                         </button>
@@ -291,7 +291,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
       {/* Export Button */}
       <button
         onClick={exportToCSV}
-        className="w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-emerald-500/30 flex items-center justify-center gap-2"
+        className="w-full px-4 py-3 bg-[#16a34a] hover:bg-[#15803d] text-white font-semibold rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -300,21 +300,21 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
       </button>
 
       {/* Summary Stats */}
-      <div className="bg-[#1E1E1E]/50 rounded-xl p-4 border border-gray-800">
+      <div className="bg-white rounded-xl p-4 border border-[#E7E5E4] shadow-md">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <div className="text-2xl font-bold text-white">{reservations.length}</div>
-            <div className="text-xs text-gray-400">Total Reservations</div>
+            <div className="text-2xl font-bold text-[#1C1917]">{reservations.length}</div>
+            <div className="text-xs text-[#A8A29E]">Total Reservations</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-purple-400">{sortedDates.length}</div>
-            <div className="text-xs text-gray-400">Days with Bookings</div>
+            <div className="text-2xl font-bold text-[#9F1239]">{sortedDates.length}</div>
+            <div className="text-xs text-[#A8A29E]">Days with Bookings</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-blue-400">
+            <div className="text-2xl font-bold text-[#7c3aed]">
               {reservations.reduce((sum, r) => sum + (r.party_size || 0), 0)}
             </div>
-            <div className="text-xs text-gray-400">Total Guests</div>
+            <div className="text-xs text-[#A8A29E]">Total Guests</div>
           </div>
         </div>
       </div>

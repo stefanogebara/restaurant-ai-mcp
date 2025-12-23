@@ -78,14 +78,14 @@ export default function InterventionPanel({
   // If no high-risk reservations, show success state
   if (highRiskReservations.length === 0) {
     return (
-      <div className="bg-card rounded-lg border border-border p-6 shadow-sm">
+      <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-md">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
-            <Star className="w-6 h-6 text-emerald-500" />
+          <div className="w-12 h-12 rounded-full bg-[#16a34a]/10 flex items-center justify-center">
+            <Star className="w-6 h-6 text-[#16a34a]" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-foreground">All Clear!</h3>
-            <p className="text-sm text-muted-foreground">No high-risk reservations need attention</p>
+            <h3 className="text-lg font-semibold text-[#1C1917]">All Clear!</h3>
+            <p className="text-sm text-[#57534E]">No high-risk reservations need attention</p>
           </div>
         </div>
       </div>
@@ -105,38 +105,38 @@ export default function InterventionPanel({
   });
 
   return (
-    <div className="bg-card rounded-lg border border-border shadow-sm">
+    <div className="bg-white rounded-xl border border-[#E7E5E4] shadow-md">
       {/* Header */}
       <div
-        className="p-4 border-b border-border cursor-pointer hover:bg-muted/50 transition-colors"
+        className="p-4 border-b border-[#E7E5E4] cursor-pointer hover:bg-[#F5F5F4] transition-colors rounded-t-xl"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center animate-pulse">
-              <AlertTriangle className="w-5 h-5 text-orange-500" />
+            <div className="w-10 h-10 rounded-full bg-[#d97706]/10 flex items-center justify-center animate-pulse">
+              <AlertTriangle className="w-5 h-5 text-[#d97706]" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-foreground">Intervention Needed</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-lg font-semibold text-[#1C1917]">Intervention Needed</h3>
+              <p className="text-sm text-[#57534E]">
                 {highRiskReservations.length} high-risk reservation{highRiskReservations.length !== 1 ? 's' : ''} •
-                <span className="ml-1 font-medium text-orange-500">
+                <span className="ml-1 font-medium text-[#d97706]">
                   €{sortedReservations.reduce((sum, r) => sum + calculatePotentialValue(r.party_size), 0)} at risk
                 </span>
               </p>
             </div>
           </div>
           {isExpanded ? (
-            <ChevronUp className="w-5 h-5 text-muted-foreground" />
+            <ChevronUp className="w-5 h-5 text-[#57534E]" />
           ) : (
-            <ChevronDown className="w-5 h-5 text-muted-foreground" />
+            <ChevronDown className="w-5 h-5 text-[#57534E]" />
           )}
         </div>
       </div>
 
       {/* Reservation List */}
       {isExpanded && (
-        <div className="divide-y divide-border max-h-[600px] overflow-y-auto">
+        <div className="divide-y divide-[#E7E5E4] max-h-[600px] overflow-y-auto">
           {sortedReservations.map((reservation) => {
             const hasActed = actedReservations.has(reservation.reservation_id);
             const potentialValue = calculatePotentialValue(reservation.party_size);
@@ -145,13 +145,13 @@ export default function InterventionPanel({
             return (
               <div
                 key={reservation.reservation_id}
-                className={`p-4 transition-colors ${hasActed ? 'bg-emerald-500/5' : 'hover:bg-muted/30'}`}
+                className={`p-4 transition-colors ${hasActed ? 'bg-[#16a34a]/5' : 'hover:bg-[#F5F5F4]'}`}
               >
                 <div className="flex items-start justify-between gap-4">
                   {/* Reservation Info */}
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2 flex-wrap">
-                      <h4 className="font-semibold text-foreground">{reservation.customer_name}</h4>
+                      <h4 className="font-semibold text-[#1C1917]">{reservation.customer_name}</h4>
                       <button
                         onClick={() => {
                           setSelectedReservation(reservation);
@@ -168,13 +168,13 @@ export default function InterventionPanel({
                         />
                       </button>
                       {hasActed && (
-                        <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-medium rounded-full">
+                        <span className="px-2 py-0.5 bg-[#16a34a]/10 text-[#16a34a] text-xs font-medium rounded-full">
                           ✓ Contacted
                         </span>
                       )}
                     </div>
 
-                    <div className="text-sm text-muted-foreground space-y-1.5">
+                    <div className="text-sm text-[#57534E] space-y-1.5">
                       <div className="flex items-center gap-4 flex-wrap">
                         <span className="font-medium">Party of {reservation.party_size}</span>
                         <span>•</span>
@@ -187,17 +187,17 @@ export default function InterventionPanel({
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="text-xs bg-muted px-2 py-0.5 rounded">
+                        <span className="text-xs bg-[#F5F5F4] px-2 py-0.5 rounded border border-[#E7E5E4]">
                           {reservation.customer_phone}
                         </span>
                       </div>
 
-                      <div className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+                      <div className="text-xs text-[#d97706] font-medium">
                         €{potentialValue} potential revenue at risk
                       </div>
 
                       {reservation.special_requests && (
-                        <div className="text-xs italic text-muted-foreground bg-muted/30 p-2 rounded mt-2">
+                        <div className="text-xs italic text-[#57534E] bg-[#F5F5F4] p-2 rounded mt-2 border border-[#E7E5E4]">
                           "{reservation.special_requests}"
                         </div>
                       )}
@@ -210,7 +210,7 @@ export default function InterventionPanel({
                     <a
                       href={`tel:${reservation.customer_phone}`}
                       onClick={() => handleAction(reservation, 'confirmation_call')}
-                      className="px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-md text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+                      className="px-3 py-2 bg-[#9F1239]/10 hover:bg-[#9F1239]/20 text-[#9F1239] rounded-lg text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
                       title="Call customer to confirm"
                     >
                       <Phone className="w-4 h-4" />
@@ -221,7 +221,7 @@ export default function InterventionPanel({
                     <a
                       href={`sms:${reservation.customer_phone}?body=Hi ${reservation.customer_name}, this is [Restaurant Name]. We're looking forward to seeing you at ${reservation.time} today!`}
                       onClick={() => handleAction(reservation, 'sms_reminder')}
-                      className="px-3 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-600 dark:text-green-400 rounded-md text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+                      className="px-3 py-2 bg-[#16a34a]/10 hover:bg-[#16a34a]/20 text-[#16a34a] rounded-lg text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
                       title="Send SMS reminder"
                     >
                       <Mail className="w-4 h-4" />
@@ -231,7 +231,7 @@ export default function InterventionPanel({
                     {/* Deposit Button */}
                     <button
                       onClick={() => handleAction(reservation, 'deposit_required')}
-                      className="px-3 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 rounded-md text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+                      className="px-3 py-2 bg-[#7c3aed]/10 hover:bg-[#7c3aed]/20 text-[#7c3aed] rounded-lg text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
                       title="Require deposit"
                     >
                       <CreditCard className="w-4 h-4" />
@@ -241,7 +241,7 @@ export default function InterventionPanel({
                     {/* Premium Seating Button */}
                     <button
                       onClick={() => handleAction(reservation, 'premium_seating')}
-                      className="px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-md text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+                      className="px-3 py-2 bg-[#d97706]/10 hover:bg-[#d97706]/20 text-[#d97706] rounded-lg text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
                       title="Offer premium seating"
                     >
                       <Star className="w-4 h-4" />

@@ -15,9 +15,9 @@ export default function Login() {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Redirect to onboarding if already logged in
+  // Redirect to welcome page if already logged in
   if (!loading && user) {
-    return <Navigate to="/onboarding" replace />;
+    return <Navigate to="/welcome" replace />;
   }
 
   const handleGoogleSignIn = async () => {

@@ -19,6 +19,7 @@ import CustomerPortal from './pages/CustomerPortal';
 import SubscriptionSuccess from './pages/SubscriptionSuccess';
 import SubscriptionManage from './pages/SubscriptionManage';
 import Login from './pages/Login';
+import Welcome from './pages/Welcome';
 import Onboarding from './pages/Onboarding';
 import LanguageSettings from './pages/LanguageSettings';
 import TestPhoneInput from './pages/TestPhoneInput';
@@ -59,6 +60,7 @@ function App() {
               <Route path="/customer" element={<CustomerPortal />} />
               <Route path="/subscription/success" element={<SubscriptionSuccess />} />
               <Route path="/subscription/manage" element={<SubscriptionManage />} />
+              <Route path="/welcome" element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
               <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
               <Route path="/settings/language" element={<LanguageSettings />} />
               <Route path="/test-phone-input" element={<TestPhoneInput />} />

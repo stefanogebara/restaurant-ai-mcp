@@ -42,32 +42,32 @@ export default function RiskExplanationModal({
     switch (riskLevel) {
       case 'very-high':
         return {
-          color: 'text-red-600 dark:text-red-400',
-          bg: 'bg-red-500/10',
+          color: 'text-[#9F1239]',
+          bg: 'bg-[#9F1239]/10',
           label: 'Very High Risk',
           description: 'Strong likelihood of no-show. Deposit or confirmation strongly recommended.',
           emoji: '🚨'
         };
       case 'high':
         return {
-          color: 'text-orange-600 dark:text-orange-400',
-          bg: 'bg-orange-500/10',
+          color: 'text-[#d97706]',
+          bg: 'bg-[#d97706]/10',
           label: 'High Risk',
           description: 'Elevated no-show risk. Confirmation call recommended.',
           emoji: '⚠️'
         };
       case 'medium':
         return {
-          color: 'text-yellow-600 dark:text-yellow-400',
-          bg: 'bg-yellow-500/10',
+          color: 'text-[#d97706]',
+          bg: 'bg-[#d97706]/10',
           label: 'Medium Risk',
           description: 'Moderate no-show risk. Consider SMS reminder.',
           emoji: '⚡'
         };
       default:
         return {
-          color: 'text-green-600 dark:text-green-400',
-          bg: 'bg-green-500/10',
+          color: 'text-[#16a34a]',
+          bg: 'bg-[#16a34a]/10',
           label: 'Low Risk',
           description: 'Low no-show probability. Standard handling.',
           emoji: '✅'
@@ -79,32 +79,32 @@ export default function RiskExplanationModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-card rounded-xl border border-border shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl border border-[#E7E5E4] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-card border-b border-border p-6 flex items-center justify-between">
+        <div className="sticky top-0 bg-white border-b border-[#E7E5E4] p-6 flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className={`w-12 h-12 rounded-full ${levelInfo.bg} flex items-center justify-center text-2xl`}>
               {levelInfo.emoji}
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-foreground">No-Show Risk Analysis</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-xl font-semibold text-[#1C1917]">No-Show Risk Analysis</h2>
+              <p className="text-sm text-[#57534E]">
                 {reservation.customer_name} • Party of {reservation.party_size}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
+            className="p-2 hover:bg-[#F5F5F4] rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-muted-foreground" />
+            <X className="w-5 h-5 text-[#57534E]" />
           </button>
         </div>
 
         {/* Content */}
         <div className="p-6 space-y-6">
           {/* Risk Score Summary */}
-          <div className={`${levelInfo.bg} rounded-lg p-4`}>
+          <div className={`${levelInfo.bg} rounded-xl p-4 border border-[#E7E5E4]`}>
             <div className="flex items-center justify-between mb-2">
               <span className={`text-lg font-semibold ${levelInfo.color}`}>
                 {levelInfo.label}
@@ -113,23 +113,23 @@ export default function RiskExplanationModal({
                 <span className={`text-3xl font-bold ${levelInfo.color}`}>
                   {riskScore}/100
                 </span>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-[#57534E]">
                   {confidence}% confidence
                 </span>
               </div>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-[#57534E]">
               {levelInfo.description}
             </p>
           </div>
 
           {/* What This Means for Staff */}
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+          <div className="bg-[#9F1239]/5 border border-[#9F1239]/20 rounded-xl p-4">
             <div className="flex items-start gap-3">
-              <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+              <Info className="w-5 h-5 text-[#9F1239] mt-0.5 flex-shrink-0" />
               <div>
-                <h3 className="font-semibold text-foreground mb-1">What This Means</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
+                <h3 className="font-semibold text-[#1C1917] mb-1">What This Means</h3>
+                <p className="text-sm text-[#57534E] leading-relaxed">
                   {riskLevel === 'very-high' && (
                     <>This reservation has multiple red flags. <strong>Require a credit card deposit</strong> (€10-20/person)
                     or make a confirmation call to verify they're still coming. Without action, there's a strong chance this party won't show up.</>
@@ -155,25 +155,25 @@ export default function RiskExplanationModal({
           {riskIncreasing.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <TrendingUp className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-                <h3 className="font-semibold text-foreground">Risk Factors</h3>
+                <TrendingUp className="w-5 h-5 text-[#d97706]" />
+                <h3 className="font-semibold text-[#1C1917]">Risk Factors</h3>
               </div>
               <div className="space-y-2">
                 {riskIncreasing.map((factor, idx) => (
                   <div
                     key={idx}
-                    className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg border border-border"
+                    className="flex items-start gap-3 p-3 bg-[#F5F5F4] rounded-xl border border-[#E7E5E4]"
                   >
-                    <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-orange-600 dark:text-orange-400 font-bold">
+                    <div className="w-12 h-12 rounded-full bg-[#d97706]/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-[#d97706] font-bold">
                         +{factor.impact}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground">
+                      <p className="text-sm font-medium text-[#1C1917]">
                         {factor.description}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
+                      <p className="text-xs text-[#A8A29E] mt-0.5">
                         {getFactorExplanation(factor.factor)}
                       </p>
                     </div>
@@ -187,25 +187,25 @@ export default function RiskExplanationModal({
           {riskDecreasing.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <TrendingDown className="w-5 h-5 text-green-600 dark:text-green-400" />
-                <h3 className="font-semibold text-foreground">Positive Signals</h3>
+                <TrendingDown className="w-5 h-5 text-[#16a34a]" />
+                <h3 className="font-semibold text-[#1C1917]">Positive Signals</h3>
               </div>
               <div className="space-y-2">
                 {riskDecreasing.map((factor, idx) => (
                   <div
                     key={idx}
-                    className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg border border-border"
+                    className="flex items-start gap-3 p-3 bg-[#F5F5F4] rounded-xl border border-[#E7E5E4]"
                   >
-                    <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-green-600 dark:text-green-400 font-bold">
+                    <div className="w-12 h-12 rounded-full bg-[#16a34a]/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-[#16a34a] font-bold">
                         {factor.impact}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground">
+                      <p className="text-sm font-medium text-[#1C1917]">
                         {factor.description}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
+                      <p className="text-xs text-[#A8A29E] mt-0.5">
                         {getFactorExplanation(factor.factor)}
                       </p>
                     </div>
@@ -217,7 +217,7 @@ export default function RiskExplanationModal({
 
           {/* No Factors Available */}
           {riskFactors.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-[#A8A29E]">
               <AlertTriangle className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p className="text-sm">
                 Detailed risk factors not available for this reservation.
@@ -229,10 +229,10 @@ export default function RiskExplanationModal({
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-card border-t border-border p-4">
+        <div className="sticky bottom-0 bg-white border-t border-[#E7E5E4] p-4 rounded-b-2xl">
           <button
             onClick={onClose}
-            className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+            className="w-full px-4 py-3 bg-[#9F1239] text-white rounded-xl font-medium hover:bg-[#881337] transition-colors"
           >
             Got it
           </button>

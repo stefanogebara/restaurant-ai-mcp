@@ -1,5 +1,5 @@
 /**
- * Step 2: Contact & Business Hours
+ * Step 2: Contact & Business Hours - Modern Elegant Design
  *
  * Collects contact information and operating hours:
  * - Phone number
@@ -14,7 +14,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
 import PhoneInput from '../common/PhoneInput';
-import '../../landing/styles/glass-morphism.css';
 
 // Service type presets with recommended hours
 const SERVICE_PRESETS = {
@@ -153,8 +152,8 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
       className="space-y-6"
     >
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">How can customers reach you?</h2>
-        <p className="text-gray-300 text-sm">Contact information and operating hours</p>
+        <h2 className="font-serif text-2xl font-bold text-[#1C1917] mb-2">How can customers reach you?</h2>
+        <p className="text-[#57534E] text-sm">Contact information and operating hours</p>
       </div>
 
       {/* Phone Number with Country Code */}
@@ -169,7 +168,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
 
       {/* Email */}
       <div>
-        <label htmlFor="email" className="block text-sm font-semibold text-gray-100 mb-2">
+        <label htmlFor="email" className="block text-sm font-semibold text-[#1C1917] mb-2">
           Business Email *
         </label>
         <input
@@ -178,16 +177,16 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
           value={data.email}
           onChange={(e) => updateData({ email: e.target.value })}
           placeholder="contact@restaurant.com"
-          className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+          className="w-full px-4 py-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
         />
         {errors.email && (
-          <p className="mt-1 text-sm text-red-400">{errors.email}</p>
+          <p className="mt-1 text-sm text-[#9F1239]">{errors.email}</p>
         )}
       </div>
 
       {/* Website (Optional) */}
       <div>
-        <label htmlFor="website" className="block text-sm font-semibold text-gray-100 mb-2">
+        <label htmlFor="website" className="block text-sm font-semibold text-[#1C1917] mb-2">
           Website (Optional)
         </label>
         <input
@@ -196,13 +195,13 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
           value={data.website || ''}
           onChange={(e) => updateData({ website: e.target.value })}
           placeholder="https://yourrestaurant.com"
-          className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+          className="w-full px-4 py-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
         />
       </div>
 
       {/* Service Type Selection */}
       <div>
-        <label className="block text-sm font-semibold text-gray-100 mb-3">
+        <label className="block text-sm font-semibold text-[#1C1917] mb-3">
           What type of service does your restaurant offer?
         </label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
@@ -215,18 +214,18 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
                 type="button"
                 onClick={() => applyServicePreset(type)}
                 className={`
-                  p-3 rounded-lg border-2 text-left transition-all
+                  p-3 rounded-xl border-2 text-left transition-all
                   ${isSelected
-                    ? 'border-violet-500 bg-violet-500/10'
-                    : 'border-gray-700 bg-gray-800/30 hover:border-gray-600'
+                    ? 'border-[#9F1239] bg-[#9F1239]/5'
+                    : 'border-[#E7E5E4] bg-white hover:border-[#9F1239]/50'
                   }
                 `}
               >
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xl">{preset.icon}</span>
-                  <span className="text-sm font-semibold text-gray-100">{preset.label}</span>
+                  <span className="text-sm font-semibold text-[#1C1917]">{preset.label}</span>
                 </div>
-                <p className="text-xs text-gray-400">{preset.description}</p>
+                <p className="text-xs text-[#57534E]">{preset.description}</p>
               </button>
             );
           })}
@@ -234,12 +233,12 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
 
         {/* Multi-period info banner */}
         {useMultiplePeriods && (
-          <div className="mb-4 p-3 bg-violet-500/10 border border-violet-500/30 rounded-lg">
+          <div className="mb-4 p-3 bg-[#9F1239]/5 border border-[#9F1239]/20 rounded-xl">
             <div className="flex items-start gap-2">
-              <span className="text-violet-400">ℹ️</span>
+              <span className="text-[#9F1239]">ℹ️</span>
               <div>
-                <p className="text-sm text-violet-300 font-medium">Split Service Hours</p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-sm text-[#9F1239] font-medium">Split Service Hours</p>
+                <p className="text-xs text-[#57534E] mt-1">
                   Your restaurant has a break between lunch and dinner service.
                   The AI will know not to accept reservations during closed periods.
                 </p>
@@ -252,11 +251,11 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
       {/* Business Hours */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <label className="block text-sm font-semibold text-gray-100">Business Hours *</label>
+          <label className="block text-sm font-semibold text-[#1C1917]">Business Hours *</label>
           <button
             type="button"
             onClick={copyHoursToAll}
-            className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-100 rounded-md transition-colors"
+            className="px-3 py-1 text-xs bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#57534E] rounded-lg transition-colors"
           >
             Copy Monday to all days
           </button>
@@ -264,18 +263,18 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
 
         <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
           {data.business_hours.map((day, index) => (
-            <div key={day.day} className="flex items-center gap-3 p-3 bg-gray-800/30 rounded-lg border border-gray-700">
+            <div key={day.day} className="flex items-center gap-3 p-3 bg-[#F5F5F4] rounded-xl border border-[#E7E5E4]">
               <div className="w-24">
-                <span className="text-gray-100 font-medium text-sm">{day.day}</span>
+                <span className="text-[#1C1917] font-medium text-sm">{day.day}</span>
               </div>
               <label className="flex items-center">
                 <input
                   type="checkbox"
                   checked={day.is_open}
                   onChange={(e) => updateDayHours(index, 'is_open', e.target.checked)}
-                  className="w-4 h-4 text-violet-500 bg-gray-800 border-gray-600 rounded focus:ring-2 focus:ring-violet-400"
+                  className="w-4 h-4 text-[#9F1239] bg-white border-[#E7E5E4] rounded focus:ring-2 focus:ring-[#9F1239]"
                 />
-                <span className="ml-2 text-gray-100 text-sm">Open</span>
+                <span className="ml-2 text-[#1C1917] text-sm">Open</span>
               </label>
               {day.is_open && (
                 <>
@@ -283,14 +282,14 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
                     type="time"
                     value={day.open_time}
                     onChange={(e) => updateDayHours(index, 'open_time', e.target.value)}
-                    className="px-3 py-1.5 bg-gray-800 border border-gray-600 rounded text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+                    className="px-3 py-1.5 bg-white border border-[#E7E5E4] rounded-lg text-[#1C1917] text-sm focus:outline-none focus:ring-2 focus:ring-[#9F1239]"
                   />
-                  <span className="text-gray-100 text-sm">to</span>
+                  <span className="text-[#57534E] text-sm">to</span>
                   <input
                     type="time"
                     value={day.close_time}
                     onChange={(e) => updateDayHours(index, 'close_time', e.target.value)}
-                    className="px-3 py-1.5 bg-gray-800 border border-gray-600 rounded text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+                    className="px-3 py-1.5 bg-white border border-[#E7E5E4] rounded-lg text-[#1C1917] text-sm focus:outline-none focus:ring-2 focus:ring-[#9F1239]"
                   />
                 </>
               )}
@@ -300,16 +299,16 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
 
         {/* Service periods summary */}
         {selectedServiceType === 'lunch_dinner' && (
-          <div className="mt-3 p-3 bg-gray-800/30 rounded-lg border border-gray-700">
-            <p className="text-xs text-gray-400 mb-2">Service Periods (based on first open day):</p>
+          <div className="mt-3 p-3 bg-[#F5F5F4] rounded-xl border border-[#E7E5E4]">
+            <p className="text-xs text-[#57534E] mb-2">Service Periods (based on first open day):</p>
             <div className="flex flex-wrap gap-2">
-              <span className="px-2 py-1 text-xs bg-green-500/20 text-green-400 rounded">
+              <span className="px-2 py-1 text-xs bg-green-50 text-green-700 border border-green-200 rounded">
                 Lunch: 12:00 - 15:30
               </span>
-              <span className="px-2 py-1 text-xs bg-gray-700 text-gray-400 rounded">
+              <span className="px-2 py-1 text-xs bg-[#F5F5F4] text-[#57534E] border border-[#E7E5E4] rounded">
                 Break: 15:30 - 19:00
               </span>
-              <span className="px-2 py-1 text-xs bg-violet-500/20 text-violet-400 rounded">
+              <span className="px-2 py-1 text-xs bg-[#9F1239]/10 text-[#9F1239] border border-[#9F1239]/20 rounded">
                 Dinner: 19:00 - 23:00
               </span>
             </div>
@@ -319,28 +318,28 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
 
       {/* Average Dining Duration */}
       <div>
-        <label htmlFor="average_dining_duration" className="block text-sm font-semibold text-gray-100 mb-2">
+        <label htmlFor="average_dining_duration" className="block text-sm font-semibold text-[#1C1917] mb-2">
           Average Dining Duration (minutes)
         </label>
         <select
           id="average_dining_duration"
           value={data.average_dining_duration}
           onChange={(e) => updateData({ average_dining_duration: parseInt(e.target.value) })}
-          className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-100 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+          className="w-full px-4 py-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
         >
-          <option value={60} className="bg-gray-900">60 minutes (Fast dining)</option>
-          <option value={90} className="bg-gray-900">90 minutes (Standard)</option>
-          <option value={120} className="bg-gray-900">120 minutes (Fine dining)</option>
-          <option value={150} className="bg-gray-900">150 minutes (Extended dining)</option>
+          <option value={60}>60 minutes (Fast dining)</option>
+          <option value={90}>90 minutes (Standard)</option>
+          <option value={120}>120 minutes (Fine dining)</option>
+          <option value={150}>150 minutes (Extended dining)</option>
         </select>
-        <p className="mt-1 text-xs text-gray-400">Used to estimate table turnover</p>
+        <p className="mt-1 text-xs text-[#57534E]">Used to estimate table turnover</p>
       </div>
 
       {/* Actions */}
       <div className="flex justify-between pt-4">
         <button
           onClick={onBack}
-          className="px-6 py-3 bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 text-gray-100 font-semibold rounded-lg transition-all flex items-center gap-2"
+          className="px-6 py-3 bg-white hover:bg-[#F5F5F4] border border-[#E7E5E4] text-[#1C1917] font-semibold rounded-xl transition-all flex items-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -349,7 +348,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
         </button>
         <button
           onClick={handleContinue}
-          className="px-8 py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold rounded-lg flex items-center gap-2 shadow-lg shadow-purple-500/30 transition-all duration-300 hover:scale-105 active:scale-95"
+          className="px-8 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300"
         >
           Continue
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

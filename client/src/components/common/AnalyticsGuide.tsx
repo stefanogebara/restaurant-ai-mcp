@@ -155,14 +155,14 @@ export default function AnalyticsGuide({ page = 'ml' }: AnalyticsGuideProps) {
   const Icon = guide.icon;
 
   return (
-    <div className="bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-lg border-2 border-blue-500/20 p-6">
+    <div className="bg-[#9F1239]/5 rounded-xl border-2 border-[#9F1239]/20 p-6">
       <div className="flex items-start gap-4 mb-6">
-        <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-          <Icon className="w-6 h-6 text-blue-400" />
+        <div className="w-12 h-12 bg-[#9F1239]/20 rounded-full flex items-center justify-center flex-shrink-0">
+          <Icon className="w-6 h-6 text-[#9F1239]" />
         </div>
         <div>
-          <h3 className="text-xl font-bold text-foreground mb-1">{guide.title}</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="text-xl font-bold text-[#1C1917] mb-1">{guide.title}</h3>
+          <p className="text-sm text-[#57534E]">
             No MBA required - just simple explanations of what you're seeing
           </p>
         </div>
@@ -172,14 +172,14 @@ export default function AnalyticsGuide({ page = 'ml' }: AnalyticsGuideProps) {
         {guide.metrics.map((metric, index) => {
           const MetricIcon = metric.icon;
           return (
-            <div key={index} className="bg-card rounded-lg border border-border p-4 hover:border-blue-500/30 transition-colors">
+            <div key={index} className="bg-white rounded-xl border border-[#E7E5E4] p-4 hover:border-[#9F1239]/30 transition-colors shadow-md">
               <div className="flex items-start gap-3 mb-2">
-                <div className="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <MetricIcon className="w-4 h-4 text-blue-400" />
+                <div className="w-8 h-8 bg-[#9F1239]/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <MetricIcon className="w-4 h-4 text-[#9F1239]" />
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-bold text-foreground text-sm mb-1">{metric.term}</h4>
-                  <p className="text-xs text-emerald-400 font-semibold mb-2">
+                  <h4 className="font-bold text-[#1C1917] text-sm mb-1">{metric.term}</h4>
+                  <p className="text-xs text-[#16a34a] font-semibold mb-2">
                     → {metric.simple}
                   </p>
                 </div>
@@ -187,12 +187,12 @@ export default function AnalyticsGuide({ page = 'ml' }: AnalyticsGuideProps) {
 
               <div className="ml-11 space-y-2">
                 <div className="text-xs">
-                  <span className="text-muted-foreground font-semibold">Example:</span>
-                  <p className="text-muted-foreground mt-1">{metric.example}</p>
+                  <span className="text-[#57534E] font-semibold">Example:</span>
+                  <p className="text-[#57534E] mt-1">{metric.example}</p>
                 </div>
                 <div className="text-xs">
-                  <span className="text-emerald-400 font-semibold">✓ What's Good:</span>
-                  <p className="text-muted-foreground mt-1">{metric.good}</p>
+                  <span className="text-[#16a34a] font-semibold">✓ What's Good:</span>
+                  <p className="text-[#57534E] mt-1">{metric.good}</p>
                 </div>
               </div>
             </div>
@@ -200,12 +200,12 @@ export default function AnalyticsGuide({ page = 'ml' }: AnalyticsGuideProps) {
         })}
       </div>
 
-      <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+      <div className="mt-6 p-4 bg-[#d97706]/10 border border-[#d97706]/20 rounded-xl">
         <div className="flex items-start gap-2">
-          <Info className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+          <Info className="w-5 h-5 text-[#d97706] flex-shrink-0 mt-0.5" />
           <div className="text-sm">
-            <span className="font-semibold text-amber-400">Tip:</span>
-            <span className="text-muted-foreground ml-2">
+            <span className="font-semibold text-[#d97706]">Tip:</span>
+            <span className="text-[#57534E] ml-2">
               Hover over any metric with a <Info className="w-3 h-3 inline" /> icon for more details.
               Don't worry if some numbers are zero - your data will build up over time!
             </span>

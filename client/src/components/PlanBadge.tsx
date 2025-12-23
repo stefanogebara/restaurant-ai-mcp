@@ -24,32 +24,40 @@ export default function PlanBadge({
     switch (planLower) {
       case 'basic':
         return {
-          bg: 'from-blue-500 to-cyan-500',
+          bg: 'bg-[#57534E]',
           icon: Zap,
-          color: 'text-blue-400',
+          textColor: 'text-[#57534E]',
+          bgLight: 'bg-[#F5F5F4]',
+          borderColor: 'border-[#E7E5E4]',
         };
       case 'professional':
         return {
-          bg: 'from-purple-500 to-pink-500',
+          bg: 'bg-[#9F1239]',
           icon: Star,
-          color: 'text-purple-400',
+          textColor: 'text-[#9F1239]',
+          bgLight: 'bg-[#9F1239]/10',
+          borderColor: 'border-[#9F1239]/30',
         };
       case 'enterprise':
         return {
-          bg: 'from-amber-500 to-orange-500',
+          bg: 'bg-[#7c3aed]',
           icon: Crown,
-          color: 'text-amber-400',
+          textColor: 'text-[#7c3aed]',
+          bgLight: 'bg-[#7c3aed]/10',
+          borderColor: 'border-[#7c3aed]/30',
         };
       default:
         return {
-          bg: 'from-gray-500 to-gray-600',
+          bg: 'bg-[#57534E]',
           icon: Zap,
-          color: 'text-gray-400',
+          textColor: 'text-[#57534E]',
+          bgLight: 'bg-[#F5F5F4]',
+          borderColor: 'border-[#E7E5E4]',
         };
     }
   };
 
-  const { bg, icon: Icon } = getPlanStyle();
+  const { bg, icon: Icon, textColor, bgLight, borderColor } = getPlanStyle();
 
   // Size variants
   const sizeClasses = {
@@ -72,16 +80,16 @@ export default function PlanBadge({
   return (
     <div className="inline-flex items-center gap-2">
       <div
-        className={`inline-flex items-center gap-1.5 ${classes.container} rounded-full glass-strong`}
+        className={`inline-flex items-center gap-1.5 ${classes.container} rounded-full ${bgLight} border ${borderColor}`}
       >
-        <div className={`${classes.icon} rounded-full bg-gradient-to-br ${bg} flex items-center justify-center p-0.5`}>
+        <div className={`${classes.icon} rounded-full ${bg} flex items-center justify-center p-0.5`}>
           <Icon className="w-full h-full text-white" />
         </div>
-        <span className="font-semibold text-white">{plan}</span>
+        <span className={`font-semibold ${textColor}`}>{plan}</span>
       </div>
 
       {isTrial && (
-        <span className="px-2 py-0.5 text-xs rounded-full glass-subtle text-emerald-400 font-semibold">
+        <span className="px-2 py-0.5 text-xs rounded-full bg-[#16a34a]/10 border border-[#16a34a]/30 text-[#16a34a] font-semibold">
           Free Trial
         </span>
       )}

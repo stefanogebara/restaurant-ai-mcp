@@ -62,33 +62,33 @@ export default function TableCard({ table, onClick }: TableCardProps) {
     switch (table.status) {
       case 'Available':
         return {
-          iconBg: 'bg-emerald-500',
+          iconBg: 'bg-[#16a34a]',
           Icon: CheckIcon,
-          statusPill: 'text-emerald-400 bg-emerald-500/10',
+          statusPill: 'text-[#16a34a] bg-[#16a34a]/10',
         };
       case 'Occupied':
         return {
-          iconBg: 'bg-red-500',
+          iconBg: 'bg-[#9F1239]',
           Icon: PersonIcon,
-          statusPill: 'text-red-400 bg-red-500/10',
+          statusPill: 'text-[#9F1239] bg-[#9F1239]/10',
         };
       case 'Being Cleaned':
         return {
-          iconBg: 'bg-amber-500',
+          iconBg: 'bg-[#d97706]',
           Icon: SparklesIcon,
-          statusPill: 'text-amber-400 bg-amber-500/10',
+          statusPill: 'text-[#d97706] bg-[#d97706]/10',
         };
       case 'Reserved':
         return {
-          iconBg: 'bg-blue-500',
+          iconBg: 'bg-[#7c3aed]',
           Icon: ClockIcon,
-          statusPill: 'text-blue-400 bg-blue-500/10',
+          statusPill: 'text-[#7c3aed] bg-[#7c3aed]/10',
         };
       default:
         return {
-          iconBg: 'bg-slate-500',
+          iconBg: 'bg-[#57534E]',
           Icon: CheckIcon,
-          statusPill: 'text-slate-400 bg-slate-500/10',
+          statusPill: 'text-[#57534E] bg-[#57534E]/10',
         };
     }
   };
@@ -109,10 +109,10 @@ export default function TableCard({ table, onClick }: TableCardProps) {
           }}
           className={`
             w-full p-4 rounded-xl transition-all duration-200
-            bg-slate-800 shadow-md
-            hover:shadow-lg hover:bg-slate-700/80
+            bg-white border border-[#E7E5E4] shadow-md
+            hover:shadow-lg hover:bg-[#F5F5F4]
             cursor-pointer group
-            ${isOver && table.status === 'Available' ? 'ring-2 ring-violet-500 scale-[1.02] bg-slate-700' : ''}
+            ${isOver && table.status === 'Available' ? 'ring-2 ring-[#9F1239] scale-[1.02] bg-[#F5F5F4]' : ''}
           `}
         >
           {/* Status Icon Badge & Actions */}
@@ -120,24 +120,24 @@ export default function TableCard({ table, onClick }: TableCardProps) {
             <div className={`w-10 h-10 rounded-lg ${config.iconBg} flex items-center justify-center`}>
               <StatusIcon className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xs text-slate-500 group-hover:text-slate-400 transition-colors">
+            <span className="text-xs text-[#A8A29E] group-hover:text-[#57534E] transition-colors">
               Tap to manage
             </span>
           </div>
 
           {/* Table Number */}
-          <div className="text-2xl font-bold text-white mb-2 text-left">
+          <div className="text-2xl font-bold text-[#1C1917] mb-2 text-left">
             {table.table_number}
           </div>
 
           {/* Capacity */}
-          <div className="flex items-center gap-1.5 text-slate-400 text-sm mb-2">
+          <div className="flex items-center gap-1.5 text-[#57534E] text-sm mb-2">
             <UsersIcon className="w-4 h-4" />
             <span className="font-medium">{table.capacity} seats</span>
           </div>
 
           {/* Location */}
-          <div className="text-xs text-slate-500 mb-3 text-left">
+          <div className="text-xs text-[#A8A29E] mb-3 text-left">
             {table.location}
           </div>
 
@@ -152,10 +152,10 @@ export default function TableCard({ table, onClick }: TableCardProps) {
 
         {/* Drop Zone Indicator */}
         {isOver && table.status === 'Available' && (
-          <div className="absolute inset-0 bg-violet-600/20 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center gap-2 pointer-events-none ring-2 ring-violet-400 ring-dashed">
-            <ArrowDownIcon className="w-8 h-8 text-violet-400" />
-            <div className="text-white font-semibold">Drop to Assign</div>
-            <div className="text-violet-300 text-sm">Table {table.table_number}</div>
+          <div className="absolute inset-0 bg-[#9F1239]/20 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center gap-2 pointer-events-none ring-2 ring-[#9F1239] ring-dashed">
+            <ArrowDownIcon className="w-8 h-8 text-[#9F1239]" />
+            <div className="text-[#1C1917] font-semibold">Drop to Assign</div>
+            <div className="text-[#9F1239] text-sm">Table {table.table_number}</div>
           </div>
         )}
       </div>

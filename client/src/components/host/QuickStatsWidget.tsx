@@ -53,8 +53,8 @@ export default function QuickStatsWidget() {
 
   if (error) {
     return (
-      <div className="bg-card rounded-lg border border-border p-4">
-        <div className="flex items-center gap-2 text-muted-foreground">
+      <div className="bg-white rounded-xl border border-[#E7E5E4] p-4 shadow-md">
+        <div className="flex items-center gap-2 text-[#57534E]">
           <AlertCircle className="w-4 h-4" />
           <span className="text-sm">ML stats temporarily unavailable</span>
         </div>
@@ -64,17 +64,17 @@ export default function QuickStatsWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-card rounded-lg border border-border p-6">
+      <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-md">
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-6 h-6 bg-muted rounded animate-pulse"></div>
-          <div className="h-5 w-32 bg-muted rounded animate-pulse"></div>
+          <div className="w-6 h-6 bg-[#F5F5F4] rounded animate-pulse"></div>
+          <div className="h-5 w-32 bg-[#F5F5F4] rounded animate-pulse"></div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => (
             <div key={i} className="space-y-2">
-              <div className="h-4 w-24 bg-muted rounded animate-pulse"></div>
-              <div className="h-8 w-16 bg-muted rounded animate-pulse"></div>
-              <div className="h-3 w-20 bg-muted rounded animate-pulse"></div>
+              <div className="h-4 w-24 bg-[#F5F5F4] rounded animate-pulse"></div>
+              <div className="h-8 w-16 bg-[#F5F5F4] rounded animate-pulse"></div>
+              <div className="h-3 w-20 bg-[#F5F5F4] rounded animate-pulse"></div>
             </div>
           ))}
         </div>
@@ -86,42 +86,42 @@ export default function QuickStatsWidget() {
 
   const getRoiColor = (status: string) => {
     switch (status) {
-      case 'exceeds': return 'text-emerald-500';
-      case 'meets': return 'text-green-500';
-      case 'below': return 'text-yellow-500';
-      default: return 'text-foreground';
+      case 'exceeds': return 'text-[#16a34a]';
+      case 'meets': return 'text-[#16a34a]';
+      case 'below': return 'text-[#d97706]';
+      default: return 'text-[#1C1917]';
     }
   };
 
   const getSuccessColor = (status: string) => {
     switch (status) {
-      case 'good': return 'text-emerald-500';
-      case 'fair': return 'text-yellow-500';
-      case 'needs_improvement': return 'text-orange-500';
-      default: return 'text-foreground';
+      case 'good': return 'text-[#16a34a]';
+      case 'fair': return 'text-[#d97706]';
+      case 'needs_improvement': return 'text-[#9F1239]';
+      default: return 'text-[#1C1917]';
     }
   };
 
   return (
-    <div className="bg-card rounded-lg border border-border shadow-sm">
+    <div className="bg-white rounded-xl border border-[#E7E5E4] shadow-md">
       {/* Header */}
       <div
-        className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+        className="flex items-center justify-between p-4 cursor-pointer hover:bg-[#F5F5F4] transition-colors rounded-t-xl"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <Target className="w-5 h-5 text-primary" />
+          <div className="w-10 h-10 rounded-full bg-[#9F1239]/10 flex items-center justify-center">
+            <Target className="w-5 h-5 text-[#9F1239]" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-foreground">ML Performance Snapshot</h3>
-            <p className="text-xs text-muted-foreground">Real-time intervention analytics</p>
+            <h3 className="text-lg font-semibold text-[#1C1917]">ML Performance Snapshot</h3>
+            <p className="text-xs text-[#A8A29E]">Real-time intervention analytics</p>
           </div>
         </div>
         {isExpanded ? (
-          <ChevronUp className="w-5 h-5 text-muted-foreground" />
+          <ChevronUp className="w-5 h-5 text-[#57534E]" />
         ) : (
-          <ChevronDown className="w-5 h-5 text-muted-foreground" />
+          <ChevronDown className="w-5 h-5 text-[#57534E]" />
         )}
       </div>
 
@@ -130,33 +130,33 @@ export default function QuickStatsWidget() {
         <div className="px-4 pb-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Today's Interventions */}
-            <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
+            <div className="bg-[#F5F5F4] rounded-lg p-4 border border-[#E7E5E4]">
               <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-4 h-4 text-blue-500" />
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <TrendingUp className="w-4 h-4 text-[#9F1239]" />
+                <span className="text-xs font-medium text-[#A8A29E] uppercase tracking-wide">
                   Today
                 </span>
               </div>
-              <div className="text-3xl font-bold text-foreground mb-1">
+              <div className="text-3xl font-bold text-[#1C1917] mb-1">
                 {stats.today_interventions}
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-[#57534E]">
                 {stats.today_change}
               </div>
             </div>
 
             {/* Weekly ROI */}
-            <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
+            <div className="bg-[#F5F5F4] rounded-lg p-4 border border-[#E7E5E4]">
               <div className="flex items-center gap-2 mb-2">
-                <Target className="w-4 h-4 text-primary" />
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <Target className="w-4 h-4 text-[#9F1239]" />
+                <span className="text-xs font-medium text-[#A8A29E] uppercase tracking-wide">
                   7-Day ROI
                 </span>
               </div>
               <div className={`text-3xl font-bold mb-1 ${getRoiColor(stats.roi_status)}`}>
                 {stats.weekly_roi}%
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-[#57534E]">
                 {stats.roi_status === 'exceeds' && '🎯 Exceeds target'}
                 {stats.roi_status === 'meets' && '✓ Meets target'}
                 {stats.roi_status === 'below' && '⚠️ Below 300% target'}
@@ -164,33 +164,33 @@ export default function QuickStatsWidget() {
             </div>
 
             {/* Value Saved */}
-            <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
+            <div className="bg-[#F5F5F4] rounded-lg p-4 border border-[#E7E5E4]">
               <div className="flex items-center gap-2 mb-2">
-                <DollarSign className="w-4 h-4 text-purple-500" />
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <DollarSign className="w-4 h-4 text-[#7c3aed]" />
+                <span className="text-xs font-medium text-[#A8A29E] uppercase tracking-wide">
                   30-Day Saved
                 </span>
               </div>
-              <div className="text-3xl font-bold text-foreground mb-1">
+              <div className="text-3xl font-bold text-[#1C1917] mb-1">
                 €{stats.value_saved_30d.toFixed(0)}
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-[#57534E]">
                 {stats.value_saved_trend}
               </div>
             </div>
 
             {/* Success Rate */}
-            <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
+            <div className="bg-[#F5F5F4] rounded-lg p-4 border border-[#E7E5E4]">
               <div className="flex items-center gap-2 mb-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <CheckCircle2 className="w-4 h-4 text-[#16a34a]" />
+                <span className="text-xs font-medium text-[#A8A29E] uppercase tracking-wide">
                   Success Rate
                 </span>
               </div>
               <div className={`text-3xl font-bold mb-1 ${getSuccessColor(stats.success_status)}`}>
                 {stats.success_rate}%
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-[#57534E]">
                 {stats.success_status === 'good' && '✓ Excellent'}
                 {stats.success_status === 'fair' && 'Good'}
                 {stats.success_status === 'needs_improvement' && 'Needs attention'}
@@ -199,10 +199,10 @@ export default function QuickStatsWidget() {
           </div>
 
           {/* Quick Action Link */}
-          <div className="mt-4 pt-4 border-t border-border/50">
+          <div className="mt-4 pt-4 border-t border-[#E7E5E4]">
             <a
               href="/host-dashboard/ml"
-              className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1 transition-colors"
+              className="text-sm text-[#9F1239] hover:text-[#881337] font-medium flex items-center gap-1 transition-colors"
             >
               View detailed analytics
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

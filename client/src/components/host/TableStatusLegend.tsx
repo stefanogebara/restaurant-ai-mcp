@@ -25,19 +25,19 @@ const ClockIcon = ({ className }: { className?: string }) => (
 
 export default function TableStatusLegend() {
   const statuses = [
-    { Icon: CheckIcon, label: 'Available', iconBg: 'bg-emerald-500', textColor: 'text-emerald-400' },
-    { Icon: PersonIcon, label: 'Occupied', iconBg: 'bg-red-500', textColor: 'text-red-400' },
-    { Icon: SparklesIcon, label: 'Being Cleaned', iconBg: 'bg-amber-500', textColor: 'text-amber-400' },
-    { Icon: ClockIcon, label: 'Reserved', iconBg: 'bg-blue-500', textColor: 'text-blue-400' },
+    { Icon: CheckIcon, label: 'Available', iconBg: 'bg-[#16a34a]', textColor: 'text-[#16a34a]' },
+    { Icon: PersonIcon, label: 'Occupied', iconBg: 'bg-[#9F1239]', textColor: 'text-[#9F1239]' },
+    { Icon: SparklesIcon, label: 'Being Cleaned', iconBg: 'bg-[#d97706]', textColor: 'text-[#d97706]' },
+    { Icon: ClockIcon, label: 'Reserved', iconBg: 'bg-[#7c3aed]', textColor: 'text-[#7c3aed]' },
   ];
 
   return (
     <div className="flex items-center gap-3 text-sm flex-wrap">
-      <span className="text-slate-400 font-medium">Status:</span>
+      <span className="text-[#57534E] font-medium">Status:</span>
       {statuses.map((status) => (
         <div
           key={status.label}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 shadow-sm"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-[#E7E5E4] shadow-sm"
         >
           <div className={`w-5 h-5 rounded ${status.iconBg} flex items-center justify-center`}>
             <status.Icon className="w-3 h-3 text-white" />

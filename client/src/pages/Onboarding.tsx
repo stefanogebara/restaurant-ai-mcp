@@ -1,5 +1,5 @@
 /**
- * Restaurant Onboarding Wizard - Premium Restaurant Design
+ * Restaurant Onboarding Wizard - Modern Elegant Design
  *
  * 6-step onboarding flow for new restaurant customers:
  * 1. Welcome & Restaurant Info
@@ -9,12 +9,8 @@
  * 5. Reservation Settings
  * 6. Team Setup (Pro+ only)
  *
- * Note: Dashboard template is auto-detected based on subscription plan:
- * - Basic plan = "simple" template
- * - Professional plan = "advanced" template
- *
- * Design: Premium restaurant aesthetic with burgundy/gold palette,
- * Playfair Display headings, and cream/parchment backgrounds
+ * Design: Modern Elegant with warm white backgrounds, burgundy accents,
+ * Playfair Display headings, and clean minimalist aesthetic
  */
 
 import { useState, useEffect } from 'react';
@@ -166,28 +162,26 @@ export default function Onboarding() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a1f] relative overflow-hidden">
-      {/* Animated background gradients */}
+    <div className="min-h-screen bg-[#FAFAF9] relative overflow-hidden">
+      {/* Subtle background pattern */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-violet-500/20 rounded-full blur-3xl opacity-50" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl opacity-40" />
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-3xl opacity-30" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#E7E5E4] rounded-full blur-3xl opacity-40" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#E7E5E4] rounded-full blur-3xl opacity-30" />
       </div>
 
       {/* Content Container */}
       <div className="relative z-10">
         {/* Header with Progress Bar */}
-        <div className="fixed top-0 left-0 right-0 z-50 bg-gray-900/80 backdrop-blur-xl border-b border-gray-800">
+        <div className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-[#E7E5E4]">
           <div className="max-w-4xl mx-auto px-6 py-4">
             {/* Logo and Step Counter */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">🍽️</span>
-                <h1 className="font-bold text-xl text-gray-100">
-                  Seatable Setup
+                <h1 className="font-serif text-2xl font-bold text-[#1C1917]">
+                  Seatable<span className="text-[#9F1239]">.</span>
                 </h1>
               </div>
-              <div className="text-sm text-gray-400 font-medium">
+              <div className="text-sm text-[#57534E] font-medium">
                 Step {currentStep} of 6
               </div>
             </div>
@@ -205,8 +199,8 @@ export default function Onboarding() {
                       className={`
                         h-2 rounded-full transition-all duration-500 ease-out
                         ${isCompleted || isActive
-                          ? 'bg-gradient-to-r from-violet-600 to-purple-600 shadow-lg shadow-purple-500/30'
-                          : 'bg-gray-800'
+                          ? 'bg-[#9F1239]'
+                          : 'bg-[#E7E5E4]'
                         }
                       `}
                     />
@@ -214,7 +208,7 @@ export default function Onboarding() {
                     <span
                       className={`
                         hidden md:block text-[10px] font-medium transition-colors duration-300
-                        ${isActive ? 'text-violet-400' : isCompleted ? 'text-cyan-400' : 'text-gray-500'}
+                        ${isActive ? 'text-[#9F1239]' : isCompleted ? 'text-[#1C1917]' : 'text-[#A8A29E]'}
                       `}
                     >
                       {name}
@@ -237,12 +231,11 @@ export default function Onboarding() {
             className="max-w-4xl mx-auto"
           >
             <div className="
-              bg-gray-900/50
-              backdrop-blur-xl
-              border border-gray-800
-              rounded-2xl
+              bg-white
+              border border-[#E7E5E4]
+              rounded-[2rem]
               p-8 md:p-12
-              shadow-2xl shadow-purple-500/10
+              shadow-xl shadow-black/5
             "
             >
               <AnimatePresence mode="wait">
@@ -306,11 +299,11 @@ export default function Onboarding() {
 
           {/* Help Text */}
           <div className="text-center mt-6 max-w-4xl mx-auto">
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-[#57534E]">
               Need help?{' '}
               <a
                 href="mailto:support@seatable.io"
-                className="text-violet-400 hover:text-violet-300 font-semibold underline transition-colors"
+                className="text-[#9F1239] hover:text-[#881337] font-semibold transition-colors"
               >
                 Contact Support
               </a>
@@ -326,7 +319,7 @@ export default function Onboarding() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-6"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-6"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -334,14 +327,13 @@ export default function Onboarding() {
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
               className="
-                bg-gray-900/90
-                backdrop-blur-xl
-                border border-purple-500/50
-                rounded-2xl
+                bg-white
+                border border-[#E7E5E4]
+                rounded-[2rem]
                 p-12
                 max-w-md
                 w-full
-                shadow-2xl shadow-purple-500/20
+                shadow-2xl
               "
             >
               <div className="text-center">
@@ -352,14 +344,15 @@ export default function Onboarding() {
                   transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
                   className="
                     w-20 h-20
-                    bg-gradient-to-br from-violet-500 to-purple-600
+                    bg-[#9F1239]
                     rounded-full
                     flex items-center justify-center
                     mx-auto mb-6
-                    shadow-lg shadow-purple-500/30
                   "
                 >
-                  <span className="text-5xl">🎉</span>
+                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
                 </motion.div>
 
                 {/* Success Message */}
@@ -368,8 +361,8 @@ export default function Onboarding() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
                   className="
-                    font-bold text-3xl
-                    text-gray-100
+                    font-serif text-3xl font-bold
+                    text-[#1C1917]
                     mb-3
                   "
                 >
@@ -382,7 +375,7 @@ export default function Onboarding() {
                   transition={{ delay: 0.4 }}
                   className="
                     text-base
-                    text-gray-300
+                    text-[#57534E]
                     mb-6
                   "
                 >
@@ -396,8 +389,8 @@ export default function Onboarding() {
                   transition={{ delay: 0.5 }}
                   className="flex items-center justify-center gap-2"
                 >
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-700 border-t-violet-500"></div>
-                  <span className="text-sm text-gray-400">
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#E7E5E4] border-t-[#9F1239]"></div>
+                  <span className="text-sm text-[#57534E]">
                     Redirecting to dashboard...
                   </span>
                 </motion.div>

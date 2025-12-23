@@ -9,7 +9,7 @@ import TableStatusLegend from '../components/host/TableStatusLegend';
 import type { PlanType } from '../config/planFeatures';
 import { hasFeatureAccess } from '../config/planFeatures';
 import { useSubscription } from '../hooks/useSubscription';
-// Professional dark theme - no glass effects
+// Modern Elegant Design - Light theme with burgundy accents
 
 type ComplexityLevel = 'completo' | 'avanzado';
 
@@ -471,13 +471,13 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   }, [toast]);
 
   return (
-    <div className="min-h-screen bg-slate-900 p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-[#FAFAF9] p-4 md:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Loading State */}
         {isLoading && (
           <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in-up">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-200 border-t-purple-600 mb-4"></div>
-            <p className="text-gray-200 font-sans font-semibold">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#E7E5E4] border-t-[#9F1239] mb-4"></div>
+            <p className="text-[#1C1917] font-sans font-semibold">
               {language === 'es' ? 'Cargando dashboard...' : 'Loading dashboard...'}
             </p>
           </div>
@@ -517,10 +517,10 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
         <div className="mb-8 md:mb-10 animate-fade-in-up">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-3">
             <div>
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-white tracking-tight mb-1">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold text-[#1C1917] tracking-tight mb-1">
                 {t.today}
               </h1>
-              <p className="text-gray-300 text-base md:text-lg font-sans font-medium">
+              <p className="text-[#57534E] text-base md:text-lg font-sans font-medium">
                 {getDayName()}, {formatDate()}
               </p>
             </div>
@@ -528,13 +528,13 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
             {/* Controls: Language Switcher + Complexity Toggle */}
             <div className="flex items-center gap-3 flex-wrap">
               {/* Language Switcher */}
-              <div className="flex items-center gap-1 bg-slate-800 rounded-xl p-1.5 shadow-sm">
+              <div className="flex items-center gap-1 bg-white border border-[#E7E5E4] rounded-xl p-1.5 shadow-md">
                 <button
                   onClick={() => handleLanguageChange('en')}
                   className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-colors duration-200 ${
                     language === 'en'
-                      ? 'bg-purple-600 text-white shadow-sm'
-                      : 'text-gray-400 hover:bg-white/10 hover:text-white'
+                      ? 'bg-[#9F1239] text-white shadow-sm'
+                      : 'text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#1C1917]'
                   }`}
                   title="English"
                 >
@@ -544,8 +544,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   onClick={() => handleLanguageChange('es')}
                   className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-colors duration-200 ${
                     language === 'es'
-                      ? 'bg-purple-600 text-white shadow-sm'
-                      : 'text-gray-400 hover:bg-white/10 hover:text-white'
+                      ? 'bg-[#9F1239] text-white shadow-sm'
+                      : 'text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#1C1917]'
                   }`}
                   title="Español"
                 >
@@ -556,7 +556,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               {/* AI Agent Button */}
               <button
                 onClick={() => window.location.href = '/host-dashboard/calls'}
-                className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-sans font-semibold transition-all duration-300 shadow-sm hover:shadow-md"
+                className="flex items-center gap-2 px-3 py-2 bg-[#9F1239] hover:bg-[#881337] text-white rounded-xl text-sm font-sans font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
                 title={language === 'es' ? 'Panel del Agente AI' : 'AI Agent Dashboard'}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -566,15 +566,15 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </button>
 
               {/* Complexity Toggle - Enhanced Design */}
-              <div className="flex items-center gap-1.5 bg-slate-800 rounded-xl p-1.5 shadow-sm">
-                <span className="text-xs text-gray-400 font-sans font-semibold px-2 hidden sm:block">{t.viewLevel}</span>
+              <div className="flex items-center gap-1.5 bg-white border border-[#E7E5E4] rounded-xl p-1.5 shadow-md">
+                <span className="text-xs text-[#57534E] font-sans font-semibold px-2 hidden sm:block">{t.viewLevel}</span>
 
               <button
                 onClick={() => handleComplexityChange('completo')}
                 className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ${
                   complexity === 'completo'
-                    ? 'bg-purple-600 text-white shadow-sm'
-                    : 'text-gray-400 hover:bg-white/10 hover:text-white'
+                    ? 'bg-[#9F1239] text-white shadow-sm'
+                    : 'text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#1C1917]'
                 }`}
                 title={t.completo}
               >
@@ -592,10 +592,10 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                 }}
                 className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ${
                   !hasFeatureAccess(currentPlan, 'mlPerformance')
-                    ? 'text-gray-500 hover:bg-white/10 cursor-not-allowed opacity-60'
+                    ? 'text-[#A8A29E] hover:bg-[#F5F5F4] cursor-not-allowed opacity-60'
                     : complexity === 'avanzado'
-                    ? 'bg-amber-500 text-white shadow-sm'
-                    : 'text-gray-400 hover:bg-white/10 hover:text-white'
+                    ? 'bg-[#d97706] text-white shadow-sm'
+                    : 'text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#1C1917]'
                 }`}
                 title={hasFeatureAccess(currentPlan, 'mlPerformance') ? t.avanzado : (language === 'es' ? 'Requiere Plan Professional' : 'Requires Professional Plan')}
               >
@@ -613,94 +613,94 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
             {/* Main Stats Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Occupied Tables */}
-              <div className="bg-slate-800 rounded-xl shadow-md p-4 md:p-5">
+              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-4 md:p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="text-3xl md:text-4xl font-bold text-indigo-400 tracking-tight">
-                    {occupiedTables}<span className="text-gray-500 text-2xl">/{totalTables}</span>
+                  <div className="text-3xl md:text-4xl font-bold text-[#9F1239] tracking-tight">
+                    {occupiedTables}<span className="text-[#A8A29E] text-2xl">/{totalTables}</span>
                   </div>
-                  <div className="p-2 bg-indigo-500/10 rounded-lg">
-                    <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="p-2 bg-[#9F1239]/10 rounded-lg">
+                    <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                   </div>
                 </div>
-                <div className="text-xs font-semibold text-gray-300 mb-3">{t.tablesOccupied}</div>
+                <div className="text-xs font-semibold text-[#57534E] mb-3">{t.tablesOccupied}</div>
                 <div className="space-y-2">
-                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-2 bg-[#F5F5F4] rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
+                      className="h-full bg-gradient-to-r from-[#9F1239] to-[#881337] rounded-full transition-all duration-500"
                       style={{ width: `${occupancyPercent}%` }}
                     />
                   </div>
-                  <div className="text-xs text-gray-400 font-medium">{occupancyPercent}% {t.occupancy}</div>
+                  <div className="text-xs text-[#A8A29E] font-medium">{occupancyPercent}% {t.occupancy}</div>
                 </div>
               </div>
 
               {/* Reservations */}
-              <div className="bg-slate-800 rounded-xl shadow-md p-4 md:p-5">
+              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-4 md:p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="text-3xl md:text-4xl font-bold text-emerald-400 tracking-tight">
+                  <div className="text-3xl md:text-4xl font-bold text-[#16a34a] tracking-tight">
                     {todayReservations.length}
                   </div>
-                  <div className="p-2 bg-emerald-500/10 rounded-lg">
-                    <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="p-2 bg-[#16a34a]/10 rounded-lg">
+                    <svg className="w-5 h-5 text-[#16a34a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
                 </div>
-                <div className="text-xs font-semibold text-gray-300 mb-3">{t.reservationsToday}</div>
+                <div className="text-xs font-semibold text-[#57534E] mb-3">{t.reservationsToday}</div>
                 <div className="space-y-2">
                   <div className="flex gap-1.5">
-                    <div className="flex-1 h-2 bg-emerald-500 rounded-full" style={{ width: `${(todayReservations.filter((r: any) => r.checked_in).length / Math.max(todayReservations.length, 1)) * 100}%` }} />
-                    <div className="flex-1 h-2 bg-white/5 rounded-full" />
+                    <div className="flex-1 h-2 bg-[#16a34a] rounded-full" style={{ width: `${(todayReservations.filter((r: any) => r.checked_in).length / Math.max(todayReservations.length, 1)) * 100}%` }} />
+                    <div className="flex-1 h-2 bg-[#F5F5F4] rounded-full" />
                   </div>
-                  <div className="text-xs text-gray-400 font-medium">
+                  <div className="text-xs text-[#A8A29E] font-medium">
                     {todayReservations.filter((r: any) => r.checked_in).length}/{todayReservations.length} {language === 'es' ? 'sentados' : 'seated'}
                   </div>
                 </div>
               </div>
 
               {/* Waiting */}
-              <div className="bg-slate-800 rounded-xl shadow-md p-4 md:p-5">
+              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-4 md:p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="text-3xl md:text-4xl font-bold text-amber-400 tracking-tight">
+                  <div className="text-3xl md:text-4xl font-bold text-[#d97706] tracking-tight">
                     {stats.waitlistCount || 0}
                   </div>
-                  <div className="p-2 bg-amber-500/10 rounded-lg">
-                    <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="p-2 bg-[#d97706]/10 rounded-lg">
+                    <svg className="w-5 h-5 text-[#d97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                 </div>
-                <div className="text-xs font-semibold text-gray-300 mb-3">{t.waiting}</div>
+                <div className="text-xs font-semibold text-[#57534E] mb-3">{t.waiting}</div>
                 <div className="space-y-1">
-                  <div className="text-sm font-bold text-amber-400">
+                  <div className="text-sm font-bold text-[#d97706]">
                     {stats.estimated_wait_time ? `~${stats.estimated_wait_time} min` : '-'}
                   </div>
-                  <div className="text-xs text-gray-400 font-medium">
+                  <div className="text-xs text-[#A8A29E] font-medium">
                     {language === 'es' ? 'Espera promedio' : 'Average wait'}
                   </div>
                 </div>
               </div>
 
               {/* Active Parties */}
-              <div className="bg-slate-800 rounded-xl shadow-md p-4 md:p-5">
+              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-4 md:p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="text-3xl md:text-4xl font-bold text-purple-400 tracking-tight">
+                  <div className="text-3xl md:text-4xl font-bold text-[#7c3aed] tracking-tight">
                     {stats.activePartiesCount || 0}
                   </div>
-                  <div className="p-2 bg-purple-500/10 rounded-lg">
-                    <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="p-2 bg-[#7c3aed]/10 rounded-lg">
+                    <svg className="w-5 h-5 text-[#7c3aed]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
                 </div>
-                <div className="text-xs font-semibold text-gray-300 mb-3">{t.activeParties}</div>
+                <div className="text-xs font-semibold text-[#57534E] mb-3">{t.activeParties}</div>
                 <div className="space-y-1">
-                  <div className="text-sm font-bold text-purple-400">
+                  <div className="text-sm font-bold text-[#7c3aed]">
                     {stats.totalSeatedGuests || 0} {t.people}
                   </div>
-                  <div className="text-xs text-gray-400 font-medium">
+                  <div className="text-xs text-[#A8A29E] font-medium">
                     {language === 'es' ? 'Comensales totales' : 'Total guests'}
                   </div>
                 </div>
@@ -709,44 +709,44 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
             {/* Additional Stats Row */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-slate-800 rounded-xl shadow-md p-4">
+              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-blue-500/10 rounded-lg">
-                    <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="p-2.5 bg-[#9F1239]/10 rounded-lg">
+                    <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div>
-                    <div className="text-xs font-semibold text-gray-300 mb-0.5">{t.avgDuration}</div>
-                    <div className="text-2xl font-bold text-blue-400 tracking-tight">
+                    <div className="text-xs font-semibold text-[#57534E] mb-0.5">{t.avgDuration}</div>
+                    <div className="text-2xl font-bold text-[#1C1917] tracking-tight">
                       {stats.avg_duration_minutes ? `${Math.round(stats.avg_duration_minutes / 60 * 10) / 10}h` : '-'}
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="bg-slate-800 rounded-xl shadow-md p-4">
+              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-pink-500/10 rounded-lg">
-                    <svg className="w-5 h-5 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="p-2.5 bg-[#9F1239]/10 rounded-lg">
+                    <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                     </svg>
                   </div>
                   <div>
-                    <div className="text-xs font-semibold text-gray-300 mb-0.5">{t.peakHours}</div>
-                    <div className="text-2xl font-bold text-pink-400 tracking-tight">{stats.peak_hours || '-'}</div>
+                    <div className="text-xs font-semibold text-[#57534E] mb-0.5">{t.peakHours}</div>
+                    <div className="text-2xl font-bold text-[#1C1917] tracking-tight">{stats.peak_hours || '-'}</div>
                   </div>
                 </div>
               </div>
-              <div className="bg-slate-800 rounded-xl shadow-md p-4">
+              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-emerald-500/10 rounded-lg">
-                    <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="p-2.5 bg-[#16a34a]/10 rounded-lg">
+                    <svg className="w-5 h-5 text-[#16a34a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div>
-                    <div className="text-xs font-semibold text-gray-300 mb-0.5">{language === 'es' ? 'Ingresos Hoy' : 'Revenue Today'}</div>
-                    <div className="text-2xl font-bold text-emerald-400 tracking-tight">
+                    <div className="text-xs font-semibold text-[#57534E] mb-0.5">{language === 'es' ? 'Ingresos Hoy' : 'Revenue Today'}</div>
+                    <div className="text-2xl font-bold text-[#16a34a] tracking-tight">
                       {stats.revenue_today ? `€${stats.revenue_today}` : '-'}
                     </div>
                   </div>
@@ -759,13 +759,13 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
         {/* Add Walk-in Button */}
         <button
           onClick={() => setShowWalkInModal(true)}
-          className="w-full mb-8 bg-violet-600 hover:bg-violet-700 text-white font-sans font-bold py-5 md:py-6 px-8 rounded-2xl shadow-md hover:shadow-lg transition-colors duration-200"
+          className="w-full mb-8 bg-[#9F1239] hover:bg-[#881337] text-white font-sans font-bold py-5 md:py-6 px-8 rounded-2xl shadow-md hover:shadow-lg hover:shadow-[#9F1239]/20 transition-all duration-300"
         >
           <div className="flex items-center justify-center gap-3">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            <span className="text-lg md:text-xl">{t.addWalkIn}</span>
+            <span className="text-lg md:text-xl tracking-wider uppercase">{t.addWalkIn}</span>
           </div>
         </button>
 
@@ -775,19 +775,19 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
             {/* Left: Table Grid (60% on desktop) */}
             <div className="lg:col-span-2">
-              <div className="bg-slate-800 rounded-xl shadow-md p-5 md:p-6">
+              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-5 md:p-6">
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-500/10 rounded-lg">
-                      <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="p-2 bg-[#9F1239]/10 rounded-lg">
+                      <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
                       </svg>
                     </div>
-                    <h2 className="text-lg md:text-xl font-bold text-gray-200">
+                    <h2 className="text-lg md:text-xl font-serif font-bold text-[#1C1917]">
                       {language === 'es' ? 'Disposición de Mesas' : 'Table Layout'}
                     </h2>
                   </div>
-                  <span className="text-xs font-semibold text-gray-400 bg-white/5 px-2.5 py-1 rounded-lg">
+                  <span className="text-xs font-semibold text-[#57534E] bg-[#F5F5F4] px-2.5 py-1 rounded-lg">
                     {language === 'es' ? 'Solo lectura' : 'Read-only'}
                   </span>
                 </div>
@@ -798,14 +798,14 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                 </div>
 
                 {/* Table Grid - Interactive in COMPLETO mode */}
-                <div className={`bg-white/5 rounded-xl p-4 ${complexity !== 'completo' ? 'pointer-events-none opacity-90' : ''}`}>
+                <div className={`bg-[#F5F5F4] rounded-xl p-4 ${complexity !== 'completo' ? 'pointer-events-none opacity-90' : ''}`}>
                   <TableGrid
                     tables={tables}
                     onTableClick={complexity === 'completo' ? handleTableClick : undefined}
                   />
                 </div>
 
-                <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-400 bg-white/5 p-3 rounded-lg">
+                <div className="mt-4 flex items-center justify-center gap-2 text-xs text-[#57534E] bg-[#F5F5F4] p-3 rounded-lg">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -826,19 +826,19 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
             <div className="space-y-5 md:space-y-6">
 
               {/* Active Parties Panel */}
-              <div className="bg-slate-800 rounded-xl shadow-md p-5 md:p-6">
+              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-5 md:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-1.5 bg-purple-500/10 rounded-lg">
-                      <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="p-1.5 bg-[#9F1239]/10 rounded-lg">
+                      <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
                     </div>
-                    <h2 className="text-base md:text-lg font-bold text-gray-200">
+                    <h2 className="text-base md:text-lg font-serif font-bold text-[#1C1917]">
                       {language === 'es' ? 'Mesas Activas' : 'Active Parties'}
                     </h2>
                   </div>
-                  <span className="px-2.5 py-1 bg-purple-500/20 text-purple-300 rounded-lg text-xs font-bold">
+                  <span className="px-2.5 py-1 bg-[#9F1239]/10 text-[#9F1239] rounded-lg text-xs font-bold">
                     {stats.activePartiesCount || 0}
                   </span>
                 </div>
@@ -848,25 +848,25 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                     {activeParties?.map((party: any) => (
                       <div
                         key={party.service_id}
-                        className="p-3.5 bg-slate-700/50 rounded-xl shadow-sm hover:bg-slate-700 transition-all duration-200"
+                        className="p-3.5 bg-[#F5F5F4] rounded-xl shadow-sm hover:bg-[#E7E5E4] transition-all duration-200 border border-[#E7E5E4]"
                       >
                         <div className="flex items-start justify-between mb-2">
-                          <div className="font-semibold text-gray-200 text-sm">
+                          <div className="font-semibold text-[#1C1917] text-sm">
                             {party.customer_name}
                           </div>
-                          <span className="text-xs font-medium text-gray-400 bg-white/5 px-2 py-0.5 rounded-md">
+                          <span className="text-xs font-medium text-[#57534E] bg-white px-2 py-0.5 rounded-md">
                             {formatTimestamp(party.seated_at)}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-gray-300">
+                        <div className="flex items-center gap-3 text-xs text-[#57534E]">
                           <div className="flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-3.5 h-3.5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                             <span className="font-medium">{party.party_size} {language === 'es' ? 'pax' : 'guests'}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-3.5 h-3.5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
                             <span className="font-medium">{language === 'es' ? 'Mesa' : 'Table'} {party.tables?.join(', ')}</span>
@@ -878,7 +878,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                               setSelectedServiceToComplete(party);
                               setShowCompleteServiceModal(true);
                             }}
-                            className="mt-2 w-full px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
+                            className="mt-2 w-full px-3 py-1.5 bg-[#9F1239] hover:bg-[#881337] text-white text-xs font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
                           >
                             {language === 'es' ? 'Completar Servicio' : 'Complete Service'}
                           </button>
@@ -888,13 +888,13 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   </div>
                 ) : (
                   <div className="text-center py-10 px-4">
-                    <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <div className="w-16 h-16 bg-[#F5F5F4] rounded-2xl flex items-center justify-center mx-auto mb-3">
                       <span className="text-3xl">🍽️</span>
                     </div>
-                    <p className="text-sm font-medium text-gray-300 mb-1">
+                    <p className="text-sm font-medium text-[#1C1917] mb-1">
                       {language === 'es' ? 'No hay mesas activas' : 'No active parties'}
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-[#57534E]">
                       {language === 'es' ? 'Las mesas aparecerán aquí al sentar clientes' : 'Tables will appear here when guests are seated'}
                     </p>
                   </div>
@@ -902,39 +902,39 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </div>
 
               {/* Waitlist Panel */}
-              <div className="bg-slate-800 rounded-xl shadow-md p-5 md:p-6">
+              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-5 md:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-1.5 bg-amber-500/10 rounded-lg">
-                      <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="p-1.5 bg-[#d97706]/10 rounded-lg">
+                      <svg className="w-5 h-5 text-[#d97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <h2 className="text-base md:text-lg font-bold text-gray-200">
+                    <h2 className="text-base md:text-lg font-serif font-bold text-[#1C1917]">
                       {language === 'es' ? 'Lista de Espera' : 'Waitlist'}
                     </h2>
                   </div>
-                  <span className="px-2.5 py-1 bg-amber-500/20 text-amber-300 rounded-lg text-xs font-bold">
+                  <span className="px-2.5 py-1 bg-[#d97706]/10 text-[#d97706] rounded-lg text-xs font-bold">
                     {stats.waitlistCount || 0}
                   </span>
                 </div>
 
                 <div className="text-center py-10 px-4">
-                  <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                  <div className="w-16 h-16 bg-[#F5F5F4] rounded-2xl flex items-center justify-center mx-auto mb-3">
                     <span className="text-3xl">⏱️</span>
                   </div>
-                  <p className="text-sm font-medium text-gray-300 mb-1">
+                  <p className="text-sm font-medium text-[#1C1917] mb-1">
                     {language === 'es' ? 'La lista de espera está vacía' : 'Waitlist is empty'}
                   </p>
-                  <p className="text-xs text-gray-400 mb-4">
+                  <p className="text-xs text-[#57534E] mb-4">
                     {language === 'es'
                       ? 'Los clientes pueden agregar sus nombres cuando lleguen'
                       : 'Customers can add their names when they arrive'}
                   </p>
                 </div>
 
-                <div className="flex items-start gap-2 text-xs text-slate-400 bg-orange-50/50 p-3 rounded-lg border border-orange-100">
-                  <svg className="w-4 h-4 flex-shrink-0 mt-0.5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-start gap-2 text-xs text-[#57534E] bg-[#9F1239]/5 p-3 rounded-lg border border-[#9F1239]/20">
+                  <svg className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                   <span>
@@ -951,17 +951,17 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
 
         {/* Upcoming Reservations */}
-        <div className="bg-slate-800 rounded-2xl p-5 md:p-6 shadow-lg animate-fade-in-up" style={{ animationDelay: '500ms' }}>
+        <div className="bg-white border border-[#E7E5E4] rounded-2xl p-5 md:p-6 shadow-md animate-fade-in-up" style={{ animationDelay: '500ms' }}>
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-purple-500/20 rounded-lg">
-              <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-2 bg-[#9F1239]/10 rounded-lg">
+              <svg className="w-6 h-6 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <h2 className="text-xl md:text-2xl font-display font-bold text-white">
+            <h2 className="text-xl md:text-2xl font-serif font-bold text-[#1C1917]">
               {t.upcomingReservations}
               {showTomorrow && (
-                <span className="ml-2 text-sm font-sans font-normal text-gray-400">
+                <span className="ml-2 text-sm font-sans font-normal text-[#57534E]">
                   ({language === 'es' ? 'Mañana' : 'Tomorrow'})
                 </span>
               )}
@@ -970,29 +970,29 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
           {displayedReservations.length === 0 ? (
             <div className="text-center py-16 px-4">
-              <div className="w-20 h-20 bg-gradient-to-br from-purple-500/20 to-amber-500/20 rounded-3xl flex items-center justify-center mx-auto mb-4">
+              <div className="w-20 h-20 bg-gradient-to-br from-[#9F1239]/10 to-[#d97706]/10 rounded-3xl flex items-center justify-center mx-auto mb-4">
                 <span className="text-5xl">✨</span>
               </div>
-              <p className="text-white text-lg font-display font-semibold mb-2">{t.allClear}</p>
-              <p className="text-gray-400 text-sm font-sans">{showTomorrow ? (language === 'es' ? 'Sin reservas mañana' : 'No reservations tomorrow') : t.noUpcoming}</p>
+              <p className="text-[#1C1917] text-lg font-serif font-semibold mb-2">{t.allClear}</p>
+              <p className="text-[#57534E] text-sm font-sans">{showTomorrow ? (language === 'es' ? 'Sin reservas mañana' : 'No reservations tomorrow') : t.noUpcoming}</p>
             </div>
           ) : (
             <div className="space-y-3">
               {displayedReservations.map((reservation: any, index: number) => (
                 <div
                   key={reservation.reservation_id}
-                  className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 md:p-5 bg-slate-700/50 rounded-xl shadow-sm hover:bg-slate-700 transition-colors duration-200"
+                  className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 md:p-5 bg-[#F5F5F4] rounded-xl shadow-sm hover:bg-[#E7E5E4] transition-colors duration-200 border border-[#E7E5E4]"
                   style={{ animationDelay: `${600 + (index * 100)}ms` }}
                 >
                   <div className="flex items-center gap-4 flex-1 min-w-0">
                     <div className="flex-shrink-0">
-                      <div className="text-2xl md:text-3xl font-mono font-bold text-purple-300 bg-white/10 px-3 py-2 rounded-lg shadow-sm border-2 border-purple-500/30">
+                      <div className="text-2xl md:text-3xl font-mono font-bold text-[#9F1239] bg-white px-3 py-2 rounded-lg shadow-sm border-2 border-[#9F1239]/30">
                         {formatTime(reservation.time)}
                       </div>
                     </div>
-                    <div className="border-l-2 border-purple-500/40 pl-4 flex-1 min-w-0">
+                    <div className="border-l-2 border-[#9F1239]/40 pl-4 flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <div className="font-display font-semibold text-white text-base md:text-lg truncate">
+                        <div className="font-serif font-semibold text-[#1C1917] text-base md:text-lg truncate">
                           {reservation.customer_name}
                         </div>
                         {/* ML Risk Badges */}
@@ -1073,9 +1073,9 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                           </button>
                         </div>
                       )}
-                      <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-[#57534E]">
                         <div className="flex items-center gap-1">
-                          <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                           </svg>
                           <span className="font-medium">{reservation.party_size} {t.people}</span>
@@ -1132,10 +1132,10 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
           <div className="mt-6 text-center">
             <button
               onClick={() => setShowTomorrow(!showTomorrow)}
-              className={`inline-flex items-center gap-2 font-sans font-semibold text-base md:text-lg transition-colors duration-200 group px-4 py-2 rounded-lg ${
+              className={`inline-flex items-center gap-2 font-sans font-semibold text-base md:text-lg transition-all duration-300 group px-4 py-2 rounded-lg ${
                 showTomorrow
-                  ? 'bg-purple-600 text-white'
-                  : 'text-purple-400 hover:text-white hover:bg-purple-500/20'
+                  ? 'bg-[#9F1239] text-white'
+                  : 'text-[#9F1239] hover:text-white hover:bg-[#9F1239]/20'
               }`}
             >
               <span>{showTomorrow ? (language === 'es' ? 'Ver Hoy' : 'View Today') : t.viewTomorrow}</span>
@@ -1191,16 +1191,16 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-100 rounded-lg">
-                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2 bg-[#9F1239]/10 rounded-lg">
+                  <svg className="w-6 h-6 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900">
+                  <h3 className="text-lg font-bold text-[#1C1917]">
                     {language === 'es' ? 'Mesa' : 'Table'} {selectedTable.table_number}
                   </h3>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-[#57534E]">
                     {selectedTable.capacity} {language === 'es' ? 'personas' : 'seats'} • {selectedTable.location}
                   </p>
                 </div>
@@ -1210,7 +1210,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   setShowTableActionsModal(false);
                   setSelectedTable(null);
                 }}
-                className="text-slate-400 hover:text-slate-600 transition-colors"
+                className="text-[#A8A29E] hover:text-[#57534E] transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1264,18 +1264,18 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               {selectedTable.status !== 'Available' && (
                 <button
                   onClick={() => handleUpdateTableStatus(selectedTable.id, 'Available')}
-                  className="w-full flex items-center gap-3 p-4 bg-indigo-50 hover:bg-indigo-100 rounded-xl border border-indigo-200 transition-colors duration-200"
+                  className="w-full flex items-center gap-3 p-4 bg-[#16a34a]/5 hover:bg-[#16a34a]/10 rounded-xl border border-[#16a34a]/20 transition-colors duration-200"
                 >
-                  <div className="p-2 bg-indigo-600 rounded-lg">
+                  <div className="p-2 bg-[#16a34a] rounded-lg">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div className="text-left flex-1">
-                    <div className="font-semibold text-indigo-900">
+                    <div className="font-semibold text-[#16a34a]">
                       {language === 'es' ? 'Marcar Disponible' : 'Mark as Available'}
                     </div>
-                    <div className="text-xs text-indigo-700">
+                    <div className="text-xs text-[#15803d]">
                       {language === 'es' ? 'Mesa lista para nuevos clientes' : 'Table ready for new guests'}
                     </div>
                   </div>
@@ -1288,18 +1288,18 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                     setShowTableActionsModal(false);
                     setShowSeatModal(true);
                   }}
-                  className="w-full flex items-center gap-3 p-4 bg-purple-50 hover:bg-purple-100 rounded-xl border border-purple-200 transition-colors duration-200"
+                  className="w-full flex items-center gap-3 p-4 bg-[#9F1239]/5 hover:bg-[#9F1239]/10 rounded-xl border border-[#9F1239]/20 transition-colors duration-200"
                 >
-                  <div className="p-2 bg-purple-600 rounded-lg">
+                  <div className="p-2 bg-[#9F1239] rounded-lg">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
                   <div className="text-left flex-1">
-                    <div className="font-semibold text-purple-900">
+                    <div className="font-semibold text-[#9F1239]">
                       {language === 'es' ? 'Asignar Clientes' : 'Seat Party'}
                     </div>
-                    <div className="text-xs text-purple-700">
+                    <div className="text-xs text-[#881337]">
                       {language === 'es' ? 'Sentar clientes en esta mesa' : 'Assign guests to this table'}
                     </div>
                   </div>
@@ -1312,7 +1312,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                 setShowTableActionsModal(false);
                 setSelectedTable(null);
               }}
-              className="w-full mt-4 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-all duration-200"
+              className="w-full mt-4 px-4 py-3 bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#57534E] font-semibold rounded-xl transition-all duration-200"
             >
               {language === 'es' ? 'Cancelar' : 'Cancel'}
             </button>
@@ -1331,7 +1331,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-bold text-slate-900">
+                <h3 className="text-lg font-bold text-[#1C1917]">
                   {language === 'es' ? 'Completar Servicio' : 'Complete Service'}
                 </h3>
               </div>
@@ -1340,7 +1340,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   setShowCompleteServiceModal(false);
                   setSelectedServiceToComplete(null);
                 }}
-                className="text-slate-400 hover:text-slate-600 transition-colors"
+                className="text-[#A8A29E] hover:text-[#57534E] transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1348,19 +1348,19 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </button>
             </div>
 
-            <div className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
-              <div className="font-semibold text-slate-900 mb-2">
+            <div className="mb-6 p-4 bg-[#F5F5F4] rounded-xl border border-[#E7E5E4]">
+              <div className="font-semibold text-[#1C1917] mb-2">
                 {selectedServiceToComplete.customer_name}
               </div>
-              <div className="space-y-1 text-sm text-slate-600">
+              <div className="space-y-1 text-sm text-[#57534E]">
                 <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                   <span>{selectedServiceToComplete.party_size} {language === 'es' ? 'personas' : 'guests'}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
                   <span>{language === 'es' ? 'Mesa' : 'Table'} {selectedServiceToComplete.tables?.join(', ')}</span>
@@ -1368,7 +1368,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </div>
             </div>
 
-            <p className="text-slate-600 text-sm mb-6">
+            <p className="text-[#57534E] text-sm mb-6">
               {language === 'es'
                 ? '¿Confirmas que el servicio ha finalizado? Las mesas serán marcadas como disponibles.'
                 : 'Confirm that the service is complete? Tables will be marked as available.'}
@@ -1380,7 +1380,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   setShowCompleteServiceModal(false);
                   setSelectedServiceToComplete(null);
                 }}
-                className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-all duration-200"
+                className="flex-1 px-4 py-3 bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#57534E] font-semibold rounded-xl transition-all duration-200"
               >
                 {language === 'es' ? 'Cancelar' : 'Cancel'}
               </button>

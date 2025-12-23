@@ -48,64 +48,64 @@ export default function UpgradePrompt({
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`glass-card ${sizeClasses[size]} text-center`}
+      className={`bg-white rounded-2xl shadow-lg border border-[#E7E5E4] ${sizeClasses[size]} text-center`}
     >
       {/* Icon */}
       <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
-        className={`${iconSizes[size]} rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center mx-auto mb-4`}
+        className={`${iconSizes[size]} rounded-full bg-[#9F1239] flex items-center justify-center mx-auto mb-4`}
       >
         <Lock className={`${size === 'small' ? 'w-4 h-4' : size === 'medium' ? 'w-6 h-6' : 'w-8 h-8'} text-white`} />
       </motion.div>
 
       {/* Heading */}
-      <h3 className={`${headingSizes[size]} font-bold mb-2 gradient-text`}>
+      <h3 className={`${headingSizes[size]} font-bold mb-2 text-[#1C1917]`}>
         Upgrade Required
       </h3>
 
       {/* Description */}
-      <p className="text-gray-400 mb-4">
+      <p className="text-[#57534E] mb-4">
         {featureDescription ||
           `${feature} is available on Professional and Enterprise plans`}
       </p>
 
       {/* Current Plan Badge */}
       {currentPlan && (
-        <div className="inline-flex items-center gap-2 px-3 py-1 glass-subtle rounded-full text-sm text-gray-300 mb-4">
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#F5F5F4] rounded-full text-sm text-[#57534E] mb-4 border border-[#E7E5E4]">
           <span>Current plan:</span>
-          <span className="font-semibold text-indigo-400">{currentPlan}</span>
+          <span className="font-semibold text-[#9F1239]">{currentPlan}</span>
         </div>
       )}
 
       {/* Features List */}
-      <div className="glass-subtle p-4 rounded-xl mb-6 text-left">
+      <div className="bg-[#F5F5F4] p-4 rounded-xl mb-6 text-left border border-[#E7E5E4]">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-4 h-4 text-amber-400" />
-          <span className="text-sm font-semibold text-white">
+          <Sparkles className="w-4 h-4 text-[#d97706]" />
+          <span className="text-sm font-semibold text-[#1C1917]">
             Upgrade to get:
           </span>
         </div>
-        <ul className="space-y-2 text-sm text-gray-300">
+        <ul className="space-y-2 text-sm text-[#57534E]">
           <li className="flex items-start gap-2">
-            <span className="text-emerald-400 mt-0.5">✓</span>
+            <span className="text-[#16a34a] mt-0.5">✓</span>
             <span>Unlimited reservations</span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-emerald-400 mt-0.5">✓</span>
+            <span className="text-[#16a34a] mt-0.5">✓</span>
             <span>Advanced analytics & insights</span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-emerald-400 mt-0.5">✓</span>
+            <span className="text-[#16a34a] mt-0.5">✓</span>
             <span>Waitlist management</span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-emerald-400 mt-0.5">✓</span>
+            <span className="text-[#16a34a] mt-0.5">✓</span>
             <span>SMS notifications</span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-emerald-400 mt-0.5">✓</span>
+            <span className="text-[#16a34a] mt-0.5">✓</span>
             <span>Priority support</span>
           </li>
         </ul>
@@ -114,14 +114,14 @@ export default function UpgradePrompt({
       {/* CTA Button */}
       <button
         onClick={handleUpgrade}
-        className="w-full px-6 py-3 glass-button-primary text-white font-semibold flex items-center justify-center gap-2 group"
+        className="w-full px-6 py-3 bg-[#9F1239] hover:bg-[#881337] rounded-xl text-white font-semibold flex items-center justify-center gap-2 group transition-colors"
       >
         Upgrade Now
         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
       </button>
 
       {/* Fine print */}
-      <p className="text-xs text-gray-500 mt-3">
+      <p className="text-xs text-[#A8A29E] mt-3">
         14-day free trial • Cancel anytime
       </p>
     </motion.div>

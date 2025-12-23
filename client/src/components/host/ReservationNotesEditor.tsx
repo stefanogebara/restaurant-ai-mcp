@@ -81,19 +81,19 @@ export default function ReservationNotesEditor({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-      <div className="bg-[#1E1E1E] rounded-xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-700">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-[#E7E5E4]">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-white">Reservation Notes</h2>
-            <p className="text-gray-400 text-sm">{reservation.customer_name} · {reservation.party_size} guests</p>
+            <h2 className="text-2xl font-bold text-[#1C1917]">Reservation Notes</h2>
+            <p className="text-[#57534E] text-sm">{reservation.customer_name} · {reservation.party_size} guests</p>
           </div>
           <button
             onClick={onCancel}
-            className="p-2 hover:bg-gray-700 rounded-lg transition"
+            className="p-2 hover:bg-[#F5F5F4] rounded-lg transition"
           >
-            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-[#57534E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -103,45 +103,45 @@ export default function ReservationNotesEditor({
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-blue-400" />
-              <h3 className="text-lg font-semibold text-white">Customer Type</h3>
+              <Users className="w-5 h-5 text-[#9F1239]" />
+              <h3 className="text-lg font-semibold text-[#1C1917]">Customer Type</h3>
             </div>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={firstTimeVisitor}
                 onChange={(e) => setFirstTimeVisitor(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-blue-500 focus:ring-offset-gray-900"
+                className="w-4 h-4 rounded border-[#E7E5E4] bg-[#F5F5F4] text-[#9F1239] focus:ring-[#9F1239]"
               />
-              <span className="text-sm text-gray-300">First Time Visitor</span>
-              <Star className="w-4 h-4 text-yellow-400" />
+              <span className="text-sm text-[#57534E]">First Time Visitor</span>
+              <Star className="w-4 h-4 text-[#d97706]" />
             </label>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => setCustomerType('Tourist')}
-              className={`p-4 rounded-lg border-2 transition-all ${
+              className={`p-4 rounded-xl border-2 transition-all ${
                 customerType === 'Tourist'
-                  ? 'bg-blue-500/20 border-blue-500 text-blue-400'
-                  : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600'
+                  ? 'bg-[#9F1239]/10 border-[#9F1239] text-[#9F1239]'
+                  : 'bg-[#F5F5F4] border-[#E7E5E4] text-[#57534E] hover:border-[#9F1239]/50'
               }`}
             >
               <div className="text-center">
                 <div className="text-lg font-semibold">🗺️ Tourist</div>
-                <div className="text-xs mt-1">International visitor</div>
+                <div className="text-xs mt-1 text-[#A8A29E]">International visitor</div>
               </div>
             </button>
             <button
               onClick={() => setCustomerType('Local')}
-              className={`p-4 rounded-lg border-2 transition-all ${
+              className={`p-4 rounded-xl border-2 transition-all ${
                 customerType === 'Local'
-                  ? 'bg-green-500/20 border-green-500 text-green-400'
-                  : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600'
+                  ? 'bg-[#16a34a]/10 border-[#16a34a] text-[#16a34a]'
+                  : 'bg-[#F5F5F4] border-[#E7E5E4] text-[#57534E] hover:border-[#16a34a]/50'
               }`}
             >
               <div className="text-center">
                 <div className="text-lg font-semibold">🏠 Local</div>
-                <div className="text-xs mt-1">Segovia resident</div>
+                <div className="text-xs mt-1 text-[#A8A29E]">Segovia resident</div>
               </div>
             </button>
           </div>
@@ -150,19 +150,19 @@ export default function ReservationNotesEditor({
         {/* Dietary Restrictions */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <Utensils className="w-5 h-5 text-emerald-400" />
-            <h3 className="text-lg font-semibold text-white">Dietary Restrictions</h3>
-            <span className="text-xs text-gray-500">(Important for cochinillo alternatives)</span>
+            <Utensils className="w-5 h-5 text-[#16a34a]" />
+            <h3 className="text-lg font-semibold text-[#1C1917]">Dietary Restrictions</h3>
+            <span className="text-xs text-[#A8A29E]">(Important for cochinillo alternatives)</span>
           </div>
           <div className="grid grid-cols-3 gap-3">
             {['Vegetarian', 'Vegan', 'Gluten-Free', 'Lactose-Free', 'Halal', 'Kosher'].map((restriction) => (
               <button
                 key={restriction}
                 onClick={() => toggleDietaryRestriction(restriction)}
-                className={`p-3 rounded-lg border-2 transition-all flex items-center justify-between ${
+                className={`p-3 rounded-xl border-2 transition-all flex items-center justify-between ${
                   dietaryRestrictions.includes(restriction)
-                    ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
-                    : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600'
+                    ? 'bg-[#16a34a]/10 border-[#16a34a] text-[#16a34a]'
+                    : 'bg-[#F5F5F4] border-[#E7E5E4] text-[#57534E] hover:border-[#16a34a]/50'
                 }`}
               >
                 <span className="font-medium">{restriction}</span>
@@ -175,8 +175,8 @@ export default function ReservationNotesEditor({
         {/* Language Preference */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <Languages className="w-5 h-5 text-purple-400" />
-            <h3 className="text-lg font-semibold text-white">Language Preference</h3>
+            <Languages className="w-5 h-5 text-[#7c3aed]" />
+            <h3 className="text-lg font-semibold text-[#1C1917]">Language Preference</h3>
           </div>
           <div className="grid grid-cols-4 gap-3">
             {[
@@ -188,10 +188,10 @@ export default function ReservationNotesEditor({
               <button
                 key={lang.code}
                 onClick={() => setLanguagePreference(lang.code)}
-                className={`p-3 rounded-lg border-2 transition-all ${
+                className={`p-3 rounded-xl border-2 transition-all ${
                   languagePreference === lang.code
-                    ? 'bg-purple-500/20 border-purple-500 text-purple-400'
-                    : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600'
+                    ? 'bg-[#7c3aed]/10 border-[#7c3aed] text-[#7c3aed]'
+                    : 'bg-[#F5F5F4] border-[#E7E5E4] text-[#57534E] hover:border-[#7c3aed]/50'
                 }`}
               >
                 <div className="text-2xl mb-1">{lang.flag}</div>
@@ -204,8 +204,8 @@ export default function ReservationNotesEditor({
         {/* Seating Preference */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <MapPin className="w-5 h-5 text-amber-400" />
-            <h3 className="text-lg font-semibold text-white">Seating Preference</h3>
+            <MapPin className="w-5 h-5 text-[#d97706]" />
+            <h3 className="text-lg font-semibold text-[#1C1917]">Seating Preference</h3>
           </div>
           <div className="grid grid-cols-4 gap-3">
             {[
@@ -217,15 +217,15 @@ export default function ReservationNotesEditor({
               <button
                 key={seat.value}
                 onClick={() => setSeatingPreference(seat.value)}
-                className={`p-3 rounded-lg border-2 transition-all ${
+                className={`p-3 rounded-xl border-2 transition-all ${
                   seatingPreference === seat.value
-                    ? 'bg-amber-500/20 border-amber-500 text-amber-400'
-                    : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600'
+                    ? 'bg-[#d97706]/10 border-[#d97706] text-[#d97706]'
+                    : 'bg-[#F5F5F4] border-[#E7E5E4] text-[#57534E] hover:border-[#d97706]/50'
                 }`}
               >
                 <div className="text-2xl mb-1">{seat.icon}</div>
                 <div className="text-sm font-medium">{seat.label}</div>
-                <div className="text-xs text-gray-500">{seat.desc}</div>
+                <div className="text-xs text-[#A8A29E]">{seat.desc}</div>
               </button>
             ))}
           </div>
@@ -234,18 +234,18 @@ export default function ReservationNotesEditor({
         {/* Special Occasion */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <Calendar className="w-5 h-5 text-pink-400" />
-            <h3 className="text-lg font-semibold text-white">Special Occasion</h3>
+            <Calendar className="w-5 h-5 text-[#9F1239]" />
+            <h3 className="text-lg font-semibold text-[#1C1917]">Special Occasion</h3>
           </div>
           <div className="grid grid-cols-4 gap-3">
             {['Birthday', 'Anniversary', 'Business', 'Tourism'].map((occasion) => (
               <button
                 key={occasion}
                 onClick={() => setSpecialOccasion(occasion)}
-                className={`p-3 rounded-lg border-2 transition-all ${
+                className={`p-3 rounded-xl border-2 transition-all ${
                   specialOccasion === occasion
-                    ? 'bg-pink-500/20 border-pink-500 text-pink-400'
-                    : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600'
+                    ? 'bg-[#9F1239]/10 border-[#9F1239] text-[#9F1239]'
+                    : 'bg-[#F5F5F4] border-[#E7E5E4] text-[#57534E] hover:border-[#9F1239]/50'
                 }`}
               >
                 <div className="font-medium">{occasion}</div>
@@ -257,18 +257,18 @@ export default function ReservationNotesEditor({
         {/* Accessibility Needs */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <Accessibility className="w-5 h-5 text-cyan-400" />
-            <h3 className="text-lg font-semibold text-white">Accessibility Needs</h3>
+            <Accessibility className="w-5 h-5 text-[#0891b2]" />
+            <h3 className="text-lg font-semibold text-[#1C1917]">Accessibility Needs</h3>
           </div>
           <div className="grid grid-cols-3 gap-3">
             {['None', 'Wheelchair', 'High Chair'].map((need) => (
               <button
                 key={need}
                 onClick={() => setAccessibilityNeeds(need)}
-                className={`p-3 rounded-lg border-2 transition-all ${
+                className={`p-3 rounded-xl border-2 transition-all ${
                   accessibilityNeeds === need
-                    ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400'
-                    : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600'
+                    ? 'bg-[#0891b2]/10 border-[#0891b2] text-[#0891b2]'
+                    : 'bg-[#F5F5F4] border-[#E7E5E4] text-[#57534E] hover:border-[#0891b2]/50'
                 }`}
               >
                 <div className="font-medium">{need}</div>
@@ -280,15 +280,15 @@ export default function ReservationNotesEditor({
         {/* Internal Notes */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <FileText className="w-5 h-5 text-gray-400" />
-            <h3 className="text-lg font-semibold text-white">Internal Notes</h3>
-            <span className="text-xs text-gray-500">(Staff only - not shown to customer)</span>
+            <FileText className="w-5 h-5 text-[#57534E]" />
+            <h3 className="text-lg font-semibold text-[#1C1917]">Internal Notes</h3>
+            <span className="text-xs text-[#A8A29E]">(Staff only - not shown to customer)</span>
           </div>
           <textarea
             value={internalNotes}
             onChange={(e) => setInternalNotes(e.target.value)}
             placeholder="VIP status, previous visits, preferences..."
-            className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent"
             rows={3}
           />
         </div>
@@ -297,13 +297,13 @@ export default function ReservationNotesEditor({
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 px-4 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition font-medium"
+            className="flex-1 px-4 py-3 border border-[#E7E5E4] text-[#57534E] rounded-xl hover:bg-[#F5F5F4] transition font-medium"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold"
+            className="flex-1 px-4 py-3 bg-[#9F1239] text-white rounded-xl hover:bg-[#881337] transition font-semibold"
           >
             Save Notes
           </button>

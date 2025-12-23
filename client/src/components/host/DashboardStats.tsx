@@ -114,43 +114,43 @@ interface StatCardProps {
 function StatCard({ label, value, Icon, color }: StatCardProps) {
   const colorConfig = {
     slate: {
-      bg: 'bg-slate-800',
-      iconBg: 'bg-slate-600',
+      bg: 'bg-white border border-[#E7E5E4]',
+      iconBg: 'bg-[#57534E]',
     },
     emerald: {
-      bg: 'bg-slate-800',
-      iconBg: 'bg-emerald-500',
+      bg: 'bg-white border border-[#E7E5E4]',
+      iconBg: 'bg-[#16a34a]',
     },
     red: {
-      bg: 'bg-slate-800',
-      iconBg: 'bg-red-500',
+      bg: 'bg-white border border-[#E7E5E4]',
+      iconBg: 'bg-[#9F1239]',
     },
     blue: {
-      bg: 'bg-slate-800',
-      iconBg: 'bg-blue-500',
+      bg: 'bg-white border border-[#E7E5E4]',
+      iconBg: 'bg-[#9F1239]',
     },
     violet: {
-      bg: 'bg-slate-800',
-      iconBg: 'bg-violet-500',
+      bg: 'bg-white border border-[#E7E5E4]',
+      iconBg: 'bg-[#7c3aed]',
     },
     amber: {
-      bg: 'bg-slate-800',
-      iconBg: 'bg-amber-500',
+      bg: 'bg-white border border-[#E7E5E4]',
+      iconBg: 'bg-[#d97706]',
     },
   };
 
   const config = colorConfig[color];
 
   return (
-    <div className={`${config.bg} rounded-xl p-5 shadow-md transition-all duration-200 hover:shadow-lg hover:bg-slate-700/80`}>
+    <div className={`${config.bg} rounded-xl p-5 shadow-md transition-all duration-200 hover:shadow-lg hover:bg-[#F5F5F4]`}>
       <div className="flex items-center justify-between mb-3">
         <div className={`w-10 h-10 ${config.iconBg} rounded-lg flex items-center justify-center`}>
           <Icon className="w-5 h-5 text-white" />
         </div>
       </div>
       <div>
-        <p className="text-sm font-medium text-slate-400 mb-1">{label}</p>
-        <p className="text-2xl font-bold text-white">{value}</p>
+        <p className="text-sm font-medium text-[#57534E] mb-1">{label}</p>
+        <p className="text-2xl font-bold text-[#1C1917]">{value}</p>
       </div>
     </div>
   );

@@ -86,23 +86,23 @@ export default function LTVDashboard() {
 
   const getTierColor = (tier: string) => {
     switch (tier) {
-      case 'vip': return 'text-gold-700';
-      case 'regular': return 'text-burgundy-600';
-      case 'occasional': return 'text-success-600';
-      case 'new': return 'text-charcoal-600';
-      case 'at_risk': return 'text-error-700';
-      default: return 'text-charcoal-600';
+      case 'vip': return 'text-[#7c3aed]';
+      case 'regular': return 'text-[#9F1239]';
+      case 'occasional': return 'text-[#16a34a]';
+      case 'new': return 'text-[#57534E]';
+      case 'at_risk': return 'text-[#d97706]';
+      default: return 'text-[#57534E]';
     }
   };
 
   const getTierBgColor = (tier: string) => {
     switch (tier) {
-      case 'vip': return 'bg-gold-100 border-gold-400';
-      case 'regular': return 'bg-burgundy-100 border-burgundy-400';
-      case 'occasional': return 'bg-success-100 border-success-400';
-      case 'new': return 'bg-charcoal-100 border-charcoal-400';
-      case 'at_risk': return 'bg-error-100 border-error-400';
-      default: return 'bg-charcoal-100 border-charcoal-400';
+      case 'vip': return 'bg-[#7c3aed]/10 border-[#7c3aed]/30';
+      case 'regular': return 'bg-[#9F1239]/10 border-[#9F1239]/30';
+      case 'occasional': return 'bg-[#16a34a]/10 border-[#16a34a]/30';
+      case 'new': return 'bg-[#57534E]/10 border-[#57534E]/30';
+      case 'at_risk': return 'bg-[#d97706]/10 border-[#d97706]/30';
+      default: return 'bg-[#57534E]/10 border-[#57534E]/30';
     }
   };
 
@@ -128,16 +128,16 @@ export default function LTVDashboard() {
 
   if (isLoading) {
     return (
-      <div className="bg-cream-100 rounded-xl shadow-lg p-6 border-2 border-cream-300">
+      <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-xl font-bold text-burgundy-900 flex items-center gap-2">
-            <Users className="w-5 h-5 text-burgundy-700" />
+          <h2 className="text-xl font-bold text-[#1C1917] flex items-center gap-2">
+            <Users className="w-5 h-5 text-[#9F1239]" />
             Customer Lifetime Value
           </h2>
         </div>
         <div className="flex flex-col items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-burgundy-200 border-t-burgundy-700 mb-4"></div>
-          <p className="font-sans text-charcoal-600 font-semibold">Loading analytics...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#E7E5E4] border-t-[#9F1239] mb-4"></div>
+          <p className="text-[#57534E] font-semibold">Loading analytics...</p>
         </div>
       </div>
     );
@@ -145,14 +145,14 @@ export default function LTVDashboard() {
 
   if (!stats || stats.total_customers === 0) {
     return (
-      <div className="bg-card rounded-lg shadow-lg p-6 border border-border">
+      <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-            <Users className="w-6 h-6 text-muted-foreground" />
+          <div className="w-12 h-12 rounded-full bg-[#F5F5F4] flex items-center justify-center">
+            <Users className="w-6 h-6 text-[#57534E]" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-foreground">No Customer Data Yet</h3>
-            <p className="text-sm text-muted-foreground">LTV metrics will appear as customers visit</p>
+            <h3 className="text-lg font-semibold text-[#1C1917]">No Customer Data Yet</h3>
+            <p className="text-sm text-[#57534E]">LTV metrics will appear as customers visit</p>
           </div>
         </div>
       </div>
@@ -162,18 +162,18 @@ export default function LTVDashboard() {
   const totalTierCustomers = Object.values(stats.tiers).reduce((sum, count) => sum + count, 0);
 
   return (
-    <div className="bg-card rounded-lg shadow-lg border border-border">
+    <div className="bg-white rounded-xl shadow-lg border border-[#E7E5E4]">
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-6 flex items-center justify-between hover:bg-muted/20 transition-colors rounded-t-lg"
+        className="w-full p-6 flex items-center justify-between hover:bg-[#F5F5F4]/50 transition-colors rounded-t-xl"
       >
-        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <Users className="w-5 h-5 text-blue-500" />
+        <h2 className="text-xl font-bold text-[#1C1917] flex items-center gap-2">
+          <Users className="w-5 h-5 text-[#9F1239]" />
           Customer Lifetime Value
         </h2>
         <div className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
-          <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-[#57534E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
@@ -185,22 +185,22 @@ export default function LTVDashboard() {
           {/* Key Metrics Row */}
           <div className="grid grid-cols-3 gap-3">
             {/* Total Customers */}
-            <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
+            <div className="p-4 bg-[#9F1239]/10 rounded-xl border border-[#9F1239]/20">
               <div className="flex items-center justify-between mb-2">
-                <Users className="w-5 h-5 text-blue-400" />
-                <span className="text-2xl font-bold text-foreground">{stats.total_customers}</span>
+                <Users className="w-5 h-5 text-[#9F1239]" />
+                <span className="text-2xl font-bold text-[#1C1917]">{stats.total_customers}</span>
               </div>
-              <div className="text-xs text-muted-foreground">Total Customers</div>
+              <div className="text-xs text-[#57534E]">Total Customers</div>
             </div>
 
             {/* Average LTV */}
-            <div className="p-4 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+            <div className="p-4 bg-[#16a34a]/10 rounded-xl border border-[#16a34a]/20">
               <div className="flex items-center justify-between mb-2">
-                <TrendingUp className="w-5 h-5 text-emerald-400" />
-                <span className="text-2xl font-bold text-foreground">{formatCurrency(stats.avg_ltv)}</span>
+                <TrendingUp className="w-5 h-5 text-[#16a34a]" />
+                <span className="text-2xl font-bold text-[#1C1917]">{formatCurrency(stats.avg_ltv)}</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="text-xs text-muted-foreground">Avg Lifetime Value</div>
+                <div className="text-xs text-[#57534E]">Avg Lifetime Value</div>
                 <HelpTooltip
                   title="What is LTV?"
                   content="Total revenue a customer generates over their relationship with you.
@@ -220,20 +220,20 @@ Focus retention efforts on high-LTV customers"
             </div>
 
             {/* Total LTV */}
-            <div className="p-4 bg-purple-500/10 rounded-lg border border-purple-500/20">
+            <div className="p-4 bg-[#7c3aed]/10 rounded-xl border border-[#7c3aed]/20">
               <div className="flex items-center justify-between mb-2">
-                <DollarSign className="w-5 h-5 text-purple-400" />
-                <span className="text-2xl font-bold text-foreground">{formatCurrency(stats.total_ltv)}</span>
+                <DollarSign className="w-5 h-5 text-[#7c3aed]" />
+                <span className="text-2xl font-bold text-[#1C1917]">{formatCurrency(stats.total_ltv)}</span>
               </div>
-              <div className="text-xs text-muted-foreground">Total LTV</div>
+              <div className="text-xs text-[#57534E]">Total LTV</div>
             </div>
           </div>
 
           {/* Customer Tiers Breakdown */}
-          <div className="p-4 bg-muted/30 rounded-lg">
+          <div className="p-4 bg-[#F5F5F4] rounded-xl">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-foreground">Customer Segments</h3>
+                <h3 className="text-sm font-semibold text-[#1C1917]">Customer Segments</h3>
                 <HelpTooltip
                   title="Customer Segments"
                   content="VIP (€500+): Top 10% - Priority reservations, special offers
@@ -245,26 +245,26 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
                   size="sm"
                 />
               </div>
-              <span className="text-xs text-muted-foreground">{totalTierCustomers} total</span>
+              <span className="text-xs text-[#57534E]">{totalTierCustomers} total</span>
             </div>
             <div className="space-y-2">
               {Object.entries(stats.tiers).map(([tier, count]) => {
                 const percentage = totalTierCustomers > 0 ? (count / totalTierCustomers) * 100 : 0;
                 return (
                   <div key={tier} className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${getTierBgColor(tier)} border`}>
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${getTierBgColor(tier)} border`}>
                       <span className={getTierColor(tier)}>
                         {getTierIcon(tier)}
                       </span>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-foreground capitalize">{tier}</span>
-                        <span className="text-sm text-muted-foreground">{count} ({percentage.toFixed(0)}%)</span>
+                        <span className="text-sm font-medium text-[#1C1917] capitalize">{tier}</span>
+                        <span className="text-sm text-[#57534E]">{count} ({percentage.toFixed(0)}%)</span>
                       </div>
-                      <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-white h-2 rounded-full overflow-hidden">
                         <div
-                          className={`h-full ${tier === 'vip' ? 'bg-purple-500' : tier === 'regular' ? 'bg-blue-500' : tier === 'occasional' ? 'bg-green-500' : tier === 'new' ? 'bg-gray-500' : 'bg-red-500'}`}
+                          className={`h-full ${tier === 'vip' ? 'bg-[#7c3aed]' : tier === 'regular' ? 'bg-[#9F1239]' : tier === 'occasional' ? 'bg-[#16a34a]' : tier === 'new' ? 'bg-[#57534E]' : 'bg-[#d97706]'}`}
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
@@ -277,26 +277,26 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
 
           {/* Top VIP Customers */}
           {topVIPs.length > 0 && (
-            <div className="p-4 bg-purple-500/10 rounded-lg border border-purple-500/20">
+            <div className="p-4 bg-[#7c3aed]/10 rounded-xl border border-[#7c3aed]/20">
               <div className="flex items-center gap-2 mb-3">
-                <Star className="w-4 h-4 text-purple-400" />
-                <h3 className="text-sm font-semibold text-foreground">Top VIP Customers</h3>
+                <Star className="w-4 h-4 text-[#7c3aed]" />
+                <h3 className="text-sm font-semibold text-[#1C1917]">Top VIP Customers</h3>
               </div>
               <div className="space-y-2">
                 {topVIPs.map((customer, index) => (
-                  <div key={customer.customer_id} className="flex items-center justify-between p-2 bg-card/50 rounded-lg">
+                  <div key={customer.customer_id} className="flex items-center justify-between p-2 bg-white/50 rounded-xl">
                     <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center">
-                        <span className="text-xs font-bold text-purple-400">#{index + 1}</span>
+                      <div className="w-6 h-6 rounded-full bg-[#7c3aed]/20 flex items-center justify-center">
+                        <span className="text-xs font-bold text-[#7c3aed]">#{index + 1}</span>
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-foreground">{customer.customer_id}</div>
-                        <div className="text-xs text-muted-foreground">{customer.total_visits} visits</div>
+                        <div className="text-sm font-medium text-[#1C1917]">{customer.customer_id}</div>
+                        <div className="text-xs text-[#57534E]">{customer.total_visits} visits</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-purple-400">{formatCurrency(customer.lifetime_value)}</div>
-                      <div className="text-xs text-muted-foreground">{formatCurrency(customer.total_revenue)} spent</div>
+                      <div className="text-sm font-bold text-[#7c3aed]">{formatCurrency(customer.lifetime_value)}</div>
+                      <div className="text-xs text-[#57534E]">{formatCurrency(customer.total_revenue)} spent</div>
                     </div>
                   </div>
                 ))}
@@ -306,36 +306,36 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
 
           {/* At-Risk Customers */}
           {atRiskCustomers.length > 0 && (
-            <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/20">
+            <div className="p-4 bg-[#d97706]/10 rounded-xl border border-[#d97706]/20">
               <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle className="w-4 h-4 text-red-400" />
-                <h3 className="text-sm font-semibold text-foreground">High Churn Risk ({stats.high_risk_customers})</h3>
+                <AlertTriangle className="w-4 h-4 text-[#d97706]" />
+                <h3 className="text-sm font-semibold text-[#1C1917]">High Churn Risk ({stats.high_risk_customers})</h3>
               </div>
               <div className="space-y-2">
                 {atRiskCustomers.map((customer) => (
-                  <div key={customer.customer_id} className="flex items-center justify-between p-2 bg-card/50 rounded-lg">
+                  <div key={customer.customer_id} className="flex items-center justify-between p-2 bg-white/50 rounded-xl">
                     <div className="flex items-center gap-3">
                       <div className="flex flex-col items-center">
-                        <TrendingDown className="w-4 h-4 text-red-400" />
-                        <span className="text-xs font-bold text-red-400">{customer.churn_risk_score}%</span>
+                        <TrendingDown className="w-4 h-4 text-[#d97706]" />
+                        <span className="text-xs font-bold text-[#d97706]">{customer.churn_risk_score}%</span>
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-foreground">{customer.customer_id}</div>
-                        <div className="text-xs text-muted-foreground flex items-center gap-1">
+                        <div className="text-sm font-medium text-[#1C1917]">{customer.customer_id}</div>
+                        <div className="text-xs text-[#57534E] flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           Last: {new Date(customer.last_visit_date).toLocaleDateString()}
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-foreground">{formatCurrency(customer.lifetime_value)} LTV</div>
-                      <div className="text-xs text-muted-foreground">{customer.total_visits} visits</div>
+                      <div className="text-sm font-bold text-[#1C1917]">{formatCurrency(customer.lifetime_value)} LTV</div>
+                      <div className="text-xs text-[#57534E]">{customer.total_visits} visits</div>
                     </div>
                   </div>
                 ))}
               </div>
               <button
-                className="w-full mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
+                className="w-full mt-3 px-4 py-2 bg-[#d97706] hover:bg-[#b45309] text-white text-sm font-medium rounded-xl transition-colors"
                 onClick={() => alert('Retention campaigns feature coming soon!')}
               >
                 Launch Retention Campaign
@@ -345,7 +345,7 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
 
           {/* Calculate All Button */}
           <button
-            className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-blue-500/30 flex items-center justify-center gap-2"
+            className="w-full px-4 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-[#9F1239]/30 flex items-center justify-center gap-2"
             onClick={async () => {
               try {
                 const response = await fetch('/api/ltv?action=calculate-all', { method: 'GET' });

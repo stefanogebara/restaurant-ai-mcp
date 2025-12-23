@@ -121,23 +121,23 @@ export default function CustomerDNADashboard() {
 
   const getDiningStyleColor = (style: string) => {
     switch (style) {
-      case 'solo': return 'bg-gray-500/10 border-gray-500/30 text-gray-400';
-      case 'couple': return 'bg-pink-500/10 border-pink-500/30 text-pink-400';
-      case 'family': return 'bg-blue-500/10 border-blue-500/30 text-blue-400';
-      case 'business': return 'bg-purple-500/10 border-purple-500/30 text-purple-400';
-      case 'group': return 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
-      default: return 'bg-gray-500/10 border-gray-500/30 text-gray-400';
+      case 'solo': return 'bg-[#57534E]/10 border-[#57534E]/30 text-[#57534E]';
+      case 'couple': return 'bg-[#9F1239]/10 border-[#9F1239]/30 text-[#9F1239]';
+      case 'family': return 'bg-[#7c3aed]/10 border-[#7c3aed]/30 text-[#7c3aed]';
+      case 'business': return 'bg-[#d97706]/10 border-[#d97706]/30 text-[#d97706]';
+      case 'group': return 'bg-[#16a34a]/10 border-[#16a34a]/30 text-[#16a34a]';
+      default: return 'bg-[#57534E]/10 border-[#57534E]/30 text-[#57534E]';
     }
   };
 
   const getSpontaneityColor = (level: string) => {
     switch (level) {
-      case 'very_spontaneous': return 'bg-red-500';
-      case 'spontaneous': return 'bg-orange-500';
-      case 'moderate': return 'bg-yellow-500';
-      case 'planner': return 'bg-blue-500';
-      case 'advance_planner': return 'bg-purple-500';
-      default: return 'bg-gray-500';
+      case 'very_spontaneous': return 'bg-[#9F1239]';
+      case 'spontaneous': return 'bg-[#d97706]';
+      case 'moderate': return 'bg-[#d97706]';
+      case 'planner': return 'bg-[#16a34a]';
+      case 'advance_planner': return 'bg-[#7c3aed]';
+      default: return 'bg-[#57534E]';
     }
   };
 
@@ -147,33 +147,33 @@ export default function CustomerDNADashboard() {
 
   if (isLoading) {
     return (
-      <div className="bg-card rounded-lg shadow-lg p-6 border border-border">
+      <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <h2 className="text-xl font-bold text-[#1C1917] flex items-center gap-2">
             <Brain className="w-5 h-5" />
             Customer DNA Profiling
           </h2>
         </div>
-        <div className="text-center py-8 text-muted-foreground">Loading...</div>
+        <div className="text-center py-8 text-[#57534E]">Loading...</div>
       </div>
     );
   }
 
   if (!stats || stats.total_profiles === 0) {
     return (
-      <div className="bg-card rounded-lg shadow-lg p-6 border border-border">
+      <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-            <Brain className="w-6 h-6 text-muted-foreground" />
+          <div className="w-12 h-12 rounded-full bg-[#F5F5F4] flex items-center justify-center">
+            <Brain className="w-6 h-6 text-[#57534E]" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-foreground">No DNA Profiles Yet</h3>
-            <p className="text-sm text-muted-foreground">Analyze customer behavior to unlock insights</p>
+            <h3 className="text-lg font-semibold text-[#1C1917]">No DNA Profiles Yet</h3>
+            <p className="text-sm text-[#57534E]">Analyze customer behavior to unlock insights</p>
           </div>
         </div>
         <button
           onClick={analyzeAllCustomers}
-          className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-blue-500/30 flex items-center justify-center gap-2"
+          className="w-full px-4 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-[#9F1239]/30 flex items-center justify-center gap-2"
         >
           <Activity className="w-5 h-5" />
           Analyze All Customers
@@ -187,21 +187,21 @@ export default function CustomerDNADashboard() {
   const totalSpontaneity = Object.values(stats.spontaneity_distribution).reduce((sum, count) => sum + count, 0);
 
   return (
-    <div className="bg-card rounded-lg shadow-lg border border-border">
+    <div className="bg-white rounded-xl shadow-lg border border-[#E7E5E4]">
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-6 flex items-center justify-between hover:bg-muted/20 transition-colors rounded-t-lg"
+        className="w-full p-6 flex items-center justify-between hover:bg-[#F5F5F4]/50 transition-colors rounded-t-xl"
       >
-        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <Brain className="w-5 h-5 text-purple-500" />
+        <h2 className="text-xl font-bold text-[#1C1917] flex items-center gap-2">
+          <Brain className="w-5 h-5 text-[#7c3aed]" />
           Customer DNA Profiling
-          <span className="px-2 py-1 bg-purple-500/20 text-purple-400 text-sm rounded-full font-semibold">
+          <span className="px-2 py-1 bg-[#7c3aed]/20 text-[#7c3aed] text-sm rounded-full font-semibold">
             {stats.total_profiles} Profiles
           </span>
         </h2>
         <div className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
-          <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-[#57534E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
@@ -213,44 +213,44 @@ export default function CustomerDNADashboard() {
           {/* Key Metrics Row */}
           <div className="grid grid-cols-3 gap-3">
             {/* Total Profiles */}
-            <div className="p-4 bg-purple-500/10 rounded-lg border border-purple-500/20">
+            <div className="p-4 bg-[#7c3aed]/10 rounded-xl border border-[#7c3aed]/20">
               <div className="flex items-center justify-between mb-2">
-                <Brain className="w-5 h-5 text-purple-400" />
-                <span className="text-2xl font-bold text-foreground">{stats.total_profiles}</span>
+                <Brain className="w-5 h-5 text-[#7c3aed]" />
+                <span className="text-2xl font-bold text-[#1C1917]">{stats.total_profiles}</span>
               </div>
-              <div className="text-xs text-muted-foreground">DNA Profiles</div>
+              <div className="text-xs text-[#57534E]">DNA Profiles</div>
             </div>
 
             {/* Avg Confidence */}
-            <div className="p-4 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+            <div className="p-4 bg-[#16a34a]/10 rounded-xl border border-[#16a34a]/20">
               <div className="flex items-center justify-between mb-2">
-                <Target className="w-5 h-5 text-emerald-400" />
-                <span className="text-2xl font-bold text-foreground">{stats.avg_confidence}%</span>
+                <Target className="w-5 h-5 text-[#16a34a]" />
+                <span className="text-2xl font-bold text-[#1C1917]">{stats.avg_confidence}%</span>
               </div>
-              <div className="text-xs text-muted-foreground">Avg Confidence</div>
+              <div className="text-xs text-[#57534E]">Avg Confidence</div>
             </div>
 
             {/* Occasions Detected */}
-            <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
+            <div className="p-4 bg-[#9F1239]/10 rounded-xl border border-[#9F1239]/20">
               <div className="flex items-center justify-between mb-2">
-                <Calendar className="w-5 h-5 text-blue-400" />
-                <span className="text-2xl font-bold text-foreground">{stats.total_occasions_detected}</span>
+                <Calendar className="w-5 h-5 text-[#9F1239]" />
+                <span className="text-2xl font-bold text-[#1C1917]">{stats.total_occasions_detected}</span>
               </div>
-              <div className="text-xs text-muted-foreground">Occasions Found</div>
+              <div className="text-xs text-[#57534E]">Occasions Found</div>
             </div>
           </div>
 
           {/* Dining Styles Breakdown */}
-          <div className="p-4 bg-muted/30 rounded-lg">
+          <div className="p-4 bg-[#F5F5F4] rounded-xl">
             <div className="flex items-center gap-2 mb-3">
-              <Users className="w-4 h-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold text-foreground">Dining Styles</h3>
+              <Users className="w-4 h-4 text-[#57534E]" />
+              <h3 className="text-sm font-semibold text-[#1C1917]">Dining Styles</h3>
             </div>
             <div className="grid grid-cols-5 gap-2">
               {Object.entries(stats.dining_styles).map(([style, count]) => {
                 const percentage = totalDiningStyles > 0 ? (count / totalDiningStyles) * 100 : 0;
                 return (
-                  <div key={style} className={`p-3 rounded-lg border text-center ${getDiningStyleColor(style)}`}>
+                  <div key={style} className={`p-3 rounded-xl border text-center ${getDiningStyleColor(style)}`}>
                     <div className="flex justify-center mb-1">
                       {getDiningStyleIcon(style)}
                     </div>
@@ -264,27 +264,27 @@ export default function CustomerDNADashboard() {
           </div>
 
           {/* Day Type Preferences */}
-          <div className="p-4 bg-muted/30 rounded-lg">
+          <div className="p-4 bg-[#F5F5F4] rounded-xl">
             <div className="flex items-center gap-2 mb-3">
-              <Calendar className="w-4 h-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold text-foreground">Day Preferences</h3>
+              <Calendar className="w-4 h-4 text-[#57534E]" />
+              <h3 className="text-sm font-semibold text-[#1C1917]">Day Preferences</h3>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {Object.entries(stats.day_type_preferences).map(([dayType, count]) => {
                 const percentage = totalDayTypes > 0 ? (count / totalDayTypes) * 100 : 0;
                 const isWeekend = dayType === 'weekend';
                 return (
-                  <div key={dayType} className={`p-3 rounded-lg border ${isWeekend ? 'bg-orange-500/10 border-orange-500/30' : 'bg-blue-500/10 border-blue-500/30'}`}>
+                  <div key={dayType} className={`p-3 rounded-xl border ${isWeekend ? 'bg-[#d97706]/10 border-[#d97706]/30' : 'bg-[#7c3aed]/10 border-[#7c3aed]/30'}`}>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        {isWeekend ? <Sun className="w-4 h-4 text-orange-400" /> : <Moon className="w-4 h-4 text-blue-400" />}
-                        <span className="text-sm font-medium text-foreground capitalize">{dayType}</span>
+                        {isWeekend ? <Sun className="w-4 h-4 text-[#d97706]" /> : <Moon className="w-4 h-4 text-[#7c3aed]" />}
+                        <span className="text-sm font-medium text-[#1C1917] capitalize">{dayType}</span>
                       </div>
-                      <span className="text-xl font-bold text-foreground">{count}</span>
+                      <span className="text-xl font-bold text-[#1C1917]">{count}</span>
                     </div>
-                    <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
+                    <div className="w-full bg-white h-2 rounded-full overflow-hidden">
                       <div
-                        className={`h-full ${isWeekend ? 'bg-orange-500' : 'bg-blue-500'}`}
+                        className={`h-full ${isWeekend ? 'bg-[#d97706]' : 'bg-[#7c3aed]'}`}
                         style={{ width: `${percentage}%` }}
                       />
                     </div>
@@ -295,10 +295,10 @@ export default function CustomerDNADashboard() {
           </div>
 
           {/* Time Slot Preferences */}
-          <div className="p-4 bg-muted/30 rounded-lg">
+          <div className="p-4 bg-[#F5F5F4] rounded-xl">
             <div className="flex items-center gap-2 mb-3">
-              <Clock className="w-4 h-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold text-foreground">Time Slot Preferences</h3>
+              <Clock className="w-4 h-4 text-[#57534E]" />
+              <h3 className="text-sm font-semibold text-[#1C1917]">Time Slot Preferences</h3>
             </div>
             <div className="space-y-2">
               {Object.entries(stats.time_slot_preferences)
@@ -310,12 +310,12 @@ export default function CustomerDNADashboard() {
                     <div key={timeSlot} className="flex items-center gap-3">
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium text-foreground">{timeSlot}</span>
-                          <span className="text-sm text-muted-foreground">{count} ({percentage.toFixed(0)}%)</span>
+                          <span className="text-sm font-medium text-[#1C1917]">{timeSlot}</span>
+                          <span className="text-sm text-[#57534E]">{count} ({percentage.toFixed(0)}%)</span>
                         </div>
-                        <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
+                        <div className="w-full bg-white h-2 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-purple-500"
+                            className="h-full bg-[#7c3aed]"
                             style={{ width: `${percentage}%` }}
                           />
                         </div>
@@ -327,10 +327,10 @@ export default function CustomerDNADashboard() {
           </div>
 
           {/* Spontaneity Distribution */}
-          <div className="p-4 bg-muted/30 rounded-lg">
+          <div className="p-4 bg-[#F5F5F4] rounded-xl">
             <div className="flex items-center gap-2 mb-3">
-              <Zap className="w-4 h-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold text-foreground">Booking Spontaneity</h3>
+              <Zap className="w-4 h-4 text-[#57534E]" />
+              <h3 className="text-sm font-semibold text-[#1C1917]">Booking Spontaneity</h3>
             </div>
             <div className="space-y-2">
               {Object.entries(stats.spontaneity_distribution)
@@ -341,10 +341,10 @@ export default function CustomerDNADashboard() {
                     <div key={level} className="flex items-center gap-3">
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium text-foreground">{getSpontaneityLabel(level)}</span>
-                          <span className="text-sm text-muted-foreground">{count} ({percentage.toFixed(0)}%)</span>
+                          <span className="text-sm font-medium text-[#1C1917]">{getSpontaneityLabel(level)}</span>
+                          <span className="text-sm text-[#57534E]">{count} ({percentage.toFixed(0)}%)</span>
                         </div>
-                        <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
+                        <div className="w-full bg-white h-2 rounded-full overflow-hidden">
                           <div
                             className={`h-full ${getSpontaneityColor(level)}`}
                             style={{ width: `${percentage}%` }}
@@ -359,38 +359,38 @@ export default function CustomerDNADashboard() {
 
           {/* Upcoming Occasions */}
           {occasions.length > 0 && (
-            <div className="p-4 bg-pink-500/10 rounded-lg border border-pink-500/20">
+            <div className="p-4 bg-[#9F1239]/10 rounded-xl border border-[#9F1239]/20">
               <button
                 onClick={() => setShowOccasions(!showOccasions)}
                 className="w-full flex items-center justify-between mb-3"
               >
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-pink-400" />
-                  <h3 className="text-sm font-semibold text-foreground">Upcoming Special Occasions</h3>
-                  <span className="px-2 py-0.5 bg-pink-500/20 text-pink-400 text-xs rounded-full font-semibold">
+                  <Calendar className="w-4 h-4 text-[#9F1239]" />
+                  <h3 className="text-sm font-semibold text-[#1C1917]">Upcoming Special Occasions</h3>
+                  <span className="px-2 py-0.5 bg-[#9F1239]/20 text-[#9F1239] text-xs rounded-full font-semibold">
                     {occasions.length}
                   </span>
                 </div>
-                {showOccasions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                {showOccasions ? <ChevronUp className="w-4 h-4 text-[#57534E]" /> : <ChevronDown className="w-4 h-4 text-[#57534E]" />}
               </button>
 
               {showOccasions && (
                 <div className="space-y-2">
                   {occasions.slice(0, 5).map((occasion) => (
-                    <div key={occasion.id} className="p-2 bg-card/50 rounded-lg flex items-center justify-between">
+                    <div key={occasion.id} className="p-2 bg-white/50 rounded-xl flex items-center justify-between">
                       <div>
-                        <div className="text-sm font-medium text-foreground capitalize">
+                        <div className="text-sm font-medium text-[#1C1917] capitalize">
                           {occasion.occasion_type.replace('_', ' ')}
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-xs text-[#57534E]">
                           {occasion.customer_id} • Party of {occasion.party_size}
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-bold text-pink-400">
+                        <div className="text-sm font-bold text-[#9F1239]">
                           {new Date(occasion.next_predicted_date).toLocaleDateString()}
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-xs text-[#57534E]">
                           {Math.round(occasion.probability_score * 100)}% confidence
                         </div>
                       </div>
@@ -402,13 +402,13 @@ export default function CustomerDNADashboard() {
           )}
 
           {/* Predictions Made */}
-          <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+          <div className="p-3 bg-[#16a34a]/10 rounded-xl border border-[#16a34a]/20">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-blue-400" />
-                <span className="text-sm font-semibold text-foreground">Total Predictions Made</span>
+                <TrendingUp className="w-4 h-4 text-[#16a34a]" />
+                <span className="text-sm font-semibold text-[#1C1917]">Total Predictions Made</span>
               </div>
-              <span className="text-xl font-bold text-foreground">{stats.total_predictions_made}</span>
+              <span className="text-xl font-bold text-[#1C1917]">{stats.total_predictions_made}</span>
             </div>
           </div>
 
@@ -416,14 +416,14 @@ export default function CustomerDNADashboard() {
           <div className="flex gap-3">
             <button
               onClick={analyzeAllCustomers}
-              className="flex-1 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-purple-500/30 flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-[#9F1239]/30 flex items-center justify-center gap-2"
             >
               <Activity className="w-5 h-5" />
               Analyze All Customers
             </button>
             <button
               onClick={() => alert('Customer search feature coming soon!')}
-              className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2"
+              className="px-4 py-3 bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
             >
               <Search className="w-5 h-5" />
               Search

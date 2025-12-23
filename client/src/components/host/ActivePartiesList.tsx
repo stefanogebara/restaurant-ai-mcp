@@ -87,7 +87,7 @@ function LiveCountdown({ seatedMinutesAgo, estimatedDurationMinutes }: { seatedM
   const { text, showWarning } = formatTime(remainingMinutes, isOverdue);
 
   return (
-    <span className={`font-semibold flex items-center gap-1 ${isOverdue ? 'text-red-400' : 'text-emerald-400'}`}>
+    <span className={`font-semibold flex items-center gap-1 ${isOverdue ? 'text-[#9F1239]' : 'text-[#16a34a]'}`}>
       {showWarning && <WarningIcon className="w-4 h-4" />}
       {text}
     </span>
@@ -102,10 +102,10 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
   if (parties.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="w-16 h-16 mx-auto mb-3 bg-slate-700 rounded-xl flex items-center justify-center">
-          <DiningIcon className="w-8 h-8 text-slate-400" />
+        <div className="w-16 h-16 mx-auto mb-3 bg-[#F5F5F4] rounded-xl flex items-center justify-center">
+          <DiningIcon className="w-8 h-8 text-[#A8A29E]" />
         </div>
-        <div className="text-sm text-slate-400">No active parties</div>
+        <div className="text-sm text-[#57534E]">No active parties</div>
       </div>
     );
   }
@@ -126,9 +126,9 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
     <div className="space-y-3">
       {parties.map((party) => (
         <DraggablePartyCard key={party.service_id} party={party}>
-          <div className="bg-slate-700/50 rounded-xl p-4 hover:bg-slate-700 transition-all relative shadow-sm">
+          <div className="bg-white border border-[#E7E5E4] rounded-xl p-4 hover:bg-[#F5F5F4] transition-all relative shadow-md">
             {/* Drag handle indicator */}
-            <div className="absolute top-2 right-2 text-slate-500 text-xs flex items-center gap-1">
+            <div className="absolute top-2 right-2 text-[#A8A29E] text-xs flex items-center gap-1">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
               </svg>
@@ -137,10 +137,10 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
           <div className="flex justify-between items-start mb-3">
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <div className="font-semibold text-white text-lg">{party.customer_name}</div>
+                <div className="font-semibold text-[#1C1917] text-lg">{party.customer_name}</div>
                 {/* Running Late indicator - shows when less than 10 minutes remaining */}
                 {!party.is_overdue && party.time_remaining_minutes > 0 && party.time_remaining_minutes <= 10 && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 text-amber-400 text-xs font-semibold rounded-full animate-pulse">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#d97706]/10 text-[#d97706] text-xs font-semibold rounded-full animate-pulse">
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                     </svg>
@@ -148,18 +148,18 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
                   </span>
                 )}
               </div>
-              <div className="text-sm text-slate-400 mt-0.5">Party of {party.party_size}</div>
+              <div className="text-sm text-[#57534E] mt-0.5">Party of {party.party_size}</div>
             </div>
             <div className="text-right">
-              <div className="text-xs text-slate-500 mb-1">Tables</div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-violet-500/20 text-violet-400 rounded-lg text-sm font-semibold">
+              <div className="text-xs text-[#A8A29E] mb-1">Tables</div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#9F1239]/10 text-[#9F1239] rounded-lg text-sm font-semibold">
                 {party.tables.join(', ')}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-xs mb-3 pb-3 border-b border-slate-600">
-            <div className="flex items-center gap-1.5 text-slate-400">
+          <div className="flex items-center justify-between text-xs mb-3 pb-3 border-b border-[#E7E5E4]">
+            <div className="flex items-center gap-1.5 text-[#57534E]">
               <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
               </svg>
@@ -175,14 +175,14 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
             <div className="flex gap-2">
               <button
                 onClick={() => setConfirmingServiceId(null)}
-                className="flex-1 px-3 py-2 text-sm bg-slate-600 text-slate-200 rounded-lg hover:bg-slate-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-3 py-2 text-sm bg-[#F5F5F4] text-[#57534E] border border-[#E7E5E4] rounded-lg hover:bg-[#E7E5E4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={completeServiceMutation.isPending}
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleCompleteService(party.service_id, party.customer_name)}
-                className="flex-1 px-3 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-3 py-2 text-sm bg-[#16a34a] hover:bg-[#15803d] text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={completeServiceMutation.isPending}
               >
                 {completeServiceMutation.isPending && (
@@ -194,7 +194,7 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
           ) : (
             <button
               onClick={() => setConfirmingServiceId(party.service_id)}
-              className="w-full px-3 py-2 text-sm bg-slate-600 hover:bg-slate-500 text-white font-medium rounded-lg transition-all"
+              className="w-full px-3 py-2 text-sm bg-[#1C1917] hover:bg-[#9F1239] text-white font-medium rounded-lg transition-all"
             >
               Complete Service
             </button>

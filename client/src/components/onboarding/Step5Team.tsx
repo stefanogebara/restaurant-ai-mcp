@@ -1,5 +1,5 @@
 /**
- * Step 5: Team Setup
+ * Step 5: Team Setup - Modern Elegant Design
  *
  * Allows users to invite team members with role-based access:
  * - Owner: Full access
@@ -12,7 +12,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { OnboardingStepProps, TeamMember } from '../../types/onboarding.types';
-import '../../landing/styles/glass-morphism.css';
 
 const ROLES = [
   { value: 'Owner', description: 'Full access to everything' },
@@ -99,15 +98,15 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
       className="space-y-6"
     >
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Invite your team</h2>
-        <p className="text-gray-300 text-sm">
+        <h2 className="font-serif text-2xl font-bold text-[#1C1917] mb-2">Invite your team</h2>
+        <p className="text-[#57534E] text-sm">
           Add team members who will manage reservations (optional)
         </p>
       </div>
 
       {/* Team Member Form */}
-      <div className="bg-white/5 border border-white/20 rounded-lg p-5">
-        <label className="block text-sm font-semibold text-white mb-3">Add team members</label>
+      <div className="bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl p-5">
+        <label className="block text-sm font-semibold text-[#1C1917] mb-3">Add team members</label>
 
         <div className="space-y-3">
           <div>
@@ -117,10 +116,10 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
               onChange={(e) => setNewMemberEmail(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && addTeamMember()}
               placeholder="team@restaurant.com"
-              className="glass-input w-full px-4 py-3 text-white placeholder-gray-400"
+              className="w-full px-4 py-3 bg-white border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
             />
             {errors.email && (
-              <p className="mt-1 text-sm text-red-400">{errors.email}</p>
+              <p className="mt-1 text-sm text-[#9F1239]">{errors.email}</p>
             )}
           </div>
 
@@ -128,10 +127,10 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
             <select
               value={newMemberRole}
               onChange={(e) => setNewMemberRole(e.target.value as any)}
-              className="glass-input flex-1 px-4 py-3 text-white appearance-none cursor-pointer"
+              className="flex-1 px-4 py-3 bg-white border border-[#E7E5E4] rounded-xl text-[#1C1917] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
             >
               {ROLES.map((role) => (
-                <option key={role.value} value={role.value} className="bg-gray-900">
+                <option key={role.value} value={role.value}>
                   {role.value} - {role.description}
                 </option>
               ))}
@@ -140,14 +139,14 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
             <button
               onClick={addTeamMember}
               disabled={!canAddMoreMembers()}
-              className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all"
+              className="px-6 py-3 bg-[#9F1239] hover:bg-[#881337] disabled:bg-[#E7E5E4] disabled:text-[#A8A29E] disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all"
             >
               Add
             </button>
           </div>
         </div>
 
-        <div className="mt-3 text-xs text-gray-400">
+        <div className="mt-3 text-xs text-[#57534E]">
           {data.team_members.length} / {TEAM_LIMIT} team members
         </div>
       </div>
@@ -155,24 +154,24 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
       {/* Team Members List */}
       {data.team_members.length > 0 && (
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-white">Team members ({data.team_members.length})</label>
+          <label className="block text-sm font-semibold text-[#1C1917]">Team members ({data.team_members.length})</label>
           {data.team_members.map((member, index) => (
             <div
               key={index}
-              className="flex items-center justify-between p-4 bg-white/5 border border-white/20 rounded-lg"
+              className="flex items-center justify-between p-4 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-semibold">
+                <div className="w-10 h-10 rounded-full bg-[#9F1239] flex items-center justify-center text-white font-semibold">
                   {member.email.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-white font-medium">{member.email}</p>
-                  <p className="text-gray-400 text-sm">{member.role}</p>
+                  <p className="text-[#1C1917] font-medium">{member.email}</p>
+                  <p className="text-[#57534E] text-sm">{member.role}</p>
                 </div>
               </div>
               <button
                 onClick={() => removeMember(index)}
-                className="p-2 hover:bg-red-500/20 text-red-300 rounded-lg transition-colors"
+                className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors"
                 title="Remove member"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,12 +184,12 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
       )}
 
       {/* Role Descriptions */}
-      <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-white/20 rounded-lg p-4">
-        <p className="text-white font-semibold text-sm mb-2">Available roles:</p>
-        <ul className="space-y-1 text-gray-300 text-sm">
+      <div className="bg-[#9F1239]/5 border border-[#9F1239]/20 rounded-xl p-4">
+        <p className="text-[#1C1917] font-semibold text-sm mb-2">Available roles:</p>
+        <ul className="space-y-1 text-[#57534E] text-sm">
           {ROLES.map((role) => (
             <li key={role.value}>
-              <span className="font-semibold text-indigo-300">{role.value}</span> - {role.description}
+              <span className="font-semibold text-[#9F1239]">{role.value}</span> - {role.description}
             </li>
           ))}
         </ul>
@@ -201,7 +200,7 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
         <button
           onClick={onBack}
           disabled={isSubmitting}
-          className="px-6 py-3 bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all flex items-center gap-2"
+          className="px-6 py-3 bg-white hover:bg-[#F5F5F4] disabled:opacity-50 disabled:cursor-not-allowed border border-[#E7E5E4] text-[#1C1917] font-semibold rounded-xl transition-all flex items-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -211,7 +210,7 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
         <button
           onClick={handleComplete}
           disabled={isSubmitting}
-          className="glass-button-primary px-8 py-3 text-white font-bold rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-8 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? (
             <>

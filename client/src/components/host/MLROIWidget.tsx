@@ -59,28 +59,28 @@ export default function MLROIWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-card rounded-lg shadow-lg p-6 border border-border">
+      <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <h2 className="text-xl font-bold text-[#1C1917] flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
             ML Performance
           </h2>
         </div>
-        <div className="text-center py-4 text-muted-foreground">Loading...</div>
+        <div className="text-center py-4 text-[#57534E]">Loading...</div>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="bg-card rounded-lg shadow-lg p-6 border border-border">
+      <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-            <AlertTriangle className="w-6 h-6 text-muted-foreground" />
+          <div className="w-12 h-12 rounded-full bg-[#F5F5F4] flex items-center justify-center">
+            <AlertTriangle className="w-6 h-6 text-[#57534E]" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-foreground">No ML Data Yet</h3>
-            <p className="text-sm text-muted-foreground">Start recording outcomes to see ROI</p>
+            <h3 className="text-lg font-semibold text-[#1C1917]">No ML Data Yet</h3>
+            <p className="text-sm text-[#57534E]">Start recording outcomes to see ROI</p>
           </div>
         </div>
       </div>
@@ -91,18 +91,18 @@ export default function MLROIWidget() {
   const meetsTarget = data.summary.meets_target;
 
   return (
-    <div className="bg-card rounded-lg shadow-lg border border-border">
+    <div className="bg-white rounded-xl shadow-lg border border-[#E7E5E4]">
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-6 flex items-center justify-between hover:bg-muted/20 transition-colors rounded-t-lg"
+        className="w-full p-6 flex items-center justify-between hover:bg-[#F5F5F4]/50 transition-colors rounded-t-xl"
       >
-        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-emerald-500" />
+        <h2 className="text-xl font-bold text-[#1C1917] flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-[#16a34a]" />
           ML Performance
         </h2>
         <div className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
-          <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-[#57534E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
@@ -114,13 +114,13 @@ export default function MLROIWidget() {
           {/* ROI Metric - Hero */}
           <div className={`p-4 rounded-xl border-2 ${
             meetsTarget
-              ? 'bg-emerald-500/10 border-emerald-500/30'
-              : 'bg-amber-500/10 border-amber-500/30'
+              ? 'bg-[#16a34a]/10 border-[#16a34a]/30'
+              : 'bg-[#d97706]/10 border-[#d97706]/30'
           }`}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <DollarSign className={`w-6 h-6 ${meetsTarget ? 'text-emerald-500' : 'text-amber-500'}`} />
-                <div className="text-sm font-semibold text-muted-foreground">Return on Investment</div>
+                <DollarSign className={`w-6 h-6 ${meetsTarget ? 'text-[#16a34a]' : 'text-[#d97706]'}`} />
+                <div className="text-sm font-semibold text-[#57534E]">Return on Investment</div>
                 <HelpTooltip
                   title="What is ROI?"
                   content="For every €1 you spend on interventions (calls, emails), how much money do you save from prevented no-shows?
@@ -135,33 +135,33 @@ Example:
                 />
               </div>
               {meetsTarget && (
-                <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded-full font-semibold">
+                <span className="px-2 py-1 bg-[#16a34a]/20 text-[#16a34a] text-xs rounded-full font-semibold">
                   Target Met!
                 </span>
               )}
             </div>
             <div className="flex items-baseline gap-2">
-              <div className={`text-4xl font-bold ${meetsTarget ? 'text-emerald-400' : 'text-amber-400'}`}>
+              <div className={`text-4xl font-bold ${meetsTarget ? 'text-[#16a34a]' : 'text-[#d97706]'}`}>
                 {roiValue}%
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-[#57534E]">
                 / {data.summary.target_roi} target
               </div>
             </div>
-            <div className="mt-2 text-xs text-muted-foreground">
+            <div className="mt-2 text-xs text-[#57534E]">
               €{data.summary.total_value_saved} saved • €{data.summary.total_cost} spent
             </div>
           </div>
 
           {/* Success Rate */}
-          <div className="flex items-center justify-between p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+          <div className="flex items-center justify-between p-3 bg-[#9F1239]/10 rounded-xl border border-[#9F1239]/20">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                <Target className="w-5 h-5 text-blue-400" />
+              <div className="w-10 h-10 bg-[#9F1239]/20 rounded-xl flex items-center justify-center">
+                <Target className="w-5 h-5 text-[#9F1239]" />
               </div>
               <div>
                 <div className="flex items-center gap-1">
-                  <div className="text-xs text-muted-foreground">Success Rate</div>
+                  <div className="text-xs text-[#57534E]">Success Rate</div>
                   <HelpTooltip
                     title="Success Rate Explained"
                     content="Percentage of interventions that successfully prevented a no-show.
@@ -177,23 +177,23 @@ Example:
                     size="sm"
                   />
                 </div>
-                <div className="text-sm text-muted-foreground">Interventions worked</div>
+                <div className="text-sm text-[#57534E]">Interventions worked</div>
               </div>
             </div>
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-2xl font-bold text-[#1C1917]">
               {data.intervention_effectiveness.success_rate}
             </div>
           </div>
 
           {/* Total Interventions */}
-          <div className="flex items-center justify-between p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
+          <div className="flex items-center justify-between p-3 bg-[#7c3aed]/10 rounded-xl border border-[#7c3aed]/20">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                <Zap className="w-5 h-5 text-purple-400" />
+              <div className="w-10 h-10 bg-[#7c3aed]/20 rounded-xl flex items-center justify-center">
+                <Zap className="w-5 h-5 text-[#7c3aed]" />
               </div>
               <div>
                 <div className="flex items-center gap-1">
-                  <div className="text-xs text-muted-foreground">Total Interventions</div>
+                  <div className="text-xs text-[#57534E]">Total Interventions</div>
                   <HelpTooltip
                     title="What are Interventions?"
                     content="Actions taken to prevent no-shows based on ML risk predictions.
@@ -209,29 +209,29 @@ Each intervention has a cost and potential value saved."
                     size="sm"
                   />
                 </div>
-                <div className="text-sm text-muted-foreground">Actions taken</div>
+                <div className="text-sm text-[#57534E]">Actions taken</div>
               </div>
             </div>
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-2xl font-bold text-[#1C1917]">
               {data.intervention_effectiveness.interventions_with_action}
             </div>
           </div>
 
           {/* Outcomes Breakdown */}
-          <div className="p-3 bg-muted/30 rounded-lg">
-            <div className="text-xs font-semibold text-muted-foreground mb-2">Outcomes</div>
+          <div className="p-3 bg-[#F5F5F4] rounded-xl">
+            <div className="text-xs font-semibold text-[#57534E] mb-2">Outcomes</div>
             <div className="grid grid-cols-3 gap-2">
               <div className="text-center">
-                <div className="text-lg font-bold text-emerald-400">{data.outcomes.showed_up}</div>
-                <div className="text-xs text-muted-foreground">Showed</div>
+                <div className="text-lg font-bold text-[#16a34a]">{data.outcomes.showed_up}</div>
+                <div className="text-xs text-[#57534E]">Showed</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-red-400">{data.outcomes.no_show}</div>
-                <div className="text-xs text-muted-foreground">No-Show</div>
+                <div className="text-lg font-bold text-[#9F1239]">{data.outcomes.no_show}</div>
+                <div className="text-xs text-[#57534E]">No-Show</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-orange-400">{data.outcomes.cancelled}</div>
-                <div className="text-xs text-muted-foreground">Cancelled</div>
+                <div className="text-lg font-bold text-[#d97706]">{data.outcomes.cancelled}</div>
+                <div className="text-xs text-[#57534E]">Cancelled</div>
               </div>
             </div>
           </div>
@@ -239,7 +239,7 @@ Each intervention has a cost and potential value saved."
           {/* Link to full ML analytics */}
           <a
             href="/analytics#ml-metrics"
-            className="flex items-center justify-center gap-2 w-full mt-4 px-4 py-2 text-center text-sm bg-muted hover:bg-muted/80 text-muted-foreground font-medium rounded-lg transition-colors group"
+            className="flex items-center justify-center gap-2 w-full mt-4 px-4 py-2 text-center text-sm bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#57534E] font-medium rounded-xl transition-colors group"
           >
             View Full ML Analytics
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

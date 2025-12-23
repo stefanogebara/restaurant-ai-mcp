@@ -1,5 +1,5 @@
 /**
- * Step 1: Welcome & Restaurant Info
+ * Step 1: Welcome & Restaurant Info - Modern Elegant Design
  *
  * Collects basic restaurant information:
  * - Restaurant name
@@ -13,7 +13,6 @@ import { motion } from 'framer-motion';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
 import { LocationSelector } from './LocationSelector';
 import { getCountryByCode } from '../../data/countries';
-import '../../landing/styles/glass-morphism.css';
 
 const RESTAURANT_TYPES = [
   'Fine Dining',
@@ -78,13 +77,13 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
       className="space-y-6"
     >
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">What's your restaurant called?</h2>
-        <p className="text-gray-300 text-sm">Let's start with the basics</p>
+        <h2 className="font-serif text-2xl font-bold text-[#1C1917] mb-2">What's your restaurant called?</h2>
+        <p className="text-[#57534E] text-sm">Let's start with the basics</p>
       </div>
 
       {/* Restaurant Name */}
       <div>
-        <label htmlFor="restaurant_name" className="block text-sm font-semibold text-gray-100 mb-2">
+        <label htmlFor="restaurant_name" className="block text-sm font-semibold text-[#1C1917] mb-2">
           Restaurant Name *
         </label>
         <input
@@ -93,16 +92,16 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
           value={data.restaurant_name}
           onChange={(e) => updateData({ restaurant_name: e.target.value })}
           placeholder="La Bella Vista"
-          className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+          className="w-full px-4 py-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
         />
         {errors.restaurant_name && (
-          <p className="mt-1 text-sm text-red-400">{errors.restaurant_name}</p>
+          <p className="mt-1 text-sm text-[#9F1239]">{errors.restaurant_name}</p>
         )}
       </div>
 
       {/* Restaurant Type - Card Selection */}
       <div>
-        <label className="block text-sm font-semibold text-gray-100 mb-3">
+        <label className="block text-sm font-semibold text-[#1C1917] mb-3">
           What type of restaurant? *
         </label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -112,10 +111,10 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
               type="button"
               onClick={() => updateData({ restaurant_type: type })}
               className={`
-                p-4 rounded-lg border-2 transition-all duration-200 text-center font-semibold text-sm
+                p-4 rounded-xl border-2 transition-all duration-200 text-center font-semibold text-sm
                 ${data.restaurant_type === type
-                  ? 'border-violet-500 bg-violet-500/20 text-gray-100 shadow-lg shadow-violet-500/20 scale-105'
-                  : 'border-gray-700 bg-gray-800/30 text-gray-300 hover:border-gray-600 hover:bg-gray-800/50 hover:text-gray-100'
+                  ? 'border-[#9F1239] bg-[#9F1239]/10 text-[#9F1239]'
+                  : 'border-[#E7E5E4] bg-white text-[#57534E] hover:border-[#9F1239]/50 hover:bg-[#FAFAF9]'
                 }
               `}
             >
@@ -124,7 +123,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
           ))}
         </div>
         {errors.restaurant_type && (
-          <p className="mt-2 text-sm text-red-400">{errors.restaurant_type}</p>
+          <p className="mt-2 text-sm text-[#9F1239]">{errors.restaurant_type}</p>
         )}
       </div>
 
@@ -142,19 +141,19 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
 
       {/* Auto-populated Language Info */}
       {data.language && (
-        <div className="bg-violet-500/10 backdrop-blur-md rounded-xl p-4 border border-violet-500/20">
+        <div className="bg-[#9F1239]/5 rounded-xl p-4 border border-[#9F1239]/20">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center">
-              <svg className="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-10 h-10 rounded-full bg-[#9F1239]/10 flex items-center justify-center">
+              <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-100">
+              <p className="text-sm font-semibold text-[#1C1917]">
                 Language automatically set
               </p>
-              <p className="text-xs text-gray-400">
-                Based on your country selection: <span className="text-violet-400 font-medium">{data.language}</span>
+              <p className="text-xs text-[#57534E]">
+                Based on your country selection: <span className="text-[#9F1239] font-medium">{data.language}</span>
               </p>
             </div>
           </div>
@@ -165,7 +164,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
       <div className="flex justify-end pt-4">
         <button
           onClick={handleContinue}
-          className="px-8 py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold rounded-lg flex items-center gap-2 shadow-lg shadow-purple-500/30 transition-all duration-300 hover:scale-105 active:scale-95"
+          className="px-8 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300"
         >
           Continue
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
