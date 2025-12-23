@@ -4,6 +4,7 @@
  * Modern Elegant Design
  */
 
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,7 +18,8 @@ import {
   Check,
   ArrowRight,
   LogOut,
-  Sparkles
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 
 const FEATURES = [
@@ -58,6 +60,7 @@ const PLANS = [
     name: 'Basic',
     price: '€49.99',
     description: 'Perfect for small restaurants',
+    priceId: 'price_1SMyEOKf4yCMjmH5kXx1RUyo',
     features: [
       'AI reservations',
       'Host dashboard',
@@ -71,6 +74,7 @@ const PLANS = [
     name: 'Professional',
     price: '€99.99',
     description: 'For growing restaurants',
+    priceId: 'price_1SMyFUKf4yCMjmH5jh4mReyI',
     features: [
       'Everything in Basic',
       'Advanced analytics',
@@ -87,11 +91,39 @@ const PLANS = [
 export default function Welcome() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  // Plan state removed - not currently used
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
-  const handleGetStarted = (plan: string) => {
-    localStorage.setItem('subscription_plan', plan);
-    navigate('/onboarding');
+  const handleGetStarted = async (priceId: string, planName: string) => {
+    try {
+      setLoadingPlan(planName);
+
+      const apiUrl = import.meta.env.VITE_API_URL
+        ? `${import.meta.env.VITE_API_URL}/api/create-checkout-session`
+        : '/api/create-checkout-session';
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          priceId,
+          planName,
+          email: user?.email,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session');
+      }
+
+      const { url } = await response.json();
+      window.location.href = url;
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      alert('Failed to start checkout. Please try again.');
+      setLoadingPlan(null);
+    }
   };
 
   const handleSignOut = async () => {
@@ -250,18 +282,29 @@ export default function Welcome() {
                 </ul>
 
                 <button
-                  onClick={() => handleGetStarted(plan.name)}
+                  onClick={() => handleGetStarted(plan.priceId, plan.name)}
+                  disabled={loadingPlan === plan.name}
                   className={`
                     w-full py-4 rounded-2xl font-bold text-sm tracking-widest uppercase
                     flex items-center justify-center gap-2 transition-all duration-300
+                    disabled:opacity-50 disabled:cursor-not-allowed
                     ${plan.highlighted
                       ? 'bg-[#9F1239] text-white hover:bg-[#881337] shadow-lg shadow-[#9F1239]/20'
                       : 'bg-[#1C1917] text-white hover:bg-[#9F1239]'
                     }
                   `}
                 >
-                  Get Started
-                  <ArrowRight className="w-4 h-4" />
+                  {loadingPlan === plan.name ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      Get Started
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
                 </button>
               </motion.div>
             ))}
@@ -291,10 +334,18 @@ export default function Welcome() {
             Join 500+ restaurants already using Seatable to automate reservations and delight customers.
           </p>
           <button
-            onClick={() => handleGetStarted('Professional')}
-            className="px-8 py-4 bg-[#9F1239] text-white font-bold text-sm tracking-widest uppercase rounded-2xl hover:bg-[#881337] transition-all duration-300 shadow-xl shadow-[#9F1239]/30"
+            onClick={() => handleGetStarted('price_1SMyFUKf4yCMjmH5jh4mReyI', 'Professional')}
+            disabled={loadingPlan === 'Professional'}
+            className="px-8 py-4 bg-[#9F1239] text-white font-bold text-sm tracking-widest uppercase rounded-2xl hover:bg-[#881337] transition-all duration-300 shadow-xl shadow-[#9F1239]/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            Start Free Trial
+            {loadingPlan === 'Professional' ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              'Start Free Trial'
+            )}
           </button>
         </div>
       </section>
