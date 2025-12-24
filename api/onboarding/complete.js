@@ -176,7 +176,8 @@ module.exports = async (req, res) => {
             location: area.name,
             status: 'available',  // Must be lowercase to match database enum
             is_active: true,
-            current_service_id: null
+            current_service_id: null,
+            is_fixed: tableConfig.is_fixed || false  // Flexible table support
           });
           tableNumber++;
         }

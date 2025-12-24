@@ -7,6 +7,12 @@ export interface Table {
   location: string;
   status: TableStatus;
   current_service_id?: string;
+  // Flexible table support
+  is_fixed?: boolean;           // true = can't be combined (round/booth), default false
+  min_capacity?: number;        // Minimum party size (defaults to 1)
+  max_capacity?: number;        // Maximum when combined with adjacents
+  adjacent_tables?: string[];   // IDs of tables that can combine with this one
+  combination_group?: string;   // Logical grouping for combinations (e.g., "main_floor_left")
 }
 
 export interface ActiveParty {
@@ -68,6 +74,10 @@ export interface DashboardSummary {
   active_parties: number;
   upcoming_reservations: number;
   estimated_wait_time?: number; // Minutes until next table available (0 if seats available)
+  // Flexible table metrics
+  max_single_party_size?: number;     // Largest party we can accommodate right now
+  flexible_tables_available?: number; // Number of available flexible (combinable) tables
+  fixed_tables_available?: number;    // Number of available fixed (non-combinable) tables
 }
 
 export interface DashboardData {

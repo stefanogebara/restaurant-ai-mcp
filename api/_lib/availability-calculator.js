@@ -196,11 +196,135 @@ function getSuggestedTimes(requestedTime, partySize, existingReservations, resta
   return suggestions.slice(0, 3);
 }
 
+/**
+ * Calculate the maximum party size that can be accommodated
+ * Considers table combinations for flexible tables
+ * @param {Array} availableTables - Array of available table objects
+ * @returns {Object} { maxSingleTable, maxWithCombinations, flexibleTableCount }
+ */
+function getMaxPartyCapacity(availableTables) {
+  if (!availableTables || availableTables.length === 0) {
+    return { maxSingleTable: 0, maxWithCombinations: 0, flexibleTableCount: 0 };
+  }
+
+  // Helper: check if a table can be combined
+  const isFlexible = (table) => table.fields['Is Fixed'] !== true;
+
+  // Helper: check if two tables can combine (same location for MVP)
+  const canCombine = (t1, t2) => {
+    if (!isFlexible(t1) || !isFlexible(t2)) return false;
+
+    // Check explicit adjacency
+    const adj1 = t1.fields['Adjacent Tables'] || [];
+    const adj2 = t2.fields['Adjacent Tables'] || [];
+    if (adj1.length > 0 || adj2.length > 0) {
+      return adj1.includes(t2.id) || adj2.includes(t1.id);
+    }
+
+    // Check combination group
+    const g1 = t1.fields['Combination Group'];
+    const g2 = t2.fields['Combination Group'];
+    if (g1 && g2) return g1 === g2;
+
+    // MVP: same location can combine
+    return t1.fields.Location === t2.fields.Location;
+  };
+
+  const activeTables = availableTables.filter(t => t.fields['Is Active']);
+  const flexibleTables = activeTables.filter(isFlexible);
+
+  // Find largest single table
+  const maxSingleTable = activeTables.reduce(
+    (max, t) => Math.max(max, t.fields.Capacity || 0),
+    0
+  );
+
+  // Find largest possible 2-table combination
+  let maxWithCombinations = maxSingleTable;
+  for (let i = 0; i < flexibleTables.length; i++) {
+    for (let j = i + 1; j < flexibleTables.length; j++) {
+      if (canCombine(flexibleTables[i], flexibleTables[j])) {
+        const combined = flexibleTables[i].fields.Capacity + flexibleTables[j].fields.Capacity;
+        maxWithCombinations = Math.max(maxWithCombinations, combined);
+      }
+    }
+  }
+
+  return {
+    maxSingleTable,
+    maxWithCombinations,
+    flexibleTableCount: flexibleTables.length
+  };
+}
+
+/**
+ * Check if a party size can be accommodated with available tables
+ * Considers table combinations
+ * @param {number} partySize - Number of guests
+ * @param {Array} availableTables - Array of available table objects
+ * @returns {Object} { canAccommodate, method, tables }
+ */
+function canAccommodateParty(partySize, availableTables) {
+  if (!availableTables || availableTables.length === 0) {
+    return { canAccommodate: false, method: 'none', tables: [] };
+  }
+
+  const isFlexible = (table) => table.fields['Is Fixed'] !== true;
+  const canCombine = (t1, t2) => {
+    if (!isFlexible(t1) || !isFlexible(t2)) return false;
+    const adj1 = t1.fields['Adjacent Tables'] || [];
+    const adj2 = t2.fields['Adjacent Tables'] || [];
+    if (adj1.length > 0 || adj2.length > 0) {
+      return adj1.includes(t2.id) || adj2.includes(t1.id);
+    }
+    const g1 = t1.fields['Combination Group'];
+    const g2 = t2.fields['Combination Group'];
+    if (g1 && g2) return g1 === g2;
+    return t1.fields.Location === t2.fields.Location;
+  };
+
+  const activeTables = availableTables.filter(t => t.fields['Is Active']);
+
+  // Try single table first
+  const singleTable = activeTables.find(t => t.fields.Capacity >= partySize);
+  if (singleTable) {
+    return {
+      canAccommodate: true,
+      method: 'single',
+      tables: [singleTable],
+      totalCapacity: singleTable.fields.Capacity
+    };
+  }
+
+  // Try 2-table combinations
+  const flexibleTables = activeTables.filter(isFlexible);
+  for (let i = 0; i < flexibleTables.length; i++) {
+    for (let j = i + 1; j < flexibleTables.length; j++) {
+      if (canCombine(flexibleTables[i], flexibleTables[j])) {
+        const combined = flexibleTables[i].fields.Capacity + flexibleTables[j].fields.Capacity;
+        if (combined >= partySize) {
+          return {
+            canAccommodate: true,
+            method: 'combination',
+            tables: [flexibleTables[i], flexibleTables[j]],
+            totalCapacity: combined
+          };
+        }
+      }
+    }
+  }
+
+  return { canAccommodate: false, method: 'none', tables: [] };
+}
+
 module.exports = {
   getDiningDuration,
   addMinutesToTime,
   timeRangesOverlap,
   getOccupiedSeatsAtTime,
   checkTimeSlotAvailability,
-  getSuggestedTimes
+  getSuggestedTimes,
+  // New flexible table functions
+  getMaxPartyCapacity,
+  canAccommodateParty
 };

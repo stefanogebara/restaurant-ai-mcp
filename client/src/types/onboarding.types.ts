@@ -21,6 +21,7 @@ export interface BusinessHours {
 export interface TableConfiguration {
   capacity: number;
   count: number;
+  is_fixed?: boolean; // true = table can't be combined (round/booth), default false (flexible)
 }
 
 export interface RestaurantArea {

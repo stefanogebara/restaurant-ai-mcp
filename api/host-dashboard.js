@@ -9,7 +9,8 @@ const {
   deleteServiceRecord,
   updateTable,
   generateServiceId,
-  findBestTableCombination
+  findBestTableCombination,
+  canAccommodateParty
 } = require('./_lib/supabase');
 
 const { logCustomerShowedUp, logCustomerCancelled } = require('./ml/data-logger');
@@ -126,6 +127,31 @@ async function handleDashboard(req, res) {
     estimatedWaitMinutes = Math.max(0, Math.ceil(soonestDeparture / 60000)); // Convert ms to minutes
   }
 
+  // Calculate flexible table metrics
+  const availableTables = tables.filter(t => t.status === 'available');
+  const flexibleTables = availableTables.filter(t => !t.is_fixed);
+  const fixedTables = availableTables.filter(t => t.is_fixed);
+
+  // Group flexible tables by location to calculate max party sizes
+  const flexibleByLocation = {};
+  flexibleTables.forEach(t => {
+    const location = t.location || 'Main';
+    if (!flexibleByLocation[location]) flexibleByLocation[location] = [];
+    flexibleByLocation[location].push(t);
+  });
+
+  // Calculate max party size that can be accommodated by combining tables
+  const maxPartySizeByLocation = Object.entries(flexibleByLocation).reduce((acc, [loc, tbls]) => {
+    acc[loc] = tbls.reduce((sum, t) => sum + t.capacity, 0);
+    return acc;
+  }, {});
+
+  const largestFixedCapacity = fixedTables.length > 0 ? Math.max(...fixedTables.map(t => t.capacity)) : 0;
+  const largestFlexibleCapacity = Object.values(maxPartySizeByLocation).length > 0
+    ? Math.max(...Object.values(maxPartySizeByLocation))
+    : 0;
+  const maxSinglePartySize = Math.max(largestFixedCapacity, largestFlexibleCapacity);
+
   return res.status(200).json({
     summary: {
       total_capacity: totalCapacity,
@@ -134,7 +160,11 @@ async function handleDashboard(req, res) {
       occupancy_percentage: Math.round((occupiedSeats / totalCapacity) * 100),
       active_parties: activeParties.length,
       upcoming_reservations: upcomingReservationsResult.reservations.length,
-      estimated_wait_time: estimatedWaitMinutes
+      estimated_wait_time: estimatedWaitMinutes,
+      // Flexible table metrics
+      max_single_party_size: maxSinglePartySize,  // Largest party we can accommodate right now
+      flexible_tables_available: flexibleTables.length,
+      fixed_tables_available: fixedTables.length
     },
     tables: tables.map(t => ({
       id: t.id,
@@ -142,7 +172,8 @@ async function handleDashboard(req, res) {
       capacity: t.capacity,
       location: t.location,
       status: t.status ? t.status.replace(/_/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : t.status,
-      current_service_id: t.current_service_id
+      current_service_id: t.current_service_id,
+      is_fixed: t.is_fixed || false  // Include in response for UI display
     })),
     active_parties: activeParties,
     upcoming_reservations: upcomingReservationsResult.reservations

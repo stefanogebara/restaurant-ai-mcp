@@ -128,53 +128,107 @@ function findLargerTable(partySize, tables) {
 }
 
 /**
+ * Check if a table can be combined with others
+ * Fixed tables (round tables, booths) cannot be combined
+ */
+function isFlexibleTable(table) {
+  // is_fixed = true means it CANNOT be combined (round table, booth)
+  // Default to flexible (can combine) if not specified
+  return table.fields['Is Fixed'] !== true;
+}
+
+/**
+ * Check if two tables can be combined based on adjacency rules
+ * MVP: Same location = can combine (implicit adjacency)
+ * Advanced: Explicit adjacent_tables array
+ */
+function canCombine(table1, table2) {
+  // Both tables must be flexible (not fixed)
+  if (!isFlexibleTable(table1) || !isFlexibleTable(table2)) {
+    return false;
+  }
+
+  // Check explicit adjacency first (if defined)
+  const adjacent1 = table1.fields['Adjacent Tables'] || [];
+  const adjacent2 = table2.fields['Adjacent Tables'] || [];
+
+  if (adjacent1.length > 0 || adjacent2.length > 0) {
+    // If adjacency is explicitly defined, use it
+    return adjacent1.includes(table2.id) || adjacent2.includes(table1.id);
+  }
+
+  // Check combination group (if defined)
+  const group1 = table1.fields['Combination Group'];
+  const group2 = table2.fields['Combination Group'];
+
+  if (group1 && group2) {
+    return group1 === group2;
+  }
+
+  // MVP fallback: Same location means can combine
+  return table1.fields.Location === table2.fields.Location;
+}
+
+/**
  * Find combination of tables that can accommodate party
+ * Respects is_fixed flag and adjacency rules
  */
 function findTableCombination(partySize, tables) {
   const activeTables = tables.filter(t => t.fields['Is Active']);
+  const flexibleTables = activeTables.filter(t => isFlexibleTable(t));
 
-  // Try combinations of 2 tables
-  for (let i = 0; i < activeTables.length; i++) {
-    for (let j = i + 1; j < activeTables.length; j++) {
-      const table1 = activeTables[i];
-      const table2 = activeTables[j];
+  // Try combinations of 2 tables (most common case)
+  for (let i = 0; i < flexibleTables.length; i++) {
+    for (let j = i + 1; j < flexibleTables.length; j++) {
+      const table1 = flexibleTables[i];
+      const table2 = flexibleTables[j];
+
+      // Check if tables can be combined
+      if (!canCombine(table1, table2)) {
+        continue;
+      }
+
       const combinedCapacity = table1.fields.Capacity + table2.fields.Capacity;
 
       // Check if combination works (exact match or up to 2 extra seats)
       if (combinedCapacity >= partySize && combinedCapacity <= partySize + 2) {
-        // Prefer same location
-        if (table1.fields.Location === table2.fields.Location) {
-          return [table1, table2];
-        }
+        return [table1, table2];
       }
     }
   }
 
   // Try combinations of 3 tables (for very large parties)
-  for (let i = 0; i < activeTables.length; i++) {
-    for (let j = i + 1; j < activeTables.length; j++) {
-      for (let k = j + 1; k < activeTables.length; k++) {
-        const table1 = activeTables[i];
-        const table2 = activeTables[j];
-        const table3 = activeTables[k];
+  for (let i = 0; i < flexibleTables.length; i++) {
+    for (let j = i + 1; j < flexibleTables.length; j++) {
+      for (let k = j + 1; k < flexibleTables.length; k++) {
+        const table1 = flexibleTables[i];
+        const table2 = flexibleTables[j];
+        const table3 = flexibleTables[k];
+
+        // All three must be able to combine
+        if (!canCombine(table1, table2) || !canCombine(table2, table3)) {
+          continue;
+        }
+
         const combinedCapacity = table1.fields.Capacity + table2.fields.Capacity + table3.fields.Capacity;
 
         if (combinedCapacity >= partySize && combinedCapacity <= partySize + 3) {
-          // Prefer same location
-          if (table1.fields.Location === table2.fields.Location &&
-              table2.fields.Location === table3.fields.Location) {
-            return [table1, table2, table3];
-          }
+          return [table1, table2, table3];
         }
       }
     }
   }
 
-  // If no good combination found in same location, try any combination
-  for (let i = 0; i < activeTables.length; i++) {
-    for (let j = i + 1; j < activeTables.length; j++) {
-      const table1 = activeTables[i];
-      const table2 = activeTables[j];
+  // Fallback: Try any 2-table combination with more seat tolerance
+  for (let i = 0; i < flexibleTables.length; i++) {
+    for (let j = i + 1; j < flexibleTables.length; j++) {
+      const table1 = flexibleTables[i];
+      const table2 = flexibleTables[j];
+
+      if (!canCombine(table1, table2)) {
+        continue;
+      }
+
       const combinedCapacity = table1.fields.Capacity + table2.fields.Capacity;
 
       if (combinedCapacity >= partySize && combinedCapacity <= partySize + 4) {
@@ -222,11 +276,18 @@ function getAllTableOptions(partySize, availableTables, preferredLocation = null
     }
   });
 
-  // Option 2: Two-table combinations
-  for (let i = 0; i < activeTables.length; i++) {
-    for (let j = i + 1; j < activeTables.length; j++) {
-      const table1 = activeTables[i];
-      const table2 = activeTables[j];
+  // Option 2: Two-table combinations (only flexible tables that can combine)
+  const flexibleTables = activeTables.filter(t => isFlexibleTable(t));
+  for (let i = 0; i < flexibleTables.length; i++) {
+    for (let j = i + 1; j < flexibleTables.length; j++) {
+      const table1 = flexibleTables[i];
+      const table2 = flexibleTables[j];
+
+      // Only include if tables can actually be combined
+      if (!canCombine(table1, table2)) {
+        continue;
+      }
+
       const combinedCapacity = table1.fields.Capacity + table2.fields.Capacity;
       const wasteSeats = combinedCapacity - partySize;
 
@@ -241,7 +302,8 @@ function getAllTableOptions(partySize, availableTables, preferredLocation = null
           wasteSeats,
           location: sameLocation ? table1.fields.Location : 'Mixed',
           match: wasteSeats <= 2 ? 'Good' : 'Acceptable',
-          score
+          score,
+          isCombination: true
         });
       }
     }
@@ -291,5 +353,8 @@ module.exports = {
   findExactMatch,
   findSizeUp,
   findLargerTable,
-  findTableCombination
+  findTableCombination,
+  // New flexible table helpers
+  isFlexibleTable,
+  canCombine
 };

@@ -130,7 +130,8 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
           ...area,
           tables: TABLE_CAPACITIES.map(cap => ({
             capacity: cap,
-            count: distribution.find(d => d.capacity === cap)?.count || 0
+            count: distribution.find(d => d.capacity === cap)?.count || 0,
+            is_fixed: false // Default: tables are flexible (can be combined)
           }))
         };
       }
@@ -199,7 +200,7 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
     const newArea: RestaurantArea = {
       name: areaName,
       is_active: true,
-      tables: TABLE_CAPACITIES.map((capacity) => ({ capacity, count: 0 })),
+      tables: TABLE_CAPACITIES.map((capacity) => ({ capacity, count: 0, is_fixed: false })),
     };
     updateData({ areas: [...data.areas, newArea] });
   };
@@ -218,6 +219,16 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
   const updateTableCount = (areaIndex: number, capacityIndex: number, count: number) => {
     const updatedAreas = [...data.areas];
     updatedAreas[areaIndex].tables[capacityIndex].count = Math.max(0, count);
+    updateData({ areas: updatedAreas });
+  };
+
+  const toggleTableFixed = (areaIndex: number, capacityIndex: number) => {
+    const updatedAreas = [...data.areas];
+    const currentTable = updatedAreas[areaIndex].tables[capacityIndex];
+    updatedAreas[areaIndex].tables[capacityIndex] = {
+      ...currentTable,
+      is_fixed: !currentTable.is_fixed
+    };
     updateData({ areas: updatedAreas });
   };
 
@@ -325,7 +336,7 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
 
             <div className="grid grid-cols-2 gap-3">
               {area.tables.map((tableConfig, tableIndex) => (
-                <div key={tableIndex} className="bg-white rounded-xl p-3 border border-[#E7E5E4]">
+                <div key={tableIndex} className={`bg-white rounded-xl p-3 border ${tableConfig.is_fixed ? 'border-amber-300 bg-amber-50/30' : 'border-[#E7E5E4]'}`}>
                   <label className="block text-sm font-medium text-[#1C1917] mb-2">
                     {tableConfig.capacity}-person tables
                   </label>
@@ -340,6 +351,28 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
                   <p className="text-xs text-[#57534E] mt-1">
                     {tableConfig.count * tableConfig.capacity} seats
                   </p>
+                  {/* Fixed table toggle - only show if tables are configured */}
+                  {tableConfig.count > 0 && (
+                    <label className="flex items-center gap-2 mt-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={tableConfig.is_fixed || false}
+                        onChange={() => toggleTableFixed(areaIndex, tableIndex)}
+                        className="w-4 h-4 rounded border-[#E7E5E4] text-amber-500 focus:ring-amber-500 cursor-pointer"
+                      />
+                      <span className="text-xs text-[#57534E] group-hover:text-[#1C1917]">
+                        Fixed (can't combine)
+                      </span>
+                      <span
+                        className="text-[#A8A29E] hover:text-[#57534E] cursor-help"
+                        title="Fixed tables (like round tables or booths) cannot be combined with other tables. Leave unchecked for flexible tables that can be merged."
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </span>
+                    </label>
+                  )}
                 </div>
               ))}
             </div>

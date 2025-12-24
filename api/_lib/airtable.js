@@ -469,10 +469,52 @@ const getAllTables = async () => {
   };
 };
 
+/**
+ * Check if a table is flexible (can be combined with others)
+ * Fixed tables (round tables, booths) cannot be combined
+ */
+const isFlexibleTable = (table) => {
+  // is_fixed = true means it CANNOT be combined (round table, booth)
+  // Default to flexible (can combine) if not specified
+  return table.is_fixed !== true;
+};
+
+/**
+ * Check if two tables can be combined based on adjacency rules
+ * MVP: Same location = can combine (implicit adjacency)
+ * Advanced: Explicit adjacent_tables array or combination_group
+ */
+const canCombineTables = (table1, table2) => {
+  // Both tables must be flexible (not fixed)
+  if (!isFlexibleTable(table1) || !isFlexibleTable(table2)) {
+    return false;
+  }
+
+  // Check explicit adjacency first (if defined)
+  const adjacent1 = table1.adjacent_tables || [];
+  const adjacent2 = table2.adjacent_tables || [];
+
+  if (adjacent1.length > 0 || adjacent2.length > 0) {
+    // If adjacency is explicitly defined, use it
+    return adjacent1.includes(table2.id) || adjacent2.includes(table1.id);
+  }
+
+  // Check combination group (if defined)
+  const group1 = table1.combination_group;
+  const group2 = table2.combination_group;
+
+  if (group1 && group2) {
+    return group1 === group2;
+  }
+
+  // MVP fallback: Same location means can combine
+  return table1.location === table2.location;
+};
+
 const findBestTableCombination = (availableTables, partySize) => {
   const recommendations = [];
 
-  // Try single table first
+  // Try single table first (any table can be used individually)
   for (const table of availableTables) {
     if (table.capacity >= partySize) {
       const waste = table.capacity - partySize;
@@ -494,22 +536,38 @@ const findBestTableCombination = (availableTables, partySize) => {
     }
   }
 
-  // Try combinations of 2 tables
-  for (let i = 0; i < availableTables.length; i++) {
-    for (let j = i + 1; j < availableTables.length; j++) {
-      const totalCapacity = availableTables[i].capacity + availableTables[j].capacity;
-      if (totalCapacity >= partySize) {
+  // Try combinations of 2 tables (only flexible tables that can combine)
+  const flexibleTables = availableTables.filter(isFlexibleTable);
+
+  for (let i = 0; i < flexibleTables.length; i++) {
+    for (let j = i + 1; j < flexibleTables.length; j++) {
+      const table1 = flexibleTables[i];
+      const table2 = flexibleTables[j];
+
+      // Check if these tables can actually be combined
+      if (!canCombineTables(table1, table2)) {
+        continue;
+      }
+
+      const totalCapacity = table1.capacity + table2.capacity;
+      if (totalCapacity >= partySize && totalCapacity <= partySize + 4) {
         const waste = totalCapacity - partySize;
         let matchQuality = 'acceptable';
         if (waste <= 1) matchQuality = 'good';
         if (waste === 0) matchQuality = 'perfect';
 
+        // Same location combinations score higher
+        const sameLocation = table1.location === table2.location;
+        const baseScore = sameLocation ? 95 : 85;
+
         recommendations.push({
-          tables: [availableTables[i].table_number, availableTables[j].table_number],
+          tables: [table1.table_number, table2.table_number],
           total_capacity: totalCapacity,
           match_quality: matchQuality,
-          score: waste === 0 ? 95 : Math.max(0, 95 - waste * 10),
-          reason: `Combination seats ${totalCapacity}, wastes ${waste} seat${waste > 1 ? 's' : ''}`
+          score: waste === 0 ? baseScore : Math.max(0, baseScore - waste * 10),
+          reason: `Combination seats ${totalCapacity}, wastes ${waste} seat${waste > 1 ? 's' : ''}`,
+          is_combination: true,
+          location: sameLocation ? table1.location : 'Mixed'
         });
       }
     }
@@ -540,6 +598,9 @@ module.exports = {
   updateTable,
   updateTableStatus,
   findBestTableCombination,
+  // Flexible table helpers
+  isFlexibleTable,
+  canCombineTables,
 
   // Service Records
   getServiceRecords,

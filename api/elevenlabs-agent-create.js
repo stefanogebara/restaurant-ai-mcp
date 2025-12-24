@@ -189,7 +189,7 @@ function buildSystemPrompt({ restaurant_name, language, business_hours, phone, a
 
   prompt += `\n**Your capabilities:**\n`;
   prompt += `- Take reservation requests (party size, date, time)\n`;
-  prompt += `- Check table availability\n`;
+  prompt += `- Check if we can accommodate parties of various sizes\n`;
   prompt += `- Confirm reservations with customer details\n`;
   prompt += `- Handle special requests and dietary restrictions\n`;
   prompt += `- Provide information about the restaurant\n\n`;
@@ -200,6 +200,9 @@ function buildSystemPrompt({ restaurant_name, language, business_hours, phone, a
   prompt += `- Ask for name, phone number, and email when making reservations\n`;
   prompt += `- If a customer requests a time outside business hours, politely suggest alternative times\n`;
   prompt += `- Use the create_reservation tool only after confirming all details with the customer\n`;
+  prompt += `- IMPORTANT: Never mention specific table numbers, table combinations, or internal seating arrangements to customers\n`;
+  prompt += `- When asked about availability, simply say "Yes, we can accommodate X guests" or "I'm sorry, we're fully booked at that time"\n`;
+  prompt += `- The host will handle actual table assignments when the customer arrives\n`;
 
   return prompt;
 }

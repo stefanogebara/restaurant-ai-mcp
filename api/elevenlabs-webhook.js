@@ -256,7 +256,7 @@ async function handleGetDateTime(req, res) {
 async function handleCheckAvailability(req, res) {
   const conversationId = req.conversation_id;
 
-  const { getReservations, getAllTables } = require('./_lib/supabase');
+  const { getReservations, getAllTables, canAccommodateParty } = require('./_lib/supabase');
   const { checkTimeSlotAvailability, getSuggestedTimes } = require('./_lib/availability-calculator');
 
   const data = req.method === 'POST' ? req.body : req.query;
@@ -395,15 +395,18 @@ async function handleCheckAvailability(req, res) {
       effectiveCapacity
     );
 
-    if (availabilityCheck.available) {
+    // Check if we can accommodate this party size using flexible table combinations
+    const accommodationCheck = await canAccommodateParty(partySize);
+
+    if (availabilityCheck.available && accommodationCheck.can_accommodate) {
+      // Customer-friendly response - don't expose table details
       const response = {
         success: true,
         available: true,
-        message: `Yes, we have availability for ${partySize} guests on ${date} at ${time}`,
+        message: `Yes, we have space for ${partySize} guests on ${date} at ${time}. Would you like to make a reservation?`,
         details: {
           estimated_duration: `${availabilityCheck.estimatedDuration} minutes`,
-          occupied_seats: availabilityCheck.occupiedSeats + currentlyOccupiedSeats,
-          available_seats: effectiveCapacity - availabilityCheck.occupiedSeats
+          can_accommodate: true
         }
       };
       console.log('[ElevenLabs] check_availability response:', response);
@@ -418,20 +421,23 @@ async function handleCheckAvailability(req, res) {
         closeTime
       );
 
+      // Customer-friendly response - don't mention tables or seats
+      let message = `Sorry, we're fully booked for ${partySize} guests at ${time}.`;
+      if (!accommodationCheck.can_accommodate) {
+        message = `Sorry, we cannot accommodate a party of ${partySize} at the moment.`;
+      }
+
       const response = {
         success: true,
         available: false,
-        message: `Sorry, ${time} is fully booked. ${availabilityCheck.reason}. We have ${availabilityCheck.availableSeats} seats available at that time, but your party needs ${partySize} seats.`,
+        message,
         details: {
           requested_time: time,
-          party_size: partySize,
-          available_seats_at_time: availabilityCheck.availableSeats,
-          occupied_seats: availabilityCheck.occupiedSeats + currentlyOccupiedSeats
+          party_size: partySize
         },
         alternative_times: suggestions.length > 0 ? suggestions.map(s => ({
           time: s.time,
-          available_seats: s.availableSeats,
-          message: `${s.time} has ${s.availableSeats} seats available`
+          message: `${s.time} is available`
         })) : []
       };
       console.log('[ElevenLabs] check_availability response:', response);
