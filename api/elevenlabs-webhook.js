@@ -18,19 +18,16 @@
 
 const { getRestaurantByPhone, getRestaurantById } = require('./_lib/restaurant-loader');
 const conversationLogger = require('./services/conversationLogger');
+const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 
 module.exports = async (req, res) => {
-  // Set CORS headers for ElevenLabs
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Called-Number, X-Caller-Number');
+  // Set CORS headers for ElevenLabs webhook (external service)
+  setWebhookCors(req, res);
   res.setHeader('Content-Type', 'application/json');
 
   // Handle OPTIONS preflight
-  if (req.method === 'OPTIONS') {
-    console.log('[ElevenLabs] OPTIONS preflight request');
-    return res.status(200).json({ success: true, message: 'CORS preflight OK' });
+  if (handlePreflight(req, res)) {
+    return;
   }
 
   // Log incoming request for debugging
@@ -200,7 +197,9 @@ module.exports = async (req, res) => {
 // Handler functions
 
 async function handleGetDateTime(req, res) {
-  const timezone = 'Europe/Amsterdam';
+  // Get timezone from query, body, or default to Europe/Madrid (Spain)
+  // Restaurants can specify their timezone via query param: ?timezone=America/New_York
+  const timezone = req.query.timezone || req.body?.timezone || 'Europe/Madrid';
   const now = new Date();
 
   const formatDate = (date) => {

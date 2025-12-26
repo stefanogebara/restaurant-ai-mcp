@@ -1,138 +1,81 @@
 /**
- * CORS Configuration
+ * CORS Configuration Utility
  *
- * Provides secure Cross-Origin Resource Sharing configuration
- * with specific allowed origins instead of wildcard (*)
+ * Provides secure CORS handling for different endpoint types:
+ * - Internal endpoints: Restricted to CLIENT_URL only
+ * - External webhooks: Allow specific trusted origins (ElevenLabs, Stripe, Twilio)
  */
 
-// Allowed origins - add your domains here
 const ALLOWED_ORIGINS = [
-  // Production domains
-  'https://restaurant-ai-mcp.vercel.app',
-  'https://seatable.vercel.app',
-
-  // Development domains
+  process.env.CLIENT_URL || 'http://localhost:5173',
+  'http://localhost:5173',
+  'http://localhost:5174',
   'http://localhost:8086',
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://127.0.0.1:8086',
-  'http://127.0.0.1:3000',
-  'http://127.0.0.1:3001',
+  'https://restaurant-ai-mcp.vercel.app'
 ];
 
-// Methods allowed for CORS requests
-const ALLOWED_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
-
-// Headers allowed in requests
-const ALLOWED_HEADERS = [
-  'Content-Type',
-  'Authorization',
-  'X-Requested-With',
-  'Accept',
-  'Origin',
-  'X-Request-ID',
-];
-
-// Headers exposed to the client
-const EXPOSED_HEADERS = [
-  'X-Request-ID',
-  'X-RateLimit-Limit',
-  'X-RateLimit-Remaining',
-  'X-RateLimit-Reset',
+// Trusted webhook origins (these services call our webhooks)
+const WEBHOOK_ORIGINS = [
+  'https://api.elevenlabs.io',
+  'https://api.stripe.com',
+  'https://api.twilio.com'
 ];
 
 /**
- * Check if origin is allowed
- * @param {string} origin - Request origin
- * @returns {boolean} Whether origin is allowed
+ * Set CORS headers for internal API endpoints
+ * Only allows requests from trusted client origins
  */
-function isOriginAllowed(origin) {
-  if (!origin) return false;
-
-  // Check exact match
-  if (ALLOWED_ORIGINS.includes(origin)) {
-    return true;
-  }
-
-  // Check Vercel preview deployments
-  if (origin.match(/^https:\/\/restaurant-ai-mcp-[a-z0-9]+-[a-z0-9]+\.vercel\.app$/)) {
-    return true;
-  }
-
-  // Check Seatable preview deployments
-  if (origin.match(/^https:\/\/seatable-[a-z0-9]+-[a-z0-9]+\.vercel\.app$/)) {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Get CORS headers for a request
- * @param {string} origin - Request origin
- * @returns {object} CORS headers object
- */
-function getCorsHeaders(origin) {
-  const headers = {
-    'Access-Control-Allow-Methods': ALLOWED_METHODS.join(', '),
-    'Access-Control-Allow-Headers': ALLOWED_HEADERS.join(', '),
-    'Access-Control-Expose-Headers': EXPOSED_HEADERS.join(', '),
-    'Access-Control-Max-Age': '86400', // 24 hours
-    'Access-Control-Allow-Credentials': 'true',
-  };
-
-  // Only set allowed origin if it's valid
-  if (isOriginAllowed(origin)) {
-    headers['Access-Control-Allow-Origin'] = origin;
-  }
-
-  return headers;
-}
-
-/**
- * CORS middleware for Vercel serverless functions
- * @param {object} req - Request object
- * @param {object} res - Response object
- * @returns {boolean} True if this was a preflight request (OPTIONS)
- */
-function corsMiddleware(req, res) {
+function setInternalCors(req, res) {
   const origin = req.headers.origin;
-  const corsHeaders = getCorsHeaders(origin);
 
-  // Set CORS headers
-  Object.entries(corsHeaders).forEach(([key, value]) => {
-    res.setHeader(key, value);
-  });
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (!origin) {
+    // Allow same-origin requests (no origin header) and server-to-server
+    res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGINS[0]);
+  }
 
-  // Handle preflight requests
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Customer-Email');
+}
+
+/**
+ * Set CORS headers for external webhook endpoints
+ * These need to accept requests from third-party services
+ */
+function setWebhookCors(req, res) {
+  const origin = req.headers.origin;
+
+  // For webhooks, we need to be more permissive since services like ElevenLabs
+  // may not send an origin header, or may send from various subdomains
+  if (origin && (ALLOWED_ORIGINS.includes(origin) || WEBHOOK_ORIGINS.some(wo => origin.includes(wo)))) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    // Webhooks often don't have origin headers - allow for server-to-server calls
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Called-Number, X-Caller-Number, Stripe-Signature, X-Twilio-Signature');
+}
+
+/**
+ * Handle OPTIONS preflight request
+ * @returns {boolean} true if this was a preflight request that was handled
+ */
+function handlePreflight(req, res) {
   if (req.method === 'OPTIONS') {
-    res.status(204).end();
+    res.status(200).end();
     return true;
   }
-
   return false;
-}
-
-/**
- * Apply CORS headers directly to response (for manual use)
- * @param {object} req - Request object
- * @param {object} res - Response object
- */
-function applyCorsHeaders(req, res) {
-  const origin = req.headers.origin;
-  const corsHeaders = getCorsHeaders(origin);
-
-  Object.entries(corsHeaders).forEach(([key, value]) => {
-    res.setHeader(key, value);
-  });
 }
 
 module.exports = {
-  ALLOWED_ORIGINS,
-  ALLOWED_METHODS,
-  ALLOWED_HEADERS,
-  isOriginAllowed,
-  getCorsHeaders,
-  corsMiddleware,
-  applyCorsHeaders,
+  setInternalCors,
+  setWebhookCors,
+  handlePreflight,
+  ALLOWED_ORIGINS
 };

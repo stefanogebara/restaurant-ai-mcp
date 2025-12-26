@@ -15,14 +15,14 @@ const {
 
 const { logCustomerShowedUp, logCustomerCancelled } = require('./ml/data-logger');
 const { validateServiceRecord, sanitizeInput } = require('./_lib/validation');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // Use secure CORS for internal dashboard endpoints
+  setInternalCors(req, res);
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).json({ success: true });
+  if (handlePreflight(req, res)) {
+    return;
   }
 
   const { action } = req.query;

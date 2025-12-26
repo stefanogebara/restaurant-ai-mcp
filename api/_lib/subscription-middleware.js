@@ -7,6 +7,39 @@
 
 const { getSubscriptionByEmail } = require('./airtable');
 const { hasFeature, checkReservationLimit, getUpgradeMessage } = require('../services/subscription-limits');
+const { createClient } = require('@supabase/supabase-js');
+
+// Initialize Supabase for reservation counting
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
+);
+
+/**
+ * Get the count of reservations for the current month
+ * @param {string} customerEmail - Customer email to count reservations for
+ * @returns {Promise<number>} Count of reservations this month
+ */
+async function getMonthlyReservationCount(customerEmail) {
+  const now = new Date();
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+  const { count, error } = await supabase
+    .from('reservations')
+    .select('*', { count: 'exact', head: true })
+    .eq('customer_email', customerEmail)
+    .gte('date', firstDayOfMonth)
+    .lte('date', lastDayOfMonth)
+    .in('status', ['Confirmed', 'Seated', 'Completed']);
+
+  if (error) {
+    console.error('[SubscriptionMiddleware] Error counting reservations:', error);
+    return 0;
+  }
+
+  return count || 0;
+}
 
 /**
  * Middleware to check if user has an active subscription
@@ -118,9 +151,7 @@ async function checkReservationLimits(req, res, next) {
     }
 
     // For Basic plan, check monthly reservation count
-    // TODO: Implement actual monthly reservation count query
-    // For now, we'll allow all reservations
-    const currentMonthReservations = 0; // Placeholder
+    const currentMonthReservations = await getMonthlyReservationCount(req.customerEmail);
 
     const limitCheck = checkReservationLimit(plan, currentMonthReservations);
 

@@ -14,6 +14,7 @@
 
 const fetch = require('node-fetch');
 const { createClient } = require('@supabase/supabase-js');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -22,13 +23,11 @@ const supabase = createClient(
 );
 
 module.exports = async (req, res) => {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // Use secure CORS for internal API endpoints
+  setInternalCors(req, res);
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+  if (handlePreflight(req, res)) {
+    return;
   }
 
   const action = req.query.action || req.body?.action;

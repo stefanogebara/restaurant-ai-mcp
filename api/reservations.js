@@ -20,6 +20,9 @@ const { logReservationCreated, logCustomerCancelled } = require('./ml/data-logge
 // Twilio for SMS confirmations
 const twilio = require('twilio');
 
+// CORS utility for secure cross-origin requests
+const { setWebhookCors, handlePreflight } = require('./_lib/cors');
+
 // ============================================================================
 // SMS CONFIRMATION HELPER
 // ============================================================================
@@ -72,13 +75,11 @@ async function sendReservationConfirmationSMS(customerPhone, reservationDetails)
 }
 
 module.exports = async (req, res) => {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // Use webhook CORS since this is called by ElevenLabs and client
+  setWebhookCors(req, res);
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).json({ message: 'OK' });
+  if (handlePreflight(req, res)) {
+    return;
   }
 
   const { action } = req.query;
