@@ -20,6 +20,14 @@ const { getRestaurantByPhone, getRestaurantById } = require('./_lib/restaurant-l
 const conversationLogger = require('./services/conversationLogger');
 const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 
+// Multi-tenant imports for WhatsApp routing
+const { getRestaurantByName, getAllActiveRestaurants } = require('./_lib/restaurant-registry');
+const { getRestaurantClient } = require('./_lib/multi-tenant-supabase');
+const { getOrCreateSession, setSessionRestaurant, getSessionByPhone } = require('./_lib/whatsapp-sessions');
+
+// Check if multi-tenant mode is enabled
+const MULTI_TENANT_MODE = process.env.MULTI_TENANT_MODE === 'true';
+
 module.exports = async (req, res) => {
   // Set CORS headers for ElevenLabs webhook (external service)
   setWebhookCors(req, res);
@@ -67,7 +75,7 @@ module.exports = async (req, res) => {
     req.conversation_id = conversationId;
 
     // ===== RESTAURANT ROUTING =====
-    // Some actions (like get_current_datetime) don't need restaurant context
+    // Some actions (like get_current_datetime, identify_restaurant) don't need restaurant context upfront
     const actionsRequiringRestaurant = [
       'check_availability',
       'create_reservation',
@@ -77,6 +85,9 @@ module.exports = async (req, res) => {
       'get_wait_time'
     ];
 
+    // Actions that handle their own restaurant identification (multi-tenant mode)
+    const multiTenantActions = ['identify_restaurant'];
+
     let restaurant = null;
 
     // Only look up restaurant if action requires it
@@ -84,9 +95,39 @@ module.exports = async (req, res) => {
       // Try multiple methods to identify which restaurant is being called
       const calledNumber = req.headers['x-called-number'] || req.query.phone || req.body?.phone;
       const restaurantId = req.query.restaurant_id || req.body?.restaurant_id;
+      const senderPhone = req.headers['x-caller-number'] || req.body?.sender_phone || req.body?.caller_phone;
 
-      // Method 1: Look up by phone number (preferred)
-      if (calledNumber) {
+      // Method 0: Multi-tenant session lookup (for WhatsApp)
+      if (MULTI_TENANT_MODE && senderPhone) {
+        try {
+          console.log(`[ElevenLabs] Multi-tenant mode: Checking session for ${senderPhone}`);
+          const session = await getSessionByPhone(senderPhone);
+
+          if (session && session.restaurant_confirmed && session.restaurant) {
+            console.log(`[ElevenLabs] ✅ Found session with restaurant: ${session.restaurant.restaurant_name}`);
+            // Use the multi-tenant client for this restaurant
+            req.multiTenantClient = getRestaurantClient(session.restaurant);
+            req.multiTenantRestaurant = session.restaurant;
+            req.session = session;
+
+            // Create a compatible restaurant object for existing handlers
+            restaurant = {
+              id: session.restaurant.id,
+              name: session.restaurant.restaurant_name,
+              language: session.restaurant.language || 'en',
+              voice_id: session.restaurant.voice_id,
+              // These will need to be loaded from the restaurant's own database
+              business_hours: {},
+              table_configuration: []
+            };
+          }
+        } catch (error) {
+          console.error(`[ElevenLabs] Multi-tenant session lookup error:`, error.message);
+        }
+      }
+
+      // Method 1: Look up by phone number (preferred - single-tenant mode)
+      if (!restaurant && calledNumber) {
         try {
           console.log(`[ElevenLabs] Looking up restaurant by phone: ${calledNumber}`);
           restaurant = await getRestaurantByPhone(calledNumber);
@@ -107,15 +148,25 @@ module.exports = async (req, res) => {
         }
       }
 
-      // If no restaurant found, return error
+      // If no restaurant found, check if we should ask user in multi-tenant mode
       if (!restaurant) {
-        console.log('[ElevenLabs] ⚠️ No restaurant identified - please provide phone number or restaurant_id');
-        return res.status(200).json({
-          success: false,
-          error: 'Restaurant not identified',
-          message: 'Unable to determine which restaurant you are calling. Please check your configuration.',
-          help: 'Provide either X-Called-Number header, phone query param, or restaurant_id'
-        });
+        if (MULTI_TENANT_MODE) {
+          console.log('[ElevenLabs] Multi-tenant mode: No restaurant in session - ask user to identify');
+          return res.status(200).json({
+            success: false,
+            error: 'No restaurant selected',
+            message: 'Please tell me which restaurant you would like to make a reservation at.',
+            requires_restaurant_identification: true
+          });
+        } else {
+          console.log('[ElevenLabs] ⚠️ No restaurant identified - please provide phone number or restaurant_id');
+          return res.status(200).json({
+            success: false,
+            error: 'Restaurant not identified',
+            message: 'Unable to determine which restaurant you are calling. Please check your configuration.',
+            help: 'Provide either X-Called-Number header, phone query param, or restaurant_id'
+          });
+        }
       }
 
       // Store restaurant in request for use in handlers
@@ -124,19 +175,25 @@ module.exports = async (req, res) => {
 
     if (!action) {
       console.log('[ElevenLabs] No action specified');
+      const availableActions = [
+        'check_availability',
+        'create_reservation',
+        'lookup_reservation',
+        'modify_reservation',
+        'cancel_reservation',
+        'get_wait_time',
+        'get_current_datetime'
+      ];
+      // Add multi-tenant actions if enabled
+      if (MULTI_TENANT_MODE) {
+        availableActions.unshift('identify_restaurant');
+      }
       return res.status(200).json({
         success: false,
         error: 'No action specified',
         message: 'Please specify an action parameter',
-        available_actions: [
-          'check_availability',
-          'create_reservation',
-          'lookup_reservation',
-          'modify_reservation',
-          'cancel_reservation',
-          'get_wait_time',
-          'get_current_datetime'
-        ]
+        available_actions: availableActions,
+        multi_tenant_mode: MULTI_TENANT_MODE
       });
     }
 
@@ -165,21 +222,28 @@ module.exports = async (req, res) => {
       case 'get_wait_time':
         return await handleGetWaitTime(req, res);
 
+      case 'identify_restaurant':
+        return await handleIdentifyRestaurant(req, res);
+
       default:
         console.log(`[ElevenLabs] Unknown action: ${action}`);
+        const defaultAvailableActions = [
+          'check_availability',
+          'create_reservation',
+          'lookup_reservation',
+          'modify_reservation',
+          'cancel_reservation',
+          'get_wait_time',
+          'get_current_datetime'
+        ];
+        if (MULTI_TENANT_MODE) {
+          defaultAvailableActions.unshift('identify_restaurant');
+        }
         return res.status(200).json({
           success: false,
           error: 'Unknown action',
           message: `Action '${action}' is not supported`,
-          available_actions: [
-            'check_availability',
-            'create_reservation',
-            'lookup_reservation',
-            'modify_reservation',
-            'cancel_reservation',
-            'get_wait_time',
-            'get_current_datetime'
-          ]
+          available_actions: defaultAvailableActions
         });
     }
   } catch (error) {
@@ -618,4 +682,132 @@ async function handleCancelReservation(req, res) {
 async function handleGetWaitTime(req, res) {
   const waitTimeHandler = require('./get-wait-time');
   return waitTimeHandler(req, res);
+}
+
+/**
+ * Handle restaurant identification for multi-tenant WhatsApp routing
+ * This action is called first to identify which restaurant the customer wants to book at
+ */
+async function handleIdentifyRestaurant(req, res) {
+  const data = req.method === 'POST' ? req.body : req.query;
+  const {
+    restaurant_name,
+    sender_phone,
+    conversation_id
+  } = data;
+
+  console.log('[ElevenLabs] identify_restaurant called:', { restaurant_name, sender_phone, conversation_id });
+
+  // Validate multi-tenant mode is enabled
+  if (!MULTI_TENANT_MODE) {
+    return res.status(200).json({
+      success: false,
+      error: 'Multi-tenant mode not enabled',
+      message: 'Restaurant identification is not available in single-tenant mode.'
+    });
+  }
+
+  try {
+    // Get or create session for this sender
+    const session = await getOrCreateSession(sender_phone, conversation_id);
+
+    if (!session) {
+      return res.status(200).json({
+        success: false,
+        error: 'Session error',
+        message: 'Unable to create conversation session. Please try again.'
+      });
+    }
+
+    // If session already has a confirmed restaurant, return it
+    if (session.restaurant_confirmed && session.restaurant) {
+      console.log(`[ElevenLabs] Session already has restaurant: ${session.restaurant.restaurant_name}`);
+      return res.status(200).json({
+        success: true,
+        restaurant_identified: true,
+        restaurant_name: session.restaurant.restaurant_name,
+        restaurant_id: session.restaurant.id,
+        message: `Continuing with ${session.restaurant.restaurant_name}. How can I help you with your reservation?`
+      });
+    }
+
+    // If no restaurant name provided, ask for it
+    if (!restaurant_name) {
+      const allRestaurants = await getAllActiveRestaurants();
+      const restaurantList = allRestaurants.map(r => r.restaurant_name).join(', ');
+
+      return res.status(200).json({
+        success: false,
+        restaurant_identified: false,
+        needs_restaurant_name: true,
+        message: `Which restaurant would you like to make a reservation at? Available restaurants: ${restaurantList || 'Please contact support to configure restaurants.'}`,
+        available_restaurants: allRestaurants.map(r => r.restaurant_name)
+      });
+    }
+
+    // Try to match the restaurant name
+    const matchResult = await getRestaurantByName(restaurant_name);
+
+    // High confidence match (exact or very similar)
+    if (matchResult.match && matchResult.confidence >= 0.8) {
+      // Set the session restaurant
+      const updatedSession = await setSessionRestaurant(session.id, matchResult.match.id);
+
+      console.log(`[ElevenLabs] Restaurant identified: ${matchResult.match.restaurant_name} (confidence: ${matchResult.confidence})`);
+
+      return res.status(200).json({
+        success: true,
+        restaurant_identified: true,
+        restaurant_name: matchResult.match.restaurant_name,
+        restaurant_id: matchResult.match.id,
+        confidence: matchResult.confidence,
+        message: `Great! I'll help you with your reservation at ${matchResult.match.restaurant_name}. What date and time would you like to book?`
+      });
+    }
+
+    // Medium confidence - confirm with user
+    if (matchResult.match && matchResult.confidence >= 0.5) {
+      return res.status(200).json({
+        success: false,
+        restaurant_identified: false,
+        needs_confirmation: true,
+        suggested_restaurant: matchResult.match.restaurant_name,
+        confidence: matchResult.confidence,
+        message: `Did you mean ${matchResult.match.restaurant_name}? Please confirm or tell me the correct restaurant name.`
+      });
+    }
+
+    // Multiple possible matches - ask user to choose
+    if (matchResult.needsDisambiguation && matchResult.matches) {
+      const options = matchResult.matches.map(m => m.restaurant_name).slice(0, 5);
+
+      return res.status(200).json({
+        success: false,
+        restaurant_identified: false,
+        needs_clarification: true,
+        possible_matches: options,
+        message: `I found several restaurants matching "${restaurant_name}": ${options.join(', ')}. Which one did you mean?`
+      });
+    }
+
+    // No match found
+    const allRestaurants = await getAllActiveRestaurants();
+    const restaurantList = allRestaurants.map(r => r.restaurant_name).slice(0, 10).join(', ');
+
+    return res.status(200).json({
+      success: false,
+      restaurant_identified: false,
+      not_found: true,
+      message: `I couldn't find a restaurant called "${restaurant_name}". Available restaurants: ${restaurantList || 'No restaurants configured.'}`,
+      available_restaurants: allRestaurants.map(r => r.restaurant_name)
+    });
+
+  } catch (error) {
+    console.error('[ElevenLabs] identify_restaurant error:', error);
+    return res.status(200).json({
+      success: false,
+      error: true,
+      message: 'Unable to identify restaurant at this time. Please try again or call us directly.'
+    });
+  }
 }
