@@ -64,7 +64,7 @@ module.exports = async (req, res) => {
             agent: {
               prompt: {
                 prompt: systemPrompt,
-                llm: 'gemini-2.5-flash'
+                llm: 'gpt-4o-mini'
               },
               first_message: firstMessage,
               language: language,
@@ -145,7 +145,7 @@ module.exports = async (req, res) => {
           agent: {
             prompt: {
               prompt: systemPrompt,
-              llm: 'gemini-2.5-flash'  // Supports multilingual agents
+              llm: 'gpt-4o-mini'  // Works for all languages
             },
             first_message: firstMessage,
             language: language,
