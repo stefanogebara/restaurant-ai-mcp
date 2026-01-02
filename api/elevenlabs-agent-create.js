@@ -52,7 +52,7 @@ module.exports = async (req, res) => {
       agentName = 'Seatable Multi-Restaurant AI';
 
       // Create multi-tenant agent
-      // Use the correct API structure based on ElevenLabs documentation
+      // Use the same structure as single-tenant (which works)
       const agentResponse = await fetch('https://api.elevenlabs.io/v1/convai/agents/create', {
         method: 'POST',
         headers: {
@@ -61,17 +61,25 @@ module.exports = async (req, res) => {
         },
         body: JSON.stringify({
           name: agentName,
-          voice_id: defaultVoiceId,  // Required at top level
-          tts_config: {
-            model_id: 'eleven_flash_v2'  // English-only, required for English agents
-          },
           conversation_config: {
             agent: {
-              first_message: firstMessage,
               prompt: {
-                prompt: systemPrompt
+                prompt: systemPrompt,
+                llm: 'gpt-4-turbo'  // Same as single-tenant
               },
+              first_message: firstMessage,
+              language: language,
               tools: tools
+            },
+            tts: {
+              voice_id: defaultVoiceId,
+              model_id: 'eleven_turbo_v2_5'  // Same as single-tenant
+            }
+          },
+          platform_settings: {
+            widget_config: {
+              avatar_url: 'https://restaurant-ai-mcp.vercel.app/logo.png',
+              title: 'Seatable Multi-Restaurant AI'
             }
           }
         })
