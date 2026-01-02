@@ -532,6 +532,8 @@ async function handleCreateReservation(req, res) {
     }
 
     // Delegate to the reservations endpoint
+    // Set the action expected by the reservations handler
+    req.query.action = 'create';
     const reservationsHandler = require('./reservations');
 
     // Intercept response to log outcome
@@ -670,6 +672,8 @@ async function handleLookupReservation(req, res) {
 }
 
 async function handleModifyReservation(req, res) {
+  // Set the action expected by the reservations handler
+  req.query.action = 'modify';
   const reservationsHandler = require('./reservations');
   return reservationsHandler(req, res);
 }
