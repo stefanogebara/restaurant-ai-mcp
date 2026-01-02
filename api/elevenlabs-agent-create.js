@@ -64,7 +64,7 @@ module.exports = async (req, res) => {
             agent: {
               prompt: {
                 prompt: systemPrompt,
-                llm: 'gpt-4o-mini'
+                llm: 'gpt-4-turbo'
               },
               first_message: firstMessage,
               language: language,
@@ -72,7 +72,7 @@ module.exports = async (req, res) => {
             },
             tts: {
               voice_id: defaultVoiceId,
-              model_id: 'eleven_turbo_v2_5'
+              model_id: 'eleven_flash_v2_5'
             }
           },
           platform_settings: {
@@ -145,7 +145,7 @@ module.exports = async (req, res) => {
           agent: {
             prompt: {
               prompt: systemPrompt,
-              llm: 'gpt-4o-mini'  // Works for all languages
+              llm: 'gpt-4-turbo'  // Works for all languages
             },
             first_message: firstMessage,
             language: language,
