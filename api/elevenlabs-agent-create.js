@@ -51,8 +51,9 @@ module.exports = async (req, res) => {
       tools = buildAgentTools(baseUrl, null, true);  // null restaurant_id, multiTenantMode=true
       agentName = 'Seatable Multi-Restaurant AI';
 
-      // Create multi-tenant agent using the newer API endpoint
-      const agentResponse = await fetch('https://api.elevenlabs.io/v1/conversational_ai/agents', {
+      // Create multi-tenant agent
+      // Use the correct API structure based on ElevenLabs documentation
+      const agentResponse = await fetch('https://api.elevenlabs.io/v1/convai/agents/create', {
         method: 'POST',
         headers: {
           'xi-api-key': process.env.ELEVENLABS_API_KEY,
@@ -60,12 +61,11 @@ module.exports = async (req, res) => {
         },
         body: JSON.stringify({
           name: agentName,
-          tags: ['multi-tenant', 'seatable'],
+          voice_id: defaultVoiceId,  // Required at top level
+          tts_config: {
+            model_id: 'eleven_flash_v2'  // English-only, required for English agents
+          },
           conversation_config: {
-            tts: {
-              voice_id: defaultVoiceId,
-              model_id: 'eleven_flash_v2'  // English-only, fastest model
-            },
             agent: {
               first_message: firstMessage,
               prompt: {
