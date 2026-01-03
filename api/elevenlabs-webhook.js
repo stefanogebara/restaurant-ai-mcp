@@ -519,76 +519,143 @@ async function handleCheckAvailability(req, res) {
 async function handleCreateReservation(req, res) {
   const conversationId = req.conversation_id;
   const startTime = Date.now();
+  const { validateReservation, buildVoiceConfirmation } = require('./_lib/reservation-validator');
 
   try {
+    const data = req.method === 'POST' ? req.body : req.query;
+    const { date, time, party_size, customer_name, customer_phone, customer_email, special_requests } = data;
+
+    // Get restaurant from session (multi-tenant) or request
+    const restaurant = req.multiTenantRestaurant || req.restaurant || {};
+    const restaurantName = restaurant.restaurant_name || 'the restaurant';
+
+    console.log(`[CreateReservation] Processing for ${restaurantName}:`, { date, time, party_size, customer_name });
+
     // Log tool call start
     if (conversationId) {
       await conversationLogger.logToolCall(conversationId, {
         tool_name: 'create_reservation',
-        parameters: req.body,
-        success: null, // Will update after completion
+        parameters: { ...data, restaurant_name: restaurantName },
+        success: null,
         timestamp: new Date().toISOString()
       });
     }
 
-    // Delegate to the reservations endpoint
-    // Set the action expected by the reservations handler
+    // Validate required fields
+    if (!date || !time || !party_size || !customer_name || !customer_phone) {
+      return res.status(200).json({
+        success: false,
+        error: 'missing_fields',
+        message: `I need a few more details to complete your reservation at ${restaurantName}. Please provide the date, time, party size, your name, and phone number.`
+      });
+    }
+
+    // Validate reservation against restaurant configuration
+    const validation = validateReservation({ date, time, party_size }, restaurant);
+
+    if (!validation.valid) {
+      console.log(`[CreateReservation] Validation failed:`, validation.errors);
+      return res.status(200).json({
+        success: false,
+        error: validation.errors[0].code,
+        message: validation.message,
+        restaurant_name: restaurantName
+      });
+    }
+
+    // Check availability before creating
+    const { checkTimeSlotAvailability } = require('./_lib/availability-calculator');
+    const { getReservations, canAccommodateParty } = require('./_lib/supabase');
+
+    // Get existing reservations for the date
+    const filter = `AND(IS_SAME({Date}, '${date}', 'day'), OR({Status} = 'Confirmed', {Status} = 'Seated'))`;
+    const reservationsResult = await getReservations(filter);
+    const existingReservations = reservationsResult.success ? (reservationsResult.data.records || []) : [];
+
+    // Check if we can accommodate
+    const accommodationCheck = await canAccommodateParty(parseInt(party_size));
+    if (!accommodationCheck.can_accommodate) {
+      return res.status(200).json({
+        success: false,
+        error: 'no_availability',
+        message: `Sorry, ${restaurantName} cannot accommodate a party of ${party_size} at ${time} on that date. Would you like to try a different time or date?`,
+        restaurant_name: restaurantName
+      });
+    }
+
+    // Create the reservation
     req.query.action = 'create';
     const reservationsHandler = require('./reservations');
 
-    // Intercept response to log outcome
+    // Intercept response to add restaurant name and enhanced confirmation
     const originalJson = res.json.bind(res);
-    res.json = async function(data) {
-      const success = data.success === true;
+    res.json = async function(responseData) {
+      const success = responseData.message && responseData.message.includes('confirmed');
       const duration = Math.floor((Date.now() - startTime) / 1000);
 
-      // Log tool call result
+      // Extract reservation ID from message if present
+      const reservationIdMatch = responseData.message?.match(/RES-[A-Za-z0-9-]+/);
+      const reservationId = reservationIdMatch ? reservationIdMatch[0] : null;
+
+      if (success && reservationId) {
+        // Build enhanced confirmation with restaurant name
+        const confirmationMessage = buildVoiceConfirmation(
+          { customer_name, party_size, date, time, special_requests },
+          restaurant,
+          reservationId
+        );
+
+        // Log success
+        if (conversationId) {
+          await conversationLogger.logToolCall(conversationId, {
+            tool_name: 'create_reservation',
+            parameters: { ...data, restaurant_name: restaurantName },
+            success: true,
+            result: { reservation_id: reservationId }
+          });
+
+          await conversationLogger.endConversation(conversationId, {
+            outcome: 'reservation_created',
+            reservation_id: reservationId,
+            restaurant_name: restaurantName,
+            customer_name,
+            party_size,
+            requested_date: date,
+            requested_time: time,
+            successful_booking: true,
+            duration_seconds: duration,
+            summary: `Reservation at ${restaurantName} for ${customer_name}, party of ${party_size} on ${date} at ${time}`
+          });
+        }
+
+        return originalJson({
+          success: true,
+          reservation_id: reservationId,
+          restaurant_name: restaurantName,
+          message: confirmationMessage
+        });
+      }
+
+      // Log failure
       if (conversationId) {
         await conversationLogger.logToolCall(conversationId, {
           tool_name: 'create_reservation',
-          parameters: req.body,
-          success,
-          result: success ? data : undefined,
-          error_message: success ? undefined : data.error || data.message
+          parameters: data,
+          success: false,
+          error_message: responseData.message
         });
-
-        // If reservation successful, update conversation with reservation details
-        if (success && data.reservation_id) {
-          await conversationLogger.updateConversation(conversationId, {
-            outcome: 'reservation_created',
-            reservation_id: data.reservation_id,
-            customer_name: req.body.customer_name,
-            customer_email: req.body.customer_email,
-            party_size: req.body.party_size,
-            requested_date: req.body.date,
-            requested_time: req.body.time,
-            successful_booking: true
-          });
-
-          // End conversation (reservation created = conversation complete)
-          await conversationLogger.endConversation(conversationId, {
-            outcome: 'reservation_created',
-            reservation_id: data.reservation_id,
-            customer_name: req.body.customer_name,
-            customer_email: req.body.customer_email,
-            party_size: req.body.party_size,
-            requested_date: req.body.date,
-            requested_time: req.body.time,
-            successful_booking: true,
-            customer_sentiment: 'positive',
-            duration_seconds: duration,
-            summary: `Reservation created for ${req.body.customer_name}, party of ${req.body.party_size} on ${req.body.date} at ${req.body.time}`
-          });
-        }
       }
 
-      return originalJson(data);
+      return originalJson({
+        ...responseData,
+        restaurant_name: restaurantName
+      });
     };
 
     return reservationsHandler(req, res);
 
   } catch (error) {
-    // Log error
+    console.error('[CreateReservation] Error:', error);
     if (conversationId) {
       await conversationLogger.logToolCall(conversationId, {
         tool_name: 'create_reservation',
@@ -597,7 +664,11 @@ async function handleCreateReservation(req, res) {
         error_message: error.message
       });
     }
-    throw error;
+    return res.status(200).json({
+      success: false,
+      error: true,
+      message: 'I apologize, but something went wrong. Please try again or call us directly.'
+    });
   }
 }
 
