@@ -465,14 +465,21 @@ module.exports = async (req, res) => {
     const token = req.query['hub.verify_token'];
     const challenge = req.query['hub.challenge'];
 
-    console.log('[WhatsApp] Verification request:', { mode, token: token?.substring(0, 10) + '...' });
+    const expectedToken = process.env.WHATSAPP_VERIFY_TOKEN;
+    console.log('[WhatsApp] Verification request:', {
+      mode,
+      receivedToken: token?.substring(0, 10) + '...',
+      expectedTokenSet: !!expectedToken,
+      expectedTokenLength: expectedToken?.length,
+      tokensMatch: token === expectedToken
+    });
 
-    if (mode === 'subscribe' && token === process.env.WHATSAPP_VERIFY_TOKEN) {
+    if (mode === 'subscribe' && token === expectedToken) {
       console.log('[WhatsApp] Webhook verified successfully');
       return res.status(200).send(challenge);
     }
 
-    console.error('[WhatsApp] Verification failed');
+    console.error('[WhatsApp] Verification failed - mode:', mode, 'tokenMatch:', token === expectedToken);
     return res.status(403).json({ error: 'Verification failed' });
   }
 
