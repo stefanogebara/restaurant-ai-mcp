@@ -12,6 +12,7 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
     "@cartesia/cartesia-js": "^2.2.9",
     "@google-cloud/vertexai": "^1.10.0",
     "@sentry/node": "^10.22.0",
