@@ -3,9 +3,11 @@
  *
  * Creates and caches Supabase clients for specific restaurants.
  * Uses a connection pool with TTL to manage resources efficiently.
+ * Falls back to central Supabase when restaurant-specific credentials aren't available.
  */
 
 const { createClient } = require('@supabase/supabase-js');
+const { centralSupabase } = require('./central-supabase');
 
 // Connection pool cache with timestamps
 const connectionPool = new Map();
@@ -18,13 +20,18 @@ const MAX_POOL_SIZE = 50;
 
 /**
  * Get or create a Supabase client for a specific restaurant
- * @param {object} restaurant - Restaurant record with supabase_url and supabase_service_role_key
- * @returns {object} Supabase client
+ * @param {object} restaurant - Restaurant record with optional supabase_url and supabase_service_role_key
+ * @returns {object} Supabase client (restaurant-specific or central fallback)
  */
 function getRestaurantClient(restaurant) {
+  // If restaurant doesn't have its own credentials, use central Supabase
   if (!restaurant || !restaurant.supabase_url || !restaurant.supabase_service_role_key) {
-    console.error('[MultiTenantSupabase] Invalid restaurant credentials');
-    throw new Error('Restaurant database credentials not available');
+    console.log('[MultiTenantSupabase] Restaurant credentials not available, using central Supabase');
+    if (!centralSupabase) {
+      console.error('[MultiTenantSupabase] Central Supabase not configured');
+      throw new Error('Database connection not available');
+    }
+    return centralSupabase;
   }
 
   const cacheKey = restaurant.id;
