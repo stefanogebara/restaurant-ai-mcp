@@ -405,26 +405,33 @@ Guidelines:
 
     // Handle tool use loop
     while (response.stop_reason === 'tool_use') {
-      const toolUseBlock = response.content.find(block => block.type === 'tool_use');
+      // Get ALL tool_use blocks from the response
+      const toolUseBlocks = response.content.filter(block => block.type === 'tool_use');
 
-      if (!toolUseBlock) break;
+      if (toolUseBlocks.length === 0) break;
 
-      const toolResult = await executeTool(toolUseBlock.name, toolUseBlock.input, session);
+      // Execute ALL tools and collect results
+      const toolResults = [];
+      for (const toolUseBlock of toolUseBlocks) {
+        const toolResult = await executeTool(toolUseBlock.name, toolUseBlock.input, session);
 
-      // If restaurant was identified, update session reference
-      if (toolUseBlock.name === 'identify_restaurant' && toolResult.found && toolResult.restaurant) {
-        session = await getSessionByPhone(session?.sender_phone);
-      }
+        // If restaurant was identified, update session reference
+        if (toolUseBlock.name === 'identify_restaurant' && toolResult.found && toolResult.restaurant) {
+          session = await getSessionByPhone(session?.sender_phone);
+        }
 
-      // Continue conversation with tool result
-      messages.push({ role: 'assistant', content: response.content });
-      messages.push({
-        role: 'user',
-        content: [{
+        toolResults.push({
           type: 'tool_result',
           tool_use_id: toolUseBlock.id,
           content: JSON.stringify(toolResult)
-        }]
+        });
+      }
+
+      // Continue conversation with ALL tool results
+      messages.push({ role: 'assistant', content: response.content });
+      messages.push({
+        role: 'user',
+        content: toolResults
       });
 
       response = await anthropic.messages.create({
@@ -521,10 +528,20 @@ module.exports = async (req, res) => {
         }
 
         // Process message with Claude
-        const response = await processWithClaude(messageText, session);
+        console.log(`[WhatsApp] Processing message with Claude for session: ${session.id}`);
+        let response;
+        try {
+          response = await processWithClaude(messageText, session);
+          console.log(`[WhatsApp] Claude response received: ${response?.substring(0, 100)}...`);
+        } catch (claudeError) {
+          console.error('[WhatsApp] Claude processing error:', claudeError);
+          response = 'Sorry, I had trouble processing your message. Please try again.';
+        }
 
         // Send response back via WhatsApp
-        await sendWhatsAppMessage(from, response);
+        console.log(`[WhatsApp] Sending response to ${from}`);
+        const sendResult = await sendWhatsAppMessage(from, response);
+        console.log(`[WhatsApp] Send result:`, JSON.stringify(sendResult));
 
         return res.status(200).json({ status: 'ok' });
       }
