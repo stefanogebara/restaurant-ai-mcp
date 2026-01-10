@@ -230,8 +230,8 @@ async function executeTool(toolName, toolInput, session) {
       }
 
       try {
-        // Call the multi-tenant availability check
-        const client = await getMultiTenantClient(session.restaurant.id);
+        // Call the multi-tenant availability check - pass full restaurant object
+        const client = getMultiTenantClient(session.restaurant);
         if (!client) {
           return { success: false, error: 'Could not connect to restaurant database' };
         }
@@ -291,7 +291,8 @@ async function executeTool(toolName, toolInput, session) {
       }
 
       try {
-        const client = await getMultiTenantClient(session.restaurant.id);
+        // Pass full restaurant object with credentials
+        const client = getMultiTenantClient(session.restaurant);
         if (!client) {
           return { success: false, error: 'Could not connect to restaurant database' };
         }
