@@ -9,7 +9,8 @@
   },
   "functions": {
     "api/**/*.js": {
-      "excludeFiles": "lambda/**"
+      "excludeFiles": "lambda/**",
+      "maxDuration": 60
     }
   },
   "rewrites": [

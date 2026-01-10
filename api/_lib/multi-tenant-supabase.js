@@ -157,6 +157,7 @@ function hasValidConnection(restaurantId) {
 
 module.exports = {
   getRestaurantClient,
+  getMultiTenantClient: getRestaurantClient, // Alias for backward compatibility
   getClientByCredentials,
   cleanupPool,
   clearConnectionPool,
