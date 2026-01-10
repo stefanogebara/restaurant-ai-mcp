@@ -75,6 +75,78 @@ async function sendWhatsAppMessage(to, message) {
 }
 
 /**
+ * Send a WhatsApp template message via Meta Cloud API
+ * Used for business-initiated messages (outside 24-hour window)
+ * Templates must be pre-approved in Meta Business Manager
+ *
+ * @param {string} to - Recipient phone number
+ * @param {string} templateName - Name of approved template (e.g., 'reservation_confirmed')
+ * @param {string} languageCode - Template language (e.g., 'en', 'es')
+ * @param {Array} bodyParameters - Array of strings for {{1}}, {{2}}, etc. placeholders
+ * @returns {object} Result with success status
+ */
+async function sendTemplateMessage(to, templateName, languageCode = 'en', bodyParameters = []) {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+
+  if (!phoneNumberId || !accessToken) {
+    console.error('[WhatsApp] Missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN');
+    return { success: false, error: 'WhatsApp not configured' };
+  }
+
+  try {
+    // Build template components
+    const components = [];
+
+    if (bodyParameters.length > 0) {
+      components.push({
+        type: 'body',
+        parameters: bodyParameters.map(param => ({
+          type: 'text',
+          text: String(param)
+        }))
+      });
+    }
+
+    const payload = {
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to: to,
+      type: 'template',
+      template: {
+        name: templateName,
+        language: { code: languageCode },
+        components: components
+      }
+    };
+
+    console.log(`[WhatsApp] Sending template '${templateName}' to ${to}:`, JSON.stringify(payload, null, 2));
+
+    const response = await fetch(`${WHATSAPP_API_URL}/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('[WhatsApp] Template send error:', data);
+      return { success: false, error: data.error?.message || 'Failed to send template' };
+    }
+
+    console.log(`[WhatsApp] Template '${templateName}' sent to ${to}, messageId: ${data.messages?.[0]?.id}`);
+    return { success: true, messageId: data.messages?.[0]?.id };
+  } catch (error) {
+    console.error('[WhatsApp] Template send exception:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Get current date/time in restaurant timezone
  */
 function getCurrentDateTime() {
@@ -324,6 +396,20 @@ async function executeTool(toolName, toolInput, session) {
           return { success: false, error: 'Could not create reservation' };
         }
 
+        // Optional: Send template confirmation message
+        // This is useful for formal confirmations or when outside 24h window
+        // Requires 'reservation_confirmed' template to be approved in Meta Business Manager
+        // Uncomment when template is ready:
+        /*
+        const templateResult = await sendTemplateMessage(
+          customer_phone,
+          'reservation_confirmed',
+          session.restaurant.language || 'en',
+          [customer_name, session.restaurant.restaurant_name, date, time, party_size.toString()]
+        );
+        console.log('[WhatsApp] Template confirmation result:', templateResult);
+        */
+
         return {
           success: true,
           message: `Reservation confirmed!`,
@@ -334,7 +420,9 @@ async function executeTool(toolName, toolInput, session) {
             time,
             party_size,
             customer_name
-          }
+          },
+          // Include phone for potential template use
+          customer_phone: customer_phone
         };
       } catch (err) {
         console.error('[WhatsApp] Create error:', err);
