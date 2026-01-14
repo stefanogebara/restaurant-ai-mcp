@@ -67,6 +67,10 @@
     {
       "path": "/api/cron/check-late-reservations",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/send-reminders",
+      "schedule": "0 9 * * *"
     }
   ]
 }

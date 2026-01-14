@@ -396,19 +396,34 @@ async function executeTool(toolName, toolInput, session) {
           return { success: false, error: 'Could not create reservation' };
         }
 
-        // Optional: Send template confirmation message
-        // This is useful for formal confirmations or when outside 24h window
-        // Requires 'reservation_confirmed' template to be approved in Meta Business Manager
-        // Uncomment when template is ready:
-        /*
+        // Send template confirmation message
+        // This provides formal confirmation and works outside the 24-hour window
+        // Template 'reservation_confirmed' must be approved in Meta Business Manager
+        const formattedDate = new Date(date).toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        const formattedTime = new Date(`2000-01-01 ${time}`).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+
         const templateResult = await sendTemplateMessage(
           customer_phone,
           'reservation_confirmed',
-          session.restaurant.language || 'en',
-          [customer_name, session.restaurant.restaurant_name, date, time, party_size.toString()]
+          'en',
+          [
+            customer_name,
+            session.restaurant.restaurant_name,
+            formattedDate,
+            formattedTime,
+            party_size.toString()
+          ]
         );
         console.log('[WhatsApp] Template confirmation result:', templateResult);
-        */
 
         return {
           success: true,
@@ -604,6 +619,58 @@ module.exports = async (req, res) => {
         // Only handle text messages for now
         if (messageType !== 'text') {
           await sendWhatsAppMessage(from, 'I can only process text messages at the moment. Please type your request.');
+          return res.status(200).json({ status: 'ok' });
+        }
+
+        // Handle template response keywords (MODIFY, CANCEL, CONFIRM, BOOK, HELP)
+        const normalizedText = messageText.trim().toUpperCase();
+        if (normalizedText === 'MODIFY') {
+          await sendWhatsAppMessage(from,
+            'To modify your reservation, please tell me:\n' +
+            '- Your name\n' +
+            '- What you\'d like to change (date, time, or party size)\n\n' +
+            'For example: "I\'m John Smith and I\'d like to change my reservation to 8pm"'
+          );
+          return res.status(200).json({ status: 'ok' });
+        }
+
+        if (normalizedText === 'CANCEL') {
+          await sendWhatsAppMessage(from,
+            'To cancel your reservation, please confirm by providing:\n' +
+            '- Your name\n' +
+            '- The date of your reservation\n\n' +
+            'For example: "Please cancel my reservation. I\'m John Smith, reservation was for January 15"'
+          );
+          return res.status(200).json({ status: 'ok' });
+        }
+
+        if (normalizedText === 'CONFIRM') {
+          await sendWhatsAppMessage(from,
+            'Great! Your reservation has been confirmed. We look forward to seeing you!\n\n' +
+            'Reply HELP if you need any assistance.'
+          );
+          return res.status(200).json({ status: 'ok' });
+        }
+
+        if (normalizedText === 'BOOK') {
+          await sendWhatsAppMessage(from,
+            'I\'d be happy to help you make a new reservation!\n\n' +
+            'Please tell me:\n' +
+            '- Which restaurant?\n' +
+            '- Date and time?\n' +
+            '- Number of guests?'
+          );
+          return res.status(200).json({ status: 'ok' });
+        }
+
+        if (normalizedText === 'HELP') {
+          await sendWhatsAppMessage(from,
+            'I can help you with:\n' +
+            '- Making a new reservation\n' +
+            '- Modifying an existing reservation\n' +
+            '- Canceling a reservation\n\n' +
+            'Just tell me what you need!'
+          );
           return res.status(200).json({ status: 'ok' });
         }
 
