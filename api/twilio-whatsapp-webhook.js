@@ -547,13 +547,22 @@ module.exports = async (req, res) => {
         response = 'Sorry, I had trouble processing your message. Please try again.';
       }
 
-      // Send response back via Twilio
-      console.log(`[Twilio] Sending response to ${fromNumber}`);
-      const sendResult = await sendWhatsAppMessage(fromNumber, response);
-      console.log(`[Twilio] Send result:`, JSON.stringify(sendResult));
+      // Send response back via TwiML (more reliable for Sandbox)
+      console.log(`[Twilio] Sending TwiML response to ${fromNumber}: ${response.substring(0, 100)}...`);
 
-      // Return empty TwiML response (we're sending asynchronously via API)
-      return res.status(200).send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
+      // Escape XML special characters in the response
+      const escapedResponse = response
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+
+      // Return TwiML response with the message
+      const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${escapedResponse}</Message></Response>`;
+
+      res.setHeader('Content-Type', 'text/xml');
+      return res.status(200).send(twimlResponse);
 
     } catch (error) {
       console.error('[Twilio] Webhook error:', error);
