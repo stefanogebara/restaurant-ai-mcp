@@ -452,6 +452,21 @@ function validateTwilioSignature(req) {
 }
 
 /**
+ * Parse URL-encoded body manually if needed
+ */
+function parseUrlEncodedBody(body) {
+  if (typeof body === 'string') {
+    const params = new URLSearchParams(body);
+    const result = {};
+    for (const [key, value] of params) {
+      result[key] = value;
+    }
+    return result;
+  }
+  return body || {};
+}
+
+/**
  * Main webhook handler for Twilio WhatsApp messages
  */
 module.exports = async (req, res) => {
@@ -467,8 +482,22 @@ module.exports = async (req, res) => {
   // Handle incoming messages (POST)
   if (req.method === 'POST') {
     try {
-      // Log incoming webhook
-      console.log('[Twilio] Webhook received:', JSON.stringify(req.body, null, 2));
+      // Log raw body type for debugging
+      console.log('[Twilio] Body type:', typeof req.body);
+      console.log('[Twilio] Raw body:', req.body);
+
+      // Twilio sends form-urlencoded data - parse it if necessary
+      let parsedBody = req.body;
+      if (typeof req.body === 'string') {
+        console.log('[Twilio] Parsing string body as URL-encoded');
+        parsedBody = parseUrlEncodedBody(req.body);
+      } else if (!req.body || Object.keys(req.body).length === 0) {
+        console.log('[Twilio] Empty body, checking raw request');
+        // Try to get raw body if available
+        parsedBody = {};
+      }
+
+      console.log('[Twilio] Parsed body:', JSON.stringify(parsedBody, null, 2));
 
       // Twilio sends form-urlencoded data
       const {
@@ -478,7 +507,7 @@ module.exports = async (req, res) => {
         MessageSid,   // Unique message ID
         NumMedia,     // Number of media attachments
         ProfileName,  // Sender's WhatsApp profile name
-      } = req.body;
+      } = parsedBody;
 
       // Validate required fields
       if (!From || !Body) {
