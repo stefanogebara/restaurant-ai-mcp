@@ -109,18 +109,64 @@ async function sendTemplateMessage(to, contentSid, contentVariables = {}) {
 
 /**
  * Build the Claude system prompt for restaurant reservation assistance
- * (Identical to the Meta webhook implementation)
+ * Updated to handle multi-restaurant platform
  */
-function buildSystemPrompt(restaurantInfo, session) {
-  const restaurantName = restaurantInfo?.name || session?.restaurantId || 'our restaurant';
-  const restaurantType = restaurantInfo?.type || 'restaurant';
+function buildSystemPrompt(restaurantInfo, session, availableRestaurants = []) {
+  const hasRestaurant = !!restaurantInfo || !!session?.restaurantId;
+  const restaurantName = restaurantInfo?.restaurant_name || session?.restaurantId || null;
 
-  // Get current time info for the restaurant's timezone
+  // Get current time info
   const now = new Date();
   const currentDate = now.toISOString().split('T')[0];
   const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' });
 
-  return `You are a friendly and professional AI assistant for ${restaurantName}, a ${restaurantType}. You help customers make reservations, answer questions, and provide information about the restaurant.
+  // Base prompt varies based on whether a restaurant is selected
+  if (!hasRestaurant) {
+    // No restaurant selected - guide user to choose one
+    const restaurantList = availableRestaurants.length > 0
+      ? availableRestaurants.map((r, i) => `${i + 1}. ${r.restaurant_name}`).join('\n')
+      : 'No restaurants currently available';
+
+    return `You are a friendly AI reservation assistant for Seatable, a restaurant reservation platform. You help customers make reservations at restaurants in our network.
+
+CURRENT CONTEXT:
+- Platform: Seatable
+- Today's Date: ${currentDate} (${currentDay})
+- Session ID: ${session?.id || 'new'}
+- Customer Phone: ${session?.phoneNumber || 'unknown'}
+- Restaurant Selected: NONE
+
+AVAILABLE RESTAURANTS IN OUR NETWORK:
+${restaurantList}
+
+CRITICAL FIRST STEP:
+Since no restaurant is selected yet, you MUST first help the user choose a restaurant before making any reservation.
+
+If the user asks to make a reservation without specifying a restaurant:
+1. Warmly greet them
+2. Present the list of available restaurants
+3. Ask which restaurant they'd like to book at
+
+Once they choose, use the 'select_restaurant' tool to set it, then proceed with the reservation.
+
+CONVERSATION STYLE:
+- Be warm, professional, and concise
+- Keep responses brief and WhatsApp-friendly
+- Present restaurant options clearly numbered
+- Guide users step by step
+
+EXAMPLE RESPONSE when user wants to book without specifying restaurant:
+"Hi! I'd be happy to help you make a reservation. 😊
+
+We have the following restaurants available:
+1. Restaurant Name 1
+2. Restaurant Name 2
+
+Which restaurant would you like to book at?"`;
+  }
+
+  // Restaurant is selected - normal reservation flow
+  return `You are a friendly and professional AI assistant for ${restaurantName}. You help customers make reservations, answer questions, and provide information about the restaurant.
 
 CURRENT CONTEXT:
 - Restaurant: ${restaurantName}
@@ -129,7 +175,7 @@ CURRENT CONTEXT:
 - Customer Phone: ${session?.phoneNumber || 'unknown'}
 
 RESTAURANT INFORMATION:
-${restaurantInfo ? JSON.stringify(restaurantInfo, null, 2) : 'No specific restaurant information available.'}
+${restaurantInfo ? JSON.stringify(restaurantInfo, null, 2) : 'Restaurant details loading...'}
 
 YOUR CAPABILITIES:
 1. Make new reservations
@@ -163,12 +209,23 @@ async function processWithClaude(messageText, session) {
   // Get restaurant info if we have a restaurant ID
   let restaurantInfo = null;
   let supabaseClient = null;
+  let availableRestaurants = [];
+
+  // Always fetch available restaurants for the platform
+  try {
+    availableRestaurants = await getAllActiveRestaurants();
+    console.log(`[Twilio] Found ${availableRestaurants.length} active restaurants in platform`);
+  } catch (err) {
+    console.error('[Twilio] Error fetching restaurants:', err);
+  }
 
   if (session?.restaurantId) {
-    const restaurant = await getRestaurantByName(session.restaurantId);
-    if (restaurant) {
-      restaurantInfo = restaurant;
-      supabaseClient = await getMultiTenantClient(restaurant.supabaseUrl, restaurant.supabaseKey);
+    const result = await getRestaurantByName(session.restaurantId);
+    if (result?.match) {
+      restaurantInfo = result.match;
+      if (restaurantInfo.supabase_url && restaurantInfo.supabase_anon_key) {
+        supabaseClient = await getMultiTenantClient(restaurantInfo.supabase_url, restaurantInfo.supabase_anon_key);
+      }
     }
   }
 
@@ -269,7 +326,7 @@ async function processWithClaude(messageText, session) {
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1024,
-      system: buildSystemPrompt(restaurantInfo, session),
+      system: buildSystemPrompt(restaurantInfo, session, availableRestaurants),
       tools: tools,
       messages: conversationHistory
     });
@@ -310,7 +367,7 @@ async function processWithClaude(messageText, session) {
       const finalResponse = await anthropic.messages.create({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1024,
-        system: buildSystemPrompt(restaurantInfo, session),
+        system: buildSystemPrompt(restaurantInfo, session, availableRestaurants),
         tools: tools,
         messages: conversationHistory
       });
@@ -346,26 +403,40 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient) {
       const restaurants = await getAllActiveRestaurants();
       return {
         success: true,
+        count: restaurants.length,
         restaurants: restaurants.map(r => ({
-          name: r.name,
-          type: r.type || 'restaurant',
-          location: r.city || 'Unknown location'
-        }))
+          name: r.restaurant_name,
+          aliases: r.restaurant_aliases || [],
+          language: r.language || 'en'
+        })),
+        message: restaurants.length > 0
+          ? `We have ${restaurants.length} restaurant(s) available: ${restaurants.map(r => r.restaurant_name).join(', ')}`
+          : 'No restaurants are currently available in our system.'
       };
     }
 
     case 'select_restaurant': {
-      const restaurant = await getRestaurantByName(toolInput.restaurant_name);
-      if (restaurant) {
-        await setSessionRestaurant(session.id, restaurant.name);
+      const result = await getRestaurantByName(toolInput.restaurant_name);
+      if (result?.match) {
+        await setSessionRestaurant(session.id, result.match.restaurant_name);
         return {
           success: true,
-          message: `Selected ${restaurant.name}. How can I help you today?`
+          restaurant: result.match.restaurant_name,
+          message: `Selected ${result.match.restaurant_name}. How can I help you with your reservation?`
+        };
+      }
+      // Check if there are multiple matches needing disambiguation
+      if (result?.needsDisambiguation && result?.matches) {
+        return {
+          success: false,
+          needsDisambiguation: true,
+          options: result.matches.map(m => m.restaurant_name),
+          message: `Multiple restaurants found. Did you mean: ${result.matches.map(m => m.restaurant_name).join(', ')}?`
         };
       }
       return {
         success: false,
-        error: `Restaurant "${toolInput.restaurant_name}" not found`
+        error: `Restaurant "${toolInput.restaurant_name}" not found in our system`
       };
     }
 
