@@ -24,7 +24,8 @@ const {
   getOrCreateSession,
   setSessionRestaurant,
   getSessionByPhone,
-  normalizePhoneNumber
+  normalizePhoneNumber,
+  updateSessionConversationHistory
 } = require('./_lib/whatsapp-sessions');
 const { getRestaurantByName, getRestaurantById, getAllActiveRestaurants } = require('./_lib/restaurant-registry');
 const { getMultiTenantClient } = require('./_lib/multi-tenant-supabase');
@@ -248,8 +249,8 @@ async function processWithClaude(messageText, session) {
     }
   }
 
-  // Build conversation history
-  const conversationHistory = session?.conversationHistory || [];
+  // Build conversation history from session (snake_case from Supabase)
+  const conversationHistory = session?.conversation_history || [];
 
   // Add the new user message
   conversationHistory.push({
@@ -341,8 +342,15 @@ async function processWithClaude(messageText, session) {
   ];
 
   try {
-    // Call Claude with the conversation
-    const response = await anthropic.messages.create({
+    // Multi-round tool calling loop
+    // Claude may need multiple tool calls (e.g., check_availability then create_reservation)
+    const MAX_TOOL_ROUNDS = 5; // Prevent infinite loops
+    let currentResponse = null;
+    let assistantMessage = '';
+    let toolRounds = 0;
+
+    // Initial Claude call
+    currentResponse = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1024,
       system: buildSystemPrompt(restaurantInfo, session, availableRestaurants),
@@ -350,40 +358,60 @@ async function processWithClaude(messageText, session) {
       messages: conversationHistory
     });
 
-    // Process the response
-    let assistantMessage = '';
-    let toolResults = [];
+    // Loop until Claude responds with just text (no tool calls) or max rounds reached
+    while (toolRounds < MAX_TOOL_ROUNDS) {
+      // Check if response has tool calls
+      const toolUseBlocks = currentResponse.content.filter(block => block.type === 'tool_use');
+      const textBlocks = currentResponse.content.filter(block => block.type === 'text');
 
-    for (const block of response.content) {
-      if (block.type === 'text') {
-        assistantMessage += block.text;
-      } else if (block.type === 'tool_use') {
-        // Handle tool calls
+      // Collect any text from this response
+      for (const block of textBlocks) {
+        assistantMessage = block.text; // Use latest text
+      }
+
+      // If no tool calls, we're done
+      if (toolUseBlocks.length === 0) {
+        console.log(`[Twilio] Claude finished after ${toolRounds} tool round(s)`);
+        break;
+      }
+
+      // Process tool calls
+      console.log(`[Twilio] Processing ${toolUseBlocks.length} tool call(s) in round ${toolRounds + 1}`);
+      const toolResults = [];
+
+      for (const block of toolUseBlocks) {
         const toolResult = await handleToolCall(block.name, block.input, session, supabaseClient);
         toolResults.push({
+          type: 'tool_result',
           tool_use_id: block.id,
           content: JSON.stringify(toolResult)
         });
-      }
-    }
 
-    // If there were tool calls, send results back to Claude
-    if (toolResults.length > 0) {
+        // If select_restaurant was called, update the supabaseClient for subsequent tools
+        if (block.name === 'select_restaurant' && toolResult.success && toolResult.restaurantId) {
+          const updatedRestaurant = await getRestaurantById(toolResult.restaurantId);
+          if (updatedRestaurant?.supabase_url && updatedRestaurant?.supabase_anon_key) {
+            supabaseClient = await getMultiTenantClient(updatedRestaurant.supabase_url, updatedRestaurant.supabase_anon_key);
+            restaurantInfo = updatedRestaurant;
+            console.log(`[Twilio] Updated supabaseClient after restaurant selection: ${updatedRestaurant.restaurant_name}`);
+          }
+        }
+      }
+
+      // Add assistant response (with tool calls) to history
       conversationHistory.push({
         role: 'assistant',
-        content: response.content
-      });
-      conversationHistory.push({
-        role: 'user',
-        content: toolResults.map(tr => ({
-          type: 'tool_result',
-          tool_use_id: tr.tool_use_id,
-          content: tr.content
-        }))
+        content: currentResponse.content
       });
 
-      // Get Claude's final response
-      const finalResponse = await anthropic.messages.create({
+      // Add tool results to history
+      conversationHistory.push({
+        role: 'user',
+        content: toolResults
+      });
+
+      // Get next response from Claude
+      currentResponse = await anthropic.messages.create({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1024,
         system: buildSystemPrompt(restaurantInfo, session, availableRestaurants),
@@ -391,18 +419,21 @@ async function processWithClaude(messageText, session) {
         messages: conversationHistory
       });
 
-      for (const block of finalResponse.content) {
-        if (block.type === 'text') {
-          assistantMessage = block.text;
-        }
-      }
+      toolRounds++;
     }
 
-    // Update session with conversation history
+    if (toolRounds >= MAX_TOOL_ROUNDS) {
+      console.warn(`[Twilio] Max tool rounds (${MAX_TOOL_ROUNDS}) reached`);
+    }
+
+    // Add final assistant message to conversation history
     conversationHistory.push({
       role: 'assistant',
       content: assistantMessage
     });
+
+    // Save conversation history to session for persistence
+    await updateSessionConversationHistory(session.id, conversationHistory);
 
     return assistantMessage || 'I apologize, but I couldn\'t generate a response. Please try again.';
   } catch (error) {

@@ -306,6 +306,43 @@ function normalizePhoneNumber(phone) {
 }
 
 /**
+ * Update conversation history for a session
+ * @param {string} sessionId - Session UUID
+ * @param {Array} conversationHistory - Array of conversation messages
+ * @returns {Promise<boolean>} Success status
+ */
+async function updateSessionConversationHistory(sessionId, conversationHistory) {
+  if (!isCentralConfigured() || !sessionId) {
+    return false;
+  }
+
+  try {
+    // Limit conversation history to last 20 messages to avoid payload size issues
+    const limitedHistory = conversationHistory.slice(-20);
+
+    const { error } = await centralSupabase
+      .from('whatsapp_sessions')
+      .update({
+        conversation_history: limitedHistory,
+        last_message_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + SESSION_EXPIRY_MS).toISOString()
+      })
+      .eq('id', sessionId);
+
+    if (error) {
+      console.error('[WhatsAppSessions] Error updating conversation history:', error);
+      return false;
+    }
+
+    console.log(`[WhatsAppSessions] Conversation history updated for session ${sessionId} (${limitedHistory.length} messages)`);
+    return true;
+  } catch (error) {
+    console.error('[WhatsAppSessions] Error:', error);
+    return false;
+  }
+}
+
+/**
  * Get active session count
  * @returns {Promise<number>} Number of active sessions
  */
@@ -339,5 +376,6 @@ module.exports = {
   clearSessionsByPhone,
   cleanupExpiredSessions,
   normalizePhoneNumber,
-  getActiveSessionCount
+  getActiveSessionCount,
+  updateSessionConversationHistory
 };
