@@ -523,10 +523,16 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient) {
         return { success: false, error: 'No restaurant selected' };
       }
 
+      // Generate a unique reservation ID (RES-YYYYMMDD-XXXX format)
+      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const reservationId = `RES-${dateStr}-${randomPart}`;
+
       // Create the reservation
       const { data, error } = await supabaseClient
         .from('reservations')
         .insert({
+          reservation_id: reservationId,
           customer_name: toolInput.customer_name,
           customer_phone: toolInput.customer_phone || session?.phoneNumber,
           date: toolInput.date,
@@ -540,13 +546,16 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient) {
         .single();
 
       if (error) {
+        console.error('[Twilio] Reservation creation error:', error);
         return { success: false, error: error.message };
       }
 
+      console.log(`[Twilio] Reservation created: ${reservationId} for ${toolInput.customer_name}`);
       return {
         success: true,
         reservation: data,
-        message: `Reservation confirmed for ${toolInput.customer_name}, party of ${toolInput.party_size} on ${toolInput.date} at ${toolInput.time}.`
+        reservationId: reservationId,
+        message: `Reservation confirmed for ${toolInput.customer_name}, party of ${toolInput.party_size} on ${toolInput.date} at ${toolInput.time}. Your confirmation number is ${reservationId}.`
       };
     }
 
