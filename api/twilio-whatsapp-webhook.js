@@ -26,7 +26,7 @@ const {
   getSessionByPhone,
   normalizePhoneNumber
 } = require('./_lib/whatsapp-sessions');
-const { getRestaurantByName, getAllActiveRestaurants } = require('./_lib/restaurant-registry');
+const { getRestaurantByName, getRestaurantById, getAllActiveRestaurants } = require('./_lib/restaurant-registry');
 const { getMultiTenantClient } = require('./_lib/multi-tenant-supabase');
 
 // Initialize Anthropic client
@@ -220,9 +220,10 @@ async function processWithClaude(messageText, session) {
   }
 
   if (session?.restaurantId) {
-    const result = await getRestaurantByName(session.restaurantId);
-    if (result?.match) {
-      restaurantInfo = result.match;
+    // Use getRestaurantById since we now store UUID in session
+    const result = await getRestaurantById(session.restaurantId);
+    if (result) {
+      restaurantInfo = result;
       if (restaurantInfo.supabase_url && restaurantInfo.supabase_anon_key) {
         supabaseClient = await getMultiTenantClient(restaurantInfo.supabase_url, restaurantInfo.supabase_anon_key);
       }
