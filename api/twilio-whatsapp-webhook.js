@@ -206,8 +206,6 @@ IMPORTANT GUIDELINES:
  * (Adapted from the Meta webhook implementation)
  */
 async function processWithClaude(messageText, session) {
-  console.log(`[processWithClaude] Received session: ${JSON.stringify({ id: session?.id, restaurant_id: session?.restaurant_id, hasRestaurant: !!session?.restaurant, restaurantName: session?.restaurant?.restaurant_name })}`);
-
   // Get restaurant info if we have a restaurant ID
   let restaurantInfo = null;
   let supabaseClient = null;
@@ -632,7 +630,6 @@ module.exports = async (req, res) => {
 
       // Process message with Claude
       console.log(`[Twilio] Processing message with Claude for session: ${session.id}`);
-      console.log(`[Twilio] Session details - restaurant_id: ${session.restaurant_id}, restaurant: ${session.restaurant?.restaurant_name || 'NONE'}, keys: ${Object.keys(session).join(', ')}`);
       let response;
       try {
         response = await processWithClaude(messageText, session);
