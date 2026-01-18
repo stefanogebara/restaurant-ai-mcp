@@ -30,6 +30,119 @@ const {
 const { getRestaurantByName, getRestaurantById, getAllActiveRestaurants } = require('./_lib/restaurant-registry');
 const { getMultiTenantClient } = require('./_lib/multi-tenant-supabase');
 
+/**
+ * Parse natural language date into YYYY-MM-DD format
+ * Handles: "today", "tomorrow", "2026-01-19", "January 19", "19/01/2026", etc.
+ */
+function parseDate(dateStr) {
+  if (!dateStr) return null;
+
+  const today = new Date();
+  const normalizedDate = dateStr.toLowerCase().trim();
+
+  // Handle "today"
+  if (normalizedDate === 'today') {
+    return today.toISOString().slice(0, 10);
+  }
+
+  // Handle "tomorrow"
+  if (normalizedDate === 'tomorrow') {
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().slice(0, 10);
+  }
+
+  // Handle day names (next Monday, this Friday, etc.)
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  for (let i = 0; i < dayNames.length; i++) {
+    if (normalizedDate.includes(dayNames[i])) {
+      const targetDay = i;
+      const currentDay = today.getDay();
+      let daysUntil = targetDay - currentDay;
+      if (daysUntil <= 0) daysUntil += 7; // Next week if today or past
+      const targetDate = new Date(today);
+      targetDate.setDate(targetDate.getDate() + daysUntil);
+      return targetDate.toISOString().slice(0, 10);
+    }
+  }
+
+  // Handle ISO format (already correct)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return dateStr;
+  }
+
+  // Handle "January 19" or "Jan 19" format
+  const monthNames = ['january', 'february', 'march', 'april', 'may', 'june',
+                      'july', 'august', 'september', 'october', 'november', 'december'];
+  const monthAbbrev = ['jan', 'feb', 'mar', 'apr', 'may', 'jun',
+                       'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+
+  for (let i = 0; i < monthNames.length; i++) {
+    const monthMatch = normalizedDate.match(new RegExp(`(${monthNames[i]}|${monthAbbrev[i]})\\s*(\\d{1,2})`));
+    if (monthMatch) {
+      const day = parseInt(monthMatch[2]);
+      const year = today.getFullYear();
+      const month = (i + 1).toString().padStart(2, '0');
+      return `${year}-${month}-${day.toString().padStart(2, '0')}`;
+    }
+  }
+
+  // Try to parse as a date directly
+  const parsed = new Date(dateStr);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toISOString().slice(0, 10);
+  }
+
+  // Default to tomorrow if we can't parse
+  console.warn(`[Twilio] Could not parse date: "${dateStr}", defaulting to tomorrow`);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return tomorrow.toISOString().slice(0, 10);
+}
+
+/**
+ * Parse natural language time into HH:MM format (24-hour)
+ * Handles: "7pm", "7:30pm", "19:00", "7 PM", "seven o'clock", etc.
+ */
+function parseTime(timeStr) {
+  if (!timeStr) return null;
+
+  const normalized = timeStr.toLowerCase().trim().replace(/\s+/g, '');
+
+  // Handle 24-hour format (19:00, 19:30)
+  const time24Match = normalized.match(/^(\d{1,2}):(\d{2})$/);
+  if (time24Match) {
+    const hours = parseInt(time24Match[1]).toString().padStart(2, '0');
+    const minutes = time24Match[2];
+    return `${hours}:${minutes}`;
+  }
+
+  // Handle 12-hour format (7pm, 7:30pm, 7:30 pm)
+  const time12Match = normalized.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/);
+  if (time12Match) {
+    let hours = parseInt(time12Match[1]);
+    const minutes = time12Match[2] || '00';
+    const period = time12Match[3];
+
+    if (period === 'pm' && hours !== 12) hours += 12;
+    if (period === 'am' && hours === 12) hours = 0;
+
+    return `${hours.toString().padStart(2, '0')}:${minutes}`;
+  }
+
+  // Handle just a number (assume PM for restaurant context, 1-11 = PM, 12 = noon)
+  const justNumber = normalized.match(/^(\d{1,2})$/);
+  if (justNumber) {
+    let hours = parseInt(justNumber[1]);
+    if (hours >= 1 && hours <= 11) hours += 12; // Assume PM for restaurant hours
+    return `${hours.toString().padStart(2, '0')}:00`;
+  }
+
+  // Default to 19:00 (7pm) if we can't parse
+  console.warn(`[Twilio] Could not parse time: "${timeStr}", defaulting to 19:00`);
+  return '19:00';
+}
+
 // Initialize Anthropic client
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
@@ -497,6 +610,10 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient) {
         return { success: false, error: 'No restaurant selected' };
       }
 
+      // Parse date/time for consistent display
+      const parsedDate = parseDate(toolInput.date);
+      const parsedTime = parseTime(toolInput.time);
+
       // Query available tables for the requested time
       const { data: tables, error } = await supabaseClient
         .from('tables')
@@ -512,8 +629,10 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient) {
         success: true,
         available: tables.length > 0,
         tables: tables.length,
+        date: parsedDate,
+        time: parsedTime,
         message: tables.length > 0
-          ? `We have ${tables.length} table(s) available for ${toolInput.party_size} guests on ${toolInput.date} at ${toolInput.time}.`
+          ? `We have ${tables.length} table(s) available for ${toolInput.party_size} guests on ${parsedDate} at ${parsedTime}.`
           : `Sorry, no tables available for ${toolInput.party_size} guests at that time.`
       };
     }
@@ -523,10 +642,24 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient) {
         return { success: false, error: 'No restaurant selected' };
       }
 
+      // Parse date and time from natural language to proper formats
+      const parsedDate = parseDate(toolInput.date);
+      const parsedTime = parseTime(toolInput.time);
+
+      console.log(`[Twilio] Parsed reservation date: "${toolInput.date}" -> "${parsedDate}"`);
+      console.log(`[Twilio] Parsed reservation time: "${toolInput.time}" -> "${parsedTime}"`);
+
+      if (!parsedDate || !parsedTime) {
+        return { success: false, error: 'Could not parse date or time. Please provide a valid date and time.' };
+      }
+
       // Generate a unique reservation ID (RES-YYYYMMDD-XXXX format)
-      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const dateForId = new Date().toISOString().slice(0, 10).replace(/-/g, '');
       const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
-      const reservationId = `RES-${dateStr}-${randomPart}`;
+      const reservationId = `RES-${dateForId}-${randomPart}`;
+
+      // Get customer phone from input or session (session uses snake_case: sender_phone)
+      const customerPhone = toolInput.customer_phone || session?.sender_phone;
 
       // Create the reservation
       const { data, error } = await supabaseClient
@@ -534,19 +667,19 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient) {
         .insert({
           reservation_id: reservationId,
           customer_name: toolInput.customer_name,
-          customer_phone: toolInput.customer_phone || session?.phoneNumber,
-          date: toolInput.date,
-          time: toolInput.time,
+          customer_phone: customerPhone,
+          date: parsedDate,
+          time: parsedTime,
           party_size: toolInput.party_size,
           special_requests: toolInput.special_requests || null,
-          status: 'confirmed',
-          created_at: new Date().toISOString()
+          status: 'confirmed'
         })
         .select()
         .single();
 
       if (error) {
         console.error('[Twilio] Reservation creation error:', error);
+        console.error('[Twilio] Insert data was:', { reservation_id: reservationId, customer_name: toolInput.customer_name, customer_phone: customerPhone, date: parsedDate, time: parsedTime, party_size: toolInput.party_size });
         return { success: false, error: error.message };
       }
 
@@ -555,7 +688,7 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient) {
         success: true,
         reservation: data,
         reservationId: reservationId,
-        message: `Reservation confirmed for ${toolInput.customer_name}, party of ${toolInput.party_size} on ${toolInput.date} at ${toolInput.time}. Your confirmation number is ${reservationId}.`
+        message: `Reservation confirmed for ${toolInput.customer_name}, party of ${toolInput.party_size} on ${parsedDate} at ${parsedTime}. Your confirmation number is ${reservationId}.`
       };
     }
 
