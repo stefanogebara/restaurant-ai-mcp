@@ -112,8 +112,8 @@ async function sendTemplateMessage(to, contentSid, contentVariables = {}) {
  * Updated to handle multi-restaurant platform
  */
 function buildSystemPrompt(restaurantInfo, session, availableRestaurants = []) {
-  const hasRestaurant = !!restaurantInfo || !!session?.restaurantId;
-  const restaurantName = restaurantInfo?.restaurant_name || session?.restaurantId || null;
+  const hasRestaurant = !!restaurantInfo || !!session?.restaurant_id || !!session?.restaurant;
+  const restaurantName = restaurantInfo?.restaurant_name || session?.restaurant?.restaurant_name || null;
 
   // Get current time info
   const now = new Date();
@@ -219,13 +219,20 @@ async function processWithClaude(messageText, session) {
     console.error('[Twilio] Error fetching restaurants:', err);
   }
 
-  if (session?.restaurantId) {
-    // Try to get restaurant by ID first (new sessions store UUID)
-    let result = await getRestaurantById(session.restaurantId);
+  // Use restaurant from session JOIN if available
+  if (session?.restaurant) {
+    restaurantInfo = session.restaurant;
+    console.log(`[Twilio] Using restaurant from session: ${restaurantInfo.restaurant_name} (ID: ${restaurantInfo.id})`);
+    if (restaurantInfo.supabase_url && restaurantInfo.supabase_anon_key) {
+      supabaseClient = await getMultiTenantClient(restaurantInfo.supabase_url, restaurantInfo.supabase_anon_key);
+    }
+  } else if (session?.restaurant_id) {
+    // Fallback: lookup restaurant by ID if JOIN didn't work
+    let result = await getRestaurantById(session.restaurant_id);
 
     // Fallback to name lookup for old sessions that stored restaurant name
     if (!result) {
-      const nameResult = await getRestaurantByName(session.restaurantId);
+      const nameResult = await getRestaurantByName(session.restaurant_id);
       if (nameResult?.match) {
         result = nameResult.match;
         console.log(`[Twilio] Found restaurant by name fallback: ${result.restaurant_name}`);
