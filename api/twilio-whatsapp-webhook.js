@@ -418,10 +418,12 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient) {
     case 'select_restaurant': {
       const result = await getRestaurantByName(toolInput.restaurant_name);
       if (result?.match) {
-        await setSessionRestaurant(session.id, result.match.restaurant_name);
+        // Use restaurant ID (UUID) not name for session storage
+        await setSessionRestaurant(session.id, result.match.id);
         return {
           success: true,
           restaurant: result.match.restaurant_name,
+          restaurantId: result.match.id,
           message: `Selected ${result.match.restaurant_name}. How can I help you with your reservation?`
         };
       }
