@@ -493,7 +493,7 @@ async function processWithClaude(messageText, session) {
       const toolResults = [];
 
       for (const block of toolUseBlocks) {
-        const toolResult = await handleToolCall(block.name, block.input, session, supabaseClient);
+        const toolResult = await handleToolCall(block.name, block.input, session, supabaseClient, restaurantInfo);
         toolResults.push({
           type: 'tool_result',
           tool_use_id: block.id,
@@ -558,7 +558,7 @@ async function processWithClaude(messageText, session) {
 /**
  * Handle tool calls from Claude
  */
-async function handleToolCall(toolName, toolInput, session, supabaseClient) {
+async function handleToolCall(toolName, toolInput, session, supabaseClient, restaurantInfo = null) {
   console.log(`[Twilio] Tool call: ${toolName}`, toolInput);
 
   switch (toolName) {
@@ -661,19 +661,27 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient) {
       // Get customer phone from input or session (session uses snake_case: sender_phone)
       const customerPhone = toolInput.customer_phone || session?.sender_phone;
 
-      // Create the reservation
+      // Create the reservation with restaurant association
+      const reservationData = {
+        reservation_id: reservationId,
+        customer_name: toolInput.customer_name,
+        customer_phone: customerPhone,
+        date: parsedDate,
+        time: parsedTime,
+        party_size: toolInput.party_size,
+        special_requests: toolInput.special_requests || null,
+        status: 'confirmed'
+      };
+
+      // Add restaurant_id if available
+      if (restaurantInfo?.id) {
+        reservationData.restaurant_id = restaurantInfo.id;
+        console.log(`[Twilio] Linking reservation to restaurant: ${restaurantInfo.restaurant_name} (${restaurantInfo.id})`);
+      }
+
       const { data, error } = await supabaseClient
         .from('reservations')
-        .insert({
-          reservation_id: reservationId,
-          customer_name: toolInput.customer_name,
-          customer_phone: customerPhone,
-          date: parsedDate,
-          time: parsedTime,
-          party_size: toolInput.party_size,
-          special_requests: toolInput.special_requests || null,
-          status: 'confirmed'
-        })
+        .insert(reservationData)
         .select()
         .single();
 
