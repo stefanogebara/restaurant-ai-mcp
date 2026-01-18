@@ -220,10 +220,21 @@ async function processWithClaude(messageText, session) {
   }
 
   if (session?.restaurantId) {
-    // Use getRestaurantById since we now store UUID in session
-    const result = await getRestaurantById(session.restaurantId);
+    // Try to get restaurant by ID first (new sessions store UUID)
+    let result = await getRestaurantById(session.restaurantId);
+
+    // Fallback to name lookup for old sessions that stored restaurant name
+    if (!result) {
+      const nameResult = await getRestaurantByName(session.restaurantId);
+      if (nameResult?.match) {
+        result = nameResult.match;
+        console.log(`[Twilio] Found restaurant by name fallback: ${result.restaurant_name}`);
+      }
+    }
+
     if (result) {
       restaurantInfo = result;
+      console.log(`[Twilio] Using restaurant: ${restaurantInfo.restaurant_name} (ID: ${restaurantInfo.id})`);
       if (restaurantInfo.supabase_url && restaurantInfo.supabase_anon_key) {
         supabaseClient = await getMultiTenantClient(restaurantInfo.supabase_url, restaurantInfo.supabase_anon_key);
       }
