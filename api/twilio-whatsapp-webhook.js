@@ -219,10 +219,17 @@ async function findRecentReservation(phoneNumber, restaurantId = null) {
   try {
     const today = new Date().toISOString().slice(0, 10);
 
+    // Normalize phone number - try multiple formats
+    // Database might have: +5511999002121, 5511999002121, or 11999002121
+    const normalizedPhone = phoneNumber.replace(/^\+/, ''); // Remove leading +
+    const withPlus = `+${normalizedPhone}`;
+    const digitsOnly = normalizedPhone.replace(/\D/g, '');
+
+    // Search for any matching phone format
     let query = centralSupabase
       .from('reservations')
       .select('*')
-      .eq('customer_phone', phoneNumber)
+      .or(`customer_phone.eq.${phoneNumber},customer_phone.eq.${normalizedPhone},customer_phone.eq.${withPlus},customer_phone.eq.${digitsOnly}`)
       .in('status', ['confirmed', 'pending'])
       .gte('date', today)
       .order('date', { ascending: true })
