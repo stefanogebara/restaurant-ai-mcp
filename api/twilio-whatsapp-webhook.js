@@ -451,6 +451,64 @@ async function processWithClaude(messageText, session) {
         },
         required: ['restaurant_name']
       }
+    },
+    {
+      name: 'lookup_reservation',
+      description: 'Look up an existing reservation by confirmation number or customer phone number',
+      input_schema: {
+        type: 'object',
+        properties: {
+          reservation_id: {
+            type: 'string',
+            description: 'The reservation confirmation number (e.g., RES-20260119-XXXX)'
+          },
+          customer_phone: {
+            type: 'string',
+            description: 'Customer phone number to look up reservations'
+          }
+        },
+        required: []
+      }
+    },
+    {
+      name: 'cancel_reservation',
+      description: 'Cancel an existing reservation. Use lookup_reservation first to verify the reservation exists.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          reservation_id: {
+            type: 'string',
+            description: 'The reservation confirmation number to cancel'
+          }
+        },
+        required: ['reservation_id']
+      }
+    },
+    {
+      name: 'modify_reservation',
+      description: 'Modify an existing reservation. Can change date, time, or party size. Use lookup_reservation first to verify the reservation.',
+      input_schema: {
+        type: 'object',
+        properties: {
+          reservation_id: {
+            type: 'string',
+            description: 'The reservation confirmation number to modify'
+          },
+          new_date: {
+            type: 'string',
+            description: 'New date in YYYY-MM-DD format (optional, only if changing date)'
+          },
+          new_time: {
+            type: 'string',
+            description: 'New time in HH:MM format (optional, only if changing time)'
+          },
+          new_party_size: {
+            type: 'integer',
+            description: 'New party size (optional, only if changing party size)'
+          }
+        },
+        required: ['reservation_id']
+      }
     }
   ];
 
@@ -697,6 +755,226 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
         reservation: data,
         reservationId: reservationId,
         message: `Reservation confirmed for ${toolInput.customer_name}, party of ${toolInput.party_size} on ${parsedDate} at ${parsedTime}. Your confirmation number is ${reservationId}.`
+      };
+    }
+
+    case 'lookup_reservation': {
+      if (!supabaseClient) {
+        return { success: false, error: 'No restaurant selected' };
+      }
+
+      const { reservation_id, customer_phone } = toolInput;
+
+      if (!reservation_id && !customer_phone) {
+        return {
+          success: false,
+          error: 'Please provide either a reservation confirmation number or phone number to look up your reservation.'
+        };
+      }
+
+      let query = supabaseClient
+        .from('reservations')
+        .select('*');
+
+      if (reservation_id) {
+        query = query.eq('reservation_id', reservation_id);
+      } else if (customer_phone) {
+        query = query.eq('customer_phone', customer_phone);
+      }
+
+      // Filter by restaurant if one is selected
+      if (restaurantInfo?.id) {
+        query = query.eq('restaurant_id', restaurantInfo.id);
+      }
+
+      const { data, error } = await query.order('date', { ascending: false }).limit(5);
+
+      if (error) {
+        console.error('[Twilio] Lookup error:', error);
+        return { success: false, error: 'Could not look up reservation. Please try again.' };
+      }
+
+      if (!data || data.length === 0) {
+        return {
+          success: false,
+          error: 'No reservation found with that information. Please check your confirmation number or phone number.'
+        };
+      }
+
+      const reservations = data.map(r => ({
+        reservation_id: r.reservation_id,
+        customer_name: r.customer_name,
+        date: r.date,
+        time: r.time,
+        party_size: r.party_size,
+        status: r.status
+      }));
+
+      console.log(`[Twilio] Found ${reservations.length} reservation(s)`);
+      return {
+        success: true,
+        count: reservations.length,
+        reservations: reservations,
+        message: reservations.length === 1
+          ? `Found reservation ${reservations[0].reservation_id} for ${reservations[0].customer_name} on ${reservations[0].date} at ${reservations[0].time} for ${reservations[0].party_size} guests. Status: ${reservations[0].status}`
+          : `Found ${reservations.length} reservations.`
+      };
+    }
+
+    case 'cancel_reservation': {
+      if (!supabaseClient) {
+        return { success: false, error: 'No restaurant selected' };
+      }
+
+      const { reservation_id } = toolInput;
+
+      if (!reservation_id) {
+        return {
+          success: false,
+          error: 'Please provide the reservation confirmation number to cancel.'
+        };
+      }
+
+      // First, verify the reservation exists and belongs to this restaurant
+      let query = supabaseClient
+        .from('reservations')
+        .select('*')
+        .eq('reservation_id', reservation_id);
+
+      if (restaurantInfo?.id) {
+        query = query.eq('restaurant_id', restaurantInfo.id);
+      }
+
+      const { data: existing, error: lookupError } = await query.single();
+
+      if (lookupError || !existing) {
+        console.error('[Twilio] Cancel lookup error:', lookupError);
+        return {
+          success: false,
+          error: 'Reservation not found. Please check your confirmation number.'
+        };
+      }
+
+      if (existing.status === 'cancelled') {
+        return {
+          success: false,
+          error: 'This reservation has already been cancelled.'
+        };
+      }
+
+      // Update the reservation status to cancelled
+      const { error: updateError } = await supabaseClient
+        .from('reservations')
+        .update({ status: 'cancelled' })
+        .eq('reservation_id', reservation_id);
+
+      if (updateError) {
+        console.error('[Twilio] Cancel update error:', updateError);
+        return { success: false, error: 'Could not cancel the reservation. Please try again or contact the restaurant directly.' };
+      }
+
+      console.log(`[Twilio] Reservation cancelled: ${reservation_id}`);
+      return {
+        success: true,
+        reservation_id: reservation_id,
+        message: `Your reservation ${reservation_id} for ${existing.customer_name} on ${existing.date} at ${existing.time} has been cancelled. We hope to see you again soon!`
+      };
+    }
+
+    case 'modify_reservation': {
+      if (!supabaseClient) {
+        return { success: false, error: 'No restaurant selected' };
+      }
+
+      const { reservation_id, new_date, new_time, new_party_size } = toolInput;
+
+      if (!reservation_id) {
+        return {
+          success: false,
+          error: 'Please provide the reservation confirmation number to modify.'
+        };
+      }
+
+      if (!new_date && !new_time && !new_party_size) {
+        return {
+          success: false,
+          error: 'Please specify what you want to change: new date, new time, or new party size.'
+        };
+      }
+
+      // First, verify the reservation exists
+      let query = supabaseClient
+        .from('reservations')
+        .select('*')
+        .eq('reservation_id', reservation_id);
+
+      if (restaurantInfo?.id) {
+        query = query.eq('restaurant_id', restaurantInfo.id);
+      }
+
+      const { data: existing, error: lookupError } = await query.single();
+
+      if (lookupError || !existing) {
+        console.error('[Twilio] Modify lookup error:', lookupError);
+        return {
+          success: false,
+          error: 'Reservation not found. Please check your confirmation number.'
+        };
+      }
+
+      if (existing.status === 'cancelled') {
+        return {
+          success: false,
+          error: 'Cannot modify a cancelled reservation. Please make a new reservation instead.'
+        };
+      }
+
+      // Build update object with only changed fields
+      const updates = {};
+      if (new_date) {
+        const parsedNewDate = parseDate(new_date);
+        if (!parsedNewDate) {
+          return { success: false, error: 'Invalid date format. Please provide a valid date.' };
+        }
+        updates.date = parsedNewDate;
+      }
+      if (new_time) {
+        const parsedNewTime = parseTime(new_time);
+        if (!parsedNewTime) {
+          return { success: false, error: 'Invalid time format. Please provide a valid time.' };
+        }
+        updates.time = parsedNewTime;
+      }
+      if (new_party_size) {
+        updates.party_size = new_party_size;
+      }
+
+      // Update the reservation
+      const { data: updated, error: updateError } = await supabaseClient
+        .from('reservations')
+        .update(updates)
+        .eq('reservation_id', reservation_id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('[Twilio] Modify update error:', updateError);
+        return { success: false, error: 'Could not modify the reservation. Please try again or contact the restaurant directly.' };
+      }
+
+      console.log(`[Twilio] Reservation modified: ${reservation_id}`, updates);
+
+      // Build change summary
+      const changes = [];
+      if (new_date) changes.push(`date to ${updated.date}`);
+      if (new_time) changes.push(`time to ${updated.time}`);
+      if (new_party_size) changes.push(`party size to ${updated.party_size}`);
+
+      return {
+        success: true,
+        reservation_id: reservation_id,
+        updated: updated,
+        message: `Your reservation ${reservation_id} has been updated! Changed: ${changes.join(', ')}. New details: ${updated.customer_name}, party of ${updated.party_size} on ${updated.date} at ${updated.time}.`
       };
     }
 
