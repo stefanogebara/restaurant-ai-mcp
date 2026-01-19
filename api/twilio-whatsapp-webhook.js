@@ -145,6 +145,71 @@ function parseTime(timeStr) {
 }
 
 /**
+ * Format a date for display with relative context (Today, Tomorrow, etc.)
+ * @param {string} dateStr - Date in YYYY-MM-DD format
+ * @returns {string} - Formatted date like "Today (Monday, January 19th)" or "Tomorrow (Tuesday, January 20th)"
+ */
+function formatDateForDisplay(dateStr) {
+  const date = new Date(dateStr + 'T12:00:00'); // Use noon to avoid timezone issues
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const dayAfterTomorrow = new Date(today);
+  dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+
+  // Format the full date
+  const options = { weekday: 'long', month: 'long', day: 'numeric' };
+  const fullDate = date.toLocaleDateString('en-US', options);
+
+  // Add ordinal suffix to day
+  const day = date.getDate();
+  const ordinal = day === 1 || day === 21 || day === 31 ? 'st'
+                : day === 2 || day === 22 ? 'nd'
+                : day === 3 || day === 23 ? 'rd' : 'th';
+  const formattedDate = fullDate.replace(/(\d+)/, `$1${ordinal}`);
+
+  // Check for relative dates
+  if (date.toDateString() === today.toDateString()) {
+    return `Today (${formattedDate})`;
+  }
+  if (date.toDateString() === tomorrow.toDateString()) {
+    return `Tomorrow (${formattedDate})`;
+  }
+
+  // For dates within the next week, just show the day name and date
+  const daysUntil = Math.floor((date - today) / (1000 * 60 * 60 * 24));
+  if (daysUntil >= 2 && daysUntil <= 7) {
+    return `This ${formattedDate}`;
+  }
+
+  // For dates further out, include the year
+  if (daysUntil > 7) {
+    return date.toLocaleDateString('en-US', { ...options, year: 'numeric' }).replace(/(\d+),/, `$1${ordinal},`);
+  }
+
+  return formattedDate;
+}
+
+/**
+ * Format time for display (12-hour format with AM/PM)
+ * @param {string} timeStr - Time in HH:MM format (24-hour)
+ * @returns {string} - Formatted time like "7:00 PM"
+ */
+function formatTimeForDisplay(timeStr) {
+  try {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const hour12 = hours % 12 || 12;
+    return `${hour12}:${minutes.toString().padStart(2, '0')} ${period}`;
+  } catch {
+    return timeStr;
+  }
+}
+
+/**
  * Find the most recent upcoming reservation for a phone number
  * @param {string} phoneNumber - Customer phone number (without whatsapp: prefix)
  * @param {string} restaurantId - Optional restaurant ID to filter by
@@ -897,13 +962,9 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
       // Note: For Twilio, templates require contentSid from Twilio Content API
       const templateContentSid = process.env.TWILIO_TEMPLATE_RESERVATION_CONFIRMED;
       if (templateContentSid && customerPhone) {
-        // Format date and time for display
-        const displayDate = new Date(parsedDate).toLocaleDateString('en-US', {
-          weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
-        });
-        const displayTime = new Date(`2000-01-01T${parsedTime}`).toLocaleTimeString('en-US', {
-          hour: 'numeric', minute: '2-digit', hour12: true
-        });
+        // Format date and time for display with relative context (Today, Tomorrow, etc.)
+        const displayDate = formatDateForDisplay(parsedDate);
+        const displayTime = formatTimeForDisplay(parsedTime);
 
         await sendTemplateMessage(customerPhone, templateContentSid, {
           '1': toolInput.customer_name,
@@ -1043,12 +1104,9 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
       // Send cancellation template if configured
       const cancelTemplateSid = process.env.TWILIO_TEMPLATE_RESERVATION_CANCELLED;
       if (cancelTemplateSid && existing.customer_phone) {
-        const displayDate = new Date(existing.date).toLocaleDateString('en-US', {
-          weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
-        });
-        const displayTime = new Date(`2000-01-01T${existing.time}`).toLocaleTimeString('en-US', {
-          hour: 'numeric', minute: '2-digit', hour12: true
-        });
+        // Format date and time for display with relative context
+        const displayDate = formatDateForDisplay(existing.date);
+        const displayTime = formatTimeForDisplay(existing.time);
 
         await sendTemplateMessage(existing.customer_phone, cancelTemplateSid, {
           '1': existing.customer_name,
@@ -1158,12 +1216,9 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
       // Send modification template if configured
       const modifyTemplateSid = process.env.TWILIO_TEMPLATE_RESERVATION_MODIFIED;
       if (modifyTemplateSid && updated.customer_phone) {
-        const displayDate = new Date(updated.date).toLocaleDateString('en-US', {
-          weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
-        });
-        const displayTime = new Date(`2000-01-01T${updated.time}`).toLocaleTimeString('en-US', {
-          hour: 'numeric', minute: '2-digit', hour12: true
-        });
+        // Format date and time for display with relative context
+        const displayDate = formatDateForDisplay(updated.date);
+        const displayTime = formatTimeForDisplay(updated.time);
 
         await sendTemplateMessage(updated.customer_phone, modifyTemplateSid, {
           '1': updated.customer_name,
@@ -1299,12 +1354,9 @@ module.exports = async (req, res) => {
         // Look up user's most recent reservation to modify
         const recentReservation = await findRecentReservation(fromNumber, session.restaurantId);
         if (recentReservation) {
-          const displayDate = new Date(recentReservation.date).toLocaleDateString('en-US', {
-            weekday: 'long', month: 'long', day: 'numeric'
-          });
-          const displayTime = new Date(`2000-01-01T${recentReservation.time}`).toLocaleTimeString('en-US', {
-            hour: 'numeric', minute: '2-digit', hour12: true
-          });
+          // Format date and time for display with relative context
+          const displayDate = formatDateForDisplay(recentReservation.date);
+          const displayTime = formatTimeForDisplay(recentReservation.time);
           const response = `I found your reservation (${recentReservation.reservation_id}) for ${displayDate} at ${displayTime} for ${recentReservation.party_size} guests.\n\nWhat would you like to change?\n• Date\n• Time\n• Party size\n\nJust tell me what you'd like to update.`;
 
           const escapedResponse = response
@@ -1334,12 +1386,9 @@ module.exports = async (req, res) => {
         // Look up user's most recent reservation to cancel
         const recentReservation = await findRecentReservation(fromNumber, session.restaurantId);
         if (recentReservation) {
-          const displayDate = new Date(recentReservation.date).toLocaleDateString('en-US', {
-            weekday: 'long', month: 'long', day: 'numeric'
-          });
-          const displayTime = new Date(`2000-01-01T${recentReservation.time}`).toLocaleTimeString('en-US', {
-            hour: 'numeric', minute: '2-digit', hour12: true
-          });
+          // Format date and time for display with relative context
+          const displayDate = formatDateForDisplay(recentReservation.date);
+          const displayTime = formatTimeForDisplay(recentReservation.time);
           const response = `I found your reservation (${recentReservation.reservation_id}) for ${displayDate} at ${displayTime} for ${recentReservation.party_size} guests.\n\nAre you sure you want to cancel this reservation?\n\nReply YES to confirm cancellation or NO to keep it.`;
 
           // Store pending cancellation in session context
