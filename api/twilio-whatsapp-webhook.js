@@ -143,6 +143,84 @@ function parseTime(timeStr) {
   return '19:00';
 }
 
+/**
+ * Find the most recent upcoming reservation for a phone number
+ * @param {string} phoneNumber - Customer phone number (without whatsapp: prefix)
+ * @param {string} restaurantId - Optional restaurant ID to filter by
+ * @returns {Object|null} - Most recent upcoming reservation or null
+ */
+async function findRecentReservation(phoneNumber, restaurantId = null) {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+
+    let query = supabase
+      .from('reservations')
+      .select('*')
+      .eq('customer_phone', phoneNumber)
+      .in('status', ['Confirmed', 'Pending'])
+      .gte('date', today)
+      .order('date', { ascending: true })
+      .order('time', { ascending: true })
+      .limit(1);
+
+    if (restaurantId) {
+      query = query.eq('restaurant_id', restaurantId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('[Twilio] Error finding recent reservation:', error);
+      return null;
+    }
+
+    return data && data.length > 0 ? data[0] : null;
+  } catch (err) {
+    console.error('[Twilio] Exception finding recent reservation:', err);
+    return null;
+  }
+}
+
+/**
+ * Update the context stored in a WhatsApp session
+ * @param {string} sessionId - Session UUID
+ * @param {Object} contextUpdate - Object with fields to update/merge into context
+ */
+async function updateSessionContext(sessionId, contextUpdate) {
+  try {
+    // First get the current session
+    const { data: session, error: fetchError } = await supabase
+      .from('whatsapp_sessions')
+      .select('context')
+      .eq('id', sessionId)
+      .single();
+
+    if (fetchError) {
+      console.error('[Twilio] Error fetching session for context update:', fetchError);
+      return;
+    }
+
+    // Merge the new context with existing
+    const currentContext = session?.context || {};
+    const newContext = { ...currentContext, ...contextUpdate };
+
+    // Update the session
+    const { error: updateError } = await supabase
+      .from('whatsapp_sessions')
+      .update({
+        context: newContext,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', sessionId);
+
+    if (updateError) {
+      console.error('[Twilio] Error updating session context:', updateError);
+    }
+  } catch (err) {
+    console.error('[Twilio] Exception updating session context:', err);
+  }
+}
+
 // Initialize Anthropic client
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
@@ -813,6 +891,29 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
       }
 
       console.log(`[Twilio] Reservation created: ${reservationId} for ${toolInput.customer_name}`);
+
+      // Send confirmation message to customer (if template contentSid is configured)
+      // Note: For Twilio, templates require contentSid from Twilio Content API
+      const templateContentSid = process.env.TWILIO_TEMPLATE_RESERVATION_CONFIRMED;
+      if (templateContentSid && customerPhone) {
+        // Format date and time for display
+        const displayDate = new Date(parsedDate).toLocaleDateString('en-US', {
+          weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+        });
+        const displayTime = new Date(`2000-01-01T${parsedTime}`).toLocaleTimeString('en-US', {
+          hour: 'numeric', minute: '2-digit', hour12: true
+        });
+
+        await sendTemplateMessage(customerPhone, templateContentSid, {
+          '1': toolInput.customer_name,
+          '2': restaurantInfo?.restaurant_name || 'our restaurant',
+          '3': displayDate,
+          '4': displayTime,
+          '5': toolInput.party_size.toString()
+        });
+        console.log(`[Twilio] Confirmation template sent to ${customerPhone}`);
+      }
+
       return {
         success: true,
         reservation: data,
@@ -937,6 +1038,26 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
       }
 
       console.log(`[Twilio] Reservation cancelled: ${reservation_id}`);
+
+      // Send cancellation template if configured
+      const cancelTemplateSid = process.env.TWILIO_TEMPLATE_RESERVATION_CANCELLED;
+      if (cancelTemplateSid && existing.customer_phone) {
+        const displayDate = new Date(existing.date).toLocaleDateString('en-US', {
+          weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+        });
+        const displayTime = new Date(`2000-01-01T${existing.time}`).toLocaleTimeString('en-US', {
+          hour: 'numeric', minute: '2-digit', hour12: true
+        });
+
+        await sendTemplateMessage(existing.customer_phone, cancelTemplateSid, {
+          '1': existing.customer_name,
+          '2': restaurantInfo?.restaurant_name || 'our restaurant',
+          '3': displayDate,
+          '4': displayTime
+        });
+        console.log(`[Twilio] Cancellation template sent to ${existing.customer_phone}`);
+      }
+
       return {
         success: true,
         reservation_id: reservation_id,
@@ -1032,6 +1153,26 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
       if (new_date) changes.push(`date to ${updated.date}`);
       if (new_time) changes.push(`time to ${updated.time}`);
       if (new_party_size) changes.push(`party size to ${updated.party_size}`);
+
+      // Send modification template if configured
+      const modifyTemplateSid = process.env.TWILIO_TEMPLATE_RESERVATION_MODIFIED;
+      if (modifyTemplateSid && updated.customer_phone) {
+        const displayDate = new Date(updated.date).toLocaleDateString('en-US', {
+          weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+        });
+        const displayTime = new Date(`2000-01-01T${updated.time}`).toLocaleTimeString('en-US', {
+          hour: 'numeric', minute: '2-digit', hour12: true
+        });
+
+        await sendTemplateMessage(updated.customer_phone, modifyTemplateSid, {
+          '1': updated.customer_name,
+          '2': restaurantInfo?.restaurant_name || 'our restaurant',
+          '3': displayDate,
+          '4': displayTime,
+          '5': updated.party_size.toString()
+        });
+        console.log(`[Twilio] Modification template sent to ${updated.customer_phone}`);
+      }
 
       return {
         success: true,
@@ -1148,6 +1289,148 @@ module.exports = async (req, res) => {
         console.error('[Twilio] Failed to create session');
         await sendWhatsAppMessage(fromNumber, 'Sorry, I had trouble starting our conversation. Please try again.');
         return res.status(200).send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
+      }
+
+      // Handle quick action keywords (MODIFY, CANCEL, BOOK, HELP)
+      const messageTextLower = messageText.toLowerCase().trim();
+
+      if (messageTextLower === 'modify') {
+        // Look up user's most recent reservation to modify
+        const recentReservation = await findRecentReservation(fromNumber, session.restaurantId);
+        if (recentReservation) {
+          const displayDate = new Date(recentReservation.date).toLocaleDateString('en-US', {
+            weekday: 'long', month: 'long', day: 'numeric'
+          });
+          const displayTime = new Date(`2000-01-01T${recentReservation.time}`).toLocaleTimeString('en-US', {
+            hour: 'numeric', minute: '2-digit', hour12: true
+          });
+          const response = `I found your reservation (${recentReservation.reservation_id}) for ${displayDate} at ${displayTime} for ${recentReservation.party_size} guests.\n\nWhat would you like to change?\n• Date\n• Time\n• Party size\n\nJust tell me what you'd like to update.`;
+
+          const escapedResponse = response
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+          const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${escapedResponse}</Message></Response>`;
+          res.setHeader('Content-Type', 'text/xml');
+          return res.status(200).send(twimlResponse);
+        } else {
+          const response = "I couldn't find any upcoming reservations for your phone number. Would you like to make a new reservation?";
+          const escapedResponse = response
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+          const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${escapedResponse}</Message></Response>`;
+          res.setHeader('Content-Type', 'text/xml');
+          return res.status(200).send(twimlResponse);
+        }
+      }
+
+      if (messageTextLower === 'cancel') {
+        // Look up user's most recent reservation to cancel
+        const recentReservation = await findRecentReservation(fromNumber, session.restaurantId);
+        if (recentReservation) {
+          const displayDate = new Date(recentReservation.date).toLocaleDateString('en-US', {
+            weekday: 'long', month: 'long', day: 'numeric'
+          });
+          const displayTime = new Date(`2000-01-01T${recentReservation.time}`).toLocaleTimeString('en-US', {
+            hour: 'numeric', minute: '2-digit', hour12: true
+          });
+          const response = `I found your reservation (${recentReservation.reservation_id}) for ${displayDate} at ${displayTime} for ${recentReservation.party_size} guests.\n\nAre you sure you want to cancel this reservation?\n\nReply YES to confirm cancellation or NO to keep it.`;
+
+          // Store pending cancellation in session context
+          await updateSessionContext(session.id, {
+            pendingCancellation: recentReservation.reservation_id
+          });
+
+          const escapedResponse = response
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+          const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${escapedResponse}</Message></Response>`;
+          res.setHeader('Content-Type', 'text/xml');
+          return res.status(200).send(twimlResponse);
+        } else {
+          const response = "I couldn't find any upcoming reservations for your phone number. Would you like to make a new reservation?";
+          const escapedResponse = response
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;');
+          const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${escapedResponse}</Message></Response>`;
+          res.setHeader('Content-Type', 'text/xml');
+          return res.status(200).send(twimlResponse);
+        }
+      }
+
+      if (messageTextLower === 'book') {
+        // Clear any pending actions and start fresh reservation flow
+        await updateSessionContext(session.id, { pendingCancellation: null });
+        const response = "I'd be happy to help you make a reservation! Please tell me:\n\n• How many guests?\n• What date?\n• What time?";
+        const escapedResponse = response
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&apos;');
+        const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${escapedResponse}</Message></Response>`;
+        res.setHeader('Content-Type', 'text/xml');
+        return res.status(200).send(twimlResponse);
+      }
+
+      if (messageTextLower === 'help') {
+        const response = "I can help you with:\n\n• BOOK - Make a new reservation\n• MODIFY - Change an existing reservation\n• CANCEL - Cancel a reservation\n• HELP - Show this menu\n\nOr just tell me what you need and I'll assist you!";
+        const escapedResponse = response
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&apos;');
+        const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${escapedResponse}</Message></Response>`;
+        res.setHeader('Content-Type', 'text/xml');
+        return res.status(200).send(twimlResponse);
+      }
+
+      // Handle YES/NO responses for pending cancellation
+      if ((messageTextLower === 'yes' || messageTextLower === 'no') && session.context?.pendingCancellation) {
+        if (messageTextLower === 'yes') {
+          // Perform the cancellation
+          const reservationId = session.context.pendingCancellation;
+          const { error } = await supabase
+            .from('reservations')
+            .update({ status: 'Cancelled' })
+            .eq('reservation_id', reservationId);
+
+          await updateSessionContext(session.id, { pendingCancellation: null });
+
+          if (error) {
+            const response = "Sorry, I had trouble cancelling your reservation. Please try again or contact the restaurant directly.";
+            const escapedResponse = response.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+            const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${escapedResponse}</Message></Response>`;
+            res.setHeader('Content-Type', 'text/xml');
+            return res.status(200).send(twimlResponse);
+          }
+
+          const response = `Your reservation (${reservationId}) has been cancelled. We hope to see you again soon!\n\nReply BOOK to make a new reservation.`;
+          const escapedResponse = response.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+          const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${escapedResponse}</Message></Response>`;
+          res.setHeader('Content-Type', 'text/xml');
+          return res.status(200).send(twimlResponse);
+        } else {
+          // User said NO - keep the reservation
+          await updateSessionContext(session.id, { pendingCancellation: null });
+          const response = "No problem! Your reservation has been kept. Is there anything else I can help you with?";
+          const escapedResponse = response.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+          const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${escapedResponse}</Message></Response>`;
+          res.setHeader('Content-Type', 'text/xml');
+          return res.status(200).send(twimlResponse);
+        }
       }
 
       // Process message with Claude
