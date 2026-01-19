@@ -326,7 +326,7 @@ async function executeTool(toolName, toolInput, session) {
         const { data: tables } = await client
           .from('tables')
           .select('capacity, status')
-          .eq('status', 'Available');
+          .eq('status', 'available');
 
         const totalCapacity = tables?.reduce((sum, t) => sum + t.capacity, 0) || 40;
 
