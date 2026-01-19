@@ -149,6 +149,66 @@ const anthropic = new Anthropic({
 });
 
 /**
+ * Sanitize conversation history to ensure valid message structure for Claude API
+ * - Ensures all tool_result blocks have corresponding tool_use blocks in the previous assistant message
+ * - Removes orphan tool_result blocks that would cause API errors
+ */
+function sanitizeConversationHistory(history) {
+  if (!Array.isArray(history) || history.length === 0) {
+    return [];
+  }
+
+  const sanitized = [];
+
+  for (let i = 0; i < history.length; i++) {
+    const msg = history[i];
+
+    // Check if this message contains tool_result blocks
+    if (msg.role === 'user' && Array.isArray(msg.content)) {
+      const toolResults = msg.content.filter(block => block.type === 'tool_result');
+
+      if (toolResults.length > 0) {
+        // Find the previous assistant message
+        const prevMsg = sanitized[sanitized.length - 1];
+
+        if (prevMsg && prevMsg.role === 'assistant' && Array.isArray(prevMsg.content)) {
+          // Get all tool_use IDs from the previous assistant message
+          const toolUseIds = new Set(
+            prevMsg.content
+              .filter(block => block.type === 'tool_use')
+              .map(block => block.id)
+          );
+
+          // Filter to only include tool_results that have matching tool_use blocks
+          const validToolResults = toolResults.filter(tr => toolUseIds.has(tr.tool_use_id));
+
+          if (validToolResults.length > 0) {
+            sanitized.push({
+              role: 'user',
+              content: validToolResults
+            });
+          } else {
+            console.warn('[Twilio] Skipping user message with orphan tool_result blocks');
+          }
+        } else {
+          // No valid previous assistant message with tool_use - skip these tool_results
+          console.warn('[Twilio] Skipping tool_result blocks without corresponding tool_use');
+        }
+      } else {
+        // No tool_results, keep the message as is
+        sanitized.push(msg);
+      }
+    } else {
+      // Regular message (not tool_result), keep it
+      sanitized.push(msg);
+    }
+  }
+
+  console.log(`[Twilio] Sanitized conversation history: ${history.length} -> ${sanitized.length} messages`);
+  return sanitized;
+}
+
+/**
  * Send a WhatsApp message via Twilio
  */
 async function sendWhatsAppMessage(to, message) {
@@ -363,7 +423,9 @@ async function processWithClaude(messageText, session) {
   }
 
   // Build conversation history from session (snake_case from Supabase)
-  const conversationHistory = session?.conversation_history || [];
+  // Sanitize to remove any orphan tool_result blocks that would cause API errors
+  const rawHistory = session?.conversation_history || [];
+  const conversationHistory = sanitizeConversationHistory(rawHistory);
 
   // Add the new user message
   conversationHistory.push({
@@ -598,9 +660,10 @@ async function processWithClaude(messageText, session) {
     }
 
     // Add final assistant message to conversation history
+    // Store the full response content array for consistency
     conversationHistory.push({
       role: 'assistant',
-      content: assistantMessage
+      content: currentResponse.content
     });
 
     // Save conversation history to session for persistence
