@@ -2,74 +2,47 @@
  * Cron Job: Send Reservation Reminders
  *
  * Sends WhatsApp template reminders to customers with reservations scheduled for today.
- * Uses the 'reservation_reminder' template approved in Meta Business Manager.
+ * Uses Twilio Content Templates for WhatsApp messaging.
  *
  * Runs daily at 9 AM via Vercel Cron Jobs
  */
 
 const { createClient } = require('@supabase/supabase-js');
-
-// WhatsApp API configuration
-const WHATSAPP_API_URL = 'https://graph.facebook.com/v18.0';
+const twilio = require('twilio');
 
 /**
- * Send a WhatsApp template message via Meta Cloud API
+ * Send a WhatsApp template message via Twilio
  * (Standalone version for cron job)
  */
-async function sendTemplateMessage(to, templateName, languageCode = 'en', bodyParameters = []) {
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+async function sendTemplateMessage(to, contentSid, contentVariables = {}) {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const twilioWhatsAppNumber = process.env.TWILIO_WHATSAPP_NUMBER;
 
-  if (!phoneNumberId || !accessToken) {
-    console.error('[CRON] Missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN');
-    return { success: false, error: 'WhatsApp not configured' };
+  if (!accountSid || !authToken || !twilioWhatsAppNumber) {
+    console.error('[CRON] Missing Twilio configuration');
+    return { success: false, error: 'Twilio not configured' };
   }
 
   try {
-    const components = [];
+    const client = twilio(accountSid, authToken);
 
-    if (bodyParameters.length > 0) {
-      components.push({
-        type: 'body',
-        parameters: bodyParameters.map(param => ({
-          type: 'text',
-          text: String(param)
-        }))
-      });
-    }
+    const toNumber = to.startsWith('whatsapp:') ? to : `whatsapp:${to}`;
+    const fromNumber = twilioWhatsAppNumber.startsWith('whatsapp:')
+      ? twilioWhatsAppNumber
+      : `whatsapp:${twilioWhatsAppNumber}`;
 
-    const payload = {
-      messaging_product: 'whatsapp',
-      recipient_type: 'individual',
-      to: to,
-      type: 'template',
-      template: {
-        name: templateName,
-        language: { code: languageCode },
-        components: components
-      }
-    };
+    console.log(`[CRON] Sending template ${contentSid} to ${to}`);
 
-    console.log(`[CRON] Sending template '${templateName}' to ${to}`);
-
-    const response = await fetch(`${WHATSAPP_API_URL}/${phoneNumberId}/messages`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
+    const result = await client.messages.create({
+      from: fromNumber,
+      to: toNumber,
+      contentSid: contentSid,
+      contentVariables: JSON.stringify(contentVariables)
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error('[CRON] Template send error:', data);
-      return { success: false, error: data.error?.message || 'Failed to send template' };
-    }
-
-    console.log(`[CRON] Template sent to ${to}, messageId: ${data.messages?.[0]?.id}`);
-    return { success: true, messageId: data.messages?.[0]?.id };
+    console.log(`[CRON] Template sent to ${to}, messageId: ${result.sid}`);
+    return { success: true, messageId: result.sid };
   } catch (error) {
     console.error('[CRON] Template send exception:', error);
     return { success: false, error: error.message };
@@ -180,19 +153,31 @@ module.exports = async (req, res) => {
       // Format the time for display
       const formattedTime = formatTime(time);
 
-      // Send the reminder template
-      // Template: reservation_reminder
-      // Variables: {{1}}=name, {{2}}=restaurant, {{3}}=time, {{4}}=party_size
+      // Get the reminder template SID
+      const reminderTemplateSid = process.env.TWILIO_TEMPLATE_RESERVATION_REMINDER;
+      if (!reminderTemplateSid) {
+        console.error('[CRON] Missing TWILIO_TEMPLATE_RESERVATION_REMINDER environment variable');
+        results.failed++;
+        results.details.push({
+          reservation_id,
+          customer_name,
+          status: 'failed',
+          error: 'Reminder template SID not configured'
+        });
+        continue;
+      }
+
+      // Send the reminder template via Twilio
+      // Content variables: {{1}}=name, {{2}}=restaurant, {{3}}=time, {{4}}=party_size
       const sendResult = await sendTemplateMessage(
         customer_phone,
-        'reservation_reminder',
-        'en',
-        [
-          customer_name,
-          restaurantName,
-          formattedTime,
-          party_size.toString()
-        ]
+        reminderTemplateSid,
+        {
+          '1': customer_name,
+          '2': restaurantName,
+          '3': formattedTime,
+          '4': party_size.toString()
+        }
       );
 
       if (sendResult.success) {
