@@ -29,6 +29,7 @@ const {
 } = require('./_lib/whatsapp-sessions');
 const { getRestaurantByName, getRestaurantById, getAllActiveRestaurants } = require('./_lib/restaurant-registry');
 const { getMultiTenantClient } = require('./_lib/multi-tenant-supabase');
+const { centralSupabase } = require('./_lib/central-supabase');
 
 /**
  * Parse natural language date into YYYY-MM-DD format
@@ -153,11 +154,11 @@ async function findRecentReservation(phoneNumber, restaurantId = null) {
   try {
     const today = new Date().toISOString().slice(0, 10);
 
-    let query = supabase
+    let query = centralSupabase
       .from('reservations')
       .select('*')
       .eq('customer_phone', phoneNumber)
-      .in('status', ['Confirmed', 'Pending'])
+      .in('status', ['confirmed', 'pending'])
       .gte('date', today)
       .order('date', { ascending: true })
       .order('time', { ascending: true })
@@ -189,7 +190,7 @@ async function findRecentReservation(phoneNumber, restaurantId = null) {
 async function updateSessionContext(sessionId, contextUpdate) {
   try {
     // First get the current session
-    const { data: session, error: fetchError } = await supabase
+    const { data: session, error: fetchError } = await centralSupabase
       .from('whatsapp_sessions')
       .select('context')
       .eq('id', sessionId)
@@ -205,7 +206,7 @@ async function updateSessionContext(sessionId, contextUpdate) {
     const newContext = { ...currentContext, ...contextUpdate };
 
     // Update the session
-    const { error: updateError } = await supabase
+    const { error: updateError } = await centralSupabase
       .from('whatsapp_sessions')
       .update({
         context: newContext,
