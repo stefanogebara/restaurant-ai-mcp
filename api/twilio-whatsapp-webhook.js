@@ -424,17 +424,14 @@ async function processWithClaude(messageText, session) {
 
   // Build conversation history from session (snake_case from Supabase)
   // Sanitize to remove any orphan tool_result blocks that would cause API errors
-  console.log(`[Twilio] Building conversation history, raw length: ${session?.conversation_history?.length || 0}`);
   const rawHistory = session?.conversation_history || [];
   const conversationHistory = sanitizeConversationHistory(rawHistory);
-  console.log(`[Twilio] After sanitization, history length: ${conversationHistory.length}`);
 
   // Add the new user message
   conversationHistory.push({
     role: 'user',
     content: messageText
   });
-  console.log(`[Twilio] Added user message, preparing to call Claude API...`);
 
   // Define available tools for restaurant operations
   const tools = [
@@ -586,7 +583,6 @@ async function processWithClaude(messageText, session) {
     let toolRounds = 0;
 
     // Initial Claude call
-    console.log(`[Twilio] Calling Claude API with ${conversationHistory.length} messages...`);
     currentResponse = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1024,
@@ -594,7 +590,6 @@ async function processWithClaude(messageText, session) {
       tools: tools,
       messages: conversationHistory
     });
-    console.log(`[Twilio] Claude API responded with stop_reason: ${currentResponse.stop_reason}`);
 
     // Loop until Claude responds with just text (no tool calls) or max rounds reached
     while (toolRounds < MAX_TOOL_ROUNDS) {
