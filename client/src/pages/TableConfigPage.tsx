@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tableConfigAPI } from '../services/api';
 import type { TableConfig } from '../services/api';
@@ -30,7 +30,7 @@ export default function TableConfigPage() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Fetch tables
-  const { data: tablesResponse, isLoading, refetch } = useQuery({
+  const { data: tablesResponse, isLoading } = useQuery({
     queryKey: ['tableConfig'],
     queryFn: tableConfigAPI.listTables,
   });
@@ -148,7 +148,7 @@ export default function TableConfigPage() {
   };
 
   // Get unique locations for dropdown
-  const locations = [...new Set(tables.map((t: TableConfig) => t.location))];
+  const locations: string[] = [...new Set(tables.map((t: TableConfig) => t.location))];
 
   if (isLoading) {
     return (
