@@ -1149,6 +1149,48 @@ const calculateAvailableCovers = async () => {
 };
 
 /**
+ * Check if a table is flexible (can be combined with others)
+ * Fixed tables (round tables, booths) cannot be combined
+ */
+const isFlexibleTable = (table) => {
+  // is_fixed = true means it CANNOT be combined (round table, booth)
+  // Default to flexible (can combine) if not specified
+  return table.is_fixed !== true;
+};
+
+/**
+ * Check if two tables can be combined based on adjacency rules
+ * MVP: Same location = can combine (implicit adjacency)
+ * Advanced: Explicit adjacent_tables array or combination_group
+ */
+const canCombineTables = (table1, table2) => {
+  // Both tables must be flexible (not fixed)
+  if (!isFlexibleTable(table1) || !isFlexibleTable(table2)) {
+    return false;
+  }
+
+  // Check explicit adjacency first (if defined)
+  const adjacent1 = table1.adjacent_tables || [];
+  const adjacent2 = table2.adjacent_tables || [];
+
+  if (adjacent1.length > 0 || adjacent2.length > 0) {
+    // If adjacency is explicitly defined, use it
+    return adjacent1.includes(table2.id) || adjacent2.includes(table1.id);
+  }
+
+  // Check combination group (if defined)
+  const group1 = table1.combination_group;
+  const group2 = table2.combination_group;
+
+  if (group1 && group2) {
+    return group1 === group2;
+  }
+
+  // MVP fallback: Same location means can combine
+  return table1.location === table2.location;
+};
+
+/**
  * Check if restaurant can accommodate a party of given size
  * Returns true/false without exposing internal table details
  */
@@ -1228,48 +1270,6 @@ const canAccommodateParty = async (partySize) => {
     can_accommodate: false,
     reason: `No single table or valid combination can seat ${partySize} guests`
   };
-};
-
-/**
- * Check if a table is flexible (can be combined with others)
- * Fixed tables (round tables, booths) cannot be combined
- */
-const isFlexibleTable = (table) => {
-  // is_fixed = true means it CANNOT be combined (round table, booth)
-  // Default to flexible (can combine) if not specified
-  return table.is_fixed !== true;
-};
-
-/**
- * Check if two tables can be combined based on adjacency rules
- * MVP: Same location = can combine (implicit adjacency)
- * Advanced: Explicit adjacent_tables array or combination_group
- */
-const canCombineTables = (table1, table2) => {
-  // Both tables must be flexible (not fixed)
-  if (!isFlexibleTable(table1) || !isFlexibleTable(table2)) {
-    return false;
-  }
-
-  // Check explicit adjacency first (if defined)
-  const adjacent1 = table1.adjacent_tables || [];
-  const adjacent2 = table2.adjacent_tables || [];
-
-  if (adjacent1.length > 0 || adjacent2.length > 0) {
-    // If adjacency is explicitly defined, use it
-    return adjacent1.includes(table2.id) || adjacent2.includes(table1.id);
-  }
-
-  // Check combination group (if defined)
-  const group1 = table1.combination_group;
-  const group2 = table2.combination_group;
-
-  if (group1 && group2) {
-    return group1 === group2;
-  }
-
-  // MVP fallback: Same location means can combine
-  return table1.location === table2.location;
 };
 
 const findBestTableCombination = (availableTables, partySize) => {
