@@ -30,6 +30,7 @@ const {
 const { getRestaurantByName, getRestaurantById, getAllActiveRestaurants } = require('./_lib/restaurant-registry');
 const { getMultiTenantClient } = require('./_lib/multi-tenant-supabase');
 const { centralSupabase } = require('./_lib/central-supabase');
+const { canAccommodateParty } = require('./_lib/supabase');
 
 /**
  * Parse natural language date into YYYY-MM-DD format
@@ -884,27 +885,67 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
       // Parse date/time for consistent display
       const parsedDate = parseDate(toolInput.date);
       const parsedTime = parseTime(toolInput.time);
+      const partySize = parseInt(toolInput.party_size);
 
-      // Query available tables for the requested time
-      const { data: tables, error } = await supabaseClient
+      // Check if party can be accommodated using table-aware logic
+      // This respects is_fixed flag and adjacent_tables configuration
+      const accommodationResult = await canAccommodateParty(partySize);
+
+      if (!accommodationResult.success) {
+        return { success: false, error: 'Could not check table availability' };
+      }
+
+      // Check for time conflicts with existing reservations
+      const { data: reservations, error: resError } = await supabaseClient
+        .from('reservations')
+        .select('party_size')
+        .eq('date', parsedDate)
+        .eq('time', parsedTime)
+        .in('status', ['confirmed', 'seated']);
+
+      if (resError) {
+        console.error('[Twilio] Reservation check error:', resError);
+      }
+
+      const bookedSeats = reservations?.reduce((sum, r) => sum + (r.party_size || 0), 0) || 0;
+
+      // Get total capacity
+      const { data: allTables } = await supabaseClient
         .from('tables')
-        .select('*')
-        .gte('capacity', toolInput.party_size)
-        .eq('status', 'available');
+        .select('capacity')
+        .eq('is_active', true);
+      const totalCapacity = allTables?.reduce((sum, t) => sum + t.capacity, 0) || 30;
+      const remainingCapacity = totalCapacity - bookedSeats;
 
-      if (error) {
-        return { success: false, error: error.message };
+      // Both conditions must be met
+      const canFit = accommodationResult.can_accommodate && remainingCapacity >= partySize;
+
+      // Build response message with table info
+      let message;
+      if (canFit) {
+        if (accommodationResult.method === 'combination') {
+          message = `We have availability for ${partySize} guests on ${parsedDate} at ${parsedTime}. We can seat you at Tables ${accommodationResult.tables.join(' + ')} (${accommodationResult.total_capacity} seats combined).`;
+        } else {
+          message = `We have a table available for ${partySize} guests on ${parsedDate} at ${parsedTime} (Table ${accommodationResult.tables[0]}, seats ${accommodationResult.total_capacity}).`;
+        }
+      } else if (!accommodationResult.can_accommodate) {
+        message = `Sorry, we cannot accommodate a party of ${partySize} guests. ${accommodationResult.reason || 'Our largest available seating option is smaller.'}`;
+      } else {
+        message = `Sorry, ${parsedTime} is fully booked for ${partySize} guests.`;
       }
 
       return {
         success: true,
-        available: tables.length > 0,
-        tables: tables.length,
+        available: canFit,
         date: parsedDate,
         time: parsedTime,
-        message: tables.length > 0
-          ? `We have ${tables.length} table(s) available for ${toolInput.party_size} guests on ${parsedDate} at ${parsedTime}.`
-          : `Sorry, no tables available for ${toolInput.party_size} guests at that time.`
+        message,
+        details: {
+          can_physically_accommodate: accommodationResult.can_accommodate,
+          seating_method: accommodationResult.method,
+          assigned_tables: accommodationResult.tables,
+          table_capacity: accommodationResult.total_capacity
+        }
       };
     }
 

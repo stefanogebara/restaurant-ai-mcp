@@ -22,6 +22,7 @@ const {
 } = require('./_lib/whatsapp-sessions');
 const { getRestaurantByName, getAllActiveRestaurants } = require('./_lib/restaurant-registry');
 const { getMultiTenantClient } = require('./_lib/multi-tenant-supabase');
+const { canAccommodateParty } = require('./_lib/supabase');
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
@@ -310,7 +311,7 @@ async function executeTool(toolName, toolInput, session) {
 
         const { date, time, party_size } = toolInput;
 
-        // Get reservations for that date
+        // Get reservations for that date/time
         const { data: reservations, error } = await client
           .from('reservations')
           .select('*')
@@ -322,30 +323,58 @@ async function executeTool(toolName, toolInput, session) {
           return { success: false, error: 'Could not check availability' };
         }
 
-        // Get restaurant capacity
-        const { data: tables } = await client
-          .from('tables')
-          .select('capacity, status')
-          .eq('status', 'available');
+        // Check if party can be accommodated using table-aware logic
+        // This respects is_fixed flag and adjacent_tables configuration
+        const accommodationResult = await canAccommodateParty(party_size);
 
-        const totalCapacity = tables?.reduce((sum, t) => sum + t.capacity, 0) || 40;
+        if (!accommodationResult.success) {
+          return { success: false, error: 'Could not check table availability' };
+        }
 
-        // Simple availability check
+        // Check for time conflicts with existing reservations
         const bookedAtTime = reservations?.filter(r => r.time === time) || [];
         const bookedSeats = bookedAtTime.reduce((sum, r) => sum + (r.party_size || 0), 0);
-        const available = (totalCapacity - bookedSeats) >= party_size;
+
+        // Get total capacity to check overall availability
+        const { data: allTables } = await client
+          .from('tables')
+          .select('capacity')
+          .eq('is_active', true);
+        const totalCapacity = allTables?.reduce((sum, t) => sum + t.capacity, 0) || 30;
+        const remainingCapacity = totalCapacity - bookedSeats;
+
+        // Both conditions must be met:
+        // 1. Tables can physically accommodate the party (proper combinations)
+        // 2. There's enough remaining capacity at the requested time
+        const canFit = accommodationResult.can_accommodate && remainingCapacity >= party_size;
+
+        // Build response message with table info
+        let message;
+        if (canFit) {
+          if (accommodationResult.method === 'combination') {
+            message = `Yes, we have availability for ${party_size} guests on ${date} at ${time}. We can seat you at Tables ${accommodationResult.tables.join(' + ')} (${accommodationResult.total_capacity} seats combined).`;
+          } else {
+            message = `Yes, we have availability for ${party_size} guests on ${date} at ${time}. We have a table that seats ${accommodationResult.total_capacity}.`;
+          }
+        } else if (!accommodationResult.can_accommodate) {
+          message = `Sorry, we cannot accommodate a party of ${party_size} guests. ${accommodationResult.reason || 'Our largest available seating option is smaller.'}`;
+        } else {
+          message = `Sorry, ${time} is fully booked for ${party_size} guests. We don't have enough available capacity at that time.`;
+        }
 
         return {
           success: true,
-          available,
-          message: available
-            ? `Yes, we have availability for ${party_size} guests on ${date} at ${time}`
-            : `Sorry, ${time} is fully booked for ${party_size} guests`,
+          available: canFit,
+          message,
           details: {
             requested_date: date,
             requested_time: time,
             party_size,
-            available_capacity: totalCapacity - bookedSeats
+            can_physically_accommodate: accommodationResult.can_accommodate,
+            seating_method: accommodationResult.method,
+            assigned_tables: accommodationResult.tables,
+            table_capacity: accommodationResult.total_capacity,
+            remaining_capacity_at_time: remainingCapacity
           }
         };
       } catch (err) {

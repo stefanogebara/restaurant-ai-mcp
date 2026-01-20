@@ -1159,28 +1159,75 @@ const canAccommodateParty = async (partySize) => {
   const availableTables = tablesResult.tables.filter(t => t.status === 'available');
 
   // Check single tables first
-  if (availableTables.some(t => t.capacity >= partySize)) {
-    return { success: true, can_accommodate: true };
+  const singleTable = availableTables.find(t => t.capacity >= partySize);
+  if (singleTable) {
+    return {
+      success: true,
+      can_accommodate: true,
+      method: 'single',
+      tables: [singleTable.table_number],
+      total_capacity: singleTable.capacity
+    };
   }
 
-  // Check flexible table combinations by location
-  const flexibleByLocation = {};
-  availableTables.filter(t => !t.is_fixed).forEach(t => {
-    const location = t.location || 'Main';
-    if (!flexibleByLocation[location]) {
-      flexibleByLocation[location] = [];
-    }
-    flexibleByLocation[location].push(t);
-  });
+  // Check 2-table combinations using adjacency rules
+  const flexibleTables = availableTables.filter(t => !t.is_fixed);
 
-  for (const [, tables] of Object.entries(flexibleByLocation)) {
-    const totalCapacity = tables.reduce((sum, t) => sum + t.capacity, 0);
-    if (totalCapacity >= partySize) {
-      return { success: true, can_accommodate: true };
+  for (let i = 0; i < flexibleTables.length; i++) {
+    for (let j = i + 1; j < flexibleTables.length; j++) {
+      const table1 = flexibleTables[i];
+      const table2 = flexibleTables[j];
+
+      // Use canCombineTables to check if they can actually combine
+      if (!canCombineTables(table1, table2)) {
+        continue;
+      }
+
+      const totalCapacity = table1.capacity + table2.capacity;
+      if (totalCapacity >= partySize) {
+        return {
+          success: true,
+          can_accommodate: true,
+          method: 'combination',
+          tables: [table1.table_number, table2.table_number],
+          total_capacity: totalCapacity
+        };
+      }
     }
   }
 
-  return { success: true, can_accommodate: false };
+  // Check 3-table combinations for larger parties
+  for (let i = 0; i < flexibleTables.length; i++) {
+    for (let j = i + 1; j < flexibleTables.length; j++) {
+      for (let k = j + 1; k < flexibleTables.length; k++) {
+        const table1 = flexibleTables[i];
+        const table2 = flexibleTables[j];
+        const table3 = flexibleTables[k];
+
+        // For 3-table chain: 1-2 must connect and 2-3 must connect
+        if (!canCombineTables(table1, table2) || !canCombineTables(table2, table3)) {
+          continue;
+        }
+
+        const totalCapacity = table1.capacity + table2.capacity + table3.capacity;
+        if (totalCapacity >= partySize) {
+          return {
+            success: true,
+            can_accommodate: true,
+            method: 'combination',
+            tables: [table1.table_number, table2.table_number, table3.table_number],
+            total_capacity: totalCapacity
+          };
+        }
+      }
+    }
+  }
+
+  return {
+    success: true,
+    can_accommodate: false,
+    reason: `No single table or valid combination can seat ${partySize} guests`
+  };
 };
 
 /**
