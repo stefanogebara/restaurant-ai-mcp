@@ -53,3 +53,67 @@ export const hostAPI = {
     first_time_visitor?: boolean;
   }) => api.post('/host-dashboard?action=update-reservation', data),
 };
+
+// Table Configuration API
+export interface TableConfig {
+  id: string;
+  table_number: number;
+  capacity: number;
+  location: string;
+  status: string;
+  is_active: boolean;
+  is_fixed: boolean;
+  min_capacity: number;
+  max_capacity: number | null;
+  adjacent_tables: string[];
+  combination_group: string | null;
+}
+
+export const tableConfigAPI = {
+  // Get all tables with full config
+  listTables: () => api.get('/table-config?action=list'),
+
+  // Get single table
+  getTable: (tableId: string) => api.get(`/table-config?action=get&table_id=${tableId}`),
+
+  // Create a new table
+  createTable: (data: {
+    table_number: number;
+    capacity: number;
+    location?: string;
+    is_fixed?: boolean;
+    combination_group?: string;
+    min_capacity?: number;
+    max_capacity?: number;
+  }) => api.post('/table-config?action=create', data),
+
+  // Update table configuration
+  updateTable: (data: {
+    table_id: string;
+    table_number?: number;
+    capacity?: number;
+    location?: string;
+    is_fixed?: boolean;
+    combination_group?: string;
+    min_capacity?: number;
+    max_capacity?: number;
+    adjacent_tables?: string[];
+  }) => api.put('/table-config?action=update', data),
+
+  // Delete (deactivate) a table
+  deleteTable: (tableId: string) =>
+    api.delete('/table-config?action=delete', { data: { table_id: tableId } }),
+
+  // Set adjacency relationships
+  setAdjacency: (tableId: string, adjacentTableIds: string[]) =>
+    api.post('/table-config?action=set-adjacency', {
+      table_id: tableId,
+      adjacent_table_ids: adjacentTableIds
+    }),
+
+  // Bulk update multiple tables
+  bulkUpdate: (updates: Array<{
+    table_id: string;
+    [key: string]: any;
+  }>) => api.post('/table-config?action=bulk-update', { updates }),
+};

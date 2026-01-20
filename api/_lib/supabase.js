@@ -322,6 +322,190 @@ const updateTableStatus = async (recordId, status) => {
   return updateTable(recordId, { 'Status': status });
 };
 
+/**
+ * Create a new table
+ * @param {Object} fields - Table fields
+ * @returns {Object} Created table
+ */
+const createTable = async (fields) => {
+  const { data, error } = await supabase
+    .from('tables')
+    .insert({
+      table_number: fields.table_number,
+      capacity: fields.capacity,
+      location: fields.location || 'Main',
+      status: 'available',
+      is_active: true,
+      is_fixed: fields.is_fixed || false,
+      min_capacity: fields.min_capacity || 1,
+      max_capacity: fields.max_capacity || null,
+      adjacent_tables: fields.adjacent_tables || [],
+      combination_group: fields.combination_group || null
+    })
+    .select()
+    .single();
+
+  if (error) return handleSupabaseResponse(null, error, 'CREATE table');
+
+  return {
+    success: true,
+    table: {
+      id: data.id,
+      table_number: data.table_number,
+      capacity: data.capacity,
+      location: data.location,
+      status: data.status,
+      is_fixed: data.is_fixed,
+      min_capacity: data.min_capacity,
+      max_capacity: data.max_capacity,
+      adjacent_tables: data.adjacent_tables,
+      combination_group: data.combination_group
+    }
+  };
+};
+
+/**
+ * Update table with all configuration fields
+ * @param {string} tableId - Table UUID
+ * @param {Object} fields - Fields to update
+ * @returns {Object} Updated table
+ */
+const updateTableConfig = async (tableId, fields) => {
+  const updates = {};
+
+  // Basic fields
+  if (fields.table_number !== undefined) updates.table_number = fields.table_number;
+  if (fields.capacity !== undefined) updates.capacity = fields.capacity;
+  if (fields.location !== undefined) updates.location = fields.location;
+  if (fields.status !== undefined) updates.status = fields.status;
+
+  // Combination settings
+  if (fields.is_fixed !== undefined) updates.is_fixed = fields.is_fixed;
+  if (fields.min_capacity !== undefined) updates.min_capacity = fields.min_capacity;
+  if (fields.max_capacity !== undefined) updates.max_capacity = fields.max_capacity;
+  if (fields.adjacent_tables !== undefined) updates.adjacent_tables = fields.adjacent_tables;
+  if (fields.combination_group !== undefined) updates.combination_group = fields.combination_group;
+
+  console.log(`[updateTableConfig] Updating table ${tableId} with:`, updates);
+
+  const { data, error } = await supabase
+    .from('tables')
+    .update(updates)
+    .eq('id', tableId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error(`[updateTableConfig] Error:`, error);
+    return handleSupabaseResponse(null, error, 'UPDATE table config');
+  }
+
+  return {
+    success: true,
+    table: {
+      id: data.id,
+      table_number: data.table_number,
+      capacity: data.capacity,
+      location: data.location,
+      status: data.status,
+      is_fixed: data.is_fixed,
+      min_capacity: data.min_capacity,
+      max_capacity: data.max_capacity,
+      adjacent_tables: data.adjacent_tables,
+      combination_group: data.combination_group
+    }
+  };
+};
+
+/**
+ * Soft delete a table (set is_active = false)
+ * @param {string} tableId - Table UUID
+ * @returns {Object} Result
+ */
+const deleteTable = async (tableId) => {
+  const { data, error } = await supabase
+    .from('tables')
+    .update({ is_active: false })
+    .eq('id', tableId)
+    .select()
+    .single();
+
+  if (error) return handleSupabaseResponse(null, error, 'DELETE table');
+
+  return {
+    success: true,
+    message: `Table ${data.table_number} deactivated`,
+    table_number: data.table_number
+  };
+};
+
+/**
+ * Get a single table by ID with full details
+ * @param {string} tableId - Table UUID
+ * @returns {Object} Table details
+ */
+const getTableById = async (tableId) => {
+  const { data, error } = await supabase
+    .from('tables')
+    .select('*')
+    .eq('id', tableId)
+    .single();
+
+  if (error) return handleSupabaseResponse(null, error, 'GET table by ID');
+  if (!data) return { success: false, error: true, message: 'Table not found' };
+
+  return {
+    success: true,
+    table: {
+      id: data.id,
+      table_number: data.table_number,
+      capacity: data.capacity,
+      location: data.location,
+      status: data.status,
+      is_active: data.is_active,
+      is_fixed: data.is_fixed,
+      min_capacity: data.min_capacity,
+      max_capacity: data.max_capacity,
+      adjacent_tables: data.adjacent_tables,
+      combination_group: data.combination_group,
+      current_service_id: data.current_service_id
+    }
+  };
+};
+
+/**
+ * Get all tables including inactive ones (for admin)
+ * @returns {Object} All tables
+ */
+const getAllTablesAdmin = async () => {
+  const { data, error } = await supabase
+    .from('tables')
+    .select('*')
+    .order('table_number', { ascending: true });
+
+  if (error) return handleSupabaseResponse(null, error, 'GET all tables admin');
+
+  const tables = data.map(t => ({
+    id: t.id,
+    table_number: t.table_number,
+    capacity: t.capacity,
+    location: t.location || 'Main',
+    status: t.status || 'available',
+    is_active: t.is_active,
+    is_fixed: t.is_fixed || false,
+    min_capacity: t.min_capacity || 1,
+    max_capacity: t.max_capacity || null,
+    adjacent_tables: t.adjacent_tables || [],
+    combination_group: t.combination_group || null,
+    current_service_id: t.current_service_id || null
+  }));
+
+  return {
+    success: true,
+    tables
+  };
+};
+
 // ============ SERVICE RECORDS ============
 
 const getServiceRecords = async (filter = {}) => {
@@ -1128,10 +1312,15 @@ module.exports = {
   // Tables
   getTables,
   getAllTables,
+  getAllTablesAdmin,
   getAvailableTables,
   getTableByNumber,
+  getTableById,
+  createTable,
   updateTable,
+  updateTableConfig,
   updateTableStatus,
+  deleteTable,
   findBestTableCombination,
   // Flexible table helpers
   isFlexibleTable,

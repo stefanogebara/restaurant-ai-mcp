@@ -23,6 +23,7 @@ import Welcome from './pages/Welcome';
 import Onboarding from './pages/Onboarding';
 import LanguageSettings from './pages/LanguageSettings';
 import TestPhoneInput from './pages/TestPhoneInput';
+import TableConfigPage from './pages/TableConfigPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const queryClient = new QueryClient({
@@ -56,6 +57,7 @@ function App() {
               <Route path="/host-dashboard/dna" element={<CustomerDNAPage />} />
               <Route path="/host-dashboard/segovia" element={<SegoviaInsightsPage />} />
               <Route path="/host-dashboard/calls" element={<CallTrackingDashboard />} />
+              <Route path="/host-dashboard/tables" element={<TableConfigPage />} />
               <Route path="/analytics" element={<AnalyticsDashboard />} />
               <Route path="/customer" element={<CustomerPortal />} />
               <Route path="/subscription/success" element={<SubscriptionSuccess />} />

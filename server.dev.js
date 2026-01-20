@@ -31,6 +31,7 @@ const mlPerformance = require('./api/ml-performance.js');
 const ltv = require('./api/ltv.js');
 const pricing = require('./api/pricing.js');
 const agentConversations = require('./api/agent-conversations.js');
+const tableConfig = require('./api/table-config.js');
 
 // Create mock req/res wrappers for Vercel functions
 const createHandler = (handler) => {
@@ -88,6 +89,12 @@ app.post('/api/pricing', createHandler(pricing));
 app.put('/api/pricing', createHandler(pricing));
 app.patch('/api/pricing', createHandler(pricing));
 app.delete('/api/pricing', createHandler(pricing));
+
+// Table Configuration endpoints
+app.get('/api/table-config', createHandler(tableConfig));
+app.post('/api/table-config', createHandler(tableConfig));
+app.put('/api/table-config', createHandler(tableConfig));
+app.delete('/api/table-config', createHandler(tableConfig));
 
 // Health check
 app.get('/api/health', (req, res) => {
