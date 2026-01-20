@@ -445,11 +445,14 @@ function buildSystemPrompt(restaurantInfo, session, availableRestaurants = []) {
   const currentDate = now.toISOString().split('T')[0];
   const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' });
 
+  // Emoji numbers for prettier restaurant list
+  const emojiNumbers = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+
   // Base prompt varies based on whether a restaurant is selected
   if (!hasRestaurant) {
     // No restaurant selected - guide user to choose one
     const restaurantList = availableRestaurants.length > 0
-      ? availableRestaurants.map((r, i) => `${i + 1}. ${r.restaurant_name}`).join('\n')
+      ? availableRestaurants.map((r, i) => `${emojiNumbers[i] || (i + 1) + '.'} ${r.restaurant_name}`).join('\n')
       : 'No restaurants currently available';
 
     return `You are a friendly AI reservation assistant for Seatable, a restaurant reservation platform. You help customers make reservations at restaurants in our network.
@@ -481,13 +484,15 @@ CONVERSATION STYLE:
 - Guide users step by step
 
 EXAMPLE RESPONSE when user wants to book without specifying restaurant:
-"Hi! I'd be happy to help you make a reservation. 😊
+"Hi! I'd be happy to help you make a reservation. 🍽️
 
-We have the following restaurants available:
-1. Restaurant Name 1
-2. Restaurant Name 2
+*Choose a Restaurant:*
 
-Which restaurant would you like to book at?"`;
+1️⃣ Restaurant Name 1
+2️⃣ Restaurant Name 2
+3️⃣ Restaurant Name 3
+
+Reply with the number or name to select."`;
   }
 
   // Restaurant is selected - normal reservation flow
