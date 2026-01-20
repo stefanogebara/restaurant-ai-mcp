@@ -148,7 +148,7 @@ export default function TableConfigPage() {
   };
 
   // Get unique locations for dropdown
-  const locations: string[] = [...new Set(tables.map((t: TableConfig) => t.location))];
+  const locations = [...new Set(tables.map((t: TableConfig) => t.location))] as string[];
 
   if (isLoading) {
     return (
