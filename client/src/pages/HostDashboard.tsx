@@ -214,11 +214,18 @@ export default function HostDashboard() {
         }} />
       </div>
 
+      {/* ML Quick Stats Bar - Full Width */}
+      {hasQuickStats && (
+        <div className="max-w-[1400px] mx-auto px-6 pb-6">
+          <QuickStatsWidget />
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="max-w-[1400px] mx-auto px-6 pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Table Grid - 60% width on desktop */}
-          <div className="lg:col-span-2">
+          {/* Table Grid - 2/3 width on desktop */}
+          <div className="lg:col-span-2 space-y-6">
             <div className="bg-card rounded-xl shadow-lg p-8">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold text-foreground">Table Layout</h2>
@@ -234,22 +241,8 @@ export default function HostDashboard() {
               </div>
               <TableGrid tables={data.tables || []} />
             </div>
-          </div>
 
-          {/* Right Panel - 40% width on desktop */}
-          <div className="space-y-6">
-            {/* Quick Stats Widget - Pro Feature */}
-            {hasQuickStats ? (
-              <QuickStatsWidget />
-            ) : (
-              <UpgradePromptInline
-                feature="Quick Stats Widget"
-                description="Get instant insights into daily performance, revenue tracking, and real-time metrics."
-                requiredPlan="Professional"
-              />
-            )}
-
-            {/* ML Intervention Panel - Pro Feature */}
+            {/* ML Intervention Panel - Below Table Grid */}
             {hasInterventionPanel ? (
               <InterventionPanel
                 reservations={data.upcoming_reservations || []}
@@ -262,7 +255,10 @@ export default function HostDashboard() {
                 requiredPlan="Professional"
               />
             )}
+          </div>
 
+          {/* Right Panel - 1/3 width on desktop */}
+          <div className="space-y-6">
             {/* Active Parties */}
             <div className="bg-card rounded-xl shadow-lg p-6">
               <div className="flex items-center justify-between mb-6">
@@ -277,7 +273,7 @@ export default function HostDashboard() {
             {/* Reservations Calendar */}
             <div className="bg-card rounded-xl shadow-lg p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-foreground">📅 Reservations Calendar</h2>
+                <h2 className="text-xl font-bold text-foreground">Reservations</h2>
                 <span className="px-3 py-1 bg-accent text-accent-foreground rounded-full text-sm font-semibold">
                   {data.upcoming_reservations?.length || 0}
                 </span>
