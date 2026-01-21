@@ -41,6 +41,7 @@ export interface UpcomingReservation {
   checked_in_at?: string;
   status?: string;
   record_id?: string;
+  table_ids?: string[];  // Assigned tables for this reservation
   // ML Prediction fields (from Supabase reservations table)
   ml_risk_score?: number;  // 0-100 percentage
   ml_risk_level?: 'low' | 'medium' | 'high' | 'very-high';

@@ -168,7 +168,7 @@ export default function ReservationsCalendarGrid({
 
           {/* Time Slots */}
           <div className="max-h-[500px] overflow-y-auto">
-            {TIME_SLOTS.map((time, timeIdx) => (
+            {TIME_SLOTS.map((time) => (
               <div key={time} className="grid grid-cols-8 border-b border-border/50 min-h-[48px]">
                 {/* Time Label */}
                 <div className="p-2 text-xs text-muted-foreground font-medium border-r border-border/50 flex items-start">
@@ -189,7 +189,7 @@ export default function ReservationsCalendarGrid({
                       } ${cellReservations.length > 0 ? '' : 'hover:bg-muted/50'}`}
                     >
                       {cellReservations.map((res, resIdx) => {
-                        const colors = getStatusColor(res.status);
+                        const colors = getStatusColor(res.status || 'pending');
                         return (
                           <button
                             key={resIdx}
@@ -249,7 +249,7 @@ export default function ReservationsCalendarGrid({
             <div className="p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-2xl font-bold text-foreground">{selectedReservation.customer_name}</span>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedReservation.status).bg} ${getStatusColor(selectedReservation.status).text}`}>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedReservation.status || 'pending').bg} ${getStatusColor(selectedReservation.status || 'pending').text}`}>
                   {selectedReservation.status}
                 </span>
               </div>

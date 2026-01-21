@@ -9,7 +9,6 @@ import { hasFeatureAccess, type PlanType } from '../config/planFeatures';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import TableGrid from '../components/host/TableGrid';
 import ActivePartiesList from '../components/host/ActivePartiesList';
-import ReservationsCalendar from '../components/host/ReservationsCalendar';
 import ReservationsCalendarGrid from '../components/host/ReservationsCalendarGrid';
 import DashboardStats from '../components/host/DashboardStats';
 import WalkInModal from '../components/host/WalkInModal';
