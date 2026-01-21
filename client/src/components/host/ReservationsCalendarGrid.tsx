@@ -5,7 +5,7 @@
  * Displays party size, table assignments, and customer names
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Users, Clock, MapPin } from 'lucide-react';
 import type { UpcomingReservation } from '../../types/host.types';
 
@@ -40,6 +40,18 @@ export default function ReservationsCalendarGrid({
 }: ReservationsCalendarGridProps) {
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedReservation, setSelectedReservation] = useState<UpcomingReservation | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to dinner service time (17:00) on mount
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      // Each time slot row is 48px min-height
+      // 17:00 is index 12 in TIME_SLOTS (0-based: 11:00=0, 11:30=1, ..., 17:00=12)
+      const dinnerStartIndex = 12;
+      const rowHeight = 48;
+      scrollContainerRef.current.scrollTop = dinnerStartIndex * rowHeight;
+    }
+  }, [weekOffset]); // Re-scroll when week changes
 
   // Get current week's dates
   const weekDates = useMemo(() => {
@@ -167,7 +179,7 @@ export default function ReservationsCalendarGrid({
           </div>
 
           {/* Time Slots */}
-          <div className="max-h-[500px] overflow-y-auto">
+          <div ref={scrollContainerRef} className="max-h-[500px] overflow-y-auto">
             {TIME_SLOTS.map((time) => (
               <div key={time} className="grid grid-cols-8 border-b border-border/50 min-h-[48px]">
                 {/* Time Label */}
