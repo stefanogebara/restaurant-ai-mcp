@@ -66,6 +66,7 @@ async function handleListConversations(req, res) {
     date_to,
     outcome,
     language,
+    restaurant_id,
     limit = 50,
     offset = 0,
     order_by = 'started_at',
@@ -76,6 +77,11 @@ async function handleListConversations(req, res) {
     let query = supabase
       .from('agent_conversations')
       .select('*', { count: 'exact' });
+
+    // Filter by restaurant (required for multi-tenant)
+    if (restaurant_id && restaurant_id !== 'default') {
+      query = query.eq('restaurant_info_id', restaurant_id);
+    }
 
     // Apply filters
     if (date_from) {
@@ -192,7 +198,7 @@ async function handleGetConversation(req, res) {
  * GET /api/agent-conversations?action=stats&period=7d
  */
 async function handleGetStats(req, res) {
-  const { period = '7d', date_from, date_to } = req.query;
+  const { period = '7d', date_from, date_to, restaurant_id } = req.query;
 
   try {
     // Calculate date range
@@ -207,12 +213,19 @@ async function handleGetStats(req, res) {
 
     const endDate = date_to ? new Date(date_to) : new Date();
 
-    // Get all conversations in period
-    const { data: conversations, error } = await supabase
+    // Build query with restaurant filter
+    let query = supabase
       .from('agent_conversations')
       .select('*')
       .gte('started_at', startDate.toISOString())
       .lte('started_at', endDate.toISOString());
+
+    // Filter by restaurant (required for multi-tenant)
+    if (restaurant_id && restaurant_id !== 'default') {
+      query = query.eq('restaurant_info_id', restaurant_id);
+    }
+
+    const { data: conversations, error } = await query;
 
     if (error) {
       console.error('[AgentConversations] Stats error:', error);

@@ -79,13 +79,13 @@ export default function CallTrackingDashboard() {
   const [phoneLoading, setPhoneLoading] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
 
-  // TODO: Get restaurant_id from auth context or URL params
-  const restaurant_id = 'default'; // Replace with actual restaurant ID from context
+  // Get restaurant_id from localStorage (set during onboarding/login)
+  const restaurant_id = localStorage.getItem('restaurant_id') || '';
 
   // Fetch conversations and stats
   useEffect(() => {
     fetchData();
-  }, [filter]);
+  }, [filter, restaurant_id]);
 
   // Fetch phone integration status
   useEffect(() => {
@@ -160,9 +160,12 @@ export default function CallTrackingDashboard() {
   async function fetchData() {
     setLoading(true);
     try {
+      // Build restaurant_id query param
+      const restaurantParam = restaurant_id ? `&restaurant_id=${restaurant_id}` : '';
+
       // Fetch conversations list
       const conversationsRes = await fetch(
-        `/api/agent-conversations?action=list&limit=50&offset=0${
+        `/api/agent-conversations?action=list&limit=50&offset=0${restaurantParam}${
           filter.outcome !== 'all' ? `&outcome=${filter.outcome}` : ''
         }${
           filter.language !== 'all' ? `&language=${filter.language}` : ''
@@ -171,7 +174,7 @@ export default function CallTrackingDashboard() {
       const conversationsData = await conversationsRes.json();
 
       // Fetch stats
-      const statsRes = await fetch(`/api/agent-conversations?action=stats&period=${filter.period}`);
+      const statsRes = await fetch(`/api/agent-conversations?action=stats&period=${filter.period}${restaurantParam}`);
       const statsData = await statsRes.json();
 
       if (conversationsData.success) {

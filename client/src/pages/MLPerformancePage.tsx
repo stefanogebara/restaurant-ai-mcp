@@ -31,7 +31,7 @@ interface MLPerformanceData {
     risk_score: number;
     type: string;
     action_taken: boolean;
-    outcome: string;
+    outcome: string | null;
     cost: number;
     value_saved: number;
     roi: number | null;
@@ -358,10 +358,12 @@ export default function MLPerformancePage() {
                               ? 'bg-[#16a34a]/10 text-[#16a34a] border-[#16a34a]/20'
                               : intervention.outcome === 'no_show'
                               ? 'bg-[#9F1239]/10 text-[#9F1239] border-[#9F1239]/20'
+                              : intervention.outcome === null
+                              ? 'bg-[#A8A29E]/10 text-[#A8A29E] border-[#A8A29E]/20'
                               : 'bg-[#d97706]/10 text-[#d97706] border-[#d97706]/20'
                           }`}>
                             {intervention.outcome === 'showed_up' ? '✓ ' : intervention.outcome === 'no_show' ? '✕ ' : ''}
-                            {intervention.outcome.replace('_', ' ')}
+                            {intervention.outcome ? intervention.outcome.replace('_', ' ') : 'pending'}
                           </span>
                         </td>
                         <td className="p-4 text-right">
