@@ -216,6 +216,17 @@ export default function HostDashboard() {
 
       {/* Main Content - Full Width Layout */}
       <div className="max-w-[1600px] mx-auto px-6 pb-12 space-y-6">
+        {/* ML Performance Snapshot - Full Width at Top */}
+        {hasQuickStats ? (
+          <QuickStatsWidget />
+        ) : (
+          <UpgradePromptInline
+            feature="Quick Stats Widget"
+            description="Real-time ML performance metrics and intervention analytics."
+            requiredPlan="Professional"
+          />
+        )}
+
         {/* Table Layout - Full Width */}
         <div className="bg-card rounded-xl shadow-lg p-6">
           <div className="flex items-center justify-between mb-4">
@@ -233,19 +244,8 @@ export default function HostDashboard() {
           <TableGrid tables={data.tables || []} />
         </div>
 
-        {/* Stats Row - ML Stats + Active Parties + Intervention */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* ML Quick Stats */}
-          {hasQuickStats ? (
-            <QuickStatsWidget />
-          ) : (
-            <UpgradePromptInline
-              feature="Quick Stats Widget"
-              description="Real-time ML performance metrics and intervention analytics."
-              requiredPlan="Professional"
-            />
-          )}
-
+        {/* Active Parties + Intervention Panel - 2-column grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Active Parties */}
           <div className="bg-card rounded-xl shadow-lg p-5">
             <div className="flex items-center justify-between mb-4">
@@ -254,7 +254,7 @@ export default function HostDashboard() {
                 {data.active_parties?.length || 0}
               </span>
             </div>
-            <div className="max-h-[200px] overflow-y-auto">
+            <div className="max-h-[250px] overflow-y-auto">
               <ActivePartiesList parties={data.active_parties || []} />
             </div>
           </div>
