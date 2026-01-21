@@ -392,6 +392,74 @@ function formatInterventionType(type) {
 }
 
 /**
+ * Return empty data structure based on action type
+ * Used when no restaurant_id is provided
+ */
+function getEmptyData(action) {
+  switch (action) {
+    case 'summary':
+      return {
+        total_interventions: 0,
+        total_cost: '0.00',
+        total_value_saved: '0.00',
+        total_roi: 0,
+        target_roi: '300-500%',
+        meets_target: false,
+        outcomes: { showed_up: 0, no_show: 0, cancelled: 0 },
+        intervention_effectiveness: {
+          interventions_with_action: 0,
+          successful_interventions: 0,
+          success_rate: '0%'
+        }
+      };
+    case 'timeline':
+      return [];
+    case 'breakdown':
+      return [];
+    case 'trend':
+      return [];
+    case 'quick-stats':
+      return {
+        today_interventions: 0,
+        today_change: 'No data',
+        weekly_roi: 0,
+        roi_status: 'below',
+        value_saved_30d: 0,
+        value_saved_trend: 'No data',
+        success_rate: 0,
+        success_status: 'needs_improvement'
+      };
+    case 'all':
+    default:
+      return {
+        summary: {
+          total_interventions: 0,
+          total_cost: '0.00',
+          total_value_saved: '0.00',
+          total_roi: 0,
+          target_roi: '300-500%',
+          meets_target: false,
+          outcomes: { showed_up: 0, no_show: 0, cancelled: 0 },
+          intervention_effectiveness: {
+            interventions_with_action: 0,
+            successful_interventions: 0,
+            success_rate: '0%'
+          }
+        },
+        timeline: [],
+        breakdown: [],
+        trend: [],
+        recommendations: [{
+          type: 'info',
+          icon: '📊',
+          message: 'Connect your restaurant to see ML performance data',
+          priority: 'low'
+        }]
+      };
+  }
+}
+
+/**
  * Serverless function handler
  */
 module.exports = async (req, res) => {
@@ -409,7 +477,19 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { action = 'all', period = 30 } = req.query;
+    const { action = 'all', period = 30, restaurant_id } = req.query;
+
+    // REQUIRED: Restaurant ID for multi-tenant filtering
+    // Return empty data if no restaurant_id provided
+    if (!restaurant_id || restaurant_id === 'default') {
+      return res.status(200).json({
+        success: true,
+        data: getEmptyData(action),
+        period: parseInt(period),
+        timestamp: new Date().toISOString(),
+        message: 'Restaurant ID required for data access'
+      });
+    }
 
     // Validate period
     const days = parseInt(period);

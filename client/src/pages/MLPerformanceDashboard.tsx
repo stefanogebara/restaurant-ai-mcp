@@ -61,12 +61,14 @@ interface MLPerformanceData {
 
 export default function MLPerformanceDashboard() {
   const [period, setPeriod] = useState<number>(30);
+  // Get restaurant_id from localStorage for multi-tenant filtering
+  const restaurantId = localStorage.getItem('restaurant_id') || '';
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['ml-performance', period],
+    queryKey: ['ml-performance', period, restaurantId],
     queryFn: async () => {
       const response = await axios.get(`${API_URL}/api/ml-performance`, {
-        params: { action: 'all', days: period }
+        params: { action: 'all', days: period, restaurant_id: restaurantId }
       });
       return response.data.data as MLPerformanceData;
     },

@@ -65,10 +65,14 @@ interface MLPerformanceData {
 }
 
 export default function MLPerformancePage() {
+  // Get restaurant_id from localStorage for multi-tenant filtering
+  const restaurantId = localStorage.getItem('restaurant_id') || '';
+
   const { data, isLoading, error } = useQuery<{ success: boolean; data: MLPerformanceData }>({
-    queryKey: ['ml-performance'],
+    queryKey: ['ml-performance', restaurantId],
     queryFn: async () => {
-      const response = await api.get('/ml-performance?action=all&period=30');
+      const restaurantParam = restaurantId ? `&restaurant_id=${restaurantId}` : '';
+      const response = await api.get(`/ml-performance?action=all&period=30${restaurantParam}`);
       return response.data;
     },
     refetchInterval: 30000,

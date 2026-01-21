@@ -34,7 +34,11 @@ export default function QuickStatsWidget() {
 
   const fetchQuickStats = async () => {
     try {
-      const response = await fetch('/api/ml-performance?action=quick-stats');
+      // Get restaurant_id from localStorage for multi-tenant filtering
+      const restaurant_id = localStorage.getItem('restaurant_id') || '';
+      const restaurantParam = restaurant_id ? `&restaurant_id=${restaurant_id}` : '';
+
+      const response = await fetch(`/api/ml-performance?action=quick-stats${restaurantParam}`);
       const result = await response.json();
 
       if (result.success) {
@@ -103,101 +107,91 @@ export default function QuickStatsWidget() {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[#E7E5E4] shadow-md">
-      {/* Header */}
+    <div className="bg-white rounded-lg border border-[#E7E5E4] shadow-sm overflow-hidden">
+      {/* Compact Header */}
       <div
-        className="flex items-center justify-between p-4 cursor-pointer hover:bg-[#F5F5F4] transition-colors rounded-t-xl"
+        className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-[#F5F5F4] transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#9F1239]/10 flex items-center justify-center">
-            <Target className="w-5 h-5 text-[#9F1239]" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-[#1C1917]">ML Performance Snapshot</h3>
-            <p className="text-xs text-[#A8A29E]">Real-time intervention analytics</p>
-          </div>
+        <div className="flex items-center gap-2 min-w-0">
+          <Target className="w-4 h-4 text-[#9F1239] flex-shrink-0" />
+          <span className="text-sm font-medium text-[#1C1917] truncate">ML Snapshot</span>
         </div>
         {isExpanded ? (
-          <ChevronUp className="w-5 h-5 text-[#57534E]" />
+          <ChevronUp className="w-4 h-4 text-[#57534E] flex-shrink-0" />
         ) : (
-          <ChevronDown className="w-5 h-5 text-[#57534E]" />
+          <ChevronDown className="w-4 h-4 text-[#57534E] flex-shrink-0" />
         )}
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats Grid - Compact */}
       {isExpanded && (
-        <div className="px-4 pb-4">
-          <div className="grid grid-cols-2 gap-3">
+        <div className="px-3 pb-3">
+          <div className="grid grid-cols-2 gap-2">
             {/* Today's Interventions */}
-            <div className="bg-[#F5F5F4] rounded-lg p-3 border border-[#E7E5E4]">
-              <div className="text-[10px] font-medium text-[#A8A29E] uppercase tracking-wide mb-1">
+            <div className="bg-[#F5F5F4] rounded p-2 border border-[#E7E5E4] min-w-0">
+              <div className="text-[9px] font-medium text-[#A8A29E] uppercase tracking-wide">
                 Today
               </div>
-              <div className="text-2xl font-bold text-[#1C1917]">
+              <div className="text-lg font-bold text-[#1C1917] truncate">
                 {stats.today_interventions}
               </div>
-              <div className="text-[10px] text-[#57534E] truncate">
+              <div className="text-[9px] text-[#57534E] truncate">
                 {stats.today_change}
               </div>
             </div>
 
             {/* Weekly ROI */}
-            <div className="bg-[#F5F5F4] rounded-lg p-3 border border-[#E7E5E4]">
-              <div className="text-[10px] font-medium text-[#A8A29E] uppercase tracking-wide mb-1">
+            <div className="bg-[#F5F5F4] rounded p-2 border border-[#E7E5E4] min-w-0">
+              <div className="text-[9px] font-medium text-[#A8A29E] uppercase tracking-wide">
                 7-Day ROI
               </div>
-              <div className={`text-2xl font-bold ${getRoiColor(stats.roi_status)}`}>
+              <div className={`text-lg font-bold truncate ${getRoiColor(stats.roi_status)}`}>
                 {stats.weekly_roi}%
               </div>
-              <div className="text-[10px] text-[#57534E] truncate">
-                {stats.roi_status === 'exceeds' && '🎯 Exceeds target'}
-                {stats.roi_status === 'meets' && '✓ Meets target'}
-                {stats.roi_status === 'below' && '⚠️ Below target'}
+              <div className="text-[9px] text-[#57534E] truncate">
+                {stats.roi_status === 'exceeds' && 'Exceeds'}
+                {stats.roi_status === 'meets' && 'On target'}
+                {stats.roi_status === 'below' && 'Below'}
               </div>
             </div>
 
             {/* Value Saved */}
-            <div className="bg-[#F5F5F4] rounded-lg p-3 border border-[#E7E5E4]">
-              <div className="text-[10px] font-medium text-[#A8A29E] uppercase tracking-wide mb-1">
-                30-Day Saved
+            <div className="bg-[#F5F5F4] rounded p-2 border border-[#E7E5E4] min-w-0">
+              <div className="text-[9px] font-medium text-[#A8A29E] uppercase tracking-wide">
+                30-Day
               </div>
-              <div className="text-2xl font-bold text-[#1C1917]">
+              <div className="text-lg font-bold text-[#1C1917] truncate">
                 €{stats.value_saved_30d.toFixed(0)}
               </div>
-              <div className="text-[10px] text-[#57534E] truncate">
+              <div className="text-[9px] text-[#57534E] truncate">
                 {stats.value_saved_trend}
               </div>
             </div>
 
             {/* Success Rate */}
-            <div className="bg-[#F5F5F4] rounded-lg p-3 border border-[#E7E5E4]">
-              <div className="text-[10px] font-medium text-[#A8A29E] uppercase tracking-wide mb-1">
-                Success Rate
+            <div className="bg-[#F5F5F4] rounded p-2 border border-[#E7E5E4] min-w-0">
+              <div className="text-[9px] font-medium text-[#A8A29E] uppercase tracking-wide">
+                Success
               </div>
-              <div className={`text-2xl font-bold ${getSuccessColor(stats.success_status)}`}>
+              <div className={`text-lg font-bold truncate ${getSuccessColor(stats.success_status)}`}>
                 {stats.success_rate}%
               </div>
-              <div className="text-[10px] text-[#57534E] truncate">
-                {stats.success_status === 'good' && '✓ Excellent'}
+              <div className="text-[9px] text-[#57534E] truncate">
+                {stats.success_status === 'good' && 'Excellent'}
                 {stats.success_status === 'fair' && 'Good'}
-                {stats.success_status === 'needs_improvement' && 'Needs attention'}
+                {stats.success_status === 'needs_improvement' && 'Improve'}
               </div>
             </div>
           </div>
 
-          {/* Quick Action Link */}
-          <div className="mt-4 pt-4 border-t border-[#E7E5E4]">
-            <a
-              href="/host-dashboard/ml"
-              className="text-sm text-[#9F1239] hover:text-[#881337] font-medium flex items-center gap-1 transition-colors"
-            >
-              View detailed analytics
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </a>
-          </div>
+          {/* Compact Link */}
+          <a
+            href="/host-dashboard/ml"
+            className="mt-2 pt-2 border-t border-[#E7E5E4] text-xs text-[#9F1239] hover:text-[#881337] font-medium flex items-center gap-1"
+          >
+            View details →
+          </a>
         </div>
       )}
     </div>

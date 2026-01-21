@@ -74,14 +74,26 @@ async function handleListConversations(req, res) {
   } = req.query;
 
   try {
+    // REQUIRED: Always require restaurant_id for multi-tenant filtering
+    // Return empty results if no restaurant_id provided (don't show other restaurants' data)
+    if (!restaurant_id || restaurant_id === 'default') {
+      return res.status(200).json({
+        success: true,
+        conversations: [],
+        pagination: {
+          total: 0,
+          limit: parseInt(limit),
+          offset: parseInt(offset),
+          has_more: false
+        },
+        message: 'Restaurant ID required for data access'
+      });
+    }
+
     let query = supabase
       .from('agent_conversations')
-      .select('*', { count: 'exact' });
-
-    // Filter by restaurant (required for multi-tenant)
-    if (restaurant_id && restaurant_id !== 'default') {
-      query = query.eq('restaurant_info_id', restaurant_id);
-    }
+      .select('*', { count: 'exact' })
+      .eq('restaurant_info_id', restaurant_id);
 
     // Apply filters
     if (date_from) {
@@ -201,6 +213,35 @@ async function handleGetStats(req, res) {
   const { period = '7d', date_from, date_to, restaurant_id } = req.query;
 
   try {
+    // REQUIRED: Always require restaurant_id for multi-tenant filtering
+    if (!restaurant_id || restaurant_id === 'default') {
+      // Return empty stats for restaurants without data
+      return res.status(200).json({
+        success: true,
+        stats: {
+          period: {
+            start: new Date().toISOString(),
+            end: new Date().toISOString(),
+            days: 0
+          },
+          overview: {
+            total_calls: 0,
+            successful_bookings: 0,
+            success_rate: 0,
+            average_duration_seconds: 0,
+            average_duration_formatted: '0s'
+          },
+          breakdowns: {
+            by_outcome: {},
+            by_language: {},
+            by_day: {}
+          },
+          top_errors: []
+        },
+        message: 'Restaurant ID required for data access'
+      });
+    }
+
     // Calculate date range
     let startDate;
     if (date_from) {
@@ -213,17 +254,13 @@ async function handleGetStats(req, res) {
 
     const endDate = date_to ? new Date(date_to) : new Date();
 
-    // Build query with restaurant filter
+    // Build query with restaurant filter (always applied)
     let query = supabase
       .from('agent_conversations')
       .select('*')
+      .eq('restaurant_info_id', restaurant_id)
       .gte('started_at', startDate.toISOString())
       .lte('started_at', endDate.toISOString());
-
-    // Filter by restaurant (required for multi-tenant)
-    if (restaurant_id && restaurant_id !== 'default') {
-      query = query.eq('restaurant_info_id', restaurant_id);
-    }
 
     const { data: conversations, error } = await query;
 
