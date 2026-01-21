@@ -10,6 +10,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import TableGrid from '../components/host/TableGrid';
 import ActivePartiesList from '../components/host/ActivePartiesList';
 import ReservationsCalendar from '../components/host/ReservationsCalendar';
+import ReservationsCalendarGrid from '../components/host/ReservationsCalendarGrid';
 import DashboardStats from '../components/host/DashboardStats';
 import WalkInModal from '../components/host/WalkInModal';
 import CheckInModal from '../components/host/CheckInModal';
@@ -214,78 +215,72 @@ export default function HostDashboard() {
         }} />
       </div>
 
-      {/* ML Quick Stats Bar - Full Width */}
-      {hasQuickStats && (
-        <div className="max-w-[1400px] mx-auto px-6 pb-6">
-          <QuickStatsWidget />
-        </div>
-      )}
-
-      {/* Main Content */}
-      <div className="max-w-[1400px] mx-auto px-6 pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Table Grid - 2/3 width on desktop */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-card rounded-xl shadow-lg p-8">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-foreground">Table Layout</h2>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground">Click any table to manage</span>
-                  <svg className="w-4 h-4 text-muted-foreground" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              </div>
-              <div className="mb-6">
-                <TableStatusLegend />
-              </div>
-              <TableGrid tables={data.tables || []} />
+      {/* Main Content - Full Width Layout */}
+      <div className="max-w-[1600px] mx-auto px-6 pb-12 space-y-6">
+        {/* Table Layout - Full Width */}
+        <div className="bg-card rounded-xl shadow-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-foreground">Table Layout</h2>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Click any table to manage</span>
+              <svg className="w-4 h-4 text-muted-foreground" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
             </div>
-
-            {/* ML Intervention Panel - Below Table Grid */}
-            {hasInterventionPanel ? (
-              <InterventionPanel
-                reservations={data.upcoming_reservations || []}
-                onRecordIntervention={handleRecordIntervention}
-              />
-            ) : (
-              <UpgradePromptInline
-                feature="ML Intervention Panel"
-                description="AI-powered no-show prevention with risk scoring and automated intervention recommendations."
-                requiredPlan="Professional"
-              />
-            )}
           </div>
+          <div className="mb-4">
+            <TableStatusLegend />
+          </div>
+          <TableGrid tables={data.tables || []} />
+        </div>
 
-          {/* Right Panel - 1/3 width on desktop */}
-          <div className="space-y-6">
-            {/* Active Parties */}
-            <div className="bg-card rounded-xl shadow-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-foreground">Active Parties</h2>
-                <span className="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm font-semibold">
-                  {data.active_parties?.length || 0}
-                </span>
-              </div>
+        {/* Stats Row - ML Stats + Active Parties + Intervention */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* ML Quick Stats */}
+          {hasQuickStats ? (
+            <QuickStatsWidget />
+          ) : (
+            <UpgradePromptInline
+              feature="Quick Stats Widget"
+              description="Real-time ML performance metrics and intervention analytics."
+              requiredPlan="Professional"
+            />
+          )}
+
+          {/* Active Parties */}
+          <div className="bg-card rounded-xl shadow-lg p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-foreground">Active Parties</h2>
+              <span className="px-2.5 py-1 bg-primary/20 text-primary rounded-full text-sm font-semibold">
+                {data.active_parties?.length || 0}
+              </span>
+            </div>
+            <div className="max-h-[200px] overflow-y-auto">
               <ActivePartiesList parties={data.active_parties || []} />
             </div>
-
-            {/* Reservations Calendar */}
-            <div className="bg-card rounded-xl shadow-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-foreground">Reservations</h2>
-                <span className="px-3 py-1 bg-accent text-accent-foreground rounded-full text-sm font-semibold">
-                  {data.upcoming_reservations?.length || 0}
-                </span>
-              </div>
-              <ReservationsCalendar
-                reservations={data.upcoming_reservations || []}
-                onCheckIn={(reservation) => setCheckInReservation(reservation)}
-                onRecordOutcome={(reservation) => setOutcomeReservation(reservation)}
-              />
-            </div>
           </div>
+
+          {/* Intervention Panel */}
+          {hasInterventionPanel ? (
+            <InterventionPanel
+              reservations={data.upcoming_reservations || []}
+              onRecordIntervention={handleRecordIntervention}
+            />
+          ) : (
+            <UpgradePromptInline
+              feature="ML Intervention Panel"
+              description="AI-powered no-show prevention with risk scoring."
+              requiredPlan="Professional"
+            />
+          )}
         </div>
+
+        {/* Reservations Calendar Grid - Full Width */}
+        <ReservationsCalendarGrid
+          reservations={data.upcoming_reservations || []}
+          onCheckIn={(reservation) => setCheckInReservation(reservation)}
+          onRecordOutcome={(reservation) => setOutcomeReservation(reservation)}
+        />
       </div>
 
       {/* Modals */}
