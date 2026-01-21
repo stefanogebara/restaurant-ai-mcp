@@ -370,3 +370,4 @@ function getTopErrors(conversations) {
     .sort((a, b) => b.count - a.count)
     .slice(0, 5); // Top 5 errors
 }
+
