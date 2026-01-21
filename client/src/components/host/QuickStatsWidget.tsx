@@ -69,7 +69,7 @@ export default function QuickStatsWidget() {
           <div className="w-6 h-6 bg-[#F5F5F4] rounded animate-pulse"></div>
           <div className="h-5 w-32 bg-[#F5F5F4] rounded animate-pulse"></div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           {[1, 2, 3, 4].map(i => (
             <div key={i} className="space-y-2">
               <div className="h-4 w-24 bg-[#F5F5F4] rounded animate-pulse"></div>
@@ -128,69 +128,57 @@ export default function QuickStatsWidget() {
       {/* Stats Grid */}
       {isExpanded && (
         <div className="px-4 pb-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             {/* Today's Interventions */}
-            <div className="bg-[#F5F5F4] rounded-lg p-4 border border-[#E7E5E4]">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-4 h-4 text-[#9F1239]" />
-                <span className="text-xs font-medium text-[#A8A29E] uppercase tracking-wide">
-                  Today
-                </span>
+            <div className="bg-[#F5F5F4] rounded-lg p-3 border border-[#E7E5E4]">
+              <div className="text-[10px] font-medium text-[#A8A29E] uppercase tracking-wide mb-1">
+                Today
               </div>
-              <div className="text-3xl font-bold text-[#1C1917] mb-1">
+              <div className="text-2xl font-bold text-[#1C1917]">
                 {stats.today_interventions}
               </div>
-              <div className="text-xs text-[#57534E]">
+              <div className="text-[10px] text-[#57534E] truncate">
                 {stats.today_change}
               </div>
             </div>
 
             {/* Weekly ROI */}
-            <div className="bg-[#F5F5F4] rounded-lg p-4 border border-[#E7E5E4]">
-              <div className="flex items-center gap-2 mb-2">
-                <Target className="w-4 h-4 text-[#9F1239]" />
-                <span className="text-xs font-medium text-[#A8A29E] uppercase tracking-wide">
-                  7-Day ROI
-                </span>
+            <div className="bg-[#F5F5F4] rounded-lg p-3 border border-[#E7E5E4]">
+              <div className="text-[10px] font-medium text-[#A8A29E] uppercase tracking-wide mb-1">
+                7-Day ROI
               </div>
-              <div className={`text-3xl font-bold mb-1 ${getRoiColor(stats.roi_status)}`}>
+              <div className={`text-2xl font-bold ${getRoiColor(stats.roi_status)}`}>
                 {stats.weekly_roi}%
               </div>
-              <div className="text-xs text-[#57534E]">
+              <div className="text-[10px] text-[#57534E] truncate">
                 {stats.roi_status === 'exceeds' && '🎯 Exceeds target'}
                 {stats.roi_status === 'meets' && '✓ Meets target'}
-                {stats.roi_status === 'below' && '⚠️ Below 300% target'}
+                {stats.roi_status === 'below' && '⚠️ Below target'}
               </div>
             </div>
 
             {/* Value Saved */}
-            <div className="bg-[#F5F5F4] rounded-lg p-4 border border-[#E7E5E4]">
-              <div className="flex items-center gap-2 mb-2">
-                <DollarSign className="w-4 h-4 text-[#7c3aed]" />
-                <span className="text-xs font-medium text-[#A8A29E] uppercase tracking-wide">
-                  30-Day Saved
-                </span>
+            <div className="bg-[#F5F5F4] rounded-lg p-3 border border-[#E7E5E4]">
+              <div className="text-[10px] font-medium text-[#A8A29E] uppercase tracking-wide mb-1">
+                30-Day Saved
               </div>
-              <div className="text-3xl font-bold text-[#1C1917] mb-1">
+              <div className="text-2xl font-bold text-[#1C1917]">
                 €{stats.value_saved_30d.toFixed(0)}
               </div>
-              <div className="text-xs text-[#57534E]">
+              <div className="text-[10px] text-[#57534E] truncate">
                 {stats.value_saved_trend}
               </div>
             </div>
 
             {/* Success Rate */}
-            <div className="bg-[#F5F5F4] rounded-lg p-4 border border-[#E7E5E4]">
-              <div className="flex items-center gap-2 mb-2">
-                <CheckCircle2 className="w-4 h-4 text-[#16a34a]" />
-                <span className="text-xs font-medium text-[#A8A29E] uppercase tracking-wide">
-                  Success Rate
-                </span>
+            <div className="bg-[#F5F5F4] rounded-lg p-3 border border-[#E7E5E4]">
+              <div className="text-[10px] font-medium text-[#A8A29E] uppercase tracking-wide mb-1">
+                Success Rate
               </div>
-              <div className={`text-3xl font-bold mb-1 ${getSuccessColor(stats.success_status)}`}>
+              <div className={`text-2xl font-bold ${getSuccessColor(stats.success_status)}`}>
                 {stats.success_rate}%
               </div>
-              <div className="text-xs text-[#57534E]">
+              <div className="text-[10px] text-[#57534E] truncate">
                 {stats.success_status === 'good' && '✓ Excellent'}
                 {stats.success_status === 'fair' && 'Good'}
                 {stats.success_status === 'needs_improvement' && 'Needs attention'}
