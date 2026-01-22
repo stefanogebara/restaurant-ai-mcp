@@ -1550,9 +1550,9 @@ module.exports = async (req, res) => {
         if (messageTextLower === 'yes') {
           // Perform the cancellation
           const reservationId = session.context.pendingCancellation;
-          const { error } = await supabase
+          const { error } = await centralSupabase
             .from('reservations')
-            .update({ status: 'Cancelled' })
+            .update({ status: 'cancelled' })
             .eq('reservation_id', reservationId);
 
           await updateSessionContext(session.id, { pendingCancellation: null });
