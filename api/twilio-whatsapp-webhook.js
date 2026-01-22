@@ -224,12 +224,35 @@ async function findRecentReservation(phoneNumber, restaurantId = null) {
     // Database stores: 5511999002121 (digits only, no +)
     const normalizedPhone = phoneNumber.replace(/^\+/, '').replace(/\D/g, '');
 
-    console.log(`[Twilio] Finding reservation for phone: ${phoneNumber} -> normalized: ${normalizedPhone}`);
+    // Generate phone variants to match different storage formats
+    // e.g., WhatsApp sends "whatsapp:+15559999001" -> "15559999001"
+    // but database might store "5559999001" (without country code)
+    const phoneVariants = [normalizedPhone];
+
+    // If phone has country code (11+ digits for US), also try without it
+    if (normalizedPhone.length >= 11 && normalizedPhone.startsWith('1')) {
+      phoneVariants.push(normalizedPhone.slice(1)); // Remove US country code
+    }
+
+    // If phone is 10 digits, also try with US country code prepended
+    if (normalizedPhone.length === 10) {
+      phoneVariants.push('1' + normalizedPhone);
+    }
+
+    // Also try last 10 digits as fallback (handles international numbers)
+    if (normalizedPhone.length > 10) {
+      const last10 = normalizedPhone.slice(-10);
+      if (!phoneVariants.includes(last10)) {
+        phoneVariants.push(last10);
+      }
+    }
+
+    console.log(`[Twilio] Finding reservation for phone: ${phoneNumber} -> variants: ${phoneVariants.join(', ')}`);
 
     let query = centralSupabase
       .from('reservations')
       .select('*')
-      .eq('customer_phone', normalizedPhone)
+      .in('customer_phone', phoneVariants)
       .in('status', ['confirmed', 'pending'])
       .gte('date', today)
       .order('date', { ascending: true })
@@ -1057,7 +1080,30 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
       if (reservation_id) {
         query = query.eq('reservation_id', reservation_id);
       } else if (customer_phone) {
-        query = query.eq('customer_phone', customer_phone);
+        // Generate phone variants to match different storage formats
+        const normalizedPhone = customer_phone.replace(/^\+/, '').replace(/\D/g, '');
+        const phoneVariants = [normalizedPhone, customer_phone];
+
+        // If phone has country code (11+ digits for US), also try without it
+        if (normalizedPhone.length >= 11 && normalizedPhone.startsWith('1')) {
+          phoneVariants.push(normalizedPhone.slice(1));
+        }
+
+        // If phone is 10 digits, also try with US country code prepended
+        if (normalizedPhone.length === 10) {
+          phoneVariants.push('1' + normalizedPhone);
+        }
+
+        // Also try last 10 digits as fallback
+        if (normalizedPhone.length > 10) {
+          const last10 = normalizedPhone.slice(-10);
+          if (!phoneVariants.includes(last10)) {
+            phoneVariants.push(last10);
+          }
+        }
+
+        console.log(`[Twilio] lookup_reservation phone variants: ${phoneVariants.join(', ')}`);
+        query = query.in('customer_phone', phoneVariants);
       }
 
       // Filter by restaurant if one is selected
