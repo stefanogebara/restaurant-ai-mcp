@@ -12,6 +12,8 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const fetch = require('node-fetch');
+const { createSecureLogger } = require('../_lib/secure-logger');
+const logger = createSecureLogger('Onboarding');
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -65,8 +67,8 @@ module.exports = async (req, res) => {
       });
     }
 
-    console.log('[Onboarding] Starting onboarding for:', customer_email);
-    console.log('[Onboarding] Restaurant:', restaurant_name);
+    logger.info(' Starting onboarding for:', customer_email);
+    logger.info(' Restaurant:', restaurant_name);
 
     // Generate Restaurant ID
     const generatedRestaurantId = restaurant_id || `REST-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
@@ -78,11 +80,11 @@ module.exports = async (req, res) => {
       : null;  // Set to null if invalid value provided
 
     if (restaurant_type && !validatedRestaurantType) {
-      console.warn(`[Onboarding] Invalid restaurant_type "${restaurant_type}". Must be one of: ${ALLOWED_RESTAURANT_TYPES.join(', ')}. Setting to null.`);
+      logger.warn(` Invalid restaurant_type "${restaurant_type}". Must be one of: ${ALLOWED_RESTAURANT_TYPES.join(', ')}. Setting to null.`);
     }
 
     // STEP 1: Update restaurant_info table
-    console.log('[Onboarding] Step 1: Updating restaurant_info...');
+    logger.info(' Step 1: Updating restaurant_info...');
 
     // Map onboarding fields to actual database schema
     const restaurantInfoData = {
@@ -134,7 +136,7 @@ module.exports = async (req, res) => {
 
       if (error) throw error;
       restaurantInfoResult = data;
-      console.log('[Onboarding] Restaurant info updated');
+      logger.info(' Restaurant info updated');
     } else {
       // Insert new record
       const { data, error } = await supabase
@@ -145,11 +147,11 @@ module.exports = async (req, res) => {
 
       if (error) throw error;
       restaurantInfoResult = data;
-      console.log('[Onboarding] Restaurant info created');
+      logger.info(' Restaurant info created');
     }
 
     // STEP 2: Create Tables
-    console.log('[Onboarding] Step 2: Creating tables...');
+    logger.info(' Step 2: Creating tables...');
 
     // First, delete all existing tables (onboarding resets the restaurant)
     const { error: deleteError } = await supabase
@@ -158,9 +160,9 @@ module.exports = async (req, res) => {
       .neq('id', '00000000-0000-0000-0000-000000000000');  // Delete all (using impossible UUID)
 
     if (deleteError) {
-      console.warn('[Onboarding] Warning: Could not delete existing tables:', deleteError);
+      logger.warn(' Warning: Could not delete existing tables:', deleteError);
     } else {
-      console.log('[Onboarding] Cleared all existing tables');
+      logger.info(' Cleared all existing tables');
     }
 
     // Create new tables from areas configuration
@@ -191,13 +193,13 @@ module.exports = async (req, res) => {
         .select();
 
       if (tablesError) throw tablesError;
-      console.log(`[Onboarding] Created ${tablesData.length} tables`);
+      logger.info(` Created ${tablesData.length} tables`);
     } else {
-      console.log('[Onboarding] No tables to create');
+      logger.info(' No tables to create');
     }
 
     // STEP 3: Create/Update Restaurant Config (for AI Agent)
-    console.log('[Onboarding] Step 3: Creating restaurant_config for AI agent...');
+    logger.info(' Step 3: Creating restaurant_config for AI agent...');
 
     // Get or create user for this email
     let userId;
@@ -206,14 +208,14 @@ module.exports = async (req, res) => {
       const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
 
       if (listError) {
-        console.warn('[Onboarding] Could not list users:', listError.message);
+        logger.warn(' Could not list users:', listError.message);
       }
 
       const existingUser = users?.find(u => u.email === customer_email);
 
       if (existingUser) {
         userId = existingUser.id;
-        console.log('[Onboarding] Found existing user:', userId);
+        logger.info(' Found existing user:', userId);
       } else {
         // Create a new user for this restaurant
         const { data: newUser, error: createUserError } = await supabase.auth.admin.createUser({
@@ -226,15 +228,15 @@ module.exports = async (req, res) => {
         });
 
         if (createUserError) {
-          console.warn('[Onboarding] Could not create user:', createUserError.message);
+          logger.warn(' Could not create user:', createUserError.message);
           // Continue without user - we'll use service role to insert
         } else {
           userId = newUser.user.id;
-          console.log('[Onboarding] Created new user:', userId);
+          logger.info(' Created new user:', userId);
         }
       }
     } catch (authError) {
-      console.warn('[Onboarding] Auth error, continuing with service role:', authError.message);
+      logger.warn(' Auth error, continuing with service role:', authError.message);
     }
 
     // Prepare table configuration for restaurant_config
@@ -410,7 +412,7 @@ module.exports = async (req, res) => {
 
           if (error) throw error;
           configResult = data;
-          console.log('[Onboarding] Restaurant config updated');
+          logger.info(' Restaurant config updated');
         } else {
           // Insert new config
           const { data, error } = await supabase
@@ -421,22 +423,22 @@ module.exports = async (req, res) => {
 
           if (error) throw error;
           configResult = data;
-          console.log('[Onboarding] Restaurant config created');
+          logger.info(' Restaurant config created');
         }
       } else {
         // No user_id, skip restaurant_config creation
-        console.log('[Onboarding] Skipping restaurant_config creation (no user_id)');
+        logger.info(' Skipping restaurant_config creation (no user_id)');
       }
     } catch (configError) {
-      console.error('[Onboarding] Error saving restaurant_config:', configError);
+      logger.error(' Error saving restaurant_config:', configError);
       // Don't fail the whole onboarding if config save fails
-      console.warn('[Onboarding] Continuing despite restaurant_config error');
+      logger.warn(' Continuing despite restaurant_config error');
     }
 
 
     // STEP 4: Create ElevenLabs Agent
-    console.log('[Onboarding] Step 4: Creating ElevenLabs agent...');
-    console.log('[Onboarding] Voice config:', {
+    logger.info(' Step 4: Creating ElevenLabs agent...');
+    logger.info(' Voice config:', {
       selected_voice_id,
       selected_voice_language,
       restaurant_name
@@ -477,7 +479,7 @@ module.exports = async (req, res) => {
         })
       });
 
-      console.log('[Onboarding] Agent API response status:', agentResponse.status);
+      logger.info(' Agent API response status:', agentResponse.status);
 
       if (agentResponse.ok) {
         const agentData = await agentResponse.json();
@@ -495,25 +497,25 @@ module.exports = async (req, res) => {
           })
           .eq('id', restaurantInfoResult.id);
 
-        console.log('[Onboarding] ✅ ElevenLabs agent created:', agentId);
-        console.log('[Onboarding] Agent URL: https://elevenlabs.io/app/conversational-ai/' + agentId);
+        logger.info(' ✅ ElevenLabs agent created:', agentId);
+        logger.info(' Agent URL: https://elevenlabs.io/app/conversational-ai/' + agentId);
       } else {
         const errorText = await agentResponse.text();
-        console.error('[Onboarding] ❌ Failed to create agent:', {
+        logger.error(' ❌ Failed to create agent:', {
           status: agentResponse.status,
           statusText: agentResponse.statusText,
           error: errorText
         });
       }
     } catch (agentError) {
-      console.error('[Onboarding] ❌ Error creating ElevenLabs agent:', {
+      logger.error(' ❌ Error creating ElevenLabs agent:', {
         message: agentError.message,
         stack: agentError.stack
       });
-      console.warn('[Onboarding] Continuing without agent creation');
+      logger.warn(' Continuing without agent creation');
     }
 
-    console.log('[Onboarding] ✅ Onboarding complete!');
+    logger.info(' ✅ Onboarding complete!');
 
     return res.status(200).json({
       success: true,
@@ -527,7 +529,7 @@ module.exports = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('[Onboarding] Error:', error);
+    logger.error(' Error:', error);
     return res.status(500).json({
       error: 'Failed to complete onboarding',
       message: error.message,

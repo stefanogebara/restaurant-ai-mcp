@@ -1,6 +1,8 @@
 const airtable = require('./_lib/supabase');
 const twilio = require('twilio'); // Force redeploy to fix Vercel dependency bundling
 const { Resend } = require('resend');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('Waitlist');
 const { validateWaitlistEntry, sanitizeInput } = require('./_lib/validation');
 
 /**
@@ -73,7 +75,7 @@ module.exports = async (req, res) => {
         return res.status(405).json({ error: 'Method not allowed' });
     }
   } catch (error) {
-    console.error('Waitlist API error:', error);
+    logger.error('Waitlist API error:', error);
     return res.status(500).json({
       error: error.message,
       details: error.toString()
@@ -168,7 +170,7 @@ async function handleGetWaitlist(req, res) {
     });
 
   } catch (error) {
-    console.error('Get waitlist error:', error);
+    logger.error('Get waitlist error:', error);
     return res.status(500).json({
       error: 'Failed to retrieve waitlist',
       details: error.message
@@ -288,7 +290,7 @@ async function handleAddToWaitlist(req, res) {
     });
 
   } catch (error) {
-    console.error('Add to waitlist error:', error);
+    logger.error('Add to waitlist error:', error);
     return res.status(500).json({
       error: 'Failed to add to waitlist',
       details: error.message
@@ -369,7 +371,7 @@ async function handleUpdateWaitlist(req, res, recordId) {
               customerDetails.name,
               customerDetails.email,
               customerDetails.partySize
-            ).catch(err => console.error('Email notification failed:', err));
+            ).catch(err => logger.error('Email notification failed:', err));
           }
 
           // Also send SMS if phone number provided (costs money with Twilio)
@@ -378,7 +380,7 @@ async function handleUpdateWaitlist(req, res, recordId) {
               customerDetails.name,
               customerDetails.phone,
               customerDetails.partySize
-            ).catch(err => console.error('SMS notification failed:', err));
+            ).catch(err => logger.error('SMS notification failed:', err));
           }
         }
       }
@@ -436,7 +438,7 @@ async function handleUpdateWaitlist(req, res, recordId) {
     });
 
   } catch (error) {
-    console.error('Update waitlist error:', error);
+    logger.error('Update waitlist error:', error);
     return res.status(500).json({
       error: 'Failed to update waitlist entry',
       details: error.message
@@ -476,7 +478,7 @@ async function handleRemoveFromWaitlist(req, res, recordId) {
     });
 
   } catch (error) {
-    console.error('Remove from waitlist error:', error);
+    logger.error('Remove from waitlist error:', error);
     return res.status(500).json({
       error: 'Failed to remove from waitlist',
       details: error.message
@@ -570,10 +572,10 @@ async function sendSMSNotification(customerName, customerPhone, partySize) {
       to: customerPhone,
     });
 
-    console.log(`SMS sent to ${customerPhone} for ${customerName}`);
+    logger.info(`SMS sent to ${customerPhone} for ${customerName}`);
     return true;
   } catch (error) {
-    console.error('Failed to send SMS:', error);
+    logger.error('Failed to send SMS:', error);
     // Don't throw error - we don't want SMS failure to break the API
     return false;
   }
@@ -684,14 +686,14 @@ async function sendEmailNotification(customerName, customerEmail, partySize) {
     });
 
     if (error) {
-      console.error('Failed to send email via Resend:', error);
+      logger.error('Failed to send email via Resend:', error);
       return false;
     }
 
-    console.log(`Email sent to ${customerEmail} for ${customerName} - Message ID: ${data?.id}`);
+    logger.info(`Email sent to ${customerEmail} for ${customerName} - Message ID: ${data?.id}`);
     return true;
   } catch (error) {
-    console.error('Failed to send email:', error);
+    logger.error('Failed to send email:', error);
     // Don't throw error - we don't want email failure to break the API
     return false;
   }

@@ -14,6 +14,8 @@
  */
 
 const Anthropic = require('@anthropic-ai/sdk');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('WhatsApp');
 const {
   getOrCreateSession,
   setSessionRestaurant,
@@ -40,7 +42,7 @@ async function sendWhatsAppMessage(to, message) {
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
 
   if (!phoneNumberId || !accessToken) {
-    console.error('[WhatsApp] Missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN');
+    logger.error(' Missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN');
     return { success: false, error: 'WhatsApp not configured' };
   }
 
@@ -63,14 +65,14 @@ async function sendWhatsAppMessage(to, message) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('[WhatsApp] Send error:', data);
+      logger.error(' Send error:', data);
       return { success: false, error: data.error?.message || 'Failed to send' };
     }
 
     console.log(`[WhatsApp] Message sent to ${to}: ${message.substring(0, 50)}...`);
     return { success: true, messageId: data.messages?.[0]?.id };
   } catch (error) {
-    console.error('[WhatsApp] Send exception:', error);
+    logger.error(' Send exception:', error);
     return { success: false, error: error.message };
   }
 }
@@ -91,7 +93,7 @@ async function sendTemplateMessage(to, templateName, languageCode = 'en', bodyPa
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
 
   if (!phoneNumberId || !accessToken) {
-    console.error('[WhatsApp] Missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN');
+    logger.error(' Missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN');
     return { success: false, error: 'WhatsApp not configured' };
   }
 
@@ -135,14 +137,14 @@ async function sendTemplateMessage(to, templateName, languageCode = 'en', bodyPa
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('[WhatsApp] Template send error:', data);
+      logger.error(' Template send error:', data);
       return { success: false, error: data.error?.message || 'Failed to send template' };
     }
 
     console.log(`[WhatsApp] Template '${templateName}' sent to ${to}, messageId: ${data.messages?.[0]?.id}`);
     return { success: true, messageId: data.messages?.[0]?.id };
   } catch (error) {
-    console.error('[WhatsApp] Template send exception:', error);
+    logger.error(' Template send exception:', error);
     return { success: false, error: error.message };
   }
 }
@@ -319,7 +321,7 @@ async function executeTool(toolName, toolInput, session) {
           .in('status', ['confirmed', 'seated']);
 
         if (error) {
-          console.error('[WhatsApp] Availability check error:', error);
+          logger.error(' Availability check error:', error);
           return { success: false, error: 'Could not check availability' };
         }
 
@@ -378,7 +380,7 @@ async function executeTool(toolName, toolInput, session) {
           }
         };
       } catch (err) {
-        console.error('[WhatsApp] Availability error:', err);
+        logger.error(' Availability error:', err);
         return { success: false, error: 'Error checking availability' };
       }
     }
@@ -421,7 +423,7 @@ async function executeTool(toolName, toolInput, session) {
           .single();
 
         if (error) {
-          console.error('[WhatsApp] Create reservation error:', error);
+          logger.error(' Create reservation error:', error);
           return { success: false, error: 'Could not create reservation' };
         }
 
@@ -452,7 +454,7 @@ async function executeTool(toolName, toolInput, session) {
             party_size.toString()
           ]
         );
-        console.log('[WhatsApp] Template confirmation result:', templateResult);
+        logger.info(' Template confirmation result:', templateResult);
 
         return {
           success: true,
@@ -469,7 +471,7 @@ async function executeTool(toolName, toolInput, session) {
           customer_phone: customer_phone
         };
       } catch (err) {
-        console.error('[WhatsApp] Create error:', err);
+        logger.error(' Create error:', err);
         return { success: false, error: 'Error creating reservation' };
       }
     }
@@ -581,7 +583,7 @@ Guidelines:
     return textBlock?.text || 'I apologize, I had trouble processing that. Could you try again?';
 
   } catch (error) {
-    console.error('[WhatsApp] Claude error:', error);
+    logger.error(' Claude error:', error);
     return 'I apologize, something went wrong. Please try again or contact the restaurant directly.';
   }
 }
@@ -606,7 +608,7 @@ module.exports = async (req, res) => {
     const challenge = req.query['hub.challenge'];
 
     const expectedToken = process.env.WHATSAPP_VERIFY_TOKEN;
-    console.log('[WhatsApp] Verification request:', {
+    logger.info(' Verification request:', {
       mode,
       receivedToken: token?.substring(0, 10) + '...',
       expectedTokenSet: !!expectedToken,
@@ -615,11 +617,11 @@ module.exports = async (req, res) => {
     });
 
     if (mode === 'subscribe' && token === expectedToken) {
-      console.log('[WhatsApp] Webhook verified successfully');
+      logger.info(' Webhook verified successfully');
       return res.status(200).send(challenge);
     }
 
-    console.error('[WhatsApp] Verification failed - mode:', mode, 'tokenMatch:', token === expectedToken);
+    logger.error(' Verification failed - mode:', mode, 'tokenMatch:', token === expectedToken);
     return res.status(403).json({ error: 'Verification failed' });
   }
 
@@ -629,7 +631,7 @@ module.exports = async (req, res) => {
       const body = req.body;
 
       // Log incoming webhook
-      console.log('[WhatsApp] Webhook received:', JSON.stringify(body, null, 2));
+      logger.info(' Webhook received:', JSON.stringify(body, null, 2));
 
       // Extract message data
       const entry = body.entry?.[0];
@@ -707,7 +709,7 @@ module.exports = async (req, res) => {
         const session = await getOrCreateSession(from, `wa-${Date.now()}`);
 
         if (!session) {
-          console.error('[WhatsApp] Failed to create session');
+          logger.error(' Failed to create session');
           await sendWhatsAppMessage(from, 'Sorry, I had trouble starting our conversation. Please try again.');
           return res.status(200).json({ status: 'ok' });
         }
@@ -719,7 +721,7 @@ module.exports = async (req, res) => {
           response = await processWithClaude(messageText, session);
           console.log(`[WhatsApp] Claude response received: ${response?.substring(0, 100)}...`);
         } catch (claudeError) {
-          console.error('[WhatsApp] Claude processing error:', claudeError);
+          logger.error(' Claude processing error:', claudeError);
           response = 'Sorry, I had trouble processing your message. Please try again.';
         }
 
@@ -735,7 +737,7 @@ module.exports = async (req, res) => {
       return res.status(200).json({ status: 'ok' });
 
     } catch (error) {
-      console.error('[WhatsApp] Webhook error:', error);
+      logger.error(' Webhook error:', error);
       return res.status(200).json({ status: 'error', message: error.message });
     }
   }

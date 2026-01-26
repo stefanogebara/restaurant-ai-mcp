@@ -24,6 +24,9 @@ const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 const { getRestaurantByName, getAllActiveRestaurants } = require('./_lib/restaurant-registry');
 const { getRestaurantClient } = require('./_lib/multi-tenant-supabase');
 const { getOrCreateSession, setSessionRestaurant, getSessionByPhone } = require('./_lib/whatsapp-sessions');
+const { createSecureLogger } = require('./_lib/secure-logger');
+
+const logger = createSecureLogger('ElevenLabs');
 
 // Check if multi-tenant mode is enabled
 const MULTI_TENANT_MODE = process.env.MULTI_TENANT_MODE === 'true';
@@ -39,7 +42,7 @@ module.exports = async (req, res) => {
   }
 
   // Log incoming request for debugging
-  console.log('[ElevenLabs] Incoming request:', {
+  logger.info(' Incoming request:', {
     method: req.method,
     url: req.url,
     headers: req.headers,
@@ -100,11 +103,11 @@ module.exports = async (req, res) => {
       // Method 0: Multi-tenant session lookup (for WhatsApp)
       if (MULTI_TENANT_MODE && senderPhone) {
         try {
-          console.log(`[ElevenLabs] Multi-tenant mode: Checking session for ${senderPhone}`);
+          logger.debug(`Multi-tenant mode: Checking session for ${senderPhone}`);
           const session = await getSessionByPhone(senderPhone);
 
           if (session && session.restaurant_confirmed && session.restaurant) {
-            console.log(`[ElevenLabs] ✅ Found session with restaurant: ${session.restaurant.restaurant_name}`);
+            logger.info(`Found session with restaurant: ${session.restaurant.restaurant_name}`);
             // Use the multi-tenant client for this restaurant
             req.multiTenantClient = getRestaurantClient(session.restaurant);
             req.multiTenantRestaurant = session.restaurant;
@@ -122,36 +125,36 @@ module.exports = async (req, res) => {
             };
           }
         } catch (error) {
-          console.error(`[ElevenLabs] Multi-tenant session lookup error:`, error.message);
+          logger.error(`Multi-tenant session lookup error:`, { message: error.message });
         }
       }
 
       // Method 1: Look up by phone number (preferred - single-tenant mode)
       if (!restaurant && calledNumber) {
         try {
-          console.log(`[ElevenLabs] Looking up restaurant by phone: ${calledNumber}`);
+          logger.debug(`Looking up restaurant by phone: ${calledNumber}`);
           restaurant = await getRestaurantByPhone(calledNumber);
-          console.log(`[ElevenLabs] ✅ Loaded restaurant: ${restaurant.name} (${restaurant.language})`);
+          logger.info(`Loaded restaurant: ${restaurant.name} (${restaurant.language})`);
         } catch (error) {
-          console.error(`[ElevenLabs] ❌ Restaurant not found for phone ${calledNumber}:`, error.message);
+          logger.warn(`Restaurant not found for phone ${calledNumber}:`, { message: error.message });
         }
       }
 
       // Method 2: Look up by restaurant ID (fallback)
       if (!restaurant && restaurantId) {
         try {
-          console.log(`[ElevenLabs] Looking up restaurant by ID: ${restaurantId}`);
+          logger.debug(`Looking up restaurant by ID: ${restaurantId}`);
           restaurant = await getRestaurantById(restaurantId);
-          console.log(`[ElevenLabs] ✅ Loaded restaurant: ${restaurant.name}`);
+          logger.info(`Loaded restaurant: ${restaurant.name}`);
         } catch (error) {
-          console.error(`[ElevenLabs] ❌ Restaurant not found for ID ${restaurantId}:`, error.message);
+          logger.warn(`Restaurant not found for ID ${restaurantId}:`, { message: error.message });
         }
       }
 
       // If no restaurant found, check if we should ask user in multi-tenant mode
       if (!restaurant) {
         if (MULTI_TENANT_MODE) {
-          console.log('[ElevenLabs] Multi-tenant mode: No restaurant in session - ask user to identify');
+          logger.info(' Multi-tenant mode: No restaurant in session - ask user to identify');
           return res.status(200).json({
             success: false,
             error: 'No restaurant selected',
@@ -159,7 +162,7 @@ module.exports = async (req, res) => {
             requires_restaurant_identification: true
           });
         } else {
-          console.log('[ElevenLabs] ⚠️ No restaurant identified - please provide phone number or restaurant_id');
+          logger.info(' ⚠️ No restaurant identified - please provide phone number or restaurant_id');
           return res.status(200).json({
             success: false,
             error: 'Restaurant not identified',
@@ -174,7 +177,7 @@ module.exports = async (req, res) => {
     }
 
     if (!action) {
-      console.log('[ElevenLabs] No action specified');
+      logger.info(' No action specified');
       const availableActions = [
         'check_availability',
         'create_reservation',
@@ -197,7 +200,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    console.log(`[ElevenLabs] Processing action: ${action}`);
+    logger.info(`Processing action: ${action}`);
 
     // Route to appropriate handler based on action
     switch (action) {
@@ -226,7 +229,7 @@ module.exports = async (req, res) => {
         return await handleIdentifyRestaurant(req, res);
 
       default:
-        console.log(`[ElevenLabs] Unknown action: ${action}`);
+        logger.warn(`Unknown action: ${action}`);
         const defaultAvailableActions = [
           'check_availability',
           'create_reservation',
@@ -247,7 +250,7 @@ module.exports = async (req, res) => {
         });
     }
   } catch (error) {
-    console.error('[ElevenLabs] Unhandled error:', error);
+    logger.error(' Unhandled error:', error);
     // ALWAYS return valid JSON, even on error
     return res.status(200).json({
       success: false,
@@ -312,7 +315,7 @@ async function handleGetDateTime(req, res) {
     unix_timestamp: Math.floor(now.getTime() / 1000)
   };
 
-  console.log('[ElevenLabs] get_current_datetime response:', response);
+  logger.info(' get_current_datetime response:', response);
   return res.status(200).json(response);
 }
 
@@ -346,9 +349,10 @@ async function handleCheckAvailability(req, res) {
     // ===== USE RESTAURANT-SPECIFIC CONFIGURATION =====
     const restaurant = req.restaurant; // Loaded by webhook router
 
-    console.log(`[ElevenLabs] ===== AVAILABILITY CHECK for ${restaurant.name} =====`);
-    console.log(`[ElevenLabs] Language: ${restaurant.language}`);
-    console.log(`[ElevenLabs] Voice: ${restaurant.voice_id}`);
+    logger.info(`AVAILABILITY CHECK for ${restaurant.name}`, {
+      language: restaurant.language,
+      voice_id: restaurant.voice_id
+    });
 
     // Calculate total capacity from table configuration
     let totalCapacity = 0;
@@ -362,7 +366,7 @@ async function handleCheckAvailability(req, res) {
       });
     }
 
-    console.log(`[ElevenLabs] Total capacity: ${totalCapacity} seats`);
+    logger.debug(`Total capacity: ${totalCapacity} seats`);
 
     // Get business hours for the requested date
     const requestedDate = new Date(date);
@@ -395,7 +399,7 @@ async function handleCheckAvailability(req, res) {
     let currentlyOccupiedSeats = 0;
     const allTables = rawTablesResult.success ? (rawTablesResult.data.records || []) : [];
 
-    console.log(`[ElevenLabs] Found ${allTables.length} total tables in Airtable`);
+    logger.debug(`Found ${allTables.length} total tables in database`);
 
     allTables.forEach(table => {
       const status = table.fields.Status || 'Available';
@@ -403,16 +407,16 @@ async function handleCheckAvailability(req, res) {
       const tableNum = table.fields['Table Number'];
       const isActive = table.fields['Is Active'];
 
-      console.log(`[ElevenLabs] Table ${tableNum}: ${status}, ${capacity} seats, Active: ${isActive}`);
+      logger.debug(`Table ${tableNum}: ${status}, ${capacity} seats, Active: ${isActive}`);
 
       // Count ONLY active tables that are Occupied or Reserved
       if (isActive && (status === 'Occupied' || status === 'Reserved')) {
         currentlyOccupiedSeats += capacity;
-        console.log(`[ElevenLabs] ++ Added ${capacity} occupied seats from Table ${tableNum}`);
+        logger.debug(`Added ${capacity} occupied seats from Table ${tableNum}`);
       }
     });
 
-    console.log(`[ElevenLabs] TOTAL currently occupied/reserved: ${currentlyOccupiedSeats} seats out of ${totalCapacity} total capacity`);
+    logger.debug(`TOTAL currently occupied/reserved: ${currentlyOccupiedSeats} seats out of ${totalCapacity}`);
 
     // Get reservations for the requested date/time
     const filter = `AND(IS_SAME({Date}, '${date}', 'day'), OR({Status} = 'Confirmed', {Status} = 'Seated'))`;
@@ -432,11 +436,11 @@ async function handleCheckAvailability(req, res) {
     // Use the EFFECTIVE capacity (total - currently occupied)
     const effectiveCapacity = Math.max(0, totalCapacity - currentlyOccupiedSeats);
 
-    console.log(`[ElevenLabs] Effective capacity for reservations: ${effectiveCapacity} (${totalCapacity} total - ${currentlyOccupiedSeats} occupied)`);
+    logger.debug(`Effective capacity for reservations: ${effectiveCapacity} (${totalCapacity} total - ${currentlyOccupiedSeats} occupied)`);
 
     // If ALL tables are occupied right now, we have ZERO availability
     if (effectiveCapacity === 0) {
-      console.log('[ElevenLabs] All tables currently occupied - no availability');
+      logger.info(' All tables currently occupied - no availability');
       return res.status(200).json({
         success: true,
         available: false,
@@ -472,7 +476,7 @@ async function handleCheckAvailability(req, res) {
           can_accommodate: true
         }
       };
-      console.log('[ElevenLabs] check_availability response:', response);
+      logger.info(' check_availability response:', response);
       return res.status(200).json(response);
     } else {
       const suggestions = getSuggestedTimes(
@@ -503,11 +507,11 @@ async function handleCheckAvailability(req, res) {
           message: `${s.time} is available`
         })) : []
       };
-      console.log('[ElevenLabs] check_availability response:', response);
+      logger.info(' check_availability response:', response);
       return res.status(200).json(response);
     }
   } catch (error) {
-    console.error('[ElevenLabs] check_availability error:', error);
+    logger.error(' check_availability error:', error);
     return res.status(200).json({
       success: false,
       error: true,
@@ -529,7 +533,7 @@ async function handleCreateReservation(req, res) {
     const restaurant = req.multiTenantRestaurant || req.restaurant || {};
     const restaurantName = restaurant.restaurant_name || 'the restaurant';
 
-    console.log(`[CreateReservation] Processing for ${restaurantName}:`, { date, time, party_size, customer_name });
+    logger.info(`CreateReservation: Processing for ${restaurantName}:`, { date, time, party_size, customer_name });
 
     // Log tool call start
     if (conversationId) {
@@ -554,7 +558,7 @@ async function handleCreateReservation(req, res) {
     const validation = validateReservation({ date, time, party_size }, restaurant);
 
     if (!validation.valid) {
-      console.log(`[CreateReservation] Validation failed:`, validation.errors);
+      logger.info(`CreateReservation: Validation failed:`, validation.errors);
       return res.status(200).json({
         success: false,
         error: validation.errors[0].code,
@@ -655,7 +659,7 @@ async function handleCreateReservation(req, res) {
     return reservationsHandler(req, res);
 
   } catch (error) {
-    console.error('[CreateReservation] Error:', error);
+    logger.error('CreateReservation Error:', error);
     if (conversationId) {
       await conversationLogger.logToolCall(conversationId, {
         tool_name: 'create_reservation',
@@ -730,10 +734,10 @@ async function handleLookupReservation(req, res) {
       count: reservations.length,
       reservations
     };
-    console.log('[ElevenLabs] lookup_reservation response:', response);
+    logger.info(' lookup_reservation response:', response);
     return res.status(200).json(response);
   } catch (error) {
-    console.error('[ElevenLabs] lookup_reservation error:', error);
+    logger.error(' lookup_reservation error:', error);
     return res.status(200).json({
       success: false,
       error: true,
@@ -771,7 +775,7 @@ async function handleIdentifyRestaurant(req, res) {
     conversation_id
   } = data;
 
-  console.log('[ElevenLabs] identify_restaurant called:', { restaurant_name, sender_phone, conversation_id });
+  logger.info(' identify_restaurant called:', { restaurant_name, sender_phone, conversation_id });
 
   // Validate multi-tenant mode is enabled
   if (!MULTI_TENANT_MODE) {
@@ -796,7 +800,7 @@ async function handleIdentifyRestaurant(req, res) {
 
     // If session already has a confirmed restaurant, return it
     if (session.restaurant_confirmed && session.restaurant) {
-      console.log(`[ElevenLabs] Session already has restaurant: ${session.restaurant.restaurant_name}`);
+      logger.info(`Session already has restaurant: ${session.restaurant.restaurant_name}`);
       return res.status(200).json({
         success: true,
         restaurant_identified: true,
@@ -828,7 +832,7 @@ async function handleIdentifyRestaurant(req, res) {
       // Set the session restaurant
       const updatedSession = await setSessionRestaurant(session.id, matchResult.match.id);
 
-      console.log(`[ElevenLabs] Restaurant identified: ${matchResult.match.restaurant_name} (confidence: ${matchResult.confidence})`);
+      logger.info(`Restaurant identified: ${matchResult.match.restaurant_name} (confidence: ${matchResult.confidence})`);
 
       return res.status(200).json({
         success: true,
@@ -878,7 +882,7 @@ async function handleIdentifyRestaurant(req, res) {
     });
 
   } catch (error) {
-    console.error('[ElevenLabs] identify_restaurant error:', error);
+    logger.error(' identify_restaurant error:', error);
     return res.status(200).json({
       success: false,
       error: true,

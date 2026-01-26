@@ -1,5 +1,7 @@
 const Stripe = require('stripe');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('StripeWebhook');
 const { getPlanFromPriceId } = require('./services/subscription-limits');
 const {
   createSubscription,
@@ -32,7 +34,7 @@ module.exports = async (req, res) => {
     // Verify webhook signature
     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
   } catch (err) {
-    console.error('Webhook signature verification failed:', err.message);
+    logger.error('Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -41,19 +43,19 @@ module.exports = async (req, res) => {
     switch (event.type) {
       case 'checkout.session.completed':
         const session = event.data.object;
-        console.log('Checkout session completed:', session.id);
+        logger.info('Checkout session completed:', session.id);
 
         // Session completed, subscription will be created in customer.subscription.created event
         // Just log for now
-        console.log('Customer:', session.customer);
-        console.log('Subscription:', session.subscription);
-        console.log('Email:', session.customer_details?.email);
+        logger.info('Customer:', session.customer);
+        logger.info('Subscription:', session.subscription);
+        logger.info('Email:', session.customer_details?.email);
 
         break;
 
       case 'customer.subscription.created':
         const subscriptionCreated = event.data.object;
-        console.log('Subscription created:', subscriptionCreated.id);
+        logger.info('Subscription created:', subscriptionCreated.id);
 
         // Get customer email from Stripe
         const customer = await stripe.customers.retrieve(subscriptionCreated.customer);
@@ -75,24 +77,24 @@ module.exports = async (req, res) => {
         });
 
         if (!createResult.success) {
-          console.error('Failed to create subscription in database:', createResult.message);
+          logger.error('Failed to create subscription in database:', createResult.message);
         } else {
-          console.log('Subscription saved to database:', subscriptionCreated.id);
+          logger.info('Subscription saved to database:', subscriptionCreated.id);
         }
 
         // Also update restaurant_info.metric_profile.plan as fallback
         const planUpdateResult = await updateRestaurantPlan(planName, customer.email);
         if (!planUpdateResult.success) {
-          console.error('Failed to update restaurant plan:', planUpdateResult.message);
+          logger.error('Failed to update restaurant plan:', planUpdateResult.message);
         } else {
-          console.log('Restaurant plan updated to:', planName);
+          logger.info('Restaurant plan updated to:', planName);
         }
 
         break;
 
       case 'customer.subscription.updated':
         const subscriptionUpdated = event.data.object;
-        console.log('Subscription updated:', subscriptionUpdated.id);
+        logger.info('Subscription updated:', subscriptionUpdated.id);
 
         // Update subscription in database
         const updatedPriceId = subscriptionUpdated.items.data[0].price.id;
@@ -108,9 +110,9 @@ module.exports = async (req, res) => {
         });
 
         if (!updateResult.success) {
-          console.error('Failed to update subscription in database:', updateResult.message);
+          logger.error('Failed to update subscription in database:', updateResult.message);
         } else {
-          console.log('Subscription updated in database:', subscriptionUpdated.id);
+          logger.info('Subscription updated in database:', subscriptionUpdated.id);
         }
 
         // Also update restaurant_info.metric_profile.plan
@@ -122,7 +124,7 @@ module.exports = async (req, res) => {
 
       case 'customer.subscription.deleted':
         const subscriptionDeleted = event.data.object;
-        console.log('Subscription cancelled:', subscriptionDeleted.id);
+        logger.info('Subscription cancelled:', subscriptionDeleted.id);
 
         // Mark subscription as canceled in database
         const cancelResult = await updateSubscription(subscriptionDeleted.id, {
@@ -131,9 +133,9 @@ module.exports = async (req, res) => {
         });
 
         if (!cancelResult.success) {
-          console.error('Failed to cancel subscription in database:', cancelResult.message);
+          logger.error('Failed to cancel subscription in database:', cancelResult.message);
         } else {
-          console.log('Subscription canceled in database:', subscriptionDeleted.id);
+          logger.info('Subscription canceled in database:', subscriptionDeleted.id);
         }
 
         // Downgrade restaurant plan to Basic when subscription is cancelled
@@ -143,9 +145,9 @@ module.exports = async (req, res) => {
 
       case 'invoice.payment_succeeded':
         const invoice = event.data.object;
-        console.log('Invoice payment succeeded:', invoice.id);
-        console.log('Customer:', invoice.customer);
-        console.log('Amount paid:', invoice.amount_paid / 100, invoice.currency.toUpperCase());
+        logger.info('Invoice payment succeeded:', invoice.id);
+        logger.info('Customer:', invoice.customer);
+        logger.info('Amount paid:', invoice.amount_paid / 100, invoice.currency.toUpperCase());
 
         // Payment status is automatically reflected in subscription.updated event
         // TODO: Send receipt email to customer (future enhancement)
@@ -154,9 +156,9 @@ module.exports = async (req, res) => {
 
       case 'invoice.payment_failed':
         const failedInvoice = event.data.object;
-        console.log('Invoice payment failed:', failedInvoice.id);
-        console.log('Customer:', failedInvoice.customer);
-        console.log('Amount due:', failedInvoice.amount_due / 100, failedInvoice.currency.toUpperCase());
+        logger.info('Invoice payment failed:', failedInvoice.id);
+        logger.info('Customer:', failedInvoice.customer);
+        logger.info('Amount due:', failedInvoice.amount_due / 100, failedInvoice.currency.toUpperCase());
 
         // Subscription status will be updated to 'past_due' automatically in subscription.updated event
         // TODO: Send payment failure notification email (future enhancement)
@@ -165,21 +167,21 @@ module.exports = async (req, res) => {
 
       case 'customer.subscription.trial_will_end':
         const trialEndingSoon = event.data.object;
-        console.log('Trial ending soon:', trialEndingSoon.id);
-        console.log('Trial ends:', new Date(trialEndingSoon.trial_end * 1000).toISOString());
+        logger.info('Trial ending soon:', trialEndingSoon.id);
+        logger.info('Trial ends:', new Date(trialEndingSoon.trial_end * 1000).toISOString());
 
         // TODO: Send trial ending reminder email (future enhancement)
 
         break;
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        logger.info(`Unhandled event type: ${event.type}`);
     }
 
     // Return a 200 response to acknowledge receipt of the event
     res.status(200).json({ received: true });
   } catch (error) {
-    console.error('Error processing webhook:', error);
+    logger.error('Error processing webhook:', error);
     return res.status(500).json({
       error: 'Webhook processing failed',
       message: error.message,

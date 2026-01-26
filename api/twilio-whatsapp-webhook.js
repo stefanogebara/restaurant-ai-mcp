@@ -20,6 +20,8 @@
 
 const Anthropic = require('@anthropic-ai/sdk');
 const twilio = require('twilio');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('Twilio');
 const {
   getOrCreateSession,
   setSessionRestaurant,
@@ -266,13 +268,13 @@ async function findRecentReservation(phoneNumber, restaurantId = null) {
     const { data, error } = await query;
 
     if (error) {
-      console.error('[Twilio] Error finding recent reservation:', error);
+      logger.error(' Error finding recent reservation:', error);
       return null;
     }
 
     return data && data.length > 0 ? data[0] : null;
   } catch (err) {
-    console.error('[Twilio] Exception finding recent reservation:', err);
+    logger.error(' Exception finding recent reservation:', err);
     return null;
   }
 }
@@ -292,7 +294,7 @@ async function updateSessionContext(sessionId, contextUpdate) {
       .single();
 
     if (fetchError) {
-      console.error('[Twilio] Error fetching session for context update:', fetchError);
+      logger.error(' Error fetching session for context update:', fetchError);
       return;
     }
 
@@ -310,10 +312,10 @@ async function updateSessionContext(sessionId, contextUpdate) {
       .eq('id', sessionId);
 
     if (updateError) {
-      console.error('[Twilio] Error updating session context:', updateError);
+      logger.error(' Error updating session context:', updateError);
     }
   } catch (err) {
-    console.error('[Twilio] Exception updating session context:', err);
+    logger.error(' Exception updating session context:', err);
   }
 }
 
@@ -362,11 +364,11 @@ function sanitizeConversationHistory(history) {
               content: validToolResults
             });
           } else {
-            console.warn('[Twilio] Skipping user message with orphan tool_result blocks');
+            logger.warn(' Skipping user message with orphan tool_result blocks');
           }
         } else {
           // No valid previous assistant message with tool_use - skip these tool_results
-          console.warn('[Twilio] Skipping tool_result blocks without corresponding tool_use');
+          logger.warn(' Skipping tool_result blocks without corresponding tool_use');
         }
       } else {
         // No tool_results, keep the message as is
@@ -391,7 +393,7 @@ async function sendWhatsAppMessage(to, message) {
   const twilioWhatsAppNumber = process.env.TWILIO_WHATSAPP_NUMBER;
 
   if (!accountSid || !authToken || !twilioWhatsAppNumber) {
-    console.error('[Twilio] Missing TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, or TWILIO_WHATSAPP_NUMBER');
+    logger.error(' Missing TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, or TWILIO_WHATSAPP_NUMBER');
     return { success: false, error: 'Twilio not configured' };
   }
 
@@ -413,7 +415,7 @@ async function sendWhatsAppMessage(to, message) {
     console.log(`[Twilio] Message sent to ${to}: ${message.substring(0, 50)}...`);
     return { success: true, messageId: result.sid };
   } catch (error) {
-    console.error('[Twilio] Send exception:', error);
+    logger.error(' Send exception:', error);
     return { success: false, error: error.message };
   }
 }
@@ -428,7 +430,7 @@ async function sendTemplateMessage(to, contentSid, contentVariables = {}) {
   const twilioWhatsAppNumber = process.env.TWILIO_WHATSAPP_NUMBER;
 
   if (!accountSid || !authToken || !twilioWhatsAppNumber) {
-    console.error('[Twilio] Missing Twilio configuration');
+    logger.error(' Missing Twilio configuration');
     return { success: false, error: 'Twilio not configured' };
   }
 
@@ -450,7 +452,7 @@ async function sendTemplateMessage(to, contentSid, contentVariables = {}) {
     console.log(`[Twilio] Template sent to ${to}: ${contentSid}`);
     return { success: true, messageId: result.sid };
   } catch (error) {
-    console.error('[Twilio] Template send exception:', error);
+    logger.error(' Template send exception:', error);
     return { success: false, error: error.message };
   }
 }
@@ -569,7 +571,7 @@ async function processWithClaude(messageText, session) {
     availableRestaurants = await getAllActiveRestaurants();
     console.log(`[Twilio] Found ${availableRestaurants.length} active restaurants in platform`);
   } catch (err) {
-    console.error('[Twilio] Error fetching restaurants:', err);
+    logger.error(' Error fetching restaurants:', err);
   }
 
   // Use restaurant from session JOIN if available
@@ -850,7 +852,7 @@ async function processWithClaude(messageText, session) {
 
     return assistantMessage || 'I apologize, but I couldn\'t generate a response. Please try again.';
   } catch (error) {
-    console.error('[Twilio] Claude API error:', error);
+    logger.error(' Claude API error:', error);
     throw error;
   }
 }
@@ -932,7 +934,7 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
         .in('status', ['confirmed', 'seated']);
 
       if (resError) {
-        console.error('[Twilio] Reservation check error:', resError);
+        logger.error(' Reservation check error:', resError);
       }
 
       const bookedSeats = reservations?.reduce((sum, r) => sum + (r.party_size || 0), 0) || 0;
@@ -1026,8 +1028,8 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
         .single();
 
       if (error) {
-        console.error('[Twilio] Reservation creation error:', error);
-        console.error('[Twilio] Insert data was:', { reservation_id: reservationId, customer_name: toolInput.customer_name, customer_phone: customerPhone, date: parsedDate, time: parsedTime, party_size: toolInput.party_size });
+        logger.error(' Reservation creation error:', error);
+        logger.error(' Insert data was:', { reservation_id: reservationId, customer_name: toolInput.customer_name, customer_phone: customerPhone, date: parsedDate, time: parsedTime, party_size: toolInput.party_size });
         return { success: false, error: error.message };
       }
 
@@ -1114,7 +1116,7 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
       const { data, error } = await query.order('date', { ascending: false }).limit(5);
 
       if (error) {
-        console.error('[Twilio] Lookup error:', error);
+        logger.error(' Lookup error:', error);
         return { success: false, error: 'Could not look up reservation. Please try again.' };
       }
 
@@ -1172,7 +1174,7 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
       const { data: existing, error: lookupError } = await query.single();
 
       if (lookupError || !existing) {
-        console.error('[Twilio] Cancel lookup error:', lookupError);
+        logger.error(' Cancel lookup error:', lookupError);
         return {
           success: false,
           error: 'Reservation not found. Please check your confirmation number.'
@@ -1193,7 +1195,7 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
         .eq('reservation_id', reservation_id);
 
       if (updateError) {
-        console.error('[Twilio] Cancel update error:', updateError);
+        logger.error(' Cancel update error:', updateError);
         return { success: false, error: 'Could not cancel the reservation. Please try again or contact the restaurant directly.' };
       }
 
@@ -1256,7 +1258,7 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
       const { data: existing, error: lookupError } = await query.single();
 
       if (lookupError || !existing) {
-        console.error('[Twilio] Modify lookup error:', lookupError);
+        logger.error(' Modify lookup error:', lookupError);
         return {
           success: false,
           error: 'Reservation not found. Please check your confirmation number.'
@@ -1299,7 +1301,7 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
         .single();
 
       if (updateError) {
-        console.error('[Twilio] Modify update error:', updateError);
+        logger.error(' Modify update error:', updateError);
         return { success: false, error: 'Could not modify the reservation. Please try again or contact the restaurant directly.' };
       }
 
@@ -1392,21 +1394,21 @@ module.exports = async (req, res) => {
   if (req.method === 'POST') {
     try {
       // Log raw body type for debugging
-      console.log('[Twilio] Body type:', typeof req.body);
-      console.log('[Twilio] Raw body:', req.body);
+      logger.info(' Body type:', typeof req.body);
+      logger.info(' Raw body:', req.body);
 
       // Twilio sends form-urlencoded data - parse it if necessary
       let parsedBody = req.body;
       if (typeof req.body === 'string') {
-        console.log('[Twilio] Parsing string body as URL-encoded');
+        logger.info(' Parsing string body as URL-encoded');
         parsedBody = parseUrlEncodedBody(req.body);
       } else if (!req.body || Object.keys(req.body).length === 0) {
-        console.log('[Twilio] Empty body, checking raw request');
+        logger.info(' Empty body, checking raw request');
         // Try to get raw body if available
         parsedBody = {};
       }
 
-      console.log('[Twilio] Parsed body:', JSON.stringify(parsedBody, null, 2));
+      logger.info(' Parsed body:', JSON.stringify(parsedBody, null, 2));
 
       // Twilio sends form-urlencoded data
       const {
@@ -1420,7 +1422,7 @@ module.exports = async (req, res) => {
 
       // Validate required fields
       if (!From || !Body) {
-        console.log('[Twilio] Missing required fields');
+        logger.info(' Missing required fields');
         return res.status(200).send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
       }
 
@@ -1440,7 +1442,7 @@ module.exports = async (req, res) => {
       const session = await getOrCreateSession(fromNumber, `twilio-${Date.now()}`);
 
       if (!session) {
-        console.error('[Twilio] Failed to create session');
+        logger.error(' Failed to create session');
         await sendWhatsAppMessage(fromNumber, 'Sorry, I had trouble starting our conversation. Please try again.');
         return res.status(200).send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
       }
@@ -1588,7 +1590,7 @@ module.exports = async (req, res) => {
         response = await processWithClaude(messageText, session);
         console.log(`[Twilio] Claude response received: ${response?.substring(0, 100)}...`);
       } catch (claudeError) {
-        console.error('[Twilio] Claude processing error:', claudeError);
+        logger.error(' Claude processing error:', claudeError);
         response = 'Sorry, I had trouble processing your message. Please try again.';
       }
 
@@ -1610,7 +1612,7 @@ module.exports = async (req, res) => {
       return res.status(200).send(twimlResponse);
 
     } catch (error) {
-      console.error('[Twilio] Webhook error:', error);
+      logger.error(' Webhook error:', error);
       return res.status(200).send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
     }
   }
