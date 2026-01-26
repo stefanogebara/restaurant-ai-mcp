@@ -323,15 +323,17 @@ async function handleROISummary(req, res) {
  * Body:
  * {
  *   reservation_id: "RES-20251101-1234",
- *   intervention_type: "confirmation_call" | "sms_reminder" | "email_reminder",
- *   notes: "Called customer to confirm reservation"
+ *   intervention_type: "phone_call" | "sms_reminder" | "email_reminder" | "whatsapp_reminder" | "deposit_required",
+ *   staff_name: "Carlos" (optional),
+ *   notes: "Called customer to confirm reservation, will arrive 10 min late"
  * }
  */
 async function handleMarkActionTaken(req, res) {
   try {
     const {
       reservation_id,
-      intervention_type = 'confirmation_call',
+      intervention_type = 'phone_call',
+      staff_name = '',
       notes = ''
     } = req.body;
 
@@ -343,7 +345,35 @@ async function handleMarkActionTaken(req, res) {
       });
     }
 
-    logger.info(`\n📞 Marking action taken for ${reservation_id}: ${intervention_type}`);
+    // Validate intervention_type
+    const validTypes = [
+      'phone_call',
+      'sms_reminder',
+      'email_reminder',
+      'whatsapp_reminder',
+      'deposit_required',
+      'confirmation_call', // Legacy support
+      'automatic_reminder',
+      'other'
+    ];
+
+    // Map legacy types
+    let normalizedType = intervention_type;
+    if (intervention_type === 'confirmation_call') {
+      normalizedType = 'phone_call';
+    }
+
+    if (!validTypes.includes(normalizedType)) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid intervention_type. Must be one of: ${validTypes.join(', ')}`
+      });
+    }
+
+    logger.info(`\n📞 Marking action taken for ${reservation_id}: ${normalizedType}`);
+    if (staff_name) {
+      logger.info(`   Staff: ${staff_name}`);
+    }
 
     // Fetch reservation to verify it exists and get ML data
     const { data: reservation, error: fetchError } = await supabase
@@ -360,14 +390,17 @@ async function handleMarkActionTaken(req, res) {
       });
     }
 
+    const timestamp = new Date().toISOString();
+
     // Update reservation to mark that intervention was taken
     const { error: updateError } = await supabase
       .from('reservations')
       .update({
         intervention_taken: true,
-        intervention_type: intervention_type,
+        intervention_type: normalizedType,
         intervention_notes: notes,
-        intervention_timestamp: new Date().toISOString()
+        intervention_timestamp: timestamp,
+        intervention_by: staff_name || null
       })
       .eq('reservation_id', reservation_id);
 
@@ -380,17 +413,42 @@ async function handleMarkActionTaken(req, res) {
       });
     }
 
+    // Also update ml_interventions table if there's a matching record
+    const { data: existingIntervention } = await supabase
+      .from('ml_interventions')
+      .select('intervention_id')
+      .eq('reservation_id', reservation_id)
+      .eq('action_taken', false)
+      .single();
+
+    if (existingIntervention) {
+      await supabase
+        .from('ml_interventions')
+        .update({
+          action_taken: true,
+          action_timestamp: timestamp,
+          intervention_type: normalizedType,
+          notes: notes
+        })
+        .eq('intervention_id', existingIntervention.intervention_id);
+
+      logger.info(`✅ Updated ml_intervention ${existingIntervention.intervention_id}`);
+    }
+
     logger.info(`✅ Marked action taken for ${reservation_id}`);
 
     return res.json({
       success: true,
       data: {
         reservation_id,
-        intervention_type,
+        intervention_type: normalizedType,
+        staff_name: staff_name || null,
         notes,
-        timestamp: new Date().toISOString()
+        timestamp,
+        ml_risk_level: reservation.ml_risk_level,
+        ml_risk_score: reservation.ml_risk_score
       },
-      message: `Action "${intervention_type}" marked for reservation ${reservation_id}`
+      message: `Action "${normalizedType}" marked for reservation ${reservation_id}`
     });
 
   } catch (error) {

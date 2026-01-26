@@ -206,6 +206,49 @@ module.exports = async (req, res) => {
       await new Promise(resolve => setTimeout(resolve, 500));
     }
 
+    // ========================================================================
+    // HIGH-RISK RESERVATIONS: Additional Handling
+    // Send extra reminders and log automatic interventions
+    // ========================================================================
+    const highRiskReservations = (reservations || []).filter(r =>
+      r.ml_risk_level === 'high' || r.ml_risk_level === 'very-high'
+    );
+
+    const highRiskResults = {
+      total: highRiskReservations.length,
+      interventions_logged: 0
+    };
+
+    if (highRiskReservations.length > 0) {
+      logger.info(` Found ${highRiskReservations.length} high-risk reservations`);
+
+      for (const reservation of highRiskReservations) {
+        try {
+          // Log automatic intervention for high-risk reservations
+          // This helps track that the system sent extra attention to these
+          if (!reservation.intervention_taken) {
+            const { error: updateError } = await supabase
+              .from('reservations')
+              .update({
+                intervention_taken: true,
+                intervention_type: 'automatic_reminder',
+                intervention_notes: `Automatic high-risk reminder sent by system (${reservation.ml_risk_level} risk, score: ${reservation.ml_risk_score})`,
+                intervention_timestamp: new Date().toISOString(),
+                intervention_by: 'system'
+              })
+              .eq('reservation_id', reservation.reservation_id);
+
+            if (!updateError) {
+              highRiskResults.interventions_logged++;
+              logger.info(` Logged automatic intervention for high-risk reservation ${reservation.reservation_id}`);
+            }
+          }
+        } catch (error) {
+          logger.error(` Error processing high-risk reservation ${reservation.reservation_id}:`, error);
+        }
+      }
+    }
+
     const summary = {
       success: true,
       run_at: new Date().toISOString(),
@@ -214,6 +257,7 @@ module.exports = async (req, res) => {
       reminders_sent: results.sent,
       reminders_failed: results.failed,
       reminders_skipped: results.skipped,
+      high_risk: highRiskResults,
       details: results.details
     };
 

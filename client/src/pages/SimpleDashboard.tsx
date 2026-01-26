@@ -4,6 +4,7 @@ import { hostAPI } from '../services/api';
 import WalkInModal from '../components/host/WalkInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
+import QuickInterventionModal from '../components/host/QuickInterventionModal';
 import TableGrid from '../components/host/TableGrid';
 import TableStatusLegend from '../components/host/TableStatusLegend';
 import type { PlanType } from '../config/planFeatures';
@@ -31,6 +32,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   const [selectedServiceToComplete, setSelectedServiceToComplete] = useState<any>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [showTomorrow, setShowTomorrow] = useState(false);
+  const [interventionReservation, setInterventionReservation] = useState<any>(null);
 
   // Get real subscription plan from API
   const subscription = useSubscription();
@@ -1021,69 +1023,25 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                         )}
                       </div>
                       {/* ML Intervention Actions */}
-                      {(reservation.ml_risk_level === 'high' || reservation.ml_risk_level === 'very-high') && (
+                      {(reservation.ml_risk_level === 'high' || reservation.ml_risk_level === 'very-high') && !reservation.intervention_taken && (
                         <div className="flex flex-wrap gap-2 mt-2">
                           <button
-                            onClick={async () => {
-                              if (!window.confirm(language === 'es' ? '¿Confirmar que se realizó la llamada?' : 'Confirm that call was made?')) return;
-                              try {
-                                const response = await fetch('/api/ml-outcomes?action=mark-action-taken', {
-                                  method: 'PATCH',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({
-                                    reservation_id: reservation.reservation_id,
-                                    intervention_type: 'confirmation_call',
-                                    notes: 'Called customer to confirm reservation'
-                                  })
-                                });
-                                if (response.ok) {
-                                  setToast({ message: language === 'es' ? 'Intervención marcada' : 'Intervention marked', type: 'success' });
-                                  refetch();
-                                } else {
-                                  throw new Error('Failed to mark intervention');
-                                }
-                              } catch (error) {
-                                console.error('Error marking intervention:', error);
-                                setToast({ message: language === 'es' ? 'Error al marcar' : 'Error marking', type: 'error' });
-                              }
-                            }}
-                            className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 hover:bg-indigo-200 text-indigo-800 text-xs font-semibold rounded-lg border border-indigo-300 transition-all duration-200"
+                            onClick={() => setInterventionReservation(reservation)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg shadow-sm transition-all duration-200"
                           >
-                            📞 {language === 'es' ? 'Marcar Llamada Hecha' : 'Mark Call Made'}
+                            ⚡ {language === 'es' ? 'Tomar Acción' : 'Take Action'}
                           </button>
-                          <button
-                            onClick={async () => {
-                              const outcome = window.prompt(language === 'es'
-                                ? 'Resultado (showed_up/no_show/cancelled):'
-                                : 'Outcome (showed_up/no_show/cancelled):');
-                              if (!outcome || !['showed_up', 'no_show', 'cancelled'].includes(outcome)) return;
-                              try {
-                                const response = await fetch('/api/ml-outcomes?action=record-outcome', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({
-                                    reservation_id: reservation.reservation_id,
-                                    actual_outcome: outcome,
-                                    intervention_taken: true,
-                                    intervention_type: 'confirmation_call',
-                                    intervention_cost: 3
-                                  })
-                                });
-                                if (response.ok) {
-                                  setToast({ message: language === 'es' ? 'Resultado registrado' : 'Outcome recorded', type: 'success' });
-                                  refetch();
-                                } else {
-                                  throw new Error('Failed to record outcome');
-                                }
-                              } catch (error) {
-                                console.error('Error recording outcome:', error);
-                                setToast({ message: language === 'es' ? 'Error al registrar' : 'Error recording', type: 'error' });
-                              }
-                            }}
-                            className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 hover:bg-green-200 text-green-800 text-xs font-semibold rounded-lg border border-green-300 transition-all duration-200"
-                          >
-                            ✅ {language === 'es' ? 'Registrar Resultado' : 'Record Outcome'}
-                          </button>
+                        </div>
+                      )}
+                      {/* Show intervention taken indicator */}
+                      {reservation.intervention_taken && (
+                        <div className="flex items-center gap-1.5 mt-2">
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-lg border border-green-200">
+                            ✓ {language === 'es' ? 'Acción tomada' : 'Action taken'}
+                            {reservation.intervention_type && (
+                              <span className="text-green-600">({reservation.intervention_type.replace('_', ' ')})</span>
+                            )}
+                          </span>
                         </div>
                       )}
                       <div className="flex flex-wrap items-center gap-2 text-sm text-[#57534E]">
@@ -1195,6 +1153,23 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
             setSelectedReservation(null);
             refetch();
           }}
+        />
+      )}
+
+      {/* Quick Intervention Modal for High-Risk Reservations */}
+      {interventionReservation && (
+        <QuickInterventionModal
+          reservation={interventionReservation}
+          isOpen={!!interventionReservation}
+          onClose={() => setInterventionReservation(null)}
+          onSuccess={() => {
+            setToast({
+              message: language === 'es' ? 'Intervención registrada' : 'Intervention logged',
+              type: 'success'
+            });
+            refetch();
+          }}
+          language={language === 'es' ? 'es' : 'en'}
         />
       )}
 
