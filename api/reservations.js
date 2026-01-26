@@ -29,6 +29,10 @@ const { checkSubscription, checkReservationLimits } = require('./_lib/subscripti
 // Rate limiting
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
+// Secure structured logging
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('Reservations');
+
 // ============================================================================
 // SMS CONFIRMATION HELPER
 // ============================================================================
@@ -37,13 +41,13 @@ async function sendReservationConfirmationSMS(customerPhone, reservationDetails)
 
   // Skip if Twilio not configured
   if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
-    console.log('[SMS] Twilio not configured, skipping SMS confirmation');
+    logger.info('Twilio not configured, skipping SMS confirmation');
     return { success: false, reason: 'twilio_not_configured' };
   }
 
   // Validate phone number (basic check)
   if (!customerPhone || customerPhone.length < 10) {
-    console.log('[SMS] Invalid phone number, skipping SMS:', customerPhone);
+    logger.info('Invalid phone number, skipping SMS', { phone: customerPhone });
     return { success: false, reason: 'invalid_phone' };
   }
 
@@ -72,10 +76,10 @@ async function sendReservationConfirmationSMS(customerPhone, reservationDetails)
       to: formattedPhone
     });
 
-    console.log(`[SMS] Confirmation sent to ${formattedPhone}: ${message.sid}`);
+    logger.info(`SMS confirmation sent to ${formattedPhone}`, { messageSid: message.sid });
     return { success: true, messageSid: message.sid };
   } catch (error) {
-    console.error('[SMS] Error sending confirmation:', error.message);
+    logger.error('Error sending SMS confirmation', error);
     return { success: false, reason: error.message };
   }
 }
@@ -112,7 +116,7 @@ module.exports = async (req, res) => {
         });
     }
   } catch (error) {
-    console.error('Reservation error:', error);
+    logger.error('Reservation error', error);
     return res.status(500).json({
       message: 'I apologize, but something went wrong processing your request. Please try again or contact the restaurant directly.'
     });
@@ -155,7 +159,7 @@ async function handleCreate(req, res) {
       if (!limitsOk) return; // Limit exceeded, response already sent
     } catch (error) {
       // Log but don't fail if subscription check errors
-      console.error('[Subscription] Error checking limits:', error);
+      logger.error('Error checking subscription limits', error);
     }
   }
 
@@ -198,31 +202,31 @@ async function handleCreate(req, res) {
     );
 
     if (customer) {
-      console.log(`[CustomerTracking] Customer found/created: ${customer.id}`);
+      logger.info(`Customer found/created: ${customer.id}`);
 
       // Update customer statistics (increment total reservations)
       await updateCustomerHistory(customer.id, fields, 'created');
 
-      console.log(`[CustomerTracking] Updated customer ${customer.id} statistics`);
+      logger.info(`Updated customer ${customer.id} statistics`);
 
       // Link reservation to customer record
       if (result.data && result.data.id) {
         await updateReservation(result.data.id, {
           'Customer History': [customer.id]
         });
-        console.log(`[CustomerTracking] Linked reservation ${result.data.id} to customer ${customer.id}`);
+        logger.info(`Linked reservation ${result.data.id} to customer ${customer.id}`);
       }
     }
   } catch (error) {
     // Don't fail the reservation if customer tracking fails
-    console.error('[CustomerTracking] Error tracking customer:', error);
+    logger.error('Error tracking customer', error);
   }
 
   // ============================================================================
   // ML PREDICTION - NO-SHOW RISK SCORING (Heuristic Model)
   // ============================================================================
   try {
-    console.log('[MLPrediction] Starting no-show prediction with heuristic model...');
+    logger.info('Starting no-show prediction with heuristic model');
 
     // Get customer history for feature extraction
     const customerHistory = await getCustomerStats(customer_email, customer_phone);
@@ -252,7 +256,7 @@ async function handleCreate(req, res) {
       metadata: { modelVersion: riskData.modelVersion }
     };
 
-    console.log('[MLPrediction] Prediction result:', {
+    logger.info('ML Prediction result', {
       riskScore: riskData.riskScore,
       riskLevel: riskData.riskLevel,
       confidence: riskData.confidence,
@@ -269,7 +273,7 @@ async function handleCreate(req, res) {
       };
 
       await updateReservation(result.data.id, mlFields);
-      console.log('[MLPrediction] Updated reservation with ML predictions');
+      logger.info('Updated reservation with ML predictions');
 
       // Log to training dataset for future model retraining
       const reservationWithId = {
@@ -300,7 +304,7 @@ async function handleCreate(req, res) {
         const riskScore = riskData.riskScore;
         const recommendedIntervention = await getRecommendedIntervention(mappedRiskLevel, riskScore);
 
-        console.log(`[Intervention] Risk: ${prediction.noShowRisk} (${riskScore}%), intervention: ${recommendedIntervention?.type || 'none'}`);
+        logger.info(`Intervention recommended`, { risk: prediction.noShowRisk, riskScore, intervention: recommendedIntervention?.type || 'none' });
 
         // Create intervention record in ml_interventions table
         if (recommendedIntervention) {
@@ -319,21 +323,25 @@ async function handleCreate(req, res) {
             .single();
 
           if (interventionError) {
-            console.error('[Intervention] Error creating intervention record:', interventionError);
+            logger.error('Error creating intervention record', interventionError);
           } else {
-            console.log(`[Intervention] Created intervention ${intervention.intervention_id} for ${reservationId}`);
-            console.log(`   Type: ${intervention.intervention_type}`);
-            console.log(`   Risk: ${intervention.ml_risk_level} (${intervention.ml_risk_score}/100)`);
-            console.log(`   Estimated ROI: ${Math.round((intervention.value_saved / intervention.cost_of_intervention) * 100)}%`);
+            logger.info(`Created intervention for reservation`, {
+              interventionId: intervention.intervention_id,
+              reservationId,
+              type: intervention.intervention_type,
+              riskLevel: intervention.ml_risk_level,
+              riskScore: intervention.ml_risk_score,
+              estimatedROI: Math.round((intervention.value_saved / intervention.cost_of_intervention) * 100)
+            });
           }
         }
       } catch (error) {
-        console.error('[Intervention] Error processing intervention:', error);
+        logger.error('Error processing intervention', error);
       }
     }
   } catch (error) {
     // Don't fail the reservation if ML prediction fails
-    console.error('[MLPrediction] Error predicting no-show risk:', error);
+    logger.error('Error predicting no-show risk', error);
   }
 
   // ============================================================================
@@ -349,13 +357,13 @@ async function handleCreate(req, res) {
     });
 
     if (smsResult.success) {
-      console.log(`[Reservation] SMS confirmation sent for ${reservationId}`);
+      logger.info(`SMS confirmation sent for ${reservationId}`);
     } else {
-      console.log(`[Reservation] SMS not sent: ${smsResult.reason}`);
+      logger.info(`SMS not sent for ${reservationId}`, { reason: smsResult.reason });
     }
   } catch (error) {
     // Don't fail the reservation if SMS fails
-    console.error('[Reservation] Error sending SMS confirmation:', error);
+    logger.error('Error sending SMS confirmation', error);
   }
 
   return res.status(200).json({
@@ -439,7 +447,7 @@ async function handleList(req, res) {
       total: result.data.records.length
     });
   } catch (error) {
-    console.error('Error listing reservations:', error);
+    logger.error('Error listing reservations', error);
     return res.status(500).json({
       message: 'Error fetching reservations',
       reservations: [],

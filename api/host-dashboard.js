@@ -19,6 +19,9 @@ const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { verifyAuth } = require('./_lib/auth');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { getDiningDuration, DEFAULT_DINING_DURATION_MINUTES } = require('./_lib/constants');
+const { createSecureLogger } = require('./_lib/secure-logger');
+
+const logger = createSecureLogger('HostDashboard');
 
 module.exports = async (req, res) => {
   // Use secure CORS for internal dashboard endpoints
@@ -69,7 +72,7 @@ module.exports = async (req, res) => {
         });
     }
   } catch (error) {
-    console.error('Host dashboard error:', error);
+    logger.error('Host dashboard error', error);
     return res.status(500).json({
       success: false,
       error: true,
@@ -389,7 +392,7 @@ async function handleSeatParty(req, res) {
     // Step 1: Create service record
     const serviceResult = await createServiceRecord(serviceFields);
     if (!serviceResult.success) {
-      console.error('Failed to create service record:', {
+      logger.error('Failed to create service record', {
         serviceFields,
         error: serviceResult.message || serviceResult.error
       });
@@ -426,26 +429,26 @@ async function handleSeatParty(req, res) {
 
   } catch (error) {
     // ROLLBACK: Clean up on failure
-    console.error('Transaction failed during seat party:', error);
+    logger.error('Transaction failed during seat party', error);
 
     // If service record was created, delete it
     if (serviceCreated) {
-      console.log(`Rolling back: Deleting service record ${serviceId}`);
+      logger.info(`Rolling back: Deleting service record ${serviceId}`);
       try {
         await deleteServiceRecord(serviceId);
       } catch (rollbackError) {
-        console.error('Failed to rollback service record:', rollbackError);
+        logger.error('Failed to rollback service record', rollbackError);
       }
     }
 
     // If any tables were updated, reset them
     if (tablesUpdated.length > 0) {
-      console.log(`Rolling back: Resetting ${tablesUpdated.length} tables`);
+      logger.info(`Rolling back: Resetting ${tablesUpdated.length} tables`);
       const rollbackPromises = tablesUpdated.map(recordId =>
         updateTable(recordId, {
           'Status': 'available',
           'Current Service ID': ''
-        }).catch(err => console.error(`Failed to rollback table ${recordId}:`, err))
+        }).catch(err => logger.error(`Failed to rollback table ${recordId}`, err))
       );
       await Promise.all(rollbackPromises);
     }
@@ -511,7 +514,7 @@ async function handleCompleteService(req, res) {
     // Convert to number for comparison since table_number could be string or number
     const table = tablesResult.tables.find(t => Number(t.table_number) === Number(tableNum));
     if (!table) {
-      console.error(`Table not found for number: ${tableNum}`, { available_tables: tablesResult.tables.map(t => t.table_number) });
+      logger.error(`Table not found for number: ${tableNum}`, { available_tables: tablesResult.tables.map(t => t.table_number) });
     }
     return table ? table.id : null;
   }).filter(id => id !== null);
