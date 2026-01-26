@@ -14,6 +14,8 @@ const {
   calculateAllCustomerLTV,
   upsertCustomerLTV
 } = require('./services/ltvCalculator');
+const { verifyAuth } = require('./_lib/auth');
+const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -238,11 +240,31 @@ module.exports = async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-customer-email');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
+
+  // Verify authentication
+  const authResult = await verifyAuth(req, { required: true });
+  if (authResult.error) {
+    return res.status(authResult.status || 401).json({
+      error: authResult.error,
+      message: 'Authentication required to access LTV data'
+    });
+  }
+  req.user = authResult.user;
+
+  // Check subscription status
+  let subscriptionChecked = false;
+  await checkSubscription(req, res, () => { subscriptionChecked = true; });
+  if (!subscriptionChecked) return; // Response already sent by middleware
+
+  // Check feature access - advanced_analytics required for LTV
+  let featureAllowed = false;
+  requireFeature('advanced_analytics')(req, res, () => { featureAllowed = true; });
+  if (!featureAllowed) return; // Response already sent by middleware
 
   const { action } = req.query;
 

@@ -11,6 +11,8 @@ const {
 
 const { getPrediction, isModelAvailable } = require('./_lib/ml-service');
 const axios = require('axios');
+const { verifyAuth } = require('./_lib/auth');
+const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
@@ -330,7 +332,7 @@ async function getRevenueOpportunities() {
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-customer-email');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).json({ success: true });
@@ -339,6 +341,26 @@ module.exports = async (req, res) => {
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
+
+  // Verify authentication
+  const authResult = await verifyAuth(req, { required: true });
+  if (authResult.error) {
+    return res.status(authResult.status || 401).json({
+      error: authResult.error,
+      message: 'Authentication required to access predictive analytics'
+    });
+  }
+  req.user = authResult.user;
+
+  // Check subscription status
+  let subscriptionChecked = false;
+  await checkSubscription(req, res, () => { subscriptionChecked = true; });
+  if (!subscriptionChecked) return; // Response already sent by middleware
+
+  // Check feature access - advanced_analytics required for predictive analytics
+  let featureAllowed = false;
+  requireFeature('advanced_analytics')(req, res, () => { featureAllowed = true; });
+  if (!featureAllowed) return; // Response already sent by middleware
 
   try {
     const { type } = req.query;

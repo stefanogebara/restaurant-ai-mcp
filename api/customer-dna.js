@@ -6,16 +6,38 @@
  */
 
 const { analyzeCustomerDNA, analyzeAllCustomersDNA, getCustomerDNAProfile } = require('./services/customerDNA');
+const { verifyAuth } = require('./_lib/auth');
+const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 
 module.exports = async (req, res) => {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-customer-email');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
+
+  // Verify authentication
+  const authResult = await verifyAuth(req, { required: true });
+  if (authResult.error) {
+    return res.status(authResult.status || 401).json({
+      error: authResult.error,
+      message: 'Authentication required to access Customer DNA'
+    });
+  }
+  req.user = authResult.user;
+
+  // Check subscription status
+  let subscriptionChecked = false;
+  await checkSubscription(req, res, () => { subscriptionChecked = true; });
+  if (!subscriptionChecked) return; // Response already sent by middleware
+
+  // Check feature access - advanced_analytics required for Customer DNA
+  let featureAllowed = false;
+  requireFeature('advanced_analytics')(req, res, () => { featureAllowed = true; });
+  if (!featureAllowed) return; // Response already sent by middleware
 
   const { action, customer_id } = req.query;
 

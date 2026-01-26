@@ -23,6 +23,9 @@ const twilio = require('twilio');
 // CORS utility for secure cross-origin requests
 const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 
+// Subscription middleware for reservation limits
+const { checkSubscription, checkReservationLimits } = require('./_lib/subscription-middleware');
+
 // ============================================================================
 // SMS CONFIRMATION HELPER
 // ============================================================================
@@ -124,6 +127,29 @@ async function handleCreate(req, res) {
     return res.status(400).json({
       message: 'I need a few more details to complete your reservation. Please provide the date, time, party size, your name, and phone number.'
     });
+  }
+
+  // ============================================================================
+  // SUBSCRIPTION LIMIT CHECK (For dashboard-created reservations)
+  // ============================================================================
+  // Check reservation limits if restaurant subscription email is provided
+  // Webhook calls (from ElevenLabs) won't have this, so limits won't apply to AI-created reservations
+  const restaurantEmail = req.headers?.['x-restaurant-email'] || req.headers?.['x-customer-email'];
+  if (restaurantEmail) {
+    try {
+      // Check subscription status
+      let subscriptionChecked = false;
+      await checkSubscription(req, res, () => { subscriptionChecked = true; });
+      if (!subscriptionChecked) return; // Subscription check failed, response already sent
+
+      // Check reservation limits (Basic plan: 50/month)
+      let limitsOk = false;
+      await checkReservationLimits(req, res, () => { limitsOk = true; });
+      if (!limitsOk) return; // Limit exceeded, response already sent
+    } catch (error) {
+      // Log but don't fail if subscription check errors
+      console.error('[Subscription] Error checking limits:', error);
+    }
   }
 
   const reservationId = generateReservationId();
