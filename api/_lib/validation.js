@@ -5,6 +5,8 @@
  * Following 2025 best practices for API input validation.
  */
 
+const { MAX_PARTY_SIZE, MAX_ADVANCE_BOOKING_DAYS } = require('./constants');
+
 /**
  * Validate phone number format
  *
@@ -110,8 +112,8 @@ function validatePartySize(partySize) {
     return { valid: false, error: 'Party size must be at least 1' };
   }
 
-  if (size > 20) {
-    return { valid: false, error: 'Party size cannot exceed 20 guests' };
+  if (size > MAX_PARTY_SIZE) {
+    return { valid: false, error: `Party size cannot exceed ${MAX_PARTY_SIZE} guests` };
   }
 
   return { valid: true, value: size };
@@ -143,12 +145,12 @@ function validateReservationDate(date) {
       return { valid: false, error: 'Cannot make reservations for past dates' };
     }
 
-    // Check if date is more than 90 days in the future
+    // Check if date is more than configured days in the future
     const maxDate = new Date();
-    maxDate.setDate(maxDate.getDate() + 90);
+    maxDate.setDate(maxDate.getDate() + MAX_ADVANCE_BOOKING_DAYS);
 
     if (parsedDate > maxDate) {
-      return { valid: false, error: 'Cannot make reservations more than 90 days in advance' };
+      return { valid: false, error: `Cannot make reservations more than ${MAX_ADVANCE_BOOKING_DAYS} days in advance` };
     }
 
     return { valid: true, value: parsedDate };

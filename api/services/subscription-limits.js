@@ -5,10 +5,12 @@
  * Used for feature gating in middleware and frontend.
  */
 
+const { BASIC_PLAN_MONTHLY_RESERVATIONS } = require('../_lib/constants');
+
 const PLAN_LIMITS = {
   basic: {
     name: 'Basic',
-    maxReservationsPerMonth: 50,
+    maxReservationsPerMonth: BASIC_PLAN_MONTHLY_RESERVATIONS,
     features: [
       'ai_reservations',
       'host_dashboard',
