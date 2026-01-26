@@ -47,13 +47,13 @@ export function useSubscription(options: UseSubscriptionOptions = {}) {
   const { email, enabled = true } = options;
 
   return useQuery<SubscriptionResponse>({
-    queryKey: ['subscription', email || 'restaurant'],
+    queryKey: ['subscription', email || 'current-user'],
     queryFn: async () => {
       const apiUrl = import.meta.env.VITE_API_URL || '';
 
-      // If no email provided, use default email to get restaurant subscription
-      // This works because getSubscriptionByEmail falls back to restaurant_info.metric_profile.plan
-      const queryEmail = email || 'test@example.com';
+      // Get email from: 1) options, 2) localStorage (set by AuthContext), 3) fallback
+      const storedEmail = localStorage.getItem('customer_email');
+      const queryEmail = email || storedEmail || 'restaurant@seatable.io';
 
       const response = await fetch(
         `${apiUrl}/api/subscription-status?email=${encodeURIComponent(queryEmail)}`
