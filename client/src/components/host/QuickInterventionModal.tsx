@@ -10,7 +10,6 @@ import {
   X,
   Phone,
   MessageSquare,
-  Mail,
   CreditCard,
   AlertTriangle,
   User,
