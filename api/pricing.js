@@ -8,6 +8,8 @@
  */
 
 const { createClient } = require('@supabase/supabase-js');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('Pricing');
 const {
   calculatePrice,
   createDefaultPricingRules,
@@ -55,7 +57,7 @@ async function handleCalculatePrice(req, res) {
     return res.status(200).json(result);
 
   } catch (error) {
-    console.error('Error calculating price:', error);
+    logger.error('Error calculating price:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to calculate price'
@@ -105,7 +107,7 @@ async function handleGetRules(req, res) {
     });
 
   } catch (error) {
-    console.error('Error fetching pricing rules:', error);
+    logger.error('Error fetching pricing rules:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to fetch pricing rules'
@@ -166,7 +168,7 @@ async function handleCreateRule(req, res) {
     });
 
   } catch (error) {
-    console.error('Error creating pricing rule:', error);
+    logger.error('Error creating pricing rule:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to create pricing rule'
@@ -225,7 +227,7 @@ async function handleUpdateRule(req, res) {
     });
 
   } catch (error) {
-    console.error('Error updating pricing rule:', error);
+    logger.error('Error updating pricing rule:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to update pricing rule'
@@ -260,7 +262,7 @@ async function handleDeleteRule(req, res) {
     });
 
   } catch (error) {
-    console.error('Error deleting pricing rule:', error);
+    logger.error('Error deleting pricing rule:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to delete pricing rule'
@@ -286,7 +288,7 @@ async function handleCreateDefaults(req, res) {
     }
 
   } catch (error) {
-    console.error('Error creating default rules:', error);
+    logger.error('Error creating default rules:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to create default pricing rules'
@@ -340,7 +342,7 @@ async function handleGetEvents(req, res) {
     });
 
   } catch (error) {
-    console.error('Error fetching pricing events:', error);
+    logger.error('Error fetching pricing events:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to fetch pricing events'
@@ -542,7 +544,7 @@ async function handleGetAnalytics(req, res) {
     });
 
   } catch (error) {
-    console.error('Error calculating pricing analytics:', error);
+    logger.error('Error calculating pricing analytics:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to calculate pricing analytics'
@@ -615,7 +617,7 @@ async function handleGetStats(req, res) {
     });
 
   } catch (error) {
-    console.error('Error calculating pricing stats:', error);
+    logger.error('Error calculating pricing stats:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to calculate pricing statistics'
@@ -733,7 +735,7 @@ module.exports = async (req, res) => {
         });
     }
   } catch (error) {
-    console.error('Pricing API Error:', error);
+    logger.error('Pricing API Error:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Internal server error'

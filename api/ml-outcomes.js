@@ -6,6 +6,8 @@
  */
 
 const { createClient } = require('@supabase/supabase-js');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('MLOutcomes');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -55,7 +57,7 @@ module.exports = async (req, res) => {
         });
     }
   } catch (error) {
-    console.error('ML Outcomes API error:', error);
+    logger.error('ML Outcomes API error:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -106,7 +108,7 @@ async function handleRecordOutcome(req, res) {
       });
     }
 
-    console.log(`\n📊 Recording outcome for ${reservation_id}: ${actual_outcome}`);
+    logger.info(`\n📊 Recording outcome for ${reservation_id}: ${actual_outcome}`);
 
     // 1. Fetch reservation with ML prediction
     const { data: reservation, error: fetchError } = await supabase
@@ -116,7 +118,7 @@ async function handleRecordOutcome(req, res) {
       .single();
 
     if (fetchError) {
-      console.error('Error fetching reservation:', fetchError);
+      logger.error('Error fetching reservation:', fetchError);
       return res.status(404).json({
         success: false,
         error: 'Reservation not found'
@@ -154,9 +156,9 @@ async function handleRecordOutcome(req, res) {
       ? ((value_saved - intervention_cost) / intervention_cost) * 100
       : 0;
 
-    console.log(`💰 Value Saved: €${value_saved}`);
-    console.log(`💵 Intervention Cost: €${intervention_cost}`);
-    console.log(`📈 ROI: ${roi_multiplier.toFixed(0)}%`);
+    logger.info(`💰 Value Saved: €${value_saved}`);
+    logger.info(`💵 Intervention Cost: €${intervention_cost}`);
+    logger.info(`📈 ROI: ${roi_multiplier.toFixed(0)}%`);
 
     // 3. Create ml_interventions record
     const interventionRecord = {
@@ -180,7 +182,7 @@ async function handleRecordOutcome(req, res) {
       .single();
 
     if (interventionError) {
-      console.error('Error creating intervention record:', interventionError);
+      logger.error('Error creating intervention record:', interventionError);
       return res.status(500).json({
         success: false,
         error: 'Failed to create intervention record',
@@ -188,7 +190,7 @@ async function handleRecordOutcome(req, res) {
       });
     }
 
-    console.log(`✅ Created intervention record: ${interventionData.intervention_id}`);
+    logger.info(`✅ Created intervention record: ${interventionData.intervention_id}`);
 
     // 4. Update customer_history
     await updateCustomerHistory(
@@ -214,7 +216,7 @@ async function handleRecordOutcome(req, res) {
     });
 
   } catch (error) {
-    console.error('Error recording outcome:', error);
+    logger.error('Error recording outcome:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -305,7 +307,7 @@ async function handleROISummary(req, res) {
     });
 
   } catch (error) {
-    console.error('Error fetching ROI summary:', error);
+    logger.error('Error fetching ROI summary:', error);
     return res.status(500).json({
       success: false,
       error: 'Failed to fetch ROI summary',
@@ -341,7 +343,7 @@ async function handleMarkActionTaken(req, res) {
       });
     }
 
-    console.log(`\n📞 Marking action taken for ${reservation_id}: ${intervention_type}`);
+    logger.info(`\n📞 Marking action taken for ${reservation_id}: ${intervention_type}`);
 
     // Fetch reservation to verify it exists and get ML data
     const { data: reservation, error: fetchError } = await supabase
@@ -351,7 +353,7 @@ async function handleMarkActionTaken(req, res) {
       .single();
 
     if (fetchError) {
-      console.error('Error fetching reservation:', fetchError);
+      logger.error('Error fetching reservation:', fetchError);
       return res.status(404).json({
         success: false,
         error: 'Reservation not found'
@@ -370,7 +372,7 @@ async function handleMarkActionTaken(req, res) {
       .eq('reservation_id', reservation_id);
 
     if (updateError) {
-      console.error('Error updating reservation:', updateError);
+      logger.error('Error updating reservation:', updateError);
       return res.status(500).json({
         success: false,
         error: 'Failed to update reservation',
@@ -378,7 +380,7 @@ async function handleMarkActionTaken(req, res) {
       });
     }
 
-    console.log(`✅ Marked action taken for ${reservation_id}`);
+    logger.info(`✅ Marked action taken for ${reservation_id}`);
 
     return res.json({
       success: true,
@@ -392,7 +394,7 @@ async function handleMarkActionTaken(req, res) {
     });
 
   } catch (error) {
-    console.error('Error marking action taken:', error);
+    logger.error('Error marking action taken:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -417,7 +419,7 @@ async function updateCustomerHistory(customerPhone, outcome, partySize) {
       .single();
 
     if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('Error fetching customer history:', fetchError);
+      logger.error('Error fetching customer history:', fetchError);
       return;
     }
 
@@ -435,9 +437,9 @@ async function updateCustomerHistory(customerPhone, outcome, partySize) {
         });
 
       if (insertError) {
-        console.error('Error creating customer history:', insertError);
+        logger.error('Error creating customer history:', insertError);
       } else {
-        console.log(`✅ Created customer history for ${customerPhone}`);
+        logger.info(`✅ Created customer history for ${customerPhone}`);
       }
     } else {
       // Update existing customer history
@@ -461,12 +463,12 @@ async function updateCustomerHistory(customerPhone, outcome, partySize) {
         .eq('customer_phone', customerPhone);
 
       if (updateError) {
-        console.error('Error updating customer history:', updateError);
+        logger.error('Error updating customer history:', updateError);
       } else {
-        console.log(`✅ Updated customer history for ${customerPhone}`);
+        logger.info(`✅ Updated customer history for ${customerPhone}`);
       }
     }
   } catch (error) {
-    console.error('Exception in updateCustomerHistory:', error);
+    logger.error('Exception in updateCustomerHistory:', error);
   }
 }

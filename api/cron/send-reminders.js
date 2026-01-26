@@ -9,6 +9,8 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const twilio = require('twilio');
+const { createSecureLogger } = require('../_lib/secure-logger');
+const logger = createSecureLogger('CronReminders');
 
 /**
  * Send a WhatsApp template message via Twilio
@@ -20,7 +22,7 @@ async function sendTemplateMessage(to, contentSid, contentVariables = {}) {
   const twilioWhatsAppNumber = process.env.TWILIO_WHATSAPP_NUMBER;
 
   if (!accountSid || !authToken || !twilioWhatsAppNumber) {
-    console.error('[CRON] Missing Twilio configuration');
+    logger.error(' Missing Twilio configuration');
     return { success: false, error: 'Twilio not configured' };
   }
 
@@ -44,7 +46,7 @@ async function sendTemplateMessage(to, contentSid, contentVariables = {}) {
     console.log(`[CRON] Template sent to ${to}, messageId: ${result.sid}`);
     return { success: true, messageId: result.sid };
   } catch (error) {
-    console.error('[CRON] Template send exception:', error);
+    logger.error(' Template send exception:', error);
     return { success: false, error: error.message };
   }
 }
@@ -76,14 +78,14 @@ module.exports = async (req, res) => {
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    console.error('[CRON] Missing Supabase credentials');
+    logger.error(' Missing Supabase credentials');
     return res.status(500).json({ success: false, error: 'Database not configured' });
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    console.log('[CRON] Starting reservation reminder job...');
+    logger.info(' Starting reservation reminder job...');
 
     // Get today's date in YYYY-MM-DD format
     const today = new Date().toISOString().split('T')[0];
@@ -97,7 +99,7 @@ module.exports = async (req, res) => {
       .single();
 
     if (restaurantError) {
-      console.error('[CRON] Error fetching restaurant info:', restaurantError);
+      logger.error(' Error fetching restaurant info:', restaurantError);
     }
 
     const restaurantName = restaurantInfo?.restaurant_name || 'the restaurant';
@@ -111,7 +113,7 @@ module.exports = async (req, res) => {
       .not('customer_phone', 'is', null);
 
     if (error) {
-      console.error('[CRON] Error fetching reservations:', error);
+      logger.error(' Error fetching reservations:', error);
       return res.status(500).json({
         success: false,
         error: 'Failed to fetch reservations',
@@ -156,7 +158,7 @@ module.exports = async (req, res) => {
       // Get the reminder template SID
       const reminderTemplateSid = process.env.TWILIO_TEMPLATE_RESERVATION_REMINDER;
       if (!reminderTemplateSid) {
-        console.error('[CRON] Missing TWILIO_TEMPLATE_RESERVATION_REMINDER environment variable');
+        logger.error(' Missing TWILIO_TEMPLATE_RESERVATION_REMINDER environment variable');
         results.failed++;
         results.details.push({
           reservation_id,
@@ -215,11 +217,11 @@ module.exports = async (req, res) => {
       details: results.details
     };
 
-    console.log('[CRON] Reminder job complete:', JSON.stringify(summary, null, 2));
+    logger.info(' Reminder job complete:', JSON.stringify(summary, null, 2));
 
     return res.status(200).json(summary);
   } catch (error) {
-    console.error('[CRON] Fatal error in reminder job:', error);
+    logger.error(' Fatal error in reminder job:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal server error',

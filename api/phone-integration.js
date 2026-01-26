@@ -14,6 +14,8 @@
 
 const fetch = require('node-fetch');
 const { createClient } = require('@supabase/supabase-js');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('PhoneIntegration');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 
 // Initialize Supabase client
@@ -49,7 +51,7 @@ module.exports = async (req, res) => {
         });
     }
   } catch (error) {
-    console.error('[Phone Integration] Error:', error);
+    logger.error('[Phone Integration] Error:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Internal server error'
@@ -89,7 +91,7 @@ async function handleRegisterPhoneNumber(req, res) {
     });
   }
 
-  console.log(`[Phone Integration] Registering phone ${twilio_phone_number} for restaurant ${restaurant_id}`);
+  logger.info(`[Phone Integration] Registering phone ${twilio_phone_number} for restaurant ${restaurant_id}`);
 
   // Get restaurant info to check if agent exists
   const { data: restaurant, error: fetchError } = await supabase
@@ -143,7 +145,7 @@ async function handleRegisterPhoneNumber(req, res) {
 
     if (!importResponse.ok) {
       const errorText = await importResponse.text();
-      console.error('[Phone Integration] ElevenLabs import error:', errorText);
+      logger.error('[Phone Integration] ElevenLabs import error:', errorText);
 
       // Update status to error
       await supabase
@@ -165,7 +167,7 @@ async function handleRegisterPhoneNumber(req, res) {
     const importData = await importResponse.json();
     const phoneNumberId = importData.phone_number_id;
 
-    console.log(`[Phone Integration] Phone number imported with ID: ${phoneNumberId}`);
+    logger.info(`[Phone Integration] Phone number imported with ID: ${phoneNumberId}`);
 
     // Step 2: Assign the agent to handle inbound calls
     const assignResponse = await fetch(`https://api.elevenlabs.io/v1/convai/phone-numbers/${phoneNumberId}`, {
@@ -181,7 +183,7 @@ async function handleRegisterPhoneNumber(req, res) {
 
     if (!assignResponse.ok) {
       const errorText = await assignResponse.text();
-      console.error('[Phone Integration] Agent assignment error:', errorText);
+      logger.error('[Phone Integration] Agent assignment error:', errorText);
 
       // Phone is imported but agent not assigned - partial success
       await supabase
@@ -222,7 +224,7 @@ async function handleRegisterPhoneNumber(req, res) {
       })
       .eq('id', restaurant_id);
 
-    console.log(`[Phone Integration] Successfully configured phone ${twilio_phone_number} for restaurant ${restaurant_id}`);
+    logger.info(`[Phone Integration] Successfully configured phone ${twilio_phone_number} for restaurant ${restaurant_id}`);
 
     return res.status(200).json({
       success: true,
@@ -236,7 +238,7 @@ async function handleRegisterPhoneNumber(req, res) {
     });
 
   } catch (error) {
-    console.error('[Phone Integration] Registration error:', error);
+    logger.error('[Phone Integration] Registration error:', error);
 
     await supabase
       .from('restaurant_info')
@@ -303,7 +305,7 @@ async function handleUnregisterPhoneNumber(req, res) {
 
     if (!deleteResponse.ok && deleteResponse.status !== 404) {
       const errorText = await deleteResponse.text();
-      console.error('[Phone Integration] Delete error:', errorText);
+      logger.error('[Phone Integration] Delete error:', errorText);
       return res.status(500).json({
         success: false,
         error: 'Failed to remove phone number from ElevenLabs',
@@ -327,7 +329,7 @@ async function handleUnregisterPhoneNumber(req, res) {
       })
       .eq('id', restaurant_id);
 
-    console.log(`[Phone Integration] Unregistered phone for restaurant ${restaurant_id}`);
+    logger.info(`[Phone Integration] Unregistered phone for restaurant ${restaurant_id}`);
 
     return res.status(200).json({
       success: true,
@@ -335,7 +337,7 @@ async function handleUnregisterPhoneNumber(req, res) {
     });
 
   } catch (error) {
-    console.error('[Phone Integration] Unregister error:', error);
+    logger.error('[Phone Integration] Unregister error:', error);
     throw error;
   }
 }
@@ -471,7 +473,7 @@ async function handleAssignAgent(req, res) {
     });
 
   } catch (error) {
-    console.error('[Phone Integration] Assign agent error:', error);
+    logger.error('[Phone Integration] Assign agent error:', error);
     throw error;
   }
 }
