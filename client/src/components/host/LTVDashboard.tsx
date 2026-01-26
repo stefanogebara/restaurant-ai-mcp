@@ -7,6 +7,7 @@
 import { useState, useEffect } from 'react';
 import { Users, TrendingUp, TrendingDown, AlertTriangle, Star, DollarSign, Calendar, Activity } from 'lucide-react';
 import HelpTooltip from '../common/HelpTooltip';
+import { api } from '../../services/api';
 
 interface Customer {
   customer_id: string;
@@ -52,25 +53,22 @@ export default function LTVDashboard() {
 
   const fetchLTVData = async () => {
     try {
-      // Fetch statistics
-      const statsResponse = await fetch('/api/ltv?action=stats');
-      const statsResult = await statsResponse.json();
-      if (statsResult.success) {
-        setStats(statsResult.data);
+      // Fetch statistics (using api instance which includes auth token)
+      const statsResponse = await api.get('/ltv?action=stats');
+      if (statsResponse.data.success) {
+        setStats(statsResponse.data.data);
       }
 
       // Fetch top VIPs
-      const vipsResponse = await fetch('/api/ltv?action=list&tier=vip&limit=5');
-      const vipsResult = await vipsResponse.json();
-      if (vipsResult.success) {
-        setTopVIPs(vipsResult.data.customers || []);
+      const vipsResponse = await api.get('/ltv?action=list&tier=vip&limit=5');
+      if (vipsResponse.data.success) {
+        setTopVIPs(vipsResponse.data.data.customers || []);
       }
 
       // Fetch all customers and filter high churn risk
-      const customersResponse = await fetch('/api/ltv?action=list&limit=100');
-      const customersResult = await customersResponse.json();
-      if (customersResult.success) {
-        const highRisk = customersResult.data.customers
+      const customersResponse = await api.get('/ltv?action=list&limit=100');
+      if (customersResponse.data.success) {
+        const highRisk = customersResponse.data.data.customers
           .filter((c: Customer) => c.churn_risk_score > 70)
           .sort((a: Customer, b: Customer) => b.churn_risk_score - a.churn_risk_score)
           .slice(0, 5);
@@ -348,10 +346,9 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
             className="w-full px-4 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-[#9F1239]/30 flex items-center justify-center gap-2"
             onClick={async () => {
               try {
-                const response = await fetch('/api/ltv?action=calculate-all', { method: 'GET' });
-                const result = await response.json();
-                if (result.success) {
-                  alert(`Successfully calculated LTV for ${result.data.total_customers} customers!`);
+                const response = await api.get('/ltv?action=calculate-all');
+                if (response.data.success) {
+                  alert(`Successfully calculated LTV for ${response.data.data.total_customers} customers!`);
                   fetchLTVData(); // Refresh data
                 }
               } catch (error) {
