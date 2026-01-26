@@ -69,7 +69,7 @@ async function sendWhatsAppMessage(to, message) {
       return { success: false, error: data.error?.message || 'Failed to send' };
     }
 
-    console.log(`[WhatsApp] Message sent to ${to}: ${message.substring(0, 50)}...`);
+    logger.info(` Message sent to ${to}: ${message.substring(0, 50)}...`);
     return { success: true, messageId: data.messages?.[0]?.id };
   } catch (error) {
     logger.error(' Send exception:', error);
@@ -123,7 +123,7 @@ async function sendTemplateMessage(to, templateName, languageCode = 'en', bodyPa
       }
     };
 
-    console.log(`[WhatsApp] Sending template '${templateName}' to ${to}:`, JSON.stringify(payload, null, 2));
+    logger.info(` Sending template '${templateName}' to ${to}:`, JSON.stringify(payload, null, 2));
 
     const response = await fetch(`${WHATSAPP_API_URL}/${phoneNumberId}/messages`, {
       method: 'POST',
@@ -141,7 +141,7 @@ async function sendTemplateMessage(to, templateName, languageCode = 'en', bodyPa
       return { success: false, error: data.error?.message || 'Failed to send template' };
     }
 
-    console.log(`[WhatsApp] Template '${templateName}' sent to ${to}, messageId: ${data.messages?.[0]?.id}`);
+    logger.info(` Template '${templateName}' sent to ${to}, messageId: ${data.messages?.[0]?.id}`);
     return { success: true, messageId: data.messages?.[0]?.id };
   } catch (error) {
     logger.error(' Template send exception:', error);
@@ -258,7 +258,7 @@ const RESERVATION_TOOLS = [
  * Execute a tool call
  */
 async function executeTool(toolName, toolInput, session) {
-  console.log(`[WhatsApp] Executing tool: ${toolName}`, toolInput);
+  logger.info(` Executing tool: ${toolName}`, toolInput);
 
   switch (toolName) {
     case 'identify_restaurant': {
@@ -645,7 +645,7 @@ module.exports = async (req, res) => {
         const messageType = message.type;
         const messageText = message.text?.body || '';
 
-        console.log(`[WhatsApp] Message from ${from}: ${messageText}`);
+        logger.info(` Message from ${from}: ${messageText}`);
 
         // Only handle text messages for now
         if (messageType !== 'text') {
@@ -715,20 +715,20 @@ module.exports = async (req, res) => {
         }
 
         // Process message with Claude
-        console.log(`[WhatsApp] Processing message with Claude for session: ${session.id}`);
+        logger.info(` Processing message with Claude for session: ${session.id}`);
         let response;
         try {
           response = await processWithClaude(messageText, session);
-          console.log(`[WhatsApp] Claude response received: ${response?.substring(0, 100)}...`);
+          logger.info(` Claude response received: ${response?.substring(0, 100)}...`);
         } catch (claudeError) {
           logger.error(' Claude processing error:', claudeError);
           response = 'Sorry, I had trouble processing your message. Please try again.';
         }
 
         // Send response back via WhatsApp
-        console.log(`[WhatsApp] Sending response to ${from}`);
+        logger.info(` Sending response to ${from}`);
         const sendResult = await sendWhatsAppMessage(from, response);
-        console.log(`[WhatsApp] Send result:`, JSON.stringify(sendResult));
+        logger.info(` Send result:`, JSON.stringify(sendResult));
 
         return res.status(200).json({ status: 'ok' });
       }

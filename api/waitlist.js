@@ -553,7 +553,7 @@ async function calculateEstimatedWait(partySize, queuePosition) {
 async function sendSMSNotification(customerName, customerPhone, partySize) {
   // Skip if Twilio credentials not configured
   if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
-    console.warn('Twilio credentials not configured - SMS notification skipped');
+    logger.warn('Twilio credentials not configured - SMS notification skipped');
     return false;
   }
 
@@ -592,13 +592,13 @@ async function sendSMSNotification(customerName, customerPhone, partySize) {
 async function sendEmailNotification(customerName, customerEmail, partySize) {
   // Skip if Resend API key not configured
   if (!process.env.RESEND_API_KEY) {
-    console.warn('Resend API key not configured - email notification skipped');
+    logger.warn('Resend API key not configured - email notification skipped');
     return false;
   }
 
   // Skip if no email provided
   if (!customerEmail) {
-    console.warn('No email provided - email notification skipped');
+    logger.warn('No email provided - email notification skipped');
     return false;
   }
 
