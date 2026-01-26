@@ -5,7 +5,7 @@
  * Verifies that users have active subscriptions and access to specific features.
  */
 
-const { getSubscriptionByEmail } = require('./airtable');
+const { getSubscriptionByEmail } = require('./supabase');
 const { hasFeature, checkReservationLimit, getUpgradeMessage } = require('../services/subscription-limits');
 const { createClient } = require('@supabase/supabase-js');
 
