@@ -16,6 +16,7 @@ const {
 const { logCustomerShowedUp, logCustomerCancelled } = require('./ml/data-logger');
 const { validateServiceRecord, sanitizeInput } = require('./_lib/validation');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { verifyAuth } = require('./_lib/auth');
 
 module.exports = async (req, res) => {
   // Use secure CORS for internal dashboard endpoints
@@ -24,6 +25,16 @@ module.exports = async (req, res) => {
   if (handlePreflight(req, res)) {
     return;
   }
+
+  // Verify authentication - dashboard requires authenticated access
+  const authResult = await verifyAuth(req, { required: true });
+  if (authResult.error) {
+    return res.status(authResult.status || 401).json({
+      error: authResult.error,
+      message: 'Authentication required to access dashboard'
+    });
+  }
+  req.user = authResult.user;
 
   const { action } = req.query;
 
