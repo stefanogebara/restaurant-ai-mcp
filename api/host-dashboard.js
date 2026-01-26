@@ -18,6 +18,7 @@ const { validateServiceRecord, sanitizeInput } = require('./_lib/validation');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { verifyAuth } = require('./_lib/auth');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { getDiningDuration, DEFAULT_DINING_DURATION_MINUTES } = require('./_lib/constants');
 
 module.exports = async (req, res) => {
   // Use secure CORS for internal dashboard endpoints
@@ -337,7 +338,9 @@ async function handleSeatParty(req, res) {
 
   const serviceId = generateServiceId();
   const seatedAt = new Date().toISOString();
-  const estimatedDeparture = new Date(Date.now() + 90 * 60 * 1000).toISOString();
+  // Use configurable dining duration (default: 90 minutes)
+  const diningDurationMs = DEFAULT_DINING_DURATION_MINUTES * 60 * 1000;
+  const estimatedDeparture = new Date(Date.now() + diningDurationMs).toISOString();
 
   // Convert table UUIDs to table numbers (Supabase schema uses integer[])
   const allTablesForConversion = await getAllTables();
