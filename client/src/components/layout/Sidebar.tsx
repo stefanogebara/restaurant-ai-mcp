@@ -67,11 +67,6 @@ export default function Sidebar() {
   const planType = subscription.data?.subscription?.plan?.toLowerCase() as PlanType | undefined;
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  // Debug logging
-  console.log('[Sidebar] subscription data:', subscription.data);
-  console.log('[Sidebar] planType:', planType);
-  console.log('[Sidebar] isLoading:', subscription.isLoading);
-
   const isActive = (path: string) => {
     if (path === '/host-dashboard') {
       return location.pathname === path;
