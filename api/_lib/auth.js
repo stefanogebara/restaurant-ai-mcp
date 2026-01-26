@@ -32,29 +32,37 @@ const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabase
 async function verifyJWT(token) {
   if (!token) return null;
 
-  try {
-    // First try to verify with our JWT secret
-    if (JWT_SECRET) {
+  // First try to verify with our JWT secret
+  if (JWT_SECRET) {
+    try {
       const decoded = jwt.verify(token, JWT_SECRET);
       return decoded;
+    } catch (jwtError) {
+      // JWT verification failed, try Supabase fallback
+      console.log('[Auth] JWT verification failed, trying Supabase fallback');
     }
+  }
 
-    // Fallback: verify with Supabase
-    if (supabase) {
+  // Fallback: verify with Supabase (handles Supabase session tokens)
+  if (supabase) {
+    try {
       const { data: { user }, error } = await supabase.auth.getUser(token);
-      if (error || !user) return null;
+      if (error || !user) {
+        console.error('[Auth] Supabase token verification failed:', error?.message);
+        return null;
+      }
       return {
         sub: user.id,
         email: user.email,
         role: user.role || 'user'
       };
+    } catch (supabaseError) {
+      console.error('[Auth] Supabase verification error:', supabaseError.message);
+      return null;
     }
-
-    return null;
-  } catch (error) {
-    console.error('[Auth] Token verification failed:', error.message);
-    return null;
   }
+
+  return null;
 }
 
 /**
