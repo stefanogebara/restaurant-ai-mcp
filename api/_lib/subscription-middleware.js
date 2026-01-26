@@ -49,8 +49,8 @@ async function getMonthlyReservationCount(customerEmail) {
  */
 async function checkSubscription(req, res, next) {
   try {
-    // Get customer email from request (adjust based on your auth system)
-    const customerEmail = req.body?.customer_email || req.query?.customer_email || req.headers?.['x-customer-email'];
+    // Get customer email from request - prioritize authenticated user, then fall back to other sources
+    const customerEmail = req.user?.email || req.body?.customer_email || req.query?.customer_email || req.headers?.['x-customer-email'];
 
     if (!customerEmail) {
       return res.status(401).json({
