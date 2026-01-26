@@ -34,7 +34,7 @@ async function sendTemplateMessage(to, contentSid, contentVariables = {}) {
       ? twilioWhatsAppNumber
       : `whatsapp:${twilioWhatsAppNumber}`;
 
-    console.log(`[CRON] Sending template ${contentSid} to ${to}`);
+    logger.info(` Sending template ${contentSid} to ${to}`);
 
     const result = await client.messages.create({
       from: fromNumber,
@@ -43,7 +43,7 @@ async function sendTemplateMessage(to, contentSid, contentVariables = {}) {
       contentVariables: JSON.stringify(contentVariables)
     });
 
-    console.log(`[CRON] Template sent to ${to}, messageId: ${result.sid}`);
+    logger.info(` Template sent to ${to}, messageId: ${result.sid}`);
     return { success: true, messageId: result.sid };
   } catch (error) {
     logger.error(' Template send exception:', error);
@@ -89,7 +89,7 @@ module.exports = async (req, res) => {
 
     // Get today's date in YYYY-MM-DD format
     const today = new Date().toISOString().split('T')[0];
-    console.log(`[CRON] Looking for reservations on ${today}`);
+    logger.info(` Looking for reservations on ${today}`);
 
     // Get restaurant info for the restaurant name
     const { data: restaurantInfo, error: restaurantError } = await supabase
@@ -121,7 +121,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    console.log(`[CRON] Found ${reservations?.length || 0} confirmed reservations for today`);
+    logger.info(` Found ${reservations?.length || 0} confirmed reservations for today`);
 
     const results = {
       sent: 0,
@@ -142,7 +142,7 @@ module.exports = async (req, res) => {
 
       // Skip if no phone number
       if (!customer_phone) {
-        console.log(`[CRON] Skipping ${reservation_id} - no phone number`);
+        logger.info(` Skipping ${reservation_id} - no phone number`);
         results.skipped++;
         results.details.push({
           reservation_id,
@@ -183,7 +183,7 @@ module.exports = async (req, res) => {
       );
 
       if (sendResult.success) {
-        console.log(`[CRON] ✓ Reminder sent to ${customer_name} (${customer_phone})`);
+        logger.info(` ✓ Reminder sent to ${customer_name} (${customer_phone})`);
         results.sent++;
         results.details.push({
           reservation_id,
@@ -192,7 +192,7 @@ module.exports = async (req, res) => {
           messageId: sendResult.messageId
         });
       } else {
-        console.error(`[CRON] ✗ Failed to send reminder to ${customer_name}:`, sendResult.error);
+        logger.error(` ✗ Failed to send reminder to ${customer_name}:`, sendResult.error);
         results.failed++;
         results.details.push({
           reservation_id,

@@ -98,7 +98,7 @@ function parseDate(dateStr) {
   }
 
   // Default to tomorrow if we can't parse
-  console.warn(`[Twilio] Could not parse date: "${dateStr}", defaulting to tomorrow`);
+  logger.warn(` Could not parse date: "${dateStr}", defaulting to tomorrow`);
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
   return tomorrow.toISOString().slice(0, 10);
@@ -143,7 +143,7 @@ function parseTime(timeStr) {
   }
 
   // Default to 19:00 (7pm) if we can't parse
-  console.warn(`[Twilio] Could not parse time: "${timeStr}", defaulting to 19:00`);
+  logger.warn(` Could not parse time: "${timeStr}", defaulting to 19:00`);
   return '19:00';
 }
 
@@ -249,7 +249,7 @@ async function findRecentReservation(phoneNumber, restaurantId = null) {
       }
     }
 
-    console.log(`[Twilio] Finding reservation for phone: ${phoneNumber} -> variants: ${phoneVariants.join(', ')}`);
+    logger.info(` Finding reservation for phone: ${phoneNumber} -> variants: ${phoneVariants.join(', ')}`);
 
     let query = centralSupabase
       .from('reservations')
@@ -380,7 +380,7 @@ function sanitizeConversationHistory(history) {
     }
   }
 
-  console.log(`[Twilio] Sanitized conversation history: ${history.length} -> ${sanitized.length} messages`);
+  logger.info(` Sanitized conversation history: ${history.length} -> ${sanitized.length} messages`);
   return sanitized;
 }
 
@@ -412,7 +412,7 @@ async function sendWhatsAppMessage(to, message) {
       to: toNumber
     });
 
-    console.log(`[Twilio] Message sent to ${to}: ${message.substring(0, 50)}...`);
+    logger.info(` Message sent to ${to}: ${message.substring(0, 50)}...`);
     return { success: true, messageId: result.sid };
   } catch (error) {
     logger.error(' Send exception:', error);
@@ -449,7 +449,7 @@ async function sendTemplateMessage(to, contentSid, contentVariables = {}) {
       contentVariables: JSON.stringify(contentVariables)
     });
 
-    console.log(`[Twilio] Template sent to ${to}: ${contentSid}`);
+    logger.info(` Template sent to ${to}: ${contentSid}`);
     return { success: true, messageId: result.sid };
   } catch (error) {
     logger.error(' Template send exception:', error);
@@ -569,7 +569,7 @@ async function processWithClaude(messageText, session) {
   // Always fetch available restaurants for the platform
   try {
     availableRestaurants = await getAllActiveRestaurants();
-    console.log(`[Twilio] Found ${availableRestaurants.length} active restaurants in platform`);
+    logger.info(` Found ${availableRestaurants.length} active restaurants in platform`);
   } catch (err) {
     logger.error(' Error fetching restaurants:', err);
   }
@@ -577,7 +577,7 @@ async function processWithClaude(messageText, session) {
   // Use restaurant from session JOIN if available
   if (session?.restaurant) {
     restaurantInfo = session.restaurant;
-    console.log(`[Twilio] Using restaurant from session: ${restaurantInfo.restaurant_name} (ID: ${restaurantInfo.id})`);
+    logger.info(` Using restaurant from session: ${restaurantInfo.restaurant_name} (ID: ${restaurantInfo.id})`);
     if (restaurantInfo.supabase_url && restaurantInfo.supabase_anon_key) {
       supabaseClient = await getMultiTenantClient(restaurantInfo.supabase_url, restaurantInfo.supabase_anon_key);
     }
@@ -590,13 +590,13 @@ async function processWithClaude(messageText, session) {
       const nameResult = await getRestaurantByName(session.restaurant_id);
       if (nameResult?.match) {
         result = nameResult.match;
-        console.log(`[Twilio] Found restaurant by name fallback: ${result.restaurant_name}`);
+        logger.info(` Found restaurant by name fallback: ${result.restaurant_name}`);
       }
     }
 
     if (result) {
       restaurantInfo = result;
-      console.log(`[Twilio] Using restaurant: ${restaurantInfo.restaurant_name} (ID: ${restaurantInfo.id})`);
+      logger.info(` Using restaurant: ${restaurantInfo.restaurant_name} (ID: ${restaurantInfo.id})`);
       if (restaurantInfo.supabase_url && restaurantInfo.supabase_anon_key) {
         supabaseClient = await getMultiTenantClient(restaurantInfo.supabase_url, restaurantInfo.supabase_anon_key);
       }
@@ -785,12 +785,12 @@ async function processWithClaude(messageText, session) {
 
       // If no tool calls, we're done
       if (toolUseBlocks.length === 0) {
-        console.log(`[Twilio] Claude finished after ${toolRounds} tool round(s)`);
+        logger.info(` Claude finished after ${toolRounds} tool round(s)`);
         break;
       }
 
       // Process tool calls
-      console.log(`[Twilio] Processing ${toolUseBlocks.length} tool call(s) in round ${toolRounds + 1}`);
+      logger.info(` Processing ${toolUseBlocks.length} tool call(s) in round ${toolRounds + 1}`);
       const toolResults = [];
 
       for (const block of toolUseBlocks) {
@@ -807,7 +807,7 @@ async function processWithClaude(messageText, session) {
           if (updatedRestaurant?.supabase_url && updatedRestaurant?.supabase_anon_key) {
             supabaseClient = await getMultiTenantClient(updatedRestaurant.supabase_url, updatedRestaurant.supabase_anon_key);
             restaurantInfo = updatedRestaurant;
-            console.log(`[Twilio] Updated supabaseClient after restaurant selection: ${updatedRestaurant.restaurant_name}`);
+            logger.info(` Updated supabaseClient after restaurant selection: ${updatedRestaurant.restaurant_name}`);
           }
         }
       }
@@ -837,7 +837,7 @@ async function processWithClaude(messageText, session) {
     }
 
     if (toolRounds >= MAX_TOOL_ROUNDS) {
-      console.warn(`[Twilio] Max tool rounds (${MAX_TOOL_ROUNDS}) reached`);
+      logger.warn(` Max tool rounds (${MAX_TOOL_ROUNDS}) reached`);
     }
 
     // Add final assistant message to conversation history
@@ -861,7 +861,7 @@ async function processWithClaude(messageText, session) {
  * Handle tool calls from Claude
  */
 async function handleToolCall(toolName, toolInput, session, supabaseClient, restaurantInfo = null) {
-  console.log(`[Twilio] Tool call: ${toolName}`, toolInput);
+  logger.info(` Tool call: ${toolName}`, toolInput);
 
   switch (toolName) {
     case 'list_restaurants': {
@@ -988,8 +988,8 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
       const parsedDate = parseDate(toolInput.date);
       const parsedTime = parseTime(toolInput.time);
 
-      console.log(`[Twilio] Parsed reservation date: "${toolInput.date}" -> "${parsedDate}"`);
-      console.log(`[Twilio] Parsed reservation time: "${toolInput.time}" -> "${parsedTime}"`);
+      logger.info(` Parsed reservation date: "${toolInput.date}" -> "${parsedDate}"`);
+      logger.info(` Parsed reservation time: "${toolInput.time}" -> "${parsedTime}"`);
 
       if (!parsedDate || !parsedTime) {
         return { success: false, error: 'Could not parse date or time. Please provide a valid date and time.' };
@@ -1018,7 +1018,7 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
       // Add restaurant_id if available
       if (restaurantInfo?.id) {
         reservationData.restaurant_id = restaurantInfo.id;
-        console.log(`[Twilio] Linking reservation to restaurant: ${restaurantInfo.restaurant_name} (${restaurantInfo.id})`);
+        logger.info(` Linking reservation to restaurant: ${restaurantInfo.restaurant_name} (${restaurantInfo.id})`);
       }
 
       const { data, error } = await supabaseClient
@@ -1033,7 +1033,7 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
         return { success: false, error: error.message };
       }
 
-      console.log(`[Twilio] Reservation created: ${reservationId} for ${toolInput.customer_name}`);
+      logger.info(` Reservation created: ${reservationId} for ${toolInput.customer_name}`);
 
       // Send confirmation message to customer (if template contentSid is configured)
       // Note: For Twilio, templates require contentSid from Twilio Content API
@@ -1050,7 +1050,7 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
           '4': displayTime,
           '5': toolInput.party_size.toString()
         });
-        console.log(`[Twilio] Confirmation template sent to ${customerPhone}`);
+        logger.info(` Confirmation template sent to ${customerPhone}`);
       }
 
       return {
@@ -1104,7 +1104,7 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
           }
         }
 
-        console.log(`[Twilio] lookup_reservation phone variants: ${phoneVariants.join(', ')}`);
+        logger.info(` lookup_reservation phone variants: ${phoneVariants.join(', ')}`);
         query = query.in('customer_phone', phoneVariants);
       }
 
@@ -1136,7 +1136,7 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
         status: r.status
       }));
 
-      console.log(`[Twilio] Found ${reservations.length} reservation(s)`);
+      logger.info(` Found ${reservations.length} reservation(s)`);
       return {
         success: true,
         count: reservations.length,
@@ -1199,7 +1199,7 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
         return { success: false, error: 'Could not cancel the reservation. Please try again or contact the restaurant directly.' };
       }
 
-      console.log(`[Twilio] Reservation cancelled: ${reservation_id}`);
+      logger.info(` Reservation cancelled: ${reservation_id}`);
 
       // Send cancellation template if configured
       const cancelTemplateSid = process.env.TWILIO_TEMPLATE_RESERVATION_CANCELLED;
@@ -1214,7 +1214,7 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
           '3': displayDate,
           '4': displayTime
         });
-        console.log(`[Twilio] Cancellation template sent to ${existing.customer_phone}`);
+        logger.info(` Cancellation template sent to ${existing.customer_phone}`);
       }
 
       return {
@@ -1305,7 +1305,7 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
         return { success: false, error: 'Could not modify the reservation. Please try again or contact the restaurant directly.' };
       }
 
-      console.log(`[Twilio] Reservation modified: ${reservation_id}`, updates);
+      logger.info(` Reservation modified: ${reservation_id}`, updates);
 
       // Build change summary
       const changes = [];
@@ -1327,7 +1327,7 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
           '4': displayTime,
           '5': updated.party_size.toString()
         });
-        console.log(`[Twilio] Modification template sent to ${updated.customer_phone}`);
+        logger.info(` Modification template sent to ${updated.customer_phone}`);
       }
 
       return {
@@ -1430,7 +1430,7 @@ module.exports = async (req, res) => {
       const fromNumber = From.replace('whatsapp:', '');
       const messageText = Body.trim();
 
-      console.log(`[Twilio] Message from ${fromNumber} (${ProfileName}): ${messageText}`);
+      logger.info(` Message from ${fromNumber} (${ProfileName}): ${messageText}`);
 
       // Handle media messages (not supported yet)
       if (NumMedia && parseInt(NumMedia) > 0) {
@@ -1584,18 +1584,18 @@ module.exports = async (req, res) => {
       }
 
       // Process message with Claude
-      console.log(`[Twilio] Processing message with Claude for session: ${session.id}`);
+      logger.info(` Processing message with Claude for session: ${session.id}`);
       let response;
       try {
         response = await processWithClaude(messageText, session);
-        console.log(`[Twilio] Claude response received: ${response?.substring(0, 100)}...`);
+        logger.info(` Claude response received: ${response?.substring(0, 100)}...`);
       } catch (claudeError) {
         logger.error(' Claude processing error:', claudeError);
         response = 'Sorry, I had trouble processing your message. Please try again.';
       }
 
       // Send response back via TwiML (more reliable for Sandbox)
-      console.log(`[Twilio] Sending TwiML response to ${fromNumber}: ${response.substring(0, 100)}...`);
+      logger.info(` Sending TwiML response to ${fromNumber}: ${response.substring(0, 100)}...`);
 
       // Escape XML special characters in the response
       const escapedResponse = response
