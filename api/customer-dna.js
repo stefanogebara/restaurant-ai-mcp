@@ -8,6 +8,7 @@
 const { analyzeCustomerDNA, analyzeAllCustomersDNA, getCustomerDNAProfile } = require('./services/customerDNA');
 const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 module.exports = async (req, res) => {
   // CORS headers
@@ -18,6 +19,10 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
+
+  // Apply rate limiting (60 requests per minute)
+  const rateLimited = checkAndApplyRateLimit(req, res, 'api');
+  if (rateLimited) return; // 429 response already sent
 
   // Verify authentication
   const authResult = await verifyAuth(req, { required: true });

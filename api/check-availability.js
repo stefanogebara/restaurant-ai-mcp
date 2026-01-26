@@ -1,5 +1,6 @@
 const { getReservations, getRestaurantInfo } = require('./_lib/supabase');
 const { checkTimeSlotAvailability, getSuggestedTimes } = require('./_lib/availability-calculator');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 module.exports = async (req, res) => {
   // Enable CORS for ElevenLabs
@@ -10,6 +11,10 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') {
     return res.status(200).json({ success: true });
   }
+
+  // Apply rate limiting (60 requests per minute)
+  const rateLimited = checkAndApplyRateLimit(req, res, 'api');
+  if (rateLimited) return; // 429 response already sent
 
   try {
     const { date, time, party_size } = req.method === 'POST' ? req.body : req.query;

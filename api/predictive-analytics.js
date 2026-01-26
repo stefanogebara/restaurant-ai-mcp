@@ -13,6 +13,7 @@ const { getPrediction, isModelAvailable } = require('./_lib/ml-service');
 const axios = require('axios');
 const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
@@ -341,6 +342,10 @@ module.exports = async (req, res) => {
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
+
+  // Apply rate limiting (60 requests per minute)
+  const rateLimited = checkAndApplyRateLimit(req, res, 'api');
+  if (rateLimited) return; // 429 response already sent
 
   // Verify authentication
   const authResult = await verifyAuth(req, { required: true });

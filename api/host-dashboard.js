@@ -17,6 +17,7 @@ const { logCustomerShowedUp, logCustomerCancelled } = require('./ml/data-logger'
 const { validateServiceRecord, sanitizeInput } = require('./_lib/validation');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { verifyAuth } = require('./_lib/auth');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 module.exports = async (req, res) => {
   // Use secure CORS for internal dashboard endpoints
@@ -25,6 +26,10 @@ module.exports = async (req, res) => {
   if (handlePreflight(req, res)) {
     return;
   }
+
+  // Apply rate limiting (60 requests per minute)
+  const rateLimited = checkAndApplyRateLimit(req, res, 'api');
+  if (rateLimited) return; // 429 response already sent
 
   // Verify authentication - dashboard requires authenticated access
   const authResult = await verifyAuth(req, { required: true });

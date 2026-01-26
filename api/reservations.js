@@ -26,6 +26,9 @@ const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 // Subscription middleware for reservation limits
 const { checkSubscription, checkReservationLimits } = require('./_lib/subscription-middleware');
 
+// Rate limiting
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+
 // ============================================================================
 // SMS CONFIRMATION HELPER
 // ============================================================================
@@ -84,6 +87,10 @@ module.exports = async (req, res) => {
   if (handlePreflight(req, res)) {
     return;
   }
+
+  // Apply rate limiting (20 reservations per hour per IP)
+  const rateLimited = checkAndApplyRateLimit(req, res, 'reservation');
+  if (rateLimited) return; // 429 response already sent
 
   const { action } = req.query;
 
