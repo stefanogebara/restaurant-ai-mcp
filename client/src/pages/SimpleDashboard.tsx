@@ -35,6 +35,13 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [showTomorrow, setShowTomorrow] = useState(false);
   const [interventionReservation, setInterventionReservation] = useState<any>(null);
+  const [showFabPulse, setShowFabPulse] = useState(true);
+
+  // Stop FAB pulse animation after 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => setShowFabPulse(false), 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Get real subscription plan from API
   const subscription = useSubscription();
@@ -796,8 +803,10 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
             </span>
           </div>
 
-          {/* Pulse animation ring */}
-          <div className="absolute inset-0 rounded-full border-2 border-[#9F1239]/50 animate-ping opacity-75" style={{ animationDuration: '2s' }} />
+          {/* Pulse animation ring - stops after 5 seconds */}
+          {showFabPulse && (
+            <div className="absolute inset-0 rounded-full border-2 border-[#9F1239]/50 animate-ping opacity-75" style={{ animationDuration: '2s' }} />
+          )}
         </button>
 
         {/* Enhanced Panels - COMPLETO MODE ONLY */}
