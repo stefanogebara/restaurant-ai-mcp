@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   TrendingUp,
@@ -7,12 +7,20 @@ import {
   ChevronLeft,
   Menu,
   Lock,
-  Phone
+  Phone,
+  Settings,
+  LogOut,
+  Globe,
+  ChevronUp,
+  User
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSidebar } from '../../contexts/SidebarContext';
 import { useSubscription } from '../../hooks/useSubscription';
+import { useAuth } from '../../contexts/AuthContext';
 import { hasFeatureAccess, type PlanFeatures, type PlanType } from '../../config/planFeatures';
+import { languageOptions } from '../../i18n/config';
 
 interface NavItem {
   path: string;
@@ -62,10 +70,45 @@ const navItems: NavItem[] = [
 
 export default function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isCollapsed, setIsCollapsed } = useSidebar();
   const subscription = useSubscription();
+  const { user, signOut } = useAuth();
+  const { i18n } = useTranslation();
   const planType = subscription.data?.subscription?.plan?.toLowerCase() as PlanType | undefined;
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
+
+  // Close settings menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
+        setIsSettingsOpen(false);
+        setIsLanguageOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLanguageChange = async (langCode: string) => {
+    await i18n.changeLanguage(langCode);
+    localStorage.setItem('i18nextLng', langCode);
+    setIsLanguageOpen(false);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
+  const currentLanguage = languageOptions.find(l => l.code === i18n.language) || languageOptions[0];
 
   const isActive = (path: string) => {
     if (path === '/host-dashboard') {
@@ -190,12 +233,103 @@ export default function Sidebar() {
             })}
           </nav>
 
+          {/* User Settings Section */}
+          <div className="border-t border-border" ref={settingsRef}>
+            {/* Settings Menu Button */}
+            <button
+              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+              className={`
+                w-full p-4 flex items-center gap-3 hover:bg-muted transition-colors
+                ${isCollapsed ? 'justify-center' : ''}
+              `}
+              title={isCollapsed ? 'Settings' : undefined}
+            >
+              {user?.user_metadata?.avatar_url ? (
+                <img
+                  src={user.user_metadata.avatar_url}
+                  alt="Profile"
+                  className="w-8 h-8 rounded-full"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="w-4 h-4 text-primary" />
+                </div>
+              )}
+              {!isCollapsed && (
+                <>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {user?.email || 'Not signed in'}
+                    </p>
+                  </div>
+                  <ChevronUp className={`w-4 h-4 text-muted-foreground transition-transform ${isSettingsOpen ? '' : 'rotate-180'}`} />
+                </>
+              )}
+            </button>
+
+            {/* Settings Dropdown */}
+            {isSettingsOpen && (
+              <div className={`
+                absolute bottom-20 bg-card border border-border rounded-lg shadow-xl overflow-hidden
+                ${isCollapsed ? 'left-20 w-56' : 'left-4 right-4'}
+              `}>
+                {/* Language Selector */}
+                <div className="relative">
+                  <button
+                    onClick={() => setIsLanguageOpen(!isLanguageOpen)}
+                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-muted transition-colors text-left"
+                  >
+                    <Globe className="w-4 h-4 text-muted-foreground" />
+                    <span className="flex-1 text-sm">Language</span>
+                    <span className="text-sm text-muted-foreground">{currentLanguage.flag} {currentLanguage.name}</span>
+                  </button>
+
+                  {/* Language Options */}
+                  {isLanguageOpen && (
+                    <div className="border-t border-border bg-muted/50">
+                      {languageOptions.map((lang) => (
+                        <button
+                          key={lang.code}
+                          onClick={() => handleLanguageChange(lang.code)}
+                          className={`
+                            w-full px-4 py-2 flex items-center gap-3 hover:bg-muted transition-colors text-left text-sm
+                            ${i18n.language === lang.code ? 'bg-primary/10 text-primary font-medium' : ''}
+                          `}
+                        >
+                          <span className="text-lg">{lang.flag}</span>
+                          <span>{lang.name}</span>
+                          {i18n.language === lang.code && (
+                            <span className="ml-auto text-primary">✓</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Divider */}
+                <div className="border-t border-border" />
+
+                {/* Logout Button */}
+                <button
+                  onClick={handleLogout}
+                  className="w-full px-4 py-3 flex items-center gap-3 hover:bg-red-50 text-red-600 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="text-sm">Sign Out</span>
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Footer */}
           {!isCollapsed && (
-            <div className="p-4 border-t border-border">
+            <div className="px-4 pb-3 pt-2">
               <div className="text-xs text-muted-foreground text-center">
-                <p>v1.0.0</p>
-                <p className="mt-1">Powered by Claude AI</p>
+                <p>v1.0.0 • Powered by Claude AI</p>
               </div>
             </div>
           )}
