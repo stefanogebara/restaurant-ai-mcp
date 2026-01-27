@@ -828,10 +828,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </div>
             </div>
 
-            {/* Active Parties + Waitlist - Side by Side */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6">
-              {/* Active Parties Panel */}
-              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-5 md:p-6">
+            {/* Active Parties Panel */}
+            <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-5 md:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2.5">
                     <div className="p-1.5 bg-[#9F1239]/10 rounded-lg">
@@ -904,21 +902,20 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                 )}
               </div>
 
-              {/* Waitlist Panel - Using New Component */}
-              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md flex flex-col max-h-[500px]">
-                <WaitlistPanel
-                  onSeatNow={(entry) => {
-                    setSelectedParty({
-                      customer_name: entry.customer_name,
-                      customer_phone: entry.customer_phone,
-                      party_size: entry.party_size,
-                      special_requests: entry.special_requests,
-                      waitlist_entry_id: entry.id,
-                    });
-                    setShowSeatModal(true);
-                  }}
-                />
-              </div>
+            {/* Waitlist Panel - Full Width */}
+            <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md flex flex-col overflow-hidden">
+              <WaitlistPanel
+                onSeatNow={(entry) => {
+                  setSelectedParty({
+                    customer_name: entry.customer_name,
+                    customer_phone: entry.customer_phone,
+                    party_size: entry.party_size,
+                    special_requests: entry.special_requests,
+                    waitlist_entry_id: entry.id,
+                  });
+                  setShowSeatModal(true);
+                }}
+              />
             </div>
           </div>
         )}

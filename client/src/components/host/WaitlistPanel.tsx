@@ -164,19 +164,29 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
     <>
       {/* Header */}
       <div className="p-4 border-b border-[#E7E5E4]">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-[#1C1917]">Waitlist</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 bg-[#9F1239]/10 rounded-lg">
+              <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2 className="text-lg font-bold text-[#1C1917]">Waitlist</h2>
+            <span className="px-2 py-0.5 bg-[#9F1239]/10 text-[#9F1239] rounded-lg text-xs font-bold">
+              {activeCount}
+            </span>
+          </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-all shadow-lg shadow-[#9F1239]/30 hover:shadow-[#9F1239]/50"
+            className="px-3 py-1.5 bg-[#9F1239] hover:bg-[#881337] text-white text-sm font-semibold rounded-lg transition-all"
           >
             + Add Guest
           </button>
         </div>
 
-        {/* Status Tabs */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex gap-1 bg-[#F5F5F4] rounded-lg p-1">
+        {/* Status Tabs + Search in one row */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex gap-0.5 bg-[#F5F5F4] rounded-lg p-0.5">
             {[
               { key: 'active', label: 'Active', count: activeCount },
               { key: 'seated', label: 'Seated', count: seatedCount },
@@ -185,14 +195,14 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key as typeof activeTab)}
-                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
                   activeTab === tab.key
                     ? 'bg-white text-[#1C1917] shadow-sm'
                     : 'text-[#57534E] hover:text-[#1C1917]'
                 }`}
               >
                 {tab.label}
-                <span className={`ml-1.5 px-1.5 py-0.5 text-xs rounded-full ${
+                <span className={`ml-1 px-1.5 py-0.5 text-[10px] rounded-full ${
                   activeTab === tab.key ? 'bg-[#9F1239]/10 text-[#9F1239]' : 'bg-[#E7E5E4] text-[#57534E]'
                 }`}>
                   {tab.count}
@@ -202,14 +212,14 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
           </div>
 
           {/* Search Input */}
-          <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#A8A29E]" />
+          <div className="relative flex-1 min-w-[120px] max-w-[200px]">
+            <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#A8A29E]" />
             <input
               type="text"
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-3 py-1.5 w-40 bg-[#F5F5F4] border border-[#E7E5E4] rounded-lg text-sm focus:ring-2 focus:ring-[#9F1239] focus:border-transparent outline-none"
+              className="w-full pl-8 pr-3 py-1.5 bg-[#F5F5F4] border border-[#E7E5E4] rounded-lg text-xs focus:ring-2 focus:ring-[#9F1239] focus:border-transparent outline-none"
             />
           </div>
         </div>
@@ -350,77 +360,82 @@ function WaitlistEntryCard({
   const tags = getTags(entry.special_requests);
 
   return (
-    <div className={`px-4 py-3 border-b border-[#E7E5E4]/50 hover:bg-[#F5F5F4]/50 transition-colors ${
+    <div className={`px-3 py-2.5 border-b border-[#E7E5E4]/50 hover:bg-[#F5F5F4]/50 transition-colors ${
       isTableReady ? 'bg-[#16a34a]/5' : ''
     }`}>
       {/* Row 1: Avatar, Name, Party Size, Status */}
-      <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#9F1239]/20 to-[#7c3aed]/20 flex items-center justify-center font-semibold text-sm border border-[#9F1239]/30 flex-shrink-0">
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#9F1239]/20 to-[#7c3aed]/20 flex items-center justify-center font-semibold text-xs border border-[#9F1239]/30 flex-shrink-0">
           {initials}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-[#1C1917] truncate">{entry.customer_name || 'Guest'}</div>
-          <div className="text-xs text-[#57534E]">{entry.customer_phone}</div>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="px-2 py-0.5 bg-[#F5F5F4] rounded text-xs font-medium text-[#1C1917]">
-            {entry.party_size} {entry.party_size === 1 ? 'guest' : 'guests'}
-          </span>
-          <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(entry.status)}`}>
-            {entry.status}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-[#1C1917] text-sm truncate">{entry.customer_name || 'Guest'}</span>
+            <span className="px-1.5 py-0.5 bg-[#F5F5F4] rounded text-[10px] font-medium text-[#57534E] flex-shrink-0">
+              {entry.party_size}p
+            </span>
+            <span className={`px-1.5 py-0.5 text-[10px] font-semibold rounded ${getStatusColor(entry.status)} flex-shrink-0`}>
+              {entry.status}
+            </span>
+          </div>
+          <div className="text-[11px] text-[#57534E]">{entry.customer_phone}</div>
         </div>
       </div>
 
-      {/* Row 2: Time Display with Progress */}
+      {/* Row 2: Time Display with Progress (compact) */}
       {['Waiting', 'Notified'].includes(entry.status) && entry.added_at && entry.estimated_wait && (
-        <div className="mb-2 ml-[52px]">
-          <WaitlistTimeDisplay addedAt={entry.added_at} estimatedWait={entry.estimated_wait} />
+        <div className="mt-1.5 ml-10">
+          <WaitlistTimeDisplay addedAt={entry.added_at} estimatedWait={entry.estimated_wait} compact />
         </div>
       )}
 
-      {/* Row 3: Tags */}
+      {/* Row 3: Tags (compact) */}
       {tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-2 ml-[52px]">
-          {tags.map((tag, i) => (
-            <span key={i} className="px-2 py-0.5 text-xs bg-[#7c3aed]/10 text-[#7c3aed] rounded-full">
+        <div className="flex flex-wrap gap-1 mt-1.5 ml-10">
+          {tags.slice(0, 3).map((tag, i) => (
+            <span key={i} className="px-1.5 py-0.5 text-[10px] bg-[#7c3aed]/10 text-[#7c3aed] rounded">
               {tag}
             </span>
           ))}
+          {tags.length > 3 && (
+            <span className="px-1.5 py-0.5 text-[10px] bg-[#E7E5E4] text-[#57534E] rounded">
+              +{tags.length - 3}
+            </span>
+          )}
         </div>
       )}
 
       {/* Notified timestamp */}
       {entry.status === 'Notified' && entry.notified_at && (
-        <div className="text-xs text-[#d97706] ml-[52px] mb-2">
+        <div className="text-[10px] text-[#d97706] ml-10 mt-1">
           Notified {formatTimeAgo(entry.notified_at)}
         </div>
       )}
 
-      {/* Row 4: Action Buttons */}
+      {/* Row 4: Action Buttons (compact) */}
       {showActions && (
-        <div className="flex items-center gap-2 ml-[52px]">
+        <div className="flex items-center gap-1.5 mt-2 ml-10">
           {entry.status === 'Waiting' && (
             <>
               <button
                 onClick={() => onNotify(entry.id)}
                 disabled={isNotifying}
-                className="px-3 py-1.5 text-xs bg-[#16a34a] hover:bg-[#15803d] text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                className="px-2 py-1 text-[11px] bg-[#16a34a] hover:bg-[#15803d] text-white font-medium rounded transition-colors disabled:opacity-50"
               >
                 Ready
               </button>
               <button
                 onClick={() => onSeatNow(entry)}
-                className="px-3 py-1.5 text-xs bg-[#9F1239] hover:bg-[#881337] text-white font-medium rounded-lg transition-colors"
+                className="px-2 py-1 text-[11px] bg-[#9F1239] hover:bg-[#881337] text-white font-medium rounded transition-colors"
               >
-                Seat Now
+                Seat
               </button>
             </>
           )}
           {entry.status === 'Notified' && (
             <button
               onClick={() => onSeatNow(entry)}
-              className="px-3 py-1.5 text-xs bg-[#9F1239] hover:bg-[#881337] text-white font-medium rounded-lg transition-colors"
+              className="px-2 py-1 text-[11px] bg-[#9F1239] hover:bg-[#881337] text-white font-medium rounded transition-colors"
             >
               Seat Now
             </button>
@@ -428,7 +443,7 @@ function WaitlistEntryCard({
           <button
             onClick={() => onRemove(entry.id)}
             disabled={isRemoving}
-            className="px-3 py-1.5 text-xs border border-[#E7E5E4] text-[#57534E] hover:bg-[#F5F5F4] rounded-lg transition-colors disabled:opacity-50 ml-auto"
+            className="px-2 py-1 text-[11px] border border-[#E7E5E4] text-[#57534E] hover:bg-[#F5F5F4] rounded transition-colors disabled:opacity-50 ml-auto"
           >
             Remove
           </button>
