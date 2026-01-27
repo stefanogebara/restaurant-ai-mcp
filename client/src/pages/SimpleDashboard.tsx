@@ -7,6 +7,7 @@ import CheckInModal from '../components/host/CheckInModal';
 import QuickInterventionModal from '../components/host/QuickInterventionModal';
 import TableGrid from '../components/host/TableGrid';
 import TableStatusLegend from '../components/host/TableStatusLegend';
+import DashboardLayout from '../components/layout/DashboardLayout';
 import type { PlanType } from '../config/planFeatures';
 import { hasFeatureAccess } from '../config/planFeatures';
 import { useSubscription } from '../hooks/useSubscription';
@@ -473,8 +474,9 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   }, [toast]);
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
+    <DashboardLayout>
+      <div className="min-h-screen bg-[#FAFAF9] p-4 md:p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto">
         {/* Loading State */}
         {isLoading && (
           <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in-up">
@@ -1406,6 +1408,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
           </div>
         </div>
       )}
-    </div>
+        </div>
+      </div>
+    </DashboardLayout>
   );
 }
