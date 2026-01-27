@@ -475,8 +475,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-[#FAFAF9] p-4 md:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[#FAFAF9] p-4 md:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
         {/* Loading State */}
         {isLoading && (
           <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in-up">
@@ -1408,8 +1408,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
           </div>
         </div>
       )}
-        </div>
       </div>
+    </div>
     </DashboardLayout>
   );
 }
