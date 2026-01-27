@@ -774,17 +774,30 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
           </div>
         )}
 
-        {/* Add Walk-in Button */}
+        {/* Floating Action Button - Add Walk-in */}
         <button
           onClick={() => setShowWalkInModal(true)}
-          className="w-full mb-8 bg-[#9F1239] hover:bg-[#881337] text-white font-sans font-bold py-5 md:py-6 px-8 rounded-2xl shadow-md hover:shadow-lg hover:shadow-[#9F1239]/20 transition-all duration-300"
+          className="fixed bottom-6 right-6 z-50 group"
         >
-          <div className="flex items-center justify-center gap-3">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            <span className="text-lg md:text-xl tracking-wider uppercase">{t.addWalkIn}</span>
+          {/* Outer glow ring */}
+          <div className="absolute inset-0 bg-[#9F1239]/20 rounded-full blur-xl group-hover:bg-[#9F1239]/30 transition-all duration-500 scale-150" />
+
+          {/* Main button container */}
+          <div className="relative flex items-center gap-3 bg-gradient-to-r from-[#9F1239] to-[#be185d] text-white pl-4 pr-4 group-hover:pr-6 py-4 rounded-full shadow-lg shadow-[#9F1239]/30 hover:shadow-xl hover:shadow-[#9F1239]/40 transition-all duration-300 transform hover:scale-105">
+            {/* Animated plus icon */}
+            <div className="relative w-8 h-8 flex items-center justify-center">
+              <div className="absolute w-6 h-0.5 bg-white rounded-full group-hover:rotate-180 transition-transform duration-300" />
+              <div className="absolute w-0.5 h-6 bg-white rounded-full group-hover:rotate-180 transition-transform duration-300" />
+            </div>
+
+            {/* Expanding text */}
+            <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-[120px] transition-all duration-300 ease-out font-semibold text-sm tracking-wide">
+              {language === 'es' ? 'Walk-in' : 'Walk-in'}
+            </span>
           </div>
+
+          {/* Pulse animation ring */}
+          <div className="absolute inset-0 rounded-full border-2 border-[#9F1239]/50 animate-ping opacity-75" style={{ animationDuration: '2s' }} />
         </button>
 
         {/* Enhanced Panels - COMPLETO MODE ONLY */}
