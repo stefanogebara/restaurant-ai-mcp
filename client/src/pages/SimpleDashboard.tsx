@@ -7,6 +7,7 @@ import CheckInModal from '../components/host/CheckInModal';
 import QuickInterventionModal from '../components/host/QuickInterventionModal';
 import TableGrid from '../components/host/TableGrid';
 import TableStatusLegend from '../components/host/TableStatusLegend';
+import WaitlistPanel from '../components/host/WaitlistPanel';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import type { PlanType } from '../config/planFeatures';
 import { hasFeatureAccess } from '../config/planFeatures';
@@ -788,60 +789,47 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
         {/* Enhanced Panels - COMPLETO MODE ONLY */}
         {complexity === 'completo' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6 mb-8">
-
-            {/* Left: Table Grid (60% on desktop) */}
-            <div className="lg:col-span-2">
-              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-5 md:p-6">
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-[#9F1239]/10 rounded-lg">
-                      <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
-                      </svg>
-                    </div>
-                    <h2 className="text-lg md:text-xl font-serif font-bold text-[#1C1917]">
-                      {language === 'es' ? 'Disposición de Mesas' : 'Table Layout'}
-                    </h2>
+          <div className="space-y-6 mb-8">
+            {/* Full-Width Table Grid */}
+            <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-5 md:p-6">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-[#9F1239]/10 rounded-lg">
+                    <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                    </svg>
                   </div>
-                  <span className="text-xs font-semibold text-[#57534E] bg-[#F5F5F4] px-2.5 py-1 rounded-lg">
-                    {language === 'es' ? 'Solo lectura' : 'Read-only'}
-                  </span>
+                  <h2 className="text-lg md:text-xl font-serif font-bold text-[#1C1917]">
+                    {language === 'es' ? 'Disposición de Mesas' : 'Table Layout'}
+                  </h2>
                 </div>
-
-                {/* Table Status Legend */}
-                <div className="mb-5">
+                <div className="flex items-center gap-3">
                   <TableStatusLegend />
                 </div>
+              </div>
 
-                {/* Table Grid - Interactive in COMPLETO mode */}
-                <div className={`bg-[#F5F5F4] rounded-xl p-4 ${complexity !== 'completo' ? 'pointer-events-none opacity-90' : ''}`}>
-                  <TableGrid
-                    tables={tables}
-                    onTableClick={complexity === 'completo' ? handleTableClick : undefined}
-                  />
-                </div>
+              {/* Table Grid - Full Width, Interactive in COMPLETO mode */}
+              <div className="bg-[#F5F5F4] rounded-xl p-4 md:p-6">
+                <TableGrid
+                  tables={tables}
+                  onTableClick={complexity === 'completo' ? handleTableClick : undefined}
+                />
+              </div>
 
-                <div className="mt-4 flex items-center justify-center gap-2 text-xs text-[#57534E] bg-[#F5F5F4] p-3 rounded-lg">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>
-                    {language === 'es'
-                      ? complexity === 'completo'
-                        ? 'Toca cualquier mesa para gestionar su estado'
-                        : 'Vista de solo lectura. Activa modo Completo para interactuar con mesas.'
-                      : complexity === 'completo'
-                        ? 'Tap any table to manage its status'
-                        : 'Read-only view. Enable Complete mode to interact with tables.'}
-                  </span>
-                </div>
+              <div className="mt-4 flex items-center justify-center gap-2 text-xs text-[#57534E] bg-[#F5F5F4] p-3 rounded-lg">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>
+                  {language === 'es'
+                    ? 'Toca cualquier mesa para gestionar su estado'
+                    : 'Tap any table to manage its status'}
+                </span>
               </div>
             </div>
-            
-            {/* Right: Active Parties + Waitlist (40% on desktop) */}
-            <div className="space-y-5 md:space-y-6">
 
+            {/* Active Parties + Waitlist - Side by Side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6">
               {/* Active Parties Panel */}
               <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-5 md:p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -861,7 +849,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                 </div>
 
                 {stats.activePartiesCount > 0 ? (
-                  <div className="space-y-2.5 max-h-[320px] overflow-y-auto custom-scrollbar">
+                  <div className="space-y-2.5 max-h-[400px] overflow-y-auto custom-scrollbar">
                     {activeParties?.map((party: any) => (
                       <div
                         key={party.service_id}
@@ -889,17 +877,15 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                             <span className="font-medium">{language === 'es' ? 'Mesa' : 'Table'} {party.tables?.join(', ')}</span>
                           </div>
                         </div>
-                        {complexity === 'completo' && (
-                          <button
-                            onClick={() => {
-                              setSelectedServiceToComplete(party);
-                              setShowCompleteServiceModal(true);
-                            }}
-                            className="mt-2 w-full px-3 py-1.5 bg-[#9F1239] hover:bg-[#881337] text-white text-xs font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
-                          >
-                            {language === 'es' ? 'Completar Servicio' : 'Complete Service'}
-                          </button>
-                        )}
+                        <button
+                          onClick={() => {
+                            setSelectedServiceToComplete(party);
+                            setShowCompleteServiceModal(true);
+                          }}
+                          className="mt-2 w-full px-3 py-1.5 bg-[#9F1239] hover:bg-[#881337] text-white text-xs font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
+                        >
+                          {language === 'es' ? 'Completar Servicio' : 'Complete Service'}
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -918,50 +904,21 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                 )}
               </div>
 
-              {/* Waitlist Panel */}
-              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-5 md:p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-1.5 bg-[#d97706]/10 rounded-lg">
-                      <svg className="w-5 h-5 text-[#d97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <h2 className="text-base md:text-lg font-serif font-bold text-[#1C1917]">
-                      {language === 'es' ? 'Lista de Espera' : 'Waitlist'}
-                    </h2>
-                  </div>
-                  <span className="px-2.5 py-1 bg-[#d97706]/10 text-[#d97706] rounded-lg text-xs font-bold">
-                    {stats.waitlistCount || 0}
-                  </span>
-                </div>
-
-                <div className="text-center py-10 px-4">
-                  <div className="w-16 h-16 bg-[#F5F5F4] rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <span className="text-3xl">⏱️</span>
-                  </div>
-                  <p className="text-sm font-medium text-[#1C1917] mb-1">
-                    {language === 'es' ? 'La lista de espera está vacía' : 'Waitlist is empty'}
-                  </p>
-                  <p className="text-xs text-[#57534E] mb-4">
-                    {language === 'es'
-                      ? 'Los clientes pueden agregar sus nombres cuando lleguen'
-                      : 'Customers can add their names when they arrive'}
-                  </p>
-                </div>
-
-                <div className="flex items-start gap-2 text-xs text-[#57534E] bg-[#9F1239]/5 p-3 rounded-lg border border-[#9F1239]/20">
-                  <svg className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  <span>
-                    {language === 'es'
-                      ? 'Upgrade a Pro para gestión de prioridades y notificaciones SMS'
-                      : 'Upgrade to Pro for priority management and SMS notifications'}
-                  </span>
-                </div>
+              {/* Waitlist Panel - Using New Component */}
+              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md flex flex-col max-h-[500px]">
+                <WaitlistPanel
+                  onSeatNow={(entry) => {
+                    setSelectedParty({
+                      customer_name: entry.customer_name,
+                      customer_phone: entry.customer_phone,
+                      party_size: entry.party_size,
+                      special_requests: entry.special_requests,
+                      waitlist_entry_id: entry.id,
+                    });
+                    setShowSeatModal(true);
+                  }}
+                />
               </div>
-
             </div>
           </div>
         )}

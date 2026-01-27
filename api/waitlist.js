@@ -88,11 +88,13 @@ module.exports = async (req, res) => {
  * Get all waitlist entries, optionally filtered by status
  *
  * Query params:
- * - status: Filter by status (Waiting, Notified, Seated, Cancelled, No Show)
+ * - status: Filter by status (comma-separated: Waiting, Notified, Seated, Cancelled, No Show)
  * - active: Boolean - if true, only return Waiting and Notified entries
+ * - limit: Number - maximum records to return (default 100)
  */
 async function handleGetWaitlist(req, res) {
-  const { status, active } = req.query;
+  const { status, active, limit } = req.query;
+  const maxRecords = parseInt(limit) || 100;
 
   const tableId = process.env.WAITLIST_TABLE_ID;
   if (!tableId) {
@@ -107,14 +109,16 @@ async function handleGetWaitlist(req, res) {
       // Note: Empty status is treated as 'Waiting' (Todo)
       filterFormula = "OR({Status}='Todo', {Status}='In progress', {Status}=BLANK())";
     } else if (status) {
-      // Translate API status to Airtable status
-      const airtableStatus = STATUS_TO_AIRTABLE[status] || status;
-      if (status === 'Waiting') {
-        // Waiting matches both 'Todo' and empty status
-        filterFormula = "OR({Status}='Todo', {Status}=BLANK())";
-      } else {
-        filterFormula = `{Status}='${airtableStatus}'`;
-      }
+      // Support comma-separated status values
+      const statuses = status.split(',').map(s => s.trim());
+      const conditions = statuses.map(s => {
+        const airtableStatus = STATUS_TO_AIRTABLE[s] || s;
+        if (s === 'Waiting') {
+          return "OR({Status}='Todo', {Status}=BLANK())";
+        }
+        return `{Status}='${airtableStatus}'`;
+      });
+      filterFormula = conditions.length > 1 ? `OR(${conditions.join(', ')})` : conditions[0];
     }
 
     const url = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}`;
@@ -123,6 +127,9 @@ async function handleGetWaitlist(req, res) {
     // Add sort parameters (Airtable format: sort[0][field]=Priority&sort[0][direction]=asc)
     params.append('sort[0][field]', 'Priority');
     params.append('sort[0][direction]', 'asc');
+
+    // Add max records limit
+    params.append('maxRecords', maxRecords.toString());
 
     if (filterFormula) {
       params.append('filterByFormula', filterFormula);

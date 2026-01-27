@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { formatTimeAgo, formatWaitTime } from '../../utils/timeFormatting';
+import { formatTimeAgo } from '../../utils/timeFormatting';
+import WaitlistTimeDisplay from './WaitlistTimeDisplay';
 
 interface WaitlistEntry {
   id: string;
@@ -27,19 +28,48 @@ interface WaitlistPanelProps {
   onSeatNow: (entry: WaitlistEntry) => void;
 }
 
+// Search icon SVG component
+function SearchIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+  );
+}
+
+// Parse special requests into tags
+function getTags(specialRequests?: string): string[] {
+  if (!specialRequests) return [];
+  return specialRequests.split(',').map(t => t.trim()).filter(Boolean);
+}
+
+// Status badge color helper
+function getStatusColor(status: string) {
+  switch (status) {
+    case 'Waiting': return 'bg-[#9F1239]/10 text-[#9F1239]';
+    case 'Notified': return 'bg-[#d97706]/10 text-[#d97706]';
+    case 'Seated': return 'bg-[#16a34a]/10 text-[#16a34a]';
+    case 'Cancelled': return 'bg-red-500/10 text-red-500';
+    case 'No Show': return 'bg-[#57534E]/10 text-[#57534E]';
+    default: return 'bg-[#57534E]/10 text-[#57534E]';
+  }
+}
+
 export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
   const queryClient = useQueryClient();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'active' | 'seated' | 'removed'>('active');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Fetch active waitlist entries
+  // Fetch all waitlist entries (we'll filter client-side)
   const { data, isLoading, error } = useQuery<WaitlistResponse>({
-    queryKey: ['waitlist', 'active'],
+    queryKey: ['waitlist', 'all'],
     queryFn: async () => {
-      const response = await fetch('/api/waitlist?active=true');
+      const response = await fetch('/api/waitlist');
       if (!response.ok) throw new Error('Failed to fetch waitlist');
       return response.json();
     },
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30000,
   });
 
   // Notify customer mutation
@@ -73,19 +103,44 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
   });
 
   const waitlist = data?.waitlist || [];
-  const waitingCount = waitlist.filter(e => e.status === 'Waiting').length;
 
-  // Status badge color
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Waiting': return 'bg-[#9F1239]/10 text-[#9F1239]';
-      case 'Notified': return 'bg-[#d97706]/10 text-[#d97706]';
-      case 'Seated': return 'bg-[#16a34a]/10 text-[#16a34a]';
-      case 'Cancelled': return 'bg-red-500/10 text-red-500';
-      case 'No Show': return 'bg-[#57534E]/10 text-[#57534E]';
-      default: return 'bg-[#57534E]/10 text-[#57534E]';
+  // Calculate counts for each tab
+  const activeCount = waitlist.filter(e => ['Waiting', 'Notified'].includes(e.status)).length;
+  const seatedCount = waitlist.filter(e => e.status === 'Seated').length;
+  const removedCount = waitlist.filter(e => ['Cancelled', 'No Show'].includes(e.status)).length;
+
+  // Filter waitlist based on tab and search
+  const filteredWaitlist = useMemo(() => {
+    let filtered = waitlist;
+
+    // Tab filtering
+    switch (activeTab) {
+      case 'active':
+        filtered = filtered.filter(e => ['Waiting', 'Notified'].includes(e.status));
+        break;
+      case 'seated':
+        filtered = filtered.filter(e => e.status === 'Seated');
+        break;
+      case 'removed':
+        filtered = filtered.filter(e => ['Cancelled', 'No Show'].includes(e.status));
+        break;
     }
-  };
+
+    // Search filtering
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(e =>
+        e.customer_name?.toLowerCase().includes(query) ||
+        e.customer_phone?.includes(query)
+      );
+    }
+
+    return filtered;
+  }, [waitlist, activeTab, searchQuery]);
+
+  // Group entries for active tab
+  const tableReadyEntries = filteredWaitlist.filter(e => e.status === 'Notified');
+  const waitingEntries = filteredWaitlist.filter(e => e.status === 'Waiting');
 
   if (isLoading) {
     return (
@@ -108,173 +163,148 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
   return (
     <>
       {/* Header */}
-      <div className="p-6 border-b border-[#E7E5E4] flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="p-4 border-b border-[#E7E5E4]">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-[#1C1917]">Waitlist</h2>
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-[#9F1239]/10 text-[#9F1239]">
-              {waitingCount} Waiting
-            </span>
-            <span className="text-sm text-[#57534E]">
-              {waitlist.length} Total
-            </span>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-4 py-2 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-all shadow-lg shadow-[#9F1239]/30 hover:shadow-[#9F1239]/50"
+          >
+            + Add Guest
+          </button>
+        </div>
+
+        {/* Status Tabs */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex gap-1 bg-[#F5F5F4] rounded-lg p-1">
+            {[
+              { key: 'active', label: 'Active', count: activeCount },
+              { key: 'seated', label: 'Seated', count: seatedCount },
+              { key: 'removed', label: 'Removed', count: removedCount }
+            ].map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key as typeof activeTab)}
+                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                  activeTab === tab.key
+                    ? 'bg-white text-[#1C1917] shadow-sm'
+                    : 'text-[#57534E] hover:text-[#1C1917]'
+                }`}
+              >
+                {tab.label}
+                <span className={`ml-1.5 px-1.5 py-0.5 text-xs rounded-full ${
+                  activeTab === tab.key ? 'bg-[#9F1239]/10 text-[#9F1239]' : 'bg-[#E7E5E4] text-[#57534E]'
+                }`}>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Search Input */}
+          <div className="relative">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#A8A29E]" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-3 py-1.5 w-40 bg-[#F5F5F4] border border-[#E7E5E4] rounded-lg text-sm focus:ring-2 focus:ring-[#9F1239] focus:border-transparent outline-none"
+            />
           </div>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-all shadow-lg shadow-[#9F1239]/30 hover:shadow-[#9F1239]/50"
-        >
-          + Add to Waitlist
-        </button>
       </div>
 
-      {/* Waitlist entries */}
-      <div className="divide-y divide-[#E7E5E4]">
-        {waitlist.length === 0 ? (
+      {/* Waitlist Entries */}
+      <div className="overflow-y-auto flex-1">
+        {filteredWaitlist.length === 0 ? (
           <div className="p-8 text-center text-[#57534E]">
-            <div className="text-4xl mb-2">📋</div>
-            <div className="font-medium">No customers on waitlist</div>
-            <div className="text-sm text-[#A8A29E]">Click "Add to Waitlist" to get started</div>
+            <div className="text-4xl mb-2">
+              {activeTab === 'active' ? '📋' : activeTab === 'seated' ? '🍽️' : '📭'}
+            </div>
+            <div className="font-medium">
+              {activeTab === 'active' && 'No customers waiting'}
+              {activeTab === 'seated' && 'No seated customers yet'}
+              {activeTab === 'removed' && 'No removed entries'}
+            </div>
+            {activeTab === 'active' && (
+              <div className="text-sm text-[#A8A29E]">Click "+ Add Guest" to get started</div>
+            )}
           </div>
-        ) : (
-          waitlist.map((entry) => {
-            // Get initials for avatar
-            const initials = entry.customer_name
-              ? entry.customer_name
-                  .split(' ')
-                  .map(n => n[0])
-                  .join('')
-                  .toUpperCase()
-                  .substring(0, 2)
-              : '?';
-
-            return (
-              <div
-                key={entry.id}
-                className="px-4 py-4 hover:bg-[#F5F5F4] transition-colors border-b border-[#E7E5E4]/50 last:border-0"
-              >
-                {/* Top row: Priority + Avatar + Info */}
-                <div className="flex gap-3 mb-3">
-                  {/* Priority badge */}
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#9F1239]/10 text-[#9F1239] font-bold text-sm flex items-center justify-center">
-                    {entry.priority}
-                  </div>
-
-                  {/* Avatar with initials */}
-                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-[#9F1239]/20 to-[#7c3aed]/20 flex items-center justify-center text-[#1C1917] font-semibold border border-[#9F1239]/30">
-                    {initials}
-                  </div>
-
-                  {/* Customer info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-[#1C1917] mb-1">
-                      {entry.customer_name || 'Unknown'}
-                    </div>
-                    <div className="text-sm text-[#57534E]">
-                      {entry.customer_phone}
-                    </div>
-                  </div>
-
-                  {/* Status badge - aligned to top right */}
-                  <div className="flex-shrink-0">
-                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(entry.status)}`}>
-                      {entry.status}
-                    </span>
-                  </div>
+        ) : activeTab === 'active' ? (
+          // Grouped view for active tab
+          <>
+            {/* TABLE READY Section */}
+            {tableReadyEntries.length > 0 && (
+              <div className="mb-2">
+                <div className="px-4 py-2 bg-[#16a34a]/10 border-l-4 border-[#16a34a]">
+                  <span className="text-xs font-bold text-[#16a34a] uppercase tracking-wide">
+                    Table Ready ({tableReadyEntries.length})
+                  </span>
                 </div>
-
-                {/* Middle row: Party details */}
-                <div className="flex items-center gap-4 text-sm text-[#57534E] mb-3 ml-14">
-                  <div className="flex items-center gap-1.5">
-                    <span>👥</span>
-                    <span className="font-medium">
-                      {entry.party_size != null ? `${entry.party_size} guests` : 'Party size unknown'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span>⏱️</span>
-                    <span>{formatWaitTime(entry.estimated_wait)}</span>
-                  </div>
-                  <div className="text-[#A8A29E]">
-                    Added {formatTimeAgo(entry.added_at)}
-                  </div>
-                </div>
-
-                {/* Special requests if any */}
-                {entry.special_requests && (
-                  <div className="text-sm text-[#57534E] italic ml-14 mb-3">
-                    "{entry.special_requests}"
-                  </div>
-                )}
-
-                {/* Notified timestamp for notified status */}
-                {entry.status === 'Notified' && entry.notified_at && (
-                  <div className="text-xs text-[#d97706] ml-14 mb-3">
-                    🔔 Notified {formatTimeAgo(entry.notified_at)}
-                  </div>
-                )}
-
-                {/* Bottom row: Action buttons */}
-                <div className="flex items-center gap-2 ml-14">
-                  {entry.status === 'Waiting' && (
-                    <>
-                      <button
-                        onClick={() => notifyMutation.mutate(entry.id)}
-                        disabled={notifyMutation.isPending}
-                        className="px-4 py-2 text-sm bg-[#d97706] hover:bg-[#b45309] text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Notify customer"
-                      >
-                        🔔 Notify
-                      </button>
-                      <button
-                        onClick={() => onSeatNow(entry)}
-                        className="px-4 py-2 text-sm bg-[#16a34a] hover:bg-[#15803d] text-white font-medium rounded-lg transition-colors"
-                        title="Seat party now"
-                      >
-                        ✓ Seat Now
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (confirm(`Remove ${entry.customer_name} from waitlist?`)) {
-                            removeMutation.mutate(entry.id);
-                          }
-                        }}
-                        disabled={removeMutation.isPending}
-                        className="px-4 py-2 text-sm border border-red-500/50 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
-                        title="Remove from waitlist"
-                      >
-                        Remove
-                      </button>
-                    </>
-                  )}
-
-                  {entry.status === 'Notified' && (
-                    <>
-                      <button
-                        onClick={() => onSeatNow(entry)}
-                        className="px-4 py-2 text-sm bg-[#16a34a] hover:bg-[#15803d] text-white font-medium rounded-lg transition-colors"
-                        title="Seat party now"
-                      >
-                        ✓ Seat Now
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (confirm(`Remove ${entry.customer_name} from waitlist?`)) {
-                            removeMutation.mutate(entry.id);
-                          }
-                        }}
-                        disabled={removeMutation.isPending}
-                        className="px-4 py-2 text-sm border border-red-500/50 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
-                        title="Remove from waitlist"
-                      >
-                        Remove
-                      </button>
-                    </>
-                  )}
-                </div>
+                {tableReadyEntries.map(entry => (
+                  <WaitlistEntryCard
+                    key={entry.id}
+                    entry={entry}
+                    isTableReady
+                    onNotify={(id) => notifyMutation.mutate(id)}
+                    onRemove={(id) => {
+                      if (confirm(`Remove ${entry.customer_name} from waitlist?`)) {
+                        removeMutation.mutate(id);
+                      }
+                    }}
+                    onSeatNow={onSeatNow}
+                    isNotifying={notifyMutation.isPending}
+                    isRemoving={removeMutation.isPending}
+                  />
+                ))}
               </div>
-            );
-          })
+            )}
+
+            {/* WAITING Section */}
+            {waitingEntries.length > 0 && (
+              <div>
+                <div className="px-4 py-2 bg-[#F5F5F4] border-l-4 border-[#57534E]">
+                  <span className="text-xs font-bold text-[#57534E] uppercase tracking-wide">
+                    Waiting ({waitingEntries.length})
+                  </span>
+                </div>
+                {waitingEntries.map(entry => (
+                  <WaitlistEntryCard
+                    key={entry.id}
+                    entry={entry}
+                    onNotify={(id) => notifyMutation.mutate(id)}
+                    onRemove={(id) => {
+                      if (confirm(`Remove ${entry.customer_name} from waitlist?`)) {
+                        removeMutation.mutate(id);
+                      }
+                    }}
+                    onSeatNow={onSeatNow}
+                    isNotifying={notifyMutation.isPending}
+                    isRemoving={removeMutation.isPending}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          // Regular list view for seated/removed tabs
+          filteredWaitlist.map(entry => (
+            <WaitlistEntryCard
+              key={entry.id}
+              entry={entry}
+              onNotify={(id) => notifyMutation.mutate(id)}
+              onRemove={(id) => {
+                if (confirm(`Remove ${entry.customer_name} from waitlist?`)) {
+                  removeMutation.mutate(id);
+                }
+              }}
+              onSeatNow={onSeatNow}
+              isNotifying={notifyMutation.isPending}
+              isRemoving={removeMutation.isPending}
+              showActions={false}
+            />
+          ))
         )}
       </div>
 
@@ -292,11 +322,129 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
   );
 }
 
+// Entry Card Component
+interface WaitlistEntryCardProps {
+  entry: WaitlistEntry;
+  isTableReady?: boolean;
+  onNotify: (id: string) => void;
+  onRemove: (id: string) => void;
+  onSeatNow: (entry: WaitlistEntry) => void;
+  isNotifying: boolean;
+  isRemoving: boolean;
+  showActions?: boolean;
+}
+
+function WaitlistEntryCard({
+  entry,
+  isTableReady,
+  onNotify,
+  onRemove,
+  onSeatNow,
+  isNotifying,
+  isRemoving,
+  showActions = true
+}: WaitlistEntryCardProps) {
+  const initials = entry.customer_name
+    ? entry.customer_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : '?';
+  const tags = getTags(entry.special_requests);
+
+  return (
+    <div className={`px-4 py-3 border-b border-[#E7E5E4]/50 hover:bg-[#F5F5F4]/50 transition-colors ${
+      isTableReady ? 'bg-[#16a34a]/5' : ''
+    }`}>
+      {/* Row 1: Avatar, Name, Party Size, Status */}
+      <div className="flex items-center gap-3 mb-2">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#9F1239]/20 to-[#7c3aed]/20 flex items-center justify-center font-semibold text-sm border border-[#9F1239]/30 flex-shrink-0">
+          {initials}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-[#1C1917] truncate">{entry.customer_name || 'Guest'}</div>
+          <div className="text-xs text-[#57534E]">{entry.customer_phone}</div>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="px-2 py-0.5 bg-[#F5F5F4] rounded text-xs font-medium text-[#1C1917]">
+            {entry.party_size} {entry.party_size === 1 ? 'guest' : 'guests'}
+          </span>
+          <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(entry.status)}`}>
+            {entry.status}
+          </span>
+        </div>
+      </div>
+
+      {/* Row 2: Time Display with Progress */}
+      {['Waiting', 'Notified'].includes(entry.status) && entry.added_at && entry.estimated_wait && (
+        <div className="mb-2 ml-[52px]">
+          <WaitlistTimeDisplay addedAt={entry.added_at} estimatedWait={entry.estimated_wait} />
+        </div>
+      )}
+
+      {/* Row 3: Tags */}
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-2 ml-[52px]">
+          {tags.map((tag, i) => (
+            <span key={i} className="px-2 py-0.5 text-xs bg-[#7c3aed]/10 text-[#7c3aed] rounded-full">
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Notified timestamp */}
+      {entry.status === 'Notified' && entry.notified_at && (
+        <div className="text-xs text-[#d97706] ml-[52px] mb-2">
+          Notified {formatTimeAgo(entry.notified_at)}
+        </div>
+      )}
+
+      {/* Row 4: Action Buttons */}
+      {showActions && (
+        <div className="flex items-center gap-2 ml-[52px]">
+          {entry.status === 'Waiting' && (
+            <>
+              <button
+                onClick={() => onNotify(entry.id)}
+                disabled={isNotifying}
+                className="px-3 py-1.5 text-xs bg-[#16a34a] hover:bg-[#15803d] text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+              >
+                Ready
+              </button>
+              <button
+                onClick={() => onSeatNow(entry)}
+                className="px-3 py-1.5 text-xs bg-[#9F1239] hover:bg-[#881337] text-white font-medium rounded-lg transition-colors"
+              >
+                Seat Now
+              </button>
+            </>
+          )}
+          {entry.status === 'Notified' && (
+            <button
+              onClick={() => onSeatNow(entry)}
+              className="px-3 py-1.5 text-xs bg-[#9F1239] hover:bg-[#881337] text-white font-medium rounded-lg transition-colors"
+            >
+              Seat Now
+            </button>
+          )}
+          <button
+            onClick={() => onRemove(entry.id)}
+            disabled={isRemoving}
+            className="px-3 py-1.5 text-xs border border-[#E7E5E4] text-[#57534E] hover:bg-[#F5F5F4] rounded-lg transition-colors disabled:opacity-50 ml-auto"
+          >
+            Remove
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Add to Waitlist Modal Component
 interface AddToWaitlistModalProps {
   onClose: () => void;
   onSuccess: () => void;
 }
+
+const TAG_PRESETS = ['High Chair', 'Outdoor', 'Birthday', 'Anniversary', 'Wheelchair', 'VIP', 'Window', 'Quiet'];
 
 function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
   const [formData, setFormData] = useState({
@@ -331,9 +479,20 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
     addMutation.mutate(formData);
   };
 
+  const addTag = (tag: string) => {
+    const current = formData.special_requests;
+    const tags = current ? current.split(',').map(t => t.trim()).filter(Boolean) : [];
+    if (!tags.includes(tag)) {
+      const newValue = current ? `${current}, ${tag}` : tag;
+      setFormData({ ...formData, special_requests: newValue });
+    }
+  };
+
+  const currentTags = getTags(formData.special_requests);
+
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl border border-[#E7E5E4] max-w-md w-full">
+      <div className="bg-white rounded-2xl shadow-2xl border border-[#E7E5E4] max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <h3 className="text-2xl font-bold text-[#1C1917] mb-6">Add to Waitlist</h3>
 
@@ -397,14 +556,45 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
 
             <div>
               <label className="block text-sm font-medium text-[#1C1917] mb-2">
-                Special Requests (Optional)
+                Tags / Special Requests
               </label>
+
+              {/* Tag Presets */}
+              <div className="flex flex-wrap gap-2 mb-3">
+                {TAG_PRESETS.map(tag => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => addTag(tag)}
+                    disabled={currentTags.includes(tag)}
+                    className={`px-2.5 py-1 text-xs rounded-full transition-colors ${
+                      currentTags.includes(tag)
+                        ? 'bg-[#7c3aed]/20 text-[#7c3aed] cursor-not-allowed'
+                        : 'bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#57534E]'
+                    }`}
+                  >
+                    + {tag}
+                  </button>
+                ))}
+              </div>
+
+              {/* Selected Tags Display */}
+              {currentTags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {currentTags.map((tag, i) => (
+                    <span key={i} className="px-2 py-0.5 text-xs bg-[#7c3aed]/10 text-[#7c3aed] rounded-full">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
               <textarea
                 value={formData.special_requests}
                 onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
                 className="w-full px-4 py-2.5 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all resize-none"
-                rows={3}
-                placeholder="High chair needed, outdoor seating preferred..."
+                rows={2}
+                placeholder="Add comma-separated tags or notes..."
               />
             </div>
 
