@@ -8,7 +8,6 @@ import {
   Menu,
   Lock,
   Phone,
-  Settings,
   LogOut,
   Globe,
   ChevronUp,
