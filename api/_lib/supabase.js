@@ -336,6 +336,19 @@ const createTable = async (fields) => {
       location: fields.location || 'Main',
       status: 'available',
       is_active: true,
+      // Shape configuration
+      shape: fields.shape || 'square',
+      is_fixed_seating: fields.is_fixed_seating || false,
+      // Joinable table configuration
+      is_joinable: fields.is_joinable !== undefined ? fields.is_joinable : true,
+      joinable_with: fields.joinable_with || [],
+      // Floor plan positioning
+      position_x: fields.position_x || 0,
+      position_y: fields.position_y || 0,
+      width: fields.width || 1,
+      height: fields.height || 1,
+      rotation: fields.rotation || 0,
+      // Legacy fields (for backwards compatibility)
       is_fixed: fields.is_fixed || false,
       min_capacity: fields.min_capacity || 1,
       max_capacity: fields.max_capacity || null,
@@ -355,6 +368,19 @@ const createTable = async (fields) => {
       capacity: data.capacity,
       location: data.location,
       status: data.status,
+      // Shape configuration
+      shape: data.shape,
+      is_fixed_seating: data.is_fixed_seating,
+      // Joinable table configuration
+      is_joinable: data.is_joinable,
+      joinable_with: data.joinable_with,
+      // Floor plan positioning
+      position_x: data.position_x,
+      position_y: data.position_y,
+      width: data.width,
+      height: data.height,
+      rotation: data.rotation,
+      // Legacy fields
       is_fixed: data.is_fixed,
       min_capacity: data.min_capacity,
       max_capacity: data.max_capacity,
@@ -379,7 +405,22 @@ const updateTableConfig = async (tableId, fields) => {
   if (fields.location !== undefined) updates.location = fields.location;
   if (fields.status !== undefined) updates.status = fields.status;
 
-  // Combination settings
+  // Shape configuration
+  if (fields.shape !== undefined) updates.shape = fields.shape;
+  if (fields.is_fixed_seating !== undefined) updates.is_fixed_seating = fields.is_fixed_seating;
+
+  // Joinable table configuration
+  if (fields.is_joinable !== undefined) updates.is_joinable = fields.is_joinable;
+  if (fields.joinable_with !== undefined) updates.joinable_with = fields.joinable_with;
+
+  // Floor plan positioning
+  if (fields.position_x !== undefined) updates.position_x = fields.position_x;
+  if (fields.position_y !== undefined) updates.position_y = fields.position_y;
+  if (fields.width !== undefined) updates.width = fields.width;
+  if (fields.height !== undefined) updates.height = fields.height;
+  if (fields.rotation !== undefined) updates.rotation = fields.rotation;
+
+  // Legacy combination settings
   if (fields.is_fixed !== undefined) updates.is_fixed = fields.is_fixed;
   if (fields.min_capacity !== undefined) updates.min_capacity = fields.min_capacity;
   if (fields.max_capacity !== undefined) updates.max_capacity = fields.max_capacity;
@@ -408,12 +449,156 @@ const updateTableConfig = async (tableId, fields) => {
       capacity: data.capacity,
       location: data.location,
       status: data.status,
+      // Shape configuration
+      shape: data.shape,
+      is_fixed_seating: data.is_fixed_seating,
+      // Joinable table configuration
+      is_joinable: data.is_joinable,
+      joinable_with: data.joinable_with,
+      // Floor plan positioning
+      position_x: data.position_x,
+      position_y: data.position_y,
+      width: data.width,
+      height: data.height,
+      rotation: data.rotation,
+      // Legacy fields
       is_fixed: data.is_fixed,
       min_capacity: data.min_capacity,
       max_capacity: data.max_capacity,
       adjacent_tables: data.adjacent_tables,
       combination_group: data.combination_group
     }
+  };
+};
+
+/**
+ * Update multiple table positions in bulk (for floor plan editor)
+ * @param {Array} tablePositions - Array of {id, position_x, position_y, width, height, rotation}
+ * @returns {Object} Result
+ */
+const updateTablePositions = async (tablePositions) => {
+  const results = [];
+  const errors = [];
+
+  for (const pos of tablePositions) {
+    const { data, error } = await supabase
+      .from('tables')
+      .update({
+        position_x: pos.position_x,
+        position_y: pos.position_y,
+        width: pos.width !== undefined ? pos.width : 1,
+        height: pos.height !== undefined ? pos.height : 1,
+        rotation: pos.rotation !== undefined ? pos.rotation : 0
+      })
+      .eq('id', pos.id)
+      .select()
+      .single();
+
+    if (error) {
+      errors.push({ id: pos.id, error: error.message });
+    } else {
+      results.push({
+        id: data.id,
+        table_number: data.table_number,
+        position_x: data.position_x,
+        position_y: data.position_y,
+        width: data.width,
+        height: data.height,
+        rotation: data.rotation
+      });
+    }
+  }
+
+  if (errors.length > 0) {
+    console.error('[updateTablePositions] Some updates failed:', errors);
+  }
+
+  return {
+    success: errors.length === 0,
+    updated: results,
+    errors: errors.length > 0 ? errors : undefined
+  };
+};
+
+/**
+ * Link two tables together (bidirectional)
+ * @param {string} tableId1 - First table UUID
+ * @param {string} tableId2 - Second table UUID
+ * @returns {Object} Result
+ */
+const linkTables = async (tableId1, tableId2) => {
+  // Get both tables
+  const [result1, result2] = await Promise.all([
+    getTableById(tableId1),
+    getTableById(tableId2)
+  ]);
+
+  if (!result1.success || !result2.success) {
+    return { success: false, error: true, message: 'One or both tables not found' };
+  }
+
+  const table1 = result1.table;
+  const table2 = result2.table;
+
+  // Update joinable_with arrays (bidirectional)
+  const newJoinable1 = [...new Set([...(table1.joinable_with || []), tableId2])];
+  const newJoinable2 = [...new Set([...(table2.joinable_with || []), tableId1])];
+
+  // Update both tables
+  const [update1, update2] = await Promise.all([
+    supabase.from('tables').update({ joinable_with: newJoinable1 }).eq('id', tableId1),
+    supabase.from('tables').update({ joinable_with: newJoinable2 }).eq('id', tableId2)
+  ]);
+
+  if (update1.error || update2.error) {
+    return handleSupabaseResponse(null, update1.error || update2.error, 'LINK tables');
+  }
+
+  return {
+    success: true,
+    message: `Tables ${table1.table_number} and ${table2.table_number} linked`,
+    linked: [tableId1, tableId2]
+  };
+};
+
+/**
+ * Unlink two tables (bidirectional)
+ * @param {string} tableId1 - First table UUID
+ * @param {string} tableId2 - Second table UUID
+ * @returns {Object} Result
+ */
+const unlinkTables = async (tableId1, tableId2) => {
+  // Get both tables
+  const [result1, result2] = await Promise.all([
+    getTableById(tableId1),
+    getTableById(tableId2)
+  ]);
+
+  if (!result1.success || !result2.success) {
+    return { success: false, error: true, message: 'One or both tables not found' };
+  }
+
+  const table1 = result1.table;
+  const table2 = result2.table;
+
+  // Remove from joinable_with arrays (bidirectional)
+  const newJoinable1 = (table1.joinable_with || []).filter(id => id !== tableId2);
+  const newJoinable2 = (table2.joinable_with || []).filter(id => id !== tableId1);
+
+  // Update both tables
+  const [update1, update2] = await Promise.all([
+    supabase.from('tables').update({ joinable_with: newJoinable1 }).eq('id', tableId1),
+    supabase.from('tables').update({ joinable_with: newJoinable2 }).eq('id', tableId2)
+  ]);
+
+  if (update1.error || update2.error) {
+    return handleSupabaseResponse(null, update1.error || update2.error, 'UNLINK tables');
+  }
+
+  return {
+    success: true,
+    message: `Tables ${table1.table_number} and ${table2.table_number} unlinked`,
+    unlinked: [tableId1, tableId2]
   };
 };
 
@@ -463,12 +648,25 @@ const getTableById = async (tableId) => {
       location: data.location,
       status: data.status,
       is_active: data.is_active,
+      current_service_id: data.current_service_id,
+      // Shape configuration
+      shape: data.shape || 'square',
+      is_fixed_seating: data.is_fixed_seating || false,
+      // Joinable table configuration
+      is_joinable: data.is_joinable !== false,
+      joinable_with: data.joinable_with || [],
+      // Floor plan positioning
+      position_x: data.position_x || 0,
+      position_y: data.position_y || 0,
+      width: data.width || 1,
+      height: data.height || 1,
+      rotation: data.rotation || 0,
+      // Legacy fields
       is_fixed: data.is_fixed,
       min_capacity: data.min_capacity,
       max_capacity: data.max_capacity,
       adjacent_tables: data.adjacent_tables,
-      combination_group: data.combination_group,
-      current_service_id: data.current_service_id
+      combination_group: data.combination_group
     }
   };
 };
@@ -492,12 +690,25 @@ const getAllTablesAdmin = async () => {
     location: t.location || 'Main',
     status: t.status || 'available',
     is_active: t.is_active,
+    current_service_id: t.current_service_id || null,
+    // Shape configuration
+    shape: t.shape || 'square',
+    is_fixed_seating: t.is_fixed_seating || false,
+    // Joinable table configuration
+    is_joinable: t.is_joinable !== false,
+    joinable_with: t.joinable_with || [],
+    // Floor plan positioning
+    position_x: t.position_x || 0,
+    position_y: t.position_y || 0,
+    width: t.width || 1,
+    height: t.height || 1,
+    rotation: t.rotation || 0,
+    // Legacy fields
     is_fixed: t.is_fixed || false,
     min_capacity: t.min_capacity || 1,
     max_capacity: t.max_capacity || null,
     adjacent_tables: t.adjacent_tables || [],
-    combination_group: t.combination_group || null,
-    current_service_id: t.current_service_id || null
+    combination_group: t.combination_group || null
   }));
 
   return {
@@ -1076,7 +1287,19 @@ const getAllTables = async () => {
     location: t.location || 'Main',
     status: t.status || 'available',
     current_service_id: t.current_service_id || null,
-    // Flexible table support
+    // Shape configuration
+    shape: t.shape || 'square',
+    is_fixed_seating: t.is_fixed_seating || false,
+    // Joinable table configuration
+    is_joinable: t.is_joinable !== false,
+    joinable_with: t.joinable_with || [],
+    // Floor plan positioning
+    position_x: t.position_x || 0,
+    position_y: t.position_y || 0,
+    width: t.width || 1,
+    height: t.height || 1,
+    rotation: t.rotation || 0,
+    // Legacy flexible table support
     is_fixed: t.is_fixed || false,
     min_capacity: t.min_capacity || 1,
     max_capacity: t.max_capacity || null,
@@ -1369,6 +1592,10 @@ module.exports = {
   updateTableStatus,
   deleteTable,
   findBestTableCombination,
+  // Floor plan positioning
+  updateTablePositions,
+  linkTables,
+  unlinkTables,
   // Flexible table helpers
   isFlexibleTable,
   canCombineTables,
