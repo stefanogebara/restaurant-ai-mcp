@@ -213,7 +213,20 @@ async function handleDashboard(req, res) {
       location: t.location,
       status: t.status ? t.status.replace(/_/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : t.status,
       current_service_id: t.current_service_id,
-      is_fixed: t.is_fixed || false  // Include in response for UI display
+      // Shape configuration
+      shape: t.shape || 'square',
+      is_fixed_seating: t.is_fixed_seating || false,
+      // Joinable table configuration
+      is_joinable: t.is_joinable !== false,
+      joinable_with: t.joinable_with || [],
+      // Floor plan positioning
+      position_x: t.position_x || 0,
+      position_y: t.position_y || 0,
+      width: t.width || 1,
+      height: t.height || 1,
+      rotation: t.rotation || 0,
+      // Legacy fields
+      is_fixed: t.is_fixed || false
     })),
     active_parties: activeParties,
     upcoming_reservations: upcomingReservationsResult.reservations
