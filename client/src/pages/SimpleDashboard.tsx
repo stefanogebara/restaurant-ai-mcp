@@ -826,6 +826,12 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   </h2>
                 </div>
                 <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => window.location.href = '/host-dashboard/floor-plan'}
+                    className="px-3 py-1.5 text-sm text-[#9F1239] hover:bg-[#9F1239]/10 rounded-lg transition-colors font-medium"
+                  >
+                    {language === 'es' ? 'Editar Plano' : 'Edit Floor Plan'}
+                  </button>
                   <TableStatusLegend />
                 </div>
               </div>

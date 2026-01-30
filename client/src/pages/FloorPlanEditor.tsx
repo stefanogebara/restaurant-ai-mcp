@@ -1,0 +1,760 @@
+import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { DndContext, DragEndEvent, useDraggable, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { hostAPI } from '../services/api';
+import type { Table, TableShape } from '../types/host.types';
+import DashboardLayout from '../components/layout/DashboardLayout';
+
+const GRID_SIZE = 20; // 20 columns
+const GRID_HEIGHT = 15; // 15 rows
+const GRID_CELL_SIZE = 40; // pixels per grid cell
+
+// SVG Icons
+const SaveIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+  </svg>
+);
+
+const LinkIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+  </svg>
+);
+
+const RotateIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+  </svg>
+);
+
+const TrashIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+  </svg>
+);
+
+const ArrowLeftIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+  </svg>
+);
+
+const UnlinkIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+  </svg>
+);
+
+interface DraggableTableProps {
+  table: Table;
+  isSelected: boolean;
+  onSelect: () => void;
+  linkMode: boolean;
+  linkSource: string | null;
+}
+
+function DraggableTable({ table, isSelected, onSelect, linkMode, linkSource }: DraggableTableProps) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: table.id,
+    data: { table }
+  });
+
+  const style = {
+    left: table.position_x * GRID_CELL_SIZE,
+    top: table.position_y * GRID_CELL_SIZE,
+    width: (table.width || 1) * GRID_CELL_SIZE - 4,
+    height: (table.height || 1) * GRID_CELL_SIZE - 4,
+    transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
+    zIndex: isDragging ? 100 : isSelected ? 50 : 1,
+  };
+
+  const shapeClass = table.shape === 'round' ? 'rounded-full' : 'rounded-lg';
+  const isLinkTarget = linkMode && linkSource && linkSource !== table.id;
+  const isLinkSource = linkSource === table.id;
+
+  const getStatusColor = () => {
+    switch (table.status) {
+      case 'Available':
+        return 'bg-green-100 border-green-500 text-green-700';
+      case 'Occupied':
+        return 'bg-red-100 border-red-500 text-red-700';
+      case 'Reserved':
+        return 'bg-purple-100 border-purple-500 text-purple-700';
+      case 'Being Cleaned':
+        return 'bg-amber-100 border-amber-500 text-amber-700';
+      default:
+        return 'bg-gray-100 border-gray-400 text-gray-700';
+    }
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      style={style}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect();
+      }}
+      className={`
+        absolute flex items-center justify-center cursor-grab active:cursor-grabbing
+        ${shapeClass}
+        ${isSelected ? 'ring-4 ring-[#9F1239] ring-offset-2' : ''}
+        ${isDragging ? 'opacity-50 shadow-2xl' : ''}
+        ${isLinkTarget ? 'ring-2 ring-blue-500 ring-dashed animate-pulse' : ''}
+        ${isLinkSource ? 'ring-4 ring-[#9F1239]' : ''}
+        ${getStatusColor()}
+        border-2 transition-shadow hover:shadow-lg
+      `}
+    >
+      <div className="text-center pointer-events-none">
+        <div className="font-bold text-sm">{table.table_number}</div>
+        <div className="text-xs opacity-75">{table.capacity}p</div>
+      </div>
+    </div>
+  );
+}
+
+interface TablePaletteItemProps {
+  shape: TableShape;
+  capacity: number;
+}
+
+function TablePaletteItem({ shape, capacity }: TablePaletteItemProps) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `palette-${shape}-${capacity}`,
+    data: { type: 'new-table', shape, capacity }
+  });
+
+  const shapeClass = shape === 'round' ? 'rounded-full' : 'rounded';
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      className={`
+        w-12 h-12 flex items-center justify-center cursor-grab
+        ${shapeClass} border-2 border-[#9F1239] bg-white
+        ${isDragging ? 'opacity-50' : ''}
+        hover:bg-[#9F1239]/10 transition-colors
+      `}
+    >
+      <span className="text-xs font-medium text-[#1C1917]">{capacity}</span>
+    </div>
+  );
+}
+
+interface TablePropertiesPanelProps {
+  table: Table;
+  tables: Table[];
+  onUpdate: (updates: Partial<Table>) => void;
+  onUnlink: (linkedTableId: string) => void;
+  onClose: () => void;
+}
+
+function TablePropertiesPanel({ table, tables, onUpdate, onUnlink, onClose }: TablePropertiesPanelProps) {
+  const linkedTables = (table.joinable_with || [])
+    .map(id => tables.find(t => t.id === id))
+    .filter(Boolean) as Table[];
+
+  return (
+    <div className="w-72 bg-white rounded-xl border border-[#E7E5E4] p-4 shadow-lg">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-[#1C1917]">Table {table.table_number}</h3>
+        <button
+          onClick={onClose}
+          className="text-[#A8A29E] hover:text-[#57534E]"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div className="space-y-4">
+        {/* Shape */}
+        <div>
+          <label className="block text-xs font-medium text-[#57534E] mb-2">Shape</label>
+          <div className="flex gap-2">
+            <button
+              onClick={() => onUpdate({ shape: 'round' })}
+              className={`flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-colors ${
+                table.shape === 'round'
+                  ? 'border-[#9F1239] bg-[#9F1239]/10 text-[#9F1239]'
+                  : 'border-[#E7E5E4] text-[#57534E] hover:bg-[#F5F5F4]'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-4 h-4 rounded-full border-2 border-current" />
+                Round
+              </div>
+            </button>
+            <button
+              onClick={() => onUpdate({ shape: 'square' })}
+              className={`flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-colors ${
+                table.shape === 'square'
+                  ? 'border-[#9F1239] bg-[#9F1239]/10 text-[#9F1239]'
+                  : 'border-[#E7E5E4] text-[#57534E] hover:bg-[#F5F5F4]'
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-4 h-4 rounded border-2 border-current" />
+                Square
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Capacity */}
+        <div>
+          <label className="block text-xs font-medium text-[#57534E] mb-2">Capacity</label>
+          <input
+            type="number"
+            min="1"
+            max="20"
+            value={table.capacity}
+            onChange={(e) => onUpdate({ capacity: parseInt(e.target.value) || 1 })}
+            className="w-full px-3 py-2 border border-[#E7E5E4] rounded-lg text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#9F1239]"
+          />
+        </div>
+
+        {/* Joinable Toggle */}
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-medium text-[#57534E]">Can be joined</label>
+          <button
+            onClick={() => onUpdate({ is_joinable: !table.is_joinable })}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              table.is_joinable ? 'bg-[#9F1239]' : 'bg-[#E7E5E4]'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                table.is_joinable ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+
+        {/* Fixed Seating Toggle */}
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-medium text-[#57534E]">Fixed seating (booth)</label>
+          <button
+            onClick={() => onUpdate({ is_fixed_seating: !table.is_fixed_seating })}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              table.is_fixed_seating ? 'bg-[#9F1239]' : 'bg-[#E7E5E4]'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                table.is_fixed_seating ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+
+        {/* Linked Tables */}
+        {linkedTables.length > 0 && (
+          <div>
+            <label className="block text-xs font-medium text-[#57534E] mb-2">Linked Tables</label>
+            <div className="space-y-2">
+              {linkedTables.map(lt => (
+                <div
+                  key={lt.id}
+                  className="flex items-center justify-between p-2 bg-[#F5F5F4] rounded-lg"
+                >
+                  <span className="text-sm text-[#1C1917]">Table {lt.table_number}</span>
+                  <button
+                    onClick={() => onUnlink(lt.id)}
+                    className="p-1 text-red-500 hover:bg-red-100 rounded"
+                    title="Unlink table"
+                  >
+                    <UnlinkIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Position Info */}
+        <div className="pt-3 border-t border-[#E7E5E4]">
+          <p className="text-xs text-[#A8A29E]">
+            Position: ({table.position_x}, {table.position_y})
+          </p>
+          <p className="text-xs text-[#A8A29E]">
+            Size: {table.width || 1} x {table.height || 1}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function FloorPlanEditor() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+  const [linkMode, setLinkMode] = useState(false);
+  const [linkSource, setLinkSource] = useState<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [localPositions, setLocalPositions] = useState<Record<string, { x: number; y: number }>>({});
+
+  // Configure sensors for smoother dragging
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    })
+  );
+
+  // Fetch tables
+  const { data: dashboardData, isLoading } = useQuery({
+    queryKey: ['tables-floor-plan'],
+    queryFn: hostAPI.getDashboard,
+  });
+
+  const rawTables: Table[] = dashboardData?.data?.tables || (dashboardData as any)?.tables || [];
+
+  // Apply local position changes to tables
+  const tables = rawTables.map(t => ({
+    ...t,
+    position_x: localPositions[t.id]?.x ?? t.position_x ?? 0,
+    position_y: localPositions[t.id]?.y ?? t.position_y ?? 0,
+    width: t.width || 1,
+    height: t.height || 1,
+    shape: t.shape || 'square',
+  }));
+
+  const selectedTable = tables.find(t => t.id === selectedTableId);
+
+  // Update table position mutation (batch save)
+  const updatePositionMutation = useMutation({
+    mutationFn: async (updates: Array<{ tableId: string; position_x: number; position_y: number }>) => {
+      // Update each table position
+      const promises = updates.map(({ tableId, position_x, position_y }) =>
+        fetch(`/api/host-dashboard/tables/${tableId}/position`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ position_x, position_y })
+        })
+      );
+      await Promise.all(promises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tables-floor-plan'] });
+      setLocalPositions({});
+      setHasUnsavedChanges(false);
+    }
+  });
+
+  // Update table config mutation
+  const updateTableMutation = useMutation({
+    mutationFn: async ({ tableId, updates }: { tableId: string; updates: Partial<Table> }) => {
+      const response = await fetch(`/api/host-dashboard/tables/${tableId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      if (!response.ok) throw new Error('Failed to update table');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tables-floor-plan'] });
+    }
+  });
+
+  // Link tables mutation
+  const linkTablesMutation = useMutation({
+    mutationFn: async ({ tableId, linkWithId }: { tableId: string; linkWithId: string }) => {
+      const response = await fetch(`/api/host-dashboard/tables/${tableId}/link`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ link_with: linkWithId })
+      });
+      if (!response.ok) throw new Error('Failed to link tables');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tables-floor-plan'] });
+      setLinkMode(false);
+      setLinkSource(null);
+    }
+  });
+
+  // Unlink tables mutation
+  const unlinkTablesMutation = useMutation({
+    mutationFn: async ({ tableId, linkedTableId }: { tableId: string; linkedTableId: string }) => {
+      const response = await fetch(`/api/host-dashboard/tables/${tableId}/link/${linkedTableId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to unlink tables');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tables-floor-plan'] });
+    }
+  });
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, delta } = event;
+
+    if (!active.data.current) return;
+
+    // Find the table
+    const table = tables.find(t => t.id === active.id);
+    if (!table) return;
+
+    // Calculate new grid position
+    const currentX = localPositions[table.id]?.x ?? table.position_x;
+    const currentY = localPositions[table.id]?.y ?? table.position_y;
+
+    const newX = Math.max(0, Math.min(GRID_SIZE - (table.width || 1),
+      Math.round((currentX * GRID_CELL_SIZE + delta.x) / GRID_CELL_SIZE)
+    ));
+    const newY = Math.max(0, Math.min(GRID_HEIGHT - (table.height || 1),
+      Math.round((currentY * GRID_CELL_SIZE + delta.y) / GRID_CELL_SIZE)
+    ));
+
+    if (newX !== currentX || newY !== currentY) {
+      setLocalPositions(prev => ({
+        ...prev,
+        [table.id]: { x: newX, y: newY }
+      }));
+      setHasUnsavedChanges(true);
+    }
+  }, [tables, localPositions]);
+
+  const handleTableClick = useCallback((tableId: string) => {
+    if (linkMode) {
+      if (linkSource === null) {
+        setLinkSource(tableId);
+      } else if (linkSource !== tableId) {
+        linkTablesMutation.mutate({ tableId: linkSource, linkWithId: tableId });
+      }
+    } else {
+      setSelectedTableId(tableId === selectedTableId ? null : tableId);
+    }
+  }, [linkMode, linkSource, selectedTableId, linkTablesMutation]);
+
+  const handleSavePositions = useCallback(() => {
+    const updates = Object.entries(localPositions).map(([tableId, pos]) => ({
+      tableId,
+      position_x: pos.x,
+      position_y: pos.y
+    }));
+    if (updates.length > 0) {
+      updatePositionMutation.mutate(updates);
+    }
+  }, [localPositions, updatePositionMutation]);
+
+  const handleUpdateTable = useCallback((updates: Partial<Table>) => {
+    if (selectedTableId) {
+      updateTableMutation.mutate({ tableId: selectedTableId, updates });
+    }
+  }, [selectedTableId, updateTableMutation]);
+
+  const handleUnlinkTable = useCallback((linkedTableId: string) => {
+    if (selectedTableId) {
+      unlinkTablesMutation.mutate({ tableId: selectedTableId, linkedTableId });
+    }
+  }, [selectedTableId, unlinkTablesMutation]);
+
+  // Draw dotted lines between linked tables
+  const renderLinks = () => {
+    const links: JSX.Element[] = [];
+    const processedPairs = new Set<string>();
+
+    tables.forEach(table => {
+      (table.joinable_with || []).forEach(linkedId => {
+        const pairKey = [table.id, linkedId].sort().join('-');
+        if (processedPairs.has(pairKey)) return;
+        processedPairs.add(pairKey);
+
+        const linkedTable = tables.find(t => t.id === linkedId);
+        if (!linkedTable) return;
+
+        const x1 = (table.position_x + (table.width || 1) / 2) * GRID_CELL_SIZE;
+        const y1 = (table.position_y + (table.height || 1) / 2) * GRID_CELL_SIZE;
+        const x2 = (linkedTable.position_x + (linkedTable.width || 1) / 2) * GRID_CELL_SIZE;
+        const y2 = (linkedTable.position_y + (linkedTable.height || 1) / 2) * GRID_CELL_SIZE;
+
+        links.push(
+          <line
+            key={pairKey}
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
+            stroke="#9F1239"
+            strokeWidth="2"
+            strokeDasharray="6,4"
+            opacity="0.6"
+          />
+        );
+      });
+    });
+
+    return links;
+  };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-screen bg-[#F5F5F4]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#E7E5E4] border-t-[#9F1239] mb-4 mx-auto"></div>
+            <p className="text-[#57534E]">Loading floor plan...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DashboardLayout>
+      <div className="min-h-screen bg-[#F5F5F4] p-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate('/host-dashboard/simple')}
+              className="p-2 hover:bg-white rounded-lg transition-colors"
+              title="Back to Dashboard"
+            >
+              <ArrowLeftIcon className="w-5 h-5 text-[#57534E]" />
+            </button>
+            <h1 className="text-2xl font-serif font-bold text-[#1C1917]">Floor Plan Editor</h1>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                setLinkMode(!linkMode);
+                setLinkSource(null);
+                setSelectedTableId(null);
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                linkMode
+                  ? 'bg-[#9F1239] text-white'
+                  : 'bg-white border border-[#E7E5E4] text-[#1C1917] hover:bg-[#F5F5F4]'
+              }`}
+            >
+              <LinkIcon className="w-4 h-4" />
+              {linkMode ? 'Cancel Link' : 'Link Tables'}
+            </button>
+            <button
+              onClick={handleSavePositions}
+              disabled={!hasUnsavedChanges || updatePositionMutation.isPending}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                hasUnsavedChanges
+                  ? 'bg-[#9F1239] text-white hover:bg-[#881337]'
+                  : 'bg-[#E7E5E4] text-[#A8A29E] cursor-not-allowed'
+              }`}
+            >
+              <SaveIcon className="w-4 h-4" />
+              {updatePositionMutation.isPending ? 'Saving...' : 'Save Positions'}
+            </button>
+            <button
+              onClick={() => navigate('/host-dashboard/simple')}
+              className="px-4 py-2 bg-white border border-[#E7E5E4] text-[#1C1917] rounded-lg font-medium hover:bg-[#F5F5F4]"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+
+        {/* Link Mode Banner */}
+        {linkMode && (
+          <div className="mb-4 p-3 bg-[#9F1239]/10 border border-[#9F1239]/20 rounded-lg">
+            <p className="text-sm text-[#9F1239] font-medium">
+              {linkSource
+                ? `Click another table to link with Table ${tables.find(t => t.id === linkSource)?.table_number}`
+                : 'Click the first table to start linking'}
+            </p>
+          </div>
+        )}
+
+        {/* Unsaved Changes Banner */}
+        {hasUnsavedChanges && (
+          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between">
+            <p className="text-sm text-amber-800 font-medium">
+              You have unsaved position changes
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setLocalPositions({});
+                  setHasUnsavedChanges(false);
+                }}
+                className="px-3 py-1 text-sm text-amber-800 hover:bg-amber-100 rounded"
+              >
+                Discard
+              </button>
+              <button
+                onClick={handleSavePositions}
+                className="px-3 py-1 text-sm bg-amber-600 text-white rounded hover:bg-amber-700"
+              >
+                Save Now
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-6">
+          {/* Sidebar - Table Palette */}
+          <div className="w-48 flex-shrink-0">
+            <div className="bg-white rounded-xl border border-[#E7E5E4] p-4 sticky top-6">
+              <h3 className="font-semibold text-[#1C1917] mb-3">Add Tables</h3>
+              <p className="text-xs text-[#A8A29E] mb-4">
+                Drag tables onto the canvas
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs text-[#57534E] mb-2 font-medium">Round Tables</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[2, 4, 6, 8].map(cap => (
+                      <TablePaletteItem key={`round-${cap}`} shape="round" capacity={cap} />
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs text-[#57534E] mb-2 font-medium">Square Tables</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[2, 4, 6, 8].map(cap => (
+                      <TablePaletteItem key={`square-${cap}`} shape="square" capacity={cap} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <hr className="my-4 border-[#E7E5E4]" />
+
+              <h3 className="font-semibold text-[#1C1917] mb-3">Quick Actions</h3>
+              <div className="space-y-2">
+                <button
+                  onClick={() => {
+                    if (selectedTable) {
+                      const newRotation = ((selectedTable.rotation || 0) + 90) % 360;
+                      handleUpdateTable({ rotation: newRotation });
+                    }
+                  }}
+                  disabled={!selectedTableId}
+                  className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm rounded-lg transition-colors ${
+                    selectedTableId
+                      ? 'hover:bg-[#F5F5F4] text-[#1C1917]'
+                      : 'text-[#A8A29E] cursor-not-allowed'
+                  }`}
+                >
+                  <RotateIcon className="w-4 h-4" />
+                  Rotate 90
+                </button>
+                <button
+                  disabled={!selectedTableId}
+                  className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm rounded-lg transition-colors ${
+                    selectedTableId
+                      ? 'text-red-600 hover:bg-red-50'
+                      : 'text-[#A8A29E] cursor-not-allowed'
+                  }`}
+                >
+                  <TrashIcon className="w-4 h-4" />
+                  Delete Table
+                </button>
+              </div>
+
+              {/* Legend */}
+              <hr className="my-4 border-[#E7E5E4]" />
+              <h3 className="font-semibold text-[#1C1917] mb-3">Legend</h3>
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-green-100 border-2 border-green-500"></div>
+                  <span className="text-[#57534E]">Available</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-red-100 border-2 border-red-500"></div>
+                  <span className="text-[#57534E]">Occupied</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-purple-100 border-2 border-purple-500"></div>
+                  <span className="text-[#57534E]">Reserved</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-amber-100 border-2 border-amber-500"></div>
+                  <span className="text-[#57534E]">Cleaning</span>
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="w-8 h-0 border-t-2 border-dashed border-[#9F1239]"></div>
+                  <span className="text-[#57534E]">Linked</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Canvas */}
+          <div className="flex-1 bg-white rounded-xl border border-[#E7E5E4] overflow-auto">
+            <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+              <div
+                className="relative"
+                style={{
+                  width: GRID_SIZE * GRID_CELL_SIZE,
+                  height: GRID_HEIGHT * GRID_CELL_SIZE,
+                  backgroundImage: `
+                    linear-gradient(to right, #E7E5E4 1px, transparent 1px),
+                    linear-gradient(to bottom, #E7E5E4 1px, transparent 1px)
+                  `,
+                  backgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`
+                }}
+                onClick={() => {
+                  if (!linkMode) {
+                    setSelectedTableId(null);
+                  }
+                }}
+              >
+                {/* Linked table lines */}
+                <svg
+                  className="absolute inset-0 pointer-events-none"
+                  style={{ width: GRID_SIZE * GRID_CELL_SIZE, height: GRID_HEIGHT * GRID_CELL_SIZE }}
+                >
+                  {renderLinks()}
+                </svg>
+
+                {/* Tables */}
+                {tables.map(table => (
+                  <DraggableTable
+                    key={table.id}
+                    table={table}
+                    isSelected={selectedTableId === table.id}
+                    onSelect={() => handleTableClick(table.id)}
+                    linkMode={linkMode}
+                    linkSource={linkSource}
+                  />
+                ))}
+              </div>
+            </DndContext>
+          </div>
+
+          {/* Properties Panel (when table selected) */}
+          {selectedTable && !linkMode && (
+            <TablePropertiesPanel
+              table={selectedTable}
+              tables={tables}
+              onUpdate={handleUpdateTable}
+              onUnlink={handleUnlinkTable}
+              onClose={() => setSelectedTableId(null)}
+            />
+          )}
+        </div>
+
+        {/* Help Text */}
+        <div className="mt-6 text-center text-sm text-[#A8A29E]">
+          <p>Drag tables to position them. Click a table to edit its properties. Use "Link Tables" to connect joinable tables.</p>
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}

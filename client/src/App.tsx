@@ -24,6 +24,7 @@ import Onboarding from './pages/Onboarding';
 import LanguageSettings from './pages/LanguageSettings';
 import TestPhoneInput from './pages/TestPhoneInput';
 import TableConfigPage from './pages/TableConfigPage';
+import FloorPlanEditor from './pages/FloorPlanEditor';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const queryClient = new QueryClient({
@@ -58,6 +59,7 @@ function App() {
               <Route path="/host-dashboard/segovia" element={<SegoviaInsightsPage />} />
               <Route path="/host-dashboard/calls" element={<CallTrackingDashboard />} />
               <Route path="/host-dashboard/tables" element={<TableConfigPage />} />
+              <Route path="/host-dashboard/floor-plan" element={<FloorPlanEditor />} />
               <Route path="/analytics" element={<AnalyticsDashboard />} />
               <Route path="/customer" element={<CustomerPortal />} />
               <Route path="/subscription/success" element={<SubscriptionSuccess />} />
