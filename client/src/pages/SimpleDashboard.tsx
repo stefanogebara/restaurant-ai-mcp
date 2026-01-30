@@ -6,6 +6,7 @@ import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
 import QuickInterventionModal from '../components/host/QuickInterventionModal';
 import TableGrid from '../components/host/TableGrid';
+import FloorPlanView from '../components/host/FloorPlanView';
 import TableStatusLegend from '../components/host/TableStatusLegend';
 import WaitlistPanel from '../components/host/WaitlistPanel';
 import DashboardLayout from '../components/layout/DashboardLayout';
@@ -36,6 +37,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   const [showTomorrow, setShowTomorrow] = useState(false);
   const [interventionReservation, setInterventionReservation] = useState<any>(null);
   const [showFabPulse, setShowFabPulse] = useState(true);
+  const [tableViewMode, setTableViewMode] = useState<'grid' | 'floorplan'>('floorplan');
 
   // Stop FAB pulse animation after 5 seconds
   useEffect(() => {
@@ -812,7 +814,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
         {/* Enhanced Panels - COMPLETO MODE ONLY */}
         {complexity === 'completo' && (
           <div className="space-y-6 mb-8">
-            {/* Full-Width Table Grid */}
+            {/* Full-Width Table Layout */}
             <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-5 md:p-6">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
@@ -825,10 +827,39 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                     {language === 'es' ? 'Disposición de Mesas' : 'Table Layout'}
                   </h2>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  {/* View Mode Toggle */}
+                  <div className="flex items-center bg-[#F5F5F4] rounded-lg p-0.5">
+                    <button
+                      onClick={() => setTableViewMode('floorplan')}
+                      className={`px-2 py-1 text-xs font-medium rounded-md transition-colors ${
+                        tableViewMode === 'floorplan'
+                          ? 'bg-white text-[#9F1239] shadow-sm'
+                          : 'text-[#57534E] hover:text-[#1C1917]'
+                      }`}
+                      title={language === 'es' ? 'Vista Plano' : 'Floor Plan View'}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => setTableViewMode('grid')}
+                      className={`px-2 py-1 text-xs font-medium rounded-md transition-colors ${
+                        tableViewMode === 'grid'
+                          ? 'bg-white text-[#9F1239] shadow-sm'
+                          : 'text-[#57534E] hover:text-[#1C1917]'
+                      }`}
+                      title={language === 'es' ? 'Vista Cuadrícula' : 'Grid View'}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                      </svg>
+                    </button>
+                  </div>
                   <button
                     onClick={() => window.location.href = '/host-dashboard/floor-plan'}
-                    className="px-3 py-1.5 text-sm text-[#9F1239] hover:bg-[#9F1239]/10 rounded-lg transition-colors font-medium"
+                    className="hidden sm:flex px-3 py-1.5 text-sm text-[#9F1239] hover:bg-[#9F1239]/10 rounded-lg transition-colors font-medium"
                   >
                     {language === 'es' ? 'Editar Plano' : 'Edit Floor Plan'}
                   </button>
@@ -836,12 +867,20 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                 </div>
               </div>
 
-              {/* Table Grid - Full Width, Interactive in COMPLETO mode */}
+              {/* Table View - Floor Plan or Grid based on toggle */}
               <div className="bg-[#F5F5F4] rounded-xl p-4 md:p-6">
-                <TableGrid
-                  tables={tables}
-                  onTableClick={complexity === 'completo' ? handleTableClick : undefined}
-                />
+                {tableViewMode === 'floorplan' ? (
+                  <FloorPlanView
+                    tables={tables}
+                    onTableClick={complexity === 'completo' ? handleTableClick : undefined}
+                    compact={true}
+                  />
+                ) : (
+                  <TableGrid
+                    tables={tables}
+                    onTableClick={complexity === 'completo' ? handleTableClick : undefined}
+                  />
+                )}
               </div>
 
               <div className="mt-4 flex items-center justify-center gap-2 text-xs text-[#57534E] bg-[#F5F5F4] p-3 rounded-lg">
