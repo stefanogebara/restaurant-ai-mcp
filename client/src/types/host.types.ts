@@ -1,4 +1,5 @@
 export type TableStatus = 'Available' | 'Occupied' | 'Being Cleaned' | 'Reserved';
+export type TableShape = 'round' | 'square';
 
 export interface Table {
   id: string;
@@ -7,12 +8,28 @@ export interface Table {
   location: string;
   status: TableStatus;
   current_service_id?: string;
-  // Flexible table support
-  is_fixed?: boolean;           // true = can't be combined (round/booth), default false
-  min_capacity?: number;        // Minimum party size (defaults to 1)
-  max_capacity?: number;        // Maximum when combined with adjacents
-  adjacent_tables?: string[];   // IDs of tables that can combine with this one
-  combination_group?: string;   // Logical grouping for combinations (e.g., "main_floor_left")
+
+  // Shape configuration
+  shape: TableShape;
+  is_fixed_seating: boolean;      // Booths, sofas - can't move chairs
+
+  // Joinable table configuration
+  is_joinable: boolean;           // Can this table be combined?
+  joinable_with: string[];        // IDs of tables it can link with
+
+  // Floor plan positioning (grid units)
+  position_x: number;
+  position_y: number;
+  width: number;                  // Grid units wide (default 1)
+  height: number;                 // Grid units tall (default 1)
+  rotation: number;               // 0, 90, 180, 270 degrees
+
+  // Legacy fields (keep for backwards compatibility)
+  is_fixed?: boolean;
+  min_capacity?: number;
+  max_capacity?: number;
+  adjacent_tables?: string[];
+  combination_group?: string;
 }
 
 export interface ActiveParty {

@@ -18,10 +18,14 @@ export interface BusinessHours {
   periods?: ServicePeriod[];
 }
 
+export type TableShape = 'round' | 'square';
+
 export interface TableConfiguration {
   capacity: number;
   count: number;
-  is_fixed?: boolean; // true = table can't be combined (round/booth), default false (flexible)
+  shape: TableShape;
+  is_fixed_seating: boolean;  // For booths/sofas
+  is_joinable: boolean;       // Can be combined with other tables
 }
 
 export interface RestaurantArea {
