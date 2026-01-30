@@ -10,7 +10,14 @@ const {
   updateTable,
   generateServiceId,
   findBestTableCombination,
-  canAccommodateParty
+  canAccommodateParty,
+  // Floor plan editor functions
+  createTable,
+  updateTableConfig,
+  deleteTable,
+  linkTables,
+  unlinkTables,
+  getTableById
 } = require('./_lib/supabase');
 
 const { logCustomerShowedUp, logCustomerCancelled } = require('./ml/data-logger');
@@ -65,10 +72,23 @@ module.exports = async (req, res) => {
         return await handleUpdateTableStatus(req, res);
       case 'update-reservation':
         return await handleUpdateReservation(req, res);
+      // Floor Plan Editor endpoints
+      case 'update-table-position':
+        return await handleUpdateTablePosition(req, res);
+      case 'update-table-properties':
+        return await handleUpdateTableProperties(req, res);
+      case 'link-tables':
+        return await handleLinkTables(req, res);
+      case 'unlink-tables':
+        return await handleUnlinkTables(req, res);
+      case 'delete-table':
+        return await handleDeleteTable(req, res);
+      case 'create-table':
+        return await handleCreateTable(req, res);
       default:
         return res.status(400).json({
           success: false,
-          error: 'Invalid action. Use: dashboard, check-in, check-walk-in, seat-party, complete-service, mark-table-clean, update-table-status, or update-reservation'
+          error: 'Invalid action. Use: dashboard, check-in, check-walk-in, seat-party, complete-service, mark-table-clean, update-table-status, update-reservation, update-table-position, update-table-properties, link-tables, unlink-tables, delete-table, or create-table'
         });
     }
   } catch (error) {
@@ -687,5 +707,337 @@ async function handleUpdateReservation(req, res) {
       reservation_id,
       ...updates
     }
+  });
+}
+
+// ============ FLOOR PLAN EDITOR ENDPOINTS ============
+
+/**
+ * Update table position (for floor plan editor drag-and-drop)
+ * Body: { table_id, position_x, position_y, width?, height?, rotation? }
+ */
+async function handleUpdateTablePosition(req, res) {
+  const { table_id, position_x, position_y, width, height, rotation } = req.body;
+
+  if (!table_id) {
+    return res.status(400).json({
+      success: false,
+      error: 'table_id is required'
+    });
+  }
+
+  if (position_x === undefined || position_y === undefined) {
+    return res.status(400).json({
+      success: false,
+      error: 'position_x and position_y are required'
+    });
+  }
+
+  // Build update object
+  const updates = {
+    position_x: parseInt(position_x, 10),
+    position_y: parseInt(position_y, 10)
+  };
+
+  // Optional size and rotation fields
+  if (width !== undefined) updates.width = parseInt(width, 10);
+  if (height !== undefined) updates.height = parseInt(height, 10);
+  if (rotation !== undefined) updates.rotation = parseInt(rotation, 10);
+
+  logger.info(`Updating table ${table_id} position`, updates);
+
+  const result = await updateTableConfig(table_id, updates);
+
+  if (!result.success) {
+    logger.error('Failed to update table position', { table_id, error: result.message });
+    return res.status(400).json({
+      success: false,
+      error: result.message || 'Failed to update table position'
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: 'Table position updated successfully',
+    table: result.table
+  });
+}
+
+/**
+ * Update table properties (shape, capacity, joinable settings)
+ * Body: { table_id, shape?, capacity?, is_joinable?, is_fixed_seating? }
+ */
+async function handleUpdateTableProperties(req, res) {
+  const { table_id, shape, capacity, is_joinable, is_fixed_seating } = req.body;
+
+  if (!table_id) {
+    return res.status(400).json({
+      success: false,
+      error: 'table_id is required'
+    });
+  }
+
+  // Build update object with only provided fields
+  const updates = {};
+
+  if (shape !== undefined) {
+    if (!['round', 'square'].includes(shape)) {
+      return res.status(400).json({
+        success: false,
+        error: 'shape must be "round" or "square"'
+      });
+    }
+    updates.shape = shape;
+  }
+
+  if (capacity !== undefined) {
+    const parsedCapacity = parseInt(capacity, 10);
+    if (isNaN(parsedCapacity) || parsedCapacity < 1 || parsedCapacity > 20) {
+      return res.status(400).json({
+        success: false,
+        error: 'capacity must be a number between 1 and 20'
+      });
+    }
+    updates.capacity = parsedCapacity;
+  }
+
+  if (is_joinable !== undefined) {
+    updates.is_joinable = Boolean(is_joinable);
+  }
+
+  if (is_fixed_seating !== undefined) {
+    updates.is_fixed_seating = Boolean(is_fixed_seating);
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return res.status(400).json({
+      success: false,
+      error: 'At least one property to update is required (shape, capacity, is_joinable, is_fixed_seating)'
+    });
+  }
+
+  logger.info(`Updating table ${table_id} properties`, updates);
+
+  const result = await updateTableConfig(table_id, updates);
+
+  if (!result.success) {
+    logger.error('Failed to update table properties', { table_id, error: result.message });
+    return res.status(400).json({
+      success: false,
+      error: result.message || 'Failed to update table properties'
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: 'Table properties updated successfully',
+    table: result.table
+  });
+}
+
+/**
+ * Link two tables together (bidirectional)
+ * Body: { table_id, linked_table_id }
+ */
+async function handleLinkTables(req, res) {
+  const { table_id, linked_table_id } = req.body;
+
+  if (!table_id || !linked_table_id) {
+    return res.status(400).json({
+      success: false,
+      error: 'table_id and linked_table_id are required'
+    });
+  }
+
+  if (table_id === linked_table_id) {
+    return res.status(400).json({
+      success: false,
+      error: 'Cannot link a table to itself'
+    });
+  }
+
+  logger.info(`Linking tables ${table_id} and ${linked_table_id}`);
+
+  const result = await linkTables(table_id, linked_table_id);
+
+  if (!result.success) {
+    logger.error('Failed to link tables', { table_id, linked_table_id, error: result.message });
+    return res.status(400).json({
+      success: false,
+      error: result.message || 'Failed to link tables'
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: result.message || 'Tables linked successfully',
+    linked: result.linked
+  });
+}
+
+/**
+ * Unlink two tables (bidirectional)
+ * Body: { table_id, linked_table_id }
+ */
+async function handleUnlinkTables(req, res) {
+  const { table_id, linked_table_id } = req.body;
+
+  if (!table_id || !linked_table_id) {
+    return res.status(400).json({
+      success: false,
+      error: 'table_id and linked_table_id are required'
+    });
+  }
+
+  logger.info(`Unlinking tables ${table_id} and ${linked_table_id}`);
+
+  const result = await unlinkTables(table_id, linked_table_id);
+
+  if (!result.success) {
+    logger.error('Failed to unlink tables', { table_id, linked_table_id, error: result.message });
+    return res.status(400).json({
+      success: false,
+      error: result.message || 'Failed to unlink tables'
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: result.message || 'Tables unlinked successfully',
+    unlinked: result.unlinked
+  });
+}
+
+/**
+ * Delete a table (soft delete - sets is_active = false)
+ * Body: { table_id }
+ */
+async function handleDeleteTable(req, res) {
+  const { table_id } = req.body;
+
+  if (!table_id) {
+    return res.status(400).json({
+      success: false,
+      error: 'table_id is required'
+    });
+  }
+
+  // Check if table exists and is not currently occupied
+  const tableResult = await getTableById(table_id);
+
+  if (!tableResult.success) {
+    return res.status(404).json({
+      success: false,
+      error: 'Table not found'
+    });
+  }
+
+  if (tableResult.table.status === 'occupied') {
+    return res.status(400).json({
+      success: false,
+      error: 'Cannot delete a table that is currently occupied'
+    });
+  }
+
+  logger.info(`Deleting table ${table_id} (table_number: ${tableResult.table.table_number})`);
+
+  const result = await deleteTable(table_id);
+
+  if (!result.success) {
+    logger.error('Failed to delete table', { table_id, error: result.message });
+    return res.status(400).json({
+      success: false,
+      error: result.message || 'Failed to delete table'
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: result.message || 'Table deleted successfully',
+    table_number: result.table_number
+  });
+}
+
+/**
+ * Create a new table
+ * Body: { table_number, capacity, location?, shape?, is_fixed_seating?, is_joinable?, position_x?, position_y? }
+ */
+async function handleCreateTable(req, res) {
+  const {
+    table_number,
+    capacity,
+    location,
+    shape,
+    is_fixed_seating,
+    is_joinable,
+    position_x,
+    position_y,
+    width,
+    height,
+    rotation
+  } = req.body;
+
+  // Validate required fields
+  if (!table_number) {
+    return res.status(400).json({
+      success: false,
+      error: 'table_number is required'
+    });
+  }
+
+  if (!capacity) {
+    return res.status(400).json({
+      success: false,
+      error: 'capacity is required'
+    });
+  }
+
+  const parsedCapacity = parseInt(capacity, 10);
+  if (isNaN(parsedCapacity) || parsedCapacity < 1 || parsedCapacity > 20) {
+    return res.status(400).json({
+      success: false,
+      error: 'capacity must be a number between 1 and 20'
+    });
+  }
+
+  // Validate shape if provided
+  if (shape && !['round', 'square'].includes(shape)) {
+    return res.status(400).json({
+      success: false,
+      error: 'shape must be "round" or "square"'
+    });
+  }
+
+  // Build table fields
+  const tableFields = {
+    table_number: String(table_number),
+    capacity: parsedCapacity,
+    location: location || 'Main',
+    shape: shape || 'square',
+    is_fixed_seating: is_fixed_seating !== undefined ? Boolean(is_fixed_seating) : false,
+    is_joinable: is_joinable !== undefined ? Boolean(is_joinable) : true,
+    position_x: position_x !== undefined ? parseInt(position_x, 10) : 0,
+    position_y: position_y !== undefined ? parseInt(position_y, 10) : 0,
+    width: width !== undefined ? parseInt(width, 10) : 1,
+    height: height !== undefined ? parseInt(height, 10) : 1,
+    rotation: rotation !== undefined ? parseInt(rotation, 10) : 0
+  };
+
+  logger.info('Creating new table', tableFields);
+
+  const result = await createTable(tableFields);
+
+  if (!result.success) {
+    logger.error('Failed to create table', { tableFields, error: result.message });
+    return res.status(400).json({
+      success: false,
+      error: result.message || 'Failed to create table'
+    });
+  }
+
+  return res.status(201).json({
+    success: true,
+    message: `Table ${tableFields.table_number} created successfully`,
+    table: result.table
   });
 }

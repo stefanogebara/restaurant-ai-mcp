@@ -335,15 +335,19 @@ export default function FloorPlanEditor() {
   // Update table position mutation (batch save)
   const updatePositionMutation = useMutation({
     mutationFn: async (updates: Array<{ tableId: string; position_x: number; position_y: number }>) => {
-      // Update each table position
+      // Update each table position using the host-dashboard action pattern
       const promises = updates.map(({ tableId, position_x, position_y }) =>
-        fetch(`/api/host-dashboard/tables/${tableId}/position`, {
-          method: 'PATCH',
+        fetch('/api/host-dashboard?action=update-table-position', {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ position_x, position_y })
+          body: JSON.stringify({ table_id: tableId, position_x, position_y })
         })
       );
-      await Promise.all(promises);
+      const responses = await Promise.all(promises);
+      // Check if any failed
+      for (const res of responses) {
+        if (!res.ok) throw new Error('Failed to update table position');
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tables-floor-plan'] });
@@ -355,10 +359,16 @@ export default function FloorPlanEditor() {
   // Update table config mutation
   const updateTableMutation = useMutation({
     mutationFn: async ({ tableId, updates }: { tableId: string; updates: Partial<Table> }) => {
-      const response = await fetch(`/api/host-dashboard/tables/${tableId}`, {
-        method: 'PATCH',
+      const response = await fetch('/api/host-dashboard?action=update-table-properties', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
+        body: JSON.stringify({
+          table_id: tableId,
+          shape: updates.shape,
+          capacity: updates.capacity,
+          is_joinable: updates.is_joinable,
+          is_fixed_seating: updates.is_fixed_seating
+        })
       });
       if (!response.ok) throw new Error('Failed to update table');
       return response.json();
@@ -371,10 +381,10 @@ export default function FloorPlanEditor() {
   // Link tables mutation
   const linkTablesMutation = useMutation({
     mutationFn: async ({ tableId, linkWithId }: { tableId: string; linkWithId: string }) => {
-      const response = await fetch(`/api/host-dashboard/tables/${tableId}/link`, {
+      const response = await fetch('/api/host-dashboard?action=link-tables', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ link_with: linkWithId })
+        body: JSON.stringify({ table_id: tableId, linked_table_id: linkWithId })
       });
       if (!response.ok) throw new Error('Failed to link tables');
       return response.json();
@@ -389,8 +399,10 @@ export default function FloorPlanEditor() {
   // Unlink tables mutation
   const unlinkTablesMutation = useMutation({
     mutationFn: async ({ tableId, linkedTableId }: { tableId: string; linkedTableId: string }) => {
-      const response = await fetch(`/api/host-dashboard/tables/${tableId}/link/${linkedTableId}`, {
-        method: 'DELETE',
+      const response = await fetch('/api/host-dashboard?action=unlink-tables', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table_id: tableId, linked_table_id: linkedTableId })
       });
       if (!response.ok) throw new Error('Failed to unlink tables');
       return response.json();
@@ -399,6 +411,67 @@ export default function FloorPlanEditor() {
       queryClient.invalidateQueries({ queryKey: ['tables-floor-plan'] });
     }
   });
+
+  // Delete table mutation
+  const deleteTableMutation = useMutation({
+    mutationFn: async (tableId: string) => {
+      const response = await fetch('/api/host-dashboard?action=delete-table', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table_id: tableId })
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete table');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tables-floor-plan'] });
+      setSelectedTableId(null);
+    }
+  });
+
+  // Create table mutation
+  const createTableMutation = useMutation({
+    mutationFn: async (tableData: {
+      table_number: string;
+      capacity: number;
+      location: string;
+      shape: 'round' | 'square';
+      position_x: number;
+      position_y: number;
+    }) => {
+      const response = await fetch('/api/host-dashboard?action=create-table', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(tableData)
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to create table');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tables-floor-plan'] });
+    }
+  });
+
+  const handleDeleteTable = useCallback(() => {
+    if (!selectedTableId) return;
+    const table = tables.find(t => t.id === selectedTableId);
+    if (!table) return;
+
+    if (table.status === 'Occupied') {
+      alert('Cannot delete an occupied table. Please clear the table first.');
+      return;
+    }
+
+    if (confirm(`Are you sure you want to delete Table ${table.table_number}?`)) {
+      deleteTableMutation.mutate(selectedTableId);
+    }
+  }, [selectedTableId, tables, deleteTableMutation]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, delta } = event;
@@ -655,15 +728,16 @@ export default function FloorPlanEditor() {
                   Rotate 90
                 </button>
                 <button
-                  disabled={!selectedTableId}
+                  onClick={handleDeleteTable}
+                  disabled={!selectedTableId || deleteTableMutation.isPending}
                   className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm rounded-lg transition-colors ${
-                    selectedTableId
+                    selectedTableId && !deleteTableMutation.isPending
                       ? 'text-red-600 hover:bg-red-50'
                       : 'text-[#A8A29E] cursor-not-allowed'
                   }`}
                 >
                   <TrashIcon className="w-4 h-4" />
-                  Delete Table
+                  {deleteTableMutation.isPending ? 'Deleting...' : 'Delete Table'}
                 </button>
               </div>
 
