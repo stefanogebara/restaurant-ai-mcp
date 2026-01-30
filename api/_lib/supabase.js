@@ -220,7 +220,19 @@ const getTables = async (filter = {}) => {
           'Location': t.location,
           'Status': t.status,
           'Current Service ID': t.current_service_id,
-          'Is Active': t.is_active
+          'Is Active': t.is_active,
+          // Shape configuration
+          'Shape': t.shape || 'square',
+          'Is Fixed Seating': t.is_fixed_seating || false,
+          // Joinable table configuration
+          'Is Joinable': t.is_joinable !== false, // Default to true
+          'Joinable With': t.joinable_with || [],
+          // Floor plan positioning
+          'Position X': t.position_x || 0,
+          'Position Y': t.position_y || 0,
+          'Width': t.width || 1,
+          'Height': t.height || 1,
+          'Rotation': t.rotation || 0
         }
       }))
     }
@@ -245,7 +257,13 @@ const getAvailableTables = async () => {
           'Table Number': t.table_number,
           'Capacity': t.capacity,
           'Location': t.location,
-          'Status': t.status
+          'Status': t.status,
+          // Shape configuration
+          'Shape': t.shape || 'square',
+          'Is Fixed Seating': t.is_fixed_seating || false,
+          // Joinable table configuration
+          'Is Joinable': t.is_joinable !== false,
+          'Joinable With': t.joinable_with || []
         }
       }))
     }
@@ -271,7 +289,19 @@ const getTableByNumber = async (tableNumber) => {
         'Capacity': data.capacity,
         'Location': data.location,
         'Status': data.status,
-        'Current Service ID': data.current_service_id
+        'Current Service ID': data.current_service_id,
+        // Shape configuration
+        'Shape': data.shape || 'square',
+        'Is Fixed Seating': data.is_fixed_seating || false,
+        // Joinable table configuration
+        'Is Joinable': data.is_joinable !== false,
+        'Joinable With': data.joinable_with || [],
+        // Floor plan positioning
+        'Position X': data.position_x || 0,
+        'Position Y': data.position_y || 0,
+        'Width': data.width || 1,
+        'Height': data.height || 1,
+        'Rotation': data.rotation || 0
       }
     }
   };
