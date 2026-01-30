@@ -11,11 +11,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import type { OnboardingStepProps, RestaurantArea } from '../../types/onboarding.types';
+import type { OnboardingStepProps, RestaurantArea, TableShape, TableConfiguration } from '../../types/onboarding.types';
 import type { RestaurantSize } from '../../types/profile.types';
 
 const AREA_TEMPLATES = ['Indoor', 'Patio', 'Bar', 'Private Room', 'Custom'];
 const TABLE_CAPACITIES = [2, 4, 6, 8];
+const TABLE_SHAPES: TableShape[] = ['round', 'square'];
 
 /**
  * Calculate recommended table distribution based on restaurant size and total seats
@@ -124,6 +125,7 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
     );
 
     // Update the Indoor area with the calculated distribution
+    // Default to square tables for the pre-population
     const updatedAreas = data.areas.map(area => {
       if (area.name === 'Indoor') {
         return {
@@ -131,7 +133,9 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
           tables: TABLE_CAPACITIES.map(cap => ({
             capacity: cap,
             count: distribution.find(d => d.capacity === cap)?.count || 0,
-            is_fixed: false // Default: tables are flexible (can be combined)
+            shape: 'square' as TableShape, // Default to square tables
+            is_fixed_seating: false,
+            is_joinable: true
           }))
         };
       }
@@ -156,6 +160,9 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
 
     return { totalTables, totalCapacity };
   };
+
+  // Note: calculateTotals already handles the new structure correctly since
+  // it iterates over all table configs regardless of shape
 
   const { totalTables, totalCapacity } = calculateTotals();
 
@@ -200,7 +207,7 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
     const newArea: RestaurantArea = {
       name: areaName,
       is_active: true,
-      tables: TABLE_CAPACITIES.map((capacity) => ({ capacity, count: 0, is_fixed: false })),
+      tables: [], // Start empty, user adds what they need
     };
     updateData({ areas: [...data.areas, newArea] });
   };
@@ -229,6 +236,50 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
       ...currentTable,
       is_fixed: !currentTable.is_fixed
     };
+    updateData({ areas: updatedAreas });
+  };
+
+  // Get table config for specific capacity and shape
+  const getTableConfig = (areaIndex: number, capacity: number, shape: TableShape): TableConfiguration | undefined => {
+    return data.areas[areaIndex]?.tables.find(
+      t => t.capacity === capacity && t.shape === shape
+    );
+  };
+
+  // Get table count for specific capacity and shape
+  const getTableCount = (areaIndex: number, capacity: number, shape: TableShape): number => {
+    return getTableConfig(areaIndex, capacity, shape)?.count || 0;
+  };
+
+  // Update table configuration
+  const updateTableConfig = (
+    areaIndex: number,
+    capacity: number,
+    shape: TableShape,
+    field: 'count' | 'is_fixed_seating' | 'is_joinable',
+    value: number | boolean
+  ) => {
+    const updatedAreas = [...data.areas];
+    const area = updatedAreas[areaIndex];
+
+    // Find existing config or create new one
+    let configIndex = area.tables.findIndex(t => t.capacity === capacity && t.shape === shape);
+
+    if (configIndex === -1) {
+      // Create new config
+      area.tables.push({
+        capacity,
+        count: 0,
+        shape,
+        is_fixed_seating: false,
+        is_joinable: true
+      });
+      configIndex = area.tables.length - 1;
+    }
+
+    // Update the field
+    (area.tables[configIndex] as any)[field] = value;
+
     updateData({ areas: updatedAreas });
   };
 
@@ -334,45 +385,63 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              {area.tables.map((tableConfig, tableIndex) => (
-                <div key={tableIndex} className={`bg-white rounded-xl p-3 border ${tableConfig.is_fixed ? 'border-amber-300 bg-amber-50/30' : 'border-[#E7E5E4]'}`}>
-                  <label className="block text-sm font-medium text-[#1C1917] mb-2">
-                    {tableConfig.capacity}-person tables
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={tableConfig.count === 0 ? '' : tableConfig.count}
-                    placeholder="0"
-                    onChange={(e) => updateTableCount(areaIndex, tableIndex, parseInt(e.target.value) || 0)}
-                    className="w-full px-3 py-2 bg-[#F5F5F4] border border-[#E7E5E4] rounded-lg text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239]"
-                  />
-                  <p className="text-xs text-[#57534E] mt-1">
-                    {tableConfig.count * tableConfig.capacity} seats
-                  </p>
-                  {/* Fixed table toggle - only show if tables are configured */}
-                  {tableConfig.count > 0 && (
-                    <label className="flex items-center gap-2 mt-2 cursor-pointer group">
+            <div className="space-y-4">
+              {TABLE_CAPACITIES.map((capacity) => (
+                <div key={capacity} className="bg-white rounded-xl p-4 border border-[#E7E5E4]">
+                  <h4 className="text-sm font-semibold text-[#1C1917] mb-3">
+                    {capacity}-Person Tables
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Round Tables */}
+                    <div className="p-3 bg-[#F5F5F4] rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-full border-2 border-[#9F1239]" />
+                        <span className="text-sm font-medium text-[#1C1917]">Round</span>
+                      </div>
                       <input
-                        type="checkbox"
-                        checked={tableConfig.is_fixed || false}
-                        onChange={() => toggleTableFixed(areaIndex, tableIndex)}
-                        className="w-4 h-4 rounded border-[#E7E5E4] text-amber-500 focus:ring-amber-500 cursor-pointer"
+                        type="number"
+                        min="0"
+                        value={getTableCount(areaIndex, capacity, 'round') || ''}
+                        placeholder="0"
+                        onChange={(e) => updateTableConfig(areaIndex, capacity, 'round', 'count', parseInt(e.target.value) || 0)}
+                        className="w-full px-3 py-2 bg-white border border-[#E7E5E4] rounded-lg text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] text-sm"
                       />
-                      <span className="text-xs text-[#57534E] group-hover:text-[#1C1917]">
-                        Fixed (can't combine)
-                      </span>
-                      <span
-                        className="text-[#A8A29E] hover:text-[#57534E] cursor-help"
-                        title="Fixed tables (like round tables or booths) cannot be combined with other tables. Leave unchecked for flexible tables that can be merged."
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </span>
-                    </label>
-                  )}
+                      <div className="flex items-center gap-2 mt-2">
+                        <input
+                          type="checkbox"
+                          checked={getTableConfig(areaIndex, capacity, 'round')?.is_fixed_seating || false}
+                          onChange={(e) => updateTableConfig(areaIndex, capacity, 'round', 'is_fixed_seating', e.target.checked)}
+                          className="w-4 h-4 rounded border-[#E7E5E4] text-[#9F1239] focus:ring-[#9F1239]"
+                        />
+                        <span className="text-xs text-[#57534E]">Fixed seating</span>
+                      </div>
+                    </div>
+
+                    {/* Square Tables */}
+                    <div className="p-3 bg-[#F5F5F4] rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded border-2 border-[#9F1239]" />
+                        <span className="text-sm font-medium text-[#1C1917]">Square</span>
+                      </div>
+                      <input
+                        type="number"
+                        min="0"
+                        value={getTableCount(areaIndex, capacity, 'square') || ''}
+                        placeholder="0"
+                        onChange={(e) => updateTableConfig(areaIndex, capacity, 'square', 'count', parseInt(e.target.value) || 0)}
+                        className="w-full px-3 py-2 bg-white border border-[#E7E5E4] rounded-lg text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] text-sm"
+                      />
+                      <div className="flex items-center gap-2 mt-2">
+                        <input
+                          type="checkbox"
+                          checked={getTableConfig(areaIndex, capacity, 'square')?.is_fixed_seating || false}
+                          onChange={(e) => updateTableConfig(areaIndex, capacity, 'square', 'is_fixed_seating', e.target.checked)}
+                          className="w-4 h-4 rounded border-[#E7E5E4] text-[#9F1239] focus:ring-[#9F1239]"
+                        />
+                        <span className="text-xs text-[#57534E]">Fixed seating</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
