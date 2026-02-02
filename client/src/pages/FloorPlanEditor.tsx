@@ -11,6 +11,48 @@ const GRID_SIZE = 20; // 20 columns
 const GRID_HEIGHT = 15; // 15 rows
 const GRID_CELL_SIZE = 40; // pixels per grid cell
 
+/**
+ * Auto-arrange tables that don't have saved positions.
+ * Distributes them evenly across the grid, grouped by capacity.
+ */
+function autoArrangeTables(tables: Table[]): Map<string, { x: number; y: number }> {
+  const positions = new Map<string, { x: number; y: number }>();
+
+  // Find tables that need positioning (position is 0,0 or null/undefined)
+  const unpositionedTables = tables.filter(t =>
+    (t.position_x === null || t.position_x === undefined || t.position_x === 0) &&
+    (t.position_y === null || t.position_y === undefined || t.position_y === 0)
+  );
+
+  if (unpositionedTables.length === 0) return positions;
+
+  // Sort by capacity for better grouping
+  const sorted = [...unpositionedTables].sort((a, b) => (a.capacity || 2) - (b.capacity || 2));
+
+  // Calculate grid layout - leave margins
+  const startX = 2;
+  const startY = 2;
+  const spacingX = 3; // 3 cells between tables horizontally
+  const spacingY = 3; // 3 cells between tables vertically
+  const maxCols = Math.floor((GRID_SIZE - startX * 2) / spacingX);
+
+  sorted.forEach((table, index) => {
+    const col = index % maxCols;
+    const row = Math.floor(index / maxCols);
+
+    const x = startX + col * spacingX;
+    const y = startY + row * spacingY;
+
+    // Ensure we don't go off the grid
+    const safeX = Math.min(x, GRID_SIZE - (table.width || 1) - 1);
+    const safeY = Math.min(y, GRID_HEIGHT - (table.height || 1) - 1);
+
+    positions.set(table.id, { x: safeX, y: safeY });
+  });
+
+  return positions;
+}
+
 // SVG Icons
 const SaveIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,9 +96,10 @@ interface DraggableTableProps {
   onSelect: () => void;
   linkMode: boolean;
   linkSource: string | null;
+  isUnpositioned?: boolean;
 }
 
-function DraggableTable({ table, isSelected, onSelect, linkMode, linkSource }: DraggableTableProps) {
+function DraggableTable({ table, isSelected, onSelect, linkMode, linkSource, isUnpositioned }: DraggableTableProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: table.id,
     data: { table }
@@ -107,6 +150,7 @@ function DraggableTable({ table, isSelected, onSelect, linkMode, linkSource }: D
         ${isDragging ? 'opacity-50 shadow-2xl' : ''}
         ${isLinkTarget ? 'ring-2 ring-blue-500 ring-dashed animate-pulse' : ''}
         ${isLinkSource ? 'ring-4 ring-[#9F1239]' : ''}
+        ${isUnpositioned && !isSelected ? 'ring-2 ring-orange-400 ring-offset-1 animate-pulse' : ''}
         ${getStatusColor()}
         border-2 transition-shadow hover:shadow-lg
       `}
@@ -114,6 +158,9 @@ function DraggableTable({ table, isSelected, onSelect, linkMode, linkSource }: D
       <div className="text-center pointer-events-none">
         <div className="font-bold text-sm">{table.table_number}</div>
         <div className="text-xs opacity-75">{table.capacity}p</div>
+        {isUnpositioned && (
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full border border-white" title="Needs positioning" />
+        )}
       </div>
     </div>
   );
@@ -321,17 +368,47 @@ export default function FloorPlanEditor() {
 
   const rawTables: Table[] = dashboardData?.data?.tables || (dashboardData as any)?.tables || [];
 
-  // Apply local position changes to tables
-  const tables = rawTables.map(t => ({
-    ...t,
-    position_x: localPositions[t.id]?.x ?? t.position_x ?? 0,
-    position_y: localPositions[t.id]?.y ?? t.position_y ?? 0,
-    width: t.width || 1,
-    height: t.height || 1,
-    shape: t.shape || 'square',
-  }));
+  // Calculate auto-arranged positions for tables without saved positions
+  const autoArrangedPositions = React.useMemo(
+    () => autoArrangeTables(rawTables),
+    [rawTables]
+  );
+
+  // Track which tables are "unpositioned" (need their position saved)
+  const unpositionedTableIds = React.useMemo(() => {
+    const ids = new Set<string>();
+    rawTables.forEach(t => {
+      const hasNoSavedPosition =
+        (t.position_x === null || t.position_x === undefined || t.position_x === 0) &&
+        (t.position_y === null || t.position_y === undefined || t.position_y === 0);
+      const hasNoLocalPosition = !localPositions[t.id];
+      if (hasNoSavedPosition && hasNoLocalPosition) {
+        ids.add(t.id);
+      }
+    });
+    return ids;
+  }, [rawTables, localPositions]);
+
+  // Apply local position changes to tables, using auto-arranged positions as fallback
+  const tables = rawTables.map(t => {
+    // Priority: 1) local positions (user dragged), 2) saved positions, 3) auto-arranged
+    const autoPos = autoArrangedPositions.get(t.id);
+    const hasNoSavedPosition =
+      (t.position_x === null || t.position_x === undefined || t.position_x === 0) &&
+      (t.position_y === null || t.position_y === undefined || t.position_y === 0);
+
+    return {
+      ...t,
+      position_x: localPositions[t.id]?.x ?? (hasNoSavedPosition ? (autoPos?.x ?? 0) : t.position_x),
+      position_y: localPositions[t.id]?.y ?? (hasNoSavedPosition ? (autoPos?.y ?? 0) : t.position_y),
+      width: t.width || 1,
+      height: t.height || 1,
+      shape: t.shape || 'square',
+    };
+  });
 
   const selectedTable = tables.find(t => t.id === selectedTableId);
+  const unpositionedCount = unpositionedTableIds.size;
 
   // Update table position mutation (batch save)
   const updatePositionMutation = useMutation({
@@ -740,12 +817,33 @@ export default function FloorPlanEditor() {
                   <div className="w-8 h-0 border-t-2 border-dashed border-[#9F1239]"></div>
                   <span className="text-[#57534E]">Linked</span>
                 </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded bg-gray-100 border-2 border-gray-400 ring-2 ring-orange-400 ring-offset-1"></div>
+                  <span className="text-[#57534E]">Needs Position</span>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Canvas */}
-          <div className="flex-1 bg-white rounded-xl border border-[#E7E5E4] overflow-auto">
+          <div className="flex-1 flex flex-col">
+            {/* Unpositioned tables banner */}
+            {unpositionedCount > 0 && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg px-4 py-3 mb-3 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+                  <span className="text-orange-600 font-bold text-sm">{unpositionedCount}</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-orange-800">
+                    {unpositionedCount} table{unpositionedCount > 1 ? 's' : ''} auto-arranged
+                  </p>
+                  <p className="text-xs text-orange-600">
+                    Drag to reposition, then click "Save Positions" to save your layout
+                  </p>
+                </div>
+              </div>
+            )}
+            <div className="flex-1 bg-white rounded-xl border border-[#E7E5E4] overflow-auto">
             <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
               <div
                 className="relative"
@@ -781,10 +879,12 @@ export default function FloorPlanEditor() {
                     onSelect={() => handleTableClick(table.id)}
                     linkMode={linkMode}
                     linkSource={linkSource}
+                    isUnpositioned={unpositionedTableIds.has(table.id)}
                   />
                 ))}
               </div>
             </DndContext>
+            </div>
           </div>
 
           {/* Properties Panel (when table selected) */}
