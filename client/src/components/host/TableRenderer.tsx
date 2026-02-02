@@ -74,7 +74,7 @@ interface ChairLayoutProps {
 
 function ChairLayout({ shape, capacity, width, height, chairFill, tableRadius, tablePadding = 4, darkMode = false }: ChairLayoutProps) {
   const chairs: { x: number; y: number }[] = [];
-  const chairSize = Math.min(10, Math.min(width, height) / 6);
+  const chairSize = Math.min(14, Math.min(width, height) / 5);  // Larger chairs for bigger tables
 
   if (shape === 'round') {
     // Chairs evenly spaced around circle
@@ -350,10 +350,10 @@ export function TableRenderer({
     strokeWidth: colors.strokeWidth,
   };
 
-  // Calculate text positioning
+  // Calculate text positioning - larger fonts for better visibility
   const textY = shape === 'booth' ? height * 0.55 : height / 2;
-  const fontSize = Math.min(12, Math.min(width, height) / 4);
-  const capacityFontSize = Math.min(9, fontSize * 0.75);
+  const fontSize = Math.min(18, Math.min(width, height) / 3);  // Larger table numbers
+  const capacityFontSize = Math.min(12, fontSize * 0.65);  // Larger capacity text
 
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>

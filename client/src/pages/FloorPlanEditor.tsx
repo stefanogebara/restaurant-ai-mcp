@@ -11,7 +11,7 @@ import { TableRenderer, TablePreview } from '../components/host/TableRenderer';
 
 const GRID_SIZE = 20; // 20 columns
 const GRID_HEIGHT = 15; // 15 rows
-const GRID_CELL_SIZE = 40; // pixels per grid cell
+const GRID_CELL_SIZE = 55; // pixels per grid cell (larger for better visibility)
 
 /**
  * Auto-arrange tables that don't have saved positions.
