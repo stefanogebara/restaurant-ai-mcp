@@ -1,4 +1,3 @@
-import React from 'react';
 import type { TableShape, TableStatus } from '../../types/host.types';
 
 interface TableRendererProps {
@@ -71,7 +70,6 @@ function ChairLayout({ shape, capacity, width, height, chairFill, tableRadius, t
     }
   } else if (shape === 'square') {
     // Chairs on 4 sides of square
-    const padding = tablePadding + chairSize / 2 + 2;
     const tableSize = Math.min(width, height) - tablePadding * 2 - chairSize - 4;
     const startX = (width - tableSize) / 2;
     const startY = (height - tableSize) / 2;
