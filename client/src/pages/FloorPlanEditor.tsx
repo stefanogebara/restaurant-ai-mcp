@@ -565,6 +565,17 @@ export default function FloorPlanEditor() {
     }
   });
 
+  // Auto-assign shapes mutation
+  const autoAssignShapesMutation = useMutation({
+    mutationFn: async () => {
+      const response = await hostAPI.autoAssignShapes();
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tables-floor-plan'] });
+    }
+  });
+
   // Extract active parties from dashboard data
   const activeParties: ActiveParty[] = dashboardData?.data?.active_parties ||
                                         (dashboardData as any)?.active_parties || [];
@@ -748,6 +759,18 @@ export default function FloorPlanEditor() {
             <h1 className={`text-2xl font-serif font-bold ${darkMode ? 'text-white' : 'text-[#1C1917]'}`}>Floor Plan Editor</h1>
           </div>
           <div className="flex gap-3">
+            <button
+              onClick={() => autoAssignShapesMutation.mutate()}
+              disabled={autoAssignShapesMutation.isPending}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                darkMode
+                  ? 'bg-[#44403C] text-white border border-[#57534E] hover:bg-[#57534E]'
+                  : 'bg-white border border-[#E7E5E4] text-[#1C1917] hover:bg-[#F5F5F4]'
+              }`}
+              title="Automatically assign different shapes based on table capacity"
+            >
+              {autoAssignShapesMutation.isPending ? 'Assigning...' : 'Auto Shapes'}
+            </button>
             <button
               onClick={handleSavePositions}
               disabled={!hasUnsavedChanges || updatePositionMutation.isPending}

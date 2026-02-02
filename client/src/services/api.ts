@@ -66,6 +66,9 @@ export const hostAPI = {
     internal_notes?: string;
     first_time_visitor?: boolean;
   }) => api.post('/host-dashboard?action=update-reservation', data),
+
+  autoAssignShapes: () =>
+    api.post('/host-dashboard?action=auto-assign-shapes', {}),
 };
 
 // Table Configuration API
