@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import type { Table } from '../../types/host.types';
 
 interface FloorPlanViewProps {
@@ -54,7 +54,7 @@ export default function FloorPlanView({ tables, onTableClick, compact = false }:
 
   // Render dotted lines between linked/joinable tables
   const renderLinks = (locationTables: Table[]) => {
-    const links: JSX.Element[] = [];
+    const links: React.ReactElement[] = [];
     const processedPairs = new Set<string>();
 
     locationTables.forEach(table => {

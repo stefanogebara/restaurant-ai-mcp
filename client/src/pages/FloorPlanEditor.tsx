@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DndContext, DragEndEvent, useDraggable, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import { DndContext, useDraggable, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { hostAPI } from '../services/api';
 import type { Table, TableShape } from '../types/host.types';
@@ -432,8 +433,8 @@ export default function FloorPlanEditor() {
     }
   });
 
-  // Create table mutation
-  const createTableMutation = useMutation({
+  // Create table mutation (unused, kept for future use)
+  const _createTableMutation = useMutation({
     mutationFn: async (tableData: {
       table_number: string;
       capacity: number;
@@ -539,7 +540,7 @@ export default function FloorPlanEditor() {
 
   // Draw dotted lines between linked tables
   const renderLinks = () => {
-    const links: JSX.Element[] = [];
+    const links: React.ReactElement[] = [];
     const processedPairs = new Set<string>();
 
     tables.forEach(table => {

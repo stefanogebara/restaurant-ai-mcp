@@ -69,10 +69,10 @@ export default function Onboarding() {
         name: 'Indoor',
         is_active: true,
         tables: [
-          { capacity: 2, count: 0 },
-          { capacity: 4, count: 0 },
-          { capacity: 6, count: 0 },
-          { capacity: 8, count: 0 }
+          { capacity: 2, count: 0, shape: 'square', is_fixed_seating: false, is_joinable: true },
+          { capacity: 4, count: 0, shape: 'square', is_fixed_seating: false, is_joinable: true },
+          { capacity: 6, count: 0, shape: 'square', is_fixed_seating: false, is_joinable: true },
+          { capacity: 8, count: 0, shape: 'square', is_fixed_seating: false, is_joinable: true }
         ]
       }
     ],
