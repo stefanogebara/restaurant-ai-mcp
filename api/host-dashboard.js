@@ -1070,28 +1070,29 @@ async function handleCreateTable(req, res) {
 async function handleAutoAssignShapes(req, res) {
   logger.info('Auto-assigning shapes to all tables');
 
-  // Get all active tables
-  const { data: tables, error: fetchError } = await supabase
-    .from('tables')
-    .select('*')
-    .eq('is_active', true)
-    .order('table_number', { ascending: true });
+  // Get all active tables using the imported function
+  const tablesResult = await getAllTables();
 
-  if (fetchError) {
-    logger.error('Failed to fetch tables for shape assignment', fetchError);
+  if (!tablesResult.success) {
+    logger.error('Failed to fetch tables for shape assignment', tablesResult.error);
     return res.status(500).json({
       success: false,
       error: 'Failed to fetch tables'
     });
   }
 
-  if (!tables || tables.length === 0) {
+  const tables = tablesResult.tables || [];
+
+  if (tables.length === 0) {
     return res.status(200).json({
       success: true,
       message: 'No tables to update',
       updated: 0
     });
   }
+
+  // Sort by table_number for consistent alternating
+  tables.sort((a, b) => parseInt(a.table_number) - parseInt(b.table_number));
 
   // Track 4-person tables to alternate between round and square
   let fourPersonIndex = 0;
@@ -1123,21 +1124,19 @@ async function handleAutoAssignShapes(req, res) {
         break;
     }
 
-    return { id: table.id, shape };
+    return { id: table.id, shape, table_number: table.table_number };
   });
 
-  // Update each table
+  // Update each table using the imported updateTableConfig function
   let updatedCount = 0;
   for (const update of updates) {
-    const { error: updateError } = await supabase
-      .from('tables')
-      .update({ shape: update.shape })
-      .eq('id', update.id);
+    const result = await updateTableConfig(update.id, { shape: update.shape });
 
-    if (!updateError) {
+    if (result.success) {
       updatedCount++;
+      logger.info(`Updated table ${update.table_number} to shape: ${update.shape}`);
     } else {
-      logger.warn(`Failed to update shape for table ${update.id}`, updateError);
+      logger.warn(`Failed to update shape for table ${update.table_number}`, result.error);
     }
   }
 
@@ -1147,6 +1146,6 @@ async function handleAutoAssignShapes(req, res) {
     success: true,
     message: `Updated shapes for ${updatedCount} tables`,
     updated: updatedCount,
-    shapes: updates.map(u => ({ id: u.id, shape: u.shape }))
+    shapes: updates.map(u => ({ id: u.id, shape: u.shape, table_number: u.table_number }))
   });
 }
