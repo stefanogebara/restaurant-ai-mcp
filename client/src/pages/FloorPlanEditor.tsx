@@ -101,10 +101,9 @@ interface DraggableTableProps {
   onSelect: () => void;
   linkMode: boolean;
   linkSource: string | null;
-  isUnpositioned?: boolean;
 }
 
-function DraggableTable({ table, isSelected, onSelect, linkMode, linkSource, isUnpositioned }: DraggableTableProps) {
+function DraggableTable({ table, isSelected, onSelect, linkMode, linkSource }: DraggableTableProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: table.id,
     data: { table }
@@ -153,11 +152,7 @@ function DraggableTable({ table, isSelected, onSelect, linkMode, linkSource, isU
         status={table.status}
         tableNumber={table.table_number}
         isSelected={isSelected}
-        isUnpositioned={isUnpositioned}
       />
-      {isUnpositioned && (
-        <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full border border-white" title="Needs positioning" />
-      )}
     </div>
   );
 }
@@ -381,21 +376,6 @@ export default function FloorPlanEditor() {
     [rawTables]
   );
 
-  // Track which tables are "unpositioned" (need their position saved)
-  const unpositionedTableIds = React.useMemo(() => {
-    const ids = new Set<string>();
-    rawTables.forEach(t => {
-      const hasNoSavedPosition =
-        (t.position_x === null || t.position_x === undefined || t.position_x === 0) &&
-        (t.position_y === null || t.position_y === undefined || t.position_y === 0);
-      const hasNoLocalPosition = !localPositions[t.id];
-      if (hasNoSavedPosition && hasNoLocalPosition) {
-        ids.add(t.id);
-      }
-    });
-    return ids;
-  }, [rawTables, localPositions]);
-
   // Apply local position changes to tables, using auto-arranged positions as fallback
   const tables = rawTables.map(t => {
     // Priority: 1) local positions (user dragged), 2) saved positions, 3) auto-arranged
@@ -415,7 +395,6 @@ export default function FloorPlanEditor() {
   });
 
   const selectedTable = tables.find(t => t.id === selectedTableId);
-  const unpositionedCount = unpositionedTableIds.size;
 
   // Update table position mutation (batch save)
   const updatePositionMutation = useMutation({
@@ -671,21 +650,6 @@ export default function FloorPlanEditor() {
           </div>
           <div className="flex gap-3">
             <button
-              onClick={() => {
-                setLinkMode(!linkMode);
-                setLinkSource(null);
-                setSelectedTableId(null);
-              }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                linkMode
-                  ? 'bg-[#9F1239] text-white'
-                  : 'bg-white border border-[#E7E5E4] text-[#1C1917] hover:bg-[#F5F5F4]'
-              }`}
-            >
-              <LinkIcon className="w-4 h-4" />
-              {linkMode ? 'Cancel Link' : 'Link Tables'}
-            </button>
-            <button
               onClick={handleSavePositions}
               disabled={!hasUnsavedChanges || updatePositionMutation.isPending}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -705,17 +669,6 @@ export default function FloorPlanEditor() {
             </button>
           </div>
         </div>
-
-        {/* Link Mode Banner */}
-        {linkMode && (
-          <div className="mb-4 p-3 bg-[#9F1239]/10 border border-[#9F1239]/20 rounded-lg">
-            <p className="text-sm text-[#9F1239] font-medium">
-              {linkSource
-                ? `Click another table to link with Table ${tables.find(t => t.id === linkSource)?.table_number}`
-                : 'Click the first table to start linking'}
-            </p>
-          </div>
-        )}
 
         {/* Unsaved Changes Banner */}
         {hasUnsavedChanges && (
@@ -798,99 +751,19 @@ export default function FloorPlanEditor() {
                 </button>
               </div>
 
-              {/* Legend */}
-              <hr className="my-4 border-[#E7E5E4]" />
-              <h3 className="font-semibold text-[#1C1917] mb-3">Status</h3>
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-green-100 border-2 border-green-500"></div>
-                  <span className="text-[#57534E]">Available</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-red-100 border-2 border-red-500"></div>
-                  <span className="text-[#57534E]">Occupied</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-purple-100 border-2 border-purple-500"></div>
-                  <span className="text-[#57534E]">Reserved</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-amber-100 border-2 border-amber-500"></div>
-                  <span className="text-[#57534E]">Cleaning</span>
-                </div>
-                <div className="flex items-center gap-2 mt-2">
-                  <div className="w-8 h-0 border-t-2 border-dashed border-[#9F1239]"></div>
-                  <span className="text-[#57534E]">Linked</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded bg-gray-100 border-2 border-gray-400 ring-2 ring-orange-400 ring-offset-1"></div>
-                  <span className="text-[#57534E]">Needs Position</span>
-                </div>
-              </div>
-
-              <h4 className="font-medium text-[#1C1917] mt-4 mb-2 text-sm">Shapes</h4>
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full border-2 border-[#57534E]"></div>
-                  <span className="text-[#57534E]">Round</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded border-2 border-[#57534E]"></div>
-                  <span className="text-[#57534E]">Square</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-3 rounded border-2 border-[#57534E]"></div>
-                  <span className="text-[#57534E]">Rectangle</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-3 rounded-full border-2 border-[#57534E]"></div>
-                  <span className="text-[#57534E]">Oval</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <svg width="16" height="12" viewBox="0 0 16 12">
-                    <path d="M2,10 L2,4 Q2,2 4,2 L12,2 Q14,2 14,4 L14,10"
-                          fill="none" stroke="#57534E" strokeWidth="2"/>
-                  </svg>
-                  <span className="text-[#57534E]">Booth</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full border-2 border-[#57534E]"></div>
-                  <span className="text-[#57534E]">Bar Stool</span>
-                </div>
-              </div>
             </div>
           </div>
 
           {/* Canvas */}
           <div className="flex-1 flex flex-col">
-            {/* Unpositioned tables banner */}
-            {unpositionedCount > 0 && (
-              <div className="bg-orange-50 border border-orange-200 rounded-lg px-4 py-3 mb-3 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
-                  <span className="text-orange-600 font-bold text-sm">{unpositionedCount}</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-orange-800">
-                    {unpositionedCount} table{unpositionedCount > 1 ? 's' : ''} auto-arranged
-                  </p>
-                  <p className="text-xs text-orange-600">
-                    Drag to reposition, then click "Save Positions" to save your layout
-                  </p>
-                </div>
-              </div>
-            )}
-            <div className="flex-1 bg-white rounded-xl border border-[#E7E5E4] overflow-auto">
+            <div className="flex-1 bg-white rounded-xl border border-[#E7E5E4] overflow-auto shadow-sm">
             <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
               <div
                 className="relative"
                 style={{
                   width: GRID_SIZE * GRID_CELL_SIZE,
                   height: GRID_HEIGHT * GRID_CELL_SIZE,
-                  backgroundImage: `
-                    linear-gradient(to right, #E7E5E4 1px, transparent 1px),
-                    linear-gradient(to bottom, #E7E5E4 1px, transparent 1px)
-                  `,
-                  backgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`
+                  backgroundColor: '#FAFAF9'
                 }}
                 onClick={() => {
                   if (!linkMode) {
@@ -915,7 +788,6 @@ export default function FloorPlanEditor() {
                     onSelect={() => handleTableClick(table.id)}
                     linkMode={linkMode}
                     linkSource={linkSource}
-                    isUnpositioned={unpositionedTableIds.has(table.id)}
                   />
                 ))}
               </div>
@@ -937,7 +809,7 @@ export default function FloorPlanEditor() {
 
         {/* Help Text */}
         <div className="mt-6 text-center text-sm text-[#A8A29E]">
-          <p>Drag tables to position them. Click a table to edit its properties. Use "Link Tables" to connect joinable tables.</p>
+          <p>Drag tables to position them. Click a table to edit its properties.</p>
         </div>
       </div>
     </DashboardLayout>

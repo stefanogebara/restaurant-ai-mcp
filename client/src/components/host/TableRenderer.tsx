@@ -8,7 +8,6 @@ interface TableRendererProps {
   status: TableStatus;
   tableNumber: string;
   isSelected?: boolean;
-  isUnpositioned?: boolean;
 }
 
 // Status-based color schemes
@@ -313,7 +312,6 @@ export function TableRenderer({
   status,
   tableNumber,
   isSelected,
-  isUnpositioned,
 }: TableRendererProps) {
   const colors = STATUS_COLORS[status] || STATUS_COLORS['Available'];
   const shapeProps: ShapeProps = {
@@ -340,22 +338,17 @@ export function TableRenderer({
             <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#9F1239" floodOpacity="0.6" />
           </filter>
         )}
-        {isUnpositioned && (
-          <filter id="unpositionedGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#f97316" floodOpacity="0.5" />
-          </filter>
-        )}
       </defs>
 
-      {/* Selection/unpositioned glow background */}
-      {(isSelected || isUnpositioned) && (
+      {/* Selection glow background */}
+      {isSelected && (
         <rect
           x="0"
           y="0"
           width={width}
           height={height}
           fill="transparent"
-          filter={isSelected ? "url(#selectedGlow)" : "url(#unpositionedGlow)"}
+          filter="url(#selectedGlow)"
         />
       )}
 
