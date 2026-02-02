@@ -1,5 +1,49 @@
 export type TableStatus = 'Available' | 'Occupied' | 'Being Cleaned' | 'Reserved';
-export type TableShape = 'round' | 'square';
+export type TableShape = 'round' | 'square' | 'rectangle' | 'oval' | 'booth' | 'bar-stool';
+
+// Default dimensions for each table shape (in grid units)
+export const TABLE_DIMENSIONS: Record<TableShape, { width: number; height: number }> = {
+  'round': { width: 1, height: 1 },
+  'square': { width: 1, height: 1 },
+  'rectangle': { width: 2, height: 1 },
+  'oval': { width: 2, height: 1 },
+  'booth': { width: 2, height: 1 },
+  'bar-stool': { width: 1, height: 1 },
+};
+
+// Calculate table size based on shape and capacity
+export function getTableSize(shape: TableShape, capacity: number): { width: number; height: number } {
+  const base = TABLE_DIMENSIONS[shape];
+
+  // Bar stools stay small regardless of capacity
+  if (shape === 'bar-stool') {
+    return base;
+  }
+
+  // Small tables (2-4 people)
+  if (capacity <= 4) {
+    return base;
+  }
+
+  // Medium tables (5-6 people)
+  if (capacity <= 6) {
+    if (shape === 'rectangle' || shape === 'oval') {
+      return { width: 2, height: 1 };
+    }
+    return { width: Math.ceil(base.width * 1.5), height: base.height };
+  }
+
+  // Large tables (7-8 people)
+  if (capacity <= 8) {
+    if (shape === 'rectangle') {
+      return { width: 2, height: 1 };
+    }
+    return { width: 2, height: 2 };
+  }
+
+  // Extra large tables (9+ people) - long table
+  return { width: 3, height: 1 };
+}
 
 export interface Table {
   id: string;

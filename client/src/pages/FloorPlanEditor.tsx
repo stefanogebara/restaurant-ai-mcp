@@ -5,7 +5,9 @@ import type { DragEndEvent } from '@dnd-kit/core';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { hostAPI } from '../services/api';
 import type { Table, TableShape } from '../types/host.types';
+import { getTableSize } from '../types/host.types';
 import DashboardLayout from '../components/layout/DashboardLayout';
+import { TableRenderer, TablePreview } from '../components/host/TableRenderer';
 
 const GRID_SIZE = 20; // 20 columns
 const GRID_HEIGHT = 15; // 15 rows
@@ -32,7 +34,7 @@ function autoArrangeTables(tables: Table[]): Map<string, { x: number; y: number 
   // Calculate grid layout - leave margins
   const startX = 2;
   const startY = 2;
-  const spacingX = 3; // 3 cells between tables horizontally
+  const spacingX = 4; // 4 cells between tables horizontally (to accommodate larger tables)
   const spacingY = 3; // 3 cells between tables vertically
   const maxCols = Math.floor((GRID_SIZE - startX * 2) / spacingX);
 
@@ -43,9 +45,12 @@ function autoArrangeTables(tables: Table[]): Map<string, { x: number; y: number 
     const x = startX + col * spacingX;
     const y = startY + row * spacingY;
 
+    // Get proportional size for boundary check
+    const tableSize = getTableSize(table.shape || 'square', table.capacity || 4);
+
     // Ensure we don't go off the grid
-    const safeX = Math.min(x, GRID_SIZE - (table.width || 1) - 1);
-    const safeY = Math.min(y, GRID_HEIGHT - (table.height || 1) - 1);
+    const safeX = Math.min(x, GRID_SIZE - tableSize.width - 1);
+    const safeY = Math.min(y, GRID_HEIGHT - tableSize.height - 1);
 
     positions.set(table.id, { x: safeX, y: safeY });
   });
@@ -105,33 +110,22 @@ function DraggableTable({ table, isSelected, onSelect, linkMode, linkSource, isU
     data: { table }
   });
 
+  // Get proportional size based on shape and capacity
+  const tableSize = getTableSize(table.shape || 'square', table.capacity || 4);
+  const pixelWidth = tableSize.width * GRID_CELL_SIZE - 4;
+  const pixelHeight = tableSize.height * GRID_CELL_SIZE - 4;
+
   const style = {
-    left: table.position_x * GRID_CELL_SIZE,
-    top: table.position_y * GRID_CELL_SIZE,
-    width: (table.width || 1) * GRID_CELL_SIZE - 4,
-    height: (table.height || 1) * GRID_CELL_SIZE - 4,
+    left: table.position_x * GRID_CELL_SIZE + 2,
+    top: table.position_y * GRID_CELL_SIZE + 2,
+    width: pixelWidth,
+    height: pixelHeight,
     transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
     zIndex: isDragging ? 100 : isSelected ? 50 : 1,
   };
 
-  const shapeClass = table.shape === 'round' ? 'rounded-full' : 'rounded-lg';
   const isLinkTarget = linkMode && linkSource && linkSource !== table.id;
   const isLinkSource = linkSource === table.id;
-
-  const getStatusColor = () => {
-    switch (table.status) {
-      case 'Available':
-        return 'bg-green-100 border-green-500 text-green-700';
-      case 'Occupied':
-        return 'bg-red-100 border-red-500 text-red-700';
-      case 'Reserved':
-        return 'bg-purple-100 border-purple-500 text-purple-700';
-      case 'Being Cleaned':
-        return 'bg-amber-100 border-amber-500 text-amber-700';
-      default:
-        return 'bg-gray-100 border-gray-400 text-gray-700';
-    }
-  };
 
   return (
     <div
@@ -144,40 +138,54 @@ function DraggableTable({ table, isSelected, onSelect, linkMode, linkSource, isU
         onSelect();
       }}
       className={`
-        absolute flex items-center justify-center cursor-grab active:cursor-grabbing
-        ${shapeClass}
-        ${isSelected ? 'ring-4 ring-[#9F1239] ring-offset-2' : ''}
-        ${isDragging ? 'opacity-50 shadow-2xl' : ''}
-        ${isLinkTarget ? 'ring-2 ring-blue-500 ring-dashed animate-pulse' : ''}
-        ${isLinkSource ? 'ring-4 ring-[#9F1239]' : ''}
-        ${isUnpositioned && !isSelected ? 'ring-2 ring-orange-400 ring-offset-1 animate-pulse' : ''}
-        ${getStatusColor()}
-        border-2 transition-shadow hover:shadow-lg
+        absolute cursor-grab active:cursor-grabbing
+        ${isDragging ? 'opacity-50' : ''}
+        ${isLinkTarget ? 'ring-2 ring-blue-500 ring-dashed animate-pulse rounded-lg' : ''}
+        ${isLinkSource ? 'ring-4 ring-[#9F1239] rounded-lg' : ''}
+        transition-shadow hover:shadow-lg
       `}
     >
-      <div className="text-center pointer-events-none">
-        <div className="font-bold text-sm">{table.table_number}</div>
-        <div className="text-xs opacity-75">{table.capacity}p</div>
-        {isUnpositioned && (
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full border border-white" title="Needs positioning" />
-        )}
-      </div>
+      <TableRenderer
+        shape={table.shape || 'square'}
+        capacity={table.capacity || 4}
+        width={pixelWidth}
+        height={pixelHeight}
+        status={table.status}
+        tableNumber={table.table_number}
+        isSelected={isSelected}
+        isUnpositioned={isUnpositioned}
+      />
+      {isUnpositioned && (
+        <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full border border-white" title="Needs positioning" />
+      )}
     </div>
   );
 }
 
+// Palette items configuration
+const PALETTE_ITEMS: { shape: TableShape; capacity: number; label: string }[] = [
+  { shape: 'round', capacity: 2, label: '2-Top Round' },
+  { shape: 'round', capacity: 4, label: '4-Top Round' },
+  { shape: 'square', capacity: 4, label: '4-Top Square' },
+  { shape: 'rectangle', capacity: 6, label: '6-Top Long' },
+  { shape: 'rectangle', capacity: 8, label: '8-Top Long' },
+  { shape: 'oval', capacity: 6, label: '6-Top Oval' },
+  { shape: 'booth', capacity: 4, label: '4-Top Booth' },
+  { shape: 'booth', capacity: 6, label: '6-Top Booth' },
+  { shape: 'bar-stool', capacity: 1, label: 'Bar Stool' },
+];
+
 interface TablePaletteItemProps {
   shape: TableShape;
   capacity: number;
+  label: string;
 }
 
-function TablePaletteItem({ shape, capacity }: TablePaletteItemProps) {
+function TablePaletteItem({ shape, capacity, label }: TablePaletteItemProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `palette-${shape}-${capacity}`,
     data: { type: 'new-table', shape, capacity }
   });
-
-  const shapeClass = shape === 'round' ? 'rounded-full' : 'rounded';
 
   return (
     <div
@@ -185,13 +193,13 @@ function TablePaletteItem({ shape, capacity }: TablePaletteItemProps) {
       {...attributes}
       {...listeners}
       className={`
-        w-12 h-12 flex items-center justify-center cursor-grab
-        ${shapeClass} border-2 border-[#9F1239] bg-white
+        flex flex-col items-center gap-1 p-2 rounded-lg border border-[#E7E5E4] bg-white cursor-grab
         ${isDragging ? 'opacity-50' : ''}
-        hover:bg-[#9F1239]/10 transition-colors
+        hover:bg-[#F5F5F4] hover:border-[#9F1239] transition-colors
       `}
     >
-      <span className="text-xs font-medium text-[#1C1917]">{capacity}</span>
+      <TablePreview shape={shape} capacity={capacity} width={44} height={44} />
+      <span className="text-[10px] text-[#57534E] text-center leading-tight">{label}</span>
     </div>
   );
 }
@@ -227,33 +235,32 @@ function TablePropertiesPanel({ table, tables, onUpdate, onUnlink, onClose }: Ta
         {/* Shape */}
         <div>
           <label className="block text-xs font-medium text-[#57534E] mb-2">Shape</label>
-          <div className="flex gap-2">
-            <button
-              onClick={() => onUpdate({ shape: 'round' })}
-              className={`flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-colors ${
-                table.shape === 'round'
-                  ? 'border-[#9F1239] bg-[#9F1239]/10 text-[#9F1239]'
-                  : 'border-[#E7E5E4] text-[#57534E] hover:bg-[#F5F5F4]'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-2">
-                <div className="w-4 h-4 rounded-full border-2 border-current" />
-                Round
-              </div>
-            </button>
-            <button
-              onClick={() => onUpdate({ shape: 'square' })}
-              className={`flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-colors ${
-                table.shape === 'square'
-                  ? 'border-[#9F1239] bg-[#9F1239]/10 text-[#9F1239]'
-                  : 'border-[#E7E5E4] text-[#57534E] hover:bg-[#F5F5F4]'
-              }`}
-            >
-              <div className="flex items-center justify-center gap-2">
-                <div className="w-4 h-4 rounded border-2 border-current" />
-                Square
-              </div>
-            </button>
+          <div className="grid grid-cols-2 gap-2">
+            {(['round', 'square', 'rectangle', 'oval', 'booth', 'bar-stool'] as TableShape[]).map(shape => (
+              <button
+                key={shape}
+                onClick={() => onUpdate({ shape })}
+                className={`py-2 px-2 rounded-lg border-2 text-xs font-medium transition-colors ${
+                  table.shape === shape
+                    ? 'border-[#9F1239] bg-[#9F1239]/10 text-[#9F1239]'
+                    : 'border-[#E7E5E4] text-[#57534E] hover:bg-[#F5F5F4]'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-1">
+                  {shape === 'round' && <div className="w-3 h-3 rounded-full border-2 border-current" />}
+                  {shape === 'square' && <div className="w-3 h-3 rounded-sm border-2 border-current" />}
+                  {shape === 'rectangle' && <div className="w-4 h-2 rounded-sm border-2 border-current" />}
+                  {shape === 'oval' && <div className="w-4 h-2 rounded-full border-2 border-current" />}
+                  {shape === 'booth' && (
+                    <svg width="12" height="8" viewBox="0 0 12 8" className="stroke-current fill-none" strokeWidth="1.5">
+                      <path d="M1,7 L1,3 Q1,1 3,1 L9,1 Q11,1 11,3 L11,7" />
+                    </svg>
+                  )}
+                  {shape === 'bar-stool' && <div className="w-2 h-2 rounded-full border-2 border-current" />}
+                  <span className="capitalize">{shape.replace('-', ' ')}</span>
+                </div>
+              </button>
+            ))}
           </div>
         </div>
 
@@ -534,14 +541,17 @@ export default function FloorPlanEditor() {
     const table = tables.find(t => t.id === active.id);
     if (!table) return;
 
+    // Get proportional size for boundary calculations
+    const tableSize = getTableSize(table.shape || 'square', table.capacity || 4);
+
     // Calculate new grid position
     const currentX = localPositions[table.id]?.x ?? table.position_x;
     const currentY = localPositions[table.id]?.y ?? table.position_y;
 
-    const newX = Math.max(0, Math.min(GRID_SIZE - (table.width || 1),
+    const newX = Math.max(0, Math.min(GRID_SIZE - tableSize.width,
       Math.round((currentX * GRID_CELL_SIZE + delta.x) / GRID_CELL_SIZE)
     ));
-    const newY = Math.max(0, Math.min(GRID_HEIGHT - (table.height || 1),
+    const newY = Math.max(0, Math.min(GRID_HEIGHT - tableSize.height,
       Math.round((currentY * GRID_CELL_SIZE + delta.y) / GRID_CELL_SIZE)
     ));
 
@@ -603,10 +613,14 @@ export default function FloorPlanEditor() {
         const linkedTable = tables.find(t => t.id === linkedId);
         if (!linkedTable) return;
 
-        const x1 = (table.position_x + (table.width || 1) / 2) * GRID_CELL_SIZE;
-        const y1 = (table.position_y + (table.height || 1) / 2) * GRID_CELL_SIZE;
-        const x2 = (linkedTable.position_x + (linkedTable.width || 1) / 2) * GRID_CELL_SIZE;
-        const y2 = (linkedTable.position_y + (linkedTable.height || 1) / 2) * GRID_CELL_SIZE;
+        // Get proportional sizes for center calculation
+        const tableSize = getTableSize(table.shape || 'square', table.capacity || 4);
+        const linkedTableSize = getTableSize(linkedTable.shape || 'square', linkedTable.capacity || 4);
+
+        const x1 = (table.position_x + tableSize.width / 2) * GRID_CELL_SIZE;
+        const y1 = (table.position_y + tableSize.height / 2) * GRID_CELL_SIZE;
+        const x2 = (linkedTable.position_x + linkedTableSize.width / 2) * GRID_CELL_SIZE;
+        const y2 = (linkedTable.position_y + linkedTableSize.height / 2) * GRID_CELL_SIZE;
 
         links.push(
           <line
@@ -738,24 +752,15 @@ export default function FloorPlanEditor() {
                 Drag tables onto the canvas
               </p>
 
-              <div className="space-y-4">
-                <div>
-                  <p className="text-xs text-[#57534E] mb-2 font-medium">Round Tables</p>
-                  <div className="flex flex-wrap gap-2">
-                    {[2, 4, 6, 8].map(cap => (
-                      <TablePaletteItem key={`round-${cap}`} shape="round" capacity={cap} />
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-xs text-[#57534E] mb-2 font-medium">Square Tables</p>
-                  <div className="flex flex-wrap gap-2">
-                    {[2, 4, 6, 8].map(cap => (
-                      <TablePaletteItem key={`square-${cap}`} shape="square" capacity={cap} />
-                    ))}
-                  </div>
-                </div>
+              <div className="grid grid-cols-2 gap-2">
+                {PALETTE_ITEMS.map(item => (
+                  <TablePaletteItem
+                    key={`${item.shape}-${item.capacity}`}
+                    shape={item.shape}
+                    capacity={item.capacity}
+                    label={item.label}
+                  />
+                ))}
               </div>
 
               <hr className="my-4 border-[#E7E5E4]" />
@@ -795,7 +800,7 @@ export default function FloorPlanEditor() {
 
               {/* Legend */}
               <hr className="my-4 border-[#E7E5E4]" />
-              <h3 className="font-semibold text-[#1C1917] mb-3">Legend</h3>
+              <h3 className="font-semibold text-[#1C1917] mb-3">Status</h3>
               <div className="space-y-2 text-xs">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded bg-green-100 border-2 border-green-500"></div>
@@ -820,6 +825,37 @@ export default function FloorPlanEditor() {
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded bg-gray-100 border-2 border-gray-400 ring-2 ring-orange-400 ring-offset-1"></div>
                   <span className="text-[#57534E]">Needs Position</span>
+                </div>
+              </div>
+
+              <h4 className="font-medium text-[#1C1917] mt-4 mb-2 text-sm">Shapes</h4>
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full border-2 border-[#57534E]"></div>
+                  <span className="text-[#57534E]">Round</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded border-2 border-[#57534E]"></div>
+                  <span className="text-[#57534E]">Square</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-3 rounded border-2 border-[#57534E]"></div>
+                  <span className="text-[#57534E]">Rectangle</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-3 rounded-full border-2 border-[#57534E]"></div>
+                  <span className="text-[#57534E]">Oval</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <svg width="16" height="12" viewBox="0 0 16 12">
+                    <path d="M2,10 L2,4 Q2,2 4,2 L12,2 Q14,2 14,4 L14,10"
+                          fill="none" stroke="#57534E" strokeWidth="2"/>
+                  </svg>
+                  <span className="text-[#57534E]">Booth</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full border-2 border-[#57534E]"></div>
+                  <span className="text-[#57534E]">Bar Stool</span>
                 </div>
               </div>
             </div>
