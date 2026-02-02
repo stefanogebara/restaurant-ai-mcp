@@ -137,12 +137,14 @@ function DraggableTable({
 
   // Get proportional size based on shape and capacity
   const tableSize = getTableSize(table.shape || 'square', table.capacity || 4);
-  const pixelWidth = tableSize.width * GRID_CELL_SIZE - 4;
-  const pixelHeight = tableSize.height * GRID_CELL_SIZE - 4;
+  // Add padding for chairs and text that extend beyond the table
+  const CHAIR_PADDING = 16; // Extra space for chairs around the table
+  const pixelWidth = tableSize.width * GRID_CELL_SIZE + CHAIR_PADDING;
+  const pixelHeight = tableSize.height * GRID_CELL_SIZE + CHAIR_PADDING;
 
   const style = {
-    left: table.position_x * GRID_CELL_SIZE + 2,
-    top: table.position_y * GRID_CELL_SIZE + 2,
+    left: table.position_x * GRID_CELL_SIZE - CHAIR_PADDING / 2,
+    top: table.position_y * GRID_CELL_SIZE - CHAIR_PADDING / 2,
     width: pixelWidth,
     height: pixelHeight,
     transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
@@ -179,7 +181,7 @@ function DraggableTable({
       style={style}
       onClick={handleClick}
       className={`
-        absolute cursor-grab active:cursor-grabbing
+        absolute cursor-grab active:cursor-grabbing overflow-visible
         ${isDragging ? 'opacity-50' : ''}
         ${isLinkTarget ? 'ring-2 ring-blue-500 ring-dashed animate-pulse rounded-lg' : ''}
         ${isLinkSource ? 'ring-4 ring-[#9F1239] rounded-lg' : ''}
