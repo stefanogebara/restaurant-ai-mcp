@@ -8,14 +8,35 @@ interface TableRendererProps {
   status: TableStatus;
   tableNumber: string;
   isSelected?: boolean;
+  // NEW props for industry-standard design
+  guestName?: string;           // Show on occupied tables
+  isVIP?: boolean;              // Golden star indicator
+  specialOccasion?: string;     // Birthday, Anniversary, etc.
+  serverColor?: string;         // Server section color
+  darkMode?: boolean;           // Dark mode styling
 }
 
-// Status-based color schemes
-const STATUS_COLORS: Record<TableStatus, { fill: string; stroke: string; glow: string; chairFill: string }> = {
-  'Available': { fill: '#dcfce7', stroke: '#22c55e', glow: '#22c55e40', chairFill: '#bbf7d0' },
-  'Occupied': { fill: '#fee2e2', stroke: '#ef4444', glow: '#ef444440', chairFill: '#fecaca' },
-  'Reserved': { fill: '#f3e8ff', stroke: '#a855f7', glow: '#a855f740', chairFill: '#e9d5ff' },
-  'Being Cleaned': { fill: '#fef3c7', stroke: '#f59e0b', glow: '#f59e0b40', chairFill: '#fde68a' },
+// Status-based color schemes - outline-based design (like SevenRooms)
+// Light mode: neutral fill with colored outline
+const LIGHT_STATUS_COLORS: Record<TableStatus, { fill: string; stroke: string; strokeWidth: number; chairFill: string }> = {
+  'Available': { fill: '#FAFAF9', stroke: '#22c55e', strokeWidth: 3, chairFill: '#e5e5e5' },
+  'Occupied': { fill: '#FAFAF9', stroke: '#ef4444', strokeWidth: 3, chairFill: '#e5e5e5' },
+  'Reserved': { fill: '#FAFAF9', stroke: '#a855f7', strokeWidth: 3, chairFill: '#e5e5e5' },
+  'Being Cleaned': { fill: '#FAFAF9', stroke: '#f59e0b', strokeWidth: 3, chairFill: '#e5e5e5' },
+};
+
+// Dark mode colors
+const DARK_STATUS_COLORS: Record<TableStatus, { fill: string; stroke: string; strokeWidth: number; chairFill: string }> = {
+  'Available': { fill: '#292524', stroke: '#4ade80', strokeWidth: 3, chairFill: '#44403C' },
+  'Occupied': { fill: '#292524', stroke: '#f87171', strokeWidth: 3, chairFill: '#44403C' },
+  'Reserved': { fill: '#292524', stroke: '#c084fc', strokeWidth: 3, chairFill: '#44403C' },
+  'Being Cleaned': { fill: '#292524', stroke: '#fbbf24', strokeWidth: 3, chairFill: '#44403C' },
+};
+
+// Get colors based on dark mode
+const getColors = (status: TableStatus, darkMode: boolean = false) => {
+  const colors = darkMode ? DARK_STATUS_COLORS : LIGHT_STATUS_COLORS;
+  return colors[status] || colors['Available'];
 };
 
 // Chair component
@@ -26,14 +47,14 @@ interface ChairProps {
   fill: string;
 }
 
-function Chair({ x, y, size, fill }: ChairProps) {
+function Chair({ x, y, size, fill, darkMode = false }: ChairProps & { darkMode?: boolean }) {
   return (
     <circle
       cx={x}
       cy={y}
       r={size / 2}
       fill={fill}
-      stroke="#a8a29e"
+      stroke={darkMode ? '#57534E' : '#a8a29e'}
       strokeWidth="1"
     />
   );
@@ -48,9 +69,10 @@ interface ChairLayoutProps {
   chairFill: string;
   tableRadius?: number;
   tablePadding?: number;
+  darkMode?: boolean;
 }
 
-function ChairLayout({ shape, capacity, width, height, chairFill, tableRadius, tablePadding = 4 }: ChairLayoutProps) {
+function ChairLayout({ shape, capacity, width, height, chairFill, tableRadius, tablePadding = 4, darkMode = false }: ChairLayoutProps) {
   const chairs: { x: number; y: number }[] = [];
   const chairSize = Math.min(10, Math.min(width, height) / 6);
 
@@ -129,7 +151,7 @@ function ChairLayout({ shape, capacity, width, height, chairFill, tableRadius, t
   return (
     <>
       {chairs.map((chair, i) => (
-        <Chair key={i} x={chair.x} y={chair.y} size={chairSize} fill={chairFill} />
+        <Chair key={i} x={chair.x} y={chair.y} size={chairSize} fill={chairFill} darkMode={darkMode} />
       ))}
     </>
   );
@@ -141,10 +163,11 @@ interface ShapeProps {
   height: number;
   fill: string;
   stroke: string;
+  strokeWidth?: number;
   padding?: number;
 }
 
-function RoundTable({ width, height, fill, stroke, padding = 8 }: ShapeProps) {
+function RoundTable({ width, height, fill, stroke, strokeWidth = 3, padding = 8 }: ShapeProps) {
   const cx = width / 2;
   const cy = height / 2;
   const r = Math.min(width, height) / 2 - padding;
@@ -163,14 +186,14 @@ function RoundTable({ width, height, fill, stroke, padding = 8 }: ShapeProps) {
         r={r}
         fill={fill}
         stroke={stroke}
-        strokeWidth="2"
+        strokeWidth={strokeWidth}
         filter="url(#shadow)"
       />
     </>
   );
 }
 
-function SquareTable({ width, height, fill, stroke, padding = 8 }: ShapeProps) {
+function SquareTable({ width, height, fill, stroke, strokeWidth = 3, padding = 8 }: ShapeProps) {
   const size = Math.min(width, height) - padding * 2 - 8;
   const x = (width - size) / 2;
   const y = (height - size) / 2;
@@ -184,13 +207,13 @@ function SquareTable({ width, height, fill, stroke, padding = 8 }: ShapeProps) {
       rx="4"
       fill={fill}
       stroke={stroke}
-      strokeWidth="2"
+      strokeWidth={strokeWidth}
       filter="url(#shadow)"
     />
   );
 }
 
-function RectangleTable({ width, height, fill, stroke, padding = 8 }: ShapeProps) {
+function RectangleTable({ width, height, fill, stroke, strokeWidth = 3, padding = 8 }: ShapeProps) {
   const tableWidth = width - padding * 2 - 8;
   const tableHeight = height - padding * 2 - 8;
   const x = (width - tableWidth) / 2;
@@ -205,13 +228,13 @@ function RectangleTable({ width, height, fill, stroke, padding = 8 }: ShapeProps
       rx="4"
       fill={fill}
       stroke={stroke}
-      strokeWidth="2"
+      strokeWidth={strokeWidth}
       filter="url(#shadow)"
     />
   );
 }
 
-function OvalTable({ width, height, fill, stroke, padding = 8 }: ShapeProps) {
+function OvalTable({ width, height, fill, stroke, strokeWidth = 3, padding = 8 }: ShapeProps) {
   const cx = width / 2;
   const cy = height / 2;
   const rx = (width - padding * 2 - 8) / 2;
@@ -225,13 +248,13 @@ function OvalTable({ width, height, fill, stroke, padding = 8 }: ShapeProps) {
       ry={ry}
       fill={fill}
       stroke={stroke}
-      strokeWidth="2"
+      strokeWidth={strokeWidth}
       filter="url(#shadow)"
     />
   );
 }
 
-function BoothTable({ width, height, fill, stroke, padding = 8 }: ShapeProps) {
+function BoothTable({ width, height, fill, stroke, strokeWidth = 3, padding = 8 }: ShapeProps) {
   const boothHeight = height * 0.35;
   const tableTop = boothHeight + 4;
   const tableHeight = height - tableTop - padding - 8;
@@ -267,14 +290,14 @@ function BoothTable({ width, height, fill, stroke, padding = 8 }: ShapeProps) {
         rx="4"
         fill={fill}
         stroke={stroke}
-        strokeWidth="2"
+        strokeWidth={strokeWidth}
         filter="url(#shadow)"
       />
     </>
   );
 }
 
-function BarStoolTable({ width, height, fill, stroke }: ShapeProps) {
+function BarStoolTable({ width, height, fill, stroke, strokeWidth = 3 }: ShapeProps) {
   const cx = width / 2;
   const cy = height / 2 - 4;
   const r = Math.min(width, height) / 3.5;
@@ -297,7 +320,7 @@ function BarStoolTable({ width, height, fill, stroke }: ShapeProps) {
         r={r}
         fill={fill}
         stroke={stroke}
-        strokeWidth="2"
+        strokeWidth={strokeWidth}
         filter="url(#shadow)"
       />
     </>
@@ -312,13 +335,19 @@ export function TableRenderer({
   status,
   tableNumber,
   isSelected,
+  guestName,
+  isVIP,
+  specialOccasion,
+  serverColor,
+  darkMode = false,
 }: TableRendererProps) {
-  const colors = STATUS_COLORS[status] || STATUS_COLORS['Available'];
+  const colors = getColors(status, darkMode);
   const shapeProps: ShapeProps = {
     width,
     height,
     fill: colors.fill,
     stroke: colors.stroke,
+    strokeWidth: colors.strokeWidth,
   };
 
   // Calculate text positioning
@@ -360,6 +389,7 @@ export function TableRenderer({
         height={height}
         chairFill={colors.chairFill}
         tableRadius={shape === 'round' ? Math.min(width, height) / 2 - 8 : undefined}
+        darkMode={darkMode}
       />
 
       {/* Table body based on shape */}
@@ -370,9 +400,77 @@ export function TableRenderer({
       {shape === 'booth' && <BoothTable {...shapeProps} />}
       {shape === 'bar-stool' && <BarStoolTable {...shapeProps} />}
 
-      {/* Table number */}
-      {tableNumber && (
+      {/* VIP indicator - golden star badge in top-right */}
+      {isVIP && (
+        <g transform={`translate(${width - 14}, 2)`}>
+          <circle cx="6" cy="6" r="7" fill="#fbbf24" stroke="#f59e0b" strokeWidth="1" />
+          <text x="6" y="9" textAnchor="middle" fontSize="8" fill="#1C1917">★</text>
+        </g>
+      )}
+
+      {/* Special occasion indicator - emoji badge in top-left */}
+      {specialOccasion && !isVIP && (
+        <g transform={`translate(2, 2)`}>
+          <circle cx="6" cy="6" r="7" fill="#fce7f3" stroke="#f9a8d4" strokeWidth="1" />
+          <text x="6" y="9" textAnchor="middle" fontSize="7">
+            {specialOccasion === 'Birthday' ? '🎂' :
+             specialOccasion === 'Anniversary' ? '💍' :
+             specialOccasion === 'Business' ? '💼' : '✨'}
+          </text>
+        </g>
+      )}
+
+      {/* Both VIP and special occasion */}
+      {isVIP && specialOccasion && (
+        <g transform={`translate(2, 2)`}>
+          <circle cx="6" cy="6" r="7" fill="#fce7f3" stroke="#f9a8d4" strokeWidth="1" />
+          <text x="6" y="9" textAnchor="middle" fontSize="7">
+            {specialOccasion === 'Birthday' ? '🎂' :
+             specialOccasion === 'Anniversary' ? '💍' :
+             specialOccasion === 'Business' ? '💼' : '✨'}
+          </text>
+        </g>
+      )}
+
+      {/* Server section indicator */}
+      {serverColor && (
+        <g transform={`translate(${width / 2 - 8}, ${height - 12})`}>
+          <rect x="0" y="0" width="16" height="8" rx="2" fill={serverColor} />
+        </g>
+      )}
+
+      {/* Table content - show guest name for occupied tables */}
+      {status === 'Occupied' && guestName ? (
         <>
+          {/* Guest first name (primary) */}
+          <text
+            x={width / 2}
+            y={textY - 2}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize={Math.min(10, fontSize)}
+            fontWeight="600"
+            fill={darkMode ? '#FAFAF9' : '#1C1917'}
+            style={{ pointerEvents: 'none' }}
+          >
+            {guestName.split(' ')[0].substring(0, 8)}
+          </text>
+          {/* Table number (secondary, smaller) */}
+          <text
+            x={width / 2}
+            y={textY + 10}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize={Math.min(8, capacityFontSize)}
+            fill={darkMode ? '#A8A29E' : '#57534E'}
+            style={{ pointerEvents: 'none' }}
+          >
+            T{tableNumber}
+          </text>
+        </>
+      ) : tableNumber ? (
+        <>
+          {/* Standard display: table number + capacity */}
           <text
             x={width / 2}
             y={textY - 2}
@@ -380,7 +478,7 @@ export function TableRenderer({
             dominantBaseline="middle"
             fontSize={fontSize}
             fontWeight="bold"
-            fill="#1C1917"
+            fill={darkMode ? '#FAFAF9' : '#1C1917'}
             style={{ pointerEvents: 'none' }}
           >
             {tableNumber}
@@ -391,13 +489,13 @@ export function TableRenderer({
             textAnchor="middle"
             dominantBaseline="middle"
             fontSize={capacityFontSize}
-            fill="#57534E"
+            fill={darkMode ? '#A8A29E' : '#57534E'}
             style={{ pointerEvents: 'none' }}
           >
             {capacity}p
           </text>
         </>
-      )}
+      ) : null}
     </svg>
   );
 }

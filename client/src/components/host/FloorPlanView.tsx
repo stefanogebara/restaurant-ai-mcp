@@ -1,18 +1,78 @@
 import React, { useMemo } from 'react';
-import type { Table } from '../../types/host.types';
+import type { Table, ActiveParty } from '../../types/host.types';
 
 interface FloorPlanViewProps {
   tables: Table[];
+  activeParties?: ActiveParty[];  // For showing guest names on occupied tables
   onTableClick?: (table: Table) => void;
   compact?: boolean; // For smaller view in dashboard
+  darkMode?: boolean;
 }
 
 // Grid cell size - smaller for compact view
 const GRID_CELL_SIZE_NORMAL = 40;
 const GRID_CELL_SIZE_COMPACT = 32;
 
-export default function FloorPlanView({ tables, onTableClick, compact = false }: FloorPlanViewProps) {
+// Outline-based status colors (matching TableRenderer)
+const getStatusColor = (status: string, darkMode: boolean = false) => {
+  if (darkMode) {
+    switch (status) {
+      case 'Available':
+        return { bg: 'bg-[#292524]', border: 'border-green-400', text: 'text-white' };
+      case 'Occupied':
+        return { bg: 'bg-[#292524]', border: 'border-red-400', text: 'text-white' };
+      case 'Reserved':
+        return { bg: 'bg-[#292524]', border: 'border-purple-400', text: 'text-white' };
+      case 'Being Cleaned':
+        return { bg: 'bg-[#292524]', border: 'border-amber-400', text: 'text-white' };
+      default:
+        return { bg: 'bg-[#292524]', border: 'border-gray-500', text: 'text-white' };
+    }
+  }
+  // Light mode - neutral fill with colored outline
+  switch (status) {
+    case 'Available':
+      return { bg: 'bg-[#FAFAF9]', border: 'border-green-500', text: 'text-[#1C1917]' };
+    case 'Occupied':
+      return { bg: 'bg-[#FAFAF9]', border: 'border-red-500', text: 'text-[#1C1917]' };
+    case 'Reserved':
+      return { bg: 'bg-[#FAFAF9]', border: 'border-purple-500', text: 'text-[#1C1917]' };
+    case 'Being Cleaned':
+      return { bg: 'bg-[#FAFAF9]', border: 'border-amber-500', text: 'text-[#1C1917]' };
+    default:
+      return { bg: 'bg-[#FAFAF9]', border: 'border-gray-400', text: 'text-[#1C1917]' };
+  }
+};
+
+export default function FloorPlanView({
+  tables,
+  activeParties = [],
+  onTableClick,
+  compact = false,
+  darkMode = false
+}: FloorPlanViewProps) {
   const GRID_CELL_SIZE = compact ? GRID_CELL_SIZE_COMPACT : GRID_CELL_SIZE_NORMAL;
+
+  // Create lookup map: table_id -> party info
+  const tablePartyMap = useMemo(() => {
+    const map = new Map<string, {
+      guestName: string;
+      isVIP?: boolean;
+      specialOccasion?: string
+    }>();
+
+    activeParties.forEach(party => {
+      (party.tables || []).forEach(tableId => {
+        map.set(tableId, {
+          guestName: party.customer_name,
+          isVIP: (party as any).is_vip,
+          specialOccasion: (party as any).special_occasion,
+        });
+      });
+    });
+
+    return map;
+  }, [activeParties]);
 
   // Group tables by location
   const tablesByLocation = useMemo(() => {
@@ -34,22 +94,6 @@ export default function FloorPlanView({ tables, onTableClick, compact = false }:
       maxY = Math.max(maxY, (t.position_y || 0) + (t.height || 1));
     });
     return { width: Math.max(10, maxX + 1), height: Math.max(6, maxY + 1) };
-  };
-
-  // Get status color classes
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Available':
-        return 'bg-green-100 border-green-500 text-green-700';
-      case 'Occupied':
-        return 'bg-red-100 border-red-500 text-red-700';
-      case 'Reserved':
-        return 'bg-purple-100 border-purple-500 text-purple-700';
-      case 'Being Cleaned':
-        return 'bg-amber-100 border-amber-500 text-amber-700';
-      default:
-        return 'bg-gray-100 border-gray-400 text-gray-700';
-    }
   };
 
   // Render dotted lines between linked/joinable tables
@@ -93,8 +137,8 @@ export default function FloorPlanView({ tables, onTableClick, compact = false }:
   // Empty state
   if (tables.length === 0) {
     return (
-      <div className="text-center py-12 text-[#57534E]">
-        <p className="font-semibold text-lg text-[#1C1917]">No tables configured yet</p>
+      <div className={`text-center py-12 ${darkMode ? 'text-[#A8A29E]' : 'text-[#57534E]'}`}>
+        <p className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-[#1C1917]'}`}>No tables configured yet</p>
         <p className="text-sm mt-2">Tables will appear here after onboarding</p>
       </div>
     );
@@ -107,9 +151,11 @@ export default function FloorPlanView({ tables, onTableClick, compact = false }:
 
         return (
           <div key={location}>
-            <h3 className="text-sm font-semibold text-[#1C1917] mb-3">{location}</h3>
+            <h3 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-white' : 'text-[#1C1917]'}`}>{location}</h3>
             <div
-              className="relative bg-[#FAFAF9] rounded-xl p-2 overflow-auto border border-[#E7E5E4]"
+              className={`relative rounded-xl p-2 overflow-auto border ${
+                darkMode ? 'bg-[#1C1917] border-[#44403C]' : 'bg-[#FAFAF9] border-[#E7E5E4]'
+              }`}
               style={{
                 width: '100%',
                 minHeight: bounds.height * GRID_CELL_SIZE + 16
@@ -120,12 +166,7 @@ export default function FloorPlanView({ tables, onTableClick, compact = false }:
                 style={{
                   width: bounds.width * GRID_CELL_SIZE,
                   height: bounds.height * GRID_CELL_SIZE,
-                  backgroundImage: `
-                    linear-gradient(to right, #E7E5E4 1px, transparent 1px),
-                    linear-gradient(to bottom, #E7E5E4 1px, transparent 1px)
-                  `,
-                  backgroundSize: `${GRID_CELL_SIZE}px ${GRID_CELL_SIZE}px`,
-                  backgroundPosition: '0 0'
+                  // No grid lines - clean plain background
                 }}
               >
                 {/* Joinable Links SVG Layer */}
@@ -142,11 +183,14 @@ export default function FloorPlanView({ tables, onTableClick, compact = false }:
                 {/* Tables */}
                 {locationTables.map(table => {
                   const shapeClass = table.shape === 'round' ? 'rounded-full' : 'rounded-lg';
-                  const colorClass = getStatusColor(table.status);
+                  const colors = getStatusColor(table.status, darkMode);
                   const posX = (table.position_x || 0) * GRID_CELL_SIZE;
                   const posY = (table.position_y || 0) * GRID_CELL_SIZE;
                   const tableWidth = (table.width || 1) * GRID_CELL_SIZE - 4;
                   const tableHeight = (table.height || 1) * GRID_CELL_SIZE - 4;
+
+                  const partyInfo = tablePartyMap.get(table.id);
+                  const showGuestName = table.status === 'Occupied' && partyInfo?.guestName;
 
                   return (
                     <button
@@ -154,7 +198,7 @@ export default function FloorPlanView({ tables, onTableClick, compact = false }:
                       onClick={() => onTableClick?.(table)}
                       className={`
                         absolute flex flex-col items-center justify-center
-                        border-2 ${shapeClass} ${colorClass}
+                        border-[3px] ${shapeClass} ${colors.bg} ${colors.border} ${colors.text}
                         hover:shadow-lg transition-all duration-200 cursor-pointer
                         text-xs font-medium
                         hover:scale-105 active:scale-95
@@ -166,12 +210,41 @@ export default function FloorPlanView({ tables, onTableClick, compact = false }:
                         height: tableHeight,
                         transform: table.rotation ? `rotate(${table.rotation}deg)` : undefined,
                       }}
-                      title={`Table ${table.table_number} - ${table.capacity} seats - ${table.status}`}
+                      title={`Table ${table.table_number} - ${table.capacity} seats - ${table.status}${partyInfo?.guestName ? ` - ${partyInfo.guestName}` : ''}`}
                     >
-                      <span className="font-bold leading-tight">{table.table_number}</span>
-                      <span className={`${compact ? 'text-[9px]' : 'text-[10px]'} opacity-75 leading-tight`}>
-                        {table.capacity}p
-                      </span>
+                      {/* VIP indicator */}
+                      {partyInfo?.isVIP && (
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center text-[8px]">
+                          *
+                        </span>
+                      )}
+
+                      {/* Special occasion indicator */}
+                      {partyInfo?.specialOccasion && !partyInfo?.isVIP && (
+                        <span className="absolute -top-1 -left-1 w-4 h-4 bg-pink-200 rounded-full flex items-center justify-center text-[8px]">
+                          {partyInfo.specialOccasion === 'Birthday' ? '!' :
+                           partyInfo.specialOccasion === 'Anniversary' ? '+' : '*'}
+                        </span>
+                      )}
+
+                      {/* Show guest name for occupied tables */}
+                      {showGuestName ? (
+                        <>
+                          <span className="font-semibold leading-tight truncate max-w-full px-1">
+                            {partyInfo.guestName.split(' ')[0].substring(0, 6)}
+                          </span>
+                          <span className={`${compact ? 'text-[8px]' : 'text-[9px]'} opacity-60 leading-tight`}>
+                            T{table.table_number}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="font-bold leading-tight">{table.table_number}</span>
+                          <span className={`${compact ? 'text-[9px]' : 'text-[10px]'} opacity-75 leading-tight`}>
+                            {table.capacity}p
+                          </span>
+                        </>
+                      )}
                     </button>
                   );
                 })}
@@ -183,21 +256,21 @@ export default function FloorPlanView({ tables, onTableClick, compact = false }:
 
       {/* Legend - only show if not in compact mode */}
       {!compact && (
-        <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-[#57534E] pt-2">
+        <div className={`flex flex-wrap items-center justify-center gap-4 text-xs pt-2 ${darkMode ? 'text-[#A8A29E]' : 'text-[#57534E]'}`}>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-green-100 border-2 border-green-500"></div>
+            <div className={`w-3 h-3 rounded border-[3px] border-green-500 ${darkMode ? 'bg-[#292524]' : 'bg-[#FAFAF9]'}`}></div>
             <span>Available</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-red-100 border-2 border-red-500"></div>
+            <div className={`w-3 h-3 rounded border-[3px] border-red-500 ${darkMode ? 'bg-[#292524]' : 'bg-[#FAFAF9]'}`}></div>
             <span>Occupied</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-purple-100 border-2 border-purple-500"></div>
+            <div className={`w-3 h-3 rounded border-[3px] border-purple-500 ${darkMode ? 'bg-[#292524]' : 'bg-[#FAFAF9]'}`}></div>
             <span>Reserved</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-amber-100 border-2 border-amber-500"></div>
+            <div className={`w-3 h-3 rounded border-[3px] border-amber-500 ${darkMode ? 'bg-[#292524]' : 'bg-[#FAFAF9]'}`}></div>
             <span>Cleaning</span>
           </div>
           <div className="flex items-center gap-1.5">

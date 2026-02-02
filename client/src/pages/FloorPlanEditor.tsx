@@ -4,7 +4,7 @@ import { DndContext, useDraggable, useSensor, useSensors, PointerSensor } from '
 import type { DragEndEvent } from '@dnd-kit/core';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { hostAPI } from '../services/api';
-import type { Table, TableShape } from '../types/host.types';
+import type { Table, TableShape, TableStatus, ActiveParty } from '../types/host.types';
 import { getTableSize } from '../types/host.types';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { TableRenderer, TablePreview } from '../components/host/TableRenderer';
@@ -89,19 +89,51 @@ const UnlinkIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const SunIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+  </svg>
+);
+
+const MoonIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+  </svg>
+);
+
 interface DraggableTableProps {
   table: Table;
   isSelected: boolean;
   onSelect: () => void;
   linkMode: boolean;
   linkSource: string | null;
+  darkMode?: boolean;
+  guestName?: string;
+  isVIP?: boolean;
+  specialOccasion?: string;
+  onStatusChange?: (tableId: string, status: TableStatus) => void;
 }
 
-function DraggableTable({ table, isSelected, onSelect, linkMode, linkSource }: DraggableTableProps) {
+// Status cycle order for double-click
+const STATUS_ORDER: TableStatus[] = ['Available', 'Occupied', 'Reserved', 'Being Cleaned'];
+
+function DraggableTable({
+  table,
+  isSelected,
+  onSelect,
+  linkMode,
+  linkSource,
+  darkMode = false,
+  guestName,
+  isVIP,
+  specialOccasion,
+  onStatusChange
+}: DraggableTableProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: table.id,
     data: { table }
   });
+  const [lastClickTime, setLastClickTime] = useState(0);
 
   // Get proportional size based on shape and capacity
   const tableSize = getTableSize(table.shape || 'square', table.capacity || 4);
@@ -120,16 +152,32 @@ function DraggableTable({ table, isSelected, onSelect, linkMode, linkSource }: D
   const isLinkTarget = linkMode && linkSource && linkSource !== table.id;
   const isLinkSource = linkSource === table.id;
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const now = Date.now();
+
+    if (now - lastClickTime < 300) {
+      // Double-click detected: cycle status
+      if (onStatusChange) {
+        const currentIndex = STATUS_ORDER.indexOf(table.status);
+        const nextStatus = STATUS_ORDER[(currentIndex + 1) % STATUS_ORDER.length];
+        onStatusChange(table.id, nextStatus);
+      }
+    } else {
+      // Single click: select table
+      onSelect();
+    }
+
+    setLastClickTime(now);
+  };
+
   return (
     <div
       ref={setNodeRef}
       {...attributes}
       {...listeners}
       style={style}
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect();
-      }}
+      onClick={handleClick}
       className={`
         absolute cursor-grab active:cursor-grabbing
         ${isDragging ? 'opacity-50' : ''}
@@ -146,6 +194,10 @@ function DraggableTable({ table, isSelected, onSelect, linkMode, linkSource }: D
         status={table.status}
         tableNumber={table.table_number}
         isSelected={isSelected}
+        darkMode={darkMode}
+        guestName={guestName}
+        isVIP={isVIP}
+        specialOccasion={specialOccasion}
       />
     </div>
   );
@@ -347,6 +399,18 @@ export default function FloorPlanEditor() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [localPositions, setLocalPositions] = useState<Record<string, { x: number; y: number }>>({});
 
+  // Dark mode state with localStorage persistence
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('floor-plan-dark-mode') === 'true';
+  });
+
+  // Toggle dark mode handler
+  const toggleDarkMode = () => {
+    const newValue = !darkMode;
+    setDarkMode(newValue);
+    localStorage.setItem('floor-plan-dark-mode', String(newValue));
+  };
+
   // Configure sensors for smoother dragging
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -490,6 +554,52 @@ export default function FloorPlanEditor() {
     }
   });
 
+  // Update table status mutation (for double-click quick status change)
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ tableId, status }: { tableId: string; status: TableStatus }) => {
+      const response = await fetch('/api/host-dashboard?action=update-table-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table_id: tableId, status })
+      });
+      if (!response.ok) throw new Error('Failed to update status');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tables-floor-plan'] });
+    }
+  });
+
+  // Extract active parties from dashboard data
+  const activeParties: ActiveParty[] = dashboardData?.data?.active_parties ||
+                                        (dashboardData as any)?.active_parties || [];
+
+  // Create lookup map: table_id -> party info
+  const tablePartyMap = React.useMemo(() => {
+    const map = new Map<string, {
+      guestName: string;
+      isVIP?: boolean;
+      specialOccasion?: string
+    }>();
+
+    activeParties.forEach(party => {
+      (party.tables || []).forEach(tableId => {
+        map.set(tableId, {
+          guestName: party.customer_name,
+          isVIP: (party as any).is_vip,
+          specialOccasion: (party as any).special_occasion,
+        });
+      });
+    });
+
+    return map;
+  }, [activeParties]);
+
+  // Handler for status change
+  const handleStatusChange = useCallback((tableId: string, status: TableStatus) => {
+    updateStatusMutation.mutate({ tableId, status });
+  }, [updateStatusMutation]);
+
   const handleDeleteTable = useCallback(() => {
     if (!selectedTableId) return;
     const table = tables.find(t => t.id === selectedTableId);
@@ -629,18 +739,18 @@ export default function FloorPlanEditor() {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-[#F5F5F4] p-6">
+      <div className={`min-h-screen p-6 transition-colors ${darkMode ? 'bg-[#1C1917]' : 'bg-[#F5F5F4]'}`}>
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate('/host-dashboard/simple')}
-              className="p-2 hover:bg-white rounded-lg transition-colors"
+              className={`p-2 rounded-lg transition-colors ${darkMode ? 'hover:bg-[#292524]' : 'hover:bg-white'}`}
               title="Back to Dashboard"
             >
-              <ArrowLeftIcon className="w-5 h-5 text-[#57534E]" />
+              <ArrowLeftIcon className={`w-5 h-5 ${darkMode ? 'text-[#A8A29E]' : 'text-[#57534E]'}`} />
             </button>
-            <h1 className="text-2xl font-serif font-bold text-[#1C1917]">Floor Plan Editor</h1>
+            <h1 className={`text-2xl font-serif font-bold ${darkMode ? 'text-white' : 'text-[#1C1917]'}`}>Floor Plan Editor</h1>
           </div>
           <div className="flex gap-3">
             <button
@@ -655,9 +765,25 @@ export default function FloorPlanEditor() {
               <SaveIcon className="w-4 h-4" />
               {updatePositionMutation.isPending ? 'Saving...' : 'Save Positions'}
             </button>
+            {/* Dark Mode Toggle */}
+            <button
+              onClick={toggleDarkMode}
+              className={`p-2 rounded-lg transition-colors ${
+                darkMode
+                  ? 'bg-[#44403C] text-yellow-400 hover:bg-[#57534E]'
+                  : 'bg-white text-[#57534E] border border-[#E7E5E4] hover:bg-[#F5F5F4]'
+              }`}
+              title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {darkMode ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
+            </button>
             <button
               onClick={() => navigate('/host-dashboard/simple')}
-              className="px-4 py-2 bg-white border border-[#E7E5E4] text-[#1C1917] rounded-lg font-medium hover:bg-[#F5F5F4]"
+              className={`px-4 py-2 rounded-lg font-medium ${
+                darkMode
+                  ? 'bg-[#44403C] text-white border border-[#57534E] hover:bg-[#57534E]'
+                  : 'bg-white border border-[#E7E5E4] text-[#1C1917] hover:bg-[#F5F5F4]'
+              }`}
             >
               Done
             </button>
@@ -693,9 +819,9 @@ export default function FloorPlanEditor() {
         <div className="flex gap-6">
           {/* Sidebar - Table Palette */}
           <div className="w-48 flex-shrink-0">
-            <div className="bg-white rounded-xl border border-[#E7E5E4] p-4 sticky top-6">
-              <h3 className="font-semibold text-[#1C1917] mb-3">Add Tables</h3>
-              <p className="text-xs text-[#A8A29E] mb-4">
+            <div className={`rounded-xl border p-4 sticky top-6 ${darkMode ? 'bg-[#292524] border-[#44403C]' : 'bg-white border-[#E7E5E4]'}`}>
+              <h3 className={`font-semibold mb-3 ${darkMode ? 'text-white' : 'text-[#1C1917]'}`}>Add Tables</h3>
+              <p className={`text-xs mb-4 ${darkMode ? 'text-[#A8A29E]' : 'text-[#A8A29E]'}`}>
                 Drag tables onto the canvas
               </p>
 
@@ -710,9 +836,9 @@ export default function FloorPlanEditor() {
                 ))}
               </div>
 
-              <hr className="my-4 border-[#E7E5E4]" />
+              <hr className={`my-4 ${darkMode ? 'border-[#44403C]' : 'border-[#E7E5E4]'}`} />
 
-              <h3 className="font-semibold text-[#1C1917] mb-3">Quick Actions</h3>
+              <h3 className={`font-semibold mb-3 ${darkMode ? 'text-white' : 'text-[#1C1917]'}`}>Quick Actions</h3>
               <div className="space-y-2">
                 <button
                   onClick={() => {
@@ -724,7 +850,7 @@ export default function FloorPlanEditor() {
                   disabled={!selectedTableId}
                   className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm rounded-lg transition-colors ${
                     selectedTableId
-                      ? 'hover:bg-[#F5F5F4] text-[#1C1917]'
+                      ? darkMode ? 'hover:bg-[#44403C] text-white' : 'hover:bg-[#F5F5F4] text-[#1C1917]'
                       : 'text-[#A8A29E] cursor-not-allowed'
                   }`}
                 >
@@ -736,7 +862,7 @@ export default function FloorPlanEditor() {
                   disabled={!selectedTableId || deleteTableMutation.isPending}
                   className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm rounded-lg transition-colors ${
                     selectedTableId && !deleteTableMutation.isPending
-                      ? 'text-red-600 hover:bg-red-50'
+                      ? darkMode ? 'text-red-400 hover:bg-red-900/30' : 'text-red-600 hover:bg-red-50'
                       : 'text-[#A8A29E] cursor-not-allowed'
                   }`}
                 >
@@ -750,14 +876,14 @@ export default function FloorPlanEditor() {
 
           {/* Canvas */}
           <div className="flex-1 flex flex-col">
-            <div className="flex-1 bg-white rounded-xl border border-[#E7E5E4] overflow-auto shadow-sm">
+            <div className={`flex-1 rounded-xl border overflow-auto shadow-sm ${darkMode ? 'bg-[#292524] border-[#44403C]' : 'bg-white border-[#E7E5E4]'}`}>
             <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
               <div
                 className="relative"
                 style={{
                   width: GRID_SIZE * GRID_CELL_SIZE,
                   height: GRID_HEIGHT * GRID_CELL_SIZE,
-                  backgroundColor: '#FAFAF9'
+                  backgroundColor: darkMode ? '#1C1917' : '#FAFAF9'
                 }}
                 onClick={() => {
                   if (!linkMode) {
@@ -774,16 +900,24 @@ export default function FloorPlanEditor() {
                 </svg>
 
                 {/* Tables */}
-                {tables.map(table => (
-                  <DraggableTable
-                    key={table.id}
-                    table={table}
-                    isSelected={selectedTableId === table.id}
-                    onSelect={() => handleTableClick(table.id)}
-                    linkMode={linkMode}
-                    linkSource={linkSource}
-                  />
-                ))}
+                {tables.map(table => {
+                  const partyInfo = tablePartyMap.get(table.id);
+                  return (
+                    <DraggableTable
+                      key={table.id}
+                      table={table}
+                      isSelected={selectedTableId === table.id}
+                      onSelect={() => handleTableClick(table.id)}
+                      linkMode={linkMode}
+                      linkSource={linkSource}
+                      darkMode={darkMode}
+                      guestName={partyInfo?.guestName}
+                      isVIP={partyInfo?.isVIP}
+                      specialOccasion={partyInfo?.specialOccasion}
+                      onStatusChange={handleStatusChange}
+                    />
+                  );
+                })}
               </div>
             </DndContext>
             </div>
@@ -802,8 +936,8 @@ export default function FloorPlanEditor() {
         </div>
 
         {/* Help Text */}
-        <div className="mt-6 text-center text-sm text-[#A8A29E]">
-          <p>Drag tables to position them. Click a table to edit its properties.</p>
+        <div className={`mt-6 text-center text-sm ${darkMode ? 'text-[#78716C]' : 'text-[#A8A29E]'}`}>
+          <p>Drag tables to position them. Click to edit, double-click to change status.</p>
         </div>
       </div>
     </DashboardLayout>
