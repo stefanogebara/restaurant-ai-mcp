@@ -557,13 +557,8 @@ export default function FloorPlanEditor() {
   // Update table status mutation (for double-click quick status change)
   const updateStatusMutation = useMutation({
     mutationFn: async ({ tableId, status }: { tableId: string; status: TableStatus }) => {
-      const response = await fetch('/api/host-dashboard?action=update-table-status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ table_id: tableId, status })
-      });
-      if (!response.ok) throw new Error('Failed to update status');
-      return response.json();
+      const response = await hostAPI.updateTableStatus(tableId, status);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tables-floor-plan'] });
