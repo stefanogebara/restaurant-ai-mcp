@@ -433,32 +433,6 @@ export default function FloorPlanEditor() {
     }
   });
 
-  // Create table mutation (unused, kept for future use)
-  const _createTableMutation = useMutation({
-    mutationFn: async (tableData: {
-      table_number: string;
-      capacity: number;
-      location: string;
-      shape: 'round' | 'square';
-      position_x: number;
-      position_y: number;
-    }) => {
-      const response = await fetch('/api/host-dashboard?action=create-table', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(tableData)
-      });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to create table');
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tables-floor-plan'] });
-    }
-  });
-
   const handleDeleteTable = useCallback(() => {
     if (!selectedTableId) return;
     const table = tables.find(t => t.id === selectedTableId);

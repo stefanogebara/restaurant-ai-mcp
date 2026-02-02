@@ -16,8 +16,6 @@ import type { RestaurantSize } from '../../types/profile.types';
 
 const AREA_TEMPLATES = ['Indoor', 'Patio', 'Bar', 'Private Room', 'Custom'];
 const TABLE_CAPACITIES = [2, 4, 6, 8];
-// TABLE_SHAPES is used in type definitions
-const _TABLE_SHAPES: TableShape[] = ['round', 'square'];
 
 /**
  * Calculate recommended table distribution based on restaurant size and total seats
@@ -221,23 +219,6 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
   const updateAreaName = (index: number, name: string) => {
     const updatedAreas = [...data.areas];
     updatedAreas[index] = { ...updatedAreas[index], name };
-    updateData({ areas: updatedAreas });
-  };
-
-  // Legacy functions - kept for potential future use
-  const _updateTableCount = (areaIndex: number, capacityIndex: number, count: number) => {
-    const updatedAreas = [...data.areas];
-    updatedAreas[areaIndex].tables[capacityIndex].count = Math.max(0, count);
-    updateData({ areas: updatedAreas });
-  };
-
-  const _toggleTableFixed = (areaIndex: number, capacityIndex: number) => {
-    const updatedAreas = [...data.areas];
-    const currentTable = updatedAreas[areaIndex].tables[capacityIndex];
-    updatedAreas[areaIndex].tables[capacityIndex] = {
-      ...currentTable,
-      is_fixed_seating: !currentTable.is_fixed_seating
-    };
     updateData({ areas: updatedAreas });
   };
 
