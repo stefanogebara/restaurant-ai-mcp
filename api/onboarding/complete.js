@@ -179,7 +179,10 @@ module.exports = async (req, res) => {
             status: 'available',  // Must be lowercase to match database enum
             is_active: true,
             current_service_id: null,
-            is_fixed: tableConfig.is_fixed || false  // Flexible table support
+            is_fixed: tableConfig.is_fixed || false,  // Flexible table support
+            shape: tableConfig.shape || 'square',  // Table shape from onboarding
+            is_joinable: tableConfig.is_joinable !== false,  // Default to joinable
+            is_fixed_seating: tableConfig.is_fixed_seating || false
           });
           tableNumber++;
         }

@@ -85,6 +85,8 @@ module.exports = async (req, res) => {
         return await handleDeleteTable(req, res);
       case 'create-table':
         return await handleCreateTable(req, res);
+      case 'auto-assign-shapes':
+        return await handleAutoAssignShapes(req, res);
       default:
         return res.status(400).json({
           success: false,
@@ -794,10 +796,11 @@ async function handleUpdateTableProperties(req, res) {
   const updates = {};
 
   if (shape !== undefined) {
-    if (!['round', 'square'].includes(shape)) {
+    const validShapes = ['round', 'square', 'rectangle', 'oval', 'booth', 'bar-stool'];
+    if (!validShapes.includes(shape)) {
       return res.status(400).json({
         success: false,
-        error: 'shape must be "round" or "square"'
+        error: `shape must be one of: ${validShapes.join(', ')}`
       });
     }
     updates.shape = shape;
@@ -1014,10 +1017,11 @@ async function handleCreateTable(req, res) {
   }
 
   // Validate shape if provided
-  if (shape && !['round', 'square'].includes(shape)) {
+  const validShapes = ['round', 'square', 'rectangle', 'oval', 'booth', 'bar-stool'];
+  if (shape && !validShapes.includes(shape)) {
     return res.status(400).json({
       success: false,
-      error: 'shape must be "round" or "square"'
+      error: `shape must be one of: ${validShapes.join(', ')}`
     });
   }
 
@@ -1052,5 +1056,97 @@ async function handleCreateTable(req, res) {
     success: true,
     message: `Table ${tableFields.table_number} created successfully`,
     table: result.table
+  });
+}
+
+/**
+ * Auto-assign shapes to all tables based on their capacity
+ * This updates existing tables with appropriate shapes:
+ * - 1-2 person: round (intimate tables)
+ * - 4 person: alternating round/square
+ * - 6 person: rectangle or booth
+ * - 8+ person: rectangle
+ */
+async function handleAutoAssignShapes(req, res) {
+  logger.info('Auto-assigning shapes to all tables');
+
+  // Get all active tables
+  const { data: tables, error: fetchError } = await supabase
+    .from('tables')
+    .select('*')
+    .eq('is_active', true)
+    .order('table_number', { ascending: true });
+
+  if (fetchError) {
+    logger.error('Failed to fetch tables for shape assignment', fetchError);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to fetch tables'
+    });
+  }
+
+  if (!tables || tables.length === 0) {
+    return res.status(200).json({
+      success: true,
+      message: 'No tables to update',
+      updated: 0
+    });
+  }
+
+  // Track 4-person tables to alternate between round and square
+  let fourPersonIndex = 0;
+  let sixPersonIndex = 0;
+
+  const updates = tables.map(table => {
+    let shape = table.shape || 'square';
+
+    switch (table.capacity) {
+      case 1:
+        shape = 'bar-stool';
+        break;
+      case 2:
+        shape = 'round';
+        break;
+      case 4:
+        // Alternate between round and square for variety
+        shape = fourPersonIndex % 2 === 0 ? 'round' : 'square';
+        fourPersonIndex++;
+        break;
+      case 6:
+        // Alternate between rectangle and booth
+        shape = sixPersonIndex % 2 === 0 ? 'rectangle' : 'booth';
+        sixPersonIndex++;
+        break;
+      case 8:
+      default:
+        shape = table.capacity >= 8 ? 'rectangle' : 'square';
+        break;
+    }
+
+    return { id: table.id, shape };
+  });
+
+  // Update each table
+  let updatedCount = 0;
+  for (const update of updates) {
+    const { error: updateError } = await supabase
+      .from('tables')
+      .update({ shape: update.shape })
+      .eq('id', update.id);
+
+    if (!updateError) {
+      updatedCount++;
+    } else {
+      logger.warn(`Failed to update shape for table ${update.id}`, updateError);
+    }
+  }
+
+  logger.info(`Auto-assigned shapes to ${updatedCount} tables`);
+
+  return res.status(200).json({
+    success: true,
+    message: `Updated shapes for ${updatedCount} tables`,
+    updated: updatedCount,
+    shapes: updates.map(u => ({ id: u.id, shape: u.shape }))
   });
 }
