@@ -137,14 +137,12 @@ function DraggableTable({
 
   // Get proportional size based on shape and capacity
   const tableSize = getTableSize(table.shape || 'square', table.capacity || 4);
-  // Add padding for chairs and text that extend beyond the table
-  const CHAIR_PADDING = 16; // Extra space for chairs around the table
-  const pixelWidth = tableSize.width * GRID_CELL_SIZE + CHAIR_PADDING;
-  const pixelHeight = tableSize.height * GRID_CELL_SIZE + CHAIR_PADDING;
+  const pixelWidth = tableSize.width * GRID_CELL_SIZE;
+  const pixelHeight = tableSize.height * GRID_CELL_SIZE;
 
   const style = {
-    left: table.position_x * GRID_CELL_SIZE - CHAIR_PADDING / 2,
-    top: table.position_y * GRID_CELL_SIZE - CHAIR_PADDING / 2,
+    left: table.position_x * GRID_CELL_SIZE,
+    top: table.position_y * GRID_CELL_SIZE,
     width: pixelWidth,
     height: pixelHeight,
     transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
