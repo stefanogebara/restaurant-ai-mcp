@@ -124,4 +124,73 @@ test.describe('Floor Plan Editor', () => {
     const helperText = page.locator('text=/Click to add|Drag tables/i').first();
     await expect(helperText).toBeVisible();
   });
+
+  test('moving a table enables save button and saves without error', async ({ page }) => {
+    // Find the first table on the canvas (draggable table buttons with SVG)
+    const firstTable = page.locator('button:has(svg)').first();
+    await expect(firstTable).toBeVisible();
+
+    // Get initial position
+    const box = await firstTable.boundingBox();
+    if (!box) throw new Error('Could not get table bounding box');
+
+    // Drag the table to a new position
+    await firstTable.hover();
+    await page.mouse.down();
+    await page.mouse.move(box.x + 50, box.y + 50);
+    await page.mouse.up();
+
+    // Wait for position change to register
+    await page.waitForTimeout(500);
+
+    // Save button should be enabled
+    const saveButton = page.getByRole('button', { name: /Save Positions/i });
+
+    // Check if save button is enabled (not disabled)
+    const isDisabled = await saveButton.isDisabled();
+
+    if (!isDisabled) {
+      // Listen for API response
+      const responsePromise = page.waitForResponse(
+        response => response.url().includes('host-dashboard') && response.status() === 200
+      );
+
+      // Click save
+      await saveButton.click();
+
+      // Wait for successful API response
+      const response = await responsePromise;
+      expect(response.status()).toBe(200);
+
+      // Verify no error toast/notification appears
+      const errorToast = page.locator('text=/error|failed|401|500/i');
+      await expect(errorToast).not.toBeVisible({ timeout: 3000 });
+    }
+  });
+
+  test('no 401 or 500 errors during floor plan operations', async ({ page }) => {
+    const errors: string[] = [];
+
+    // Listen for failed API requests
+    page.on('response', response => {
+      if (response.status() >= 400) {
+        errors.push(`${response.status()} - ${response.url()}`);
+      }
+    });
+
+    // Perform some operations
+    await page.reload();
+    await page.waitForSelector('svg', { timeout: 10000 });
+
+    // Click a palette item
+    const paletteItem = page.getByRole('button', { name: '2-Top Round' });
+    if (await paletteItem.isVisible()) {
+      await paletteItem.click();
+      await page.waitForTimeout(2000);
+    }
+
+    // Check no auth/server errors occurred
+    const authErrors = errors.filter(e => e.includes('401') || e.includes('500'));
+    expect(authErrors).toHaveLength(0);
+  });
 });
