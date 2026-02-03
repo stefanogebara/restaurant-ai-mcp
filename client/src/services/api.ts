@@ -69,6 +69,36 @@ export const hostAPI = {
 
   autoAssignShapes: () =>
     api.post('/host-dashboard?action=auto-assign-shapes', {}),
+
+  // Floor Plan Editor methods
+  updateTablePosition: (tableId: string, position_x: number, position_y: number) =>
+    api.post('/host-dashboard?action=update-table-position', { table_id: tableId, position_x, position_y }),
+
+  updateTableProperties: (data: {
+    table_id: string;
+    shape?: string;
+    capacity?: number;
+    is_joinable?: boolean;
+    is_fixed_seating?: boolean;
+  }) => api.post('/host-dashboard?action=update-table-properties', data),
+
+  linkTables: (tableId: string, linkWithId: string) =>
+    api.post('/host-dashboard?action=link-tables', { table_id: tableId, link_with_id: linkWithId }),
+
+  unlinkTables: (tableId: string, unlinkFromId: string) =>
+    api.post('/host-dashboard?action=unlink-tables', { table_id: tableId, unlink_from_id: unlinkFromId }),
+
+  deleteTable: (tableId: string) =>
+    api.post('/host-dashboard?action=delete-table', { table_id: tableId }),
+
+  createTable: (data: {
+    table_number: number;
+    capacity: number;
+    shape: string;
+    position_x: number;
+    position_y: number;
+    location?: string;
+  }) => api.post('/host-dashboard?action=create-table', data),
 };
 
 // Table Configuration API

@@ -457,19 +457,11 @@ export default function FloorPlanEditor() {
   // Update table position mutation (batch save)
   const updatePositionMutation = useMutation({
     mutationFn: async (updates: Array<{ tableId: string; position_x: number; position_y: number }>) => {
-      // Update each table position using the host-dashboard action pattern
+      // Update each table position using authenticated API
       const promises = updates.map(({ tableId, position_x, position_y }) =>
-        fetch('/api/host-dashboard?action=update-table-position', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ table_id: tableId, position_x, position_y })
-        })
+        hostAPI.updateTablePosition(tableId, position_x, position_y)
       );
-      const responses = await Promise.all(promises);
-      // Check if any failed
-      for (const res of responses) {
-        if (!res.ok) throw new Error('Failed to update table position');
-      }
+      await Promise.all(promises);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tables-floor-plan'] });
@@ -481,19 +473,14 @@ export default function FloorPlanEditor() {
   // Update table config mutation
   const updateTableMutation = useMutation({
     mutationFn: async ({ tableId, updates }: { tableId: string; updates: Partial<Table> }) => {
-      const response = await fetch('/api/host-dashboard?action=update-table-properties', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          table_id: tableId,
-          shape: updates.shape,
-          capacity: updates.capacity,
-          is_joinable: updates.is_joinable,
-          is_fixed_seating: updates.is_fixed_seating
-        })
+      const response = await hostAPI.updateTableProperties({
+        table_id: tableId,
+        shape: updates.shape,
+        capacity: updates.capacity,
+        is_joinable: updates.is_joinable,
+        is_fixed_seating: updates.is_fixed_seating
       });
-      if (!response.ok) throw new Error('Failed to update table');
-      return response.json();
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tables-floor-plan'] });
@@ -503,13 +490,8 @@ export default function FloorPlanEditor() {
   // Link tables mutation
   const linkTablesMutation = useMutation({
     mutationFn: async ({ tableId, linkWithId }: { tableId: string; linkWithId: string }) => {
-      const response = await fetch('/api/host-dashboard?action=link-tables', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ table_id: tableId, linked_table_id: linkWithId })
-      });
-      if (!response.ok) throw new Error('Failed to link tables');
-      return response.json();
+      const response = await hostAPI.linkTables(tableId, linkWithId);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tables-floor-plan'] });
@@ -521,13 +503,8 @@ export default function FloorPlanEditor() {
   // Unlink tables mutation
   const unlinkTablesMutation = useMutation({
     mutationFn: async ({ tableId, linkedTableId }: { tableId: string; linkedTableId: string }) => {
-      const response = await fetch('/api/host-dashboard?action=unlink-tables', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ table_id: tableId, linked_table_id: linkedTableId })
-      });
-      if (!response.ok) throw new Error('Failed to unlink tables');
-      return response.json();
+      const response = await hostAPI.unlinkTables(tableId, linkedTableId);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tables-floor-plan'] });
@@ -537,20 +514,35 @@ export default function FloorPlanEditor() {
   // Delete table mutation
   const deleteTableMutation = useMutation({
     mutationFn: async (tableId: string) => {
-      const response = await fetch('/api/host-dashboard?action=delete-table', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ table_id: tableId })
-      });
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to delete table');
-      }
-      return response.json();
+      const response = await hostAPI.deleteTable(tableId);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tables-floor-plan'] });
       setSelectedTableId(null);
+    }
+  });
+
+  // Create new table mutation (for dragging from palette)
+  const createTableMutation = useMutation({
+    mutationFn: async (data: { shape: TableShape; capacity: number; position_x: number; position_y: number }) => {
+      // Find the next available table number
+      const existingNumbers = tables.map(t => t.table_number).filter(n => typeof n === 'number');
+      const maxNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers.map(n => parseInt(String(n), 10))) : 0;
+      const newTableNumber = maxNumber + 1;
+
+      const response = await hostAPI.createTable({
+        table_number: newTableNumber,
+        capacity: data.capacity,
+        shape: data.shape,
+        position_x: data.position_x,
+        position_y: data.position_y,
+        location: 'Main'
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tables-floor-plan'] });
     }
   });
 
@@ -622,11 +614,36 @@ export default function FloorPlanEditor() {
   }, [selectedTableId, tables, deleteTableMutation]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, delta } = event;
+    const { active, delta, over } = event;
 
     if (!active.data.current) return;
 
-    // Find the table
+    // Check if this is a new table being dragged from the palette
+    if (active.data.current.type === 'new-table') {
+      const { shape, capacity } = active.data.current as { shape: TableShape; capacity: number };
+      const tableSize = getTableSize(shape, capacity);
+
+      // Calculate drop position - use a default position if not dropped on canvas
+      // The delta is relative to the original position of the palette item
+      // We need to convert this to canvas coordinates
+      const dropX = Math.max(0, Math.min(GRID_SIZE - tableSize.width,
+        Math.round(delta.x / GRID_CELL_SIZE) + 2 // Start at position 2 as default
+      ));
+      const dropY = Math.max(0, Math.min(GRID_HEIGHT - tableSize.height,
+        Math.round(delta.y / GRID_CELL_SIZE) + 2
+      ));
+
+      // Create the new table
+      createTableMutation.mutate({
+        shape,
+        capacity,
+        position_x: dropX,
+        position_y: dropY
+      });
+      return;
+    }
+
+    // Handle moving existing table
     const table = tables.find(t => t.id === active.id);
     if (!table) return;
 
@@ -651,7 +668,7 @@ export default function FloorPlanEditor() {
       }));
       setHasUnsavedChanges(true);
     }
-  }, [tables, localPositions]);
+  }, [tables, localPositions, createTableMutation]);
 
   const handleTableClick = useCallback((tableId: string) => {
     if (linkMode) {
