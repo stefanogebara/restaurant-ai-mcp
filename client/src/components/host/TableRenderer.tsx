@@ -355,15 +355,12 @@ export function TableRenderer({
   const fontSize = Math.min(24, Math.min(width, height) / 2.5);  // Bold prominent table numbers
   const capacityFontSize = Math.min(14, fontSize * 0.55);  // Smaller capacity text below
 
-  // Add padding to viewBox so chairs aren't clipped at edges
-  const VIEW_PADDING = 12;
-
   return (
     <svg
-      width={width + VIEW_PADDING * 2}
-      height={height + VIEW_PADDING * 2}
-      viewBox={`${-VIEW_PADDING} ${-VIEW_PADDING} ${width + VIEW_PADDING * 2} ${height + VIEW_PADDING * 2}`}
-      style={{ margin: -VIEW_PADDING }}
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      style={{ overflow: 'visible' }}
     >
       {/* Shadow filter */}
       <defs>
