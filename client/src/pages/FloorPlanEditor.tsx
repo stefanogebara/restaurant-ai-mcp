@@ -220,24 +220,34 @@ interface TablePaletteItemProps {
   shape: TableShape;
   capacity: number;
   label: string;
+  onAdd: (shape: TableShape, capacity: number) => void;
 }
 
-function TablePaletteItem({ shape, capacity, label }: TablePaletteItemProps) {
+function TablePaletteItem({ shape, capacity, label, onAdd }: TablePaletteItemProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `palette-${shape}-${capacity}`,
     data: { type: 'new-table', shape, capacity }
   });
+
+  const handleClick = (e: React.MouseEvent) => {
+    // Only trigger on click, not on drag
+    if (!isDragging) {
+      onAdd(shape, capacity);
+    }
+  };
 
   return (
     <div
       ref={setNodeRef}
       {...attributes}
       {...listeners}
+      onClick={handleClick}
       className={`
-        flex flex-col items-center gap-1 p-2 rounded-lg border border-[#E7E5E4] bg-white cursor-grab
+        flex flex-col items-center gap-1 p-2 rounded-lg border border-[#E7E5E4] bg-white cursor-pointer
         ${isDragging ? 'opacity-50' : ''}
         hover:bg-[#F5F5F4] hover:border-[#9F1239] transition-colors
       `}
+      title="Click to add table"
     >
       <TablePreview shape={shape} capacity={capacity} width={44} height={44} />
       <span className="text-[10px] text-[#57534E] text-center leading-tight">{label}</span>
@@ -705,6 +715,53 @@ export default function FloorPlanEditor() {
     }
   }, [selectedTableId, unlinkTablesMutation]);
 
+  // Add table from palette (click to add)
+  const handleAddTableFromPalette = useCallback((shape: TableShape, capacity: number) => {
+    const tableSize = getTableSize(shape, capacity);
+
+    // Find an empty position for the new table
+    // Start from position (2,2) and find first available spot
+    let position_x = 2;
+    let position_y = 2;
+
+    // Simple algorithm: find a spot that doesn't overlap with existing tables
+    const occupiedPositions = new Set(
+      tables.map(t => `${t.position_x},${t.position_y}`)
+    );
+
+    // Try positions in a grid pattern
+    outer: for (let y = 1; y < GRID_HEIGHT - tableSize.height; y++) {
+      for (let x = 1; x < GRID_SIZE - tableSize.width; x++) {
+        let spotClear = true;
+        // Check if this position overlaps with any existing table
+        for (const table of tables) {
+          const existingSize = getTableSize(table.shape || 'square', table.capacity || 4);
+          const existingX = localPositions[table.id]?.x ?? table.position_x;
+          const existingY = localPositions[table.id]?.y ?? table.position_y;
+
+          // Check for overlap
+          if (x < existingX + existingSize.width && x + tableSize.width > existingX &&
+              y < existingY + existingSize.height && y + tableSize.height > existingY) {
+            spotClear = false;
+            break;
+          }
+        }
+        if (spotClear) {
+          position_x = x;
+          position_y = y;
+          break outer;
+        }
+      }
+    }
+
+    createTableMutation.mutate({
+      shape,
+      capacity,
+      position_x,
+      position_y
+    });
+  }, [tables, localPositions, createTableMutation]);
+
   // Draw dotted lines between linked tables
   const renderLinks = () => {
     const links: React.ReactElement[] = [];
@@ -857,7 +914,7 @@ export default function FloorPlanEditor() {
             <div className={`rounded-xl border p-4 sticky top-6 ${darkMode ? 'bg-[#292524] border-[#44403C]' : 'bg-white border-[#E7E5E4]'}`}>
               <h3 className={`font-semibold mb-3 ${darkMode ? 'text-white' : 'text-[#1C1917]'}`}>Add Tables</h3>
               <p className={`text-xs mb-4 ${darkMode ? 'text-[#A8A29E]' : 'text-[#A8A29E]'}`}>
-                Drag tables onto the canvas
+                Click to add a table
               </p>
 
               <div className="grid grid-cols-2 gap-2">
@@ -867,6 +924,7 @@ export default function FloorPlanEditor() {
                     shape={item.shape}
                     capacity={item.capacity}
                     label={item.label}
+                    onAdd={handleAddTableFromPalette}
                   />
                 ))}
               </div>
