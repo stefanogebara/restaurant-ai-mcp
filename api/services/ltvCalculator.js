@@ -18,15 +18,23 @@ const supabase = createClient(
 /**
  * Calculate LTV for a specific customer
  * @param {string} customerId - Customer identifier (phone or email)
+ * @param {string|null} restaurantId - Optional restaurant ID to filter by
  * @returns {Promise<Object>} LTV metrics
  */
-async function calculateCustomerLTV(customerId) {
+async function calculateCustomerLTV(customerId, restaurantId = null) {
   try {
     // 1. Get all revenue records for this customer
-    const { data: revenues, error: revenueError } = await supabase
+    let query = supabase
       .from('revenue_records')
       .select('*')
-      .eq('customer_id', customerId)
+      .eq('customer_id', customerId);
+
+    // Filter by restaurant if specified
+    if (restaurantId) {
+      query = query.eq('restaurant_id', restaurantId);
+    }
+
+    const { data: revenues, error: revenueError } = await query
       .order('service_date', { ascending: true });
 
     if (revenueError) throw revenueError;
@@ -35,6 +43,7 @@ async function calculateCustomerLTV(customerId) {
     if (!revenues || revenues.length === 0) {
       return {
         customer_id: customerId,
+        restaurant_id: restaurantId,
         total_visits: 0,
         total_revenue: 0,
         avg_revenue_per_visit: 0,
@@ -88,6 +97,7 @@ async function calculateCustomerLTV(customerId) {
 
     return {
       customer_id: customerId,
+      restaurant_id: restaurantId,
       total_visits: totalVisits,
       first_visit_date: firstVisit.toISOString().split('T')[0],
       last_visit_date: lastVisit.toISOString().split('T')[0],
@@ -112,26 +122,33 @@ async function calculateCustomerLTV(customerId) {
 
 /**
  * Batch calculate LTV for all customers
+ * @param {string|null} restaurantId - Optional restaurant ID to filter by
  * @returns {Promise<Array>} Array of LTV calculations
  */
-async function calculateAllCustomerLTV() {
+async function calculateAllCustomerLTV(restaurantId = null) {
   try {
     // Get all unique customer IDs from revenue records
-    const { data: customers, error } = await supabase
+    let query = supabase
       .from('revenue_records')
-      .select('customer_id')
-      .order('customer_id');
+      .select('customer_id');
+
+    // Filter by restaurant if specified
+    if (restaurantId) {
+      query = query.eq('restaurant_id', restaurantId);
+    }
+
+    const { data: customers, error } = await query.order('customer_id');
 
     if (error) throw error;
 
     const uniqueCustomers = [...new Set(customers.map(c => c.customer_id))];
 
-    console.log(`📊 Calculating LTV for ${uniqueCustomers.length} customers...`);
+    console.log(`📊 Calculating LTV for ${uniqueCustomers.length} customers${restaurantId ? ` (restaurant: ${restaurantId})` : ''}...`);
 
     const results = [];
     for (const customerId of uniqueCustomers) {
       try {
-        const ltv = await calculateCustomerLTV(customerId);
+        const ltv = await calculateCustomerLTV(customerId, restaurantId);
         results.push(ltv);
 
         // Update or insert into customer_ltv table

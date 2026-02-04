@@ -28,7 +28,7 @@ const supabase = createClient(
  */
 async function handleCalculateSingle(req, res) {
   try {
-    const { customer_id } = req.query;
+    const { customer_id, restaurant_id } = req.query;
 
     if (!customer_id) {
       return res.status(400).json({
@@ -37,7 +37,7 @@ async function handleCalculateSingle(req, res) {
       });
     }
 
-    const ltvData = await calculateCustomerLTV(customer_id);
+    const ltvData = await calculateCustomerLTV(customer_id, restaurant_id || null);
 
     // Store calculated LTV
     await upsertCustomerLTV(ltvData);
@@ -61,8 +61,9 @@ async function handleCalculateSingle(req, res) {
  */
 async function handleCalculateAll(req, res) {
   try {
-    console.log('Starting batch LTV calculation...');
-    const results = await calculateAllCustomerLTV();
+    const { restaurant_id } = req.query;
+    console.log(`Starting batch LTV calculation${restaurant_id ? ` for restaurant ${restaurant_id}` : ''}...`);
+    const results = await calculateAllCustomerLTV(restaurant_id || null);
 
     return res.status(200).json({
       success: true,
@@ -132,13 +133,18 @@ async function handleGet(req, res) {
  */
 async function handleList(req, res) {
   try {
-    const { tier, limit = 100, offset = 0 } = req.query;
+    const { tier, restaurant_id, limit = 100, offset = 0 } = req.query;
 
     let query = supabase
       .from('customer_ltv')
       .select('*')
       .order('lifetime_value', { ascending: false })
-      .range(offset, offset + limit - 1);
+      .range(offset, offset + parseInt(limit) - 1);
+
+    // Filter by restaurant if specified
+    if (restaurant_id) {
+      query = query.eq('restaurant_id', restaurant_id);
+    }
 
     // Filter by tier if specified
     if (tier) {
@@ -178,10 +184,19 @@ async function handleList(req, res) {
  */
 async function handleStats(req, res) {
   try {
+    const { restaurant_id } = req.query;
+
     // Get all customer LTV data
-    const { data: customers, error } = await supabase
+    let query = supabase
       .from('customer_ltv')
       .select('*');
+
+    // Filter by restaurant if specified
+    if (restaurant_id) {
+      query = query.eq('restaurant_id', restaurant_id);
+    }
+
+    const { data: customers, error } = await query;
 
     if (error) throw error;
 
@@ -230,6 +245,105 @@ async function handleStats(req, res) {
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to calculate LTV statistics'
+    });
+  }
+}
+
+/**
+ * Get LTV trend analytics over time
+ */
+async function handleTrends(req, res) {
+  try {
+    const { period = '30d', restaurant_id } = req.query;
+
+    // Calculate date range
+    const daysBack = period === '7d' ? 7 : period === '30d' ? 30 : period === '90d' ? 90 : 30;
+    const startDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
+    const startDateStr = startDate.toISOString().split('T')[0];
+
+    // Get historical revenue data
+    let query = supabase
+      .from('revenue_records')
+      .select('service_date, total_revenue, customer_id')
+      .gte('service_date', startDateStr)
+      .order('service_date', { ascending: true });
+
+    if (restaurant_id) {
+      query = query.eq('restaurant_id', restaurant_id);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          period: period,
+          trends: [],
+          summary: {
+            total_revenue: 0,
+            total_customers: 0,
+            avg_per_customer: 0
+          }
+        }
+      });
+    }
+
+    // Group by date
+    const byDate = {};
+    const allCustomers = new Set();
+
+    data.forEach(record => {
+      const date = record.service_date;
+      if (!byDate[date]) {
+        byDate[date] = { revenue: 0, customers: new Set() };
+      }
+      byDate[date].revenue += parseFloat(record.total_revenue) || 0;
+      byDate[date].customers.add(record.customer_id);
+      allCustomers.add(record.customer_id);
+    });
+
+    // Convert to array and calculate metrics
+    const trends = Object.entries(byDate)
+      .map(([date, stats]) => ({
+        date,
+        revenue: Math.round(stats.revenue * 100) / 100,
+        unique_customers: stats.customers.size,
+        avg_per_customer: stats.customers.size > 0
+          ? Math.round((stats.revenue / stats.customers.size) * 100) / 100
+          : 0
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Calculate summary
+    const totalRevenue = trends.reduce((sum, t) => sum + t.revenue, 0);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        period: period,
+        start_date: startDateStr,
+        end_date: new Date().toISOString().split('T')[0],
+        trends: trends,
+        summary: {
+          total_revenue: Math.round(totalRevenue * 100) / 100,
+          total_unique_customers: allCustomers.size,
+          avg_per_customer: allCustomers.size > 0
+            ? Math.round((totalRevenue / allCustomers.size) * 100) / 100
+            : 0,
+          avg_daily_revenue: trends.length > 0
+            ? Math.round((totalRevenue / trends.length) * 100) / 100
+            : 0
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Error calculating LTV trends:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to calculate LTV trends'
     });
   }
 }
@@ -298,11 +412,14 @@ module.exports = async (req, res) => {
       case 'stats':
         return await handleStats(req, res);
 
+      case 'trends':
+        return await handleTrends(req, res);
+
       default:
         return res.status(400).json({
           success: false,
           error: `Unknown action: ${action}`,
-          available_actions: ['calculate', 'calculate-all', 'get', 'list', 'stats']
+          available_actions: ['calculate', 'calculate-all', 'get', 'list', 'stats', 'trends']
         });
     }
   } catch (error) {

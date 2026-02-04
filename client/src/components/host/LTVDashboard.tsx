@@ -5,9 +5,10 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Users, TrendingUp, TrendingDown, AlertTriangle, Star, DollarSign, Calendar, Activity } from 'lucide-react';
+import { Users, TrendingUp, TrendingDown, AlertTriangle, Star, DollarSign, Calendar, Activity, Mail } from 'lucide-react';
 import HelpTooltip from '../common/HelpTooltip';
 import { api } from '../../services/api';
+import { RetentionCampaignModal } from './RetentionCampaignModal';
 
 interface Customer {
   customer_id: string;
@@ -43,6 +44,8 @@ export default function LTVDashboard() {
   const [atRiskCustomers, setAtRiskCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [selectedCustomerForCampaign, setSelectedCustomerForCampaign] = useState<Customer | null>(null);
+  const [campaignModalOpen, setCampaignModalOpen] = useState(false);
 
   useEffect(() => {
     fetchLTVData();
@@ -80,6 +83,31 @@ export default function LTVDashboard() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSendCampaign = async (customerId: string, campaignType: string, message: string) => {
+    try {
+      const response = await api.post('/retention-campaigns?action=create', {
+        customer_id: customerId,
+        campaign_type: campaignType,
+        message: message,
+        channel: 'email'
+      });
+
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Failed to create campaign');
+      }
+
+      console.log('Campaign created:', response.data);
+    } catch (error) {
+      console.error('Failed to send campaign:', error);
+      throw error;
+    }
+  };
+
+  const openCampaignModal = (customer: Customer) => {
+    setSelectedCustomerForCampaign(customer);
+    setCampaignModalOpen(true);
   };
 
   const getTierColor = (tier: string) => {
@@ -325,16 +353,25 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm font-bold text-[#1C1917]">{formatCurrency(customer.lifetime_value)} LTV</div>
-                      <div className="text-xs text-[#57534E]">{customer.total_visits} visits</div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-right">
+                        <div className="text-sm font-bold text-[#1C1917]">{formatCurrency(customer.lifetime_value)} LTV</div>
+                        <div className="text-xs text-[#57534E]">{customer.total_visits} visits</div>
+                      </div>
+                      <button
+                        onClick={() => openCampaignModal(customer)}
+                        className="p-2 bg-[#d97706]/20 hover:bg-[#d97706]/30 rounded-lg transition-colors"
+                        title="Send retention campaign"
+                      >
+                        <Mail className="w-4 h-4 text-[#d97706]" />
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
               <button
                 className="w-full mt-3 px-4 py-2 bg-[#d97706] hover:bg-[#b45309] text-white text-sm font-medium rounded-xl transition-colors"
-                onClick={() => alert('Retention campaigns feature coming soon!')}
+                onClick={() => atRiskCustomers[0] && openCampaignModal(atRiskCustomers[0])}
               >
                 Launch Retention Campaign
               </button>
@@ -361,6 +398,14 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
           </button>
         </div>
       )}
+
+      {/* Retention Campaign Modal */}
+      <RetentionCampaignModal
+        isOpen={campaignModalOpen}
+        onClose={() => setCampaignModalOpen(false)}
+        customer={selectedCustomerForCampaign}
+        onSendCampaign={handleSendCampaign}
+      />
     </div>
   );
 }
