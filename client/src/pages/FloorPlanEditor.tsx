@@ -229,7 +229,7 @@ function TablePaletteItem({ shape, capacity, label, onAdd }: TablePaletteItemPro
     data: { type: 'new-table', shape, capacity }
   });
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = (_e: React.MouseEvent) => {
     // Only trigger on click, not on drag
     if (!isDragging) {
       onAdd(shape, capacity);
@@ -624,7 +624,7 @@ export default function FloorPlanEditor() {
   }, [selectedTableId, tables, deleteTableMutation]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, delta, over } = event;
+    const { active, delta } = event;
 
     if (!active.data.current) return;
 
@@ -725,10 +725,6 @@ export default function FloorPlanEditor() {
     let position_y = 2;
 
     // Simple algorithm: find a spot that doesn't overlap with existing tables
-    const occupiedPositions = new Set(
-      tables.map(t => `${t.position_x},${t.position_y}`)
-    );
-
     // Try positions in a grid pattern
     outer: for (let y = 1; y < GRID_HEIGHT - tableSize.height; y++) {
       for (let x = 1; x < GRID_SIZE - tableSize.width; x++) {

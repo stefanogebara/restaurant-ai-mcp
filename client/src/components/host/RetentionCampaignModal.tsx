@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { X, Mail, Gift, Calendar } from 'lucide-react';
 
 interface Customer {
