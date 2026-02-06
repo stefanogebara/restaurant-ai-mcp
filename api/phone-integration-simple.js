@@ -172,10 +172,8 @@ async function handleRegister(req, res) {
           phone_number: PLATFORM_TWILIO_NUMBER,
           label: `Seatable - ${restaurant.restaurant_name}`,
           provider: 'twilio',
-          twilio_config: {
-            account_sid: PLATFORM_TWILIO_SID,
-            auth_token: PLATFORM_TWILIO_TOKEN
-          }
+          sid: PLATFORM_TWILIO_SID,
+          token: PLATFORM_TWILIO_TOKEN
         })
       });
 
