@@ -587,7 +587,9 @@ async function handleFixTools(req, res) {
       }
 
       const toolData = await createResponse.json();
-      createdToolIds.push({ name: toolDef.name, id: toolData.tool_id });
+      // Try multiple possible field names for the tool ID
+      const toolId = toolData.tool_id || toolData.id || toolData.tool_config?.id;
+      createdToolIds.push({ name: toolDef.name, id: toolId, raw_keys: Object.keys(toolData) });
     } catch (err) {
       errors.push({ tool: toolDef.name, error: err.message });
     }
