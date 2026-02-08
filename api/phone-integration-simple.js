@@ -702,7 +702,10 @@ async function handleDiagnose(req, res) {
     prompt_preview: agentData.conversation_config?.agent?.prompt?.prompt?.substring(0, 200) + '...',
     raw_agent_keys: Object.keys(agentData),
     raw_config_keys: Object.keys(agentData.conversation_config || {}),
-    raw_agent_sub_keys: Object.keys(agentData.conversation_config?.agent || {})
+    raw_agent_sub_keys: Object.keys(agentData.conversation_config?.agent || {}),
+    prompt_keys: Object.keys(agentData.conversation_config?.agent?.prompt || {}),
+    tool_ids: agentData.conversation_config?.agent?.prompt?.tool_ids || [],
+    tool_ids_count: (agentData.conversation_config?.agent?.prompt?.tool_ids || []).length
   });
 }
 
