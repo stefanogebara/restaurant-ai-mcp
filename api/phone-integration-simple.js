@@ -449,7 +449,8 @@ async function handleListPhones(req, res) {
 }
 
 /**
- * Fix agent tools - add webhook tools for reservation management
+ * Fix agent tools - create webhook tools and attach to agent via tool_ids
+ * Uses the new ElevenLabs API (post July 2025): create tools separately, then reference by ID
  */
 async function handleFixTools(req, res) {
   if (req.method !== 'POST') {
@@ -475,78 +476,134 @@ async function handleFixTools(req, res) {
   const baseUrl = 'https://restaurant-ai-mcp.vercel.app';
   const rid = restaurant_id;
 
-  const tools = [
+  // Define tools using the new ElevenLabs API format (api_schema)
+  const toolDefinitions = [
     {
       type: 'webhook',
       name: 'get_current_datetime',
       description: 'Get the current date and time. Use this at the start of conversations to know what "today" and "tomorrow" mean.',
-      webhook: { url: `${baseUrl}/api/elevenlabs-webhook?action=get_current_datetime`, method: 'GET' },
-      parameters: { type: 'object', properties: {}, required: [] }
+      api_schema: {
+        url: `${baseUrl}/api/elevenlabs-webhook?action=get_current_datetime`,
+        method: 'GET'
+      }
     },
     {
       type: 'webhook',
       name: 'check_availability',
       description: 'Check table availability for a specific date, time, and party size. Use this before creating a reservation.',
-      webhook: { url: `${baseUrl}/api/elevenlabs-webhook?action=check_availability&restaurant_id=${rid}`, method: 'POST' },
-      parameters: {
-        type: 'object',
-        properties: {
-          date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
-          time: { type: 'string', description: 'Time in HH:MM format' },
-          party_size: { type: 'number', description: 'Number of guests' }
-        },
-        required: ['date', 'time', 'party_size']
+      api_schema: {
+        url: `${baseUrl}/api/elevenlabs-webhook?action=check_availability&restaurant_id=${rid}`,
+        method: 'POST',
+        content_type: 'application/json',
+        request_body_schema: {
+          type: 'object',
+          properties: {
+            date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
+            time: { type: 'string', description: 'Time in HH:MM format' },
+            party_size: { type: 'number', description: 'Number of guests' }
+          },
+          required: ['date', 'time', 'party_size']
+        }
       }
     },
     {
       type: 'webhook',
       name: 'create_reservation',
-      description: 'Create a new reservation after confirming all details with the customer.',
-      webhook: { url: `${baseUrl}/api/elevenlabs-webhook?action=create_reservation&restaurant_id=${rid}`, method: 'POST' },
-      parameters: {
-        type: 'object',
-        properties: {
-          customer_name: { type: 'string', description: 'Full name of customer' },
-          customer_phone: { type: 'string', description: 'Phone number' },
-          customer_email: { type: 'string', description: 'Email (optional)' },
-          date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
-          time: { type: 'string', description: 'Time in HH:MM format' },
-          party_size: { type: 'number', description: 'Number of guests' },
-          special_requests: { type: 'string', description: 'Special requests (optional)' }
-        },
-        required: ['customer_name', 'customer_phone', 'date', 'time', 'party_size']
+      description: 'Create a new reservation after confirming all details with the customer. Only use after checking availability and getting customer name, phone.',
+      api_schema: {
+        url: `${baseUrl}/api/elevenlabs-webhook?action=create_reservation&restaurant_id=${rid}`,
+        method: 'POST',
+        content_type: 'application/json',
+        request_body_schema: {
+          type: 'object',
+          properties: {
+            customer_name: { type: 'string', description: 'Full name of customer' },
+            customer_phone: { type: 'string', description: 'Phone number' },
+            customer_email: { type: 'string', description: 'Email address (optional)' },
+            date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
+            time: { type: 'string', description: 'Time in HH:MM format' },
+            party_size: { type: 'number', description: 'Number of guests' },
+            special_requests: { type: 'string', description: 'Special requests (optional)' }
+          },
+          required: ['customer_name', 'customer_phone', 'date', 'time', 'party_size']
+        }
       }
     },
     {
       type: 'webhook',
       name: 'lookup_reservation',
-      description: 'Find an existing reservation by phone or name.',
-      webhook: { url: `${baseUrl}/api/reservations?action=lookup&restaurant_id=${rid}`, method: 'POST' },
-      parameters: {
-        type: 'object',
-        properties: {
-          customer_phone: { type: 'string', description: 'Phone number' },
-          customer_name: { type: 'string', description: 'Name (optional if phone provided)' }
-        },
-        required: []
+      description: 'Find an existing reservation by customer phone number or name.',
+      api_schema: {
+        url: `${baseUrl}/api/reservations?action=lookup&restaurant_id=${rid}`,
+        method: 'POST',
+        content_type: 'application/json',
+        request_body_schema: {
+          type: 'object',
+          properties: {
+            customer_phone: { type: 'string', description: 'Phone number' },
+            customer_name: { type: 'string', description: 'Name (optional if phone provided)' }
+          }
+        }
       }
     },
     {
       type: 'webhook',
       name: 'cancel_reservation',
-      description: 'Cancel an existing reservation by its ID.',
-      webhook: { url: `${baseUrl}/api/reservations?action=cancel&restaurant_id=${rid}`, method: 'POST' },
-      parameters: {
-        type: 'object',
-        properties: {
-          reservation_id: { type: 'string', description: 'Reservation ID to cancel' }
-        },
-        required: ['reservation_id']
+      description: 'Cancel an existing reservation by its reservation ID.',
+      api_schema: {
+        url: `${baseUrl}/api/reservations?action=cancel&restaurant_id=${rid}`,
+        method: 'POST',
+        content_type: 'application/json',
+        request_body_schema: {
+          type: 'object',
+          properties: {
+            reservation_id: { type: 'string', description: 'Reservation ID to cancel' }
+          },
+          required: ['reservation_id']
+        }
       }
     }
   ];
 
-  // PATCH the agent to add tools
+  // Step 1: Create each tool via the ElevenLabs Tools API
+  const createdToolIds = [];
+  const errors = [];
+
+  for (const toolDef of toolDefinitions) {
+    try {
+      const createResponse = await fetch('https://api.elevenlabs.io/v1/convai/tools', {
+        method: 'POST',
+        headers: {
+          'xi-api-key': ELEVENLABS_API_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ tool_config: toolDef })
+      });
+
+      if (!createResponse.ok) {
+        const errorText = await createResponse.text();
+        errors.push({ tool: toolDef.name, error: errorText });
+        continue;
+      }
+
+      const toolData = await createResponse.json();
+      createdToolIds.push({ name: toolDef.name, id: toolData.tool_id });
+    } catch (err) {
+      errors.push({ tool: toolDef.name, error: err.message });
+    }
+  }
+
+  if (createdToolIds.length === 0) {
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to create any tools',
+      details: errors
+    });
+  }
+
+  // Step 2: Assign tool IDs to the agent via prompt.tool_ids
+  const toolIds = createdToolIds.map(t => t.id);
+
   const patchResponse = await fetch(
     `https://api.elevenlabs.io/v1/convai/agents/${restaurant.elevenlabs_agent_id}`,
     {
@@ -558,7 +615,9 @@ async function handleFixTools(req, res) {
       body: JSON.stringify({
         conversation_config: {
           agent: {
-            tools: tools
+            prompt: {
+              tool_ids: toolIds
+            }
           }
         }
       })
@@ -567,14 +626,20 @@ async function handleFixTools(req, res) {
 
   if (!patchResponse.ok) {
     const errorText = await patchResponse.text();
-    return res.status(500).json({ success: false, error: 'Failed to update agent tools', details: errorText });
+    return res.status(500).json({
+      success: false,
+      error: 'Tools created but failed to assign to agent',
+      created_tools: createdToolIds,
+      patch_error: errorText
+    });
   }
 
   return res.status(200).json({
     success: true,
-    message: `Added ${tools.length} webhook tools to agent`,
+    message: `Created ${createdToolIds.length} tools and assigned to agent`,
     agent_id: restaurant.elevenlabs_agent_id,
-    tools_added: tools.map(t => t.name)
+    tools_created: createdToolIds,
+    errors: errors.length > 0 ? errors : undefined
   });
 }
 
