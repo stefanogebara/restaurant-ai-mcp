@@ -80,7 +80,10 @@ function validateReservation(params, restaurant) {
     timeZone: config.timezone
   }).toLowerCase();
 
-  const dayHours = config.business_hours[dayOfWeek];
+  // business_hours can be an array of {day, is_open, ...} or an object keyed by day name
+  const dayHours = Array.isArray(config.business_hours)
+    ? config.business_hours.find(d => d.day && d.day.toLowerCase() === dayOfWeek)
+    : config.business_hours[dayOfWeek];
 
   if (!dayHours || dayHours.is_open === false) {
     errors.push({
@@ -90,8 +93,8 @@ function validateReservation(params, restaurant) {
   } else {
     // 6. Check if time is within business hours
     const requestedTime = time;
-    const openTime = dayHours.open || '11:00';
-    const closeTime = dayHours.close || '22:00';
+    const openTime = dayHours.open || dayHours.open_time || (dayHours.periods?.[0]?.open) || '11:00';
+    const closeTime = dayHours.close || dayHours.close_time || (dayHours.periods?.[dayHours.periods.length - 1]?.close) || '22:00';
 
     if (requestedTime < openTime) {
       errors.push({
