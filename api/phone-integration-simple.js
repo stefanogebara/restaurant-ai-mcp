@@ -51,6 +51,8 @@ module.exports = async (req, res) => {
         return await handleListPhones(req, res);
       case 'diagnose':
         return await handleDiagnose(req, res);
+      case 'fix-tools':
+        return await handleFixTools(req, res);
       default:
         return res.status(400).json({
           success: false,
@@ -443,6 +445,136 @@ async function handleListPhones(req, res) {
     success: true,
     phone_numbers: data.phone_numbers || [],
     count: data.phone_numbers?.length || 0
+  });
+}
+
+/**
+ * Fix agent tools - add webhook tools for reservation management
+ */
+async function handleFixTools(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Method not allowed' });
+  }
+
+  const { restaurant_id } = req.body;
+
+  if (!restaurant_id) {
+    return res.status(400).json({ success: false, error: 'Missing restaurant_id' });
+  }
+
+  const { data: restaurant } = await supabase
+    .from('restaurant_info')
+    .select('restaurant_name, elevenlabs_agent_id')
+    .eq('id', restaurant_id)
+    .single();
+
+  if (!restaurant || !restaurant.elevenlabs_agent_id) {
+    return res.status(404).json({ success: false, error: 'Restaurant or agent not found' });
+  }
+
+  const baseUrl = 'https://restaurant-ai-mcp.vercel.app';
+  const rid = restaurant_id;
+
+  const tools = [
+    {
+      type: 'webhook',
+      name: 'get_current_datetime',
+      description: 'Get the current date and time. Use this at the start of conversations to know what "today" and "tomorrow" mean.',
+      webhook: { url: `${baseUrl}/api/elevenlabs-webhook?action=get_current_datetime`, method: 'GET' },
+      parameters: { type: 'object', properties: {}, required: [] }
+    },
+    {
+      type: 'webhook',
+      name: 'check_availability',
+      description: 'Check table availability for a specific date, time, and party size. Use this before creating a reservation.',
+      webhook: { url: `${baseUrl}/api/elevenlabs-webhook?action=check_availability&restaurant_id=${rid}`, method: 'POST' },
+      parameters: {
+        type: 'object',
+        properties: {
+          date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
+          time: { type: 'string', description: 'Time in HH:MM format' },
+          party_size: { type: 'number', description: 'Number of guests' }
+        },
+        required: ['date', 'time', 'party_size']
+      }
+    },
+    {
+      type: 'webhook',
+      name: 'create_reservation',
+      description: 'Create a new reservation after confirming all details with the customer.',
+      webhook: { url: `${baseUrl}/api/elevenlabs-webhook?action=create_reservation&restaurant_id=${rid}`, method: 'POST' },
+      parameters: {
+        type: 'object',
+        properties: {
+          customer_name: { type: 'string', description: 'Full name of customer' },
+          customer_phone: { type: 'string', description: 'Phone number' },
+          customer_email: { type: 'string', description: 'Email (optional)' },
+          date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
+          time: { type: 'string', description: 'Time in HH:MM format' },
+          party_size: { type: 'number', description: 'Number of guests' },
+          special_requests: { type: 'string', description: 'Special requests (optional)' }
+        },
+        required: ['customer_name', 'customer_phone', 'date', 'time', 'party_size']
+      }
+    },
+    {
+      type: 'webhook',
+      name: 'lookup_reservation',
+      description: 'Find an existing reservation by phone or name.',
+      webhook: { url: `${baseUrl}/api/reservations?action=lookup&restaurant_id=${rid}`, method: 'POST' },
+      parameters: {
+        type: 'object',
+        properties: {
+          customer_phone: { type: 'string', description: 'Phone number' },
+          customer_name: { type: 'string', description: 'Name (optional if phone provided)' }
+        },
+        required: []
+      }
+    },
+    {
+      type: 'webhook',
+      name: 'cancel_reservation',
+      description: 'Cancel an existing reservation by its ID.',
+      webhook: { url: `${baseUrl}/api/reservations?action=cancel&restaurant_id=${rid}`, method: 'POST' },
+      parameters: {
+        type: 'object',
+        properties: {
+          reservation_id: { type: 'string', description: 'Reservation ID to cancel' }
+        },
+        required: ['reservation_id']
+      }
+    }
+  ];
+
+  // PATCH the agent to add tools
+  const patchResponse = await fetch(
+    `https://api.elevenlabs.io/v1/convai/agents/${restaurant.elevenlabs_agent_id}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'xi-api-key': ELEVENLABS_API_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        conversation_config: {
+          agent: {
+            tools: tools
+          }
+        }
+      })
+    }
+  );
+
+  if (!patchResponse.ok) {
+    const errorText = await patchResponse.text();
+    return res.status(500).json({ success: false, error: 'Failed to update agent tools', details: errorText });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: `Added ${tools.length} webhook tools to agent`,
+    agent_id: restaurant.elevenlabs_agent_id,
+    tools_added: tools.map(t => t.name)
   });
 }
 
