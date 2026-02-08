@@ -612,21 +612,30 @@ async function handleDiagnose(req, res) {
   const agentData = await agentResponse.json();
   const tools = agentData.conversation_config?.agent?.tools || [];
 
+  // Also check alternate paths where tools might live
+  const altTools1 = agentData.tools || [];
+  const altTools2 = agentData.conversation_config?.tools || [];
+
   return res.status(200).json({
     success: true,
     restaurant_name: restaurant.restaurant_name,
     agent_id: restaurant.elevenlabs_agent_id,
     agent_name: agentData.name,
-    has_tools: tools.length > 0,
+    has_tools: tools.length > 0 || altTools1.length > 0 || altTools2.length > 0,
     tool_count: tools.length,
     tools: tools.map(t => ({
       name: t.name,
       type: t.type,
       url: t.webhook?.url || t.url || null
     })),
+    alt_tools_root: altTools1.length,
+    alt_tools_config: altTools2.length,
     language: agentData.conversation_config?.agent?.language,
     first_message: agentData.conversation_config?.agent?.first_message,
-    prompt_preview: agentData.conversation_config?.agent?.prompt?.prompt?.substring(0, 200) + '...'
+    prompt_preview: agentData.conversation_config?.agent?.prompt?.prompt?.substring(0, 200) + '...',
+    raw_agent_keys: Object.keys(agentData),
+    raw_config_keys: Object.keys(agentData.conversation_config || {}),
+    raw_agent_sub_keys: Object.keys(agentData.conversation_config?.agent || {})
   });
 }
 
