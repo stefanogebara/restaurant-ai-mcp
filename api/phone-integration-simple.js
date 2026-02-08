@@ -49,6 +49,8 @@ module.exports = async (req, res) => {
         return await handleTestCall(req, res);
       case 'list-phones':
         return await handleListPhones(req, res);
+      case 'diagnose':
+        return await handleDiagnose(req, res);
       default:
         return res.status(400).json({
           success: false,
@@ -441,6 +443,58 @@ async function handleListPhones(req, res) {
     success: true,
     phone_numbers: data.phone_numbers || [],
     count: data.phone_numbers?.length || 0
+  });
+}
+
+/**
+ * Diagnose agent configuration - check if tools/webhooks are set up
+ */
+async function handleDiagnose(req, res) {
+  const restaurant_id = req.query.restaurant_id || req.body?.restaurant_id;
+
+  if (!restaurant_id) {
+    return res.status(400).json({ success: false, error: 'Missing restaurant_id' });
+  }
+
+  const { data: restaurant } = await supabase
+    .from('restaurant_info')
+    .select('restaurant_name, elevenlabs_agent_id, phone_integration_status')
+    .eq('id', restaurant_id)
+    .single();
+
+  if (!restaurant || !restaurant.elevenlabs_agent_id) {
+    return res.status(404).json({ success: false, error: 'Restaurant or agent not found' });
+  }
+
+  // Fetch agent config from ElevenLabs
+  const agentResponse = await fetch(
+    `https://api.elevenlabs.io/v1/convai/agents/${restaurant.elevenlabs_agent_id}`,
+    { headers: { 'xi-api-key': ELEVENLABS_API_KEY } }
+  );
+
+  if (!agentResponse.ok) {
+    const errorText = await agentResponse.text();
+    return res.status(500).json({ success: false, error: 'Failed to fetch agent config', details: errorText });
+  }
+
+  const agentData = await agentResponse.json();
+  const tools = agentData.conversation_config?.agent?.tools || [];
+
+  return res.status(200).json({
+    success: true,
+    restaurant_name: restaurant.restaurant_name,
+    agent_id: restaurant.elevenlabs_agent_id,
+    agent_name: agentData.name,
+    has_tools: tools.length > 0,
+    tool_count: tools.length,
+    tools: tools.map(t => ({
+      name: t.name,
+      type: t.type,
+      url: t.webhook?.url || t.url || null
+    })),
+    language: agentData.conversation_config?.agent?.language,
+    first_message: agentData.conversation_config?.agent?.first_message,
+    prompt_preview: agentData.conversation_config?.agent?.prompt?.prompt?.substring(0, 200) + '...'
   });
 }
 
