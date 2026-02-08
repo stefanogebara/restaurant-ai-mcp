@@ -45,6 +45,7 @@ async function getRestaurantByPhone(phoneNumber) {
     return {
       id: restaurant.id,
       name: restaurant.restaurant_name,
+      restaurant_name: restaurant.restaurant_name,
       city: restaurant.city,
       country: restaurant.country,
       phone: restaurant.phone,
@@ -88,6 +89,7 @@ async function getRestaurantById(restaurantId) {
   console.log(`[RestaurantLoader] Looking up restaurant by ID: ${restaurantId}`);
 
   try {
+    // Try restaurant_config first (onboarded restaurants)
     const result = await query
       .from('restaurant_config')
       .select('*')
@@ -95,33 +97,61 @@ async function getRestaurantById(restaurantId) {
       .eq('is_active', true)
       .single();
 
-    if (result.error) {
-      console.error('[RestaurantLoader] Database error:', result.error);
+    if (!result.error && result.data) {
+      const restaurant = result.data;
+      console.log(`[RestaurantLoader] Found restaurant in config: ${restaurant.restaurant_name}`);
+
+      return {
+        id: restaurant.id,
+        name: restaurant.restaurant_name,
+        restaurant_name: restaurant.restaurant_name,
+        city: restaurant.city,
+        country: restaurant.country,
+        phone: restaurant.phone,
+        email: restaurant.email,
+        website: restaurant.website,
+        voice_id: restaurant.voice_id,
+        ai_config: restaurant.ai_config,
+        language: restaurant.ai_config?.language || 'en-US',
+        greeting_message: restaurant.ai_config?.greeting_message,
+        farewell_message: restaurant.ai_config?.farewell_message,
+        business_hours: restaurant.business_hours,
+        average_dining_duration_minutes: restaurant.average_dining_duration_minutes || 90,
+        table_configuration: restaurant.table_configuration,
+        reservation_settings: restaurant.reservation_settings,
+        team_members: restaurant.team_members || []
+      };
+    }
+
+    // Fallback to restaurant_info table
+    console.log(`[RestaurantLoader] Not found in restaurant_config, trying restaurant_info`);
+    const infoResult = await query
+      .from('restaurant_info')
+      .select('*')
+      .eq('id', restaurantId)
+      .single();
+
+    if (infoResult.error || !infoResult.data) {
+      console.error('[RestaurantLoader] Not found in either table:', infoResult.error);
       throw new Error(`Restaurant not found with ID: ${restaurantId}`);
     }
 
-    const restaurant = result.data;
-
-    console.log(`[RestaurantLoader] Found restaurant: ${restaurant.restaurant_name}`);
+    const restaurant = infoResult.data;
+    console.log(`[RestaurantLoader] Found restaurant in info: ${restaurant.restaurant_name}`);
 
     return {
       id: restaurant.id,
       name: restaurant.restaurant_name,
-      city: restaurant.city,
-      country: restaurant.country,
+      restaurant_name: restaurant.restaurant_name,
       phone: restaurant.phone,
       email: restaurant.email,
-      website: restaurant.website,
-      voice_id: restaurant.voice_id,
-      ai_config: restaurant.ai_config,
-      language: restaurant.ai_config?.language || 'en-US',
-      greeting_message: restaurant.ai_config?.greeting_message,
-      farewell_message: restaurant.ai_config?.farewell_message,
-      business_hours: restaurant.business_hours,
-      average_dining_duration_minutes: restaurant.average_dining_duration_minutes || 90,
-      table_configuration: restaurant.table_configuration,
-      reservation_settings: restaurant.reservation_settings,
-      team_members: restaurant.team_members || []
+      language: restaurant.language || 'en',
+      business_hours: restaurant.business_hours || {},
+      average_dining_duration_minutes: restaurant.avg_dining_duration_minutes || 90,
+      timezone: restaurant.timezone || 'Europe/Madrid',
+      table_configuration: [],
+      reservation_settings: {},
+      team_members: []
     };
   } catch (error) {
     console.error('[RestaurantLoader] Error loading restaurant:', error);

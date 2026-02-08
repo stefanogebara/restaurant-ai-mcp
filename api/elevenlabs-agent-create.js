@@ -7,6 +7,11 @@
  * - Language configuration
  * - Conversation tools (create_reservation, check_availability)
  *
+ * Uses the ElevenLabs Tools API (post July 2025):
+ * 1. Create each tool as a standalone resource via POST /v1/convai/tools
+ * 2. Collect the returned tool IDs
+ * 3. Reference them in the agent via conversation_config.agent.prompt.tool_ids
+ *
  * Related: MVP_PLAN_SIMPLIFICATION.md Phase 2
  */
 
@@ -39,7 +44,7 @@ module.exports = async (req, res) => {
       ? `https://${process.env.VERCEL_URL}`
       : 'https://restaurant-ai-mcp.vercel.app';
 
-    let systemPrompt, firstMessage, tools, agentName;
+    let systemPrompt, firstMessage, agentName;
 
     // Multi-tenant mode: Create a platform-wide agent for all restaurants
     if (multi_tenant_mode) {
@@ -48,11 +53,22 @@ module.exports = async (req, res) => {
 
       systemPrompt = buildMultiTenantSystemPrompt({ language });
       firstMessage = buildMultiTenantFirstMessage({ language });
-      tools = buildAgentTools(baseUrl, null, true);  // null restaurant_id, multiTenantMode=true
       agentName = 'Seatable Multi-Restaurant AI';
 
-      // Create multi-tenant agent
-      // Use the same structure as single-tenant (which works)
+      // Create tools via the Tools API and collect IDs
+      const toolDefinitions = buildToolDefinitions(baseUrl, null, true);
+      const { toolIds, errors } = await createToolsViaAPI(toolDefinitions);
+
+      if (toolIds.length === 0) {
+        console.error('Failed to create any tools:', errors);
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to create agent tools',
+          details: errors
+        });
+      }
+
+      // Create multi-tenant agent with tool_ids reference
       const agentResponse = await fetch('https://api.elevenlabs.io/v1/convai/agents/create', {
         method: 'POST',
         headers: {
@@ -65,15 +81,15 @@ module.exports = async (req, res) => {
             agent: {
               prompt: {
                 prompt: systemPrompt,
-                llm: 'gpt-4-turbo'  // Same as single-tenant
+                llm: 'gpt-4-turbo',
+                tool_ids: toolIds
               },
               first_message: firstMessage,
-              language: language,
-              tools: tools
+              language: language
             },
             tts: {
               voice_id: defaultVoiceId,
-              model_id: 'eleven_turbo_v2_5'  // Same as single-tenant
+              model_id: 'eleven_turbo_v2_5'
             }
           },
           platform_settings: {
@@ -102,6 +118,7 @@ module.exports = async (req, res) => {
         agent_url: `https://elevenlabs.io/app/conversational-ai/${agentData.agent_id}`,
         mode: 'multi_tenant',
         language: language,
+        tools_created: toolIds.length,
         message: 'Multi-tenant agent created successfully. Configure this agent ID in your WhatsApp/phone integration.'
       });
     }
@@ -131,9 +148,20 @@ module.exports = async (req, res) => {
       custom_greeting
     });
 
-    tools = buildAgentTools(baseUrl, restaurant_id, false);
+    // Create tools via the Tools API and collect IDs
+    const toolDefinitions = buildToolDefinitions(baseUrl, restaurant_id, false);
+    const { toolIds, errors } = await createToolsViaAPI(toolDefinitions);
 
-    // Create agent via ElevenLabs API
+    if (toolIds.length === 0) {
+      console.error('Failed to create any tools:', errors);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to create agent tools',
+        details: errors
+      });
+    }
+
+    // Create agent via ElevenLabs API with tool_ids reference
     const agentResponse = await fetch('https://api.elevenlabs.io/v1/convai/agents/create', {
       method: 'POST',
       headers: {
@@ -141,20 +169,20 @@ module.exports = async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        name: `${restaurant_name} AI Receptionist`,  // Custom agent name
+        name: `${restaurant_name} AI Receptionist`,
         conversation_config: {
           agent: {
             prompt: {
               prompt: systemPrompt,
-              llm: 'gpt-4-turbo'  // Works for all languages
+              llm: 'gpt-4-turbo',
+              tool_ids: toolIds
             },
             first_message: firstMessage,
-            language: language,
-            tools: tools  // Add tools to agent
+            language: language
           },
           tts: {
             voice_id: voice_id,
-            model_id: 'eleven_turbo_v2_5'  // Required for non-English TTS
+            model_id: 'eleven_turbo_v2_5'
           }
         },
         platform_settings: {
@@ -185,7 +213,8 @@ module.exports = async (req, res) => {
       agent_id: agent_id,
       agent_url: `https://elevenlabs.io/app/conversational-ai/${agent_id}`,
       voice_id: voice_id,
-      language: language
+      language: language,
+      tools_created: toolIds.length
     });
 
   } catch (error) {
@@ -295,14 +324,18 @@ function buildFirstMessage({ restaurant_name, language, custom_greeting }) {
 }
 
 /**
- * Build agent tools configuration
- * These webhook-based tools allow the agent to interact with our reservation system
+ * Build tool definitions in the new ElevenLabs Tools API format (api_schema).
+ * These definitions are used with POST /v1/convai/tools to create standalone tool resources.
  * @param {string} baseUrl - The base URL for webhook endpoints
  * @param {string} restaurant_id - The restaurant ID (null for multi-tenant mode)
  * @param {boolean} multiTenantMode - Whether to include restaurant identification tools
+ * @returns {Array} Array of tool definitions with {type, name, description, api_schema}
  */
-function buildAgentTools(baseUrl, restaurant_id, multiTenantMode = false) {
+function buildToolDefinitions(baseUrl, restaurant_id, multiTenantMode = false) {
   const tools = [];
+
+  // Build restaurant_id query param only if provided (single-tenant mode)
+  const restaurantParam = restaurant_id ? `&restaurant_id=${restaurant_id}` : '';
 
   // Add identify_restaurant tool for multi-tenant mode (MUST be first)
   if (multiTenantMode) {
@@ -310,33 +343,31 @@ function buildAgentTools(baseUrl, restaurant_id, multiTenantMode = false) {
       type: 'webhook',
       name: 'identify_restaurant',
       description: 'Identify which restaurant the customer wants to book at. Call this FIRST when a customer mentions a restaurant name or at the start of any conversation. This must be called before any reservation actions like check_availability or create_reservation.',
-      webhook: {
+      api_schema: {
         url: `${baseUrl}/api/elevenlabs-webhook?action=identify_restaurant`,
-        method: 'POST'
-      },
-      parameters: {
-        type: 'object',
-        properties: {
-          restaurant_name: {
-            type: 'string',
-            description: 'The name of the restaurant the customer mentioned or wants to book at'
+        method: 'POST',
+        content_type: 'application/json',
+        request_body_schema: {
+          type: 'object',
+          properties: {
+            restaurant_name: {
+              type: 'string',
+              description: 'The name of the restaurant the customer mentioned or wants to book at'
+            },
+            sender_phone: {
+              type: 'string',
+              description: 'The phone number of the customer (from conversation context)'
+            },
+            conversation_id: {
+              type: 'string',
+              description: 'The current conversation ID'
+            }
           },
-          sender_phone: {
-            type: 'string',
-            description: 'The phone number of the customer (from conversation context)'
-          },
-          conversation_id: {
-            type: 'string',
-            description: 'The current conversation ID'
-          }
-        },
-        required: ['restaurant_name']
+          required: ['restaurant_name']
+        }
       }
     });
   }
-
-  // Build restaurant_id query param only if provided (single-tenant mode)
-  const restaurantParam = restaurant_id ? `&restaurant_id=${restaurant_id}` : '';
 
   // Standard tools that work in both single and multi-tenant mode
   tools.push(
@@ -344,184 +375,227 @@ function buildAgentTools(baseUrl, restaurant_id, multiTenantMode = false) {
       type: 'webhook',
       name: 'get_current_datetime',
       description: 'Get the current date and time. Use this at the start of conversations to know what "today" and "tomorrow" mean. Returns current date, time, day of week, and relative dates.',
-      webhook: {
+      api_schema: {
         url: `${baseUrl}/api/elevenlabs-webhook?action=get_current_datetime`,
         method: 'GET'
-      },
-      parameters: {
-        type: 'object',
-        properties: {},
-        required: []
       }
     },
     {
       type: 'webhook',
       name: 'check_availability',
       description: 'Check table availability for a specific date, time, and party size. Use this before creating a reservation to verify availability.' + (multiTenantMode ? ' NOTE: In multi-restaurant mode, call identify_restaurant FIRST to select the restaurant.' : ''),
-      webhook: {
+      api_schema: {
         url: `${baseUrl}/api/elevenlabs-webhook?action=check_availability${restaurantParam}`,
-        method: 'POST'
-      },
-      parameters: {
-        type: 'object',
-        properties: {
-          date: {
-            type: 'string',
-            description: 'The date for the reservation in YYYY-MM-DD format (e.g., 2025-11-26)'
+        method: 'POST',
+        content_type: 'application/json',
+        request_body_schema: {
+          type: 'object',
+          properties: {
+            date: {
+              type: 'string',
+              description: 'The date for the reservation in YYYY-MM-DD format (e.g., 2025-11-26)'
+            },
+            time: {
+              type: 'string',
+              description: 'The time for the reservation in HH:MM format (e.g., 19:00)'
+            },
+            party_size: {
+              type: 'number',
+              description: 'Number of people dining (e.g., 2, 4, 6). This must be a NUMBER, not a date.'
+            },
+            sender_phone: {
+              type: 'string',
+              description: 'The phone number of the customer (required in multi-restaurant mode)'
+            }
           },
-          time: {
-            type: 'string',
-            description: 'The time for the reservation in HH:MM format (e.g., 19:00)'
-          },
-          party_size: {
-            type: 'number',
-            description: 'Number of people dining (e.g., 2, 4, 6). This must be a NUMBER, not a date.'
-          },
-          sender_phone: {
-            type: 'string',
-            description: 'The phone number of the customer (required in multi-restaurant mode)'
-          }
-        },
-        required: ['date', 'time', 'party_size']
+          required: ['date', 'time', 'party_size']
+        }
       }
     },
     {
       type: 'webhook',
       name: 'create_reservation',
       description: 'Create a new reservation after confirming all details with the customer. Only use after checking availability and getting customer name, phone, and email.' + (multiTenantMode ? ' NOTE: In multi-restaurant mode, call identify_restaurant FIRST.' : ''),
-      webhook: {
+      api_schema: {
         url: `${baseUrl}/api/elevenlabs-webhook?action=create_reservation${restaurantParam}`,
-        method: 'POST'
-      },
-      parameters: {
-        type: 'object',
-        properties: {
-          customer_name: {
-            type: 'string',
-            description: 'Full name of the customer making the reservation'
+        method: 'POST',
+        content_type: 'application/json',
+        request_body_schema: {
+          type: 'object',
+          properties: {
+            customer_name: {
+              type: 'string',
+              description: 'Full name of the customer making the reservation'
+            },
+            customer_phone: {
+              type: 'string',
+              description: 'Phone number of the customer'
+            },
+            customer_email: {
+              type: 'string',
+              description: 'Email address of the customer (optional)'
+            },
+            date: {
+              type: 'string',
+              description: 'The date for the reservation in YYYY-MM-DD format'
+            },
+            time: {
+              type: 'string',
+              description: 'The time for the reservation in HH:MM format'
+            },
+            party_size: {
+              type: 'number',
+              description: 'Number of people dining. This must be a NUMBER, not a date.'
+            },
+            special_requests: {
+              type: 'string',
+              description: 'Any special requests or dietary requirements (optional)'
+            },
+            sender_phone: {
+              type: 'string',
+              description: 'The phone number of the customer (required in multi-restaurant mode)'
+            }
           },
-          customer_phone: {
-            type: 'string',
-            description: 'Phone number of the customer'
-          },
-          customer_email: {
-            type: 'string',
-            description: 'Email address of the customer (optional)'
-          },
-          date: {
-            type: 'string',
-            description: 'The date for the reservation in YYYY-MM-DD format'
-          },
-          time: {
-            type: 'string',
-            description: 'The time for the reservation in HH:MM format'
-          },
-          party_size: {
-            type: 'number',
-            description: 'Number of people dining. This must be a NUMBER, not a date.'
-          },
-          special_requests: {
-            type: 'string',
-            description: 'Any special requests or dietary requirements (optional)'
-          },
-          sender_phone: {
-            type: 'string',
-            description: 'The phone number of the customer (required in multi-restaurant mode)'
-          }
-        },
-        required: ['customer_name', 'customer_phone', 'date', 'time', 'party_size']
+          required: ['customer_name', 'customer_phone', 'date', 'time', 'party_size']
+        }
       }
     },
     {
       type: 'webhook',
       name: 'lookup_reservation',
       description: 'Find an existing reservation by customer phone number or name. Use this to help customers find their reservation details or before modifying/canceling.',
-      webhook: {
+      api_schema: {
         url: `${baseUrl}/api/reservations?action=lookup${restaurantParam}`,
-        method: 'POST'
-      },
-      parameters: {
-        type: 'object',
-        properties: {
-          customer_phone: {
-            type: 'string',
-            description: 'Phone number used for the reservation'
-          },
-          customer_name: {
-            type: 'string',
-            description: 'Name used for the reservation (optional if phone provided)'
+        method: 'POST',
+        content_type: 'application/json',
+        request_body_schema: {
+          type: 'object',
+          properties: {
+            customer_phone: {
+              type: 'string',
+              description: 'Phone number used for the reservation'
+            },
+            customer_name: {
+              type: 'string',
+              description: 'Name used for the reservation (optional if phone provided)'
+            }
           }
-        },
-        required: []
+        }
       }
     },
     {
       type: 'webhook',
       name: 'cancel_reservation',
       description: 'Cancel an existing reservation. First use lookup_reservation to get the Reservation ID, then call this tool to cancel it.',
-      webhook: {
+      api_schema: {
         url: `${baseUrl}/api/reservations?action=cancel${restaurantParam}`,
-        method: 'POST'
-      },
-      parameters: {
-        type: 'object',
-        properties: {
-          reservation_id: {
-            type: 'string',
-            description: 'The unique reservation ID to cancel'
-          }
-        },
-        required: ['reservation_id']
+        method: 'POST',
+        content_type: 'application/json',
+        request_body_schema: {
+          type: 'object',
+          properties: {
+            reservation_id: {
+              type: 'string',
+              description: 'The unique reservation ID to cancel'
+            }
+          },
+          required: ['reservation_id']
+        }
       }
     },
     {
       type: 'webhook',
       name: 'modify_reservation',
       description: 'Change the date, time, or party size of an existing reservation. First use lookup_reservation to get the Reservation ID.',
-      webhook: {
+      api_schema: {
         url: `${baseUrl}/api/reservations?action=modify${restaurantParam}`,
-        method: 'POST'
-      },
-      parameters: {
-        type: 'object',
-        properties: {
-          reservation_id: {
-            type: 'string',
-            description: 'The unique reservation ID to modify'
+        method: 'POST',
+        content_type: 'application/json',
+        request_body_schema: {
+          type: 'object',
+          properties: {
+            reservation_id: {
+              type: 'string',
+              description: 'The unique reservation ID to modify'
+            },
+            new_date: {
+              type: 'string',
+              description: 'New date in YYYY-MM-DD format (optional)'
+            },
+            new_time: {
+              type: 'string',
+              description: 'New time in HH:MM format (optional)'
+            },
+            new_party_size: {
+              type: 'number',
+              description: 'New party size (optional)'
+            }
           },
-          new_date: {
-            type: 'string',
-            description: 'New date in YYYY-MM-DD format (optional)'
-          },
-          new_time: {
-            type: 'string',
-            description: 'New time in HH:MM format (optional)'
-          },
-          new_party_size: {
-            type: 'number',
-            description: 'New party size (optional)'
-          }
-        },
-        required: ['reservation_id']
+          required: ['reservation_id']
+        }
       }
     },
     {
       type: 'webhook',
       name: 'get_wait_time',
       description: 'Get the current estimated wait time for walk-in customers. Use when someone asks about wait times or walk-in availability today.',
-      webhook: {
+      api_schema: {
         url: `${baseUrl}/api/get-wait-time?${restaurant_id ? `restaurant_id=${restaurant_id}` : ''}`,
         method: 'GET'
-      },
-      parameters: {
-        type: 'object',
-        properties: {},
-        required: []
       }
     }
   );
 
   return tools;
+}
+
+/**
+ * Create tools via the ElevenLabs Tools API and return their IDs.
+ * Each tool is created as a standalone resource via POST /v1/convai/tools,
+ * and the returned ID is collected for use in agent creation.
+ * @param {Array} toolDefinitions - Array of tool definitions from buildToolDefinitions()
+ * @returns {Promise<{toolIds: string[], errors: Array}>}
+ */
+async function createToolsViaAPI(toolDefinitions) {
+  const toolIds = [];
+  const errors = [];
+
+  for (const toolDef of toolDefinitions) {
+    try {
+      const createResponse = await fetch('https://api.elevenlabs.io/v1/convai/tools', {
+        method: 'POST',
+        headers: {
+          'xi-api-key': process.env.ELEVENLABS_API_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ tool_config: toolDef })
+      });
+
+      if (!createResponse.ok) {
+        const errorText = await createResponse.text();
+        console.error(`Failed to create tool '${toolDef.name}':`, errorText);
+        errors.push({ tool: toolDef.name, error: errorText });
+        continue;
+      }
+
+      const toolData = await createResponse.json();
+      // The response returns { id: 'tool_xxx', ... } - use the 'id' field
+      const toolId = toolData.id || toolData.tool_id;
+
+      if (toolId) {
+        toolIds.push(toolId);
+        console.log(`Created tool '${toolDef.name}' with ID: ${toolId}`);
+      } else {
+        console.error(`Tool '${toolDef.name}' created but no ID returned:`, Object.keys(toolData));
+        errors.push({ tool: toolDef.name, error: 'No ID in response', response_keys: Object.keys(toolData) });
+      }
+    } catch (err) {
+      console.error(`Error creating tool '${toolDef.name}':`, err.message);
+      errors.push({ tool: toolDef.name, error: err.message });
+    }
+  }
+
+  return { toolIds, errors };
 }
 
 /**

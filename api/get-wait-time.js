@@ -30,8 +30,7 @@ module.exports = async (req, res) => {
 
     // Get today's reservations
     const today = new Date().toISOString().split('T')[0];
-    const filter = `AND(IS_SAME({Date}, '${today}', 'day'), OR({Status} = 'Confirmed', {Status} = 'Seated'))`;
-    const reservationsResult = await getReservations(filter);
+    const reservationsResult = await getReservations({ date: today });
 
     if (!reservationsResult.success) {
       return res.status(500).json(reservationsResult);

@@ -56,7 +56,7 @@ module.exports = async (req, res) => {
       default:
         return res.status(400).json({
           success: false,
-          error: 'Invalid action. Use: register, unregister, status, test-call, list-phones',
+          error: 'Invalid action. Use: register, unregister, status, test-call, list-phones, diagnose, fix-tools',
           platform_phone: PLATFORM_TWILIO_NUMBER,
           elevenlabs_configured: !!ELEVENLABS_API_KEY && ELEVENLABS_API_KEY !== 'your-elevenlabs-key-here'
         });
@@ -243,6 +243,40 @@ async function handleRegister(req, res) {
       });
     }
 
+    // Step 3.5: Auto-configure tools if agent doesn't have them
+    let toolsConfigured = false;
+    let toolsError = null;
+    try {
+      // Check if agent already has tools configured
+      const agentCheckResponse = await fetch(
+        `https://api.elevenlabs.io/v1/convai/agents/${restaurant.elevenlabs_agent_id}`,
+        { headers: { 'xi-api-key': ELEVENLABS_API_KEY } }
+      );
+
+      if (agentCheckResponse.ok) {
+        const agentData = await agentCheckResponse.json();
+        const existingToolIds = agentData.conversation_config?.agent?.prompt?.tool_ids || [];
+
+        if (existingToolIds.length === 0) {
+          logger.info(`Agent ${restaurant.elevenlabs_agent_id} has no tools configured, auto-creating...`);
+          const toolResult = await createAndAssignTools(restaurant_id, restaurant.elevenlabs_agent_id);
+          toolsConfigured = toolResult.success;
+          if (!toolResult.success) {
+            toolsError = toolResult.error;
+            logger.warn(`Auto tool creation warning: ${toolResult.error}. Phone registration will continue.`);
+          } else {
+            logger.info(`Auto-configured ${toolResult.toolCount} tools for agent`);
+          }
+        } else {
+          toolsConfigured = true;
+          logger.info(`Agent already has ${existingToolIds.length} tools configured`);
+        }
+      }
+    } catch (toolErr) {
+      toolsError = toolErr.message;
+      logger.warn(`Auto tool creation failed: ${toolErr.message}. Phone registration will continue.`);
+    }
+
     // Step 4: Save successful configuration
     await supabase
       .from('restaurant_info')
@@ -268,6 +302,8 @@ async function handleRegister(req, res) {
         phone_number_id: phoneNumberId,
         agent_id: restaurant.elevenlabs_agent_id,
         status: 'active',
+        tools_configured: toolsConfigured,
+        tools_warning: toolsError || undefined,
         test_instructions: `Call ${PLATFORM_TWILIO_NUMBER} to test the AI agent for ${restaurant.restaurant_name}`
       }
     });
@@ -473,10 +509,86 @@ async function handleFixTools(req, res) {
     return res.status(404).json({ success: false, error: 'Restaurant or agent not found' });
   }
 
+  const result = await createAndAssignTools(restaurant_id, restaurant.elevenlabs_agent_id);
+
+  if (!result.success) {
+    return res.status(500).json({
+      success: false,
+      error: result.error
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: `Created ${result.toolCount} tools and assigned to agent`,
+    agent_id: restaurant.elevenlabs_agent_id,
+    tool_count: result.toolCount
+  });
+}
+
+/**
+ * Diagnose agent configuration - check if tools/webhooks are set up
+ */
+async function handleDiagnose(req, res) {
+  const restaurant_id = req.query.restaurant_id || req.body?.restaurant_id;
+
+  if (!restaurant_id) {
+    return res.status(400).json({ success: false, error: 'Missing restaurant_id' });
+  }
+
+  const { data: restaurant } = await supabase
+    .from('restaurant_info')
+    .select('restaurant_name, elevenlabs_agent_id, phone_integration_status')
+    .eq('id', restaurant_id)
+    .single();
+
+  if (!restaurant || !restaurant.elevenlabs_agent_id) {
+    return res.status(404).json({ success: false, error: 'Restaurant or agent not found' });
+  }
+
+  // Fetch agent config from ElevenLabs
+  const agentResponse = await fetch(
+    `https://api.elevenlabs.io/v1/convai/agents/${restaurant.elevenlabs_agent_id}`,
+    { headers: { 'xi-api-key': ELEVENLABS_API_KEY } }
+  );
+
+  if (!agentResponse.ok) {
+    const errorText = await agentResponse.text();
+    return res.status(500).json({ success: false, error: 'Failed to fetch agent config', details: errorText });
+  }
+
+  const agentData = await agentResponse.json();
+  const tools = agentData.conversation_config?.agent?.tools || [];
+
+  return res.status(200).json({
+    success: true,
+    restaurant_name: restaurant.restaurant_name,
+    agent_id: restaurant.elevenlabs_agent_id,
+    agent_name: agentData.name,
+    has_tools: tools.length > 0,
+    tool_count: tools.length,
+    tools: tools.map(t => ({
+      name: t.name,
+      type: t.type,
+      url: t.webhook?.url || t.url || null
+    })),
+    language: agentData.conversation_config?.agent?.language,
+    first_message: agentData.conversation_config?.agent?.first_message,
+    prompt_preview: agentData.conversation_config?.agent?.prompt?.prompt?.substring(0, 200) + '...',
+    tool_ids: agentData.conversation_config?.agent?.prompt?.tool_ids || [],
+    tool_ids_count: (agentData.conversation_config?.agent?.prompt?.tool_ids || []).length
+  });
+}
+
+/**
+ * Helper to create webhook tools and assign them to an agent.
+ * Used by both handleFixTools() and the auto-configure step in handleRegister().
+ * Returns { success, toolCount, error }
+ */
+async function createAndAssignTools(restaurant_id, agent_id) {
   const baseUrl = 'https://restaurant-ai-mcp.vercel.app';
   const rid = restaurant_id;
 
-  // Define tools using the new ElevenLabs API format (api_schema)
   const toolDefinitions = [
     {
       type: 'webhook',
@@ -565,7 +677,6 @@ async function handleFixTools(req, res) {
     }
   ];
 
-  // Step 1: Create each tool via the ElevenLabs Tools API
   const createdToolIds = [];
   const errors = [];
 
@@ -587,27 +698,20 @@ async function handleFixTools(req, res) {
       }
 
       const toolData = await createResponse.json();
-      // Try multiple possible field names for the tool ID
       const toolId = toolData.tool_id || toolData.id || toolData.tool_config?.id;
-      createdToolIds.push({ name: toolDef.name, id: toolId, raw_keys: Object.keys(toolData) });
+      createdToolIds.push(toolId);
     } catch (err) {
       errors.push({ tool: toolDef.name, error: err.message });
     }
   }
 
   if (createdToolIds.length === 0) {
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to create any tools',
-      details: errors
-    });
+    return { success: false, toolCount: 0, error: `Failed to create any tools: ${JSON.stringify(errors)}` };
   }
 
-  // Step 2: Assign tool IDs to the agent via prompt.tool_ids
-  const toolIds = createdToolIds.map(t => t.id);
-
+  // Assign tool IDs to the agent
   const patchResponse = await fetch(
-    `https://api.elevenlabs.io/v1/convai/agents/${restaurant.elevenlabs_agent_id}`,
+    `https://api.elevenlabs.io/v1/convai/agents/${agent_id}`,
     {
       method: 'PATCH',
       headers: {
@@ -618,7 +722,7 @@ async function handleFixTools(req, res) {
         conversation_config: {
           agent: {
             prompt: {
-              tool_ids: toolIds
+              tool_ids: createdToolIds
             }
           }
         }
@@ -628,85 +732,10 @@ async function handleFixTools(req, res) {
 
   if (!patchResponse.ok) {
     const errorText = await patchResponse.text();
-    return res.status(500).json({
-      success: false,
-      error: 'Tools created but failed to assign to agent',
-      created_tools: createdToolIds,
-      patch_error: errorText
-    });
+    return { success: false, toolCount: createdToolIds.length, error: `Tools created but failed to assign: ${errorText}` };
   }
 
-  return res.status(200).json({
-    success: true,
-    message: `Created ${createdToolIds.length} tools and assigned to agent`,
-    agent_id: restaurant.elevenlabs_agent_id,
-    tools_created: createdToolIds,
-    errors: errors.length > 0 ? errors : undefined
-  });
-}
-
-/**
- * Diagnose agent configuration - check if tools/webhooks are set up
- */
-async function handleDiagnose(req, res) {
-  const restaurant_id = req.query.restaurant_id || req.body?.restaurant_id;
-
-  if (!restaurant_id) {
-    return res.status(400).json({ success: false, error: 'Missing restaurant_id' });
-  }
-
-  const { data: restaurant } = await supabase
-    .from('restaurant_info')
-    .select('restaurant_name, elevenlabs_agent_id, phone_integration_status')
-    .eq('id', restaurant_id)
-    .single();
-
-  if (!restaurant || !restaurant.elevenlabs_agent_id) {
-    return res.status(404).json({ success: false, error: 'Restaurant or agent not found' });
-  }
-
-  // Fetch agent config from ElevenLabs
-  const agentResponse = await fetch(
-    `https://api.elevenlabs.io/v1/convai/agents/${restaurant.elevenlabs_agent_id}`,
-    { headers: { 'xi-api-key': ELEVENLABS_API_KEY } }
-  );
-
-  if (!agentResponse.ok) {
-    const errorText = await agentResponse.text();
-    return res.status(500).json({ success: false, error: 'Failed to fetch agent config', details: errorText });
-  }
-
-  const agentData = await agentResponse.json();
-  const tools = agentData.conversation_config?.agent?.tools || [];
-
-  // Also check alternate paths where tools might live
-  const altTools1 = agentData.tools || [];
-  const altTools2 = agentData.conversation_config?.tools || [];
-
-  return res.status(200).json({
-    success: true,
-    restaurant_name: restaurant.restaurant_name,
-    agent_id: restaurant.elevenlabs_agent_id,
-    agent_name: agentData.name,
-    has_tools: tools.length > 0 || altTools1.length > 0 || altTools2.length > 0,
-    tool_count: tools.length,
-    tools: tools.map(t => ({
-      name: t.name,
-      type: t.type,
-      url: t.webhook?.url || t.url || null
-    })),
-    alt_tools_root: altTools1.length,
-    alt_tools_config: altTools2.length,
-    language: agentData.conversation_config?.agent?.language,
-    first_message: agentData.conversation_config?.agent?.first_message,
-    prompt_preview: agentData.conversation_config?.agent?.prompt?.prompt?.substring(0, 200) + '...',
-    raw_agent_keys: Object.keys(agentData),
-    raw_config_keys: Object.keys(agentData.conversation_config || {}),
-    raw_agent_sub_keys: Object.keys(agentData.conversation_config?.agent || {}),
-    prompt_keys: Object.keys(agentData.conversation_config?.agent?.prompt || {}),
-    tool_ids: agentData.conversation_config?.agent?.prompt?.tool_ids || [],
-    tool_ids_count: (agentData.conversation_config?.agent?.prompt?.tool_ids || []).length
-  });
+  return { success: true, toolCount: createdToolIds.length, error: null };
 }
 
 /**

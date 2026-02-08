@@ -174,6 +174,13 @@ module.exports = async (req, res) => {
 
       // Store restaurant in request for use in handlers
       req.restaurant = restaurant;
+
+      // Update conversation log with restaurant_info_id if we have both
+      if (conversationId && restaurant && restaurant.id) {
+        await conversationLogger.updateConversation(conversationId, {
+          restaurant_info_id: restaurant.id
+        }).catch(err => logger.warn('Failed to update conversation with restaurant_id:', { message: err.message }));
+      }
     }
 
     if (!action) {
@@ -354,9 +361,9 @@ async function handleCheckAvailability(req, res) {
       voice_id: restaurant.voice_id
     });
 
-    // Calculate total capacity from table configuration
+    // Calculate total capacity from table configuration or database
     let totalCapacity = 0;
-    if (restaurant.table_configuration && Array.isArray(restaurant.table_configuration)) {
+    if (restaurant.table_configuration && Array.isArray(restaurant.table_configuration) && restaurant.table_configuration.length > 0) {
       restaurant.table_configuration.forEach(area => {
         if (area.tables && Array.isArray(area.tables)) {
           area.tables.forEach(table => {
@@ -364,6 +371,20 @@ async function handleCheckAvailability(req, res) {
           });
         }
       });
+    }
+
+    // If no capacity from config, calculate from actual tables in database
+    if (totalCapacity === 0) {
+      const { getTables: getDbTables } = require('./_lib/supabase');
+      const dbTablesResult = await getDbTables();
+      if (dbTablesResult.success) {
+        const dbTables = dbTablesResult.data.records || [];
+        dbTables.forEach(t => {
+          if (t.fields['Is Active']) {
+            totalCapacity += t.fields.Capacity || 0;
+          }
+        });
+      }
     }
 
     logger.debug(`Total capacity: ${totalCapacity} seats`);
@@ -418,9 +439,15 @@ async function handleCheckAvailability(req, res) {
 
     logger.debug(`TOTAL currently occupied/reserved: ${currentlyOccupiedSeats} seats out of ${totalCapacity}`);
 
-    // Get reservations for the requested date/time
-    const filter = `AND(IS_SAME({Date}, '${date}', 'day'), OR({Status} = 'Confirmed', {Status} = 'Seated'))`;
-    const reservationsResult = await getReservations(filter);
+    // Get reservations for the requested date/time using Supabase filter
+    const reservationsResult = await getReservations({ date, status: null });
+    // Post-filter for confirmed/seated status since getReservations only supports single status
+    if (reservationsResult.success && reservationsResult.data.records) {
+      reservationsResult.data.records = reservationsResult.data.records.filter(r => {
+        const status = (r.fields.Status || '').toLowerCase();
+        return status === 'confirmed' || status === 'seated';
+      });
+    }
 
     if (!reservationsResult.success) {
       return res.status(200).json({
@@ -571,10 +598,14 @@ async function handleCreateReservation(req, res) {
     const { checkTimeSlotAvailability } = require('./_lib/availability-calculator');
     const { getReservations, canAccommodateParty } = require('./_lib/supabase');
 
-    // Get existing reservations for the date
-    const filter = `AND(IS_SAME({Date}, '${date}', 'day'), OR({Status} = 'Confirmed', {Status} = 'Seated'))`;
-    const reservationsResult = await getReservations(filter);
-    const existingReservations = reservationsResult.success ? (reservationsResult.data.records || []) : [];
+    // Get existing reservations for the date using Supabase filter
+    const reservationsResult = await getReservations({ date });
+    let existingReservations = reservationsResult.success ? (reservationsResult.data.records || []) : [];
+    // Filter for confirmed/seated status
+    existingReservations = existingReservations.filter(r => {
+      const status = (r.fields.Status || '').toLowerCase();
+      return status === 'confirmed' || status === 'seated';
+    });
 
     // Check if we can accommodate
     const accommodationCheck = await canAccommodateParty(parseInt(party_size));
@@ -677,38 +708,46 @@ async function handleCreateReservation(req, res) {
 }
 
 async function handleLookupReservation(req, res) {
-  const { getReservations } = require('./_lib/supabase');
+  const conversationId = req.conversation_id;
+  const { findReservation } = require('./_lib/supabase');
 
   const data = req.method === 'POST' ? req.body : req.query;
-  const { phone, name } = data;
+  const { phone, name, reservation_id } = data;
 
-  if (!phone && !name) {
+  // Log tool call
+  if (conversationId) {
+    await conversationLogger.logToolCall(conversationId, {
+      tool_name: 'lookup_reservation',
+      parameters: { phone, name, reservation_id },
+      success: null
+    });
+  }
+
+  if (!phone && !name && !reservation_id) {
     return res.status(200).json({
       success: false,
       error: true,
-      message: 'Please provide either a phone number or name to lookup your reservation'
+      message: 'Please provide either a phone number, name, or reservation ID to lookup your reservation'
     });
   }
 
   try {
-    let filter;
-    if (phone) {
-      filter = `SEARCH("${phone}", {Phone})`;
-    } else {
-      filter = `SEARCH("${name}", {Customer Name})`;
-    }
-
-    const result = await getReservations(filter);
+    const result = await findReservation({
+      reservation_id: reservation_id || undefined,
+      customer_phone: !reservation_id ? phone : undefined,
+      customer_name: !reservation_id && !phone ? name : undefined
+    });
 
     if (!result.success) {
-      return res.status(200).json({
-        success: false,
-        error: true,
-        message: 'Unable to lookup reservation at this time. Please call us directly.'
-      });
-    }
-
-    if (result.data.records.length === 0) {
+      // Log unsuccessful lookup
+      if (conversationId) {
+        await conversationLogger.logToolCall(conversationId, {
+          tool_name: 'lookup_reservation',
+          parameters: { phone, name, reservation_id },
+          success: true,
+          result: { found: false }
+        });
+      }
       return res.status(200).json({
         success: true,
         found: false,
@@ -716,17 +755,29 @@ async function handleLookupReservation(req, res) {
       });
     }
 
-    const reservations = result.data.records.map(r => ({
-      id: r.id,
-      customer_name: r.fields['Customer Name'],
-      phone: r.fields.Phone,
-      email: r.fields.Email,
-      party_size: r.fields['Party Size'],
-      date: r.fields.Date,
-      time: r.fields.Time,
-      status: r.fields.Status,
-      special_requests: r.fields['Special Requests']
-    }));
+    const r = result.reservation;
+    const reservations = [{
+      id: r.record_id,
+      reservation_id: r.reservation_id,
+      customer_name: r.customer_name,
+      phone: r.customer_phone,
+      email: r.customer_email,
+      party_size: r.party_size,
+      date: r.reservation_time ? r.reservation_time.split(' ')[0] : undefined,
+      time: r.reservation_time ? r.reservation_time.split(' ')[1] : undefined,
+      status: r.status,
+      special_requests: r.special_requests
+    }];
+
+    // Log successful lookup
+    if (conversationId) {
+      await conversationLogger.logToolCall(conversationId, {
+        tool_name: 'lookup_reservation',
+        parameters: { phone, name, reservation_id },
+        success: true,
+        result: { found: true, reservation_id: r.reservation_id }
+      });
+    }
 
     const response = {
       success: true,
@@ -738,6 +789,14 @@ async function handleLookupReservation(req, res) {
     return res.status(200).json(response);
   } catch (error) {
     logger.error(' lookup_reservation error:', error);
+    if (conversationId) {
+      await conversationLogger.logToolCall(conversationId, {
+        tool_name: 'lookup_reservation',
+        parameters: { phone, name, reservation_id },
+        success: false,
+        error_message: error.message
+      });
+    }
     return res.status(200).json({
       success: false,
       error: true,
@@ -754,8 +813,10 @@ async function handleModifyReservation(req, res) {
 }
 
 async function handleCancelReservation(req, res) {
-  const cancelHandler = require('./cancel-reservation');
-  return cancelHandler(req, res);
+  // Delegate to reservations handler with cancel action
+  req.query.action = 'cancel';
+  const reservationsHandler = require('./reservations');
+  return reservationsHandler(req, res);
 }
 
 async function handleGetWaitTime(req, res) {

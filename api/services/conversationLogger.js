@@ -23,23 +23,47 @@ async function startConversation(conversationData) {
     caller_phone,
     called_phone,
     language = 'en',
-    agent_version
+    agent_version,
+    restaurant_info_id,
+    agent_id
   } = conversationData;
 
   try {
+    // Check if conversation already exists to prevent duplicates
+    const { data: existing } = await supabase
+      .from('agent_conversations')
+      .select('id')
+      .eq('conversation_id', conversation_id)
+      .maybeSingle();
+
+    if (existing) {
+      console.log(`[ConversationLogger] Conversation ${conversation_id} already exists, skipping insert`);
+      return existing;
+    }
+
+    const insertData = {
+      conversation_id,
+      caller_phone,
+      called_phone,
+      language,
+      started_at: new Date().toISOString(),
+      agent_version,
+      transcript: [],
+      tools_used: [],
+      errors_encountered: []
+    };
+
+    // Include restaurant_info_id if provided
+    if (restaurant_info_id) {
+      insertData.restaurant_info_id = restaurant_info_id;
+    }
+    if (agent_id) {
+      insertData.agent_id = agent_id;
+    }
+
     const { data, error } = await supabase
       .from('agent_conversations')
-      .insert({
-        conversation_id,
-        caller_phone,
-        called_phone,
-        language,
-        started_at: new Date().toISOString(),
-        agent_version,
-        transcript: [],
-        tools_used: [],
-        errors_encountered: []
-      })
+      .insert(insertData)
       .select()
       .single();
 

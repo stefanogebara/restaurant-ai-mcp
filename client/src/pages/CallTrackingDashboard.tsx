@@ -3,12 +3,14 @@
  *
  * Monitor and analyze all ElevenLabs AI agent phone conversations.
  * Shows call history, success metrics, transcripts, and agent performance.
+ * Includes phone integration status, agent diagnostics, and setup controls.
  */
 
-import { useState, useEffect } from 'react';
-import { Phone, Calendar, Clock, CheckCircle, XCircle, TrendingUp, MessageSquare, Globe, Settings, PhoneCall, AlertCircle, Loader2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Phone, Calendar, Clock, CheckCircle, XCircle, TrendingUp, MessageSquare, Globe, PhoneCall, AlertCircle, Loader2, Stethoscope, Wrench, PhoneOff, Wifi, WifiOff } from 'lucide-react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import Breadcrumb, { breadcrumbConfigs } from '../components/common/Breadcrumb';
+import { useToast } from '../contexts/ToastContext';
 
 interface Conversation {
   id: string;
@@ -47,7 +49,8 @@ interface Stats {
   top_errors: Array<{ error_type: string; count: number }>;
 }
 
-interface PhoneStatus {
+interface PhoneStatusData {
+  name: string;
   has_agent: boolean;
   agent_id: string | null;
   phone_number: string | null;
@@ -55,6 +58,20 @@ interface PhoneStatus {
   status: 'not_configured' | 'pending' | 'active' | 'error';
   error: string | null;
   configured_at: string | null;
+}
+
+interface DiagnoseData {
+  restaurant_name: string;
+  agent_id: string;
+  agent_name: string;
+  has_tools: boolean;
+  tool_count: number;
+  tools: Array<{ name: string; type: string; url: string | null }>;
+  language: string;
+  first_message: string;
+  prompt_preview: string;
+  tool_ids: string[];
+  tool_ids_count: number;
 }
 
 export default function CallTrackingDashboard() {
@@ -69,101 +86,146 @@ export default function CallTrackingDashboard() {
   });
 
   // Phone integration state
-  const [phoneStatus, setPhoneStatus] = useState<PhoneStatus | null>(null);
-  const [showPhoneSettings, setShowPhoneSettings] = useState(false);
-  const [phoneForm, setPhoneForm] = useState({
-    twilio_account_sid: '',
-    twilio_auth_token: '',
-    twilio_phone_number: ''
-  });
-  const [phoneLoading, setPhoneLoading] = useState(false);
-  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [phoneStatus, setPhoneStatus] = useState<PhoneStatusData | null>(null);
+  const [phoneStatusLoading, setPhoneStatusLoading] = useState(false);
+
+  // Diagnose state
+  const [diagnoseData, setDiagnoseData] = useState<DiagnoseData | null>(null);
+  const [diagnoseLoading, setDiagnoseLoading] = useState(false);
+  const [showDiagnosePanel, setShowDiagnosePanel] = useState(false);
+
+  // Action loading states
+  const [setupLoading, setSetupLoading] = useState(false);
+  const [fixToolsLoading, setFixToolsLoading] = useState(false);
+  const [disconnectLoading, setDisconnectLoading] = useState(false);
+
+  const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
 
   // Get restaurant_id from localStorage (set during onboarding/login)
   const restaurant_id = localStorage.getItem('restaurant_id') || '';
 
-  // Fetch conversations and stats
-  useEffect(() => {
-    fetchData();
-  }, [filter, restaurant_id]);
-
   // Fetch phone integration status
-  useEffect(() => {
-    fetchPhoneStatus();
-  }, []);
-
-  async function fetchPhoneStatus() {
+  const fetchPhoneStatus = useCallback(async () => {
+    if (!restaurant_id) return;
+    setPhoneStatusLoading(true);
     try {
-      const res = await fetch(`/api/phone-integration?action=status&restaurant_id=${restaurant_id}`);
+      const res = await fetch(`/api/phone-integration-simple?action=status&restaurant_id=${restaurant_id}`);
       const data = await res.json();
-      if (data.success) {
-        setPhoneStatus(data.data);
+      if (data.success && data.restaurant) {
+        setPhoneStatus(data.restaurant);
       }
-    } catch (error) {
-      console.error('Error fetching phone status:', error);
-    }
-  }
-
-  async function handleRegisterPhone(e: React.FormEvent) {
-    e.preventDefault();
-    setPhoneLoading(true);
-    setPhoneError(null);
-
-    try {
-      const res = await fetch('/api/phone-integration?action=register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          restaurant_id,
-          ...phoneForm
-        })
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        setShowPhoneSettings(false);
-        setPhoneForm({ twilio_account_sid: '', twilio_auth_token: '', twilio_phone_number: '' });
-        fetchPhoneStatus();
-      } else {
-        setPhoneError(data.error || 'Failed to register phone number');
-      }
-    } catch (error) {
-      setPhoneError('Network error. Please try again.');
+    } catch (err) {
+      console.error('Error fetching phone status:', err);
     } finally {
-      setPhoneLoading(false);
+      setPhoneStatusLoading(false);
     }
-  }
+  }, [restaurant_id]);
 
-  async function handleUnregisterPhone() {
-    if (!confirm('Are you sure you want to disconnect this phone number?')) return;
-
-    setPhoneLoading(true);
+  // Diagnose agent
+  const handleDiagnose = useCallback(async () => {
+    if (!restaurant_id) return;
+    setDiagnoseLoading(true);
+    setShowDiagnosePanel(true);
     try {
-      const res = await fetch('/api/phone-integration?action=unregister', {
+      const res = await fetch(`/api/phone-integration-simple?action=diagnose&restaurant_id=${restaurant_id}`);
+      const data = await res.json();
+      if (data.success) {
+        setDiagnoseData(data);
+        toastSuccess('Agent diagnostics loaded');
+      } else {
+        toastError(data.error || 'Failed to diagnose agent');
+        setDiagnoseData(null);
+      }
+    } catch (err) {
+      toastError('Network error while diagnosing agent');
+      setDiagnoseData(null);
+    } finally {
+      setDiagnoseLoading(false);
+    }
+  }, [restaurant_id, toastSuccess, toastError]);
+
+  // Setup phone
+  const handleSetupPhone = useCallback(async () => {
+    if (!restaurant_id) return;
+    setSetupLoading(true);
+    try {
+      const res = await fetch('/api/phone-integration-simple?action=register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ restaurant_id })
       });
-
       const data = await res.json();
       if (data.success) {
+        toastSuccess(data.message || 'Phone number connected successfully');
         fetchPhoneStatus();
+      } else {
+        toastError(data.error || 'Failed to set up phone');
       }
-    } catch (error) {
-      console.error('Error unregistering phone:', error);
+    } catch (err) {
+      toastError('Network error. Please try again.');
     } finally {
-      setPhoneLoading(false);
+      setSetupLoading(false);
     }
-  }
+  }, [restaurant_id, toastSuccess, toastError, fetchPhoneStatus]);
 
-  async function fetchData() {
+  // Fix tools
+  const handleFixTools = useCallback(async () => {
+    if (!restaurant_id) return;
+    setFixToolsLoading(true);
+    try {
+      const res = await fetch('/api/phone-integration-simple?action=fix-tools', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurant_id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toastSuccess(data.message || 'Tools configured successfully');
+        // Refresh diagnostics to show updated state
+        handleDiagnose();
+      } else {
+        toastError(data.error || 'Failed to fix tools');
+      }
+    } catch (err) {
+      toastError('Network error while fixing tools');
+    } finally {
+      setFixToolsLoading(false);
+    }
+  }, [restaurant_id, toastSuccess, toastError, handleDiagnose]);
+
+  // Disconnect phone
+  const handleDisconnect = useCallback(async () => {
+    if (!restaurant_id) return;
+    if (!confirm('Are you sure you want to disconnect this phone number?')) return;
+    setDisconnectLoading(true);
+    try {
+      const res = await fetch('/api/phone-integration-simple?action=unregister', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurant_id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toastSuccess('Phone number disconnected');
+        fetchPhoneStatus();
+        setDiagnoseData(null);
+        setShowDiagnosePanel(false);
+      } else {
+        toastError(data.error || 'Failed to disconnect phone');
+      }
+    } catch (err) {
+      toastError('Network error. Please try again.');
+    } finally {
+      setDisconnectLoading(false);
+    }
+  }, [restaurant_id, toastSuccess, toastError, fetchPhoneStatus]);
+
+  // Fetch conversations and stats
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // Build restaurant_id query param
       const restaurantParam = restaurant_id ? `&restaurant_id=${restaurant_id}` : '';
 
-      // Fetch conversations list
       const conversationsRes = await fetch(
         `/api/agent-conversations?action=list&limit=50&offset=0${restaurantParam}${
           filter.outcome !== 'all' ? `&outcome=${filter.outcome}` : ''
@@ -173,7 +235,6 @@ export default function CallTrackingDashboard() {
       );
       const conversationsData = await conversationsRes.json();
 
-      // Fetch stats
       const statsRes = await fetch(`/api/agent-conversations?action=stats&period=${filter.period}${restaurantParam}`);
       const statsData = await statsRes.json();
 
@@ -184,24 +245,30 @@ export default function CallTrackingDashboard() {
       if (statsData.success) {
         setStats(statsData.stats);
       }
-
-    } catch (error) {
-      console.error('Error fetching call data:', error);
+    } catch (err) {
+      console.error('Error fetching call data:', err);
     } finally {
       setLoading(false);
     }
-  }
+  }, [filter, restaurant_id]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    fetchPhoneStatus();
+  }, [fetchPhoneStatus]);
 
   async function viewConversation(id: string) {
     try {
       const res = await fetch(`/api/agent-conversations?action=get&id=${id}`);
       const data = await res.json();
-
       if (data.success) {
         setSelectedConversation(data.conversation);
       }
-    } catch (error) {
-      console.error('Error fetching conversation details:', error);
+    } catch (err) {
+      console.error('Error fetching conversation details:', err);
     }
   }
 
@@ -210,6 +277,17 @@ export default function CallTrackingDashboard() {
     return new Date(dateString).toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatConfiguredDate = (dateString: string | null) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -232,6 +310,39 @@ export default function CallTrackingDashboard() {
       case 'error': return 'Error';
       case 'abandoned': return 'Abandoned';
       default: return 'Unknown';
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'active':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-semibold rounded-full">
+            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+            Active
+          </span>
+        );
+      case 'pending':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 text-xs font-semibold rounded-full">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            Pending
+          </span>
+        );
+      case 'error':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-semibold rounded-full">
+            <AlertCircle className="w-3 h-3" />
+            Error
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-500/10 text-gray-600 dark:text-gray-400 text-xs font-semibold rounded-full">
+            <WifiOff className="w-3 h-3" />
+            Not Configured
+          </span>
+        );
     }
   };
 
@@ -269,10 +380,10 @@ export default function CallTrackingDashboard() {
           </button>
         </div>
 
-        {/* Phone Integration Status Card */}
+        {/* Phone Status Card */}
         <div className="bg-card rounded-lg border border-border p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
               <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
                 phoneStatus?.status === 'active'
                   ? 'bg-green-500/10'
@@ -289,54 +400,296 @@ export default function CallTrackingDashboard() {
                 }`} />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-foreground">Phone Integration</h2>
-                {phoneStatus?.status === 'active' ? (
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-green-600 dark:text-green-400 font-medium">{phoneStatus.phone_number}</span>
-                    <span className="px-2 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400 text-xs rounded-full">Active</span>
-                  </div>
-                ) : phoneStatus?.status === 'error' ? (
-                  <div className="flex items-center gap-2 mt-1">
-                    <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
-                    <span className="text-red-600 dark:text-red-400 text-sm">{phoneStatus.error || 'Configuration error'}</span>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm mt-1">
-                    Connect a phone number so customers can call your AI agent directly
-                  </p>
-                )}
+                <h2 className="text-lg font-semibold text-foreground">Phone Status</h2>
+                <p className="text-sm text-muted-foreground">
+                  {phoneStatus?.status === 'active'
+                    ? 'Your AI agent is receiving calls'
+                    : phoneStatus?.status === 'error'
+                      ? 'There is an issue with your phone integration'
+                      : 'Connect a phone number to start receiving AI calls'
+                  }
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {phoneStatus?.status === 'active' ? (
-                <>
-                  <button
-                    onClick={handleUnregisterPhone}
-                    disabled={phoneLoading}
-                    className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                  >
-                    Disconnect
-                  </button>
-                  <button
-                    onClick={() => setShowPhoneSettings(true)}
-                    className="px-4 py-2 bg-muted hover:bg-muted/80 text-foreground rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                  >
-                    <Settings className="w-4 h-4" />
-                    Settings
-                  </button>
-                </>
+              {phoneStatusLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
               ) : (
-                <button
-                  onClick={() => setShowPhoneSettings(true)}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
-                >
-                  <Phone className="w-4 h-4" />
-                  Connect Phone Number
-                </button>
+                phoneStatus && getStatusBadge(phoneStatus.status)
               )}
             </div>
           </div>
+
+          {phoneStatus && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+              {/* Connection Status */}
+              <div className="bg-muted/30 rounded-lg p-3">
+                <p className="text-xs text-muted-foreground mb-1">Connection</p>
+                <div className="flex items-center gap-2">
+                  {phoneStatus.status === 'active' ? (
+                    <Wifi className="w-4 h-4 text-green-500" />
+                  ) : (
+                    <WifiOff className="w-4 h-4 text-gray-400" />
+                  )}
+                  <span className="text-sm font-medium text-foreground capitalize">
+                    {phoneStatus.status === 'not_configured' ? 'Not Connected' : phoneStatus.status}
+                  </span>
+                </div>
+              </div>
+
+              {/* Phone Number */}
+              <div className="bg-muted/30 rounded-lg p-3">
+                <p className="text-xs text-muted-foreground mb-1">Phone Number</p>
+                <p className="text-sm font-medium text-foreground">
+                  {phoneStatus.phone_number || 'None assigned'}
+                </p>
+              </div>
+
+              {/* Agent ID */}
+              <div className="bg-muted/30 rounded-lg p-3">
+                <p className="text-xs text-muted-foreground mb-1">Agent ID</p>
+                <p className="text-sm font-medium text-foreground font-mono truncate" title={phoneStatus.agent_id || undefined}>
+                  {phoneStatus.agent_id
+                    ? `${phoneStatus.agent_id.substring(0, 12)}...`
+                    : 'No agent'
+                  }
+                </p>
+              </div>
+
+              {/* Configured Date */}
+              <div className="bg-muted/30 rounded-lg p-3">
+                <p className="text-xs text-muted-foreground mb-1">Configured</p>
+                <p className="text-sm font-medium text-foreground">
+                  {formatConfiguredDate(phoneStatus.configured_at)}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Error message display */}
+          {phoneStatus?.status === 'error' && phoneStatus.error && (
+            <div className="mt-4 bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-start gap-2">
+              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+              <p className="text-sm text-red-600 dark:text-red-400">{phoneStatus.error}</p>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-border">
+            {/* Setup Phone - shown when not configured */}
+            {(!phoneStatus || phoneStatus.status === 'not_configured' || phoneStatus.status === 'error') && (
+              <button
+                onClick={handleSetupPhone}
+                disabled={setupLoading}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {setupLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Setting up...
+                  </>
+                ) : (
+                  <>
+                    <Phone className="w-4 h-4" />
+                    Setup Phone
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Diagnose Agent */}
+            {phoneStatus?.has_agent && (
+              <button
+                onClick={handleDiagnose}
+                disabled={diagnoseLoading}
+                className="px-4 py-2 bg-muted hover:bg-muted/80 text-foreground rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {diagnoseLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Diagnosing...
+                  </>
+                ) : (
+                  <>
+                    <Stethoscope className="w-4 h-4" />
+                    Diagnose Agent
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Disconnect - shown when active */}
+            {phoneStatus?.status === 'active' && (
+              <button
+                onClick={handleDisconnect}
+                disabled={disconnectLoading}
+                className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {disconnectLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Disconnecting...
+                  </>
+                ) : (
+                  <>
+                    <PhoneOff className="w-4 h-4" />
+                    Disconnect
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Refresh Status */}
+            <button
+              onClick={() => {
+                fetchPhoneStatus();
+                toastInfo('Refreshing phone status...');
+              }}
+              className="px-3 py-2 text-muted-foreground hover:text-foreground transition-colors text-sm"
+            >
+              Refresh Status
+            </button>
+          </div>
         </div>
+
+        {/* Agent Diagnostics Panel */}
+        {showDiagnosePanel && (
+          <div className="bg-card rounded-lg border border-border p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center">
+                  <Stethoscope className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <h2 className="text-lg font-semibold text-foreground">Agent Diagnostics</h2>
+              </div>
+              <button
+                onClick={() => {
+                  setShowDiagnosePanel(false);
+                  setDiagnoseData(null);
+                }}
+                className="p-1 hover:bg-muted rounded transition-colors"
+              >
+                <XCircle className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+
+            {diagnoseLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : diagnoseData ? (
+              <div className="space-y-4">
+                {/* Agent Info Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="bg-muted/30 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Agent Name</p>
+                    <p className="text-sm font-medium text-foreground">{diagnoseData.agent_name || 'Unnamed'}</p>
+                  </div>
+                  <div className="bg-muted/30 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Language</p>
+                    <p className="text-sm font-medium text-foreground uppercase">{diagnoseData.language || 'Not set'}</p>
+                  </div>
+                  <div className="bg-muted/30 rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Tools (via tool_ids)</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-foreground">{diagnoseData.tool_ids_count} configured</p>
+                      {diagnoseData.tool_ids_count === 0 && (
+                        <span className="px-1.5 py-0.5 bg-red-500/10 text-red-600 dark:text-red-400 text-xs rounded font-medium">
+                          Missing
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tool Names */}
+                {diagnoseData.tools && diagnoseData.tools.length > 0 && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-2">Embedded Tools ({diagnoseData.tool_count})</p>
+                    <div className="flex flex-wrap gap-2">
+                      {diagnoseData.tools.map((tool, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2.5 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-medium rounded-full"
+                        >
+                          {tool.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Tool IDs */}
+                {diagnoseData.tool_ids && diagnoseData.tool_ids.length > 0 && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-2">Tool IDs ({diagnoseData.tool_ids_count})</p>
+                    <div className="flex flex-wrap gap-2">
+                      {diagnoseData.tool_ids.map((id, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2.5 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs font-mono rounded-full"
+                          title={id}
+                        >
+                          {id.substring(0, 16)}...
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* First Message Preview */}
+                {diagnoseData.first_message && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">First Message Preview</p>
+                    <div className="bg-muted/30 rounded-lg p-3">
+                      <p className="text-sm text-foreground italic">
+                        "{diagnoseData.first_message.length > 200
+                          ? diagnoseData.first_message.substring(0, 200) + '...'
+                          : diagnoseData.first_message}"
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Fix Tools Button - shown when tool_ids_count is 0 */}
+                {diagnoseData.tool_ids_count === 0 && (
+                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">No tools configured</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Your agent has no webhook tools attached. Without tools, the agent cannot check availability or create reservations. Click "Fix Tools" to auto-create and attach the required tools.
+                        </p>
+                        <button
+                          onClick={handleFixTools}
+                          disabled={fixToolsLoading}
+                          className="mt-3 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                        >
+                          {fixToolsLoading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Fixing tools...
+                            </>
+                          ) : (
+                            <>
+                              <Wrench className="w-4 h-4" />
+                              Fix Tools
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No diagnostic data available. Click "Diagnose Agent" to check your agent configuration.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Filters */}
         <div className="bg-card rounded-lg border border-border p-4">
@@ -525,114 +878,6 @@ export default function CallTrackingDashboard() {
             </table>
           </div>
         </div>
-
-        {/* Phone Settings Modal */}
-        {showPhoneSettings && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-card rounded-xl border border-border shadow-2xl max-w-md w-full">
-              <div className="p-6 border-b border-border">
-                <h2 className="text-xl font-semibold text-foreground">Connect Phone Number</h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Connect your Twilio phone number to receive customer calls
-                </p>
-              </div>
-
-              <form onSubmit={handleRegisterPhone} className="p-6 space-y-4">
-                {phoneError && (
-                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-start gap-2">
-                    <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
-                    <p className="text-sm text-red-600 dark:text-red-400">{phoneError}</p>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    placeholder="+1234567890"
-                    value={phoneForm.twilio_phone_number}
-                    onChange={(e) => setPhoneForm({ ...phoneForm, twilio_phone_number: e.target.value })}
-                    className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">E.164 format (e.g., +1234567890)</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
-                    Twilio Account SID
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                    value={phoneForm.twilio_account_sid}
-                    onChange={(e) => setPhoneForm({ ...phoneForm, twilio_account_sid: e.target.value })}
-                    className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
-                    Twilio Auth Token
-                  </label>
-                  <input
-                    type="password"
-                    placeholder="Your Twilio Auth Token"
-                    value={phoneForm.twilio_auth_token}
-                    onChange={(e) => setPhoneForm({ ...phoneForm, twilio_auth_token: e.target.value })}
-                    className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
-                </div>
-
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
-                  <p className="text-xs text-muted-foreground">
-                    Find your Account SID and Auth Token in the{' '}
-                    <a
-                      href="https://console.twilio.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
-                    >
-                      Twilio Console
-                    </a>
-                  </p>
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowPhoneSettings(false);
-                      setPhoneError(null);
-                      setPhoneForm({ twilio_account_sid: '', twilio_auth_token: '', twilio_phone_number: '' });
-                    }}
-                    className="flex-1 px-4 py-2 bg-muted hover:bg-muted/80 text-foreground rounded-lg font-medium transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={phoneLoading}
-                    className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {phoneLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Connecting...
-                      </>
-                    ) : (
-                      'Connect Phone'
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
 
         {/* Conversation Detail Modal */}
         {selectedConversation && (
