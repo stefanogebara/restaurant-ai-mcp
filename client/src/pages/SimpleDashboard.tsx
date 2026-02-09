@@ -859,7 +859,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   </div>
                   <button
                     onClick={() => window.location.href = '/host-dashboard/floor-plan'}
-                    className="hidden sm:flex px-3 py-1.5 text-sm text-[#9F1239] hover:bg-[#9F1239]/10 rounded-lg transition-colors font-medium"
+                    className="flex px-3 py-1.5 text-sm text-[#9F1239] hover:bg-[#9F1239]/10 rounded-lg transition-colors font-medium"
                   >
                     {language === 'es' ? 'Editar Plano' : 'Edit Floor Plan'}
                   </button>
@@ -1229,7 +1229,52 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </button>
             </div>
 
+            {/* Joinable Tables Info */}
+            {selectedTable.is_joinable && selectedTable.joinable_with?.length > 0 && (
+              <div className="mb-4 p-3 bg-[#9F1239]/5 border border-[#9F1239]/15 rounded-xl">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm">&#x26D3;</span>
+                  <span className="text-sm font-semibold text-[#9F1239]">
+                    {language === 'es' ? 'Mesas Combinables' : 'Joinable Tables'}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 mb-1.5">
+                  {selectedTable.joinable_with.map((linkedId: string) => {
+                    const linked = tables.find((t: any) => t.id === linkedId);
+                    return linked ? (
+                      <span key={linkedId} className="px-2 py-0.5 bg-white border border-[#E7E5E4] rounded-md text-xs font-medium text-[#1C1917]">
+                        {language === 'es' ? 'Mesa' : 'Table'} {linked.table_number}
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+                <p className="text-xs text-[#57534E]">
+                  {language === 'es' ? 'Capacidad combinada' : 'Combined capacity'}: {
+                    selectedTable.capacity + selectedTable.joinable_with.reduce((sum: number, id: string) => {
+                      const t = tables.find((tb: any) => tb.id === id);
+                      return sum + (t?.capacity || 0);
+                    }, 0)
+                  } {language === 'es' ? 'personas' : 'seats'}
+                </p>
+              </div>
+            )}
+
             <div className="space-y-3">
+              {/* Edit in Floor Plan link */}
+              <button
+                onClick={() => window.location.href = '/host-dashboard/floor-plan'}
+                className="w-full flex items-center gap-3 p-3 bg-[#F5F5F4] hover:bg-[#E7E5E4] rounded-xl border border-[#E7E5E4] transition-colors duration-200"
+              >
+                <div className="p-1.5 bg-[#9F1239]/10 rounded-lg">
+                  <svg className="w-4 h-4 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </div>
+                <span className="text-sm font-medium text-[#57534E]">
+                  {language === 'es' ? 'Editar en Plano' : 'Edit in Floor Plan'}
+                </span>
+              </button>
+
               {selectedTable.status === 'Occupied' && (
                 <button
                   onClick={() => handleFreeTable(selectedTable.id)}

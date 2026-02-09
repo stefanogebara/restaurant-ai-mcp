@@ -154,6 +154,7 @@ const ANIM_CSS = `
   @keyframes fpDash    { to { stroke-dashoffset: -24 } }
   @keyframes fpOverdue { 0%,100%{ opacity:0.35; stroke-width:2.5 } 50%{ opacity:1; stroke-width:3.5 } }
   @keyframes fpCardIn  { from { opacity:0 } to { opacity:1 } }
+  @keyframes fpLinkDash { to { stroke-dashoffset: -20 } }
   .fp-avail  { animation: fpPulse 3s ease-in-out infinite }
   .fp-occup  { animation: fpGlow 2.5s ease-in-out infinite }
   .fp-clean  { animation: fpSweep 1.8s ease-in-out infinite }
@@ -203,15 +204,28 @@ function ProgressRing({ cx, cy, radius, party }: {
 
 // ── Hover Card ───────────────────────────────────────────────────────────────
 
-function HoverCard({ table, party, x, y, w, h, svgW, darkMode }: {
+function HoverCard({ table, party, x, y, w, h, svgW, darkMode, allTables }: {
   table: Table; party?: PartyInfo;
   x: number; y: number; w: number; h: number;
-  svgW: number; darkMode: boolean;
+  svgW: number; darkMode: boolean; allTables?: Table[];
 }) {
   const style = getStatusStyle(table.status, darkMode);
   const isOccupied = table.status?.toLowerCase() === 'occupied' && party;
+  const joinableNames = (table.is_joinable && table.joinable_with?.length > 0 && allTables)
+    ? table.joinable_with
+        .map(id => allTables.find(t => t.id === id))
+        .filter(Boolean)
+        .map(t => t!.table_number)
+    : [];
+  const combinedCapacity = joinableNames.length > 0 && allTables
+    ? table.capacity + table.joinable_with
+        .map(id => allTables.find(t => t.id === id))
+        .filter(Boolean)
+        .reduce((sum, t) => sum + (t!.capacity || 0), 0)
+    : 0;
+  const hasJoinable = joinableNames.length > 0;
   const cardW = 200;
-  const cardH = isOccupied ? 118 : 76;
+  const cardH = isOccupied ? (hasJoinable ? 148 : 118) : (hasJoinable ? 106 : 76);
   const cx = x + w / 2;
 
   const showBelow = y < cardH + 24;
@@ -279,6 +293,21 @@ function HoverCard({ table, party, x, y, w, h, svgW, darkMode }: {
               </span>
             </div>
           </>
+        )}
+
+        {/* Joinable info */}
+        {hasJoinable && (
+          <div style={{
+            marginTop: 6, paddingTop: 6,
+            borderTop: `1px solid ${darkMode ? '#44403C' : '#e7e5e4'}`,
+            display: 'flex', alignItems: 'center', gap: 4,
+            fontSize: 10, color: darkMode ? '#a8a29e' : '#78716c',
+          }}>
+            <span style={{ fontSize: 12 }}>&#x1F517;</span>
+            <span>
+              Join w/ Table {joinableNames.join(', ')} &middot; {combinedCapacity} seats
+            </span>
+          </div>
         )}
       </div>
     </foreignObject>
@@ -394,6 +423,34 @@ export default function FloorPlanView({
 
                 <rect width="100%" height="100%" fill="url(#fpFloor)" />
 
+                {/* ── Joinable connector lines (behind tables) ── */}
+                {(() => {
+                  const links: React.ReactElement[] = [];
+                  const processedPairs = new Set<string>();
+                  const posMap = new Map(positions.map(p => [p.table.id, p]));
+                  positions.forEach(pos => {
+                    const t = pos.table;
+                    if (!t.is_joinable || !t.joinable_with?.length) return;
+                    t.joinable_with.forEach(linkedId => {
+                      const pairKey = [t.id, linkedId].sort().join('-');
+                      if (processedPairs.has(pairKey)) return;
+                      processedPairs.add(pairKey);
+                      const linkedPos = posMap.get(linkedId);
+                      if (!linkedPos) return;
+                      links.push(
+                        <line key={pairKey}
+                          x1={pos.x + pos.w / 2} y1={pos.y + pos.h / 2}
+                          x2={linkedPos.x + linkedPos.w / 2} y2={linkedPos.y + linkedPos.h / 2}
+                          stroke="#9F1239" strokeWidth="2"
+                          strokeDasharray="6,4" opacity="0.5"
+                          style={{ animation: 'fpLinkDash 1.2s linear infinite' }}
+                        />
+                      );
+                    });
+                  });
+                  return links;
+                })()}
+
                 {/* ── Render each table ── */}
                 {positions.map(({ table, x, y, w, h }) => {
                   const st = getStatusStyle(table.status, darkMode);
@@ -494,6 +551,18 @@ export default function FloorPlanView({
                         </g>
                       )}
 
+                      {/* ─ Joinable badge ─ */}
+                      {table.is_joinable && table.joinable_with?.length > 0 && (
+                        <g>
+                          <circle cx={x + 2} cy={y + 2} r={9}
+                            fill={darkMode ? '#7f1d1d' : '#9F1239'} opacity={0.9} />
+                          <text x={x + 2} y={y + 3.5} textAnchor="middle"
+                            dominantBaseline="middle" fontSize={11} fill="#fff">
+                            &#x26D3;
+                          </text>
+                        </g>
+                      )}
+
                       {/* ─ Invisible hit area ─ */}
                       {isRound ? (
                         <circle cx={cx} cy={cy} r={ringR + 4} fill="transparent" />
@@ -514,6 +583,7 @@ export default function FloorPlanView({
                     w={hoveredPos.w} h={hoveredPos.h}
                     svgW={svgW}
                     darkMode={darkMode}
+                    allTables={locTables}
                   />
                 )}
               </svg>
