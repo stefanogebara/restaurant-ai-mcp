@@ -71,7 +71,7 @@ const hasPositionData = (tables: Table[]) => {
 // Auto-layout: arrange tables in a natural restaurant floor pattern
 const autoLayoutTables = (tables: Table[]) => {
   const GAP = 24;
-  const sorted = [...tables].sort((a, b) => (a.table_number || 0) - (b.table_number || 0));
+  const sorted = [...tables].sort((a, b) => (Number(a.table_number) || 0) - (Number(b.table_number) || 0));
   const positions: { table: Table; x: number; y: number; w: number; h: number }[] = [];
 
   // Calculate available width (responsive, approx container width)
@@ -127,7 +127,6 @@ const renderChairs = (
     }
   } else {
     // Rectangular arrangement
-    const halfW = w / 2 + offset + chairSize / 2;
     const halfH = h / 2 + offset + chairSize / 2;
     const perSideLong = Math.ceil(capacity / 2);
     const perSideShort = capacity - perSideLong;
