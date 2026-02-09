@@ -22,6 +22,7 @@ import RecordOutcomeModal, { type OutcomeData } from '../components/host/RecordO
 import QuickStatsWidget from '../components/host/QuickStatsWidget';
 import UpgradePromptInline from '../components/host/UpgradePromptInline';
 import type { UpcomingReservation } from '../types/host.types';
+import { authFetch } from '../services/api';
 
 export default function HostDashboard() {
   const navigate = useNavigate();
@@ -71,7 +72,7 @@ export default function HostDashboard() {
   // Handle outcome submission
   const handleOutcomeSubmit = async (outcomeData: OutcomeData) => {
     try {
-      const response = await fetch('/api/ml-outcomes?action=record-outcome', {
+      const response = await authFetch('/api/ml-outcomes?action=record-outcome', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(outcomeData)
@@ -321,7 +322,7 @@ export default function HostDashboard() {
           // If this was a waitlist seating, update waitlist status
           if (seatPartyData?.type === 'waitlist' && seatPartyData?.waitlist_id) {
             try {
-              await fetch(`/api/waitlist?id=${seatPartyData.waitlist_id}`, {
+              await authFetch(`/api/waitlist?id=${seatPartyData.waitlist_id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'Seated' }),

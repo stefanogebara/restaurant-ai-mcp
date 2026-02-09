@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { authFetch } from '../../services/api';
 import type { TableRecommendation } from '../../types/host.types';
 import { useState } from 'react';
 
@@ -26,7 +27,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
 
   const findTablesMutation = useMutation({
     mutationFn: async (partySize: number) => {
-      const response = await fetch('/api/host-dashboard?action=check-walk-in', {
+      const response = await authFetch('/api/host-dashboard?action=check-walk-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

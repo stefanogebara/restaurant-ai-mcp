@@ -11,6 +11,7 @@ import { Phone, Calendar, Clock, CheckCircle, XCircle, TrendingUp, MessageSquare
 import DashboardLayout from '../components/layout/DashboardLayout';
 import Breadcrumb, { breadcrumbConfigs } from '../components/common/Breadcrumb';
 import { useToast } from '../contexts/ToastContext';
+import { authFetch } from '../services/api';
 
 interface Conversation {
   id: string;
@@ -109,7 +110,7 @@ export default function CallTrackingDashboard() {
     if (!restaurant_id) return;
     setPhoneStatusLoading(true);
     try {
-      const res = await fetch(`/api/phone-integration-simple?action=status&restaurant_id=${restaurant_id}`);
+      const res = await authFetch(`/api/phone-integration-simple?action=status&restaurant_id=${restaurant_id}`);
       const data = await res.json();
       if (data.success && data.restaurant) {
         setPhoneStatus(data.restaurant);
@@ -127,7 +128,7 @@ export default function CallTrackingDashboard() {
     setDiagnoseLoading(true);
     setShowDiagnosePanel(true);
     try {
-      const res = await fetch(`/api/phone-integration-simple?action=diagnose&restaurant_id=${restaurant_id}`);
+      const res = await authFetch(`/api/phone-integration-simple?action=diagnose&restaurant_id=${restaurant_id}`);
       const data = await res.json();
       if (data.success) {
         setDiagnoseData(data);
@@ -149,7 +150,7 @@ export default function CallTrackingDashboard() {
     if (!restaurant_id) return;
     setSetupLoading(true);
     try {
-      const res = await fetch('/api/phone-integration-simple?action=register', {
+      const res = await authFetch('/api/phone-integration-simple?action=register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ restaurant_id })
@@ -173,7 +174,7 @@ export default function CallTrackingDashboard() {
     if (!restaurant_id) return;
     setFixToolsLoading(true);
     try {
-      const res = await fetch('/api/phone-integration-simple?action=fix-tools', {
+      const res = await authFetch('/api/phone-integration-simple?action=fix-tools', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ restaurant_id })
@@ -199,7 +200,7 @@ export default function CallTrackingDashboard() {
     if (!confirm('Are you sure you want to disconnect this phone number?')) return;
     setDisconnectLoading(true);
     try {
-      const res = await fetch('/api/phone-integration-simple?action=unregister', {
+      const res = await authFetch('/api/phone-integration-simple?action=unregister', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ restaurant_id })
@@ -226,7 +227,7 @@ export default function CallTrackingDashboard() {
     try {
       const restaurantParam = restaurant_id ? `&restaurant_id=${restaurant_id}` : '';
 
-      const conversationsRes = await fetch(
+      const conversationsRes = await authFetch(
         `/api/agent-conversations?action=list&limit=50&offset=0${restaurantParam}${
           filter.outcome !== 'all' ? `&outcome=${filter.outcome}` : ''
         }${
@@ -235,7 +236,7 @@ export default function CallTrackingDashboard() {
       );
       const conversationsData = await conversationsRes.json();
 
-      const statsRes = await fetch(`/api/agent-conversations?action=stats&period=${filter.period}${restaurantParam}`);
+      const statsRes = await authFetch(`/api/agent-conversations?action=stats&period=${filter.period}${restaurantParam}`);
       const statsData = await statsRes.json();
 
       if (conversationsData.success) {
@@ -262,7 +263,7 @@ export default function CallTrackingDashboard() {
 
   async function viewConversation(id: string) {
     try {
-      const res = await fetch(`/api/agent-conversations?action=get&id=${id}`);
+      const res = await authFetch(`/api/agent-conversations?action=get&id=${id}`);
       const data = await res.json();
       if (data.success) {
         setSelectedConversation(data.conversation);

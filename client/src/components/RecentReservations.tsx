@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { authFetch } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Calendar, Clock, Users, Phone, Mail, MessageSquare, Sparkles } from 'lucide-react';
 
@@ -51,7 +52,7 @@ export default function RecentReservations() {
     // Poll for new reservations every 5 seconds
     const pollInterval = setInterval(async () => {
       try {
-        const response = await fetch(
+        const response = await authFetch(
           `/api/reservations?action=list&limit=5&sort=created_at_desc`
         );
 
@@ -96,7 +97,7 @@ export default function RecentReservations() {
     }, 5000);
 
     // Initial fetch
-    fetch(`/api/reservations?action=list&limit=5&sort=created_at_desc`)
+    authFetch(`/api/reservations?action=list&limit=5&sort=created_at_desc`)
       .then(res => res.json())
       .then(data => {
         if (data.reservations && data.reservations.length > 0) {

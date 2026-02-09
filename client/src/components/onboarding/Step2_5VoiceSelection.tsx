@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { authFetch } from '../../services/api';
 import { Volume2, Play, Pause, Loader, CheckCircle2 } from 'lucide-react';
 import type { OnboardingData } from '../../types/onboarding.types';
 
@@ -69,7 +70,7 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
       previousCountryRef.current = country;
 
       try {
-        const response = await fetch(`/api/elevenlabs-voices?country=${encodeURIComponent(country)}`);
+        const response = await authFetch(`/api/elevenlabs-voices?country=${encodeURIComponent(country)}`);
 
         if (!response.ok) {
           throw new Error('Failed to fetch voices');
@@ -137,7 +138,7 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
     // Generate new audio
     setLoadingAudio(voiceId);
     try {
-      const response = await fetch('/api/elevenlabs-preview', {
+      const response = await authFetch('/api/elevenlabs-preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

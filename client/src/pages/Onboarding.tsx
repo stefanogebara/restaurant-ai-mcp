@@ -24,6 +24,7 @@ import Step3Tables from '../components/onboarding/Step3Tables';
 import Step4Settings from '../components/onboarding/Step4Settings';
 import Step5Team from '../components/onboarding/Step5Team';
 import type { OnboardingData } from '../types/onboarding.types';
+import { authFetch } from '../services/api';
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -118,7 +119,7 @@ export default function Onboarding() {
   const completeOnboarding = async () => {
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/onboarding/complete', {
+      const response = await authFetch('/api/onboarding/complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(onboardingData),

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { authFetch } from '../services/api';
 import AnalyticsStats from '../components/analytics/AnalyticsStats';
 import ReservationTrendChart from '../components/analytics/ReservationTrendChart';
 import PeakHoursChart from '../components/analytics/PeakHoursChart';
@@ -50,7 +51,7 @@ export default function AnalyticsDashboard() {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch('/api/analytics');
+      const response = await authFetch('/api/analytics');
       const result = await response.json();
 
       if (!result.success) {

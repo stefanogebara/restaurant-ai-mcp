@@ -1,4 +1,5 @@
 import DashboardLayout from '../components/layout/DashboardLayout';
+import { authFetch } from '../services/api';
 import { useQuery } from '@tanstack/react-query';
 
 export default function SegoviaInsightsPage() {
@@ -6,7 +7,7 @@ export default function SegoviaInsightsPage() {
   const { data: insights, isLoading } = useQuery({
     queryKey: ['segovia-insights'],
     queryFn: async () => {
-      const response = await fetch('/api/ml-training-status?action=segovia-insights');
+      const response = await authFetch('/api/ml-training-status?action=segovia-insights');
       if (!response.ok) throw new Error('Failed to fetch Segovia insights');
       return response.json();
     },

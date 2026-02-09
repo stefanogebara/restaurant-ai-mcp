@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { authFetch } from '../../services/api';
 import { X, DollarSign, User, Phone, Calendar, Users, Search, Loader2 } from 'lucide-react';
 
 interface Customer {
@@ -102,7 +103,7 @@ export default function ManualRevenueModal({
     const searchTimeout = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const response = await fetch(
+        const response = await authFetch(
           `/api/revenue?action=customer-search&q=${encodeURIComponent(searchQuery)}`
         );
         const data = await response.json();
@@ -142,7 +143,7 @@ export default function ManualRevenueModal({
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/revenue?action=create', {
+      const response = await authFetch('/api/revenue?action=create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

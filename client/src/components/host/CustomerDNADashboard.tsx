@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { authFetch } from '../../services/api';
 import {
   Users,
   TrendingUp,
@@ -68,14 +69,14 @@ export default function CustomerDNADashboard() {
   const fetchDNAData = async () => {
     try {
       // Fetch statistics
-      const statsResponse = await fetch('/api/customer-dna?action=stats');
+      const statsResponse = await authFetch('/api/customer-dna?action=stats');
       const statsResult = await statsResponse.json();
       if (statsResult.success) {
         setStats(statsResult.data);
       }
 
       // Fetch upcoming occasions
-      const occasionsResponse = await fetch('/api/customer-dna?action=occasions&limit=10');
+      const occasionsResponse = await authFetch('/api/customer-dna?action=occasions&limit=10');
       const occasionsResult = await occasionsResponse.json();
       if (occasionsResult.success) {
         setOccasions(occasionsResult.data.occasions || []);
@@ -91,7 +92,7 @@ export default function CustomerDNADashboard() {
   const analyzeAllCustomers = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/customer-dna?action=analyze-all');
+      const response = await authFetch('/api/customer-dna?action=analyze-all');
       const result = await response.json();
 
       if (result.success) {

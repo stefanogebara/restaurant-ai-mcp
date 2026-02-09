@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { authFetch } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 
 interface Reservation {
@@ -55,7 +56,7 @@ export default function CustomerPortal() {
         )
       });
 
-      const response = await fetch(`/api/reservations?${params}`);
+      const response = await authFetch(`/api/reservations?${params}`);
       const data = await response.json();
 
       if (data.success && data.reservation) {
@@ -81,7 +82,7 @@ export default function CustomerPortal() {
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/reservations?action=modify', {
+      const response = await authFetch('/api/reservations?action=modify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -119,7 +120,7 @@ export default function CustomerPortal() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/reservations?action=cancel&reservation_id=${reservation.reservation_id}`, {
+      const response = await authFetch(`/api/reservations?action=cancel&reservation_id=${reservation.reservation_id}`, {
         method: 'POST'
       });
 

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { authFetch } from '../../services/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatTimeAgo } from '../../utils/timeFormatting';
 import WaitlistTimeDisplay from './WaitlistTimeDisplay';
@@ -65,7 +66,7 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
   const { data, isLoading, error } = useQuery<WaitlistResponse>({
     queryKey: ['waitlist', 'all'],
     queryFn: async () => {
-      const response = await fetch('/api/waitlist');
+      const response = await authFetch('/api/waitlist');
       if (!response.ok) throw new Error('Failed to fetch waitlist');
       return response.json();
     },
@@ -75,7 +76,7 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
   // Notify customer mutation
   const notifyMutation = useMutation({
     mutationFn: async (entryId: string) => {
-      const response = await fetch(`/api/waitlist?id=${entryId}`, {
+      const response = await authFetch(`/api/waitlist?id=${entryId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'Notified' }),
@@ -91,7 +92,7 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
   // Remove from waitlist mutation
   const removeMutation = useMutation({
     mutationFn: async (entryId: string) => {
-      const response = await fetch(`/api/waitlist?id=${entryId}`, {
+      const response = await authFetch(`/api/waitlist?id=${entryId}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Failed to remove from waitlist');
@@ -472,7 +473,7 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
 
   const addMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const response = await fetch('/api/waitlist', {
+      const response = await authFetch('/api/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

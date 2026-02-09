@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { authFetch } from '../../services/api';
 
 interface RevenueOpportunity {
   rank: number;
@@ -34,7 +35,7 @@ export default function RevenueOpportunities() {
   const fetchOpportunities = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/predictive-analytics?type=revenue');
+      const response = await authFetch('/api/predictive-analytics?type=revenue');
       const result = await response.json();
 
       if (result.success) {

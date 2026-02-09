@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { hostAPI } from '../services/api';
+import { hostAPI, authFetch } from '../services/api';
 import WalkInModal from '../components/host/WalkInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
@@ -409,7 +409,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   // Complete Service Handler
   const handleCompleteService = async (serviceId: string) => {
     try {
-      const response = await fetch(`/api/host-dashboard?action=complete-service`, {
+      const response = await authFetch(`/api/host-dashboard?action=complete-service`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ service_record_id: serviceId }),
@@ -432,7 +432,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   // Table Status Update Handler
   const handleUpdateTableStatus = async (tableId: string, status: string) => {
     try {
-      const response = await fetch(`/api/host-dashboard?action=update-table-status`, {
+      const response = await authFetch(`/api/host-dashboard?action=update-table-status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ table_id: tableId, status }),
@@ -455,7 +455,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   // Free Table Handler
   const handleFreeTable = async (tableId: string) => {
     try {
-      const response = await fetch(`/api/host-dashboard?action=free-table`, {
+      const response = await authFetch(`/api/host-dashboard?action=free-table`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ table_id: tableId }),

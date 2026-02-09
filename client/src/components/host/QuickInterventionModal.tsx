@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import { authFetch } from '../../services/api';
 import {
   X,
   Phone,
@@ -135,7 +136,7 @@ export default function QuickInterventionModal({
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/ml-outcomes?action=mark-action-taken', {
+      const response = await authFetch('/api/ml-outcomes?action=mark-action-taken', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

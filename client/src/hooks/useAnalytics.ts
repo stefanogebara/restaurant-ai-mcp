@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { authFetch } from '../services/api';
 
 interface AnalyticsData {
   total_reservations: number;
@@ -11,7 +12,7 @@ export function useAnalytics() {
   return useQuery<AnalyticsData>({
     queryKey: ['analytics'],
     queryFn: async () => {
-      const response = await fetch('/api/analytics');
+      const response = await authFetch('/api/analytics');
       if (!response.ok) {
         throw new Error('Failed to fetch analytics');
       }

@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { authFetch } from '../../services/api';
 import { Target, TrendingUp, DollarSign, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
 
 interface QuickStats {
@@ -37,7 +38,7 @@ export default function QuickStatsWidget() {
       const restaurant_id = localStorage.getItem('restaurant_id') || '';
       const restaurantParam = restaurant_id ? `&restaurant_id=${restaurant_id}` : '';
 
-      const response = await fetch(`/api/ml-performance?action=quick-stats${restaurantParam}`);
+      const response = await authFetch(`/api/ml-performance?action=quick-stats${restaurantParam}`);
       const result = await response.json();
 
       if (result.success) {

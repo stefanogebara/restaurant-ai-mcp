@@ -7,6 +7,7 @@
  */
 
 import { useState } from 'react';
+import { authFetch } from '../../services/api';
 import { AlertTriangle, Phone, CreditCard, Star, ChevronDown, ChevronUp, Mail, Clock } from 'lucide-react';
 import type { UpcomingReservation } from '../../types/host.types';
 import RiskScoreBadge from './RiskScoreBadge';
@@ -41,7 +42,7 @@ export default function InterventionPanel({
 
     // Call API to mark intervention as taken
     try {
-      await fetch('/api/ml-outcomes?action=mark-action-taken', {
+      await authFetch('/api/ml-outcomes?action=mark-action-taken', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

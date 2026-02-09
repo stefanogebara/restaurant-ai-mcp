@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { authFetch } from '../../services/api';
 import { TrendingUp, Target, Zap, DollarSign, AlertTriangle, ArrowRight } from 'lucide-react';
 import HelpTooltip from '../common/HelpTooltip';
 
@@ -44,7 +45,7 @@ export default function MLROIWidget() {
 
   const fetchMLROI = async () => {
     try {
-      const response = await fetch('/api/ml-outcomes?action=roi-summary');
+      const response = await authFetch('/api/ml-outcomes?action=roi-summary');
       const result = await response.json();
 
       if (result.success) {

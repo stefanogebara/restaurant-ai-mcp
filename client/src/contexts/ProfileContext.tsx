@@ -6,6 +6,7 @@
  */
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { authFetch } from '../services/api';
 import type { RestaurantProfile } from '../types/profile.types';
 import { TEMPLATE_CONFIGS } from '../types/profile.types';
 
@@ -70,7 +71,7 @@ export function ProfileProvider({ children, restaurantId }: ProfileProviderProps
     setError(null);
 
     try {
-      const response = await fetch('/api/restaurant-settings/profile', {
+      const response = await authFetch('/api/restaurant-settings/profile', {
         headers: {
           'Content-Type': 'application/json',
           'X-Restaurant-ID': restaurantId,
@@ -113,7 +114,7 @@ export function ProfileProvider({ children, restaurantId }: ProfileProviderProps
     const updatedProfile = { ...profile, ...updates };
 
     try {
-      const response = await fetch('/api/restaurant-settings/profile', {
+      const response = await authFetch('/api/restaurant-settings/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

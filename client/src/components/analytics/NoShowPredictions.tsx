@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { authFetch } from '../../services/api';
 
 interface NoShowPrediction {
   reservation_id: string;
@@ -34,7 +35,7 @@ export default function NoShowPredictions() {
   const fetchPredictions = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/predictive-analytics?type=no-show');
+      const response = await authFetch('/api/predictive-analytics?type=no-show');
       const result = await response.json();
 
       if (result.success) {

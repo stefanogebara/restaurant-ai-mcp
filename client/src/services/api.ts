@@ -23,6 +23,27 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+/**
+ * Authenticated fetch wrapper - use instead of raw fetch() for API calls.
+ * Automatically attaches the Supabase session token as Bearer auth.
+ */
+export async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      const headers = new Headers(options.headers || {});
+      headers.set('Authorization', `Bearer ${session.access_token}`);
+      if (!headers.has('Content-Type') && options.body) {
+        headers.set('Content-Type', 'application/json');
+      }
+      options.headers = headers;
+    }
+  } catch (error) {
+    console.error('Error getting auth session for fetch:', error);
+  }
+  return fetch(url, options);
+}
+
 // Dashboard API
 export const hostAPI = {
   getDashboard: () => api.get('/host-dashboard?action=dashboard'),
