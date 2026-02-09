@@ -11,11 +11,12 @@
  */
 
 const { createClient } = require('@supabase/supabase-js');
+const twilio = require('twilio');
 
 // Initialize Supabase client
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
 );
 
 // Generate HTML viewer for SMS logs
@@ -140,6 +141,17 @@ module.exports = async (req, res) => {
 
   // POST request - receive incoming SMS from Twilio
   if (req.method === 'POST') {
+    // Verify Twilio signature
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    if (authToken) {
+      const signature = req.headers['x-twilio-signature'];
+      const url = `https://${req.headers.host}${req.url}`;
+      if (!signature || !twilio.validateRequest(authToken, signature, url, req.body || {})) {
+        console.error('[SMS] Invalid Twilio webhook signature');
+        return res.status(403).json({ error: 'Invalid signature' });
+      }
+    }
+
     try {
       // Twilio sends data as form-urlencoded
       const {

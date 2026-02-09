@@ -41,11 +41,20 @@ module.exports = async (req, res) => {
     return;
   }
 
+  // Verify ElevenLabs webhook secret if configured
+  const webhookSecret = process.env.ELEVENLABS_WEBHOOK_SECRET;
+  if (webhookSecret) {
+    const signature = req.headers['x-elevenlabs-signature'] || req.query.secret;
+    if (signature !== webhookSecret) {
+      logger.error('Invalid ElevenLabs webhook signature/secret');
+      return res.status(403).json({ error: 'Invalid webhook secret' });
+    }
+  }
+
   // Log incoming request for debugging
   logger.info(' Incoming request:', {
     method: req.method,
     url: req.url,
-    headers: req.headers,
     body: req.body,
     query: req.query
   });

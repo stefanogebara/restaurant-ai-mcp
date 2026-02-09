@@ -14,6 +14,7 @@
  */
 
 const Anthropic = require('@anthropic-ai/sdk');
+const crypto = require('crypto');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('WhatsApp');
 const {
@@ -627,6 +628,22 @@ module.exports = async (req, res) => {
 
   // Message handling (POST request from Meta)
   if (req.method === 'POST') {
+    // Verify Meta webhook signature (X-Hub-Signature-256)
+    const appSecret = process.env.META_APP_SECRET || process.env.WHATSAPP_APP_SECRET;
+    if (appSecret) {
+      const signature = req.headers['x-hub-signature-256'];
+      if (!signature) {
+        logger.error('Missing X-Hub-Signature-256 header');
+        return res.status(403).json({ error: 'Missing signature' });
+      }
+      const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+      const expectedSig = 'sha256=' + crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex');
+      if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig))) {
+        logger.error('Invalid Meta webhook signature');
+        return res.status(403).json({ error: 'Invalid signature' });
+      }
+    }
+
     try {
       const body = req.body;
 

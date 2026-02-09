@@ -7,7 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
 );
 
 const ALLOWED_LANGUAGES = ['en', 'es', 'pt', 'fr', 'it'];
@@ -226,15 +226,19 @@ export default async function handler(req, res) {
 
     // PUT / - Update settings
     if (method === 'PUT' && !path.includes('/profile')) {
-      const { language, ...otherSettings } = req.body;
+      const ALLOWED_FIELDS = ['language', 'restaurant_name', 'city', 'country', 'phone', 'email', 'business_hours', 'timezone'];
+      const { language } = req.body;
 
       if (language && !ALLOWED_LANGUAGES.includes(language)) {
         return res.status(400).json({ success: false, error: `Invalid language. Allowed values: ${ALLOWED_LANGUAGES.join(', ')}` });
       }
 
       const updates = {};
-      if (language) updates.language = language;
-      Object.assign(updates, otherSettings);
+      for (const field of ALLOWED_FIELDS) {
+        if (req.body[field] !== undefined) {
+          updates[field] = req.body[field];
+        }
+      }
 
       if (Object.keys(updates).length === 0) {
         return res.status(400).json({ success: false, error: 'No updates provided' });

@@ -1378,6 +1378,26 @@ function parseUrlEncodedBody(body) {
 }
 
 /**
+ * Verify Twilio webhook signature
+ */
+function verifyTwilioSignature(req) {
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  if (!authToken) {
+    logger.warn('TWILIO_AUTH_TOKEN not set - skipping signature verification');
+    return true; // Allow in dev, but log warning
+  }
+
+  const signature = req.headers['x-twilio-signature'];
+  if (!signature) {
+    logger.error('Missing x-twilio-signature header');
+    return false;
+  }
+
+  const url = `https://${req.headers.host}${req.url}`;
+  return twilio.validateRequest(authToken, signature, url, req.body || {});
+}
+
+/**
  * Main webhook handler for Twilio WhatsApp messages
  */
 module.exports = async (req, res) => {
@@ -1392,6 +1412,12 @@ module.exports = async (req, res) => {
 
   // Handle incoming messages (POST)
   if (req.method === 'POST') {
+    // Verify Twilio signature
+    if (!verifyTwilioSignature(req)) {
+      logger.error('Invalid Twilio webhook signature - rejecting request');
+      return res.status(403).json({ error: 'Invalid signature' });
+    }
+
     try {
       // Log raw body type for debugging
       logger.info(' Body type:', typeof req.body);

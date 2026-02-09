@@ -149,13 +149,20 @@ async function handleCreateRule(req, res) {
       });
     }
 
-    // Insert rule
+    // Insert rule with allowlisted fields only
+    const ALLOWED_RULE_FIELDS = ['rule_name', 'rule_type', 'price_modifier_type', 'price_modifier_value',
+      'description', 'conditions', 'time_start', 'time_end', 'days_of_week', 'is_active', 'priority',
+      'min_occupancy', 'max_occupancy', 'min_party_size', 'max_party_size', 'event_name', 'start_date', 'end_date'];
+    const sanitizedData = {};
+    for (const field of ALLOWED_RULE_FIELDS) {
+      if (ruleData[field] !== undefined) sanitizedData[field] = ruleData[field];
+    }
     const { data, error } = await supabase
       .from('pricing_rules')
       .insert({
-        ...ruleData,
-        is_active: ruleData.is_active !== undefined ? ruleData.is_active : true,
-        priority: ruleData.priority || 100
+        ...sanitizedData,
+        is_active: sanitizedData.is_active !== undefined ? sanitizedData.is_active : true,
+        priority: sanitizedData.priority || 100
       })
       .select()
       .single();
@@ -203,10 +210,17 @@ async function handleUpdateRule(req, res) {
       }
     }
 
-    // Update rule
+    // Update rule with allowlisted fields only
+    const ALLOWED_UPDATE_FIELDS = ['rule_name', 'rule_type', 'price_modifier_type', 'price_modifier_value',
+      'description', 'conditions', 'time_start', 'time_end', 'days_of_week', 'is_active', 'priority',
+      'min_occupancy', 'max_occupancy', 'min_party_size', 'max_party_size', 'event_name', 'start_date', 'end_date'];
+    const sanitizedUpdates = {};
+    for (const field of ALLOWED_UPDATE_FIELDS) {
+      if (updates[field] !== undefined) sanitizedUpdates[field] = updates[field];
+    }
     const { data, error } = await supabase
       .from('pricing_rules')
-      .update(updates)
+      .update(sanitizedUpdates)
       .eq('id', rule_id)
       .select()
       .single();
