@@ -148,11 +148,11 @@ ${formData.message}
             <div className="bg-[#FAFAF9] p-6 rounded-[2rem] border border-[#E7E5E4]">
               <div className="grid grid-cols-2 gap-6 text-center">
                 <div>
-                  <div className="text-3xl font-serif font-bold text-[#9F1239]">99.9%</div>
+                  <div className="text-2xl font-serif font-bold text-[#9F1239]">Reliable</div>
                   <div className="text-xs text-[#57534E] mt-1 uppercase tracking-wider">Uptime</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-serif font-bold text-[#1C1917]">94%</div>
+                  <div className="text-2xl font-serif font-bold text-[#1C1917]">High</div>
                   <div className="text-xs text-[#57534E] mt-1 uppercase tracking-wider">Satisfaction</div>
                 </div>
               </div>

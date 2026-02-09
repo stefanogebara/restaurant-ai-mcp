@@ -74,6 +74,7 @@ export default function Sidebar() {
   const subscription = useSubscription();
   const { user, signOut } = useAuth();
   const { i18n } = useTranslation();
+  const isSubscriptionLoading = subscription.isLoading;
   const planType = subscription.data?.subscription?.plan?.toLowerCase() as PlanType | undefined;
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -170,7 +171,8 @@ export default function Sidebar() {
             {navItems.map((item) => {
               const active = isActive(item.path);
               const hasAccess = hasFeatureAccess(planType, item.requiredFeature);
-              const isLocked = !hasAccess;
+              // While subscription data is loading, default to unlocked to prevent flash of lock icons
+              const isLocked = isSubscriptionLoading ? false : !hasAccess;
 
               // For locked items, don't navigate - just show as disabled
               const itemContent = (
@@ -328,7 +330,7 @@ export default function Sidebar() {
           {!isCollapsed && (
             <div className="px-4 pb-3 pt-2">
               <div className="text-xs text-muted-foreground text-center">
-                <p>v1.0.0 • Powered by Claude AI</p>
+                <p>Powered by AI</p>
               </div>
             </div>
           )}

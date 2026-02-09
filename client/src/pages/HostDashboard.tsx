@@ -173,14 +173,26 @@ export default function HostDashboard() {
                       <span>Refreshing...</span>
                     </div>
                   )}
-                  {!isFetching && (
-                    <div className="text-xs text-muted-foreground">
-                      Updated {Math.floor((new Date().getTime() - lastRefresh.getTime()) / 1000)}s ago
-                    </div>
-                  )}
+                  {!isFetching && (() => {
+                    const secondsAgo = Math.floor((new Date().getTime() - lastRefresh.getTime()) / 1000);
+                    return (
+                      <div className="text-xs text-muted-foreground">
+                        {secondsAgo < 5 ? 'Just now' : `Updated ${secondsAgo}s ago`}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
               <div className="flex items-center gap-3">
+                <button
+                  onClick={() => navigate('/host-dashboard/simple')}
+                  className="px-4 py-2.5 border border-border hover:bg-muted text-foreground font-medium rounded-lg transition-all flex items-center gap-2 text-sm"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h8m-8 6h16" />
+                  </svg>
+                  Simple View
+                </button>
                 <button
                   onClick={() => navigate('/host-dashboard/reports')}
                   className="px-4 py-2.5 bg-[#9F1239] hover:bg-[#881337] text-white font-medium rounded-lg transition-all flex items-center gap-2"

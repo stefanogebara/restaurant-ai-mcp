@@ -176,7 +176,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
       viewLevel: 'Vista',
       avanzado: 'Avanzado',
       estándar: 'Estándar',
-      completo: 'Completo',
+      completo: 'Simple',
       occupancy: 'Ocupación',
       activeParties: 'Mesas Activas',
       avgDuration: 'Duración Media',
@@ -200,7 +200,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
       viewLevel: 'View',
       avanzado: 'Advanced',
       estándar: 'Standard',
-      completo: 'Complete',
+      completo: 'Simple',
       occupancy: 'Occupancy',
       activeParties: 'Active Tables',
       avgDuration: 'Avg Duration',
@@ -224,7 +224,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
       viewLevel: 'Visualização',
       avanzado: 'Avançado',
       estándar: 'Padrão',
-      completo: 'Completo',
+      completo: 'Simple',
       occupancy: 'Ocupação',
       activeParties: 'Mesas Ativas',
       avgDuration: 'Duração Média',
@@ -248,7 +248,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
       viewLevel: 'Affichage',
       avanzado: 'Avancé',
       estándar: 'Standard',
-      completo: 'Complet',
+      completo: 'Simple',
       occupancy: 'Occupation',
       activeParties: 'Tables Actives',
       avgDuration: 'Durée Moyenne',
@@ -272,7 +272,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
       viewLevel: 'Visualizzazione',
       avanzado: 'Avanzato',
       estándar: 'Standard',
-      completo: 'Completo',
+      completo: 'Semplice',
       occupancy: 'Occupazione',
       activeParties: 'Tavoli Attivi',
       avgDuration: 'Durata Media',
@@ -296,7 +296,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
       viewLevel: 'Ansicht',
       avanzado: 'Erweitert',
       estándar: 'Standard',
-      completo: 'Komplett',
+      completo: 'Einfach',
       occupancy: 'Auslastung',
       activeParties: 'Aktive Tische',
       avgDuration: 'Durchschn. Dauer',
@@ -485,7 +485,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
   return (
     <DashboardLayout>
-    <div className="min-h-screen bg-[#FAFAF9] p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-[#FAFAF9] p-4 md:p-6 lg:p-8 pb-20">
       <div className="max-w-7xl mx-auto">
         {/* Loading State */}
         {isLoading && (
@@ -530,7 +530,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
         {/* Header */}
         <div className="mb-8 md:mb-10 animate-fade-in-up">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-3">
-            <div>
+            <div className="pl-12 sm:pl-0">
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold text-[#1C1917] tracking-tight mb-1">
                 {t.today}
               </h1>
@@ -638,7 +638,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
         {complexity === 'completo' && (
           <div className="space-y-4 md:space-y-5 mb-8">
             {/* Main Stats Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Occupied Tables */}
               <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-4 md:p-5">
                 <div className="flex items-center justify-between mb-3">
@@ -735,7 +735,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
             </div>
 
             {/* Additional Stats Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-[#9F1239]/10 rounded-lg">
@@ -745,9 +745,12 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   </div>
                   <div>
                     <div className="text-xs font-semibold text-[#57534E] mb-0.5">{t.avgDuration}</div>
-                    <div className="text-2xl font-bold text-[#1C1917] tracking-tight">
+                    <div className="text-2xl font-bold text-[#1C1917] tracking-tight" title={!stats.avg_duration_minutes ? (language === 'es' ? 'Se actualiza cuando los comensales están sentados' : 'Updates when guests are seated') : undefined}>
                       {stats.avg_duration_minutes ? `${Math.round(stats.avg_duration_minutes / 60 * 10) / 10}h` : '-'}
                     </div>
+                    {!stats.avg_duration_minutes && (
+                      <div className="text-[10px] text-[#A8A29E] mt-0.5">{language === 'es' ? 'Se actualiza al sentar comensales' : 'Updates when guests are seated'}</div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -760,7 +763,12 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   </div>
                   <div>
                     <div className="text-xs font-semibold text-[#57534E] mb-0.5">{t.peakHours}</div>
-                    <div className="text-2xl font-bold text-[#1C1917] tracking-tight">{stats.peak_hours || '-'}</div>
+                    <div className="text-2xl font-bold text-[#1C1917] tracking-tight" title={!stats.peak_hours ? (language === 'es' ? 'Se actualiza cuando los comensales están sentados' : 'Updates when guests are seated') : undefined}>
+                      {stats.peak_hours || '-'}
+                    </div>
+                    {!stats.peak_hours && (
+                      <div className="text-[10px] text-[#A8A29E] mt-0.5">{language === 'es' ? 'Se actualiza al sentar comensales' : 'Updates when guests are seated'}</div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -773,9 +781,12 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   </div>
                   <div>
                     <div className="text-xs font-semibold text-[#57534E] mb-0.5">{language === 'es' ? 'Ingresos Hoy' : 'Revenue Today'}</div>
-                    <div className="text-2xl font-bold text-[#16a34a] tracking-tight">
+                    <div className="text-2xl font-bold text-[#16a34a] tracking-tight" title={!stats.revenue_today ? (language === 'es' ? 'Se actualiza cuando los comensales están sentados' : 'Updates when guests are seated') : undefined}>
                       {stats.revenue_today ? `€${stats.revenue_today}` : '-'}
                     </div>
+                    {!stats.revenue_today && (
+                      <div className="text-[10px] text-[#A8A29E] mt-0.5">{language === 'es' ? 'Se actualiza al sentar comensales' : 'Updates when guests are seated'}</div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -863,7 +874,9 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   >
                     {language === 'es' ? 'Editar Plano' : 'Edit Floor Plan'}
                   </button>
-                  <TableStatusLegend />
+                  <div className="overflow-x-auto whitespace-nowrap max-w-[calc(100vw-2rem)] sm:max-w-none">
+                    <TableStatusLegend />
+                  </div>
                 </div>
               </div>
 

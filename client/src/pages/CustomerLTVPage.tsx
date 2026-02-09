@@ -1,7 +1,68 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Users } from 'lucide-react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import LTVDashboard from '../components/host/LTVDashboard';
 import AnalyticsGuide from '../components/common/AnalyticsGuide';
 import Breadcrumb, { breadcrumbConfigs } from '../components/common/Breadcrumb';
+
+function LTVDashboardWithTimeout() {
+  const [timedOut, setTimedOut] = useState(false);
+  const [, setLoaded] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // After 10 seconds, check if still showing spinner
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (containerRef.current) {
+        const hasSpinner = containerRef.current.querySelector('.animate-spin');
+        if (hasSpinner) {
+          setTimedOut(true);
+        } else {
+          setLoaded(true);
+        }
+      }
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Observe DOM changes to detect when loading finishes even after timeout
+  const containerRefCallback = useCallback((node: HTMLDivElement | null) => {
+    if (node) {
+      (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      const observer = new MutationObserver(() => {
+        const hasSpinner = node.querySelector('.animate-spin');
+        if (!hasSpinner && timedOut) {
+          setTimedOut(false);
+          setLoaded(true);
+        }
+      });
+      observer.observe(node, { childList: true, subtree: true });
+      return () => observer.disconnect();
+    }
+  }, [timedOut]);
+
+  if (timedOut) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-[#F5F5F4] flex items-center justify-center">
+            <Users className="w-6 h-6 text-[#57534E]" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-[#1C1917]">No analytics data yet</h3>
+            <p className="text-sm text-[#57534E]">Customer analytics will appear once reservation data is available. Make sure you have reservations with customer history to see LTV metrics.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={containerRefCallback}>
+      <LTVDashboard />
+    </div>
+  );
+}
 
 export default function CustomerLTVPage() {
   return (
@@ -23,9 +84,9 @@ export default function CustomerLTVPage() {
           <AnalyticsGuide page="ltv" />
         </div>
 
-        {/* LTV Dashboard - Full Width */}
+        {/* LTV Dashboard - Full Width with timeout fallback */}
         <div className="max-w-7xl">
-          <LTVDashboard />
+          <LTVDashboardWithTimeout />
         </div>
 
         {/* Customer Insights Section */}

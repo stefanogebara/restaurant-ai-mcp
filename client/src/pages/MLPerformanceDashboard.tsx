@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import DashboardLayout from '../components/layout/DashboardLayout';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -77,24 +78,28 @@ export default function MLPerformanceDashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading ML Performance Data...</p>
+      <DashboardLayout>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading ML Performance Data...</p>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-600 text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Failed to Load Data</h2>
-          <p className="text-gray-600">{(error as Error).message}</p>
+      <DashboardLayout>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-red-600 text-6xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Failed to Load Data</h2>
+            <p className="text-gray-600">{(error as Error).message}</p>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
@@ -104,6 +109,7 @@ export default function MLPerformanceDashboard() {
   const recommendations = data?.recommendations || [];
 
   return (
+    <DashboardLayout>
     <div className="min-h-screen bg-gray-50 p-6">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-8">
@@ -298,10 +304,18 @@ export default function MLPerformanceDashboard() {
               </table>
             </div>
           ) : (
-            <div className="text-center py-12 text-gray-500">
-              <div className="text-4xl mb-4">📭</div>
-              <p>No interventions recorded yet</p>
-              <p className="text-sm mt-2">Start creating reservations to see intervention data</p>
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="w-48 h-32 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center mb-6">
+                <svg className="w-16 h-16 text-gray-300 mb-2" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="8" y="36" width="10" height="20" rx="2" fill="currentColor" opacity="0.4" />
+                  <rect x="22" y="24" width="10" height="32" rx="2" fill="currentColor" opacity="0.6" />
+                  <rect x="36" y="16" width="10" height="40" rx="2" fill="currentColor" opacity="0.8" />
+                  <rect x="50" y="8" width="10" height="48" rx="2" fill="currentColor" />
+                  <line x1="4" y1="58" x2="62" y2="58" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.3" />
+                </svg>
+              </div>
+              <p className="text-gray-600 font-medium text-base">No intervention types to display</p>
+              <p className="text-gray-400 text-sm mt-2 max-w-xs text-center">Data will populate as interventions are tracked across different reservation types</p>
             </div>
           )}
         </div>
@@ -379,9 +393,20 @@ export default function MLPerformanceDashboard() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-gray-500">
-              <div className="text-4xl mb-4">📝</div>
-              <p>No recent interventions</p>
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="w-48 h-32 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center mb-6">
+                <svg className="w-16 h-16 text-gray-300 mb-2" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <polyline points="8,48 20,32 32,40 44,20 56,12" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.6" />
+                  <circle cx="8" cy="48" r="3" fill="currentColor" opacity="0.4" />
+                  <circle cx="20" cy="32" r="3" fill="currentColor" opacity="0.5" />
+                  <circle cx="32" cy="40" r="3" fill="currentColor" opacity="0.6" />
+                  <circle cx="44" cy="20" r="3" fill="currentColor" opacity="0.7" />
+                  <circle cx="56" cy="12" r="3" fill="currentColor" opacity="0.8" />
+                  <line x1="4" y1="56" x2="62" y2="56" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.3" />
+                </svg>
+              </div>
+              <p className="text-gray-600 font-medium text-base">No recent interventions</p>
+              <p className="text-gray-400 text-sm mt-2 max-w-xs text-center">ROI trend data will appear here as the system tracks and resolves reservation interventions</p>
             </div>
           )}
         </div>
@@ -414,5 +439,6 @@ export default function MLPerformanceDashboard() {
         )}
       </div>
     </div>
+    </DashboardLayout>
   );
 }

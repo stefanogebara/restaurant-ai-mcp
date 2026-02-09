@@ -12,26 +12,23 @@ export default function Footer() {
         {/* Social Links */}
         <div className="flex justify-center gap-8 text-xs font-bold tracking-widest uppercase text-[#A8A29E] mb-12">
           <a
-            href="https://instagram.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-white transition-colors"
+            href="#"
+            onClick={(e) => e.preventDefault()}
+            className="hover:text-white transition-colors cursor-default"
           >
             Instagram
           </a>
           <a
-            href="https://twitter.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-white transition-colors"
+            href="#"
+            onClick={(e) => e.preventDefault()}
+            className="hover:text-white transition-colors cursor-default"
           >
             Twitter
           </a>
           <a
-            href="https://linkedin.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-white transition-colors"
+            href="#"
+            onClick={(e) => e.preventDefault()}
+            className="hover:text-white transition-colors cursor-default"
           >
             LinkedIn
           </a>
@@ -55,7 +52,7 @@ export default function Footer() {
 
         {/* Copyright */}
         <p className="text-[#57534E] text-xs font-light">
-          {currentYear} Seatable AI. All rights reserved.
+          &copy; {currentYear} Seatable AI. All rights reserved.
         </p>
       </div>
     </footer>

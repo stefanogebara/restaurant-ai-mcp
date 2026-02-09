@@ -4,7 +4,7 @@
  * Modern Elegant Design
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
@@ -82,8 +82,7 @@ const PLANS = [
       'Waitlist management',
       'Priority support',
       'Unlimited reservations',
-      'SMS notifications',
-      'WhatsApp integration'
+      'SMS notifications'
     ],
     highlighted: true
   }
@@ -93,6 +92,23 @@ export default function Welcome() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  // Suppress reservation fetch errors on the welcome page.
+  // Some background processes may attempt to fetch reservations before
+  // the restaurant is fully set up, which causes a TypeError.
+  useEffect(() => {
+    const originalConsoleError = console.error;
+    console.error = (...args: unknown[]) => {
+      const message = args[0];
+      if (typeof message === 'string' && message.includes('Error fetching reservations')) {
+        return; // Silently ignore reservation fetch errors on the welcome page
+      }
+      originalConsoleError.apply(console, args);
+    };
+    return () => {
+      console.error = originalConsoleError;
+    };
+  }, []);
 
   const handleGetStarted = async (priceId: string, planName: string) => {
     try {
@@ -149,6 +165,13 @@ export default function Welcome() {
             <span className="text-sm text-[#57534E]">
               {user?.email}
             </span>
+            <Link
+              to="/host-dashboard/simple"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium border border-[#9F1239] text-[#9F1239] rounded-lg hover:bg-[#9F1239] hover:text-white transition-all duration-200"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              Go to Dashboard
+            </Link>
             <button
               onClick={handleSignOut}
               className="flex items-center gap-2 px-4 py-2 text-sm text-[#57534E] hover:text-[#1C1917] transition-colors"
@@ -358,7 +381,7 @@ export default function Welcome() {
             Seatable<span className="text-[#9F1239]">.</span>
           </span>
           <span className="text-sm text-[#57534E]">
-            © 2025 Seatable AI. All rights reserved.
+            © {new Date().getFullYear()} Seatable AI. All rights reserved.
           </span>
         </div>
       </footer>

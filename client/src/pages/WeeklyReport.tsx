@@ -23,6 +23,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import Breadcrumb, { breadcrumbConfigs } from '../components/common/Breadcrumb';
+import DashboardLayout from '../components/layout/DashboardLayout';
 import { authFetch } from '../services/api';
 
 interface WeeklyReportData {
@@ -111,28 +112,33 @@ export default function WeeklyReport() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="w-12 h-12 text-[#9F1239] animate-spin mx-auto mb-4" />
-          <p className="text-foreground text-lg">Loading weekly report...</p>
+      <DashboardLayout>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center">
+            <RefreshCw className="w-12 h-12 text-[#9F1239] animate-spin mx-auto mb-4" />
+            <p className="text-foreground text-lg">Loading weekly report...</p>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (!report) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-foreground">No data available</p>
+      <DashboardLayout>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-foreground">No data available</p>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   const { summary, busiest, demographics, preferences } = report;
 
   return (
+    <DashboardLayout>
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
         {/* Breadcrumb Navigation */}
@@ -199,17 +205,25 @@ export default function WeeklyReport() {
           <div className="bg-card p-6 rounded-lg border border-border">
             <div className="flex items-center justify-between mb-2">
               <Users className="w-8 h-8 text-[#9F1239]" />
-              {summary.covers_change_percent >= 0 ? (
-                <TrendingUp className="w-6 h-6 text-green-500" />
-              ) : (
-                <TrendingDown className="w-6 h-6 text-red-500" />
-              )}
+              {summary.previous_covers >= 3 ? (
+                summary.covers_change_percent >= 0 ? (
+                  <TrendingUp className="w-6 h-6 text-green-500" />
+                ) : (
+                  <TrendingDown className="w-6 h-6 text-red-500" />
+                )
+              ) : null}
             </div>
             <div className="text-4xl font-bold text-foreground mb-1">{summary.total_covers}</div>
             <div className="text-sm text-muted-foreground">Total Covers</div>
-            <div className={`text-sm font-semibold mt-2 ${summary.covers_change_percent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {summary.covers_change_percent >= 0 ? '+' : ''}{summary.covers_change_percent}% vs last week
-            </div>
+            {summary.previous_covers >= 3 ? (
+              <div className={`text-sm font-semibold mt-2 ${summary.covers_change_percent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {summary.covers_change_percent >= 0 ? '+' : ''}{summary.covers_change_percent}% vs last week
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground mt-2">
+                First week of data
+              </div>
+            )}
           </div>
 
           {/* Reservations */}
@@ -406,5 +420,6 @@ export default function WeeklyReport() {
         </div>
       </div>
     </div>
+    </DashboardLayout>
   );
 }

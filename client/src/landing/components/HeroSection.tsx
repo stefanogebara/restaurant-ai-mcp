@@ -74,15 +74,15 @@ export default function HeroSection() {
           className="mt-16 pt-10 border-t border-[#E7E5E4] grid grid-cols-3 gap-6 max-w-lg mx-auto"
         >
           <div className="text-center">
-            <div className="text-3xl md:text-4xl font-serif font-bold text-[#1C1917]">500+</div>
-            <div className="text-xs text-[#57534E] mt-1 uppercase tracking-wider">Restaurants</div>
+            <div className="text-2xl md:text-3xl font-serif font-bold text-[#1C1917]">Growing</div>
+            <div className="text-xs text-[#57534E] mt-1 uppercase tracking-wider">Network</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl md:text-4xl font-serif font-bold text-[#9F1239]">40h</div>
-            <div className="text-xs text-[#57534E] mt-1 uppercase tracking-wider">Saved/Month</div>
+            <div className="text-2xl md:text-3xl font-serif font-bold text-[#9F1239]">Hours</div>
+            <div className="text-xs text-[#57534E] mt-1 uppercase tracking-wider">Saved Monthly</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl md:text-4xl font-serif font-bold text-[#1C1917]">94%</div>
+            <div className="text-2xl md:text-3xl font-serif font-bold text-[#1C1917]">High</div>
             <div className="text-xs text-[#57534E] mt-1 uppercase tracking-wider">Satisfaction</div>
           </div>
         </motion.div>

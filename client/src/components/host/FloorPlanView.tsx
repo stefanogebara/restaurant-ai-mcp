@@ -400,12 +400,12 @@ export default function FloorPlanView({
 
             <div className={`rounded-xl overflow-hidden border ${
               darkMode ? 'bg-[#1C1917] border-[#44403C]' : 'bg-white border-[#E7E5E4]'
-            }`}>
+            }`} style={{ maxWidth: '100%', overflowX: 'auto' }}>
               <svg
                 width="100%"
                 viewBox={`0 0 ${svgW} ${svgH}`}
                 className="block"
-                style={{ minHeight: compact ? 180 : 240 }}
+                style={{ minHeight: compact ? 180 : 240, minWidth: 320, maxWidth: '100%' }}
               >
                 <defs>
                   <style>{ANIM_CSS}</style>

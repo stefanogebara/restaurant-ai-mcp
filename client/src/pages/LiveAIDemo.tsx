@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import ElevenLabsWidget from '../components/ElevenLabsWidget';
 import RecentReservations from '../components/RecentReservations';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Phone, MessageSquare, Mic, Volume2, Sparkles, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Phone, MessageSquare, Mic, Volume2, Sparkles, ArrowRight, ArrowDownRight, Keyboard } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 
 export default function LiveAIDemo() {
@@ -96,7 +96,7 @@ export default function LiveAIDemo() {
 
               <div className="space-y-5">
                 {[
-                  { step: 1, title: 'Click the Widget Below', desc: 'Start the conversation by clicking the AI assistant button', color: 'bg-[#9F1239]' },
+                  { step: 1, title: 'Open the Chat Widget', desc: 'Look for the chat bubble in the bottom-right corner of your screen and click it', color: 'bg-[#9F1239]' },
                   { step: 2, title: 'Allow Microphone Access', desc: 'Grant permission to use your microphone for voice interaction', color: 'bg-[#1C1917]' },
                   { step: 3, title: 'Start Talking', desc: 'Speak naturally - say "I\'d like to make a reservation for 2 people tonight at 7 PM"', color: 'bg-[#57534E]' },
                   { step: 4, title: 'Watch the Magic', desc: 'Our AI will check availability, confirm details, and complete your reservation', color: 'bg-[#9F1239]' },
@@ -111,6 +111,14 @@ export default function LiveAIDemo() {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* No microphone note */}
+              <div className="mt-6 flex items-start gap-3 p-4 bg-[#FAFAF9] rounded-xl border border-[#E7E5E4]">
+                <Keyboard className="w-5 h-5 text-[#9F1239] flex-shrink-0 mt-0.5" />
+                <p className="text-[#57534E] text-sm font-light">
+                  <span className="font-medium text-[#1C1917]">No microphone?</span> You can also type your request in the chat widget.
+                </p>
               </div>
             </div>
 
@@ -187,8 +195,32 @@ export default function LiveAIDemo() {
                 </div>
                 <h3 className="font-serif text-2xl text-[#1C1917]">AI Reservation Assistant</h3>
                 <p className="text-[#57534E] font-light text-sm">
-                  Click the button below to start your conversation
+                  Use the chat widget in the bottom-right corner to start your conversation
                 </p>
+
+                {/* Animated indicator pointing to the chat widget */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1 }}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-[#9F1239]/10 rounded-full border border-[#9F1239]/20"
+                >
+                  <motion.div
+                    animate={{ x: [0, 4, 0], y: [0, 4, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    <ArrowDownRight className="w-4 h-4 text-[#9F1239]" />
+                  </motion.div>
+                  <span className="text-xs text-[#9F1239] font-medium">
+                    Look for the chat bubble in the bottom-right corner
+                  </span>
+                  <motion.div
+                    animate={{ x: [0, 4, 0], y: [0, 4, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    <ArrowDownRight className="w-4 h-4 text-[#9F1239]" />
+                  </motion.div>
+                </motion.div>
               </div>
 
               {/* ElevenLabs Widget Container */}
@@ -283,6 +315,28 @@ export default function LiveAIDemo() {
           </div>
         </motion.div>
       </div>
+
+      {/* Fixed pulsing indicator pointing to the ElevenLabs chat widget */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 2 }}
+        className="fixed bottom-24 right-6 z-40 flex items-center gap-2 pointer-events-none"
+      >
+        <motion.div
+          animate={{ opacity: [1, 0.6, 1] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          className="bg-[#9F1239] text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-[#9F1239]/30 pointer-events-none whitespace-nowrap"
+        >
+          Start your demo here
+        </motion.div>
+        <motion.div
+          animate={{ y: [0, 6, 0] }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <ArrowDownRight className="w-5 h-5 text-[#9F1239]" />
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

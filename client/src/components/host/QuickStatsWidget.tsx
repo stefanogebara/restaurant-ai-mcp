@@ -88,7 +88,11 @@ export default function QuickStatsWidget() {
 
   if (!stats) return null;
 
+  // Check if there's no meaningful data yet (0 interventions = no data to evaluate)
+  const hasData = stats.today_interventions > 0 || stats.value_saved_30d > 0;
+
   const getRoiColor = (status: string) => {
+    if (!hasData) return 'text-gray-500';
     switch (status) {
       case 'exceeds': return 'text-green-600';
       case 'meets': return 'text-green-600';
@@ -98,6 +102,7 @@ export default function QuickStatsWidget() {
   };
 
   const getRoiBg = (status: string) => {
+    if (!hasData) return 'bg-gray-50';
     switch (status) {
       case 'exceeds': return 'bg-green-50';
       case 'meets': return 'bg-green-50';
@@ -107,6 +112,7 @@ export default function QuickStatsWidget() {
   };
 
   const getSuccessColor = (status: string) => {
+    if (!hasData) return 'text-gray-500';
     switch (status) {
       case 'good': return 'text-green-600';
       case 'fair': return 'text-amber-600';
@@ -116,6 +122,7 @@ export default function QuickStatsWidget() {
   };
 
   const getSuccessBg = (status: string) => {
+    if (!hasData) return 'bg-gray-50';
     switch (status) {
       case 'good': return 'bg-green-50';
       case 'fair': return 'bg-amber-50';
@@ -161,9 +168,9 @@ export default function QuickStatsWidget() {
           </div>
 
           {/* Weekly ROI */}
-          <div className={`${getRoiBg(stats.roi_status)} rounded-lg p-4 border border-green-100`}>
+          <div className={`${getRoiBg(stats.roi_status)} rounded-lg p-4 border ${!hasData ? 'border-gray-200' : 'border-green-100'}`}>
             <div className="flex items-center gap-2 mb-2">
-              <div className={`w-8 h-8 ${stats.roi_status === 'below' ? 'bg-amber-100' : 'bg-green-100'} rounded-lg flex items-center justify-center`}>
+              <div className={`w-8 h-8 ${!hasData ? 'bg-gray-100' : stats.roi_status === 'below' ? 'bg-amber-100' : 'bg-green-100'} rounded-lg flex items-center justify-center`}>
                 <TrendingUp className={`w-4 h-4 ${getRoiColor(stats.roi_status)}`} />
               </div>
               <span className={`text-xs font-medium uppercase tracking-wide ${getRoiColor(stats.roi_status)}`}>7-Day ROI</span>
@@ -172,9 +179,13 @@ export default function QuickStatsWidget() {
               {stats.weekly_roi}%
             </div>
             <div className="text-xs text-muted-foreground mt-1">
-              {stats.roi_status === 'exceeds' && 'Exceeds target'}
-              {stats.roi_status === 'meets' && 'On target'}
-              {stats.roi_status === 'below' && 'Below target'}
+              {!hasData ? 'Awaiting data' : (
+                <>
+                  {stats.roi_status === 'exceeds' && 'Exceeds target'}
+                  {stats.roi_status === 'meets' && 'On target'}
+                  {stats.roi_status === 'below' && 'Below target'}
+                </>
+              )}
             </div>
           </div>
 
@@ -195,9 +206,9 @@ export default function QuickStatsWidget() {
           </div>
 
           {/* Success Rate */}
-          <div className={`${getSuccessBg(stats.success_status)} rounded-lg p-4 border ${stats.success_status === 'good' ? 'border-green-100' : stats.success_status === 'fair' ? 'border-amber-100' : 'border-red-100'}`}>
+          <div className={`${getSuccessBg(stats.success_status)} rounded-lg p-4 border ${!hasData ? 'border-gray-200' : stats.success_status === 'good' ? 'border-green-100' : stats.success_status === 'fair' ? 'border-amber-100' : 'border-red-100'}`}>
             <div className="flex items-center gap-2 mb-2">
-              <div className={`w-8 h-8 ${stats.success_status === 'good' ? 'bg-green-100' : stats.success_status === 'fair' ? 'bg-amber-100' : 'bg-red-100'} rounded-lg flex items-center justify-center`}>
+              <div className={`w-8 h-8 ${!hasData ? 'bg-gray-100' : stats.success_status === 'good' ? 'bg-green-100' : stats.success_status === 'fair' ? 'bg-amber-100' : 'bg-red-100'} rounded-lg flex items-center justify-center`}>
                 <CheckCircle2 className={`w-4 h-4 ${getSuccessColor(stats.success_status)}`} />
               </div>
               <span className={`text-xs font-medium uppercase tracking-wide ${getSuccessColor(stats.success_status)}`}>Success Rate</span>
@@ -206,9 +217,13 @@ export default function QuickStatsWidget() {
               {stats.success_rate}%
             </div>
             <div className="text-xs text-muted-foreground mt-1">
-              {stats.success_status === 'good' && 'Excellent performance'}
-              {stats.success_status === 'fair' && 'Room to improve'}
-              {stats.success_status === 'needs_improvement' && 'Needs attention'}
+              {!hasData ? 'Awaiting data' : (
+                <>
+                  {stats.success_status === 'good' && 'Excellent performance'}
+                  {stats.success_status === 'fair' && 'Room to improve'}
+                  {stats.success_status === 'needs_improvement' && 'Needs attention'}
+                </>
+              )}
             </div>
           </div>
         </div>

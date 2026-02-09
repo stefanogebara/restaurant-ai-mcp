@@ -88,24 +88,23 @@ export default function InteractiveDemoSection() {
             transition={{ duration: 0.6 }}
             className="space-y-6"
           >
-            {/* Call AI Assistant */}
-            <div className="bg-white p-6 rounded-[2rem] border border-[#E7E5E4] shadow-md hover:shadow-lg transition-shadow">
+            {/* Call AI Assistant - Coming Soon */}
+            <div className="bg-white p-6 rounded-[2rem] border border-[#E7E5E4] shadow-md opacity-60">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#9F1239] flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-2xl bg-[#A8A29E] flex items-center justify-center flex-shrink-0">
                   <Phone className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-serif text-xl text-[#1C1917] mb-2">Call Our AI Assistant</h3>
                   <p className="text-[#57534E] mb-4 font-light text-sm">
-                    Try making a reservation by calling our demo restaurant number
+                    Voice reservations via phone are coming soon. Try the text chat below!
                   </p>
-                  <a
-                    href={`tel:${DEMO_RESTAURANT.phone}`}
-                    className="px-5 py-3 bg-[#1C1917] text-white text-xs tracking-widest uppercase font-bold hover:bg-[#9F1239] transition-all duration-300 rounded-xl inline-flex items-center gap-2"
+                  <span
+                    className="px-5 py-3 bg-[#A8A29E] text-white text-xs tracking-widest uppercase font-bold rounded-xl inline-flex items-center gap-2 cursor-not-allowed"
                   >
                     <Phone className="w-4 h-4" />
-                    {DEMO_RESTAURANT.phone}
-                  </a>
+                    Coming Soon
+                  </span>
                 </div>
               </div>
             </div>
