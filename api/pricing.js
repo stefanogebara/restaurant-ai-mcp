@@ -9,6 +9,7 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { verifyAuth } = require('./_lib/auth');
 const logger = createSecureLogger('Pricing');
 const {
   calculatePrice,
@@ -636,6 +637,12 @@ module.exports = async (req, res) => {
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  // Require authentication
+  const auth = await verifyAuth(req);
+  if (auth.error) {
+    return res.status(auth.status).json({ success: false, error: auth.error });
   }
 
   const { action } = req.query;

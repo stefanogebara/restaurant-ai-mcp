@@ -15,6 +15,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { verifyAuth } = require('./_lib/auth');
 const { calculateCustomerLTV, upsertCustomerLTV } = require('./services/ltvCalculator');
 
 const logger = createSecureLogger('Revenue');
@@ -28,6 +29,12 @@ module.exports = async (req, res) => {
   // Set CORS headers
   setInternalCors(req, res);
   if (handlePreflight(req, res)) return;
+
+  // Require authentication
+  const auth = await verifyAuth(req);
+  if (auth.error) {
+    return res.status(auth.status).json({ error: auth.error });
+  }
 
   const { action } = req.query;
 

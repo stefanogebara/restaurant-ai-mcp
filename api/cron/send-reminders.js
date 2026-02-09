@@ -68,8 +68,13 @@ function formatTime(time24) {
 
 module.exports = async (req, res) => {
   // Verify this is a cron request (Vercel adds this header)
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    logger.error('CRON_SECRET not configured - denying request');
+    return res.status(500).json({ success: false, error: 'Cron not configured' });
+  }
   const authHeader = req.headers.authorization;
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 

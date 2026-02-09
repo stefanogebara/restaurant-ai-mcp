@@ -7,16 +7,14 @@
 const jwt = require('jsonwebtoken');
 const { createClient } = require('@supabase/supabase-js');
 
-// JWT_SECRET priority: explicit JWT_SECRET > Supabase JWT secret > fallback warning
-const JWT_SECRET = process.env.JWT_SECRET ||
-  process.env.SUPABASE_JWT_SECRET ||
-  process.env.SUPABASE_ANON_KEY; // Last resort: use anon key (not ideal, but prevents crashes)
+// JWT_SECRET priority: explicit JWT_SECRET > Supabase JWT secret
+const JWT_SECRET = process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET;
 
 const JWT_EXPIRY = '24h';
 
-// Log warning if using fallback secret
-if (!process.env.JWT_SECRET && !process.env.SUPABASE_JWT_SECRET) {
-  console.warn('[Auth] WARNING: JWT_SECRET not configured. Using fallback. Please set JWT_SECRET in environment variables for production.');
+// Log error if no proper secret configured
+if (!JWT_SECRET) {
+  console.error('[Auth] CRITICAL: No JWT_SECRET or SUPABASE_JWT_SECRET configured. JWT signing/verification will fail. Set JWT_SECRET in environment variables.');
 }
 
 // Initialize Supabase client for user verification
