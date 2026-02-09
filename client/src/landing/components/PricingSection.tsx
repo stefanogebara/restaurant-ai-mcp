@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Check, ArrowRight, Loader2 } from 'lucide-react';
 import { PRICING_TIERS } from '../data/demoData';
 import { useState } from 'react';
+import { authFetch } from '../../services/api';
 
 export default function PricingSection() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
@@ -21,7 +22,7 @@ export default function PricingSection() {
         ? `${import.meta.env.VITE_API_URL}/api/create-checkout-session`
         : '/api/create-checkout-session';
 
-      const response = await fetch(apiUrl, {
+      const response = await authFetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

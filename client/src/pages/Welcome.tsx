@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
+import { authFetch } from '../services/api';
 import {
   Phone,
   LayoutDashboard,
@@ -101,7 +102,7 @@ export default function Welcome() {
         ? `${import.meta.env.VITE_API_URL}/api/create-checkout-session`
         : '/api/create-checkout-session';
 
-      const response = await fetch(apiUrl, {
+      const response = await authFetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

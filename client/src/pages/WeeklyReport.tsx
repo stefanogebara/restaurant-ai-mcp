@@ -23,6 +23,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import Breadcrumb, { breadcrumbConfigs } from '../components/common/Breadcrumb';
+import { authFetch } from '../services/api';
 
 interface WeeklyReportData {
   period: {
@@ -83,7 +84,7 @@ export default function WeeklyReport() {
       const startParam = start ? start.toISOString().split('T')[0] : startDate;
       const endParam = end ? end.toISOString().split('T')[0] : endDate;
 
-      const response = await fetch(
+      const response = await authFetch(
         `/api/reports?action=weekly&start_date=${startParam}&end_date=${endParam}`
       );
       const result = await response.json();

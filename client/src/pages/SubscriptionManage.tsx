@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CreditCard, Calendar, CheckCircle, XCircle, Loader2, ArrowRight, Settings, Sparkles, Star } from 'lucide-react';
+import { authFetch } from '../services/api';
 
 interface SubscriptionData {
   status: 'active' | 'trialing' | 'canceled' | 'past_due' | 'none';
@@ -33,7 +34,7 @@ export default function SubscriptionManage() {
           ? `${import.meta.env.VITE_API_URL}/api/get-subscription`
           : '/api/get-subscription';
 
-        const response = await fetch(`${apiUrl}?customerId=${customerId}`);
+        const response = await authFetch(`${apiUrl}?customerId=${customerId}`);
 
         if (!response.ok) {
           throw new Error('Failed to fetch subscription');
@@ -71,7 +72,7 @@ export default function SubscriptionManage() {
         ? `${import.meta.env.VITE_API_URL}/api/customer-portal`
         : '/api/customer-portal';
 
-      const response = await fetch(apiUrl, {
+      const response = await authFetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

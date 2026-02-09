@@ -5,6 +5,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { authFetch } from '../services/api';
 
 interface SubscriptionDetails {
   plan: string;
@@ -55,7 +56,7 @@ export function useSubscription(options: UseSubscriptionOptions = {}) {
       const storedEmail = localStorage.getItem('customer_email');
       const queryEmail = email || storedEmail || 'restaurant@seatable.io';
 
-      const response = await fetch(
+      const response = await authFetch(
         `${apiUrl}/api/subscription-status?email=${encodeURIComponent(queryEmail)}`
       );
 

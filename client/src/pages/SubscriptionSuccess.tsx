@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle, ArrowRight, Loader2, Sparkles } from 'lucide-react';
+import { authFetch } from '../services/api';
 
 export default function SubscriptionSuccess() {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ export default function SubscriptionSuccess() {
           ? `${import.meta.env.VITE_API_URL}/api/verify-session`
           : '/api/verify-session';
 
-        const response = await fetch(`${apiUrl}?session_id=${id}`);
+        const response = await authFetch(`${apiUrl}?session_id=${id}`);
 
         if (response.ok) {
           const data = await response.json();
