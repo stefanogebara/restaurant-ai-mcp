@@ -15,12 +15,19 @@ const {
 } = require('./_lib/supabase');
 
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { verifyAuth } = require('./_lib/auth');
 
 module.exports = async (req, res) => {
   setInternalCors(req, res);
 
   if (handlePreflight(req, res)) {
     return;
+  }
+
+  // Require authentication
+  const auth = await verifyAuth(req);
+  if (auth.error) {
+    return res.status(auth.status).json({ error: auth.error });
   }
 
   const { action } = req.query;

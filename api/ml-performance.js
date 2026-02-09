@@ -464,12 +464,19 @@ function getEmptyData(action) {
  */
 module.exports = async (req, res) => {
   // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  // Require authentication
+  const { verifyAuth } = require('./_lib/auth');
+  const auth = await verifyAuth(req);
+  if (auth.error) {
+    return res.status(auth.status).json({ error: auth.error });
   }
 
   if (req.method !== 'GET') {

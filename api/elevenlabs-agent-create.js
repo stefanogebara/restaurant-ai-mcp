@@ -16,6 +16,7 @@
  */
 
 const fetch = require('node-fetch');
+const { verifyAuth } = require('./_lib/auth');
 
 module.exports = async (req, res) => {
   // Only allow POST requests
@@ -24,6 +25,12 @@ module.exports = async (req, res) => {
       success: false,
       error: 'Method not allowed'
     });
+  }
+
+  // Require authentication
+  const auth = await verifyAuth(req);
+  if (auth.error) {
+    return res.status(auth.status).json({ success: false, error: auth.error });
   }
 
   try {

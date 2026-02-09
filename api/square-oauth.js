@@ -15,6 +15,7 @@ const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const crypto = require('crypto');
 
+const { verifyAuth } = require('./_lib/auth');
 const logger = createSecureLogger('SquareOAuth');
 
 const supabase = createClient(
@@ -46,6 +47,14 @@ module.exports = async (req, res) => {
   if (handlePreflight(req, res)) return;
 
   const { action } = req.query;
+
+  // Require auth for all actions except callback (external redirect from Square)
+  if (action !== 'callback') {
+    const auth = await verifyAuth(req);
+    if (auth.error) {
+      return res.status(auth.status).json({ error: auth.error });
+    }
+  }
 
   try {
     switch (action) {

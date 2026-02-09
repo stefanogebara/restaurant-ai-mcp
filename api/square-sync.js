@@ -19,6 +19,7 @@ const {
 } = require('./services/squareService');
 const { calculateAllCustomerLTV } = require('./services/ltvCalculator');
 
+const { verifyAuth } = require('./_lib/auth');
 const logger = createSecureLogger('SquareSync');
 
 const supabase = createClient(
@@ -30,6 +31,12 @@ module.exports = async (req, res) => {
   // Set CORS headers
   setInternalCors(req, res);
   if (handlePreflight(req, res)) return;
+
+  // Require authentication
+  const auth = await verifyAuth(req);
+  if (auth.error) {
+    return res.status(auth.status).json({ error: auth.error });
+  }
 
   const { action } = req.query;
 

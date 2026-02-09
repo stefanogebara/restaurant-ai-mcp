@@ -7,6 +7,7 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { verifyAuth } = require('./_lib/auth');
 const logger = createSecureLogger('MLOutcomes');
 
 const supabase = createClient(
@@ -16,12 +17,18 @@ const supabase = createClient(
 
 module.exports = async (req, res) => {
   // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  // Require authentication
+  const auth = await verifyAuth(req);
+  if (auth.error) {
+    return res.status(auth.status).json({ error: auth.error });
   }
 
   const { action } = req.query;

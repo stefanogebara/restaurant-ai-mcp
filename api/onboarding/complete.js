@@ -13,6 +13,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const fetch = require('node-fetch');
 const { createSecureLogger } = require('../_lib/secure-logger');
+const { verifyAuth } = require('../_lib/auth');
 const logger = createSecureLogger('Onboarding');
 
 // Initialize Supabase client
@@ -22,9 +23,9 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 module.exports = async (req, res) => {
   // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   // Handle preflight
   if (req.method === 'OPTIONS') {
@@ -33,6 +34,12 @@ module.exports = async (req, res) => {
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Require authentication
+  const auth = await verifyAuth(req);
+  if (auth.error) {
+    return res.status(auth.status).json({ error: auth.error });
   }
 
   try {

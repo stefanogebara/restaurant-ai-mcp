@@ -2,6 +2,7 @@ const airtable = require('./_lib/supabase');
 const twilio = require('twilio'); // Force redeploy to fix Vercel dependency bundling
 const { Resend } = require('resend');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { verifyAuth } = require('./_lib/auth');
 const logger = createSecureLogger('Waitlist');
 const { validateWaitlistEntry, sanitizeInput } = require('./_lib/validation');
 
@@ -42,14 +43,20 @@ const STATUS_FROM_AIRTABLE = {
 module.exports = async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
 
   // Handle OPTIONS request for CORS
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
+  }
+
+  // Require authentication
+  const auth = await verifyAuth(req);
+  if (auth.error) {
+    return res.status(auth.status).json({ error: auth.error });
   }
 
   const method = req.method;
