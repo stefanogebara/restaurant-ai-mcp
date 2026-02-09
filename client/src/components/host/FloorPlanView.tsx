@@ -3,45 +3,150 @@ import type { Table, ActiveParty } from '../../types/host.types';
 
 interface FloorPlanViewProps {
   tables: Table[];
-  activeParties?: ActiveParty[];  // For showing guest names on occupied tables
+  activeParties?: ActiveParty[];
   onTableClick?: (table: Table) => void;
-  compact?: boolean; // For smaller view in dashboard
+  compact?: boolean;
   darkMode?: boolean;
 }
 
-// Grid cell size - smaller for compact view
-const GRID_CELL_SIZE_NORMAL = 40;
-const GRID_CELL_SIZE_COMPACT = 32;
-
-// Outline-based status colors (matching TableRenderer)
-const getStatusColor = (status: string, darkMode: boolean = false) => {
+// Status colors - fills for visual clarity
+const getStatusStyle = (status: string, darkMode: boolean = false) => {
+  const normalized = status?.toLowerCase() || '';
   if (darkMode) {
-    switch (status) {
-      case 'Available':
-        return { bg: 'bg-[#292524]', border: 'border-green-400', text: 'text-white' };
-      case 'Occupied':
-        return { bg: 'bg-[#292524]', border: 'border-red-400', text: 'text-white' };
-      case 'Reserved':
-        return { bg: 'bg-[#292524]', border: 'border-purple-400', text: 'text-white' };
-      case 'Being Cleaned':
-        return { bg: 'bg-[#292524]', border: 'border-amber-400', text: 'text-white' };
+    switch (normalized) {
+      case 'available':
+        return { bg: '#1a2e1a', border: '#22c55e', text: '#d1fae5', dot: '#22c55e' };
+      case 'occupied':
+        return { bg: '#2e1a1a', border: '#ef4444', text: '#fecaca', dot: '#ef4444' };
+      case 'reserved':
+        return { bg: '#2a1a3e', border: '#a855f7', text: '#e9d5ff', dot: '#a855f7' };
+      case 'being cleaned':
+        return { bg: '#2e2a1a', border: '#f59e0b', text: '#fef3c7', dot: '#f59e0b' };
       default:
-        return { bg: 'bg-[#292524]', border: 'border-gray-500', text: 'text-white' };
+        return { bg: '#292524', border: '#78716c', text: '#d6d3d1', dot: '#78716c' };
     }
   }
-  // Light mode - neutral fill with colored outline
-  switch (status) {
-    case 'Available':
-      return { bg: 'bg-[#FAFAF9]', border: 'border-green-500', text: 'text-[#1C1917]' };
-    case 'Occupied':
-      return { bg: 'bg-[#FAFAF9]', border: 'border-red-500', text: 'text-[#1C1917]' };
-    case 'Reserved':
-      return { bg: 'bg-[#FAFAF9]', border: 'border-purple-500', text: 'text-[#1C1917]' };
-    case 'Being Cleaned':
-      return { bg: 'bg-[#FAFAF9]', border: 'border-amber-500', text: 'text-[#1C1917]' };
+  switch (normalized) {
+    case 'available':
+      return { bg: '#f0fdf4', border: '#22c55e', text: '#14532d', dot: '#22c55e' };
+    case 'occupied':
+      return { bg: '#fef2f2', border: '#ef4444', text: '#7f1d1d', dot: '#ef4444' };
+    case 'reserved':
+      return { bg: '#faf5ff', border: '#a855f7', text: '#581c87', dot: '#a855f7' };
+    case 'being cleaned':
+      return { bg: '#fffbeb', border: '#f59e0b', text: '#78350f', dot: '#f59e0b' };
     default:
-      return { bg: 'bg-[#FAFAF9]', border: 'border-gray-400', text: 'text-[#1C1917]' };
+      return { bg: '#fafaf9', border: '#a8a29e', text: '#44403c', dot: '#a8a29e' };
   }
+};
+
+// Get table dimensions based on capacity and shape
+const getTableSize = (table: Table) => {
+  const cap = table.capacity || 2;
+  const shape = table.shape?.toLowerCase() || 'round';
+
+  if (shape === 'round' || shape === 'circle') {
+    const size = cap <= 2 ? 72 : cap <= 4 ? 88 : 100;
+    return { w: size, h: size };
+  }
+  if (shape === 'booth') {
+    return { w: cap <= 4 ? 100 : 120, h: cap <= 4 ? 64 : 72 };
+  }
+  if (shape === 'rectangle' || shape === 'long') {
+    return { w: cap <= 4 ? 110 : 140, h: 64 };
+  }
+  // square / default
+  const size = cap <= 2 ? 72 : cap <= 4 ? 88 : 100;
+  return { w: size, h: size };
+};
+
+// Check if tables have real position data
+const hasPositionData = (tables: Table[]) => {
+  return tables.some(t =>
+    (t.position_x !== undefined && t.position_x !== null && t.position_x !== 0) ||
+    (t.position_y !== undefined && t.position_y !== null && t.position_y !== 0)
+  );
+};
+
+// Auto-layout: arrange tables in a natural restaurant floor pattern
+const autoLayoutTables = (tables: Table[]) => {
+  const GAP = 24;
+  const sorted = [...tables].sort((a, b) => (a.table_number || 0) - (b.table_number || 0));
+  const positions: { table: Table; x: number; y: number; w: number; h: number }[] = [];
+
+  // Calculate available width (responsive, approx container width)
+  const containerWidth = 800;
+  let curX = GAP;
+  let curY = GAP;
+  let rowHeight = 0;
+
+  sorted.forEach(table => {
+    const size = getTableSize(table);
+
+    // Wrap to next row if needed
+    if (curX + size.w + GAP > containerWidth && curX > GAP) {
+      curX = GAP;
+      curY += rowHeight + GAP;
+      rowHeight = 0;
+    }
+
+    positions.push({ table, x: curX, y: curY, w: size.w, h: size.h });
+    curX += size.w + GAP;
+    rowHeight = Math.max(rowHeight, size.h);
+  });
+
+  const totalWidth = containerWidth;
+  const totalHeight = curY + rowHeight + GAP;
+  return { positions, totalWidth, totalHeight };
+};
+
+// Render chair dots around a table
+const renderChairs = (
+  cx: number, cy: number, w: number, h: number,
+  capacity: number, shape: string, color: string
+) => {
+  const chairs: React.ReactElement[] = [];
+  const isRound = shape === 'round' || shape === 'circle';
+  const chairSize = 8;
+  const offset = 6; // distance from table edge
+
+  if (isRound) {
+    const radius = w / 2 + offset + chairSize / 2;
+    for (let i = 0; i < capacity; i++) {
+      const angle = (2 * Math.PI * i) / capacity - Math.PI / 2;
+      chairs.push(
+        <circle
+          key={`chair-${i}`}
+          cx={cx + radius * Math.cos(angle)}
+          cy={cy + radius * Math.sin(angle)}
+          r={chairSize / 2}
+          fill={color}
+          opacity={0.35}
+        />
+      );
+    }
+  } else {
+    // Rectangular arrangement
+    const halfW = w / 2 + offset + chairSize / 2;
+    const halfH = h / 2 + offset + chairSize / 2;
+    const perSideLong = Math.ceil(capacity / 2);
+    const perSideShort = capacity - perSideLong;
+
+    // Top and bottom (long sides)
+    for (let i = 0; i < perSideLong; i++) {
+      const xPos = cx - (w / 2) + (w / (perSideLong + 1)) * (i + 1);
+      chairs.push(
+        <circle key={`chair-t-${i}`} cx={xPos} cy={cy - halfH} r={chairSize / 2} fill={color} opacity={0.35} />
+      );
+    }
+    for (let i = 0; i < perSideShort; i++) {
+      const xPos = cx - (w / 2) + (w / (perSideShort + 1)) * (i + 1);
+      chairs.push(
+        <circle key={`chair-b-${i}`} cx={xPos} cy={cy + halfH} r={chairSize / 2} fill={color} opacity={0.35} />
+      );
+    }
+  }
+  return chairs;
 };
 
 export default function FloorPlanView({
@@ -51,16 +156,9 @@ export default function FloorPlanView({
   compact = false,
   darkMode = false
 }: FloorPlanViewProps) {
-  const GRID_CELL_SIZE = compact ? GRID_CELL_SIZE_COMPACT : GRID_CELL_SIZE_NORMAL;
-
-  // Create lookup map: table_id -> party info
+  // Party lookup
   const tablePartyMap = useMemo(() => {
-    const map = new Map<string, {
-      guestName: string;
-      isVIP?: boolean;
-      specialOccasion?: string
-    }>();
-
+    const map = new Map<string, { guestName: string; isVIP?: boolean; specialOccasion?: string }>();
     activeParties.forEach(party => {
       (party.tables || []).forEach(tableId => {
         map.set(tableId, {
@@ -70,11 +168,10 @@ export default function FloorPlanView({
         });
       });
     });
-
     return map;
   }, [activeParties]);
 
-  // Group tables by location
+  // Group by location
   const tablesByLocation = useMemo(() => {
     return tables.reduce((acc, table) => {
       const location = table.location || 'Main';
@@ -84,57 +181,6 @@ export default function FloorPlanView({
     }, {} as Record<string, Table[]>);
   }, [tables]);
 
-  // Calculate grid bounds for each location
-  const getGridBounds = (locationTables: Table[]) => {
-    if (locationTables.length === 0) return { width: 10, height: 6 };
-
-    let maxX = 0, maxY = 0;
-    locationTables.forEach(t => {
-      maxX = Math.max(maxX, (t.position_x || 0) + (t.width || 1));
-      maxY = Math.max(maxY, (t.position_y || 0) + (t.height || 1));
-    });
-    return { width: Math.max(10, maxX + 1), height: Math.max(6, maxY + 1) };
-  };
-
-  // Render dotted lines between linked/joinable tables
-  const renderLinks = (locationTables: Table[]) => {
-    const links: React.ReactElement[] = [];
-    const processedPairs = new Set<string>();
-
-    locationTables.forEach(table => {
-      (table.joinable_with || []).forEach(linkedId => {
-        const pairKey = [table.id, linkedId].sort().join('-');
-        if (processedPairs.has(pairKey)) return;
-        processedPairs.add(pairKey);
-
-        const linkedTable = locationTables.find(t => t.id === linkedId);
-        if (!linkedTable) return;
-
-        const x1 = ((table.position_x || 0) + (table.width || 1) / 2) * GRID_CELL_SIZE;
-        const y1 = ((table.position_y || 0) + (table.height || 1) / 2) * GRID_CELL_SIZE;
-        const x2 = ((linkedTable.position_x || 0) + (linkedTable.width || 1) / 2) * GRID_CELL_SIZE;
-        const y2 = ((linkedTable.position_y || 0) + (linkedTable.height || 1) / 2) * GRID_CELL_SIZE;
-
-        links.push(
-          <line
-            key={pairKey}
-            x1={x1}
-            y1={y1}
-            x2={x2}
-            y2={y2}
-            stroke="#9F1239"
-            strokeWidth="1.5"
-            strokeDasharray="4,4"
-            opacity="0.4"
-          />
-        );
-      });
-    });
-
-    return links;
-  };
-
-  // Empty state
   if (tables.length === 0) {
     return (
       <div className={`text-center py-12 ${darkMode ? 'text-[#A8A29E]' : 'text-[#57534E]'}`}>
@@ -145,140 +191,183 @@ export default function FloorPlanView({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {Object.entries(tablesByLocation).map(([location, locationTables]) => {
-        const bounds = getGridBounds(locationTables);
+        const useAutoLayout = !hasPositionData(locationTables);
+        const layout = useAutoLayout ? autoLayoutTables(locationTables) : null;
+
+        // For manual positions, calculate bounds
+        let manualBounds = { width: 0, height: 0 };
+        let manualPositions: { table: Table; x: number; y: number; w: number; h: number }[] = [];
+        if (!useAutoLayout) {
+          const CELL = compact ? 32 : 40;
+          let maxX = 0, maxY = 0;
+          manualPositions = locationTables.map(t => {
+            const size = getTableSize(t);
+            const x = (t.position_x || 0) * CELL;
+            const y = (t.position_y || 0) * CELL;
+            maxX = Math.max(maxX, x + size.w);
+            maxY = Math.max(maxY, y + size.h);
+            return { table: t, x, y, w: size.w, h: size.h };
+          });
+          manualBounds = { width: maxX + 24, height: maxY + 24 };
+        }
+
+        const positions = useAutoLayout ? layout!.positions : manualPositions;
+        const svgWidth = useAutoLayout ? layout!.totalWidth : manualBounds.width;
+        const svgHeight = useAutoLayout ? layout!.totalHeight : manualBounds.height;
 
         return (
           <div key={location}>
-            <h3 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-white' : 'text-[#1C1917]'}`}>{location}</h3>
+            <h3 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-[#1C1917]'}`}>
+              <span className={`w-2 h-2 rounded-full ${darkMode ? 'bg-[#A8A29E]' : 'bg-[#9F1239]'}`} />
+              {location}
+              <span className={`text-xs font-normal ${darkMode ? 'text-[#78716c]' : 'text-[#a8a29e]'}`}>
+                {locationTables.length} tables
+              </span>
+            </h3>
+
             <div
-              className={`relative rounded-xl p-2 overflow-auto border ${
-                darkMode ? 'bg-[#1C1917] border-[#44403C]' : 'bg-[#FAFAF9] border-[#E7E5E4]'
+              className={`rounded-xl overflow-auto border ${
+                darkMode ? 'bg-[#1C1917] border-[#44403C]' : 'bg-white border-[#E7E5E4]'
               }`}
-              style={{
-                width: '100%',
-                minHeight: bounds.height * GRID_CELL_SIZE + 16
-              }}
             >
-              <div
-                className="relative"
-                style={{
-                  width: bounds.width * GRID_CELL_SIZE,
-                  height: bounds.height * GRID_CELL_SIZE,
-                  // No grid lines - clean plain background
-                }}
+              <svg
+                width="100%"
+                viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+                className="block"
+                style={{ minHeight: compact ? 160 : 200 }}
               >
-                {/* Joinable Links SVG Layer */}
-                <svg
-                  className="absolute inset-0 pointer-events-none"
-                  style={{
-                    width: bounds.width * GRID_CELL_SIZE,
-                    height: bounds.height * GRID_CELL_SIZE
-                  }}
-                >
-                  {renderLinks(locationTables)}
-                </svg>
+                {/* Subtle floor pattern */}
+                <defs>
+                  <pattern id="floorPattern" patternUnits="userSpaceOnUse" width="40" height="40">
+                    <circle cx="20" cy="20" r="0.8" fill={darkMode ? '#44403C' : '#e7e5e4'} opacity="0.5" />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill={`url(#floorPattern)`} />
 
-                {/* Tables */}
-                {locationTables.map(table => {
-                  const shapeClass = table.shape === 'round' ? 'rounded-full' : 'rounded-lg';
-                  const colors = getStatusColor(table.status, darkMode);
-                  const posX = (table.position_x || 0) * GRID_CELL_SIZE;
-                  const posY = (table.position_y || 0) * GRID_CELL_SIZE;
-                  const tableWidth = (table.width || 1) * GRID_CELL_SIZE - 4;
-                  const tableHeight = (table.height || 1) * GRID_CELL_SIZE - 4;
-
+                {positions.map(({ table, x, y, w, h }) => {
+                  const style = getStatusStyle(table.status, darkMode);
+                  const shape = table.shape?.toLowerCase() || 'round';
+                  const isRound = shape === 'round' || shape === 'circle';
+                  const cx = x + w / 2;
+                  const cy = y + h / 2;
                   const partyInfo = tablePartyMap.get(table.id);
-                  const showGuestName = table.status === 'Occupied' && partyInfo?.guestName;
+                  const showGuest = table.status?.toLowerCase() === 'occupied' && partyInfo?.guestName;
 
                   return (
-                    <button
+                    <g
                       key={table.id}
+                      className="cursor-pointer"
                       onClick={() => onTableClick?.(table)}
-                      className={`
-                        absolute flex flex-col items-center justify-center
-                        border-[3px] ${shapeClass} ${colors.bg} ${colors.border} ${colors.text}
-                        hover:shadow-lg transition-all duration-200 cursor-pointer
-                        text-xs font-medium
-                        hover:scale-105 active:scale-95
-                      `}
-                      style={{
-                        left: posX + 2,
-                        top: posY + 2,
-                        width: tableWidth,
-                        height: tableHeight,
-                        transform: table.rotation ? `rotate(${table.rotation}deg)` : undefined,
-                      }}
-                      title={`Table ${table.table_number} - ${table.capacity} seats - ${table.status}${partyInfo?.guestName ? ` - ${partyInfo.guestName}` : ''}`}
+                      style={{ transition: 'transform 0.15s' }}
                     >
-                      {/* VIP indicator */}
-                      {partyInfo?.isVIP && (
-                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center text-[8px]">
-                          *
-                        </span>
-                      )}
+                      {/* Chairs */}
+                      {renderChairs(cx, cy, w, h, table.capacity || 2, shape, style.border)}
 
-                      {/* Special occasion indicator */}
-                      {partyInfo?.specialOccasion && !partyInfo?.isVIP && (
-                        <span className="absolute -top-1 -left-1 w-4 h-4 bg-pink-200 rounded-full flex items-center justify-center text-[8px]">
-                          {partyInfo.specialOccasion === 'Birthday' ? '!' :
-                           partyInfo.specialOccasion === 'Anniversary' ? '+' : '*'}
-                        </span>
-                      )}
-
-                      {/* Show guest name for occupied tables */}
-                      {showGuestName ? (
+                      {/* Table shape */}
+                      {isRound ? (
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={w / 2}
+                          fill={style.bg}
+                          stroke={style.border}
+                          strokeWidth={3}
+                        />
+                      ) : shape === 'booth' ? (
                         <>
-                          <span className="font-semibold leading-tight truncate max-w-full px-1">
-                            {partyInfo.guestName.split(' ')[0].substring(0, 6)}
-                          </span>
-                          <span className={`${compact ? 'text-[8px]' : 'text-[9px]'} opacity-60 leading-tight`}>
-                            T{table.table_number}
-                          </span>
+                          {/* Booth back */}
+                          <rect
+                            x={x}
+                            y={y}
+                            width={w}
+                            height={h}
+                            rx={12}
+                            fill={style.bg}
+                            stroke={style.border}
+                            strokeWidth={3}
+                          />
+                          <rect
+                            x={x + 2}
+                            y={y + h - 8}
+                            width={w - 4}
+                            height={8}
+                            rx={4}
+                            fill={style.border}
+                            opacity={0.15}
+                          />
                         </>
                       ) : (
-                        <>
-                          <span className="font-bold leading-tight">{table.table_number}</span>
-                          <span className={`${compact ? 'text-[9px]' : 'text-[10px]'} opacity-75 leading-tight`}>
-                            {table.capacity}p
-                          </span>
-                        </>
+                        <rect
+                          x={x}
+                          y={y}
+                          width={w}
+                          height={h}
+                          rx={shape === 'rectangle' || shape === 'long' ? 8 : 12}
+                          fill={style.bg}
+                          stroke={style.border}
+                          strokeWidth={3}
+                        />
                       )}
-                    </button>
+
+                      {/* Table number */}
+                      <text
+                        x={cx}
+                        y={showGuest ? cy - 4 : cy + 1}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fill={style.text}
+                        fontSize={compact ? 14 : 16}
+                        fontWeight={700}
+                        fontFamily="system-ui, -apple-system, sans-serif"
+                      >
+                        {table.table_number}
+                      </text>
+
+                      {/* Capacity or guest name */}
+                      <text
+                        x={cx}
+                        y={showGuest ? cy + 12 : cy + (compact ? 14 : 16)}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fill={style.text}
+                        fontSize={compact ? 9 : 10}
+                        opacity={0.7}
+                        fontFamily="system-ui, -apple-system, sans-serif"
+                      >
+                        {showGuest
+                          ? partyInfo!.guestName.split(' ')[0].substring(0, 8)
+                          : `${table.capacity}p`}
+                      </text>
+
+                      {/* VIP badge */}
+                      {partyInfo?.isVIP && (
+                        <g>
+                          <circle cx={x + w - 4} cy={y + 4} r={7} fill="#eab308" />
+                          <text x={x + w - 4} y={y + 5} textAnchor="middle" dominantBaseline="middle" fontSize={8} fontWeight={700} fill="#422006">
+                            V
+                          </text>
+                        </g>
+                      )}
+
+                      {/* Status dot */}
+                      <circle cx={x + w - 4} cy={cy} r={4} fill={style.dot} opacity={0.8} />
+
+                      {/* Hover overlay (invisible, for larger hit area) */}
+                      {isRound ? (
+                        <circle cx={cx} cy={cy} r={w / 2 + 8} fill="transparent" />
+                      ) : (
+                        <rect x={x - 4} y={y - 4} width={w + 8} height={h + 8} rx={12} fill="transparent" />
+                      )}
+                    </g>
                   );
                 })}
-              </div>
+              </svg>
             </div>
           </div>
         );
       })}
-
-      {/* Legend - only show if not in compact mode */}
-      {!compact && (
-        <div className={`flex flex-wrap items-center justify-center gap-4 text-xs pt-2 ${darkMode ? 'text-[#A8A29E]' : 'text-[#57534E]'}`}>
-          <div className="flex items-center gap-1.5">
-            <div className={`w-3 h-3 rounded border-[3px] border-green-500 ${darkMode ? 'bg-[#292524]' : 'bg-[#FAFAF9]'}`}></div>
-            <span>Available</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className={`w-3 h-3 rounded border-[3px] border-red-500 ${darkMode ? 'bg-[#292524]' : 'bg-[#FAFAF9]'}`}></div>
-            <span>Occupied</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className={`w-3 h-3 rounded border-[3px] border-purple-500 ${darkMode ? 'bg-[#292524]' : 'bg-[#FAFAF9]'}`}></div>
-            <span>Reserved</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className={`w-3 h-3 rounded border-[3px] border-amber-500 ${darkMode ? 'bg-[#292524]' : 'bg-[#FAFAF9]'}`}></div>
-            <span>Cleaning</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-6 h-0 border-t-2 border-dashed border-[#9F1239] opacity-60"></div>
-            <span>Joinable</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

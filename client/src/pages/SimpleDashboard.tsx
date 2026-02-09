@@ -868,12 +868,12 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </div>
 
               {/* Table View - Floor Plan or Grid based on toggle */}
-              <div className="bg-[#F5F5F4] rounded-xl p-4 md:p-6">
+              <div className={tableViewMode === 'grid' ? 'bg-[#F5F5F4] rounded-xl p-4 md:p-6' : ''}>
                 {tableViewMode === 'floorplan' ? (
                   <FloorPlanView
                     tables={tables}
+                    activeParties={activeParties}
                     onTableClick={complexity === 'completo' ? handleTableClick : undefined}
-                    compact={true}
                   />
                 ) : (
                   <TableGrid
