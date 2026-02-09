@@ -93,7 +93,7 @@ export default function LandingNav() {
             Login
           </button>
           <button
-            onClick={() => navigate('/onboarding')}
+            onClick={() => navigate('/login')}
             className="bg-[#1C1917] text-[#FAFAF9] px-6 py-2.5 rounded-none hover:bg-[#9F1239] transition-colors duration-300 text-sm tracking-widest font-bold uppercase"
           >
             Get Started
@@ -149,7 +149,7 @@ export default function LandingNav() {
               Login
             </button>
             <button
-              onClick={() => { navigate('/onboarding'); setIsMobileMenuOpen(false); }}
+              onClick={() => { navigate('/login'); setIsMobileMenuOpen(false); }}
               className="block w-full bg-[#9F1239] text-white text-center px-6 py-3 text-sm tracking-widest font-bold uppercase"
             >
               Get Started
