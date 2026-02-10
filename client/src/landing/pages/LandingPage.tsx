@@ -7,6 +7,7 @@ import PricingSection from '../components/PricingSection';
 import FAQSection from '../components/FAQSection';
 import ContactForm from '../components/ContactForm';
 import Footer from '../components/Footer';
+import SocialProofSection from '../components/SocialProofSection';
 
 export default function LandingPage() {
   useEffect(() => {
@@ -22,6 +23,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-[#FAFAF9] text-[#1C1917] font-sans selection:bg-[#9F1239] selection:text-white overflow-x-hidden">
       <LandingNav />
       <HeroSection />
+      <SocialProofSection />
       <FeaturesGrid />
       <InteractiveDemoSection />
       <PricingSection />

@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabase';
 
 export default function PricingSection() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [isAnnual, setIsAnnual] = useState(false);
   const navigate = useNavigate();
 
   const scrollToContact = () => {
@@ -77,6 +78,39 @@ export default function PricingSection() {
           </p>
         </motion.div>
 
+        {/* Billing Toggle */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2 }}
+          className="flex items-center justify-center gap-4 mb-12"
+        >
+          <span className={`text-sm font-medium transition-colors ${!isAnnual ? 'text-[#1C1917]' : 'text-[#A8A29E]'}`}>
+            Monthly
+          </span>
+          <button
+            onClick={() => setIsAnnual(!isAnnual)}
+            className="relative w-14 h-7 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:ring-offset-2"
+            style={{ backgroundColor: isAnnual ? '#9F1239' : '#E7E5E4' }}
+            aria-label={isAnnual ? 'Switch to monthly billing' : 'Switch to annual billing'}
+          >
+            <div
+              className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 ${
+                isAnnual ? 'translate-x-7' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
+          <span className={`text-sm font-medium transition-colors ${isAnnual ? 'text-[#1C1917]' : 'text-[#A8A29E]'}`}>
+            Annual
+          </span>
+          {isAnnual && (
+            <span className="text-xs font-bold text-[#9F1239] bg-[#9F1239]/10 px-2.5 py-1 rounded-full">
+              Save 20%
+            </span>
+          )}
+        </motion.div>
+
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {PRICING_TIERS.map((tier, index) => (
@@ -107,10 +141,28 @@ export default function PricingSection() {
 
               {/* Price */}
               <div className="mb-8">
-                <div className="flex items-baseline">
-                  <span className="text-5xl font-serif font-bold text-[#1C1917]">{tier.price}</span>
-                  {tier.period && <span className="text-[#57534E] ml-2 text-sm">{tier.period}</span>}
-                </div>
+                {tier.price !== 'Custom' ? (
+                  <div className="flex items-baseline">
+                    <span className="text-5xl font-serif font-bold text-[#1C1917]">
+                      {isAnnual
+                        ? `€${(parseFloat(tier.price.replace('€', '')) * 0.8).toFixed(2)}`
+                        : tier.price
+                      }
+                    </span>
+                    <span className="text-[#57534E] ml-2 text-sm">
+                      {isAnnual ? '/mo, billed annually' : tier.period}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-baseline">
+                    <span className="text-5xl font-serif font-bold text-[#1C1917]">{tier.price}</span>
+                  </div>
+                )}
+                {isAnnual && tier.price !== 'Custom' && (
+                  <p className="text-xs text-[#9F1239] mt-2 font-medium">
+                    €{(parseFloat(tier.price.replace('€', '')) * 0.8 * 12).toFixed(0)}/year (save €{(parseFloat(tier.price.replace('€', '')) * 0.2 * 12).toFixed(0)})
+                  </p>
+                )}
               </div>
 
               {/* Features */}

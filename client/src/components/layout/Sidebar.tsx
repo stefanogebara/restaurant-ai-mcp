@@ -122,7 +122,7 @@ export default function Sidebar() {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-card rounded-lg shadow-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-white rounded-lg shadow-lg border border-[#E7E5E4] focus:outline-none focus:ring-2 focus:ring-[#9F1239]"
         aria-label={isMobileOpen ? "Close navigation menu" : "Open navigation menu"}
         aria-expanded={isMobileOpen}
       >
@@ -140,7 +140,7 @@ export default function Sidebar() {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-full bg-card border-r border-border z-40
+          fixed top-0 left-0 h-full bg-white border-r border-[#E7E5E4] z-40
           transition-all duration-300 ease-in-out
           ${isCollapsed ? 'w-20' : 'w-64'}
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -149,16 +149,16 @@ export default function Sidebar() {
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="p-6 border-b border-border flex items-center justify-between">
+          <div className="p-6 border-b border-[#E7E5E4] flex items-center justify-between">
             {!isCollapsed && (
               <div>
-                <h1 className="text-xl font-bold text-foreground">Seatable</h1>
-                <p className="text-xs text-muted-foreground mt-1">AI Restaurant Management</p>
+                <h1 className="text-xl font-bold text-[#1C1917]">Seatable</h1>
+                <p className="text-xs text-[#57534E] mt-1">AI Restaurant Management</p>
               </div>
             )}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hidden lg:block p-2 hover:bg-muted rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+              className="hidden lg:block p-2 hover:bg-[#F5F5F4] rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#9F1239]"
               aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
@@ -201,7 +201,7 @@ export default function Sidebar() {
                     onClick={() => {/* Prevent navigation - could show upgrade modal */}}
                     className={`
                       flex items-center gap-3 px-4 py-3 rounded-lg transition-all w-full text-left
-                      opacity-50 cursor-not-allowed text-muted-foreground
+                      opacity-50 cursor-not-allowed text-[#57534E]
                       ${isCollapsed ? 'justify-center' : ''}
                     `}
                     title={tooltipText}
@@ -221,8 +221,8 @@ export default function Sidebar() {
                   className={`
                     flex items-center gap-3 px-4 py-3 rounded-lg transition-all
                     ${active
-                      ? 'bg-primary text-primary-foreground shadow-lg'
-                      : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                      ? 'bg-[#9F1239] text-white shadow-lg'
+                      : 'hover:bg-[#F5F5F4] text-[#57534E] hover:text-[#1C1917]'
                     }
                     ${isCollapsed ? 'justify-center' : ''}
                   `}
@@ -235,12 +235,12 @@ export default function Sidebar() {
           </nav>
 
           {/* User Settings Section */}
-          <div className="border-t border-border" ref={settingsRef}>
+          <div className="border-t border-[#E7E5E4]" ref={settingsRef}>
             {/* Settings Menu Button */}
             <button
               onClick={() => setIsSettingsOpen(!isSettingsOpen)}
               className={`
-                w-full p-4 flex items-center gap-3 hover:bg-muted transition-colors
+                w-full p-4 flex items-center gap-3 hover:bg-[#F5F5F4] transition-colors
                 ${isCollapsed ? 'justify-center' : ''}
               `}
               title={isCollapsed ? 'Settings' : undefined}
@@ -252,21 +252,21 @@ export default function Sidebar() {
                   className="w-8 h-8 rounded-full"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="w-4 h-4 text-primary" />
+                <div className="w-8 h-8 rounded-full bg-[#9F1239]/10 flex items-center justify-center">
+                  <User className="w-4 h-4 text-[#9F1239]" />
                 </div>
               )}
               {!isCollapsed && (
                 <>
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-sm font-medium text-foreground truncate">
+                    <p className="text-sm font-medium text-[#1C1917] truncate">
                       {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}
                     </p>
-                    <p className="text-xs text-muted-foreground truncate">
+                    <p className="text-xs text-[#57534E] truncate">
                       {user?.email || 'Not signed in'}
                     </p>
                   </div>
-                  <ChevronUp className={`w-4 h-4 text-muted-foreground transition-transform ${isSettingsOpen ? '' : 'rotate-180'}`} />
+                  <ChevronUp className={`w-4 h-4 text-[#57534E] transition-transform ${isSettingsOpen ? '' : 'rotate-180'}`} />
                 </>
               )}
             </button>
@@ -274,36 +274,36 @@ export default function Sidebar() {
             {/* Settings Dropdown */}
             {isSettingsOpen && (
               <div className={`
-                absolute bottom-20 bg-card border border-border rounded-lg shadow-xl overflow-hidden
+                absolute bottom-20 bg-white border border-[#E7E5E4] rounded-lg shadow-xl overflow-hidden
                 ${isCollapsed ? 'left-20 w-56' : 'left-4 right-4'}
               `}>
                 {/* Language Selector */}
                 <div className="relative">
                   <button
                     onClick={() => setIsLanguageOpen(!isLanguageOpen)}
-                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-muted transition-colors text-left"
+                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[#F5F5F4] transition-colors text-left"
                   >
-                    <Globe className="w-4 h-4 text-muted-foreground" />
+                    <Globe className="w-4 h-4 text-[#57534E]" />
                     <span className="flex-1 text-sm">Language</span>
-                    <span className="text-sm text-muted-foreground">{currentLanguage.flag} {currentLanguage.name}</span>
+                    <span className="text-sm text-[#57534E]">{currentLanguage.flag} {currentLanguage.name}</span>
                   </button>
 
                   {/* Language Options */}
                   {isLanguageOpen && (
-                    <div className="border-t border-border bg-muted/50">
+                    <div className="border-t border-[#E7E5E4] bg-[#F5F5F4]/50">
                       {languageOptions.map((lang) => (
                         <button
                           key={lang.code}
                           onClick={() => handleLanguageChange(lang.code)}
                           className={`
-                            w-full px-4 py-2 flex items-center gap-3 hover:bg-muted transition-colors text-left text-sm
-                            ${i18n.language === lang.code ? 'bg-primary/10 text-primary font-medium' : ''}
+                            w-full px-4 py-2 flex items-center gap-3 hover:bg-[#F5F5F4] transition-colors text-left text-sm
+                            ${i18n.language === lang.code ? 'bg-[#9F1239]/10 text-[#9F1239] font-medium' : ''}
                           `}
                         >
                           <span className="text-lg">{lang.flag}</span>
                           <span>{lang.name}</span>
                           {i18n.language === lang.code && (
-                            <span className="ml-auto text-primary">✓</span>
+                            <span className="ml-auto text-[#9F1239]">✓</span>
                           )}
                         </button>
                       ))}
@@ -312,7 +312,7 @@ export default function Sidebar() {
                 </div>
 
                 {/* Divider */}
-                <div className="border-t border-border" />
+                <div className="border-t border-[#E7E5E4]" />
 
                 {/* Logout Button */}
                 <button
@@ -329,7 +329,7 @@ export default function Sidebar() {
           {/* Footer */}
           {!isCollapsed && (
             <div className="px-4 pb-3 pt-2">
-              <div className="text-xs text-muted-foreground text-center">
+              <div className="text-xs text-[#57534E] text-center">
                 <p>Powered by AI</p>
               </div>
             </div>

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ExternalLink, Phone, MessageSquare, ArrowRight } from 'lucide-react';
+import { ExternalLink, Phone, MessageSquare, ArrowRight, LayoutDashboard, Clock, Users } from 'lucide-react';
 import { DEMO_RESTAURANT } from '../data/demoData';
 
 export default function InteractiveDemoSection() {
@@ -31,7 +31,7 @@ export default function InteractiveDemoSection() {
         </motion.div>
 
         <div className="grid lg:grid-cols-2 gap-10 items-start">
-          {/* Left Column - Demo Dashboard Embed */}
+          {/* Left Column - Dashboard Preview */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -39,39 +39,97 @@ export default function InteractiveDemoSection() {
             transition={{ duration: 0.6 }}
             className="bg-white p-3 rounded-[2rem] border border-[#E7E5E4] shadow-lg relative"
           >
-            {/* Dashboard Wrapper */}
-            <div className="aspect-[16/10] bg-[#1C1917] rounded-[1.5rem] overflow-hidden relative">
-              {/* Embedded iframe or screenshot */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center space-y-4 p-8">
-                  <div className="w-16 h-16 rounded-2xl bg-[#9F1239]/20 mx-auto flex items-center justify-center">
-                    <div className="w-8 h-8 rounded-full bg-[#9F1239]"></div>
+            <div className="rounded-[1.5rem] overflow-hidden border border-[#E7E5E4]">
+              {/* Mini Browser Chrome */}
+              <div className="flex items-center gap-2 px-3 py-2 bg-[#F5F5F4] border-b border-[#E7E5E4]">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 rounded-full bg-[#E7E5E4]" />
+                  <div className="w-2 h-2 rounded-full bg-[#E7E5E4]" />
+                  <div className="w-2 h-2 rounded-full bg-[#E7E5E4]" />
+                </div>
+                <div className="flex-1 mx-2">
+                  <div className="bg-white rounded px-3 py-1 text-[10px] text-[#A8A29E] text-center border border-[#E7E5E4]">
+                    app.seatable.io/host-dashboard
                   </div>
-                  <h3 className="font-serif text-2xl text-white">Live Dashboard Demo</h3>
-                  <p className="text-gray-400 font-light text-sm max-w-xs mx-auto">
-                    Open the host dashboard to see real-time table management
-                  </p>
-                  <a
-                    href="/host-dashboard"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#9F1239] text-white text-sm tracking-widest uppercase font-bold hover:bg-[#881337] transition-all duration-300 rounded-xl"
-                  >
-                    Open Dashboard
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
                 </div>
               </div>
 
-              {/* Decorative grid overlay */}
-              <div className="absolute inset-0 opacity-5">
-                <div className="grid grid-cols-6 grid-rows-4 h-full">
-                  {Array.from({ length: 24 }).map((_, i) => (
-                    <div key={i} className="border border-white/20" />
-                  ))}
+              {/* Dashboard Content */}
+              <div className="flex bg-[#FAFAF9]">
+                {/* Tiny Sidebar */}
+                <div className="hidden sm:flex flex-col w-36 bg-white border-r border-[#E7E5E4] p-3 gap-1.5">
+                  <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#9F1239] text-white rounded text-[10px] font-medium">
+                    <LayoutDashboard className="w-3 h-3" />
+                    Overview
+                  </div>
+                  <div className="flex items-center gap-1.5 px-2 py-1.5 text-[#A8A29E] text-[10px]">
+                    <Users className="w-3 h-3" />
+                    Customers
+                  </div>
+                  <div className="flex items-center gap-1.5 px-2 py-1.5 text-[#A8A29E] text-[10px]">
+                    <Clock className="w-3 h-3" />
+                    Analytics
+                  </div>
+                </div>
+
+                {/* Main Area */}
+                <div className="flex-1 p-3 md:p-4">
+                  {/* Stats */}
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    <div className="bg-white rounded-lg p-2 text-center border border-[#E7E5E4]">
+                      <div className="text-sm font-bold text-[#1C1917]">8/12</div>
+                      <div className="text-[9px] text-[#A8A29E] uppercase">Tables</div>
+                    </div>
+                    <div className="bg-white rounded-lg p-2 text-center border border-[#E7E5E4]">
+                      <div className="text-sm font-bold text-[#9F1239]">67%</div>
+                      <div className="text-[9px] text-[#A8A29E] uppercase">Occupancy</div>
+                    </div>
+                    <div className="bg-white rounded-lg p-2 text-center border border-[#E7E5E4]">
+                      <div className="text-sm font-bold text-[#1C1917]">24</div>
+                      <div className="text-[9px] text-[#A8A29E] uppercase">Today</div>
+                    </div>
+                  </div>
+
+                  {/* Table Grid */}
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {[
+                      'available', 'occupied', 'occupied', 'available',
+                      'reserved', 'occupied', 'cleaning', 'occupied',
+                    ].map((status, i) => {
+                      const colors: Record<string, string> = {
+                        available: 'bg-emerald-50 border-emerald-200',
+                        occupied: 'bg-red-50 border-red-200',
+                        reserved: 'bg-purple-50 border-purple-200',
+                        cleaning: 'bg-amber-50 border-amber-200',
+                      };
+                      const dots: Record<string, string> = {
+                        available: 'bg-emerald-400',
+                        occupied: 'bg-red-400',
+                        reserved: 'bg-purple-400',
+                        cleaning: 'bg-amber-400',
+                      };
+                      return (
+                        <div key={i} className={`${colors[status]} border rounded p-1.5 text-center`}>
+                          <div className="text-[10px] font-bold text-[#57534E]">T{i + 1}</div>
+                          <div className={`w-1 h-1 rounded-full ${dots[status]} mx-auto mt-0.5`} />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
+
+            {/* Open Dashboard CTA overlay */}
+            <a
+              href="/live-demo"
+              className="absolute inset-0 rounded-[2rem] flex items-end justify-center pb-6 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"
+            >
+              <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-[#1C1917] text-xs tracking-widest uppercase font-bold rounded-xl shadow-lg">
+                Try Live Demo
+                <ExternalLink className="w-3.5 h-3.5" />
+              </span>
+            </a>
 
             {/* Live Indicator */}
             <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-2 bg-white/90 rounded-full shadow-md">

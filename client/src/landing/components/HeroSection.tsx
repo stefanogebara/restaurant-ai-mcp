@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Clock, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, Users, TrendingUp } from 'lucide-react';
 
 export default function HeroSection() {
   const navigate = useNavigate();
