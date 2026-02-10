@@ -1,59 +1,57 @@
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
-    <footer className="bg-[#1C1917] text-[#FAFAF9] py-20 px-6">
-      <div className="max-w-7xl mx-auto text-center">
-        {/* Logo */}
-        <div className="font-serif text-3xl font-bold tracking-tight mb-8">
-          Seatable<span className="text-[#9F1239]">.</span>
+    <footer className="bg-[#1C1917] text-[#FAFAF9] py-16 px-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Top Row */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-12">
+          {/* Logo */}
+          <a href="/" className="font-serif text-2xl font-bold tracking-tight">
+            Seatable<span className="text-[#9F1239]">.</span>
+          </a>
+
+          {/* Navigation Links */}
+          <div className="flex flex-wrap justify-center gap-8 text-sm text-[#A8A29E]">
+            <a href="/live-demo" className="hover:text-white transition-colors">
+              Live Demo
+            </a>
+            <button onClick={() => scrollToSection('features')} className="hover:text-white transition-colors">
+              Features
+            </button>
+            <button onClick={() => scrollToSection('pricing')} className="hover:text-white transition-colors">
+              Pricing
+            </button>
+            <button onClick={() => scrollToSection('faq')} className="hover:text-white transition-colors">
+              FAQ
+            </button>
+            <a href="mailto:stefanogebara@gmail.com" className="hover:text-white transition-colors">
+              Contact
+            </a>
+          </div>
         </div>
 
-        {/* Social Links */}
-        <div className="flex justify-center gap-8 text-xs font-bold tracking-widest uppercase text-[#A8A29E] mb-12">
-          <a
-            href="#"
-            onClick={(e) => e.preventDefault()}
-            className="hover:text-white transition-colors cursor-default"
-          >
-            Instagram
-          </a>
-          <a
-            href="#"
-            onClick={(e) => e.preventDefault()}
-            className="hover:text-white transition-colors cursor-default"
-          >
-            Twitter
-          </a>
-          <a
-            href="#"
-            onClick={(e) => e.preventDefault()}
-            className="hover:text-white transition-colors cursor-default"
-          >
-            LinkedIn
-          </a>
+        {/* Divider */}
+        <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-[#57534E] text-xs font-light">
+            &copy; {currentYear} Seatable AI. All rights reserved.
+          </p>
+          <div className="flex gap-6 text-xs text-[#57534E]">
+            <a href="/login" className="hover:text-[#A8A29E] transition-colors">
+              Get Started
+            </a>
+            <a href="/login" className="hover:text-[#A8A29E] transition-colors">
+              Login
+            </a>
+          </div>
         </div>
-
-        {/* Navigation Links */}
-        <div className="flex justify-center flex-wrap gap-8 text-sm text-[#A8A29E] mb-12">
-          <a href="/live-demo" className="hover:text-white transition-colors">
-            Live Demo
-          </a>
-          <a href="/login" className="hover:text-white transition-colors">
-            Get Started
-          </a>
-          <a href="/login" className="hover:text-white transition-colors">
-            Login
-          </a>
-          <a href="mailto:stefanogebara@gmail.com" className="hover:text-white transition-colors">
-            Contact
-          </a>
-        </div>
-
-        {/* Copyright */}
-        <p className="text-[#57534E] text-xs font-light">
-          &copy; {currentYear} Seatable AI. All rights reserved.
-        </p>
       </div>
     </footer>
   );

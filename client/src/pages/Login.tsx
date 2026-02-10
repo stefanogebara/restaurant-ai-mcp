@@ -165,18 +165,18 @@ export default function Login() {
         {/* Trust Indicators */}
         <div className="mt-8 flex justify-center gap-8 text-center">
           <div>
-            <div className="text-xl font-serif font-bold text-[#1C1917]">500+</div>
-            <div className="text-xs text-[#57534E] uppercase tracking-wider">Restaurants</div>
+            <div className="text-xl font-serif font-bold text-[#1C1917]">2.3s</div>
+            <div className="text-xs text-[#57534E] uppercase tracking-wider">Avg Response</div>
           </div>
           <div className="w-px bg-[#E7E5E4]"></div>
           <div>
-            <div className="text-xl font-serif font-bold text-[#1C1917]">99.9%</div>
-            <div className="text-xs text-[#57534E] uppercase tracking-wider">Uptime</div>
+            <div className="text-xl font-serif font-bold text-[#9F1239]">6+</div>
+            <div className="text-xs text-[#57534E] uppercase tracking-wider">Languages</div>
           </div>
           <div className="w-px bg-[#E7E5E4]"></div>
           <div>
             <div className="text-xl font-serif font-bold text-[#1C1917]">24/7</div>
-            <div className="text-xs text-[#57534E] uppercase tracking-wider">Support</div>
+            <div className="text-xs text-[#57534E] uppercase tracking-wider">AI Booking</div>
           </div>
         </div>
       </motion.div>

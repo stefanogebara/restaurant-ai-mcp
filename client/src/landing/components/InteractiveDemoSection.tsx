@@ -88,45 +88,44 @@ export default function InteractiveDemoSection() {
             transition={{ duration: 0.6 }}
             className="space-y-6"
           >
-            {/* Call AI Assistant - Coming Soon */}
-            <div className="bg-white p-6 rounded-[2rem] border border-[#E7E5E4] shadow-md opacity-60">
+            {/* Try the AI Chat */}
+            <div className="bg-white p-6 rounded-[2rem] border border-[#E7E5E4] shadow-lg hover:shadow-xl transition-shadow">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#A8A29E] flex items-center justify-center flex-shrink-0">
-                  <Phone className="w-5 h-5 text-white" />
+                <div className="w-12 h-12 rounded-2xl bg-[#9F1239] flex items-center justify-center flex-shrink-0">
+                  <MessageSquare className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-serif text-xl text-[#1C1917] mb-2">Call Our AI Assistant</h3>
+                  <h3 className="font-serif text-xl text-[#1C1917] mb-2">Chat with Our AI</h3>
                   <p className="text-[#57534E] mb-4 font-light text-sm">
-                    Voice reservations via phone are coming soon. Try the text chat below!
+                    Try making a reservation via our AI-powered chat. Speak naturally or type your request.
                   </p>
-                  <span
-                    className="px-5 py-3 bg-[#A8A29E] text-white text-xs tracking-widest uppercase font-bold rounded-xl inline-flex items-center gap-2 cursor-not-allowed"
+                  <a
+                    href="/live-demo"
+                    className="px-5 py-3 bg-[#9F1239] text-white text-xs tracking-widest uppercase font-bold hover:bg-[#881337] transition-all duration-300 rounded-xl inline-flex items-center gap-2 shadow-md shadow-[#9F1239]/20"
                   >
-                    <Phone className="w-4 h-4" />
-                    Coming Soon
-                  </span>
+                    Start Chat
+                    <ArrowRight className="w-4 h-4" />
+                  </a>
                 </div>
               </div>
             </div>
 
-            {/* Chat with AI */}
+            {/* Voice Reservations */}
             <div className="bg-white p-6 rounded-[2rem] border border-[#E7E5E4] shadow-md hover:shadow-lg transition-shadow">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-[#1C1917] flex items-center justify-center flex-shrink-0">
-                  <MessageSquare className="w-5 h-5 text-white" />
+                  <Phone className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-serif text-xl text-[#1C1917] mb-2">Text Reservation</h3>
+                  <h3 className="font-serif text-xl text-[#1C1917] mb-2">Voice Reservations</h3>
                   <p className="text-[#57534E] mb-4 font-light text-sm">
-                    Or try making a reservation via our text-based chat interface
+                    Our AI handles phone calls in 6+ languages, takes reservations, and confirms bookings automatically.
                   </p>
                   <a
                     href="/live-demo"
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className="px-5 py-3 border border-[#1C1917] text-[#1C1917] text-xs tracking-widest uppercase font-bold hover:bg-[#1C1917] hover:text-white transition-all duration-300 rounded-xl inline-flex items-center gap-2"
                   >
-                    Start Chat
+                    Try Live Demo
                     <ExternalLink className="w-4 h-4" />
                   </a>
                 </div>

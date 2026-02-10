@@ -113,3 +113,11 @@
 .font-sans {
   font-family: 'Lato', -apple-system, BlinkMacSystemFont, sans-serif;
 }
+
+/* ElevenLabs widget: prevent floating bubble from overlapping page headings */
+elevenlabs-convai {
+  --elevenlabs-convai-widget-z-index: 30;
+}
+elevenlabs-convai::part(widget) {
+  z-index: 30 !important;
+}
