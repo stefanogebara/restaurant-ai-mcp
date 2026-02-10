@@ -102,7 +102,7 @@ export default function UpgradePrompt({
           </li>
           <li className="flex items-start gap-2">
             <span className="text-[#16a34a] mt-0.5">✓</span>
-            <span>SMS notifications</span>
+            <span>Automated notifications</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-[#16a34a] mt-0.5">✓</span>

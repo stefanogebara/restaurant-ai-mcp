@@ -27,7 +27,7 @@ export const PRICING_TIERS = [
       "Waitlist management",
       "Priority support",
       "Unlimited reservations",
-      "SMS notifications",
+      "Automated notifications",
     ],
     cta: "Start Free Trial",
     highlighted: true,

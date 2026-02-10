@@ -147,7 +147,7 @@ export const FEATURES = [
   {
     icon: "Bell",
     title: "Automated Notifications",
-    description: "SMS and email alerts for reservation confirmations and table ready notifications",
+    description: "Email alerts for reservation confirmations and table ready notifications",
     gradient: "from-blue-500 to-indigo-500",
     demo: "Customers receive instant confirmation and updates",
   },
@@ -189,7 +189,7 @@ export const PRICING_TIERS = [
       "Waitlist management",
       "Priority support",
       "Unlimited reservations",
-      "SMS notifications",
+      "Automated notifications",
     ],
     cta: "Start Free Trial",
     highlighted: true,

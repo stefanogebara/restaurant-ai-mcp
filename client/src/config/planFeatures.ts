@@ -110,7 +110,7 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
 
     // Customer Intelligence - Full
     customerLTV: true,
-    customerDNA: false,
+    customerDNA: true,
     customerHistory: true,
 
     // AI Agent - All plans get access
@@ -153,7 +153,7 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
 
     // Customer Intelligence
     customerLTV: true,
-    customerDNA: false,
+    customerDNA: true,
     customerHistory: true,
 
     // AI Agent - All plans get access

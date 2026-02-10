@@ -61,7 +61,7 @@ export default function RiskExplanationModal({
           color: 'text-[#d97706]',
           bg: 'bg-[#d97706]/10',
           label: 'Medium Risk',
-          description: 'Moderate no-show risk. Consider SMS reminder.',
+          description: 'Moderate no-show risk. Consider sending a reminder.',
           emoji: '⚡'
         };
       default:
@@ -139,7 +139,7 @@ export default function RiskExplanationModal({
                     they're still coming. A quick 2-minute call can prevent an empty table during peak hours.</>
                   )}
                   {riskLevel === 'medium' && (
-                    <>This reservation has some risk factors but nothing alarming. Consider sending an <strong>automated SMS reminder</strong>
+                    <>This reservation has some risk factors but nothing alarming. Consider sending an <strong>automated reminder</strong>
                     a few hours before. No phone call needed unless other concerns arise.</>
                   )}
                   {riskLevel === 'low' && (

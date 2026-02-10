@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Send, Mail, CheckCircle, Clock } from 'lucide-react';
 import { CONTACT_INFO } from '../data/demoData';
+import { supabase } from '../../lib/supabase';
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -15,6 +16,7 @@ export default function ContactForm() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -26,26 +28,24 @@ export default function ContactForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSubmitError(null);
 
-    // Simulate form submission (in production, this would send to an API)
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    // Create mailto link with form data
-    const subject = `Seatable Inquiry from ${formData.name}`;
-    const body = `
-Name: ${formData.name}
-Email: ${formData.email}
-Phone: ${formData.phone || 'Not provided'}
-Restaurant: ${formData.restaurant}
-Number of Tables: ${formData.tables || 'Not provided'}
-
-Message:
-${formData.message}
-    `.trim();
-
-    window.location.href = `mailto:${CONTACT_INFO.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const { error } = await supabase.from('contact_submissions').insert({
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone || null,
+      restaurant_name: formData.restaurant,
+      num_tables: formData.tables ? parseInt(formData.tables, 10) : null,
+      message: formData.message,
+    });
 
     setIsSubmitting(false);
+
+    if (error) {
+      setSubmitError('Something went wrong. Please try again or email us directly.');
+      return;
+    }
+
     setIsSubmitted(true);
 
     // Reset form after 3 seconds
@@ -291,6 +291,11 @@ ${formData.message}
                   </>
                 )}
               </button>
+
+              {/* Error Message */}
+              {submitError && (
+                <p className="text-sm text-red-600 text-center">{submitError}</p>
+              )}
 
               {/* Privacy Note */}
               <p className="text-xs text-[#A8A29E] text-center font-light">

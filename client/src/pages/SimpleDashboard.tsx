@@ -479,11 +479,56 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
       <div className="max-w-7xl mx-auto">
         {/* Loading State */}
         {isLoading && (
-          <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in-up">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#E7E5E4] border-t-[#9F1239] mb-4"></div>
-            <p className="text-[#1C1917] font-sans font-semibold">
-              {language === 'es' ? 'Cargando dashboard...' : 'Loading dashboard...'}
-            </p>
+          <div className="animate-fade-in-up space-y-6">
+            {/* Header skeleton */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div>
+                <div className="h-8 w-48 bg-[#E7E5E4] rounded-lg animate-pulse mb-2"></div>
+                <div className="h-4 w-32 bg-[#F5F5F4] rounded animate-pulse"></div>
+              </div>
+              <div className="flex gap-2">
+                <div className="h-10 w-24 bg-[#E7E5E4] rounded-xl animate-pulse"></div>
+                <div className="h-10 w-20 bg-[#E7E5E4] rounded-xl animate-pulse"></div>
+              </div>
+            </div>
+
+            {/* Stats cards skeleton */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="bg-white rounded-2xl p-4 border border-[#E7E5E4] shadow-sm">
+                  <div className="h-3 w-20 bg-[#F5F5F4] rounded animate-pulse mb-3"></div>
+                  <div className="h-8 w-16 bg-[#E7E5E4] rounded-lg animate-pulse mb-1"></div>
+                  <div className="h-3 w-24 bg-[#F5F5F4] rounded animate-pulse"></div>
+                </div>
+              ))}
+            </div>
+
+            {/* Table area skeleton */}
+            <div className="bg-white rounded-2xl border border-[#E7E5E4] p-6 shadow-sm">
+              <div className="h-6 w-40 bg-[#E7E5E4] rounded-lg animate-pulse mb-6"></div>
+              <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
+                {[...Array(10)].map((_, i) => (
+                  <div key={i} className="aspect-square bg-[#F5F5F4] rounded-xl animate-pulse"></div>
+                ))}
+              </div>
+            </div>
+
+            {/* Reservations skeleton */}
+            <div className="bg-white rounded-2xl border border-[#E7E5E4] p-6 shadow-sm">
+              <div className="h-6 w-52 bg-[#E7E5E4] rounded-lg animate-pulse mb-4"></div>
+              <div className="space-y-3">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-4 p-3 bg-[#FAFAF9] rounded-xl">
+                    <div className="w-10 h-10 bg-[#E7E5E4] rounded-full animate-pulse"></div>
+                    <div className="flex-1">
+                      <div className="h-4 w-32 bg-[#E7E5E4] rounded animate-pulse mb-2"></div>
+                      <div className="h-3 w-48 bg-[#F5F5F4] rounded animate-pulse"></div>
+                    </div>
+                    <div className="h-8 w-20 bg-[#E7E5E4] rounded-lg animate-pulse"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 

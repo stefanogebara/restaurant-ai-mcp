@@ -34,7 +34,7 @@ export default function RiskBadge({ riskLevel, riskScore, size = 'md', showToolt
       bg: 'bg-yellow-500/20',
       border: 'border-yellow-500/30',
       label: 'Medium Risk',
-      recommendation: 'Send reminder SMS'
+      recommendation: 'Send reminder notification'
     },
     'high': {
       emoji: '🔶',

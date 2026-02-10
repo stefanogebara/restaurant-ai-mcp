@@ -248,7 +248,7 @@ export default function CustomerPortal() {
 
             <div className="mt-6 p-4 bg-muted/50 border border-border rounded-lg">
               <p className="text-sm text-muted-foreground text-center">
-                💡 Your reservation ID was sent to you via email or SMS when you booked.
+                💡 Your reservation ID was sent to you via email when you booked.
               </p>
             </div>
           </div>
