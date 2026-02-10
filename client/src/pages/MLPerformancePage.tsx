@@ -72,6 +72,21 @@ export default function MLPerformancePage() {
   const currentPlan = (subscription.data?.subscription?.plan?.toLowerCase() as PlanType) || undefined;
   const hasAccess = currentPlan ? hasFeatureAccess(currentPlan, 'mlPerformance') : false;
 
+  // Get restaurant_id from localStorage for multi-tenant filtering
+  const restaurantId = localStorage.getItem('restaurant_id') || '';
+
+  // All hooks must be called before any early returns
+  const { data, isLoading, error } = useQuery<{ success: boolean; data: MLPerformanceData }>({
+    queryKey: ['ml-performance', restaurantId],
+    queryFn: async () => {
+      const restaurantParam = restaurantId ? `&restaurant_id=${restaurantId}` : '';
+      const response = await api.get(`/ml-performance?action=all&period=30${restaurantParam}`);
+      return response.data;
+    },
+    refetchInterval: 30000,
+    enabled: hasAccess && !subscription.isLoading,
+  });
+
   if (subscription.isLoading) {
     return (
       <DashboardLayout>
@@ -115,19 +130,6 @@ export default function MLPerformancePage() {
       </DashboardLayout>
     );
   }
-
-  // Get restaurant_id from localStorage for multi-tenant filtering
-  const restaurantId = localStorage.getItem('restaurant_id') || '';
-
-  const { data, isLoading, error } = useQuery<{ success: boolean; data: MLPerformanceData }>({
-    queryKey: ['ml-performance', restaurantId],
-    queryFn: async () => {
-      const restaurantParam = restaurantId ? `&restaurant_id=${restaurantId}` : '';
-      const response = await api.get(`/ml-performance?action=all&period=30${restaurantParam}`);
-      return response.data;
-    },
-    refetchInterval: 30000,
-  });
 
   const mlData = data?.data;
 
