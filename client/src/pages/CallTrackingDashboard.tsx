@@ -296,11 +296,11 @@ export default function CallTrackingDashboard() {
 
   const getOutcomeColor = (outcome?: string) => {
     switch (outcome) {
-      case 'reservation_created': return 'bg-green-500/10 text-green-600 dark:text-green-400';
-      case 'information_only': return 'bg-blue-500/10 text-blue-600 dark:text-blue-400';
-      case 'error': return 'bg-red-500/10 text-red-600 dark:text-red-400';
-      case 'abandoned': return 'bg-gray-500/10 text-gray-600 dark:text-gray-400';
-      default: return 'bg-gray-500/10 text-gray-600 dark:text-gray-400';
+      case 'reservation_created': return 'bg-green-500/10 text-green-600';
+      case 'information_only': return 'bg-blue-500/10 text-blue-600';
+      case 'error': return 'bg-red-500/10 text-red-600';
+      case 'abandoned': return 'bg-gray-500/10 text-gray-600';
+      default: return 'bg-gray-500/10 text-gray-600';
     }
   };
 
@@ -318,28 +318,28 @@ export default function CallTrackingDashboard() {
     switch (status) {
       case 'active':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-semibold rounded-full">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-500/10 text-green-600 text-xs font-semibold rounded-full">
             <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
             Active
           </span>
         );
       case 'pending':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 text-xs font-semibold rounded-full">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-yellow-500/10 text-yellow-600 text-xs font-semibold rounded-full">
             <Loader2 className="w-3 h-3 animate-spin" />
             Pending
           </span>
         );
       case 'error':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-semibold rounded-full">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-500/10 text-red-600 text-xs font-semibold rounded-full">
             <AlertCircle className="w-3 h-3" />
             Error
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-500/10 text-gray-600 dark:text-gray-400 text-xs font-semibold rounded-full">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-500/10 text-gray-600 text-xs font-semibold rounded-full">
             <WifiOff className="w-3 h-3" />
             Not Configured
           </span>
@@ -352,8 +352,8 @@ export default function CallTrackingDashboard() {
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading call data...</p>
+            <div className="animate-spin w-12 h-12 border-4 border-[#9F1239] border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-[#57534E]">Loading call data...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -362,7 +362,7 @@ export default function CallTrackingDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-background p-6">
+      <div className="min-h-screen bg-[#FAFAF9] p-6">
         <div className="max-w-7xl mx-auto space-y-6">
         {/* Breadcrumb Navigation */}
         <Breadcrumb items={breadcrumbConfigs.calls} />
@@ -370,19 +370,19 @@ export default function CallTrackingDashboard() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">AI Agent Dashboard</h1>
-            <p className="text-muted-foreground mt-1">Monitor AI agent performance, calls, and phone settings</p>
+            <h1 className="text-3xl font-bold text-[#1C1917] font-serif">AI Agent Dashboard</h1>
+            <p className="text-[#57534E] mt-1">Monitor AI agent performance, calls, and phone settings</p>
           </div>
           <button
             onClick={fetchData}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            className="px-4 py-2 bg-[#9F1239] text-white rounded-xl hover:bg-[#881337] transition-colors font-medium text-sm"
           >
             Refresh
           </button>
         </div>
 
         {/* Phone Status Card */}
-        <div className="bg-card rounded-lg border border-border p-6">
+        <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
@@ -394,15 +394,15 @@ export default function CallTrackingDashboard() {
               }`}>
                 <PhoneCall className={`w-6 h-6 ${
                   phoneStatus?.status === 'active'
-                    ? 'text-green-600 dark:text-green-400'
+                    ? 'text-green-600'
                     : phoneStatus?.status === 'error'
-                      ? 'text-red-600 dark:text-red-400'
-                      : 'text-gray-600 dark:text-gray-400'
+                      ? 'text-red-600'
+                      : 'text-gray-600'
                 }`} />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-foreground">Phone Status</h2>
-                <p className="text-sm text-muted-foreground">
+                <h2 className="text-lg font-semibold text-[#1C1917]">Phone Status</h2>
+                <p className="text-sm text-[#57534E]">
                   {phoneStatus?.status === 'active'
                     ? 'Your AI agent is receiving calls'
                     : phoneStatus?.status === 'error'
@@ -414,7 +414,7 @@ export default function CallTrackingDashboard() {
             </div>
             <div className="flex items-center gap-2">
               {phoneStatusLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                <Loader2 className="w-5 h-5 animate-spin text-[#57534E]" />
               ) : (
                 phoneStatus && getStatusBadge(phoneStatus.status)
               )}
@@ -424,32 +424,32 @@ export default function CallTrackingDashboard() {
           {phoneStatus && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
               {/* Connection Status */}
-              <div className="bg-muted/30 rounded-lg p-3">
-                <p className="text-xs text-muted-foreground mb-1">Connection</p>
+              <div className="bg-[#F5F5F4]/30 rounded-lg p-3">
+                <p className="text-xs text-[#57534E] mb-1">Connection</p>
                 <div className="flex items-center gap-2">
                   {phoneStatus.status === 'active' ? (
                     <Wifi className="w-4 h-4 text-green-500" />
                   ) : (
                     <WifiOff className="w-4 h-4 text-gray-400" />
                   )}
-                  <span className="text-sm font-medium text-foreground capitalize">
+                  <span className="text-sm font-medium text-[#1C1917] capitalize">
                     {phoneStatus.status === 'not_configured' ? 'Not Connected' : phoneStatus.status}
                   </span>
                 </div>
               </div>
 
               {/* Phone Number */}
-              <div className="bg-muted/30 rounded-lg p-3">
-                <p className="text-xs text-muted-foreground mb-1">Phone Number</p>
-                <p className="text-sm font-medium text-foreground">
+              <div className="bg-[#F5F5F4]/30 rounded-lg p-3">
+                <p className="text-xs text-[#57534E] mb-1">Phone Number</p>
+                <p className="text-sm font-medium text-[#1C1917]">
                   {phoneStatus.phone_number || 'None assigned'}
                 </p>
               </div>
 
               {/* Agent ID */}
-              <div className="bg-muted/30 rounded-lg p-3">
-                <p className="text-xs text-muted-foreground mb-1">Agent ID</p>
-                <p className="text-sm font-medium text-foreground font-mono truncate" title={phoneStatus.agent_id || undefined}>
+              <div className="bg-[#F5F5F4]/30 rounded-lg p-3">
+                <p className="text-xs text-[#57534E] mb-1">Agent ID</p>
+                <p className="text-sm font-medium text-[#1C1917] font-mono truncate" title={phoneStatus.agent_id || undefined}>
                   {phoneStatus.agent_id
                     ? `${phoneStatus.agent_id.substring(0, 12)}...`
                     : 'No agent'
@@ -458,9 +458,9 @@ export default function CallTrackingDashboard() {
               </div>
 
               {/* Configured Date */}
-              <div className="bg-muted/30 rounded-lg p-3">
-                <p className="text-xs text-muted-foreground mb-1">Configured</p>
-                <p className="text-sm font-medium text-foreground">
+              <div className="bg-[#F5F5F4]/30 rounded-lg p-3">
+                <p className="text-xs text-[#57534E] mb-1">Configured</p>
+                <p className="text-sm font-medium text-[#1C1917]">
                   {formatConfiguredDate(phoneStatus.configured_at)}
                 </p>
               </div>
@@ -470,19 +470,19 @@ export default function CallTrackingDashboard() {
           {/* Error message display */}
           {phoneStatus?.status === 'error' && phoneStatus.error && (
             <div className="mt-4 bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
-              <p className="text-sm text-red-600 dark:text-red-400">{phoneStatus.error}</p>
+              <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+              <p className="text-sm text-red-600">{phoneStatus.error}</p>
             </div>
           )}
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-border">
+          <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-[#E7E5E4]">
             {/* Setup Phone - shown when not configured */}
             {(!phoneStatus || phoneStatus.status === 'not_configured' || phoneStatus.status === 'error') && (
               <button
                 onClick={handleSetupPhone}
                 disabled={setupLoading}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-[#9F1239] text-white rounded-lg font-medium hover:bg-[#881337] transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {setupLoading ? (
                   <>
@@ -503,7 +503,7 @@ export default function CallTrackingDashboard() {
               <button
                 onClick={handleDiagnose}
                 disabled={diagnoseLoading}
-                className="px-4 py-2 bg-muted hover:bg-muted/80 text-foreground rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#1C1917] rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {diagnoseLoading ? (
                   <>
@@ -524,7 +524,7 @@ export default function CallTrackingDashboard() {
               <button
                 onClick={handleDisconnect}
                 disabled={disconnectLoading}
-                className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {disconnectLoading ? (
                   <>
@@ -546,7 +546,7 @@ export default function CallTrackingDashboard() {
                 fetchPhoneStatus();
                 toastInfo('Refreshing phone status...');
               }}
-              className="px-3 py-2 text-muted-foreground hover:text-foreground transition-colors text-sm"
+              className="px-3 py-2 text-[#57534E] hover:text-[#1C1917] transition-colors text-sm"
             >
               Refresh Status
             </button>
@@ -555,47 +555,47 @@ export default function CallTrackingDashboard() {
 
         {/* Agent Diagnostics Panel */}
         {showDiagnosePanel && (
-          <div className="bg-card rounded-lg border border-border p-6">
+          <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center">
-                  <Stethoscope className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  <Stethoscope className="w-5 h-5 text-purple-600" />
                 </div>
-                <h2 className="text-lg font-semibold text-foreground">Agent Diagnostics</h2>
+                <h2 className="text-lg font-semibold text-[#1C1917]">Agent Diagnostics</h2>
               </div>
               <button
                 onClick={() => {
                   setShowDiagnosePanel(false);
                   setDiagnoseData(null);
                 }}
-                className="p-1 hover:bg-muted rounded transition-colors"
+                className="p-1 hover:bg-[#F5F5F4] rounded transition-colors"
               >
-                <XCircle className="w-5 h-5 text-muted-foreground" />
+                <XCircle className="w-5 h-5 text-[#57534E]" />
               </button>
             </div>
 
             {diagnoseLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <Loader2 className="w-8 h-8 animate-spin text-[#9F1239]" />
               </div>
             ) : diagnoseData ? (
               <div className="space-y-4">
                 {/* Agent Info Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="bg-muted/30 rounded-lg p-3">
-                    <p className="text-xs text-muted-foreground mb-1">Agent Name</p>
-                    <p className="text-sm font-medium text-foreground">{diagnoseData.agent_name || 'Unnamed'}</p>
+                  <div className="bg-[#F5F5F4]/30 rounded-lg p-3">
+                    <p className="text-xs text-[#57534E] mb-1">Agent Name</p>
+                    <p className="text-sm font-medium text-[#1C1917]">{diagnoseData.agent_name || 'Unnamed'}</p>
                   </div>
-                  <div className="bg-muted/30 rounded-lg p-3">
-                    <p className="text-xs text-muted-foreground mb-1">Language</p>
-                    <p className="text-sm font-medium text-foreground uppercase">{diagnoseData.language || 'Not set'}</p>
+                  <div className="bg-[#F5F5F4]/30 rounded-lg p-3">
+                    <p className="text-xs text-[#57534E] mb-1">Language</p>
+                    <p className="text-sm font-medium text-[#1C1917] uppercase">{diagnoseData.language || 'Not set'}</p>
                   </div>
-                  <div className="bg-muted/30 rounded-lg p-3">
-                    <p className="text-xs text-muted-foreground mb-1">Tools (via tool_ids)</p>
+                  <div className="bg-[#F5F5F4]/30 rounded-lg p-3">
+                    <p className="text-xs text-[#57534E] mb-1">Tools (via tool_ids)</p>
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-foreground">{diagnoseData.tool_ids_count} configured</p>
+                      <p className="text-sm font-medium text-[#1C1917]">{diagnoseData.tool_ids_count} configured</p>
                       {diagnoseData.tool_ids_count === 0 && (
-                        <span className="px-1.5 py-0.5 bg-red-500/10 text-red-600 dark:text-red-400 text-xs rounded font-medium">
+                        <span className="px-1.5 py-0.5 bg-red-500/10 text-red-600 text-xs rounded font-medium">
                           Missing
                         </span>
                       )}
@@ -606,12 +606,12 @@ export default function CallTrackingDashboard() {
                 {/* Tool Names */}
                 {diagnoseData.tools && diagnoseData.tools.length > 0 && (
                   <div>
-                    <p className="text-xs text-muted-foreground mb-2">Embedded Tools ({diagnoseData.tool_count})</p>
+                    <p className="text-xs text-[#57534E] mb-2">Embedded Tools ({diagnoseData.tool_count})</p>
                     <div className="flex flex-wrap gap-2">
                       {diagnoseData.tools.map((tool, idx) => (
                         <span
                           key={idx}
-                          className="px-2.5 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-medium rounded-full"
+                          className="px-2.5 py-1 bg-blue-500/10 text-blue-600 text-xs font-medium rounded-full"
                         >
                           {tool.name}
                         </span>
@@ -623,12 +623,12 @@ export default function CallTrackingDashboard() {
                 {/* Tool IDs */}
                 {diagnoseData.tool_ids && diagnoseData.tool_ids.length > 0 && (
                   <div>
-                    <p className="text-xs text-muted-foreground mb-2">Tool IDs ({diagnoseData.tool_ids_count})</p>
+                    <p className="text-xs text-[#57534E] mb-2">Tool IDs ({diagnoseData.tool_ids_count})</p>
                     <div className="flex flex-wrap gap-2">
                       {diagnoseData.tool_ids.map((id, idx) => (
                         <span
                           key={idx}
-                          className="px-2.5 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs font-mono rounded-full"
+                          className="px-2.5 py-1 bg-purple-500/10 text-purple-600 text-xs font-mono rounded-full"
                           title={id}
                         >
                           {id.substring(0, 16)}...
@@ -641,9 +641,9 @@ export default function CallTrackingDashboard() {
                 {/* First Message Preview */}
                 {diagnoseData.first_message && (
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">First Message Preview</p>
-                    <div className="bg-muted/30 rounded-lg p-3">
-                      <p className="text-sm text-foreground italic">
+                    <p className="text-xs text-[#57534E] mb-1">First Message Preview</p>
+                    <div className="bg-[#F5F5F4]/30 rounded-lg p-3">
+                      <p className="text-sm text-[#1C1917] italic">
                         "{diagnoseData.first_message.length > 200
                           ? diagnoseData.first_message.substring(0, 200) + '...'
                           : diagnoseData.first_message}"
@@ -656,10 +656,10 @@ export default function CallTrackingDashboard() {
                 {diagnoseData.tool_ids_count === 0 && (
                   <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
                     <div className="flex items-start gap-3">
-                      <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
+                      <AlertCircle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">No tools configured</p>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-sm font-medium text-[#1C1917]">No tools configured</p>
+                        <p className="text-xs text-[#57534E] mt-1">
                           Your agent has no webhook tools attached. Without tools, the agent cannot check availability or create reservations. Click "Fix Tools" to auto-create and attach the required tools.
                         </p>
                         <button
@@ -685,7 +685,7 @@ export default function CallTrackingDashboard() {
                 )}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground text-center py-4">
+              <p className="text-sm text-[#57534E] text-center py-4">
                 No diagnostic data available. Click "Diagnose Agent" to check your agent configuration.
               </p>
             )}
@@ -693,14 +693,14 @@ export default function CallTrackingDashboard() {
         )}
 
         {/* Filters */}
-        <div className="bg-card rounded-lg border border-border p-4">
+        <div className="bg-white rounded-xl border border-[#E7E5E4] p-4 shadow-sm">
           <div className="flex gap-4 flex-wrap">
             <div>
-              <label className="text-sm font-medium text-foreground block mb-1">Time Period</label>
+              <label className="text-sm font-medium text-[#1C1917] block mb-1">Time Period</label>
               <select
                 value={filter.period}
                 onChange={(e) => setFilter({ ...filter, period: e.target.value })}
-                className="px-3 py-2 bg-background border border-border rounded-lg text-foreground"
+                className="px-3 py-2 bg-[#FAFAF9] border border-[#E7E5E4] rounded-lg text-[#1C1917]"
               >
                 <option value="1d">Last 24 Hours</option>
                 <option value="7d">Last 7 Days</option>
@@ -710,11 +710,11 @@ export default function CallTrackingDashboard() {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-foreground block mb-1">Outcome</label>
+              <label className="text-sm font-medium text-[#1C1917] block mb-1">Outcome</label>
               <select
                 value={filter.outcome}
                 onChange={(e) => setFilter({ ...filter, outcome: e.target.value })}
-                className="px-3 py-2 bg-background border border-border rounded-lg text-foreground"
+                className="px-3 py-2 bg-[#FAFAF9] border border-[#E7E5E4] rounded-lg text-[#1C1917]"
               >
                 <option value="all">All Outcomes</option>
                 <option value="reservation_created">Reservations Created</option>
@@ -725,11 +725,11 @@ export default function CallTrackingDashboard() {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-foreground block mb-1">Language</label>
+              <label className="text-sm font-medium text-[#1C1917] block mb-1">Language</label>
               <select
                 value={filter.language}
                 onChange={(e) => setFilter({ ...filter, language: e.target.value })}
-                className="px-3 py-2 bg-background border border-border rounded-lg text-foreground"
+                className="px-3 py-2 bg-[#FAFAF9] border border-[#E7E5E4] rounded-lg text-[#1C1917]"
               >
                 <option value="all">All Languages</option>
                 <option value="en">English</option>
@@ -746,53 +746,53 @@ export default function CallTrackingDashboard() {
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Total Calls */}
-            <div className="bg-card rounded-lg border border-border p-6">
+            <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-full bg-[#9F1239]/10 flex items-center justify-center">
                   <Phone className="w-5 h-5 text-[#9F1239]" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Calls</p>
-                  <p className="text-2xl font-bold text-foreground">{stats.overview.total_calls}</p>
+                  <p className="text-sm text-[#57534E]">Total Calls</p>
+                  <p className="text-2xl font-bold text-[#1C1917]">{stats.overview.total_calls}</p>
                 </div>
               </div>
             </div>
 
             {/* Successful Bookings */}
-            <div className="bg-card rounded-lg border border-border p-6">
+            <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-full bg-[#16a34a]/10 flex items-center justify-center">
                   <CheckCircle className="w-5 h-5 text-[#16a34a]" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Reservations</p>
-                  <p className="text-2xl font-bold text-foreground">{stats.overview.successful_bookings}</p>
+                  <p className="text-sm text-[#57534E]">Reservations</p>
+                  <p className="text-2xl font-bold text-[#1C1917]">{stats.overview.successful_bookings}</p>
                 </div>
               </div>
             </div>
 
             {/* Success Rate */}
-            <div className="bg-card rounded-lg border border-border p-6">
+            <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-full bg-[#9F1239]/10 flex items-center justify-center">
                   <TrendingUp className="w-5 h-5 text-[#9F1239]" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Success Rate</p>
-                  <p className="text-2xl font-bold text-foreground">{stats.overview.success_rate}%</p>
+                  <p className="text-sm text-[#57534E]">Success Rate</p>
+                  <p className="text-2xl font-bold text-[#1C1917]">{stats.overview.success_rate}%</p>
                 </div>
               </div>
             </div>
 
             {/* Average Duration */}
-            <div className="bg-card rounded-lg border border-border p-6">
+            <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-full bg-[#d97706]/10 flex items-center justify-center">
                   <Clock className="w-5 h-5 text-[#d97706]" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Avg Duration</p>
-                  <p className="text-2xl font-bold text-foreground">{stats.overview.average_duration_formatted}</p>
+                  <p className="text-sm text-[#57534E]">Avg Duration</p>
+                  <p className="text-2xl font-bold text-[#1C1917]">{stats.overview.average_duration_formatted}</p>
                 </div>
               </div>
             </div>
@@ -800,64 +800,64 @@ export default function CallTrackingDashboard() {
         )}
 
         {/* Call History Table */}
-        <div className="bg-card rounded-lg border border-border overflow-hidden">
-          <div className="p-4 border-b border-border">
-            <h2 className="text-lg font-semibold text-foreground">Call History</h2>
+        <div className="bg-white rounded-xl border border-[#E7E5E4] overflow-hidden shadow-sm">
+          <div className="p-4 border-b border-[#E7E5E4]">
+            <h2 className="text-lg font-semibold text-[#1C1917]">Call History</h2>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-muted/50">
+              <thead className="bg-[#F5F5F4]/50">
                 <tr>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Time</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Customer</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Duration</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Language</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Outcome</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Details</th>
+                  <th className="text-left p-4 text-sm font-medium text-[#57534E]">Time</th>
+                  <th className="text-left p-4 text-sm font-medium text-[#57534E]">Customer</th>
+                  <th className="text-left p-4 text-sm font-medium text-[#57534E]">Duration</th>
+                  <th className="text-left p-4 text-sm font-medium text-[#57534E]">Language</th>
+                  <th className="text-left p-4 text-sm font-medium text-[#57534E]">Outcome</th>
+                  <th className="text-left p-4 text-sm font-medium text-[#57534E]">Details</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {conversations.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                    <td colSpan={6} className="p-8 text-center text-[#57534E]">
                       <p className="font-medium mb-1">No calls recorded yet</p>
                       <p className="text-sm">Once your AI agent starts taking calls, conversations will appear here. Try adjusting your filters if you expect to see results.</p>
                     </td>
                   </tr>
                 ) : (
                   conversations.map((conv) => (
-                    <tr key={conv.id} className="hover:bg-muted/30 transition-colors">
+                    <tr key={conv.id} className="hover:bg-[#F5F5F4]/30 transition-colors">
                       <td className="p-4">
                         <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm text-foreground">{formatDate(conv.started_at)}</span>
+                          <Calendar className="w-4 h-4 text-[#57534E]" />
+                          <span className="text-sm text-[#1C1917]">{formatDate(conv.started_at)}</span>
                         </div>
                       </td>
                       <td className="p-4">
                         <div>
                           {conv.customer_name ? (
                             <>
-                              <p className="text-sm font-medium text-foreground">{conv.customer_name}</p>
-                              <p className="text-xs text-muted-foreground">{conv.caller_phone}</p>
+                              <p className="text-sm font-medium text-[#1C1917]">{conv.customer_name}</p>
+                              <p className="text-xs text-[#57534E]">{conv.caller_phone}</p>
                             </>
                           ) : (
-                            <p className="text-sm text-muted-foreground">{conv.caller_phone || 'Unknown'}</p>
+                            <p className="text-sm text-[#57534E]">{conv.caller_phone || 'Unknown'}</p>
                           )}
                         </div>
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm text-foreground">
+                          <Clock className="w-4 h-4 text-[#57534E]" />
+                          <span className="text-sm text-[#1C1917]">
                             {conv.duration_seconds ? `${Math.floor(conv.duration_seconds / 60)}m ${conv.duration_seconds % 60}s` : 'In progress'}
                           </span>
                         </div>
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
-                          <Globe className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm text-foreground uppercase">{conv.language}</span>
+                          <Globe className="w-4 h-4 text-[#57534E]" />
+                          <span className="text-sm text-[#1C1917] uppercase">{conv.language}</span>
                         </div>
                       </td>
                       <td className="p-4">
@@ -868,7 +868,7 @@ export default function CallTrackingDashboard() {
                       <td className="p-4">
                         <button
                           onClick={() => viewConversation(conv.id)}
-                          className="px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded text-sm font-medium transition-colors"
+                          className="px-3 py-1 bg-[#9F1239]/10 hover:bg-[#9F1239]/20 text-[#9F1239] rounded text-sm font-medium transition-colors"
                         >
                           View
                         </button>
@@ -884,20 +884,20 @@ export default function CallTrackingDashboard() {
         {/* Conversation Detail Modal */}
         {selectedConversation && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-card rounded-xl border border-border shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-2xl border border-[#E7E5E4] shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               {/* Modal Header */}
-              <div className="sticky top-0 bg-card border-b border-border p-6 flex items-center justify-between">
+              <div className="sticky top-0 bg-white border-b border-[#E7E5E4] p-6 flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-semibold text-foreground">Conversation Details</h2>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <h2 className="text-xl font-semibold text-[#1C1917]">Conversation Details</h2>
+                  <p className="text-sm text-[#57534E] mt-1">
                     {formatDate(selectedConversation.started_at)}
                   </p>
                 </div>
                 <button
                   onClick={() => setSelectedConversation(null)}
-                  className="p-2 hover:bg-muted rounded-lg transition-colors"
+                  className="p-2 hover:bg-[#F5F5F4] rounded-lg transition-colors"
                 >
-                  <XCircle className="w-5 h-5 text-muted-foreground" />
+                  <XCircle className="w-5 h-5 text-[#57534E]" />
                 </button>
               </div>
 
@@ -907,10 +907,10 @@ export default function CallTrackingDashboard() {
                 {selectedConversation.summary && (
                   <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
                     <div className="flex items-start gap-3">
-                      <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                      <MessageSquare className="w-5 h-5 text-blue-600 mt-0.5" />
                       <div>
-                        <h3 className="font-semibold text-foreground mb-1">Summary</h3>
-                        <p className="text-sm text-muted-foreground">{selectedConversation.summary}</p>
+                        <h3 className="font-semibold text-[#1C1917] mb-1">Summary</h3>
+                        <p className="text-sm text-[#57534E]">{selectedConversation.summary}</p>
                       </div>
                     </div>
                   </div>
@@ -919,25 +919,25 @@ export default function CallTrackingDashboard() {
                 {/* Metadata Grid */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Outcome</p>
+                    <p className="text-sm text-[#57534E]">Outcome</p>
                     <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${getOutcomeColor(selectedConversation.outcome)}`}>
                       {getOutcomeLabel(selectedConversation.outcome)}
                     </span>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Duration</p>
-                    <p className="text-sm font-medium text-foreground mt-1">
+                    <p className="text-sm text-[#57534E]">Duration</p>
+                    <p className="text-sm font-medium text-[#1C1917] mt-1">
                       {selectedConversation.duration_seconds ? `${Math.floor(selectedConversation.duration_seconds / 60)}m ${selectedConversation.duration_seconds % 60}s` : 'Unknown'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Language</p>
-                    <p className="text-sm font-medium text-foreground mt-1 uppercase">{selectedConversation.language}</p>
+                    <p className="text-sm text-[#57534E]">Language</p>
+                    <p className="text-sm font-medium text-[#1C1917] mt-1 uppercase">{selectedConversation.language}</p>
                   </div>
                   {selectedConversation.reservation_id && (
                     <div>
-                      <p className="text-sm text-muted-foreground">Reservation ID</p>
-                      <p className="text-sm font-medium text-foreground mt-1">{selectedConversation.reservation_id}</p>
+                      <p className="text-sm text-[#57534E]">Reservation ID</p>
+                      <p className="text-sm font-medium text-[#1C1917] mt-1">{selectedConversation.reservation_id}</p>
                     </div>
                   )}
                 </div>
@@ -945,16 +945,16 @@ export default function CallTrackingDashboard() {
                 {/* Tools Used */}
                 {selectedConversation.tools_used && selectedConversation.tools_used.length > 0 && (
                   <div>
-                    <h3 className="font-semibold text-foreground mb-3">Tools Used</h3>
+                    <h3 className="font-semibold text-[#1C1917] mb-3">Tools Used</h3>
                     <div className="space-y-2">
                       {selectedConversation.tools_used.map((tool, idx) => (
-                        <div key={idx} className="bg-muted/50 rounded-lg p-3">
+                        <div key={idx} className="bg-[#F5F5F4]/50 rounded-lg p-3">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-foreground">{tool.tool_name}</span>
+                            <span className="text-sm font-medium text-[#1C1917]">{tool.tool_name}</span>
                             {tool.success ? (
-                              <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                              <CheckCircle className="w-4 h-4 text-green-600" />
                             ) : (
-                              <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                              <XCircle className="w-4 h-4 text-red-600" />
                             )}
                           </div>
                         </div>
@@ -966,7 +966,7 @@ export default function CallTrackingDashboard() {
                 {/* Transcript */}
                 {selectedConversation.transcript && selectedConversation.transcript.length > 0 && (
                   <div>
-                    <h3 className="font-semibold text-foreground mb-3">Transcript</h3>
+                    <h3 className="font-semibold text-[#1C1917] mb-3">Transcript</h3>
                     <div className="space-y-3 max-h-96 overflow-y-auto">
                       {selectedConversation.transcript.map((message: any, idx: number) => (
                         <div
@@ -977,10 +977,10 @@ export default function CallTrackingDashboard() {
                               : 'bg-green-500/10 mr-8'
                           }`}
                         >
-                          <p className="text-xs text-muted-foreground mb-1">
+                          <p className="text-xs text-[#57534E] mb-1">
                             {message.role === 'user' ? 'Customer' : 'Agent'}
                           </p>
-                          <p className="text-sm text-foreground">{message.content}</p>
+                          <p className="text-sm text-[#1C1917]">{message.content}</p>
                         </div>
                       ))}
                     </div>
@@ -990,12 +990,12 @@ export default function CallTrackingDashboard() {
                 {/* Errors */}
                 {selectedConversation.errors_encountered && selectedConversation.errors_encountered.length > 0 && (
                   <div>
-                    <h3 className="font-semibold text-foreground mb-3 text-red-600 dark:text-red-400">Errors Encountered</h3>
+                    <h3 className="font-semibold text-red-600 mb-3">Errors Encountered</h3>
                     <div className="space-y-2">
                       {selectedConversation.errors_encountered.map((error: any, idx: number) => (
                         <div key={idx} className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                          <p className="text-sm font-medium text-foreground">{error.error_type}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{error.message}</p>
+                          <p className="text-sm font-medium text-[#1C1917]">{error.error_type}</p>
+                          <p className="text-xs text-[#57534E] mt-1">{error.message}</p>
                         </div>
                       ))}
                     </div>
@@ -1004,10 +1004,10 @@ export default function CallTrackingDashboard() {
               </div>
 
               {/* Modal Footer */}
-              <div className="sticky bottom-0 bg-card border-t border-border p-4">
+              <div className="sticky bottom-0 bg-white border-t border-[#E7E5E4] p-4">
                 <button
                   onClick={() => setSelectedConversation(null)}
-                  className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+                  className="w-full px-4 py-2 bg-[#9F1239] text-white rounded-lg font-medium hover:bg-[#881337] transition-colors"
                 >
                   Close
                 </button>

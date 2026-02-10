@@ -57,7 +57,7 @@ export default function HowItWorksSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.2 }}
-              className="text-center relative"
+              className="text-center relative hover:-translate-y-1 transition-transform duration-300"
             >
               {/* Icon Circle */}
               <div className={`w-16 h-16 ${step.accent} rounded-2xl mx-auto mb-6 flex items-center justify-center relative z-10 shadow-lg`}>

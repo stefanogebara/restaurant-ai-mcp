@@ -120,7 +120,7 @@ export default function PricingSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className={`relative bg-white p-8 md:p-10 rounded-[2rem] border transition-all duration-500 hover:shadow-2xl ${
+              className={`relative bg-white p-8 md:p-10 rounded-[2rem] border transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 ${
                 tier.highlighted
                   ? 'border-[#9F1239] shadow-xl'
                   : 'border-[#E7E5E4]'

@@ -221,6 +221,18 @@ export const FAQS = [
     question: "Can customers still call directly?",
     answer: "Absolutely. The AI handles reservation requests, but customers can still speak to staff for special occasions, large parties, or specific questions. The AI and humans work together seamlessly.",
   },
+  {
+    question: "What languages does the AI support?",
+    answer: "Our AI currently supports 6+ languages including English, Spanish, Portuguese, French, Italian, and German. It auto-detects the caller's language and responds naturally. More languages are being added regularly.",
+  },
+  {
+    question: "Is my restaurant data secure?",
+    answer: "Absolutely. All data is encrypted in transit and at rest. We use enterprise-grade database security with row-level access controls, and we never share your customer data with third parties. You own your data completely.",
+  },
+  {
+    question: "Can I try it before committing?",
+    answer: "Yes! All plans come with a 14-day free trial, no credit card required. You can also try our live AI demo on the website to hear the voice assistant in action before signing up.",
+  },
 ];
 
 export const TIMELINE_STEPS = [
