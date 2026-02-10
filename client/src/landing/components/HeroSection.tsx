@@ -147,38 +147,80 @@ export default function HeroSection() {
               </div>
 
               {/* Table Grid Preview */}
-              <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
                 {[
-                  { id: 1, status: 'available' },
-                  { id: 2, status: 'occupied' },
-                  { id: 3, status: 'occupied' },
-                  { id: 4, status: 'available' },
-                  { id: 5, status: 'reserved' },
-                  { id: 6, status: 'occupied' },
-                  { id: 7, status: 'cleaning' },
-                  { id: 8, status: 'occupied' },
-                  { id: 9, status: 'available' },
-                  { id: 10, status: 'occupied' },
+                  { id: 1, status: 'available', seats: 2, label: 'Window' },
+                  { id: 2, status: 'occupied', seats: 4, guest: 'Garcia', time: '45m', pax: 3 },
+                  { id: 3, status: 'occupied', seats: 6, guest: 'Laurent', time: '1h 12m', pax: 5 },
+                  { id: 4, status: 'available', seats: 4, label: 'Patio' },
+                  { id: 5, status: 'reserved', seats: 2, guest: 'Rossi', time: '19:30', pax: 2 },
+                  { id: 6, status: 'occupied', seats: 4, guest: 'Schmidt', time: '28m', pax: 4 },
+                  { id: 7, status: 'cleaning', seats: 6, label: '~5 min' },
+                  { id: 8, status: 'occupied', seats: 8, guest: 'Chen', time: '1h 35m', pax: 7 },
+                  { id: 9, status: 'available', seats: 2, label: 'Bar' },
+                  { id: 10, status: 'occupied', seats: 4, guest: 'Dubois', time: '15m', pax: 2 },
                 ].map((table) => {
-                  const colors: Record<string, string> = {
-                    available: 'bg-emerald-50 border-emerald-200 text-emerald-700',
-                    occupied: 'bg-red-50 border-red-200 text-red-700',
-                    reserved: 'bg-purple-50 border-purple-200 text-purple-700',
-                    cleaning: 'bg-amber-50 border-amber-200 text-amber-700',
+                  const cardStyles: Record<string, string> = {
+                    available: 'bg-emerald-50/80 border-emerald-200/60',
+                    occupied: 'bg-white border-red-200/60',
+                    reserved: 'bg-purple-50/80 border-purple-200/60',
+                    cleaning: 'bg-amber-50/80 border-amber-200/60',
                   };
-                  const dots: Record<string, string> = {
+                  const statusColors: Record<string, string> = {
                     available: 'bg-emerald-400',
                     occupied: 'bg-red-400',
                     reserved: 'bg-purple-400',
                     cleaning: 'bg-amber-400',
                   };
+                  const statusLabels: Record<string, string> = {
+                    available: 'Open',
+                    occupied: 'Seated',
+                    reserved: 'Reserved',
+                    cleaning: 'Cleaning',
+                  };
                   return (
-                    <div key={table.id} className={`${colors[table.status]} border rounded-lg p-2.5 text-center`}>
-                      <div className="text-xs font-bold">T{table.id}</div>
-                      <div className={`w-1.5 h-1.5 rounded-full ${dots[table.status]} mx-auto mt-1`} />
+                    <div key={table.id} className={`${cardStyles[table.status]} border rounded-xl p-2.5 relative overflow-hidden`}>
+                      {/* Header row */}
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[11px] font-bold text-[#1C1917]">T{table.id}</span>
+                        <div className={`w-1.5 h-1.5 rounded-full ${statusColors[table.status]} ${table.status === 'occupied' ? 'animate-pulse' : ''}`} />
+                      </div>
+                      {/* Content */}
+                      {table.status === 'occupied' || table.status === 'reserved' ? (
+                        <>
+                          <div className="text-[10px] font-medium text-[#1C1917] truncate">{table.guest}</div>
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-[9px] text-[#A8A29E]">{table.pax}/{table.seats}</span>
+                            <span className="text-[9px] text-[#57534E] font-medium">{table.time}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="text-[10px] text-[#57534E]">{table.label}</div>
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-[9px] text-[#A8A29E]">{table.seats} seats</span>
+                            <span className="text-[9px] text-[#A8A29E]">{statusLabels[table.status]}</span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   );
                 })}
+              </div>
+
+              {/* Legend */}
+              <div className="flex items-center gap-4 mt-3 justify-end">
+                {[
+                  { color: 'bg-emerald-400', label: 'Open' },
+                  { color: 'bg-red-400', label: 'Seated' },
+                  { color: 'bg-purple-400', label: 'Reserved' },
+                  { color: 'bg-amber-400', label: 'Cleaning' },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-1">
+                    <div className={`w-1.5 h-1.5 rounded-full ${item.color}`} />
+                    <span className="text-[8px] text-[#A8A29E] uppercase tracking-wider">{item.label}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
