@@ -475,7 +475,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
   return (
     <DashboardLayout>
-    <div className="min-h-screen bg-[#FAFAF9] p-4 md:p-6 lg:p-8 pb-20">
+    <div className="min-h-screen bg-[#FAFAF9] p-3 sm:p-4 md:p-6 lg:p-8 pb-28 sm:pb-20">
       <div className="max-w-7xl mx-auto">
         {/* Loading State */}
         {isLoading && (
@@ -861,7 +861,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
         {complexity === 'completo' && (
           <div className="space-y-6 mb-8">
             {/* Full-Width Table Layout */}
-            <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-5 md:p-6">
+            <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-3 sm:p-5 md:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-[#9F1239]/10 rounded-lg shrink-0">
@@ -1037,7 +1037,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
 
         {/* Upcoming Reservations */}
-        <div className="bg-white border border-[#E7E5E4] rounded-2xl p-5 md:p-6 shadow-md animate-fade-in-up" style={{ animationDelay: '500ms' }}>
+        <div className="bg-white border border-[#E7E5E4] rounded-2xl p-3 sm:p-5 md:p-6 shadow-md animate-fade-in-up" style={{ animationDelay: '500ms' }}>
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-[#9F1239]/10 rounded-lg">
               <svg className="w-6 h-6 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1070,10 +1070,10 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               {displayedReservations.map((reservation: any, index: number) => (
                 <div
                   key={reservation.reservation_id}
-                  className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 md:p-5 bg-[#F5F5F4] rounded-xl shadow-sm hover:bg-[#E7E5E4] transition-colors duration-200 border border-[#E7E5E4]"
+                  className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-3 sm:p-4 md:p-5 bg-[#F5F5F4] rounded-xl shadow-sm hover:bg-[#E7E5E4] transition-colors duration-200 border border-[#E7E5E4]"
                   style={{ animationDelay: `${600 + (index * 100)}ms` }}
                 >
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                     <div className="flex-shrink-0">
                       <div className="text-lg sm:text-2xl md:text-3xl font-mono font-bold text-[#9F1239] bg-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg shadow-sm border-2 border-[#9F1239]/30">
                         {formatTime(reservation.time)}
@@ -1126,11 +1126,11 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                           <span className="font-medium">{reservation.party_size} {t.people}</span>
                         </div>
                         {reservation.special_requests && (
-                          <span className="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-lg font-medium">
-                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                          <span className="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-lg font-medium max-w-full">
+                            <svg className="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                             </svg>
-                            {reservation.special_requests}
+                            <span className="truncate">{reservation.special_requests}</span>
                           </span>
                         )}
                       </div>

@@ -196,7 +196,7 @@ export default function CustomerDNADashboard() {
     return (
       <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-[#1C1917] flex items-center gap-2">
+          <h2 className="text-xl font-bold font-serif text-[#1C1917] flex items-center gap-2">
             <Brain className="w-5 h-5" />
             Customer DNA Profiling
           </h2>
@@ -214,7 +214,7 @@ export default function CustomerDNADashboard() {
             <Brain className="w-6 h-6 text-[#57534E]" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-[#1C1917]">No DNA Profiles Yet</h3>
+            <h3 className="text-lg font-semibold font-serif text-[#1C1917]">No DNA Profiles Yet</h3>
             <p className="text-sm text-[#57534E]">Analyze customer behavior to unlock insights</p>
           </div>
         </div>
@@ -240,7 +240,7 @@ export default function CustomerDNADashboard() {
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full p-6 flex items-center justify-between hover:bg-[#F5F5F4]/50 transition-colors rounded-t-xl"
       >
-        <h2 className="text-xl font-bold text-[#1C1917] flex items-center gap-2">
+        <h2 className="text-xl font-bold font-serif text-[#1C1917] flex items-center gap-2">
           <Brain className="w-5 h-5 text-[#7c3aed]" />
           Customer DNA Profiling
           <span className="px-2 py-1 bg-[#7c3aed]/20 text-[#7c3aed] text-sm rounded-full font-semibold">
@@ -258,7 +258,7 @@ export default function CustomerDNADashboard() {
       {isExpanded && (
         <div className="px-6 pb-6 space-y-4">
           {/* Key Metrics Row */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {/* Total Profiles */}
             <div className="p-4 bg-[#7c3aed]/10 rounded-xl border border-[#7c3aed]/20">
               <div className="flex items-center justify-between mb-2">
@@ -291,9 +291,9 @@ export default function CustomerDNADashboard() {
           <div className="p-4 bg-[#F5F5F4] rounded-xl">
             <div className="flex items-center gap-2 mb-3">
               <Users className="w-4 h-4 text-[#57534E]" />
-              <h3 className="text-sm font-semibold text-[#1C1917]">Dining Styles</h3>
+              <h3 className="text-sm font-semibold font-serif text-[#1C1917]">Dining Styles</h3>
             </div>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
               {Object.entries(stats.dining_styles).map(([style, count]) => {
                 const percentage = totalDiningStyles > 0 ? (count / totalDiningStyles) * 100 : 0;
                 return (
@@ -314,7 +314,7 @@ export default function CustomerDNADashboard() {
           <div className="p-4 bg-[#F5F5F4] rounded-xl">
             <div className="flex items-center gap-2 mb-3">
               <Calendar className="w-4 h-4 text-[#57534E]" />
-              <h3 className="text-sm font-semibold text-[#1C1917]">Day Preferences</h3>
+              <h3 className="text-sm font-semibold font-serif text-[#1C1917]">Day Preferences</h3>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {Object.entries(stats.day_type_preferences).map(([dayType, count]) => {
@@ -345,7 +345,7 @@ export default function CustomerDNADashboard() {
           <div className="p-4 bg-[#F5F5F4] rounded-xl">
             <div className="flex items-center gap-2 mb-3">
               <Clock className="w-4 h-4 text-[#57534E]" />
-              <h3 className="text-sm font-semibold text-[#1C1917]">Time Slot Preferences</h3>
+              <h3 className="text-sm font-semibold font-serif text-[#1C1917]">Time Slot Preferences</h3>
             </div>
             <div className="space-y-2">
               {Object.entries(stats.time_slot_preferences)
@@ -377,7 +377,7 @@ export default function CustomerDNADashboard() {
           <div className="p-4 bg-[#F5F5F4] rounded-xl">
             <div className="flex items-center gap-2 mb-3">
               <Zap className="w-4 h-4 text-[#57534E]" />
-              <h3 className="text-sm font-semibold text-[#1C1917]">Booking Spontaneity</h3>
+              <h3 className="text-sm font-semibold font-serif text-[#1C1917]">Booking Spontaneity</h3>
             </div>
             <div className="space-y-2">
               {Object.entries(stats.spontaneity_distribution)
@@ -413,7 +413,7 @@ export default function CustomerDNADashboard() {
               >
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-[#9F1239]" />
-                  <h3 className="text-sm font-semibold text-[#1C1917]">Upcoming Special Occasions</h3>
+                  <h3 className="text-sm font-semibold font-serif text-[#1C1917]">Upcoming Special Occasions</h3>
                   <span className="px-2 py-0.5 bg-[#9F1239]/20 text-[#9F1239] text-xs rounded-full font-semibold">
                     {occasions.length}
                   </span>
@@ -475,7 +475,7 @@ export default function CustomerDNADashboard() {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-[#57534E]" />
-                <h3 className="text-sm font-semibold text-[#1C1917]">Customer Profiles</h3>
+                <h3 className="text-sm font-semibold font-serif text-[#1C1917]">Customer Profiles</h3>
               </div>
             </div>
 
@@ -514,7 +514,7 @@ export default function CustomerDNADashboard() {
             ) : customers.length > 0 ? (
               <div className="space-y-1">
                 {/* Table Header */}
-                <div className="grid grid-cols-12 gap-2 px-3 py-2 text-xs font-semibold text-[#57534E] uppercase">
+                <div className="hidden md:grid grid-cols-12 gap-2 px-3 py-2 text-xs font-semibold text-[#57534E] uppercase">
                   <div className="col-span-3">Name</div>
                   <div className="col-span-2">Style</div>
                   <div className="col-span-1 text-center">Visits</div>
@@ -528,38 +528,59 @@ export default function CustomerDNADashboard() {
                   <button
                     key={customer.customer_id}
                     onClick={() => navigate(`/host-dashboard/dna/${encodeURIComponent(customer.customer_id)}`)}
-                    className="w-full grid grid-cols-12 gap-2 px-3 py-3 bg-white rounded-lg border border-transparent hover:border-[#7c3aed]/30 hover:shadow-sm transition-all items-center text-left"
+                    className="w-full px-3 py-3 bg-white rounded-lg border border-transparent hover:border-[#7c3aed]/30 hover:shadow-sm transition-all text-left"
                   >
-                    <div className="col-span-3">
-                      <div className="text-sm font-medium text-[#1C1917] truncate">
-                        {customer.customer_name || customer.customer_id}
+                    {/* Mobile layout */}
+                    <div className="flex md:hidden items-center justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-[#1C1917] truncate">
+                          {customer.customer_name || customer.customer_id}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border capitalize ${getDiningStyleColor(customer.dining_style)}`}>
+                            {customer.dining_style}
+                          </span>
+                          <span className="text-xs text-[#57534E]">
+                            {customer.avg_check_per_person != null ? `€${customer.avg_check_per_person.toFixed(0)}` : '--'}
+                          </span>
+                          <span className="text-xs text-[#57534E]">{customer.profile_confidence}%</span>
+                        </div>
                       </div>
-                      {customer.customer_name && (
-                        <div className="text-xs text-[#A8A29E] truncate">{customer.customer_id}</div>
-                      )}
+                      <ChevronRight className="w-4 h-4 text-[#A8A29E] shrink-0 ml-2" />
                     </div>
-                    <div className="col-span-2">
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border capitalize ${getDiningStyleColor(customer.dining_style)}`}>
-                        {customer.dining_style}
-                      </span>
-                    </div>
-                    <div className="col-span-1 text-center text-sm text-[#1C1917]">
-                      {Math.round(customer.typical_party_size)}
-                    </div>
-                    <div className="col-span-2 text-right text-sm text-[#1C1917]">
-                      {customer.avg_check_per_person != null ? `$${customer.avg_check_per_person.toFixed(0)}` : '--'}
-                    </div>
-                    <div className="col-span-2 flex items-center justify-center gap-1">
-                      <div className="w-16 bg-[#E7E5E4] h-1.5 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-[#7c3aed] rounded-full"
-                          style={{ width: `${customer.profile_confidence}%` }}
-                        />
+                    {/* Desktop layout */}
+                    <div className="hidden md:grid grid-cols-12 gap-2 items-center">
+                      <div className="col-span-3">
+                        <div className="text-sm font-medium text-[#1C1917] truncate">
+                          {customer.customer_name || customer.customer_id}
+                        </div>
+                        {customer.customer_name && (
+                          <div className="text-xs text-[#A8A29E] truncate">{customer.customer_id}</div>
+                        )}
                       </div>
-                      <span className="text-xs text-[#57534E]">{customer.profile_confidence}%</span>
-                    </div>
-                    <div className="col-span-2 flex justify-end">
-                      <ChevronRight className="w-4 h-4 text-[#A8A29E]" />
+                      <div className="col-span-2">
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border capitalize ${getDiningStyleColor(customer.dining_style)}`}>
+                          {customer.dining_style}
+                        </span>
+                      </div>
+                      <div className="col-span-1 text-center text-sm text-[#1C1917]">
+                        {Math.round(customer.typical_party_size)}
+                      </div>
+                      <div className="col-span-2 text-right text-sm text-[#1C1917]">
+                        {customer.avg_check_per_person != null ? `€${customer.avg_check_per_person.toFixed(0)}` : '--'}
+                      </div>
+                      <div className="col-span-2 flex items-center justify-center gap-1">
+                        <div className="w-16 bg-[#E7E5E4] h-1.5 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-[#7c3aed] rounded-full"
+                            style={{ width: `${customer.profile_confidence}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-[#57534E]">{customer.profile_confidence}%</span>
+                      </div>
+                      <div className="col-span-2 flex justify-end">
+                        <ChevronRight className="w-4 h-4 text-[#A8A29E]" />
+                      </div>
                     </div>
                   </button>
                 ))}
