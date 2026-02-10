@@ -2,10 +2,13 @@ import { motion } from 'framer-motion';
 import { Check, ArrowRight, Loader2 } from 'lucide-react';
 import { PRICING_TIERS } from '../data/demoData';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../../services/api';
+import { supabase } from '../../lib/supabase';
 
 export default function PricingSection() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const scrollToContact = () => {
     const element = document.getElementById('contact');
@@ -17,6 +20,14 @@ export default function PricingSection() {
   const handleSubscribe = async (priceId: string, planName: string) => {
     try {
       setLoadingPlan(planName);
+
+      // Check if user is logged in before starting checkout
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setLoadingPlan(null);
+        navigate('/login?redirect=pricing');
+        return;
+      }
 
       const apiUrl = import.meta.env.VITE_API_URL
         ? `${import.meta.env.VITE_API_URL}/api/create-checkout-session`

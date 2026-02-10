@@ -352,9 +352,9 @@ export default function FloorPlanView({
     return (
       <div className={`text-center py-12 ${darkMode ? 'text-[#A8A29E]' : 'text-[#57534E]'}`}>
         <p className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-[#1C1917]'}`}>
-          No tables configured yet
+          No tables set up yet
         </p>
-        <p className="text-sm mt-2">Tables will appear here after onboarding</p>
+        <p className="text-sm mt-2">Complete your restaurant onboarding or add tables in Settings to see your floor plan</p>
       </div>
     );
   }

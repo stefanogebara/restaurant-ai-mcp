@@ -821,7 +821,8 @@ export default function CallTrackingDashboard() {
                 {conversations.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                      No calls found for the selected filters
+                      <p className="font-medium mb-1">No calls recorded yet</p>
+                      <p className="text-sm">Once your AI agent starts taking calls, conversations will appear here. Try adjusting your filters if you expect to see results.</p>
                     </td>
                   </tr>
                 ) : (

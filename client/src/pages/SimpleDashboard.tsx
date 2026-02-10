@@ -161,8 +161,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
       checkIn: 'Check In',
       table: 'Mesa',
       people: 'personas',
-      allClear: 'Todo despejado',
-      noUpcoming: 'No hay reservas próximas para hoy',
+      allClear: 'Todo al dia',
+      noUpcoming: 'Sin reservas pendientes para hoy',
       viewLevel: 'Vista',
       avanzado: 'Avanzado',
       estándar: 'Estándar',
@@ -185,8 +185,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
       checkIn: 'Check In',
       table: 'Table',
       people: 'people',
-      allClear: 'All Clear',
-      noUpcoming: 'No upcoming reservations today',
+      allClear: 'All Caught Up',
+      noUpcoming: 'No upcoming reservations for today',
       viewLevel: 'View',
       avanzado: 'Advanced',
       estándar: 'Standard',
@@ -209,8 +209,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
       checkIn: 'Check In',
       table: 'Mesa',
       people: 'pessoas',
-      allClear: 'Tudo livre',
-      noUpcoming: 'Sem reservas para hoje',
+      allClear: 'Tudo em dia',
+      noUpcoming: 'Sem reservas pendentes para hoje',
       viewLevel: 'Visualização',
       avanzado: 'Avançado',
       estándar: 'Padrão',
@@ -233,8 +233,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
       checkIn: 'Check In',
       table: 'Table',
       people: 'personnes',
-      allClear: 'Tout libre',
-      noUpcoming: "Pas de réservations aujourd'hui",
+      allClear: 'Tout est en ordre',
+      noUpcoming: "Pas de réservations à venir aujourd'hui",
       viewLevel: 'Affichage',
       avanzado: 'Avancé',
       estándar: 'Standard',
@@ -257,8 +257,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
       checkIn: 'Check In',
       table: 'Tavolo',
       people: 'persone',
-      allClear: 'Tutto libero',
-      noUpcoming: 'Nessuna prenotazione per oggi',
+      allClear: 'Tutto in ordine',
+      noUpcoming: 'Nessuna prenotazione in arrivo per oggi',
       viewLevel: 'Visualizzazione',
       avanzado: 'Avanzato',
       estándar: 'Standard',
@@ -281,8 +281,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
       checkIn: 'Check In',
       table: 'Tisch',
       people: 'Personen',
-      allClear: 'Alles frei',
-      noUpcoming: 'Keine Reservierungen für heute',
+      allClear: 'Alles erledigt',
+      noUpcoming: 'Keine anstehenden Reservierungen für heute',
       viewLevel: 'Ansicht',
       avanzado: 'Erweitert',
       estándar: 'Standard',
@@ -1008,10 +1008,10 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                       <span className="text-3xl">🍽️</span>
                     </div>
                     <p className="text-sm font-medium text-[#1C1917] mb-1">
-                      {language === 'es' ? 'No hay mesas activas' : 'No active parties'}
+                      {language === 'es' ? 'Sin mesas activas' : 'No active parties yet'}
                     </p>
                     <p className="text-xs text-[#57534E]">
-                      {language === 'es' ? 'Las mesas aparecerán aquí al sentar clientes' : 'Tables will appear here when guests are seated'}
+                      {language === 'es' ? 'Añade un walk-in o haz check-in de una reserva para comenzar' : 'Add a walk-in or check in a reservation to get started'}
                     </p>
                   </div>
                 )}
@@ -1061,6 +1061,9 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </div>
               <p className="text-[#1C1917] text-lg font-serif font-semibold mb-2">{t.allClear}</p>
               <p className="text-[#57534E] text-sm font-sans">{showTomorrow ? (language === 'es' ? 'Sin reservas mañana' : 'No reservations tomorrow') : t.noUpcoming}</p>
+              {!showTomorrow && (
+                <p className="text-[#A8A29E] text-xs font-sans mt-1">{language === 'es' ? 'Las reservas del asistente AI o las añadidas manualmente aparecerán aquí' : 'Reservations from the AI assistant or added manually will appear here'}</p>
+              )}
             </div>
           ) : (
             <div className="space-y-3">

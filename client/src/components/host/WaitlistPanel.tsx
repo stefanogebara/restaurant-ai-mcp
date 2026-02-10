@@ -234,12 +234,12 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
               {activeTab === 'active' ? '📋' : activeTab === 'seated' ? '🍽️' : '📭'}
             </div>
             <div className="font-medium">
-              {activeTab === 'active' && 'No customers waiting'}
-              {activeTab === 'seated' && 'No seated customers yet'}
+              {activeTab === 'active' && 'No one on the waitlist'}
+              {activeTab === 'seated' && 'No guests seated from the waitlist yet'}
               {activeTab === 'removed' && 'No removed entries'}
             </div>
             {activeTab === 'active' && (
-              <div className="text-sm text-[#A8A29E]">Click "+ Add Guest" to get started</div>
+              <div className="text-sm text-[#A8A29E]">Tap "+ Add Guest" above to add a walk-in to the waitlist</div>
             )}
           </div>
         ) : activeTab === 'active' ? (
