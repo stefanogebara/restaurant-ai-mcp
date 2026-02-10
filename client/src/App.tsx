@@ -20,6 +20,7 @@ const WeeklyReport = lazy(() => import('./pages/WeeklyReport'));
 const MLPerformancePage = lazy(() => import('./pages/MLPerformancePage'));
 const CustomerLTVPage = lazy(() => import('./pages/CustomerLTVPage'));
 const CustomerDNAPage = lazy(() => import('./pages/CustomerDNAPage'));
+const CustomerDNAProfilePage = lazy(() => import('./pages/CustomerDNAProfilePage'));
 const SegoviaInsightsPage = lazy(() => import('./pages/SegoviaInsightsPage'));
 const AnalyticsDashboard = lazy(() => import('./pages/AnalyticsDashboard'));
 const CallTrackingDashboard = lazy(() => import('./pages/CallTrackingDashboard'));
@@ -67,6 +68,7 @@ function App() {
               <Route path="/host-dashboard/ml" element={<MLPerformancePage />} />
               <Route path="/host-dashboard/ltv" element={<CustomerLTVPage />} />
               <Route path="/host-dashboard/dna" element={<CustomerDNAPage />} />
+              <Route path="/host-dashboard/dna/:customerId" element={<CustomerDNAProfilePage />} />
               <Route path="/host-dashboard/segovia" element={<SegoviaInsightsPage />} />
               <Route path="/host-dashboard/calls" element={<CallTrackingDashboard />} />
               <Route path="/host-dashboard/tables" element={<TableConfigPage />} />

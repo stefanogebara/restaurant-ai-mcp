@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../../services/api';
 import {
   Users,
@@ -21,7 +22,9 @@ import {
   Brain,
   Search,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ChevronRight,
+  Filter
 } from 'lucide-react';
 
 interface DNAStats {
@@ -52,19 +55,43 @@ interface Occasion {
   probability_score: number;
 }
 
+interface CustomerListItem {
+  customer_id: string;
+  customer_name: string | null;
+  dining_style: string;
+  typical_party_size: number;
+  profile_confidence: number;
+  avg_check_per_person: number | null;
+  spontaneity_score: number;
+  preferred_time_slot: string;
+  analysis_version: string | null;
+}
+
 export default function CustomerDNADashboard() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<DNAStats | null>(null);
   const [occasions, setOccasions] = useState<Occasion[]>([]);
+  const [customers, setCustomers] = useState<CustomerListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(true);
   const [showOccasions, setShowOccasions] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [styleFilter, setStyleFilter] = useState('');
+  const [isLoadingList, setIsLoadingList] = useState(false);
 
   useEffect(() => {
     fetchDNAData();
-    // Refresh every 5 minutes
+    fetchCustomerList();
     const interval = setInterval(fetchDNAData, 300000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const debounce = setTimeout(() => {
+      fetchCustomerList();
+    }, 300);
+    return () => clearTimeout(debounce);
+  }, [searchQuery, styleFilter]);
 
   const fetchDNAData = async () => {
     try {
@@ -86,6 +113,25 @@ export default function CustomerDNADashboard() {
       console.error('Error fetching DNA data:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchCustomerList = async () => {
+    try {
+      setIsLoadingList(true);
+      const params = new URLSearchParams({ action: 'list', limit: '50', offset: '0' });
+      if (searchQuery) params.set('search', searchQuery);
+      if (styleFilter) params.set('dining_style', styleFilter);
+
+      const response = await authFetch(`/api/customer-dna?${params.toString()}`);
+      const result = await response.json();
+      if (result.success) {
+        setCustomers(result.data.profiles || []);
+      }
+    } catch (error) {
+      console.error('Error fetching customer list:', error);
+    } finally {
+      setIsLoadingList(false);
     }
   };
 
@@ -422,13 +468,107 @@ export default function CustomerDNADashboard() {
               <Activity className="w-5 h-5" />
               Analyze All Customers
             </button>
-            <button
-              onClick={() => alert('Customer search feature coming soon!')}
-              className="px-4 py-3 bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
-            >
-              <Search className="w-5 h-5" />
-              Search
-            </button>
+          </div>
+
+          {/* Customer List Section */}
+          <div className="p-4 bg-[#F5F5F4] rounded-xl">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-[#57534E]" />
+                <h3 className="text-sm font-semibold text-[#1C1917]">Customer Profiles</h3>
+              </div>
+            </div>
+
+            {/* Search & Filter */}
+            <div className="flex gap-2 mb-3">
+              <div className="flex-1 relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E]" />
+                <input
+                  type="text"
+                  placeholder="Search by name or phone..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-[#E7E5E4] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/30 focus:border-[#7c3aed]"
+                />
+              </div>
+              <div className="relative">
+                <Filter className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E]" />
+                <select
+                  value={styleFilter}
+                  onChange={(e) => setStyleFilter(e.target.value)}
+                  className="pl-9 pr-8 py-2 text-sm bg-white border border-[#E7E5E4] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/30 focus:border-[#7c3aed] appearance-none cursor-pointer"
+                >
+                  <option value="">All Styles</option>
+                  <option value="solo">Solo</option>
+                  <option value="couple">Couple</option>
+                  <option value="family">Family</option>
+                  <option value="business">Business</option>
+                  <option value="group">Group</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Customer Table */}
+            {isLoadingList ? (
+              <div className="text-center py-4 text-sm text-[#57534E]">Loading customers...</div>
+            ) : customers.length > 0 ? (
+              <div className="space-y-1">
+                {/* Table Header */}
+                <div className="grid grid-cols-12 gap-2 px-3 py-2 text-xs font-semibold text-[#57534E] uppercase">
+                  <div className="col-span-3">Name</div>
+                  <div className="col-span-2">Style</div>
+                  <div className="col-span-1 text-center">Visits</div>
+                  <div className="col-span-2 text-right">Avg Spend</div>
+                  <div className="col-span-2 text-center">Confidence</div>
+                  <div className="col-span-2 text-right"></div>
+                </div>
+
+                {/* Rows */}
+                {customers.map((customer) => (
+                  <button
+                    key={customer.customer_id}
+                    onClick={() => navigate(`/host-dashboard/dna/${encodeURIComponent(customer.customer_id)}`)}
+                    className="w-full grid grid-cols-12 gap-2 px-3 py-3 bg-white rounded-lg border border-transparent hover:border-[#7c3aed]/30 hover:shadow-sm transition-all items-center text-left"
+                  >
+                    <div className="col-span-3">
+                      <div className="text-sm font-medium text-[#1C1917] truncate">
+                        {customer.customer_name || customer.customer_id}
+                      </div>
+                      {customer.customer_name && (
+                        <div className="text-xs text-[#A8A29E] truncate">{customer.customer_id}</div>
+                      )}
+                    </div>
+                    <div className="col-span-2">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border capitalize ${getDiningStyleColor(customer.dining_style)}`}>
+                        {customer.dining_style}
+                      </span>
+                    </div>
+                    <div className="col-span-1 text-center text-sm text-[#1C1917]">
+                      {Math.round(customer.typical_party_size)}
+                    </div>
+                    <div className="col-span-2 text-right text-sm text-[#1C1917]">
+                      {customer.avg_check_per_person != null ? `$${customer.avg_check_per_person.toFixed(0)}` : '--'}
+                    </div>
+                    <div className="col-span-2 flex items-center justify-center gap-1">
+                      <div className="w-16 bg-[#E7E5E4] h-1.5 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#7c3aed] rounded-full"
+                          style={{ width: `${customer.profile_confidence}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-[#57534E]">{customer.profile_confidence}%</span>
+                    </div>
+                    <div className="col-span-2 flex justify-end">
+                      <ChevronRight className="w-4 h-4 text-[#A8A29E]" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-4 text-sm text-[#57534E]">
+                {searchQuery || styleFilter ? 'No customers match your filters' : 'No customer profiles available'}
+              </div>
+            )}
           </div>
         </div>
       )}

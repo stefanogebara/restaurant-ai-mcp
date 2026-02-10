@@ -5,7 +5,7 @@
  * Goes beyond LTV to understand WHO customers are and WHAT they prefer
  */
 
-const { analyzeCustomerDNA, analyzeAllCustomersDNA, getCustomerDNAProfile } = require('./services/customerDNA');
+const { analyzeCustomerDNA, analyzeAllCustomersDNA, getCustomerDNAProfile, getFullCustomerProfile, listCustomerProfiles } = require('./services/customerDNA');
 const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
@@ -332,10 +332,48 @@ module.exports = async (req, res) => {
         });
       }
 
+      case 'profile': {
+        // Get full individual customer profile (v2)
+        if (!customer_id) {
+          return res.status(400).json({
+            success: false,
+            error: 'customer_id is required'
+          });
+        }
+
+        const fullProfile = await getFullCustomerProfile(customer_id);
+
+        return res.status(200).json({
+          success: true,
+          data: fullProfile,
+          message: fullProfile.profile
+            ? `Retrieved full profile for customer ${customer_id}`
+            : `No profile found for customer ${customer_id}. Run analysis first.`
+        });
+      }
+
+      case 'list': {
+        // List customers with search/filter for dashboard
+        const { search, dining_style: dStyle, min_confidence: minConf, limit: lim, offset: off } = req.query;
+
+        const listResult = await listCustomerProfiles({
+          search: search || null,
+          dining_style: dStyle || null,
+          min_confidence: minConf || null,
+          limit: parseInt(lim) || 50,
+          offset: parseInt(off) || 0
+        });
+
+        return res.status(200).json({
+          success: true,
+          data: listResult
+        });
+      }
+
       default:
         return res.status(400).json({
           success: false,
-          error: 'Invalid action. Available actions: analyze, analyze-all, get, stats, occasions, predictions, companions, search'
+          error: 'Invalid action. Available actions: analyze, analyze-all, get, stats, occasions, predictions, companions, search, profile, list'
         });
     }
 
