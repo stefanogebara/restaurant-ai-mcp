@@ -1,9 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { TrendingUp, Target, AlertCircle, DollarSign, CheckCircle2, BarChart3 } from 'lucide-react';
+import { TrendingUp, Target, AlertCircle, DollarSign, CheckCircle2, BarChart3, Lock, Crown, Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import TrendChart from '../components/common/TrendChart';
 import Breadcrumb, { breadcrumbConfigs } from '../components/common/Breadcrumb';
 import { api } from '../services/api';
+import { useSubscription } from '../hooks/useSubscription';
+import { hasFeatureAccess, type PlanType } from '../config/planFeatures';
 
 interface MLPerformanceData {
   summary: {
@@ -65,6 +68,54 @@ interface MLPerformanceData {
 }
 
 export default function MLPerformancePage() {
+  const subscription = useSubscription();
+  const currentPlan = (subscription.data?.subscription?.plan?.toLowerCase() as PlanType) || undefined;
+  const hasAccess = currentPlan ? hasFeatureAccess(currentPlan, 'mlPerformance') : false;
+
+  if (subscription.isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="p-8">
+          <Breadcrumb items={breadcrumbConfigs.ml} className="mb-4" />
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <Loader2 className="w-8 h-8 text-[#9F1239] animate-spin" />
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!hasAccess) {
+    return (
+      <DashboardLayout>
+        <div className="p-8">
+          <Breadcrumb items={breadcrumbConfigs.ml} className="mb-4" />
+          <div className="flex flex-col items-center justify-center min-h-[50vh]">
+            <div className="bg-white rounded-2xl border border-[#E7E5E4] p-12 max-w-lg text-center shadow-lg">
+              <div className="w-16 h-16 bg-[#9F1239]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Lock className="w-8 h-8 text-[#9F1239]" />
+              </div>
+              <h2 className="text-2xl font-bold text-[#1C1917] mb-3">No-Show Prevention</h2>
+              <p className="text-[#57534E] mb-6">
+                Track intervention effectiveness and ROI for no-show prevention. Available on the Professional plan.
+              </p>
+              <div className="flex items-center justify-center gap-2 text-sm text-[#9F1239] font-medium mb-6">
+                <Crown className="w-4 h-4" />
+                Professional Plan Feature
+              </div>
+              <Link
+                to="/welcome"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#9F1239] text-white rounded-xl hover:bg-[#881337] transition-colors font-medium"
+              >
+                Upgrade Plan
+              </Link>
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   // Get restaurant_id from localStorage for multi-tenant filtering
   const restaurantId = localStorage.getItem('restaurant_id') || '';
 

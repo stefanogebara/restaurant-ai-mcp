@@ -15,5 +15,7 @@ requirements.txt
 *.log
 .env.local
 .claude/
+parallel-agents/
+.git/
 
 # Keep ml_models/ - we need the trained model for production

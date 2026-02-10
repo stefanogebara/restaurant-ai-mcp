@@ -1,32 +1,37 @@
+import { lazy, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import "./i18n/config";
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './contexts/ToastContext';
 import { SidebarProvider } from './contexts/SidebarContext';
 import { AuthProvider } from './contexts/AuthContext';
+
+// Static imports (needed immediately or very small)
 import LandingPage from './landing/pages/LandingPage';
-import LiveAIDemo from './pages/LiveAIDemo';
-import SimpleDashboard from './pages/SimpleDashboard';
-import HostDashboard from './pages/HostDashboard';
-import WeeklyReport from './pages/WeeklyReport';
-import MLPerformancePage from './pages/MLPerformancePage';
-import CustomerLTVPage from './pages/CustomerLTVPage';
-import CustomerDNAPage from './pages/CustomerDNAPage';
-import SegoviaInsightsPage from './pages/SegoviaInsightsPage';
-import AnalyticsDashboard from './pages/AnalyticsDashboard';
-import CallTrackingDashboard from './pages/CallTrackingDashboard';
-import CustomerPortal from './pages/CustomerPortal';
-import SubscriptionSuccess from './pages/SubscriptionSuccess';
-import SubscriptionManage from './pages/SubscriptionManage';
 import Login from './pages/Login';
-import Welcome from './pages/Welcome';
-import Onboarding from './pages/Onboarding';
-import LanguageSettings from './pages/LanguageSettings';
-import TestPhoneInput from './pages/TestPhoneInput';
-import TableConfigPage from './pages/TableConfigPage';
-import FloorPlanEditor from './pages/FloorPlanEditor';
-import ProtectedRoute from './components/ProtectedRoute';
 import NotFound from './pages/NotFound';
+import ProtectedRoute from './components/ProtectedRoute';
+
+// Lazy-loaded pages
+const LiveAIDemo = lazy(() => import('./pages/LiveAIDemo'));
+const SimpleDashboard = lazy(() => import('./pages/SimpleDashboard'));
+const HostDashboard = lazy(() => import('./pages/HostDashboard'));
+const WeeklyReport = lazy(() => import('./pages/WeeklyReport'));
+const MLPerformancePage = lazy(() => import('./pages/MLPerformancePage'));
+const CustomerLTVPage = lazy(() => import('./pages/CustomerLTVPage'));
+const CustomerDNAPage = lazy(() => import('./pages/CustomerDNAPage'));
+const SegoviaInsightsPage = lazy(() => import('./pages/SegoviaInsightsPage'));
+const AnalyticsDashboard = lazy(() => import('./pages/AnalyticsDashboard'));
+const CallTrackingDashboard = lazy(() => import('./pages/CallTrackingDashboard'));
+const CustomerPortal = lazy(() => import('./pages/CustomerPortal'));
+const SubscriptionSuccess = lazy(() => import('./pages/SubscriptionSuccess'));
+const SubscriptionManage = lazy(() => import('./pages/SubscriptionManage'));
+const Welcome = lazy(() => import('./pages/Welcome'));
+const Onboarding = lazy(() => import('./pages/Onboarding'));
+const LanguageSettings = lazy(() => import('./pages/LanguageSettings'));
+const TestPhoneInput = lazy(() => import('./pages/TestPhoneInput'));
+const TableConfigPage = lazy(() => import('./pages/TableConfigPage'));
+const FloorPlanEditor = lazy(() => import('./pages/FloorPlanEditor'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,6 +49,11 @@ function App() {
         <ToastProvider>
           <SidebarProvider>
             <BrowserRouter>
+            <Suspense fallback={
+              <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#E7E5E4] border-t-[#9F1239]"></div>
+              </div>
+            }>
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<Login />} />
@@ -71,6 +81,7 @@ function App() {
               <Route path="/test-phone-input" element={<TestPhoneInput />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
           </BrowserRouter>
           </SidebarProvider>
         </ToastProvider>

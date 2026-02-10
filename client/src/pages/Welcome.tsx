@@ -248,7 +248,20 @@ export default function Welcome() {
         </div>
       </section>
 
-      {hasActiveSubscription ? (
+      {subscriptionQuery.isLoading ? (
+        <section className="py-20 px-6">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="h-8 w-48 bg-[#E7E5E4] rounded-lg animate-pulse mx-auto mb-4"></div>
+            <div className="h-4 w-64 bg-[#F5F5F4] rounded animate-pulse mx-auto mb-12"></div>
+            <div className="bg-white rounded-[2rem] border border-[#E7E5E4] p-12">
+              <div className="w-16 h-16 bg-[#F5F5F4] rounded-full animate-pulse mx-auto mb-6"></div>
+              <div className="h-6 w-40 bg-[#E7E5E4] rounded-lg animate-pulse mx-auto mb-3"></div>
+              <div className="h-4 w-56 bg-[#F5F5F4] rounded animate-pulse mx-auto mb-8"></div>
+              <div className="h-12 w-48 bg-[#E7E5E4] rounded-2xl animate-pulse mx-auto"></div>
+            </div>
+          </div>
+        </section>
+      ) : hasActiveSubscription ? (
         <section className="py-20 px-6">
           <div className="max-w-2xl mx-auto text-center">
             <div className="bg-white border-2 border-[#9F1239]/20 rounded-[2rem] p-12 shadow-xl">
