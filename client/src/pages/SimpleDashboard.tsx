@@ -506,7 +506,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
             {/* Table area skeleton */}
             <div className="bg-white rounded-2xl border border-[#E7E5E4] p-6 shadow-sm">
               <div className="h-6 w-40 bg-[#E7E5E4] rounded-lg animate-pulse mb-6"></div>
-              <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
                 {[...Array(10)].map((_, i) => (
                   <div key={i} className="aspect-square bg-[#F5F5F4] rounded-xl animate-pulse"></div>
                 ))}
@@ -575,37 +575,37 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
             </div>
 
             {/* Controls: Language Switcher + Complexity Toggle */}
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               {/* Language Switcher */}
-              <div className="flex items-center gap-1 bg-white border border-[#E7E5E4] rounded-xl p-1.5 shadow-md">
+              <div className="flex items-center gap-1 bg-white border border-[#E7E5E4] rounded-xl p-1 sm:p-1.5 shadow-md">
                 <button
                   onClick={() => handleLanguageChange('en')}
-                  className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-colors duration-200 ${
+                  className={`min-h-[44px] min-w-[44px] flex items-center justify-center px-2 sm:px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-colors duration-200 ${
                     language === 'en'
                       ? 'bg-[#9F1239] text-white shadow-sm'
                       : 'text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#1C1917]'
                   }`}
                   title="English"
                 >
-                  🇬🇧 EN
+                  EN
                 </button>
                 <button
                   onClick={() => handleLanguageChange('es')}
-                  className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-colors duration-200 ${
+                  className={`min-h-[44px] min-w-[44px] flex items-center justify-center px-2 sm:px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-colors duration-200 ${
                     language === 'es'
                       ? 'bg-[#9F1239] text-white shadow-sm'
                       : 'text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#1C1917]'
                   }`}
                   title="Español"
                 >
-                  🇪🇸 ES
+                  ES
                 </button>
               </div>
 
               {/* AI Agent Button */}
               <button
                 onClick={() => window.location.href = '/host-dashboard/calls'}
-                className="flex items-center gap-2 px-3 py-2 bg-[#9F1239] hover:bg-[#881337] text-white rounded-xl text-sm font-sans font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
+                className="flex items-center justify-center gap-2 min-h-[44px] min-w-[44px] px-3 py-2 bg-[#9F1239] hover:bg-[#881337] text-white rounded-xl text-sm font-sans font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
                 title={language === 'es' ? 'Panel del Agente AI' : 'AI Agent Dashboard'}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -617,7 +617,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               {/* Table Configuration Button */}
               <button
                 onClick={() => window.location.href = '/host-dashboard/tables'}
-                className="flex items-center gap-2 px-3 py-2 bg-white border border-[#E7E5E4] hover:bg-[#F5F5F4] text-[#57534E] rounded-xl text-sm font-sans font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
+                className="flex items-center justify-center gap-2 min-h-[44px] min-w-[44px] px-3 py-2 bg-white border border-[#E7E5E4] hover:bg-[#F5F5F4] text-[#57534E] rounded-xl text-sm font-sans font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
                 title={language === 'es' ? 'Configurar Mesas' : 'Configure Tables'}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -628,12 +628,12 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               </button>
 
               {/* Complexity Toggle - Enhanced Design */}
-              <div className="flex items-center gap-1.5 bg-white border border-[#E7E5E4] rounded-xl p-1.5 shadow-md">
+              <div className="flex items-center gap-1.5 bg-white border border-[#E7E5E4] rounded-xl p-1 sm:p-1.5 shadow-md">
                 <span className="text-xs text-[#57534E] font-sans font-semibold px-2 hidden sm:block">{t.viewLevel}</span>
 
               <button
                 onClick={() => handleComplexityChange('completo')}
-                className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ${
+                className={`min-h-[44px] px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ${
                   complexity === 'completo'
                     ? 'bg-[#9F1239] text-white shadow-sm'
                     : 'text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#1C1917]'
@@ -652,7 +652,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                       : 'This feature requires the Professional Plan.\n\nUpgrade your plan to access the ML Performance Dashboard.');
                   }
                 }}
-                className={`px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ${
+                className={`min-h-[44px] px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ${
                   !hasFeatureAccess(currentPlan, 'mlPerformance')
                     ? 'text-[#A8A29E] hover:bg-[#F5F5F4] cursor-not-allowed opacity-60'
                     : complexity === 'avanzado'
@@ -770,7 +770,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
             </div>
 
             {/* Additional Stats Row */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-4 overflow-hidden min-w-0">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="p-2.5 bg-[#9F1239]/10 rounded-lg shrink-0">
@@ -832,13 +832,13 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
         {/* Floating Action Button - Add Walk-in */}
         <button
           onClick={() => setShowWalkInModal(true)}
-          className="fixed bottom-6 right-6 z-50 group"
+          className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 group"
         >
           {/* Outer glow ring */}
           <div className="absolute inset-0 bg-[#9F1239]/20 rounded-full blur-xl group-hover:bg-[#9F1239]/30 transition-all duration-500 scale-150" />
 
           {/* Main button container */}
-          <div className="relative flex items-center gap-3 bg-gradient-to-r from-[#9F1239] to-[#be185d] text-white pl-4 pr-4 group-hover:pr-6 py-4 rounded-full shadow-lg shadow-[#9F1239]/30 hover:shadow-xl hover:shadow-[#9F1239]/40 transition-all duration-300 transform hover:scale-105">
+          <div className="relative flex items-center gap-3 bg-gradient-to-r from-[#9F1239] to-[#be185d] text-white pl-4 pr-4 group-hover:pr-6 py-4 rounded-full shadow-lg shadow-[#9F1239]/30 hover:shadow-xl hover:shadow-[#9F1239]/40 transition-all duration-300 transform hover:scale-105 min-h-[56px] min-w-[56px] justify-center">
             {/* Animated plus icon */}
             <div className="relative w-8 h-8 flex items-center justify-center">
               <div className="absolute w-6 h-0.5 bg-white rounded-full group-hover:rotate-180 transition-transform duration-300" />
@@ -862,9 +862,9 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
           <div className="space-y-6 mb-8">
             {/* Full-Width Table Layout */}
             <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-5 md:p-6">
-              <div className="flex items-center justify-between mb-5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-[#9F1239]/10 rounded-lg">
+                  <div className="p-2 bg-[#9F1239]/10 rounded-lg shrink-0">
                     <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
                     </svg>
@@ -873,12 +873,12 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                     {language === 'es' ? 'Disposición de Mesas' : 'Table Layout'}
                   </h2>
                 </div>
-                <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                   {/* View Mode Toggle */}
                   <div className="flex items-center bg-[#F5F5F4] rounded-lg p-0.5">
                     <button
                       onClick={() => setTableViewMode('floorplan')}
-                      className={`px-2 py-1 text-xs font-medium rounded-md transition-colors ${
+                      className={`min-h-[44px] min-w-[44px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-md transition-colors ${
                         tableViewMode === 'floorplan'
                           ? 'bg-white text-[#9F1239] shadow-sm'
                           : 'text-[#57534E] hover:text-[#1C1917]'
@@ -891,7 +891,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                     </button>
                     <button
                       onClick={() => setTableViewMode('grid')}
-                      className={`px-2 py-1 text-xs font-medium rounded-md transition-colors ${
+                      className={`min-h-[44px] min-w-[44px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-md transition-colors ${
                         tableViewMode === 'grid'
                           ? 'bg-white text-[#9F1239] shadow-sm'
                           : 'text-[#57534E] hover:text-[#1C1917]'
@@ -905,7 +905,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   </div>
                   <button
                     onClick={() => window.location.href = '/host-dashboard/floor-plan'}
-                    className="flex px-3 py-1.5 text-sm text-[#9F1239] hover:bg-[#9F1239]/10 rounded-lg transition-colors font-medium"
+                    className="flex min-h-[44px] items-center px-3 py-1.5 text-sm text-[#9F1239] hover:bg-[#9F1239]/10 rounded-lg transition-colors font-medium"
                   >
                     {language === 'es' ? 'Editar Plano' : 'Edit Floor Plan'}
                   </button>
@@ -995,7 +995,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                             setSelectedServiceToComplete(party);
                             setShowCompleteServiceModal(true);
                           }}
-                          className="mt-2 w-full px-3 py-1.5 bg-[#9F1239] hover:bg-[#881337] text-white text-xs font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
+                          className="mt-2 w-full px-3 py-2.5 min-h-[44px] bg-[#9F1239] hover:bg-[#881337] text-white text-xs font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
                         >
                           {language === 'es' ? 'Completar Servicio' : 'Complete Service'}
                         </button>
@@ -1075,24 +1075,24 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                 >
                   <div className="flex items-center gap-4 flex-1 min-w-0">
                     <div className="flex-shrink-0">
-                      <div className="text-2xl md:text-3xl font-mono font-bold text-[#9F1239] bg-white px-3 py-2 rounded-lg shadow-sm border-2 border-[#9F1239]/30">
+                      <div className="text-lg sm:text-2xl md:text-3xl font-mono font-bold text-[#9F1239] bg-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg shadow-sm border-2 border-[#9F1239]/30">
                         {formatTime(reservation.time)}
                       </div>
                     </div>
                     <div className="border-l-2 border-[#9F1239]/40 pl-4 flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="font-serif font-semibold text-[#1C1917] text-base md:text-lg truncate">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <div className="font-serif font-semibold text-[#1C1917] text-base md:text-lg truncate max-w-[60vw] sm:max-w-none">
                           {reservation.customer_name}
                         </div>
                         {/* ML Risk Badges */}
                         {reservation.ml_risk_level === 'very-high' && (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-lg border border-red-300 shadow-sm flex-shrink-0">
-                            🔴 VERY HIGH RISK
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 text-[10px] sm:text-xs font-bold rounded-lg border border-red-300 shadow-sm flex-shrink-0">
+                            VERY HIGH RISK
                           </span>
                         )}
                         {reservation.ml_risk_level === 'high' && (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 text-xs font-bold rounded-lg border border-orange-300 shadow-sm flex-shrink-0">
-                            ⚠️ HIGH RISK
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 text-[10px] sm:text-xs font-bold rounded-lg border border-orange-300 shadow-sm flex-shrink-0">
+                            HIGH RISK
                           </span>
                         )}
                       </div>
@@ -1101,7 +1101,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                         <div className="flex flex-wrap gap-2 mt-2">
                           <button
                             onClick={() => setInterventionReservation(reservation)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg shadow-sm transition-all duration-200"
+                            className="inline-flex items-center gap-1.5 px-3 py-2.5 min-h-[44px] bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg shadow-sm transition-all duration-200"
                           >
                             ⚡ {language === 'es' ? 'Tomar Acción' : 'Take Action'}
                           </button>
@@ -1144,7 +1144,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                           setSelectedReservation(reservation);
                           setShowCheckInModal(true);
                         }}
-                        className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-sans font-semibold px-5 py-2.5 rounded-lg transition-all duration-300 shadow-sm hover:shadow-md active:scale-95"
+                        className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-sans font-semibold px-5 py-2.5 min-h-[44px] rounded-lg transition-all duration-300 shadow-sm hover:shadow-md active:scale-95"
                       >
                         <span className="flex items-center justify-center gap-2">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1177,7 +1177,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
           <div className="mt-6 text-center">
             <button
               onClick={() => setShowTomorrow(!showTomorrow)}
-              className={`inline-flex items-center gap-2 font-sans font-semibold text-base md:text-lg transition-all duration-300 group px-4 py-2 rounded-lg ${
+              className={`inline-flex items-center gap-2 font-sans font-semibold text-base md:text-lg transition-all duration-300 group px-4 py-2.5 min-h-[44px] rounded-lg ${
                 showTomorrow
                   ? 'bg-[#9F1239] text-white'
                   : 'text-[#9F1239] hover:text-white hover:bg-[#9F1239]/20'
@@ -1249,8 +1249,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
       {/* Table Actions Modal */}
       {showTableActionsModal && selectedTable && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-6 transform transition-all max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-[#9F1239]/10 rounded-lg">
@@ -1314,7 +1314,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               {/* Edit in Floor Plan link */}
               <button
                 onClick={() => window.location.href = '/host-dashboard/floor-plan'}
-                className="w-full flex items-center gap-3 p-3 bg-[#F5F5F4] hover:bg-[#E7E5E4] rounded-xl border border-[#E7E5E4] transition-colors duration-200"
+                className="w-full flex items-center gap-3 p-3 min-h-[44px] bg-[#F5F5F4] hover:bg-[#E7E5E4] rounded-xl border border-[#E7E5E4] transition-colors duration-200"
               >
                 <div className="p-1.5 bg-[#9F1239]/10 rounded-lg">
                   <svg className="w-4 h-4 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1329,7 +1329,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               {selectedTable.status === 'Occupied' && (
                 <button
                   onClick={() => handleFreeTable(selectedTable.id)}
-                  className="w-full flex items-center gap-3 p-4 bg-green-50 hover:bg-green-100 rounded-xl border border-green-200 transition-colors duration-200"
+                  className="w-full flex items-center gap-3 p-4 min-h-[52px] bg-green-50 hover:bg-green-100 rounded-xl border border-green-200 transition-colors duration-200"
                 >
                   <div className="p-2 bg-green-600 rounded-lg">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1350,7 +1350,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               {selectedTable.status !== 'Being Cleaned' && (
                 <button
                   onClick={() => handleUpdateTableStatus(selectedTable.id, 'Being Cleaned')}
-                  className="w-full flex items-center gap-3 p-4 bg-orange-50 hover:bg-orange-100 rounded-xl border border-orange-200 transition-colors duration-200"
+                  className="w-full flex items-center gap-3 p-4 min-h-[52px] bg-orange-50 hover:bg-orange-100 rounded-xl border border-orange-200 transition-colors duration-200"
                 >
                   <div className="p-2 bg-orange-600 rounded-lg">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1371,7 +1371,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               {selectedTable.status !== 'Available' && (
                 <button
                   onClick={() => handleUpdateTableStatus(selectedTable.id, 'Available')}
-                  className="w-full flex items-center gap-3 p-4 bg-[#16a34a]/5 hover:bg-[#16a34a]/10 rounded-xl border border-[#16a34a]/20 transition-colors duration-200"
+                  className="w-full flex items-center gap-3 p-4 min-h-[52px] bg-[#16a34a]/5 hover:bg-[#16a34a]/10 rounded-xl border border-[#16a34a]/20 transition-colors duration-200"
                 >
                   <div className="p-2 bg-[#16a34a] rounded-lg">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1395,7 +1395,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                     setShowTableActionsModal(false);
                     setShowSeatModal(true);
                   }}
-                  className="w-full flex items-center gap-3 p-4 bg-[#9F1239]/5 hover:bg-[#9F1239]/10 rounded-xl border border-[#9F1239]/20 transition-colors duration-200"
+                  className="w-full flex items-center gap-3 p-4 min-h-[52px] bg-[#9F1239]/5 hover:bg-[#9F1239]/10 rounded-xl border border-[#9F1239]/20 transition-colors duration-200"
                 >
                   <div className="p-2 bg-[#9F1239] rounded-lg">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1419,7 +1419,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                 setShowTableActionsModal(false);
                 setSelectedTable(null);
               }}
-              className="w-full mt-4 px-4 py-3 bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#57534E] font-semibold rounded-xl transition-all duration-200"
+              className="w-full mt-4 px-4 py-3 min-h-[44px] bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#57534E] font-semibold rounded-xl transition-all duration-200"
             >
               {language === 'es' ? 'Cancelar' : 'Cancel'}
             </button>
@@ -1429,8 +1429,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
       {/* Complete Service Confirmation Modal */}
       {showCompleteServiceModal && selectedServiceToComplete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-6 transform transition-all max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-green-100 rounded-lg">
@@ -1487,13 +1487,13 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   setShowCompleteServiceModal(false);
                   setSelectedServiceToComplete(null);
                 }}
-                className="flex-1 px-4 py-3 bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#57534E] font-semibold rounded-xl transition-all duration-200"
+                className="flex-1 px-4 py-3 min-h-[44px] bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#57534E] font-semibold rounded-xl transition-all duration-200"
               >
                 {language === 'es' ? 'Cancelar' : 'Cancel'}
               </button>
               <button
                 onClick={() => handleCompleteService(selectedServiceToComplete.service_id)}
-                className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
+                className="flex-1 px-4 py-3 min-h-[44px] bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
               >
                 {language === 'es' ? 'Confirmar' : 'Confirm'}
               </button>
@@ -1504,8 +1504,8 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 animate-slide-up">
-          <div className={`px-6 py-4 rounded-xl shadow-2xl border-2 ${
+        <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-[60] animate-slide-up">
+          <div className={`px-4 sm:px-6 py-3 sm:py-4 rounded-xl shadow-2xl border-2 ${
             toast.type === 'success'
               ? 'bg-green-50 border-green-500 text-green-900'
               : 'bg-red-50 border-red-500 text-red-900'

@@ -100,7 +100,7 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
       <div>
         <h2 className="font-serif text-2xl font-bold text-[#1C1917] mb-2">Invite your team</h2>
         <p className="text-[#57534E] text-sm">
-          Add team members who will manage reservations (optional)
+          Add team members who will help manage reservations. You can skip this step and invite them later.
         </p>
       </div>
 
@@ -114,8 +114,8 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
               type="email"
               value={newMemberEmail}
               onChange={(e) => setNewMemberEmail(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && addTeamMember()}
-              placeholder="team@restaurant.com"
+              onKeyDown={(e) => e.key === 'Enter' && addTeamMember()}
+              placeholder="colleague@yourrestaurant.com"
               className="w-full px-4 py-3 bg-white border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
             />
             {errors.email && (
@@ -146,8 +146,8 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
           </div>
         </div>
 
-        <div className="mt-3 text-xs text-[#57534E]">
-          {data.team_members.length} / {TEAM_LIMIT} team members
+        <div className="mt-3 text-xs text-[#A8A29E]">
+          {data.team_members.length} of {TEAM_LIMIT} team members added
         </div>
       </div>
 

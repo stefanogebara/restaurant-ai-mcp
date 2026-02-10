@@ -194,35 +194,36 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
   };
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="text-center mb-12">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-[#9F1239]/10 rounded-full mb-6">
-          <Volume2 className="w-8 h-8 text-[#9F1239]" />
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="inline-flex items-center justify-center w-10 h-10 bg-[#9F1239]/10 rounded-full">
+            <Volume2 className="w-5 h-5 text-[#9F1239]" />
+          </div>
+          <h2 className="font-serif text-2xl font-bold text-[#1C1917]">
+            Choose Your AI Voice
+          </h2>
         </div>
-        <h2 className="font-serif text-3xl font-bold text-[#1C1917] mb-4">
-          Choose Your AI Voice
-        </h2>
-        <p className="text-lg text-[#57534E] max-w-2xl mx-auto">
-          Select the voice that will represent your restaurant in phone conversations with customers.
-          Click the play button to hear a preview of each voice.
+        <p className="text-sm text-[#57534E]">
+          Select the voice that will represent your restaurant when customers call. Click play to preview.
         </p>
       </div>
 
       {/* Loading State */}
       {isLoading && (
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="relative w-16 h-16 mb-6">
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="relative w-12 h-12 mb-4">
             <div className="absolute inset-0 rounded-full border-4 border-[#E7E5E4]"></div>
             <div className="absolute inset-0 rounded-full border-4 border-t-[#9F1239] animate-spin"></div>
           </div>
-          <p className="text-[#57534E] text-lg">Loading voices...</p>
+          <p className="text-[#57534E] text-sm">Loading available voices...</p>
         </div>
       )}
 
       {/* Voice Grid */}
       {!isLoading && voices.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           {voices.map((voice) => {
             const isSelected = selectedVoiceId === voice.id;
             const isPlaying = playingVoiceId === voice.id;
@@ -307,35 +308,41 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
 
       {/* No Voices Message */}
       {!isLoading && voices.length === 0 && (
-        <div className="text-center py-20">
-          <div className="bg-[#9F1239]/5 border border-[#9F1239]/20 rounded-xl p-8 max-w-lg mx-auto">
-            <Volume2 className="w-12 h-12 text-[#9F1239] mx-auto mb-4" />
-            <p className="text-lg text-[#1C1917] mb-2">
-              Using default voice for your AI assistant
+        <div className="text-center py-12">
+          <div className="bg-[#9F1239]/5 border border-[#9F1239]/20 rounded-xl p-6 max-w-lg mx-auto">
+            <Volume2 className="w-10 h-10 text-[#9F1239] mx-auto mb-3" />
+            <p className="text-base font-semibold text-[#1C1917] mb-1">
+              A default voice has been selected
             </p>
             <p className="text-sm text-[#57534E]">
-              You can customize the voice later in Settings after setup is complete.
+              You can change the voice anytime from your dashboard settings.
             </p>
           </div>
         </div>
       )}
 
       {/* Navigation Buttons */}
-      <div className="flex items-center justify-between pt-8 border-t border-[#E7E5E4]">
+      <div className="flex justify-between pt-4">
         <button
           type="button"
           onClick={onPrev}
           className="px-6 py-3 bg-white hover:bg-[#F5F5F4] border border-[#E7E5E4] text-[#1C1917] font-semibold rounded-xl transition-all flex items-center gap-2"
         >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
           Back
         </button>
         <button
           type="button"
           onClick={handleContinue}
           disabled={!selectedVoiceId}
-          className="px-8 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-bold rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-8 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Continue
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </button>
       </div>
     </div>

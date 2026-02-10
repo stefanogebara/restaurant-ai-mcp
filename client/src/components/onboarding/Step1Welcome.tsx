@@ -78,7 +78,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
     >
       <div>
         <h2 className="font-serif text-2xl font-bold text-[#1C1917] mb-2">What's your restaurant called?</h2>
-        <p className="text-[#57534E] text-sm">Let's start with the basics</p>
+        <p className="text-[#57534E] text-sm">Tell us a bit about your restaurant to get started</p>
       </div>
 
       {/* Restaurant Name */}
@@ -91,7 +91,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
           type="text"
           value={data.restaurant_name}
           onChange={(e) => updateData({ restaurant_name: e.target.value })}
-          placeholder="La Bella Vista"
+          placeholder="e.g. La Bella Vista"
           className="w-full px-4 py-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
         />
         {errors.restaurant_name && (

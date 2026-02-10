@@ -153,7 +153,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
     >
       <div>
         <h2 className="font-serif text-2xl font-bold text-[#1C1917] mb-2">How can customers reach you?</h2>
-        <p className="text-[#57534E] text-sm">Contact information and operating hours</p>
+        <p className="text-[#57534E] text-sm">Set up your contact details and when your restaurant is open for service</p>
       </div>
 
       {/* Phone Number with Country Code */}
@@ -302,13 +302,13 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
           <div className="mt-3 p-3 bg-[#F5F5F4] rounded-xl border border-[#E7E5E4]">
             <p className="text-xs text-[#57534E] mb-2">Service Periods (based on first open day):</p>
             <div className="flex flex-wrap gap-2">
-              <span className="px-2 py-1 text-xs bg-green-50 text-green-700 border border-green-200 rounded">
+              <span className="px-2 py-1 text-xs bg-[#9F1239]/10 text-[#9F1239] border border-[#9F1239]/20 rounded-lg font-medium">
                 Lunch: 12:00 - 15:30
               </span>
-              <span className="px-2 py-1 text-xs bg-[#F5F5F4] text-[#57534E] border border-[#E7E5E4] rounded">
+              <span className="px-2 py-1 text-xs bg-[#F5F5F4] text-[#A8A29E] border border-[#E7E5E4] rounded-lg">
                 Break: 15:30 - 19:00
               </span>
-              <span className="px-2 py-1 text-xs bg-[#9F1239]/10 text-[#9F1239] border border-[#9F1239]/20 rounded">
+              <span className="px-2 py-1 text-xs bg-[#9F1239]/10 text-[#9F1239] border border-[#9F1239]/20 rounded-lg font-medium">
                 Dinner: 19:00 - 23:00
               </span>
             </div>
@@ -332,7 +332,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
           <option value={120}>120 minutes (Fine dining)</option>
           <option value={150}>150 minutes (Extended dining)</option>
         </select>
-        <p className="mt-1 text-xs text-[#57534E]">Used to estimate table turnover</p>
+        <p className="mt-1 text-xs text-[#57534E]">Helps the AI estimate table availability and turnover times</p>
       </div>
 
       {/* Actions */}

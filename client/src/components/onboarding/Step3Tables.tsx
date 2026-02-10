@@ -275,7 +275,7 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
     >
       <div>
         <h2 className="font-serif text-2xl font-bold text-[#1C1917] mb-2">Let's set up your tables</h2>
-        <p className="text-[#57534E] text-sm">Configure your dining areas and table layout</p>
+        <p className="text-[#57534E] text-sm">Define your dining areas and how many tables of each size you have</p>
       </div>
 
       {/* Total Capacity Summary */}
@@ -284,19 +284,19 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
         const isMatch = targetSeats && Math.abs(totalCapacity - targetSeats) <= 2;
 
         return (
-          <div className={`bg-[#F5F5F4] border ${isMatch ? 'border-green-300' : 'border-[#E7E5E4]'} rounded-xl p-4`}>
+          <div className={`bg-[#F5F5F4] border ${isMatch ? 'border-[#9F1239]/40' : 'border-[#E7E5E4]'} rounded-xl p-4`}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[#1C1917] font-semibold text-lg">Total Capacity</p>
-                <p className="text-[#57534E] text-sm">Across all areas</p>
+                <p className="text-[#57534E] text-sm">Across all dining areas</p>
                 {targetSeats && (
-                  <p className={`text-sm mt-1 ${isMatch ? 'text-green-600' : 'text-[#9F1239]'}`}>
-                    {isMatch ? '✓ Matches your profile!' : `Target: ${targetSeats} seats`}
+                  <p className={`text-sm mt-1 ${isMatch ? 'text-[#9F1239]' : 'text-[#57534E]'}`}>
+                    {isMatch ? 'Matches your profile' : `Target: ${targetSeats} seats`}
                   </p>
                 )}
               </div>
               <div className="text-right">
-                <p className={`text-3xl font-bold ${isMatch ? 'text-green-600' : 'text-[#1C1917]'}`}>{totalCapacity} seats</p>
+                <p className={`text-3xl font-bold ${isMatch ? 'text-[#9F1239]' : 'text-[#1C1917]'}`}>{totalCapacity} seats</p>
                 <p className="text-[#9F1239] text-sm font-medium">{totalTables} tables</p>
               </div>
             </div>
@@ -320,15 +320,15 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
 
       {/* Plan Limit Warning */}
       {totalTables > getPlanLimit() && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+        <div className="bg-[#9F1239]/5 border border-[#9F1239]/20 rounded-xl p-4">
           <div className="flex items-start gap-3">
-            <svg className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-[#9F1239] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
             <div>
               <p className="text-[#1C1917] font-semibold">Basic Plan Limit</p>
-              <p className="text-amber-700 text-sm mt-1">
-                You've configured {totalTables} tables, but Basic plan supports up to {getPlanLimit()} tables.
+              <p className="text-[#57534E] text-sm mt-1">
+                You've configured {totalTables} tables, but the Basic plan supports up to {getPlanLimit()} tables.
               </p>
               <div className="mt-3 space-x-3">
                 <button
@@ -456,8 +456,8 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
         <p className="text-sm text-[#9F1239]">{errors.tables}</p>
       )}
 
-      <p className="text-xs text-[#57534E]">
-        Pro tip: You can always adjust this later in Settings
+      <p className="text-xs text-[#A8A29E]">
+        You can always adjust your table layout later in Settings.
       </p>
 
       {/* Actions */}

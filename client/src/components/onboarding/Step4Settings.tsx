@@ -52,7 +52,7 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
     >
       <div>
         <h2 className="font-serif text-2xl font-bold text-[#1C1917] mb-2">Reservation preferences</h2>
-        <p className="text-[#57534E] text-sm">Set your booking rules and policies</p>
+        <p className="text-[#57534E] text-sm">Configure how customers can book and what policies apply to reservations</p>
       </div>
 
       {/* Advance Booking Days */}
@@ -136,7 +136,7 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
             rows={3}
             value={data.cancellation_policy}
             onChange={(e) => updateData({ cancellation_policy: e.target.value })}
-            placeholder="Example: Full refund if cancelled 24 hours before. 50% refund if cancelled within 24 hours."
+            placeholder="e.g. Full refund if cancelled 24 hours before. 50% charge for late cancellations."
             className="w-full px-4 py-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] resize-none focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
           />
         </div>
@@ -152,11 +152,11 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
           rows={3}
           value={data.special_notes || ''}
           onChange={(e) => updateData({ special_notes: e.target.value })}
-          placeholder="Example: Vegan options available, outdoor seating seasonal, live music on weekends"
+          placeholder="e.g. Vegan options available, outdoor seating is seasonal, live music on weekends"
           className="w-full px-4 py-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] resize-none focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
         />
-        <p className="mt-1 text-xs text-[#57534E]">
-          This will be shown to customers when they make reservations
+        <p className="mt-1 text-xs text-[#A8A29E]">
+          Displayed to customers during the booking process and communicated by the AI agent
         </p>
       </div>
 
@@ -169,10 +169,10 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
           <div>
             <p className="text-[#1C1917] font-semibold text-sm mb-2">Preview: What customers will see</p>
             <div className="space-y-1 text-[#57534E] text-sm">
-              <p>Book up to {data.advance_booking_days} days in advance</p>
-              <p>{data.buffer_time} minute buffer between reservations</p>
-              <p>{data.cancellation_policy}</p>
-              {data.special_notes && <p>{data.special_notes}</p>}
+              <p>Bookings accepted up to {data.advance_booking_days} days in advance</p>
+              <p>{data.buffer_time > 0 ? `${data.buffer_time}-minute buffer between reservations` : 'No buffer between reservations'}</p>
+              {data.cancellation_policy && <p>{data.cancellation_policy}</p>}
+              {data.special_notes && <p className="italic">{data.special_notes}</p>}
             </div>
           </div>
         </div>

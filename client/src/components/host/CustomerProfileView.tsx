@@ -222,7 +222,7 @@ export default function CustomerProfileView() {
 
   const formatCurrency = (val: number | null) => {
     if (val == null) return '--';
-    return `$${val.toFixed(2)}`;
+    return `€${val.toFixed(2)}`;
   };
 
   return (
@@ -241,7 +241,7 @@ export default function CustomerProfileView() {
             </div>
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-[#1C1917]">{displayName}</h1>
+                <h1 className="text-2xl font-bold font-serif text-[#1C1917]">{displayName}</h1>
                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${tier.color}`}>{tier.label}</span>
                 {textSignals?.vip_signals && (
                   <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#d97706]/20 text-[#d97706]">
@@ -291,7 +291,7 @@ export default function CustomerProfileView() {
       </div>
 
       {/* Key Metrics Row */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl border border-[#E7E5E4] p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <DollarSign className="w-4 h-4 text-[#16a34a]" />
@@ -328,10 +328,10 @@ export default function CustomerProfileView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Behavioral Profile */}
         <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-lg">
-          <h2 className="text-lg font-semibold text-[#1C1917] mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold font-serif text-[#1C1917] mb-4 flex items-center gap-2">
             <Brain className="w-5 h-5 text-[#7c3aed]" />
             Behavioral Profile
           </h2>
@@ -426,7 +426,7 @@ export default function CustomerProfileView() {
 
         {/* AI Insights */}
         <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-lg">
-          <h2 className="text-lg font-semibold text-[#1C1917] mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold font-serif text-[#1C1917] mb-4 flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-[#d97706]" />
             AI Insights
           </h2>
@@ -507,7 +507,7 @@ export default function CustomerProfileView() {
           onClick={() => setShowAllReservations(!showAllReservations)}
           className="w-full flex items-center justify-between"
         >
-          <h2 className="text-lg font-semibold text-[#1C1917] flex items-center gap-2">
+          <h2 className="text-lg font-semibold font-serif text-[#1C1917] flex items-center gap-2">
             <Utensils className="w-5 h-5 text-[#9F1239]" />
             Visit History
             <span className="px-2 py-0.5 bg-[#9F1239]/10 text-[#9F1239] text-xs rounded-full font-semibold">{data.reservations.length}</span>
@@ -544,10 +544,10 @@ export default function CustomerProfileView() {
       </div>
 
       {/* Predictions & Revenue */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Predictions */}
         <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-lg">
-          <h2 className="text-lg font-semibold text-[#1C1917] mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold font-serif text-[#1C1917] mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-[#16a34a]" />
             Predictions
           </h2>
@@ -585,7 +585,7 @@ export default function CustomerProfileView() {
 
         {/* Revenue Summary */}
         <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-lg">
-          <h2 className="text-lg font-semibold text-[#1C1917] mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold font-serif text-[#1C1917] mb-4 flex items-center gap-2">
             <DollarSign className="w-5 h-5 text-[#d97706]" />
             Revenue Summary
           </h2>
@@ -593,15 +593,15 @@ export default function CustomerProfileView() {
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-[#d97706]/5 rounded-lg">
                 <div className="text-xs text-[#57534E]">Total Revenue</div>
-                <div className="text-xl font-bold text-[#1C1917]">${data.revenue_summary.total_revenue.toFixed(2)}</div>
+                <div className="text-xl font-bold text-[#1C1917]">&euro;{data.revenue_summary.total_revenue.toFixed(2)}</div>
               </div>
               <div className="p-3 bg-[#d97706]/5 rounded-lg">
                 <div className="text-xs text-[#57534E]">Avg per Visit</div>
-                <div className="text-xl font-bold text-[#1C1917]">${data.revenue_summary.avg_revenue.toFixed(2)}</div>
+                <div className="text-xl font-bold text-[#1C1917]">&euro;{data.revenue_summary.avg_revenue.toFixed(2)}</div>
               </div>
               <div className="p-3 bg-[#d97706]/5 rounded-lg">
                 <div className="text-xs text-[#57534E]">Total Tips</div>
-                <div className="text-xl font-bold text-[#1C1917]">${data.revenue_summary.total_tips.toFixed(2)}</div>
+                <div className="text-xl font-bold text-[#1C1917]">&euro;{data.revenue_summary.total_tips.toFixed(2)}</div>
               </div>
               <div className="p-3 bg-[#d97706]/5 rounded-lg">
                 <div className="text-xs text-[#57534E]">Revenue Visits</div>
