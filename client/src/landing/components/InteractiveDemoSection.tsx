@@ -11,7 +11,7 @@ export default function InteractiveDemoSection() {
   };
 
   return (
-    <section id="demo" className="py-24 px-6 bg-[#F5F5F4]">
+    <section id="demo" className="py-24 px-6 bg-[#F5F5F4] border-t border-[#E7E5E4]">
       <div className="max-w-6xl mx-auto">
         {/* Section Header */}
         <motion.div

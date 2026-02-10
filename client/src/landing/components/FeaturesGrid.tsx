@@ -6,8 +6,8 @@ export default function FeaturesGrid() {
   const navigate = useNavigate();
 
   return (
-    <section id="features" className="py-20 px-6 bg-[#F5F5F4]">
-      <div className="max-w-7xl mx-auto">
+    <section id="features" className="py-20 px-6 bg-[#FAFAF9]">
+      <div className="max-w-6xl mx-auto">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -24,7 +24,7 @@ export default function FeaturesGrid() {
 
         {/* Bento Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 auto-rows-[240px]">
-          {/* Feature 1 - Large Card: AI Reservations */}
+          {/* Row 1: AI Reservations (span-2) + Host Dashboard (1) = 3 */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -48,7 +48,6 @@ export default function FeaturesGrid() {
             </button>
           </motion.div>
 
-          {/* Feature 2 - Dark Card: Host Dashboard */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -65,7 +64,7 @@ export default function FeaturesGrid() {
             </div>
           </motion.div>
 
-          {/* Feature 3 - Burgundy Card: Smart Analytics */}
+          {/* Row 2: Smart Analytics (1) + Live Wait Times (span-2) = 3 */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -82,29 +81,11 @@ export default function FeaturesGrid() {
             </div>
           </motion.div>
 
-          {/* Feature 4 - Multilingual */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="bg-white p-8 flex flex-col justify-between group hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 rounded-[2rem] border border-[#E7E5E4]"
-          >
-            <Globe className="text-[#9F1239]" size={28} />
-            <div>
-              <h3 className="font-serif text-xl mb-2 text-[#1C1917]">6+ Languages</h3>
-              <p className="text-[#57534E] font-light text-sm">
-                AI handles calls and chats in English, Spanish, French, Italian, Portuguese, and more.
-              </p>
-            </div>
-          </motion.div>
-
-          {/* Feature 5 - Large Card: Live Wait Times */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.25 }}
             className="md:col-span-2 bg-white p-8 md:p-10 relative overflow-hidden flex items-center group hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 rounded-[2rem] border border-[#E7E5E4]"
           >
             <div className="z-10 relative max-w-lg">
@@ -122,6 +103,30 @@ export default function FeaturesGrid() {
               </p>
             </div>
             <div className="absolute -right-16 -bottom-16 w-56 h-56 border-[24px] border-[#F5F5F4] rounded-full opacity-50 group-hover:scale-110 transition-transform duration-700" />
+          </motion.div>
+
+          {/* Row 3: 6+ Languages (span-3, full width) = 3 */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.25 }}
+            className="md:col-span-3 bg-white p-8 md:p-10 relative overflow-hidden flex items-center group hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 rounded-[2rem] border border-[#E7E5E4]"
+          >
+            <div className="z-10 relative flex-1">
+              <Globe className="text-[#9F1239] mb-4" size={28} />
+              <h3 className="font-serif text-2xl md:text-3xl mb-2 text-[#1C1917]">6+ Languages</h3>
+              <p className="text-[#57534E] font-light text-sm md:text-base max-w-xl">
+                AI handles calls and chats in English, Spanish, French, Italian, Portuguese, and more. Your customers speak their language, our AI understands.
+              </p>
+            </div>
+            <div className="hidden md:flex gap-3 text-center">
+              {['EN', 'ES', 'FR', 'IT', 'PT', 'DE'].map((lang) => (
+                <div key={lang} className="w-12 h-12 rounded-xl bg-[#F5F5F4] flex items-center justify-center text-xs font-bold text-[#57534E]">
+                  {lang}
+                </div>
+              ))}
+            </div>
           </motion.div>
         </div>
 
