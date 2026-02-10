@@ -109,13 +109,21 @@ export default function LandingNav() {
         </button>
       </div>
 
+      {/* Mobile Menu Backdrop */}
+      {isMobileMenuOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-[-1]"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className="md:hidden bg-[#FAFAF9] border-t border-[#E7E5E4] px-6 py-6 space-y-4"
+          className="md:hidden bg-[#FAFAF9]/95 backdrop-blur-md border-t border-[#E7E5E4] px-6 py-6 space-y-4"
         >
           <button
             onClick={() => { navigate('/live-demo'); setIsMobileMenuOpen(false); }}

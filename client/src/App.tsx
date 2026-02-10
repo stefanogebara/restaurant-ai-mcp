@@ -51,8 +51,11 @@ function App() {
           <SidebarProvider>
             <BrowserRouter>
             <Suspense fallback={
-              <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#E7E5E4] border-t-[#9F1239]"></div>
+              <div className="min-h-screen bg-[#FAFAF9] flex flex-col items-center justify-center gap-4">
+                <div className="font-serif text-2xl text-[#1C1917] opacity-50">
+                  Seatable<span className="text-[#9F1239]">.</span>
+                </div>
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#E7E5E4] border-t-[#9F1239]"></div>
               </div>
             }>
             <Routes>

@@ -146,14 +146,18 @@ export default function ContactForm() {
 
             {/* Trust Indicators */}
             <div className="bg-[#FAFAF9] p-6 rounded-[2rem] border border-[#E7E5E4]">
-              <div className="grid grid-cols-2 gap-6 text-center">
+              <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <div className="text-2xl font-serif font-bold text-[#9F1239]">Reliable</div>
-                  <div className="text-xs text-[#57534E] mt-1 uppercase tracking-wider">Uptime</div>
+                  <div className="text-2xl font-serif font-bold text-[#9F1239]">24/7</div>
+                  <div className="text-xs text-[#57534E] mt-1 uppercase tracking-wider">AI Uptime</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-serif font-bold text-[#1C1917]">High</div>
-                  <div className="text-xs text-[#57534E] mt-1 uppercase tracking-wider">Satisfaction</div>
+                  <div className="text-2xl font-serif font-bold text-[#1C1917]">2.3s</div>
+                  <div className="text-xs text-[#57534E] mt-1 uppercase tracking-wider">Response</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-serif font-bold text-[#1C1917]">6+</div>
+                  <div className="text-xs text-[#57534E] mt-1 uppercase tracking-wider">Languages</div>
                 </div>
               </div>
             </div>

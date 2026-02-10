@@ -8,6 +8,7 @@ import FAQSection from '../components/FAQSection';
 import ContactForm from '../components/ContactForm';
 import Footer from '../components/Footer';
 import SocialProofSection from '../components/SocialProofSection';
+import HowItWorksSection from '../components/HowItWorksSection';
 
 export default function LandingPage() {
   useEffect(() => {
@@ -24,6 +25,7 @@ export default function LandingPage() {
       <LandingNav />
       <HeroSection />
       <SocialProofSection />
+      <HowItWorksSection />
       <FeaturesGrid />
       <InteractiveDemoSection />
       <PricingSection />

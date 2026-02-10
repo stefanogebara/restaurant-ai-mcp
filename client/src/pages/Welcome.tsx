@@ -402,7 +402,7 @@ export default function Welcome() {
               <button
                 onClick={() => handleGetStarted('price_1SMyFUKf4yCMjmH5jh4mReyI', 'Professional')}
                 disabled={loadingPlan === 'Professional'}
-                className="px-8 py-4 bg-[#9F1239] text-white font-bold text-sm tracking-widest uppercase rounded-2xl hover:bg-[#881337] transition-all duration-300 shadow-xl shadow-[#9F1239]/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-8 py-4 bg-[#9F1239] text-white font-bold text-sm tracking-widest uppercase rounded-2xl hover:bg-[#881337] transition-all duration-300 shadow-xl shadow-[#9F1239]/30 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2 mx-auto"
               >
                 {loadingPlan === 'Professional' ? (
                   <>

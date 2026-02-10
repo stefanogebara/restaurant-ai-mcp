@@ -188,32 +188,49 @@ export default function Onboarding() {
             </div>
 
             {/* Progress Steps */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center">
               {stepNames.map((name, index) => {
                 const stepNumber = index + 1;
                 const isActive = stepNumber === currentStep;
                 const isCompleted = stepNumber < currentStep;
+                const isLast = index === stepNames.length - 1;
 
                 return (
-                  <div key={stepNumber} className="flex-1 flex flex-col gap-1">
-                    <div
-                      className={`
-                        h-2 rounded-full transition-all duration-500 ease-out
-                        ${isCompleted || isActive
-                          ? 'bg-[#9F1239]'
-                          : 'bg-[#E7E5E4]'
-                        }
-                      `}
-                    />
-                    {/* Step label on desktop */}
-                    <span
-                      className={`
-                        hidden md:block text-[10px] font-medium transition-colors duration-300
-                        ${isActive ? 'text-[#9F1239]' : isCompleted ? 'text-[#1C1917]' : 'text-[#A8A29E]'}
-                      `}
-                    >
-                      {name}
-                    </span>
+                  <div key={stepNumber} className="flex items-center flex-1 last:flex-none">
+                    {/* Step Circle + Label */}
+                    <div className="flex flex-col items-center gap-1">
+                      <div
+                        className={`
+                          w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300
+                          ${isCompleted
+                            ? 'bg-[#9F1239] text-white'
+                            : isActive
+                              ? 'bg-[#9F1239] text-white ring-4 ring-[#9F1239]/20'
+                              : 'bg-[#E7E5E4] text-[#A8A29E]'
+                          }
+                        `}
+                      >
+                        {isCompleted ? (
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          stepNumber
+                        )}
+                      </div>
+                      <span
+                        className={`
+                          hidden md:block text-[10px] font-medium transition-colors duration-300 whitespace-nowrap
+                          ${isActive ? 'text-[#9F1239]' : isCompleted ? 'text-[#1C1917]' : 'text-[#A8A29E]'}
+                        `}
+                      >
+                        {name}
+                      </span>
+                    </div>
+                    {/* Connecting Line */}
+                    {!isLast && (
+                      <div className={`flex-1 h-0.5 mx-1.5 transition-colors duration-500 ${isCompleted ? 'bg-[#9F1239]' : 'bg-[#E7E5E4]'}`} />
+                    )}
                   </div>
                 );
               })}
