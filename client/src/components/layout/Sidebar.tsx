@@ -31,7 +31,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    path: '/host-dashboard',
+    path: '/host-dashboard/simple',
     label: 'Overview',
     icon: <LayoutDashboard className="w-5 h-5" />,
     description: 'Tables & Active Parties',
@@ -111,8 +111,8 @@ export default function Sidebar() {
   const currentLanguage = languageOptions.find(l => l.code === i18n.language) || languageOptions[0];
 
   const isActive = (path: string) => {
-    if (path === '/host-dashboard') {
-      return location.pathname === path;
+    if (path === '/host-dashboard/simple') {
+      return location.pathname === '/host-dashboard/simple' || location.pathname === '/host-dashboard';
     }
     return location.pathname.startsWith(path);
   };

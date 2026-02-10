@@ -98,7 +98,6 @@ export default function LTVDashboard() {
         throw new Error(response.data.error || 'Failed to create campaign');
       }
 
-      console.log('Campaign created:', response.data);
     } catch (error) {
       console.error('Failed to send campaign:', error);
       throw error;

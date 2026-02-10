@@ -147,16 +147,6 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  // Debug: Log API response structure to help diagnose table visualization issues
-  useEffect(() => {
-    if (dashboardData) {
-      console.log('🔍 Dashboard API Response:', dashboardData);
-      console.log('📊 Tables from data.tables:', dashboardData?.data?.tables);
-      console.log('📊 Tables from direct:', (dashboardData as any)?.tables);
-      console.log('📊 Tables count:', (dashboardData?.data?.tables || (dashboardData as any)?.tables || []).length);
-    }
-  }, [dashboardData]);
-
   const translations = {
     es: {
       today: 'Hoy',
@@ -736,15 +726,15 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
 
             {/* Additional Stats Row */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-[#9F1239]/10 rounded-lg">
+              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-4 overflow-hidden min-w-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2.5 bg-[#9F1239]/10 rounded-lg shrink-0">
                     <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <div>
-                    <div className="text-xs font-semibold text-[#57534E] mb-0.5">{t.avgDuration}</div>
+                  <div className="min-w-0">
+                    <div className="text-[10px] sm:text-xs font-semibold text-[#57534E] mb-0.5 truncate">{t.avgDuration}</div>
                     <div className="text-2xl font-bold text-[#1C1917] tracking-tight" title={!stats.avg_duration_minutes ? (language === 'es' ? 'Se actualiza cuando los comensales están sentados' : 'Updates when guests are seated') : undefined}>
                       {stats.avg_duration_minutes ? `${Math.round(stats.avg_duration_minutes / 60 * 10) / 10}h` : '-'}
                     </div>
@@ -754,15 +744,15 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   </div>
                 </div>
               </div>
-              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-[#9F1239]/10 rounded-lg">
+              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-4 overflow-hidden min-w-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2.5 bg-[#9F1239]/10 rounded-lg shrink-0">
                     <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                     </svg>
                   </div>
-                  <div>
-                    <div className="text-xs font-semibold text-[#57534E] mb-0.5">{t.peakHours}</div>
+                  <div className="min-w-0">
+                    <div className="text-[10px] sm:text-xs font-semibold text-[#57534E] mb-0.5 truncate">{t.peakHours}</div>
                     <div className="text-2xl font-bold text-[#1C1917] tracking-tight" title={!stats.peak_hours ? (language === 'es' ? 'Se actualiza cuando los comensales están sentados' : 'Updates when guests are seated') : undefined}>
                       {stats.peak_hours || '-'}
                     </div>
@@ -772,15 +762,15 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   </div>
                 </div>
               </div>
-              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-[#16a34a]/10 rounded-lg">
+              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-4 overflow-hidden min-w-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2.5 bg-[#16a34a]/10 rounded-lg shrink-0">
                     <svg className="w-5 h-5 text-[#16a34a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <div>
-                    <div className="text-xs font-semibold text-[#57534E] mb-0.5">{language === 'es' ? 'Ingresos Hoy' : 'Revenue Today'}</div>
+                  <div className="min-w-0">
+                    <div className="text-[10px] sm:text-xs font-semibold text-[#57534E] mb-0.5 truncate">{language === 'es' ? 'Ingresos Hoy' : 'Revenue Today'}</div>
                     <div className="text-2xl font-bold text-[#16a34a] tracking-tight" title={!stats.revenue_today ? (language === 'es' ? 'Se actualiza cuando los comensales están sentados' : 'Updates when guests are seated') : undefined}>
                       {stats.revenue_today ? `€${stats.revenue_today}` : '-'}
                     </div>

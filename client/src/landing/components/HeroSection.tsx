@@ -74,16 +74,16 @@ export default function HeroSection() {
           className="mt-16 pt-10 border-t border-[#E7E5E4] grid grid-cols-3 gap-6 max-w-lg mx-auto"
         >
           <div className="text-center">
-            <div className="text-2xl md:text-3xl font-serif font-bold text-[#1C1917]">Growing</div>
-            <div className="text-xs text-[#57534E] mt-1 uppercase tracking-wider">Network</div>
+            <div className="text-2xl md:text-3xl font-serif font-bold text-[#1C1917]">24/7</div>
+            <div className="text-xs text-[#57534E] mt-1 uppercase tracking-wider">AI Booking</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl md:text-3xl font-serif font-bold text-[#9F1239]">Hours</div>
-            <div className="text-xs text-[#57534E] mt-1 uppercase tracking-wider">Saved Monthly</div>
+            <div className="text-2xl md:text-3xl font-serif font-bold text-[#9F1239]">6+</div>
+            <div className="text-xs text-[#57534E] mt-1 uppercase tracking-wider">Languages</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl md:text-3xl font-serif font-bold text-[#1C1917]">High</div>
-            <div className="text-xs text-[#57534E] mt-1 uppercase tracking-wider">Satisfaction</div>
+            <div className="text-2xl md:text-3xl font-serif font-bold text-[#1C1917]">Real-Time</div>
+            <div className="text-xs text-[#57534E] mt-1 uppercase tracking-wider">Dashboard</div>
           </div>
         </motion.div>
       </motion.div>

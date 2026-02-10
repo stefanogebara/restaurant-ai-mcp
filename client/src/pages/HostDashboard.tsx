@@ -51,18 +51,12 @@ export default function HostDashboard() {
   }, [data, isFetching]);
 
   // Handle intervention recording
-  const handleRecordIntervention = async (reservation: UpcomingReservation, interventionType: string) => {
+  const handleRecordIntervention = async (_reservation: UpcomingReservation, interventionType: string) => {
     try {
       // Show confirmation toast
       success(`📞 Action recorded: ${interventionType.replace('_', ' ')}`);
 
       // Open outcome modal to record full details later
-      // For now, just log the intervention
-      console.log('Intervention recorded:', {
-        reservation: reservation.reservation_id,
-        type: interventionType,
-        timestamp: new Date().toISOString()
-      });
     } catch (error) {
       console.error('Error recording intervention:', error);
       showError('Failed to record intervention');

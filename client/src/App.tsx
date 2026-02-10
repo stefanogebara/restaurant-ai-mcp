@@ -26,6 +26,7 @@ import TestPhoneInput from './pages/TestPhoneInput';
 import TableConfigPage from './pages/TableConfigPage';
 import FloorPlanEditor from './pages/FloorPlanEditor';
 import ProtectedRoute from './components/ProtectedRoute';
+import NotFound from './pages/NotFound';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -68,7 +69,7 @@ function App() {
               <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
               <Route path="/settings/language" element={<LanguageSettings />} />
               <Route path="/test-phone-input" element={<TestPhoneInput />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
           </SidebarProvider>

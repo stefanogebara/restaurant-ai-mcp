@@ -294,7 +294,7 @@ ${formData.message}
 
               {/* Privacy Note */}
               <p className="text-xs text-[#A8A29E] text-center font-light">
-                By submitting this form, you agree to our Terms of Service and Privacy Policy
+                By submitting this form, you agree to be contacted regarding your inquiry.
               </p>
             </form>
           </motion.div>

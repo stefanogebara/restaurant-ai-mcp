@@ -355,7 +355,7 @@ export default function Welcome() {
             Ready to Transform Your Restaurant?
           </h2>
           <p className="text-white/70 font-light mb-8">
-            Join 500+ restaurants already using Seatable to automate reservations and delight customers.
+            Start automating reservations and delighting customers with AI-powered table management.
           </p>
           <button
             onClick={() => handleGetStarted('price_1SMyFUKf4yCMjmH5jh4mReyI', 'Professional')}

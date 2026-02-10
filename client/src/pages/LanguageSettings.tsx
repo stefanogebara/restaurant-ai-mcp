@@ -42,8 +42,7 @@ export default function LanguageSettings() {
               <LanguageSelector
                 variant="buttons"
                 size="lg"
-                onLanguageChange={(lang) => {
-                  console.log('Language changed to:', lang);
+                onLanguageChange={(_lang) => {
                 }}
               />
             </div>

@@ -51,7 +51,6 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
       let shouldAutoSelect = !selectedVoiceId; // Track if we need to auto-select
 
       if (previousCountryRef.current && previousCountryRef.current !== country) {
-        console.log('[VoiceSelection] Country changed from', previousCountryRef.current, 'to', country, '- resetting voice selection');
         setSelectedVoiceId('');
         shouldAutoSelect = true; // Force auto-select for new country
         // Clear cached audio elements since they're for the old language
@@ -83,7 +82,6 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
           // Auto-select first voice if none selected OR if country just changed
           if (shouldAutoSelect && result.data.voices.length > 0) {
             const firstVoice = result.data.voices[0];
-            console.log('[VoiceSelection] Auto-selecting voice:', firstVoice.name, firstVoice.id, 'language:', firstVoice.language);
             setSelectedVoiceId(firstVoice.id);
             onUpdate({
               selected_voice_id: firstVoice.id,

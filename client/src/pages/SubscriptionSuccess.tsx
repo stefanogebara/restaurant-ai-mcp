@@ -49,7 +49,6 @@ export default function SubscriptionSuccess() {
             // Check if onboarding is complete
             // For new customers, redirect to onboarding
             // This will be a new subscription, so redirect to onboarding
-            console.log('New subscription - redirecting to onboarding');
             setTimeout(() => {
               navigate(`/onboarding?email=${encodeURIComponent(data.customer_email)}&plan=${encodeURIComponent(data.plan || 'Basic')}`);
             }, 3000); // Give user 3 seconds to see success message
