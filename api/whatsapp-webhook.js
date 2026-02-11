@@ -726,6 +726,16 @@ module.exports = async (req, res) => {
       const changes = entry?.changes?.[0];
       const value = changes?.value;
 
+      // Debug: log what type of webhook event this is
+      logger.info(' Webhook event type:', {
+        hasEntry: !!entry,
+        hasChanges: !!changes,
+        field: changes?.field,
+        hasMessages: !!value?.messages,
+        hasStatuses: !!value?.statuses,
+        messageCount: value?.messages?.length || 0,
+      });
+
       // Check if this is a message event
       if (value?.messages) {
         const message = value.messages[0];
