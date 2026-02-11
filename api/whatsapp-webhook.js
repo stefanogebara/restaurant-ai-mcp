@@ -37,6 +37,18 @@ const AI_CONFIG = {
 // WhatsApp API base URL
 const WHATSAPP_API_URL = 'https://graph.facebook.com/v18.0';
 
+// In-memory message deduplication (prevents Meta retry from reprocessing)
+// Map<messageId, timestamp> - entries auto-expire after 5 minutes
+const processedMessages = new Map();
+function cleanupProcessedMessages() {
+  const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+  for (const [id, ts] of processedMessages) {
+    if (ts < fiveMinutesAgo) processedMessages.delete(id);
+  }
+}
+// Clean up every 2 minutes
+setInterval(cleanupProcessedMessages, 2 * 60 * 1000);
+
 /**
  * Send a WhatsApp message via Meta Cloud API
  */
@@ -808,15 +820,29 @@ module.exports = async (req, res) => {
           return res.status(200).json({ status: 'ok' });
         }
 
-        // Respond to Meta IMMEDIATELY to prevent retries (Meta times out in ~20s)
-        // The function continues executing after sending the response
-        res.status(200).json({ status: 'ok' });
-        logger.info(' Response sent to Meta, processing message in background...');
+        // Deduplicate: Meta retries on timeout, ignore messages we've already seen
+        const messageId = message.id;
+        if (messageId && processedMessages.has(messageId)) {
+          logger.info(` Duplicate message ${messageId}, skipping`);
+          return res.status(200).json({ status: 'ok' });
+        }
+        if (messageId) {
+          processedMessages.set(messageId, Date.now());
+        }
 
         // Get or create session for this phone number
         logger.info(' [STEP 1] Getting/creating session...');
         const sessionStart = Date.now();
-        let session = await getOrCreateSession(from, `wa-${Date.now()}`);
+        let session;
+        try {
+          session = await Promise.race([
+            getOrCreateSession(from, `wa-${Date.now()}`),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout after 8s')), 8000))
+          ]);
+        } catch (sessionErr) {
+          logger.error(` [STEP 1] Session failed in ${Date.now() - sessionStart}ms:`, sessionErr.message);
+          session = null;
+        }
         logger.info(` [STEP 1] Session done in ${Date.now() - sessionStart}ms, session=${!!session}`);
 
         if (!session) {
@@ -830,7 +856,10 @@ module.exports = async (req, res) => {
           try {
             logger.info(' [STEP 2] Getting active restaurants...');
             const restStart = Date.now();
-            const activeRestaurants = await getAllActiveRestaurants();
+            const activeRestaurants = await Promise.race([
+              getAllActiveRestaurants(),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Restaurant lookup timeout after 8s')), 8000))
+            ]);
             logger.info(` [STEP 2] Restaurants done in ${Date.now() - restStart}ms, count=${activeRestaurants.length}`);
             if (activeRestaurants.length === 1) {
               logger.info(` Auto-assigning single restaurant: ${activeRestaurants[0].restaurant_name}`);
@@ -877,7 +906,7 @@ module.exports = async (req, res) => {
         const sendResult = await sendWhatsAppMessage(from, response);
         logger.info(` Send result:`, JSON.stringify(sendResult));
 
-        return; // Response already sent earlier
+        return res.status(200).json({ status: 'ok' });
       }
 
       // Acknowledge other webhook events (status updates, etc.)
