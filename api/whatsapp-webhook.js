@@ -2,7 +2,7 @@
  * Meta WhatsApp Cloud API Webhook
  *
  * Custom WhatsApp AI agent for restaurant reservations.
- * Receives messages from Meta's WhatsApp Business Platform and responds using Claude AI.
+ * Receives messages from Meta's WhatsApp Business Platform and responds using AI.
  *
  * Webhook URL: https://restaurant-ai-mcp.vercel.app/api/whatsapp-webhook
  *
@@ -10,10 +10,9 @@
  * - WHATSAPP_VERIFY_TOKEN: Token for webhook verification
  * - WHATSAPP_ACCESS_TOKEN: Meta Graph API access token
  * - WHATSAPP_PHONE_NUMBER_ID: Phone number ID from Meta Business
- * - ANTHROPIC_API_KEY: Claude AI API key
+ * - OPENROUTER_API_KEY or MOONSHOT_API_KEY: AI provider API key
  */
 
-const Anthropic = require('@anthropic-ai/sdk');
 const crypto = require('crypto');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('WhatsApp');
@@ -28,10 +27,12 @@ const { getRestaurantByName, getAllActiveRestaurants } = require('./_lib/restaur
 const { getMultiTenantClient } = require('./_lib/multi-tenant-supabase');
 const { canAccommodateParty } = require('./_lib/supabase');
 
-// Initialize Anthropic client
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY
-});
+// AI provider configuration - supports any OpenAI-compatible API
+const AI_CONFIG = {
+  apiKey: process.env.OPENROUTER_API_KEY || process.env.MOONSHOT_API_KEY,
+  baseUrl: process.env.AI_BASE_URL || 'https://openrouter.ai/api/v1',
+  model: process.env.AI_MODEL || 'moonshotai/kimi-k2.5',
+};
 
 // WhatsApp API base URL
 const WHATSAPP_API_URL = 'https://graph.facebook.com/v18.0';
@@ -174,86 +175,98 @@ function getCurrentDateTime(language = 'en') {
 }
 
 /**
- * Define tools for Claude to use
+ * Define tools in OpenAI function-calling format
  */
 const RESERVATION_TOOLS = [
   {
-    name: 'identify_restaurant',
-    description: 'Identify which restaurant the customer wants to book at. Use this first to determine the restaurant.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        restaurant_name: {
-          type: 'string',
-          description: 'The name of the restaurant the customer mentioned'
-        }
-      },
-      required: ['restaurant_name']
+    type: 'function',
+    function: {
+      name: 'identify_restaurant',
+      description: 'Identify which restaurant the customer wants to book at. Use this first to determine the restaurant.',
+      parameters: {
+        type: 'object',
+        properties: {
+          restaurant_name: {
+            type: 'string',
+            description: 'The name of the restaurant the customer mentioned'
+          }
+        },
+        required: ['restaurant_name']
+      }
     }
   },
   {
-    name: 'check_availability',
-    description: 'Check if a specific date, time, and party size is available for reservation',
-    input_schema: {
-      type: 'object',
-      properties: {
-        date: {
-          type: 'string',
-          description: 'Date in YYYY-MM-DD format'
+    type: 'function',
+    function: {
+      name: 'check_availability',
+      description: 'Check if a specific date, time, and party size is available for reservation',
+      parameters: {
+        type: 'object',
+        properties: {
+          date: {
+            type: 'string',
+            description: 'Date in YYYY-MM-DD format'
+          },
+          time: {
+            type: 'string',
+            description: 'Time in HH:MM format (24-hour)'
+          },
+          party_size: {
+            type: 'integer',
+            description: 'Number of guests'
+          }
         },
-        time: {
-          type: 'string',
-          description: 'Time in HH:MM format (24-hour)'
-        },
-        party_size: {
-          type: 'integer',
-          description: 'Number of guests'
-        }
-      },
-      required: ['date', 'time', 'party_size']
+        required: ['date', 'time', 'party_size']
+      }
     }
   },
   {
-    name: 'create_reservation',
-    description: 'Create a new reservation after confirming all details with the customer',
-    input_schema: {
-      type: 'object',
-      properties: {
-        date: {
-          type: 'string',
-          description: 'Date in YYYY-MM-DD format'
+    type: 'function',
+    function: {
+      name: 'create_reservation',
+      description: 'Create a new reservation after confirming all details with the customer',
+      parameters: {
+        type: 'object',
+        properties: {
+          date: {
+            type: 'string',
+            description: 'Date in YYYY-MM-DD format'
+          },
+          time: {
+            type: 'string',
+            description: 'Time in HH:MM format (24-hour)'
+          },
+          party_size: {
+            type: 'integer',
+            description: 'Number of guests'
+          },
+          customer_name: {
+            type: 'string',
+            description: 'Full name of the customer'
+          },
+          customer_phone: {
+            type: 'string',
+            description: 'Phone number of the customer'
+          },
+          special_requests: {
+            type: 'string',
+            description: 'Any special requests or notes'
+          }
         },
-        time: {
-          type: 'string',
-          description: 'Time in HH:MM format (24-hour)'
-        },
-        party_size: {
-          type: 'integer',
-          description: 'Number of guests'
-        },
-        customer_name: {
-          type: 'string',
-          description: 'Full name of the customer'
-        },
-        customer_phone: {
-          type: 'string',
-          description: 'Phone number of the customer'
-        },
-        special_requests: {
-          type: 'string',
-          description: 'Any special requests or notes'
-        }
-      },
-      required: ['date', 'time', 'party_size', 'customer_name', 'customer_phone']
+        required: ['date', 'time', 'party_size', 'customer_name', 'customer_phone']
+      }
     }
   },
   {
-    name: 'get_current_datetime',
-    description: 'Get the current date and time. Use this when the customer says "today", "tomorrow", or needs to know current time.',
-    input_schema: {
-      type: 'object',
-      properties: {},
-      required: []
+    type: 'function',
+    function: {
+      name: 'get_current_datetime',
+      description: 'Get the current date and time. Use this when the customer says "today", "tomorrow", or needs to know current time.',
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: []
+      }
     }
   }
 ];
@@ -490,9 +503,35 @@ async function executeTool(toolName, toolInput, session) {
 }
 
 /**
- * Process a message with Claude AI
+ * Call the OpenAI-compatible chat completions endpoint
  */
-async function processWithClaude(userMessage, session, conversationHistory = []) {
+async function callChatCompletions(messages, tools) {
+  const response = await fetch(`${AI_CONFIG.baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${AI_CONFIG.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: AI_CONFIG.model,
+      max_tokens: 1024,
+      messages,
+      tools,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`AI API error ${response.status}: ${errorBody}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Process a message with AI (OpenAI-compatible API)
+ */
+async function processWithAI(userMessage, session, conversationHistory = []) {
   const language = session?.restaurant?.language || 'en';
   const currentDateTime = getCurrentDateTime(language);
 
@@ -536,67 +575,53 @@ Guidelines:
 - If they give a time like "7pm", convert to 24-hour format (19:00)
 `;
 
-  // Build messages array
+  // Build messages array with system prompt as first message
   const messages = [
+    { role: 'system', content: systemPrompt },
     ...conversationHistory,
     { role: 'user', content: userMessage }
   ];
 
   try {
-    let response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1024,
-      system: systemPrompt,
-      tools: RESERVATION_TOOLS,
-      messages
-    });
+    let data = await callChatCompletions(messages, RESERVATION_TOOLS);
+    let choice = data.choices?.[0];
 
     // Handle tool use loop
-    while (response.stop_reason === 'tool_use') {
-      // Get ALL tool_use blocks from the response
-      const toolUseBlocks = response.content.filter(block => block.type === 'tool_use');
+    while (choice?.finish_reason === 'tool_calls') {
+      const toolCalls = choice.message.tool_calls;
+      if (!toolCalls || toolCalls.length === 0) break;
 
-      if (toolUseBlocks.length === 0) break;
+      // Append the assistant message (contains tool_calls)
+      messages.push(choice.message);
 
-      // Execute ALL tools and collect results
-      const toolResults = [];
-      for (const toolUseBlock of toolUseBlocks) {
-        const toolResult = await executeTool(toolUseBlock.name, toolUseBlock.input, session);
+      // Execute each tool and append results
+      for (const toolCall of toolCalls) {
+        const toolName = toolCall.function.name;
+        const toolInput = JSON.parse(toolCall.function.arguments);
+        const toolResult = await executeTool(toolName, toolInput, session);
 
         // If restaurant was identified, update session reference
-        if (toolUseBlock.name === 'identify_restaurant' && toolResult.found && toolResult.restaurant) {
+        if (toolName === 'identify_restaurant' && toolResult.found && toolResult.restaurant) {
           session = await getSessionByPhone(session?.sender_phone);
         }
 
-        toolResults.push({
-          type: 'tool_result',
-          tool_use_id: toolUseBlock.id,
-          content: JSON.stringify(toolResult)
+        messages.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: JSON.stringify(toolResult),
         });
       }
 
-      // Continue conversation with ALL tool results
-      messages.push({ role: 'assistant', content: response.content });
-      messages.push({
-        role: 'user',
-        content: toolResults
-      });
-
-      response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
-        system: systemPrompt,
-        tools: RESERVATION_TOOLS,
-        messages
-      });
+      // Continue conversation
+      data = await callChatCompletions(messages, RESERVATION_TOOLS);
+      choice = data.choices?.[0];
     }
 
     // Extract text response
-    const textBlock = response.content.find(block => block.type === 'text');
-    return textBlock?.text || 'I apologize, I had trouble processing that. Could you try again?';
+    return choice?.message?.content || 'I apologize, I had trouble processing that. Could you try again?';
 
   } catch (error) {
-    logger.error(' Claude error:', error);
+    logger.error(' AI error:', error);
     return 'I apologize, something went wrong. Please try again or contact the restaurant directly.';
   }
 }
@@ -790,14 +815,14 @@ module.exports = async (req, res) => {
         const conversationHistory = session.conversation_history || [];
         logger.info(` Loaded ${conversationHistory.length} history messages for session: ${session.id}`);
 
-        // Process message with Claude
-        logger.info(` Processing message with Claude for session: ${session.id}`);
+        // Process message with AI
+        logger.info(` Processing message with AI for session: ${session.id}`);
         let response;
         try {
-          response = await processWithClaude(messageText, session, conversationHistory);
-          logger.info(` Claude response received: ${response?.substring(0, 100)}...`);
-        } catch (claudeError) {
-          logger.error(' Claude processing error:', claudeError);
+          response = await processWithAI(messageText, session, conversationHistory);
+          logger.info(` AI response received: ${response?.substring(0, 100)}...`);
+        } catch (aiError) {
+          logger.error(' AI processing error:', aiError);
           response = 'Sorry, I had trouble processing your message. Please try again.';
         }
 
