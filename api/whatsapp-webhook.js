@@ -809,7 +809,10 @@ module.exports = async (req, res) => {
         }
 
         // Get or create session for this phone number
+        logger.info(' [STEP 1] Getting/creating session...');
+        const sessionStart = Date.now();
         let session = await getOrCreateSession(from, `wa-${Date.now()}`);
+        logger.info(` [STEP 1] Session done in ${Date.now() - sessionStart}ms, session=${!!session}`);
 
         if (!session) {
           logger.error(' Failed to create session');
@@ -820,7 +823,10 @@ module.exports = async (req, res) => {
         // Auto-assign restaurant if only one exists and session has no restaurant
         if (!session.restaurant) {
           try {
+            logger.info(' [STEP 2] Getting active restaurants...');
+            const restStart = Date.now();
             const activeRestaurants = await getAllActiveRestaurants();
+            logger.info(` [STEP 2] Restaurants done in ${Date.now() - restStart}ms, count=${activeRestaurants.length}`);
             if (activeRestaurants.length === 1) {
               logger.info(` Auto-assigning single restaurant: ${activeRestaurants[0].restaurant_name}`);
               const updated = await setSessionRestaurant(session.id, activeRestaurants[0].id);
@@ -838,13 +844,14 @@ module.exports = async (req, res) => {
         logger.info(` Loaded ${conversationHistory.length} history messages for session: ${session.id}`);
 
         // Process message with AI
-        logger.info(` Processing message with AI for session: ${session.id}`);
+        logger.info(' [STEP 3] Processing message with AI...');
+        const aiStart = Date.now();
         let response;
         try {
           response = await processWithAI(messageText, session, conversationHistory);
-          logger.info(` AI response received: ${response?.substring(0, 100)}...`);
+          logger.info(` [STEP 3] AI done in ${Date.now() - aiStart}ms: ${response?.substring(0, 100)}...`);
         } catch (aiError) {
-          logger.error(' AI processing error:', aiError);
+          logger.error(` [STEP 3] AI error after ${Date.now() - aiStart}ms:`, aiError);
           response = 'Sorry, I had trouble processing your message. Please try again.';
         }
 
