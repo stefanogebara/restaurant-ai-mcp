@@ -21,7 +21,8 @@ const {
   getOrCreateSession,
   setSessionRestaurant,
   getSessionByPhone,
-  normalizePhoneNumber
+  normalizePhoneNumber,
+  updateSessionConversationHistory
 } = require('./_lib/whatsapp-sessions');
 const { getRestaurantByName, getAllActiveRestaurants } = require('./_lib/restaurant-registry');
 const { getMultiTenantClient } = require('./_lib/multi-tenant-supabase');
@@ -153,13 +154,15 @@ async function sendTemplateMessage(to, templateName, languageCode = 'en', bodyPa
 /**
  * Get current date/time in restaurant timezone
  */
-function getCurrentDateTime() {
+function getCurrentDateTime(language = 'en') {
   const now = new Date();
+  const localeMap = { en: 'en-US', es: 'es-ES', pt: 'pt-BR' };
+  const locale = localeMap[language] || 'en-US';
   return {
     date: now.toISOString().split('T')[0],
     time: now.toTimeString().split(' ')[0].substring(0, 5),
-    dayOfWeek: now.toLocaleDateString('en-US', { weekday: 'long' }),
-    formatted: now.toLocaleString('en-US', {
+    dayOfWeek: now.toLocaleDateString(locale, { weekday: 'long' }),
+    formatted: now.toLocaleString(locale, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -490,11 +493,20 @@ async function executeTool(toolName, toolInput, session) {
  * Process a message with Claude AI
  */
 async function processWithClaude(userMessage, session, conversationHistory = []) {
-  const currentDateTime = getCurrentDateTime();
+  const language = session?.restaurant?.language || 'en';
+  const currentDateTime = getCurrentDateTime(language);
+
+  // Language instruction based on restaurant setting
+  let languageInstruction = '';
+  if (language === 'pt') {
+    languageInstruction = '\nIMPORTANT: Always respond in Brazilian Portuguese (pt-BR). Use natural, friendly Brazilian Portuguese with "voce" form. Never switch to English unless the customer writes in English.\n';
+  } else if (language === 'es') {
+    languageInstruction = '\nIMPORTANT: Always respond in Spanish. Use the formal "usted" form. Never switch to English unless the customer writes in English.\n';
+  }
 
   // Build system prompt
   let systemPrompt = `You are a friendly AI assistant helping customers make restaurant reservations via WhatsApp.
-
+${languageInstruction}
 Current date and time: ${currentDateTime.formatted}
 Today is ${currentDateTime.dayOfWeek}, ${currentDateTime.date}
 
@@ -670,60 +682,87 @@ module.exports = async (req, res) => {
           return res.status(200).json({ status: 'ok' });
         }
 
-        // Handle template response keywords (MODIFY, CANCEL, CONFIRM, BOOK, HELP)
+        // Handle template response keywords (EN: MODIFY, CANCEL, CONFIRM, BOOK, HELP)
+        // Also supports Portuguese (MODIFICAR, CANCELAR, CONFIRMAR, RESERVAR, AJUDA)
+        // and Spanish (MODIFICAR, CANCELAR, CONFIRMAR, RESERVAR, AYUDA)
         const normalizedText = messageText.trim().toUpperCase();
-        if (normalizedText === 'MODIFY') {
+        if (normalizedText === 'MODIFY' || normalizedText === 'MODIFICAR') {
           await sendWhatsAppMessage(from,
-            'To modify your reservation, please tell me:\n' +
-            '- Your name\n' +
-            '- What you\'d like to change (date, time, or party size)\n\n' +
-            'For example: "I\'m John Smith and I\'d like to change my reservation to 8pm"'
+            normalizedText === 'MODIFICAR'
+              ? 'Para modificar a sua reserva, por favor diga-me:\n' +
+                '- O seu nome\n' +
+                '- O que gostaria de alterar (data, hora ou numero de pessoas)\n\n' +
+                'Por exemplo: "Sou o Joao Silva e gostaria de mudar a minha reserva para as 20h"'
+              : 'To modify your reservation, please tell me:\n' +
+                '- Your name\n' +
+                '- What you\'d like to change (date, time, or party size)\n\n' +
+                'For example: "I\'m John Smith and I\'d like to change my reservation to 8pm"'
           );
           return res.status(200).json({ status: 'ok' });
         }
 
-        if (normalizedText === 'CANCEL') {
+        if (normalizedText === 'CANCEL' || normalizedText === 'CANCELAR') {
           await sendWhatsAppMessage(from,
-            'To cancel your reservation, please confirm by providing:\n' +
-            '- Your name\n' +
-            '- The date of your reservation\n\n' +
-            'For example: "Please cancel my reservation. I\'m John Smith, reservation was for January 15"'
+            normalizedText === 'CANCELAR'
+              ? 'Para cancelar a sua reserva, por favor confirme com:\n' +
+                '- O seu nome\n' +
+                '- A data da sua reserva\n\n' +
+                'Por exemplo: "Por favor cancele a minha reserva. Sou o Joao Silva, reserva para 15 de Janeiro"'
+              : 'To cancel your reservation, please confirm by providing:\n' +
+                '- Your name\n' +
+                '- The date of your reservation\n\n' +
+                'For example: "Please cancel my reservation. I\'m John Smith, reservation was for January 15"'
           );
           return res.status(200).json({ status: 'ok' });
         }
 
-        if (normalizedText === 'CONFIRM') {
+        if (normalizedText === 'CONFIRM' || normalizedText === 'CONFIRMAR') {
           await sendWhatsAppMessage(from,
-            'Great! Your reservation has been confirmed. We look forward to seeing you!\n\n' +
-            'Reply HELP if you need any assistance.'
+            normalizedText === 'CONFIRMAR'
+              ? 'Otimo! A sua reserva foi confirmada. Esperamos ve-lo em breve!\n\n' +
+                'Responda AJUDA se precisar de assistencia.'
+              : 'Great! Your reservation has been confirmed. We look forward to seeing you!\n\n' +
+                'Reply HELP if you need any assistance.'
           );
           return res.status(200).json({ status: 'ok' });
         }
 
-        if (normalizedText === 'BOOK') {
+        if (normalizedText === 'BOOK' || normalizedText === 'RESERVAR') {
           await sendWhatsAppMessage(from,
-            'I\'d be happy to help you make a new reservation!\n\n' +
-            'Please tell me:\n' +
-            '- Which restaurant?\n' +
-            '- Date and time?\n' +
-            '- Number of guests?'
+            normalizedText === 'RESERVAR'
+              ? 'Terei todo o gosto em ajuda-lo a fazer uma nova reserva!\n\n' +
+                'Por favor diga-me:\n' +
+                '- Qual restaurante?\n' +
+                '- Data e hora?\n' +
+                '- Numero de pessoas?'
+              : 'I\'d be happy to help you make a new reservation!\n\n' +
+                'Please tell me:\n' +
+                '- Which restaurant?\n' +
+                '- Date and time?\n' +
+                '- Number of guests?'
           );
           return res.status(200).json({ status: 'ok' });
         }
 
-        if (normalizedText === 'HELP') {
+        if (normalizedText === 'HELP' || normalizedText === 'AJUDA' || normalizedText === 'AYUDA') {
           await sendWhatsAppMessage(from,
-            'I can help you with:\n' +
-            '- Making a new reservation\n' +
-            '- Modifying an existing reservation\n' +
-            '- Canceling a reservation\n\n' +
-            'Just tell me what you need!'
+            (normalizedText === 'AJUDA')
+              ? 'Posso ajuda-lo com:\n' +
+                '- Fazer uma nova reserva\n' +
+                '- Modificar uma reserva existente\n' +
+                '- Cancelar uma reserva\n\n' +
+                'Diga-me o que precisa!'
+              : 'I can help you with:\n' +
+                '- Making a new reservation\n' +
+                '- Modifying an existing reservation\n' +
+                '- Canceling a reservation\n\n' +
+                'Just tell me what you need!'
           );
           return res.status(200).json({ status: 'ok' });
         }
 
         // Get or create session for this phone number
-        const session = await getOrCreateSession(from, `wa-${Date.now()}`);
+        let session = await getOrCreateSession(from, `wa-${Date.now()}`);
 
         if (!session) {
           logger.error(' Failed to create session');
@@ -731,15 +770,47 @@ module.exports = async (req, res) => {
           return res.status(200).json({ status: 'ok' });
         }
 
+        // Auto-assign restaurant if only one exists and session has no restaurant
+        if (!session.restaurant) {
+          try {
+            const activeRestaurants = await getAllActiveRestaurants();
+            if (activeRestaurants.length === 1) {
+              logger.info(` Auto-assigning single restaurant: ${activeRestaurants[0].restaurant_name}`);
+              const updated = await setSessionRestaurant(session.id, activeRestaurants[0].id);
+              if (updated) {
+                session = updated;
+              }
+            }
+          } catch (autoErr) {
+            logger.error(' Auto-assign error (non-fatal):', autoErr.message);
+          }
+        }
+
+        // Load conversation history from session
+        const conversationHistory = session.conversation_history || [];
+        logger.info(` Loaded ${conversationHistory.length} history messages for session: ${session.id}`);
+
         // Process message with Claude
         logger.info(` Processing message with Claude for session: ${session.id}`);
         let response;
         try {
-          response = await processWithClaude(messageText, session);
+          response = await processWithClaude(messageText, session, conversationHistory);
           logger.info(` Claude response received: ${response?.substring(0, 100)}...`);
         } catch (claudeError) {
           logger.error(' Claude processing error:', claudeError);
           response = 'Sorry, I had trouble processing your message. Please try again.';
+        }
+
+        // Save updated conversation history (append user message + assistant response)
+        try {
+          const updatedHistory = [
+            ...conversationHistory,
+            { role: 'user', content: messageText },
+            { role: 'assistant', content: response }
+          ];
+          await updateSessionConversationHistory(session.id, updatedHistory);
+        } catch (historyErr) {
+          logger.error(' Failed to save conversation history (non-fatal):', historyErr.message);
         }
 
         // Send response back via WhatsApp
