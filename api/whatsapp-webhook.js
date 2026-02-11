@@ -808,6 +808,11 @@ module.exports = async (req, res) => {
           return res.status(200).json({ status: 'ok' });
         }
 
+        // Respond to Meta IMMEDIATELY to prevent retries (Meta times out in ~20s)
+        // The function continues executing after sending the response
+        res.status(200).json({ status: 'ok' });
+        logger.info(' Response sent to Meta, processing message in background...');
+
         // Get or create session for this phone number
         logger.info(' [STEP 1] Getting/creating session...');
         const sessionStart = Date.now();
@@ -872,7 +877,7 @@ module.exports = async (req, res) => {
         const sendResult = await sendWhatsAppMessage(from, response);
         logger.info(` Send result:`, JSON.stringify(sendResult));
 
-        return res.status(200).json({ status: 'ok' });
+        return; // Response already sent earlier
       }
 
       // Acknowledge other webhook events (status updates, etc.)
