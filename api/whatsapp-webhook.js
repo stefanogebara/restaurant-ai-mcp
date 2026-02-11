@@ -506,26 +506,43 @@ async function executeTool(toolName, toolInput, session) {
  * Call the OpenAI-compatible chat completions endpoint
  */
 async function callChatCompletions(messages, tools) {
-  const response = await fetch(`${AI_CONFIG.baseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${AI_CONFIG.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: AI_CONFIG.model,
-      max_tokens: 1024,
-      messages,
-      tools,
-    }),
-  });
+  // 30-second timeout to avoid Vercel function timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`AI API error ${response.status}: ${errorBody}`);
+  try {
+    logger.info(` AI call: model=${AI_CONFIG.model}, baseUrl=${AI_CONFIG.baseUrl}, keySet=${!!AI_CONFIG.apiKey}`);
+
+    const response = await fetch(`${AI_CONFIG.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${AI_CONFIG.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: AI_CONFIG.model,
+        max_tokens: 1024,
+        messages,
+        tools,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`AI API error ${response.status}: ${errorBody}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('AI API timeout after 30s');
+    }
+    throw error;
   }
-
-  return response.json();
 }
 
 /**
@@ -684,8 +701,13 @@ module.exports = async (req, res) => {
     try {
       const body = req.body;
 
-      // Log incoming webhook
-      logger.info(' Webhook received:', JSON.stringify(body, null, 2));
+      // Log incoming webhook (abbreviated to avoid log bloat)
+      logger.info(' Webhook POST received, AI config:', {
+        model: AI_CONFIG.model,
+        baseUrl: AI_CONFIG.baseUrl,
+        apiKeySet: !!AI_CONFIG.apiKey,
+        apiKeyPrefix: AI_CONFIG.apiKey?.substring(0, 8) || 'NONE',
+      });
 
       // Extract message data
       const entry = body.entry?.[0];
