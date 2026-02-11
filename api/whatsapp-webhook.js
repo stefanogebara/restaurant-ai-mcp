@@ -80,11 +80,11 @@ async function sendWhatsAppMessage(to, message) {
     const data = await response.json();
 
     if (!response.ok) {
-      logger.error(' Send error:', data);
+      logger.error(' Send error:', { status: response.status, data: JSON.stringify(data) });
       return { success: false, error: data.error?.message || 'Failed to send' };
     }
 
-    logger.info(` Message sent to ${to}: ${message.substring(0, 50)}...`);
+    logger.info(` Message sent to ${to}, status=${response.status}, msgId=${data.messages?.[0]?.id}, contacts=${JSON.stringify(data.contacts)}`);
     return { success: true, messageId: data.messages?.[0]?.id };
   } catch (error) {
     logger.error(' Send exception:', error);
@@ -917,6 +917,19 @@ module.exports = async (req, res) => {
         logger.info(` Send result:`, JSON.stringify(sendResult));
 
         return res.status(200).json({ status: 'ok' });
+      }
+
+      // Log status updates (delivery receipts) for debugging
+      if (value?.statuses) {
+        for (const status of value.statuses) {
+          logger.info(' Message status update:', {
+            id: status.id,
+            recipientId: status.recipient_id,
+            status: status.status,
+            timestamp: status.timestamp,
+            errors: status.errors || null,
+          });
+        }
       }
 
       // Acknowledge other webhook events (status updates, etc.)
