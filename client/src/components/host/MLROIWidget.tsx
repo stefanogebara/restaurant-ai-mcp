@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { authFetch } from '../../services/api';
-import { TrendingUp, Target, Zap, DollarSign, AlertTriangle, ArrowRight } from 'lucide-react';
+import ThiingsIcon from '../common/ThiingsIcon';
 import HelpTooltip from '../common/HelpTooltip';
 
 interface MLROIData {
@@ -63,7 +63,7 @@ export default function MLROIWidget() {
       <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-[#1C1917] flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
+            <ThiingsIcon name="trending-up" size="sm" />
             ML Performance
           </h2>
         </div>
@@ -77,7 +77,7 @@ export default function MLROIWidget() {
       <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-[#F5F5F4] flex items-center justify-center">
-            <AlertTriangle className="w-6 h-6 text-[#57534E]" />
+            <ThiingsIcon name="alert-triangle" pxSize={24} />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-[#1C1917]">No ML Data Yet</h3>
@@ -99,13 +99,11 @@ export default function MLROIWidget() {
         className="w-full p-6 flex items-center justify-between hover:bg-[#F5F5F4]/50 transition-colors rounded-t-xl"
       >
         <h2 className="text-xl font-bold text-[#1C1917] flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-[#16a34a]" />
+          <ThiingsIcon name="trending-up" size="sm" />
           ML Performance
         </h2>
         <div className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
-          <svg className="w-5 h-5 text-[#57534E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
+          <ThiingsIcon name="chevron-down" size="sm" />
         </div>
       </button>
 
@@ -120,7 +118,7 @@ export default function MLROIWidget() {
           }`}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <DollarSign className={`w-6 h-6 ${meetsTarget ? 'text-[#16a34a]' : 'text-[#d97706]'}`} />
+                <ThiingsIcon name="dollar" pxSize={24} />
                 <div className="text-sm font-semibold text-[#57534E]">Return on Investment</div>
                 <HelpTooltip
                   title="What is ROI?"
@@ -158,7 +156,7 @@ Example:
           <div className="flex items-center justify-between p-3 bg-[#9F1239]/10 rounded-xl border border-[#9F1239]/20">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-[#9F1239]/20 rounded-xl flex items-center justify-center">
-                <Target className="w-5 h-5 text-[#9F1239]" />
+                <ThiingsIcon name="target" size="sm" />
               </div>
               <div>
                 <div className="flex items-center gap-1">
@@ -190,7 +188,7 @@ Example:
           <div className="flex items-center justify-between p-3 bg-[#7c3aed]/10 rounded-xl border border-[#7c3aed]/20">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-[#7c3aed]/20 rounded-xl flex items-center justify-center">
-                <Zap className="w-5 h-5 text-[#7c3aed]" />
+                <ThiingsIcon name="zap" size="sm" />
               </div>
               <div>
                 <div className="flex items-center gap-1">
@@ -243,7 +241,7 @@ Each intervention has a cost and potential value saved."
             className="flex items-center justify-center gap-2 w-full mt-4 px-4 py-2 text-center text-sm bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#57534E] font-medium rounded-xl transition-colors group"
           >
             View Full ML Analytics
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <ThiingsIcon name="arrow-right" size="xs" className="group-hover:translate-x-1 transition-transform" />
           </a>
         </div>
       )}

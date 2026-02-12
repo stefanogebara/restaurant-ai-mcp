@@ -4,7 +4,7 @@
  * Compact banner to show upgrade prompts inline
  */
 
-import { Sparkles, ArrowRight } from 'lucide-react';
+import ThiingsIcon from './common/ThiingsIcon';
 
 interface UpgradeBannerProps {
   feature: string;
@@ -23,7 +23,7 @@ export default function UpgradeBanner({
     return (
       <div className="bg-[#F5F5F4] p-3 rounded-xl flex items-center justify-between gap-3 border border-[#E7E5E4]">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#d97706] flex-shrink-0" />
+          <ThiingsIcon name="sparkles" pxSize={16} className="flex-shrink-0" />
           <span className="text-sm text-[#57534E]">
             <span className="font-semibold text-[#1C1917]">{feature}</span> available
             on Pro
@@ -44,7 +44,7 @@ export default function UpgradeBanner({
       <div className="flex items-start gap-4">
         {/* Icon */}
         <div className="w-10 h-10 rounded-xl bg-[#9F1239] flex items-center justify-center flex-shrink-0">
-          <Sparkles className="w-5 h-5 text-white" />
+          <ThiingsIcon name="sparkles" pxSize={20} />
         </div>
 
         {/* Content */}
@@ -61,7 +61,7 @@ export default function UpgradeBanner({
             className="inline-flex items-center gap-2 px-4 py-2 bg-[#9F1239] hover:bg-[#881337] rounded-xl text-sm text-white font-semibold group transition-colors"
           >
             View Plans
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <span className="group-hover:translate-x-1 transition-transform inline-flex"><ThiingsIcon name="arrow-right" pxSize={16} /></span>
           </button>
         </div>
       </div>

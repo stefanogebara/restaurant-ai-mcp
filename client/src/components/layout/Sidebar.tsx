@@ -1,18 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  TrendingUp,
-  Users,
-  Dna,
-  ChevronLeft,
-  Menu,
-  Lock,
-  Phone,
-  LogOut,
-  Globe,
-  ChevronUp,
-  User
-} from 'lucide-react';
+import ThiingsIcon, { type IconName } from '../common/ThiingsIcon';
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSidebar } from '../../contexts/SidebarContext';
@@ -24,7 +11,7 @@ import { languageOptions } from '../../i18n/config';
 interface NavItem {
   path: string;
   label: string;
-  icon: React.ReactNode;
+  iconName: IconName;
   description: string;
   requiredFeature: keyof PlanFeatures;
 }
@@ -33,35 +20,35 @@ const navItems: NavItem[] = [
   {
     path: '/host-dashboard/simple',
     label: 'Overview',
-    icon: <LayoutDashboard className="w-5 h-5" />,
+    iconName: 'dashboard',
     description: 'Tables & Active Parties',
     requiredFeature: 'overview'
   },
   {
     path: '/host-dashboard/calls',
     label: 'AI Agent',
-    icon: <Phone className="w-5 h-5" />,
+    iconName: 'phone',
     description: 'Call Tracking & Analytics',
     requiredFeature: 'aiAgentTracking'
   },
   {
     path: '/host-dashboard/ml',
     label: 'No-Show Prevention',
-    icon: <TrendingUp className="w-5 h-5" />,
+    iconName: 'trending-up',
     description: 'Intervention ROI',
     requiredFeature: 'mlPerformance'
   },
   {
     path: '/host-dashboard/ltv',
     label: 'Customer LTV',
-    icon: <Users className="w-5 h-5" />,
+    iconName: 'users',
     description: 'Lifetime Value',
     requiredFeature: 'customerLTV'
   },
   {
     path: '/host-dashboard/dna',
     label: 'Customer DNA',
-    icon: <Dna className="w-5 h-5" />,
+    iconName: 'dna',
     description: 'Behavioral Profiling',
     requiredFeature: 'customerDNA'
   }
@@ -126,7 +113,7 @@ export default function Sidebar() {
         aria-label={isMobileOpen ? "Close navigation menu" : "Open navigation menu"}
         aria-expanded={isMobileOpen}
       >
-        <Menu className="w-6 h-6" aria-hidden="true" />
+        <ThiingsIcon name="menu" pxSize={24} />
       </button>
 
       {/* Mobile Overlay */}
@@ -162,7 +149,7 @@ export default function Sidebar() {
               aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              <ChevronLeft className={`w-5 h-5 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} aria-hidden="true" />
+              <span className={`inline-flex transition-transform ${isCollapsed ? 'rotate-180' : ''}`}><ThiingsIcon name="chevron-left" pxSize={20} /></span>
             </button>
           </div>
 
@@ -177,12 +164,12 @@ export default function Sidebar() {
               // For locked items, don't navigate - just show as disabled
               const itemContent = (
                 <>
-                  <span className={active ? 'scale-110' : ''}>{item.icon}</span>
+                  <span className={active ? 'scale-110' : ''}><ThiingsIcon name={item.iconName} pxSize={20} /></span>
                   {!isCollapsed && (
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-sm flex items-center gap-2">
                         {item.label}
-                        {isLocked && <Lock className="w-3 h-3" />}
+                        {isLocked && <ThiingsIcon name="lock" pxSize={12} />}
                       </div>
                       <div className="text-xs opacity-70 truncate">{item.description}</div>
                     </div>
@@ -253,7 +240,7 @@ export default function Sidebar() {
                 />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-[#9F1239]/10 flex items-center justify-center">
-                  <User className="w-4 h-4 text-[#9F1239]" />
+                  <ThiingsIcon name="user" pxSize={16} />
                 </div>
               )}
               {!isCollapsed && (
@@ -266,7 +253,7 @@ export default function Sidebar() {
                       {user?.email || 'Not signed in'}
                     </p>
                   </div>
-                  <ChevronUp className={`w-4 h-4 text-[#57534E] transition-transform ${isSettingsOpen ? '' : 'rotate-180'}`} />
+                  <span className={`inline-flex transition-transform ${isSettingsOpen ? '' : 'rotate-180'}`}><ThiingsIcon name="chevron-up" pxSize={16} /></span>
                 </>
               )}
             </button>
@@ -283,7 +270,7 @@ export default function Sidebar() {
                     onClick={() => setIsLanguageOpen(!isLanguageOpen)}
                     className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[#F5F5F4] transition-colors text-left"
                   >
-                    <Globe className="w-4 h-4 text-[#57534E]" />
+                    <ThiingsIcon name="globe" pxSize={16} />
                     <span className="flex-1 text-sm">Language</span>
                     <span className="text-sm text-[#57534E]">{currentLanguage.flag} {currentLanguage.name}</span>
                   </button>
@@ -319,7 +306,7 @@ export default function Sidebar() {
                   onClick={handleLogout}
                   className="w-full px-4 py-3 flex items-center gap-3 hover:bg-red-50 text-red-600 transition-colors"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <ThiingsIcon name="logout" pxSize={16} />
                   <span className="text-sm">Sign Out</span>
                 </button>
               </div>

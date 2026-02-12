@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { HelpCircle } from 'lucide-react';
+import ThiingsIcon from './ThiingsIcon';
 
 interface HelpTooltipProps {
   content: string;
@@ -25,10 +25,10 @@ export default function HelpTooltip({
 }: HelpTooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
 
-  const sizeClasses = {
-    sm: 'w-3 h-3',
-    md: 'w-4 h-4',
-    lg: 'w-5 h-5'
+  const sizePx = {
+    sm: 12,
+    md: 16,
+    lg: 20
   };
 
   const positionClasses = {
@@ -56,7 +56,7 @@ export default function HelpTooltip({
         className="inline-flex items-center justify-center text-[#57534E] hover:text-[#1C1917] transition-colors cursor-help focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:ring-offset-2 rounded-full"
         aria-label="Help information"
       >
-        <HelpCircle className={sizeClasses[size]} />
+        <ThiingsIcon name="help-circle" pxSize={sizePx[size]} />
       </button>
 
       {/* Tooltip */}

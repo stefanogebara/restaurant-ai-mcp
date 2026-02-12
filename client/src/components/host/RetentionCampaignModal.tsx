@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { X, Mail, Gift, Calendar } from 'lucide-react';
+import ThiingsIcon from '../common/ThiingsIcon';
+import type { IconName } from '../common/ThiingsIcon';
 
 interface Customer {
   customer_id: string;
@@ -22,19 +23,19 @@ interface RetentionCampaignModalProps {
 const CAMPAIGN_TEMPLATES = {
   win_back: {
     name: 'Win Back',
-    icon: Gift,
+    iconName: 'gift' as IconName,
     subject: 'We miss you!',
     message: "Hi {name}, we noticed it's been a while since your last visit. We'd love to welcome you back with a special 15% off your next meal!",
   },
   loyalty_reward: {
     name: 'Loyalty Reward',
-    icon: Gift,
+    iconName: 'gift' as IconName,
     subject: 'A special thank you',
     message: "Hi {name}, thank you for being a valued customer! As a token of our appreciation, enjoy a complimentary dessert on your next visit.",
   },
   reservation_reminder: {
     name: 'Reservation Invite',
-    icon: Calendar,
+    iconName: 'calendar' as IconName,
     subject: 'Reserve your favorite table',
     message: "Hi {name}, your favorite table is waiting! Book now for this weekend and enjoy priority seating.",
   },
@@ -78,14 +79,14 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
             Retention Campaign
           </h2>
           <button onClick={onClose} className="p-1 hover:bg-[#F5F5F4] rounded">
-            <X className="w-5 h-5 text-[#57534E]" />
+            <ThiingsIcon name="close" pxSize={20} />
           </button>
         </div>
 
         {sent ? (
           <div className="p-8 text-center">
             <div className="w-16 h-16 bg-[#16a34a]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Mail className="w-8 h-8 text-[#16a34a]" />
+              <ThiingsIcon name="mail" pxSize={32} />
             </div>
             <h3 className="text-lg font-medium text-[#1C1917] mb-2">Campaign Sent!</h3>
             <p className="text-[#57534E]">
@@ -115,9 +116,7 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
             <div className="p-4 space-y-3">
               <label className="text-sm font-medium text-[#1C1917]">Campaign Type</label>
               <div className="grid grid-cols-3 gap-2">
-                {Object.entries(CAMPAIGN_TEMPLATES).map(([key, tmpl]) => {
-                  const Icon = tmpl.icon;
-                  return (
+                {Object.entries(CAMPAIGN_TEMPLATES).map(([key, tmpl]) => (
                     <button
                       key={key}
                       onClick={() => {
@@ -130,11 +129,10 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
                           : 'border-[#E7E5E4] hover:bg-[#F5F5F4]'
                       }`}
                     >
-                      <Icon className={`w-5 h-5 mx-auto mb-1 ${selectedCampaign === key ? 'text-[#9F1239]' : 'text-[#57534E]'}`} />
+                      <div className="flex justify-center mb-1"><ThiingsIcon name={tmpl.iconName} pxSize={20} /></div>
                       <span className="text-xs font-medium text-[#1C1917]">{tmpl.name}</span>
                     </button>
-                  );
-                })}
+                  ))}
               </div>
             </div>
 
@@ -168,7 +166,7 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
                   <>Sending...</>
                 ) : (
                   <>
-                    <Mail className="w-4 h-4" />
+                    <ThiingsIcon name="mail" pxSize={16} />
                     Send Campaign
                   </>
                 )}

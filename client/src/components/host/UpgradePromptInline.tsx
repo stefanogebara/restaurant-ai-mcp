@@ -4,7 +4,7 @@
  * Shows a teaser for Pro features within the dashboard layout
  */
 
-import { Lock, Sparkles, ArrowRight } from 'lucide-react';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface UpgradePromptInlineProps {
   feature: string;
@@ -30,12 +30,12 @@ export default function UpgradePromptInline({
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2 bg-primary/10 rounded-lg">
-            <Lock className="w-5 h-5 text-primary" />
+            <ThiingsIcon name="lock" pxSize={20} />
           </div>
           <div>
             <h3 className="font-semibold text-foreground">{feature}</h3>
             <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <Sparkles className="w-3 h-3" />
+              <ThiingsIcon name="sparkles" pxSize={12} />
               {requiredPlan} Feature
             </span>
           </div>
@@ -54,7 +54,7 @@ export default function UpgradePromptInline({
           className="w-full bg-primary/10 hover:bg-primary/20 text-primary font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
         >
           <span>Upgrade to {requiredPlan}</span>
-          <ArrowRight className="w-4 h-4" />
+          <ThiingsIcon name="arrow-right" pxSize={16} />
         </button>
       </div>
     </div>

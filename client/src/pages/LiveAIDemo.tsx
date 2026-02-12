@@ -3,7 +3,8 @@ import { useEffect } from 'react';
 import ElevenLabsWidget from '../components/ElevenLabsWidget';
 import RecentReservations from '../components/RecentReservations';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Phone, MessageSquare, Mic, Volume2, Sparkles, ArrowRight, ArrowDownRight, Keyboard } from 'lucide-react';
+import ThiingsIcon from '../components/common/ThiingsIcon';
+import type { IconName } from '../components/common/ThiingsIcon';
 import { useNavigate, Link } from 'react-router-dom';
 
 export default function LiveAIDemo() {
@@ -34,7 +35,7 @@ export default function LiveAIDemo() {
             to="/"
             className="inline-flex items-center gap-2 text-[#57534E] hover:text-[#1C1917] transition-colors text-sm"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ThiingsIcon name="arrow-left" size="xs" />
             Back to Home
           </Link>
 
@@ -61,7 +62,7 @@ export default function LiveAIDemo() {
           className="text-center mb-16"
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#9F1239]/10 rounded-full mb-6">
-            <Sparkles className="w-4 h-4 text-[#9F1239]" />
+            <ThiingsIcon name="sparkles" size="xs" />
             <span className="text-sm text-[#9F1239] font-medium">Live AI Demonstration</span>
           </div>
 
@@ -89,7 +90,7 @@ export default function LiveAIDemo() {
             <div className="bg-white p-8 rounded-[2rem] border border-[#E7E5E4] shadow-md">
               <h2 className="font-serif text-2xl text-[#1C1917] mb-6 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#9F1239] flex items-center justify-center">
-                  <Mic className="w-5 h-5 text-white" />
+                  <ThiingsIcon name="microphone" size="sm" />
                 </div>
                 How It Works
               </h2>
@@ -115,7 +116,7 @@ export default function LiveAIDemo() {
 
               {/* No microphone note */}
               <div className="mt-6 flex items-start gap-3 p-4 bg-[#FAFAF9] rounded-xl border border-[#E7E5E4]">
-                <Keyboard className="w-5 h-5 text-[#9F1239] flex-shrink-0 mt-0.5" />
+                <ThiingsIcon name="keyboard" size="sm" className="flex-shrink-0 mt-0.5" />
                 <p className="text-[#57534E] text-sm font-light">
                   <span className="font-medium text-[#1C1917]">No microphone?</span> You can also type your request in the chat widget.
                 </p>
@@ -126,7 +127,7 @@ export default function LiveAIDemo() {
             <div className="bg-white p-8 rounded-[2rem] border border-[#E7E5E4] shadow-md">
               <h2 className="font-serif text-2xl text-[#1C1917] mb-6 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#1C1917] flex items-center justify-center">
-                  <MessageSquare className="w-5 h-5 text-white" />
+                  <ThiingsIcon name="chat" size="sm" />
                 </div>
                 Try Saying...
               </h2>
@@ -143,7 +144,7 @@ export default function LiveAIDemo() {
                     key={index}
                     className="bg-[#FAFAF9] p-4 rounded-xl flex items-start gap-3 hover:bg-[#F5F5F4] transition-all cursor-pointer group border border-[#E7E5E4]"
                   >
-                    <Volume2 className="w-4 h-4 text-[#9F1239] flex-shrink-0 mt-0.5" />
+                    <ThiingsIcon name="volume" size="xs" className="flex-shrink-0 mt-0.5" />
                     <span className="text-[#57534E] text-sm italic font-light">"{phrase}"</span>
                   </div>
                 ))}
@@ -190,7 +191,7 @@ export default function LiveAIDemo() {
               <div className="text-center space-y-4 mb-8">
                 <div className="w-20 h-20 rounded-[1.5rem] bg-[#9F1239]/10 mx-auto flex items-center justify-center">
                   <div className="w-10 h-10 rounded-full bg-[#9F1239] flex items-center justify-center">
-                    <Mic className="w-5 h-5 text-white" />
+                    <ThiingsIcon name="microphone" size="sm" />
                   </div>
                 </div>
                 <h3 className="font-serif text-2xl text-[#1C1917]">AI Reservation Assistant</h3>
@@ -209,7 +210,7 @@ export default function LiveAIDemo() {
                     animate={{ x: [0, 4, 0], y: [0, 4, 0] }}
                     transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
                   >
-                    <ArrowDownRight className="w-4 h-4 text-[#9F1239]" />
+                    <ThiingsIcon name="arrow-right" size="xs" />
                   </motion.div>
                   <span className="text-xs text-[#9F1239] font-medium">
                     Look for the chat bubble in the bottom-right corner
@@ -218,7 +219,7 @@ export default function LiveAIDemo() {
                     animate={{ x: [0, 4, 0], y: [0, 4, 0] }}
                     transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
                   >
-                    <ArrowDownRight className="w-4 h-4 text-[#9F1239]" />
+                    <ThiingsIcon name="arrow-right" size="xs" />
                   </motion.div>
                 </motion.div>
               </div>
@@ -232,7 +233,7 @@ export default function LiveAIDemo() {
               {!import.meta.env.VITE_ELEVENLABS_AGENT_ID && (
                 <div className="mt-6 p-4 bg-amber-50 rounded-xl border border-amber-200">
                   <div className="flex items-start gap-3">
-                    <Sparkles className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <ThiingsIcon name="sparkles" size="sm" className="flex-shrink-0 mt-0.5" />
                     <div>
                       <h4 className="text-[#1C1917] font-medium mb-1">Configuration Required</h4>
                       <p className="text-[#57534E] text-sm font-light mb-2">
@@ -263,15 +264,15 @@ export default function LiveAIDemo() {
             <div className="bg-white p-6 rounded-[2rem] border border-[#E7E5E4] shadow-md mt-6">
               <h3 className="font-serif text-lg text-[#1C1917] mb-4">AI Capabilities</h3>
               <div className="grid grid-cols-2 gap-3">
-                {[
-                  { icon: Phone, label: 'Voice Recognition' },
-                  { icon: MessageSquare, label: 'Natural Language' },
-                  { icon: Sparkles, label: 'Smart Responses' },
-                  { icon: Volume2, label: 'Text-to-Speech' },
-                ].map((feature, index) => (
+                {([
+                  { icon: 'phone' as IconName, label: 'Voice Recognition' },
+                  { icon: 'chat' as IconName, label: 'Natural Language' },
+                  { icon: 'sparkles' as IconName, label: 'Smart Responses' },
+                  { icon: 'volume' as IconName, label: 'Text-to-Speech' },
+                ] as const).map((feature, index) => (
                   <div key={index} className="bg-[#FAFAF9] p-4 rounded-xl text-center border border-[#E7E5E4]">
                     <div className="w-10 h-10 rounded-xl bg-[#9F1239]/10 mx-auto mb-2 flex items-center justify-center">
-                      <feature.icon className="w-5 h-5 text-[#9F1239]" />
+                      <ThiingsIcon name={feature.icon} size="sm" />
                     </div>
                     <div className="text-sm text-[#57534E]">{feature.label}</div>
                   </div>
@@ -310,7 +311,7 @@ export default function LiveAIDemo() {
               className="bg-[#9F1239] text-white px-8 py-4 text-sm tracking-widest uppercase font-bold hover:bg-[#881337] transition-all duration-300 rounded-2xl shadow-xl shadow-[#9F1239]/20 inline-flex items-center gap-2"
             >
               Contact Sales
-              <ArrowRight className="w-4 h-4" />
+              <ThiingsIcon name="arrow-right" size="xs" />
             </button>
           </div>
         </motion.div>
@@ -334,7 +335,7 @@ export default function LiveAIDemo() {
           animate={{ y: [0, 6, 0] }}
           transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <ArrowDownRight className="w-5 h-5 text-[#9F1239]" />
+          <ThiingsIcon name="arrow-right" size="sm" />
         </motion.div>
       </motion.div>
     </div>

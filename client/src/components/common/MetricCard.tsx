@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import ThiingsIcon from './ThiingsIcon';
 
 interface MetricCardProps {
   title: string;
@@ -63,9 +63,9 @@ export default function MetricCard({
                 }`}
               >
                 {trend.isPositive ? (
-                  <TrendingUp className="w-3 h-3" />
+                  <ThiingsIcon name="trending-up" pxSize={12} />
                 ) : (
-                  <TrendingDown className="w-3 h-3" />
+                  <ThiingsIcon name="trending-down" pxSize={12} />
                 )}
                 {Math.abs(trend.value)}%
               </div>

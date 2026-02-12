@@ -1,35 +1,5 @@
 import { useState } from 'react';
-
-// SVG Icon Components
-const CalendarIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 20 20" fill="currentColor">
-    <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-  </svg>
-);
-
-const CheckIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 20 20" fill="currentColor">
-    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-  </svg>
-);
-
-const UsersIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-  </svg>
-);
-
-const ClockIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 20 20" fill="currentColor">
-    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-  </svg>
-);
-
-const ChartIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 20 20" fill="currentColor">
-    <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
-  </svg>
-);
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface QuickStatsProps {
   analyticsData?: {
@@ -49,7 +19,7 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
       <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-[#1C1917] flex items-center gap-2">
-            <ChartIcon className="w-5 h-5 text-[#9F1239]" />
+            <ThiingsIcon name="bar-chart" size="sm" />
             Quick Stats
           </h2>
         </div>
@@ -70,13 +40,11 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
         className="w-full p-6 flex items-center justify-between hover:bg-[#F5F5F4] transition-colors rounded-t-xl"
       >
         <h2 className="text-xl font-bold text-[#1C1917] flex items-center gap-2">
-          <ChartIcon className="w-5 h-5 text-[#9F1239]" />
+          <ThiingsIcon name="bar-chart" size="sm" />
           Quick Stats
         </h2>
         <div className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
-          <svg className="w-5 h-5 text-[#57534E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
+          <ThiingsIcon name="chevron-down" size="sm" />
         </div>
       </button>
 
@@ -87,7 +55,7 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
           <div className="flex items-center justify-between p-3 bg-[#F5F5F4] rounded-lg">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-[#9F1239] rounded-lg flex items-center justify-center">
-                <CalendarIcon className="w-5 h-5 text-white" />
+                <ThiingsIcon name="calendar" size="sm" />
               </div>
               <div>
                 <div className="text-sm font-medium text-[#1C1917]">Total Reservations</div>
@@ -101,7 +69,7 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
           <div className="flex items-center justify-between p-3 bg-[#F5F5F4] rounded-lg">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-[#16a34a] rounded-lg flex items-center justify-center">
-                <CheckIcon className="w-5 h-5 text-white" />
+                <ThiingsIcon name="check" size="sm" />
               </div>
               <div>
                 <div className="text-sm font-medium text-[#1C1917]">Completed Services</div>
@@ -115,7 +83,7 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
           <div className="flex items-center justify-between p-3 bg-[#F5F5F4] rounded-lg">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-[#7c3aed] rounded-lg flex items-center justify-center">
-                <UsersIcon className="w-5 h-5 text-white" />
+                <ThiingsIcon name="users" size="sm" />
               </div>
               <div>
                 <div className="text-sm font-medium text-[#1C1917]">Avg Party Size</div>
@@ -129,7 +97,7 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
           <div className="flex items-center justify-between p-3 bg-[#F5F5F4] rounded-lg">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-[#d97706] rounded-lg flex items-center justify-center">
-                <ClockIcon className="w-5 h-5 text-white" />
+                <ThiingsIcon name="clock" size="sm" />
               </div>
               <div>
                 <div className="text-sm font-medium text-[#1C1917]">Avg Service Time</div>

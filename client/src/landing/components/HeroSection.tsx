@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, TrendingUp } from 'lucide-react';
+import ThiingsIcon from '../../components/common/ThiingsIcon';
 
 export default function HeroSection() {
   const navigate = useNavigate();
@@ -116,15 +116,15 @@ export default function HeroSection() {
             {/* Mini Sidebar */}
             <div className="hidden md:flex flex-col w-48 bg-[#FAFAF9] border-r border-[#E7E5E4] p-4 gap-2">
               <div className="flex items-center gap-2 px-3 py-2 bg-[#9F1239] text-white rounded-lg text-xs font-medium">
-                <LayoutDashboard className="w-3.5 h-3.5" />
+                <ThiingsIcon name="dashboard" size="xs" pxSize={14} />
                 Overview
               </div>
               <div className="flex items-center gap-2 px-3 py-2 text-[#A8A29E] text-xs">
-                <Users className="w-3.5 h-3.5" />
+                <ThiingsIcon name="users" size="xs" pxSize={14} />
                 Customer DNA
               </div>
               <div className="flex items-center gap-2 px-3 py-2 text-[#A8A29E] text-xs">
-                <TrendingUp className="w-3.5 h-3.5" />
+                <ThiingsIcon name="trending-up" size="xs" pxSize={14} />
                 Analytics
               </div>
             </div>

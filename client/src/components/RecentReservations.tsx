@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { authFetch } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Calendar, Clock, Users, Phone, Mail, MessageSquare, Sparkles } from 'lucide-react';
+import ThiingsIcon from './common/ThiingsIcon';
 
 interface Reservation {
   reservation_id: string;
@@ -137,17 +137,17 @@ export default function RecentReservations() {
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
-                <Check className="w-6 h-6 text-white" />
+                <ThiingsIcon name="check" pxSize={24} />
               </div>
               <div className="flex-1">
                 <h3 className="text-white font-semibold text-lg">
-                  Reservation Confirmed! 🎉
+                  Reservation Confirmed!
                 </h3>
                 <p className="text-gray-400 text-sm">
                   Your reservation has been successfully created
                 </p>
               </div>
-              <Sparkles className="w-5 h-5 text-emerald-400 animate-pulse" />
+              <ThiingsIcon name="sparkles" pxSize={20} />
             </div>
           </motion.div>
         )}
@@ -161,7 +161,7 @@ export default function RecentReservations() {
       >
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
-            <Check className="w-6 h-6 text-white" />
+            <ThiingsIcon name="check" pxSize={24} />
           </div>
           <div>
             <h3 className="text-xl font-bold text-white">Latest Reservation</h3>
@@ -181,7 +181,7 @@ export default function RecentReservations() {
           {/* Customer Info */}
           <div className="grid grid-cols-1 gap-3">
             <div className="flex items-center gap-3 text-gray-300">
-              <Users className="w-5 h-5 text-indigo-400" />
+              <ThiingsIcon name="users" pxSize={20} />
               <div>
                 <div className="text-sm text-gray-400">Customer</div>
                 <div className="font-semibold text-white">{latestReservation.customer_name}</div>
@@ -189,7 +189,7 @@ export default function RecentReservations() {
             </div>
 
             <div className="flex items-center gap-3 text-gray-300">
-              <Phone className="w-5 h-5 text-emerald-400" />
+              <ThiingsIcon name="phone" pxSize={20} />
               <div>
                 <div className="text-sm text-gray-400">Phone</div>
                 <div className="font-semibold text-white">{latestReservation.customer_phone}</div>
@@ -198,7 +198,7 @@ export default function RecentReservations() {
 
             {latestReservation.customer_email && (
               <div className="flex items-center gap-3 text-gray-300">
-                <Mail className="w-5 h-5 text-purple-400" />
+                <ThiingsIcon name="mail" pxSize={20} />
                 <div>
                   <div className="text-sm text-gray-400">Email</div>
                   <div className="font-semibold text-white">{latestReservation.customer_email}</div>
@@ -211,7 +211,7 @@ export default function RecentReservations() {
           <div className="grid grid-cols-2 gap-3">
             <div className="glass-subtle p-3 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                <Calendar className="w-4 h-4 text-indigo-400" />
+                <ThiingsIcon name="calendar" pxSize={16} />
                 <span className="text-xs text-gray-400">Date</span>
               </div>
               <div className="font-semibold text-white">{latestReservation.date}</div>
@@ -219,7 +219,7 @@ export default function RecentReservations() {
 
             <div className="glass-subtle p-3 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                <Clock className="w-4 h-4 text-purple-400" />
+                <ThiingsIcon name="clock" pxSize={16} />
                 <span className="text-xs text-gray-400">Time</span>
               </div>
               <div className="font-semibold text-white">{latestReservation.time}</div>
@@ -228,7 +228,7 @@ export default function RecentReservations() {
 
           <div className="glass-subtle p-3 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
-              <Users className="w-4 h-4 text-emerald-400" />
+              <ThiingsIcon name="users" pxSize={16} />
               <span className="text-xs text-gray-400">Party Size</span>
             </div>
             <div className="font-semibold text-white">
@@ -240,7 +240,7 @@ export default function RecentReservations() {
           {latestReservation.special_requests && (
             <div className="glass-subtle p-4 rounded-xl">
               <div className="flex items-center gap-2 mb-2">
-                <MessageSquare className="w-4 h-4 text-amber-400" />
+                <ThiingsIcon name="chat" pxSize={16} />
                 <span className="text-sm text-gray-400">Special Requests</span>
               </div>
               <p className="text-white italic">"{latestReservation.special_requests}"</p>

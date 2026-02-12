@@ -7,7 +7,8 @@
 
 import { useState, useEffect } from 'react';
 import { authFetch } from '../../services/api';
-import { X, DollarSign, User, Phone, Calendar, Users, Search, Loader2 } from 'lucide-react';
+import ThiingsIcon from '../common/ThiingsIcon';
+import Spinner from '../common/Spinner';
 
 interface Customer {
   customer_id: string;
@@ -209,7 +210,7 @@ export default function ManualRevenueModal({
         <div className="sticky top-0 bg-white px-6 py-4 border-b border-[#E7E5E4] flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-[#16a34a]/10 rounded-lg">
-              <DollarSign className="w-5 h-5 text-[#16a34a]" />
+              <ThiingsIcon name="dollar" size="sm" />
             </div>
             <h2 className="text-xl font-bold text-[#1C1917]">{t.title}</h2>
           </div>
@@ -217,7 +218,7 @@ export default function ManualRevenueModal({
             onClick={onClose}
             className="p-2 hover:bg-[#F5F5F4] rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-[#57534E]" />
+            <ThiingsIcon name="x-circle" size="sm" />
           </button>
         </div>
 
@@ -229,7 +230,7 @@ export default function ManualRevenueModal({
               {t.customerSearch}
             </label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#57534E]" />
+              <ThiingsIcon name="search" size="xs" className="absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
@@ -238,7 +239,7 @@ export default function ManualRevenueModal({
                 className="w-full pl-10 pr-4 py-2 border border-[#E7E5E4] rounded-lg focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-colors"
               />
               {isSearching && (
-                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#57534E] animate-spin" />
+                <Spinner size="sm" className="absolute right-3 top-1/2 -translate-y-1/2" />
               )}
             </div>
 
@@ -252,7 +253,7 @@ export default function ManualRevenueModal({
                     onClick={() => selectCustomer(customer)}
                     className="w-full px-4 py-2 text-left hover:bg-[#F5F5F4] transition-colors flex items-center gap-3"
                   >
-                    <User className="w-4 h-4 text-[#57534E]" />
+                    <ThiingsIcon name="user" size="xs" />
                     <div>
                       <div className="font-medium text-[#1C1917]">
                         {customer.customer_name || customer.customer_phone || customer.customer_email}
@@ -271,7 +272,7 @@ export default function ManualRevenueModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[#1C1917] mb-1">
-                <Phone className="w-4 h-4 inline mr-1" />
+                <ThiingsIcon name="phone" size="xs" className="inline mr-1" />
                 {t.customerPhone}
               </label>
               <input
@@ -284,7 +285,7 @@ export default function ManualRevenueModal({
             </div>
             <div>
               <label className="block text-sm font-medium text-[#1C1917] mb-1">
-                <User className="w-4 h-4 inline mr-1" />
+                <ThiingsIcon name="user" size="xs" className="inline mr-1" />
                 {t.customerName}
               </label>
               <input
@@ -315,7 +316,7 @@ export default function ManualRevenueModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[#1C1917] mb-1">
-                <DollarSign className="w-4 h-4 inline mr-1" />
+                <ThiingsIcon name="dollar" size="xs" className="inline mr-1" />
                 {t.totalRevenue} *
               </label>
               <div className="relative">
@@ -355,7 +356,7 @@ export default function ManualRevenueModal({
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-[#1C1917] mb-1">
-                <Calendar className="w-4 h-4 inline mr-1" />
+                <ThiingsIcon name="calendar" size="xs" className="inline mr-1" />
                 {t.serviceDate} *
               </label>
               <input
@@ -379,7 +380,7 @@ export default function ManualRevenueModal({
             </div>
             <div>
               <label className="block text-sm font-medium text-[#1C1917] mb-1">
-                <Users className="w-4 h-4 inline mr-1" />
+                <ThiingsIcon name="users" size="xs" className="inline mr-1" />
                 {t.partySize}
               </label>
               <select
@@ -434,12 +435,12 @@ export default function ManualRevenueModal({
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Spinner size="sm" />
                   {t.saving}
                 </>
               ) : (
                 <>
-                  <DollarSign className="w-4 h-4" />
+                  <ThiingsIcon name="dollar" size="xs" />
                   {t.save}
                 </>
               )}

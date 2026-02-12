@@ -7,19 +7,9 @@
 
 import { useState } from 'react';
 import { authFetch } from '../../services/api';
-import {
-  X,
-  Phone,
-  MessageSquare,
-  CreditCard,
-  AlertTriangle,
-  User,
-  Users,
-  Calendar,
-  Clock,
-  Loader2,
-  CheckCircle2
-} from 'lucide-react';
+import ThiingsIcon from '../common/ThiingsIcon';
+import type { IconName } from '../common/ThiingsIcon';
+import Spinner from '../common/Spinner';
 
 interface Reservation {
   reservation_id: string;
@@ -109,12 +99,12 @@ export default function QuickInterventionModal({
 
   const t = translations[language];
 
-  const actionOptions = [
-    { id: 'phone_call', label: t.called, icon: Phone, color: 'bg-blue-500' },
-    { id: 'sms_reminder', label: t.sentSMS, icon: MessageSquare, color: 'bg-green-500' },
-    { id: 'whatsapp_reminder', label: t.sentWhatsApp, icon: MessageSquare, color: 'bg-emerald-500' },
-    { id: 'deposit_required', label: t.depositRequired, icon: CreditCard, color: 'bg-purple-500' },
-    { id: 'other', label: t.other, icon: CheckCircle2, color: 'bg-gray-500' }
+  const actionOptions: Array<{ id: string; label: string; icon: IconName; color: string }> = [
+    { id: 'phone_call', label: t.called, icon: 'phone', color: 'bg-blue-500' },
+    { id: 'sms_reminder', label: t.sentSMS, icon: 'chat', color: 'bg-green-500' },
+    { id: 'whatsapp_reminder', label: t.sentWhatsApp, icon: 'chat', color: 'bg-emerald-500' },
+    { id: 'deposit_required', label: t.depositRequired, icon: 'credit-card', color: 'bg-purple-500' },
+    { id: 'other', label: t.other, icon: 'check-circle', color: 'bg-gray-500' }
   ];
 
   const getRiskColor = (level?: string) => {
@@ -185,7 +175,7 @@ export default function QuickInterventionModal({
         <div className="sticky top-0 bg-white px-6 py-4 border-b border-[#E7E5E4] flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-orange-100 rounded-lg">
-              <AlertTriangle className="w-5 h-5 text-orange-600" />
+              <ThiingsIcon name="alert-triangle" size="sm" />
             </div>
             <h2 className="text-xl font-bold text-[#1C1917]">{t.title}</h2>
           </div>
@@ -193,7 +183,7 @@ export default function QuickInterventionModal({
             onClick={onClose}
             className="p-2 hover:bg-[#F5F5F4] rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-[#57534E]" />
+            <ThiingsIcon name="x-circle" size="sm" />
           </button>
         </div>
 
@@ -203,7 +193,7 @@ export default function QuickInterventionModal({
           <div className="bg-[#F5F5F4] rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <User className="w-4 h-4 text-[#9F1239]" />
+                <ThiingsIcon name="user" size="xs" />
                 <span className="font-semibold text-[#1C1917]">{reservation.customer_name}</span>
               </div>
               <div className={`px-2 py-1 rounded-lg border text-xs font-bold ${getRiskColor(reservation.ml_risk_level)}`}>
@@ -212,21 +202,21 @@ export default function QuickInterventionModal({
             </div>
             <div className="grid grid-cols-3 gap-3 text-sm text-[#57534E]">
               <div className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" />
+                <ThiingsIcon name="calendar" pxSize={14} />
                 <span>{reservation.date}</span>
               </div>
               <div className="flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" />
+                <ThiingsIcon name="clock" pxSize={14} />
                 <span>{reservation.time}</span>
               </div>
               <div className="flex items-center gap-1">
-                <Users className="w-3.5 h-3.5" />
+                <ThiingsIcon name="users" pxSize={14} />
                 <span>{reservation.party_size} {t.people}</span>
               </div>
             </div>
             {reservation.customer_phone && (
               <div className="mt-2 text-sm text-[#57534E] flex items-center gap-1">
-                <Phone className="w-3.5 h-3.5" />
+                <ThiingsIcon name="phone" pxSize={14} />
                 <span>{reservation.customer_phone}</span>
               </div>
             )}
@@ -250,7 +240,7 @@ export default function QuickInterventionModal({
           {/* Already taken indicator */}
           {reservation.intervention_taken && (
             <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
+              <ThiingsIcon name="check-circle" size="sm" />
               <div>
                 <span className="text-green-800 font-medium">{t.alreadyTaken}</span>
                 {reservation.intervention_type && (
@@ -269,7 +259,6 @@ export default function QuickInterventionModal({
                 <h3 className="text-sm font-semibold text-[#1C1917] mb-3">{t.quickActions}</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {actionOptions.map((action) => {
-                    const Icon = action.icon;
                     const isSelected = selectedAction === action.id;
                     return (
                       <button
@@ -282,7 +271,7 @@ export default function QuickInterventionModal({
                         }`}
                       >
                         <div className={`p-1.5 rounded-lg ${action.color}`}>
-                          <Icon className="w-4 h-4 text-white" />
+                          <ThiingsIcon name={action.icon} size="xs" />
                         </div>
                         <span className={`text-sm font-medium ${isSelected ? 'text-[#9F1239]' : 'text-[#1C1917]'}`}>
                           {action.label}
@@ -327,7 +316,7 @@ export default function QuickInterventionModal({
           {success && (
             <div className="text-center py-6">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle2 className="w-8 h-8 text-green-600" />
+                <ThiingsIcon name="check-circle" pxSize={32} />
               </div>
               <p className="text-lg font-semibold text-green-800">{t.success}</p>
             </div>
@@ -357,12 +346,12 @@ export default function QuickInterventionModal({
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Spinner size="sm" />
                     {t.saving}
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="w-4 h-4" />
+                    <ThiingsIcon name="check-circle" size="xs" />
                     {t.save}
                   </>
                 )}

@@ -4,7 +4,7 @@
  * Displays user's current subscription plan
  */
 
-import { Crown, Zap, Star } from 'lucide-react';
+import ThiingsIcon, { type IconName } from './common/ThiingsIcon';
 
 interface PlanBadgeProps {
   plan: string;
@@ -25,7 +25,7 @@ export default function PlanBadge({
       case 'basic':
         return {
           bg: 'bg-[#57534E]',
-          icon: Zap,
+          iconName: 'zap' as IconName,
           textColor: 'text-[#57534E]',
           bgLight: 'bg-[#F5F5F4]',
           borderColor: 'border-[#E7E5E4]',
@@ -33,7 +33,7 @@ export default function PlanBadge({
       case 'professional':
         return {
           bg: 'bg-[#9F1239]',
-          icon: Star,
+          iconName: 'star' as IconName,
           textColor: 'text-[#9F1239]',
           bgLight: 'bg-[#9F1239]/10',
           borderColor: 'border-[#9F1239]/30',
@@ -41,7 +41,7 @@ export default function PlanBadge({
       case 'enterprise':
         return {
           bg: 'bg-[#7c3aed]',
-          icon: Crown,
+          iconName: 'crown' as IconName,
           textColor: 'text-[#7c3aed]',
           bgLight: 'bg-[#7c3aed]/10',
           borderColor: 'border-[#7c3aed]/30',
@@ -49,7 +49,7 @@ export default function PlanBadge({
       default:
         return {
           bg: 'bg-[#57534E]',
-          icon: Zap,
+          iconName: 'zap' as IconName,
           textColor: 'text-[#57534E]',
           bgLight: 'bg-[#F5F5F4]',
           borderColor: 'border-[#E7E5E4]',
@@ -57,21 +57,21 @@ export default function PlanBadge({
     }
   };
 
-  const { bg, icon: Icon, textColor, bgLight, borderColor } = getPlanStyle();
+  const { bg, iconName, textColor, bgLight, borderColor } = getPlanStyle();
 
   // Size variants
   const sizeClasses = {
     small: {
       container: 'px-2 py-1 text-xs',
-      icon: 'w-3 h-3',
+      iconPx: 12,
     },
     medium: {
       container: 'px-3 py-1.5 text-sm',
-      icon: 'w-4 h-4',
+      iconPx: 16,
     },
     large: {
       container: 'px-4 py-2 text-base',
-      icon: 'w-5 h-5',
+      iconPx: 20,
     },
   };
 
@@ -82,8 +82,8 @@ export default function PlanBadge({
       <div
         className={`inline-flex items-center gap-1.5 ${classes.container} rounded-full ${bgLight} border ${borderColor}`}
       >
-        <div className={`${classes.icon} rounded-full ${bg} flex items-center justify-center p-0.5`}>
-          <Icon className="w-full h-full text-white" />
+        <div className={`rounded-full ${bg} flex items-center justify-center p-0.5`} style={{ width: classes.iconPx, height: classes.iconPx }}>
+          <ThiingsIcon name={iconName} pxSize={classes.iconPx - 4} />
         </div>
         <span className={`font-semibold ${textColor}`}>{plan}</span>
       </div>

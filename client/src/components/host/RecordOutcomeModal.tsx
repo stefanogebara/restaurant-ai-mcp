@@ -7,7 +7,7 @@
  */
 
 import { useState } from 'react';
-import { X, CheckCircle, XCircle, Ban, Phone, CreditCard, Star } from 'lucide-react';
+import ThiingsIcon from '../common/ThiingsIcon';
 import type { UpcomingReservation } from '../../types/host.types';
 import RiskScoreBadge from './RiskScoreBadge';
 
@@ -83,7 +83,7 @@ export default function RecordOutcomeModal({
             className="w-10 h-10 rounded-full hover:bg-[#F5F5F4] flex items-center justify-center transition-colors"
             disabled={isSubmitting}
           >
-            <X className="w-5 h-5 text-[#57534E]" />
+            <ThiingsIcon name="close" pxSize={20} />
           </button>
         </div>
 
@@ -121,9 +121,7 @@ export default function RecordOutcomeModal({
                     : 'border-[#E7E5E4] hover:border-[#16a34a]/50'
                 }`}
               >
-                <CheckCircle className={`w-8 h-8 mx-auto mb-2 ${
-                  outcome === 'showed_up' ? 'text-[#16a34a]' : 'text-[#A8A29E]'
-                }`} />
+                <div className="flex justify-center mb-2"><ThiingsIcon name="check-circle" pxSize={32} /></div>
                 <div className="text-sm font-medium text-[#1C1917]">Showed Up</div>
               </button>
 
@@ -136,9 +134,7 @@ export default function RecordOutcomeModal({
                     : 'border-[#E7E5E4] hover:border-[#9F1239]/50'
                 }`}
               >
-                <XCircle className={`w-8 h-8 mx-auto mb-2 ${
-                  outcome === 'no_show' ? 'text-[#9F1239]' : 'text-[#A8A29E]'
-                }`} />
+                <div className="flex justify-center mb-2"><ThiingsIcon name="x-circle" pxSize={32} /></div>
                 <div className="text-sm font-medium text-[#1C1917]">No Show</div>
               </button>
 
@@ -151,9 +147,7 @@ export default function RecordOutcomeModal({
                     : 'border-[#E7E5E4] hover:border-[#d97706]/50'
                 }`}
               >
-                <Ban className={`w-8 h-8 mx-auto mb-2 ${
-                  outcome === 'cancelled' ? 'text-[#d97706]' : 'text-[#A8A29E]'
-                }`} />
+                <div className="flex justify-center mb-2"><ThiingsIcon name="ban" pxSize={32} /></div>
                 <div className="text-sm font-medium text-[#1C1917]">Cancelled</div>
               </button>
             </div>
@@ -189,7 +183,7 @@ export default function RecordOutcomeModal({
                           : 'border-[#E7E5E4] hover:border-[#9F1239]/50'
                       }`}
                     >
-                      <Phone className="w-5 h-5 mx-auto mb-1 text-[#9F1239]" />
+                      <div className="flex justify-center mb-1"><ThiingsIcon name="phone" pxSize={20} /></div>
                       <div className="text-xs font-medium text-[#1C1917]">Call</div>
                     </button>
 
@@ -202,7 +196,7 @@ export default function RecordOutcomeModal({
                           : 'border-[#E7E5E4] hover:border-[#7c3aed]/50'
                       }`}
                     >
-                      <CreditCard className="w-5 h-5 mx-auto mb-1 text-[#7c3aed]" />
+                      <div className="flex justify-center mb-1"><ThiingsIcon name="credit-card" pxSize={20} /></div>
                       <div className="text-xs font-medium text-[#1C1917]">Deposit</div>
                     </button>
 
@@ -215,7 +209,7 @@ export default function RecordOutcomeModal({
                           : 'border-[#E7E5E4] hover:border-[#d97706]/50'
                       }`}
                     >
-                      <Star className="w-5 h-5 mx-auto mb-1 text-[#d97706]" />
+                      <div className="flex justify-center mb-1"><ThiingsIcon name="star" pxSize={20} /></div>
                       <div className="text-xs font-medium text-[#1C1917]">Premium</div>
                     </button>
                   </div>

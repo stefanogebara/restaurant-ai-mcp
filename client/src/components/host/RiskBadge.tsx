@@ -1,3 +1,5 @@
+import ThiingsIcon, { type IconName } from '../common/ThiingsIcon';
+
 interface RiskBadgeProps {
   riskLevel?: 'low' | 'medium' | 'high' | 'very-high';
   riskScore?: number;
@@ -21,7 +23,7 @@ export default function RiskBadge({ riskLevel, riskScore, size = 'md', showToolt
 
   const configs = {
     'low': {
-      emoji: '✅',
+      iconName: 'green-check' as IconName,
       color: 'text-green-400',
       bg: 'bg-green-500/20',
       border: 'border-green-500/30',
@@ -29,7 +31,7 @@ export default function RiskBadge({ riskLevel, riskScore, size = 'md', showToolt
       recommendation: 'Standard confirmation'
     },
     'medium': {
-      emoji: '⚠️',
+      iconName: 'alert-triangle' as IconName,
       color: 'text-yellow-400',
       bg: 'bg-yellow-500/20',
       border: 'border-yellow-500/30',
@@ -37,7 +39,7 @@ export default function RiskBadge({ riskLevel, riskScore, size = 'md', showToolt
       recommendation: 'Send reminder notification'
     },
     'high': {
-      emoji: '🔶',
+      iconName: 'alert-circle' as IconName,
       color: 'text-orange-400',
       bg: 'bg-orange-500/20',
       border: 'border-orange-500/30',
@@ -45,7 +47,7 @@ export default function RiskBadge({ riskLevel, riskScore, size = 'md', showToolt
       recommendation: 'Call to confirm'
     },
     'very-high': {
-      emoji: '🔴',
+      iconName: 'red-x' as IconName,
       color: 'text-red-400',
       bg: 'bg-red-500/20',
       border: 'border-red-500/30',
@@ -73,7 +75,7 @@ export default function RiskBadge({ riskLevel, riskScore, size = 'md', showToolt
       `}
       title={showTooltip ? `${riskScore ? riskScore + '% ' : ''}${config.label} - ${config.recommendation}` : undefined}
     >
-      <span>{config.emoji}</span>
+      <ThiingsIcon name={config.iconName} size="xs" />
       <span className="font-semibold">{config.label}</span>
       {riskScore !== undefined && size !== 'sm' && (
         <span className="opacity-75">({riskScore}%)</span>

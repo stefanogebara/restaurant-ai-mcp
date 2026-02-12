@@ -7,7 +7,8 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { Phone, Calendar, Clock, CheckCircle, XCircle, TrendingUp, MessageSquare, Globe, PhoneCall, AlertCircle, Loader2, Stethoscope, Wrench, PhoneOff, Wifi, WifiOff } from 'lucide-react';
+import ThiingsIcon from '../components/common/ThiingsIcon';
+import Spinner from '../components/common/Spinner';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import Breadcrumb, { breadcrumbConfigs } from '../components/common/Breadcrumb';
 import { useToast } from '../contexts/ToastContext';
@@ -326,21 +327,21 @@ export default function CallTrackingDashboard() {
       case 'pending':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-yellow-500/10 text-yellow-600 text-xs font-semibold rounded-full">
-            <Loader2 className="w-3 h-3 animate-spin" />
+            <Spinner size="sm" />
             Pending
           </span>
         );
       case 'error':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-500/10 text-red-600 text-xs font-semibold rounded-full">
-            <AlertCircle className="w-3 h-3" />
+            <ThiingsIcon name="alert-circle" size="xs" />
             Error
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-500/10 text-gray-600 text-xs font-semibold rounded-full">
-            <WifiOff className="w-3 h-3" />
+            <ThiingsIcon name="wifi-off" size="xs" />
             Not Configured
           </span>
         );
@@ -392,13 +393,7 @@ export default function CallTrackingDashboard() {
                     ? 'bg-red-500/10'
                     : 'bg-gray-500/10'
               }`}>
-                <PhoneCall className={`w-6 h-6 ${
-                  phoneStatus?.status === 'active'
-                    ? 'text-green-600'
-                    : phoneStatus?.status === 'error'
-                      ? 'text-red-600'
-                      : 'text-gray-600'
-                }`} />
+                <ThiingsIcon name="phone-call" pxSize={24} />
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-[#1C1917]">Phone Status</h2>
@@ -414,7 +409,7 @@ export default function CallTrackingDashboard() {
             </div>
             <div className="flex items-center gap-2">
               {phoneStatusLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin text-[#57534E]" />
+                <Spinner size="md" />
               ) : (
                 phoneStatus && getStatusBadge(phoneStatus.status)
               )}
@@ -428,9 +423,9 @@ export default function CallTrackingDashboard() {
                 <p className="text-xs text-[#57534E] mb-1">Connection</p>
                 <div className="flex items-center gap-2">
                   {phoneStatus.status === 'active' ? (
-                    <Wifi className="w-4 h-4 text-green-500" />
+                    <ThiingsIcon name="wifi" size="xs" />
                   ) : (
-                    <WifiOff className="w-4 h-4 text-gray-400" />
+                    <ThiingsIcon name="wifi-off" size="xs" />
                   )}
                   <span className="text-sm font-medium text-[#1C1917] capitalize">
                     {phoneStatus.status === 'not_configured' ? 'Not Connected' : phoneStatus.status}
@@ -470,7 +465,7 @@ export default function CallTrackingDashboard() {
           {/* Error message display */}
           {phoneStatus?.status === 'error' && phoneStatus.error && (
             <div className="mt-4 bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+              <ThiingsIcon name="alert-circle" size="sm" className="shrink-0 mt-0.5" />
               <p className="text-sm text-red-600">{phoneStatus.error}</p>
             </div>
           )}
@@ -486,12 +481,12 @@ export default function CallTrackingDashboard() {
               >
                 {setupLoading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Spinner size="sm" />
                     Setting up...
                   </>
                 ) : (
                   <>
-                    <Phone className="w-4 h-4" />
+                    <ThiingsIcon name="phone" size="xs" />
                     Setup Phone
                   </>
                 )}
@@ -507,12 +502,12 @@ export default function CallTrackingDashboard() {
               >
                 {diagnoseLoading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Spinner size="sm" />
                     Diagnosing...
                   </>
                 ) : (
                   <>
-                    <Stethoscope className="w-4 h-4" />
+                    <ThiingsIcon name="stethoscope" size="xs" />
                     Diagnose Agent
                   </>
                 )}
@@ -528,12 +523,12 @@ export default function CallTrackingDashboard() {
               >
                 {disconnectLoading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Spinner size="sm" />
                     Disconnecting...
                   </>
                 ) : (
                   <>
-                    <PhoneOff className="w-4 h-4" />
+                    <ThiingsIcon name="phone-off" size="xs" />
                     Disconnect
                   </>
                 )}
@@ -559,7 +554,7 @@ export default function CallTrackingDashboard() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center">
-                  <Stethoscope className="w-5 h-5 text-purple-600" />
+                  <ThiingsIcon name="stethoscope" size="sm" />
                 </div>
                 <h2 className="text-lg font-semibold text-[#1C1917]">Agent Diagnostics</h2>
               </div>
@@ -570,13 +565,13 @@ export default function CallTrackingDashboard() {
                 }}
                 className="p-1 hover:bg-[#F5F5F4] rounded transition-colors"
               >
-                <XCircle className="w-5 h-5 text-[#57534E]" />
+                <ThiingsIcon name="close" size="sm" />
               </button>
             </div>
 
             {diagnoseLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin text-[#9F1239]" />
+                <Spinner size="lg" />
               </div>
             ) : diagnoseData ? (
               <div className="space-y-4">
@@ -656,7 +651,7 @@ export default function CallTrackingDashboard() {
                 {diagnoseData.tool_ids_count === 0 && (
                   <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
                     <div className="flex items-start gap-3">
-                      <AlertCircle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
+                      <ThiingsIcon name="alert-circle" size="sm" className="shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <p className="text-sm font-medium text-[#1C1917]">No tools configured</p>
                         <p className="text-xs text-[#57534E] mt-1">
@@ -669,12 +664,12 @@ export default function CallTrackingDashboard() {
                         >
                           {fixToolsLoading ? (
                             <>
-                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <Spinner size="sm" />
                               Fixing tools...
                             </>
                           ) : (
                             <>
-                              <Wrench className="w-4 h-4" />
+                              <ThiingsIcon name="wrench" size="xs" />
                               Fix Tools
                             </>
                           )}
@@ -749,7 +744,7 @@ export default function CallTrackingDashboard() {
             <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-full bg-[#9F1239]/10 flex items-center justify-center">
-                  <Phone className="w-5 h-5 text-[#9F1239]" />
+                  <ThiingsIcon name="phone" size="sm" />
                 </div>
                 <div>
                   <p className="text-sm text-[#57534E]">Total Calls</p>
@@ -762,7 +757,7 @@ export default function CallTrackingDashboard() {
             <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-full bg-[#16a34a]/10 flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-[#16a34a]" />
+                  <ThiingsIcon name="check-circle" size="sm" />
                 </div>
                 <div>
                   <p className="text-sm text-[#57534E]">Reservations</p>
@@ -775,7 +770,7 @@ export default function CallTrackingDashboard() {
             <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-full bg-[#9F1239]/10 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-[#9F1239]" />
+                  <ThiingsIcon name="trending-up" size="sm" />
                 </div>
                 <div>
                   <p className="text-sm text-[#57534E]">Success Rate</p>
@@ -788,7 +783,7 @@ export default function CallTrackingDashboard() {
             <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-full bg-[#d97706]/10 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-[#d97706]" />
+                  <ThiingsIcon name="clock" size="sm" />
                 </div>
                 <div>
                   <p className="text-sm text-[#57534E]">Avg Duration</p>
@@ -830,7 +825,7 @@ export default function CallTrackingDashboard() {
                     <tr key={conv.id} className="hover:bg-[#F5F5F4]/30 transition-colors">
                       <td className="p-4">
                         <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-[#57534E]" />
+                          <ThiingsIcon name="calendar" size="xs" />
                           <span className="text-sm text-[#1C1917]">{formatDate(conv.started_at)}</span>
                         </div>
                       </td>
@@ -848,7 +843,7 @@ export default function CallTrackingDashboard() {
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-[#57534E]" />
+                          <ThiingsIcon name="clock" size="xs" />
                           <span className="text-sm text-[#1C1917]">
                             {conv.duration_seconds ? `${Math.floor(conv.duration_seconds / 60)}m ${conv.duration_seconds % 60}s` : 'In progress'}
                           </span>
@@ -856,7 +851,7 @@ export default function CallTrackingDashboard() {
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
-                          <Globe className="w-4 h-4 text-[#57534E]" />
+                          <ThiingsIcon name="globe" size="xs" />
                           <span className="text-sm text-[#1C1917] uppercase">{conv.language}</span>
                         </div>
                       </td>
@@ -897,7 +892,7 @@ export default function CallTrackingDashboard() {
                   onClick={() => setSelectedConversation(null)}
                   className="p-2 hover:bg-[#F5F5F4] rounded-lg transition-colors"
                 >
-                  <XCircle className="w-5 h-5 text-[#57534E]" />
+                  <ThiingsIcon name="close" size="sm" />
                 </button>
               </div>
 
@@ -907,7 +902,7 @@ export default function CallTrackingDashboard() {
                 {selectedConversation.summary && (
                   <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
                     <div className="flex items-start gap-3">
-                      <MessageSquare className="w-5 h-5 text-blue-600 mt-0.5" />
+                      <ThiingsIcon name="chat" size="sm" className="mt-0.5" />
                       <div>
                         <h3 className="font-semibold text-[#1C1917] mb-1">Summary</h3>
                         <p className="text-sm text-[#57534E]">{selectedConversation.summary}</p>
@@ -952,9 +947,9 @@ export default function CallTrackingDashboard() {
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-[#1C1917]">{tool.tool_name}</span>
                             {tool.success ? (
-                              <CheckCircle className="w-4 h-4 text-green-600" />
+                              <ThiingsIcon name="check-circle" size="xs" />
                             ) : (
-                              <XCircle className="w-4 h-4 text-red-600" />
+                              <ThiingsIcon name="x-circle" size="xs" />
                             )}
                           </div>
                         </div>

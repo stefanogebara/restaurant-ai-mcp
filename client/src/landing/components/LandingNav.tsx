@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import ThiingsIcon from '../../components/common/ThiingsIcon';
 import { useNavigate } from 'react-router-dom';
 
 export default function LandingNav() {
@@ -105,7 +105,7 @@ export default function LandingNav() {
           className="md:hidden text-[#1C1917]"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          {isMobileMenuOpen ? <ThiingsIcon name="close" pxSize={24} /> : <ThiingsIcon name="menu" pxSize={24} />}
         </button>
       </div>
 

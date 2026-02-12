@@ -8,26 +8,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { authFetch } from '../../services/api';
-import {
-  ArrowLeft,
-  User,
-  Phone,
-  Clock,
-  Calendar,
-  DollarSign,
-  Users,
-  Brain,
-  Sparkles,
-  TrendingUp,
-  Star,
-  AlertCircle,
-  ChevronDown,
-  ChevronUp,
-  Utensils,
-  MessageSquare,
-  Timer,
-  MapPin
-} from 'lucide-react';
+import ThiingsIcon from '../common/ThiingsIcon';
+import Spinner from '../common/Spinner';
 
 interface Profile {
   customer_id: string;
@@ -167,7 +149,7 @@ export default function CustomerProfileView() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#E7E5E4] border-t-[#9F1239]"></div>
+        <Spinner size="lg" />
       </div>
     );
   }
@@ -176,10 +158,10 @@ export default function CustomerProfileView() {
     return (
       <div className="space-y-4">
         <button onClick={() => navigate('/host-dashboard/dna')} className="flex items-center gap-2 text-[#57534E] hover:text-[#1C1917] transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Back to DNA Dashboard
+          <ThiingsIcon name="arrow-left" size="xs" /> Back to DNA Dashboard
         </button>
         <div className="bg-white rounded-xl border border-[#E7E5E4] p-8 text-center">
-          <AlertCircle className="w-12 h-12 text-[#57534E] mx-auto mb-4" />
+          <ThiingsIcon name="alert-circle" pxSize={48} className="mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-[#1C1917] mb-2">{error || 'Profile not found'}</h3>
           <p className="text-sm text-[#57534E] mb-4">This customer may not have been analyzed yet.</p>
           <button onClick={handleAnalyze} className="px-4 py-2 bg-[#9F1239] text-white rounded-xl hover:bg-[#881337] transition-colors">
@@ -229,7 +211,7 @@ export default function CustomerProfileView() {
     <div className="space-y-6">
       {/* Back Navigation */}
       <button onClick={() => navigate('/host-dashboard/dna')} className="flex items-center gap-2 text-[#57534E] hover:text-[#1C1917] transition-colors">
-        <ArrowLeft className="w-4 h-4" /> Back to DNA Dashboard
+        <ThiingsIcon name="arrow-left" size="xs" /> Back to DNA Dashboard
       </button>
 
       {/* Header */}
@@ -237,7 +219,7 @@ export default function CustomerProfileView() {
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-[#7c3aed]/10 flex items-center justify-center">
-              <User className="w-8 h-8 text-[#7c3aed]" />
+              <ThiingsIcon name="user" pxSize={32} />
             </div>
             <div>
               <div className="flex items-center gap-3">
@@ -245,16 +227,16 @@ export default function CustomerProfileView() {
                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${tier.color}`}>{tier.label}</span>
                 {textSignals?.vip_signals && (
                   <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#d97706]/20 text-[#d97706]">
-                    <Star className="w-3 h-3 inline mr-1" />VIP Signals
+                    <ThiingsIcon name="star" pxSize={12} className="inline mr-1" />VIP Signals
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-4 mt-1 text-sm text-[#57534E]">
-                <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{data.customer_id}</span>
-                <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{data.reservations.length} visits</span>
+                <span className="flex items-center gap-1"><ThiingsIcon name="phone" pxSize={12} />{data.customer_id}</span>
+                <span className="flex items-center gap-1"><ThiingsIcon name="calendar" pxSize={12} />{data.reservations.length} visits</span>
                 {profile?.last_analyzed_at && (
                   <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
+                    <ThiingsIcon name="clock" pxSize={12} />
                     Analyzed {new Date(profile.last_analyzed_at).toLocaleDateString()}
                   </span>
                 )}
@@ -294,14 +276,14 @@ export default function CustomerProfileView() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl border border-[#E7E5E4] p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="w-4 h-4 text-[#16a34a]" />
+            <ThiingsIcon name="dollar" pxSize={16} />
             <span className="text-xs text-[#57534E]">Avg Check/Person</span>
           </div>
           <div className="text-2xl font-bold text-[#1C1917]">{formatCurrency(profile?.avg_check_per_person ?? null)}</div>
         </div>
         <div className="bg-white rounded-xl border border-[#E7E5E4] p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="w-4 h-4 text-[#d97706]" />
+            <ThiingsIcon name="trending-up" size="xs" />
             <span className="text-xs text-[#57534E]">Avg Tip</span>
           </div>
           <div className="text-2xl font-bold text-[#1C1917]">
@@ -310,7 +292,7 @@ export default function CustomerProfileView() {
         </div>
         <div className="bg-white rounded-xl border border-[#E7E5E4] p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
-            <Timer className="w-4 h-4 text-[#7c3aed]" />
+            <ThiingsIcon name="clock" size="xs" />
             <span className="text-xs text-[#57534E]">Avg Duration</span>
           </div>
           <div className="text-2xl font-bold text-[#1C1917]">
@@ -319,7 +301,7 @@ export default function CustomerProfileView() {
         </div>
         <div className="bg-white rounded-xl border border-[#E7E5E4] p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
-            <Users className="w-4 h-4 text-[#9F1239]" />
+            <ThiingsIcon name="users" size="xs" />
             <span className="text-xs text-[#57534E]">Typical Party</span>
           </div>
           <div className="text-2xl font-bold text-[#1C1917]">
@@ -332,7 +314,7 @@ export default function CustomerProfileView() {
         {/* Behavioral Profile */}
         <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-lg">
           <h2 className="text-lg font-semibold font-serif text-[#1C1917] mb-4 flex items-center gap-2">
-            <Brain className="w-5 h-5 text-[#7c3aed]" />
+            <ThiingsIcon name="brain" size="sm" />
             Behavioral Profile
           </h2>
           <div className="space-y-4">
@@ -402,7 +384,7 @@ export default function CustomerProfileView() {
               <div>
                 <div className="text-xs text-[#57534E] mb-1">Preferred Seating</div>
                 <div className="text-sm font-medium text-[#1C1917] flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
+                  <ThiingsIcon name="map-pin" pxSize={12} />
                   {profile?.preferred_seating || 'No preference'}
                 </div>
               </div>
@@ -427,7 +409,7 @@ export default function CustomerProfileView() {
         {/* AI Insights */}
         <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-lg">
           <h2 className="text-lg font-semibold font-serif text-[#1C1917] mb-4 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[#d97706]" />
+            <ThiingsIcon name="sparkles" size="sm" />
             AI Insights
           </h2>
 
@@ -446,7 +428,7 @@ export default function CustomerProfileView() {
                   <div className="space-y-1">
                     {textSignals.key_phrases.map((phrase, i) => (
                       <div key={i} className="flex items-start gap-2">
-                        <MessageSquare className="w-3 h-3 text-[#d97706] mt-1 shrink-0" />
+                        <ThiingsIcon name="chat" pxSize={12} className="mt-1 shrink-0" />
                         <span className="text-sm text-[#1C1917] italic">"{phrase}"</span>
                       </div>
                     ))}
@@ -490,7 +472,7 @@ export default function CustomerProfileView() {
             </div>
           ) : (
             <div className="text-center py-8 text-[#57534E]">
-              <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-30" />
+              <ThiingsIcon name="sparkles" pxSize={32} className="mx-auto mb-2 opacity-30" />
               <p className="text-sm">No AI insights available yet.</p>
               <p className="text-xs mt-1">Run analysis to extract signals from text data.</p>
               <button onClick={handleAnalyze} className="mt-3 px-4 py-2 bg-[#d97706] text-white text-sm rounded-lg hover:bg-[#b45309] transition-colors">
@@ -508,11 +490,11 @@ export default function CustomerProfileView() {
           className="w-full flex items-center justify-between"
         >
           <h2 className="text-lg font-semibold font-serif text-[#1C1917] flex items-center gap-2">
-            <Utensils className="w-5 h-5 text-[#9F1239]" />
+            <ThiingsIcon name="utensils" size="sm" />
             Visit History
             <span className="px-2 py-0.5 bg-[#9F1239]/10 text-[#9F1239] text-xs rounded-full font-semibold">{data.reservations.length}</span>
           </h2>
-          {showAllReservations ? <ChevronUp className="w-5 h-5 text-[#57534E]" /> : <ChevronDown className="w-5 h-5 text-[#57534E]" />}
+          {showAllReservations ? <ThiingsIcon name="chevron-up" size="sm" /> : <ThiingsIcon name="chevron-down" size="sm" />}
         </button>
 
         <div className="mt-4 space-y-2">
@@ -548,7 +530,7 @@ export default function CustomerProfileView() {
         {/* Predictions */}
         <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-lg">
           <h2 className="text-lg font-semibold font-serif text-[#1C1917] mb-4 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-[#16a34a]" />
+            <ThiingsIcon name="trending-up" size="sm" />
             Predictions
           </h2>
           {data.predictions.length > 0 ? (
@@ -586,7 +568,7 @@ export default function CustomerProfileView() {
         {/* Revenue Summary */}
         <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-lg">
           <h2 className="text-lg font-semibold font-serif text-[#1C1917] mb-4 flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-[#d97706]" />
+            <ThiingsIcon name="dollar" size="sm" />
             Revenue Summary
           </h2>
           <div className="space-y-4">
@@ -654,7 +636,7 @@ export default function CustomerProfileView() {
           onClick={handleAnalyze}
           className="px-6 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-[#9F1239]/30 flex items-center gap-2"
         >
-          <Brain className="w-5 h-5" />
+          <ThiingsIcon name="brain" pxSize={20} />
           Re-analyze Customer DNA
         </button>
       </div>

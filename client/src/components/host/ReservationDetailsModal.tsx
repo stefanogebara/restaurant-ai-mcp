@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { UpcomingReservation } from '../../types/host.types';
 import ReservationNotesEditor from './ReservationNotesEditor';
-import { Edit2, Utensils, Languages, MapPin, Calendar, Users as UsersIcon, Accessibility, FileText } from 'lucide-react';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface ReservationDetailsModalProps {
   isOpen: boolean;
@@ -165,7 +165,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
               onClick={() => setIsEditingNotes(true)}
               className="flex items-center gap-2 px-3 py-1.5 bg-[#9F1239] hover:bg-[#881337] text-white text-sm rounded-lg transition"
             >
-              <Edit2 className="w-4 h-4" />
+              <ThiingsIcon name="edit" pxSize={16} />
               Edit Notes
             </button>
           </div>
@@ -174,7 +174,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
             {/* Customer Type */}
             {reservation.customer_type && (
               <div className="flex items-start gap-3">
-                <UsersIcon className="w-5 h-5 text-[#9F1239] mt-0.5" />
+                <ThiingsIcon name="users" pxSize={20} className="mt-0.5" />
                 <div>
                   <div className="text-xs text-[#A8A29E]">Customer Type</div>
                   <div className="text-[#1C1917] font-medium">{reservation.customer_type}</div>
@@ -188,7 +188,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
             {/* Dietary Restrictions */}
             {reservation.dietary_restrictions && reservation.dietary_restrictions.length > 0 && (
               <div className="flex items-start gap-3">
-                <Utensils className="w-5 h-5 text-[#16a34a] mt-0.5" />
+                <ThiingsIcon name="utensils" pxSize={20} className="mt-0.5" />
                 <div>
                   <div className="text-xs text-[#A8A29E]">Dietary Restrictions</div>
                   <div className="flex flex-wrap gap-1 mt-1">
@@ -208,7 +208,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
             {/* Language Preference */}
             {reservation.language_preference && (
               <div className="flex items-start gap-3">
-                <Languages className="w-5 h-5 text-[#7c3aed] mt-0.5" />
+                <ThiingsIcon name="languages" pxSize={20} className="mt-0.5" />
                 <div>
                   <div className="text-xs text-[#A8A29E]">Language</div>
                   <div className="text-[#1C1917] font-medium">{reservation.language_preference}</div>
@@ -219,7 +219,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
             {/* Seating Preference */}
             {reservation.seating_preference && (
               <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-[#d97706] mt-0.5" />
+                <ThiingsIcon name="map-pin" pxSize={20} className="mt-0.5" />
                 <div>
                   <div className="text-xs text-[#A8A29E]">Seating Preference</div>
                   <div className="text-[#1C1917] font-medium">{reservation.seating_preference}</div>
@@ -230,7 +230,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
             {/* Special Occasion */}
             {reservation.special_occasion && (
               <div className="flex items-start gap-3">
-                <Calendar className="w-5 h-5 text-[#9F1239] mt-0.5" />
+                <ThiingsIcon name="calendar" pxSize={20} className="mt-0.5" />
                 <div>
                   <div className="text-xs text-[#A8A29E]">Special Occasion</div>
                   <div className="text-[#1C1917] font-medium">{reservation.special_occasion}</div>
@@ -241,7 +241,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
             {/* Accessibility Needs */}
             {reservation.accessibility_needs && reservation.accessibility_needs !== 'None' && (
               <div className="flex items-start gap-3">
-                <Accessibility className="w-5 h-5 text-[#0891b2] mt-0.5" />
+                <ThiingsIcon name="accessibility" pxSize={20} className="mt-0.5" />
                 <div>
                   <div className="text-xs text-[#A8A29E]">Accessibility</div>
                   <div className="text-[#1C1917] font-medium">{reservation.accessibility_needs}</div>
@@ -254,7 +254,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
           {reservation.internal_notes && (
             <div className="mt-4 pt-4 border-t border-[#E7E5E4]">
               <div className="flex items-start gap-3">
-                <FileText className="w-5 h-5 text-[#57534E] mt-0.5" />
+                <ThiingsIcon name="file-text" pxSize={20} className="mt-0.5" />
                 <div className="flex-1">
                   <div className="text-xs text-[#A8A29E] mb-1">Internal Notes (Staff Only)</div>
                   <div className="text-[#57534E] text-sm">{reservation.internal_notes}</div>

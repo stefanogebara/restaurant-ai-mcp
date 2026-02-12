@@ -11,17 +11,7 @@
 
 import { useState } from 'react';
 import type { UpcomingReservation } from '../../types/host.types';
-import {
-  Utensils,
-  Languages,
-  MapPin,
-  Calendar,
-  Users,
-  Accessibility,
-  FileText,
-  Star,
-  Check
-} from 'lucide-react';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface ReservationNotesEditorProps {
   reservation: UpcomingReservation;
@@ -103,7 +93,7 @@ export default function ReservationNotesEditor({
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-[#9F1239]" />
+              <ThiingsIcon name="users" pxSize={20} />
               <h3 className="text-lg font-semibold text-[#1C1917]">Customer Type</h3>
             </div>
             <label className="flex items-center gap-2 cursor-pointer">
@@ -114,7 +104,7 @@ export default function ReservationNotesEditor({
                 className="w-4 h-4 rounded border-[#E7E5E4] bg-[#F5F5F4] text-[#9F1239] focus:ring-[#9F1239]"
               />
               <span className="text-sm text-[#57534E]">First Time Visitor</span>
-              <Star className="w-4 h-4 text-[#d97706]" />
+              <ThiingsIcon name="star" pxSize={16} />
             </label>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -150,7 +140,7 @@ export default function ReservationNotesEditor({
         {/* Dietary Restrictions */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <Utensils className="w-5 h-5 text-[#16a34a]" />
+            <ThiingsIcon name="utensils" pxSize={20} />
             <h3 className="text-lg font-semibold text-[#1C1917]">Dietary Restrictions</h3>
             <span className="text-xs text-[#A8A29E]">(Important for cochinillo alternatives)</span>
           </div>
@@ -166,7 +156,7 @@ export default function ReservationNotesEditor({
                 }`}
               >
                 <span className="font-medium">{restriction}</span>
-                {dietaryRestrictions.includes(restriction) && <Check className="w-4 h-4" />}
+                {dietaryRestrictions.includes(restriction) && <ThiingsIcon name="check" pxSize={16} />}
               </button>
             ))}
           </div>
@@ -175,7 +165,7 @@ export default function ReservationNotesEditor({
         {/* Language Preference */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <Languages className="w-5 h-5 text-[#7c3aed]" />
+            <ThiingsIcon name="languages" pxSize={20} />
             <h3 className="text-lg font-semibold text-[#1C1917]">Language Preference</h3>
           </div>
           <div className="grid grid-cols-4 gap-3">
@@ -204,7 +194,7 @@ export default function ReservationNotesEditor({
         {/* Seating Preference */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <MapPin className="w-5 h-5 text-[#d97706]" />
+            <ThiingsIcon name="map-pin" pxSize={20} />
             <h3 className="text-lg font-semibold text-[#1C1917]">Seating Preference</h3>
           </div>
           <div className="grid grid-cols-4 gap-3">
@@ -234,7 +224,7 @@ export default function ReservationNotesEditor({
         {/* Special Occasion */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <Calendar className="w-5 h-5 text-[#9F1239]" />
+            <ThiingsIcon name="calendar" pxSize={20} />
             <h3 className="text-lg font-semibold text-[#1C1917]">Special Occasion</h3>
           </div>
           <div className="grid grid-cols-4 gap-3">
@@ -257,7 +247,7 @@ export default function ReservationNotesEditor({
         {/* Accessibility Needs */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <Accessibility className="w-5 h-5 text-[#0891b2]" />
+            <ThiingsIcon name="accessibility" pxSize={20} />
             <h3 className="text-lg font-semibold text-[#1C1917]">Accessibility Needs</h3>
           </div>
           <div className="grid grid-cols-3 gap-3">
@@ -280,7 +270,7 @@ export default function ReservationNotesEditor({
         {/* Internal Notes */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <FileText className="w-5 h-5 text-[#57534E]" />
+            <ThiingsIcon name="file-text" pxSize={20} />
             <h3 className="text-lg font-semibold text-[#1C1917]">Internal Notes</h3>
             <span className="text-xs text-[#A8A29E]">(Staff only - not shown to customer)</span>
           </div>

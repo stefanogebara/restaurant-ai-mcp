@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { authFetch } from '../services/api';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Users, Clock, Plus, Bell, Check, X, AlertCircle } from 'lucide-react';
+import ThiingsIcon from '../components/common/ThiingsIcon';
+import type { IconName } from '../components/common/ThiingsIcon';
+import Spinner from '../components/common/Spinner';
 
 interface WaitlistEntry {
   id: string;
@@ -97,49 +99,49 @@ export default function WaitlistPage() {
   };
 
   // Status badge configuration
-  const getStatusConfig = (status: string) => {
+  const getStatusConfig = (status: string): { bg: string; text: string; border: string; icon: IconName } => {
     switch (status) {
       case 'Waiting':
         return {
           bg: 'bg-blue-500/20',
           text: 'text-blue-400',
           border: 'border-blue-500/30',
-          icon: Clock,
+          icon: 'clock',
         };
       case 'Notified':
         return {
           bg: 'bg-yellow-500/20',
           text: 'text-yellow-400',
           border: 'border-yellow-500/30',
-          icon: Bell,
+          icon: 'bell',
         };
       case 'Seated':
         return {
           bg: 'bg-green-500/20',
           text: 'text-green-400',
           border: 'border-green-500/30',
-          icon: Check,
+          icon: 'check',
         };
       case 'Cancelled':
         return {
           bg: 'bg-red-500/20',
           text: 'text-red-400',
           border: 'border-red-500/30',
-          icon: X,
+          icon: 'x-circle',
         };
       case 'No Show':
         return {
           bg: 'bg-gray-500/20',
           text: 'text-gray-400',
           border: 'border-gray-500/30',
-          icon: AlertCircle,
+          icon: 'alert-circle',
         };
       default:
         return {
           bg: 'bg-gray-500/20',
           text: 'text-gray-400',
           border: 'border-gray-500/30',
-          icon: Users,
+          icon: 'users',
         };
     }
   };
@@ -148,7 +150,7 @@ export default function WaitlistPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4 mx-auto"></div>
+          <Spinner size="lg" className="mx-auto mb-4" />
           <p className="text-gray-400">Loading waitlist...</p>
         </div>
       </div>
@@ -178,7 +180,7 @@ export default function WaitlistPage() {
                 to="/host-dashboard"
                 className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ThiingsIcon name="arrow-left" size="sm" />
                 <span>Back to Dashboard</span>
               </Link>
               <div className="h-6 w-px bg-border"></div>
@@ -191,7 +193,7 @@ export default function WaitlistPage() {
               onClick={() => setShowAddModal(true)}
               className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl transition-all shadow-lg shadow-primary/30 hover:shadow-primary/50"
             >
-              <Plus className="w-5 h-5" />
+              <ThiingsIcon name="plus" size="sm" />
               Add to Waitlist
             </button>
           </div>
@@ -204,7 +206,7 @@ export default function WaitlistPage() {
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div className="flex items-center gap-3 p-4 bg-background/50 rounded-xl border border-border">
               <div className="p-3 bg-blue-500/20 rounded-lg">
-                <Clock className="w-5 h-5 text-blue-400" />
+                <ThiingsIcon name="clock" size="sm" />
               </div>
               <div>
                 <div className="text-2xl font-bold text-blue-400">{waitingCount}</div>
@@ -213,7 +215,7 @@ export default function WaitlistPage() {
             </div>
             <div className="flex items-center gap-3 p-4 bg-background/50 rounded-xl border border-border">
               <div className="p-3 bg-yellow-500/20 rounded-lg">
-                <Bell className="w-5 h-5 text-yellow-400" />
+                <ThiingsIcon name="bell" size="sm" />
               </div>
               <div>
                 <div className="text-2xl font-bold text-yellow-400">{notifiedCount}</div>
@@ -222,7 +224,7 @@ export default function WaitlistPage() {
             </div>
             <div className="flex items-center gap-3 p-4 bg-background/50 rounded-xl border border-border">
               <div className="p-3 bg-purple-500/20 rounded-lg">
-                <Users className="w-5 h-5 text-purple-400" />
+                <ThiingsIcon name="users" size="sm" />
               </div>
               <div>
                 <div className="text-2xl font-bold text-purple-400">{waitlist.length}</div>
@@ -231,7 +233,7 @@ export default function WaitlistPage() {
             </div>
             <div className="flex items-center gap-3 p-4 bg-background/50 rounded-xl border border-border">
               <div className="p-3 bg-green-500/20 rounded-lg">
-                <Check className="w-5 h-5 text-green-400" />
+                <ThiingsIcon name="check" size="sm" />
               </div>
               <div>
                 <div className="text-2xl font-bold text-green-400">
@@ -262,7 +264,7 @@ export default function WaitlistPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {waitlist.map((entry) => {
               const statusConfig = getStatusConfig(entry.status);
-              const StatusIcon = statusConfig.icon;
+              const statusIconName = statusConfig.icon;
               const waitProgress = getWaitProgress(entry.added_at, entry.estimated_wait);
 
               // Get initials
@@ -289,7 +291,7 @@ export default function WaitlistPage() {
                       <div className="text-xs text-gray-500">Position</div>
                     </div>
                     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${statusConfig.bg} ${statusConfig.text} ${statusConfig.border}`}>
-                      <StatusIcon className="w-4 h-4" />
+                      <ThiingsIcon name={statusIconName} size="xs" />
                       <span className="text-sm font-semibold">{entry.status}</span>
                     </div>
                   </div>
@@ -314,14 +316,14 @@ export default function WaitlistPage() {
                   <div className="grid grid-cols-2 gap-4 mb-6">
                     <div className="bg-background/50 rounded-xl p-4 border border-border">
                       <div className="flex items-center gap-2 text-gray-400 mb-1">
-                        <Users className="w-4 h-4" />
+                        <ThiingsIcon name="users" size="xs" />
                         <span className="text-xs">Party Size</span>
                       </div>
                       <div className="text-2xl font-bold text-white">{entry.party_size}</div>
                     </div>
                     <div className="bg-background/50 rounded-xl p-4 border border-border">
                       <div className="flex items-center gap-2 text-gray-400 mb-1">
-                        <Clock className="w-4 h-4" />
+                        <ThiingsIcon name="clock" size="xs" />
                         <span className="text-xs">Est. Wait</span>
                       </div>
                       <div className="text-2xl font-bold text-white">{entry.estimated_wait}m</div>
@@ -351,7 +353,7 @@ export default function WaitlistPage() {
                   {entry.status === 'Notified' && entry.notified_at && (
                     <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3 mb-4">
                       <div className="flex items-center gap-2 text-yellow-400 text-sm">
-                        <Bell className="w-4 h-4" />
+                        <ThiingsIcon name="bell" size="xs" />
                         <span className="font-medium">Notified {formatTimeSince(entry.notified_at)}</span>
                       </div>
                     </div>
@@ -374,7 +376,7 @@ export default function WaitlistPage() {
                           disabled={notifyMutation.isPending}
                           className="flex items-center justify-center gap-2 px-4 py-3 bg-yellow-600 hover:bg-yellow-500 text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <Bell className="w-4 h-4" />
+                          <ThiingsIcon name="bell" size="xs" />
                           Notify Customer
                         </button>
                         <div className="grid grid-cols-2 gap-2">
@@ -382,7 +384,7 @@ export default function WaitlistPage() {
                             onClick={() => setSeatEntry(entry)}
                             className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-xl transition-colors"
                           >
-                            <Check className="w-4 h-4" />
+                            <ThiingsIcon name="check" size="xs" />
                             Seat Now
                           </button>
                           <button
@@ -394,7 +396,7 @@ export default function WaitlistPage() {
                             disabled={removeMutation.isPending}
                             className="flex items-center justify-center gap-2 px-4 py-3 border border-red-500/50 text-red-400 hover:bg-red-500/10 rounded-xl transition-colors disabled:opacity-50"
                           >
-                            <X className="w-4 h-4" />
+                            <ThiingsIcon name="x-circle" size="xs" />
                             Remove
                           </button>
                         </div>
@@ -406,7 +408,7 @@ export default function WaitlistPage() {
                           onClick={() => setSeatEntry(entry)}
                           className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-xl transition-colors"
                         >
-                          <Check className="w-4 h-4" />
+                          <ThiingsIcon name="check" size="xs" />
                           Seat Now
                         </button>
                         <button
@@ -418,7 +420,7 @@ export default function WaitlistPage() {
                           disabled={removeMutation.isPending}
                           className="flex items-center justify-center gap-2 px-4 py-3 border border-red-500/50 text-red-400 hover:bg-red-500/10 rounded-xl transition-colors disabled:opacity-50"
                         >
-                          <X className="w-4 h-4" />
+                          <ThiingsIcon name="x-circle" size="xs" />
                           Remove
                         </button>
                       </div>

@@ -5,7 +5,9 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Users, TrendingUp, TrendingDown, AlertTriangle, Star, DollarSign, Calendar, Activity, Mail } from 'lucide-react';
+import ThiingsIcon from '../common/ThiingsIcon';
+import type { IconName } from '../common/ThiingsIcon';
+import Spinner from '../common/Spinner';
 import HelpTooltip from '../common/HelpTooltip';
 import { api } from '../../services/api';
 import { RetentionCampaignModal } from './RetentionCampaignModal';
@@ -132,14 +134,14 @@ export default function LTVDashboard() {
   };
 
   const getTierIcon = (tier: string) => {
-    switch (tier) {
-      case 'vip': return <Star className="w-4 h-4" />;
-      case 'regular': return <Users className="w-4 h-4" />;
-      case 'occasional': return <Activity className="w-4 h-4" />;
-      case 'new': return <TrendingUp className="w-4 h-4" />;
-      case 'at_risk': return <AlertTriangle className="w-4 h-4" />;
-      default: return <Users className="w-4 h-4" />;
-    }
+    const iconMap: Record<string, IconName> = {
+      vip: 'star',
+      regular: 'users',
+      occasional: 'activity',
+      new: 'trending-up',
+      at_risk: 'alert-triangle',
+    };
+    return <ThiingsIcon name={iconMap[tier] || 'users'} size="xs" />;
   };
 
   const formatCurrency = (amount: number) => {
@@ -156,12 +158,12 @@ export default function LTVDashboard() {
       <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-[#1C1917] flex items-center gap-2">
-            <Users className="w-5 h-5 text-[#9F1239]" />
+            <ThiingsIcon name="users" size="sm" />
             Customer Lifetime Value
           </h2>
         </div>
         <div className="flex flex-col items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#E7E5E4] border-t-[#9F1239] mb-4"></div>
+          <Spinner size="lg" className="mb-4" />
           <p className="text-[#57534E] font-semibold">Loading analytics...</p>
         </div>
       </div>
@@ -173,7 +175,7 @@ export default function LTVDashboard() {
       <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-[#F5F5F4] flex items-center justify-center">
-            <Users className="w-6 h-6 text-[#57534E]" />
+            <ThiingsIcon name="users" pxSize={24} />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-[#1C1917]">No Customer Data Yet</h3>
@@ -194,13 +196,11 @@ export default function LTVDashboard() {
         className="w-full p-6 flex items-center justify-between hover:bg-[#F5F5F4]/50 transition-colors rounded-t-xl"
       >
         <h2 className="text-xl font-bold text-[#1C1917] flex items-center gap-2">
-          <Users className="w-5 h-5 text-[#9F1239]" />
+          <ThiingsIcon name="users" size="sm" />
           Customer Lifetime Value
         </h2>
         <div className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
-          <svg className="w-5 h-5 text-[#57534E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
+          <ThiingsIcon name="chevron-down" size="sm" />
         </div>
       </button>
 
@@ -212,7 +212,7 @@ export default function LTVDashboard() {
             {/* Total Customers */}
             <div className="p-4 bg-[#9F1239]/10 rounded-xl border border-[#9F1239]/20">
               <div className="flex items-center justify-between mb-2">
-                <Users className="w-5 h-5 text-[#9F1239]" />
+                <ThiingsIcon name="users" size="sm" />
                 <span className="text-2xl font-bold text-[#1C1917]">{stats.total_customers}</span>
               </div>
               <div className="text-xs text-[#57534E]">Total Customers</div>
@@ -221,7 +221,7 @@ export default function LTVDashboard() {
             {/* Average LTV */}
             <div className="p-4 bg-[#16a34a]/10 rounded-xl border border-[#16a34a]/20">
               <div className="flex items-center justify-between mb-2">
-                <TrendingUp className="w-5 h-5 text-[#16a34a]" />
+                <ThiingsIcon name="trending-up" size="sm" />
                 <span className="text-2xl font-bold text-[#1C1917]">{formatCurrency(stats.avg_ltv)}</span>
               </div>
               <div className="flex items-center gap-1">
@@ -247,7 +247,7 @@ Focus retention efforts on high-LTV customers"
             {/* Total LTV */}
             <div className="p-4 bg-[#7c3aed]/10 rounded-xl border border-[#7c3aed]/20">
               <div className="flex items-center justify-between mb-2">
-                <DollarSign className="w-5 h-5 text-[#7c3aed]" />
+                <ThiingsIcon name="dollar" size="sm" />
                 <span className="text-2xl font-bold text-[#1C1917]">{formatCurrency(stats.total_ltv)}</span>
               </div>
               <div className="text-xs text-[#57534E]">Total LTV</div>
@@ -304,7 +304,7 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
           {topVIPs.length > 0 && (
             <div className="p-4 bg-[#7c3aed]/10 rounded-xl border border-[#7c3aed]/20">
               <div className="flex items-center gap-2 mb-3">
-                <Star className="w-4 h-4 text-[#7c3aed]" />
+                <ThiingsIcon name="star" size="xs" />
                 <h3 className="text-sm font-semibold text-[#1C1917]">Top VIP Customers</h3>
               </div>
               <div className="space-y-2">
@@ -333,7 +333,7 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
           {atRiskCustomers.length > 0 && (
             <div className="p-4 bg-[#d97706]/10 rounded-xl border border-[#d97706]/20">
               <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle className="w-4 h-4 text-[#d97706]" />
+                <ThiingsIcon name="alert-triangle" size="xs" />
                 <h3 className="text-sm font-semibold text-[#1C1917]">High Churn Risk ({stats.high_risk_customers})</h3>
               </div>
               <div className="space-y-2">
@@ -341,13 +341,13 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
                   <div key={customer.customer_id} className="flex items-center justify-between p-2 bg-white/50 rounded-xl">
                     <div className="flex items-center gap-3">
                       <div className="flex flex-col items-center">
-                        <TrendingDown className="w-4 h-4 text-[#d97706]" />
+                        <ThiingsIcon name="trending-down" size="xs" />
                         <span className="text-xs font-bold text-[#d97706]">{customer.churn_risk_score}%</span>
                       </div>
                       <div>
                         <div className="text-sm font-medium text-[#1C1917]">{customer.customer_id}</div>
                         <div className="text-xs text-[#57534E] flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
+                          <ThiingsIcon name="calendar" pxSize={12} />
                           Last: {new Date(customer.last_visit_date).toLocaleDateString()}
                         </div>
                       </div>
@@ -362,7 +362,7 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
                         className="p-2 bg-[#d97706]/20 hover:bg-[#d97706]/30 rounded-lg transition-colors"
                         title="Send retention campaign"
                       >
-                        <Mail className="w-4 h-4 text-[#d97706]" />
+                        <ThiingsIcon name="mail" size="xs" />
                       </button>
                     </div>
                   </div>
@@ -392,7 +392,7 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
               }
             }}
           >
-            <Activity className="w-5 h-5" />
+            <ThiingsIcon name="activity" size="sm" />
             Recalculate All Customer LTV
           </button>
         </div>

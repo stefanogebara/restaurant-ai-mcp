@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CheckCircle, ArrowRight, Loader2, Sparkles } from 'lucide-react';
+import ThiingsIcon from '../components/common/ThiingsIcon';
+import Spinner from '../components/common/Spinner';
 import { authFetch } from '../services/api';
 
 export default function SubscriptionSuccess() {
@@ -68,7 +69,7 @@ export default function SubscriptionSuccess() {
     return (
       <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-[#9F1239] animate-spin mx-auto mb-4" />
+          <Spinner size="lg" className="mx-auto mb-4" />
           <p className="text-[#57534E]">Verifying your subscription...</p>
         </div>
       </div>
@@ -102,7 +103,7 @@ export default function SubscriptionSuccess() {
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
               className="w-20 h-20 rounded-full bg-[#16a34a] flex items-center justify-center mx-auto mb-6"
             >
-              <CheckCircle className="w-12 h-12 text-white" />
+              <ThiingsIcon name="check-circle" pxSize={48} />
             </motion.div>
 
             {/* Heading */}
@@ -122,7 +123,7 @@ export default function SubscriptionSuccess() {
               transition={{ delay: 0.35 }}
               className="inline-flex items-center gap-2 px-4 py-2 bg-[#9F1239]/10 text-[#9F1239] rounded-full text-sm font-semibold mb-4"
             >
-              <Sparkles className="w-4 h-4" />
+              <ThiingsIcon name="sparkles" size="xs" />
               {plan} Plan Activated
             </motion.div>
 
@@ -176,7 +177,7 @@ export default function SubscriptionSuccess() {
                   'Explore analytics to track your restaurant performance',
                 ].map((item, index) => (
                   <li key={index} className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-[#16a34a] flex-shrink-0 mt-0.5" />
+                    <ThiingsIcon name="check-circle" size="sm" className="flex-shrink-0 mt-0.5" />
                     <span className="text-[#57534E]">{item}</span>
                   </li>
                 ))}
@@ -196,7 +197,7 @@ export default function SubscriptionSuccess() {
                   className="flex-1 px-6 py-4 bg-[#9F1239] hover:bg-[#881337] text-white font-bold text-sm tracking-widest uppercase rounded-2xl flex items-center justify-center gap-2 group transition-all duration-300 shadow-lg shadow-[#9F1239]/20"
                 >
                   Continue to Onboarding
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <ThiingsIcon name="arrow-right" size="xs" />
                 </button>
                 <button
                   onClick={() => navigate('/subscription/manage')}

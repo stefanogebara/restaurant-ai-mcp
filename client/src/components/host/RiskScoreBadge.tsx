@@ -4,7 +4,7 @@
  * Displays ML-predicted no-show risk level with color-coded badges
  */
 
-import { AlertCircle, AlertTriangle, Info, ShieldCheck } from 'lucide-react';
+import ThiingsIcon, { type IconName } from '../common/ThiingsIcon';
 
 interface RiskScoreBadgeProps {
   riskScore?: number;
@@ -46,48 +46,47 @@ export default function RiskScoreBadge({
   };
 
   // Risk level styling
-  const getRiskStyle = () => {
+  const getRiskStyle = (): { bg: string; text: string; iconName: IconName; label: string } => {
     switch (riskLevel) {
       case 'very-high':
         return {
           bg: 'bg-red-500/10 border-red-500/30',
           text: 'text-red-600 dark:text-red-400',
-          icon: AlertCircle,
+          iconName: 'alert-circle',
           label: 'Very High Risk'
         };
       case 'high':
         return {
           bg: 'bg-orange-500/10 border-orange-500/30',
           text: 'text-orange-600 dark:text-orange-400',
-          icon: AlertTriangle,
+          iconName: 'alert-triangle',
           label: 'High Risk'
         };
       case 'medium':
         return {
           bg: 'bg-yellow-500/10 border-yellow-500/30',
           text: 'text-yellow-600 dark:text-yellow-400',
-          icon: Info,
+          iconName: 'info',
           label: 'Medium Risk'
         };
       case 'low':
         return {
           bg: 'bg-emerald-500/10 border-emerald-500/30',
           text: 'text-emerald-600 dark:text-emerald-400',
-          icon: ShieldCheck,
+          iconName: 'shield-check',
           label: 'Low Risk'
         };
       default:
         return {
           bg: 'bg-gray-500/10 border-gray-500/30',
           text: 'text-gray-600 dark:text-gray-400',
-          icon: Info,
+          iconName: 'info',
           label: 'Unknown'
         };
     }
   };
 
   const style = getRiskStyle();
-  const Icon = style.icon;
   const classes = sizeClasses[size];
 
   return (
@@ -96,7 +95,7 @@ export default function RiskScoreBadge({
         className={`inline-flex items-center ${classes.container} ${style.bg} ${style.text} border rounded-md font-medium`}
         title={`Risk Score: ${riskScore}% | Level: ${style.label}${confidence ? ` | Confidence: ${confidence}%` : ''}`}
       >
-        <Icon className={classes.icon} />
+        <ThiingsIcon name={style.iconName} size="xs" />
         <span className="font-semibold">{Math.round(riskScore)}%</span>
       </div>
 

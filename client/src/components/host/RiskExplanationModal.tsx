@@ -1,4 +1,4 @@
-import { X, AlertTriangle, TrendingUp, TrendingDown, Info } from 'lucide-react';
+import ThiingsIcon, { type IconName } from '../common/ThiingsIcon';
 
 interface RiskFactor {
   factor: string;
@@ -46,7 +46,7 @@ export default function RiskExplanationModal({
           bg: 'bg-[#9F1239]/10',
           label: 'Very High Risk',
           description: 'Strong likelihood of no-show. Deposit or confirmation strongly recommended.',
-          emoji: '🚨'
+          iconName: 'siren' as IconName
         };
       case 'high':
         return {
@@ -54,7 +54,7 @@ export default function RiskExplanationModal({
           bg: 'bg-[#d97706]/10',
           label: 'High Risk',
           description: 'Elevated no-show risk. Confirmation call recommended.',
-          emoji: '⚠️'
+          iconName: 'alert-triangle' as IconName
         };
       case 'medium':
         return {
@@ -62,7 +62,7 @@ export default function RiskExplanationModal({
           bg: 'bg-[#d97706]/10',
           label: 'Medium Risk',
           description: 'Moderate no-show risk. Consider sending a reminder.',
-          emoji: '⚡'
+          iconName: 'lightning' as IconName
         };
       default:
         return {
@@ -70,7 +70,7 @@ export default function RiskExplanationModal({
           bg: 'bg-[#16a34a]/10',
           label: 'Low Risk',
           description: 'Low no-show probability. Standard handling.',
-          emoji: '✅'
+          iconName: 'green-check' as IconName
         };
     }
   };
@@ -83,8 +83,8 @@ export default function RiskExplanationModal({
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-[#E7E5E4] p-6 flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-full ${levelInfo.bg} flex items-center justify-center text-2xl`}>
-              {levelInfo.emoji}
+            <div className={`w-12 h-12 rounded-full ${levelInfo.bg} flex items-center justify-center`}>
+              <ThiingsIcon name={levelInfo.iconName} size="md" />
             </div>
             <div>
               <h2 className="text-xl font-semibold text-[#1C1917]">No-Show Risk Analysis</h2>
@@ -97,7 +97,7 @@ export default function RiskExplanationModal({
             onClick={onClose}
             className="p-2 hover:bg-[#F5F5F4] rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-[#57534E]" />
+            <ThiingsIcon name="close" size="sm" />
           </button>
         </div>
 
@@ -126,7 +126,7 @@ export default function RiskExplanationModal({
           {/* What This Means for Staff */}
           <div className="bg-[#9F1239]/5 border border-[#9F1239]/20 rounded-xl p-4">
             <div className="flex items-start gap-3">
-              <Info className="w-5 h-5 text-[#9F1239] mt-0.5 flex-shrink-0" />
+              <ThiingsIcon name="info" size="sm" className="mt-0.5 flex-shrink-0" />
               <div>
                 <h3 className="font-semibold text-[#1C1917] mb-1">What This Means</h3>
                 <p className="text-sm text-[#57534E] leading-relaxed">
@@ -155,7 +155,7 @@ export default function RiskExplanationModal({
           {riskIncreasing.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <TrendingUp className="w-5 h-5 text-[#d97706]" />
+                <ThiingsIcon name="trending-up" size="sm" />
                 <h3 className="font-semibold text-[#1C1917]">Risk Factors</h3>
               </div>
               <div className="space-y-2">
@@ -187,7 +187,7 @@ export default function RiskExplanationModal({
           {riskDecreasing.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <TrendingDown className="w-5 h-5 text-[#16a34a]" />
+                <ThiingsIcon name="trending-down" size="sm" />
                 <h3 className="font-semibold text-[#1C1917]">Positive Signals</h3>
               </div>
               <div className="space-y-2">
@@ -218,7 +218,7 @@ export default function RiskExplanationModal({
           {/* No Factors Available */}
           {riskFactors.length === 0 && (
             <div className="text-center py-8 text-[#A8A29E]">
-              <AlertTriangle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <ThiingsIcon name="alert-triangle" size="md" className="mx-auto mb-3 opacity-50" />
               <p className="text-sm">
                 Detailed risk factors not available for this reservation.
                 <br />

@@ -8,24 +8,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../../services/api';
-import {
-  Users,
-  TrendingUp,
-  Clock,
-  Calendar,
-  Coffee,
-  Sun,
-  Moon,
-  Zap,
-  Target,
-  Activity,
-  Brain,
-  Search,
-  ChevronDown,
-  ChevronUp,
-  ChevronRight,
-  Filter
-} from 'lucide-react';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface DNAStats {
   total_profiles: number;
@@ -157,12 +140,12 @@ export default function CustomerDNADashboard() {
 
   const getDiningStyleIcon = (style: string) => {
     switch (style) {
-      case 'solo': return <Users className="w-4 h-4" />;
-      case 'couple': return <Users className="w-4 h-4" />;
-      case 'family': return <Users className="w-4 h-4" />;
-      case 'business': return <Coffee className="w-4 h-4" />;
-      case 'group': return <Users className="w-4 h-4" />;
-      default: return <Users className="w-4 h-4" />;
+      case 'solo': return <ThiingsIcon name="users" pxSize={16} />;
+      case 'couple': return <ThiingsIcon name="users" pxSize={16} />;
+      case 'family': return <ThiingsIcon name="users" pxSize={16} />;
+      case 'business': return <ThiingsIcon name="coffee" pxSize={16} />;
+      case 'group': return <ThiingsIcon name="users" pxSize={16} />;
+      default: return <ThiingsIcon name="users" pxSize={16} />;
     }
   };
 
@@ -197,7 +180,7 @@ export default function CustomerDNADashboard() {
       <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold font-serif text-[#1C1917] flex items-center gap-2">
-            <Brain className="w-5 h-5" />
+            <ThiingsIcon name="brain" pxSize={20} />
             Customer DNA Profiling
           </h2>
         </div>
@@ -211,7 +194,7 @@ export default function CustomerDNADashboard() {
       <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-full bg-[#F5F5F4] flex items-center justify-center">
-            <Brain className="w-6 h-6 text-[#57534E]" />
+            <ThiingsIcon name="brain" pxSize={24} />
           </div>
           <div>
             <h3 className="text-lg font-semibold font-serif text-[#1C1917]">No DNA Profiles Yet</h3>
@@ -222,7 +205,7 @@ export default function CustomerDNADashboard() {
           onClick={analyzeAllCustomers}
           className="w-full px-4 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-[#9F1239]/30 flex items-center justify-center gap-2"
         >
-          <Activity className="w-5 h-5" />
+          <ThiingsIcon name="activity" pxSize={20} />
           Analyze All Customers
         </button>
       </div>
@@ -241,7 +224,7 @@ export default function CustomerDNADashboard() {
         className="w-full p-6 flex items-center justify-between hover:bg-[#F5F5F4]/50 transition-colors rounded-t-xl"
       >
         <h2 className="text-xl font-bold font-serif text-[#1C1917] flex items-center gap-2">
-          <Brain className="w-5 h-5 text-[#7c3aed]" />
+          <ThiingsIcon name="brain" pxSize={20} />
           Customer DNA Profiling
           <span className="px-2 py-1 bg-[#7c3aed]/20 text-[#7c3aed] text-sm rounded-full font-semibold">
             {stats.total_profiles} Profiles
@@ -262,7 +245,7 @@ export default function CustomerDNADashboard() {
             {/* Total Profiles */}
             <div className="p-4 bg-[#7c3aed]/10 rounded-xl border border-[#7c3aed]/20">
               <div className="flex items-center justify-between mb-2">
-                <Brain className="w-5 h-5 text-[#7c3aed]" />
+                <ThiingsIcon name="brain" pxSize={20} />
                 <span className="text-2xl font-bold text-[#1C1917]">{stats.total_profiles}</span>
               </div>
               <div className="text-xs text-[#57534E]">DNA Profiles</div>
@@ -271,7 +254,7 @@ export default function CustomerDNADashboard() {
             {/* Avg Confidence */}
             <div className="p-4 bg-[#16a34a]/10 rounded-xl border border-[#16a34a]/20">
               <div className="flex items-center justify-between mb-2">
-                <Target className="w-5 h-5 text-[#16a34a]" />
+                <ThiingsIcon name="target" pxSize={20} />
                 <span className="text-2xl font-bold text-[#1C1917]">{stats.avg_confidence}%</span>
               </div>
               <div className="text-xs text-[#57534E]">Avg Confidence</div>
@@ -280,7 +263,7 @@ export default function CustomerDNADashboard() {
             {/* Occasions Detected */}
             <div className="p-4 bg-[#9F1239]/10 rounded-xl border border-[#9F1239]/20">
               <div className="flex items-center justify-between mb-2">
-                <Calendar className="w-5 h-5 text-[#9F1239]" />
+                <ThiingsIcon name="calendar" pxSize={20} />
                 <span className="text-2xl font-bold text-[#1C1917]">{stats.total_occasions_detected}</span>
               </div>
               <div className="text-xs text-[#57534E]">Occasions Found</div>
@@ -290,7 +273,7 @@ export default function CustomerDNADashboard() {
           {/* Dining Styles Breakdown */}
           <div className="p-4 bg-[#F5F5F4] rounded-xl">
             <div className="flex items-center gap-2 mb-3">
-              <Users className="w-4 h-4 text-[#57534E]" />
+              <ThiingsIcon name="users" pxSize={16} />
               <h3 className="text-sm font-semibold font-serif text-[#1C1917]">Dining Styles</h3>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
@@ -313,7 +296,7 @@ export default function CustomerDNADashboard() {
           {/* Day Type Preferences */}
           <div className="p-4 bg-[#F5F5F4] rounded-xl">
             <div className="flex items-center gap-2 mb-3">
-              <Calendar className="w-4 h-4 text-[#57534E]" />
+              <ThiingsIcon name="calendar" pxSize={16} />
               <h3 className="text-sm font-semibold font-serif text-[#1C1917]">Day Preferences</h3>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -324,7 +307,7 @@ export default function CustomerDNADashboard() {
                   <div key={dayType} className={`p-3 rounded-xl border ${isWeekend ? 'bg-[#d97706]/10 border-[#d97706]/30' : 'bg-[#7c3aed]/10 border-[#7c3aed]/30'}`}>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        {isWeekend ? <Sun className="w-4 h-4 text-[#d97706]" /> : <Moon className="w-4 h-4 text-[#7c3aed]" />}
+                        {isWeekend ? <ThiingsIcon name="sun" pxSize={16} /> : <ThiingsIcon name="moon" pxSize={16} />}
                         <span className="text-sm font-medium text-[#1C1917] capitalize">{dayType}</span>
                       </div>
                       <span className="text-xl font-bold text-[#1C1917]">{count}</span>
@@ -344,7 +327,7 @@ export default function CustomerDNADashboard() {
           {/* Time Slot Preferences */}
           <div className="p-4 bg-[#F5F5F4] rounded-xl">
             <div className="flex items-center gap-2 mb-3">
-              <Clock className="w-4 h-4 text-[#57534E]" />
+              <ThiingsIcon name="clock" pxSize={16} />
               <h3 className="text-sm font-semibold font-serif text-[#1C1917]">Time Slot Preferences</h3>
             </div>
             <div className="space-y-2">
@@ -376,7 +359,7 @@ export default function CustomerDNADashboard() {
           {/* Spontaneity Distribution */}
           <div className="p-4 bg-[#F5F5F4] rounded-xl">
             <div className="flex items-center gap-2 mb-3">
-              <Zap className="w-4 h-4 text-[#57534E]" />
+              <ThiingsIcon name="zap" pxSize={16} />
               <h3 className="text-sm font-semibold font-serif text-[#1C1917]">Booking Spontaneity</h3>
             </div>
             <div className="space-y-2">
@@ -412,13 +395,13 @@ export default function CustomerDNADashboard() {
                 className="w-full flex items-center justify-between mb-3"
               >
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-[#9F1239]" />
+                  <ThiingsIcon name="calendar" pxSize={16} />
                   <h3 className="text-sm font-semibold font-serif text-[#1C1917]">Upcoming Special Occasions</h3>
                   <span className="px-2 py-0.5 bg-[#9F1239]/20 text-[#9F1239] text-xs rounded-full font-semibold">
                     {occasions.length}
                   </span>
                 </div>
-                {showOccasions ? <ChevronUp className="w-4 h-4 text-[#57534E]" /> : <ChevronDown className="w-4 h-4 text-[#57534E]" />}
+                {showOccasions ? <ThiingsIcon name="chevron-up" pxSize={16} /> : <ThiingsIcon name="chevron-down" pxSize={16} />}
               </button>
 
               {showOccasions && (
@@ -452,7 +435,7 @@ export default function CustomerDNADashboard() {
           <div className="p-3 bg-[#16a34a]/10 rounded-xl border border-[#16a34a]/20">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-[#16a34a]" />
+                <ThiingsIcon name="trending-up" pxSize={16} />
                 <span className="text-sm font-semibold text-[#1C1917]">Total Predictions Made</span>
               </div>
               <span className="text-xl font-bold text-[#1C1917]">{stats.total_predictions_made}</span>
@@ -465,7 +448,7 @@ export default function CustomerDNADashboard() {
               onClick={analyzeAllCustomers}
               className="flex-1 px-4 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-[#9F1239]/30 flex items-center justify-center gap-2"
             >
-              <Activity className="w-5 h-5" />
+              <ThiingsIcon name="activity" pxSize={20} />
               Analyze All Customers
             </button>
           </div>
@@ -474,7 +457,7 @@ export default function CustomerDNADashboard() {
           <div className="p-4 bg-[#F5F5F4] rounded-xl">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-[#57534E]" />
+                <ThiingsIcon name="users" pxSize={16} />
                 <h3 className="text-sm font-semibold font-serif text-[#1C1917]">Customer Profiles</h3>
               </div>
             </div>
@@ -482,7 +465,7 @@ export default function CustomerDNADashboard() {
             {/* Search & Filter */}
             <div className="flex gap-2 mb-3">
               <div className="flex-1 relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E]" />
+                <ThiingsIcon name="search" pxSize={16} className="absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   placeholder="Search by name or phone..."
@@ -492,7 +475,7 @@ export default function CustomerDNADashboard() {
                 />
               </div>
               <div className="relative">
-                <Filter className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E]" />
+                <ThiingsIcon name="filter" pxSize={16} className="absolute left-3 top-1/2 -translate-y-1/2" />
                 <select
                   value={styleFilter}
                   onChange={(e) => setStyleFilter(e.target.value)}
@@ -546,7 +529,7 @@ export default function CustomerDNADashboard() {
                           <span className="text-xs text-[#57534E]">{customer.profile_confidence}%</span>
                         </div>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-[#A8A29E] shrink-0 ml-2" />
+                      <ThiingsIcon name="chevron-right" pxSize={16} className="ml-2" />
                     </div>
                     {/* Desktop layout */}
                     <div className="hidden md:grid grid-cols-12 gap-2 items-center">
@@ -579,7 +562,7 @@ export default function CustomerDNADashboard() {
                         <span className="text-xs text-[#57534E]">{customer.profile_confidence}%</span>
                       </div>
                       <div className="col-span-2 flex justify-end">
-                        <ChevronRight className="w-4 h-4 text-[#A8A29E]" />
+                        <ThiingsIcon name="chevron-right" pxSize={16} />
                       </div>
                     </div>
                   </button>

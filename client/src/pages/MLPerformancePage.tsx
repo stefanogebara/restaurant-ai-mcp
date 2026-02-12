@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { TrendingUp, Target, AlertCircle, DollarSign, CheckCircle2, BarChart3, Lock, Crown, Loader2 } from 'lucide-react';
+import ThiingsIcon from '../components/common/ThiingsIcon';
+import Spinner from '../components/common/Spinner';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import TrendChart from '../components/common/TrendChart';
@@ -93,7 +94,7 @@ export default function MLPerformancePage() {
         <div className="p-8">
           <Breadcrumb items={breadcrumbConfigs.ml} className="mb-4" />
           <div className="flex items-center justify-center min-h-[50vh]">
-            <Loader2 className="w-8 h-8 text-[#9F1239] animate-spin" />
+            <Spinner size="lg" />
           </div>
         </div>
       </DashboardLayout>
@@ -108,14 +109,14 @@ export default function MLPerformancePage() {
           <div className="flex flex-col items-center justify-center min-h-[50vh]">
             <div className="bg-white rounded-2xl border border-[#E7E5E4] p-12 max-w-lg text-center shadow-lg">
               <div className="w-16 h-16 bg-[#9F1239]/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Lock className="w-8 h-8 text-[#9F1239]" />
+                <ThiingsIcon name="lock" pxSize={32} />
               </div>
               <h2 className="text-2xl font-bold text-[#1C1917] mb-3">No-Show Prevention</h2>
               <p className="text-[#57534E] mb-6">
                 Track intervention effectiveness and ROI for no-show prevention. Available on the Professional plan.
               </p>
               <div className="flex items-center justify-center gap-2 text-sm text-[#9F1239] font-medium mb-6">
-                <Crown className="w-4 h-4" />
+                <ThiingsIcon name="crown" size="xs" />
                 Professional Plan Feature
               </div>
               <Link
@@ -140,7 +141,7 @@ export default function MLPerformancePage() {
           <div className="max-w-md mx-auto mt-12">
             <div className="bg-white border border-[#E7E5E4] rounded-xl p-8 text-center shadow-lg">
               <div className="w-16 h-16 bg-[#9F1239]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <AlertCircle className="w-8 h-8 text-[#9F1239]" />
+                <ThiingsIcon name="alert-circle" pxSize={32} />
               </div>
               <h3 className="text-xl font-bold text-[#1C1917] mb-2">
                 Connection Error
@@ -197,7 +198,7 @@ export default function MLPerformancePage() {
           <div className="bg-white border border-[#E7E5E4] rounded-xl p-6 shadow-lg">
             <div className="flex items-center justify-between mb-4">
               <div className="p-2 bg-[#9F1239]/10 rounded-lg">
-                <Target className="w-5 h-5 text-[#9F1239]" />
+                <ThiingsIcon name="target" size="sm" />
               </div>
               {mlData?.summary?.meets_target && (
                 <span className="text-xs font-semibold bg-[#16a34a]/10 text-[#16a34a] px-2 py-1 rounded-full">
@@ -224,7 +225,7 @@ export default function MLPerformancePage() {
           <div className="bg-white border border-[#E7E5E4] rounded-xl p-6 shadow-lg">
             <div className="flex items-center justify-between mb-4">
               <div className="p-2 bg-[#7c3aed]/10 rounded-lg">
-                <TrendingUp className="w-5 h-5 text-[#7c3aed]" />
+                <ThiingsIcon name="trending-up" size="sm" />
               </div>
               <span className="text-xs text-[#A8A29E]">30 DAYS</span>
             </div>
@@ -242,7 +243,7 @@ export default function MLPerformancePage() {
           <div className="bg-white border border-[#E7E5E4] rounded-xl p-6 shadow-lg">
             <div className="flex items-center justify-between mb-4">
               <div className="p-2 bg-[#16a34a]/10 rounded-lg">
-                <CheckCircle2 className="w-5 h-5 text-[#16a34a]" />
+                <ThiingsIcon name="check-circle" size="sm" />
               </div>
               {mlData?.summary && (
                 <span className="text-xs text-[#A8A29E]">
@@ -264,7 +265,7 @@ export default function MLPerformancePage() {
           <div className="bg-white border border-[#E7E5E4] rounded-xl p-6 shadow-lg">
             <div className="flex items-center justify-between mb-4">
               <div className="p-2 bg-[#d97706]/10 rounded-lg">
-                <DollarSign className="w-5 h-5 text-[#d97706]" />
+                <ThiingsIcon name="dollar" size="sm" />
               </div>
               {mlData?.summary && (
                 <span className="text-xs text-[#A8A29E]">€{mlData.summary.total_cost} cost</span>
@@ -289,7 +290,7 @@ export default function MLPerformancePage() {
           <div className="bg-white border border-[#E7E5E4] rounded-xl p-6 shadow-lg">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-[#9F1239]/10 rounded-lg">
-                <BarChart3 className="w-5 h-5 text-[#9F1239]" />
+                <ThiingsIcon name="bar-chart" size="sm" />
               </div>
               <h2 className="text-xl font-bold text-[#1C1917]">
                 ROI Trend
@@ -322,7 +323,7 @@ export default function MLPerformancePage() {
           <div className="bg-white border border-[#E7E5E4] rounded-xl p-6 shadow-lg">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-[#7c3aed]/10 rounded-lg">
-                <BarChart3 className="w-5 h-5 text-[#7c3aed]" />
+                <ThiingsIcon name="bar-chart" size="sm" />
               </div>
               <h2 className="text-xl font-bold text-[#1C1917]">
                 Type Breakdown

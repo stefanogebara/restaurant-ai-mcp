@@ -10,48 +10,38 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../hooks/useSubscription';
 import { authFetch } from '../services/api';
-import {
-  Phone,
-  LayoutDashboard,
-  BarChart3,
-  Users,
-  Clock,
-  Bell,
-  Check,
-  ArrowRight,
-  LogOut,
-  Sparkles,
-  Loader2
-} from 'lucide-react';
+import ThiingsIcon from '../components/common/ThiingsIcon';
+import Spinner from '../components/common/Spinner';
+import type { IconName } from '../components/common/ThiingsIcon';
 
-const FEATURES = [
+const FEATURES: Array<{ icon: IconName; title: string; description: string }> = [
   {
-    icon: Phone,
+    icon: 'phone',
     title: 'AI Voice Reservations',
     description: 'Let AI handle phone calls and take reservations 24/7 in multiple languages'
   },
   {
-    icon: LayoutDashboard,
+    icon: 'dashboard',
     title: 'Real-Time Dashboard',
     description: 'Monitor table status, occupancy, and reservations in real-time'
   },
   {
-    icon: BarChart3,
+    icon: 'bar-chart',
     title: 'Smart Analytics',
     description: 'Track peak hours, customer preferences, and revenue insights'
   },
   {
-    icon: Users,
+    icon: 'users',
     title: 'Waitlist Management',
     description: 'Automated waitlist with real-time notifications and time estimates'
   },
   {
-    icon: Clock,
+    icon: 'clock',
     title: 'Table Optimization',
     description: 'Smart seating algorithms to maximize your restaurant capacity'
   },
   {
-    icon: Bell,
+    icon: 'bell',
     title: 'Automated Notifications',
     description: 'Email confirmations, reminders, and updates to your customers'
   }
@@ -172,14 +162,14 @@ export default function Welcome() {
               to="/host-dashboard/simple"
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium border border-[#9F1239] text-[#9F1239] rounded-lg hover:bg-[#9F1239] hover:text-white transition-all duration-200"
             >
-              <LayoutDashboard className="w-4 h-4" />
+              <ThiingsIcon name="dashboard" size="xs" />
               Go to Dashboard
             </Link>
             <button
               onClick={handleSignOut}
               className="flex items-center gap-2 px-4 py-2 text-sm text-[#57534E] hover:text-[#1C1917] transition-colors"
             >
-              <LogOut className="w-4 h-4" />
+              <ThiingsIcon name="logout" size="xs" />
               Sign Out
             </button>
           </div>
@@ -195,7 +185,7 @@ export default function Welcome() {
           className="max-w-4xl mx-auto text-center"
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#9F1239]/10 text-[#9F1239] rounded-full text-sm font-medium mb-6">
-            <Sparkles className="w-4 h-4" />
+            <ThiingsIcon name="sparkles" size="xs" />
             Welcome to Seatable
           </div>
           <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-[#1C1917] mb-6">
@@ -238,7 +228,7 @@ export default function Welcome() {
                 className="bg-[#FAFAF9] border border-[#E7E5E4] rounded-2xl p-6 hover:shadow-lg transition-shadow"
               >
                 <div className="w-12 h-12 bg-[#9F1239]/10 rounded-xl flex items-center justify-center mb-4">
-                  <feature.icon className="w-6 h-6 text-[#9F1239]" />
+                  <ThiingsIcon name={feature.icon} pxSize={24} />
                 </div>
                 <h3 className="font-semibold text-[#1C1917] mb-2">{feature.title}</h3>
                 <p className="text-sm text-[#57534E] font-light">{feature.description}</p>
@@ -266,7 +256,7 @@ export default function Welcome() {
           <div className="max-w-2xl mx-auto text-center">
             <div className="bg-white border-2 border-[#9F1239]/20 rounded-[2rem] p-12 shadow-xl">
               <div className="w-16 h-16 bg-[#9F1239]/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Sparkles className="w-8 h-8 text-[#9F1239]" />
+                <ThiingsIcon name="sparkles" pxSize={32} />
               </div>
               <h2 className="font-serif text-3xl text-[#1C1917] mb-4">You're All Set!</h2>
               <p className="text-[#57534E] font-light mb-2">
@@ -280,7 +270,7 @@ export default function Welcome() {
                 className="inline-flex items-center gap-2 px-8 py-4 bg-[#9F1239] text-white font-bold text-sm tracking-widest uppercase rounded-2xl hover:bg-[#881337] transition-all duration-300 shadow-lg shadow-[#9F1239]/20"
               >
                 Go to Dashboard
-                <ArrowRight className="w-4 h-4" />
+                <ThiingsIcon name="arrow-right" size="xs" />
               </Link>
             </div>
           </div>
@@ -341,7 +331,7 @@ export default function Welcome() {
                     <ul className="space-y-3 mb-8">
                       {plan.features.map((feature) => (
                         <li key={feature} className="flex items-start gap-3">
-                          <Check className="w-5 h-5 text-[#9F1239] flex-shrink-0 mt-0.5" />
+                          <ThiingsIcon name="check" size="sm" className="flex-shrink-0 mt-0.5" />
                           <span className="text-[#57534E] text-sm">{feature}</span>
                         </li>
                       ))}
@@ -362,13 +352,13 @@ export default function Welcome() {
                     >
                       {loadingPlan === plan.name ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Spinner size="sm" />
                           Loading...
                         </>
                       ) : (
                         <>
                           Get Started
-                          <ArrowRight className="w-4 h-4" />
+                          <ThiingsIcon name="arrow-right" size="xs" />
                         </>
                       )}
                     </button>
@@ -406,7 +396,7 @@ export default function Welcome() {
               >
                 {loadingPlan === 'Professional' ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Spinner size="sm" />
                     Loading...
                   </>
                 ) : (

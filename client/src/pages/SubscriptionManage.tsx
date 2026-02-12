@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CreditCard, Calendar, CheckCircle, XCircle, Loader2, ArrowRight, Settings, Sparkles, Star } from 'lucide-react';
+import ThiingsIcon from '../components/common/ThiingsIcon';
+import Spinner from '../components/common/Spinner';
 import { authFetch } from '../services/api';
 
 interface SubscriptionData {
@@ -131,10 +132,10 @@ export default function SubscriptionManage() {
     switch (status) {
       case 'active':
       case 'trialing':
-        return <CheckCircle className="w-5 h-5 text-[#16a34a]" />;
+        return <ThiingsIcon name="check-circle" size="sm" />;
       case 'canceled':
       case 'past_due':
-        return <XCircle className="w-5 h-5 text-[#dc2626]" />;
+        return <ThiingsIcon name="x-circle" size="sm" />;
       default:
         return null;
     }
@@ -143,9 +144,9 @@ export default function SubscriptionManage() {
   const getPlanIcon = (planName: string) => {
     switch (planName.toLowerCase()) {
       case 'professional':
-        return <Star className="w-6 h-6 text-white" />;
+        return <ThiingsIcon name="star" pxSize={24} />;
       default:
-        return <CreditCard className="w-6 h-6 text-white" />;
+        return <ThiingsIcon name="credit-card" pxSize={24} />;
     }
   };
 
@@ -153,7 +154,7 @@ export default function SubscriptionManage() {
     return (
       <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-[#9F1239] animate-spin mx-auto mb-4" />
+          <Spinner size="lg" className="mx-auto mb-4" />
           <p className="text-[#57534E]">Loading subscription details...</p>
         </div>
       </div>
@@ -180,7 +181,7 @@ export default function SubscriptionManage() {
             className="max-w-2xl w-full"
           >
             <div className="bg-white border border-[#E7E5E4] rounded-[2rem] p-8 md:p-12 text-center shadow-xl">
-              <XCircle className="w-16 h-16 text-[#A8A29E] mx-auto mb-6" />
+              <ThiingsIcon name="x-circle" pxSize={64} className="mx-auto mb-6" />
               <h1 className="font-serif text-3xl text-[#1C1917] mb-4">No Active Subscription</h1>
               <p className="text-[#57534E] mb-8 font-light">
                 You don't have an active subscription yet. Choose a plan to get started!
@@ -190,7 +191,7 @@ export default function SubscriptionManage() {
                 className="px-8 py-4 bg-[#9F1239] hover:bg-[#881337] text-white font-bold text-sm tracking-widest uppercase rounded-2xl inline-flex items-center gap-2 group transition-all duration-300 shadow-lg shadow-[#9F1239]/20"
               >
                 View Pricing Plans
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <ThiingsIcon name="arrow-right" size="xs" />
               </button>
             </div>
           </motion.div>
@@ -226,7 +227,7 @@ export default function SubscriptionManage() {
             className="mb-8 text-center"
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#9F1239]/10 text-[#9F1239] rounded-full text-sm font-medium mb-4">
-              <Sparkles className="w-4 h-4" />
+              <ThiingsIcon name="sparkles" size="xs" />
               Subscription Management
             </div>
             <h1 className="font-serif text-4xl text-[#1C1917] mb-2">
@@ -265,7 +266,7 @@ export default function SubscriptionManage() {
               {subscription.status === 'trialing' && subscription.trialEnd && (
                 <div className="bg-[#0ea5e9]/10 border border-[#0ea5e9]/30 p-4 rounded-xl">
                   <div className="flex items-center gap-3 mb-2">
-                    <Calendar className="w-5 h-5 text-[#0ea5e9]" />
+                    <ThiingsIcon name="calendar" size="sm" />
                     <span className="font-semibold text-[#1C1917]">Free Trial Active</span>
                   </div>
                   <p className="text-[#57534E] text-sm">
@@ -277,7 +278,7 @@ export default function SubscriptionManage() {
               {subscription.currentPeriodEnd && (
                 <div className="bg-[#F5F5F4] border border-[#E7E5E4] p-4 rounded-xl">
                   <div className="flex items-center gap-3 mb-2">
-                    <Calendar className="w-5 h-5 text-[#9F1239]" />
+                    <ThiingsIcon name="calendar" size="sm" />
                     <span className="font-semibold text-[#1C1917]">
                       {subscription.cancelAtPeriodEnd ? 'Subscription Ends' : 'Next Billing Date'}
                     </span>
@@ -316,14 +317,14 @@ export default function SubscriptionManage() {
             >
               {managingSubscription ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Spinner size="md" />
                   Opening Portal...
                 </>
               ) : (
                 <>
-                  <Settings className="w-5 h-5" />
+                  <ThiingsIcon name="settings" size="sm" />
                   Manage Subscription
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <ThiingsIcon name="arrow-right" size="xs" />
                 </>
               )}
             </button>

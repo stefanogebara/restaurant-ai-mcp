@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ChevronDown, MapPin, Globe } from 'lucide-react';
+import ThiingsIcon from '../common/ThiingsIcon';
 import {
   LANGUAGE_GROUPS,
   getCountryByCode,
@@ -117,7 +117,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
           } text-left text-[#1C1917] flex items-center justify-between hover:bg-[#E7E5E4]/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#9F1239]`}
         >
           <div className="flex items-center gap-3">
-            <Globe className="w-5 h-5 text-[#57534E]" />
+            <ThiingsIcon name="globe" pxSize={20} />
             {selectedCountry ? (
               <span className="flex items-center gap-2">
                 <span className="text-xl">{selectedCountry.flag}</span>
@@ -127,11 +127,9 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
               <span className="text-[#A8A29E]">Select your country</span>
             )}
           </div>
-          <ChevronDown
-            className={`w-5 h-5 text-[#57534E] transition-transform duration-200 ${
-              isCountryOpen ? 'rotate-180' : ''
-            }`}
-          />
+          <span className={`inline-flex transition-transform duration-200 ${isCountryOpen ? 'rotate-180' : ''}`}>
+            <ThiingsIcon name="chevron-down" pxSize={20} />
+          </span>
         </button>
 
         {error?.country && (
@@ -218,7 +216,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
           }`}
         >
           <div className="flex items-center gap-3">
-            <MapPin className="w-5 h-5 text-[#57534E]" />
+            <ThiingsIcon name="map-pin" pxSize={20} />
             {selectedCity ? (
               <span>{selectedCity}</span>
             ) : (
@@ -227,11 +225,9 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
               </span>
             )}
           </div>
-          <ChevronDown
-            className={`w-5 h-5 text-[#57534E] transition-transform duration-200 ${
-              isCityOpen ? 'rotate-180' : ''
-            }`}
-          />
+          <span className={`inline-flex transition-transform duration-200 ${isCityOpen ? 'rotate-180' : ''}`}>
+            <ThiingsIcon name="chevron-down" pxSize={20} />
+          </span>
         </button>
 
         {error?.city && (

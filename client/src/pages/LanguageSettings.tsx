@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import LanguageSelector from '../components/common/LanguageSelector';
-import { ArrowLeft, Globe } from 'lucide-react';
+import ThiingsIcon from '../components/common/ThiingsIcon';
 
 export default function LanguageSettings() {
   const { t } = useTranslation();
@@ -15,7 +15,7 @@ export default function LanguageSettings() {
           onClick={() => navigate(-1)}
           className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ThiingsIcon name="arrow-left" size="sm" />
           <span>{t('common.back')}</span>
         </button>
 
@@ -24,7 +24,7 @@ export default function LanguageSettings() {
           {/* Header */}
           <div className="flex items-center gap-3 mb-8">
             <div className="p-3 bg-blue-100 rounded-xl">
-              <Globe className="w-8 h-8 text-blue-600" />
+              <ThiingsIcon name="globe" pxSize={32} />
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowUp } from 'lucide-react';
+import ThiingsIcon from '../../components/common/ThiingsIcon';
 import LandingNav from '../components/LandingNav';
 import HeroSection from '../components/HeroSection';
 import FeaturesGrid from '../components/FeaturesGrid';
@@ -58,7 +58,7 @@ export default function LandingPage() {
             className="fixed bottom-8 right-8 z-40 w-12 h-12 bg-[#1C1917] hover:bg-[#9F1239] text-white rounded-full shadow-lg hover:shadow-xl transition-colors duration-300 flex items-center justify-center"
             aria-label="Scroll to top"
           >
-            <ArrowUp className="w-5 h-5" />
+            <ThiingsIcon name="chevron-up" pxSize={20} />
           </motion.button>
         )}
       </AnimatePresence>

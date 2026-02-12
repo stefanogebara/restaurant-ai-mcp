@@ -6,7 +6,7 @@
  */
 
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Users, Clock, MapPin } from 'lucide-react';
+import ThiingsIcon from '../common/ThiingsIcon';
 import type { UpcomingReservation } from '../../types/host.types';
 
 interface ReservationsCalendarGridProps {
@@ -137,7 +137,7 @@ export default function ReservationsCalendarGrid({
               onClick={() => setWeekOffset(prev => prev - 1)}
               className="p-2 hover:bg-muted transition-colors rounded-l-lg"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ThiingsIcon name="chevron-left" pxSize={16} />
             </button>
             <span className="px-4 py-1.5 text-sm font-medium min-w-[180px] text-center">
               {getWeekLabel()}
@@ -146,7 +146,7 @@ export default function ReservationsCalendarGrid({
               onClick={() => setWeekOffset(prev => prev + 1)}
               className="p-2 hover:bg-muted transition-colors rounded-r-lg"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ThiingsIcon name="chevron-right" pxSize={16} />
             </button>
           </div>
         </div>
@@ -210,7 +210,7 @@ export default function ReservationsCalendarGrid({
                           >
                             <div className="font-medium truncate">{res.customer_name}</div>
                             <div className="flex items-center gap-1 text-[10px] opacity-75">
-                              <Users className="w-3 h-3" />
+                              <ThiingsIcon name="users" pxSize={12} />
                               <span>{res.party_size}</span>
                               {res.table_ids && res.table_ids.length > 0 && (
                                 <>
@@ -268,16 +268,16 @@ export default function ReservationsCalendarGrid({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="w-4 h-4" />
+                  <ThiingsIcon name="clock" pxSize={16} />
                   <span>{selectedReservation.time?.substring(0, 5)}</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <Users className="w-4 h-4" />
+                  <ThiingsIcon name="users" pxSize={16} />
                   <span>{selectedReservation.party_size} guests</span>
                 </div>
                 {selectedReservation.table_ids && selectedReservation.table_ids.length > 0 && (
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    <MapPin className="w-4 h-4" />
+                    <ThiingsIcon name="map-pin" pxSize={16} />
                     <span>Table {selectedReservation.table_ids.join(', ')}</span>
                   </div>
                 )}

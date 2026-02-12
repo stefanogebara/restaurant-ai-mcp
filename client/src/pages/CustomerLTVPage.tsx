@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Users, Lock, Crown, Loader2 } from 'lucide-react';
+import ThiingsIcon from '../components/common/ThiingsIcon';
+import Spinner from '../components/common/Spinner';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import LTVDashboard from '../components/host/LTVDashboard';
@@ -49,7 +50,7 @@ function LTVDashboardWithTimeout() {
       <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-[#F5F5F4] flex items-center justify-center">
-            <Users className="w-6 h-6 text-[#57534E]" />
+            <ThiingsIcon name="users" pxSize={24} />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-[#1C1917]">No analytics data yet</h3>
@@ -78,7 +79,7 @@ export default function CustomerLTVPage() {
         <div className="p-8">
           <Breadcrumb items={breadcrumbConfigs.ltv} className="mb-4" />
           <div className="flex items-center justify-center min-h-[50vh]">
-            <Loader2 className="w-8 h-8 text-[#9F1239] animate-spin" />
+            <Spinner size="lg" />
           </div>
         </div>
       </DashboardLayout>
@@ -93,14 +94,14 @@ export default function CustomerLTVPage() {
           <div className="flex flex-col items-center justify-center min-h-[50vh]">
             <div className="bg-white rounded-2xl border border-[#E7E5E4] p-12 max-w-lg text-center shadow-lg">
               <div className="w-16 h-16 bg-[#9F1239]/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Lock className="w-8 h-8 text-[#9F1239]" />
+                <ThiingsIcon name="lock" pxSize={32} />
               </div>
               <h2 className="text-2xl font-bold text-[#1C1917] mb-3">Customer Lifetime Value</h2>
               <p className="text-[#57534E] mb-6">
                 Track your most valuable customers and identify churn risks. Available on the Professional plan.
               </p>
               <div className="flex items-center justify-center gap-2 text-sm text-[#9F1239] font-medium mb-6">
-                <Crown className="w-4 h-4" />
+                <ThiingsIcon name="crown" size="xs" />
                 Professional Plan Feature
               </div>
               <Link

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ExternalLink, Phone, MessageSquare, ArrowRight, LayoutDashboard, Clock, Users } from 'lucide-react';
+import ThiingsIcon from '../../components/common/ThiingsIcon';
 import { DEMO_RESTAURANT } from '../data/demoData';
 
 export default function InteractiveDemoSection() {
@@ -59,15 +59,15 @@ export default function InteractiveDemoSection() {
                 {/* Tiny Sidebar */}
                 <div className="hidden sm:flex flex-col w-36 bg-white border-r border-[#E7E5E4] p-3 gap-1.5">
                   <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#9F1239] text-white rounded text-[10px] font-medium">
-                    <LayoutDashboard className="w-3 h-3" />
+                    <ThiingsIcon name="dashboard" pxSize={12} />
                     Overview
                   </div>
                   <div className="flex items-center gap-1.5 px-2 py-1.5 text-[#A8A29E] text-[10px]">
-                    <Users className="w-3 h-3" />
+                    <ThiingsIcon name="users" pxSize={12} />
                     Customers
                   </div>
                   <div className="flex items-center gap-1.5 px-2 py-1.5 text-[#A8A29E] text-[10px]">
-                    <Clock className="w-3 h-3" />
+                    <ThiingsIcon name="clock" pxSize={12} />
                     Analytics
                   </div>
                 </div>
@@ -127,7 +127,7 @@ export default function InteractiveDemoSection() {
             >
               <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-[#1C1917] text-xs tracking-widest uppercase font-bold rounded-xl shadow-lg">
                 Try Live Demo
-                <ExternalLink className="w-3.5 h-3.5" />
+                <ThiingsIcon name="external-link" pxSize={14} />
               </span>
             </a>
 
@@ -150,7 +150,7 @@ export default function InteractiveDemoSection() {
             <div className="bg-white p-6 rounded-[2rem] border border-[#E7E5E4] shadow-lg hover:shadow-xl transition-shadow">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-[#9F1239] flex items-center justify-center flex-shrink-0">
-                  <MessageSquare className="w-5 h-5 text-white" />
+                  <ThiingsIcon name="chat" pxSize={20} />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-serif text-xl text-[#1C1917] mb-2">Chat with Our AI</h3>
@@ -162,7 +162,7 @@ export default function InteractiveDemoSection() {
                     className="px-5 py-3 bg-[#9F1239] text-white text-xs tracking-widest uppercase font-bold hover:bg-[#881337] transition-all duration-300 rounded-xl inline-flex items-center gap-2 shadow-md shadow-[#9F1239]/20"
                   >
                     Start Chat
-                    <ArrowRight className="w-4 h-4" />
+                    <ThiingsIcon name="arrow-right" pxSize={16} />
                   </a>
                 </div>
               </div>
@@ -172,7 +172,7 @@ export default function InteractiveDemoSection() {
             <div className="bg-white p-6 rounded-[2rem] border border-[#E7E5E4] shadow-md hover:shadow-lg transition-shadow">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-[#1C1917] flex items-center justify-center flex-shrink-0">
-                  <Phone className="w-5 h-5 text-white" />
+                  <ThiingsIcon name="phone" pxSize={20} />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-serif text-xl text-[#1C1917] mb-2">Voice Reservations</h3>
@@ -184,7 +184,7 @@ export default function InteractiveDemoSection() {
                     className="px-5 py-3 border border-[#1C1917] text-[#1C1917] text-xs tracking-widest uppercase font-bold hover:bg-[#1C1917] hover:text-white transition-all duration-300 rounded-xl inline-flex items-center gap-2"
                   >
                     Try Live Demo
-                    <ExternalLink className="w-4 h-4" />
+                    <ThiingsIcon name="external-link" pxSize={16} />
                   </a>
                 </div>
               </div>
@@ -223,7 +223,7 @@ export default function InteractiveDemoSection() {
                 className="bg-[#9F1239] text-white px-8 py-4 text-sm tracking-widest uppercase font-bold hover:bg-[#881337] transition-all duration-300 rounded-2xl shadow-xl shadow-[#9F1239]/20 inline-flex items-center gap-2"
               >
                 Get Started Today
-                <ArrowRight className="w-4 h-4" />
+                <ThiingsIcon name="arrow-right" pxSize={16} />
               </button>
             </div>
           </motion.div>

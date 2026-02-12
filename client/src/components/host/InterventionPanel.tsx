@@ -8,7 +8,7 @@
 
 import { useState } from 'react';
 import { authFetch } from '../../services/api';
-import { AlertTriangle, Phone, CreditCard, Star, ChevronDown, ChevronUp, Mail, Clock } from 'lucide-react';
+import ThiingsIcon from '../common/ThiingsIcon';
 import type { UpcomingReservation } from '../../types/host.types';
 import RiskScoreBadge from './RiskScoreBadge';
 import RiskExplanationModal from './RiskExplanationModal';
@@ -82,7 +82,7 @@ export default function InterventionPanel({
       <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-md">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-[#16a34a]/10 flex items-center justify-center">
-            <Star className="w-6 h-6 text-[#16a34a]" />
+            <ThiingsIcon name="star" pxSize={24} />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-[#1C1917]">All Clear!</h3>
@@ -115,7 +115,7 @@ export default function InterventionPanel({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-[#d97706]/10 flex items-center justify-center animate-pulse">
-              <AlertTriangle className="w-5 h-5 text-[#d97706]" />
+              <ThiingsIcon name="alert-triangle" pxSize={20} />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-[#1C1917]">Intervention Needed</h3>
@@ -128,9 +128,9 @@ export default function InterventionPanel({
             </div>
           </div>
           {isExpanded ? (
-            <ChevronUp className="w-5 h-5 text-[#57534E]" />
+            <ThiingsIcon name="chevron-up" pxSize={20} />
           ) : (
-            <ChevronDown className="w-5 h-5 text-[#57534E]" />
+            <ThiingsIcon name="chevron-down" pxSize={20} />
           )}
         </div>
       </div>
@@ -182,7 +182,7 @@ export default function InterventionPanel({
                         <span>{reservation.time}</span>
                         <span>•</span>
                         <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
+                          <ThiingsIcon name="clock" pxSize={12} />
                           {timeUntil}
                         </span>
                       </div>
@@ -214,7 +214,7 @@ export default function InterventionPanel({
                       className="px-3 py-2 bg-[#9F1239]/10 hover:bg-[#9F1239]/20 text-[#9F1239] rounded-lg text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
                       title="Call customer to confirm"
                     >
-                      <Phone className="w-4 h-4" />
+                      <ThiingsIcon name="phone" pxSize={16} />
                       Call Now
                     </a>
 
@@ -225,7 +225,7 @@ export default function InterventionPanel({
                       className="px-3 py-2 bg-[#16a34a]/10 hover:bg-[#16a34a]/20 text-[#16a34a] rounded-lg text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
                       title="Send SMS reminder"
                     >
-                      <Mail className="w-4 h-4" />
+                      <ThiingsIcon name="mail" pxSize={16} />
                       SMS
                     </a>
 
@@ -235,7 +235,7 @@ export default function InterventionPanel({
                       className="px-3 py-2 bg-[#7c3aed]/10 hover:bg-[#7c3aed]/20 text-[#7c3aed] rounded-lg text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
                       title="Require deposit"
                     >
-                      <CreditCard className="w-4 h-4" />
+                      <ThiingsIcon name="credit-card" pxSize={16} />
                       Deposit
                     </button>
 
@@ -245,7 +245,7 @@ export default function InterventionPanel({
                       className="px-3 py-2 bg-[#d97706]/10 hover:bg-[#d97706]/20 text-[#d97706] rounded-lg text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
                       title="Offer premium seating"
                     >
-                      <Star className="w-4 h-4" />
+                      <ThiingsIcon name="star" pxSize={16} />
                       VIP Seat
                     </button>
                   </div>

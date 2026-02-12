@@ -10,21 +10,8 @@
  */
 
 import { useState, useEffect } from 'react';
-import {
-  TrendingUp,
-  TrendingDown,
-  Calendar,
-  Users,
-  Clock,
-  Utensils,
-  Languages,
-  MapPin,
-  Download,
-  RefreshCw,
-  Lock,
-  Crown,
-  Loader2
-} from 'lucide-react';
+import ThiingsIcon from '../components/common/ThiingsIcon';
+import Spinner from '../components/common/Spinner';
 import { Link } from 'react-router-dom';
 import Breadcrumb, { breadcrumbConfigs } from '../components/common/Breadcrumb';
 import DashboardLayout from '../components/layout/DashboardLayout';
@@ -126,7 +113,7 @@ export default function WeeklyReport() {
         <div className="p-8">
           <Breadcrumb items={breadcrumbConfigs.reports} className="mb-4" />
           <div className="flex items-center justify-center min-h-[50vh]">
-            <Loader2 className="w-8 h-8 text-[#9F1239] animate-spin" />
+            <Spinner size="lg" />
           </div>
         </div>
       </DashboardLayout>
@@ -141,14 +128,14 @@ export default function WeeklyReport() {
           <div className="flex flex-col items-center justify-center min-h-[50vh]">
             <div className="bg-white rounded-2xl border border-[#E7E5E4] p-12 max-w-lg text-center shadow-lg">
               <div className="w-16 h-16 bg-[#9F1239]/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Lock className="w-8 h-8 text-[#9F1239]" />
+                <ThiingsIcon name="lock" pxSize={32} />
               </div>
               <h2 className="text-2xl font-bold text-[#1C1917] mb-3">Weekly Reports</h2>
               <p className="text-[#57534E] mb-6">
                 Detailed weekly analytics and performance reports. Available on the Professional plan.
               </p>
               <div className="flex items-center justify-center gap-2 text-sm text-[#9F1239] font-medium mb-6">
-                <Crown className="w-4 h-4" />
+                <ThiingsIcon name="crown" size="xs" />
                 Professional Plan Feature
               </div>
               <Link
@@ -169,7 +156,7 @@ export default function WeeklyReport() {
       <DashboardLayout>
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
-            <RefreshCw className="w-12 h-12 text-[#9F1239] animate-spin mx-auto mb-4" />
+            <Spinner size="lg" className="mx-auto mb-4" />
             <p className="text-foreground text-lg">Loading weekly report...</p>
           </div>
         </div>
@@ -210,14 +197,14 @@ export default function WeeklyReport() {
               onClick={handlePrint}
               className="flex items-center gap-2 px-4 py-2 bg-[#9F1239] hover:bg-[#881337] text-white rounded-lg transition"
             >
-              <Download className="w-4 h-4" />
+              <ThiingsIcon name="download" size="xs" />
               Download/Print
             </button>
             <button
               onClick={() => fetchReport()}
               className="flex items-center gap-2 px-4 py-2 bg-[#57534E] hover:bg-[#44403C] text-white rounded-lg transition"
             >
-              <RefreshCw className="w-4 h-4" />
+              <ThiingsIcon name="refresh" size="xs" />
               Refresh
             </button>
           </div>
@@ -258,12 +245,12 @@ export default function WeeklyReport() {
           {/* Total Covers */}
           <div className="bg-card p-6 rounded-lg border border-border">
             <div className="flex items-center justify-between mb-2">
-              <Users className="w-8 h-8 text-[#9F1239]" />
+              <ThiingsIcon name="users" pxSize={32} />
               {summary.previous_covers >= 3 ? (
                 summary.covers_change_percent >= 0 ? (
-                  <TrendingUp className="w-6 h-6 text-green-500" />
+                  <ThiingsIcon name="trending-up" pxSize={24} />
                 ) : (
-                  <TrendingDown className="w-6 h-6 text-red-500" />
+                  <ThiingsIcon name="trending-down" pxSize={24} />
                 )
               ) : null}
             </div>
@@ -282,7 +269,7 @@ export default function WeeklyReport() {
 
           {/* Reservations */}
           <div className="bg-card p-6 rounded-lg border border-border">
-            <Calendar className="w-8 h-8 text-[#9F1239] mb-2" />
+            <ThiingsIcon name="calendar" pxSize={32} className="mb-2" />
             <div className="text-4xl font-bold text-foreground mb-1">{summary.total_reservations}</div>
             <div className="text-sm text-muted-foreground">Total Reservations</div>
             <div className="text-sm text-foreground mt-2">
@@ -292,7 +279,7 @@ export default function WeeklyReport() {
 
           {/* Average Party Size */}
           <div className="bg-card p-6 rounded-lg border border-border">
-            <Users className="w-8 h-8 text-emerald-500 mb-2" />
+            <ThiingsIcon name="users" pxSize={32} className="mb-2" />
             <div className="text-4xl font-bold text-foreground mb-1">{summary.avg_party_size}</div>
             <div className="text-sm text-muted-foreground">Avg Party Size</div>
             <div className="text-sm text-foreground mt-2">
@@ -303,7 +290,7 @@ export default function WeeklyReport() {
           {/* Cancellation Rate */}
           <div className="bg-card p-6 rounded-lg border border-border">
             <div className="flex items-center justify-between mb-2">
-              <Calendar className="w-8 h-8 text-red-500" />
+              <ThiingsIcon name="calendar" pxSize={32} />
               <span className="text-sm text-red-400">{summary.cancelled_count} cancelled</span>
             </div>
             <div className="text-4xl font-bold text-foreground mb-1">{summary.cancellation_rate}%</div>
@@ -316,7 +303,7 @@ export default function WeeklyReport() {
           {/* Busiest Days */}
           <div className="bg-card p-6 rounded-lg border border-border">
             <div className="flex items-center gap-2 mb-4">
-              <Calendar className="w-5 h-5 text-[#9F1239]" />
+              <ThiingsIcon name="calendar" size="sm" />
               <h2 className="text-xl font-bold text-foreground">Busiest Days</h2>
             </div>
             <div className="space-y-3">
@@ -337,7 +324,7 @@ export default function WeeklyReport() {
           {/* Busiest Times */}
           <div className="bg-card p-6 rounded-lg border border-border">
             <div className="flex items-center gap-2 mb-4">
-              <Clock className="w-5 h-5 text-[#d97706]" />
+              <ThiingsIcon name="clock" size="sm" />
               <h2 className="text-xl font-bold text-foreground">Busiest Times</h2>
             </div>
             <div className="space-y-3">
@@ -359,7 +346,7 @@ export default function WeeklyReport() {
         {/* Customer Demographics */}
         <div className="bg-card p-6 rounded-lg border border-border mb-8">
           <div className="flex items-center gap-2 mb-6">
-            <Users className="w-5 h-5 text-[#16a34a]" />
+            <ThiingsIcon name="users" size="sm" />
             <h2 className="text-xl font-bold text-foreground">Customer Demographics</h2>
           </div>
           <div className="grid grid-cols-4 gap-6">
@@ -396,7 +383,7 @@ export default function WeeklyReport() {
           {Object.keys(preferences.dietary_restrictions).length > 0 && (
             <div className="bg-card p-6 rounded-lg border border-border">
               <div className="flex items-center gap-2 mb-4">
-                <Utensils className="w-5 h-5 text-[#16a34a]" />
+                <ThiingsIcon name="utensils" size="sm" />
                 <h2 className="text-xl font-bold text-foreground">Dietary Restrictions</h2>
               </div>
               <div className="space-y-2">
@@ -416,7 +403,7 @@ export default function WeeklyReport() {
           {Object.keys(preferences.languages).length > 0 && (
             <div className="bg-card p-6 rounded-lg border border-border">
               <div className="flex items-center gap-2 mb-4">
-                <Languages className="w-5 h-5 text-[#7c3aed]" />
+                <ThiingsIcon name="languages" size="sm" />
                 <h2 className="text-xl font-bold text-foreground">Languages</h2>
               </div>
               <div className="space-y-2">
@@ -436,7 +423,7 @@ export default function WeeklyReport() {
           {Object.keys(preferences.seating).length > 0 && (
             <div className="bg-card p-6 rounded-lg border border-border">
               <div className="flex items-center gap-2 mb-4">
-                <MapPin className="w-5 h-5 text-[#d97706]" />
+                <ThiingsIcon name="map-pin" size="sm" />
                 <h2 className="text-xl font-bold text-foreground">Seating Preferences</h2>
               </div>
               <div className="space-y-2">
@@ -456,7 +443,7 @@ export default function WeeklyReport() {
           {Object.keys(preferences.occasions).length > 0 && (
             <div className="bg-card p-6 rounded-lg border border-border">
               <div className="flex items-center gap-2 mb-4">
-                <Calendar className="w-5 h-5 text-[#9F1239]" />
+                <ThiingsIcon name="calendar" size="sm" />
                 <h2 className="text-xl font-bold text-foreground">Special Occasions</h2>
               </div>
               <div className="space-y-2">

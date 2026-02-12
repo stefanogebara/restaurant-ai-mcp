@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { authFetch } from '../../services/api';
-import { Target, TrendingUp, DollarSign, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface QuickStats {
   today_interventions: number;
@@ -59,7 +59,7 @@ export default function QuickStatsWidget() {
     return (
       <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
         <div className="flex items-center gap-2 text-muted-foreground">
-          <AlertCircle className="w-4 h-4" />
+          <ThiingsIcon name="alert-circle" size="xs" />
           <span className="text-sm">ML stats temporarily unavailable</span>
         </div>
       </div>
@@ -136,7 +136,7 @@ export default function QuickStatsWidget() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
         <div className="flex items-center gap-2">
-          <Target className="w-5 h-5 text-[#9F1239]" />
+          <ThiingsIcon name="target" size="sm" />
           <span className="font-semibold text-foreground">ML Performance Snapshot</span>
         </div>
         <a
@@ -144,7 +144,7 @@ export default function QuickStatsWidget() {
           className="text-sm text-[#9F1239] hover:text-[#881337] font-medium flex items-center gap-1 transition-colors"
         >
           View Details
-          <ExternalLink className="w-3.5 h-3.5" />
+          <ThiingsIcon name="external-link" size="xs" />
         </a>
       </div>
 
@@ -155,7 +155,7 @@ export default function QuickStatsWidget() {
           <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Target className="w-4 h-4 text-blue-600" />
+                <ThiingsIcon name="target" size="xs" />
               </div>
               <span className="text-xs font-medium text-blue-600 uppercase tracking-wide">Today</span>
             </div>
@@ -171,7 +171,7 @@ export default function QuickStatsWidget() {
           <div className={`${getRoiBg(stats.roi_status)} rounded-lg p-4 border ${!hasData ? 'border-gray-200' : 'border-green-100'}`}>
             <div className="flex items-center gap-2 mb-2">
               <div className={`w-8 h-8 ${!hasData ? 'bg-gray-100' : stats.roi_status === 'below' ? 'bg-amber-100' : 'bg-green-100'} rounded-lg flex items-center justify-center`}>
-                <TrendingUp className={`w-4 h-4 ${getRoiColor(stats.roi_status)}`} />
+                <ThiingsIcon name="trending-up" size="xs" />
               </div>
               <span className={`text-xs font-medium uppercase tracking-wide ${getRoiColor(stats.roi_status)}`}>7-Day ROI</span>
             </div>
@@ -193,7 +193,7 @@ export default function QuickStatsWidget() {
           <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-100">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-4 h-4 text-emerald-600" />
+                <ThiingsIcon name="dollar" size="xs" />
               </div>
               <span className="text-xs font-medium text-emerald-600 uppercase tracking-wide">30-Day Saved</span>
             </div>
@@ -209,7 +209,7 @@ export default function QuickStatsWidget() {
           <div className={`${getSuccessBg(stats.success_status)} rounded-lg p-4 border ${!hasData ? 'border-gray-200' : stats.success_status === 'good' ? 'border-green-100' : stats.success_status === 'fair' ? 'border-amber-100' : 'border-red-100'}`}>
             <div className="flex items-center gap-2 mb-2">
               <div className={`w-8 h-8 ${!hasData ? 'bg-gray-100' : stats.success_status === 'good' ? 'bg-green-100' : stats.success_status === 'fair' ? 'bg-amber-100' : 'bg-red-100'} rounded-lg flex items-center justify-center`}>
-                <CheckCircle2 className={`w-4 h-4 ${getSuccessColor(stats.success_status)}`} />
+                <ThiingsIcon name="check-circle" size="xs" />
               </div>
               <span className={`text-xs font-medium uppercase tracking-wide ${getSuccessColor(stats.success_status)}`}>Success Rate</span>
             </div>

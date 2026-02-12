@@ -5,19 +5,7 @@ import { useToast } from '../../contexts/ToastContext';
 import type { ActiveParty } from '../../types/host.types';
 import { useCompleteService } from '../../hooks/useCompleteService';
 import { formatTimeAgo } from '../../utils/timeFormatting';
-
-// SVG Icon Components
-const DiningIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 20 20" fill="currentColor">
-    <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
-  </svg>
-);
-
-const WarningIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 20 20" fill="currentColor">
-    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-  </svg>
-);
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface ActivePartiesListProps {
   parties: ActiveParty[];
@@ -88,7 +76,7 @@ function LiveCountdown({ seatedMinutesAgo, estimatedDurationMinutes }: { seatedM
 
   return (
     <span className={`font-semibold flex items-center gap-1 ${isOverdue ? 'text-[#9F1239]' : 'text-[#16a34a]'}`}>
-      {showWarning && <WarningIcon className="w-4 h-4" />}
+      {showWarning && <ThiingsIcon name="alert-triangle" size="xs" />}
       {text}
     </span>
   );
@@ -103,7 +91,7 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 mx-auto mb-3 bg-[#F5F5F4] rounded-xl flex items-center justify-center">
-          <DiningIcon className="w-8 h-8 text-[#A8A29E]" />
+          <ThiingsIcon name="dining" size="md" />
         </div>
         <div className="text-sm text-[#57534E]">No active parties</div>
       </div>
@@ -129,9 +117,7 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
           <div className="bg-white border border-[#E7E5E4] rounded-xl p-4 hover:bg-[#F5F5F4] transition-all relative shadow-md">
             {/* Drag handle indicator */}
             <div className="absolute top-2 right-2 text-[#A8A29E] text-xs flex items-center gap-1">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-              </svg>
+              <ThiingsIcon name="menu" size="xs" />
               <span>Drag to table</span>
             </div>
           <div className="flex justify-between items-start mb-3">
@@ -141,9 +127,7 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
                 {/* Running Late indicator - shows when less than 10 minutes remaining */}
                 {!party.is_overdue && party.time_remaining_minutes > 0 && party.time_remaining_minutes <= 10 && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#d97706]/10 text-[#d97706] text-xs font-semibold rounded-full animate-pulse">
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                    </svg>
+                    <ThiingsIcon name="clock" size="xs" pxSize={12} />
                     Running Late
                   </span>
                 )}
@@ -160,9 +144,7 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
 
           <div className="flex items-center justify-between text-xs mb-3 pb-3 border-b border-[#E7E5E4]">
             <div className="flex items-center gap-1.5 text-[#57534E]">
-              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-              </svg>
+              <ThiingsIcon name="clock" size="xs" pxSize={14} />
               <span>Seated {formatTimeAgo(new Date(Date.now() - party.time_elapsed_minutes * 60000))}</span>
             </div>
             <LiveCountdown

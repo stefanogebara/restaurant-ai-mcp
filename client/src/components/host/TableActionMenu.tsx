@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../../contexts/ToastContext';
 import type { Table } from '../../types/host.types';
 import { hostAPI } from '../../services/api';
+import ThiingsIcon, { type IconName } from '../common/ThiingsIcon';
 
 interface TableActionMenuProps {
   table: Table;
@@ -27,24 +28,24 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
     },
   });
 
-  const actions = [
+  const actions: { label: string; iconName: IconName; color: string; show: boolean; onClick: () => void }[] = [
     {
       label: 'Mark as Free',
-      icon: '✅',
+      iconName: 'green-check',
       color: 'text-[#16a34a]',
       show: table.status !== 'Available',
       onClick: () => updateTableMutation.mutate({ status: 'Available' }),
     },
     {
       label: 'Mark as Occupied',
-      icon: '🔴',
+      iconName: 'red-x',
       color: 'text-[#9F1239]',
       show: table.status !== 'Occupied',
       onClick: () => updateTableMutation.mutate({ status: 'Occupied' }),
     },
     {
       label: 'Mark as Reserved',
-      icon: '🔵',
+      iconName: 'clock',
       color: 'text-[#7c3aed]',
       show: table.status !== 'Reserved',
       onClick: () => updateTableMutation.mutate({ status: 'Reserved' }),
@@ -75,9 +76,7 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
               onClick={onClose}
               className="text-[#57534E] hover:text-[#1C1917] transition-colors"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <ThiingsIcon name="close" size="sm" />
             </button>
           </div>
 
@@ -116,7 +115,7 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
                 {updateTableMutation.isPending ? (
                   <div className="w-5 h-5 border-2 border-[#9F1239] border-t-transparent rounded-full animate-spin"></div>
                 ) : (
-                  <span className="text-2xl">{action.icon}</span>
+                  <ThiingsIcon name={action.iconName} size="sm" />
                 )}
                 <span className={`font-medium ${action.color} group-hover:text-[#1C1917] transition-colors`}>
                   {action.label}

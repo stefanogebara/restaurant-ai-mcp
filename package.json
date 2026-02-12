@@ -24,7 +24,6 @@
     "axios": "^1.12.2",
     "dotenv": "^17.2.3",
     "framer-motion": "^12.23.24",
-    "lucide-react": "^0.548.0",
     "resend": "^6.3.0",
     "stripe": "^19.1.0",
     "twilio": "^5.10.3"
@@ -40,6 +39,7 @@
     "jest": "^30.2.0",
     "ml-cart": "^2.1.1",
     "ml-matrix": "^6.12.1",
-    "random-forest-classifier": "^0.6.0"
+    "random-forest-classifier": "^0.6.0",
+    "sharp": "^0.34.5"
   }
 }

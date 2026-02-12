@@ -5,7 +5,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { authFetch } from '../../services/api';
-import { Volume2, Play, Pause, Loader, CheckCircle2 } from 'lucide-react';
+import ThiingsIcon from '../common/ThiingsIcon';
+import Spinner from '../common/Spinner';
 import type { OnboardingData } from '../../types/onboarding.types';
 
 interface ElevenLabsVoice {
@@ -199,7 +200,7 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <div className="inline-flex items-center justify-center w-10 h-10 bg-[#9F1239]/10 rounded-full">
-            <Volume2 className="w-5 h-5 text-[#9F1239]" />
+            <ThiingsIcon name="volume" pxSize={20} />
           </div>
           <h2 className="font-serif text-2xl font-bold text-[#1C1917]">
             Choose Your AI Voice
@@ -245,7 +246,7 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
                 {/* Selected Indicator */}
                 {isSelected && (
                   <div className="absolute top-4 right-4">
-                    <CheckCircle2 className="w-6 h-6 text-[#9F1239]" />
+                    <ThiingsIcon name="check-circle" pxSize={24} />
                   </div>
                 )}
 
@@ -285,17 +286,17 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
                 >
                   {isLoadingAudio ? (
                     <>
-                      <Loader className="w-5 h-5 animate-spin" />
+                      <Spinner size="sm" />
                       <span>Loading...</span>
                     </>
                   ) : isPlaying ? (
                     <>
-                      <Pause className="w-5 h-5" />
+                      <ThiingsIcon name="pause" pxSize={20} />
                       <span>Pause</span>
                     </>
                   ) : (
                     <>
-                      <Play className="w-5 h-5" />
+                      <ThiingsIcon name="play" pxSize={20} />
                       <span>Play Preview</span>
                     </>
                   )}
@@ -310,7 +311,7 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
       {!isLoading && voices.length === 0 && (
         <div className="text-center py-12">
           <div className="bg-[#9F1239]/5 border border-[#9F1239]/20 rounded-xl p-6 max-w-lg mx-auto">
-            <Volume2 className="w-10 h-10 text-[#9F1239] mx-auto mb-3" />
+            <ThiingsIcon name="volume" pxSize={40} className="mx-auto mb-3" />
             <p className="text-base font-semibold text-[#1C1917] mb-1">
               A default voice has been selected
             </p>

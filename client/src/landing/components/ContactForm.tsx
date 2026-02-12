@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Mail, CheckCircle, Clock } from 'lucide-react';
+import ThiingsIcon from '../../components/common/ThiingsIcon';
 import { CONTACT_INFO } from '../data/demoData';
 import { supabase } from '../../lib/supabase';
 
@@ -98,7 +98,7 @@ export default function ContactForm() {
                 {/* Email */}
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-[#9F1239] flex items-center justify-center flex-shrink-0">
-                    <Mail className="w-5 h-5 text-white" />
+                    <ThiingsIcon name="mail" pxSize={20} />
                   </div>
                   <div>
                     <div className="text-sm text-gray-400 mb-1 font-light">Email</div>
@@ -114,7 +114,7 @@ export default function ContactForm() {
                 {/* Response Time */}
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                    <Clock className="w-5 h-5 text-white" />
+                    <ThiingsIcon name="clock" pxSize={20} />
                   </div>
                   <div>
                     <div className="text-sm text-gray-400 mb-1 font-light">Response Time</div>
@@ -136,7 +136,7 @@ export default function ContactForm() {
                 ].map((item, index) => (
                   <div key={index} className="flex items-start gap-3">
                     <div className="w-5 h-5 rounded-full bg-[#9F1239]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle className="w-3 h-3 text-[#9F1239]" />
+                      <ThiingsIcon name="check-circle" pxSize={12} />
                     </div>
                     <span className="text-[#57534E] text-sm font-light">{item}</span>
                   </div>
@@ -280,7 +280,7 @@ export default function ContactForm() {
               >
                 {isSubmitted ? (
                   <>
-                    <CheckCircle className="w-5 h-5" />
+                    <ThiingsIcon name="check-circle" pxSize={20} />
                     Message Sent!
                   </>
                 ) : isSubmitting ? (
@@ -290,7 +290,7 @@ export default function ContactForm() {
                   </>
                 ) : (
                   <>
-                    <Send className="w-5 h-5" />
+                    <ThiingsIcon name="send" pxSize={20} />
                     Send Message
                   </>
                 )}

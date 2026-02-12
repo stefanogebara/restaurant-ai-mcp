@@ -6,7 +6,7 @@
  */
 
 import { Link } from 'react-router-dom';
-import { ChevronRight, Home } from 'lucide-react';
+import ThiingsIcon from './ThiingsIcon';
 
 export interface BreadcrumbItem {
   label: string;
@@ -30,13 +30,13 @@ export default function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
         className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
         aria-label="Go to Dashboard Overview"
       >
-        <Home className="w-4 h-4" />
+        <ThiingsIcon name="home" pxSize={16} />
         <span className="hidden sm:inline">Overview</span>
       </Link>
 
       {items.map((item, index) => (
         <div key={index} className="flex items-center gap-2">
-          <ChevronRight className="w-4 h-4 text-muted-foreground/50" aria-hidden="true" />
+          <ThiingsIcon name="chevron-right" pxSize={16} />
           {item.href && index < items.length - 1 ? (
             <Link
               to={item.href}

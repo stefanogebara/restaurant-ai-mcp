@@ -1,4 +1,4 @@
-import { Lock, Sparkles, ArrowRight } from 'lucide-react';
+import ThiingsIcon from './ThiingsIcon';
 import { PLAN_NAMES, PLAN_PRICES, type PlanType } from '../../config/planFeatures';
 
 interface UpgradePromptProps {
@@ -22,7 +22,7 @@ export default function UpgradePrompt({ requiredPlan, feature, description }: Up
         {/* Header with gradient */}
         <div className="bg-[#9F1239]/10 p-8 text-center">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#9F1239]/10 border-2 border-[#9F1239]/20 mb-4">
-            <Lock className="w-10 h-10 text-[#9F1239]" />
+            <ThiingsIcon name="lock" pxSize={40} />
           </div>
           <h1 className="text-3xl font-bold text-[#1C1917] mb-2">{feature}</h1>
           {description && (
@@ -33,7 +33,7 @@ export default function UpgradePrompt({ requiredPlan, feature, description }: Up
         {/* Body */}
         <div className="p-8">
           <div className="flex items-center gap-3 mb-6 p-4 bg-[#F5F5F4] rounded-xl border border-[#E7E5E4]">
-            <Sparkles className="w-6 h-6 text-[#9F1239] flex-shrink-0" />
+            <ThiingsIcon name="sparkles" pxSize={24} className="flex-shrink-0" />
             <p className="text-[#1C1917]">
               This feature is available on the <span className="font-bold text-[#9F1239]">{planName}</span> plan
               {price && (
@@ -74,7 +74,7 @@ export default function UpgradePrompt({ requiredPlan, feature, description }: Up
               className="flex-1 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold py-3 px-6 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center justify-center gap-2"
             >
               <span>Upgrade to {planName}</span>
-              <ArrowRight className="w-5 h-5" />
+              <ThiingsIcon name="arrow-right" pxSize={20} />
             </button>
             <button
               onClick={() => window.history.back()}

@@ -5,7 +5,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { Lock, Sparkles, ArrowRight } from 'lucide-react';
+import ThiingsIcon from './common/ThiingsIcon';
 
 interface UpgradePromptProps {
   feature: string;
@@ -57,7 +57,7 @@ export default function UpgradePrompt({
         transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
         className={`${iconSizes[size]} rounded-full bg-[#9F1239] flex items-center justify-center mx-auto mb-4`}
       >
-        <Lock className={`${size === 'small' ? 'w-4 h-4' : size === 'medium' ? 'w-6 h-6' : 'w-8 h-8'} text-white`} />
+        <ThiingsIcon name="lock" pxSize={size === 'small' ? 16 : size === 'medium' ? 24 : 32} />
       </motion.div>
 
       {/* Heading */}
@@ -82,7 +82,7 @@ export default function UpgradePrompt({
       {/* Features List */}
       <div className="bg-[#F5F5F4] p-4 rounded-xl mb-6 text-left border border-[#E7E5E4]">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-4 h-4 text-[#d97706]" />
+          <ThiingsIcon name="sparkles" pxSize={16} />
           <span className="text-sm font-semibold text-[#1C1917]">
             Upgrade to get:
           </span>
@@ -117,7 +117,7 @@ export default function UpgradePrompt({
         className="w-full px-6 py-3 bg-[#9F1239] hover:bg-[#881337] rounded-xl text-white font-semibold flex items-center justify-center gap-2 group transition-colors"
       >
         Upgrade Now
-        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+        <span className="group-hover:translate-x-1 transition-transform inline-flex"><ThiingsIcon name="arrow-right" pxSize={16} /></span>
       </button>
 
       {/* Fine print */}

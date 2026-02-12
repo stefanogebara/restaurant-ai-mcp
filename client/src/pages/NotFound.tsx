@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Home, ArrowLeft } from 'lucide-react';
+import ThiingsIcon from '../components/common/ThiingsIcon';
 
 export default function NotFound() {
   return (
@@ -15,14 +15,14 @@ export default function NotFound() {
             to="/"
             className="inline-flex items-center gap-2 px-6 py-3 bg-[#9F1239] text-white rounded-xl hover:bg-[#881337] transition-colors font-medium"
           >
-            <Home className="w-4 h-4" />
+            <ThiingsIcon name="home" size="xs" />
             Go Home
           </Link>
           <button
             onClick={() => window.history.back()}
             className="inline-flex items-center gap-2 px-6 py-3 border border-[#D6D3D1] text-[#57534E] rounded-xl hover:bg-white transition-colors font-medium"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ThiingsIcon name="arrow-left" size="xs" />
             Go Back
           </button>
         </div>

@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { ArrowLeft, Phone, LayoutDashboard, TrendingUp } from 'lucide-react';
+import ThiingsIcon from '../components/common/ThiingsIcon';
 import { motion } from 'framer-motion';
 
 export default function Login() {
@@ -90,9 +90,9 @@ export default function Login() {
             {/* Feature highlights */}
             <div className="space-y-4">
               {[
-                { icon: Phone, text: 'AI answers calls 24/7 in 6+ languages' },
-                { icon: LayoutDashboard, text: 'Real-time dashboard with table management' },
-                { icon: TrendingUp, text: 'Analytics that reduce no-shows by 35%' },
+                { icon: 'phone' as const, text: 'AI answers calls 24/7 in 6+ languages' },
+                { icon: 'dashboard' as const, text: 'Real-time dashboard with table management' },
+                { icon: 'trending-up' as const, text: 'Analytics that reduce no-shows by 35%' },
               ].map((feature, i) => (
                 <motion.div
                   key={i}
@@ -102,7 +102,7 @@ export default function Login() {
                   className="flex items-center gap-3"
                 >
                   <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                    <feature.icon className="w-5 h-5 text-[#9F1239]" />
+                    <ThiingsIcon name={feature.icon} size="sm" />
                   </div>
                   <span className="text-[#E7E5E4] text-sm font-light">{feature.text}</span>
                 </motion.div>
@@ -147,7 +147,7 @@ export default function Login() {
             to="/"
             className="inline-flex items-center gap-2 text-[#57534E] hover:text-[#1C1917] transition-colors text-sm"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ThiingsIcon name="arrow-left" size="xs" />
             Back to Home
           </Link>
         </motion.div>
