@@ -4,7 +4,7 @@
  * Modern Elegant Design
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
@@ -83,29 +83,18 @@ export default function Welcome() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const subscriptionQuery = useSubscription();
   const hasActiveSubscription = subscriptionQuery.data?.has_subscription && subscriptionQuery.data?.subscription?.is_active;
 
-  // Suppress reservation fetch errors on the welcome page.
-  // Some background processes may attempt to fetch reservations before
-  // the restaurant is fully set up, which causes a TypeError.
-  useEffect(() => {
-    const originalConsoleError = console.error;
-    console.error = (...args: unknown[]) => {
-      const message = args[0];
-      if (typeof message === 'string' && message.includes('Error fetching reservations')) {
-        return; // Silently ignore reservation fetch errors on the welcome page
-      }
-      originalConsoleError.apply(console, args);
-    };
-    return () => {
-      console.error = originalConsoleError;
-    };
-  }, []);
+  // Note: Reservation fetch errors on the welcome page are expected
+  // when restaurant is not fully set up yet - they are handled gracefully
+  // by the API layer and don't affect this page's functionality.
 
   const handleGetStarted = async (priceId: string, planName: string) => {
     try {
       setLoadingPlan(planName);
+      setCheckoutError(null);
 
       const apiUrl = import.meta.env.VITE_API_URL
         ? `${import.meta.env.VITE_API_URL}/api/create-checkout-session`
@@ -131,7 +120,7 @@ export default function Welcome() {
       window.location.href = url;
     } catch (error) {
       console.error('Error creating checkout session:', error);
-      alert('Failed to start checkout. Please try again.');
+      setCheckoutError('Failed to start checkout. Please try again.');
       setLoadingPlan(null);
     }
   };
@@ -405,6 +394,14 @@ export default function Welcome() {
               </button>
             </div>
           </section>
+
+          {/* Checkout Error Toast */}
+          {checkoutError && (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-red-600 text-white px-6 py-3 rounded-xl shadow-lg text-sm font-medium animate-fade-in-up">
+              {checkoutError}
+              <button onClick={() => setCheckoutError(null)} className="ml-3 text-white/80 hover:text-white">&times;</button>
+            </div>
+          )}
         </>
       )}
 
