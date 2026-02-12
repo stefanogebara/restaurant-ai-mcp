@@ -1,7 +1,11 @@
 /**
  * ElevenLabs Voices API - Vercel Serverless Function
  * GET /api/elevenlabs-voices
- * Fetches available voices from ElevenLabs, filtered by language based on country
+ * Fetches available voices from ElevenLabs Voice Library (shared-voices),
+ * with filtering by language, gender, search, and pagination.
+ *
+ * Backward compatible: old callers without page_size get 6 voices (legacy behavior).
+ * New callers set page_size=12 for enhanced browsing.
  */
 
 // Language mapping for countries
@@ -38,7 +42,7 @@ const COUNTRY_LANGUAGE_MAP = {
   // Italian-speaking countries
   'Italy': 'it',
 
-  // Portuguese-speaking countries - Portugal gets European Portuguese
+  // Portuguese-speaking countries
   'Portugal': 'pt-PT',
   'Brazil': 'pt-BR',
 
@@ -48,22 +52,6 @@ const COUNTRY_LANGUAGE_MAP = {
   'Netherlands': 'nl', 'Poland': 'pl',
   'Russia': 'ru', 'Sweden': 'sv',
   'Turkey': 'tr', 'India': 'hi'
-};
-
-// CURATED VOICE LISTS - High-quality voices for each language/region
-// These are hand-picked ElevenLabs voices that sound professional and native
-const CURATED_VOICES = {
-  // Spanish (Spain) - Use dynamic API filtering for Castilian voices
-  'es-ES': null,
-
-  // Portuguese (Portugal) - Use dynamic API filtering for Brazilian voices
-  'pt-PT': null,
-
-  // Portuguese (Brazil) - Use dynamic API filtering
-  'pt-BR': null,
-
-  // Spanish (Latin America) - Will use API filtering
-  'es-LATAM': null
 };
 
 // Sample phrases for voice preview (language-specific)
@@ -85,37 +73,16 @@ const PREVIEW_PHRASES = {
   'tr': "Restoranımıza hoş geldiniz! Bugün rezervasyon yapmanıza yardımcı olmaktan mutluluk duyarım."
 };
 
-// ElevenLabs language codes mapping
-const ELEVENLABS_LANGUAGE_MAP = {
-  'en': ['en', 'en-US', 'en-GB', 'en-AU'],
-  'es': ['es', 'es-ES', 'es-MX', 'es-AR'],
-  'fr': ['fr', 'fr-FR', 'fr-CA'],
-  'de': ['de', 'de-DE'],
-  'it': ['it', 'it-IT'],
-  'pt': ['pt', 'pt-BR', 'pt-PT'],
-  'zh': ['zh', 'zh-CN'],
-  'ja': ['ja', 'ja-JP'],
-  'ko': ['ko', 'ko-KR'],
-  'nl': ['nl', 'nl-NL'],
-  'pl': ['pl', 'pl-PL'],
-  'ru': ['ru', 'ru-RU'],
-  'sv': ['sv', 'sv-SE'],
-  'tr': ['tr', 'tr-TR'],
-  'hi': ['hi', 'hi-IN']
-};
-
 module.exports = async (req, res) => {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // Handle OPTIONS request for CORS preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  // Only allow GET requests
   if (req.method !== 'GET') {
     return res.status(405).json({
       success: false,
@@ -124,9 +91,16 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { country, language } = req.query;
+    const {
+      country,
+      language,
+      gender,
+      search,
+      use_case,
+      page_size: pageSizeParam,
+      page: pageParam
+    } = req.query;
 
-    // Validate API key
     if (!process.env.ELEVENLABS_API_KEY) {
       console.error('[ElevenLabs] ELEVENLABS_API_KEY not configured');
       return res.status(500).json({
@@ -135,50 +109,36 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Determine language from country or use explicit language
+    // Determine language from country or explicit language param
     let targetLanguage = language || COUNTRY_LANGUAGE_MAP[country] || 'en';
-
-    console.log(`[ElevenLabs] Fetching voices for language: ${targetLanguage} (country: ${country})`);
-
-    // Check if we have curated voices for this language/region
-    const curatedVoices = CURATED_VOICES[targetLanguage];
-    if (curatedVoices && curatedVoices.length > 0) {
-      console.log(`[ElevenLabs] Using ${curatedVoices.length} curated voices for ${targetLanguage}`);
-
-      // Get the base language code for preview phrase (es-ES -> es, pt-PT -> pt)
-      const baseLanguage = targetLanguage.split('-')[0];
-      const previewPhrase = PREVIEW_PHRASES[baseLanguage] || PREVIEW_PHRASES['en'];
-
-      const voicesWithPhrases = curatedVoices.map(voice => ({
-        id: voice.id,
-        name: voice.name,
-        description: voice.description,
-        language: targetLanguage,
-        gender: voice.gender,
-        preview_phrase: previewPhrase,
-        preview_url: null,
-        category: 'curated',
-        is_multilingual: false
-      }));
-
-      return res.status(200).json({
-        success: true,
-        data: {
-          voices: voicesWithPhrases,
-          language: targetLanguage,
-          country: country,
-          total_count: voicesWithPhrases.length,
-          returned_count: voicesWithPhrases.length,
-          source: 'curated'
-        }
-      });
-    }
-
-    // For non-curated languages, normalize language code (es-LATAM -> es, pt-BR -> pt)
     const normalizedLanguage = targetLanguage.split('-')[0];
 
-    // Fetch voices from ElevenLabs API
-    const response = await fetch('https://api.elevenlabs.io/v1/voices', {
+    // Pagination: backward compatible (default 6 for old callers)
+    const pageSize = Math.min(parseInt(pageSizeParam) || 6, 50);
+    const page = parseInt(pageParam) || 0;
+
+    console.log(`[ElevenLabs] Fetching voices: lang=${normalizedLanguage}, gender=${gender || 'all'}, search=${search || ''}, page=${page}, page_size=${pageSize}`);
+
+    // Build query params for shared-voices API
+    const queryParams = new URLSearchParams();
+    queryParams.set('page_size', String(pageSize));
+    queryParams.set('page', String(page));
+    queryParams.set('language', normalizedLanguage);
+
+    if (gender && gender !== 'all') {
+      queryParams.set('gender', gender);
+    }
+    if (search) {
+      queryParams.set('search', search);
+    }
+    if (use_case) {
+      queryParams.set('use_case', use_case);
+    }
+
+    // Use shared-voices (Voice Library) instead of /v1/voices (own voices only)
+    const apiUrl = `https://api.elevenlabs.io/v1/shared-voices?${queryParams.toString()}`;
+
+    const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'xi-api-key': process.env.ELEVENLABS_API_KEY,
@@ -188,102 +148,54 @@ module.exports = async (req, res) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[ElevenLabs] API error:', response.status, errorText);
-      return res.status(response.status).json({
-        success: false,
-        error: `ElevenLabs API error: ${response.status} ${errorText}`
-      });
+
+      if (response.status === 401 || response.status === 403) {
+        // Paywall / free-tier limitation - fallback silently
+        console.log(`[ElevenLabs] Shared voices unavailable (${response.status}), using own voices fallback`);
+      } else {
+        // Other errors (500, network) - log and fallback
+        console.error('[ElevenLabs] Shared voices API error:', response.status, errorText);
+      }
+
+      return await fallbackToOwnVoices(req, res, targetLanguage, normalizedLanguage, country, pageSize);
     }
 
     const data = await response.json();
     const voices = data.voices || [];
-    console.log(`[ElevenLabs] Received ${voices.length} total voices`);
+    const hasMore = voices.length === pageSize;
 
-    // Get language codes to match (use normalized language for API filtering)
-    const languageCodes = ELEVENLABS_LANGUAGE_MAP[normalizedLanguage] || [normalizedLanguage];
+    console.log(`[ElevenLabs] Shared library returned ${voices.length} voices (hasMore: ${hasMore})`);
 
-    // Filter voices by language
-    // ElevenLabs voices have fine_tuning.language or labels.language
-    let filteredVoices = voices.filter(voice => {
-      // Check various places where language might be stored
-      const voiceLanguage = voice.fine_tuning?.language ||
-                           voice.labels?.language ||
-                           '';
-
-      // Also check if it's a multilingual voice (can be used for any language)
-      const isMultilingual = voice.labels?.use_case === 'conversational' ||
-                            voice.fine_tuning?.is_allowed_to_fine_tune;
-
-      // Match if language matches or if it's a high-quality multilingual voice
-      return languageCodes.some(code =>
-        voiceLanguage.toLowerCase().startsWith(code.toLowerCase())
-      ) || (isMultilingual && normalizedLanguage === 'en');
-    });
-
-    // Track if we're using fallback (multilingual) voices
-    let usingMultilingualFallback = false;
-
-    // If no language-specific voices found, return general high-quality voices
-    if (filteredVoices.length === 0) {
-      console.log(`[ElevenLabs] No voices found for ${targetLanguage}, returning multilingual voices`);
-      usingMultilingualFallback = true;
-      filteredVoices = voices.filter(voice =>
-        voice.category === 'premade' || voice.category === 'professional'
-      );
-    }
-
-    console.log(`[ElevenLabs] Filtered to ${filteredVoices.length} voices for language ${normalizedLanguage} (multilingual: ${usingMultilingualFallback})`);
-
-    // Sort by quality/popularity and return top 6 voices
-    const sortedVoices = filteredVoices.sort((a, b) => {
-      // Prioritize premade and professional voices
-      const categoryOrder = { 'premade': 0, 'professional': 1, 'cloned': 2, 'generated': 3 };
-      return (categoryOrder[a.category] || 4) - (categoryOrder[b.category] || 4);
-    });
-
-    const voicesToReturn = sortedVoices.slice(0, 6);
-
-    // Add preview phrase for each voice (use normalized language)
+    // Build preview phrase
     const previewPhrase = PREVIEW_PHRASES[normalizedLanguage] || PREVIEW_PHRASES['en'];
-    const voicesWithPhrases = voicesToReturn.map(voice => {
-      // Get the voice's native language
-      const nativeLanguage = voice.fine_tuning?.language || voice.labels?.language || '';
 
-      // For multilingual fallback voices, use target language and note multilingual support
-      let displayLanguage = targetLanguage;
-      let description = voice.description || voice.labels?.description || '';
-
-      if (usingMultilingualFallback && nativeLanguage && nativeLanguage.toLowerCase().startsWith('en')) {
-        // Add multilingual note if not already present
-        if (!description.toLowerCase().includes('multilingual')) {
-          description = description ? `${description} (Multilingual voice)` : 'Multilingual voice - supports all languages';
-        }
-      } else if (nativeLanguage) {
-        // Use native language if available and not in fallback mode
-        displayLanguage = nativeLanguage;
-      }
-
-      return {
-        id: voice.voice_id,
-        name: voice.name,
-        description: description,
-        language: displayLanguage,
-        gender: voice.labels?.gender || 'neutral',
-        preview_phrase: previewPhrase,
-        preview_url: voice.preview_url || null,
-        category: voice.category,
-        is_multilingual: usingMultilingualFallback
-      };
-    });
+    // Map shared-voices response to our voice format
+    const voicesWithPhrases = voices.map(voice => ({
+      id: voice.voice_id,
+      name: voice.name,
+      description: voice.description || '',
+      language: normalizedLanguage,
+      gender: voice.gender || 'neutral',
+      accent: voice.accent || null,
+      age: voice.age || null,
+      use_case: voice.use_case || null,
+      category: voice.category || 'shared',
+      preview_url: voice.preview_url || null,
+      preview_phrase: previewPhrase,
+    }));
 
     return res.status(200).json({
       success: true,
       data: {
         voices: voicesWithPhrases,
         language: targetLanguage,
-        country: country,
-        total_count: filteredVoices.length,
-        returned_count: voicesWithPhrases.length
+        country: country || null,
+        total_count: voicesWithPhrases.length,
+        returned_count: voicesWithPhrases.length,
+        has_more: hasMore,
+        page: page,
+        page_size: pageSize,
+        source: 'shared_library'
       }
     });
 
@@ -295,3 +207,98 @@ module.exports = async (req, res) => {
     });
   }
 };
+
+/**
+ * Fallback to the own voices API (/v1/voices) if shared-voices is unavailable.
+ * This preserves backward compatibility with the original implementation.
+ */
+async function fallbackToOwnVoices(req, res, targetLanguage, normalizedLanguage, country, pageSize) {
+  const ELEVENLABS_LANGUAGE_MAP = {
+    'en': ['en', 'en-US', 'en-GB', 'en-AU'],
+    'es': ['es', 'es-ES', 'es-MX', 'es-AR'],
+    'fr': ['fr', 'fr-FR', 'fr-CA'],
+    'de': ['de', 'de-DE'],
+    'it': ['it', 'it-IT'],
+    'pt': ['pt', 'pt-BR', 'pt-PT'],
+    'zh': ['zh', 'zh-CN'],
+    'ja': ['ja', 'ja-JP'],
+    'ko': ['ko', 'ko-KR'],
+    'nl': ['nl', 'nl-NL'],
+    'pl': ['pl', 'pl-PL'],
+    'ru': ['ru', 'ru-RU'],
+    'sv': ['sv', 'sv-SE'],
+    'tr': ['tr', 'tr-TR'],
+    'hi': ['hi', 'hi-IN']
+  };
+
+  const response = await fetch('https://api.elevenlabs.io/v1/voices', {
+    method: 'GET',
+    headers: {
+      'xi-api-key': process.env.ELEVENLABS_API_KEY,
+      'Content-Type': 'application/json'
+    }
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    return res.status(response.status).json({
+      success: false,
+      error: `ElevenLabs API error: ${response.status} ${errorText}`
+    });
+  }
+
+  const data = await response.json();
+  const voices = data.voices || [];
+  const languageCodes = ELEVENLABS_LANGUAGE_MAP[normalizedLanguage] || [normalizedLanguage];
+
+  let filteredVoices = voices.filter(voice => {
+    const voiceLanguage = voice.fine_tuning?.language || voice.labels?.language || '';
+    const isMultilingual = voice.labels?.use_case === 'conversational' || voice.fine_tuning?.is_allowed_to_fine_tune;
+    return languageCodes.some(code =>
+      voiceLanguage.toLowerCase().startsWith(code.toLowerCase())
+    ) || (isMultilingual && normalizedLanguage === 'en');
+  });
+
+  if (filteredVoices.length === 0) {
+    filteredVoices = voices.filter(voice =>
+      voice.category === 'premade' || voice.category === 'professional'
+    );
+  }
+
+  const sortedVoices = filteredVoices.sort((a, b) => {
+    const categoryOrder = { 'premade': 0, 'professional': 1, 'cloned': 2, 'generated': 3 };
+    return (categoryOrder[a.category] || 4) - (categoryOrder[b.category] || 4);
+  });
+
+  const voicesToReturn = sortedVoices.slice(0, pageSize);
+  const previewPhrase = PREVIEW_PHRASES[normalizedLanguage] || PREVIEW_PHRASES['en'];
+
+  const voicesWithPhrases = voicesToReturn.map(voice => ({
+    id: voice.voice_id,
+    name: voice.name,
+    description: voice.description || voice.labels?.description || '',
+    language: targetLanguage,
+    gender: voice.labels?.gender || 'neutral',
+    accent: voice.labels?.accent || null,
+    age: null,
+    use_case: voice.labels?.use_case || null,
+    category: voice.category,
+    preview_url: voice.preview_url || null,
+    preview_phrase: previewPhrase,
+  }));
+
+  return res.status(200).json({
+    success: true,
+    data: {
+      voices: voicesWithPhrases,
+      language: targetLanguage,
+      country: country || null,
+      total_count: filteredVoices.length,
+      returned_count: voicesWithPhrases.length,
+      has_more: false,
+      page: 0,
+      page_size: pageSize,
+      source: 'own_voices_fallback'
+    }
+  });
+}

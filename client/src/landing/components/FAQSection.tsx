@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import ThiingsIcon from '../../components/common/ThiingsIcon';
+import { ChevronDown, ArrowRight } from 'lucide-react';
 import { FAQS } from '../data/demoData';
 
 export default function FAQSection() {
@@ -58,7 +58,7 @@ export default function FAQSection() {
                   transition={{ duration: 0.3 }}
                   className="flex-shrink-0"
                 >
-                  <ThiingsIcon name="chevron-down" pxSize={20} />
+                  <ChevronDown className="w-5 h-5 text-[#9F1239]" />
                 </motion.div>
               </button>
 
@@ -99,7 +99,7 @@ export default function FAQSection() {
               className="bg-[#9F1239] text-white px-8 py-4 text-sm tracking-widest uppercase font-bold hover:bg-[#881337] transition-all duration-300 rounded-2xl inline-flex items-center gap-2"
             >
               Contact Support
-              <ThiingsIcon name="arrow-right" pxSize={16} />
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </motion.div>

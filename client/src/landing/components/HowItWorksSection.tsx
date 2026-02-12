@@ -1,24 +1,24 @@
 import { motion } from 'framer-motion';
-import ThiingsIcon, { type IconName } from '../../components/common/ThiingsIcon';
+import { Phone, Bot, CalendarCheck } from 'lucide-react';
 
 const steps = [
   {
     number: '01',
-    iconName: 'phone' as IconName,
+    icon: Phone,
     title: 'Customer Calls or Chats',
     description: 'A customer contacts your restaurant via phone or web chat to make a reservation.',
     accent: 'bg-[#9F1239]',
   },
   {
     number: '02',
-    iconName: 'bot' as IconName,
+    icon: Bot,
     title: 'AI Handles Everything',
     description: 'Our AI checks real-time availability, understands preferences, and confirms the booking in seconds.',
     accent: 'bg-[#1C1917]',
   },
   {
     number: '03',
-    iconName: 'calendar-check' as IconName,
+    icon: CalendarCheck,
     title: 'Reservation Confirmed',
     description: 'The guest receives a confirmation. Your dashboard updates instantly. No manual work needed.',
     accent: 'bg-[#9F1239]',
@@ -61,7 +61,7 @@ export default function HowItWorksSection() {
             >
               {/* Icon Circle */}
               <div className={`w-16 h-16 ${step.accent} rounded-2xl mx-auto mb-6 flex items-center justify-center relative z-10 shadow-lg`}>
-                <ThiingsIcon name={step.iconName} pxSize={28} />
+                <step.icon className="w-7 h-7 text-white" />
               </div>
 
               {/* Step Number */}

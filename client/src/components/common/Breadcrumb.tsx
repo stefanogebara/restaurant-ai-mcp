@@ -69,4 +69,5 @@ export const breadcrumbConfigs = {
   advanced: [{ label: 'Advanced Dashboard' }],
   waitlist: [{ label: 'Waitlist' }],
   analytics: [{ label: 'Analytics' }],
+  voiceSettings: [{ label: 'Voice & Language Settings' }],
 };

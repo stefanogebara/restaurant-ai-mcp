@@ -7,12 +7,12 @@ import { SidebarProvider } from './contexts/SidebarContext';
 import { AuthProvider } from './contexts/AuthContext';
 
 // Static imports (needed immediately or very small)
-import LandingPage from './landing/pages/LandingPage';
-import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Lazy-loaded pages
+const LandingPage = lazy(() => import('./landing/pages/LandingPage'));
+const Login = lazy(() => import('./pages/Login'));
 const LiveAIDemo = lazy(() => import('./pages/LiveAIDemo'));
 const SimpleDashboard = lazy(() => import('./pages/SimpleDashboard'));
 const HostDashboard = lazy(() => import('./pages/HostDashboard'));
@@ -33,6 +33,7 @@ const LanguageSettings = lazy(() => import('./pages/LanguageSettings'));
 const TestPhoneInput = lazy(() => import('./pages/TestPhoneInput'));
 const TableConfigPage = lazy(() => import('./pages/TableConfigPage'));
 const FloorPlanEditor = lazy(() => import('./pages/FloorPlanEditor'));
+const VoiceSettingsPage = lazy(() => import('./pages/VoiceSettingsPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -76,6 +77,7 @@ function App() {
               <Route path="/host-dashboard/calls" element={<CallTrackingDashboard />} />
               <Route path="/host-dashboard/tables" element={<TableConfigPage />} />
               <Route path="/host-dashboard/floor-plan" element={<FloorPlanEditor />} />
+              <Route path="/host-dashboard/voice-settings" element={<VoiceSettingsPage />} />
               <Route path="/analytics" element={<AnalyticsDashboard />} />
               <Route path="/customer" element={<CustomerPortal />} />
               <Route path="/subscription/success" element={<SubscriptionSuccess />} />

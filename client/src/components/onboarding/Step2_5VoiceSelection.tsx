@@ -1,23 +1,16 @@
 /**
- * Voice Selection Step - Onboarding Step 2.5 - Modern Elegant Design
- * Allows users to preview and select AI voice for their restaurant's conversational agent
+ * Voice Selection Step - Onboarding Step 2.5 - Enhanced with Filters & Pagination
+ * Uses shared voice components for consistent experience with VoiceSettingsPage.
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { authFetch } from '../../services/api';
 import ThiingsIcon from '../common/ThiingsIcon';
-import Spinner from '../common/Spinner';
+import VoiceFilters from '../voice/VoiceFilters';
+import VoiceGrid from '../voice/VoiceGrid';
+import { getLanguageFromCountry, getPreviewText } from '../voice/voiceConstants';
+import type { EnhancedVoice, VoiceFiltersState } from '../voice/voiceTypes';
 import type { OnboardingData } from '../../types/onboarding.types';
-
-interface ElevenLabsVoice {
-  id: string;
-  name: string;
-  description: string;
-  language: string;
-  gender: string;
-  preview_phrase: string;
-  preview_url?: string; category?: string;
-}
 
 interface Step2_5Props {
   data: OnboardingData;
@@ -26,167 +19,225 @@ interface Step2_5Props {
   onPrev: () => void;
 }
 
+const PAGE_SIZE = 12;
+const DEFAULT_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel - ElevenLabs default
+const DEFAULT_VOICE_LANGUAGE = 'en';
+
 export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }: Step2_5Props) {
-  const [voices, setVoices] = useState<ElevenLabsVoice[]>([]);
+  const [voices, setVoices] = useState<EnhancedVoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>(data.selected_voice_id || '');
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const [loadingAudio, setLoadingAudio] = useState<string | null>(null);
   const [audioElements, setAudioElements] = useState<Record<string, HTMLAudioElement>>({});
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [voicesSource, setVoicesSource] = useState<string>('');
 
-  // Track previous country to detect changes and reset voice selection
+  const defaultLang = getLanguageFromCountry(data.country || 'United States');
+  const [filters, setFilters] = useState<VoiceFiltersState>({
+    gender: 'all',
+    language: defaultLang,
+    search: '',
+  });
+
+  // Track previous country to detect changes
   const previousCountryRef = useRef<string>(data.country || '');
 
-  // Default voice fallback when API fails
-  const DEFAULT_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel - ElevenLabs default
-  const DEFAULT_VOICE_LANGUAGE = 'en';
-
-  // Fetch voices on mount and when country changes
+  // Reset when country changes
   useEffect(() => {
-    const fetchVoices = async () => {
+    const country = data.country || 'United States';
+    if (previousCountryRef.current && previousCountryRef.current !== country) {
+      const newLang = getLanguageFromCountry(country);
+      setFilters(prev => ({ ...prev, language: newLang }));
+      setSelectedVoiceId('');
+      setPage(0);
+      setVoices([]);
+      // Clear cached audio
+      Object.values(audioElements).forEach(audio => {
+        audio.pause();
+        audio.src = '';
+      });
+      setAudioElements({});
+      setPlayingVoiceId(null);
+      onUpdate({ selected_voice_id: '', selected_voice_language: '' });
+    }
+    previousCountryRef.current = country;
+  }, [data.country]);
+
+  // Fetch voices when filters change
+  const fetchVoices = useCallback(async (pageNum: number, append: boolean) => {
+    if (append) {
+      setIsLoadingMore(true);
+    } else {
       setIsLoading(true);
+    }
 
-      const country = data.country || 'United States';
+    const country = data.country || 'United States';
+    const params = new URLSearchParams({
+      country: country,
+      language: filters.language,
+      page_size: String(PAGE_SIZE),
+      page: String(pageNum),
+    });
+    if (filters.gender !== 'all') params.set('gender', filters.gender);
+    if (filters.search) params.set('search', filters.search);
 
-      // Check if country changed - if so, reset voice selection
-      let shouldAutoSelect = !selectedVoiceId; // Track if we need to auto-select
+    try {
+      const response = await authFetch(`/api/elevenlabs-voices?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch voices');
 
-      if (previousCountryRef.current && previousCountryRef.current !== country) {
-        setSelectedVoiceId('');
-        shouldAutoSelect = true; // Force auto-select for new country
-        // Clear cached audio elements since they're for the old language
-        Object.values(audioElements).forEach(audio => {
-          audio.pause();
-          audio.src = '';
-        });
-        setAudioElements({});
-        setPlayingVoiceId(null);
-        // Clear parent state
-        onUpdate({
-          selected_voice_id: '',
-          selected_voice_language: ''
-        });
-      }
-      previousCountryRef.current = country;
+      const result = await response.json();
+      if (result.success && result.data.voices) {
+        const newVoices: EnhancedVoice[] = result.data.voices.map((v: EnhancedVoice) => ({
+          ...v,
+          preview_phrase: getPreviewText(filters.language, data.restaurant_name),
+        }));
 
-      try {
-        const response = await authFetch(`/api/elevenlabs-voices?country=${encodeURIComponent(country)}`);
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch voices');
-        }
-
-        const result = await response.json();
-
-        if (result.success && result.data.voices && result.data.voices.length > 0) {
-          setVoices(result.data.voices);
-          // Auto-select first voice if none selected OR if country just changed
-          if (shouldAutoSelect && result.data.voices.length > 0) {
-            const firstVoice = result.data.voices[0];
+        if (append) {
+          setVoices(prev => [...prev, ...newVoices]);
+        } else {
+          setVoices(newVoices);
+          // Auto-select first voice if none selected
+          if (!selectedVoiceId && newVoices.length > 0) {
+            const firstVoice = newVoices[0];
             setSelectedVoiceId(firstVoice.id);
             onUpdate({
               selected_voice_id: firstVoice.id,
-              selected_voice_language: firstVoice.language || 'en'
+              selected_voice_language: filters.language,
             });
           }
-        } else {
-          // No voices available - use default
-          setSelectedVoiceId(DEFAULT_VOICE_ID);
-          onUpdate({
-            selected_voice_id: DEFAULT_VOICE_ID,
-            selected_voice_language: DEFAULT_VOICE_LANGUAGE
-          });
         }
-      } catch (error) {
-        console.error('Error fetching voices:', error);
-        // On error, use default voice so user can continue
+        setHasMore(result.data.has_more || false);
+        setVoicesSource(result.data.source || '');
+      } else if (!append) {
+        // No voices - use default
         setSelectedVoiceId(DEFAULT_VOICE_ID);
         onUpdate({
           selected_voice_id: DEFAULT_VOICE_ID,
-          selected_voice_language: DEFAULT_VOICE_LANGUAGE
+          selected_voice_language: DEFAULT_VOICE_LANGUAGE,
         });
-      } finally {
-        setIsLoading(false);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching voices:', error);
+      if (!append) {
+        setSelectedVoiceId(DEFAULT_VOICE_ID);
+        onUpdate({
+          selected_voice_id: DEFAULT_VOICE_ID,
+          selected_voice_language: DEFAULT_VOICE_LANGUAGE,
+        });
+      }
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  }, [filters, data.country, data.restaurant_name, selectedVoiceId, onUpdate]);
 
-    fetchVoices();
-  }, [data.country]);
+  // Refetch when filters change (reset page)
+  useEffect(() => {
+    setPage(0);
+    fetchVoices(0, false);
+  }, [filters.gender, filters.language, filters.search]);
+
+  // Load more handler
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchVoices(nextPage, true);
+  };
+
+  // Filter change handler
+  const handleFiltersChange = (newFilters: VoiceFiltersState) => {
+    // If language changed, update the voice language for onboarding
+    if (newFilters.language !== filters.language) {
+      onUpdate({ selected_voice_language: newFilters.language });
+    }
+    setFilters(newFilters);
+  };
 
   // Handle voice preview
   const handlePlayVoice = async (voiceId: string, previewText: string) => {
-    // If already playing this voice, pause it
     if (playingVoiceId === voiceId) {
       audioElements[voiceId]?.pause();
       setPlayingVoiceId(null);
       return;
     }
 
-    // Pause any currently playing audio
     if (playingVoiceId && audioElements[playingVoiceId]) {
       audioElements[playingVoiceId].pause();
     }
 
-    // If audio already exists, play it
     if (audioElements[voiceId]) {
+      audioElements[voiceId].currentTime = 0;
       audioElements[voiceId].play();
       setPlayingVoiceId(voiceId);
       return;
     }
 
-    // Generate new audio
     setLoadingAudio(voiceId);
+    try {
+      // Try preview_url first (free CDN), fall back to TTS API
+      const voice = voices.find(v => v.id === voiceId);
+      if (voice?.preview_url) {
+        const audio = new Audio(voice.preview_url);
+        audio.onended = () => setPlayingVoiceId(null);
+        audio.onerror = () => {
+          // Fallback to TTS API on preview_url failure
+          generatePreviewFromAPI(voiceId, previewText);
+        };
+        setAudioElements(prev => ({ ...prev, [voiceId]: audio }));
+        await audio.play();
+        setPlayingVoiceId(voiceId);
+        setLoadingAudio(null);
+        return;
+      }
+
+      await generatePreviewFromAPI(voiceId, previewText);
+    } catch (error) {
+      console.error('Error playing voice:', error);
+      setLoadingAudio(null);
+    }
+  };
+
+  const generatePreviewFromAPI = async (voiceId: string, previewText: string) => {
     try {
       const response = await authFetch('/api/elevenlabs-preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          voice_id: voiceId,
-          text: previewText
-        })
+        body: JSON.stringify({ voice_id: voiceId, text: previewText }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate preview');
-      }
+      if (!response.ok) throw new Error('Failed to generate preview');
 
       const result = await response.json();
-
       if (result.success && result.data.audio) {
-        // Create audio element
         const audio = new Audio(result.data.audio);
         audio.onended = () => setPlayingVoiceId(null);
         audio.onerror = () => {
           setPlayingVoiceId(null);
           console.error('Audio playback error');
         };
-
-        // Store audio element
         setAudioElements(prev => ({ ...prev, [voiceId]: audio }));
-
-        // Play audio
         await audio.play();
         setPlayingVoiceId(voiceId);
       }
     } catch (error) {
-      console.error('Error playing voice:', error);
+      console.error('Error generating preview:', error);
     } finally {
       setLoadingAudio(null);
     }
   };
 
-  // Handle voice selection
   const handleSelectVoice = (voiceId: string) => {
     setSelectedVoiceId(voiceId);
-    // Find the selected voice to get its language
     const selectedVoice = voices.find(v => v.id === voiceId);
     onUpdate({
       selected_voice_id: voiceId,
-      selected_voice_language: selectedVoice?.language || 'en'
+      selected_voice_language: selectedVoice?.language || filters.language || 'en',
     });
   };
 
-  // Handle continue
   const handleContinue = () => {
     if (selectedVoiceId) {
       onUpdate({ selected_voice_id: selectedVoiceId });
@@ -197,7 +248,7 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
           <div className="inline-flex items-center justify-center w-10 h-10 bg-[#9F1239]/10 rounded-full">
             <ThiingsIcon name="volume" pxSize={20} />
@@ -211,104 +262,31 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
         </p>
       </div>
 
-      {/* Loading State */}
-      {isLoading && (
-        <div className="flex flex-col items-center justify-center py-12">
-          <div className="relative w-12 h-12 mb-4">
-            <div className="absolute inset-0 rounded-full border-4 border-[#E7E5E4]"></div>
-            <div className="absolute inset-0 rounded-full border-4 border-t-[#9F1239] animate-spin"></div>
-          </div>
-          <p className="text-[#57534E] text-sm">Loading available voices...</p>
-        </div>
-      )}
+      {/* Filters */}
+      <VoiceFilters
+        filters={filters}
+        onChange={handleFiltersChange}
+        defaultLanguage={defaultLang}
+        hideSearch={voicesSource === 'own_voices_fallback'}
+      />
 
-      {/* Voice Grid */}
-      {!isLoading && voices.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          {voices.map((voice) => {
-            const isSelected = selectedVoiceId === voice.id;
-            const isPlaying = playingVoiceId === voice.id;
-            const isLoadingAudio = loadingAudio === voice.id;
-
-            return (
-              <div
-                key={voice.id}
-                onClick={() => handleSelectVoice(voice.id)}
-                className={`
-                  relative bg-white border-2 rounded-xl p-6 cursor-pointer
-                  transition-all duration-200 hover:shadow-lg
-                  ${isSelected
-                    ? 'border-[#9F1239] shadow-md bg-[#9F1239]/5'
-                    : 'border-[#E7E5E4] hover:border-[#9F1239]/50'
-                  }
-                `}
-              >
-                {/* Selected Indicator */}
-                {isSelected && (
-                  <div className="absolute top-4 right-4">
-                    <ThiingsIcon name="check-circle" pxSize={24} />
-                  </div>
-                )}
-
-                {/* Voice Info */}
-                <div className="mb-4">
-                  <h3 className="text-lg font-bold text-[#1C1917] mb-1">
-                    {voice.name}
-                  </h3>
-                  <div className="flex items-center gap-2 text-sm text-[#57534E] mb-2">
-                    <span className="capitalize">{voice.gender}</span>
-                    <span>-</span>
-                    <span>{voice.language.toUpperCase()}</span>
-                  </div>
-                  {voice.description && (
-                    <p className="text-sm text-[#57534E] line-clamp-2">
-                      {voice.description}
-                    </p>
-                  )}
-                </div>
-
-                {/* Play Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePlayVoice(voice.id, voice.preview_phrase);
-                  }}
-                  disabled={isLoadingAudio}
-                  className={`
-                    w-full py-3 px-4 rounded-xl font-semibold transition-all
-                    flex items-center justify-center gap-2
-                    ${isPlaying
-                      ? 'bg-[#9F1239] text-white hover:bg-[#881337]'
-                      : 'bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#1C1917]'
-                    }
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                  `}
-                >
-                  {isLoadingAudio ? (
-                    <>
-                      <Spinner size="sm" />
-                      <span>Loading...</span>
-                    </>
-                  ) : isPlaying ? (
-                    <>
-                      <ThiingsIcon name="pause" pxSize={20} />
-                      <span>Pause</span>
-                    </>
-                  ) : (
-                    <>
-                      <ThiingsIcon name="play" pxSize={20} />
-                      <span>Play Preview</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {/* Voice Grid (shows skeleton when loading) */}
+      <VoiceGrid
+        voices={voices}
+        selectedVoiceId={selectedVoiceId}
+        playingVoiceId={playingVoiceId}
+        loadingAudioId={loadingAudio}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        onSelectVoice={handleSelectVoice}
+        onPlayVoice={handlePlayVoice}
+        onLoadMore={handleLoadMore}
+        isLoading={isLoading}
+        source={voicesSource}
+      />
 
       {/* No Voices Message */}
-      {!isLoading && voices.length === 0 && (
+      {!isLoading && voices.length === 0 && !filters.search && (
         <div className="text-center py-12">
           <div className="bg-[#9F1239]/5 border border-[#9F1239]/20 rounded-xl p-6 max-w-lg mx-auto">
             <ThiingsIcon name="volume" pxSize={40} className="mx-auto mb-3" />
@@ -329,9 +307,7 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
           onClick={onPrev}
           className="px-6 py-3 bg-white hover:bg-[#F5F5F4] border border-[#E7E5E4] text-[#1C1917] font-semibold rounded-xl transition-all flex items-center gap-2"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ThiingsIcon name="chevron-left" pxSize={20} />
           Back
         </button>
         <button
@@ -341,9 +317,7 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
           className="px-8 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Continue
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
+          <ThiingsIcon name="arrow-right" pxSize={20} />
         </button>
       </div>
     </div>

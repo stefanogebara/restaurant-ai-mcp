@@ -32,6 +32,13 @@ const navItems: NavItem[] = [
     requiredFeature: 'aiAgentTracking'
   },
   {
+    path: '/host-dashboard/voice-settings',
+    label: 'Voice & Language',
+    iconName: 'volume',
+    description: 'AI Voice Settings',
+    requiredFeature: 'aiAgentTracking'
+  },
+  {
     path: '/host-dashboard/ml',
     label: 'No-Show Prevention',
     iconName: 'trending-up',

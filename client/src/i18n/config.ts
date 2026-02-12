@@ -2,19 +2,15 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-// Import translation files
+// Only import English eagerly (fallback language, always needed)
 import en from './locales/en.json';
-import es from './locales/es.json';
-import pt from './locales/pt.json';
-import fr from './locales/fr.json';
-import it from './locales/it.json';
 
 export const languages = {
-  en: { name: 'English', flag: '🇺🇸' },
-  es: { name: 'Español', flag: '🇪🇸' },
-  pt: { name: 'Português', flag: '🇵🇹' },
-  fr: { name: 'Français', flag: '🇫🇷' },
-  it: { name: 'Italiano', flag: '🇮🇹' },
+  en: { name: 'English', flag: '\u{1F1FA}\u{1F1F8}' },
+  es: { name: 'Espa\u00f1ol', flag: '\u{1F1EA}\u{1F1F8}' },
+  pt: { name: 'Portugu\u00eas', flag: '\u{1F1F5}\u{1F1F9}' },
+  fr: { name: 'Fran\u00e7ais', flag: '\u{1F1EB}\u{1F1F7}' },
+  it: { name: 'Italiano', flag: '\u{1F1EE}\u{1F1F9}' },
 };
 
 export const languageOptions = Object.entries(languages).map(([code, info]) => ({
@@ -23,19 +19,28 @@ export const languageOptions = Object.entries(languages).map(([code, info]) => (
   flag: info.flag,
 }));
 
-const resources = {
-  en: { translation: en },
-  es: { translation: es },
-  pt: { translation: pt },
-  fr: { translation: fr },
-  it: { translation: it },
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const localeLoaders: Record<string, () => Promise<{ default: any }>> = {
+  es: () => import('./locales/es.json'),
+  pt: () => import('./locales/pt.json'),
+  fr: () => import('./locales/fr.json'),
+  it: () => import('./locales/it.json'),
 };
+
+async function loadLocale(lng: string) {
+  if (lng === 'en' || !localeLoaders[lng]) return;
+  if (i18n.hasResourceBundle(lng, 'translation')) return;
+  const mod = await localeLoaders[lng]();
+  i18n.addResourceBundle(lng, 'translation', mod.default, true, true);
+}
 
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resources,
+    resources: {
+      en: { translation: en },
+    },
     fallbackLng: 'en',
     debug: false,
     interpolation: {
@@ -47,5 +52,16 @@ i18n
       lookupLocalStorage: 'i18nextLng',
     },
   });
+
+// Load the detected language on startup (if not English)
+const detectedLng = i18n.language?.split('-')[0];
+if (detectedLng && detectedLng !== 'en') {
+  loadLocale(detectedLng);
+}
+
+// Load locale dynamically whenever language changes
+i18n.on('languageChanged', (lng) => {
+  loadLocale(lng.split('-')[0]);
+});
 
 export default i18n;

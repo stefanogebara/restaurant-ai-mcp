@@ -18,7 +18,6 @@
     "@cartesia/cartesia-js": "^2.2.9",
     "@google-cloud/vertexai": "^1.10.0",
     "@sentry/node": "^10.22.0",
-    "@sentry/react": "^10.22.0",
     "@stripe/stripe-js": "^8.2.0",
     "@supabase/supabase-js": "^2.78.0",
     "axios": "^1.12.2",

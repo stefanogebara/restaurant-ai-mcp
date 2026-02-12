@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { voice_id, text } = req.body;
+    const { voice_id, text, voice_settings, model_id } = req.body;
 
     // Validate input
     if (!voice_id) {
@@ -45,7 +45,20 @@ module.exports = async (req, res) => {
 
     const previewText = text || "Welcome to our restaurant! I'd be happy to help you make a reservation.";
 
-    console.log(`[ElevenLabs] Generating preview for voice ${voice_id}`);
+    // Merge custom voice_settings with defaults (backward compatible)
+    const defaultSettings = {
+      stability: 0.5,
+      similarity_boost: 0.75,
+      style: 0.0,
+      use_speaker_boost: true
+    };
+    const mergedSettings = voice_settings
+      ? { ...defaultSettings, ...voice_settings }
+      : defaultSettings;
+
+    const ttsModelId = model_id || 'eleven_multilingual_v2';
+
+    console.log(`[ElevenLabs] Generating preview for voice ${voice_id} (model: ${ttsModelId})`);
 
     // Generate TTS preview using ElevenLabs
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice_id}`, {
@@ -57,13 +70,8 @@ module.exports = async (req, res) => {
       },
       body: JSON.stringify({
         text: previewText,
-        model_id: 'eleven_multilingual_v2',
-        voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.75,
-          style: 0.0,
-          use_speaker_boost: true
-        }
+        model_id: ttsModelId,
+        voice_settings: mergedSettings
       })
     });
 

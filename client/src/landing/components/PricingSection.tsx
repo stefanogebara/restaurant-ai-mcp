@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
-import ThiingsIcon from '../../components/common/ThiingsIcon';
-import Spinner from '../../components/common/Spinner';
+import { Check, ArrowRight, Loader2 } from 'lucide-react';
 import { PRICING_TIERS } from '../data/demoData';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -171,7 +170,7 @@ export default function PricingSection() {
                 {tier.features.map((feature, featureIndex) => (
                   <li key={featureIndex} className="flex items-start gap-3">
                     <div className="w-5 h-5 rounded-full bg-[#9F1239]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <ThiingsIcon name="check" size="xs" pxSize={12} />
+                      <Check className="w-3 h-3 text-[#9F1239]" />
                     </div>
                     <span className="text-[#57534E] text-sm">{feature}</span>
                   </li>
@@ -190,13 +189,13 @@ export default function PricingSection() {
               >
                 {loadingPlan === tier.name ? (
                   <>
-                    <Spinner size="sm" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                     Loading...
                   </>
                 ) : (
                   <>
                     {tier.cta}
-                    <ThiingsIcon name="arrow-right" size="xs" />
+                    <ArrowRight className="w-4 h-4" />
                   </>
                 )}
               </button>
@@ -220,7 +219,7 @@ export default function PricingSection() {
             className="text-[#9F1239] hover:text-[#881337] font-bold text-sm uppercase tracking-widest inline-flex items-center gap-2 transition-colors"
           >
             Contact us for enterprise pricing
-            <ThiingsIcon name="arrow-right" size="xs" />
+            <ArrowRight className="w-4 h-4" />
           </button>
         </motion.div>
       </div>

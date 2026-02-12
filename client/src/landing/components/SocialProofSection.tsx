@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import ThiingsIcon, { type IconName } from '../../components/common/ThiingsIcon';
+import { Bot, User, CheckCircle2, Clock, Globe, Sparkles } from 'lucide-react';
 
 const chatMessages = [
   {
@@ -57,7 +57,7 @@ export default function SocialProofSection() {
             {/* Chat Header */}
             <div className="flex items-center gap-3 px-6 py-4 bg-white border-b border-[#E7E5E4]">
               <div className="w-9 h-9 rounded-xl bg-[#9F1239] flex items-center justify-center">
-                <ThiingsIcon name="bot" pxSize={18} />
+                <Bot className="w-4.5 h-4.5 text-white" />
               </div>
               <div className="flex-1">
                 <div className="text-sm font-bold text-[#1C1917]">Seatable AI</div>
@@ -67,7 +67,7 @@ export default function SocialProofSection() {
                 </div>
               </div>
               <div className="flex items-center gap-1 px-2 py-1 bg-[#F5F5F4] rounded-lg">
-                <ThiingsIcon name="globe" pxSize={12} />
+                <Globe className="w-3 h-3 text-[#A8A29E]" />
                 <span className="text-[10px] text-[#A8A29E] font-medium">EN</span>
               </div>
             </div>
@@ -85,7 +85,7 @@ export default function SocialProofSection() {
                 >
                   {msg.role === 'ai' && (
                     <div className="w-7 h-7 rounded-lg bg-[#9F1239]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <ThiingsIcon name="sparkles" pxSize={14} />
+                      <Sparkles className="w-3.5 h-3.5 text-[#9F1239]" />
                     </div>
                   )}
                   <div
@@ -99,7 +99,7 @@ export default function SocialProofSection() {
                   </div>
                   {msg.role === 'customer' && (
                     <div className="w-7 h-7 rounded-lg bg-[#E7E5E4] flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <ThiingsIcon name="user" pxSize={14} />
+                      <User className="w-3.5 h-3.5 text-[#57534E]" />
                     </div>
                   )}
                 </motion.div>
@@ -114,7 +114,7 @@ export default function SocialProofSection() {
                 className="flex justify-center pt-2"
               >
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-full">
-                  <ThiingsIcon name="check-circle" pxSize={16} />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Reservation Confirmed</span>
                 </div>
               </motion.div>
@@ -131,19 +131,19 @@ export default function SocialProofSection() {
           >
             {[
               {
-                iconName: 'clock' as IconName,
+                icon: Clock,
                 title: 'Instant Response',
                 description: 'Answers calls and chats in under 3 seconds, 24 hours a day. No hold music, no missed calls.',
                 accent: 'bg-[#9F1239]',
               },
               {
-                iconName: 'globe' as IconName,
+                icon: Globe,
                 title: '6+ Languages',
                 description: 'Handles reservations in English, Spanish, French, Italian, Portuguese, German, and more.',
                 accent: 'bg-[#1C1917]',
               },
               {
-                iconName: 'sparkles' as IconName,
+                icon: Sparkles,
                 title: 'Understands Context',
                 description: 'Remembers dietary preferences, special occasions, and seating requests. Not just booking, but caring.',
                 accent: 'bg-[#9F1239]',
@@ -158,7 +158,7 @@ export default function SocialProofSection() {
                 className="flex items-start gap-4 bg-[#FAFAF9] p-5 rounded-2xl border border-[#E7E5E4] hover:shadow-md transition-shadow duration-300"
               >
                 <div className={`w-10 h-10 ${item.accent} rounded-xl flex items-center justify-center flex-shrink-0`}>
-                  <ThiingsIcon name={item.iconName} pxSize={18} />
+                  <item.icon className="w-4.5 h-4.5 text-white" />
                 </div>
                 <div>
                   <h3 className="font-serif text-lg text-[#1C1917] mb-1">{item.title}</h3>

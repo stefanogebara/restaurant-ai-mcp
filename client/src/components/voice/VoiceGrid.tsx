@@ -1,0 +1,139 @@
+/**
+ * Scrollable voice grid with pagination, skeleton loading, and keyboard navigation.
+ */
+
+import { useState, useRef, useCallback } from 'react';
+import VoiceCard from './VoiceCard';
+import VoiceCardSkeleton from './VoiceCardSkeleton';
+import type { EnhancedVoice } from './voiceTypes';
+
+interface VoiceGridProps {
+  voices: EnhancedVoice[];
+  selectedVoiceId: string;
+  playingVoiceId: string | null;
+  loadingAudioId: string | null;
+  hasMore: boolean;
+  isLoadingMore: boolean;
+  onSelectVoice: (voiceId: string) => void;
+  onPlayVoice: (voiceId: string, previewText: string) => void;
+  onLoadMore: () => void;
+  isLoading?: boolean;
+  source?: string;
+}
+
+export default function VoiceGrid({
+  voices,
+  selectedVoiceId,
+  playingVoiceId,
+  loadingAudioId,
+  hasMore,
+  isLoadingMore,
+  onSelectVoice,
+  onPlayVoice,
+  onLoadMore,
+  isLoading = false,
+  source,
+}: VoiceGridProps) {
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  const handleGridKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (voices.length === 0) return;
+
+      let nextIndex = focusedIndex;
+
+      switch (e.key) {
+        case 'ArrowRight':
+          e.preventDefault();
+          nextIndex = focusedIndex < voices.length - 1 ? focusedIndex + 1 : 0;
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          nextIndex = focusedIndex > 0 ? focusedIndex - 1 : voices.length - 1;
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          nextIndex = Math.min(focusedIndex + 3, voices.length - 1);
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          nextIndex = Math.max(focusedIndex - 3, 0);
+          break;
+        default:
+          return;
+      }
+
+      setFocusedIndex(nextIndex);
+      cardRefs.current[nextIndex]?.focus();
+    },
+    [focusedIndex, voices.length],
+  );
+
+  if (isLoading) {
+    return (
+      <div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" role="status" aria-label="Loading voices">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <VoiceCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (voices.length === 0) {
+    return (
+      <div className="text-center py-10 text-[#57534E]">
+        <p className="text-sm">No voices found matching your filters.</p>
+        <p className="text-xs mt-1">Try adjusting your search or filters.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {source === 'own_voices_fallback' && (
+        <p className="text-xs text-[#57534E] bg-[#F5F5F4] rounded-lg px-3 py-2 mb-3">
+          Showing curated voices. Upgrade your ElevenLabs plan for access to 10,000+ voices.
+        </p>
+      )}
+
+      <div
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[520px] overflow-y-auto pr-1"
+        role="radiogroup"
+        aria-label="Available voices"
+        onKeyDown={handleGridKeyDown}
+      >
+        {voices.map((voice, index) => (
+          <VoiceCard
+            key={voice.id}
+            ref={(el) => { cardRefs.current[index] = el; }}
+            voice={voice}
+            isSelected={selectedVoiceId === voice.id}
+            isPlaying={playingVoiceId === voice.id}
+            isLoading={loadingAudioId === voice.id}
+            onSelect={(id) => {
+              setFocusedIndex(index);
+              onSelectVoice(id);
+            }}
+            onPlay={onPlayVoice}
+          />
+        ))}
+      </div>
+
+      {hasMore && (
+        <div className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={onLoadMore}
+            disabled={isLoadingMore}
+            className="px-6 py-2.5 text-sm font-medium text-[#9F1239] bg-[#9F1239]/5 hover:bg-[#9F1239]/10 rounded-lg transition-colors disabled:opacity-50"
+          >
+            {isLoadingMore ? 'Loading more voices...' : 'Show more voices'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
