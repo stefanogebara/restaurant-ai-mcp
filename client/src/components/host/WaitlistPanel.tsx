@@ -61,6 +61,7 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'active' | 'seated' | 'removed'>('active');
   const [searchQuery, setSearchQuery] = useState('');
+  const [confirmRemove, setConfirmRemove] = useState<{ id: string; name: string } | null>(null);
 
   // Fetch all waitlist entries (we'll filter client-side)
   const { data, isLoading, error } = useQuery<WaitlistResponse>({
@@ -187,7 +188,7 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
 
         {/* Status Tabs + Search in one row */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex gap-0.5 bg-[#F5F5F4] rounded-lg p-0.5">
+          <div className="flex gap-0.5 bg-[#F5F5F4] rounded-lg p-0.5" role="tablist" aria-label="Waitlist status filter">
             {[
               { key: 'active', label: 'Active', count: activeCount },
               { key: 'seated', label: 'Seated', count: seatedCount },
@@ -195,6 +196,8 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
             ].map(tab => (
               <button
                 key={tab.key}
+                role="tab"
+                aria-selected={activeTab === tab.key}
                 onClick={() => setActiveTab(tab.key as typeof activeTab)}
                 className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
                   activeTab === tab.key
@@ -218,6 +221,7 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
             <input
               type="text"
               placeholder="Search..."
+              aria-label="Search waitlist"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-8 pr-3 py-1.5 bg-[#F5F5F4] border border-[#E7E5E4] rounded-lg text-xs focus:ring-2 focus:ring-[#9F1239] focus:border-transparent outline-none"
@@ -259,11 +263,7 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
                     entry={entry}
                     isTableReady
                     onNotify={(id) => notifyMutation.mutate(id)}
-                    onRemove={(id) => {
-                      if (confirm(`Remove ${entry.customer_name} from waitlist?`)) {
-                        removeMutation.mutate(id);
-                      }
-                    }}
+                    onRemove={(id) => setConfirmRemove({ id, name: entry.customer_name || 'Guest' })}
                     onSeatNow={onSeatNow}
                     isNotifying={notifyMutation.isPending}
                     isRemoving={removeMutation.isPending}
@@ -285,11 +285,7 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
                     key={entry.id}
                     entry={entry}
                     onNotify={(id) => notifyMutation.mutate(id)}
-                    onRemove={(id) => {
-                      if (confirm(`Remove ${entry.customer_name} from waitlist?`)) {
-                        removeMutation.mutate(id);
-                      }
-                    }}
+                    onRemove={(id) => setConfirmRemove({ id, name: entry.customer_name || 'Guest' })}
                     onSeatNow={onSeatNow}
                     isNotifying={notifyMutation.isPending}
                     isRemoving={removeMutation.isPending}
@@ -305,11 +301,7 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
               key={entry.id}
               entry={entry}
               onNotify={(id) => notifyMutation.mutate(id)}
-              onRemove={(id) => {
-                if (confirm(`Remove ${entry.customer_name} from waitlist?`)) {
-                  removeMutation.mutate(id);
-                }
-              }}
+              onRemove={(id) => setConfirmRemove({ id, name: entry.customer_name || 'Guest' })}
               onSeatNow={onSeatNow}
               isNotifying={notifyMutation.isPending}
               isRemoving={removeMutation.isPending}
@@ -328,6 +320,35 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
             queryClient.invalidateQueries({ queryKey: ['waitlist'] });
           }}
         />
+      )}
+
+      {/* Remove Confirmation Modal */}
+      {confirmRemove && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-[#E7E5E4] p-6 max-w-sm w-full">
+            <h3 className="text-lg font-bold text-[#1C1917] mb-2">Remove from Waitlist</h3>
+            <p className="text-sm text-[#57534E] mb-6">
+              Remove <span className="font-semibold text-[#1C1917]">{confirmRemove.name}</span> from the waitlist?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmRemove(null)}
+                className="flex-1 px-4 py-2.5 border border-[#E7E5E4] text-[#57534E] rounded-xl hover:bg-[#F5F5F4] transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  removeMutation.mutate(confirmRemove.id);
+                  setConfirmRemove(null);
+                }}
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition-colors"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

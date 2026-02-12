@@ -277,7 +277,7 @@ Push to `main` branch triggers automatic Vercel deployment.
 
 ## Contact
 
-- **Email**: stefanogebara@gmail.com
+- **Email**: hello@seatable.io
 - **Response Time**: Within 24 hours
 
 ---

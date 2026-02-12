@@ -82,6 +82,7 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
               min="1"
               max="20"
               required
+              aria-label="Party size"
               value={formData.party_size}
               onChange={(e) => setFormData({ ...formData, party_size: e.target.value })}
               className="w-full px-4 py-2.5 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent"
@@ -95,6 +96,7 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
             <input
               type="text"
               required
+              aria-label="Customer name"
               value={formData.customer_name}
               onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
               className="w-full px-4 py-2.5 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent"
@@ -108,6 +110,7 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
             <input
               type="tel"
               required
+              aria-label="Customer phone"
               placeholder="+1 (555) 123-4567"
               value={formData.customer_phone}
               onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
@@ -121,6 +124,7 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
               Preferred Location (Optional)
             </label>
             <select
+              aria-label="Preferred location"
               value={formData.preferred_location}
               onChange={(e) => setFormData({ ...formData, preferred_location: e.target.value })}
               className="w-full px-4 py-2.5 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent"
