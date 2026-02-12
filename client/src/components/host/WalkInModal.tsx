@@ -108,14 +108,12 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
             <input
               type="tel"
               required
-              pattern="[0-9\-\(\)\s\+]{7,20}"
-              title="Please enter a valid phone number (7-20 digits, may include +, -, (), spaces)"
               placeholder="+1 (555) 123-4567"
               value={formData.customer_phone}
               onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
               className="w-full px-4 py-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent"
             />
-            <p className="text-xs text-[#A8A29E] mt-1">Format: +1 (555) 123-4567</p>
+            <p className="text-xs text-[#A8A29E] mt-1">Any format accepted, e.g. +1 (555) 123-4567</p>
           </div>
 
           <div>

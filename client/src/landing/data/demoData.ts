@@ -65,9 +65,9 @@ export const DEMO_RESERVATIONS = [
     customer_name: "Isabella Romano",
     customer_phone: "+1 (555) 234-5678",
     party_size: 4,
-    date: "2025-10-27",
+    date: "2026-02-12",
     time: "19:00",
-    reservation_time: "2025-10-27T19:00:00",
+    reservation_time: "2026-02-12T19:00:00",
     special_requests: "Window table preferred",
     status: "confirmed",
   },
@@ -76,9 +76,9 @@ export const DEMO_RESERVATIONS = [
     customer_name: "Alessandro Bianchi",
     customer_phone: "+1 (555) 345-6789",
     party_size: 2,
-    date: "2025-10-27",
+    date: "2026-02-12",
     time: "20:00",
-    reservation_time: "2025-10-27T20:00:00",
+    reservation_time: "2026-02-12T20:00:00",
     status: "confirmed",
   },
   {
@@ -86,9 +86,9 @@ export const DEMO_RESERVATIONS = [
     customer_name: "Lucia Ferrari",
     customer_phone: "+1 (555) 456-7890",
     party_size: 6,
-    date: "2025-10-28",
+    date: "2026-02-13",
     time: "18:30",
-    reservation_time: "2025-10-28T18:30:00",
+    reservation_time: "2026-02-13T18:30:00",
     special_requests: "Birthday celebration - cake request",
     status: "confirmed",
   },
@@ -101,7 +101,7 @@ export const DEMO_WAITLIST = [
     customer_phone: "+1 (555) 567-8901",
     party_size: 2,
     estimated_wait: 15,
-    added_at: "2025-10-27T18:15:00",
+    added_at: "2026-02-12T18:15:00",
     status: "Waiting",
   },
   {
@@ -110,7 +110,7 @@ export const DEMO_WAITLIST = [
     customer_phone: "+1 (555) 678-9012",
     party_size: 4,
     estimated_wait: 25,
-    added_at: "2025-10-27T18:20:00",
+    added_at: "2026-02-12T18:20:00",
     status: "Waiting",
   },
 ];
@@ -286,7 +286,7 @@ export const STATS = [
 ];
 
 export const CONTACT_INFO = {
-  email: "stefanogebara@gmail.com",
+  email: "hello@seatable.io",
   formFields: [
     { name: "name", label: "Full Name", type: "text", required: true },
     { name: "email", label: "Email Address", type: "email", required: true },

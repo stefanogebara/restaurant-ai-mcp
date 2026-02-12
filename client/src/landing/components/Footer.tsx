@@ -32,7 +32,7 @@ export default function Footer() {
             <button onClick={() => scrollToSection('faq')} className="hover:text-white transition-colors">
               FAQ
             </button>
-            <a href="mailto:stefanogebara@gmail.com" className="hover:text-white transition-colors">
+            <a href="mailto:hello@seatable.io" className="hover:text-white transition-colors">
               Contact
             </a>
           </div>
@@ -44,7 +44,7 @@ export default function Footer() {
             &copy; {currentYear} Seatable AI. All rights reserved.
           </p>
           <div className="flex gap-6 text-xs text-[#57534E]">
-            <a href="/login" className="hover:text-[#A8A29E] transition-colors">
+            <a href="/onboarding" className="hover:text-[#A8A29E] transition-colors">
               Get Started
             </a>
             <a href="/login" className="hover:text-[#A8A29E] transition-colors">

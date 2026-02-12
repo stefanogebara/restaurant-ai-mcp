@@ -194,6 +194,31 @@ async function handleDashboard(req, res) {
     : 0;
   const maxSinglePartySize = Math.max(largestFixedCapacity, largestFlexibleCapacity);
 
+  // Calculate avg duration from active parties
+  let avgDurationMinutes = 0;
+  if (activeParties.length > 0) {
+    const totalElapsed = activeParties.reduce((sum, p) => sum + (p.time_elapsed_minutes || 0), 0);
+    avgDurationMinutes = Math.round(totalElapsed / activeParties.length);
+  }
+
+  // Calculate peak hours from upcoming reservations
+  let peakHours = null;
+  const reservations = upcomingReservationsResult.reservations || [];
+  if (reservations.length > 0) {
+    const hourCounts = {};
+    reservations.forEach(r => {
+      if (r.time) {
+        const hour = r.time.split(':')[0];
+        hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+      }
+    });
+    const peakHour = Object.entries(hourCounts).sort((a, b) => b[1] - a[1])[0];
+    if (peakHour) {
+      const h = parseInt(peakHour[0]);
+      peakHours = `${h > 12 ? h - 12 : h}${h >= 12 ? 'PM' : 'AM'}`;
+    }
+  }
+
   return res.status(200).json({
     summary: {
       total_capacity: totalCapacity,
@@ -203,6 +228,8 @@ async function handleDashboard(req, res) {
       active_parties: activeParties.length,
       upcoming_reservations: upcomingReservationsResult.reservations.length,
       estimated_wait_time: estimatedWaitMinutes,
+      avg_duration_minutes: avgDurationMinutes || null,
+      peak_hours: peakHours,
       // Flexible table metrics
       max_single_party_size: maxSinglePartySize,  // Largest party we can accommodate right now
       flexible_tables_available: flexibleTables.length,

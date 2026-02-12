@@ -62,7 +62,7 @@ export default function HeroSection() {
             Try Live Demo
           </button>
           <button
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/onboarding')}
             className="border border-[#1C1917] text-[#1C1917] px-8 py-4 text-sm tracking-widest uppercase font-bold hover:bg-[#1C1917] hover:text-white transition-all duration-300 rounded-2xl"
           >
             Start Free Trial

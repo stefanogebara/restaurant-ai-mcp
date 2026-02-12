@@ -93,7 +93,7 @@ export default function LandingNav() {
             Login
           </button>
           <button
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/onboarding')}
             className="bg-[#1C1917] text-[#FAFAF9] px-6 py-2.5 rounded-xl hover:bg-[#9F1239] transition-colors duration-300 text-sm tracking-widest font-bold uppercase"
           >
             Get Started
@@ -104,6 +104,8 @@ export default function LandingNav() {
         <button
           className="md:hidden text-[#1C1917]"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={isMobileMenuOpen}
         >
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -157,7 +159,7 @@ export default function LandingNav() {
               Login
             </button>
             <button
-              onClick={() => { navigate('/login'); setIsMobileMenuOpen(false); }}
+              onClick={() => { navigate('/onboarding'); setIsMobileMenuOpen(false); }}
               className="block w-full bg-[#9F1239] text-white text-center px-6 py-3 text-sm tracking-widest font-bold uppercase rounded-xl"
             >
               Get Started

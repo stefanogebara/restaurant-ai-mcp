@@ -91,6 +91,8 @@ export default function PricingSection() {
           </span>
           <button
             onClick={() => setIsAnnual(!isAnnual)}
+            role="switch"
+            aria-checked={isAnnual}
             className="relative w-14 h-7 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:ring-offset-2"
             style={{ backgroundColor: isAnnual ? '#9F1239' : '#E7E5E4' }}
             aria-label={isAnnual ? 'Switch to monthly billing' : 'Switch to annual billing'}
