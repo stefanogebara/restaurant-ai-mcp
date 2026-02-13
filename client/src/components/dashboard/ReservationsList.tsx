@@ -55,7 +55,7 @@ export default function ReservationsList({
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-[#E7E5E4] rounded-xl p-5 shadow-sm">
+      <div className="bg-white border border-[#E7E5E4] rounded-xl p-5">
         <div className="h-6 w-52 bg-[#E7E5E4] rounded-lg animate-pulse mb-4" />
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -74,24 +74,17 @@ export default function ReservationsList({
   }
 
   return (
-    <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-sm overflow-hidden">
+    <div className="bg-white border border-[#E7E5E4] rounded-xl overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-[#E7E5E4]">
-        <div className="flex items-center gap-2.5">
-          <div className="p-1.5 bg-[#9F1239]/10 rounded-lg">
-            <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <h2 className="text-base font-bold text-[#1C1917]">
+        <div className="flex items-center gap-2">
+          <h2 className="text-base font-semibold text-[#1C1917]">
             {t.upcoming}
             {showTomorrow && (
               <span className="ml-2 text-sm font-normal text-[#57534E]">({t.tomorrow})</span>
             )}
           </h2>
-          <span className="px-2 py-0.5 bg-[#9F1239]/10 text-[#9F1239] rounded-lg text-xs font-bold">
-            {displayed.length}
-          </span>
+          <span className="text-sm text-[#78716C]">({displayed.length})</span>
         </div>
 
         {/* Tomorrow toggle */}
@@ -99,8 +92,8 @@ export default function ReservationsList({
           onClick={() => setShowTomorrow(!showTomorrow)}
           className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
             showTomorrow
-              ? 'bg-[#9F1239] text-white'
-              : 'text-[#9F1239] hover:bg-[#9F1239]/10'
+              ? 'bg-[#F5F5F4] text-[#1C1917]'
+              : 'text-[#78716C] hover:bg-[#F5F5F4]'
           }`}
         >
           {showTomorrow ? t.today : t.tomorrow}
@@ -162,18 +155,18 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
   const isHighRisk = reservation.ml_risk_level === 'high' || reservation.ml_risk_level === 'very-high';
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 sm:p-4 hover:bg-[#F5F5F4]/50 transition-colors">
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 sm:p-4">
       {/* Time */}
       <div className="flex-shrink-0">
-        <div className="text-lg sm:text-2xl font-mono font-bold text-[#9F1239] bg-white px-2.5 py-1.5 rounded-lg shadow-sm border-2 border-[#9F1239]/30">
+        <div className="text-sm font-medium text-[#1C1917]">
           {formatTime(reservation.time)}
         </div>
       </div>
 
       {/* Info */}
-      <div className="flex-1 min-w-0 border-l-2 border-[#9F1239]/40 pl-3">
+      <div className="flex-1 min-w-0 pl-3">
         <div className="flex flex-wrap items-center gap-2 mb-0.5">
-          <span className="font-serif font-semibold text-[#1C1917] text-base truncate">
+          <span className="font-medium text-[#1C1917] text-base truncate">
             {reservation.customer_name}
           </span>
 
@@ -206,12 +199,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
         )}
 
         <div className="flex flex-wrap items-center gap-2 text-sm text-[#57534E] mt-1">
-          <div className="flex items-center gap-1">
-            <svg className="w-4 h-4 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            <span className="font-medium">{reservation.party_size} {t.people}</span>
-          </div>
+          <span className="font-medium">{reservation.party_size}p</span>
           {reservation.special_requests && (
             <span className="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-lg font-medium max-w-full">
               <svg className="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -228,7 +216,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
         {!reservation.checked_in ? (
           <button
             onClick={onCheckIn}
-            className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 min-h-[44px] rounded-lg transition-colors text-sm shadow-sm hover:shadow-md active:scale-95"
+            className="w-full sm:w-auto bg-[#16a34a] hover:bg-[#15803d] text-white font-semibold px-5 py-2.5 min-h-[44px] rounded-lg transition-colors text-sm"
           >
             <span className="flex items-center justify-center gap-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -41,7 +41,7 @@ export default function ActivePartiesPanel({
   const t = translations[language];
   if (isLoading) {
     return (
-      <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-sm p-4">
+      <div className="bg-white border border-[#E7E5E4] rounded-xl p-4">
         <div className="h-5 w-32 bg-[#E7E5E4] rounded animate-pulse mb-4" />
         <div className="space-y-3">
           {[1, 2].map((i) => (
@@ -56,19 +56,12 @@ export default function ActivePartiesPanel({
   }
 
   return (
-    <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-sm overflow-hidden">
+    <div className="bg-white border border-[#E7E5E4] rounded-xl overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-[#E7E5E4]">
-        <div className="flex items-center gap-2.5">
-          <div className="p-1.5 bg-[#7c3aed]/10 rounded-lg">
-            <svg className="w-5 h-5 text-[#7c3aed]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-          </div>
-          <h2 className="text-base font-bold text-[#1C1917]">{t.activeParties}</h2>
-          <span className="px-2 py-0.5 bg-[#7c3aed]/10 text-[#7c3aed] rounded-lg text-xs font-bold">
-            {parties.length}
-          </span>
+        <div className="flex items-center gap-2">
+          <h2 className="text-base font-semibold text-[#1C1917]">{t.activeParties}</h2>
+          <span className="text-sm text-[#78716C]">({parties.length})</span>
         </div>
       </div>
 
@@ -117,29 +110,19 @@ function PartyRow({ party, onComplete, language }: PartyRowProps) {
   const isOverdue = party.is_overdue;
 
   return (
-    <div className={`p-3.5 hover:bg-[#F5F5F4]/50 transition-colors ${isOverdue ? 'bg-red-50/50' : ''}`}>
+    <div className={`p-3.5 ${isOverdue ? 'bg-red-50/50' : ''}`}>
       <div className="flex items-start justify-between mb-2">
         <div className="font-semibold text-[#1C1917] text-sm truncate">
           {party.customer_name}
         </div>
-        <span className="text-xs font-medium text-[#57534E] bg-white px-2 py-0.5 rounded-md flex-shrink-0 ml-2">
+        <span className="text-xs font-medium text-[#57534E] flex-shrink-0 ml-2">
           {formatTimestamp(party.seated_at)}
         </span>
       </div>
 
       <div className="flex items-center gap-3 text-xs text-[#57534E] mb-2">
-        <div className="flex items-center gap-1">
-          <svg className="w-3.5 h-3.5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-          <span className="font-medium">{party.party_size} {t.guests}</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <svg className="w-3.5 h-3.5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
-          <span className="font-medium">{t.table} {party.tables?.join(', ')}</span>
-        </div>
+        <span className="font-medium">{party.party_size} {t.guests}</span>
+        <span className="font-medium">{t.table} {party.tables?.join(', ')}</span>
         {isOverdue && (
           <span className="text-red-600 font-semibold">{t.overdue}</span>
         )}
@@ -148,9 +131,9 @@ function PartyRow({ party, onComplete, language }: PartyRowProps) {
       {/* Time progress */}
       {party.time_elapsed_minutes !== undefined && (
         <div className="mb-2">
-          <div className="h-1 bg-[#F5F5F4] rounded-full overflow-hidden">
+          <div className="h-[3px] bg-[#F5F5F4] rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all ${isOverdue ? 'bg-red-500' : 'bg-[#7c3aed]'}`}
+              className={`h-full rounded-full transition-all ${isOverdue ? 'bg-red-500' : 'bg-[#1C1917]'}`}
               style={{
                 width: `${Math.min(
                   ((party.time_elapsed_minutes) /
@@ -169,7 +152,7 @@ function PartyRow({ party, onComplete, language }: PartyRowProps) {
 
       <button
         onClick={onComplete}
-        className="w-full mt-2 px-3 py-2.5 min-h-[44px] bg-[#9F1239] hover:bg-[#881337] text-white text-xs font-semibold rounded-lg transition-all shadow-sm hover:shadow-md active:scale-95"
+        className="w-full mt-2 px-3 py-2.5 min-h-[44px] border border-[#E7E5E4] text-[#1C1917] hover:bg-[#F5F5F4] text-xs font-medium rounded-lg transition-colors"
       >
         {t.completeService}
       </button>

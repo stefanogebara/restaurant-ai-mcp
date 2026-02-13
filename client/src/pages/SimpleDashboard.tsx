@@ -155,11 +155,6 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   const dayName = dayNames[now.getDay()];
   const dateStr = `${now.getDate()} ${monthNames[now.getMonth()]}`;
 
-  // Format avg duration
-  const avgDuration = rawStats.avg_duration_minutes
-    ? `${Math.round(rawStats.avg_duration_minutes / 60 * 10) / 10}h`
-    : undefined;
-
   // Handlers
   const handleWalkInSuccess = (partyData: any) => {
     setSelectedParty(partyData);
@@ -322,9 +317,6 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                   estimatedWaitTime={rawStats.estimated_wait_time}
                   activeParties={rawStats.active_parties || 0}
                   totalGuests={totalGuests}
-                  avgDuration={avgDuration}
-                  peakHours={rawStats.peak_hours}
-                  revenueToday={rawStats.revenue_today}
                   language={language}
                 />
               </div>

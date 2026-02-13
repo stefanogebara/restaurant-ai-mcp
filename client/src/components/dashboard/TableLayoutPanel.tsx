@@ -121,7 +121,7 @@ export default function TableLayoutPanel({
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-[#E7E5E4] rounded-xl p-5 shadow-sm">
+      <div className="bg-white border border-[#E7E5E4] rounded-xl p-5">
         <div className="h-6 w-40 bg-[#E7E5E4] rounded-lg animate-pulse mb-4" />
         <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
           {Array.from({ length: 10 }).map((_, i) => (
@@ -134,17 +134,10 @@ export default function TableLayoutPanel({
 
   return (
     <>
-      <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-[#E7E5E4] rounded-xl overflow-hidden">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b border-[#E7E5E4]">
-          <div className="flex items-center gap-2.5">
-            <div className="p-1.5 bg-[#9F1239]/10 rounded-lg">
-              <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
-              </svg>
-            </div>
-            <h2 className="text-base font-bold text-[#1C1917]">{t.tableLayout}</h2>
-          </div>
+          <h2 className="text-base font-semibold text-[#1C1917]">{t.tableLayout}</h2>
 
           <div className="flex items-center gap-2 flex-wrap">
             {/* View Mode Toggle */}
@@ -153,8 +146,8 @@ export default function TableLayoutPanel({
                 onClick={() => setViewMode('floorplan')}
                 className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-md transition-colors ${
                   viewMode === 'floorplan'
-                    ? 'bg-white text-[#9F1239] shadow-sm'
-                    : 'text-[#57534E] hover:text-[#1C1917]'
+                    ? 'bg-[#1C1917] text-white'
+                    : 'text-[#78716C] hover:text-[#1C1917]'
                 }`}
                 title="Floor Plan View"
               >
@@ -166,8 +159,8 @@ export default function TableLayoutPanel({
                 onClick={() => setViewMode('grid')}
                 className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-md transition-colors ${
                   viewMode === 'grid'
-                    ? 'bg-white text-[#9F1239] shadow-sm'
-                    : 'text-[#57534E] hover:text-[#1C1917]'
+                    ? 'bg-[#1C1917] text-white'
+                    : 'text-[#78716C] hover:text-[#1C1917]'
                 }`}
                 title="Grid View"
               >
@@ -196,13 +189,6 @@ export default function TableLayoutPanel({
           )}
         </div>
 
-        {/* Helper text */}
-        <div className="px-4 pb-3 flex items-center justify-center gap-1.5 text-[10px] text-[#A8A29E]">
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>{t.tapToManage}</span>
-        </div>
       </div>
 
       {/* Table Actions Modal */}
@@ -215,13 +201,8 @@ export default function TableLayoutPanel({
             {/* Header */}
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#9F1239]/10 rounded-lg">
-                  <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                </div>
                 <div>
-                  <h3 className="text-lg font-bold text-[#1C1917]">
+                  <h3 className="text-lg font-semibold text-[#1C1917]">
                     {t.table} {selectedTable.table_number}
                   </h3>
                   <p className="text-sm text-[#57534E]">

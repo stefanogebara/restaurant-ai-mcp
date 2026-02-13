@@ -12,7 +12,7 @@
  * All panels are extracted into standalone components.
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { hostAPI, authFetch } from '../services/api';
 import { usePlanInfo } from '../hooks/useSubscription';
@@ -26,7 +26,6 @@ import WalkInModal from '../components/host/WalkInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
 import QuickInterventionModal from '../components/host/QuickInterventionModal';
-import UsageStatsCard from '../components/dashboard/UsageStatsCard';
 import type { UpcomingReservation, ActiveParty } from '../types/host.types';
 
 export default function Dashboard() {
@@ -39,13 +38,6 @@ export default function Dashboard() {
   const [interventionReservation, setInterventionReservation] = useState<any>(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [serviceToComplete, setServiceToComplete] = useState<ActiveParty | null>(null);
-
-  // FAB pulse animation
-  const [showFabPulse, setShowFabPulse] = useState(true);
-  useEffect(() => {
-    const timer = setTimeout(() => setShowFabPulse(false), 5000);
-    return () => clearTimeout(timer);
-  }, []);
 
   // ---- Data fetching ----
   const { data: dashboardData, refetch, isLoading, isError } = useQuery({
@@ -156,12 +148,12 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-[#FAFAF9] p-3 sm:p-4 md:p-6 lg:p-8 pb-28 sm:pb-20">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <div className="dashboard min-h-screen bg-[#FAFAF9] p-3 sm:p-4 md:p-6 lg:p-8 pb-28 sm:pb-20">
+        <div className="max-w-7xl mx-auto space-y-8">
           {/* ---- Header ---- */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
             <div>
-              <h1 className="text-3xl md:text-4xl font-serif font-bold text-[#1C1917] tracking-tight">
+              <h1 className="text-3xl md:text-4xl font-semibold text-[#1C1917] tracking-tight">
                 Today
               </h1>
               <p className="text-[#57534E] text-base font-medium">
@@ -184,7 +176,7 @@ export default function Dashboard() {
               {/* Table Config */}
               <button
                 onClick={() => window.location.href = '/host-dashboard/tables'}
-                className="flex items-center gap-2 min-h-[40px] px-3 py-2 bg-white border border-[#E7E5E4] hover:bg-[#F5F5F4] text-[#57534E] rounded-xl text-sm font-semibold transition-colors shadow-sm"
+                className="flex items-center gap-2 min-h-[40px] px-3 py-2 bg-transparent border border-[#E7E5E4] text-[#57534E] hover:border-[#A8A29E] rounded-xl text-sm font-semibold transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -263,7 +255,7 @@ export default function Dashboard() {
 
             {/* Right Column (1/3 width): Waitlist + Active Parties */}
             <div className="space-y-6">
-              <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-sm flex flex-col overflow-hidden">
+              <div className="bg-white border border-[#E7E5E4] rounded-xl flex flex-col overflow-hidden">
                 <WaitlistPanel onSeatNow={handleSeatFromWaitlist} />
               </div>
 
@@ -272,8 +264,6 @@ export default function Dashboard() {
                 onCompleteService={handleCompleteService}
                 isLoading={isLoading}
               />
-
-              <UsageStatsCard />
             </div>
           </div>
         </div>
@@ -281,21 +271,11 @@ export default function Dashboard() {
         {/* ---- FAB: Add Walk-in ---- */}
         <button
           onClick={() => setShowWalkInModal(true)}
-          className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 group"
+          className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-[#1C1917] hover:bg-[#292524] text-white rounded-full shadow-lg transition-all duration-200 flex items-center justify-center"
         >
-          <div className="absolute inset-0 bg-[#9F1239]/20 rounded-full blur-xl group-hover:bg-[#9F1239]/30 transition-all duration-500 scale-150" />
-          <div className="relative flex items-center gap-3 bg-gradient-to-r from-[#9F1239] to-[#be185d] text-white pl-4 pr-4 group-hover:pr-6 py-4 rounded-full shadow-lg shadow-[#9F1239]/30 hover:shadow-xl transition-all duration-300 transform hover:scale-105 min-h-[56px] min-w-[56px] justify-center">
-            <div className="relative w-8 h-8 flex items-center justify-center">
-              <div className="absolute w-6 h-0.5 bg-white rounded-full group-hover:rotate-180 transition-transform duration-300" />
-              <div className="absolute w-0.5 h-6 bg-white rounded-full group-hover:rotate-180 transition-transform duration-300" />
-            </div>
-            <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-[120px] transition-all duration-300 ease-out font-semibold text-sm tracking-wide">
-              Walk-in
-            </span>
-          </div>
-          {showFabPulse && (
-            <div className="absolute inset-0 rounded-full border-2 border-[#9F1239]/50 animate-ping opacity-75" style={{ animationDuration: '2s' }} />
-          )}
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
         </button>
       </div>
 

@@ -62,6 +62,10 @@
   }
 }
 
+.dashboard h1, .dashboard h2, .dashboard h3, .dashboard h4 {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
 @keyframes slideIn {
   from {
     opacity: 0;

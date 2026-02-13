@@ -11,9 +11,6 @@ const defaultProps = {
   estimatedWaitTime: 15,
   activeParties: 6,
   totalGuests: 18,
-  avgDuration: '1h 15m',
-  peakHours: '7-9 PM',
-  revenueToday: '1,250',
 };
 
 describe('StatsBar', () => {
@@ -32,68 +29,43 @@ describe('StatsBar', () => {
 
   it('displays occupancy percentage', () => {
     render(<StatsBar {...defaultProps} />);
-    expect(screen.getByText('60% occupancy')).toBeInTheDocument();
+    expect(screen.getByText('60% occupied')).toBeInTheDocument();
   });
 
-  it('displays reservations today', () => {
+  it('displays reservations', () => {
     render(<StatsBar {...defaultProps} />);
     expect(screen.getByText('12')).toBeInTheDocument();
-    expect(screen.getByText('Reservations Today')).toBeInTheDocument();
+    expect(screen.getByText('Reservations')).toBeInTheDocument();
   });
 
   it('displays waitlist count and estimated wait time', () => {
     render(<StatsBar {...defaultProps} />);
     expect(screen.getByText('3')).toBeInTheDocument();
     expect(screen.getByText('Waiting')).toBeInTheDocument();
-    expect(screen.getByText('~15 min')).toBeInTheDocument();
+    expect(screen.getByText('~15 min avg')).toBeInTheDocument();
   });
 
-  it('displays dash for wait time when not provided', () => {
+  it('displays "No wait" when estimatedWaitTime is not provided', () => {
     render(<StatsBar {...defaultProps} estimatedWaitTime={undefined} />);
-    expect(screen.getByText('-')).toBeInTheDocument();
+    expect(screen.getByText('No wait')).toBeInTheDocument();
   });
 
   it('displays active parties and total guests', () => {
     render(<StatsBar {...defaultProps} />);
-    expect(screen.getByText('Active Parties')).toBeInTheDocument();
-    expect(screen.getByText('18 people')).toBeInTheDocument();
-  });
-
-  it('displays secondary stats (duration, peak, revenue)', () => {
-    render(<StatsBar {...defaultProps} />);
-    expect(screen.getByText('Avg Duration')).toBeInTheDocument();
-    expect(screen.getByText('1h 15m')).toBeInTheDocument();
-    expect(screen.getByText('Peak Hours')).toBeInTheDocument();
-    expect(screen.getByText('7-9 PM')).toBeInTheDocument();
-    expect(screen.getByText('Revenue Today')).toBeInTheDocument();
-    expect(screen.getByText('€1,250')).toBeInTheDocument();
-  });
-
-  it('shows empty hints when secondary stats are missing', () => {
-    render(
-      <StatsBar
-        {...defaultProps}
-        avgDuration={undefined}
-        peakHours={undefined}
-        revenueToday={undefined}
-      />
-    );
-    expect(screen.getAllByText('Updates when guests are seated')).toHaveLength(3);
+    expect(screen.getByText('Active')).toBeInTheDocument();
+    expect(screen.getByText('18 guests')).toBeInTheDocument();
   });
 
   it('handles zero occupancy without division errors', () => {
     render(<StatsBar {...defaultProps} occupiedTables={0} totalTables={0} />);
-    expect(screen.getByText('0% occupancy')).toBeInTheDocument();
+    expect(screen.getByText('0% occupied')).toBeInTheDocument();
   });
 
   it('renders in Spanish when language is "es"', () => {
     render(<StatsBar {...defaultProps} language="es" />);
-    expect(screen.getByText('Mesas Ocupadas')).toBeInTheDocument();
-    expect(screen.getByText('Reservas Hoy')).toBeInTheDocument();
-    expect(screen.getByText('Sin mesa (espera)')).toBeInTheDocument();
-    expect(screen.getByText('Mesas Activas')).toBeInTheDocument();
-    expect(screen.getByText('Duración Media')).toBeInTheDocument();
-    expect(screen.getByText('Horas Pico')).toBeInTheDocument();
-    expect(screen.getByText('Ingresos Hoy')).toBeInTheDocument();
+    expect(screen.getByText('Mesas')).toBeInTheDocument();
+    expect(screen.getByText('Reservas')).toBeInTheDocument();
+    expect(screen.getByText('En Espera')).toBeInTheDocument();
+    expect(screen.getByText('Activas')).toBeInTheDocument();
   });
 });

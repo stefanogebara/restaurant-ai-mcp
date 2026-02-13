@@ -62,8 +62,8 @@ describe('ReservationsList', () => {
     expect(screen.getByText('Upcoming Reservations')).toBeInTheDocument();
     expect(screen.getByText('Alice Smith')).toBeInTheDocument();
     expect(screen.getByText('Bob Johnson')).toBeInTheDocument();
-    // Count badge
-    expect(screen.getByText('2')).toBeInTheDocument();
+    // Count shown in parenthetical
+    expect(screen.getByText('(2)')).toBeInTheDocument();
   });
 
   it('shows check-in button for unchecked reservations', () => {
@@ -94,8 +94,8 @@ describe('ReservationsList', () => {
 
   it('displays party size for each reservation', () => {
     render(<ReservationsList {...defaultProps} />);
-    expect(screen.getByText('4 people')).toBeInTheDocument();
-    expect(screen.getByText('2 people')).toBeInTheDocument();
+    expect(screen.getByText('4p')).toBeInTheDocument();
+    expect(screen.getByText('2p')).toBeInTheDocument();
   });
 
   it('toggles to tomorrow reservations when button is clicked', async () => {
@@ -107,7 +107,7 @@ describe('ReservationsList', () => {
 
     // Should now show tomorrow's reservations
     expect(screen.getByText('Charlie Brown')).toBeInTheDocument();
-    expect(screen.getByText('6 people')).toBeInTheDocument();
+    expect(screen.getByText('6p')).toBeInTheDocument();
     expect(screen.getByText('(Tomorrow)')).toBeInTheDocument();
 
     // Toggle back to "Today"
@@ -143,7 +143,7 @@ describe('ReservationsList', () => {
   it('renders in Spanish when language is "es"', () => {
     render(<ReservationsList {...defaultProps} language="es" />);
     expect(screen.getByText('Próximas Reservas')).toBeInTheDocument();
-    expect(screen.getByText('4 personas')).toBeInTheDocument();
+    expect(screen.getByText('4p')).toBeInTheDocument();
   });
 
   it('shows high-risk badges for risky reservations', () => {
