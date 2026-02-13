@@ -58,8 +58,9 @@ module.exports = async (req, res) => {
   if (auth.error) {
     return res.status(auth.status).json({ error: auth.error });
   }
+  req.user = auth.user;
 
-  const restaurantId = req.user.restaurant_id;
+  const restaurantId = auth.user.restaurant_id;
   const method = req.method;
   const { id } = req.query;
 
