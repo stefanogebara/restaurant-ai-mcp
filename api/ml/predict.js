@@ -5,6 +5,8 @@
  */
 
 const { extractAllFeatures } = require('./features');
+const { createSecureLogger } = require('../_lib/secure-logger');
+const logger = createSecureLogger('MLPredict');
 
 // Import inline model data (serverless-compatible)
 const MODEL_DATA = require('./model-data');
@@ -25,7 +27,7 @@ function loadModel() {
   }
 
   try {
-    console.log('[ML] Loading no-show prediction model...');
+    logger.info('[ML] Loading no-show prediction model...');
 
     // Use inline model data (no file system access needed)
     MODEL_METADATA = {
@@ -37,13 +39,13 @@ function loadModel() {
 
     MODEL = MODEL_DATA.model;
 
-    console.log('[ML] Model loaded successfully (inline data)');
-    console.log(`[ML] Version: ${MODEL_METADATA.version}`);
-    console.log(`[ML] Trained: ${MODEL_METADATA.trainedAt}`);
+    logger.info('[ML] Model loaded successfully (inline data)');
+    logger.info(`[ML] Version: ${MODEL_METADATA.version}`);
+    logger.info(`[ML] Trained: ${MODEL_METADATA.trainedAt}`);
 
     return MODEL;
   } catch (error) {
-    console.error('[ML] Failed to load model:', error.message);
+    logger.error('[ML] Failed to load model:', error.message);
     return null;
   }
 }
@@ -114,7 +116,7 @@ function predictNoShow(reservation, customerHistory = null) {
       }
     };
   } catch (error) {
-    console.error('[ML] Prediction error:', error.message);
+    logger.error('[ML] Prediction error:', error.message);
 
     return {
       error: error.message,

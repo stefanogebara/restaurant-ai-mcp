@@ -8,6 +8,8 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const { centralSupabase } = require('./central-supabase');
+const { createSecureLogger } = require('./secure-logger');
+const logger = createSecureLogger('MultiTenantSupabase');
 
 // Connection pool cache with timestamps
 const connectionPool = new Map();
@@ -26,9 +28,9 @@ const MAX_POOL_SIZE = 50;
 function getRestaurantClient(restaurant) {
   // If restaurant doesn't have its own credentials, use central Supabase
   if (!restaurant || !restaurant.supabase_url || !restaurant.supabase_service_role_key) {
-    console.log('[MultiTenantSupabase] Restaurant credentials not available, using central Supabase');
+    logger.info('Restaurant credentials not available, using central Supabase');
     if (!centralSupabase) {
-      console.error('[MultiTenantSupabase] Central Supabase not configured');
+      logger.error('Central Supabase not configured');
       throw new Error('Database connection not available');
     }
     return centralSupabase;
@@ -49,7 +51,7 @@ function getRestaurantClient(restaurant) {
   }
 
   // Create new client
-  console.log(`[MultiTenantSupabase] Creating new client for restaurant: ${restaurant.restaurant_name || restaurant.id}`);
+  logger.info(`Creating new client for restaurant: ${restaurant.restaurant_name || restaurant.id}`);
 
   const client = createClient(
     restaurant.supabase_url,
@@ -121,7 +123,7 @@ function cleanupPool() {
   }
 
   if (removed > 0) {
-    console.log(`[MultiTenantSupabase] Cleaned up ${removed} expired connections. Pool size: ${connectionPool.size}`);
+    logger.info(`Cleaned up ${removed} expired connections. Pool size: ${connectionPool.size}`);
   }
 }
 
@@ -131,7 +133,7 @@ function cleanupPool() {
 function clearConnectionPool() {
   const size = connectionPool.size;
   connectionPool.clear();
-  console.log(`[MultiTenantSupabase] Cleared ${size} connections from pool`);
+  logger.info(`Cleared ${size} connections from pool`);
 }
 
 /**

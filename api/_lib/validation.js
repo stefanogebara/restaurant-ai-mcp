@@ -6,6 +6,8 @@
  */
 
 const { MAX_PARTY_SIZE, MAX_ADVANCE_BOOKING_DAYS } = require('./constants');
+const { createSecureLogger } = require('./secure-logger');
+const logger = createSecureLogger('Validation');
 
 /**
  * Validate phone number format
@@ -85,7 +87,7 @@ function validateCustomerName(name) {
 
   // Warn about test data (but don't reject)
   if (/test/i.test(trimmed)) {
-    console.warn('[VALIDATION] Customer name contains "test":', trimmed);
+    logger.warn('Customer name contains "test":', trimmed);
   }
 
   return { valid: true };

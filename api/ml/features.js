@@ -15,6 +15,8 @@
  */
 
 const { FEATURE_GROUPS, ALL_FEATURES } = require('./feature-config');
+const { createSecureLogger } = require('../_lib/secure-logger');
+const logger = createSecureLogger('MLFeatures');
 
 // ============================================================================
 // TEMPORAL FEATURES (7 features)
@@ -39,7 +41,7 @@ function calculateBookingLeadTimeHours(reservation) {
     // Ensure non-negative (booking should be before reservation)
     return Math.max(0, diffHours);
   } catch (error) {
-    console.error('[Features] Error calculating lead time:', error);
+    logger.error('[Features] Error calculating lead time:', error);
     return 24; // Default
   }
 }
@@ -388,14 +390,14 @@ function extractAllFeatures(reservation, customerHistory = null, historicalStats
     // Validate all features are numeric
     for (const [key, value] of Object.entries(features)) {
       if (typeof value !== 'number' || isNaN(value)) {
-        console.warn(`[Features] Invalid feature value for ${key}: ${value}, using default`);
+        logger.warn(`[Features] Invalid feature value for ${key}: ${value}, using default`);
         features[key] = 0;
       }
     }
 
     return features;
   } catch (error) {
-    console.error('[Features] Error extracting features:', error);
+    logger.error('[Features] Error extracting features:', error);
     throw error;
   }
 }

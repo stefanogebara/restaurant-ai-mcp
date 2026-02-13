@@ -6,6 +6,8 @@
 
 const jwt = require('jsonwebtoken');
 const { supabaseAdmin: supabase } = require('./supabase');
+const { createSecureLogger } = require('./secure-logger');
+const logger = createSecureLogger('Auth');
 
 // JWT_SECRET priority: explicit JWT_SECRET > Supabase JWT secret
 const JWT_SECRET = process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET;
@@ -14,7 +16,7 @@ const JWT_EXPIRY = '24h';
 
 // Log error if no proper secret configured
 if (!JWT_SECRET) {
-  console.error('[Auth] CRITICAL: No JWT_SECRET or SUPABASE_JWT_SECRET configured. JWT signing/verification will fail. Set JWT_SECRET in environment variables.');
+  logger.error('[Auth] CRITICAL: No JWT_SECRET or SUPABASE_JWT_SECRET configured. JWT signing/verification will fail. Set JWT_SECRET in environment variables.');
 }
 
 // Cache user→restaurant mappings (TTL 5 minutes) to avoid repeated DB lookups
@@ -47,7 +49,7 @@ async function getRestaurantIdForUser(userId) {
       .single();
 
     if (error || !data) {
-      console.log(`[Auth] No restaurant found for user ${userId}`);
+      logger.info(`[Auth] No restaurant found for user ${userId}`);
       return null;
     }
 
@@ -65,7 +67,7 @@ async function getRestaurantIdForUser(userId) {
 
     return result;
   } catch (err) {
-    console.error('[Auth] Error looking up restaurant for user:', err.message);
+    logger.error('[Auth] Error looking up restaurant for user:', err.message);
     return null;
   }
 }
@@ -86,7 +88,7 @@ async function verifyJWT(token) {
       decoded = jwt.verify(token, JWT_SECRET);
     } catch (jwtError) {
       // JWT verification failed, try Supabase fallback
-      console.log('[Auth] JWT verification failed, trying Supabase fallback');
+      logger.info('[Auth] JWT verification failed, trying Supabase fallback');
     }
   }
 
@@ -95,7 +97,7 @@ async function verifyJWT(token) {
     try {
       const { data: { user }, error } = await supabase.auth.getUser(token);
       if (error || !user) {
-        console.error('[Auth] Supabase token verification failed:', error?.message);
+        logger.error('[Auth] Supabase token verification failed:', error?.message);
         return null;
       }
       decoded = {
@@ -104,7 +106,7 @@ async function verifyJWT(token) {
         role: user.role || 'user'
       };
     } catch (supabaseError) {
-      console.error('[Auth] Supabase verification error:', supabaseError.message);
+      logger.error('[Auth] Supabase verification error:', supabaseError.message);
       return null;
     }
   }
@@ -130,7 +132,7 @@ async function verifyJWT(token) {
  */
 async function generateJWT(payload) {
   if (!JWT_SECRET) {
-    console.error('[Auth] CRITICAL: No JWT secret available. Check environment configuration.');
+    logger.error('[Auth] CRITICAL: No JWT secret available. Check environment configuration.');
     throw new Error('Authentication configuration error. Please contact support.');
   }
   // Look up restaurant_id and timezone if not already in payload

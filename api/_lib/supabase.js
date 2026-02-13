@@ -23,6 +23,8 @@
 const { createClient } = require('@supabase/supabase-js');
 const { generateSecureReservationId, generateSecureServiceId } = require('./secure-id');
 const { getLocalDate, getLocalTime } = require('./timezone');
+const { createSecureLogger } = require('./secure-logger');
+const logger = createSecureLogger('Supabase');
 
 // ============ SUPABASE CLIENTS ============
 
@@ -31,13 +33,13 @@ const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const anonKey = process.env.SUPABASE_ANON_KEY;
 
 if (!supabaseUrl) {
-  console.error('[Supabase] CRITICAL: Missing SUPABASE_URL');
+  logger.error('[Supabase] CRITICAL: Missing SUPABASE_URL');
 }
 if (!serviceRoleKey) {
-  console.error('[Supabase] WARNING: Missing SUPABASE_SERVICE_ROLE_KEY. Admin operations will fail.');
+  logger.error('[Supabase] WARNING: Missing SUPABASE_SERVICE_ROLE_KEY. Admin operations will fail.');
 }
 if (!anonKey) {
-  console.error('[Supabase] WARNING: Missing SUPABASE_ANON_KEY. RLS-aware client unavailable.');
+  logger.error('[Supabase] WARNING: Missing SUPABASE_ANON_KEY. RLS-aware client unavailable.');
 }
 
 // Admin client – bypasses RLS (for webhooks, crons, health checks, cross-tenant ops)
@@ -78,7 +80,7 @@ const supabase = supabaseAdmin || supabaseClient;
 
 const handleSupabaseResponse = (data, error, operation = 'query') => {
   if (error) {
-    console.error(`[Supabase ${operation}] Error:`, error);
+    logger.error(`[Supabase ${operation}] Error:`, error);
     return {
       success: false,
       error: true,
@@ -86,7 +88,7 @@ const handleSupabaseResponse = (data, error, operation = 'query') => {
     };
   }
 
-  console.log(`[Supabase ${operation}] Success`);
+  logger.info(`[Supabase ${operation}] Success`);
   return { success: true, data };
 };
 
@@ -378,7 +380,7 @@ const updateTable = async (restaurantId, recordId, fields) => {
   if (fields['Status']) updates.status = fields['Status'];
   if (fields['Current Service ID'] !== undefined) updates.current_service_id = fields['Current Service ID'];
 
-  console.log(`[updateTable] Updating table ${recordId} with:`, updates);
+  logger.info(`[updateTable] Updating table ${recordId} with:`, updates);
 
   const { data, error } = await supabase
     .from('tables')
@@ -389,12 +391,12 @@ const updateTable = async (restaurantId, recordId, fields) => {
     .single();
 
   if (error) {
-    console.error(`[updateTable] Error updating table ${recordId}:`, error);
+    logger.error(`[updateTable] Error updating table ${recordId}:`, error);
     return handleSupabaseResponse(null, error, 'UPDATE table');
   }
 
   if (!data) {
-    console.error(`[updateTable] No data returned for table ${recordId}`);
+    logger.error(`[updateTable] No data returned for table ${recordId}`);
     return {
       success: false,
       error: true,
@@ -526,7 +528,7 @@ const updateTableConfig = async (restaurantId, tableId, fields) => {
   if (fields.adjacent_tables !== undefined) updates.adjacent_tables = fields.adjacent_tables;
   if (fields.combination_group !== undefined) updates.combination_group = fields.combination_group;
 
-  console.log(`[updateTableConfig] Updating table ${tableId} with:`, updates);
+  logger.info(`[updateTableConfig] Updating table ${tableId} with:`, updates);
 
   const { data, error } = await supabase
     .from('tables')
@@ -537,7 +539,7 @@ const updateTableConfig = async (restaurantId, tableId, fields) => {
     .single();
 
   if (error) {
-    console.error(`[updateTableConfig] Error:`, error);
+    logger.error(`[updateTableConfig] Error:`, error);
     return handleSupabaseResponse(null, error, 'UPDATE table config');
   }
 
@@ -612,7 +614,7 @@ const updateTablePositions = async (restaurantId, tablePositions) => {
   }
 
   if (errors.length > 0) {
-    console.error('[updateTablePositions] Some updates failed:', errors);
+    logger.error('[updateTablePositions] Some updates failed:', errors);
   }
 
   return {
@@ -933,7 +935,7 @@ const updateServiceRecord = async (restaurantId, serviceId, fields) => {
   if (fields['Status']) updates.status = fields['Status'];
   if (fields['Actual Departure']) updates.actual_departure = fields['Actual Departure'];
 
-  console.log(`[updateServiceRecord] Updating service ${serviceId} with:`, updates);
+  logger.info(`[updateServiceRecord] Updating service ${serviceId} with:`, updates);
 
   const { data, error } = await supabase
     .from('service_records')
@@ -944,11 +946,11 @@ const updateServiceRecord = async (restaurantId, serviceId, fields) => {
     .single();
 
   if (error) {
-    console.error(`[updateServiceRecord] Error updating service ${serviceId}:`, error);
+    logger.error(`[updateServiceRecord] Error updating service ${serviceId}:`, error);
     return handleSupabaseResponse(null, error, 'UPDATE service record');
   }
 
-  console.log(`[updateServiceRecord] Success for ${serviceId}:`, data);
+  logger.info(`[updateServiceRecord] Success for ${serviceId}:`, data);
 
   return {
     success: true,

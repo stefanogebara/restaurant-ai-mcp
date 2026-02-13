@@ -6,6 +6,8 @@
  */
 
 const { centralSupabase, isCentralConfigured } = require('./central-supabase');
+const { createSecureLogger } = require('./secure-logger');
+const logger = createSecureLogger('RestaurantRegistry');
 
 /**
  * Get a restaurant by exact name match (case-insensitive)
@@ -14,7 +16,7 @@ const { centralSupabase, isCentralConfigured } = require('./central-supabase');
  */
 async function getRestaurantByName(name) {
   if (!isCentralConfigured()) {
-    console.error('[RestaurantRegistry] Central Supabase not configured');
+    logger.error('[RestaurantRegistry] Central Supabase not configured');
     return { match: null, confidence: 0, error: 'Database not configured' };
   }
 
@@ -34,7 +36,7 @@ async function getRestaurantByName(name) {
       .single();
 
     if (exact && !exactError) {
-      console.log(`[RestaurantRegistry] Exact match found: ${exact.restaurant_name}`);
+      logger.info(`[RestaurantRegistry] Exact match found: ${exact.restaurant_name}`);
       return { match: exact, confidence: 1.0 };
     }
 
@@ -43,18 +45,18 @@ async function getRestaurantByName(name) {
       .rpc('fuzzy_match_restaurant', { search_name: searchName });
 
     if (fuzzyError) {
-      console.error('[RestaurantRegistry] Fuzzy match error:', fuzzyError);
+      logger.error('[RestaurantRegistry] Fuzzy match error:', fuzzyError);
       return { match: null, confidence: 0, error: fuzzyError.message };
     }
 
     if (!fuzzyResults || fuzzyResults.length === 0) {
-      console.log(`[RestaurantRegistry] No matches found for: ${searchName}`);
+      logger.info(`[RestaurantRegistry] No matches found for: ${searchName}`);
       return { match: null, confidence: 0 };
     }
 
     // Single high-confidence match
     if (fuzzyResults.length === 1 && fuzzyResults[0].similarity > 0.6) {
-      console.log(`[RestaurantRegistry] High-confidence fuzzy match: ${fuzzyResults[0].restaurant_name} (${fuzzyResults[0].similarity})`);
+      logger.info(`[RestaurantRegistry] High-confidence fuzzy match: ${fuzzyResults[0].restaurant_name} (${fuzzyResults[0].similarity})`);
       return {
         match: fuzzyResults[0],
         confidence: fuzzyResults[0].similarity
@@ -62,7 +64,7 @@ async function getRestaurantByName(name) {
     }
 
     // Multiple potential matches - needs disambiguation
-    console.log(`[RestaurantRegistry] Multiple matches found for: ${searchName}`, fuzzyResults.map(r => r.restaurant_name));
+    logger.info(`[RestaurantRegistry] Multiple matches found for: ${searchName}`, fuzzyResults.map(r => r.restaurant_name));
     return {
       matches: fuzzyResults,
       confidence: 0,
@@ -70,7 +72,7 @@ async function getRestaurantByName(name) {
     };
 
   } catch (error) {
-    console.error('[RestaurantRegistry] Error searching for restaurant:', error);
+    logger.error('[RestaurantRegistry] Error searching for restaurant:', error);
     return { match: null, confidence: 0, error: error.message };
   }
 }
@@ -82,7 +84,7 @@ async function getRestaurantByName(name) {
  */
 async function getRestaurantById(id) {
   if (!isCentralConfigured()) {
-    console.error('[RestaurantRegistry] Central Supabase not configured');
+    logger.error('[RestaurantRegistry] Central Supabase not configured');
     return null;
   }
 
@@ -95,13 +97,13 @@ async function getRestaurantById(id) {
       .single();
 
     if (error) {
-      console.error('[RestaurantRegistry] Error fetching restaurant by ID:', error);
+      logger.error('[RestaurantRegistry] Error fetching restaurant by ID:', error);
       return null;
     }
 
     return data;
   } catch (error) {
-    console.error('[RestaurantRegistry] Error:', error);
+    logger.error('[RestaurantRegistry] Error:', error);
     return null;
   }
 }
@@ -112,7 +114,7 @@ async function getRestaurantById(id) {
  */
 async function getAllActiveRestaurants() {
   if (!isCentralConfigured()) {
-    console.error('[RestaurantRegistry] Central Supabase not configured');
+    logger.error('[RestaurantRegistry] Central Supabase not configured');
     return [];
   }
 
@@ -124,13 +126,13 @@ async function getAllActiveRestaurants() {
       .order('restaurant_name');
 
     if (error) {
-      console.error('[RestaurantRegistry] Error fetching restaurants:', error);
+      logger.error('[RestaurantRegistry] Error fetching restaurants:', error);
       return [];
     }
 
     return data || [];
   } catch (error) {
-    console.error('[RestaurantRegistry] Error:', error);
+    logger.error('[RestaurantRegistry] Error:', error);
     return [];
   }
 }
@@ -165,14 +167,14 @@ async function registerRestaurant(restaurantData) {
       .single();
 
     if (error) {
-      console.error('[RestaurantRegistry] Error registering restaurant:', error);
+      logger.error('[RestaurantRegistry] Error registering restaurant:', error);
       return { data: null, error: error.message };
     }
 
-    console.log(`[RestaurantRegistry] Registered restaurant: ${data.restaurant_name}`);
+    logger.info(`[RestaurantRegistry] Registered restaurant: ${data.restaurant_name}`);
     return { data, error: null };
   } catch (error) {
-    console.error('[RestaurantRegistry] Error:', error);
+    logger.error('[RestaurantRegistry] Error:', error);
     return { data: null, error: error.message };
   }
 }
@@ -200,13 +202,13 @@ async function updateRestaurant(id, updates) {
       .single();
 
     if (error) {
-      console.error('[RestaurantRegistry] Error updating restaurant:', error);
+      logger.error('[RestaurantRegistry] Error updating restaurant:', error);
       return { data: null, error: error.message };
     }
 
     return { data, error: null };
   } catch (error) {
-    console.error('[RestaurantRegistry] Error:', error);
+    logger.error('[RestaurantRegistry] Error:', error);
     return { data: null, error: error.message };
   }
 }
@@ -239,13 +241,13 @@ async function getRestaurantsByEmail(email) {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('[RestaurantRegistry] Error fetching by email:', error);
+      logger.error('[RestaurantRegistry] Error fetching by email:', error);
       return [];
     }
 
     return data || [];
   } catch (error) {
-    console.error('[RestaurantRegistry] Error:', error);
+    logger.error('[RestaurantRegistry] Error:', error);
     return [];
   }
 }

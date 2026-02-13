@@ -1,5 +1,7 @@
 const axios = require('axios');
 const { generateSecureReservationId, generateSecureServiceId } = require('./secure-id');
+const { createSecureLogger } = require('./secure-logger');
+const logger = createSecureLogger('Airtable');
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
@@ -26,34 +28,34 @@ const airtableRequest = async (method, endpoint, data = null) => {
       config.data = data;
     }
 
-    console.log(`[Airtable ${method}] ${endpoint}`, data ? JSON.stringify(data, null, 2) : '');
+    logger.info(`[${method}] ${endpoint}`, data ? JSON.stringify(data, null, 2) : '');
     const response = await axios(config);
 
     // Validate response for POST/PATCH operations
     if (method === 'POST' || method === 'PATCH') {
       // Check if we got a record back
       if (!response.data || !response.data.id) {
-        console.error('Airtable response missing record ID:', response.data);
+        logger.error('Airtable response missing record ID:', response.data);
         return {
           success: false,
           error: true,
           message: 'Failed to create/update record - no ID returned'
         };
       }
-      console.log(`[Airtable ${method}] Success - Record ID: ${response.data.id}`);
+      logger.info(`[${method}] Success - Record ID: ${response.data.id}`);
     }
 
     return { success: true, data: response.data };
   } catch (error) {
     if (error.code === 'ECONNABORTED') {
-      console.error('Airtable request timeout:', endpoint);
+      logger.error('Airtable request timeout:', endpoint);
       return {
         success: false,
         error: true,
         message: 'Database request timed out. Please try again or call us directly.'
       };
     }
-    console.error('Airtable request error:', error.response?.data || error.message);
+    logger.error('Airtable request error:', error.response?.data || error.message);
     return {
       success: false,
       error: true,

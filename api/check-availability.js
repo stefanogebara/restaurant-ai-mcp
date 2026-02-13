@@ -1,6 +1,8 @@
 const { getReservations, getRestaurantInfo } = require('./_lib/supabase');
 const { checkTimeSlotAvailability, getSuggestedTimes } = require('./_lib/availability-calculator');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('CheckAvailability');
 
 module.exports = async (req, res) => {
   // Enable CORS for ElevenLabs
@@ -117,7 +119,7 @@ module.exports = async (req, res) => {
     }
 
   } catch (error) {
-    console.error('Check availability error:', error);
+    logger.error('Check availability error:', error);
     return res.status(500).json({
       success: false,
       error: true,

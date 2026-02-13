@@ -13,6 +13,9 @@
  * }
  */
 
+const { createSecureLogger } = require('./secure-logger');
+const logger = createSecureLogger('FeatureFlags');
+
 /**
  * Check if Cartesia should be used instead of ElevenLabs
  * @returns {boolean} True if Cartesia should be used
@@ -98,7 +101,7 @@ function getTTSConfig() {
  */
 function logFeatureUsage(feature, enabled) {
   if (process.env.NODE_ENV === 'development') {
-    console.log(`[Feature Flag] ${feature}: ${enabled ? 'ENABLED' : 'DISABLED'}`);
+    logger.info(`[Feature Flag] ${feature}: ${enabled ? 'ENABLED' : 'DISABLED'}`);
   }
 
   // In production, you might want to send this to an analytics service

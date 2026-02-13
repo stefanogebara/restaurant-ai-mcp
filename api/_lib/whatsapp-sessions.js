@@ -6,6 +6,8 @@
  */
 
 const { centralSupabase, isCentralConfigured } = require('./central-supabase');
+const { createSecureLogger } = require('./secure-logger');
+const logger = createSecureLogger('WhatsAppSessions');
 
 // Session expiry time in milliseconds (30 minutes)
 const SESSION_EXPIRY_MS = 30 * 60 * 1000;
@@ -18,12 +20,12 @@ const SESSION_EXPIRY_MS = 30 * 60 * 1000;
  */
 async function getOrCreateSession(senderPhone, conversationId) {
   if (!isCentralConfigured()) {
-    console.error('[WhatsAppSessions] Central Supabase not configured');
+    logger.error('[WhatsAppSessions] Central Supabase not configured');
     return null;
   }
 
   if (!senderPhone) {
-    console.warn('[WhatsAppSessions] No sender phone provided');
+    logger.warn('[WhatsAppSessions] No sender phone provided');
     return null;
   }
 
@@ -55,7 +57,7 @@ async function getOrCreateSession(senderPhone, conversationId) {
         })
         .eq('id', existing.id);
 
-      console.log(`[WhatsAppSessions] Existing session found for ${normalizedPhone}: ${existing.restaurant?.restaurant_name || 'No restaurant yet'}`);
+      logger.info(`[WhatsAppSessions] Existing session found for ${normalizedPhone}: ${existing.restaurant?.restaurant_name || 'No restaurant yet'}`);
       return existing;
     }
 
@@ -73,15 +75,15 @@ async function getOrCreateSession(senderPhone, conversationId) {
       .single();
 
     if (createError) {
-      console.error('[WhatsAppSessions] Error creating session:', createError);
+      logger.error('[WhatsAppSessions] Error creating session:', createError);
       return null;
     }
 
-    console.log(`[WhatsAppSessions] New session created for ${normalizedPhone}`);
+    logger.info(`[WhatsAppSessions] New session created for ${normalizedPhone}`);
     return newSession;
 
   } catch (error) {
-    console.error('[WhatsAppSessions] Error in getOrCreateSession:', error);
+    logger.error('[WhatsAppSessions] Error in getOrCreateSession:', error);
     return null;
   }
 }
@@ -114,15 +116,15 @@ async function setSessionRestaurant(sessionId, restaurantId) {
       .single();
 
     if (error) {
-      console.error('[WhatsAppSessions] Error setting restaurant:', error);
+      logger.error('[WhatsAppSessions] Error setting restaurant:', error);
       return null;
     }
 
-    console.log(`[WhatsAppSessions] Session ${sessionId} linked to restaurant: ${data.restaurant?.restaurant_name}`);
+    logger.info(`[WhatsAppSessions] Session ${sessionId} linked to restaurant: ${data.restaurant?.restaurant_name}`);
     return data;
 
   } catch (error) {
-    console.error('[WhatsAppSessions] Error:', error);
+    logger.error('[WhatsAppSessions] Error:', error);
     return null;
   }
 }
@@ -212,14 +214,14 @@ async function clearSession(sessionId) {
       .eq('id', sessionId);
 
     if (error) {
-      console.error('[WhatsAppSessions] Error clearing session:', error);
+      logger.error('[WhatsAppSessions] Error clearing session:', error);
       return false;
     }
 
-    console.log(`[WhatsAppSessions] Session ${sessionId} cleared`);
+    logger.info(`[WhatsAppSessions] Session ${sessionId} cleared`);
     return true;
   } catch (error) {
-    console.error('[WhatsAppSessions] Error:', error);
+    logger.error('[WhatsAppSessions] Error:', error);
     return false;
   }
 }
@@ -244,7 +246,7 @@ async function clearSessionsByPhone(senderPhone) {
       .select();
 
     if (error) {
-      console.error('[WhatsAppSessions] Error clearing sessions:', error);
+      logger.error('[WhatsAppSessions] Error clearing sessions:', error);
       return 0;
     }
 
@@ -271,13 +273,13 @@ async function cleanupExpiredSessions() {
       .select();
 
     if (error) {
-      console.error('[WhatsAppSessions] Error cleaning up sessions:', error);
+      logger.error('[WhatsAppSessions] Error cleaning up sessions:', error);
       return 0;
     }
 
     const count = data?.length || 0;
     if (count > 0) {
-      console.log(`[WhatsAppSessions] Cleaned up ${count} expired sessions`);
+      logger.info(`[WhatsAppSessions] Cleaned up ${count} expired sessions`);
     }
 
     return count;
@@ -330,14 +332,14 @@ async function updateSessionConversationHistory(sessionId, conversationHistory) 
       .eq('id', sessionId);
 
     if (error) {
-      console.error('[WhatsAppSessions] Error updating conversation history:', error);
+      logger.error('[WhatsAppSessions] Error updating conversation history:', error);
       return false;
     }
 
-    console.log(`[WhatsAppSessions] Conversation history updated for session ${sessionId} (${limitedHistory.length} messages)`);
+    logger.info(`[WhatsAppSessions] Conversation history updated for session ${sessionId} (${limitedHistory.length} messages)`);
     return true;
   } catch (error) {
-    console.error('[WhatsAppSessions] Error:', error);
+    logger.error('[WhatsAppSessions] Error:', error);
     return false;
   }
 }

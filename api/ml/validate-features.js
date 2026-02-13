@@ -6,6 +6,8 @@
  */
 
 const { ALL_FEATURES, FEATURE_DEFINITIONS } = require('./feature-config');
+const { createSecureLogger } = require('../_lib/secure-logger');
+const logger = createSecureLogger('MLValidateFeatures');
 
 /**
  * Validate a complete feature vector
@@ -132,7 +134,7 @@ function sanitizeFeatureVector(features) {
   // Replace NaN with 0
   for (const [key, value] of Object.entries(sanitized)) {
     if (typeof value === 'number' && isNaN(value)) {
-      console.warn(`[Sanitize] Replacing NaN in ${key} with 0`);
+      logger.warn(`[Sanitize] Replacing NaN in ${key} with 0`);
       sanitized[key] = 0;
     }
   }
@@ -219,21 +221,21 @@ function printValidationReport(validationResult, identifier = '') {
   const prefix = identifier ? `[${identifier}] ` : '';
 
   if (validationResult.valid) {
-    console.log(`${prefix}✅ Feature vector is valid`);
-    console.log(`   ${validationResult.featureCount}/${validationResult.expectedCount} features present`);
+    logger.info(`${prefix}✅ Feature vector is valid`);
+    logger.info(`   ${validationResult.featureCount}/${validationResult.expectedCount} features present`);
   } else {
-    console.log(`${prefix}❌ Feature vector is INVALID`);
-    console.log(`   ${validationResult.errors.length} errors found`);
+    logger.info(`${prefix}❌ Feature vector is INVALID`);
+    logger.info(`   ${validationResult.errors.length} errors found`);
   }
 
   if (validationResult.errors.length > 0) {
-    console.log(`\n   Errors:`);
-    validationResult.errors.forEach(err => console.log(`   - ${err}`));
+    logger.info(`\n   Errors:`);
+    validationResult.errors.forEach(err => logger.info(`   - ${err}`));
   }
 
   if (validationResult.warnings.length > 0) {
-    console.log(`\n   Warnings:`);
-    validationResult.warnings.forEach(warn => console.log(`   ⚠️ ${warn}`));
+    logger.info(`\n   Warnings:`);
+    validationResult.warnings.forEach(warn => logger.info(`   ⚠️ ${warn}`));
   }
 }
 

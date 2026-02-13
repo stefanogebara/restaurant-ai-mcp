@@ -7,13 +7,15 @@
  */
 
 const { createClient } = require('@supabase/supabase-js');
+const { createSecureLogger } = require('./secure-logger');
+const logger = createSecureLogger('CentralSupabase');
 
 // Use dedicated central DB if configured, otherwise fall back to main Supabase
 const centralUrl = process.env.CENTRAL_SUPABASE_URL || process.env.SUPABASE_URL;
 const centralKey = process.env.CENTRAL_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!centralUrl || !centralKey) {
-  console.warn('[CentralSupabase] WARNING: Missing Supabase credentials for central registry');
+  logger.warn('WARNING: Missing Supabase credentials for central registry');
 }
 
 const centralSupabase = centralUrl && centralKey

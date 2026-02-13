@@ -6,6 +6,8 @@
  */
 
 const axios = require('axios');
+const { createSecureLogger } = require('./secure-logger');
+const logger = createSecureLogger('CustomerHistory');
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
@@ -31,12 +33,12 @@ async function airtableRequest(method, endpoint, data = null) {
       config.data = data;
     }
 
-    console.log(`[CustomerHistory ${method}] ${endpoint}`);
+    logger.info(`[CustomerHistory ${method}] ${endpoint}`);
     const response = await axios(config);
 
     return { success: true, data: response.data };
   } catch (error) {
-    console.error('Customer History request error:', error.response?.data || error.message);
+    logger.error('Customer History request error:', error.response?.data || error.message);
     return {
       success: false,
       error: true,
@@ -136,7 +138,7 @@ function mapCustomerRecord(record) {
  * Tries to find by email first, then phone, then creates new
  */
 async function findOrCreateCustomer(email, phone, name) {
-  console.log(`[CustomerHistory] Finding or creating customer: ${email || phone}`);
+  logger.info(`[CustomerHistory] Finding or creating customer: ${email || phone}`);
 
   // Try to find by email
   let customer = await findCustomerByEmail(email);
@@ -148,7 +150,7 @@ async function findOrCreateCustomer(email, phone, name) {
 
   // If still not found, create new
   if (!customer) {
-    console.log('[CustomerHistory] Customer not found, creating new...');
+    logger.info('[CustomerHistory] Customer not found, creating new...');
 
     const today = new Date().toISOString().split('T')[0];
 
@@ -173,13 +175,13 @@ async function findOrCreateCustomer(email, phone, name) {
 
     if (result.success && result.data) {
       customer = mapCustomerRecord(result.data);
-      console.log(`[CustomerHistory] ✓ Created new customer: ${customer.id}`);
+      logger.info(`[CustomerHistory] Created new customer: ${customer.id}`);
     } else {
-      console.error('[CustomerHistory] ✗ Failed to create customer:', result);
+      logger.error('[CustomerHistory] Failed to create customer:', result);
       return null;
     }
   } else {
-    console.log(`[CustomerHistory] ✓ Found existing customer: ${customer.id}`);
+    logger.info(`[CustomerHistory] Found existing customer: ${customer.id}`);
   }
 
   return customer;
@@ -197,12 +199,12 @@ async function findOrCreateCustomer(email, phone, name) {
  * @param {string} outcome - 'created', 'completed', 'no-show', 'cancelled'
  */
 async function updateCustomerHistory(customerId, reservation, outcome) {
-  console.log(`[CustomerHistory] Updating customer ${customerId} - outcome: ${outcome}`);
+  logger.info(`[CustomerHistory] Updating customer ${customerId} - outcome: ${outcome}`);
 
   // Get current customer data
   const customer = await getCustomer(customerId);
   if (!customer) {
-    console.error('[CustomerHistory] Customer not found:', customerId);
+    logger.error('[CustomerHistory] Customer not found:', customerId);
     return { success: false, error: 'Customer not found' };
   }
 
@@ -248,10 +250,10 @@ async function updateCustomerHistory(customerId, reservation, outcome) {
   });
 
   if (result.success) {
-    console.log(`[CustomerHistory] ✓ Updated customer ${customerId}:`, updates);
+    logger.info(`[CustomerHistory] Updated customer ${customerId}:`, updates);
     return { success: true, updates };
   } else {
-    console.error(`[CustomerHistory] ✗ Failed to update customer ${customerId}:`, result);
+    logger.error(`[CustomerHistory] Failed to update customer ${customerId}:`, result);
     return { success: false, error: result.message };
   }
 }
@@ -341,7 +343,7 @@ function calculateDaysSinceLastVisit(lastVisitDate) {
  * Run once to populate customer history table
  */
 async function backfillCustomerHistory(reservations) {
-  console.log('[CustomerHistory] Starting backfill of customer history...');
+  logger.info('[CustomerHistory] Starting backfill of customer history...');
 
   // Group reservations by customer (email/phone)
   const customerMap = new Map();
@@ -362,7 +364,7 @@ async function backfillCustomerHistory(reservations) {
     customerMap.get(key).reservations.push(res);
   }
 
-  console.log(`[CustomerHistory] Found ${customerMap.size} unique customers`);
+  logger.info(`[CustomerHistory] Found ${customerMap.size} unique customers`);
 
   let created = 0;
   let errors = 0;
@@ -408,16 +410,16 @@ async function backfillCustomerHistory(reservations) {
         created++;
       } else {
         errors++;
-        console.error('[CustomerHistory] Failed to create customer:', result);
+        logger.error('[CustomerHistory] Failed to create customer:', result);
       }
 
     } catch (error) {
       errors++;
-      console.error('[CustomerHistory] Error processing customer:', error);
+      logger.error('[CustomerHistory] Error processing customer:', error);
     }
   }
 
-  console.log(`[CustomerHistory] Backfill complete: ${created} created, ${errors} errors`);
+  logger.info(`[CustomerHistory] Backfill complete: ${created} created, ${errors} errors`);
 
   return {
     success: true,

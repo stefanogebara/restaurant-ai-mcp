@@ -7,6 +7,8 @@
 
 const https = require('https');
 const http = require('http');
+const { createSecureLogger } = require('../_lib/secure-logger');
+const logger = createSecureLogger('MLLambdaPredict');
 
 // Lambda endpoint from Vercel environment variable
 const ML_ENDPOINT_URL = process.env.ML_ENDPOINT_URL || 'https://ht5iob5wezlylbl5qc72ehfk6i0srrwl.lambda-url.us-east-1.on.aws/';
@@ -164,12 +166,12 @@ async function callLambdaEndpoint(reservation) {
  */
 async function predictNoShow(reservation, customerHistory = null) {
   try {
-    console.log('[LambdaML] Starting prediction for reservation:', reservation.reservation_id);
+    logger.info('[LambdaML] Starting prediction for reservation:', reservation.reservation_id);
 
     // Call Lambda endpoint directly with reservation
     // Lambda will extract features internally from reservation_date, party_size, booking_date
     const lambdaResponse = await callLambdaEndpoint(reservation);
-    console.log('[LambdaML] Lambda response:', JSON.stringify(lambdaResponse, null, 2));
+    logger.info('[LambdaML] Lambda response:', JSON.stringify(lambdaResponse, null, 2));
 
     // Lambda response structure:
     // {
@@ -214,7 +216,7 @@ async function predictNoShow(reservation, customerHistory = null) {
       }
     };
   } catch (error) {
-    console.error('[LambdaML] Prediction error:', error.message);
+    logger.error('[LambdaML] Prediction error:', error.message);
 
     // Fallback to default values on error
     return {

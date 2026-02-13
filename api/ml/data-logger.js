@@ -17,6 +17,8 @@
 const fs = require('fs');
 const path = require('path');
 const { promisify } = require('util');
+const { createSecureLogger } = require('../_lib/secure-logger');
+const logger = createSecureLogger('MLDataLogger');
 
 const appendFileAsync = promisify(fs.appendFile);
 const writeFileAsync = promisify(fs.writeFile);
@@ -59,14 +61,14 @@ try {
     ].join(',') + '\n';
 
     fs.writeFileSync(TRAINING_LOG_FILE, headers);
-    console.log('[DataLogger] Initialized training data log:', TRAINING_LOG_FILE);
+    logger.info('[DataLogger] Initialized training data log:', TRAINING_LOG_FILE);
   }
 
   isFileSystemWritable = true;
-  console.log('[DataLogger] File system is writable - data collection enabled');
+  logger.info('[DataLogger] File system is writable - data collection enabled');
 } catch (error) {
-  console.warn('[DataLogger] File system is read-only (Vercel production) - data collection disabled');
-  console.warn('[DataLogger] Training data will only be collected in local development');
+  logger.warn('[DataLogger] File system is read-only (Vercel production) - data collection disabled');
+  logger.warn('[DataLogger] Training data will only be collected in local development');
 }
 
 /**
@@ -75,7 +77,7 @@ try {
 async function logReservationCreated(reservation, mlPrediction, customerHistory = null) {
   // Skip logging if filesystem is read-only (Vercel production)
   if (!isFileSystemWritable) {
-    console.warn('[DataLogger] Skipping reservation log - filesystem read-only');
+    logger.warn('[DataLogger] Skipping reservation log - filesystem read-only');
     return { success: false, reason: 'filesystem_read_only' };
   }
 
@@ -104,11 +106,11 @@ async function logReservationCreated(reservation, mlPrediction, customerHistory 
     ].join(',') + '\n';
 
     await appendFileAsync(TRAINING_LOG_FILE, row);
-    console.log('[DataLogger] Logged reservation:', reservation.reservation_id);
+    logger.info('[DataLogger] Logged reservation:', reservation.reservation_id);
 
     return { success: true };
   } catch (error) {
-    console.error('[DataLogger] Error logging reservation:', error);
+    logger.error('[DataLogger] Error logging reservation:', error);
     return { success: false, error: error.message };
   }
 }
@@ -141,7 +143,7 @@ async function logCustomerCancelled(reservationId, cancelledAt) {
 async function updateOutcome(reservationId, outcome, outcomeTimestamp, seatedAt = '', completedAt = '') {
   // Skip updating if filesystem is read-only (Vercel production)
   if (!isFileSystemWritable) {
-    console.warn('[DataLogger] Skipping outcome update - filesystem read-only');
+    logger.warn('[DataLogger] Skipping outcome update - filesystem read-only');
     return { success: false, reason: 'filesystem_read_only' };
   }
 
@@ -168,14 +170,14 @@ async function updateOutcome(reservationId, outcome, outcomeTimestamp, seatedAt 
 
     if (updated) {
       await writeFileAsync(TRAINING_LOG_FILE, updatedLines.join('\n'));
-      console.log(`[DataLogger] Updated outcome for ${reservationId}: ${outcome}`);
+      logger.info(`[DataLogger] Updated outcome for ${reservationId}: ${outcome}`);
       return { success: true };
     } else {
-      console.warn(`[DataLogger] Reservation ${reservationId} not found in training log`);
+      logger.warn(`[DataLogger] Reservation ${reservationId} not found in training log`);
       return { success: false, error: 'Reservation not found' };
     }
   } catch (error) {
-    console.error('[DataLogger] Error updating outcome:', error);
+    logger.error('[DataLogger] Error updating outcome:', error);
     return { success: false, error: error.message };
   }
 }
@@ -252,7 +254,7 @@ function getTrainingDataStats() {
       samplesNeeded: Math.max(0, 100 - totalCompleted)
     };
   } catch (error) {
-    console.error('[DataLogger] Error getting stats:', error);
+    logger.error('[DataLogger] Error getting stats:', error);
     return { error: error.message };
   }
 }

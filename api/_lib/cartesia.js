@@ -19,6 +19,8 @@
  */
 
 const { CartesiaClient } = require('@cartesia/cartesia-js');
+const { createSecureLogger } = require('./secure-logger');
+const logger = createSecureLogger('Cartesia');
 
 // Initialize Cartesia client
 let cartesiaClient = null;
@@ -39,7 +41,7 @@ function getClient() {
       apiKey: apiKey
     });
 
-    console.log('[Cartesia] Client initialized successfully');
+    logger.info('[Cartesia] Client initialized successfully');
   }
 
   return cartesiaClient;
@@ -149,7 +151,7 @@ async function textToSpeech(text, options = {}) {
   }
   const emotion = options.emotion || '';
 
-  console.log('[Cartesia] Generating speech:', {
+  logger.info('[Cartesia] Generating speech:', {
     text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
     voice: voice.id,
     model,
@@ -187,7 +189,7 @@ async function textToSpeech(text, options = {}) {
 
     const response = await client.tts.bytes(ttsRequest);
 
-    console.log('[Cartesia] Speech generated successfully');
+    logger.info('[Cartesia] Speech generated successfully');
 
     return {
       success: true,
@@ -198,7 +200,7 @@ async function textToSpeech(text, options = {}) {
       duration_estimate: estimateDuration(text, options.speed || 1.0)
     };
   } catch (error) {
-    console.error('[Cartesia] TTS error:', error);
+    logger.error('[Cartesia] TTS error:', error);
     throw new Error(`Cartesia TTS failed: ${error.message}`);
   }
 }
@@ -218,7 +220,7 @@ async function streamTextToSpeech(text, options = {}) {
   const model = options.model || 'sonic-english';
   const outputFormat = options.outputFormat || OUTPUT_FORMATS.web;
 
-  console.log('[Cartesia] Starting WebSocket stream');
+  logger.info('[Cartesia] Starting WebSocket stream');
 
   try {
     const websocket = client.tts.websocket({
@@ -241,7 +243,7 @@ async function streamTextToSpeech(text, options = {}) {
       context_id: options.context_id || `ctx_${Date.now()}`
     });
 
-    console.log('[Cartesia] WebSocket stream started');
+    logger.info('[Cartesia] WebSocket stream started');
 
     return {
       success: true,
@@ -251,7 +253,7 @@ async function streamTextToSpeech(text, options = {}) {
       voice: voice
     };
   } catch (error) {
-    console.error('[Cartesia] WebSocket streaming error:', error);
+    logger.error('[Cartesia] WebSocket streaming error:', error);
     throw new Error(`Cartesia streaming failed: ${error.message}`);
   }
 }
@@ -292,7 +294,7 @@ async function emotionalTextToSpeech(text, emotions = {}, options = {}) {
     processedText = text.replace(/(!|haha|lol)/gi, ' [laugh] ');
   }
 
-  console.log('[Cartesia] Generating emotional speech:', {
+  logger.info('[Cartesia] Generating emotional speech:', {
     emotions: emotionControls,
     laughter: emotions.laughter
   });
@@ -315,7 +317,7 @@ async function emotionalTextToSpeech(text, emotions = {}, options = {}) {
 async function cloneVoice(audioSample, voiceName, description) {
   const client = getClient();
 
-  console.log('[Cartesia] Cloning voice from sample:', {
+  logger.info('[Cartesia] Cloning voice from sample:', {
     name: voiceName,
     sampleSize: audioSample.length
   });
@@ -328,7 +330,7 @@ async function cloneVoice(audioSample, voiceName, description) {
       language: 'en'
     });
 
-    console.log('[Cartesia] Voice cloned successfully:', result.id);
+    logger.info('[Cartesia] Voice cloned successfully:', result.id);
 
     return {
       success: true,
@@ -337,7 +339,7 @@ async function cloneVoice(audioSample, voiceName, description) {
       description: description
     };
   } catch (error) {
-    console.error('[Cartesia] Voice cloning error:', error);
+    logger.error('[Cartesia] Voice cloning error:', error);
     throw new Error(`Voice cloning failed: ${error.message}`);
   }
 }
@@ -414,7 +416,7 @@ async function healthCheck() {
       test_request_successful: result.success
     };
   } catch (error) {
-    console.error('[Cartesia] Health check failed:', error);
+    logger.error('[Cartesia] Health check failed:', error);
     return {
       success: false,
       status: 'unhealthy',

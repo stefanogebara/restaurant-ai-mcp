@@ -6,6 +6,8 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const { createSecureLogger } = require('./secure-logger');
+const logger = createSecureLogger('MLService');
 
 const MODEL_VERSION = 'v2.0-xgboost-hotel-trained';
 const MODEL_PATH = path.join(process.cwd(), 'ml_models', 'restaurant_noshow_xgboost.json');
@@ -152,7 +154,7 @@ async function getPrediction(reservation, options = {}) {
       };
     }
   } catch (error) {
-    console.error('ML prediction failed:', error.message);
+    logger.error('ML prediction failed:', error.message);
 
     if (!fallbackToHeuristic) {
       throw error;

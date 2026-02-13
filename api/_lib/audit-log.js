@@ -5,7 +5,8 @@
  * Logs to console (in production, integrate with external logging service)
  */
 
-const { sanitizeForLogging, sanitizeHeaders } = require('./secure-logger');
+const { sanitizeForLogging, sanitizeHeaders, createSecureLogger } = require('./secure-logger');
+const logger = createSecureLogger('AuditLog');
 
 // Audit event types
 const AUDIT_EVENTS = {
@@ -140,13 +141,13 @@ function logAudit(options) {
   switch (entry.severity) {
     case SEVERITY.CRITICAL:
     case SEVERITY.ERROR:
-      console.error(`[AUDIT] ${logMessage}`);
+      logger.error(`[AUDIT] ${logMessage}`);
       break;
     case SEVERITY.WARNING:
-      console.warn(`[AUDIT] ${logMessage}`);
+      logger.warn(`[AUDIT] ${logMessage}`);
       break;
     default:
-      console.log(`[AUDIT] ${logMessage}`);
+      logger.info(`[AUDIT] ${logMessage}`);
   }
 
   // In production, you would also send to external logging service here

@@ -7,6 +7,8 @@
  */
 
 const { Redis } = require('@upstash/redis');
+const { createSecureLogger } = require('./secure-logger');
+const logger = createSecureLogger('RateLimit');
 
 // Rate limit configuration per endpoint type
 const RATE_LIMITS = {
@@ -56,13 +58,13 @@ if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) 
       url: process.env.UPSTASH_REDIS_REST_URL,
       token: process.env.UPSTASH_REDIS_REST_TOKEN,
     });
-    console.log('[RateLimit] Using Upstash Redis store');
+    logger.info('Using Upstash Redis store');
   } catch (err) {
-    console.error('[RateLimit] Failed to initialize Redis, falling back to in-memory:', err.message);
+    logger.error('Failed to initialize Redis, falling back to in-memory:', err.message);
     redis = null;
   }
 } else {
-  console.log('[RateLimit] No UPSTASH_REDIS_REST_URL configured, using in-memory store');
+  logger.info('No UPSTASH_REDIS_REST_URL configured, using in-memory store');
 }
 
 // ============ IN-MEMORY FALLBACK ============
@@ -131,7 +133,7 @@ async function checkRateLimitRedis(clientId, endpointType) {
     };
   } catch (err) {
     // Redis error - fail open (allow request)
-    console.error('[RateLimit] Redis error, allowing request:', err.message);
+    logger.error('Redis error, allowing request:', err.message);
     return {
       allowed: true,
       limit: config.maxRequests,

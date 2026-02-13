@@ -9,6 +9,8 @@
  */
 
 const { captureMessage } = require('./sentry');
+const { createSecureLogger } = require('./secure-logger');
+const logger = createSecureLogger('Alerts');
 
 // Alert thresholds
 const THRESHOLDS = {
@@ -58,7 +60,7 @@ function sendAlert(level, message, context = {}) {
   const alertKey = `${level}:${message}`;
 
   if (!shouldSendAlert(alertKey)) {
-    console.log(`⏭️  Alert suppressed (cooldown): ${message}`);
+    logger.info(`Alert suppressed (cooldown): ${message}`);
     return false;
   }
 
@@ -70,7 +72,7 @@ function sendAlert(level, message, context = {}) {
     critical: '🔴'
   }[level] || 'ℹ️';
 
-  console.log(`${emoji} [ALERT:${level.toUpperCase()}] ${message}`, context);
+  logger.info(`${emoji} [ALERT:${level.toUpperCase()}] ${message}`, context);
 
   // Send to Sentry
   captureMessage(message, level, context);
@@ -246,7 +248,7 @@ function alertOnEvent(eventType, data) {
       break;
 
     default:
-      console.log(`Unknown event type: ${eventType}`, data);
+      logger.info(`Unknown event type: ${eventType}`, data);
   }
 }
 

@@ -6,6 +6,8 @@
  */
 
 const { supabaseAdmin: query } = require('./supabase');
+const { createSecureLogger } = require('./secure-logger');
+const logger = createSecureLogger('RestaurantLoader');
 
 /**
  * Get restaurant configuration by phone number
@@ -20,7 +22,7 @@ async function getRestaurantByPhone(phoneNumber) {
   // Normalize phone number (remove spaces, dashes, etc.)
   const normalizedPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
 
-  console.log(`[RestaurantLoader] Looking up restaurant for phone: ${phoneNumber} (normalized: ${normalizedPhone})`);
+  logger.info(`[RestaurantLoader] Looking up restaurant for phone: ${phoneNumber} (normalized: ${normalizedPhone})`);
 
   try {
     // Query restaurant_config by phone number
@@ -33,13 +35,13 @@ async function getRestaurantByPhone(phoneNumber) {
       .single();
 
     if (result.error) {
-      console.error('[RestaurantLoader] Database error:', result.error);
+      logger.error('[RestaurantLoader] Database error:', result.error);
       throw new Error(`Restaurant not found for phone number: ${phoneNumber}`);
     }
 
     const restaurant = result.data;
 
-    console.log(`[RestaurantLoader] Found restaurant: ${restaurant.restaurant_name} (${restaurant.city}, ${restaurant.country})`);
+    logger.info(`[RestaurantLoader] Found restaurant: ${restaurant.restaurant_name} (${restaurant.city}, ${restaurant.country})`);
 
     // Return formatted configuration for AI agent
     return {
@@ -76,7 +78,7 @@ async function getRestaurantByPhone(phoneNumber) {
       team_members: restaurant.team_members || []
     };
   } catch (error) {
-    console.error('[RestaurantLoader] Error loading restaurant:', error);
+    logger.error('[RestaurantLoader] Error loading restaurant:', error);
     throw error;
   }
 }
@@ -87,7 +89,7 @@ async function getRestaurantByPhone(phoneNumber) {
  * @returns {Promise<Object>} Restaurant configuration
  */
 async function getRestaurantById(restaurantId) {
-  console.log(`[RestaurantLoader] Looking up restaurant by ID: ${restaurantId}`);
+  logger.info(`[RestaurantLoader] Looking up restaurant by ID: ${restaurantId}`);
 
   try {
     // Try restaurant_config first (onboarded restaurants)
@@ -100,7 +102,7 @@ async function getRestaurantById(restaurantId) {
 
     if (!result.error && result.data) {
       const restaurant = result.data;
-      console.log(`[RestaurantLoader] Found restaurant in config: ${restaurant.restaurant_name}`);
+      logger.info(`[RestaurantLoader] Found restaurant in config: ${restaurant.restaurant_name}`);
 
       return {
         id: restaurant.id,
@@ -126,7 +128,7 @@ async function getRestaurantById(restaurantId) {
     }
 
     // Fallback to restaurant_info table
-    console.log(`[RestaurantLoader] Not found in restaurant_config, trying restaurant_info`);
+    logger.info(`[RestaurantLoader] Not found in restaurant_config, trying restaurant_info`);
     const infoResult = await query
       .from('restaurant_info')
       .select('*')
@@ -134,12 +136,12 @@ async function getRestaurantById(restaurantId) {
       .single();
 
     if (infoResult.error || !infoResult.data) {
-      console.error('[RestaurantLoader] Not found in either table:', infoResult.error);
+      logger.error('[RestaurantLoader] Not found in either table:', infoResult.error);
       throw new Error(`Restaurant not found with ID: ${restaurantId}`);
     }
 
     const restaurant = infoResult.data;
-    console.log(`[RestaurantLoader] Found restaurant in info: ${restaurant.restaurant_name}`);
+    logger.info(`[RestaurantLoader] Found restaurant in info: ${restaurant.restaurant_name}`);
 
     return {
       id: restaurant.id,
@@ -156,7 +158,7 @@ async function getRestaurantById(restaurantId) {
       team_members: []
     };
   } catch (error) {
-    console.error('[RestaurantLoader] Error loading restaurant:', error);
+    logger.error('[RestaurantLoader] Error loading restaurant:', error);
     throw error;
   }
 }
@@ -166,7 +168,7 @@ async function getRestaurantById(restaurantId) {
  * @returns {Promise<Array>} List of active restaurants
  */
 async function getAllRestaurants() {
-  console.log('[RestaurantLoader] Fetching all active restaurants');
+  logger.info('[RestaurantLoader] Fetching all active restaurants');
 
   try {
     const result = await query
@@ -177,11 +179,11 @@ async function getAllRestaurants() {
       .order('created_at', { ascending: false });
 
     if (result.error) {
-      console.error('[RestaurantLoader] Database error:', result.error);
+      logger.error('[RestaurantLoader] Database error:', result.error);
       throw new Error('Failed to fetch restaurants');
     }
 
-    console.log(`[RestaurantLoader] Found ${result.data.length} active restaurants`);
+    logger.info(`[RestaurantLoader] Found ${result.data.length} active restaurants`);
 
     return result.data.map(r => ({
       id: r.id,
@@ -193,7 +195,7 @@ async function getAllRestaurants() {
       language: r.ai_config?.language || 'en-US'
     }));
   } catch (error) {
-    console.error('[RestaurantLoader] Error listing restaurants:', error);
+    logger.error('[RestaurantLoader] Error listing restaurants:', error);
     throw error;
   }
 }
