@@ -1,748 +1,196 @@
-const airtable = require('./_lib/supabase');
-const twilio = require('twilio'); // Force redeploy to fix Vercel dependency bundling
+const {
+  getWaitlistEntries,
+  addToWaitlist,
+  updateWaitlistEntry,
+  removeFromWaitlist,
+} = require('./_lib/supabase');
+const twilio = require('twilio');
 const { Resend } = require('resend');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { verifyAuth } = require('./_lib/auth');
-const logger = createSecureLogger('Waitlist');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { validateWaitlistEntry, sanitizeInput } = require('./_lib/validation');
+const { trackUsage } = require('./_lib/usage-tracking');
+
+const logger = createSecureLogger('Waitlist');
 
 /**
- * Waitlist Management API
+ * Waitlist Management API (Supabase)
  *
- * Endpoints:
- * - GET /api/waitlist - Get all waitlist entries (optionally filtered by status)
- * - POST /api/waitlist - Add new customer to waitlist
- * - PATCH /api/waitlist/:id - Update waitlist entry (status, estimated wait, etc.)
- * - DELETE /api/waitlist/:id - Remove from waitlist
- *
- * Status Mapping:
- * Airtable field uses default options (Todo, In progress, Done)
- * API translates to proper waitlist terminology:
- * - Todo → Waiting
- * - In progress → Notified
- * - Done → Seated
+ * GET    /api/waitlist         - Get waitlist entries
+ * POST   /api/waitlist         - Add to waitlist
+ * PATCH  /api/waitlist?id=X    - Update entry
+ * DELETE /api/waitlist?id=X    - Remove from waitlist
  */
 
-// Status mapping helpers
-const STATUS_TO_AIRTABLE = {
-  'Waiting': 'Todo',
-  'Notified': 'In progress',
-  'Seated': 'Done',
-  'Cancelled': 'Cancelled',
-  'No Show': 'No Show'
-};
-
-const STATUS_FROM_AIRTABLE = {
-  'Todo': 'Waiting',
-  'In progress': 'Notified',
-  'Done': 'Seated',
-  'Cancelled': 'Cancelled',
-  'No Show': 'No Show'
-};
-
 module.exports = async (req, res) => {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
+  setInternalCors(req, res);
+  if (handlePreflight(req, res)) return;
 
-  // Handle OPTIONS request for CORS
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'api');
+  if (rateLimited) return;
 
-  // Require authentication
   const auth = await verifyAuth(req);
   if (auth.error) {
     return res.status(auth.status).json({ error: auth.error });
   }
   req.user = auth.user;
-
   const restaurantId = auth.user.restaurant_id;
-  const method = req.method;
+
+  if (!restaurantId) {
+    return res.status(400).json({ error: 'No restaurant associated with this account' });
+  }
+
   const { id } = req.query;
 
   try {
-    switch (method) {
+    switch (req.method) {
       case 'GET':
         return await handleGetWaitlist(req, res, restaurantId);
       case 'POST':
         return await handleAddToWaitlist(req, res, restaurantId);
       case 'PATCH':
-        if (!id) {
-          return res.status(400).json({ error: 'Waitlist ID required for update' });
-        }
+        if (!id) return res.status(400).json({ error: 'Waitlist entry ID required' });
         return await handleUpdateWaitlist(req, res, id, restaurantId);
       case 'DELETE':
-        if (!id) {
-          return res.status(400).json({ error: 'Waitlist ID required for deletion' });
-        }
+        if (!id) return res.status(400).json({ error: 'Waitlist entry ID required' });
         return await handleRemoveFromWaitlist(req, res, id, restaurantId);
       default:
         return res.status(405).json({ error: 'Method not allowed' });
     }
   } catch (error) {
     logger.error('Waitlist API error:', error);
-    return res.status(500).json({
-      error: error.message,
-      details: error.toString()
-    });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };
 
-/**
- * GET /api/waitlist
- * Get all waitlist entries, optionally filtered by status
- *
- * Query params:
- * - status: Filter by status (comma-separated: Waiting, Notified, Seated, Cancelled, No Show)
- * - active: Boolean - if true, only return Waiting and Notified entries
- * - limit: Number - maximum records to return (default 100)
- */
 async function handleGetWaitlist(req, res, restaurantId) {
   const { status, active, limit } = req.query;
-  const maxRecords = parseInt(limit) || 100;
 
-  const tableId = process.env.WAITLIST_TABLE_ID;
-  if (!tableId) {
-    return res.status(500).json({ error: 'WAITLIST_TABLE_ID not configured' });
+  const result = await getWaitlistEntries(restaurantId, {
+    status,
+    active: active === 'true',
+    limit: parseInt(limit) || 100,
+  });
+
+  if (!result.success) {
+    return res.status(500).json({ error: 'Failed to fetch waitlist' });
   }
 
-  try {
-    // Build filter formula for Airtable (always scoped to restaurant)
-    const restaurantFilter = `{Restaurant ID}='${restaurantId}'`;
-    let filterFormula = '';
-    if (active === 'true') {
-      // Active = Waiting (Todo or empty) or Notified (In progress)
-      // Note: Empty status is treated as 'Waiting' (Todo)
-      filterFormula = `AND(${restaurantFilter}, OR({Status}='Todo', {Status}='In progress', {Status}=BLANK()))`;
-    } else if (status) {
-      // Support comma-separated status values
-      const statuses = status.split(',').map(s => s.trim());
-      const conditions = statuses.map(s => {
-        const airtableStatus = STATUS_TO_AIRTABLE[s] || s;
-        if (s === 'Waiting') {
-          return "OR({Status}='Todo', {Status}=BLANK())";
-        }
-        return `{Status}='${airtableStatus}'`;
-      });
-      const statusFilter = conditions.length > 1 ? `OR(${conditions.join(', ')})` : conditions[0];
-      filterFormula = `AND(${restaurantFilter}, ${statusFilter})`;
-    } else {
-      filterFormula = restaurantFilter;
-    }
-
-    const url = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}`;
-    const params = new URLSearchParams();
-
-    // Add sort parameters (Airtable format: sort[0][field]=Priority&sort[0][direction]=asc)
-    params.append('sort[0][field]', 'Priority');
-    params.append('sort[0][direction]', 'asc');
-
-    // Add max records limit
-    params.append('maxRecords', maxRecords.toString());
-
-    if (filterFormula) {
-      params.append('filterByFormula', filterFormula);
-    }
-
-    const response = await fetch(`${url}?${params.toString()}`, {
-      headers: {
-        'Authorization': `Bearer ${process.env.AIRTABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Airtable API error: ${response.status} - ${errorText}`);
-    }
-
-    const data = await response.json();
-
-    // Transform Airtable records to our format
-    const waitlist = data.records.map(record => {
-      const airtableStatus = record.fields['Status'] || 'Todo';
-      const apiStatus = STATUS_FROM_AIRTABLE[airtableStatus] || airtableStatus;
-
-      return {
-        id: record.id,
-        waitlist_id: record.fields['Waitlist ID'],
-        customer_name: record.fields['Customer Name'],
-        customer_phone: record.fields['Customer Phone'],
-        customer_email: record.fields['Customer Email'],
-        party_size: record.fields['Party Size'],
-        added_at: record.fields['Added At'],
-        estimated_wait: record.fields['Estimated Wait'],
-        status: apiStatus,
-        priority: record.fields['Priority'],
-        special_requests: record.fields['Special Requests'],
-        notified_at: record.fields['Notified At'],
-      };
-    });
-
-    return res.status(200).json({
-      success: true,
-      count: waitlist.length,
-      waitlist,
-    });
-
-  } catch (error) {
-    logger.error('Get waitlist error:', error);
-    return res.status(500).json({
-      error: 'Failed to retrieve waitlist',
-      details: error.message
-    });
-  }
+  return res.status(200).json({
+    success: true,
+    count: result.entries.length,
+    waitlist: result.entries,
+  });
 }
 
-/**
- * POST /api/waitlist
- * Add new customer to waitlist
- *
- * Body:
- * - customer_name: string (required)
- * - customer_phone: string (required)
- * - customer_email: string (optional)
- * - party_size: number (required, 1-20)
- * - special_requests: string (optional)
- * - estimated_wait: number (optional, in minutes)
- */
 async function handleAddToWaitlist(req, res, restaurantId) {
-  const {
-    customer_name,
-    customer_phone,
-    customer_email,
-    party_size,
-    special_requests,
-    estimated_wait
-  } = req.body;
+  const { customer_name, customer_phone, customer_email, party_size, special_requests, estimated_wait } = req.body;
 
-  // Comprehensive validation using centralized utility
-  const validation = validateWaitlistEntry({
-    customer_name,
-    customer_phone,
-    customer_email,
-    party_size
-  });
-
+  const validation = validateWaitlistEntry({ customer_name, customer_phone, customer_email, party_size });
   if (!validation.valid) {
-    return res.status(400).json({
-      error: 'Validation failed',
-      details: validation.errors
-    });
+    return res.status(400).json({ error: 'Validation failed', details: validation.errors });
   }
 
-  // Sanitize inputs to prevent injection attacks
-  const sanitizedName = sanitizeInput(customer_name);
-  const sanitizedPhone = sanitizeInput(customer_phone);
-  const sanitizedEmail = customer_email ? sanitizeInput(customer_email) : '';
-  const sanitizedRequests = special_requests ? sanitizeInput(special_requests) : '';
-
-  const tableId = process.env.WAITLIST_TABLE_ID;
-  if (!tableId) {
-    return res.status(500).json({ error: 'WAITLIST_TABLE_ID not configured' });
-  }
-
-  try {
-    // Get current waitlist to calculate next priority
-    const currentWaitlist = await getCurrentWaitlist(restaurantId);
-    const nextPriority = currentWaitlist.length + 1;
-
-    // Generate unique waitlist ID
-    const timestamp = Date.now();
-    const waitlist_id = `WAIT-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${timestamp}`;
-
-    // Calculate estimated wait if not provided
-    let calculatedWait = estimated_wait;
-    if (!calculatedWait) {
-      calculatedWait = await calculateEstimatedWait(party_size, currentWaitlist.length);
-    }
-
-    // Create Airtable record
-    const url = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.AIRTABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        fields: {
-          'Restaurant ID': restaurantId,
-          'Waitlist ID': waitlist_id,
-          'Customer Name': sanitizedName,
-          'Customer Phone': sanitizedPhone,
-          'Customer Email': sanitizedEmail,
-          'Party Size': parseInt(party_size),
-          'Estimated Wait': calculatedWait,
-          'Status': 'Todo',  // Using existing option name (will need to rename in Airtable UI)
-          'Priority': nextPriority,
-          'Special Requests': sanitizedRequests,
-        }
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Airtable API error: ${response.status} - ${errorText}`);
-    }
-
-    const data = await response.json();
-
-    return res.status(201).json({
-      success: true,
-      message: 'Customer added to waitlist',
-      waitlist_entry: {
-        id: data.id,
-        waitlist_id,
-        customer_name,
-        customer_phone,
-        customer_email,
-        party_size,
-        estimated_wait: calculatedWait,
-        status: 'Waiting',
-        priority: nextPriority,
-        special_requests,
-        added_at: data.fields['Added At'],
-      },
-    });
-
-  } catch (error) {
-    logger.error('Add to waitlist error:', error);
-    return res.status(500).json({
-      error: 'Failed to add to waitlist',
-      details: error.message
-    });
-  }
-}
-
-/**
- * PATCH /api/waitlist/:id
- * Update waitlist entry
- *
- * Body (all optional):
- * - status: string (Waiting, Notified, Seated, Cancelled, No Show)
- * - estimated_wait: number (minutes)
- * - special_requests: string
- * - priority: number (for manual queue reordering)
- */
-async function handleUpdateWaitlist(req, res, recordId, restaurantId) {
-  const { status, estimated_wait, special_requests, priority } = req.body;
-
-  if (!status && !estimated_wait && !special_requests && !priority) {
-    return res.status(400).json({
-      error: 'At least one field must be provided for update'
-    });
-  }
-
-  const tableId = process.env.WAITLIST_TABLE_ID;
-  if (!tableId) {
-    return res.status(500).json({ error: 'WAITLIST_TABLE_ID not configured' });
-  }
-
-  try {
-    // Fetch existing record to verify restaurant ownership
-    const getUrl = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}/${recordId}`;
-    const getResponse = await fetch(getUrl, {
-      headers: {
-        'Authorization': `Bearer ${process.env.AIRTABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!getResponse.ok) {
-      return res.status(404).json({ error: 'Waitlist entry not found' });
-    }
-
-    const recordData = await getResponse.json();
-
-    // Verify the record belongs to this restaurant
-    if (recordData.fields['Restaurant ID'] && recordData.fields['Restaurant ID'] !== restaurantId) {
-      return res.status(403).json({ error: 'Not authorized to update this waitlist entry' });
-    }
-
-    // Extract customer details for notification if needed
-    let customerDetails = null;
-    if (status === 'Notified') {
-      customerDetails = {
-        name: recordData.fields['Customer Name'],
-        phone: recordData.fields['Customer Phone'],
-        partySize: recordData.fields['Party Size'],
-        email: recordData.fields['Customer Email'],
-      };
-    }
-
-    const fields = {};
-
-    if (status) {
-      const validStatuses = ['Waiting', 'Notified', 'Seated', 'Cancelled', 'No Show'];
-      if (!validStatuses.includes(status)) {
-        return res.status(400).json({
-          error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
-        });
-      }
-
-      // Translate API status to Airtable status
-      const airtableStatus = STATUS_TO_AIRTABLE[status] || status;
-      fields['Status'] = airtableStatus;
-
-      // If status is Notified, record the notification time and send notifications
-      if (status === 'Notified') {
-        fields['Notified At'] = new Date().toISOString();
-
-        // Send notifications (don't block on failure)
-        if (customerDetails) {
-          // Prefer email notification (free and unlimited)
-          if (customerDetails.email) {
-            sendEmailNotification(
-              customerDetails.name,
-              customerDetails.email,
-              customerDetails.partySize
-            ).catch(err => logger.error('Email notification failed:', err));
-          }
-
-          // Also send SMS if phone number provided (costs money with Twilio)
-          if (customerDetails.phone) {
-            sendSMSNotification(
-              customerDetails.name,
-              customerDetails.phone,
-              customerDetails.partySize
-            ).catch(err => logger.error('SMS notification failed:', err));
-          }
-        }
-      }
-    }
-
-    if (estimated_wait !== undefined) {
-      fields['Estimated Wait'] = estimated_wait;
-    }
-
-    if (special_requests !== undefined) {
-      fields['Special Requests'] = special_requests;
-    }
-
-    if (priority !== undefined) {
-      fields['Priority'] = priority;
-    }
-
-    const url = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}/${recordId}`;
-    const response = await fetch(url, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${process.env.AIRTABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ fields }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Airtable API error: ${response.status} - ${errorText}`);
-    }
-
-    const data = await response.json();
-
-    const airtableStatus = data.fields['Status'];
-    const apiStatus = STATUS_FROM_AIRTABLE[airtableStatus] || airtableStatus;
-
-    return res.status(200).json({
-      success: true,
-      message: 'Waitlist entry updated',
-      waitlist_entry: {
-        id: data.id,
-        waitlist_id: data.fields['Waitlist ID'],
-        customer_name: data.fields['Customer Name'],
-        customer_phone: data.fields['Customer Phone'],
-        customer_email: data.fields['Customer Email'],
-        party_size: data.fields['Party Size'],
-        estimated_wait: data.fields['Estimated Wait'],
-        status: apiStatus,
-        priority: data.fields['Priority'],
-        special_requests: data.fields['Special Requests'],
-        added_at: data.fields['Added At'],
-        notified_at: data.fields['Notified At'],
-      },
-    });
-
-  } catch (error) {
-    logger.error('Update waitlist error:', error);
-    return res.status(500).json({
-      error: 'Failed to update waitlist entry',
-      details: error.message
-    });
-  }
-}
-
-/**
- * DELETE /api/waitlist/:id
- * Remove customer from waitlist
- */
-async function handleRemoveFromWaitlist(req, res, recordId, restaurantId) {
-  const tableId = process.env.WAITLIST_TABLE_ID;
-  if (!tableId) {
-    return res.status(500).json({ error: 'WAITLIST_TABLE_ID not configured' });
-  }
-
-  try {
-    const url = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}/${recordId}`;
-
-    // Verify restaurant ownership before deleting
-    const getResponse = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${process.env.AIRTABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!getResponse.ok) {
-      return res.status(404).json({ error: 'Waitlist entry not found' });
-    }
-
-    const recordData = await getResponse.json();
-    if (recordData.fields['Restaurant ID'] && recordData.fields['Restaurant ID'] !== restaurantId) {
-      return res.status(403).json({ error: 'Not authorized to delete this waitlist entry' });
-    }
-
-    const response = await fetch(url, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${process.env.AIRTABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Airtable API error: ${response.status} - ${errorText}`);
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: 'Customer removed from waitlist',
-      deleted_id: recordId,
-    });
-
-  } catch (error) {
-    logger.error('Remove from waitlist error:', error);
-    return res.status(500).json({
-      error: 'Failed to remove from waitlist',
-      details: error.message
-    });
-  }
-}
-
-/**
- * Helper: Get current active waitlist
- */
-async function getCurrentWaitlist(restaurantId) {
-  const tableId = process.env.WAITLIST_TABLE_ID;
-  const url = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}`;
-
-  const params = new URLSearchParams({
-    filterByFormula: `AND({Restaurant ID}='${restaurantId}', OR({Status}='Waiting', {Status}='Notified'))`,
+  const result = await addToWaitlist(restaurantId, {
+    customer_name: sanitizeInput(customer_name),
+    customer_phone: sanitizeInput(customer_phone),
+    party_size: parseInt(party_size),
+    notes: special_requests ? sanitizeInput(special_requests) : null,
+    estimated_wait_minutes: estimated_wait || calculateEstimatedWait(parseInt(party_size)),
   });
 
-  const response = await fetch(`${url}?${params.toString()}`, {
-    headers: {
-      'Authorization': `Bearer ${process.env.AIRTABLE_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
+  if (!result.success) {
+    return res.status(500).json({ error: 'Failed to add to waitlist' });
+  }
+
+  return res.status(201).json({
+    success: true,
+    message: 'Customer added to waitlist',
+    waitlist_entry: result.entry,
   });
-
-  if (!response.ok) {
-    return [];
-  }
-
-  const data = await response.json();
-  return data.records || [];
 }
 
-/**
- * Helper: Calculate estimated wait time
- *
- * Algorithm:
- * - Base wait: 15 minutes per party ahead in queue
- * - Adjust for party size matching (larger parties wait longer)
- * - Round to nearest 5 minutes
- */
-async function calculateEstimatedWait(partySize, queuePosition) {
-  const baseWaitPerParty = 15; // minutes
-  let estimatedWait = queuePosition * baseWaitPerParty;
+async function handleUpdateWaitlist(req, res, entryId, restaurantId) {
+  const { status, estimated_wait, notes } = req.body;
 
-  // Add extra time for larger parties (harder to seat)
-  if (partySize >= 6) {
-    estimatedWait += 10;
-  } else if (partySize >= 4) {
-    estimatedWait += 5;
+  if (!status && estimated_wait === undefined && notes === undefined) {
+    return res.status(400).json({ error: 'At least one field required for update' });
   }
 
-  // Round to nearest 5 minutes
-  estimatedWait = Math.ceil(estimatedWait / 5) * 5;
-
-  // Minimum wait time
-  if (estimatedWait < 10) {
-    estimatedWait = 10;
+  if (status) {
+    const validStatuses = ['waiting', 'notified', 'seated', 'cancelled', 'no_show'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
+    }
   }
 
-  return estimatedWait;
+  const updates = {};
+  if (status) updates.status = status;
+  if (estimated_wait !== undefined) updates.estimated_wait_minutes = estimated_wait;
+  if (notes !== undefined) updates.notes = notes;
+
+  const result = await updateWaitlistEntry(entryId, restaurantId, updates);
+
+  if (!result.success) {
+    return res.status(result.message?.includes('not found') ? 404 : 500).json({
+      error: result.message || 'Failed to update waitlist entry',
+    });
+  }
+
+  // Send notifications if status changed to 'notified'
+  if (status === 'notified' && result.entry) {
+    const entry = result.entry;
+    if (entry.customer_phone) {
+      sendSMSNotification(entry.customer_name, entry.customer_phone, entry.party_size)
+        .catch(err => logger.error('SMS notification failed:', err));
+    }
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: 'Waitlist entry updated',
+    waitlist_entry: result.entry,
+  });
 }
 
-/**
- * Helper: Send SMS notification to customer
- *
- * @param {string} customerName - Customer's name
- * @param {string} customerPhone - Customer's phone number
- * @param {number} partySize - Number of guests
- * @returns {Promise<boolean>} - True if SMS sent successfully
- */
+async function handleRemoveFromWaitlist(req, res, entryId, restaurantId) {
+  const result = await removeFromWaitlist(entryId, restaurantId);
+
+  if (!result.success) {
+    return res.status(500).json({ error: 'Failed to remove from waitlist' });
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: 'Customer removed from waitlist',
+    deleted_id: entryId,
+  });
+}
+
+function calculateEstimatedWait(partySize) {
+  let wait = 15;
+  if (partySize >= 6) wait = 25;
+  else if (partySize >= 4) wait = 20;
+  return Math.ceil(wait / 5) * 5;
+}
+
 async function sendSMSNotification(customerName, customerPhone, partySize) {
-  // Skip if Twilio credentials not configured
   if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
-    logger.warn('Twilio credentials not configured - SMS notification skipped');
     return false;
   }
-
   try {
-    // Initialize Twilio client with environment variables
-    const twilioClient = twilio(
-      process.env.TWILIO_ACCOUNT_SID,
-      process.env.TWILIO_AUTH_TOKEN
-    );
-
-    const message = `Hi ${customerName}! Your table for ${partySize} ${partySize === 1 ? 'person' : 'people'} is ready! Please come to the host stand. See you soon!`;
-
+    const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
     await twilioClient.messages.create({
-      body: message,
+      body: `Hi ${customerName}! Your table for ${partySize} ${partySize === 1 ? 'person' : 'people'} is ready! Please come to the host stand.`,
       from: process.env.TWILIO_PHONE_NUMBER,
       to: customerPhone,
     });
-
-    logger.info(`SMS sent to ${customerPhone} for ${customerName}`);
+    logger.info(`SMS sent to ${customerPhone}`);
     return true;
   } catch (error) {
     logger.error('Failed to send SMS:', error);
-    // Don't throw error - we don't want SMS failure to break the API
-    return false;
-  }
-}
-
-/**
- * Helper: Send EMAIL notification to customer (FREE alternative to SMS)
- *
- * @param {string} customerName - Customer's name
- * @param {string} customerEmail - Customer's email address
- * @param {number} partySize - Number of guests
- * @returns {Promise<boolean>} - True if email sent successfully
- */
-async function sendEmailNotification(customerName, customerEmail, partySize) {
-  // Skip if Resend API key not configured
-  if (!process.env.RESEND_API_KEY) {
-    logger.warn('Resend API key not configured - email notification skipped');
-    return false;
-  }
-
-  // Skip if no email provided
-  if (!customerEmail) {
-    logger.warn('No email provided - email notification skipped');
-    return false;
-  }
-
-  try {
-    // Initialize Resend client
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
-    // Create professional HTML email
-    const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your Table is Ready!</title>
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;">
-          <!-- Header -->
-          <tr>
-            <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">🍽️ Your Table is Ready!</h1>
-            </td>
-          </tr>
-
-          <!-- Content -->
-          <tr>
-            <td style="padding: 40px 30px;">
-              <p style="margin: 0 0 20px; font-size: 18px; color: #333333; line-height: 1.6;">
-                Hi <strong>${customerName}</strong>,
-              </p>
-
-              <p style="margin: 0 0 20px; font-size: 16px; color: #555555; line-height: 1.6;">
-                Great news! Your table for <strong>${partySize} ${partySize === 1 ? 'person' : 'people'}</strong> is now ready.
-              </p>
-
-              <div style="background-color: #f8f9fa; border-left: 4px solid #667eea; padding: 20px; margin: 30px 0; border-radius: 4px;">
-                <p style="margin: 0; font-size: 16px; color: #333333; font-weight: 500;">
-                  ⏰ Please come to the host stand to be seated
-                </p>
-              </div>
-
-              <p style="margin: 0 0 10px; font-size: 16px; color: #555555; line-height: 1.6;">
-                We're looking forward to serving you!
-              </p>
-
-              <p style="margin: 0; font-size: 16px; color: #555555; line-height: 1.6;">
-                See you soon! 👋
-              </p>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;">
-              <p style="margin: 0 0 10px; font-size: 14px; color: #6c757d;">
-                Thank you for dining with us
-              </p>
-              <p style="margin: 0; font-size: 12px; color: #adb5bd;">
-                This is an automated notification from our waitlist system
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-    `;
-
-    // Plain text fallback
-    const textContent = `Hi ${customerName}!\n\nYour table for ${partySize} ${partySize === 1 ? 'person' : 'people'} is ready!\n\nPlease come to the host stand to be seated.\n\nSee you soon!`;
-
-    // Send email
-    const { data, error } = await resend.emails.send({
-      from: 'Restaurant Waitlist <onboarding@resend.dev>', // Will be updated after domain verification
-      to: [customerEmail],
-      subject: `🍽️ Your Table for ${partySize} is Ready!`,
-      html: htmlContent,
-      text: textContent,
-    });
-
-    if (error) {
-      logger.error('Failed to send email via Resend:', error);
-      return false;
-    }
-
-    logger.info(`Email sent to ${customerEmail} for ${customerName} - Message ID: ${data?.id}`);
-    return true;
-  } catch (error) {
-    logger.error('Failed to send email:', error);
-    // Don't throw error - we don't want email failure to break the API
     return false;
   }
 }
