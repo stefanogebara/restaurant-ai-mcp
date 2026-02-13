@@ -1,5 +1,6 @@
 const Stripe = require('stripe');
 const { verifyAuth } = require('./_lib/auth');
+const { getMeteredPriceMap } = require('./_lib/stripe-usage-reporter');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
 module.exports = async (req, res) => {
@@ -29,19 +30,35 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Price ID is required' });
     }
 
+    // Get restaurant_id from authenticated user for multi-tenancy
+    const restaurantId = auth.user?.restaurant_id || null;
+
     // Get the origin for success/cancel URLs
     const origin = req.headers.origin || process.env.CLIENT_URL || 'http://localhost:8086';
+
+    // Build line items: base subscription + metered prices
+    const lineItems = [
+      {
+        price: priceId,
+        quantity: 1,
+      },
+    ];
+
+    // Add metered price items for usage-based billing
+    const meteredPriceMap = getMeteredPriceMap();
+    const addedPrices = new Set();
+    for (const meteredPriceId of Object.values(meteredPriceMap)) {
+      if (!addedPrices.has(meteredPriceId)) {
+        addedPrices.add(meteredPriceId);
+        lineItems.push({ price: meteredPriceId });
+      }
+    }
 
     // Create Checkout Session
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
+      line_items: lineItems,
       success_url: `${origin}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/#pricing`,
       allow_promotion_codes: true,
@@ -49,11 +66,13 @@ module.exports = async (req, res) => {
       customer_email: req.body.email || undefined,
       metadata: {
         plan_name: req.body.planName || 'Unknown Plan',
+        restaurant_id: restaurantId || '',
       },
       subscription_data: {
         trial_period_days: 14, // 14-day free trial
         metadata: {
           plan_name: req.body.planName || 'Unknown Plan',
+          restaurant_id: restaurantId || '',
         },
       },
     });

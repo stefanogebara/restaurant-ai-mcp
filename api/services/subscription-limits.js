@@ -83,6 +83,33 @@ const PRICE_ID_TO_PLAN = {
 };
 
 /**
+ * Metered usage pricing configuration.
+ *
+ * Each metric type maps to an env var holding the Stripe metered price ID.
+ * These prices should be created in Stripe as "metered" recurring prices
+ * with "sum of usage during period" aggregation.
+ *
+ * To enable metered billing:
+ * 1. Create metered prices in Stripe Dashboard (Products → Add price → Recurring → Metered)
+ * 2. Set the corresponding env vars on Vercel
+ * 3. The checkout session will automatically include them as line items
+ * 4. Daily cron at /api/report-usage reports accumulated usage to Stripe
+ *
+ * Env vars:
+ *   STRIPE_METERED_PRICE_RESERVATION  - Charged per reservation (any source)
+ *   STRIPE_METERED_PRICE_AI_CALL      - Charged per AI phone call completed
+ *   STRIPE_METERED_PRICE_SMS          - Charged per SMS sent
+ *   STRIPE_METERED_PRICE_WHATSAPP     - Charged per WhatsApp reservation (overrides general)
+ */
+const METERED_PRICING = {
+  reservation_created: { envVar: 'STRIPE_METERED_PRICE_RESERVATION', label: 'Reservation' },
+  portal_booking: { envVar: 'STRIPE_METERED_PRICE_RESERVATION', label: 'Portal Booking' },
+  whatsapp_reservation: { envVar: 'STRIPE_METERED_PRICE_WHATSAPP', label: 'WhatsApp Reservation', fallback: 'STRIPE_METERED_PRICE_RESERVATION' },
+  ai_call_completed: { envVar: 'STRIPE_METERED_PRICE_AI_CALL', label: 'AI Call' },
+  sms_sent: { envVar: 'STRIPE_METERED_PRICE_SMS', label: 'SMS Sent' },
+};
+
+/**
  * Get plan details by plan name
  */
 function getPlanLimits(planName) {
@@ -148,6 +175,7 @@ function getUpgradeMessage(featureName, currentPlan) {
 module.exports = {
   PLAN_LIMITS,
   PRICE_ID_TO_PLAN,
+  METERED_PRICING,
   getPlanLimits,
   getPlanFromPriceId,
   hasFeature,

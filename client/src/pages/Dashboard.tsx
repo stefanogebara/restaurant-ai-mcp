@@ -26,6 +26,7 @@ import WalkInModal from '../components/host/WalkInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
 import QuickInterventionModal from '../components/host/QuickInterventionModal';
+import UsageStatsCard from '../components/dashboard/UsageStatsCard';
 import type { UpcomingReservation, ActiveParty } from '../types/host.types';
 
 export default function Dashboard() {
@@ -271,6 +272,8 @@ export default function Dashboard() {
                 onCompleteService={handleCompleteService}
                 isLoading={isLoading}
               />
+
+              <UsageStatsCard />
             </div>
           </div>
         </div>
