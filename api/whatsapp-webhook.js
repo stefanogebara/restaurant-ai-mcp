@@ -281,6 +281,85 @@ const RESERVATION_TOOLS = [
         required: []
       }
     }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'list_restaurants',
+      description: 'List all available restaurants in the platform. Use when the customer has not specified which restaurant.',
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: []
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'lookup_reservation',
+      description: 'Look up an existing reservation by confirmation number or customer phone number.',
+      parameters: {
+        type: 'object',
+        properties: {
+          reservation_id: {
+            type: 'string',
+            description: 'The reservation confirmation number (e.g., RES-20260119-XXXX)'
+          },
+          customer_phone: {
+            type: 'string',
+            description: 'Customer phone number to look up reservations'
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'cancel_reservation',
+      description: 'Cancel an existing reservation. Use lookup_reservation first to verify the reservation exists.',
+      parameters: {
+        type: 'object',
+        properties: {
+          reservation_id: {
+            type: 'string',
+            description: 'The reservation confirmation number to cancel'
+          }
+        },
+        required: ['reservation_id']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'modify_reservation',
+      description: 'Modify an existing reservation. Can change date, time, or party size. Use lookup_reservation first.',
+      parameters: {
+        type: 'object',
+        properties: {
+          reservation_id: {
+            type: 'string',
+            description: 'The reservation confirmation number to modify'
+          },
+          new_date: {
+            type: 'string',
+            description: 'New date in YYYY-MM-DD format (optional)'
+          },
+          new_time: {
+            type: 'string',
+            description: 'New time in HH:MM format (optional)'
+          },
+          new_party_size: {
+            type: 'integer',
+            description: 'New party size (optional)'
+          }
+        },
+        required: ['reservation_id']
+      }
+    }
   }
 ];
 
@@ -513,6 +592,201 @@ async function executeTool(toolName, toolInput, session) {
 
     case 'get_current_datetime': {
       return getCurrentDateTime();
+    }
+
+    case 'list_restaurants': {
+      const restaurants = await getAllActiveRestaurants();
+      return {
+        success: true,
+        count: restaurants.length,
+        restaurants: restaurants.map(r => ({
+          name: r.restaurant_name,
+          id: r.id
+        })),
+        message: restaurants.length > 0
+          ? `We have ${restaurants.length} restaurant(s) available: ${restaurants.map(r => r.restaurant_name).join(', ')}`
+          : 'No restaurants are currently available.'
+      };
+    }
+
+    case 'lookup_reservation': {
+      if (!session?.restaurant) {
+        return { success: false, error: 'No restaurant selected. Please identify the restaurant first.' };
+      }
+
+      const { reservation_id, customer_phone } = toolInput;
+      if (!reservation_id && !customer_phone) {
+        return { success: false, error: 'Please provide a reservation ID or phone number.' };
+      }
+
+      try {
+        const client = getMultiTenantClient(session.restaurant);
+        if (!client) return { success: false, error: 'Could not connect to restaurant database' };
+
+        let query = client.from('reservations').select('*');
+
+        if (reservation_id) {
+          query = query.eq('reservation_id', reservation_id);
+        } else {
+          const normalizedPhone = customer_phone.replace(/^\+/, '').replace(/\D/g, '');
+          const phoneVariants = [normalizedPhone, customer_phone];
+          if (normalizedPhone.length >= 11 && normalizedPhone.startsWith('1')) {
+            phoneVariants.push(normalizedPhone.slice(1));
+          }
+          if (normalizedPhone.length === 10) {
+            phoneVariants.push('1' + normalizedPhone);
+          }
+          query = query.in('customer_phone', phoneVariants);
+        }
+
+        const { data, error } = await query.order('date', { ascending: false }).limit(5);
+        if (error) {
+          logger.error(' Lookup error:', error);
+          return { success: false, error: 'Could not look up reservation.' };
+        }
+
+        if (!data || data.length === 0) {
+          return { success: false, error: 'No reservation found with that information.' };
+        }
+
+        const reservations = data.map(r => ({
+          reservation_id: r.reservation_id,
+          customer_name: r.customer_name,
+          date: r.date,
+          time: r.time,
+          party_size: r.party_size,
+          status: r.status
+        }));
+
+        return {
+          success: true,
+          count: reservations.length,
+          reservations,
+          message: reservations.length === 1
+            ? `Found reservation ${reservations[0].reservation_id} for ${reservations[0].customer_name} on ${reservations[0].date} at ${reservations[0].time} for ${reservations[0].party_size} guests. Status: ${reservations[0].status}`
+            : `Found ${reservations.length} reservations.`
+        };
+      } catch (err) {
+        logger.error(' Lookup error:', err);
+        return { success: false, error: 'Error looking up reservation' };
+      }
+    }
+
+    case 'cancel_reservation': {
+      if (!session?.restaurant) {
+        return { success: false, error: 'No restaurant selected.' };
+      }
+
+      const { reservation_id } = toolInput;
+      if (!reservation_id) {
+        return { success: false, error: 'Please provide the reservation confirmation number.' };
+      }
+
+      try {
+        const client = getMultiTenantClient(session.restaurant);
+        if (!client) return { success: false, error: 'Could not connect to restaurant database' };
+
+        // Verify reservation exists
+        const { data: existing, error: lookupErr } = await client
+          .from('reservations')
+          .select('*')
+          .eq('reservation_id', reservation_id)
+          .single();
+
+        if (lookupErr || !existing) {
+          return { success: false, error: 'Reservation not found.' };
+        }
+
+        if (existing.status === 'cancelled') {
+          return { success: false, error: 'This reservation has already been cancelled.' };
+        }
+
+        const { error: updateErr } = await client
+          .from('reservations')
+          .update({ status: 'cancelled' })
+          .eq('reservation_id', reservation_id);
+
+        if (updateErr) {
+          logger.error(' Cancel error:', updateErr);
+          return { success: false, error: 'Could not cancel reservation.' };
+        }
+
+        logger.info(` Reservation cancelled: ${reservation_id}`);
+        return {
+          success: true,
+          reservation_id,
+          message: `Reservation ${reservation_id} for ${existing.customer_name} on ${existing.date} at ${existing.time} has been cancelled.`
+        };
+      } catch (err) {
+        logger.error(' Cancel error:', err);
+        return { success: false, error: 'Error cancelling reservation' };
+      }
+    }
+
+    case 'modify_reservation': {
+      if (!session?.restaurant) {
+        return { success: false, error: 'No restaurant selected.' };
+      }
+
+      const { reservation_id, new_date, new_time, new_party_size } = toolInput;
+      if (!reservation_id) {
+        return { success: false, error: 'Please provide the reservation confirmation number.' };
+      }
+
+      if (!new_date && !new_time && !new_party_size) {
+        return { success: false, error: 'Please specify what to change: new date, time, or party size.' };
+      }
+
+      try {
+        const client = getMultiTenantClient(session.restaurant);
+        if (!client) return { success: false, error: 'Could not connect to restaurant database' };
+
+        const { data: existing, error: lookupErr } = await client
+          .from('reservations')
+          .select('*')
+          .eq('reservation_id', reservation_id)
+          .single();
+
+        if (lookupErr || !existing) {
+          return { success: false, error: 'Reservation not found.' };
+        }
+
+        if (existing.status === 'cancelled') {
+          return { success: false, error: 'Cannot modify a cancelled reservation.' };
+        }
+
+        const updates = {};
+        if (new_date) updates.date = new_date;
+        if (new_time) updates.time = new_time;
+        if (new_party_size) updates.party_size = new_party_size;
+
+        const { data: updated, error: updateErr } = await client
+          .from('reservations')
+          .update(updates)
+          .eq('reservation_id', reservation_id)
+          .select()
+          .single();
+
+        if (updateErr) {
+          logger.error(' Modify error:', updateErr);
+          return { success: false, error: 'Could not modify reservation.' };
+        }
+
+        const changes = [];
+        if (new_date) changes.push(`date to ${updated.date}`);
+        if (new_time) changes.push(`time to ${updated.time}`);
+        if (new_party_size) changes.push(`party size to ${updated.party_size}`);
+
+        logger.info(` Reservation modified: ${reservation_id}`, updates);
+        return {
+          success: true,
+          reservation_id,
+          message: `Reservation ${reservation_id} updated: ${changes.join(', ')}. New details: ${updated.customer_name}, party of ${updated.party_size} on ${updated.date} at ${updated.time}.`
+        };
+      } catch (err) {
+        logger.error(' Modify error:', err);
+        return { success: false, error: 'Error modifying reservation' };
+      }
     }
 
     default:
