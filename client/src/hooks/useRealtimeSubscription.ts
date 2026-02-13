@@ -117,6 +117,7 @@ export function useRealtimeDashboard(restaurantId: string | undefined): void {
             queryClient.invalidateQueries({ queryKey: [queryKey] });
           }
           queryClient.invalidateQueries({ queryKey: ['hostDashboard'] });
+          queryClient.invalidateQueries({ queryKey: ['simpleDashboard'] });
         },
       );
     }

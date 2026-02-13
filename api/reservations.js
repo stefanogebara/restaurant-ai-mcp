@@ -110,11 +110,14 @@ module.exports = async (req, res) => {
     return res.status(auth.status || 401).json({ message: auth.error });
   }
   const restaurantId = auth.user.restaurant_id;
+  const timezone = auth.user.timezone || 'UTC';
   if (!restaurantId) {
     return res.status(403).json({
       message: 'No restaurant associated with your account. Please complete onboarding first.'
     });
   }
+
+  req.user = auth.user;
 
   const { action } = req.query;
 

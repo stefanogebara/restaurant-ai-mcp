@@ -222,6 +222,8 @@ async function handleDashboard(req, res) {
   }
 
   return res.status(200).json({
+    restaurant_id: restaurantId,
+    timezone: timezone,
     summary: {
       total_capacity: totalCapacity,
       available_seats: availableSeats,

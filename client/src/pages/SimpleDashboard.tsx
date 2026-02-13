@@ -10,6 +10,7 @@ import FloorPlanView from '../components/host/FloorPlanView';
 import TableStatusLegend from '../components/host/TableStatusLegend';
 import WaitlistPanel from '../components/host/WaitlistPanel';
 import DashboardLayout from '../components/layout/DashboardLayout';
+import { useRealtimeDashboard } from '../hooks/useRealtimeSubscription';
 // Modern Elegant Design - Light theme with burgundy accents
 
 type ComplexityLevel = 'completo' | 'avanzado';
@@ -137,8 +138,11 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
   const { data: dashboardData, refetch, isLoading, isError } = useQuery({
     queryKey: ['simpleDashboard'],
     queryFn: hostAPI.getDashboard,
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 120000, // Fallback polling every 2 minutes (Realtime handles instant updates)
   });
+
+  // Subscribe to real-time changes (invalidates query cache automatically)
+  useRealtimeDashboard(dashboardData?.data?.restaurant_id);
 
   const translations = {
     es: {
@@ -986,6 +990,7 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
             {/* Waitlist Panel - Full Width */}
             <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-md flex flex-col overflow-hidden">
               <WaitlistPanel
+                restaurantId={dashboardData?.data?.restaurant_id}
                 onSeatNow={(entry) => {
                   setSelectedParty({
                     customer_name: entry.customer_name,

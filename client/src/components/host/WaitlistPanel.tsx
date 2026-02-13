@@ -3,6 +3,7 @@ import { authFetch } from '../../services/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatTimeAgo } from '../../utils/timeFormatting';
 import WaitlistTimeDisplay from './WaitlistTimeDisplay';
+import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription';
 
 interface WaitlistEntry {
   id: string;
@@ -27,6 +28,7 @@ interface WaitlistResponse {
 
 interface WaitlistPanelProps {
   onSeatNow: (entry: WaitlistEntry) => void;
+  restaurantId?: string;
 }
 
 // Search icon SVG component
@@ -56,12 +58,15 @@ function getStatusColor(status: string) {
   }
 }
 
-export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
+export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanelProps) {
   const queryClient = useQueryClient();
   const [showAddModal, setShowAddModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'active' | 'seated' | 'removed'>('active');
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmRemove, setConfirmRemove] = useState<{ id: string; name: string } | null>(null);
+
+  // Subscribe to real-time waitlist changes (invalidates query cache automatically)
+  useRealtimeSubscription('waitlist', restaurantId);
 
   // Fetch all waitlist entries (we'll filter client-side)
   const { data, isLoading, error } = useQuery<WaitlistResponse>({
@@ -71,7 +76,7 @@ export default function WaitlistPanel({ onSeatNow }: WaitlistPanelProps) {
       if (!response.ok) throw new Error('Failed to fetch waitlist');
       return response.json();
     },
-    refetchInterval: 30000,
+    refetchInterval: 120000, // Fallback polling every 2 minutes (Realtime handles instant updates)
   });
 
   // Notify customer mutation
