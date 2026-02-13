@@ -5,15 +5,10 @@
  * Links predictions to real-world results for continuous model improvement.
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { verifyAuth } = require('./_lib/auth');
 const logger = createSecureLogger('MLOutcomes');
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
 
 module.exports = async (req, res) => {
   // Set CORS headers
@@ -118,7 +113,7 @@ async function handleRecordOutcome(req, res) {
     logger.info(`\n📊 Recording outcome for ${reservation_id}: ${actual_outcome}`);
 
     // 1. Fetch reservation with ML prediction
-    const { data: reservation, error: fetchError } = await supabase
+    const { data: reservation, error: fetchError } = await supabaseAdmin
       .from('reservations')
       .select('*')
       .eq('reservation_id', reservation_id)
@@ -182,7 +177,7 @@ async function handleRecordOutcome(req, res) {
       notes
     };
 
-    const { data: interventionData, error: interventionError } = await supabase
+    const { data: interventionData, error: interventionError } = await supabaseAdmin
       .from('ml_interventions')
       .insert(interventionRecord)
       .select()
@@ -239,7 +234,7 @@ async function handleRecordOutcome(req, res) {
 async function handleROISummary(req, res) {
   try {
     // Fetch all intervention records
-    const { data: interventions, error } = await supabase
+    const { data: interventions, error } = await supabaseAdmin
       .from('ml_interventions')
       .select('*')
       .order('created_at', { ascending: false });
@@ -383,7 +378,7 @@ async function handleMarkActionTaken(req, res) {
     }
 
     // Fetch reservation to verify it exists and get ML data
-    const { data: reservation, error: fetchError } = await supabase
+    const { data: reservation, error: fetchError } = await supabaseAdmin
       .from('reservations')
       .select('*')
       .eq('reservation_id', reservation_id)
@@ -400,7 +395,7 @@ async function handleMarkActionTaken(req, res) {
     const timestamp = new Date().toISOString();
 
     // Update reservation to mark that intervention was taken
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('reservations')
       .update({
         intervention_taken: true,
@@ -421,7 +416,7 @@ async function handleMarkActionTaken(req, res) {
     }
 
     // Also update ml_interventions table if there's a matching record
-    const { data: existingIntervention } = await supabase
+    const { data: existingIntervention } = await supabaseAdmin
       .from('ml_interventions')
       .select('intervention_id')
       .eq('reservation_id', reservation_id)
@@ -429,7 +424,7 @@ async function handleMarkActionTaken(req, res) {
       .single();
 
     if (existingIntervention) {
-      await supabase
+      await supabaseAdmin
         .from('ml_interventions')
         .update({
           action_taken: true,
@@ -477,7 +472,7 @@ async function handleMarkActionTaken(req, res) {
 async function updateCustomerHistory(customerPhone, outcome, partySize) {
   try {
     // Check if customer exists
-    const { data: existing, error: fetchError } = await supabase
+    const { data: existing, error: fetchError } = await supabaseAdmin
       .from('customer_history')
       .select('*')
       .eq('customer_phone', customerPhone)
@@ -490,7 +485,7 @@ async function updateCustomerHistory(customerPhone, outcome, partySize) {
 
     if (!existing) {
       // Create new customer history
-      const { error: insertError } = await supabase
+      const { error: insertError } = await supabaseAdmin
         .from('customer_history')
         .insert({
           customer_phone: customerPhone,
@@ -522,7 +517,7 @@ async function updateCustomerHistory(customerPhone, outcome, partySize) {
         updates.last_visit_date = new Date().toISOString();
       }
 
-      const { error: updateError } = await supabase
+      const { error: updateError } = await supabaseAdmin
         .from('customer_history')
         .update(updates)
         .eq('customer_phone', customerPhone);

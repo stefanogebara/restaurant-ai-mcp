@@ -9,7 +9,7 @@
  * - payment.canceled - Remove/mark revenue record
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 const {
@@ -21,11 +21,6 @@ const { calculateCustomerLTV, upsertCustomerLTV } = require('./services/ltvCalcu
 const crypto = require('crypto');
 
 const logger = createSecureLogger('SquareWebhook');
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
 
 module.exports = async (req, res) => {
   // Set CORS headers for webhooks
@@ -120,7 +115,7 @@ async function handlePaymentCompleted(event, res) {
   }
 
   // Skip if already processed (idempotency)
-  const { data: existing } = await supabase
+  const { data: existing } = await supabaseAdmin
     .from('revenue_records')
     .select('id')
     .eq('pos_transaction_id', payment.id)
@@ -132,7 +127,7 @@ async function handlePaymentCompleted(event, res) {
   }
 
   // Find the restaurant by merchant_id
-  const { data: connection } = await supabase
+  const { data: connection } = await supabaseAdmin
     .from('pos_connections')
     .select('restaurant_id, access_token')
     .eq('merchant_id', event.merchant_id)
@@ -156,7 +151,7 @@ async function handlePaymentCompleted(event, res) {
     );
 
     // Insert revenue record
-    const { data: inserted, error } = await supabase
+    const { data: inserted, error } = await supabaseAdmin
       .from('revenue_records')
       .insert(revenueRecord)
       .select()
@@ -203,7 +198,7 @@ async function handlePaymentUpdated(event, res) {
   }
 
   // Find existing revenue record
-  const { data: existing } = await supabase
+  const { data: existing } = await supabaseAdmin
     .from('revenue_records')
     .select('*')
     .eq('pos_transaction_id', payment.id)
@@ -219,7 +214,7 @@ async function handlePaymentUpdated(event, res) {
   const totalAmount = (payment.total_money?.amount || 0) / 100;
   const tipAmount = (payment.tip_money?.amount || 0) / 100;
 
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('revenue_records')
     .update({
       total_revenue: totalAmount - tipAmount,
@@ -262,7 +257,7 @@ async function handlePaymentCanceled(event, res) {
   }
 
   // Find and soft delete revenue record
-  const { data: existing } = await supabase
+  const { data: existing } = await supabaseAdmin
     .from('revenue_records')
     .select('*')
     .eq('pos_transaction_id', payment.id)
@@ -273,7 +268,7 @@ async function handlePaymentCanceled(event, res) {
     return res.status(200).json({ received: true, not_found: true });
   }
 
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('revenue_records')
     .update({ is_deleted: true })
     .eq('id', existing.id);

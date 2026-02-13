@@ -13,16 +13,10 @@
  */
 
 const fetch = require('node-fetch');
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('PhoneIntegration');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
-
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
 
 module.exports = async (req, res) => {
   // Use secure CORS for internal API endpoints
@@ -94,7 +88,7 @@ async function handleRegisterPhoneNumber(req, res) {
   logger.info(`[Phone Integration] Registering phone ${twilio_phone_number} for restaurant ${restaurant_id}`);
 
   // Get restaurant info to check if agent exists
-  const { data: restaurant, error: fetchError } = await supabase
+  const { data: restaurant, error: fetchError } = await supabaseAdmin
     .from('restaurant_info')
     .select('elevenlabs_agent_id, restaurant_name')
     .eq('id', restaurant_id)
@@ -115,7 +109,7 @@ async function handleRegisterPhoneNumber(req, res) {
   }
 
   // Update status to pending
-  await supabase
+  await supabaseAdmin
     .from('restaurant_info')
     .update({
       phone_integration_status: 'pending',
@@ -148,7 +142,7 @@ async function handleRegisterPhoneNumber(req, res) {
       logger.error('[Phone Integration] ElevenLabs import error:', errorText);
 
       // Update status to error
-      await supabase
+      await supabaseAdmin
         .from('restaurant_info')
         .update({
           phone_integration_status: 'error',
@@ -186,7 +180,7 @@ async function handleRegisterPhoneNumber(req, res) {
       logger.error('[Phone Integration] Agent assignment error:', errorText);
 
       // Phone is imported but agent not assigned - partial success
-      await supabase
+      await supabaseAdmin
         .from('restaurant_info')
         .update({
           twilio_account_sid,
@@ -209,7 +203,7 @@ async function handleRegisterPhoneNumber(req, res) {
     }
 
     // Step 3: Save successful configuration
-    await supabase
+    await supabaseAdmin
       .from('restaurant_info')
       .update({
         twilio_account_sid,
@@ -240,7 +234,7 @@ async function handleRegisterPhoneNumber(req, res) {
   } catch (error) {
     logger.error('[Phone Integration] Registration error:', error);
 
-    await supabase
+    await supabaseAdmin
       .from('restaurant_info')
       .update({
         phone_integration_status: 'error',
@@ -271,7 +265,7 @@ async function handleUnregisterPhoneNumber(req, res) {
   }
 
   // Get current phone number ID
-  const { data: restaurant, error: fetchError } = await supabase
+  const { data: restaurant, error: fetchError } = await supabaseAdmin
     .from('restaurant_info')
     .select('elevenlabs_phone_number_id, twilio_phone_number')
     .eq('id', restaurant_id)
@@ -314,7 +308,7 @@ async function handleUnregisterPhoneNumber(req, res) {
     }
 
     // Clear database fields
-    await supabase
+    await supabaseAdmin
       .from('restaurant_info')
       .update({
         twilio_account_sid: null,
@@ -355,7 +349,7 @@ async function handleGetStatus(req, res) {
     });
   }
 
-  const { data: restaurant, error: fetchError } = await supabase
+  const { data: restaurant, error: fetchError } = await supabaseAdmin
     .from('restaurant_info')
     .select(`
       elevenlabs_agent_id,
@@ -407,7 +401,7 @@ async function handleAssignAgent(req, res) {
     });
   }
 
-  const { data: restaurant, error: fetchError } = await supabase
+  const { data: restaurant, error: fetchError } = await supabaseAdmin
     .from('restaurant_info')
     .select('elevenlabs_agent_id, elevenlabs_phone_number_id')
     .eq('id', restaurant_id)
@@ -458,7 +452,7 @@ async function handleAssignAgent(req, res) {
       });
     }
 
-    await supabase
+    await supabaseAdmin
       .from('restaurant_info')
       .update({
         phone_integration_status: 'active',

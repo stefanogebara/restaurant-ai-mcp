@@ -8,12 +8,10 @@
  * - Churn risk prediction
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('../_lib/supabase');
+const { createSecureLogger } = require('../_lib/secure-logger');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
+const logger = createSecureLogger('LTVCalculator');
 
 /**
  * Calculate LTV for a specific customer
@@ -24,7 +22,7 @@ const supabase = createClient(
 async function calculateCustomerLTV(customerId, restaurantId = null) {
   try {
     // 1. Get all revenue records for this customer
-    let query = supabase
+    let query = supabaseAdmin
       .from('revenue_records')
       .select('*')
       .eq('customer_id', customerId);
@@ -115,7 +113,7 @@ async function calculateCustomerLTV(customerId, restaurantId = null) {
     };
 
   } catch (error) {
-    console.error('Error calculating LTV:', error);
+    logger.error('Error calculating LTV:', error);
     throw error;
   }
 }
@@ -128,7 +126,7 @@ async function calculateCustomerLTV(customerId, restaurantId = null) {
 async function calculateAllCustomerLTV(restaurantId = null) {
   try {
     // Get all unique customer IDs from revenue records
-    let query = supabase
+    let query = supabaseAdmin
       .from('revenue_records')
       .select('customer_id');
 
@@ -143,7 +141,7 @@ async function calculateAllCustomerLTV(restaurantId = null) {
 
     const uniqueCustomers = [...new Set(customers.map(c => c.customer_id))];
 
-    console.log(`📊 Calculating LTV for ${uniqueCustomers.length} customers${restaurantId ? ` (restaurant: ${restaurantId})` : ''}...`);
+    logger.info(`📊 Calculating LTV for ${uniqueCustomers.length} customers${restaurantId ? ` (restaurant: ${restaurantId})` : ''}...`);
 
     const results = [];
     for (const customerId of uniqueCustomers) {
@@ -154,15 +152,15 @@ async function calculateAllCustomerLTV(restaurantId = null) {
         // Update or insert into customer_ltv table
         await upsertCustomerLTV(ltv);
       } catch (err) {
-        console.error(`Failed to calculate LTV for ${customerId}:`, err);
+        logger.error(`Failed to calculate LTV for ${customerId}:`, err);
       }
     }
 
-    console.log(`✅ Calculated LTV for ${results.length} customers`);
+    logger.info(`✅ Calculated LTV for ${results.length} customers`);
     return results;
 
   } catch (error) {
-    console.error('Error in batch LTV calculation:', error);
+    logger.error('Error in batch LTV calculation:', error);
     throw error;
   }
 }
@@ -171,7 +169,7 @@ async function calculateAllCustomerLTV(restaurantId = null) {
  * Upsert customer LTV data into database
  */
 async function upsertCustomerLTV(ltvData) {
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('customer_ltv')
     .upsert(
       {
@@ -182,7 +180,7 @@ async function upsertCustomerLTV(ltvData) {
     );
 
   if (error) {
-    console.error('Error upserting LTV data:', error);
+    logger.error('Error upserting LTV data:', error);
     throw error;
   }
 }

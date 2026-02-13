@@ -3,22 +3,19 @@
  * Provides comprehensive ML intervention analytics and ROI tracking
  */
 
-const { createClient } = require('@supabase/supabase-js');
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
+const { supabaseAdmin } = require('./_lib/supabase');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('MLPerformance');
 
 /**
  * Get overall ROI summary metrics
  */
 async function getROISummary(days) {
-  const { data, error } = await supabase.rpc('get_ml_roi_summary', { days_back: days });
+  const { data, error } = await supabaseAdmin.rpc('get_ml_roi_summary', { days_back: days });
 
   if (error) {
     // Fallback to direct query if RPC doesn't exist
-    const { data: fallbackData, error: fallbackError } = await supabase
+    const { data: fallbackData, error: fallbackError } = await supabaseAdmin
       .from('ml_interventions')
       .select('*')
       .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString());
@@ -72,7 +69,7 @@ function calculateROISummary(interventions) {
  * Get recent intervention timeline with details
  */
 async function getInterventionTimeline(days, limit = 20) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('ml_interventions')
     .select('*')
     .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
@@ -103,7 +100,7 @@ async function getInterventionTimeline(days, limit = 20) {
  * Get intervention type breakdown with performance metrics
  */
 async function getTypeBreakdown(days) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('ml_interventions')
     .select('*')
     .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString());
@@ -156,7 +153,7 @@ async function getTypeBreakdown(days) {
  * Get ROI trend over time (weekly)
  */
 async function getROITrend(days) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('ml_interventions')
     .select('*')
     .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
@@ -210,7 +207,7 @@ async function getQuickStats() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const { data: todayData, error: todayError } = await supabase
+    const { data: todayData, error: todayError } = await supabaseAdmin
       .from('ml_interventions')
       .select('*')
       .gte('created_at', today.toISOString());
@@ -221,7 +218,7 @@ async function getQuickStats() {
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
-    const { data: yesterdayData, error: yesterdayError } = await supabase
+    const { data: yesterdayData, error: yesterdayError } = await supabaseAdmin
       .from('ml_interventions')
       .select('intervention_id')
       .gte('created_at', yesterday.toISOString())
@@ -252,7 +249,7 @@ async function getQuickStats() {
     const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-    const { data: prevMonthData, error: prevMonthError } = await supabase
+    const { data: prevMonthData, error: prevMonthError } = await supabaseAdmin
       .from('ml_interventions')
       .select('value_saved')
       .gte('created_at', sixtyDaysAgo.toISOString())
@@ -286,7 +283,7 @@ async function getQuickStats() {
       success_status: successStatus
     };
   } catch (error) {
-    console.error('Error calculating quick stats:', error);
+    logger.error('Error calculating quick stats:', error);
     throw error;
   }
 }
@@ -556,7 +553,7 @@ module.exports = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('ML Performance API Error:', error);
+    logger.error('ML Performance API Error:', error);
     res.status(500).json({
       error: 'Failed to fetch ML performance data',
       details: error.message

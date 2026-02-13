@@ -7,15 +7,10 @@
  * - Customer matching
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 
 const logger = createSecureLogger('SquareService');
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
 
 // Square API endpoints
 const SQUARE_API_URL = process.env.SQUARE_ENVIRONMENT === 'production'
@@ -32,7 +27,7 @@ const SQUARE_API_URL = process.env.SQUARE_ENVIRONMENT === 'production'
 async function getAccessToken(restaurantId) {
   try {
     // Get the connection from database
-    const { data: connection, error } = await supabase
+    const { data: connection, error } = await supabaseAdmin
       .from('pos_connections')
       .select('*')
       .eq('restaurant_id', restaurantId)
@@ -100,7 +95,7 @@ async function refreshToken(connection) {
       logger.error('Token refresh failed:', errorData);
 
       // Mark connection as expired
-      await supabase
+      await supabaseAdmin
         .from('pos_connections')
         .update({
           status: 'expired',
@@ -118,7 +113,7 @@ async function refreshToken(connection) {
     expiresAt.setSeconds(expiresAt.getSeconds() + (data.expires_in || 2592000));
 
     // Update the connection with new tokens
-    await supabase
+    await supabaseAdmin
       .from('pos_connections')
       .update({
         access_token: data.access_token,
@@ -279,7 +274,7 @@ async function matchCustomerToReservation(payment, accessToken) {
     const paymentDate = new Date(payment.created_at).toISOString().split('T')[0];
 
     // Search for reservation on same day
-    let query = supabase
+    let query = supabaseAdmin
       .from('reservations')
       .select('reservation_id')
       .eq('date', paymentDate)

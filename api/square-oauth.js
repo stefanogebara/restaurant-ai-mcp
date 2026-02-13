@@ -10,18 +10,13 @@
  * - GET ?action=status - Check connection status
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const crypto = require('crypto');
 
 const { verifyAuth } = require('./_lib/auth');
 const logger = createSecureLogger('SquareOAuth');
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
 
 // Square OAuth URLs
 const SQUARE_ENVIRONMENT = process.env.SQUARE_ENVIRONMENT || 'sandbox';
@@ -122,7 +117,7 @@ async function handleAuthorize(req, res) {
   const state = crypto.randomBytes(32).toString('hex');
 
   // Store state in database temporarily (expires in 10 minutes)
-  const { error: stateError } = await supabase
+  const { error: stateError } = await supabaseAdmin
     .from('pos_connections')
     .upsert({
       restaurant_id,
@@ -185,7 +180,7 @@ async function handleCallback(req, res) {
   }
 
   // Verify state matches what we stored
-  const { data: pending, error: fetchError } = await supabase
+  const { data: pending, error: fetchError } = await supabaseAdmin
     .from('pos_connections')
     .select('*')
     .eq('restaurant_id', restaurant_id)
@@ -263,7 +258,7 @@ async function handleCallback(req, res) {
     const webhookSignatureKey = crypto.randomBytes(32).toString('hex');
 
     // Update connection with tokens
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('pos_connections')
       .update({
         merchant_id: merchantId,
@@ -314,7 +309,7 @@ async function handleDisconnect(req, res) {
   }
 
   // Get current connection
-  const { data: connection, error: fetchError } = await supabase
+  const { data: connection, error: fetchError } = await supabaseAdmin
     .from('pos_connections')
     .select('*')
     .eq('restaurant_id', restaurant_id)
@@ -348,7 +343,7 @@ async function handleDisconnect(req, res) {
   }
 
   // Update connection status
-  const { error: updateError } = await supabase
+  const { error: updateError } = await supabaseAdmin
     .from('pos_connections')
     .update({
       status: 'disconnected',
@@ -387,7 +382,7 @@ async function handleStatus(req, res) {
     });
   }
 
-  const { data: connection, error } = await supabase
+  const { data: connection, error } = await supabaseAdmin
     .from('pos_connections')
     .select('*')
     .eq('restaurant_id', restaurant_id)

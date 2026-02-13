@@ -11,7 +11,7 @@
  * - GET /api/phone-integration-simple?action=test-call - Test the voice agent
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('PhoneIntegrationSimple');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
@@ -21,12 +21,6 @@ const PLATFORM_TWILIO_SID = process.env.TWILIO_ACCOUNT_SID;
 const PLATFORM_TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const PLATFORM_TWILIO_NUMBER = process.env.TWILIO_PHONE_NUMBER;
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
 
 module.exports = async (req, res) => {
   setInternalCors(req, res);
@@ -106,7 +100,7 @@ async function handleRegister(req, res) {
   logger.info(`Registering platform phone ${PLATFORM_TWILIO_NUMBER} for restaurant ${restaurant_id}`);
 
   // Get restaurant info
-  const { data: restaurant, error: fetchError } = await supabase
+  const { data: restaurant, error: fetchError } = await supabaseAdmin
     .from('restaurant_info')
     .select('elevenlabs_agent_id, restaurant_name')
     .eq('id', restaurant_id)
@@ -128,7 +122,7 @@ async function handleRegister(req, res) {
   }
 
   // Update status to pending
-  await supabase
+  await supabaseAdmin
     .from('restaurant_info')
     .update({
       phone_integration_status: 'pending',
@@ -278,7 +272,7 @@ async function handleRegister(req, res) {
     }
 
     // Step 4: Save successful configuration
-    await supabase
+    await supabaseAdmin
       .from('restaurant_info')
       .update({
         twilio_phone_number: PLATFORM_TWILIO_NUMBER,
@@ -333,7 +327,7 @@ async function handleUnregister(req, res) {
   }
 
   // Clear phone fields from restaurant (but don't delete from ElevenLabs - reusable)
-  await supabase
+  await supabaseAdmin
     .from('restaurant_info')
     .update({
       twilio_phone_number: null,
@@ -371,7 +365,7 @@ async function handleStatus(req, res) {
     });
   }
 
-  const { data: restaurant, error: fetchError } = await supabase
+  const { data: restaurant, error: fetchError } = await supabaseAdmin
     .from('restaurant_info')
     .select(`
       restaurant_name,
@@ -425,7 +419,7 @@ async function handleTestCall(req, res) {
   }
 
   // Get restaurant to verify it's configured
-  const { data: restaurant } = await supabase
+  const { data: restaurant } = await supabaseAdmin
     .from('restaurant_info')
     .select('restaurant_name, phone_integration_status, elevenlabs_agent_id')
     .eq('id', restaurant_id)
@@ -499,7 +493,7 @@ async function handleFixTools(req, res) {
     return res.status(400).json({ success: false, error: 'Missing restaurant_id' });
   }
 
-  const { data: restaurant } = await supabase
+  const { data: restaurant } = await supabaseAdmin
     .from('restaurant_info')
     .select('restaurant_name, elevenlabs_agent_id')
     .eq('id', restaurant_id)
@@ -536,7 +530,7 @@ async function handleDiagnose(req, res) {
     return res.status(400).json({ success: false, error: 'Missing restaurant_id' });
   }
 
-  const { data: restaurant } = await supabase
+  const { data: restaurant } = await supabaseAdmin
     .from('restaurant_info')
     .select('restaurant_name, elevenlabs_agent_id, phone_integration_status')
     .eq('id', restaurant_id)
@@ -742,7 +736,7 @@ async function createAndAssignTools(restaurant_id, agent_id) {
  * Helper to update error status
  */
 async function updateError(restaurant_id, errorMessage) {
-  await supabase
+  await supabaseAdmin
     .from('restaurant_info')
     .update({
       phone_integration_status: 'error',

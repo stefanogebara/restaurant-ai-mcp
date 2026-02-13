@@ -9,13 +9,11 @@
  * Implements hash-based caching to avoid redundant AI calls.
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('../_lib/supabase');
+const { createSecureLogger } = require('../_lib/secure-logger');
 const crypto = require('crypto');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
+const logger = createSecureLogger('CustomerTextAnalysis');
 
 /**
  * Extract behavioral signals from all text associated with a customer.
@@ -41,14 +39,14 @@ async function extractCustomerSignals(customerId) {
     const textHash = computeTextHash(textSources.allText);
 
     // Step 3: Check cache
-    const { data: cached } = await supabase
+    const { data: cached } = await supabaseAdmin
       .from('customer_text_signals')
       .select('*')
       .eq('customer_id', customerId)
       .single();
 
     if (cached && cached.text_content_hash === textHash) {
-      console.log(`[TextAnalysis] Cache hit for ${customerId}, skipping AI call`);
+      logger.info(`[TextAnalysis] Cache hit for ${customerId}, skipping AI call`);
       return {
         customer_id: customerId,
         cached: true,
@@ -69,7 +67,7 @@ async function extractCustomerSignals(customerId) {
     };
 
   } catch (error) {
-    console.error(`[TextAnalysis] Error for ${customerId}:`, error);
+    logger.error(`[TextAnalysis] Error for ${customerId}:`, error);
     throw error;
   }
 }
@@ -81,7 +79,7 @@ async function gatherCustomerText(customerId) {
   const texts = [];
 
   // 1. Reservation special_requests and notes
-  const { data: reservations } = await supabase
+  const { data: reservations } = await supabaseAdmin
     .from('reservations')
     .select('date, special_requests, notes')
     .eq('customer_phone', customerId)
@@ -110,7 +108,7 @@ async function gatherCustomerText(customerId) {
   // Build phone variants for matching
   const phoneVariants = buildPhoneVariants(customerId);
 
-  const { data: conversations } = await supabase
+  const { data: conversations } = await supabaseAdmin
     .from('agent_conversations')
     .select('started_at, transcript, summary, customer_sentiment')
     .in('caller_phone', phoneVariants)
@@ -243,7 +241,7 @@ Only include signals that are clearly supported by the text. Use null for uncert
   try {
     return JSON.parse(jsonStr);
   } catch (parseError) {
-    console.error('[TextAnalysis] Failed to parse Claude response:', responseText);
+    logger.error('[TextAnalysis] Failed to parse Claude response:', responseText);
     return {
       dietary_restrictions: [],
       cuisine_preferences: [],
@@ -285,18 +283,18 @@ async function saveTextSignals(customerId, textHash, signals, textSourcesCount) 
     last_analyzed_at: new Date().toISOString()
   };
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('customer_text_signals')
     .upsert(record, { onConflict: 'customer_id' })
     .select()
     .single();
 
   if (error) {
-    console.error('[TextAnalysis] Error saving signals:', error);
+    logger.error('[TextAnalysis] Error saving signals:', error);
     throw error;
   }
 
-  console.log(`[TextAnalysis] Saved signals for ${customerId} (confidence: ${signals.confidence}%)`);
+  logger.info(`[TextAnalysis] Saved signals for ${customerId} (confidence: ${signals.confidence}%)`);
   return data;
 }
 

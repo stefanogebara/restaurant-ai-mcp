@@ -8,7 +8,8 @@
  * - List customers by tier
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('./_lib/supabase');
+const { createSecureLogger } = require('./_lib/secure-logger');
 const {
   calculateCustomerLTV,
   calculateAllCustomerLTV,
@@ -18,10 +19,7 @@ const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
+const logger = createSecureLogger('LTV');
 
 /**
  * Calculate LTV for a single customer
@@ -48,7 +46,7 @@ async function handleCalculateSingle(req, res) {
     });
 
   } catch (error) {
-    console.error('Error calculating LTV:', error);
+    logger.error('Error calculating LTV:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to calculate LTV'
@@ -62,7 +60,7 @@ async function handleCalculateSingle(req, res) {
 async function handleCalculateAll(req, res) {
   try {
     const { restaurant_id } = req.query;
-    console.log(`Starting batch LTV calculation${restaurant_id ? ` for restaurant ${restaurant_id}` : ''}...`);
+    logger.info(`Starting batch LTV calculation${restaurant_id ? ` for restaurant ${restaurant_id}` : ''}...`);
     const results = await calculateAllCustomerLTV(restaurant_id || null);
 
     return res.status(200).json({
@@ -75,7 +73,7 @@ async function handleCalculateAll(req, res) {
     });
 
   } catch (error) {
-    console.error('Error in batch LTV calculation:', error);
+    logger.error('Error in batch LTV calculation:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to calculate batch LTV'
@@ -97,7 +95,7 @@ async function handleGet(req, res) {
       });
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('customer_ltv')
       .select('*')
       .eq('customer_id', customer_id)
@@ -120,7 +118,7 @@ async function handleGet(req, res) {
     });
 
   } catch (error) {
-    console.error('Error fetching LTV data:', error);
+    logger.error('Error fetching LTV data:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to fetch LTV data'
@@ -135,7 +133,7 @@ async function handleList(req, res) {
   try {
     const { tier, restaurant_id, limit = 100, offset = 0 } = req.query;
 
-    let query = supabase
+    let query = supabaseAdmin
       .from('customer_ltv')
       .select('*')
       .order('lifetime_value', { ascending: false })
@@ -171,7 +169,7 @@ async function handleList(req, res) {
     });
 
   } catch (error) {
-    console.error('Error listing customers:', error);
+    logger.error('Error listing customers:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to list customers'
@@ -187,7 +185,7 @@ async function handleStats(req, res) {
     const { restaurant_id } = req.query;
 
     // Get all customer LTV data
-    let query = supabase
+    let query = supabaseAdmin
       .from('customer_ltv')
       .select('*');
 
@@ -241,7 +239,7 @@ async function handleStats(req, res) {
     });
 
   } catch (error) {
-    console.error('Error calculating LTV stats:', error);
+    logger.error('Error calculating LTV stats:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to calculate LTV statistics'
@@ -262,7 +260,7 @@ async function handleTrends(req, res) {
     const startDateStr = startDate.toISOString().split('T')[0];
 
     // Get historical revenue data
-    let query = supabase
+    let query = supabaseAdmin
       .from('revenue_records')
       .select('service_date, total_revenue, customer_id')
       .gte('service_date', startDateStr)
@@ -340,7 +338,7 @@ async function handleTrends(req, res) {
     });
 
   } catch (error) {
-    console.error('Error calculating LTV trends:', error);
+    logger.error('Error calculating LTV trends:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to calculate LTV trends'
@@ -423,7 +421,7 @@ module.exports = async (req, res) => {
         });
     }
   } catch (error) {
-    console.error('LTV API Error:', error);
+    logger.error('LTV API Error:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Internal server error'

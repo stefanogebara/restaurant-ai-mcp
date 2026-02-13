@@ -8,7 +8,7 @@
  * - GET ?action=sync-status - Check sync progress
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const {
@@ -21,11 +21,6 @@ const { calculateAllCustomerLTV } = require('./services/ltvCalculator');
 
 const { verifyAuth } = require('./_lib/auth');
 const logger = createSecureLogger('SquareSync');
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
 
 module.exports = async (req, res) => {
   // Set CORS headers
@@ -120,7 +115,7 @@ async function handleSyncHistory(req, res) {
   startDate.setDate(startDate.getDate() - daysToSync);
 
   // Update connection to show sync in progress
-  await supabase
+  await supabaseAdmin
     .from('pos_connections')
     .update({
       sync_error: null,
@@ -147,7 +142,7 @@ async function handleSyncHistory(req, res) {
     for (const payment of transactions) {
       try {
         // Skip if already exists
-        const { data: existing } = await supabase
+        const { data: existing } = await supabaseAdmin
           .from('revenue_records')
           .select('id')
           .eq('pos_transaction_id', payment.id)
@@ -176,7 +171,7 @@ async function handleSyncHistory(req, res) {
         revenueRecord.source = 'pos_sync'; // Mark as synced (not real-time)
 
         // Insert
-        const { error: insertError } = await supabase
+        const { error: insertError } = await supabaseAdmin
           .from('revenue_records')
           .insert(revenueRecord);
 
@@ -197,7 +192,7 @@ async function handleSyncHistory(req, res) {
     }
 
     // Update sync timestamp
-    await supabase
+    await supabaseAdmin
       .from('pos_connections')
       .update({
         last_sync_at: new Date().toISOString(),
@@ -232,7 +227,7 @@ async function handleSyncHistory(req, res) {
 
   } catch (error) {
     // Update connection with error
-    await supabase
+    await supabaseAdmin
       .from('pos_connections')
       .update({
         sync_error: error.message
@@ -259,7 +254,7 @@ async function handleSyncStatus(req, res) {
   }
 
   // Get connection info
-  const { data: connection, error: connError } = await supabase
+  const { data: connection, error: connError } = await supabaseAdmin
     .from('pos_connections')
     .select('status, last_sync_at, sync_error')
     .eq('restaurant_id', restaurant_id)
@@ -274,7 +269,7 @@ async function handleSyncStatus(req, res) {
   }
 
   // Count revenue records from Square
-  const { count } = await supabase
+  const { count } = await supabaseAdmin
     .from('revenue_records')
     .select('*', { count: 'exact', head: true })
     .eq('restaurant_id', restaurant_id)
@@ -282,7 +277,7 @@ async function handleSyncStatus(req, res) {
     .eq('is_deleted', false);
 
   // Get date range of synced data
-  const { data: dateRange } = await supabase
+  const { data: dateRange } = await supabaseAdmin
     .from('revenue_records')
     .select('service_date')
     .eq('restaurant_id', restaurant_id)
@@ -291,7 +286,7 @@ async function handleSyncStatus(req, res) {
     .order('service_date', { ascending: true })
     .limit(1);
 
-  const { data: lastDate } = await supabase
+  const { data: lastDate } = await supabaseAdmin
     .from('revenue_records')
     .select('service_date')
     .eq('restaurant_id', restaurant_id)

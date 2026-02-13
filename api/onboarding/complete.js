@@ -10,17 +10,12 @@
  * Supabase single-restaurant architecture (Nov 2025)
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('../_lib/supabase');
 const fetch = require('node-fetch');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { verifyAuth } = require('../_lib/auth');
 const { suggestTimezone } = require('../_lib/timezone');
 const logger = createSecureLogger('Onboarding');
-
-// Initialize Supabase client
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 // ============ Slug Generation ============
 
@@ -185,7 +180,7 @@ module.exports = async (req, res) => {
     };
 
     // Check if restaurant_info record exists
-    const { data: existingInfo, error: fetchError } = await supabase
+    const { data: existingInfo, error: fetchError } = await supabaseAdmin
       .from('restaurant_info')
       .select('*')
       .limit(1)
@@ -194,7 +189,7 @@ module.exports = async (req, res) => {
     let restaurantInfoResult;
     if (existingInfo) {
       // Update existing record
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('restaurant_info')
         .update(restaurantInfoData)
         .eq('id', existingInfo.id)
@@ -206,7 +201,7 @@ module.exports = async (req, res) => {
       logger.info(' Restaurant info updated');
     } else {
       // Insert new record
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('restaurant_info')
         .insert(restaurantInfoData)
         .select()
@@ -221,7 +216,7 @@ module.exports = async (req, res) => {
     logger.info(' Step 2: Creating tables...');
 
     // First, delete all existing tables (onboarding resets the restaurant)
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await supabaseAdmin
       .from('tables')
       .delete()
       .neq('id', '00000000-0000-0000-0000-000000000000');  // Delete all (using impossible UUID)
@@ -257,7 +252,7 @@ module.exports = async (req, res) => {
     }
 
     if (tablesToInsert.length > 0) {
-      const { data: tablesData, error: tablesError } = await supabase
+      const { data: tablesData, error: tablesError } = await supabaseAdmin
         .from('tables')
         .insert(tablesToInsert)
         .select();
@@ -275,7 +270,7 @@ module.exports = async (req, res) => {
     let userId;
     try {
       // Check if user exists in auth.users
-      const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
+      const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
 
       if (listError) {
         logger.warn(' Could not list users:', listError.message);
@@ -288,7 +283,7 @@ module.exports = async (req, res) => {
         logger.info(' Found existing user:', userId);
       } else {
         // Create a new user for this restaurant
-        const { data: newUser, error: createUserError } = await supabase.auth.admin.createUser({
+        const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
           email: customer_email,
           email_confirm: true, // Auto-confirm email
           user_metadata: {
@@ -410,7 +405,7 @@ module.exports = async (req, res) => {
 
     // STEP 3a: Generate unique slug for public booking URL
     logger.info(' Step 3a: Generating booking slug...');
-    const restaurantSlug = await generateUniqueSlug(restaurant_name, supabase);
+    const restaurantSlug = await generateUniqueSlug(restaurant_name, supabaseAdmin);
     logger.info(` Slug generated: ${restaurantSlug}`);
 
     // Prepare restaurant_config data
@@ -472,7 +467,7 @@ module.exports = async (req, res) => {
       // Check if config already exists for this user
       let configResult;
       if (userId) {
-        const { data: existingConfig } = await supabase
+        const { data: existingConfig } = await supabaseAdmin
           .from('restaurant_config')
           .select('*')
           .eq('user_id', userId)
@@ -480,7 +475,7 @@ module.exports = async (req, res) => {
 
         if (existingConfig) {
           // Update existing config
-          const { data, error } = await supabase
+          const { data, error } = await supabaseAdmin
             .from('restaurant_config')
             .update(restaurantConfigData)
             .eq('user_id', userId)
@@ -492,7 +487,7 @@ module.exports = async (req, res) => {
           logger.info(' Restaurant config updated');
         } else {
           // Insert new config
-          const { data, error } = await supabase
+          const { data, error } = await supabaseAdmin
             .from('restaurant_config')
             .insert(restaurantConfigData)
             .select()
@@ -564,7 +559,7 @@ module.exports = async (req, res) => {
 
         // Update restaurant_info with agent details
         const voiceIdToSave = selected_voice_id || '21m00Tcm4TlvDq8ikWAM';
-        await supabase
+        await supabaseAdmin
           .from('restaurant_info')
           .update({
             elevenlabs_agent_id: agentId,
@@ -600,7 +595,7 @@ module.exports = async (req, res) => {
       const now = new Date();
       const trialEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days
 
-      const { data: subData, error: subError } = await supabase
+      const { data: subData, error: subError } = await supabaseAdmin
         .from('subscriptions')
         .insert({
           restaurant_id: restaurantInfoResult.id,

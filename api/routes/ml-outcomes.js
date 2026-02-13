@@ -7,12 +7,9 @@
 
 const express = require('express');
 const router = express.Router();
-const { createClient } = require('@supabase/supabase-js');
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
+const { supabaseAdmin } = require('../_lib/supabase');
+const { createSecureLogger } = require('../_lib/secure-logger');
+const logger = createSecureLogger('MLOutcomesRoutes');
 
 /**
  * Mark intervention action as taken
@@ -36,10 +33,10 @@ router.patch('/mark-action-taken', async (req, res) => {
       });
     }
 
-    console.log(`\n📞 Marking intervention action taken for ${reservation_id}`);
+    logger.info(`\n📞 Marking intervention action taken for ${reservation_id}`);
 
     // Find intervention record for this reservation
-    const { data: intervention, error: findError } = await supabase
+    const { data: intervention, error: findError } = await supabaseAdmin
       .from('ml_interventions')
       .select('*')
       .eq('reservation_id', reservation_id)
@@ -53,7 +50,7 @@ router.patch('/mark-action-taken', async (req, res) => {
     }
 
     // Update intervention record
-    const { data: updated, error: updateError } = await supabase
+    const { data: updated, error: updateError } = await supabaseAdmin
       .from('ml_interventions')
       .update({
         action_taken: true,
@@ -66,14 +63,14 @@ router.patch('/mark-action-taken', async (req, res) => {
       .single();
 
     if (updateError) {
-      console.error('Error updating intervention:', updateError);
+      logger.error('Error updating intervention:', updateError);
       return res.status(500).json({
         success: false,
         error: 'Failed to update intervention record'
       });
     }
 
-    console.log(`✅ Intervention marked as taken: ${intervention_type}`);
+    logger.info(`✅ Intervention marked as taken: ${intervention_type}`);
 
     return res.status(200).json({
       success: true,
@@ -82,7 +79,7 @@ router.patch('/mark-action-taken', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error marking intervention action:', error);
+    logger.error('Error marking intervention action:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal server error'
@@ -132,17 +129,17 @@ router.post('/record-outcome', async (req, res) => {
       });
     }
 
-    console.log(`\n📊 Recording outcome for ${reservation_id}: ${actual_outcome}`);
+    logger.info(`\n📊 Recording outcome for ${reservation_id}: ${actual_outcome}`);
 
     // 1. Fetch reservation with ML prediction
-    const { data: reservation, error: fetchError } = await supabase
+    const { data: reservation, error: fetchError } = await supabaseAdmin
       .from('reservations')
       .select('*')
       .eq('reservation_id', reservation_id)
       .single();
 
     if (fetchError) {
-      console.error('Error fetching reservation:', fetchError);
+      logger.error('Error fetching reservation:', fetchError);
       return res.status(404).json({
         success: false,
         error: 'Reservation not found'
@@ -180,9 +177,9 @@ router.post('/record-outcome', async (req, res) => {
       ? ((value_saved - intervention_cost) / intervention_cost) * 100
       : 0;
 
-    console.log(`💰 Value Saved: €${value_saved}`);
-    console.log(`💵 Intervention Cost: €${intervention_cost}`);
-    console.log(`📈 ROI: ${roi_multiplier.toFixed(0)}%`);
+    logger.info(`💰 Value Saved: €${value_saved}`);
+    logger.info(`💵 Intervention Cost: €${intervention_cost}`);
+    logger.info(`📈 ROI: ${roi_multiplier.toFixed(0)}%`);
 
     // 3. Create ml_interventions record
     const interventionRecord = {
@@ -199,14 +196,14 @@ router.post('/record-outcome', async (req, res) => {
       notes
     };
 
-    const { data: interventionData, error: interventionError } = await supabase
+    const { data: interventionData, error: interventionError } = await supabaseAdmin
       .from('ml_interventions')
       .insert(interventionRecord)
       .select()
       .single();
 
     if (interventionError) {
-      console.error('Error creating intervention record:', interventionError);
+      logger.error('Error creating intervention record:', interventionError);
       return res.status(500).json({
         success: false,
         error: 'Failed to create intervention record',
@@ -214,7 +211,7 @@ router.post('/record-outcome', async (req, res) => {
       });
     }
 
-    console.log(`✅ Created intervention record: ${interventionData.intervention_id}`);
+    logger.info(`✅ Created intervention record: ${interventionData.intervention_id}`);
 
     // 4. Update customer_history
     await updateCustomerHistory(
@@ -240,7 +237,7 @@ router.post('/record-outcome', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error recording outcome:', error);
+    logger.error('Error recording outcome:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -256,7 +253,7 @@ router.post('/record-outcome', async (req, res) => {
 router.get('/roi-summary', async (req, res) => {
   try {
     // Fetch all intervention records
-    const { data: interventions, error } = await supabase
+    const { data: interventions, error } = await supabaseAdmin
       .from('ml_interventions')
       .select('*')
       .order('created_at', { ascending: false });
@@ -331,7 +328,7 @@ router.get('/roi-summary', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching ROI summary:', error);
+    logger.error('Error fetching ROI summary:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch ROI summary',
@@ -349,20 +346,20 @@ router.get('/roi-summary', async (req, res) => {
 async function updateCustomerHistory(customerPhone, outcome, partySize) {
   try {
     // Check if customer exists
-    const { data: existing, error: fetchError } = await supabase
+    const { data: existing, error: fetchError } = await supabaseAdmin
       .from('customer_history')
       .select('*')
       .eq('customer_phone', customerPhone)
       .single();
 
     if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('Error fetching customer history:', fetchError);
+      logger.error('Error fetching customer history:', fetchError);
       return;
     }
 
     if (!existing) {
       // Create new customer history
-      const { error: insertError } = await supabase
+      const { error: insertError } = await supabaseAdmin
         .from('customer_history')
         .insert({
           customer_phone: customerPhone,
@@ -374,9 +371,9 @@ async function updateCustomerHistory(customerPhone, outcome, partySize) {
         });
 
       if (insertError) {
-        console.error('Error creating customer history:', insertError);
+        logger.error('Error creating customer history:', insertError);
       } else {
-        console.log(`✅ Created customer history for ${customerPhone}`);
+        logger.info(`✅ Created customer history for ${customerPhone}`);
       }
     } else {
       // Update existing customer history
@@ -394,19 +391,19 @@ async function updateCustomerHistory(customerPhone, outcome, partySize) {
         updates.last_visit_date = new Date().toISOString();
       }
 
-      const { error: updateError } = await supabase
+      const { error: updateError } = await supabaseAdmin
         .from('customer_history')
         .update(updates)
         .eq('customer_phone', customerPhone);
 
       if (updateError) {
-        console.error('Error updating customer history:', updateError);
+        logger.error('Error updating customer history:', updateError);
       } else {
-        console.log(`✅ Updated customer history for ${customerPhone}`);
+        logger.info(`✅ Updated customer history for ${customerPhone}`);
       }
     }
   } catch (error) {
-    console.error('Exception in updateCustomerHistory:', error);
+    logger.error('Exception in updateCustomerHistory:', error);
   }
 }
 

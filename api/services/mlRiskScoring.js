@@ -7,12 +7,10 @@
  * Target: Achieve 300-500% ROI on interventions
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('../_lib/supabase');
+const { createSecureLogger } = require('../_lib/secure-logger');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
+const logger = createSecureLogger('MLRiskScoring');
 
 const MODEL_VERSION = 'v1.2-heuristic-segovia-fixed'; // Fixed lead time U-curve + configurable costs
 
@@ -251,7 +249,7 @@ async function calculateAverageNoShowValue() {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('service_records')
       .select('total_bill')
       .eq('status', 'completed')
@@ -259,12 +257,12 @@ async function calculateAverageNoShowValue() {
       .gte('actual_departure', thirtyDaysAgo.toISOString());
 
     if (error) {
-      console.error('[mlRiskScoring] Error fetching service records for avg revenue:', error);
+      logger.error('[mlRiskScoring] Error fetching service records for avg revenue:', error);
       return 50; // Fallback default
     }
 
     if (!data || data.length === 0) {
-      console.log('[mlRiskScoring] No service records with total_bill found. Using default €50.');
+      logger.info('[mlRiskScoring] No service records with total_bill found. Using default €50.');
       return 50; // No data yet, use default
     }
 
@@ -276,11 +274,11 @@ async function calculateAverageNoShowValue() {
     AVERAGE_NO_SHOW_VALUE_CACHE = average;
     CACHE_TIMESTAMP = now;
 
-    console.log(`[mlRiskScoring] Calculated avg revenue from ${data.length} records: €${average}`);
+    logger.info(`[mlRiskScoring] Calculated avg revenue from ${data.length} records: €${average}`);
     return average;
 
   } catch (error) {
-    console.error('[mlRiskScoring] Exception calculating avg revenue:', error);
+    logger.error('[mlRiskScoring] Exception calculating avg revenue:', error);
     return 50; // Fallback on error
   }
 }
@@ -292,7 +290,7 @@ async function calculateAverageNoShowValue() {
  */
 async function getCustomerHistory(customerPhone) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('customer_history')
       .select('*')
       .eq('customer_phone', customerPhone)
@@ -303,13 +301,13 @@ async function getCustomerHistory(customerPhone) {
         // No rows returned - new customer
         return null;
       }
-      console.error('Error fetching customer history:', error);
+      logger.error('Error fetching customer history:', error);
       return null;
     }
 
     return data;
   } catch (error) {
-    console.error('Exception in getCustomerHistory:', error);
+    logger.error('Exception in getCustomerHistory:', error);
     return null;
   }
 }
@@ -321,7 +319,7 @@ async function getCustomerHistory(customerPhone) {
  */
 async function updateReservationRiskScore(reservationId, riskData) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('reservations')
       .update({
         ml_risk_score: riskData.riskScore,
@@ -336,14 +334,14 @@ async function updateReservationRiskScore(reservationId, riskData) {
       .single();
 
     if (error) {
-      console.error('Error updating reservation risk score:', error);
+      logger.error('Error updating reservation risk score:', error);
       throw error;
     }
 
-    console.log(`✅ Updated risk score for ${reservationId}: ${riskData.riskScore} (${riskData.riskLevel})`);
+    logger.info(`✅ Updated risk score for ${reservationId}: ${riskData.riskScore} (${riskData.riskLevel})`);
     return data;
   } catch (error) {
-    console.error('Exception in updateReservationRiskScore:', error);
+    logger.error('Exception in updateReservationRiskScore:', error);
     throw error;
   }
 }
@@ -355,16 +353,16 @@ async function updateReservationRiskScore(reservationId, riskData) {
  * @returns {Object} Risk assessment results
  */
 async function processReservation(reservation) {
-  console.log(`\n🤖 ML Risk Scoring for ${reservation.reservation_id}`);
+  logger.info(`\n🤖 ML Risk Scoring for ${reservation.reservation_id}`);
 
   // Calculate risk score
   const riskData = await calculateRiskScore(reservation);
 
-  console.log(`📊 Risk Score: ${riskData.riskScore}/100 (${riskData.riskLevel})`);
-  console.log(`📈 Confidence: ${riskData.confidence}%`);
-  console.log(`🔍 Risk Factors:`);
+  logger.info(`📊 Risk Score: ${riskData.riskScore}/100 (${riskData.riskLevel})`);
+  logger.info(`📈 Confidence: ${riskData.confidence}%`);
+  logger.info(`🔍 Risk Factors:`);
   riskData.factors.forEach(f => {
-    console.log(`   - ${f.description} (${f.impact > 0 ? '+' : ''}${f.impact})`);
+    logger.info(`   - ${f.description} (${f.impact > 0 ? '+' : ''}${f.impact})`);
   });
 
   // Update reservation in database

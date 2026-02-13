@@ -18,12 +18,10 @@
  * - Automatic backups
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('../_lib/supabase');
+const { createSecureLogger } = require('../_lib/secure-logger');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
+const logger = createSecureLogger('MLDataLogger');
 
 /**
  * Log a new reservation (at creation time)
@@ -87,22 +85,22 @@ async function logReservationCreated(reservation, mlPrediction, customerHistory 
       actual_outcome: 'pending'
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('ml_training_data')
       .insert([trainingData])
       .select()
       .single();
 
     if (error) {
-      console.error('[DataLogger] Error logging reservation:', error);
+      logger.error('[DataLogger] Error logging reservation:', error);
       return { success: false, error: error.message };
     }
 
-    console.log(`[DataLogger] ✅ Logged reservation: ${reservation.reservation_id}`);
+    logger.info(`[DataLogger] ✅ Logged reservation: ${reservation.reservation_id}`);
     return { success: true, data };
 
   } catch (error) {
-    console.error('[DataLogger] Exception logging reservation:', error);
+    logger.error('[DataLogger] Exception logging reservation:', error);
     return { success: false, error: error.message };
   }
 }
@@ -150,7 +148,7 @@ async function logCustomerCancelled(reservationId, cancelledAt) {
  */
 async function updateOutcome(reservationId, outcome, timestamps = {}) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('ml_training_data')
       .update({
         actual_outcome: outcome,
@@ -160,20 +158,20 @@ async function updateOutcome(reservationId, outcome, timestamps = {}) {
       .select();
 
     if (error) {
-      console.error(`[DataLogger] Error updating outcome for ${reservationId}:`, error);
+      logger.error(`[DataLogger] Error updating outcome for ${reservationId}:`, error);
       return { success: false, error: error.message };
     }
 
     if (!data || data.length === 0) {
-      console.warn(`[DataLogger] Reservation ${reservationId} not found in training data`);
+      logger.warn(`[DataLogger] Reservation ${reservationId} not found in training data`);
       return { success: false, error: 'Reservation not found' };
     }
 
-    console.log(`[DataLogger] ✅ Updated outcome for ${reservationId}: ${outcome}`);
+    logger.info(`[DataLogger] ✅ Updated outcome for ${reservationId}: ${outcome}`);
     return { success: true, data: data[0] };
 
   } catch (error) {
-    console.error('[DataLogger] Exception updating outcome:', error);
+    logger.error('[DataLogger] Exception updating outcome:', error);
     return { success: false, error: error.message };
   }
 }
@@ -185,14 +183,14 @@ async function updateOutcome(reservationId, outcome, timestamps = {}) {
 async function getTrainingDataStats() {
   try {
     // Get total count
-    const { count: totalCount, error: totalError } = await supabase
+    const { count: totalCount, error: totalError } = await supabaseAdmin
       .from('ml_training_data')
       .select('*', { count: 'exact', head: true });
 
     if (totalError) throw totalError;
 
     // Get counts by outcome
-    const { data: outcomes, error: outcomesError } = await supabase
+    const { data: outcomes, error: outcomesError } = await supabaseAdmin
       .from('ml_training_data')
       .select('actual_outcome');
 
@@ -238,7 +236,7 @@ async function getTrainingDataStats() {
     };
 
   } catch (error) {
-    console.error('[DataLogger] Error getting stats:', error);
+    logger.error('[DataLogger] Error getting stats:', error);
     return {
       error: error.message,
       totalSamples: 0,
@@ -254,7 +252,7 @@ async function getTrainingDataStats() {
  */
 async function getSegoviaInsights() {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('ml_training_data')
       .select('customer_type, language_preference, seating_preference, special_occasion, dietary_restrictions, actual_outcome')
       .neq('actual_outcome', 'pending');
@@ -330,7 +328,7 @@ async function getSegoviaInsights() {
     return insights;
 
   } catch (error) {
-    console.error('[DataLogger] Error getting Segovia insights:', error);
+    logger.error('[DataLogger] Error getting Segovia insights:', error);
     return { error: error.message };
   }
 }

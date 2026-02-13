@@ -10,12 +10,10 @@
  * - Language distribution
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('./_lib/supabase');
 const { verifyAuth } = require('./_lib/auth');
-
-// Initialize Supabase client
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('Reports');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
@@ -45,7 +43,7 @@ module.exports = async (req, res) => {
         });
     }
   } catch (error) {
-    console.error('Reports error:', error);
+    logger.error('Reports error:', error);
     return res.status(500).json({
       success: false,
       error: error.message
@@ -60,8 +58,6 @@ module.exports = async (req, res) => {
  * for the specified week vs previous week comparison
  */
 async function handleWeeklyReport(req, res) {
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
   // Parse date range from query params
   const { start_date, end_date } = req.query;
 
@@ -87,7 +83,7 @@ async function handleWeeklyReport(req, res) {
     // ============================================================================
 
     // Get completed service records (actual covers served)
-    const { data: currentServices, error: currentServicesError } = await supabase
+    const { data: currentServices, error: currentServicesError } = await supabaseAdmin
       .from('service_records')
       .select('*')
       .gte('seated_at', currentStart)
@@ -97,7 +93,7 @@ async function handleWeeklyReport(req, res) {
     if (currentServicesError) throw currentServicesError;
 
     // Get reservations data for current week
-    const { data: currentReservations, error: currentReservationsError } = await supabase
+    const { data: currentReservations, error: currentReservationsError } = await supabaseAdmin
       .from('reservations')
       .select('*')
       .gte('date', currentStart)
@@ -109,7 +105,7 @@ async function handleWeeklyReport(req, res) {
     // PREVIOUS WEEK DATA (for comparison)
     // ============================================================================
 
-    const { data: prevServices, error: prevServicesError } = await supabase
+    const { data: prevServices, error: prevServicesError } = await supabaseAdmin
       .from('service_records')
       .select('*')
       .gte('seated_at', prevStart)
@@ -118,7 +114,7 @@ async function handleWeeklyReport(req, res) {
 
     if (prevServicesError) throw prevServicesError;
 
-    const { data: prevReservations, error: prevReservationsError } = await supabase
+    const { data: prevReservations, error: prevReservationsError } = await supabaseAdmin
       .from('reservations')
       .select('*')
       .gte('date', prevStart)
@@ -336,7 +332,7 @@ async function handleWeeklyReport(req, res) {
     });
 
   } catch (error) {
-    console.error('Weekly report generation error:', error);
+    logger.error('Weekly report generation error:', error);
     throw error;
   }
 }

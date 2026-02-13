@@ -4,7 +4,8 @@ const {
   findReservation,
   updateReservation,
   cancelReservation: airtableCancelReservation,
-  getReservations
+  getReservations,
+  supabaseAdmin
 } = require('./_lib/supabase');
 
 const {
@@ -317,12 +318,6 @@ async function handleCreate(req, res, restaurantId) {
     const interventionRiskLevels = ['medium', 'high', 'very-high'];
     if (prediction && interventionRiskLevels.includes(prediction.noShowRisk)) {
       try {
-        const { createClient } = require('@supabase/supabase-js');
-        const supabase = createClient(
-          process.env.SUPABASE_URL,
-          process.env.SUPABASE_ANON_KEY
-        );
-
         // Map medium to high for intervention type (confirmation call)
         const mappedRiskLevel = prediction.noShowRisk === 'medium' ? 'high' : prediction.noShowRisk;
 
@@ -334,7 +329,7 @@ async function handleCreate(req, res, restaurantId) {
 
         // Create intervention record in ml_interventions table
         if (recommendedIntervention) {
-          const { data: intervention, error: interventionError } = await supabase
+          const { data: intervention, error: interventionError } = await supabaseAdmin
             .from('ml_interventions')
             .insert({
               reservation_id: reservationId,

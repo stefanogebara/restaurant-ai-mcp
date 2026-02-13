@@ -7,9 +7,9 @@
  * - View pricing events history
  */
 
-const { createClient } = require('@supabase/supabase-js');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { verifyAuth } = require('./_lib/auth');
+const { supabaseAdmin } = require('./_lib/supabase');
 const logger = createSecureLogger('Pricing');
 const {
   calculatePrice,
@@ -17,11 +17,6 @@ const {
   getBasePrice,
   getDemandLevel
 } = require('./services/dynamicPricing');
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
 
 /**
  * Calculate dynamic price for a reservation
@@ -73,7 +68,7 @@ async function handleGetRules(req, res) {
   try {
     const { is_active, rule_type } = req.query;
 
-    let query = supabase
+    let query = supabaseAdmin
       .from('pricing_rules')
       .select('*')
       .order('priority', { ascending: false });
@@ -157,7 +152,7 @@ async function handleCreateRule(req, res) {
     for (const field of ALLOWED_RULE_FIELDS) {
       if (ruleData[field] !== undefined) sanitizedData[field] = ruleData[field];
     }
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('pricing_rules')
       .insert({
         ...sanitizedData,
@@ -218,7 +213,7 @@ async function handleUpdateRule(req, res) {
     for (const field of ALLOWED_UPDATE_FIELDS) {
       if (updates[field] !== undefined) sanitizedUpdates[field] = updates[field];
     }
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('pricing_rules')
       .update(sanitizedUpdates)
       .eq('id', rule_id)
@@ -264,7 +259,7 @@ async function handleDeleteRule(req, res) {
       });
     }
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('pricing_rules')
       .delete()
       .eq('id', rule_id);
@@ -318,7 +313,7 @@ async function handleGetEvents(req, res) {
   try {
     const { start_date, end_date, demand_level, limit = 100 } = req.query;
 
-    let query = supabase
+    let query = supabaseAdmin
       .from('pricing_events')
       .select('*')
       .order('created_at', { ascending: false })
@@ -372,7 +367,7 @@ async function handleGetAnalytics(req, res) {
   try {
     const { start_date, end_date } = req.query;
 
-    let query = supabase
+    let query = supabaseAdmin
       .from('pricing_events')
       .select('*');
 
@@ -574,7 +569,7 @@ async function handleGetStats(req, res) {
   try {
     const { start_date, end_date } = req.query;
 
-    let query = supabase
+    let query = supabaseAdmin
       .from('pricing_events')
       .select('*');
 

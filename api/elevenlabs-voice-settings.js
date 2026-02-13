@@ -4,12 +4,9 @@
  * PATCH /api/elevenlabs-voice-settings - Update voice/settings on existing agent
  */
 
-const { createClient } = require('@supabase/supabase-js');
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
+const { supabaseAdmin } = require('./_lib/supabase');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('VoiceSettings');
 
 module.exports = async (req, res) => {
   // CORS headers
@@ -46,7 +43,7 @@ module.exports = async (req, res) => {
 async function handleGet(req, res) {
   try {
     // Get restaurant info to find agent_id
-    const { data: restaurant, error: dbError } = await supabase
+    const { data: restaurant, error: dbError } = await supabaseAdmin
       .from('restaurant_info')
       .select('id, elevenlabs_agent_id, agent_voice_id, agent_language, voice_settings, tts_model_id, agent_updated_at, restaurant_name')
       .limit(1)
@@ -80,7 +77,7 @@ async function handleGet(req, res) {
 
     if (!agentResponse.ok) {
       const errorText = await agentResponse.text();
-      console.error('[VoiceSettings] Failed to fetch agent:', agentResponse.status, errorText);
+      logger.error('[VoiceSettings] Failed to fetch agent:', agentResponse.status, errorText);
       // Return what we have from DB even if agent fetch fails
       return res.status(200).json({
         success: true,
@@ -129,7 +126,7 @@ async function handleGet(req, res) {
       }
     });
   } catch (error) {
-    console.error('[VoiceSettings GET] Error:', error);
+    logger.error('[VoiceSettings GET] Error:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to fetch voice settings'
@@ -150,7 +147,7 @@ async function handlePatch(req, res) {
     } = req.body;
 
     // Get restaurant info
-    const { data: restaurant, error: dbError } = await supabase
+    const { data: restaurant, error: dbError } = await supabaseAdmin
       .from('restaurant_info')
       .select('id, elevenlabs_agent_id, agent_language, restaurant_name')
       .limit(1)
@@ -224,7 +221,7 @@ async function handlePatch(req, res) {
       };
     }
 
-    console.log(`[VoiceSettings PATCH] Updating agent ${restaurant.elevenlabs_agent_id}:`, JSON.stringify(patchPayload));
+    logger.info(`[VoiceSettings PATCH] Updating agent ${restaurant.elevenlabs_agent_id}:`, JSON.stringify(patchPayload));
 
     // Call ElevenLabs PATCH API
     const patchResponse = await fetch(
@@ -241,7 +238,7 @@ async function handlePatch(req, res) {
 
     if (!patchResponse.ok) {
       const errorText = await patchResponse.text();
-      console.error('[VoiceSettings PATCH] ElevenLabs error:', patchResponse.status, errorText);
+      logger.error('[VoiceSettings PATCH] ElevenLabs error:', patchResponse.status, errorText);
       return res.status(patchResponse.status).json({
         success: false,
         error: `Failed to update agent: ${errorText}`
@@ -257,13 +254,13 @@ async function handlePatch(req, res) {
     if (voice_settings) dbUpdates.voice_settings = voice_settings;
     if (tts_model_id) dbUpdates.tts_model_id = tts_model_id;
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('restaurant_info')
       .update(dbUpdates)
       .eq('id', restaurant.id);
 
     if (updateError) {
-      console.error('[VoiceSettings PATCH] DB update error:', updateError);
+      logger.error('[VoiceSettings PATCH] DB update error:', updateError);
       // Agent was updated successfully, DB sync failed - not critical
     }
 
@@ -279,7 +276,7 @@ async function handlePatch(req, res) {
       }
     });
   } catch (error) {
-    console.error('[VoiceSettings PATCH] Error:', error);
+    logger.error('[VoiceSettings PATCH] Error:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to update voice settings'

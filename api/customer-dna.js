@@ -9,6 +9,9 @@ const { analyzeCustomerDNA, analyzeAllCustomersDNA, getCustomerDNAProfile, getFu
 const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { supabaseAdmin } = require('./_lib/supabase');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('CustomerDNA');
 
 module.exports = async (req, res) => {
   // CORS headers
@@ -102,14 +105,9 @@ module.exports = async (req, res) => {
 
       case 'stats': {
         // Get DNA profiling statistics across all customers
-        const { createClient } = require('@supabase/supabase-js');
-        const supabase = createClient(
-          process.env.SUPABASE_URL,
-          process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-        );
 
         // Get profile statistics
-        const { data: profiles, error: profilesError } = await supabase
+        const { data: profiles, error: profilesError } = await supabaseAdmin
           .from('customer_behavioral_profiles')
           .select('*');
 
@@ -159,12 +157,12 @@ module.exports = async (req, res) => {
         });
 
         // Get occasions count
-        const { count: occasionsCount } = await supabase
+        const { count: occasionsCount } = await supabaseAdmin
           .from('customer_occasions')
           .select('*', { count: 'exact', head: true });
 
         // Get predictions count
-        const { count: predictionsCount } = await supabase
+        const { count: predictionsCount } = await supabaseAdmin
           .from('customer_predictions')
           .select('*', { count: 'exact', head: true });
 
@@ -185,16 +183,11 @@ module.exports = async (req, res) => {
 
       case 'occasions': {
         // Get all detected occasions across customers
-        const { createClient } = require('@supabase/supabase-js');
-        const supabase = createClient(
-          process.env.SUPABASE_URL,
-          process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-        );
 
         const limit = parseInt(req.query.limit) || 50;
         const offset = parseInt(req.query.offset) || 0;
 
-        const { data: occasions, error } = await supabase
+        const { data: occasions, error } = await supabaseAdmin
           .from('customer_occasions')
           .select('*')
           .order('next_predicted_date', { ascending: true })
@@ -220,13 +213,7 @@ module.exports = async (req, res) => {
           });
         }
 
-        const { createClient } = require('@supabase/supabase-js');
-        const supabase = createClient(
-          process.env.SUPABASE_URL,
-          process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-        );
-
-        const { data: predictions, error } = await supabase
+        const { data: predictions, error } = await supabaseAdmin
           .from('customer_predictions')
           .select('*')
           .eq('customer_id', customer_id)
@@ -253,13 +240,7 @@ module.exports = async (req, res) => {
           });
         }
 
-        const { createClient } = require('@supabase/supabase-js');
-        const supabase = createClient(
-          process.env.SUPABASE_URL,
-          process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-        );
-
-        const { data: companions, error } = await supabase
+        const { data: companions, error } = await supabaseAdmin
           .from('customer_companions')
           .select('*')
           .eq('customer_id', customer_id)
@@ -279,11 +260,6 @@ module.exports = async (req, res) => {
 
       case 'search': {
         // Search customers by behavioral attributes
-        const { createClient } = require('@supabase/supabase-js');
-        const supabase = createClient(
-          process.env.SUPABASE_URL,
-          process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-        );
 
         const {
           dining_style,
@@ -292,7 +268,7 @@ module.exports = async (req, res) => {
           brings_children
         } = req.query;
 
-        let query = supabase
+        let query = supabaseAdmin
           .from('customer_behavioral_profiles')
           .select('*');
 
@@ -378,7 +354,7 @@ module.exports = async (req, res) => {
     }
 
   } catch (error) {
-    console.error('Customer DNA API Error:', error);
+    logger.error('Customer DNA API Error:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Internal server error'

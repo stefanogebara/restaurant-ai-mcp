@@ -7,15 +7,12 @@
  * - Get campaign statistics
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('./_lib/supabase');
 const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('RetentionCampaigns');
 
 /**
  * Create a new retention campaign
@@ -39,7 +36,7 @@ async function handleCreate(req, res) {
       });
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('retention_campaigns')
       .insert({
         customer_id,
@@ -56,17 +53,17 @@ async function handleCreate(req, res) {
 
     // TODO: Queue actual email/SMS sending via SendGrid/Twilio
     // For now, mark as sent after creation
-    await supabase
+    await supabaseAdmin
       .from('retention_campaigns')
       .update({ status: 'sent', sent_at: new Date().toISOString() })
       .eq('id', data.id);
 
-    console.log(`Created retention campaign ${data.id} for customer ${customer_id}`);
+    logger.info(`Created retention campaign ${data.id} for customer ${customer_id}`);
 
     return res.status(200).json({ success: true, data });
 
   } catch (error) {
-    console.error('Error creating campaign:', error);
+    logger.error('Error creating campaign:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to create campaign'
@@ -81,7 +78,7 @@ async function handleList(req, res) {
   try {
     const { customer_id, limit = 50, offset = 0 } = req.query;
 
-    let query = supabase
+    let query = supabaseAdmin
       .from('retention_campaigns')
       .select('*')
       .order('created_at', { ascending: false })
@@ -103,7 +100,7 @@ async function handleList(req, res) {
     });
 
   } catch (error) {
-    console.error('Error listing campaigns:', error);
+    logger.error('Error listing campaigns:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to list campaigns'
@@ -116,7 +113,7 @@ async function handleList(req, res) {
  */
 async function handleStats(req, res) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('retention_campaigns')
       .select('campaign_type, status, created_at');
 
@@ -141,7 +138,7 @@ async function handleStats(req, res) {
     return res.status(200).json({ success: true, data: stats });
 
   } catch (error) {
-    console.error('Error getting campaign stats:', error);
+    logger.error('Error getting campaign stats:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to get campaign statistics'
@@ -218,7 +215,7 @@ module.exports = async (req, res) => {
         });
     }
   } catch (error) {
-    console.error('Retention Campaigns API Error:', error);
+    logger.error('Retention Campaigns API Error:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Internal server error'

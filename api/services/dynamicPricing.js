@@ -8,12 +8,10 @@
  * - Customer tier (VIP discounts)
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('../_lib/supabase');
+const { createSecureLogger } = require('../_lib/secure-logger');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
+const logger = createSecureLogger('DynamicPricing');
 
 // Base prices (can be configured per restaurant)
 const BASE_PRICES = {
@@ -42,7 +40,7 @@ async function calculatePrice(params) {
     const basePrice = getBasePrice(time);
 
     // 2. Get all active pricing rules
-    const { data: rules, error } = await supabase
+    const { data: rules, error } = await supabaseAdmin
       .from('pricing_rules')
       .select('*')
       .eq('is_active', true)
@@ -130,7 +128,7 @@ async function calculatePrice(params) {
     };
 
   } catch (error) {
-    console.error('Error calculating dynamic price:', error);
+    logger.error('Error calculating dynamic price:', error);
     return {
       success: false,
       error: error.message,
@@ -226,7 +224,7 @@ function calculateModifier(rule, basePrice) {
  */
 async function getCustomerTierDiscount(customerId) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('customer_ltv')
       .select('customer_tier')
       .eq('customer_id', customerId)
@@ -243,7 +241,7 @@ async function getCustomerTierDiscount(customerId) {
     return 0;
 
   } catch (error) {
-    console.error('Error getting customer tier:', error);
+    logger.error('Error getting customer tier:', error);
     return 0;
   }
 }
@@ -277,7 +275,7 @@ function getDemandLevel(occupancyPercentage) {
  */
 async function logPricingEvent(eventData) {
   try {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('pricing_events')
       .insert({
         event_type: 'price_calculated',
@@ -292,10 +290,10 @@ async function logPricingEvent(eventData) {
       });
 
     if (error) {
-      console.error('Error logging pricing event:', error);
+      logger.error('Error logging pricing event:', error);
     }
   } catch (error) {
-    console.error('Exception logging pricing event:', error);
+    logger.error('Exception logging pricing event:', error);
   }
 }
 
@@ -347,18 +345,18 @@ async function createDefaultPricingRules() {
   ];
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('pricing_rules')
       .insert(defaultRules)
       .select();
 
     if (error) throw error;
 
-    console.log(`✅ Created ${data.length} default pricing rules`);
+    logger.info(`✅ Created ${data.length} default pricing rules`);
     return { success: true, rules: data };
 
   } catch (error) {
-    console.error('Error creating default rules:', error);
+    logger.error('Error creating default rules:', error);
     return { success: false, error: error.message };
   }
 }

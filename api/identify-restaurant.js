@@ -6,6 +6,8 @@
  */
 
 const { getRestaurantByName, getAllActiveRestaurants } = require('./_lib/restaurant-registry');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('IdentifyRestaurant');
 
 module.exports = async (req, res) => {
   // Enable CORS for ElevenLabs
@@ -41,14 +43,14 @@ module.exports = async (req, res) => {
       });
     }
 
-    console.log(`[IdentifyRestaurant] Searching for: ${restaurant_name}`);
+    logger.info(`[IdentifyRestaurant] Searching for: ${restaurant_name}`);
 
     // Search for the restaurant
     const result = await getRestaurantByName(restaurant_name);
 
     // Handle exact or high-confidence match
     if (result.match && result.confidence >= 0.6) {
-      console.log(`[IdentifyRestaurant] Found: ${result.match.restaurant_name} (confidence: ${result.confidence})`);
+      logger.info(`[IdentifyRestaurant] Found: ${result.match.restaurant_name} (confidence: ${result.confidence})`);
 
       return res.status(200).json({
         success: true,
@@ -69,7 +71,7 @@ module.exports = async (req, res) => {
 
     // Handle multiple potential matches (disambiguation needed)
     if (result.needsDisambiguation && result.matches) {
-      console.log(`[IdentifyRestaurant] Multiple matches found, disambiguation needed`);
+      logger.info(`[IdentifyRestaurant] Multiple matches found, disambiguation needed`);
 
       return res.status(200).json({
         success: true,
@@ -85,7 +87,7 @@ module.exports = async (req, res) => {
     }
 
     // No match found
-    console.log(`[IdentifyRestaurant] No match found for: ${restaurant_name}`);
+    logger.info(`[IdentifyRestaurant] No match found for: ${restaurant_name}`);
 
     // Get available restaurants to suggest
     const restaurants = await getAllActiveRestaurants();
@@ -101,7 +103,7 @@ module.exports = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[IdentifyRestaurant] Error:', error);
+    logger.error('[IdentifyRestaurant] Error:', error);
     return res.status(500).json({
       success: false,
       error: true,

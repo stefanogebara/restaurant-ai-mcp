@@ -5,15 +5,11 @@
  * Verifies that users have active subscriptions and access to specific features.
  */
 
-const { getSubscriptionByEmail } = require('./supabase');
+const { getSubscriptionByEmail, supabaseAdmin } = require('./supabase');
 const { hasFeature, checkReservationLimit, getUpgradeMessage } = require('../services/subscription-limits');
-const { createClient } = require('@supabase/supabase-js');
+const { createSecureLogger } = require('./secure-logger');
 
-// Initialize Supabase for reservation counting
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
+const logger = createSecureLogger('SubscriptionMiddleware');
 
 /**
  * Get the count of reservations for the current month
@@ -26,7 +22,7 @@ async function getMonthlyReservationCount(restaurantId, customerEmail) {
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
   const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
 
-  let query = supabase
+  let query = supabaseAdmin
     .from('reservations')
     .select('*', { count: 'exact', head: true })
     .eq('customer_email', customerEmail)
@@ -41,7 +37,7 @@ async function getMonthlyReservationCount(restaurantId, customerEmail) {
   const { count, error } = await query;
 
   if (error) {
-    console.error('[SubscriptionMiddleware] Error counting reservations:', error);
+    logger.error('[SubscriptionMiddleware] Error counting reservations:', error);
     return 0;
   }
 
@@ -99,7 +95,7 @@ async function checkSubscription(req, res, next) {
 
     next();
   } catch (error) {
-    console.error('Subscription middleware error:', error);
+    logger.error('Subscription middleware error:', error);
     return res.status(500).json({
       error: 'Subscription check failed',
       message: 'Unable to verify subscription status'
@@ -181,7 +177,7 @@ async function checkReservationLimits(req, res, next) {
 
     next();
   } catch (error) {
-    console.error('Reservation limit check error:', error);
+    logger.error('Reservation limit check error:', error);
     return res.status(500).json({
       error: 'Limit check failed',
       message: 'Unable to verify reservation limits'

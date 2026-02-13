@@ -5,12 +5,10 @@
  * Stores transcripts, outcomes, tool usage, and performance metrics.
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('../_lib/supabase');
+const { createSecureLogger } = require('../_lib/secure-logger');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
+const logger = createSecureLogger('ConversationLogger');
 
 /**
  * Start logging a new conversation
@@ -30,14 +28,14 @@ async function startConversation(conversationData) {
 
   try {
     // Check if conversation already exists to prevent duplicates
-    const { data: existing } = await supabase
+    const { data: existing } = await supabaseAdmin
       .from('agent_conversations')
       .select('id')
       .eq('conversation_id', conversation_id)
       .maybeSingle();
 
     if (existing) {
-      console.log(`[ConversationLogger] Conversation ${conversation_id} already exists, skipping insert`);
+      logger.info(`[ConversationLogger] Conversation ${conversation_id} already exists, skipping insert`);
       return existing;
     }
 
@@ -61,22 +59,22 @@ async function startConversation(conversationData) {
       insertData.agent_id = agent_id;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('agent_conversations')
       .insert(insertData)
       .select()
       .single();
 
     if (error) {
-      console.error('[ConversationLogger] Error starting conversation:', error);
+      logger.error('[ConversationLogger] Error starting conversation:', error);
       throw error;
     }
 
-    console.log(`✅ [ConversationLogger] Started conversation ${conversation_id}`);
+    logger.info(`✅ [ConversationLogger] Started conversation ${conversation_id}`);
     return data;
 
   } catch (error) {
-    console.error('[ConversationLogger] Exception starting conversation:', error);
+    logger.error('[ConversationLogger] Exception starting conversation:', error);
     // Don't throw - we don't want to break the webhook if logging fails
     return null;
   }
@@ -98,14 +96,14 @@ async function logToolCall(conversationId, toolData) {
 
   try {
     // Get existing conversation
-    const { data: conversation, error: fetchError } = await supabase
+    const { data: conversation, error: fetchError } = await supabaseAdmin
       .from('agent_conversations')
       .select('tools_used, errors_encountered')
       .eq('conversation_id', conversationId)
       .single();
 
     if (fetchError) {
-      console.error('[ConversationLogger] Error fetching conversation for tool log:', fetchError);
+      logger.error('[ConversationLogger] Error fetching conversation for tool log:', fetchError);
       return;
     }
 
@@ -131,7 +129,7 @@ async function logToolCall(conversationId, toolData) {
     }
 
     // Update conversation
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('agent_conversations')
       .update({
         tools_used: toolsUsed,
@@ -141,13 +139,13 @@ async function logToolCall(conversationId, toolData) {
       .eq('conversation_id', conversationId);
 
     if (updateError) {
-      console.error('[ConversationLogger] Error logging tool call:', updateError);
+      logger.error('[ConversationLogger] Error logging tool call:', updateError);
     } else {
-      console.log(`✅ [ConversationLogger] Logged tool call: ${tool_name} (success: ${success})`);
+      logger.info(`✅ [ConversationLogger] Logged tool call: ${tool_name} (success: ${success})`);
     }
 
   } catch (error) {
-    console.error('[ConversationLogger] Exception logging tool call:', error);
+    logger.error('[ConversationLogger] Exception logging tool call:', error);
   }
 }
 
@@ -174,7 +172,7 @@ async function endConversation(conversationId, outcomeData) {
   } = outcomeData;
 
   try {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('agent_conversations')
       .update({
         ended_at: new Date().toISOString(),
@@ -196,14 +194,14 @@ async function endConversation(conversationId, outcomeData) {
       .eq('conversation_id', conversationId);
 
     if (error) {
-      console.error('[ConversationLogger] Error ending conversation:', error);
+      logger.error('[ConversationLogger] Error ending conversation:', error);
       throw error;
     }
 
-    console.log(`✅ [ConversationLogger] Ended conversation ${conversationId} (outcome: ${outcome})`);
+    logger.info(`✅ [ConversationLogger] Ended conversation ${conversationId} (outcome: ${outcome})`);
 
   } catch (error) {
-    console.error('[ConversationLogger] Exception ending conversation:', error);
+    logger.error('[ConversationLogger] Exception ending conversation:', error);
   }
 }
 
@@ -221,14 +219,14 @@ async function logMessage(conversationId, message) {
 
   try {
     // Get existing transcript
-    const { data: conversation, error: fetchError } = await supabase
+    const { data: conversation, error: fetchError } = await supabaseAdmin
       .from('agent_conversations')
       .select('transcript')
       .eq('conversation_id', conversationId)
       .single();
 
     if (fetchError) {
-      console.error('[ConversationLogger] Error fetching conversation for message log:', fetchError);
+      logger.error('[ConversationLogger] Error fetching conversation for message log:', fetchError);
       return;
     }
 
@@ -241,7 +239,7 @@ async function logMessage(conversationId, message) {
     });
 
     // Update conversation
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('agent_conversations')
       .update({
         transcript,
@@ -250,11 +248,11 @@ async function logMessage(conversationId, message) {
       .eq('conversation_id', conversationId);
 
     if (updateError) {
-      console.error('[ConversationLogger] Error logging message:', updateError);
+      logger.error('[ConversationLogger] Error logging message:', updateError);
     }
 
   } catch (error) {
-    console.error('[ConversationLogger] Exception logging message:', error);
+    logger.error('[ConversationLogger] Exception logging message:', error);
   }
 }
 
@@ -265,7 +263,7 @@ async function logMessage(conversationId, message) {
  */
 async function updateConversation(conversationId, updates) {
   try {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('agent_conversations')
       .update({
         ...updates,
@@ -274,14 +272,14 @@ async function updateConversation(conversationId, updates) {
       .eq('conversation_id', conversationId);
 
     if (error) {
-      console.error('[ConversationLogger] Error updating conversation:', error);
+      logger.error('[ConversationLogger] Error updating conversation:', error);
       throw error;
     }
 
-    console.log(`✅ [ConversationLogger] Updated conversation ${conversationId}`);
+    logger.info(`✅ [ConversationLogger] Updated conversation ${conversationId}`);
 
   } catch (error) {
-    console.error('[ConversationLogger] Exception updating conversation:', error);
+    logger.error('[ConversationLogger] Exception updating conversation:', error);
   }
 }
 

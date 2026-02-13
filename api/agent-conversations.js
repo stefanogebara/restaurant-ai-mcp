@@ -7,13 +7,10 @@
  * @vercel
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('./_lib/supabase');
 const { verifyAuth } = require('./_lib/auth');
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('AgentConversations');
 
 module.exports = async (req, res) => {
   // Set CORS headers
@@ -54,7 +51,7 @@ module.exports = async (req, res) => {
     }
 
   } catch (error) {
-    console.error('[AgentConversations] Error:', error);
+    logger.error('[AgentConversations] Error:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -97,7 +94,7 @@ async function handleListConversations(req, res) {
       });
     }
 
-    let query = supabase
+    let query = supabaseAdmin
       .from('agent_conversations')
       .select('*', { count: 'exact' })
       .eq('restaurant_info_id', restaurant_id);
@@ -125,7 +122,7 @@ async function handleListConversations(req, res) {
     const { data, error, count } = await query;
 
     if (error) {
-      console.error('[AgentConversations] List error:', error);
+      logger.error('[AgentConversations] List error:', error);
       return res.status(500).json({
         success: false,
         error: 'Database error',
@@ -145,7 +142,7 @@ async function handleListConversations(req, res) {
     });
 
   } catch (error) {
-    console.error('[AgentConversations] List exception:', error);
+    logger.error('[AgentConversations] List exception:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal error',
@@ -170,7 +167,7 @@ async function handleGetConversation(req, res) {
   }
 
   try {
-    let query = supabase.from('agent_conversations').select('*');
+    let query = supabaseAdmin.from('agent_conversations').select('*');
 
     if (id) {
       query = query.eq('id', id);
@@ -189,7 +186,7 @@ async function handleGetConversation(req, res) {
         });
       }
 
-      console.error('[AgentConversations] Get error:', error);
+      logger.error('[AgentConversations] Get error:', error);
       return res.status(500).json({
         success: false,
         error: 'Database error',
@@ -203,7 +200,7 @@ async function handleGetConversation(req, res) {
     });
 
   } catch (error) {
-    console.error('[AgentConversations] Get exception:', error);
+    logger.error('[AgentConversations] Get exception:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal error',
@@ -262,7 +259,7 @@ async function handleGetStats(req, res) {
     const endDate = date_to ? new Date(date_to) : new Date();
 
     // Build query with restaurant filter (always applied)
-    let query = supabase
+    let query = supabaseAdmin
       .from('agent_conversations')
       .select('*')
       .eq('restaurant_info_id', restaurant_id)
@@ -272,7 +269,7 @@ async function handleGetStats(req, res) {
     const { data: conversations, error } = await query;
 
     if (error) {
-      console.error('[AgentConversations] Stats error:', error);
+      logger.error('[AgentConversations] Stats error:', error);
       return res.status(500).json({
         success: false,
         error: 'Database error',
@@ -332,7 +329,7 @@ async function handleGetStats(req, res) {
     });
 
   } catch (error) {
-    console.error('[AgentConversations] Stats exception:', error);
+    logger.error('[AgentConversations] Stats exception:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal error',

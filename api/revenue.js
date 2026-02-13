@@ -12,18 +12,13 @@
  * - GET ?action=stats - Get revenue statistics
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { verifyAuth } = require('./_lib/auth');
 const { calculateCustomerLTV, upsertCustomerLTV } = require('./services/ltvCalculator');
 
 const logger = createSecureLogger('Revenue');
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
 
 module.exports = async (req, res) => {
   // Set CORS headers
@@ -165,7 +160,7 @@ async function handleCreate(req, res) {
     logger.info(`Creating revenue record for ${customer_id}: ${total_revenue}`);
 
     // Create revenue record
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('revenue_records')
       .insert({
         customer_id,
@@ -246,7 +241,7 @@ async function handleList(req, res) {
       sort = 'desc'
     } = req.query;
 
-    let query = supabase
+    let query = supabaseAdmin
       .from('revenue_records')
       .select('*', { count: 'exact' })
       .eq('is_deleted', false)
@@ -346,7 +341,7 @@ async function handleUpdate(req, res) {
 
     logger.info(`Updating revenue record ${id}`);
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('revenue_records')
       .update(updates)
       .eq('id', id)
@@ -405,14 +400,14 @@ async function handleDelete(req, res) {
     logger.info(`Soft deleting revenue record ${id}`);
 
     // Get the record first to get customer_id for LTV recalc
-    const { data: existing } = await supabase
+    const { data: existing } = await supabaseAdmin
       .from('revenue_records')
       .select('customer_id')
       .eq('id', id)
       .single();
 
     // Soft delete
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('revenue_records')
       .update({ is_deleted: true })
       .eq('id', id);
@@ -459,7 +454,7 @@ async function handleStats(req, res) {
   try {
     const { start_date, end_date } = req.query;
 
-    let query = supabase
+    let query = supabaseAdmin
       .from('revenue_records')
       .select('*')
       .eq('is_deleted', false);
@@ -556,7 +551,7 @@ async function handleCustomerSearch(req, res) {
     }
 
     // Search in revenue_records for unique customers
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('revenue_records')
       .select('customer_id, customer_name, customer_phone, customer_email')
       .eq('is_deleted', false)

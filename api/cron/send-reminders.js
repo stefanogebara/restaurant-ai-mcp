@@ -7,8 +7,8 @@
  * Runs daily at 9 AM via Vercel Cron Jobs
  */
 
-const { createClient } = require('@supabase/supabase-js');
 const twilio = require('twilio');
+const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const logger = createSecureLogger('CronReminders');
 
@@ -78,16 +78,11 @@ module.exports = async (req, res) => {
     return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 
-  // Initialize Supabase client
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseKey) {
-    logger.error(' Missing Supabase credentials');
+  // Verify Supabase admin client is available
+  if (!supabaseAdmin) {
+    logger.error('supabaseAdmin not initialized - missing Supabase credentials');
     return res.status(500).json({ success: false, error: 'Database not configured' });
   }
-
-  const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
     logger.info(' Starting reservation reminder job...');
@@ -97,7 +92,7 @@ module.exports = async (req, res) => {
     logger.info(` Looking for reservations on ${today}`);
 
     // Get restaurant info for the restaurant name
-    const { data: restaurantInfo, error: restaurantError } = await supabase
+    const { data: restaurantInfo, error: restaurantError } = await supabaseAdmin
       .from('restaurant_info')
       .select('restaurant_name')
       .limit(1)
@@ -110,7 +105,7 @@ module.exports = async (req, res) => {
     const restaurantName = restaurantInfo?.restaurant_name || 'the restaurant';
 
     // Find all confirmed reservations for today that have a phone number
-    const { data: reservations, error } = await supabase
+    const { data: reservations, error } = await supabaseAdmin
       .from('reservations')
       .select('*')
       .eq('date', today)
@@ -232,7 +227,7 @@ module.exports = async (req, res) => {
           // Log automatic intervention for high-risk reservations
           // This helps track that the system sent extra attention to these
           if (!reservation.intervention_taken) {
-            const { error: updateError } = await supabase
+            const { error: updateError } = await supabaseAdmin
               .from('reservations')
               .update({
                 intervention_taken: true,

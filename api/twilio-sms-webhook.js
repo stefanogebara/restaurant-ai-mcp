@@ -10,14 +10,11 @@
  * - Auto-refresh HTML viewer
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('./_lib/supabase');
+const { createSecureLogger } = require('./_lib/secure-logger');
 const twilio = require('twilio');
 
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
+const logger = createSecureLogger('TwilioSmsWebhook');
 
 // Generate HTML viewer for SMS logs
 function generateHtmlViewer(messages) {
@@ -105,14 +102,14 @@ module.exports = async (req, res) => {
   // GET request - retrieve logged messages (JSON or HTML)
   if (req.method === 'GET') {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('sms_logs')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (error) {
-        console.error('Error fetching SMS logs:', error);
+        logger.error('Error fetching SMS logs:', error);
         return res.status(500).json({ error: 'Failed to fetch logs' });
       }
 
@@ -134,7 +131,7 @@ module.exports = async (req, res) => {
         last_updated: new Date().toISOString()
       });
     } catch (err) {
-      console.error('Error:', err);
+      logger.error('Error:', err);
       return res.status(500).json({ error: err.message });
     }
   }
@@ -147,7 +144,7 @@ module.exports = async (req, res) => {
       const signature = req.headers['x-twilio-signature'];
       const url = `https://${req.headers.host}${req.url}`;
       if (!signature || !twilio.validateRequest(authToken, signature, url, req.body || {})) {
-        console.error('[SMS] Invalid Twilio webhook signature');
+        logger.error('[SMS] Invalid Twilio webhook signature');
         return res.status(403).json({ error: 'Invalid signature' });
       }
     }
@@ -166,15 +163,15 @@ module.exports = async (req, res) => {
         FromCountry
       } = req.body;
 
-      console.log('=== INCOMING SMS ===');
-      console.log('From:', From);
-      console.log('To:', To);
-      console.log('Body:', Body);
-      console.log('MessageSid:', MessageSid);
-      console.log('====================');
+      logger.info('=== INCOMING SMS ===');
+      logger.info('From:', From);
+      logger.info('To:', To);
+      logger.info('Body:', Body);
+      logger.info('MessageSid:', MessageSid);
+      logger.info('====================');
 
       // Log to Supabase
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('sms_logs')
         .insert([{
           from_number: From,
@@ -191,7 +188,7 @@ module.exports = async (req, res) => {
         .select();
 
       if (error) {
-        console.error('Error logging SMS:', error);
+        logger.error('Error logging SMS:', error);
         // Still respond to Twilio even if logging fails
       }
 
@@ -202,7 +199,7 @@ module.exports = async (req, res) => {
 <Response></Response>`);
 
     } catch (err) {
-      console.error('Error processing SMS:', err);
+      logger.error('Error processing SMS:', err);
       // Still respond to Twilio
       res.setHeader('Content-Type', 'text/xml');
       return res.status(200).send(`<?xml version="1.0" encoding="UTF-8"?>

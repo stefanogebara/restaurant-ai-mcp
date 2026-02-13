@@ -12,13 +12,11 @@
  * - Weighted confidence scoring across all data sources
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('../_lib/supabase');
+const { createSecureLogger } = require('../_lib/secure-logger');
 const { extractCustomerSignals } = require('./customerTextAnalysis');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
-);
+const logger = createSecureLogger('CustomerDNA');
 
 // ─── ENRICHMENT FUNCTIONS ────────────────────────────────────────────────────
 
@@ -28,7 +26,7 @@ const supabase = createClient(
 async function enrichWithRevenueData(customerId) {
   const phoneVariants = buildPhoneVariants(customerId);
 
-  const { data: revenues, error } = await supabase
+  const { data: revenues, error } = await supabaseAdmin
     .from('revenue_records')
     .select('total_revenue, tip_amount, party_size, line_items')
     .in('customer_phone', phoneVariants);
@@ -80,7 +78,7 @@ async function enrichWithRevenueData(customerId) {
     : 0;
 
   // Get restaurant average for price sensitivity comparison
-  const { data: allRevenues } = await supabase
+  const { data: allRevenues } = await supabaseAdmin
     .from('revenue_records')
     .select('total_revenue, party_size')
     .limit(500);
@@ -113,7 +111,7 @@ async function enrichWithServiceData(customerId) {
   const phoneVariants = buildPhoneVariants(customerId);
 
   // Query service_records matching customer phone
-  const { data: services, error } = await supabase
+  const { data: services, error } = await supabaseAdmin
     .from('service_records')
     .select('seated_at, actual_departure, table_ids')
     .in('customer_phone', phoneVariants)
@@ -165,7 +163,7 @@ async function enrichWithServiceData(customerId) {
     const topTableId = Object.entries(tableAreas).sort(([, a], [, b]) => b - a)[0][0];
 
     // Lookup table location
-    const { data: tableInfo } = await supabase
+    const { data: tableInfo } = await supabaseAdmin
       .from('tables')
       .select('location')
       .eq('id', topTableId)
@@ -189,7 +187,7 @@ async function enrichWithServiceData(customerId) {
 async function enrichWithSentimentData(customerId) {
   const phoneVariants = buildPhoneVariants(customerId);
 
-  const { data: conversations, error } = await supabase
+  const { data: conversations, error } = await supabaseAdmin
     .from('agent_conversations')
     .select('customer_sentiment, outcome')
     .in('caller_phone', phoneVariants);
@@ -263,7 +261,7 @@ function calculateConfidenceV2(reservationCount, hasRevenue, hasService, hasTran
 async function analyzeCustomerDNA(customerId) {
   try {
     // Get all historical data for this customer
-    const { data: reservations, error: resError } = await supabase
+    const { data: reservations, error: resError } = await supabaseAdmin
       .from('reservations')
       .select('*')
       .eq('customer_phone', customerId)
@@ -291,19 +289,19 @@ async function analyzeCustomerDNA(customerId) {
     // 4. Run enrichments in parallel
     const [revenueData, serviceData, sentimentData, textResult] = await Promise.all([
       enrichWithRevenueData(customerId).catch(err => {
-        console.error(`Revenue enrichment failed for ${customerId}:`, err.message);
+        logger.error(`Revenue enrichment failed for ${customerId}:`, err.message);
         return null;
       }),
       enrichWithServiceData(customerId).catch(err => {
-        console.error(`Service enrichment failed for ${customerId}:`, err.message);
+        logger.error(`Service enrichment failed for ${customerId}:`, err.message);
         return null;
       }),
       enrichWithSentimentData(customerId).catch(err => {
-        console.error(`Sentiment enrichment failed for ${customerId}:`, err.message);
+        logger.error(`Sentiment enrichment failed for ${customerId}:`, err.message);
         return null;
       }),
       extractCustomerSignals(customerId).catch(err => {
-        console.error(`Text analysis failed for ${customerId}:`, err.message);
+        logger.error(`Text analysis failed for ${customerId}:`, err.message);
         return null;
       })
     ]);
@@ -418,7 +416,7 @@ async function analyzeCustomerDNA(customerId) {
     }
 
     // 7. Save or update profile
-    const { data: savedProfile, error: saveError } = await supabase
+    const { data: savedProfile, error: saveError } = await supabaseAdmin
       .from('customer_behavioral_profiles')
       .upsert(behavioralProfile, { onConflict: 'customer_id' })
       .select()
@@ -447,7 +445,7 @@ async function analyzeCustomerDNA(customerId) {
     };
 
   } catch (error) {
-    console.error('Error analyzing customer DNA:', error);
+    logger.error('Error analyzing customer DNA:', error);
     throw error;
   }
 }
@@ -700,12 +698,12 @@ async function saveOccasions(customerId, occasions) {
     customer_id: customerId
   }));
 
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('customer_occasions')
     .upsert(occasionsWithCustomerId, { onConflict: 'customer_id,occasion_date' });
 
   if (error) {
-    console.error('Error saving occasions:', error);
+    logger.error('Error saving occasions:', error);
   }
 }
 
@@ -718,12 +716,12 @@ async function savePredictions(customerId, predictions) {
     customer_id: customerId
   }));
 
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('customer_predictions')
     .insert(predictionsWithCustomerId);
 
   if (error && error.code !== '23505') {
-    console.error('Error saving predictions:', error);
+    logger.error('Error saving predictions:', error);
   }
 }
 
@@ -766,7 +764,7 @@ function getTimeSlot(timeString) {
  */
 async function analyzeAllCustomersDNA() {
   try {
-    const { data: customers, error } = await supabase
+    const { data: customers, error } = await supabaseAdmin
       .from('reservations')
       .select('customer_phone')
       .order('customer_phone');
@@ -775,7 +773,7 @@ async function analyzeAllCustomersDNA() {
 
     const uniqueCustomers = [...new Set(customers.map(c => c.customer_phone))];
 
-    console.log(`Analyzing DNA for ${uniqueCustomers.length} customers...`);
+    logger.info(`Analyzing DNA for ${uniqueCustomers.length} customers...`);
 
     const results = [];
     for (const customerId of uniqueCustomers) {
@@ -783,15 +781,15 @@ async function analyzeAllCustomersDNA() {
         const result = await analyzeCustomerDNA(customerId);
         results.push(result);
       } catch (err) {
-        console.error(`Failed to analyze DNA for ${customerId}:`, err);
+        logger.error(`Failed to analyze DNA for ${customerId}:`, err);
       }
     }
 
-    console.log(`Analyzed DNA for ${results.length} customers`);
+    logger.info(`Analyzed DNA for ${results.length} customers`);
     return results;
 
   } catch (error) {
-    console.error('Error in batch DNA analysis:', error);
+    logger.error('Error in batch DNA analysis:', error);
     throw error;
   }
 }
@@ -802,22 +800,22 @@ async function analyzeAllCustomersDNA() {
 async function getCustomerDNAProfile(customerId) {
   try {
     const [profileResult, occasionsResult, predictionsResult, textSignalsResult] = await Promise.all([
-      supabase
+      supabaseAdmin
         .from('customer_behavioral_profiles')
         .select('*')
         .eq('customer_id', customerId)
         .single(),
-      supabase
+      supabaseAdmin
         .from('customer_occasions')
         .select('*')
         .eq('customer_id', customerId),
-      supabase
+      supabaseAdmin
         .from('customer_predictions')
         .select('*')
         .eq('customer_id', customerId)
         .order('created_at', { ascending: false })
         .limit(10),
-      supabase
+      supabaseAdmin
         .from('customer_text_signals')
         .select('*')
         .eq('customer_id', customerId)
@@ -841,7 +839,7 @@ async function getCustomerDNAProfile(customerId) {
     };
 
   } catch (error) {
-    console.error('Error fetching DNA profile:', error);
+    logger.error('Error fetching DNA profile:', error);
     throw error;
   }
 }
@@ -856,19 +854,19 @@ async function getFullCustomerProfile(customerId) {
 
     const [dnaProfile, reservationsResult, revenueResult, customerName] = await Promise.all([
       getCustomerDNAProfile(customerId),
-      supabase
+      supabaseAdmin
         .from('reservations')
         .select('id, date, time, party_size, status, special_requests, notes, customer_name')
         .eq('customer_phone', customerId)
         .order('date', { ascending: false })
         .limit(50),
-      supabase
+      supabaseAdmin
         .from('revenue_records')
         .select('total_revenue, tip_amount, party_size, service_date')
         .in('customer_phone', phoneVariants)
         .order('service_date', { ascending: false })
         .limit(50),
-      supabase
+      supabaseAdmin
         .from('reservations')
         .select('customer_name')
         .eq('customer_phone', customerId)
@@ -897,7 +895,7 @@ async function getFullCustomerProfile(customerId) {
     };
 
   } catch (error) {
-    console.error('Error fetching full customer profile:', error);
+    logger.error('Error fetching full customer profile:', error);
     throw error;
   }
 }
@@ -907,7 +905,7 @@ async function getFullCustomerProfile(customerId) {
  */
 async function listCustomerProfiles({ search, dining_style, min_confidence, limit = 50, offset = 0 } = {}) {
   try {
-    let query = supabase
+    let query = supabaseAdmin
       .from('customer_behavioral_profiles')
       .select('customer_id, dining_style, typical_party_size, profile_confidence, avg_check_per_person, spontaneity_score, preferred_time_slot, last_analyzed_at, data_sources_used, analysis_version');
 
@@ -936,7 +934,7 @@ async function listCustomerProfiles({ search, dining_style, min_confidence, limi
         const matchesPhone = profile.customer_id.includes(search);
 
         // Quick name lookup
-        const { data: nameData } = await supabase
+        const { data: nameData } = await supabaseAdmin
           .from('reservations')
           .select('customer_name')
           .eq('customer_phone', profile.customer_id)
@@ -954,7 +952,7 @@ async function listCustomerProfiles({ search, dining_style, min_confidence, limi
           customer_name: name
         });
       } else {
-        const { data: nameData } = await supabase
+        const { data: nameData } = await supabaseAdmin
           .from('reservations')
           .select('customer_name')
           .eq('customer_phone', profile.customer_id)
@@ -970,7 +968,7 @@ async function listCustomerProfiles({ search, dining_style, min_confidence, limi
     }
 
     // Get total count for pagination
-    let countQuery = supabase
+    let countQuery = supabaseAdmin
       .from('customer_behavioral_profiles')
       .select('customer_id', { count: 'exact', head: true });
 
@@ -987,7 +985,7 @@ async function listCustomerProfiles({ search, dining_style, min_confidence, limi
     };
 
   } catch (error) {
-    console.error('Error listing customer profiles:', error);
+    logger.error('Error listing customer profiles:', error);
     throw error;
   }
 }
