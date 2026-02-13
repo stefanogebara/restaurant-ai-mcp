@@ -36,6 +36,9 @@ const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 // Usage tracking (fire-and-forget)
 const { trackUsage } = require('./_lib/usage-tracking');
 
+// Timezone conversions
+const { getLocalDate } = require('./_lib/timezone');
+
 // Secure structured logging
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('Reservations');
@@ -199,8 +202,8 @@ async function handleCreate(req, res, restaurantId) {
     'Customer Email': customer_email || '',
     'Special Requests': special_requests || '',
     'Status': 'confirmed',
-    'Created At': new Date().toISOString().split('T')[0],
-    'Updated At': new Date().toISOString().split('T')[0],
+    'Created At': getLocalDate(timezone),
+    'Updated At': getLocalDate(timezone),
     'Confirmation Sent': true,
     'Reminder Sent': false,
     'Notes': 'Created via AI Phone System'
@@ -492,8 +495,9 @@ async function handleModify(req, res, restaurantId) {
     });
   }
 
+  const timezone = req.user.timezone || 'UTC';
   const updateFields = {
-    'Updated At': new Date().toISOString().split('T')[0]
+    'Updated At': getLocalDate(timezone)
   };
 
   if (date) updateFields['Date'] = date;
