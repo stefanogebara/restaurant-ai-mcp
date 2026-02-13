@@ -17,7 +17,9 @@ const {
   deleteTable,
   linkTables,
   unlinkTables,
-  getTableById
+  getTableById,
+  // Supabase client for direct queries
+  query: supabase
 } = require('./_lib/supabase');
 
 const { logCustomerShowedUp, logCustomerCancelled } = require('./ml/data-logger');
@@ -106,10 +108,16 @@ module.exports = async (req, res) => {
 async function handleDashboard(req, res) {
   const restaurantId = req.user.restaurant_id;
   const timezone = req.user.timezone || 'UTC';
-  const [tablesResult, activePartiesResult, upcomingReservationsResult] = await Promise.all([
+  const [tablesResult, activePartiesResult, upcomingReservationsResult, restaurantConfigResult] = await Promise.all([
     getAllTables(restaurantId),
     getActiveServiceRecords(restaurantId),
-    getUpcomingReservations(restaurantId, timezone)
+    getUpcomingReservations(restaurantId, timezone),
+    supabase
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('slug')
+      .eq('id', restaurantId)
+      .single()
   ]);
 
   if (!tablesResult.success || !activePartiesResult.success || !upcomingReservationsResult.success) {
@@ -118,6 +126,8 @@ async function handleDashboard(req, res) {
       error: 'Failed to load dashboard data'
     });
   }
+
+  const restaurantSlug = restaurantConfigResult.data?.slug || null;
 
   const tables = tablesResult.tables;
   const activeParties = activePartiesResult.service_records.map(record => {
@@ -224,6 +234,7 @@ async function handleDashboard(req, res) {
   return res.status(200).json({
     restaurant_id: restaurantId,
     timezone: timezone,
+    slug: restaurantSlug,
     summary: {
       total_capacity: totalCapacity,
       available_seats: availableSeats,

@@ -22,6 +22,65 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// ============ Slug Generation ============
+
+/**
+ * Generate a URL-friendly slug from a restaurant name.
+ * Handles accented characters, special chars, and trims to 50 chars.
+ * @param {string} name - Restaurant name
+ * @returns {string} URL-safe slug
+ */
+function generateSlug(name) {
+  return name
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/[^a-z0-9\s-]/g, '')  // Remove special chars
+    .replace(/\s+/g, '-')           // Spaces to hyphens
+    .replace(/-+/g, '-')            // Collapse consecutive hyphens
+    .replace(/^-|-$/g, '')          // Trim leading/trailing hyphens
+    .slice(0, 50);
+}
+
+/**
+ * Generate a unique slug for a restaurant, checking against existing slugs.
+ * If a collision is found, appends a random 4-digit suffix.
+ * @param {string} name - Restaurant name
+ * @param {object} supabaseClient - Supabase client instance
+ * @returns {Promise<string>} Unique slug
+ */
+async function generateUniqueSlug(name, supabaseClient) {
+  const baseSlug = generateSlug(name);
+
+  // Check if this slug already exists
+  const { data: existing } = await supabaseClient
+    .from('restaurant_config')
+    .select('id')
+    .eq('slug', baseSlug)
+    .limit(1);
+
+  if (!existing || existing.length === 0) {
+    return baseSlug;
+  }
+
+  // Collision detected: append random 4-digit suffix
+  const suffix = Math.floor(1000 + Math.random() * 9000); // 1000-9999
+  const slugWithSuffix = `${baseSlug.slice(0, 45)}-${suffix}`;
+
+  // Verify the suffixed slug is also unique (extremely unlikely collision but safe)
+  const { data: existingWithSuffix } = await supabaseClient
+    .from('restaurant_config')
+    .select('id')
+    .eq('slug', slugWithSuffix)
+    .limit(1);
+
+  if (!existingWithSuffix || existingWithSuffix.length === 0) {
+    return slugWithSuffix;
+  }
+
+  // Last resort: add timestamp fragment
+  return `${baseSlug.slice(0, 40)}-${Date.now().toString(36).slice(-6)}`;
+}
+
 module.exports = async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
@@ -349,10 +408,16 @@ module.exports = async (req, res) => {
     const greetingMessage = greetingMessages[voiceLanguage] || greetingMessages['en'];
     const farewellMessage = farewellMessages[voiceLanguage] || farewellMessages['en'];
 
+    // STEP 3a: Generate unique slug for public booking URL
+    logger.info(' Step 3a: Generating booking slug...');
+    const restaurantSlug = await generateUniqueSlug(restaurant_name, supabase);
+    logger.info(` Slug generated: ${restaurantSlug}`);
+
     // Prepare restaurant_config data
     const restaurantConfigData = {
       restaurant_name,
       restaurant_type: mappedType,
+      slug: restaurantSlug,
       city,
       country,
       email: email || customer_email,
@@ -570,6 +635,8 @@ module.exports = async (req, res) => {
       restaurant: {
         restaurant_id: generatedRestaurantId,
         restaurant_name,
+        slug: restaurantSlug,
+        booking_url: `/book/${restaurantSlug}`,
         record_id: restaurantInfoResult.id,
         tables_created: tablesToInsert.length,
         ai_config_saved: !!userId,
