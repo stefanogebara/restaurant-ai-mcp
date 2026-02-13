@@ -562,18 +562,32 @@ describe('verifyAuth', () => {
 // getRestaurantIdForUser
 // ============================================================
 describe('getRestaurantIdForUser', () => {
-  it('returns restaurant ID from database', async () => {
+  it('returns an object with restaurantId and timezone from database', async () => {
     mockSingle.mockResolvedValueOnce({
-      data: { id: 'found-rest-id' },
+      data: { id: 'found-rest-id', timezone: 'Europe/Madrid' },
       error: null,
     });
 
     const result = await getRestaurantIdForUser('user-lookup-1');
 
-    expect(result).toBe('found-rest-id');
+    expect(result).not.toBeNull();
+    expect(result.restaurantId).toBe('found-rest-id');
+    expect(result.timezone).toBe('Europe/Madrid');
     expect(mockSchema).toHaveBeenCalledWith('restaurant');
     expect(mockFrom).toHaveBeenCalledWith('restaurant_config');
-    expect(mockSelect).toHaveBeenCalledWith('id');
+    expect(mockSelect).toHaveBeenCalledWith('id, timezone');
+  });
+
+  it('defaults timezone to UTC when not present in data', async () => {
+    mockSingle.mockResolvedValueOnce({
+      data: { id: 'rest-no-tz' },
+      error: null,
+    });
+
+    const result = await getRestaurantIdForUser('user-no-tz');
+
+    expect(result.restaurantId).toBe('rest-no-tz');
+    expect(result.timezone).toBe('UTC');
   });
 
   it('returns null when no restaurant found for user', async () => {
@@ -595,15 +609,15 @@ describe('getRestaurantIdForUser', () => {
 
   it('caches results and returns cached value on subsequent calls', async () => {
     mockSingle.mockResolvedValueOnce({
-      data: { id: 'cached-rest-id' },
+      data: { id: 'cached-rest-id', timezone: 'America/New_York' },
       error: null,
     });
 
     const result1 = await getRestaurantIdForUser('cached-user');
     const result2 = await getRestaurantIdForUser('cached-user');
 
-    expect(result1).toBe('cached-rest-id');
-    expect(result2).toBe('cached-rest-id');
+    expect(result1.restaurantId).toBe('cached-rest-id');
+    expect(result2.restaurantId).toBe('cached-rest-id');
     // Should only hit DB once due to caching
     expect(mockSingle).toHaveBeenCalledTimes(1);
   });
