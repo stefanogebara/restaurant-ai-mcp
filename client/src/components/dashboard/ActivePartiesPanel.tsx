@@ -3,14 +3,42 @@ import type { ActiveParty } from '../../types/host.types';
 interface ActivePartiesPanelProps {
   parties: ActiveParty[];
   onCompleteService: (party: ActiveParty) => void;
+  language?: 'en' | 'es';
   isLoading?: boolean;
 }
+
+const translations = {
+  en: {
+    activeParties: 'Active Parties',
+    noActive: 'No active parties yet',
+    addHint: 'Add a walk-in or check in a reservation to get started',
+    guests: 'guests',
+    table: 'Table',
+    overdue: 'Overdue',
+    elapsed: 'elapsed',
+    left: 'left',
+    completeService: 'Complete Service',
+  },
+  es: {
+    activeParties: 'Mesas Activas',
+    noActive: 'Sin mesas activas',
+    addHint: 'Añade un walk-in o haz check-in de una reserva para comenzar',
+    guests: 'pax',
+    table: 'Mesa',
+    overdue: 'Excedido',
+    elapsed: 'transcurridos',
+    left: 'restantes',
+    completeService: 'Completar Servicio',
+  },
+};
 
 export default function ActivePartiesPanel({
   parties,
   onCompleteService,
+  language = 'en',
   isLoading,
 }: ActivePartiesPanelProps) {
+  const t = translations[language];
   if (isLoading) {
     return (
       <div className="bg-white border border-[#E7E5E4] rounded-xl shadow-sm p-4">
@@ -37,7 +65,7 @@ export default function ActivePartiesPanel({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           </div>
-          <h2 className="text-base font-bold text-[#1C1917]">Active Parties</h2>
+          <h2 className="text-base font-bold text-[#1C1917]">{t.activeParties}</h2>
           <span className="px-2 py-0.5 bg-[#7c3aed]/10 text-[#7c3aed] rounded-lg text-xs font-bold">
             {parties.length}
           </span>
@@ -52,8 +80,8 @@ export default function ActivePartiesPanel({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
           </div>
-          <p className="text-sm font-semibold text-[#1C1917] mb-1">No active parties</p>
-          <p className="text-xs text-[#57534E]">Add a walk-in or check in a reservation</p>
+          <p className="text-sm font-semibold text-[#1C1917] mb-1">{t.noActive}</p>
+          <p className="text-xs text-[#57534E]">{t.addHint}</p>
         </div>
       ) : (
         <div className="divide-y divide-[#E7E5E4]/50 max-h-[400px] overflow-y-auto">
@@ -62,6 +90,7 @@ export default function ActivePartiesPanel({
               key={party.service_id}
               party={party}
               onComplete={() => onCompleteService(party)}
+              language={language}
             />
           ))}
         </div>
@@ -80,27 +109,39 @@ function formatTimestamp(ts: string): string {
 interface PartyRowProps {
   party: ActiveParty;
   onComplete: () => void;
+  language: 'en' | 'es';
 }
 
-function PartyRow({ party, onComplete }: PartyRowProps) {
+function PartyRow({ party, onComplete, language }: PartyRowProps) {
+  const t = translations[language];
   const isOverdue = party.is_overdue;
 
   return (
-    <div className={`p-3 hover:bg-[#F5F5F4]/50 transition-colors ${isOverdue ? 'bg-red-50/50' : ''}`}>
-      <div className="flex items-start justify-between mb-1.5">
+    <div className={`p-3.5 hover:bg-[#F5F5F4]/50 transition-colors ${isOverdue ? 'bg-red-50/50' : ''}`}>
+      <div className="flex items-start justify-between mb-2">
         <div className="font-semibold text-[#1C1917] text-sm truncate">
           {party.customer_name}
         </div>
-        <span className="text-[10px] font-medium text-[#57534E] bg-[#F5F5F4] px-1.5 py-0.5 rounded flex-shrink-0 ml-2">
+        <span className="text-xs font-medium text-[#57534E] bg-white px-2 py-0.5 rounded-md flex-shrink-0 ml-2">
           {formatTimestamp(party.seated_at)}
         </span>
       </div>
 
-      <div className="flex items-center gap-3 text-[11px] text-[#57534E] mb-2">
-        <span className="font-medium">{party.party_size} guests</span>
-        <span className="font-medium">Table {party.tables?.join(', ')}</span>
+      <div className="flex items-center gap-3 text-xs text-[#57534E] mb-2">
+        <div className="flex items-center gap-1">
+          <svg className="w-3.5 h-3.5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          <span className="font-medium">{party.party_size} {t.guests}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <svg className="w-3.5 h-3.5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          <span className="font-medium">{t.table} {party.tables?.join(', ')}</span>
+        </div>
         {isOverdue && (
-          <span className="text-red-600 font-semibold">Overdue</span>
+          <span className="text-red-600 font-semibold">{t.overdue}</span>
         )}
       </div>
 
@@ -120,17 +161,17 @@ function PartyRow({ party, onComplete }: PartyRowProps) {
             />
           </div>
           <div className="flex justify-between text-[10px] text-[#A8A29E] mt-0.5">
-            <span>{party.time_elapsed_minutes}m elapsed</span>
-            <span>{party.time_remaining_minutes > 0 ? `${party.time_remaining_minutes}m left` : 'Overdue'}</span>
+            <span>{party.time_elapsed_minutes}m {t.elapsed}</span>
+            <span>{party.time_remaining_minutes > 0 ? `${party.time_remaining_minutes}m ${t.left}` : t.overdue}</span>
           </div>
         </div>
       )}
 
       <button
         onClick={onComplete}
-        className="w-full px-3 py-2 bg-[#9F1239] hover:bg-[#881337] text-white text-xs font-semibold rounded-lg transition-colors"
+        className="w-full mt-2 px-3 py-2.5 min-h-[44px] bg-[#9F1239] hover:bg-[#881337] text-white text-xs font-semibold rounded-lg transition-all shadow-sm hover:shadow-md active:scale-95"
       >
-        Complete Service
+        {t.completeService}
       </button>
     </div>
   );
