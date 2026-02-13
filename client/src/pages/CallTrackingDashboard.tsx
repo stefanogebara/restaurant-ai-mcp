@@ -9,6 +9,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import Spinner from '../components/common/Spinner';
+import { SkeletonCallTracking } from '../components/common/Skeleton';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import Breadcrumb, { breadcrumbConfigs } from '../components/common/Breadcrumb';
 import { useToast } from '../contexts/ToastContext';
@@ -351,12 +352,7 @@ export default function CallTrackingDashboard() {
   if (loading && !stats) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin w-12 h-12 border-4 border-[#9F1239] border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-[#57534E]">Loading call data...</p>
-          </div>
-        </div>
+        <SkeletonCallTracking />
       </DashboardLayout>
     );
   }

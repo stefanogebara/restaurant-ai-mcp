@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { authFetch } from '../services/api';
+import { SkeletonAnalytics } from '../components/common/Skeleton';
 import AnalyticsStats from '../components/analytics/AnalyticsStats';
 import ReservationTrendChart from '../components/analytics/ReservationTrendChart';
 import PeakHoursChart from '../components/analytics/PeakHoursChart';
@@ -68,14 +69,7 @@ export default function AnalyticsDashboard() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <div className="text-xl text-muted-foreground">Loading analytics...</div>
-        </div>
-      </div>
-    );
+    return <SkeletonAnalytics />;
   }
 
   if (error) {

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import Spinner from '../components/common/Spinner';
+import { SkeletonSubscription } from '../components/common/Skeleton';
 import { authFetch } from '../services/api';
 
 interface SubscriptionData {
@@ -151,14 +152,7 @@ export default function SubscriptionManage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
-        <div className="text-center">
-          <Spinner size="lg" className="mx-auto mb-4" />
-          <p className="text-[#57534E]">Loading subscription details...</p>
-        </div>
-      </div>
-    );
+    return <SkeletonSubscription />;
   }
 
   if (!subscription || subscription.status === 'none') {

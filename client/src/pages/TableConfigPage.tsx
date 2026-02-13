@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tableConfigAPI } from '../services/api';
 import type { TableConfig } from '../services/api';
 import { Link } from 'react-router-dom';
+import { SkeletonTableConfig } from '../components/common/Skeleton';
 
 interface TableFormData {
   table_number: number;
@@ -151,11 +152,7 @@ export default function TableConfigPage() {
   const locations = [...new Set(tables.map((t: TableConfig) => t.location))] as string[];
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
-        <div className="text-slate-600">Loading tables...</div>
-      </div>
-    );
+    return <SkeletonTableConfig />;
   }
 
   return (

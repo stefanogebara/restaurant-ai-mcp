@@ -12,6 +12,7 @@
 import { useState, useEffect } from 'react';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import Spinner from '../components/common/Spinner';
+import { SkeletonWeeklyReport } from '../components/common/Skeleton';
 import { Link } from 'react-router-dom';
 import Breadcrumb, { breadcrumbConfigs } from '../components/common/Breadcrumb';
 import DashboardLayout from '../components/layout/DashboardLayout';
@@ -154,11 +155,9 @@ export default function WeeklyReport() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center">
-            <Spinner size="lg" className="mx-auto mb-4" />
-            <p className="text-foreground text-lg">Loading weekly report...</p>
-          </div>
+        <div className="p-8">
+          <Breadcrumb items={breadcrumbConfigs.reports} className="mb-4" />
+          <SkeletonWeeklyReport />
         </div>
       </DashboardLayout>
     );
