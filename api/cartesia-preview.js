@@ -4,6 +4,9 @@
  * Generates audio preview for a specific Cartesia voice
  */
 
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('CartesiaPreview');
+
 module.exports = async (req, res) => {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -36,7 +39,7 @@ module.exports = async (req, res) => {
 
     // Validate API key
     if (!process.env.CARTESIA_API_KEY) {
-      console.error('[Cartesia] CARTESIA_API_KEY not configured');
+      logger.error('[Cartesia] CARTESIA_API_KEY not configured');
       return res.status(500).json({
         success: false,
         error: 'Cartesia API key not configured'
@@ -48,7 +51,7 @@ module.exports = async (req, res) => {
     // Use multilingual model for all languages (supports all languages)
     const model_id = 'sonic-multilingual';
 
-    console.log(`[Cartesia] Generating preview for voice ${voice_id} using model ${model_id}`);
+    logger.info(`[Cartesia] Generating preview for voice ${voice_id} using model ${model_id}`);
 
     // Generate TTS preview using Cartesia
     const response = await fetch('https://api.cartesia.ai/tts/bytes', {
@@ -75,7 +78,7 @@ module.exports = async (req, res) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[Cartesia] TTS API error:', response.status, errorText);
+      logger.error('[Cartesia] TTS API error:', response.status, errorText);
       return res.status(response.status).json({
         success: false,
         error: `Cartesia TTS error: ${response.status} ${errorText}`
@@ -86,7 +89,7 @@ module.exports = async (req, res) => {
     const audioBuffer = await response.arrayBuffer();
     const audioBase64 = Buffer.from(audioBuffer).toString('base64');
 
-    console.log(`[Cartesia] Generated ${audioBase64.length} bytes of audio (base64)`);
+    logger.info(`[Cartesia] Generated ${audioBase64.length} bytes of audio (base64)`);
 
     return res.status(200).json({
       success: true,
@@ -98,7 +101,7 @@ module.exports = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[Cartesia] Error generating preview:', error);
+    logger.error('[Cartesia] Error generating preview:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to generate preview'

@@ -1,6 +1,8 @@
 const Stripe = require('stripe');
 const { verifyAuth } = require('./_lib/auth');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('GetSubscription');
 
 module.exports = async (req, res) => {
   // Enable CORS
@@ -78,7 +80,7 @@ module.exports = async (req, res) => {
 
     return res.status(200).json(response);
   } catch (error) {
-    console.error('Error fetching subscription:', error);
+    logger.error('Error fetching subscription:', error);
     return res.status(500).json({
       error: 'Failed to fetch subscription',
       message: error.message,

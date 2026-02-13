@@ -17,6 +17,8 @@
 
 const fetch = require('node-fetch');
 const { verifyAuth } = require('./_lib/auth');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('ElevenLabsAgentCreate');
 
 module.exports = async (req, res) => {
   // Only allow POST requests
@@ -67,7 +69,7 @@ module.exports = async (req, res) => {
       const { toolIds, errors } = await createToolsViaAPI(toolDefinitions);
 
       if (toolIds.length === 0) {
-        console.error('Failed to create any tools:', errors);
+        logger.error('Failed to create any tools:', errors);
         return res.status(500).json({
           success: false,
           error: 'Failed to create agent tools',
@@ -110,7 +112,7 @@ module.exports = async (req, res) => {
 
       if (!agentResponse.ok) {
         const errorText = await agentResponse.text();
-        console.error('ElevenLabs API Error:', errorText);
+        logger.error('ElevenLabs API Error:', errorText);
         return res.status(500).json({
           success: false,
           error: 'Failed to create multi-tenant agent',
@@ -160,7 +162,7 @@ module.exports = async (req, res) => {
     const { toolIds, errors } = await createToolsViaAPI(toolDefinitions);
 
     if (toolIds.length === 0) {
-      console.error('Failed to create any tools:', errors);
+      logger.error('Failed to create any tools:', errors);
       return res.status(500).json({
         success: false,
         error: 'Failed to create agent tools',
@@ -203,7 +205,7 @@ module.exports = async (req, res) => {
 
     if (!agentResponse.ok) {
       const errorText = await agentResponse.text();
-      console.error('ElevenLabs API Error:', errorText);
+      logger.error('ElevenLabs API Error:', errorText);
       return res.status(500).json({
         success: false,
         error: 'Failed to create agent',
@@ -225,7 +227,7 @@ module.exports = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error creating ElevenLabs agent:', error);
+    logger.error('Error creating ElevenLabs agent:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -580,7 +582,7 @@ async function createToolsViaAPI(toolDefinitions) {
 
       if (!createResponse.ok) {
         const errorText = await createResponse.text();
-        console.error(`Failed to create tool '${toolDef.name}':`, errorText);
+        logger.error(`Failed to create tool '${toolDef.name}':`, errorText);
         errors.push({ tool: toolDef.name, error: errorText });
         continue;
       }
@@ -591,13 +593,13 @@ async function createToolsViaAPI(toolDefinitions) {
 
       if (toolId) {
         toolIds.push(toolId);
-        console.log(`Created tool '${toolDef.name}' with ID: ${toolId}`);
+        logger.info(`Created tool '${toolDef.name}' with ID: ${toolId}`);
       } else {
-        console.error(`Tool '${toolDef.name}' created but no ID returned:`, Object.keys(toolData));
+        logger.error(`Tool '${toolDef.name}' created but no ID returned:`, Object.keys(toolData));
         errors.push({ tool: toolDef.name, error: 'No ID in response', response_keys: Object.keys(toolData) });
       }
     } catch (err) {
-      console.error(`Error creating tool '${toolDef.name}':`, err.message);
+      logger.error(`Error creating tool '${toolDef.name}':`, err.message);
       errors.push({ tool: toolDef.name, error: err.message });
     }
   }

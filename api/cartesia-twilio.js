@@ -17,6 +17,8 @@
 
 const { textToSpeech, streamTextToSpeech, OUTPUT_FORMATS } = require('./_lib/cartesia');
 const { useCartesia } = require('./_lib/feature-flags');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('CartesiaTwilio');
 
 module.exports = async (req, res) => {
   // Set headers for TwiML
@@ -30,7 +32,7 @@ module.exports = async (req, res) => {
     return res.status(200).end();
   }
 
-  console.log('[Cartesia-Twilio] Incoming request:', {
+  logger.info('[Cartesia-Twilio] Incoming request:', {
     method: req.method,
     body: req.body,
     query: req.query
@@ -38,7 +40,7 @@ module.exports = async (req, res) => {
 
   // Check if Cartesia is enabled
   if (!useCartesia()) {
-    console.log('[Cartesia-Twilio] Cartesia not enabled, redirecting to ElevenLabs');
+    logger.info('[Cartesia-Twilio] Cartesia not enabled, redirecting to ElevenLabs');
     return res.status(200).send(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Redirect>/api/elevenlabs-webhook</Redirect>
@@ -48,7 +50,7 @@ module.exports = async (req, res) => {
   try {
     const action = req.query.action || req.body?.action || 'greet';
 
-    console.log(`[Cartesia-Twilio] Processing action: ${action}`);
+    logger.info(`[Cartesia-Twilio] Processing action: ${action}`);
 
     switch (action) {
       case 'greet':
@@ -67,7 +69,7 @@ module.exports = async (req, res) => {
         return await handleGreeting(req, res);
     }
   } catch (error) {
-    console.error('[Cartesia-Twilio] Error:', error);
+    logger.error('[Cartesia-Twilio] Error:', error);
     return res.status(200).send(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Say>I'm sorry, we're experiencing technical difficulties. Please call back later or visit our website.</Say>
@@ -82,7 +84,7 @@ module.exports = async (req, res) => {
 async function handleGreeting(req, res) {
   const greetingText = "Hello! Thank you for calling our restaurant. I'm your AI assistant. How can I help you today? You can make a reservation, check availability, or modify an existing booking.";
 
-  console.log('[Cartesia-Twilio] Generating greeting audio');
+  logger.info('[Cartesia-Twilio] Generating greeting audio');
 
   try {
     // Generate TTS audio with Cartesia
@@ -106,10 +108,10 @@ async function handleGreeting(req, res) {
   <Hangup/>
 </Response>`;
 
-    console.log('[Cartesia-Twilio] Greeting sent');
+    logger.info('[Cartesia-Twilio] Greeting sent');
     return res.status(200).send(twiml);
   } catch (error) {
-    console.error('[Cartesia-Twilio] TTS error:', error);
+    logger.error('[Cartesia-Twilio] TTS error:', error);
 
     // Fallback to Twilio's built-in TTS
     return res.status(200).send(`<?xml version="1.0" encoding="UTF-8"?>
@@ -128,12 +130,12 @@ async function handleGatherInput(req, res) {
   const userSpeech = req.body.SpeechResult || '';
   const confidence = req.body.Confidence || 0;
 
-  console.log('[Cartesia-Twilio] User said:', userSpeech, 'Confidence:', confidence);
+  logger.info('[Cartesia-Twilio] User said:', userSpeech, 'Confidence:', confidence);
 
   // Parse intent from speech
   const intent = parseIntent(userSpeech);
 
-  console.log('[Cartesia-Twilio] Detected intent:', intent);
+  logger.info('[Cartesia-Twilio] Detected intent:', intent);
 
   switch (intent) {
     case 'make_reservation':

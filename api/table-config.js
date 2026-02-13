@@ -16,6 +16,8 @@ const {
 
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { verifyAuth } = require('./_lib/auth');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('TableConfig');
 
 module.exports = async (req, res) => {
   setInternalCors(req, res);
@@ -56,7 +58,7 @@ module.exports = async (req, res) => {
         });
     }
   } catch (error) {
-    console.error('Table config error:', error);
+    logger.error('Table config error:', error);
     return res.status(500).json({
       success: false,
       error: 'An error occurred processing your request'

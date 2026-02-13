@@ -1,6 +1,8 @@
 const Stripe = require('stripe');
 const { verifyAuth } = require('./_lib/auth');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('CustomerPortal');
 
 module.exports = async (req, res) => {
   // Enable CORS
@@ -42,7 +44,7 @@ module.exports = async (req, res) => {
       url: portalSession.url,
     });
   } catch (error) {
-    console.error('Error creating portal session:', error);
+    logger.error('Error creating portal session:', error);
     return res.status(500).json({
       error: 'Failed to create portal session',
       message: error.message,

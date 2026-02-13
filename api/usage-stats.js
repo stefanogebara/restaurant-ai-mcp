@@ -12,6 +12,8 @@ const { verifyAuth } = require('./_lib/auth');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { getMonthlyUsage, getUsageSummary } = require('./_lib/usage-tracking');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('UsageStats');
 
 module.exports = async (req, res) => {
   setInternalCors(req, res);
@@ -52,7 +54,7 @@ module.exports = async (req, res) => {
       usage: result.data,
     });
   } catch (error) {
-    console.error('[UsageStats] Error:', error);
+    logger.error('[UsageStats] Error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 };

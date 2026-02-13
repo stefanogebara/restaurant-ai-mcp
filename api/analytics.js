@@ -7,6 +7,8 @@ const axios = require('axios');
 const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('Analytics');
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
@@ -24,7 +26,7 @@ async function getAllReservations() {
     });
     return { success: true, records: response.data.records };
   } catch (error) {
-    console.error('Error:', error);
+    logger.error('Error:', error);
     return { success: false, error: error.message };
   }
 }
@@ -40,7 +42,7 @@ async function getAllServiceRecordsData() {
     });
     return { success: true, records: response.data.records };
   } catch (error) {
-    console.error('Error:', error);
+    logger.error('Error:', error);
     return { success: false, error: error.message };
   }
 }
@@ -235,7 +237,7 @@ module.exports = async (req, res) => {
     const result = await calculateAnalytics(restaurantId);
     return res.status(200).json(result);
   } catch (error) {
-    console.error('Analytics error:', error);
+    logger.error('Analytics error:', error);
     return res.status(500).json({ success: false, error: 'Failed to calculate analytics' });
   }
 };

@@ -3,15 +3,12 @@
  * Handles fetching user subscription information for plan-based access control
  */
 
-import express from 'express';
-import { createClient } from '@supabase/supabase-js';
+const express = require('express');
+const { supabaseAdmin } = require('../_lib/supabase');
+const { createSecureLogger } = require('../_lib/secure-logger');
+const logger = createSecureLogger('SubscriptionRoutes');
 
 const router = express.Router();
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
 
 /**
  * GET /api/subscription
@@ -31,7 +28,7 @@ router.get('/', async (req, res) => {
     }
 
     // Fetch the subscription from Supabase
-    const { data: subscription, error } = await supabase
+    const { data: subscription, error } = await supabaseAdmin
       .from('subscriptions')
       .select('*')
       .eq('customer_email', customerEmail)
@@ -54,7 +51,7 @@ router.get('/', async (req, res) => {
 
     res.json(subscription);
   } catch (error) {
-    console.error('Error fetching subscription:', error);
+    logger.error('Error fetching subscription:', error);
     res.status(500).json({
       error: 'Failed to fetch subscription',
       details: error.message
@@ -78,7 +75,7 @@ router.post('/test', async (req, res) => {
     }
 
     // Check if subscription already exists
-    const { data: existing } = await supabase
+    const { data: existing } = await supabaseAdmin
       .from('subscriptions')
       .select('id')
       .eq('customer_email', email)
@@ -86,7 +83,7 @@ router.post('/test', async (req, res) => {
 
     if (existing) {
       // Update existing subscription
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('subscriptions')
         .update({
           plan_name,
@@ -108,7 +105,7 @@ router.post('/test', async (req, res) => {
     }
 
     // Create new test subscription
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('subscriptions')
       .insert({
         subscription_id: `test_sub_${Date.now()}`,
@@ -129,7 +126,7 @@ router.post('/test', async (req, res) => {
       subscription: data
     });
   } catch (error) {
-    console.error('Error creating test subscription:', error);
+    logger.error('Error creating test subscription:', error);
     res.status(500).json({
       error: 'Failed to create test subscription',
       details: error.message
@@ -137,4 +134,4 @@ router.post('/test', async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

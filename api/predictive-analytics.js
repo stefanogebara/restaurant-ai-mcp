@@ -14,6 +14,8 @@ const axios = require('axios');
 const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('PredictiveAnalytics');
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
@@ -34,7 +36,7 @@ async function getAllReservations() {
     });
     return { success: true, records: response.data.records };
   } catch (error) {
-    console.error('Error fetching reservations:', error);
+    logger.error('Error fetching reservations:', error);
     return { success: false, error: error.message };
   }
 }
@@ -75,7 +77,7 @@ async function predictNoShowRisks() {
 
   // Check if ML model is available
   const mlAvailable = isModelAvailable();
-  console.log(`ML Model ${mlAvailable ? 'available' : 'not available'} - using ${mlAvailable ? 'XGBoost v2.0' : 'heuristic v1.1'}`);
+  logger.info(`ML Model ${mlAvailable ? 'available' : 'not available'} - using ${mlAvailable ? 'XGBoost v2.0' : 'heuristic v1.1'}`);
 
   // Predict risk for each upcoming reservation
   const predictions = await Promise.all(upcomingReservations.map(async (r) => {
@@ -104,7 +106,7 @@ async function predictNoShowRisks() {
         riskLevel = 'high';
       }
     } catch (error) {
-      console.error('Prediction error for reservation:', r.fields['Reservation ID'], error.message);
+      logger.error('Prediction error for reservation:', r.fields['Reservation ID'], error.message);
 
       // Emergency fallback to simple heuristic
       riskScore = historicalNoShowRate;
@@ -391,7 +393,7 @@ module.exports = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error('Predictive analytics error:', error);
+    logger.error('Predictive analytics error:', error);
     return res.status(500).json({
       success: false,
       error: 'Failed to calculate predictive analytics'

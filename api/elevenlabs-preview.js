@@ -4,6 +4,9 @@
  * Generates audio preview for a specific ElevenLabs voice
  */
 
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('ElevenLabsPreview');
+
 module.exports = async (req, res) => {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -36,7 +39,7 @@ module.exports = async (req, res) => {
 
     // Validate API key
     if (!process.env.ELEVENLABS_API_KEY) {
-      console.error('[ElevenLabs] ELEVENLABS_API_KEY not configured');
+      logger.error('[ElevenLabs] ELEVENLABS_API_KEY not configured');
       return res.status(500).json({
         success: false,
         error: 'ElevenLabs API key not configured'
@@ -58,7 +61,7 @@ module.exports = async (req, res) => {
 
     const ttsModelId = model_id || 'eleven_multilingual_v2';
 
-    console.log(`[ElevenLabs] Generating preview for voice ${voice_id} (model: ${ttsModelId})`);
+    logger.info(`[ElevenLabs] Generating preview for voice ${voice_id} (model: ${ttsModelId})`);
 
     // Generate TTS preview using ElevenLabs
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice_id}`, {
@@ -77,7 +80,7 @@ module.exports = async (req, res) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[ElevenLabs] TTS API error:', response.status, errorText);
+      logger.error('[ElevenLabs] TTS API error:', response.status, errorText);
       return res.status(response.status).json({
         success: false,
         error: `ElevenLabs TTS error: ${response.status} ${errorText}`
@@ -88,7 +91,7 @@ module.exports = async (req, res) => {
     const audioBuffer = await response.arrayBuffer();
     const audioBase64 = Buffer.from(audioBuffer).toString('base64');
 
-    console.log(`[ElevenLabs] Generated ${audioBase64.length} bytes of audio (base64)`);
+    logger.info(`[ElevenLabs] Generated ${audioBase64.length} bytes of audio (base64)`);
 
     return res.status(200).json({
       success: true,
@@ -100,7 +103,7 @@ module.exports = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[ElevenLabs] Error generating preview:', error);
+    logger.error('[ElevenLabs] Error generating preview:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to generate preview'

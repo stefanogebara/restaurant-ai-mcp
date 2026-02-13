@@ -23,6 +23,9 @@
  * }
  */
 
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('DateTime');
+
 module.exports = async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -103,7 +106,7 @@ module.exports = async (req, res) => {
     return res.status(200).json(response);
 
   } catch (error) {
-    console.error('Error getting current datetime:', error);
+    logger.error('Error getting current datetime:', error);
 
     return res.status(500).json({
       success: false,

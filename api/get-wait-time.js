@@ -1,5 +1,7 @@
 const { getReservations, getRestaurantInfo } = require('./_lib/supabase');
 const { verifyAuth } = require('./_lib/auth');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('WaitTime');
 
 module.exports = async (req, res) => {
   // Enable CORS
@@ -103,7 +105,7 @@ module.exports = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get wait time error:', error);
+    logger.error('Get wait time error:', error);
     return res.status(500).json({
       success: false,
       error: true,

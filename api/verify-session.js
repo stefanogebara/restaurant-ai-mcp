@@ -1,5 +1,7 @@
 const Stripe = require('stripe');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('VerifySession');
 
 module.exports = async (req, res) => {
   // Enable CORS
@@ -52,7 +54,7 @@ module.exports = async (req, res) => {
       plan: plan, // Add plan to response
     });
   } catch (error) {
-    console.error('Error verifying session:', error);
+    logger.error('Error verifying session:', error);
     return res.status(500).json({
       error: 'Failed to verify session',
       message: error.message,

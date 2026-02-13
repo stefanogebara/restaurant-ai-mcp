@@ -6,6 +6,8 @@
 
 const { getSubscriptionByEmail } = require('./_lib/supabase');
 const { verifyAuth } = require('./_lib/auth');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('SubscriptionStatus');
 
 module.exports = async (req, res) => {
   // Enable CORS
@@ -67,7 +69,7 @@ module.exports = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching subscription status:', error);
+    logger.error('Error fetching subscription status:', error);
     return res.status(500).json({
       error: 'Failed to fetch subscription status',
       message: error.message

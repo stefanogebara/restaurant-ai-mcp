@@ -13,6 +13,8 @@
 
 const { initSentry, captureException } = require('./_lib/sentry');
 const { analyzeMetrics, checkSystemHealth } = require('./_lib/alerts');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('Observability');
 
 // Initialize Sentry error tracking
 initSentry();
@@ -290,7 +292,7 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
 
   } catch (error) {
-    console.error('Observability API error:', error);
+    logger.error('Observability API error:', error);
 
     // Capture error in Sentry
     captureException(error, {

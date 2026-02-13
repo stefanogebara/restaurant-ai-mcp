@@ -8,6 +8,9 @@
  * New callers set page_size=12 for enhanced browsing.
  */
 
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('ElevenLabsVoices');
+
 // Language mapping for countries
 const COUNTRY_LANGUAGE_MAP = {
   // Spanish-speaking countries - Spain gets special treatment (es-ES)
@@ -102,7 +105,7 @@ module.exports = async (req, res) => {
     } = req.query;
 
     if (!process.env.ELEVENLABS_API_KEY) {
-      console.error('[ElevenLabs] ELEVENLABS_API_KEY not configured');
+      logger.error('[ElevenLabs] ELEVENLABS_API_KEY not configured');
       return res.status(500).json({
         success: false,
         error: 'ElevenLabs API key not configured'
@@ -117,7 +120,7 @@ module.exports = async (req, res) => {
     const pageSize = Math.min(parseInt(pageSizeParam) || 6, 50);
     const page = parseInt(pageParam) || 0;
 
-    console.log(`[ElevenLabs] Fetching voices: lang=${normalizedLanguage}, gender=${gender || 'all'}, search=${search || ''}, page=${page}, page_size=${pageSize}`);
+    logger.info(`[ElevenLabs] Fetching voices: lang=${normalizedLanguage}, gender=${gender || 'all'}, search=${search || ''}, page=${page}, page_size=${pageSize}`);
 
     // Build query params for shared-voices API
     const queryParams = new URLSearchParams();
@@ -151,10 +154,10 @@ module.exports = async (req, res) => {
 
       if (response.status === 401 || response.status === 403) {
         // Paywall / free-tier limitation - fallback silently
-        console.log(`[ElevenLabs] Shared voices unavailable (${response.status}), using own voices fallback`);
+        logger.info(`[ElevenLabs] Shared voices unavailable (${response.status}), using own voices fallback`);
       } else {
         // Other errors (500, network) - log and fallback
-        console.error('[ElevenLabs] Shared voices API error:', response.status, errorText);
+        logger.error('[ElevenLabs] Shared voices API error:', response.status, errorText);
       }
 
       return await fallbackToOwnVoices(req, res, targetLanguage, normalizedLanguage, country, pageSize);
@@ -164,7 +167,7 @@ module.exports = async (req, res) => {
     const voices = data.voices || [];
     const hasMore = voices.length === pageSize;
 
-    console.log(`[ElevenLabs] Shared library returned ${voices.length} voices (hasMore: ${hasMore})`);
+    logger.info(`[ElevenLabs] Shared library returned ${voices.length} voices (hasMore: ${hasMore})`);
 
     // Build preview phrase
     const previewPhrase = PREVIEW_PHRASES[normalizedLanguage] || PREVIEW_PHRASES['en'];
@@ -200,7 +203,7 @@ module.exports = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[ElevenLabs] Error fetching voices:', error);
+    logger.error('[ElevenLabs] Error fetching voices:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to fetch voices'

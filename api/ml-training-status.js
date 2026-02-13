@@ -7,6 +7,8 @@
 
 const { getTrainingDataStats } = require('./ml/data-logger');
 const { getSegoviaInsights } = require('./ml/data-logger-supabase');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('MLTrainingStatus');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -44,7 +46,7 @@ module.exports = async (req, res) => {
         : `📊 Collecting data... You need ${stats.samplesNeeded} more completed reservations (currently: ${stats.completedSamples}/100).`
     });
   } catch (error) {
-    console.error('[MLTrainingStatus] Error:', error);
+    logger.error('[MLTrainingStatus] Error:', error);
     return res.status(500).json({
       success: false,
       error: 'Failed to get training data status'

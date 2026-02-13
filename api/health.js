@@ -15,6 +15,8 @@
  */
 
 const { supabaseAdmin } = require('./_lib/supabase');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('Health');
 
 // Health check uses supabaseAdmin (service_role) for unscoped cross-tenant
 // system-level checks. No restaurant_id scoping needed.
@@ -118,7 +120,7 @@ module.exports = async (req, res) => {
     return res.status(statusCode).json(healthStatus);
 
   } catch (error) {
-    console.error('Health check error:', error);
+    logger.error('Health check error:', error);
     return res.status(503).json({
       status: 'unhealthy',
       timestamp: new Date().toISOString(),

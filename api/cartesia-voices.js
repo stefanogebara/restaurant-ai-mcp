@@ -4,6 +4,9 @@
  * Fetches available voices from Cartesia, filtered by language based on country
  */
 
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('CartesiaVoices');
+
 // Language mapping for countries
 const COUNTRY_LANGUAGE_MAP = {
   // Spanish-speaking countries
@@ -91,7 +94,7 @@ module.exports = async (req, res) => {
 
     // Validate API key
     if (!process.env.CARTESIA_API_KEY) {
-      console.error('[Cartesia] CARTESIA_API_KEY not configured');
+      logger.error('[Cartesia] CARTESIA_API_KEY not configured');
       return res.status(500).json({
         success: false,
         error: 'Cartesia API key not configured'
@@ -101,7 +104,7 @@ module.exports = async (req, res) => {
     // Determine language from country or use explicit language
     let targetLanguage = language || COUNTRY_LANGUAGE_MAP[country] || 'en';
 
-    console.log(`[Cartesia] Fetching voices for language: ${targetLanguage} (country: ${country})`);
+    logger.info(`[Cartesia] Fetching voices for language: ${targetLanguage} (country: ${country})`);
 
     // Fetch voices from Cartesia API
     const response = await fetch('https://api.cartesia.ai/voices', {
@@ -115,7 +118,7 @@ module.exports = async (req, res) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[Cartesia] API error:', response.status, errorText);
+      logger.error('[Cartesia] API error:', response.status, errorText);
       return res.status(response.status).json({
         success: false,
         error: `Cartesia API error: ${response.status} ${errorText}`
@@ -123,7 +126,7 @@ module.exports = async (req, res) => {
     }
 
     const data = await response.json();
-    console.log(`[Cartesia] Received ${data.length || 0} total voices`);
+    logger.info(`[Cartesia] Received ${data.length || 0} total voices`);
 
     // Filter voices by language and public availability
     // Use startsWith() to match language variants (e.g., 'pt' matches 'pt-BR' and 'pt-PT')
@@ -132,7 +135,7 @@ module.exports = async (req, res) => {
       return voiceLang.startsWith(targetLanguage) && voice.is_public === true;
     });
 
-    console.log(`[Cartesia] Filtered to ${filteredVoices.length} voices for language ${targetLanguage}`);
+    logger.info(`[Cartesia] Filtered to ${filteredVoices.length} voices for language ${targetLanguage}`);
 
     // Return top 6 voices (one row)
     const voicesToReturn = filteredVoices.slice(0, 6);
@@ -161,7 +164,7 @@ module.exports = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[Cartesia] Error fetching voices:', error);
+    logger.error('[Cartesia] Error fetching voices:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to fetch voices'

@@ -16,6 +16,8 @@ const { generateSecureReservationId } = require('./_lib/secure-id');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { trackUsage } = require('./_lib/usage-tracking');
 const { Resend } = require('resend');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('Portal');
 
 module.exports = async (req, res) => {
   // CORS for public portal
@@ -48,7 +50,7 @@ module.exports = async (req, res) => {
         });
     }
   } catch (error) {
-    console.error('[Portal] Unhandled error:', error);
+    logger.error('[Portal] Unhandled error:', error);
     return res.status(500).json({
       success: false,
       message: 'Something went wrong. Please try again.'
@@ -188,7 +190,7 @@ async function handleGetAvailability(req, res) {
     .in('status', ['confirmed', 'pending', 'Confirmed', 'Pending', 'Seated']);
 
   if (resError) {
-    console.error('[Portal] Error fetching reservations:', resError);
+    logger.error('[Portal] Error fetching reservations:', resError);
     return res.status(500).json({
       success: false,
       message: 'Could not check availability.'
@@ -399,7 +401,7 @@ async function handleCreateReservation(req, res) {
     .single();
 
   if (createError) {
-    console.error('[Portal] Error creating reservation:', createError);
+    logger.error('[Portal] Error creating reservation:', createError);
     return res.status(500).json({
       success: false,
       message: 'Could not create reservation. Please try again.'
@@ -420,7 +422,7 @@ async function handleCreateReservation(req, res) {
       date,
       time,
       specialRequests: special_requests,
-    }).catch(err => console.error('[Portal] Email send failed:', err.message));
+    }).catch(err => logger.error('[Portal] Email send failed:', err.message));
   }
 
   return res.status(201).json({

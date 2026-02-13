@@ -4,6 +4,8 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { createSecureLogger } from './_lib/secure-logger';
+const logger = createSecureLogger('RestaurantSettings');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -142,7 +144,7 @@ export default async function handler(req, res) {
         .single();
 
       if (error) {
-        console.error('Error fetching profile:', error);
+        logger.error('Error fetching profile:', error);
         return res.status(500).json({ success: false, error: 'Failed to fetch profile' });
       }
 
@@ -175,7 +177,7 @@ export default async function handler(req, res) {
         .single();
 
       if (error) {
-        console.error('Error updating profile:', error);
+        logger.error('Error updating profile:', error);
         return res.status(500).json({ success: false, error: 'Failed to update profile' });
       }
 
@@ -205,7 +207,7 @@ export default async function handler(req, res) {
         .single();
 
       if (error) {
-        console.error('Error fetching restaurant settings:', error);
+        logger.error('Error fetching restaurant settings:', error);
         return res.status(500).json({ success: false, error: 'Failed to fetch restaurant settings' });
       }
 
@@ -252,7 +254,7 @@ export default async function handler(req, res) {
         .single();
 
       if (error) {
-        console.error('Error updating restaurant settings:', error);
+        logger.error('Error updating restaurant settings:', error);
         return res.status(500).json({ success: false, error: 'Failed to update restaurant settings' });
       }
 
@@ -265,7 +267,7 @@ export default async function handler(req, res) {
 
     return res.status(405).json({ success: false, error: `Method ${method} not allowed for path ${path}` });
   } catch (error) {
-    console.error('Restaurant settings API error:', error);
+    logger.error('Restaurant settings API error:', error);
     return res.status(500).json({ success: false, error: 'Internal server error', details: error.message });
   }
 }

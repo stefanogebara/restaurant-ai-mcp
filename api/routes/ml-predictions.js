@@ -6,6 +6,8 @@
 
 const { predictNoShow, predictBatch, getModelInfo, explainPrediction } = require('../ml/predict');
 const { findOrCreateCustomer } = require('../_lib/customer-history');
+const { createSecureLogger } = require('../_lib/secure-logger');
+const logger = createSecureLogger('MLPredictions');
 
 // ============================================================================
 // PREDICTION ENDPOINTS
@@ -60,7 +62,7 @@ async function handlePredict(req, res) {
       prediction
     });
   } catch (error) {
-    console.error('[ML API] Prediction error:', error);
+    logger.error('[ML API] Prediction error:', error);
 
     return res.status(500).json({
       error: error.message
@@ -116,7 +118,7 @@ async function handlePredictBatch(req, res) {
       count: predictions.length
     });
   } catch (error) {
-    console.error('[ML API] Batch prediction error:', error);
+    logger.error('[ML API] Batch prediction error:', error);
 
     return res.status(500).json({
       error: error.message
@@ -138,7 +140,7 @@ function handleModelInfo(req, res) {
       model: info
     });
   } catch (error) {
-    console.error('[ML API] Model info error:', error);
+    logger.error('[ML API] Model info error:', error);
 
     return res.status(500).json({
       error: error.message
@@ -198,7 +200,7 @@ async function handleExplain(req, res) {
       }))
     });
   } catch (error) {
-    console.error('[ML API] Explanation error:', error);
+    logger.error('[ML API] Explanation error:', error);
 
     return res.status(500).json({
       error: error.message
