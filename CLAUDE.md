@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Seatable** is an AI-powered restaurant management platform that enables customers to make reservations through natural conversation (voice/text) while providing restaurant hosts with real-time dashboards to manage walk-ins, reservations, and table assignments.
+**Seatable** is an AI-powered multi-tenant restaurant management platform that enables customers to make reservations through natural conversation (voice, text, WhatsApp) while providing restaurant hosts with real-time dashboards to manage walk-ins, reservations, and table assignments.
 
 **Production URL**: https://restaurant-ai-mcp.vercel.app
 
@@ -14,11 +14,26 @@
 |-------|------------|
 | **Frontend** | React 18, TypeScript, Vite, Tailwind CSS |
 | **Backend** | Node.js, Express (Vercel Serverless) |
-| **Database** | Supabase PostgreSQL |
-| **AI Services** | Anthropic Claude, OpenAI, ElevenLabs (TTS) |
-| **Payments** | Stripe |
+| **Database** | Supabase PostgreSQL (multi-tenant, RLS) |
+| **AI Services** | Anthropic Claude, OpenAI, ElevenLabs/Cartesia (TTS) |
+| **Payments** | Stripe (subscription + metered usage billing) |
 | **Deployment** | Vercel (auto-deploy on push to main) |
 | **State** | React Query (@tanstack/react-query) |
+| **Rate Limiting** | Upstash Redis (with in-memory fallback) |
+| **Testing** | Jest (backend, 164 tests), Vitest + RTL (frontend, 100 tests) |
+| **Logging** | createSecureLogger (masks sensitive data) |
+
+---
+
+## Multi-Tenancy Architecture
+
+All operational tables (`reservations`, `tables`, `waitlist`, `service_records`, `subscriptions`) are scoped by `restaurant_id`. RLS policies enforce tenant isolation via JWT claims.
+
+- **supabaseAdmin**: SERVICE_ROLE_KEY client, bypasses RLS. Used by webhooks, cron jobs.
+- **supabaseClient**: ANON_KEY client, respects RLS. Used for user-facing queries.
+- **createAuthClient(jwt)**: Per-request client with user JWT for RLS enforcement.
+
+Restaurant config lives in `restaurant.restaurant_config` schema.
 
 ---
 
@@ -26,10 +41,10 @@
 
 | Plan | Price | Features |
 |------|-------|----------|
-| **Basic** | €49.99/month | AI reservations, Host dashboard, Basic analytics |
-| **Professional** | €99.99/month | Everything in Basic + Advanced analytics, Waitlist management, Priority support, Unlimited reservations, SMS notifications |
+| **Basic** | EUR 49.99/month | AI reservations, Host dashboard, Basic analytics |
+| **Professional** | EUR 99.99/month | Everything in Basic + Advanced analytics, Waitlist management, Priority support, Unlimited reservations, SMS notifications |
 
-*All plans include 14-day free trial*
+*All plans include 14-day free trial. Usage-based metered billing for reservations, AI calls, SMS, and WhatsApp.*
 
 ---
 
@@ -40,134 +55,65 @@
 |-------|------|-------------|
 | `/` | Landing Page | Marketing site with features, pricing, FAQ, contact |
 | `/live-demo` | Live AI Demo | Voice-based AI reservation demo |
-| `/onboarding` | Onboarding Wizard | 6-step restaurant setup flow |
 | `/login` | Login | Google OAuth authentication |
+| `/book/:slug` | Booking Page | Public customer booking portal |
+| `/book/:slug/confirmed` | Booking Confirmation | Reservation confirmation |
+| `/customer` | Customer Portal | Customer reservation management |
 
 ### Dashboard Pages
 | Route | Page | Description |
 |-------|------|-------------|
-| `/host-dashboard/simple` | Simple Dashboard | Streamlined view with stats and table layout |
-| `/host-dashboard/advanced` | Advanced Dashboard | Full floor overview with more stats |
+| `/host-dashboard/simple` | Dashboard | Main unified dashboard (stats, tables, reservations, waitlist) |
+| `/host-dashboard/legacy` | SimpleDashboard | Legacy simple view |
 | `/host-dashboard/reports` | Weekly Reports | Date-range reports with metrics |
-| `/host-dashboard/ltv` | Customer LTV | Customer lifetime value education |
-| `/host-dashboard/dna` | Customer DNA | Behavioral insights education |
-| `/host-dashboard/calls` | AI Agent Dashboard | Call tracking and phone integration |
-| `/host-dashboard/ml` | Twin Intelligence | Personalized recommendations (experimental) |
+| `/host-dashboard/segovia` | Segovia Insights | AI-powered insights |
+| `/host-dashboard/calls` | Call Tracking | AI agent call dashboard |
+| `/host-dashboard/tables` | Table Config | Table setup and management |
+| `/host-dashboard/voice-settings` | Voice Settings | AI voice configuration |
+| `/analytics` | Analytics Dashboard | Full analytics view |
+
+### Auth/Setup Pages
+| Route | Page | Description |
+|-------|------|-------------|
+| `/onboarding` | Onboarding Wizard | 6-step restaurant setup (protected) |
+| `/welcome` | Welcome | Post-onboarding welcome (protected) |
+| `/subscription/success` | Subscription Success | Post-payment confirmation |
+| `/subscription/manage` | Subscription Manage | Plan management |
+| `/settings/language` | Language Settings | EN/ES language toggle |
 
 ---
 
-## Landing Page Sections
+## Cron Jobs (Vercel)
 
-1. **Hero** - "Transform Your Restaurant with AI"
-2. **Features Grid** - 6 feature cards
-3. **Interactive Demo** - Call/text demo options
-4. **Pricing** - Basic & Professional plans
-5. **FAQ** - 5 expandable questions
-6. **Contact Form** - Schedule demo call
+| Schedule | Endpoint | Description |
+|----------|----------|-------------|
+| Every 5 min | `/api/cron/check-late-reservations` | Marks 20+ min late reservations as no-show |
+| Daily 9 AM | `/api/cron/send-reminders` | Sends reservation reminders |
+| Daily 6 AM | `/api/cron/update-churn-scores` | Recalculates customer churn risk |
+| Daily 4 AM | `/api/report-usage` | Reports metered usage to Stripe |
 
-### Advertised Features
-- Real-Time Host Dashboard
-- Smart Table Matching
-- Live Wait Times
-- Automated Notifications
-- Analytics & Insights
-
----
-
-## Onboarding Flow (6 Steps)
-
-1. **Restaurant Basics** - Name, type, country, city
-2. **Contact & Hours** - Phone (with country code selector), email, business hours
-3. **Table Setup** - Define tables by area (Indoor, Patio, Bar)
-4. **AI Configuration** - Customize assistant behavior
-5. **Review** - Confirm all settings
-6. **Launch** - Go live
-
-### Restaurant Types Supported
-Fine Dining, Casual Dining, Fast Casual, Cafe, Bar, Bistro, Pizzeria, Steakhouse, Seafood, Other
-
----
-
-## Simple Dashboard Features
-
-### Header
-- Date display (Today + day of week)
-- Plan badge (Professional)
-- Language toggle (EN/ES)
-- View toggle (Complete/Advanced)
-
-### Stats Cards
-- Tables Occupied (X/10)
-- Occupancy %
-- Reservations Today
-- Waiting count
-- Active Tables
-- Avg Duration
-- Peak Hours
-- Revenue Today
-
-### Actions
-- **+ Add Walk-in** button
-
-### Table Layout
-- Visual grid of all tables
-- Status indicators: Available (green), Occupied (red), Being Cleaned (yellow)
-- Table info: Number, capacity, location
-- "Tap to manage" interaction
-
----
-
-## Advanced Dashboard Features
-
-### Stats Grid (6 cards)
-- Total Capacity
-- Available Seats
-- Occupied Seats
-- Occupancy %
-- Active Parties
-- Est. Wait Time
-
-### Actions
-- Weekly Report button
-- Add Walk-in button
-
----
-
-## Weekly Reports
-
-- Date range selector (Start/End)
-- Download/Print functionality
-- Refresh button
-- Update Report button
-
-### Metrics
-- **Total Covers** (with week-over-week %)
-- **Total Reservations** (seated vs walk-ins breakdown)
-- **Avg Party Size** (with guest total)
-- **Cancellation Rate** (with count)
-
----
-
-## AI Agent Dashboard (Call Tracking)
-
-- Phone Integration setup
-- Filters: Time Period, Outcome, Language
-- **Total Calls** count
-- **Reservations** made via AI
+All cron jobs are secured with `CRON_SECRET` Bearer token and use `createSecureLogger`.
 
 ---
 
 ## Database Schema (Supabase)
 
+### Public Schema
+| Table | Purpose | Multi-tenant |
+|-------|---------|:---:|
+| `reservations` | Customer bookings | Yes (`restaurant_id`) |
+| `tables` | Physical table inventory | Yes (`restaurant_id`) |
+| `waitlist` | Customers waiting | Yes (`restaurant_id`) |
+| `service_records` | Active dining sessions | Yes (`restaurant_id`) |
+| `subscriptions` | Stripe subscription data | Yes (`restaurant_id`) |
+| `customer_history` | Visit history & preferences | Yes |
+| `customer_ltv` | Lifetime value & churn scores | Yes |
+| `usage_tracking` | Metered billing usage | Yes (`restaurant_id`) |
+
+### Restaurant Schema
 | Table | Purpose |
 |-------|---------|
-| `restaurant_info` | Business config, hours, policies |
-| `tables` | Physical table inventory |
-| `reservations` | Customer bookings |
-| `service_records` | Active dining sessions |
-| `waitlist` | Customers waiting |
-| `customer_history` | Visit history & preferences |
-| `subscriptions` | Stripe subscription data |
+| `restaurant_config` | Business config, hours, policies, timezone |
 
 ---
 
@@ -177,20 +123,28 @@ Fine Dining, Casual Dining, Fast Casual, Cafe, Bar, Bistro, Pizzeria, Steakhouse
 restaurant-ai-mcp/
 ├── client/
 │   └── src/
-│       ├── pages/           # React pages
-│       ├── components/      # Reusable components
-│       │   ├── common/      # PhoneInput, etc.
-│       │   ├── host/        # Dashboard components
-│       │   ├── onboarding/  # Onboarding steps
-│       │   └── landing/     # Landing page sections
-│       ├── contexts/        # Auth & state
-│       ├── services/        # API clients
-│       └── types/           # TypeScript types
+│       ├── pages/              # React pages
+│       ├── components/
+│       │   ├── common/         # PhoneInput, Modal, etc.
+│       │   ├── host/           # WalkInModal, WaitlistPanel, etc.
+│       │   ├── dashboard/      # StatsBar, ReservationsList, ActivePartiesPanel
+│       │   ├── onboarding/     # Onboarding steps
+│       │   └── landing/        # Landing page sections
+│       ├── contexts/           # Auth & state management
+│       ├── hooks/              # useRealtimeSubscription, etc.
+│       ├── services/           # API clients, supabase.ts
+│       ├── utils/              # timeFormatting, tableCombinations
+│       ├── types/              # TypeScript types
+│       └── i18n/               # EN + ES translations
 ├── api/
-│   ├── routes/              # API endpoints
-│   ├── _lib/                # Supabase service layer
-│   └── index.js             # Express server
-└── scripts/                 # Utility scripts
+│   ├── _lib/                   # Shared: supabase.js, auth.js, rate-limit.js, secure-logger.js
+│   ├── cron/                   # Cron jobs
+│   ├── ml/                     # ML prediction engine
+│   ├── onboarding/             # Onboarding API
+│   ├── services/               # Business logic (subscription-limits, etc.)
+│   └── *.js                    # Serverless API endpoints
+├── api/__tests__/              # Backend tests (Jest)
+└── client/src/**/__tests__/    # Frontend tests (Vitest + RTL)
 ```
 
 ---
@@ -198,41 +152,80 @@ restaurant-ai-mcp/
 ## Key Files
 
 ### Frontend
-- `client/src/pages/SimpleDashboard.tsx` - Main simple dashboard
-- `client/src/pages/HostDashboard.tsx` - Advanced dashboard
-- `client/src/pages/LiveAIDemo.tsx` - AI demo page
-- `client/src/pages/Onboarding.tsx` - Onboarding wizard
-- `client/src/components/onboarding/Step2Contact.tsx` - Contact form with phone input
-- `client/src/components/common/PhoneInput.tsx` - Country code selector (30+ countries)
+| File | Purpose |
+|------|---------|
+| `client/src/pages/Dashboard.tsx` | Main unified dashboard |
+| `client/src/pages/SimpleDashboard.tsx` | Legacy simple dashboard |
+| `client/src/pages/LiveAIDemo.tsx` | AI demo page |
+| `client/src/pages/Onboarding.tsx` | Onboarding wizard |
+| `client/src/pages/BookingPage.tsx` | Public customer booking portal |
+| `client/src/components/common/PhoneInput.tsx` | Country code selector (30+ countries) |
+| `client/src/components/dashboard/StatsBar.tsx` | Dashboard stats bar |
+| `client/src/components/dashboard/ReservationsList.tsx` | Upcoming reservations list |
+| `client/src/components/dashboard/ActivePartiesPanel.tsx` | Active parties panel |
+| `client/src/hooks/useRealtimeSubscription.ts` | Supabase Realtime subscriptions |
 
 ### Backend
-- `api/routes/host-dashboard.js` - Dashboard API endpoints
-- `api/routes/reservations.js` - Reservation endpoints
-- `api/_lib/supabase.js` - Database service layer
+| File | Purpose |
+|------|---------|
+| `api/_lib/supabase.js` | Database service layer (~1900 lines) |
+| `api/_lib/auth.js` | JWT auth, Google OAuth, restaurant_id in tokens |
+| `api/_lib/rate-limit.js` | Upstash Redis rate limiting with fallback |
+| `api/_lib/secure-logger.js` | Logging with sensitive data masking |
+| `api/_lib/stripe-usage-reporter.js` | Metered billing usage reporting |
+| `api/host-dashboard.js` | Dashboard API endpoints |
+| `api/reservations.js` | Reservation CRUD |
+| `api/waitlist.js` | Waitlist management |
+| `api/whatsapp-webhook.js` | Meta Cloud WhatsApp integration |
+| `api/twilio-whatsapp-webhook.js` | Twilio WhatsApp integration |
+| `api/stripe-webhook.js` | Stripe payment webhooks |
+| `api/batch-predict.js` | ML no-show predictions (cron + single-restaurant) |
+
+---
+
+## Testing
+
+### Backend (Jest)
+```bash
+npx jest --forceExit    # 164 tests across 3 suites
+```
+
+Test files:
+- `api/__tests__/auth.test.js` - JWT, middleware, restaurant lookup
+- `api/__tests__/multi-tenancy.test.js` - Restaurant isolation
+- `api/__tests__/supabase.test.js` - Database operations
+
+### Frontend (Vitest + React Testing Library)
+```bash
+cd client && npx vitest run    # 100 tests across 8 suites
+```
+
+Test files:
+- `client/src/utils/__tests__/timeFormatting.test.ts` - Time formatting utilities
+- `client/src/utils/__tests__/tableCombinations.test.ts` - Table combination algorithm
+- `client/src/components/dashboard/__tests__/StatsBar.test.tsx` - Stats bar
+- `client/src/components/dashboard/__tests__/ReservationsList.test.tsx` - Reservations list
+- `client/src/components/dashboard/__tests__/ActivePartiesPanel.test.tsx` - Active parties
+- `client/src/components/common/__tests__/PhoneInput.test.tsx` - Phone input
+- `client/src/components/host/__tests__/WaitlistPanel.test.tsx` - Waitlist panel
+- `client/src/components/host/__tests__/WalkInModal.test.tsx` - Walk-in modal
 
 ---
 
 ## Environment Variables
 
-```env
-# Core
-NODE_ENV=production
-PORT=3001
-CLIENT_URL=https://restaurant-ai-mcp.vercel.app
+See `.env.example` for the full list. Key groups:
 
-# Supabase
-SUPABASE_URL=https://lurebwaudisfilhuhmnj.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-
-# AI Services
-ANTHROPIC_API_KEY=sk-ant-***
-OPENAI_API_KEY=sk-***
-ELEVENLABS_API_KEY=***
-
-# Stripe
-STRIPE_SECRET_KEY=sk_***
-STRIPE_WEBHOOK_SECRET=whsec_***
-```
+| Group | Variables |
+|-------|-----------|
+| **Core** | `NODE_ENV`, `PORT`, `CLIENT_URL` |
+| **Supabase** | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` |
+| **AI** | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, `CARTESIA_API_KEY` |
+| **Stripe** | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `VITE_STRIPE_PUBLISHABLE_KEY` |
+| **Metered Billing** | `STRIPE_METERED_PRICE_RESERVATION`, `_AI_CALL`, `_SMS`, `_WHATSAPP` |
+| **Rate Limiting** | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` |
+| **Cron** | `CRON_SECRET` |
+| **Email** | `RESEND_API_KEY` |
 
 ---
 
@@ -249,6 +242,9 @@ cd client && npm run dev
 # Run backend (port 3001)
 npm run server:dev
 
+# Or run both together
+npm run dev:full
+
 # Build for production
 cd client && npm run build
 ```
@@ -256,22 +252,12 @@ cd client && npm run build
 ### Deployment
 Push to `main` branch triggers automatic Vercel deployment.
 
----
-
-## Recent Updates (December 2025)
-
-### Phone Input with Country Code (Dec 20, 2025)
-- Added PhoneInput component with 30+ countries
-- Country selector with flags and dial codes
-- Per-country phone validation patterns
-- Real-time validation indicators
-- Integrated in onboarding Step 2
-
-### UX Improvements (Dec 17, 2025)
-- Fixed text visibility on dark backgrounds
-- Fixed plan limit detection in onboarding
-- Fixed leading zeros in table inputs
-- Updated Python version for Vercel deployment
+### Code Conventions
+- All API endpoints use `createSecureLogger` (not `console.log`) for logging
+- All API queries are scoped by `restaurant_id` for multi-tenancy
+- Cron jobs use `supabaseAdmin` (service role) and are secured with `CRON_SECRET`
+- Frontend supports EN + ES via i18n
+- Tests must pass before pushing: `npx jest --forceExit && cd client && npx vitest run`
 
 ---
 
@@ -282,4 +268,4 @@ Push to `main` branch triggers automatic Vercel deployment.
 
 ---
 
-**Last Updated**: December 20, 2025
+**Last Updated**: February 13, 2026
