@@ -12,6 +12,7 @@ const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { sendRetentionCampaignEmail } = require('./_lib/email');
 const logger = createSecureLogger('RetentionCampaigns');
 
 /**
@@ -51,12 +52,41 @@ async function handleCreate(req, res) {
 
     if (error) throw error;
 
-    // TODO: Queue actual email/SMS sending via SendGrid/Twilio
-    // For now, mark as sent after creation
-    await supabaseAdmin
-      .from('retention_campaigns')
-      .update({ status: 'sent', sent_at: new Date().toISOString() })
-      .eq('id', data.id);
+    // Send the campaign email if channel is email
+    if (data.channel === 'email') {
+      // Look up customer email from customer_history
+      const { data: customer } = await supabaseAdmin
+        .from('customer_history')
+        .select('email, customer_name')
+        .eq('id', customer_id)
+        .single();
+
+      if (customer?.email) {
+        const result = await sendRetentionCampaignEmail({
+          customerEmail: customer.email,
+          customerName: customer.customer_name,
+          message,
+          campaignType: campaign_type,
+        });
+
+        await supabaseAdmin
+          .from('retention_campaigns')
+          .update({
+            status: result.sent ? 'sent' : 'failed',
+            sent_at: result.sent ? new Date().toISOString() : null,
+          })
+          .eq('id', data.id);
+      } else {
+        logger.warn(`No email found for customer ${customer_id}, marking campaign as failed`);
+        await supabaseAdmin
+          .from('retention_campaigns')
+          .update({ status: 'failed' })
+          .eq('id', data.id);
+      }
+    } else {
+      // SMS/WhatsApp channels - mark as pending for future implementation
+      logger.info(`Campaign ${data.id} uses ${data.channel} channel - queued for future delivery`);
+    }
 
     logger.info(`Created retention campaign ${data.id} for customer ${customer_id}`);
 

@@ -10,6 +10,7 @@ const {
   updateRestaurantPlan,
   query: supabase,
 } = require('./_lib/supabase');
+const { sendPaymentReceiptEmail, sendPaymentFailedEmail, sendTrialEndingEmail } = require('./_lib/email');
 
 // This is your Stripe webhook secret for verifying webhook signatures
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -217,7 +218,20 @@ module.exports = async (req, res) => {
         logger.info('Amount paid:', invoice.amount_paid / 100, invoice.currency.toUpperCase());
 
         // Payment status is automatically reflected in subscription.updated event
-        // TODO: Send receipt email to customer (future enhancement)
+        // Send receipt email
+        try {
+          const receiptCustomer = await stripe.customers.retrieve(invoice.customer);
+          if (receiptCustomer.email) {
+            await sendPaymentReceiptEmail({
+              customerEmail: receiptCustomer.email,
+              amount: (invoice.amount_paid / 100).toFixed(2),
+              currency: invoice.currency.toUpperCase(),
+              invoiceId: invoice.id,
+            });
+          }
+        } catch (emailErr) {
+          logger.error('Failed to send receipt email:', emailErr.message);
+        }
 
         break;
 
@@ -228,7 +242,20 @@ module.exports = async (req, res) => {
         logger.info('Amount due:', failedInvoice.amount_due / 100, failedInvoice.currency.toUpperCase());
 
         // Subscription status will be updated to 'past_due' automatically in subscription.updated event
-        // TODO: Send payment failure notification email (future enhancement)
+        // Send payment failure notification
+        try {
+          const failedCustomer = await stripe.customers.retrieve(failedInvoice.customer);
+          if (failedCustomer.email) {
+            await sendPaymentFailedEmail({
+              customerEmail: failedCustomer.email,
+              amount: (failedInvoice.amount_due / 100).toFixed(2),
+              currency: failedInvoice.currency.toUpperCase(),
+              invoiceId: failedInvoice.id,
+            });
+          }
+        } catch (emailErr) {
+          logger.error('Failed to send payment failed email:', emailErr.message);
+        }
 
         break;
 
@@ -237,7 +264,18 @@ module.exports = async (req, res) => {
         logger.info('Trial ending soon:', trialEndingSoon.id);
         logger.info('Trial ends:', new Date(trialEndingSoon.trial_end * 1000).toISOString());
 
-        // TODO: Send trial ending reminder email (future enhancement)
+        // Send trial ending reminder
+        try {
+          const trialCustomer = await stripe.customers.retrieve(trialEndingSoon.customer);
+          if (trialCustomer.email) {
+            await sendTrialEndingEmail({
+              customerEmail: trialCustomer.email,
+              trialEndsAt: new Date(trialEndingSoon.trial_end * 1000).toISOString(),
+            });
+          }
+        } catch (emailErr) {
+          logger.error('Failed to send trial ending email:', emailErr.message);
+        }
 
         break;
 
