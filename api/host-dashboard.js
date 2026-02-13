@@ -39,7 +39,7 @@ module.exports = async (req, res) => {
   }
 
   // Apply rate limiting (60 requests per minute)
-  const rateLimited = checkAndApplyRateLimit(req, res, 'api');
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'api');
   if (rateLimited) return; // 429 response already sent
 
   // Verify authentication - dashboard requires authenticated access
@@ -104,10 +104,12 @@ module.exports = async (req, res) => {
 };
 
 async function handleDashboard(req, res) {
+  const restaurantId = req.user.restaurant_id;
+  const timezone = req.user.timezone || 'UTC';
   const [tablesResult, activePartiesResult, upcomingReservationsResult] = await Promise.all([
-    getAllTables(),
-    getActiveServiceRecords(),
-    getUpcomingReservations()
+    getAllTables(restaurantId),
+    getActiveServiceRecords(restaurantId),
+    getUpcomingReservations(restaurantId, timezone)
   ]);
 
   if (!tablesResult.success || !activePartiesResult.success || !upcomingReservationsResult.success) {
@@ -263,6 +265,7 @@ async function handleDashboard(req, res) {
 }
 
 async function handleCheckIn(req, res) {
+  const restaurantId = req.user.restaurant_id;
   const { reservation_id } = req.body;
 
   if (!reservation_id) {
@@ -272,7 +275,7 @@ async function handleCheckIn(req, res) {
     });
   }
 
-  const reservationResult = await findReservation({ reservation_id });
+  const reservationResult = await findReservation(restaurantId, { reservation_id });
 
   if (!reservationResult.success || !reservationResult.reservation) {
     return res.status(404).json({
@@ -284,7 +287,7 @@ async function handleCheckIn(req, res) {
   const reservation = reservationResult.reservation;
   const partySize = reservation.party_size;
 
-  const tablesResult = await getAllTables();
+  const tablesResult = await getAllTables(restaurantId);
   if (!tablesResult.success) {
     return res.status(500).json({
       success: false,
@@ -322,6 +325,7 @@ async function handleCheckIn(req, res) {
 }
 
 async function handleCheckWalkIn(req, res) {
+  const restaurantId = req.user.restaurant_id;
   const { party_size, preferred_location } = req.body;
 
   if (!party_size) {
@@ -331,7 +335,7 @@ async function handleCheckWalkIn(req, res) {
     });
   }
 
-  const tablesResult = await getAllTables();
+  const tablesResult = await getAllTables(restaurantId);
   if (!tablesResult.success) {
     return res.status(500).json({
       success: false,
@@ -370,6 +374,7 @@ async function handleCheckWalkIn(req, res) {
 }
 
 async function handleSeatParty(req, res) {
+  const restaurantId = req.user.restaurant_id;
   const {
     type,
     reservation_id,
@@ -408,7 +413,7 @@ async function handleSeatParty(req, res) {
   const estimatedDeparture = new Date(Date.now() + diningDurationMs).toISOString();
 
   // Convert table UUIDs to table numbers (Supabase schema uses integer[])
-  const allTablesForConversion = await getAllTables();
+  const allTablesForConversion = await getAllTables(restaurantId);
   if (!allTablesForConversion.success || !allTablesForConversion.tables) {
     return res.status(500).json({
       success: false,
@@ -452,7 +457,7 @@ async function handleSeatParty(req, res) {
 
   try {
     // Step 1: Create service record
-    const serviceResult = await createServiceRecord(serviceFields);
+    const serviceResult = await createServiceRecord(restaurantId, serviceFields);
     if (!serviceResult.success) {
       logger.error('Failed to create service record', {
         serviceFields,
@@ -467,7 +472,7 @@ async function handleSeatParty(req, res) {
     const tableRecordIds = table_ids;
 
     const updatePromises = tableRecordIds.map(async (recordId) => {
-      const result = await updateTable(recordId, {
+      const result = await updateTable(restaurantId, recordId, {
         'Status': 'occupied',
         'Current Service ID': null  // Don't set service ID - link is in service_records.table_ids
       });
@@ -497,7 +502,7 @@ async function handleSeatParty(req, res) {
     if (serviceCreated) {
       logger.info(`Rolling back: Deleting service record ${serviceId}`);
       try {
-        await deleteServiceRecord(serviceId);
+        await deleteServiceRecord(restaurantId, serviceId);
       } catch (rollbackError) {
         logger.error('Failed to rollback service record', rollbackError);
       }
@@ -507,7 +512,7 @@ async function handleSeatParty(req, res) {
     if (tablesUpdated.length > 0) {
       logger.info(`Rolling back: Resetting ${tablesUpdated.length} tables`);
       const rollbackPromises = tablesUpdated.map(recordId =>
-        updateTable(recordId, {
+        updateTable(restaurantId, recordId, {
           'Status': 'available',
           'Current Service ID': ''
         }).catch(err => logger.error(`Failed to rollback table ${recordId}`, err))
@@ -525,6 +530,7 @@ async function handleSeatParty(req, res) {
 }
 
 async function handleCompleteService(req, res) {
+  const restaurantId = req.user.restaurant_id;
   const { service_record_id } = req.body;
 
   if (!service_record_id) {
@@ -536,7 +542,7 @@ async function handleCompleteService(req, res) {
 
   const departedAt = new Date().toISOString();
 
-  const updateResult = await updateServiceRecord(service_record_id, {
+  const updateResult = await updateServiceRecord(restaurantId, service_record_id, {
     'Actual Departure': departedAt,
     'Status': 'completed'
   });
@@ -563,7 +569,7 @@ async function handleCompleteService(req, res) {
     : (Array.isArray(tableIdsRaw) ? tableIdsRaw : []);
 
   // Get all tables to map table numbers to Airtable record IDs
-  const tablesResult = await getAllTables();
+  const tablesResult = await getAllTables(restaurantId);
   if (!tablesResult.success) {
     return res.status(500).json({
       success: false,
@@ -582,7 +588,7 @@ async function handleCompleteService(req, res) {
   }).filter(id => id !== null);
 
   const updatePromises = tableRecordIds.map(recordId =>
-    updateTable(recordId, {
+    updateTable(restaurantId, recordId, {
       'Status': 'available',
       'Current Service ID': null
     })
@@ -598,6 +604,7 @@ async function handleCompleteService(req, res) {
 }
 
 async function handleMarkTableClean(req, res) {
+  const restaurantId = req.user.restaurant_id;
   const { table_id } = req.body;
 
   if (!table_id) {
@@ -607,7 +614,7 @@ async function handleMarkTableClean(req, res) {
     });
   }
 
-  const updateResult = await updateTable(table_id, {
+  const updateResult = await updateTable(restaurantId, table_id, {
     'Status': 'available'
   });
 
@@ -625,6 +632,7 @@ async function handleMarkTableClean(req, res) {
 }
 
 async function handleUpdateTableStatus(req, res) {
+  const restaurantId = req.user.restaurant_id;
   const { table_id, status } = req.body;
 
   if (!table_id || !status) {
@@ -653,7 +661,7 @@ async function handleUpdateTableStatus(req, res) {
     });
   }
 
-  const updateResult = await updateTable(table_id, {
+  const updateResult = await updateTable(restaurantId, table_id, {
     'Status': dbStatus
   });
 
@@ -689,6 +697,7 @@ async function handleUpdateTableStatus(req, res) {
  * - First-time visitor flag
  */
 async function handleUpdateReservation(req, res) {
+  const restaurantId = req.user.restaurant_id;
   const {
     reservation_id,
     dietary_restrictions,
@@ -709,7 +718,7 @@ async function handleUpdateReservation(req, res) {
   }
 
   // Find the reservation
-  const findResult = await findReservation(reservation_id);
+  const findResult = await findReservation(restaurantId, reservation_id);
 
   if (!findResult.success || !findResult.reservation) {
     return res.status(404).json({
@@ -733,7 +742,7 @@ async function handleUpdateReservation(req, res) {
   if (first_time_visitor !== undefined) updates.first_time_visitor = first_time_visitor;
 
   // Update the reservation
-  const updateResult = await updateReservation(findResult.reservation.record_id, updates);
+  const updateResult = await updateReservation(restaurantId, findResult.reservation.record_id, updates);
 
   if (!updateResult.success) {
     return res.status(500).json({
@@ -759,6 +768,7 @@ async function handleUpdateReservation(req, res) {
  * Body: { table_id, position_x, position_y, width?, height?, rotation? }
  */
 async function handleUpdateTablePosition(req, res) {
+  const restaurantId = req.user.restaurant_id;
   const { table_id, position_x, position_y, width, height, rotation } = req.body;
 
   if (!table_id) {
@@ -788,7 +798,7 @@ async function handleUpdateTablePosition(req, res) {
 
   logger.info(`Updating table ${table_id} position`, updates);
 
-  const result = await updateTableConfig(table_id, updates);
+  const result = await updateTableConfig(restaurantId, table_id, updates);
 
   if (!result.success) {
     logger.error('Failed to update table position', { table_id, error: result.message });
@@ -810,6 +820,7 @@ async function handleUpdateTablePosition(req, res) {
  * Body: { table_id, shape?, capacity?, is_joinable?, is_fixed_seating? }
  */
 async function handleUpdateTableProperties(req, res) {
+  const restaurantId = req.user.restaurant_id;
   const { table_id, shape, capacity, is_joinable, is_fixed_seating } = req.body;
 
   if (!table_id) {
@@ -861,7 +872,7 @@ async function handleUpdateTableProperties(req, res) {
 
   logger.info(`Updating table ${table_id} properties`, updates);
 
-  const result = await updateTableConfig(table_id, updates);
+  const result = await updateTableConfig(restaurantId, table_id, updates);
 
   if (!result.success) {
     logger.error('Failed to update table properties', { table_id, error: result.message });
@@ -883,6 +894,7 @@ async function handleUpdateTableProperties(req, res) {
  * Body: { table_id, linked_table_id }
  */
 async function handleLinkTables(req, res) {
+  const restaurantId = req.user.restaurant_id;
   const { table_id, linked_table_id } = req.body;
 
   if (!table_id || !linked_table_id) {
@@ -901,7 +913,7 @@ async function handleLinkTables(req, res) {
 
   logger.info(`Linking tables ${table_id} and ${linked_table_id}`);
 
-  const result = await linkTables(table_id, linked_table_id);
+  const result = await linkTables(restaurantId, table_id, linked_table_id);
 
   if (!result.success) {
     logger.error('Failed to link tables', { table_id, linked_table_id, error: result.message });
@@ -923,6 +935,7 @@ async function handleLinkTables(req, res) {
  * Body: { table_id, linked_table_id }
  */
 async function handleUnlinkTables(req, res) {
+  const restaurantId = req.user.restaurant_id;
   const { table_id, linked_table_id } = req.body;
 
   if (!table_id || !linked_table_id) {
@@ -934,7 +947,7 @@ async function handleUnlinkTables(req, res) {
 
   logger.info(`Unlinking tables ${table_id} and ${linked_table_id}`);
 
-  const result = await unlinkTables(table_id, linked_table_id);
+  const result = await unlinkTables(restaurantId, table_id, linked_table_id);
 
   if (!result.success) {
     logger.error('Failed to unlink tables', { table_id, linked_table_id, error: result.message });
@@ -956,6 +969,7 @@ async function handleUnlinkTables(req, res) {
  * Body: { table_id }
  */
 async function handleDeleteTable(req, res) {
+  const restaurantId = req.user.restaurant_id;
   const { table_id } = req.body;
 
   if (!table_id) {
@@ -966,7 +980,7 @@ async function handleDeleteTable(req, res) {
   }
 
   // Check if table exists and is not currently occupied
-  const tableResult = await getTableById(table_id);
+  const tableResult = await getTableById(restaurantId, table_id);
 
   if (!tableResult.success) {
     return res.status(404).json({
@@ -984,7 +998,7 @@ async function handleDeleteTable(req, res) {
 
   logger.info(`Deleting table ${table_id} (table_number: ${tableResult.table.table_number})`);
 
-  const result = await deleteTable(table_id);
+  const result = await deleteTable(restaurantId, table_id);
 
   if (!result.success) {
     logger.error('Failed to delete table', { table_id, error: result.message });
@@ -1006,6 +1020,7 @@ async function handleDeleteTable(req, res) {
  * Body: { table_number, capacity, location?, shape?, is_fixed_seating?, is_joinable?, position_x?, position_y? }
  */
 async function handleCreateTable(req, res) {
+  const restaurantId = req.user.restaurant_id;
   const {
     table_number,
     capacity,
@@ -1069,7 +1084,7 @@ async function handleCreateTable(req, res) {
 
   logger.info('Creating new table', tableFields);
 
-  const result = await createTable(tableFields);
+  const result = await createTable(restaurantId, tableFields);
 
   if (!result.success) {
     logger.error('Failed to create table', { tableFields, error: result.message });
@@ -1095,10 +1110,11 @@ async function handleCreateTable(req, res) {
  * - 8+ person: rectangle
  */
 async function handleAutoAssignShapes(req, res) {
+  const restaurantId = req.user.restaurant_id;
   logger.info('Auto-assigning shapes to all tables');
 
   // Get all active tables using the imported function
-  const tablesResult = await getAllTables();
+  const tablesResult = await getAllTables(restaurantId);
 
   if (!tablesResult.success) {
     logger.error('Failed to fetch tables for shape assignment', tablesResult.error);
@@ -1157,7 +1173,7 @@ async function handleAutoAssignShapes(req, res) {
   // Update each table using the imported updateTableConfig function
   let updatedCount = 0;
   for (const update of updates) {
-    const result = await updateTableConfig(update.id, { shape: update.shape });
+    const result = await updateTableConfig(restaurantId, update.id, { shape: update.shape });
 
     if (result.success) {
       updatedCount++;

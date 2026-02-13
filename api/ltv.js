@@ -362,7 +362,7 @@ module.exports = async (req, res) => {
   }
 
   // Apply rate limiting (60 requests per minute)
-  const rateLimited = checkAndApplyRateLimit(req, res, 'api');
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'api');
   if (rateLimited) return; // 429 response already sent
 
   // Verify authentication

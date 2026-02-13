@@ -20,6 +20,7 @@
     "@sentry/node": "^10.22.0",
     "@stripe/stripe-js": "^8.2.0",
     "@supabase/supabase-js": "^2.78.0",
+    "@upstash/redis": "^1.36.2",
     "axios": "^1.12.2",
     "dotenv": "^17.2.3",
     "framer-motion": "^12.23.24",

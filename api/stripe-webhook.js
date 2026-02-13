@@ -8,10 +8,54 @@ const {
   updateSubscription,
   getSubscriptionByCustomerId,
   updateRestaurantPlan,
+  query: supabase,
 } = require('./_lib/supabase');
 
 // This is your Stripe webhook secret for verifying webhook signatures
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+/**
+ * Look up restaurant_id from Stripe event metadata or customer email.
+ * Stripe checkout sessions should include restaurant_id in metadata.
+ * Fallback: look up restaurant_config by email.
+ *
+ * @param {object} stripeObject - The Stripe event data object (session, subscription, invoice, etc.)
+ * @param {string|null} customerEmail - Customer email if already retrieved
+ * @returns {Promise<string|null>} restaurant_id or null
+ */
+async function resolveRestaurantId(stripeObject, customerEmail = null) {
+  // Method 1: Check Stripe metadata for restaurant_id
+  // TODO: Ensure Stripe checkout session creation includes metadata: { restaurant_id: '<uuid>' }
+  const metadataRestaurantId = stripeObject.metadata?.restaurant_id;
+  if (metadataRestaurantId) {
+    logger.info('Restaurant ID from Stripe metadata:', metadataRestaurantId);
+    return metadataRestaurantId;
+  }
+
+  // Method 2: Look up by customer email in restaurant_config
+  if (customerEmail) {
+    try {
+      const { data, error } = await supabase
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('id')
+        .eq('email', customerEmail)
+        .limit(1)
+        .single();
+
+      if (!error && data) {
+        logger.info('Restaurant ID resolved from email:', data.id);
+        return data.id;
+      }
+    } catch (err) {
+      logger.warn('Could not look up restaurant by email:', err.message);
+    }
+  }
+
+  // TODO: Consider storing restaurant_id in Stripe customer metadata during checkout
+  logger.warn('Could not resolve restaurant_id from Stripe event. Subscription functions will fail without it.');
+  return null;
+}
 
 module.exports = async (req, res) => {
   // Enable CORS
@@ -50,6 +94,8 @@ module.exports = async (req, res) => {
         logger.info('Customer:', session.customer);
         logger.info('Subscription:', session.subscription);
         logger.info('Email:', session.customer_details?.email);
+        // TODO: Ensure checkout session is created with metadata: { restaurant_id } so webhooks can resolve it
+        logger.info('Metadata restaurant_id:', session.metadata?.restaurant_id || 'NOT SET');
 
         break;
 
@@ -62,8 +108,15 @@ module.exports = async (req, res) => {
         const priceId = subscriptionCreated.items.data[0].price.id;
         const planName = getPlanFromPriceId(priceId);
 
-        // Create subscription record in Airtable
-        const createResult = await createSubscription({
+        // Resolve restaurant_id from Stripe metadata or customer email
+        const createRestaurantId = await resolveRestaurantId(subscriptionCreated, customer.email);
+        if (!createRestaurantId) {
+          logger.error('Cannot create subscription without restaurant_id. Customer email:', customer.email);
+          break;
+        }
+
+        // Create subscription record in database
+        const createResult = await createSubscription(createRestaurantId, {
           'Subscription ID': subscriptionCreated.id,
           'Customer ID': subscriptionCreated.customer,
           'Customer Email': customer.email,
@@ -83,7 +136,7 @@ module.exports = async (req, res) => {
         }
 
         // Also update restaurant_info.metric_profile.plan as fallback
-        const planUpdateResult = await updateRestaurantPlan(planName, customer.email);
+        const planUpdateResult = await updateRestaurantPlan(createRestaurantId, planName, customer.email);
         if (!planUpdateResult.success) {
           logger.error('Failed to update restaurant plan:', planUpdateResult.message);
         } else {
@@ -100,7 +153,15 @@ module.exports = async (req, res) => {
         const updatedPriceId = subscriptionUpdated.items.data[0].price.id;
         const updatedPlanName = getPlanFromPriceId(updatedPriceId);
 
-        const updateResult = await updateSubscription(subscriptionUpdated.id, {
+        // Resolve restaurant_id from Stripe metadata or customer lookup
+        const updateCustomer = await stripe.customers.retrieve(subscriptionUpdated.customer);
+        const updateRestaurantId = await resolveRestaurantId(subscriptionUpdated, updateCustomer.email);
+        if (!updateRestaurantId) {
+          logger.error('Cannot update subscription without restaurant_id. Customer:', subscriptionUpdated.customer);
+          break;
+        }
+
+        const updateResult = await updateSubscription(updateRestaurantId, subscriptionUpdated.id, {
           'Plan Name': updatedPlanName || 'unknown',
           'Price ID': updatedPriceId,
           'Status': subscriptionUpdated.status,
@@ -117,7 +178,7 @@ module.exports = async (req, res) => {
 
         // Also update restaurant_info.metric_profile.plan
         if (updatedPlanName) {
-          await updateRestaurantPlan(updatedPlanName);
+          await updateRestaurantPlan(updateRestaurantId, updatedPlanName);
         }
 
         break;
@@ -126,8 +187,16 @@ module.exports = async (req, res) => {
         const subscriptionDeleted = event.data.object;
         logger.info('Subscription cancelled:', subscriptionDeleted.id);
 
+        // Resolve restaurant_id from Stripe metadata or customer lookup
+        const deleteCustomer = await stripe.customers.retrieve(subscriptionDeleted.customer);
+        const deleteRestaurantId = await resolveRestaurantId(subscriptionDeleted, deleteCustomer.email);
+        if (!deleteRestaurantId) {
+          logger.error('Cannot cancel subscription without restaurant_id. Customer:', subscriptionDeleted.customer);
+          break;
+        }
+
         // Mark subscription as canceled in database
-        const cancelResult = await updateSubscription(subscriptionDeleted.id, {
+        const cancelResult = await updateSubscription(deleteRestaurantId, subscriptionDeleted.id, {
           'Status': 'canceled',
           'Canceled At': new Date().toISOString().split('T')[0]
         });
@@ -139,7 +208,7 @@ module.exports = async (req, res) => {
         }
 
         // Downgrade restaurant plan to Basic when subscription is cancelled
-        await updateRestaurantPlan('Basic');
+        await updateRestaurantPlan(deleteRestaurantId, 'Basic');
 
         break;
 

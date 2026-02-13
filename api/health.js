@@ -14,7 +14,10 @@
  * - Meaningful thresholds for alerts
  */
 
-const airtable = require('./_lib/supabase');
+const { supabaseAdmin } = require('./_lib/supabase');
+
+// Health check uses supabaseAdmin (service_role) for unscoped cross-tenant
+// system-level checks. No restaurant_id scoping needed.
 
 // Thresholds for stale data detection
 const THRESHOLDS = {
@@ -127,22 +130,27 @@ module.exports = async (req, res) => {
 
 /**
  * Check database connectivity
+ * Uses a simple unscoped count query to verify the database is reachable.
+ * No restaurant_id needed - this is a system-level connectivity check.
  */
 async function checkDatabaseConnectivity() {
   try {
-    const tablesResult = await airtable.getAllTables();
+    // Use raw Supabase client for unscoped connectivity check
+    const { count, error } = await supabaseAdmin
+      .from('tables')
+      .select('*', { count: 'exact', head: true });
 
-    if (tablesResult.success) {
+    if (!error) {
       return {
         status: 'healthy',
         message: 'Database connection successful',
-        tablesCount: tablesResult.tables.length
+        tablesCount: count || 0
       };
     } else {
       return {
         status: 'unhealthy',
         message: 'Database query failed',
-        error: tablesResult.error
+        error: error.message
       };
     }
   } catch (error) {
@@ -160,6 +168,9 @@ async function checkDatabaseConnectivity() {
  * Detects:
  * - Service records older than THRESHOLD hours
  * - Waitlist entries older than THRESHOLD hours
+ *
+ * NOTE: Uses unscoped queries (no restaurant_id filter) since this is a
+ * system-wide health check across all restaurants.
  */
 async function checkForStaleData() {
   try {
@@ -167,29 +178,29 @@ async function checkForStaleData() {
     const staleServiceThreshold = new Date(now.getTime() - (THRESHOLDS.SERVICE_RECORD_MAX_HOURS * 60 * 60 * 1000));
     const staleWaitlistThreshold = new Date(now.getTime() - (THRESHOLDS.WAITLIST_ENTRY_MAX_HOURS * 60 * 60 * 1000));
 
-    // Check service records
-    const serviceRecordsResult = await airtable.getActiveServiceRecords();
-    const staleServiceRecords = serviceRecordsResult.success
-      ? serviceRecordsResult.service_records.filter(record => {
-          const seatedAt = new Date(record.seated_at);
-          return seatedAt < staleServiceThreshold;
-        })
-      : [];
+    // Check service records - unscoped query across all restaurants
+    const { data: activeServiceRecords, error: serviceError } = await supabaseAdmin
+      .from('service_records')
+      .select('seated_at')
+      .eq('status', 'active');
 
-    // Check waitlist entries
-    const waitlistUrl = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${process.env.WAITLIST_TABLE_ID}`;
-    const waitlistResponse = await fetch(waitlistUrl, {
-      headers: {
-        'Authorization': `Bearer ${process.env.AIRTABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    let staleServiceRecords = [];
+    if (!serviceError && activeServiceRecords) {
+      staleServiceRecords = activeServiceRecords.filter(record => {
+        const seatedAt = new Date(record.seated_at);
+        return seatedAt < staleServiceThreshold;
+      });
+    }
+
+    // Check waitlist entries - unscoped query across all restaurants
+    const { data: waitlistEntries, error: waitlistError } = await supabaseAdmin
+      .from('waitlist')
+      .select('added_at');
 
     let staleWaitlistEntries = [];
-    if (waitlistResponse.ok) {
-      const waitlistData = await waitlistResponse.json();
-      staleWaitlistEntries = waitlistData.records.filter(record => {
-        const addedAt = record.fields['Added At'];
+    if (!waitlistError && waitlistEntries) {
+      staleWaitlistEntries = waitlistEntries.filter(record => {
+        const addedAt = record.added_at;
         if (!addedAt) return false;
         const addedDate = new Date(addedAt);
         return addedDate < staleWaitlistThreshold;
@@ -223,33 +234,31 @@ async function checkForStaleData() {
  * - Required fields are not NULL
  * - Data types are correct
  * - Referential integrity
+ *
+ * NOTE: Uses unscoped queries (no restaurant_id filter) since this is a
+ * system-wide health check across all restaurants.
  */
 async function checkDataQuality() {
   try {
     let nullDataCount = 0;
     const issues = [];
 
-    // Check waitlist for NULL required fields
-    const waitlistUrl = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${process.env.WAITLIST_TABLE_ID}`;
-    const waitlistResponse = await fetch(waitlistUrl, {
-      headers: {
-        'Authorization': `Bearer ${process.env.AIRTABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    // Check waitlist for NULL required fields - unscoped query via Supabase
+    const { data: waitlistRecords, error: waitlistError } = await supabaseAdmin
+      .from('waitlist')
+      .select('id, customer_name, party_size');
 
-    if (waitlistResponse.ok) {
-      const waitlistData = await waitlistResponse.json();
-      waitlistData.records.forEach(record => {
-        const customerName = record.fields['Customer Name'];
-        const partySize = record.fields['Party Size'];
+    if (!waitlistError && waitlistRecords) {
+      waitlistRecords.forEach(record => {
+        const customerName = record.customer_name;
+        const partySize = record.party_size;
 
         if (!customerName || customerName === '' || customerName === 'Unknown') {
           nullDataCount++;
           issues.push({
             table: 'waitlist',
             recordId: record.id,
-            field: 'Customer Name',
+            field: 'customer_name',
             issue: 'NULL or Unknown'
           });
         }
@@ -259,7 +268,7 @@ async function checkDataQuality() {
           issues.push({
             table: 'waitlist',
             recordId: record.id,
-            field: 'Party Size',
+            field: 'party_size',
             issue: 'NULL or invalid'
           });
         }
@@ -285,25 +294,29 @@ async function checkDataQuality() {
 
 /**
  * Get detailed metrics for monitoring dashboards
+ *
+ * NOTE: Uses unscoped queries to aggregate metrics across all restaurants.
+ * For per-restaurant metrics, use the host-dashboard API with proper auth.
  */
 async function getDetailedMetrics() {
   try {
-    const [tablesResult, serviceRecordsResult] = await Promise.all([
-      airtable.getAllTables(),
-      airtable.getActiveServiceRecords()
+    // Unscoped queries across all restaurants for system-wide health metrics
+    const [tablesQueryResult, serviceRecordsQueryResult] = await Promise.all([
+      supabaseAdmin.from('tables').select('table_number, capacity, status, is_active').eq('is_active', true),
+      supabaseAdmin.from('service_records').select('party_size, status').eq('status', 'active')
     ]);
 
-    const tables = tablesResult.success ? tablesResult.tables : [];
-    const serviceRecords = serviceRecordsResult.success ? serviceRecordsResult.service_records : [];
+    const tables = tablesQueryResult.data || [];
+    const serviceRecords = serviceRecordsQueryResult.data || [];
 
-    const totalCapacity = tables.reduce((sum, table) => sum + table.capacity, 0);
-    const occupiedSeats = serviceRecords.reduce((sum, record) => sum + record.party_size, 0);
+    const totalCapacity = tables.reduce((sum, table) => sum + (table.capacity || 0), 0);
+    const occupiedSeats = serviceRecords.reduce((sum, record) => sum + (record.party_size || 0), 0);
     const availableSeats = totalCapacity - occupiedSeats;
 
     return {
       tables: {
         total: tables.length,
-        available: tables.filter(t => t.status === 'available').length,
+        available: tables.filter(t => t.status === 'available' || t.status === 'Available').length,
         occupied: tables.filter(t => t.status === 'Occupied').length,
         beingCleaned: tables.filter(t => t.status === 'Being Cleaned').length,
         reserved: tables.filter(t => t.status === 'Reserved').length
@@ -312,7 +325,7 @@ async function getDetailedMetrics() {
         total: totalCapacity,
         occupied: occupiedSeats,
         available: availableSeats,
-        occupancyPercentage: Math.round((occupiedSeats / totalCapacity) * 100)
+        occupancyPercentage: totalCapacity > 0 ? Math.round((occupiedSeats / totalCapacity) * 100) : 0
       },
       activeParties: {
         count: serviceRecords.length,

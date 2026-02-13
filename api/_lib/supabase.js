@@ -2,20 +2,77 @@
  * Supabase Database Service Layer
  * PostgreSQL-based replacement for Airtable
  * Provides same API interface as airtable.js for easy migration
+ *
+ * MULTI-TENANCY: All operational queries are scoped by restaurant_id.
+ * Every function that touches reservations, tables, waitlist,
+ * service_records, or subscriptions requires a restaurantId parameter.
+ *
+ * CLIENT SPLIT:
+ *   supabaseAdmin  – SERVICE_ROLE_KEY, bypasses RLS. Used for webhooks,
+ *                    cron jobs, health checks, and cross-tenant admin ops.
+ *   supabaseClient – ANON_KEY, respects RLS. Available for future use
+ *                    when passing user JWTs for per-request RLS enforcement.
+ *   createAuthClient(token) – Factory that returns an anon-key client
+ *                    with the user's JWT set, enabling RLS enforcement.
+ *
+ * Current operational functions use supabaseAdmin because they already
+ * enforce restaurant_id at the application layer. As the platform matures,
+ * these can migrate to per-request auth clients for defense-in-depth.
  */
 
 const { createClient } = require('@supabase/supabase-js');
 const { generateSecureReservationId, generateSecureServiceId } = require('./secure-id');
+const { getLocalDate, getLocalTime } = require('./timezone');
 
-// Initialize Supabase client
+// ============ SUPABASE CLIENTS ============
+
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const anonKey = process.env.SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase credentials. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+if (!supabaseUrl) {
+  console.error('[Supabase] CRITICAL: Missing SUPABASE_URL');
+}
+if (!serviceRoleKey) {
+  console.error('[Supabase] WARNING: Missing SUPABASE_SERVICE_ROLE_KEY. Admin operations will fail.');
+}
+if (!anonKey) {
+  console.error('[Supabase] WARNING: Missing SUPABASE_ANON_KEY. RLS-aware client unavailable.');
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Admin client – bypasses RLS (for webhooks, crons, health checks, cross-tenant ops)
+const supabaseAdmin = serviceRoleKey
+  ? createClient(supabaseUrl, serviceRoleKey)
+  : null;
+
+// Public client – respects RLS (for future per-request auth usage)
+const supabaseClient = anonKey
+  ? createClient(supabaseUrl, anonKey)
+  : null;
+
+/**
+ * Create a per-request Supabase client with a user's JWT token.
+ * This client respects RLS policies, providing defense-in-depth
+ * beyond the application-layer restaurant_id scoping.
+ * @param {string} token - User's JWT/access token
+ * @returns {import('@supabase/supabase-js').SupabaseClient}
+ */
+function createAuthClient(token) {
+  if (!anonKey || !supabaseUrl) {
+    throw new Error('Cannot create auth client: missing SUPABASE_URL or SUPABASE_ANON_KEY');
+  }
+  return createClient(supabaseUrl, anonKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  });
+}
+
+// Primary client used by all operational functions.
+// Falls back to anon key if service_role is unavailable.
+const supabase = supabaseAdmin || supabaseClient;
 
 // ============ HELPER FUNCTIONS ============
 
@@ -35,8 +92,9 @@ const handleSupabaseResponse = (data, error, operation = 'query') => {
 
 // ============ RESERVATIONS ============
 
-const getReservations = async (filter = {}) => {
-  let query = supabase.from('reservations').select('*');
+const getReservations = async (restaurantId, filter = {}) => {
+  let query = supabase.from('reservations').select('*')
+    .eq('restaurant_id', restaurantId);
 
   // Apply filters if provided
   if (filter.status) {
@@ -82,10 +140,11 @@ const getReservations = async (filter = {}) => {
   };
 };
 
-const getReservationById = async (reservationId) => {
+const getReservationById = async (restaurantId, reservationId) => {
   const { data, error } = await supabase
     .from('reservations')
     .select('*')
+    .eq('restaurant_id', restaurantId)
     .eq('reservation_id', reservationId)
     .single();
 
@@ -113,10 +172,11 @@ const getReservationById = async (reservationId) => {
   };
 };
 
-const createReservation = async (fields) => {
+const createReservation = async (restaurantId, fields) => {
   const { data, error } = await supabase
     .from('reservations')
     .insert({
+      restaurant_id: restaurantId,
       reservation_id: fields['Reservation ID'],
       customer_name: fields['Customer Name'],
       customer_phone: fields['Customer Phone'],
@@ -147,7 +207,7 @@ const createReservation = async (fields) => {
   };
 };
 
-const updateReservation = async (recordId, fields) => {
+const updateReservation = async (restaurantId, recordId, fields) => {
   const updates = {};
 
   // Core reservation fields
@@ -178,6 +238,7 @@ const updateReservation = async (recordId, fields) => {
   const { data, error } = await supabase
     .from('reservations')
     .update(updates)
+    .eq('restaurant_id', restaurantId)
     .eq(filterColumn, recordId)
     .select()
     .single();
@@ -198,8 +259,10 @@ const updateReservation = async (recordId, fields) => {
 
 // ============ TABLES ============
 
-const getTables = async (filter = {}) => {
-  let query = supabase.from('tables').select('*').eq('is_active', true);
+const getTables = async (restaurantId, filter = {}) => {
+  let query = supabase.from('tables').select('*')
+    .eq('restaurant_id', restaurantId)
+    .eq('is_active', true);
 
   if (filter.status) {
     query = query.eq('status', filter.status);
@@ -239,10 +302,11 @@ const getTables = async (filter = {}) => {
   };
 };
 
-const getAvailableTables = async () => {
+const getAvailableTables = async (restaurantId) => {
   const { data, error } = await supabase
     .from('tables')
     .select('*')
+    .eq('restaurant_id', restaurantId)
     .eq('status', 'available')
     .eq('is_active', true);
 
@@ -270,10 +334,11 @@ const getAvailableTables = async () => {
   };
 };
 
-const getTableByNumber = async (tableNumber) => {
+const getTableByNumber = async (restaurantId, tableNumber) => {
   const { data, error } = await supabase
     .from('tables')
     .select('*')
+    .eq('restaurant_id', restaurantId)
     .eq('table_number', tableNumber)
     .single();
 
@@ -307,7 +372,7 @@ const getTableByNumber = async (tableNumber) => {
   };
 };
 
-const updateTable = async (recordId, fields) => {
+const updateTable = async (restaurantId, recordId, fields) => {
   const updates = {};
 
   if (fields['Status']) updates.status = fields['Status'];
@@ -318,6 +383,7 @@ const updateTable = async (recordId, fields) => {
   const { data, error } = await supabase
     .from('tables')
     .update(updates)
+    .eq('restaurant_id', restaurantId)
     .eq('id', recordId)
     .select()
     .single();
@@ -348,19 +414,21 @@ const updateTable = async (recordId, fields) => {
   };
 };
 
-const updateTableStatus = async (recordId, status) => {
-  return updateTable(recordId, { 'Status': status });
+const updateTableStatus = async (restaurantId, recordId, status) => {
+  return updateTable(restaurantId, recordId, { 'Status': status });
 };
 
 /**
  * Create a new table
+ * @param {string} restaurantId - Restaurant UUID
  * @param {Object} fields - Table fields
  * @returns {Object} Created table
  */
-const createTable = async (fields) => {
+const createTable = async (restaurantId, fields) => {
   const { data, error } = await supabase
     .from('tables')
     .insert({
+      restaurant_id: restaurantId,
       table_number: fields.table_number,
       capacity: fields.capacity,
       location: fields.location || 'Main',
@@ -422,11 +490,12 @@ const createTable = async (fields) => {
 
 /**
  * Update table with all configuration fields
+ * @param {string} restaurantId - Restaurant UUID
  * @param {string} tableId - Table UUID
  * @param {Object} fields - Fields to update
  * @returns {Object} Updated table
  */
-const updateTableConfig = async (tableId, fields) => {
+const updateTableConfig = async (restaurantId, tableId, fields) => {
   const updates = {};
 
   // Basic fields
@@ -462,6 +531,7 @@ const updateTableConfig = async (tableId, fields) => {
   const { data, error } = await supabase
     .from('tables')
     .update(updates)
+    .eq('restaurant_id', restaurantId)
     .eq('id', tableId)
     .select()
     .single();
@@ -503,10 +573,11 @@ const updateTableConfig = async (tableId, fields) => {
 
 /**
  * Update multiple table positions in bulk (for floor plan editor)
+ * @param {string} restaurantId - Restaurant UUID
  * @param {Array} tablePositions - Array of {id, position_x, position_y, width, height, rotation}
  * @returns {Object} Result
  */
-const updateTablePositions = async (tablePositions) => {
+const updateTablePositions = async (restaurantId, tablePositions) => {
   const results = [];
   const errors = [];
 
@@ -520,6 +591,7 @@ const updateTablePositions = async (tablePositions) => {
         height: pos.height !== undefined ? pos.height : 1,
         rotation: pos.rotation !== undefined ? pos.rotation : 0
       })
+      .eq('restaurant_id', restaurantId)
       .eq('id', pos.id)
       .select()
       .single();
@@ -552,15 +624,16 @@ const updateTablePositions = async (tablePositions) => {
 
 /**
  * Link two tables together (bidirectional)
+ * @param {string} restaurantId - Restaurant UUID
  * @param {string} tableId1 - First table UUID
  * @param {string} tableId2 - Second table UUID
  * @returns {Object} Result
  */
-const linkTables = async (tableId1, tableId2) => {
+const linkTables = async (restaurantId, tableId1, tableId2) => {
   // Get both tables
   const [result1, result2] = await Promise.all([
-    getTableById(tableId1),
-    getTableById(tableId2)
+    getTableById(restaurantId, tableId1),
+    getTableById(restaurantId, tableId2)
   ]);
 
   if (!result1.success || !result2.success) {
@@ -576,8 +649,8 @@ const linkTables = async (tableId1, tableId2) => {
 
   // Update both tables
   const [update1, update2] = await Promise.all([
-    supabase.from('tables').update({ joinable_with: newJoinable1 }).eq('id', tableId1),
-    supabase.from('tables').update({ joinable_with: newJoinable2 }).eq('id', tableId2)
+    supabase.from('tables').update({ joinable_with: newJoinable1 }).eq('restaurant_id', restaurantId).eq('id', tableId1),
+    supabase.from('tables').update({ joinable_with: newJoinable2 }).eq('restaurant_id', restaurantId).eq('id', tableId2)
   ]);
 
   if (update1.error || update2.error) {
@@ -593,15 +666,16 @@ const linkTables = async (tableId1, tableId2) => {
 
 /**
  * Unlink two tables (bidirectional)
+ * @param {string} restaurantId - Restaurant UUID
  * @param {string} tableId1 - First table UUID
  * @param {string} tableId2 - Second table UUID
  * @returns {Object} Result
  */
-const unlinkTables = async (tableId1, tableId2) => {
+const unlinkTables = async (restaurantId, tableId1, tableId2) => {
   // Get both tables
   const [result1, result2] = await Promise.all([
-    getTableById(tableId1),
-    getTableById(tableId2)
+    getTableById(restaurantId, tableId1),
+    getTableById(restaurantId, tableId2)
   ]);
 
   if (!result1.success || !result2.success) {
@@ -617,8 +691,8 @@ const unlinkTables = async (tableId1, tableId2) => {
 
   // Update both tables
   const [update1, update2] = await Promise.all([
-    supabase.from('tables').update({ joinable_with: newJoinable1 }).eq('id', tableId1),
-    supabase.from('tables').update({ joinable_with: newJoinable2 }).eq('id', tableId2)
+    supabase.from('tables').update({ joinable_with: newJoinable1 }).eq('restaurant_id', restaurantId).eq('id', tableId1),
+    supabase.from('tables').update({ joinable_with: newJoinable2 }).eq('restaurant_id', restaurantId).eq('id', tableId2)
   ]);
 
   if (update1.error || update2.error) {
@@ -634,13 +708,15 @@ const unlinkTables = async (tableId1, tableId2) => {
 
 /**
  * Soft delete a table (set is_active = false)
+ * @param {string} restaurantId - Restaurant UUID
  * @param {string} tableId - Table UUID
  * @returns {Object} Result
  */
-const deleteTable = async (tableId) => {
+const deleteTable = async (restaurantId, tableId) => {
   const { data, error } = await supabase
     .from('tables')
     .update({ is_active: false })
+    .eq('restaurant_id', restaurantId)
     .eq('id', tableId)
     .select()
     .single();
@@ -656,13 +732,15 @@ const deleteTable = async (tableId) => {
 
 /**
  * Get a single table by ID with full details
+ * @param {string} restaurantId - Restaurant UUID
  * @param {string} tableId - Table UUID
  * @returns {Object} Table details
  */
-const getTableById = async (tableId) => {
+const getTableById = async (restaurantId, tableId) => {
   const { data, error } = await supabase
     .from('tables')
     .select('*')
+    .eq('restaurant_id', restaurantId)
     .eq('id', tableId)
     .single();
 
@@ -703,12 +781,14 @@ const getTableById = async (tableId) => {
 
 /**
  * Get all tables including inactive ones (for admin)
+ * @param {string} restaurantId - Restaurant UUID
  * @returns {Object} All tables
  */
-const getAllTablesAdmin = async () => {
+const getAllTablesAdmin = async (restaurantId) => {
   const { data, error } = await supabase
     .from('tables')
     .select('*')
+    .eq('restaurant_id', restaurantId)
     .order('table_number', { ascending: true });
 
   if (error) return handleSupabaseResponse(null, error, 'GET all tables admin');
@@ -749,8 +829,9 @@ const getAllTablesAdmin = async () => {
 
 // ============ SERVICE RECORDS ============
 
-const getServiceRecords = async (filter = {}) => {
-  let query = supabase.from('service_records').select('*');
+const getServiceRecords = async (restaurantId, filter = {}) => {
+  let query = supabase.from('service_records').select('*')
+    .eq('restaurant_id', restaurantId);
 
   if (filter.status) {
     query = query.eq('status', filter.status);
@@ -783,10 +864,11 @@ const getServiceRecords = async (filter = {}) => {
   };
 };
 
-const getActiveServiceRecords = async () => {
+const getActiveServiceRecords = async (restaurantId) => {
   const { data, error } = await supabase
     .from('service_records')
     .select('*')
+    .eq('restaurant_id', restaurantId)
     .eq('status', 'active');
 
   if (error) return handleSupabaseResponse(null, error, 'GET active service records');
@@ -811,10 +893,11 @@ const getActiveServiceRecords = async () => {
   };
 };
 
-const createServiceRecord = async (fields) => {
+const createServiceRecord = async (restaurantId, fields) => {
   const { data, error } = await supabase
     .from('service_records')
     .insert({
+      restaurant_id: restaurantId,
       service_id: fields['Service ID'],
       reservation_id: fields['Reservation ID'] || null,
       customer_name: fields['Customer Name'],
@@ -844,7 +927,7 @@ const createServiceRecord = async (fields) => {
   };
 };
 
-const updateServiceRecord = async (serviceId, fields) => {
+const updateServiceRecord = async (restaurantId, serviceId, fields) => {
   const updates = {};
 
   if (fields['Status']) updates.status = fields['Status'];
@@ -855,6 +938,7 @@ const updateServiceRecord = async (serviceId, fields) => {
   const { data, error } = await supabase
     .from('service_records')
     .update(updates)
+    .eq('restaurant_id', restaurantId)
     .eq('service_id', serviceId)
     .select()
     .single();
@@ -876,17 +960,18 @@ const updateServiceRecord = async (serviceId, fields) => {
   };
 };
 
-const completeServiceRecord = async (serviceId) => {
-  return updateServiceRecord(serviceId, {
+const completeServiceRecord = async (restaurantId, serviceId) => {
+  return updateServiceRecord(restaurantId, serviceId, {
     'Status': 'completed',
     'Actual Departure': new Date().toISOString()
   });
 };
 
-const deleteServiceRecord = async (serviceId) => {
+const deleteServiceRecord = async (restaurantId, serviceId) => {
   const { data, error } = await supabase
     .from('service_records')
     .delete()
+    .eq('restaurant_id', restaurantId)
     .eq('service_id', serviceId)
     .select();
 
@@ -901,11 +986,13 @@ const deleteServiceRecord = async (serviceId) => {
 
 // ============ RESTAURANT INFO ============
 
-const getRestaurantInfo = async () => {
+const getRestaurantInfo = async (restaurantId) => {
+  // Query restaurant_config in the restaurant schema by ID
   const { data, error } = await supabase
-    .from('restaurant_info')
+    .schema('restaurant')
+    .from('restaurant_config')
     .select('*')
-    .limit(1)
+    .eq('id', restaurantId)
     .single();
 
   if (error) return handleSupabaseResponse(null, error, 'GET restaurant info');
@@ -929,12 +1016,13 @@ const getRestaurantInfo = async () => {
   };
 };
 
-const updateRestaurantPlan = async (plan, customerEmail = null) => {
-  // Get current restaurant info
+const updateRestaurantPlan = async (restaurantId, plan, customerEmail = null) => {
+  // Get current restaurant config
   const { data: current, error: fetchError } = await supabase
-    .from('restaurant_info')
+    .schema('restaurant')
+    .from('restaurant_config')
     .select('id, metric_profile')
-    .limit(1)
+    .eq('id', restaurantId)
     .single();
 
   if (fetchError) return handleSupabaseResponse(null, fetchError, 'FETCH restaurant info for plan update');
@@ -951,9 +1039,10 @@ const updateRestaurantPlan = async (plan, customerEmail = null) => {
   }
 
   const { data, error } = await supabase
-    .from('restaurant_info')
+    .schema('restaurant')
+    .from('restaurant_config')
     .update({ metric_profile: updatedProfile })
-    .eq('id', current.id)
+    .eq('id', restaurantId)
     .select()
     .single();
 
@@ -970,8 +1059,9 @@ const updateRestaurantPlan = async (plan, customerEmail = null) => {
 
 // ============ SUBSCRIPTIONS ============
 
-const getSubscriptions = async (filter = {}) => {
-  let query = supabase.from('subscriptions').select('*');
+const getSubscriptions = async (restaurantId, filter = {}) => {
+  let query = supabase.from('subscriptions').select('*')
+    .eq('restaurant_id', restaurantId);
 
   if (filter.customer_id) {
     query = query.eq('customer_id', filter.customer_id);
@@ -1007,8 +1097,8 @@ const getSubscriptions = async (filter = {}) => {
   };
 };
 
-const getSubscriptionByCustomerId = async (customerId) => {
-  const result = await getSubscriptions({ customer_id: customerId });
+const getSubscriptionByCustomerId = async (restaurantId, customerId) => {
+  const result = await getSubscriptions(restaurantId, { customer_id: customerId });
 
   if (result.success && result.data.records && result.data.records.length > 0) {
     const subscription = result.data.records[0];
@@ -1038,11 +1128,12 @@ const getSubscriptionByCustomerId = async (customerId) => {
   };
 };
 
-const getSubscriptionByEmail = async (email) => {
+const getSubscriptionByEmail = async (restaurantId, email) => {
   // First, try to get from subscriptions table
   const { data: subscriptions, error: subError } = await supabase
     .from('subscriptions')
     .select('*')
+    .eq('restaurant_id', restaurantId)
     .eq('customer_email', email)
     .limit(1);
 
@@ -1067,30 +1158,31 @@ const getSubscriptionByEmail = async (email) => {
     };
   }
 
-  // Fallback: Check restaurant_info.metric_profile.plan (set during onboarding)
-  const { data: restaurantInfo, error: infoError } = await supabase
-    .from('restaurant_info')
+  // Fallback: Check restaurant_config.metric_profile.plan (set during onboarding)
+  const { data: restaurantConfig, error: infoError } = await supabase
+    .schema('restaurant')
+    .from('restaurant_config')
     .select('id, metric_profile')
-    .limit(1)
+    .eq('id', restaurantId)
     .single();
 
-  if (!infoError && restaurantInfo && restaurantInfo.metric_profile?.plan) {
-    const plan = restaurantInfo.metric_profile.plan;
+  if (!infoError && restaurantConfig && restaurantConfig.metric_profile?.plan) {
+    const plan = restaurantConfig.metric_profile.plan;
     return {
       success: true,
       subscription: {
         subscription_id: 'onboarding-plan',
         customer_id: null,
-        customer_email: restaurantInfo.metric_profile.customer_email || email,
+        customer_email: restaurantConfig.metric_profile.customer_email || email,
         plan_name: plan,
         price_id: null,
         status: 'active',  // Assume active if set in onboarding
-        current_period_start: restaurantInfo.metric_profile.onboarding_completed_at,
+        current_period_start: restaurantConfig.metric_profile.onboarding_completed_at,
         current_period_end: null,  // No end date for onboarding plans
         trial_end: null,
         canceled_at: null,
-        created_at: restaurantInfo.metric_profile.onboarding_completed_at,
-        record_id: restaurantInfo.id
+        created_at: restaurantConfig.metric_profile.onboarding_completed_at,
+        record_id: restaurantConfig.id
       }
     };
   }
@@ -1102,10 +1194,11 @@ const getSubscriptionByEmail = async (email) => {
   };
 };
 
-const createSubscription = async (fields) => {
+const createSubscription = async (restaurantId, fields) => {
   const { data, error } = await supabase
     .from('subscriptions')
     .insert({
+      restaurant_id: restaurantId,
       subscription_id: fields['Subscription ID'],
       customer_id: fields['Customer ID'],
       customer_email: fields['Customer Email'],
@@ -1133,7 +1226,7 @@ const createSubscription = async (fields) => {
   };
 };
 
-const updateSubscription = async (subscriptionId, fields) => {
+const updateSubscription = async (restaurantId, subscriptionId, fields) => {
   const updates = {};
 
   if (fields['Status']) updates.status = fields['Status'];
@@ -1144,6 +1237,7 @@ const updateSubscription = async (subscriptionId, fields) => {
   const { data, error } = await supabase
     .from('subscriptions')
     .update(updates)
+    .eq('restaurant_id', restaurantId)
     .eq('subscription_id', subscriptionId)
     .select()
     .single();
@@ -1162,8 +1256,8 @@ const updateSubscription = async (subscriptionId, fields) => {
   };
 };
 
-const cancelSubscription = async (subscriptionId) => {
-  return updateSubscription(subscriptionId, {
+const cancelSubscription = async (restaurantId, subscriptionId) => {
+  return updateSubscription(restaurantId, subscriptionId, {
     'Status': 'canceled',
     'Canceled At': new Date().toISOString().split('T')[0]
   });
@@ -1178,8 +1272,9 @@ const generateServiceId = generateSecureServiceId;
 
 // ============ RESERVATION HELPERS ============
 
-const findReservation = async ({ reservation_id, customer_phone, customer_name }) => {
-  let query = supabase.from('reservations').select('*');
+const findReservation = async (restaurantId, { reservation_id, customer_phone, customer_name }) => {
+  let query = supabase.from('reservations').select('*')
+    .eq('restaurant_id', restaurantId);
 
   if (reservation_id) {
     query = query.eq('reservation_id', reservation_id);
@@ -1215,14 +1310,14 @@ const findReservation = async ({ reservation_id, customer_phone, customer_name }
   };
 };
 
-const cancelReservation = async (reservationId) => {
-  const result = await findReservation({ reservation_id: reservationId });
+const cancelReservation = async (restaurantId, reservationId) => {
+  const result = await findReservation(restaurantId, { reservation_id: reservationId });
 
   if (!result.success) {
     return result;
   }
 
-  const updateResult = await updateReservation(result.reservation.record_id, {
+  const updateResult = await updateReservation(restaurantId, result.reservation.record_id, {
     'Status': 'cancelled'
   });
 
@@ -1237,8 +1332,8 @@ const cancelReservation = async (reservationId) => {
   };
 };
 
-const markReservationAsNoShow = async (recordId) => {
-  const updateResult = await updateReservation(recordId, {
+const markReservationAsNoShow = async (restaurantId, recordId) => {
+  const updateResult = await updateReservation(restaurantId, recordId, {
     'Status': 'no-show',
     'Notes': 'Automatically marked as no-show - 20+ minutes late without check-in'
   });
@@ -1254,14 +1349,16 @@ const markReservationAsNoShow = async (recordId) => {
   };
 };
 
-const getUpcomingReservations = async () => {
-  const now = new Date();
-  const today = now.toISOString().split('T')[0];
+const getUpcomingReservations = async (restaurantId, timezone) => {
+  // Use restaurant-local time to determine "today" and "now"
+  const today = timezone ? getLocalDate(timezone) : new Date().toISOString().split('T')[0];
+  const currentTime = timezone ? getLocalTime(timezone) : new Date().toTimeString().slice(0, 5);
 
   const { data, error } = await supabase
     .from('reservations')
     .select('*')
-    .or(`date.gt.${today},and(date.eq.${today},time.gte.${now.toTimeString().slice(0, 5)})`)
+    .eq('restaurant_id', restaurantId)
+    .or(`date.gt.${today},and(date.eq.${today},time.gte.${currentTime})`)
     .in('status', ['confirmed', 'waitlist'])
     .order('date', { ascending: true })
     .order('time', { ascending: true });
@@ -1301,10 +1398,11 @@ const getUpcomingReservations = async () => {
 
 // ============ TABLE HELPERS ============
 
-const getAllTables = async () => {
+const getAllTables = async (restaurantId) => {
   const { data, error } = await supabase
     .from('tables')
     .select('*')
+    .eq('restaurant_id', restaurantId)
     .eq('is_active', true)
     .order('table_number', { ascending: true });
 
@@ -1347,9 +1445,10 @@ const getAllTables = async () => {
  * Calculate total available covers (seats) for a given time slot
  * This includes both single tables AND potential combinations of flexible tables
  * Used to answer "Do you have space for X people?" without exposing table details
+ * @param {string} restaurantId - Restaurant UUID
  */
-const calculateAvailableCovers = async () => {
-  const tablesResult = await getAllTables();
+const calculateAvailableCovers = async (restaurantId) => {
+  const tablesResult = await getAllTables(restaurantId);
   if (!tablesResult.success) return { success: false, available_covers: 0 };
 
   const availableTables = tablesResult.tables.filter(t => t.status === 'available');
@@ -1446,9 +1545,11 @@ const canCombineTables = (table1, table2) => {
 /**
  * Check if restaurant can accommodate a party of given size
  * Returns true/false without exposing internal table details
+ * @param {string} restaurantId - Restaurant UUID
+ * @param {number} partySize - Number of guests
  */
-const canAccommodateParty = async (partySize) => {
-  const tablesResult = await getAllTables();
+const canAccommodateParty = async (restaurantId, partySize) => {
+  const tablesResult = await getAllTables(restaurantId);
   if (!tablesResult.success) return { success: false, can_accommodate: false };
 
   const availableTables = tablesResult.tables.filter(t => t.status === 'available');
@@ -1596,8 +1697,11 @@ const findBestTableCombination = (availableTables, partySize) => {
 };
 
 module.exports = {
-  // Raw Supabase client for advanced queries
-  query: supabase,
+  // Supabase clients
+  query: supabase,              // Primary client (admin) – backwards compatible
+  supabaseAdmin,                // Explicit admin client (bypasses RLS)
+  supabaseClient,               // Anon-key client (respects RLS)
+  createAuthClient,             // Factory: per-request client with user JWT
 
   // Reservations
   getReservations,

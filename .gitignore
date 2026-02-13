@@ -35,3 +35,4 @@ scripts/train-ml-model.py
 lambda/package/
 lambda/lambda-package.zip
 lambda/trust-policy.json
+.env*.local

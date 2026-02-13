@@ -1,3 +1,0 @@
-  // Allow flexible formats with spaces, dashes, dots, parentheses
-  // Examples: +34 611 22 33 44, (555) 123-4567, +1-555-123-4567
-  const phonePattern = /^[\+]?[\d\s\-\(\)\.]+$/;

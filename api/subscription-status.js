@@ -26,8 +26,11 @@ module.exports = async (req, res) => {
   if (auth.error) {
     return res.status(auth.status).json({ error: auth.error });
   }
+  req.user = auth.user;
 
   try {
+    const restaurantId = req.user.restaurant_id;
+
     // Get customer email from query params
     const customerEmail = req.query.email;
 
@@ -39,7 +42,7 @@ module.exports = async (req, res) => {
     }
 
     // Get subscription from database
-    const result = await getSubscriptionByEmail(customerEmail);
+    const result = await getSubscriptionByEmail(restaurantId, customerEmail);
 
     if (!result.success) {
       return res.status(404).json({

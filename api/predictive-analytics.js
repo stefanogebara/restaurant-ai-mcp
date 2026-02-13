@@ -175,11 +175,11 @@ async function predictNoShowRisks() {
 /**
  * Calculate revenue optimization opportunities
  */
-async function getRevenueOpportunities() {
+async function getRevenueOpportunities(restaurantId) {
   const results = await Promise.all([
     getAllReservations(),
-    getActiveServiceRecords(),
-    getAllTables()
+    getActiveServiceRecords(restaurantId),
+    getAllTables(restaurantId)
   ]);
 
   const reservationsResult = results[0];
@@ -344,7 +344,7 @@ module.exports = async (req, res) => {
   }
 
   // Apply rate limiting (60 requests per minute)
-  const rateLimited = checkAndApplyRateLimit(req, res, 'api');
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'api');
   if (rateLimited) return; // 429 response already sent
 
   // Verify authentication
@@ -368,19 +368,20 @@ module.exports = async (req, res) => {
   if (!featureAllowed) return; // Response already sent by middleware
 
   try {
+    const restaurantId = req.user.restaurant_id;
     const { type } = req.query;
 
     if (type === 'no-show') {
       const result = await predictNoShowRisks();
       return res.status(200).json(result);
     } else if (type === 'revenue') {
-      const result = await getRevenueOpportunities();
+      const result = await getRevenueOpportunities(restaurantId);
       return res.status(200).json(result);
     } else {
       // Return both by default
       const [noShowResult, revenueResult] = await Promise.all([
         predictNoShowRisks(),
-        getRevenueOpportunities()
+        getRevenueOpportunities(restaurantId)
       ]);
 
       return res.status(200).json({

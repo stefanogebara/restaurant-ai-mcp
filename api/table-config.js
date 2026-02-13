@@ -30,24 +30,25 @@ module.exports = async (req, res) => {
     return res.status(auth.status).json({ error: auth.error });
   }
 
+  const restaurantId = auth.user.restaurant_id;
   const { action } = req.query;
 
   try {
     switch (action) {
       case 'list':
-        return await handleListTables(req, res);
+        return await handleListTables(req, res, restaurantId);
       case 'get':
-        return await handleGetTable(req, res);
+        return await handleGetTable(req, res, restaurantId);
       case 'create':
-        return await handleCreateTable(req, res);
+        return await handleCreateTable(req, res, restaurantId);
       case 'update':
-        return await handleUpdateTable(req, res);
+        return await handleUpdateTable(req, res, restaurantId);
       case 'delete':
-        return await handleDeleteTable(req, res);
+        return await handleDeleteTable(req, res, restaurantId);
       case 'set-adjacency':
-        return await handleSetAdjacency(req, res);
+        return await handleSetAdjacency(req, res, restaurantId);
       case 'bulk-update':
-        return await handleBulkUpdate(req, res);
+        return await handleBulkUpdate(req, res, restaurantId);
       default:
         return res.status(400).json({
           success: false,
@@ -67,8 +68,8 @@ module.exports = async (req, res) => {
  * List all tables with full configuration details
  * GET /api/table-config?action=list
  */
-async function handleListTables(req, res) {
-  const result = await getAllTablesAdmin();
+async function handleListTables(req, res, restaurantId) {
+  const result = await getAllTablesAdmin(restaurantId);
 
   if (!result.success) {
     return res.status(500).json({
@@ -112,7 +113,7 @@ async function handleListTables(req, res) {
  * Get single table details
  * GET /api/table-config?action=get&table_id=<uuid>
  */
-async function handleGetTable(req, res) {
+async function handleGetTable(req, res, restaurantId) {
   const { table_id } = req.query;
 
   if (!table_id) {
@@ -122,7 +123,7 @@ async function handleGetTable(req, res) {
     });
   }
 
-  const result = await getTableById(table_id);
+  const result = await getTableById(restaurantId, table_id);
 
   if (!result.success) {
     return res.status(404).json({
@@ -142,7 +143,7 @@ async function handleGetTable(req, res) {
  * POST /api/table-config?action=create
  * Body: { table_number, capacity, location, is_fixed, combination_group }
  */
-async function handleCreateTable(req, res) {
+async function handleCreateTable(req, res, restaurantId) {
   const { table_number, capacity, location, is_fixed, combination_group, min_capacity, max_capacity } = req.body;
 
   // Validation
@@ -160,7 +161,7 @@ async function handleCreateTable(req, res) {
     });
   }
 
-  const result = await createTable({
+  const result = await createTable(restaurantId, {
     table_number: parseInt(table_number),
     capacity: parseInt(capacity),
     location: location || 'Main',
@@ -189,7 +190,7 @@ async function handleCreateTable(req, res) {
  * PUT /api/table-config?action=update
  * Body: { table_id, ...fields }
  */
-async function handleUpdateTable(req, res) {
+async function handleUpdateTable(req, res, restaurantId) {
   const { table_id, ...fields } = req.body;
 
   if (!table_id) {
@@ -214,7 +215,7 @@ async function handleUpdateTable(req, res) {
     });
   }
 
-  const result = await updateTableConfig(table_id, fields);
+  const result = await updateTableConfig(restaurantId, table_id, fields);
 
   if (!result.success) {
     return res.status(500).json({
@@ -235,7 +236,7 @@ async function handleUpdateTable(req, res) {
  * DELETE /api/table-config?action=delete
  * Body: { table_id }
  */
-async function handleDeleteTable(req, res) {
+async function handleDeleteTable(req, res, restaurantId) {
   const { table_id } = req.body;
 
   if (!table_id) {
@@ -246,7 +247,7 @@ async function handleDeleteTable(req, res) {
   }
 
   // First check if table has active service
-  const tableResult = await getTableById(table_id);
+  const tableResult = await getTableById(restaurantId, table_id);
   if (!tableResult.success) {
     return res.status(404).json({
       success: false,
@@ -261,7 +262,7 @@ async function handleDeleteTable(req, res) {
     });
   }
 
-  const result = await deleteTable(table_id);
+  const result = await deleteTable(restaurantId, table_id);
 
   if (!result.success) {
     return res.status(500).json({
@@ -284,7 +285,7 @@ async function handleDeleteTable(req, res) {
  * This creates a bidirectional relationship - if A is adjacent to B,
  * B is also adjacent to A.
  */
-async function handleSetAdjacency(req, res) {
+async function handleSetAdjacency(req, res, restaurantId) {
   const { table_id, adjacent_table_ids } = req.body;
 
   if (!table_id) {
@@ -302,7 +303,7 @@ async function handleSetAdjacency(req, res) {
   }
 
   // Update the main table
-  const result = await updateTableConfig(table_id, {
+  const result = await updateTableConfig(restaurantId, table_id, {
     adjacent_tables: adjacent_table_ids
   });
 
@@ -315,11 +316,11 @@ async function handleSetAdjacency(req, res) {
 
   // Update reverse relationships (bidirectional)
   const updatePromises = adjacent_table_ids.map(async (adjTableId) => {
-    const adjTable = await getTableById(adjTableId);
+    const adjTable = await getTableById(restaurantId, adjTableId);
     if (adjTable.success) {
       const currentAdjacent = adjTable.table.adjacent_tables || [];
       if (!currentAdjacent.includes(table_id)) {
-        await updateTableConfig(adjTableId, {
+        await updateTableConfig(restaurantId, adjTableId, {
           adjacent_tables: [...currentAdjacent, table_id]
         });
       }
@@ -340,7 +341,7 @@ async function handleSetAdjacency(req, res) {
  * POST /api/table-config?action=bulk-update
  * Body: { updates: [{ table_id, ...fields }, ...] }
  */
-async function handleBulkUpdate(req, res) {
+async function handleBulkUpdate(req, res, restaurantId) {
   const { updates } = req.body;
 
   if (!Array.isArray(updates) || updates.length === 0) {
@@ -363,7 +364,7 @@ async function handleBulkUpdate(req, res) {
       if (!table_id) {
         return { success: false, error: 'Missing table_id' };
       }
-      return await updateTableConfig(table_id, fields);
+      return await updateTableConfig(restaurantId, table_id, fields);
     })
   );
 

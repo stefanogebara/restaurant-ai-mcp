@@ -17,21 +17,28 @@ const supabase = createClient(
 
 /**
  * Get the count of reservations for the current month
+ * @param {string} restaurantId - Restaurant ID for multi-tenancy
  * @param {string} customerEmail - Customer email to count reservations for
  * @returns {Promise<number>} Count of reservations this month
  */
-async function getMonthlyReservationCount(customerEmail) {
+async function getMonthlyReservationCount(restaurantId, customerEmail) {
   const now = new Date();
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
   const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
 
-  const { count, error } = await supabase
+  let query = supabase
     .from('reservations')
     .select('*', { count: 'exact', head: true })
     .eq('customer_email', customerEmail)
     .gte('date', firstDayOfMonth)
     .lte('date', lastDayOfMonth)
     .in('status', ['Confirmed', 'Seated', 'Completed']);
+
+  if (restaurantId) {
+    query = query.eq('restaurant_id', restaurantId);
+  }
+
+  const { count, error } = await query;
 
   if (error) {
     console.error('[SubscriptionMiddleware] Error counting reservations:', error);
@@ -49,6 +56,9 @@ async function getMonthlyReservationCount(customerEmail) {
  */
 async function checkSubscription(req, res, next) {
   try {
+    // Get restaurant ID from authenticated user for multi-tenancy
+    const restaurantId = req.user?.restaurant_id;
+
     // Get customer email from request - prioritize authenticated user, then fall back to other sources
     const customerEmail = req.user?.email || req.body?.customer_email || req.query?.customer_email || req.headers?.['x-customer-email'];
 
@@ -61,7 +71,7 @@ async function checkSubscription(req, res, next) {
     }
 
     // Get subscription from database
-    const result = await getSubscriptionByEmail(customerEmail);
+    const result = await getSubscriptionByEmail(restaurantId, customerEmail);
 
     if (!result.success) {
       return res.status(403).json({
@@ -151,7 +161,8 @@ async function checkReservationLimits(req, res, next) {
     }
 
     // For Basic plan, check monthly reservation count
-    const currentMonthReservations = await getMonthlyReservationCount(req.customerEmail);
+    const restaurantId = req.user?.restaurant_id;
+    const currentMonthReservations = await getMonthlyReservationCount(restaurantId, req.customerEmail);
 
     const limitCheck = checkReservationLimit(plan, currentMonthReservations);
 

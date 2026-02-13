@@ -95,7 +95,7 @@ export default function VoiceGrid({
     <div>
       {source === 'own_voices_fallback' && (
         <p className="text-xs text-[#57534E] bg-[#F5F5F4] rounded-lg px-3 py-2 mb-3">
-          Showing curated voices. Upgrade your ElevenLabs plan for access to 10,000+ voices.
+          Showing curated voices. Contact support to unlock the full voice library.
         </p>
       )}
 

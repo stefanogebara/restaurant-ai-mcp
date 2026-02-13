@@ -45,12 +45,12 @@ async function getAllServiceRecordsData() {
   }
 }
 
-async function calculateAnalytics() {
+async function calculateAnalytics(restaurantId) {
   const results = await Promise.all([
     getAllReservations(),
     getAllServiceRecordsData(),
-    getAllTables(),
-    getActiveServiceRecords()
+    getAllTables(restaurantId),
+    getActiveServiceRecords(restaurantId)
   ]);
   
   const reservationsResult = results[0];
@@ -207,7 +207,7 @@ module.exports = async (req, res) => {
   }
 
   // Apply rate limiting (60 requests per minute)
-  const rateLimited = checkAndApplyRateLimit(req, res, 'api');
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'api');
   if (rateLimited) return; // 429 response already sent
 
   // Verify authentication
@@ -231,7 +231,8 @@ module.exports = async (req, res) => {
   if (!featureAllowed) return; // Response already sent by middleware
 
   try {
-    const result = await calculateAnalytics();
+    const restaurantId = req.user.restaurant_id;
+    const result = await calculateAnalytics(restaurantId);
     return res.status(200).json(result);
   } catch (error) {
     console.error('Analytics error:', error);

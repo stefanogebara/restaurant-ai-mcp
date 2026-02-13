@@ -13,11 +13,20 @@ module.exports = async (req, res) => {
   }
 
   // Apply rate limiting (60 requests per minute)
-  const rateLimited = checkAndApplyRateLimit(req, res, 'api');
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'api');
   if (rateLimited) return; // 429 response already sent
 
   try {
-    const { date, time, party_size } = req.method === 'POST' ? req.body : req.query;
+    const params = req.method === 'POST' ? req.body : req.query;
+    const { date, time, party_size, restaurant_id: restaurantId } = params;
+
+    if (!restaurantId) {
+      return res.status(400).json({
+        success: false,
+        error: true,
+        message: 'Missing required parameter: restaurant_id'
+      });
+    }
 
     if (!date || !time || !party_size) {
       return res.status(400).json({
@@ -28,7 +37,7 @@ module.exports = async (req, res) => {
     }
 
     // Get restaurant info
-    const restaurantResult = await getRestaurantInfo();
+    const restaurantResult = await getRestaurantInfo(restaurantId);
     if (!restaurantResult.success) {
       return res.status(500).json(restaurantResult);
     }
@@ -45,10 +54,11 @@ module.exports = async (req, res) => {
     const capacity = restaurant.fields.Capacity || 60;
     const openTime = restaurant.fields['Opening Time'] || '17:00';
     const closeTime = restaurant.fields['Closing Time'] || '22:00';
+    const timezone = restaurant.fields.Timezone || 'UTC';
 
     // Get existing reservations for that date
     const filter = `AND(IS_SAME({Date}, '${date}', 'day'), OR({Status} = 'Confirmed', {Status} = 'Seated'))`;
-    const reservationsResult = await getReservations(filter);
+    const reservationsResult = await getReservations(restaurantId, filter);
 
     if (!reservationsResult.success) {
       return res.status(500).json(reservationsResult);
@@ -70,6 +80,7 @@ module.exports = async (req, res) => {
         success: true,
         available: true,
         message: `Yes, we have availability for ${partySize} guests on ${date} at ${time}`,
+        timezone,
         details: {
           estimated_duration: `${availabilityCheck.estimatedDuration} minutes`,
           occupied_seats: availabilityCheck.occupiedSeats,

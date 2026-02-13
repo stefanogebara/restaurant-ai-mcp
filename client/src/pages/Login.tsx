@@ -1,6 +1,6 @@
 /**
  * Login Page
- * Google OAuth sign-in for restaurant onboarding
+ * Email/password + Google OAuth sign-in for restaurant onboarding
  * Split-screen design with branded left panel
  */
 
@@ -10,10 +10,18 @@ import { useAuth } from '../contexts/AuthContext';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { motion } from 'framer-motion';
 
+type AuthMode = 'signin' | 'signup';
+
 export default function Login() {
-  const { user, loading, signInWithGoogle } = useAuth();
+  const { user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [mode, setMode] = useState<AuthMode>('signin');
+
+  // Email/password form state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   // Redirect to welcome page if already logged in
   if (!loading && user) {
@@ -28,6 +36,29 @@ export default function Login() {
       await signInWithGoogle();
     } catch (err: any) {
       setError(err.message || 'Failed to sign in with Google');
+      setIsSigningIn(false);
+    }
+  };
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSigningIn(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      if (mode === 'signin') {
+        await signInWithEmail(email, password);
+      } else {
+        const { needsConfirmation } = await signUpWithEmail(email, password);
+        if (needsConfirmation) {
+          setSuccessMessage('Check your email for a confirmation link to complete your registration.');
+          setIsSigningIn(false);
+          return;
+        }
+      }
+    } catch (err: any) {
+      setError(err.message || `Failed to ${mode === 'signin' ? 'sign in' : 'create account'}`);
       setIsSigningIn(false);
     }
   };
@@ -161,17 +192,17 @@ export default function Login() {
         >
           <div className="bg-white border border-[#E7E5E4] rounded-[2rem] p-10 shadow-xl">
             {/* Logo and Title */}
-            <div className="text-center mb-10">
+            <div className="text-center mb-8">
               <Link to="/" className="inline-block mb-6 lg:hidden">
                 <span className="font-serif text-3xl tracking-tight text-[#1C1917]">
                   Seatable<span className="text-[#9F1239]">.</span>
                 </span>
               </Link>
               <h1 className="font-serif text-2xl text-[#1C1917] mb-2">
-                Welcome back
+                {mode === 'signin' ? 'Welcome back' : 'Create your account'}
               </h1>
               <p className="text-[#57534E] font-light">
-                Sign in to manage your restaurant
+                {mode === 'signin' ? 'Sign in to manage your restaurant' : 'Start your 14-day free trial'}
               </p>
             </div>
 
@@ -186,20 +217,31 @@ export default function Login() {
               </motion.div>
             )}
 
+            {/* Success Message */}
+            {successMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm"
+              >
+                {successMessage}
+              </motion.div>
+            )}
+
             {/* Google Sign In Button */}
             <button
               onClick={handleGoogleSignIn}
               disabled={isSigningIn}
               className={`
                 w-full flex items-center justify-center gap-3 px-6 py-4
-                bg-[#1C1917] hover:bg-[#9F1239]
-                text-white font-bold text-sm tracking-widest uppercase rounded-2xl
-                transition-all duration-300 shadow-lg
-                ${isSigningIn ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-xl hover:shadow-[#9F1239]/20'}
+                bg-white border-2 border-[#E7E5E4] hover:border-[#1C1917]
+                text-[#1C1917] font-medium text-sm rounded-2xl
+                transition-all duration-300
+                ${isSigningIn ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-md'}
               `}
             >
-              {isSigningIn ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+              {isSigningIn && !email ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#1C1917] border-t-transparent"></div>
               ) : (
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
@@ -220,32 +262,93 @@ export default function Login() {
                   />
                 </svg>
               )}
-              <span>{isSigningIn ? 'Signing in...' : 'Continue with Google'}</span>
+              <span>Continue with Google</span>
             </button>
 
             {/* Divider */}
-            <div className="flex items-center gap-4 my-8">
+            <div className="flex items-center gap-4 my-6">
               <div className="flex-1 h-px bg-[#E7E5E4]"></div>
               <span className="text-xs text-[#A8A29E] uppercase tracking-wider">or</span>
               <div className="flex-1 h-px bg-[#E7E5E4]"></div>
             </div>
 
-            {/* Alternative Actions */}
-            <div className="text-center">
-              <p className="text-[#57534E] text-sm mb-4">
-                New to Seatable?
-              </p>
+            {/* Email/Password Form */}
+            <form onSubmit={handleEmailSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-[#1C1917] mb-1.5">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@restaurant.com"
+                  required
+                  className="w-full px-4 py-3 border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-all"
+                />
+              </div>
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-[#1C1917] mb-1.5">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={mode === 'signup' ? 'Min. 6 characters' : 'Your password'}
+                  required
+                  minLength={6}
+                  className="w-full px-4 py-3 border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-all"
+                />
+              </div>
+
               <button
-                onClick={handleGoogleSignIn}
+                type="submit"
                 disabled={isSigningIn}
-                className="w-full px-6 py-4 border border-[#1C1917] text-[#1C1917] font-bold text-sm tracking-widest uppercase rounded-2xl hover:bg-[#1C1917] hover:text-white transition-all duration-300"
+                className={`
+                  w-full flex items-center justify-center gap-3 px-6 py-4
+                  bg-[#1C1917] hover:bg-[#9F1239]
+                  text-white font-bold text-sm tracking-widest uppercase rounded-2xl
+                  transition-all duration-300 shadow-lg
+                  ${isSigningIn ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-xl hover:shadow-[#9F1239]/20'}
+                `}
               >
-                Create Account
+                {isSigningIn && email ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                ) : null}
+                <span>{mode === 'signin' ? 'Sign In' : 'Create Account'}</span>
               </button>
+            </form>
+
+            {/* Toggle sign-in / sign-up */}
+            <div className="text-center mt-6">
+              {mode === 'signin' ? (
+                <p className="text-[#57534E] text-sm">
+                  New to Seatable?{' '}
+                  <button
+                    onClick={() => { setMode('signup'); setError(null); setSuccessMessage(null); }}
+                    className="text-[#9F1239] font-semibold hover:underline"
+                  >
+                    Create an account
+                  </button>
+                </p>
+              ) : (
+                <p className="text-[#57534E] text-sm">
+                  Already have an account?{' '}
+                  <button
+                    onClick={() => { setMode('signin'); setError(null); setSuccessMessage(null); }}
+                    className="text-[#9F1239] font-semibold hover:underline"
+                  >
+                    Sign in
+                  </button>
+                </p>
+              )}
             </div>
 
             {/* Terms */}
-            <p className="mt-8 text-center text-xs text-[#A8A29E] font-light">
+            <p className="mt-6 text-center text-xs text-[#A8A29E] font-light">
               By continuing, you agree to our{' '}
               <a href="#" className="text-[#9F1239] hover:underline">
                 Terms of Service

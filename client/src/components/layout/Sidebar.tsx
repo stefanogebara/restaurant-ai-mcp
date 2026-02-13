@@ -37,27 +37,6 @@ const navItems: NavItem[] = [
     iconName: 'volume',
     description: 'AI Voice Settings',
     requiredFeature: 'aiAgentTracking'
-  },
-  {
-    path: '/host-dashboard/ml',
-    label: 'No-Show Prevention',
-    iconName: 'trending-up',
-    description: 'Intervention ROI',
-    requiredFeature: 'mlPerformance'
-  },
-  {
-    path: '/host-dashboard/ltv',
-    label: 'Customer LTV',
-    iconName: 'users',
-    description: 'Lifetime Value',
-    requiredFeature: 'customerLTV'
-  },
-  {
-    path: '/host-dashboard/dna',
-    label: 'Customer DNA',
-    iconName: 'dna',
-    description: 'Behavioral Profiling',
-    requiredFeature: 'customerDNA'
   }
 ];
 

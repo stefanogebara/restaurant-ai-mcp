@@ -5,7 +5,7 @@
  */
 
 const jwt = require('jsonwebtoken');
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin: supabase } = require('./supabase');
 
 // JWT_SECRET priority: explicit JWT_SECRET > Supabase JWT secret
 const JWT_SECRET = process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET;
@@ -17,10 +17,58 @@ if (!JWT_SECRET) {
   console.error('[Auth] CRITICAL: No JWT_SECRET or SUPABASE_JWT_SECRET configured. JWT signing/verification will fail. Set JWT_SECRET in environment variables.');
 }
 
-// Initialize Supabase client for user verification
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+// Cache user→restaurant mappings (TTL 5 minutes) to avoid repeated DB lookups
+const restaurantCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000;
+
+/**
+ * Look up the restaurant_id for a given user ID
+ * Uses restaurant.restaurant_config table (set during onboarding)
+ * @param {string} userId - Supabase auth user UUID
+ * @returns {string|null} restaurant_id UUID or null
+ */
+async function getRestaurantIdForUser(userId) {
+  if (!userId || !supabase) return null;
+
+  // Check cache first
+  const cached = restaurantCache.get(userId);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('id, timezone')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .limit(1)
+      .single();
+
+    if (error || !data) {
+      console.log(`[Auth] No restaurant found for user ${userId}`);
+      return null;
+    }
+
+    // Cache the result (includes both restaurantId and timezone)
+    const result = { restaurantId: data.id, timezone: data.timezone || 'UTC', timestamp: Date.now() };
+    restaurantCache.set(userId, result);
+
+    // Evict old entries if cache grows too large
+    if (restaurantCache.size > 500) {
+      const now = Date.now();
+      for (const [key, val] of restaurantCache.entries()) {
+        if (now - val.timestamp > CACHE_TTL) restaurantCache.delete(key);
+      }
+    }
+
+    return result;
+  } catch (err) {
+    console.error('[Auth] Error looking up restaurant for user:', err.message);
+    return null;
+  }
+}
 
 /**
  * Verify JWT token and return decoded payload
@@ -30,11 +78,12 @@ const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabase
 async function verifyJWT(token) {
   if (!token) return null;
 
+  let decoded = null;
+
   // First try to verify with our JWT secret
   if (JWT_SECRET) {
     try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      return decoded;
+      decoded = jwt.verify(token, JWT_SECRET);
     } catch (jwtError) {
       // JWT verification failed, try Supabase fallback
       console.log('[Auth] JWT verification failed, trying Supabase fallback');
@@ -42,14 +91,14 @@ async function verifyJWT(token) {
   }
 
   // Fallback: verify with Supabase (handles Supabase session tokens)
-  if (supabase) {
+  if (!decoded && supabase) {
     try {
       const { data: { user }, error } = await supabase.auth.getUser(token);
       if (error || !user) {
         console.error('[Auth] Supabase token verification failed:', error?.message);
         return null;
       }
-      return {
+      decoded = {
         sub: user.id,
         email: user.email,
         role: user.role || 'user'
@@ -60,7 +109,18 @@ async function verifyJWT(token) {
     }
   }
 
-  return null;
+  if (!decoded) return null;
+
+  // Ensure restaurant_id and timezone are present on the user object
+  if (!decoded.restaurant_id && decoded.sub) {
+    const restaurant = await getRestaurantIdForUser(decoded.sub);
+    if (restaurant) {
+      decoded.restaurant_id = restaurant.restaurantId;
+      decoded.timezone = restaurant.timezone;
+    }
+  }
+
+  return decoded;
 }
 
 /**
@@ -68,10 +128,18 @@ async function verifyJWT(token) {
  * @param {object} payload - Token payload
  * @returns {string} JWT token
  */
-function generateJWT(payload) {
+async function generateJWT(payload) {
   if (!JWT_SECRET) {
     console.error('[Auth] CRITICAL: No JWT secret available. Check environment configuration.');
     throw new Error('Authentication configuration error. Please contact support.');
+  }
+  // Look up restaurant_id and timezone if not already in payload
+  if (!payload.restaurant_id && payload.sub) {
+    const restaurant = await getRestaurantIdForUser(payload.sub);
+    if (restaurant) {
+      payload.restaurant_id = restaurant.restaurantId;
+      payload.timezone = restaurant.timezone;
+    }
   }
   return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRY });
 }
@@ -177,5 +245,6 @@ module.exports = {
   generateJWT,
   authMiddleware,
   verifyAuth,
-  maskSensitiveData
+  maskSensitiveData,
+  getRestaurantIdForUser
 };

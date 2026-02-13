@@ -8,9 +8,6 @@ import en from './locales/en.json';
 export const languages = {
   en: { name: 'English', flag: '\u{1F1FA}\u{1F1F8}' },
   es: { name: 'Espa\u00f1ol', flag: '\u{1F1EA}\u{1F1F8}' },
-  pt: { name: 'Portugu\u00eas', flag: '\u{1F1F5}\u{1F1F9}' },
-  fr: { name: 'Fran\u00e7ais', flag: '\u{1F1EB}\u{1F1F7}' },
-  it: { name: 'Italiano', flag: '\u{1F1EE}\u{1F1F9}' },
 };
 
 export const languageOptions = Object.entries(languages).map(([code, info]) => ({
@@ -22,9 +19,6 @@ export const languageOptions = Object.entries(languages).map(([code, info]) => (
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const localeLoaders: Record<string, () => Promise<{ default: any }>> = {
   es: () => import('./locales/es.json'),
-  pt: () => import('./locales/pt.json'),
-  fr: () => import('./locales/fr.json'),
-  it: () => import('./locales/it.json'),
 };
 
 async function loadLocale(lng: string) {

@@ -10,9 +10,6 @@ import FloorPlanView from '../components/host/FloorPlanView';
 import TableStatusLegend from '../components/host/TableStatusLegend';
 import WaitlistPanel from '../components/host/WaitlistPanel';
 import DashboardLayout from '../components/layout/DashboardLayout';
-import type { PlanType } from '../config/planFeatures';
-import { hasFeatureAccess } from '../config/planFeatures';
-import { useSubscription } from '../hooks/useSubscription';
 // Modern Elegant Design - Light theme with burgundy accents
 
 type ComplexityLevel = 'completo' | 'avanzado';
@@ -44,10 +41,6 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
     const timer = setTimeout(() => setShowFabPulse(false), 5000);
     return () => clearTimeout(timer);
   }, []);
-
-  // Get real subscription plan from API
-  const subscription = useSubscription();
-  const currentPlan = (subscription.data?.subscription?.plan?.toLowerCase() as PlanType) || 'basic';
 
   // Load complexity preference from localStorage
   useEffect(() => {
@@ -642,27 +635,6 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
               >
                 {t.completo}
               </button>
-              <button
-                onClick={() => {
-                  if (hasFeatureAccess(currentPlan, 'mlPerformance')) {
-                    window.location.href = '/host-dashboard/advanced';
-                  } else {
-                    alert(language === 'es'
-                      ? 'Esta función requiere el Plan Professional.\n\nActualiza tu plan para acceder al Panel de ML Performance.'
-                      : 'This feature requires the Professional Plan.\n\nUpgrade your plan to access the ML Performance Dashboard.');
-                  }
-                }}
-                className={`min-h-[44px] px-3 py-2 rounded-lg text-sm font-sans font-semibold transition-all duration-300 ${
-                  !hasFeatureAccess(currentPlan, 'mlPerformance')
-                    ? 'text-[#A8A29E] hover:bg-[#F5F5F4] cursor-not-allowed opacity-60'
-                    : complexity === 'avanzado'
-                    ? 'bg-[#d97706] text-white shadow-sm'
-                    : 'text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#1C1917]'
-                }`}
-                title={hasFeatureAccess(currentPlan, 'mlPerformance') ? t.avanzado : (language === 'es' ? 'Requiere Plan Professional' : 'Requires Professional Plan')}
-              >
-                {t.avanzado}
-              </button>
             </div>
             </div>
           </div>
@@ -903,12 +875,6 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
                       </svg>
                     </button>
                   </div>
-                  <button
-                    onClick={() => window.location.href = '/host-dashboard/floor-plan'}
-                    className="flex min-h-[44px] items-center px-3 py-1.5 text-sm text-[#9F1239] hover:bg-[#9F1239]/10 rounded-lg transition-colors font-medium"
-                  >
-                    {language === 'es' ? 'Editar Plano' : 'Edit Floor Plan'}
-                  </button>
                   <div className="overflow-x-auto whitespace-nowrap max-w-[calc(100vw-2rem)] sm:max-w-none">
                     <TableStatusLegend />
                   </div>
@@ -1311,21 +1277,6 @@ export default function SimpleDashboard({ language: initialLanguage = 'en' }: Si
             )}
 
             <div className="space-y-3">
-              {/* Edit in Floor Plan link */}
-              <button
-                onClick={() => window.location.href = '/host-dashboard/floor-plan'}
-                className="w-full flex items-center gap-3 p-3 min-h-[44px] bg-[#F5F5F4] hover:bg-[#E7E5E4] rounded-xl border border-[#E7E5E4] transition-colors duration-200"
-              >
-                <div className="p-1.5 bg-[#9F1239]/10 rounded-lg">
-                  <svg className="w-4 h-4 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </div>
-                <span className="text-sm font-medium text-[#57534E]">
-                  {language === 'es' ? 'Editar en Plano' : 'Edit in Floor Plan'}
-                </span>
-              </button>
-
               {selectedTable.status === 'Occupied' && (
                 <button
                   onClick={() => handleFreeTable(selectedTable.id)}

@@ -26,6 +26,7 @@ const {
 const { getRestaurantByName, getAllActiveRestaurants } = require('./_lib/restaurant-registry');
 const { getMultiTenantClient } = require('./_lib/multi-tenant-supabase');
 const { canAccommodateParty } = require('./_lib/supabase');
+const { trackUsage } = require('./_lib/usage-tracking');
 
 // AI provider configuration - supports any OpenAI-compatible API
 const AI_CONFIG = {
@@ -356,7 +357,7 @@ async function executeTool(toolName, toolInput, session) {
 
         // Check if party can be accommodated using table-aware logic
         // This respects is_fixed flag and adjacent_tables configuration
-        const accommodationResult = await canAccommodateParty(party_size);
+        const accommodationResult = await canAccommodateParty(session.restaurant.id, party_size);
 
         if (!accommodationResult.success) {
           return { success: false, error: 'Could not check table availability' };
@@ -454,6 +455,11 @@ async function executeTool(toolName, toolInput, session) {
         if (error) {
           logger.error(' Create reservation error:', error);
           return { success: false, error: 'Could not create reservation' };
+        }
+
+        // Track usage for metered billing
+        if (session.restaurant?.id) {
+          trackUsage(session.restaurant.id, 'whatsapp_reservation');
         }
 
         // Send template confirmation message

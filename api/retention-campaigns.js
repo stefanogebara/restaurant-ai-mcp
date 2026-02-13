@@ -163,7 +163,7 @@ module.exports = async (req, res) => {
   }
 
   // Apply rate limiting
-  const rateLimited = checkAndApplyRateLimit(req, res, 'api');
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'api');
   if (rateLimited) return;
 
   // Verify authentication

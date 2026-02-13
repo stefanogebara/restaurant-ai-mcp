@@ -16,9 +16,11 @@
  * - Each restaurant can have different language, voice, and settings
  */
 
+const crypto = require('crypto');
 const { getRestaurantByPhone, getRestaurantById } = require('./_lib/restaurant-loader');
 const conversationLogger = require('./services/conversationLogger');
 const { setWebhookCors, handlePreflight } = require('./_lib/cors');
+const { trackUsage } = require('./_lib/usage-tracking');
 
 // Multi-tenant imports for WhatsApp routing
 const { getRestaurantByName, getAllActiveRestaurants } = require('./_lib/restaurant-registry');
@@ -41,14 +43,30 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Verify ElevenLabs webhook secret if configured
+  // Verify ElevenLabs webhook signature (HMAC-SHA256) if configured
   const webhookSecret = process.env.ELEVENLABS_WEBHOOK_SECRET;
   if (webhookSecret) {
-    const signature = req.headers['x-elevenlabs-signature'] || req.query.secret;
-    if (signature !== webhookSecret) {
-      logger.error('Invalid ElevenLabs webhook signature/secret');
-      return res.status(403).json({ error: 'Invalid webhook secret' });
+    const signature = req.headers['x-elevenlabs-signature'];
+    if (!signature) {
+      logger.error('Missing x-elevenlabs-signature header');
+      return res.status(403).json({ error: 'Missing webhook signature' });
     }
+    try {
+      const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+      const expectedSig = crypto.createHmac('sha256', webhookSecret).update(rawBody).digest('hex');
+      // Compare using timing-safe equality to prevent timing attacks
+      const sigBuffer = Buffer.from(signature);
+      const expectedBuffer = Buffer.from(expectedSig);
+      if (sigBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(sigBuffer, expectedBuffer)) {
+        logger.error('Invalid ElevenLabs webhook signature');
+        return res.status(403).json({ error: 'Invalid webhook signature' });
+      }
+    } catch (sigError) {
+      logger.error('Error verifying ElevenLabs webhook signature:', sigError.message);
+      return res.status(403).json({ error: 'Signature verification failed' });
+    }
+  } else {
+    logger.warn('ELEVENLABS_WEBHOOK_SECRET not set - skipping signature verification. Set this env var to secure the webhook.');
   }
 
   // Log incoming request for debugging
@@ -385,7 +403,7 @@ async function handleCheckAvailability(req, res) {
     // If no capacity from config, calculate from actual tables in database
     if (totalCapacity === 0) {
       const { getTables: getDbTables } = require('./_lib/supabase');
-      const dbTablesResult = await getDbTables();
+      const dbTablesResult = await getDbTables(restaurant.id);
       if (dbTablesResult.success) {
         const dbTables = dbTablesResult.data.records || [];
         dbTables.forEach(t => {
@@ -423,7 +441,7 @@ async function handleCheckAvailability(req, res) {
 
     // Get real-time table status from Supabase
     const { getTables } = require('./_lib/supabase');
-    const rawTablesResult = await getTables();
+    const rawTablesResult = await getTables(restaurant.id);
 
     // Calculate REAL-TIME occupied seats from Tables table
     let currentlyOccupiedSeats = 0;
@@ -449,7 +467,7 @@ async function handleCheckAvailability(req, res) {
     logger.debug(`TOTAL currently occupied/reserved: ${currentlyOccupiedSeats} seats out of ${totalCapacity}`);
 
     // Get reservations for the requested date/time using Supabase filter
-    const reservationsResult = await getReservations({ date, status: null });
+    const reservationsResult = await getReservations(restaurant.id, { date, status: null });
     // Post-filter for confirmed/seated status since getReservations only supports single status
     if (reservationsResult.success && reservationsResult.data.records) {
       reservationsResult.data.records = reservationsResult.data.records.filter(r => {
@@ -499,7 +517,7 @@ async function handleCheckAvailability(req, res) {
     );
 
     // Check if we can accommodate this party size using flexible table combinations
-    const accommodationCheck = await canAccommodateParty(partySize);
+    const accommodationCheck = await canAccommodateParty(restaurant.id, partySize);
 
     if (availabilityCheck.available && accommodationCheck.can_accommodate) {
       // Customer-friendly response - don't expose table details
@@ -608,7 +626,7 @@ async function handleCreateReservation(req, res) {
     const { getReservations, canAccommodateParty } = require('./_lib/supabase');
 
     // Get existing reservations for the date using Supabase filter
-    const reservationsResult = await getReservations({ date });
+    const reservationsResult = await getReservations(restaurant.id, { date });
     let existingReservations = reservationsResult.success ? (reservationsResult.data.records || []) : [];
     // Filter for confirmed/seated status
     existingReservations = existingReservations.filter(r => {
@@ -617,7 +635,7 @@ async function handleCreateReservation(req, res) {
     });
 
     // Check if we can accommodate
-    const accommodationCheck = await canAccommodateParty(parseInt(party_size));
+    const accommodationCheck = await canAccommodateParty(restaurant.id, parseInt(party_size));
     if (!accommodationCheck.can_accommodate) {
       return res.status(200).json({
         success: false,
@@ -670,6 +688,11 @@ async function handleCreateReservation(req, res) {
             duration_seconds: duration,
             summary: `Reservation at ${restaurantName} for ${customer_name}, party of ${party_size} on ${date} at ${time}`
           });
+
+          // Track AI call usage for metered billing
+          if (restaurant?.id) {
+            trackUsage(restaurant.id, 'ai_call_completed');
+          }
         }
 
         return originalJson({
@@ -719,6 +742,7 @@ async function handleCreateReservation(req, res) {
 async function handleLookupReservation(req, res) {
   const conversationId = req.conversation_id;
   const { findReservation } = require('./_lib/supabase');
+  const restaurant = req.restaurant;
 
   const data = req.method === 'POST' ? req.body : req.query;
   const { phone, name, reservation_id } = data;
@@ -741,7 +765,7 @@ async function handleLookupReservation(req, res) {
   }
 
   try {
-    const result = await findReservation({
+    const result = await findReservation(restaurant.id, {
       reservation_id: reservation_id || undefined,
       customer_phone: !reservation_id ? phone : undefined,
       customer_name: !reservation_id && !phone ? name : undefined

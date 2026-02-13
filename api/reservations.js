@@ -13,6 +13,9 @@ const {
   getCustomerStats
 } = require('./_lib/customer-history');
 
+// Authentication
+const { verifyAuth } = require('./_lib/auth');
+
 // Use heuristic model for restaurant-specific predictions (more accurate than hotel-trained Lambda)
 const { calculateRiskScore, getRecommendedIntervention } = require('./services/mlRiskScoring');
 const { logReservationCreated, logCustomerCancelled } = require('./ml/data-logger');
@@ -28,6 +31,9 @@ const { checkSubscription, checkReservationLimits } = require('./_lib/subscripti
 
 // Rate limiting
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+
+// Usage tracking (fire-and-forget)
+const { trackUsage } = require('./_lib/usage-tracking');
 
 // Secure structured logging
 const { createSecureLogger } = require('./_lib/secure-logger');
@@ -93,23 +99,37 @@ module.exports = async (req, res) => {
   }
 
   // Apply rate limiting (20 reservations per hour per IP)
-  const rateLimited = checkAndApplyRateLimit(req, res, 'reservation');
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'reservation');
   if (rateLimited) return; // 429 response already sent
+
+  // ============================================================================
+  // AUTHENTICATION & MULTI-TENANCY
+  // ============================================================================
+  const auth = await verifyAuth(req);
+  if (auth.error) {
+    return res.status(auth.status || 401).json({ message: auth.error });
+  }
+  const restaurantId = auth.user.restaurant_id;
+  if (!restaurantId) {
+    return res.status(403).json({
+      message: 'No restaurant associated with your account. Please complete onboarding first.'
+    });
+  }
 
   const { action } = req.query;
 
   try {
     switch (action) {
       case 'create':
-        return await handleCreate(req, res);
+        return await handleCreate(req, res, restaurantId);
       case 'lookup':
-        return await handleLookup(req, res);
+        return await handleLookup(req, res, restaurantId);
       case 'list':
-        return await handleList(req, res);
+        return await handleList(req, res, restaurantId);
       case 'modify':
-        return await handleModify(req, res);
+        return await handleModify(req, res, restaurantId);
       case 'cancel':
-        return await handleCancel(req, res);
+        return await handleCancel(req, res, restaurantId);
       default:
         return res.status(400).json({
           message: 'Invalid action requested. Please specify whether you want to create, lookup, list, modify, or cancel a reservation.'
@@ -123,7 +143,7 @@ module.exports = async (req, res) => {
   }
 };
 
-async function handleCreate(req, res) {
+async function handleCreate(req, res, restaurantId) {
   const {
     date,
     time,
@@ -182,13 +202,16 @@ async function handleCreate(req, res) {
     'Notes': 'Created via AI Phone System'
   };
 
-  const result = await createReservation(fields);
+  const result = await createReservation(restaurantId, fields);
 
   if (!result.success) {
     return res.status(500).json({
       message: 'I apologize, but I encountered an issue creating your reservation. Please try again or call us directly at the restaurant.'
     });
   }
+
+  // Track usage for metered billing
+  trackUsage(restaurantId, 'reservation_created');
 
   // ============================================================================
   // CUSTOMER HISTORY TRACKING (ML Foundation)
@@ -211,7 +234,7 @@ async function handleCreate(req, res) {
 
       // Link reservation to customer record
       if (result.data && result.data.id) {
-        await updateReservation(result.data.id, {
+        await updateReservation(restaurantId, result.data.id, {
           'Customer History': [customer.id]
         });
         logger.info(`Linked reservation ${result.data.id} to customer ${customer.id}`);
@@ -272,7 +295,7 @@ async function handleCreate(req, res) {
         'ML Model Version': riskData.modelVersion
       };
 
-      await updateReservation(result.data.id, mlFields);
+      await updateReservation(restaurantId, result.data.id, mlFields);
       logger.info('Updated reservation with ML predictions');
 
       // Log to training dataset for future model retraining
@@ -371,7 +394,7 @@ async function handleCreate(req, res) {
   });
 }
 
-async function handleLookup(req, res) {
+async function handleLookup(req, res, restaurantId) {
   const {
     reservation_id,
     customer_phone,
@@ -384,7 +407,7 @@ async function handleLookup(req, res) {
     });
   }
 
-  const result = await findReservation({
+  const result = await findReservation(restaurantId, {
     reservation_id,
     customer_phone,
     customer_name
@@ -405,12 +428,12 @@ async function handleLookup(req, res) {
   });
 }
 
-async function handleList(req, res) {
+async function handleList(req, res, restaurantId) {
   const { limit = 5, sort = 'created_at_desc' } = req.query;
 
   try {
     // Fetch all reservations sorted by created date (most recent first)
-    const result = await getReservations('');
+    const result = await getReservations(restaurantId);
 
     if (!result.success || !result.data || !result.data.records) {
       return res.status(200).json({
@@ -456,7 +479,7 @@ async function handleList(req, res) {
   }
 }
 
-async function handleModify(req, res) {
+async function handleModify(req, res, restaurantId) {
   const {
     reservation_id,
     date,
@@ -480,7 +503,7 @@ async function handleModify(req, res) {
   if (party_size) updateFields['Party Size'] = parseInt(party_size);
   if (special_requests !== undefined) updateFields['Special Requests'] = special_requests;
 
-  const result = await updateReservation(reservation_id, updateFields);
+  const result = await updateReservation(restaurantId, reservation_id, updateFields);
 
   if (!result.success) {
     return res.status(500).json({
@@ -500,7 +523,7 @@ async function handleModify(req, res) {
   });
 }
 
-async function handleCancel(req, res) {
+async function handleCancel(req, res, restaurantId) {
   const { reservation_id } = req.method === 'POST' ? req.body : req.query;
 
   if (!reservation_id) {
@@ -509,7 +532,7 @@ async function handleCancel(req, res) {
     });
   }
 
-  const result = await airtableCancelReservation(reservation_id);
+  const result = await airtableCancelReservation(restaurantId, reservation_id);
 
   if (!result.success) {
     return res.status(500).json({

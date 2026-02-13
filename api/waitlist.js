@@ -59,25 +59,26 @@ module.exports = async (req, res) => {
     return res.status(auth.status).json({ error: auth.error });
   }
 
+  const restaurantId = req.user.restaurant_id;
   const method = req.method;
   const { id } = req.query;
 
   try {
     switch (method) {
       case 'GET':
-        return await handleGetWaitlist(req, res);
+        return await handleGetWaitlist(req, res, restaurantId);
       case 'POST':
-        return await handleAddToWaitlist(req, res);
+        return await handleAddToWaitlist(req, res, restaurantId);
       case 'PATCH':
         if (!id) {
           return res.status(400).json({ error: 'Waitlist ID required for update' });
         }
-        return await handleUpdateWaitlist(req, res, id);
+        return await handleUpdateWaitlist(req, res, id, restaurantId);
       case 'DELETE':
         if (!id) {
           return res.status(400).json({ error: 'Waitlist ID required for deletion' });
         }
-        return await handleRemoveFromWaitlist(req, res, id);
+        return await handleRemoveFromWaitlist(req, res, id, restaurantId);
       default:
         return res.status(405).json({ error: 'Method not allowed' });
     }
@@ -99,7 +100,7 @@ module.exports = async (req, res) => {
  * - active: Boolean - if true, only return Waiting and Notified entries
  * - limit: Number - maximum records to return (default 100)
  */
-async function handleGetWaitlist(req, res) {
+async function handleGetWaitlist(req, res, restaurantId) {
   const { status, active, limit } = req.query;
   const maxRecords = parseInt(limit) || 100;
 
@@ -109,12 +110,13 @@ async function handleGetWaitlist(req, res) {
   }
 
   try {
-    // Build filter formula for Airtable
+    // Build filter formula for Airtable (always scoped to restaurant)
+    const restaurantFilter = `{Restaurant ID}='${restaurantId}'`;
     let filterFormula = '';
     if (active === 'true') {
       // Active = Waiting (Todo or empty) or Notified (In progress)
       // Note: Empty status is treated as 'Waiting' (Todo)
-      filterFormula = "OR({Status}='Todo', {Status}='In progress', {Status}=BLANK())";
+      filterFormula = `AND(${restaurantFilter}, OR({Status}='Todo', {Status}='In progress', {Status}=BLANK()))`;
     } else if (status) {
       // Support comma-separated status values
       const statuses = status.split(',').map(s => s.trim());
@@ -125,7 +127,10 @@ async function handleGetWaitlist(req, res) {
         }
         return `{Status}='${airtableStatus}'`;
       });
-      filterFormula = conditions.length > 1 ? `OR(${conditions.join(', ')})` : conditions[0];
+      const statusFilter = conditions.length > 1 ? `OR(${conditions.join(', ')})` : conditions[0];
+      filterFormula = `AND(${restaurantFilter}, ${statusFilter})`;
+    } else {
+      filterFormula = restaurantFilter;
     }
 
     const url = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}`;
@@ -204,7 +209,7 @@ async function handleGetWaitlist(req, res) {
  * - special_requests: string (optional)
  * - estimated_wait: number (optional, in minutes)
  */
-async function handleAddToWaitlist(req, res) {
+async function handleAddToWaitlist(req, res, restaurantId) {
   const {
     customer_name,
     customer_phone,
@@ -242,7 +247,7 @@ async function handleAddToWaitlist(req, res) {
 
   try {
     // Get current waitlist to calculate next priority
-    const currentWaitlist = await getCurrentWaitlist();
+    const currentWaitlist = await getCurrentWaitlist(restaurantId);
     const nextPriority = currentWaitlist.length + 1;
 
     // Generate unique waitlist ID
@@ -265,6 +270,7 @@ async function handleAddToWaitlist(req, res) {
       },
       body: JSON.stringify({
         fields: {
+          'Restaurant ID': restaurantId,
           'Waitlist ID': waitlist_id,
           'Customer Name': sanitizedName,
           'Customer Phone': sanitizedPhone,
@@ -322,7 +328,7 @@ async function handleAddToWaitlist(req, res) {
  * - special_requests: string
  * - priority: number (for manual queue reordering)
  */
-async function handleUpdateWaitlist(req, res, recordId) {
+async function handleUpdateWaitlist(req, res, recordId, restaurantId) {
   const { status, estimated_wait, special_requests, priority } = req.body;
 
   if (!status && !estimated_wait && !special_requests && !priority) {
@@ -337,26 +343,35 @@ async function handleUpdateWaitlist(req, res, recordId) {
   }
 
   try {
-    // If notifying customer, fetch their details first for SMS
+    // Fetch existing record to verify restaurant ownership
+    const getUrl = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}/${recordId}`;
+    const getResponse = await fetch(getUrl, {
+      headers: {
+        'Authorization': `Bearer ${process.env.AIRTABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!getResponse.ok) {
+      return res.status(404).json({ error: 'Waitlist entry not found' });
+    }
+
+    const recordData = await getResponse.json();
+
+    // Verify the record belongs to this restaurant
+    if (recordData.fields['Restaurant ID'] && recordData.fields['Restaurant ID'] !== restaurantId) {
+      return res.status(403).json({ error: 'Not authorized to update this waitlist entry' });
+    }
+
+    // Extract customer details for notification if needed
     let customerDetails = null;
     if (status === 'Notified') {
-      const getUrl = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}/${recordId}`;
-      const getResponse = await fetch(getUrl, {
-        headers: {
-          'Authorization': `Bearer ${process.env.AIRTABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (getResponse.ok) {
-        const recordData = await getResponse.json();
-        customerDetails = {
-          name: recordData.fields['Customer Name'],
-          phone: recordData.fields['Customer Phone'],
-          partySize: recordData.fields['Party Size'],
-          email: recordData.fields['Customer Email'],
-        };
-      }
+      customerDetails = {
+        name: recordData.fields['Customer Name'],
+        phone: recordData.fields['Customer Phone'],
+        partySize: recordData.fields['Party Size'],
+        email: recordData.fields['Customer Email'],
+      };
     }
 
     const fields = {};
@@ -464,7 +479,7 @@ async function handleUpdateWaitlist(req, res, recordId) {
  * DELETE /api/waitlist/:id
  * Remove customer from waitlist
  */
-async function handleRemoveFromWaitlist(req, res, recordId) {
+async function handleRemoveFromWaitlist(req, res, recordId, restaurantId) {
   const tableId = process.env.WAITLIST_TABLE_ID;
   if (!tableId) {
     return res.status(500).json({ error: 'WAITLIST_TABLE_ID not configured' });
@@ -472,6 +487,24 @@ async function handleRemoveFromWaitlist(req, res, recordId) {
 
   try {
     const url = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}/${recordId}`;
+
+    // Verify restaurant ownership before deleting
+    const getResponse = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${process.env.AIRTABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!getResponse.ok) {
+      return res.status(404).json({ error: 'Waitlist entry not found' });
+    }
+
+    const recordData = await getResponse.json();
+    if (recordData.fields['Restaurant ID'] && recordData.fields['Restaurant ID'] !== restaurantId) {
+      return res.status(403).json({ error: 'Not authorized to delete this waitlist entry' });
+    }
+
     const response = await fetch(url, {
       method: 'DELETE',
       headers: {
@@ -503,12 +536,12 @@ async function handleRemoveFromWaitlist(req, res, recordId) {
 /**
  * Helper: Get current active waitlist
  */
-async function getCurrentWaitlist() {
+async function getCurrentWaitlist(restaurantId) {
   const tableId = process.env.WAITLIST_TABLE_ID;
   const url = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${tableId}`;
 
   const params = new URLSearchParams({
-    filterByFormula: "OR({Status}='Waiting', {Status}='Notified')",
+    filterByFormula: `AND({Restaurant ID}='${restaurantId}', OR({Status}='Waiting', {Status}='Notified'))`,
   });
 
   const response = await fetch(`${url}?${params.toString()}`, {

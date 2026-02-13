@@ -1,9 +1,12 @@
 /**
  * Rate Limiting Middleware
  *
- * Provides IP-based rate limiting for API endpoints
- * Uses in-memory store (suitable for serverless with low traffic)
+ * Provides IP-based rate limiting for API endpoints.
+ * Uses Upstash Redis when configured (persistent across Vercel instances),
+ * falls back to in-memory store for local development.
  */
+
+const { Redis } = require('@upstash/redis');
 
 // Rate limit configuration per endpoint type
 const RATE_LIMITS = {
@@ -43,21 +46,34 @@ const RATE_LIMITS = {
   },
 };
 
-// In-memory store for rate limiting
-// Note: In production with multiple instances, use Redis instead
-const rateLimitStore = new Map();
+// ============ REDIS STORE ============
 
-// Cleanup interval (remove expired entries every 5 minutes)
+let redis = null;
+
+if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+  try {
+    redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+    console.log('[RateLimit] Using Upstash Redis store');
+  } catch (err) {
+    console.error('[RateLimit] Failed to initialize Redis, falling back to in-memory:', err.message);
+    redis = null;
+  }
+} else {
+  console.log('[RateLimit] No UPSTASH_REDIS_REST_URL configured, using in-memory store');
+}
+
+// ============ IN-MEMORY FALLBACK ============
+
+const rateLimitStore = new Map();
 const CLEANUP_INTERVAL = 5 * 60 * 1000;
 let lastCleanup = Date.now();
 
-/**
- * Clean up expired rate limit entries
- */
 function cleanupExpiredEntries() {
   const now = Date.now();
   if (now - lastCleanup < CLEANUP_INTERVAL) return;
-
   lastCleanup = now;
   for (const [key, data] of rateLimitStore.entries()) {
     if (now > data.resetTime) {
@@ -66,38 +82,70 @@ function cleanupExpiredEntries() {
   }
 }
 
+// ============ RATE LIMIT LOGIC ============
+
 /**
- * Get client identifier (IP address or API key)
+ * Get client identifier (IP address)
  * @param {object} req - Request object
  * @returns {string} Client identifier
  */
 function getClientId(req) {
-  // Try to get real IP from various headers (Vercel, Cloudflare, etc.)
-  const forwardedFor = req.headers['x-forwarded-for'];
-  const realIp = req.headers['x-real-ip'];
   const vercelIp = req.headers['x-vercel-forwarded-for'];
+  if (vercelIp) return vercelIp.split(',')[0].trim();
 
-  if (vercelIp) {
-    return vercelIp.split(',')[0].trim();
-  }
-  if (forwardedFor) {
-    return forwardedFor.split(',')[0].trim();
-  }
-  if (realIp) {
-    return realIp;
-  }
+  const forwardedFor = req.headers['x-forwarded-for'];
+  if (forwardedFor) return forwardedFor.split(',')[0].trim();
 
-  // Fallback to connection remote address
+  const realIp = req.headers['x-real-ip'];
+  if (realIp) return realIp;
+
   return req.connection?.remoteAddress || req.socket?.remoteAddress || 'unknown';
 }
 
 /**
- * Check rate limit for a client
- * @param {string} clientId - Client identifier
- * @param {string} endpointType - Type of endpoint (auth, api, chat, reservation, webhook)
- * @returns {object} Rate limit status
+ * Check rate limit using Redis (persistent across instances)
+ * Uses a sliding window counter via INCR + EXPIRE.
  */
-function checkRateLimit(clientId, endpointType = 'api') {
+async function checkRateLimitRedis(clientId, endpointType) {
+  const config = RATE_LIMITS[endpointType] || RATE_LIMITS.api;
+  const windowSeconds = Math.ceil(config.windowMs / 1000);
+  const key = `rl:${clientId}:${endpointType}`;
+
+  try {
+    // Atomic increment + set TTL if new key
+    const count = await redis.incr(key);
+    if (count === 1) {
+      await redis.expire(key, windowSeconds);
+    }
+
+    // Get remaining TTL for headers
+    const ttl = await redis.ttl(key);
+    const remaining = Math.max(0, config.maxRequests - count);
+
+    return {
+      allowed: count <= config.maxRequests,
+      limit: config.maxRequests,
+      remaining,
+      resetSeconds: ttl > 0 ? ttl : windowSeconds,
+      message: config.message,
+    };
+  } catch (err) {
+    // Redis error - fail open (allow request)
+    console.error('[RateLimit] Redis error, allowing request:', err.message);
+    return {
+      allowed: true,
+      limit: config.maxRequests,
+      remaining: config.maxRequests - 1,
+      resetSeconds: windowSeconds,
+      message: config.message,
+    };
+  }
+}
+
+/**
+ * Check rate limit using in-memory store (local/fallback)
+ */
+function checkRateLimitMemory(clientId, endpointType) {
   cleanupExpiredEntries();
 
   const config = RATE_LIMITS[endpointType] || RATE_LIMITS.api;
@@ -107,14 +155,12 @@ function checkRateLimit(clientId, endpointType = 'api') {
   let data = rateLimitStore.get(key);
 
   if (!data || now > data.resetTime) {
-    // Create new window
     data = {
       count: 1,
       resetTime: now + config.windowMs,
     };
     rateLimitStore.set(key, data);
   } else {
-    // Increment count
     data.count++;
   }
 
@@ -131,16 +177,28 @@ function checkRateLimit(clientId, endpointType = 'api') {
 }
 
 /**
- * Rate limiting middleware for Vercel serverless functions
+ * Check rate limit (auto-selects Redis or in-memory)
+ * @param {string} clientId - Client identifier
+ * @param {string} endpointType - Type of endpoint
+ * @returns {Promise<object>|object} Rate limit status
+ */
+function checkRateLimit(clientId, endpointType = 'api') {
+  if (redis) {
+    return checkRateLimitRedis(clientId, endpointType);
+  }
+  return checkRateLimitMemory(clientId, endpointType);
+}
+
+/**
+ * Rate limiting middleware for Express-style handlers
  * @param {string} endpointType - Type of endpoint
  * @returns {function} Middleware function
  */
 function rateLimitMiddleware(endpointType = 'api') {
-  return (req, res, next) => {
+  return async (req, res, next) => {
     const clientId = getClientId(req);
-    const result = checkRateLimit(clientId, endpointType);
+    const result = await checkRateLimit(clientId, endpointType);
 
-    // Set rate limit headers
     res.setHeader('X-RateLimit-Limit', result.limit);
     res.setHeader('X-RateLimit-Remaining', result.remaining);
     res.setHeader('X-RateLimit-Reset', result.resetSeconds);
@@ -167,13 +225,12 @@ function rateLimitMiddleware(endpointType = 'api') {
  * @param {object} req - Request object
  * @param {object} res - Response object
  * @param {string} endpointType - Type of endpoint
- * @returns {boolean} True if request should be blocked
+ * @returns {Promise<boolean>} True if request should be blocked
  */
-function checkAndApplyRateLimit(req, res, endpointType = 'api') {
+async function checkAndApplyRateLimit(req, res, endpointType = 'api') {
   const clientId = getClientId(req);
-  const result = checkRateLimit(clientId, endpointType);
+  const result = await checkRateLimit(clientId, endpointType);
 
-  // Set rate limit headers
   res.setHeader('X-RateLimit-Limit', result.limit);
   res.setHeader('X-RateLimit-Remaining', result.remaining);
   res.setHeader('X-RateLimit-Reset', result.resetSeconds);

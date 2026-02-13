@@ -49,7 +49,7 @@ async function applySecurityMiddleware(req, res, options = {}) {
 
   // Apply rate limiting
   if (!skipRateLimit) {
-    const rateLimitBlocked = checkAndApplyRateLimit(req, res, rateLimit);
+    const rateLimitBlocked = await checkAndApplyRateLimit(req, res, rateLimit);
     if (rateLimitBlocked) {
       logSecurityEvent(AUDIT_EVENTS.SECURITY_RATE_LIMIT, req, {
         endpoint: req.url,

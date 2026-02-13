@@ -25,25 +25,24 @@ import Step4Settings from '../components/onboarding/Step4Settings';
 import Step5Team from '../components/onboarding/Step5Team';
 import type { OnboardingData } from '../types/onboarding.types';
 import { authFetch } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Onboarding() {
   const navigate = useNavigate();
   const { error: showError } = useToast();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // Get customer email and plan from subscription (passed via URL params after Stripe checkout)
-  const urlParams = new URLSearchParams(window.location.search);
-  const customerEmail = urlParams.get('email') || localStorage.getItem('customer_email') || '';
-  const restaurantId = urlParams.get('restaurant_id') || localStorage.getItem('restaurant_id') || '';
-  const subscriptionPlan = urlParams.get('plan') || localStorage.getItem('subscription_plan') || 'Basic';
+  // Get customer email from auth context (no longer requires URL params or Stripe checkout)
+  const customerEmail = user?.email || localStorage.getItem('customer_email') || '';
 
   // Onboarding data state
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
     customer_email: customerEmail,
-    restaurant_id: restaurantId,
-    plan: subscriptionPlan,
+    restaurant_id: '',
+    plan: 'Professional',
     // Step 1: Welcome & Restaurant Info
     restaurant_name: '',
     restaurant_type: '',
@@ -90,10 +89,6 @@ export default function Onboarding() {
   useEffect(() => {
     localStorage.setItem('onboarding_data', JSON.stringify(onboardingData));
     localStorage.setItem('onboarding_step', currentStep.toString());
-    // Also save subscription plan for persistence
-    if (onboardingData.plan) {
-      localStorage.setItem('subscription_plan', onboardingData.plan);
-    }
   }, [onboardingData, currentStep]);
 
   // Update onboarding data

@@ -237,7 +237,7 @@ export default function LiveAIDemo() {
                     <div>
                       <h4 className="text-[#1C1917] font-medium mb-1">Configuration Required</h4>
                       <p className="text-[#57534E] text-sm font-light mb-2">
-                        To activate the live AI demo, add your ElevenLabs Agent ID to the environment variables:
+                        To activate the live AI demo, configure the AI agent in your environment settings.
                       </p>
                       <code className="text-xs text-[#9F1239] bg-[#FAFAF9] px-2 py-1 rounded border border-[#E7E5E4]">
                         VITE_ELEVENLABS_AGENT_ID=your_agent_id

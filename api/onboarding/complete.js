@@ -14,6 +14,7 @@ const { createClient } = require('@supabase/supabase-js');
 const fetch = require('node-fetch');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { verifyAuth } = require('../_lib/auth');
+const { suggestTimezone } = require('../_lib/timezone');
 const logger = createSecureLogger('Onboarding');
 
 // Initialize Supabase client
@@ -101,7 +102,7 @@ module.exports = async (req, res) => {
       address: `${city}, ${country}`,
       business_hours: business_hours || [],
       avg_dining_duration_minutes: average_dining_duration || 90,  // Schema uses this name
-      timezone: 'America/New_York',  // Default timezone
+      timezone: suggestTimezone(country, city),
       language: 'en',
       // Store additional metadata in metric_profile JSON field
       // Template is auto-derived from subscription plan:
@@ -378,6 +379,7 @@ module.exports = async (req, res) => {
         allow_waitlist: true
       },
       average_dining_duration_minutes: average_dining_duration || 90,
+      timezone: suggestTimezone(country, city),
       max_concurrent_reservations: 50,
       team_members: (team_members || []).map(tm => ({
         email: tm.email,
@@ -525,7 +527,42 @@ module.exports = async (req, res) => {
       logger.warn(' Continuing without agent creation');
     }
 
-    logger.info(' ✅ Onboarding complete!');
+    // STEP 5: Create trial subscription (14-day free trial, no payment required)
+    logger.info(' Step 5: Creating trial subscription...');
+
+    let trialSubscription = null;
+    try {
+      const now = new Date();
+      const trialEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days
+
+      const { data: subData, error: subError } = await supabase
+        .from('subscriptions')
+        .insert({
+          restaurant_id: restaurantInfoResult.id,
+          subscription_id: `trial_${restaurantInfoResult.id}`,
+          customer_id: userId || `user_${Date.now()}`,
+          customer_email: customer_email,
+          plan_name: plan || 'Professional',
+          price_id: 'trial',
+          status: 'trialing',
+          current_period_start: now.toISOString(),
+          current_period_end: trialEnd.toISOString(),
+          trial_end: trialEnd.toISOString()
+        })
+        .select()
+        .single();
+
+      if (subError) {
+        logger.warn(' Could not create trial subscription:', subError.message);
+      } else {
+        trialSubscription = subData;
+        logger.info(' Trial subscription created (expires:', trialEnd.toISOString(), ')');
+      }
+    } catch (trialError) {
+      logger.warn(' Trial subscription error (non-fatal):', trialError.message);
+    }
+
+    logger.info(' Onboarding complete!');
 
     return res.status(200).json({
       success: true,
@@ -535,7 +572,9 @@ module.exports = async (req, res) => {
         restaurant_name,
         record_id: restaurantInfoResult.id,
         tables_created: tablesToInsert.length,
-        ai_config_saved: !!userId
+        ai_config_saved: !!userId,
+        trial_active: !!trialSubscription,
+        trial_end: trialSubscription?.trial_end || null
       },
     });
   } catch (error) {

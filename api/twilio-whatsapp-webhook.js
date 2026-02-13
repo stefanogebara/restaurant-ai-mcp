@@ -22,6 +22,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 const twilio = require('twilio');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('Twilio');
+const { trackUsage } = require('./_lib/usage-tracking');
 const {
   getOrCreateSession,
   setSessionRestaurant,
@@ -919,7 +920,7 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
 
       // Check if party can be accommodated using table-aware logic
       // This respects is_fixed flag and adjacent_tables configuration
-      const accommodationResult = await canAccommodateParty(partySize);
+      const accommodationResult = await canAccommodateParty(restaurantInfo.id, partySize);
 
       if (!accommodationResult.success) {
         return { success: false, error: 'Could not check table availability' };
@@ -1012,7 +1013,8 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
         time: parsedTime,
         party_size: toolInput.party_size,
         special_requests: toolInput.special_requests || null,
-        status: 'confirmed'
+        status: 'confirmed',
+        source: 'whatsapp_ai'
       };
 
       // Add restaurant_id if available
@@ -1034,6 +1036,11 @@ async function handleToolCall(toolName, toolInput, session, supabaseClient, rest
       }
 
       logger.info(` Reservation created: ${reservationId} for ${toolInput.customer_name}`);
+
+      // Track usage for metered billing
+      if (restaurantInfo?.id) {
+        trackUsage(restaurantInfo.id, 'whatsapp_reservation');
+      }
 
       // Send confirmation message to customer (if template contentSid is configured)
       // Note: For Twilio, templates require contentSid from Twilio Content API

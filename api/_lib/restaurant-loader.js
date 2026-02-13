@@ -5,7 +5,7 @@
  * Used by ElevenLabs webhook to route calls to correct restaurant
  */
 
-const { query } = require('./supabase');
+const { supabaseAdmin: query } = require('./supabase');
 
 /**
  * Get restaurant configuration by phone number
@@ -61,8 +61,9 @@ async function getRestaurantByPhone(phoneNumber) {
       greeting_message: restaurant.ai_config?.greeting_message,
       farewell_message: restaurant.ai_config?.farewell_message,
 
-      // Business hours
+      // Business hours & timezone
       business_hours: restaurant.business_hours,
+      timezone: restaurant.timezone || 'UTC',
       average_dining_duration_minutes: restaurant.average_dining_duration_minutes || 90,
 
       // Table configuration
@@ -116,6 +117,7 @@ async function getRestaurantById(restaurantId) {
         greeting_message: restaurant.ai_config?.greeting_message,
         farewell_message: restaurant.ai_config?.farewell_message,
         business_hours: restaurant.business_hours,
+        timezone: restaurant.timezone || 'UTC',
         average_dining_duration_minutes: restaurant.average_dining_duration_minutes || 90,
         table_configuration: restaurant.table_configuration,
         reservation_settings: restaurant.reservation_settings,

@@ -1,18 +1,35 @@
 const { getReservations, getRestaurantInfo } = require('./_lib/supabase');
+const { verifyAuth } = require('./_lib/auth');
 
 module.exports = async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).json({ success: true });
   }
 
   try {
+    // Get restaurantId - try auth first, fall back to query param for public access
+    let restaurantId = req.query.restaurant_id;
+
+    const authResult = await verifyAuth(req, { required: false });
+    if (authResult.user) {
+      req.user = authResult.user;
+      restaurantId = req.user.restaurant_id || restaurantId;
+    }
+
+    if (!restaurantId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing restaurant_id parameter or authentication'
+      });
+    }
+
     // Get restaurant info
-    const restaurantResult = await getRestaurantInfo();
+    const restaurantResult = await getRestaurantInfo(restaurantId);
     if (!restaurantResult.success) {
       return res.status(500).json(restaurantResult);
     }
@@ -30,7 +47,7 @@ module.exports = async (req, res) => {
 
     // Get today's reservations
     const today = new Date().toISOString().split('T')[0];
-    const reservationsResult = await getReservations({ date: today });
+    const reservationsResult = await getReservations(restaurantId, { date: today });
 
     if (!reservationsResult.success) {
       return res.status(500).json(reservationsResult);

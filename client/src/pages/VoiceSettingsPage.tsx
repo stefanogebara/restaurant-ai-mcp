@@ -530,8 +530,8 @@ export default function VoiceSettingsPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="text-[#A8A29E] text-xs mb-1">TTS Model</p>
-                <p className="text-[#1C1917] font-mono">{config.tts_model_id || 'eleven_turbo_v2_5'}</p>
+                <p className="text-[#A8A29E] text-xs mb-1">Voice Engine</p>
+                <p className="text-[#1C1917] font-mono">turbo_v2.5</p>
               </div>
               <div>
                 <p className="text-[#A8A29E] text-xs mb-1">Agent ID</p>
