@@ -14,7 +14,7 @@
  *   "time": "14:30",
  *   "datetime": "2025-10-12 14:30:45",
  *   "day_of_week": "Sunday",
- *   "timezone": "Europe/Amsterdam",
+ *   "timezone": "UTC",
  *   "relative_dates": {
  *     "today": "2025-10-12",
  *     "tomorrow": "2025-10-13",
@@ -45,8 +45,8 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Get current date/time in Amsterdam timezone
-    const timezone = 'Europe/Amsterdam';
+    // Get timezone from query param, body, or default to UTC
+    const timezone = req.query?.timezone || req.body?.timezone || 'UTC';
     const now = new Date();
 
     // Format date as YYYY-MM-DD

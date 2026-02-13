@@ -298,9 +298,8 @@ module.exports = async (req, res) => {
 // Handler functions
 
 async function handleGetDateTime(req, res) {
-  // Get timezone from query, body, or default to Europe/Madrid (Spain)
-  // Restaurants can specify their timezone via query param: ?timezone=America/New_York
-  const timezone = req.query.timezone || req.body?.timezone || 'Europe/Madrid';
+  // Get timezone from restaurant context, query param, body, or default to UTC
+  const timezone = req.multiTenantRestaurant?.timezone || req.query.timezone || req.body?.timezone || 'UTC';
   const now = new Date();
 
   const formatDate = (date) => {
