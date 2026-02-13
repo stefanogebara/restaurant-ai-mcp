@@ -7,15 +7,17 @@
  * Runs every 5 minutes via Vercel Cron Jobs
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('../_lib/supabase');
+const { createSecureLogger } = require('../_lib/secure-logger');
 
+const logger = createSecureLogger('CronLateReservations');
 const LATE_THRESHOLD_MINUTES = 20;
 
 module.exports = async (req, res) => {
   // Verify this is a cron request (Vercel adds this header)
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret) {
-    console.error('[CRON] CRON_SECRET not configured - denying request');
+    logger.error('CRON_SECRET not configured - denying request');
     return res.status(500).json({ success: false, error: 'Cron not configured' });
   }
   const authHeader = req.headers.authorization;
@@ -23,19 +25,13 @@ module.exports = async (req, res) => {
     return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 
-  // Initialize Supabase client
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseKey) {
-    console.error('[CRON] Missing Supabase credentials');
+  if (!supabaseAdmin) {
+    logger.error('Supabase admin client not available');
     return res.status(500).json({ success: false, error: 'Database not configured' });
   }
 
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
   try {
-    console.log('[CRON] Starting late reservation check...');
+    logger.info('Starting late reservation check...');
 
     const now = new Date();
     const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
@@ -44,11 +40,11 @@ module.exports = async (req, res) => {
     const twentyMinutesAgo = new Date(now.getTime() - LATE_THRESHOLD_MINUTES * 60 * 1000);
     const lateTimeThreshold = twentyMinutesAgo.toTimeString().slice(0, 5); // HH:MM
 
-    console.log(`[CRON] Looking for reservations on ${today} with time <= ${lateTimeThreshold}`);
+    logger.info(`Looking for reservations on ${today} with time <= ${lateTimeThreshold}`);
 
     // Find all "confirmed" reservations for today that haven't been checked in
     // and whose reservation time was more than 20 minutes ago
-    const { data: lateReservations, error } = await supabase
+    const { data: lateReservations, error } = await supabaseAdmin
       .from('reservations')
       .select('*')
       .eq('date', today)
@@ -57,7 +53,7 @@ module.exports = async (req, res) => {
       .is('checked_in_at', null);
 
     if (error) {
-      console.error('[CRON] Error fetching reservations:', error);
+      logger.error('Error fetching reservations:', error.message);
       return res.status(500).json({
         success: false,
         error: 'Failed to fetch reservations',
@@ -65,7 +61,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    console.log(`[CRON] Found ${lateReservations?.length || 0} late reservations`);
+    logger.info(`Found ${lateReservations?.length || 0} late reservations`);
 
     const markedAsNoShow = [];
     const errors = [];
@@ -82,7 +78,7 @@ module.exports = async (req, res) => {
 
       try {
         // Mark as no-show
-        const { error: updateError } = await supabase
+        const { error: updateError } = await supabaseAdmin
           .from('reservations')
           .update({
             status: 'no-show',
@@ -94,13 +90,13 @@ module.exports = async (req, res) => {
           throw new Error(updateError.message);
         }
 
-        console.log(`[CRON] ✓ Marked as no-show: ${resId} (${customerName} at ${time})`);
+        logger.info(`Marked as no-show: ${resId} (${customerName} at ${time})`);
 
         // If tables were assigned, release them back to Available status
         if (tableIds && tableIds.length > 0) {
           for (const tableId of tableIds) {
             try {
-              const { error: tableError } = await supabase
+              const { error: tableError } = await supabaseAdmin
                 .from('tables')
                 .update({
                   status: 'available',
@@ -109,12 +105,12 @@ module.exports = async (req, res) => {
                 .eq('id', tableId);
 
               if (tableError) {
-                console.error(`[CRON]   └─ Failed to release table ${tableId}:`, tableError);
+                logger.error(`Failed to release table ${tableId}:`, tableError.message);
               } else {
-                console.log(`[CRON]   └─ Released table ${tableId}`);
+                logger.info(`Released table ${tableId}`);
               }
             } catch (tableError) {
-              console.error(`[CRON]   └─ Failed to release table ${tableId}:`, tableError);
+              logger.error(`Failed to release table ${tableId}:`, tableError.message);
             }
           }
         }
@@ -126,7 +122,7 @@ module.exports = async (req, res) => {
           tables_released: tableIds?.length || 0
         });
       } catch (error) {
-        console.error(`[CRON] ✗ Failed to mark ${resId} as no-show:`, error);
+        logger.error(`Failed to mark ${resId} as no-show:`, error.message);
         errors.push({
           reservation_id: resId,
           error: error.message
@@ -147,11 +143,11 @@ module.exports = async (req, res) => {
       }
     };
 
-    console.log('[CRON] Late reservation check complete:', JSON.stringify(summary, null, 2));
+    logger.info('Late reservation check complete', summary);
 
     return res.status(200).json(summary);
   } catch (error) {
-    console.error('[CRON] Fatal error checking late reservations:', error);
+    logger.error('Fatal error checking late reservations:', error.message);
     return res.status(500).json({
       success: false,
       error: 'Internal server error',

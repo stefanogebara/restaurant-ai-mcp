@@ -1,7 +1,9 @@
 const Stripe = require('stripe');
 const { verifyAuth } = require('./_lib/auth');
 const { getMeteredPriceMap } = require('./_lib/stripe-usage-reporter');
+const { createSecureLogger } = require('./_lib/secure-logger');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const logger = createSecureLogger('CheckoutSession');
 
 module.exports = async (req, res) => {
   // Enable CORS
@@ -82,7 +84,7 @@ module.exports = async (req, res) => {
       url: session.url,
     });
   } catch (error) {
-    console.error('Error creating checkout session:', error);
+    logger.error('Error creating checkout session:', error.message);
     return res.status(500).json({
       error: 'Failed to create checkout session',
       message: error.message,

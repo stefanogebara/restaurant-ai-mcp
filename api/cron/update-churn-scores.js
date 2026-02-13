@@ -8,13 +8,16 @@
  * Runs daily at 6 AM UTC via Vercel Cron Jobs
  */
 
-const { createClient } = require('@supabase/supabase-js');
+const { supabaseAdmin } = require('../_lib/supabase');
+const { createSecureLogger } = require('../_lib/secure-logger');
+
+const logger = createSecureLogger('CronChurnScores');
 
 module.exports = async (req, res) => {
   // Verify this is a cron request (Vercel adds this header)
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret) {
-    console.error('[CRON] CRON_SECRET not configured - denying request');
+    logger.error('CRON_SECRET not configured - denying request');
     return res.status(500).json({ success: false, error: 'Cron not configured' });
   }
   const authHeader = req.headers.authorization;
@@ -22,29 +25,23 @@ module.exports = async (req, res) => {
     return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 
-  // Initialize Supabase client
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseKey) {
-    console.error('[CRON] Missing Supabase credentials');
+  if (!supabaseAdmin) {
+    logger.error('Supabase admin client not available');
     return res.status(500).json({ success: false, error: 'Database not configured' });
   }
 
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
   try {
-    console.log('[CRON] Starting daily churn score update...');
+    logger.info('Starting daily churn score update...');
 
     // Get all customers with LTV records
-    const { data: customers, error: fetchError } = await supabase
+    const { data: customers, error: fetchError } = await supabaseAdmin
       .from('customer_ltv')
       .select('customer_id, avg_days_between_visits, last_visit_date, total_visits, customer_tier');
 
     if (fetchError) throw fetchError;
 
     if (!customers || customers.length === 0) {
-      console.log('[CRON] No customers found to update');
+      logger.info('No customers found to update');
       return res.status(200).json({
         success: true,
         message: 'No customers to update',
@@ -94,7 +91,7 @@ module.exports = async (req, res) => {
       }
 
       // Update the record
-      const { error: updateError } = await supabase
+      const { error: updateError } = await supabaseAdmin
         .from('customer_ltv')
         .update({
           churn_risk_score: churnRiskScore,
@@ -106,11 +103,11 @@ module.exports = async (req, res) => {
       if (!updateError) {
         updated++;
       } else {
-        console.error(`[CRON] Failed to update ${customer.customer_id}:`, updateError);
+        logger.error(`Failed to update ${customer.customer_id}:`, updateError.message);
       }
     }
 
-    console.log(`[CRON] Updated churn scores for ${updated} customers, ${atRiskCount} newly at risk`);
+    logger.info(`Updated churn scores for ${updated} customers, ${atRiskCount} newly at risk`);
 
     return res.status(200).json({
       success: true,
@@ -124,7 +121,7 @@ module.exports = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[CRON] Churn update error:', error);
+    logger.error('Churn update error:', error.message);
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to update churn scores'

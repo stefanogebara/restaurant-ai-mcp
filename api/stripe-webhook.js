@@ -25,7 +25,7 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
  */
 async function resolveRestaurantId(stripeObject, customerEmail = null) {
   // Method 1: Check Stripe metadata for restaurant_id
-  // TODO: Ensure Stripe checkout session creation includes metadata: { restaurant_id: '<uuid>' }
+  // (create-checkout-session.js includes restaurant_id in both session and subscription metadata)
   const metadataRestaurantId = stripeObject.metadata?.restaurant_id;
   if (metadataRestaurantId) {
     logger.info('Restaurant ID from Stripe metadata:', metadataRestaurantId);
@@ -52,7 +52,6 @@ async function resolveRestaurantId(stripeObject, customerEmail = null) {
     }
   }
 
-  // TODO: Consider storing restaurant_id in Stripe customer metadata during checkout
   logger.warn('Could not resolve restaurant_id from Stripe event. Subscription functions will fail without it.');
   return null;
 }
@@ -94,7 +93,6 @@ module.exports = async (req, res) => {
         logger.info('Customer:', session.customer);
         logger.info('Subscription:', session.subscription);
         logger.info('Email:', session.customer_details?.email);
-        // TODO: Ensure checkout session is created with metadata: { restaurant_id } so webhooks can resolve it
         logger.info('Metadata restaurant_id:', session.metadata?.restaurant_id || 'NOT SET');
 
         break;
