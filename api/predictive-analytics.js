@@ -6,37 +6,44 @@
 
 const {
   getAllTables,
-  getActiveServiceRecords
+  getActiveServiceRecords,
+  supabaseAdmin
 } = require('./_lib/supabase');
 
 const { getPrediction, isModelAvailable } = require('./_lib/ml-service');
-const axios = require('axios');
 const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('PredictiveAnalytics');
 
-const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
-const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
-const RESERVATIONS_TABLE_ID = process.env.RESERVATIONS_TABLE_ID;
-const SERVICE_RECORDS_TABLE_ID = process.env.SERVICE_RECORDS_TABLE_ID;
-
 /**
- * Get all reservations from Airtable
+ * Get all reservations from Supabase
  */
-async function getAllReservations() {
+async function getAllReservations(restaurantId) {
   try {
-    const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${RESERVATIONS_TABLE_ID}`;
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${AIRTABLE_API_KEY}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    return { success: true, records: response.data.records };
+    const { data, error } = await supabaseAdmin
+      .from('reservations')
+      .select('*')
+      .eq('restaurant_id', restaurantId);
+
+    if (error) throw error;
+
+    // Map to Airtable-compatible format so downstream code works unchanged
+    const records = (data || []).map(r => ({
+      fields: {
+        Date: r.date,
+        Time: r.time,
+        Status: r.status,
+        'Party Size': r.party_size,
+        'Customer Name': r.customer_name,
+        'Reservation ID': r.reservation_id,
+      },
+      createdTime: r.created_at,
+    }));
+    return { success: true, records };
   } catch (error) {
-    logger.error('Error fetching reservations:', error);
+    logger.error('Error fetching reservations:', error.message);
     return { success: false, error: error.message };
   }
 }
@@ -45,8 +52,8 @@ async function getAllReservations() {
  * Calculate no-show risk for upcoming reservations
  * Uses historical patterns to predict likelihood of no-shows
  */
-async function predictNoShowRisks() {
-  const reservationsResult = await getAllReservations();
+async function predictNoShowRisks(restaurantId) {
+  const reservationsResult = await getAllReservations(restaurantId);
 
   if (!reservationsResult.success) {
     return { success: false, error: 'Failed to fetch reservations' };
@@ -179,7 +186,7 @@ async function predictNoShowRisks() {
  */
 async function getRevenueOpportunities(restaurantId) {
   const results = await Promise.all([
-    getAllReservations(),
+    getAllReservations(restaurantId),
     getActiveServiceRecords(restaurantId),
     getAllTables(restaurantId)
   ]);
@@ -374,7 +381,7 @@ module.exports = async (req, res) => {
     const { type } = req.query;
 
     if (type === 'no-show') {
-      const result = await predictNoShowRisks();
+      const result = await predictNoShowRisks(restaurantId);
       return res.status(200).json(result);
     } else if (type === 'revenue') {
       const result = await getRevenueOpportunities(restaurantId);
@@ -382,7 +389,7 @@ module.exports = async (req, res) => {
     } else {
       // Return both by default
       const [noShowResult, revenueResult] = await Promise.all([
-        predictNoShowRisks(),
+        predictNoShowRisks(restaurantId),
         getRevenueOpportunities(restaurantId)
       ]);
 

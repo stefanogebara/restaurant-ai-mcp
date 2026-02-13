@@ -41,6 +41,38 @@ const queryClient = new QueryClient({
   },
 });
 
+function RouteErrorFallback() {
+  return (
+    <div className="min-h-[50vh] flex flex-col items-center justify-center p-6">
+      <div className="bg-white border border-[#E7E5E4] rounded-2xl p-8 max-w-md text-center shadow-sm">
+        <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <svg className="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+        </div>
+        <h3 className="text-lg font-bold text-[#1C1917] mb-2">This page encountered an error</h3>
+        <p className="text-sm text-[#57534E] mb-4">
+          Something went wrong loading this page. Other parts of the app should still work.
+        </p>
+        <div className="flex gap-3 justify-center">
+          <a
+            href="/host-dashboard/simple"
+            className="px-5 py-2.5 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-colors text-sm"
+          >
+            Go to Dashboard
+          </a>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-5 py-2.5 bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#1C1917] font-semibold rounded-xl transition-colors text-sm"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -63,22 +95,22 @@ function App() {
               <Route path="/live-demo" element={<LiveAIDemo />} />
               {/* Dashboard - New unified dashboard (default) */}
               <Route path="/host-dashboard" element={<Navigate to="/host-dashboard/simple" replace />} />
-              <Route path="/host-dashboard/simple" element={<Dashboard />} />
+              <Route path="/host-dashboard/simple" element={<ErrorBoundary fallback={<RouteErrorFallback />}><Dashboard /></ErrorBoundary>} />
               <Route path="/host-dashboard/legacy" element={<SimpleDashboard />} />
               <Route path="/host-dashboard/reports" element={<WeeklyReport />} />
               <Route path="/host-dashboard/segovia" element={<SegoviaInsightsPage />} />
               <Route path="/host-dashboard/calls" element={<CallTrackingDashboard />} />
               <Route path="/host-dashboard/tables" element={<TableConfigPage />} />
               <Route path="/host-dashboard/voice-settings" element={<VoiceSettingsPage />} />
-              <Route path="/analytics" element={<AnalyticsDashboard />} />
+              <Route path="/analytics" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AnalyticsDashboard /></ErrorBoundary>} />
               <Route path="/customer" element={<CustomerPortal />} />
               <Route path="/subscription/success" element={<SubscriptionSuccess />} />
-              <Route path="/subscription/manage" element={<SubscriptionManage />} />
+              <Route path="/subscription/manage" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SubscriptionManage /></ErrorBoundary>} />
               <Route path="/welcome" element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
-              <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+              <Route path="/onboarding" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><Onboarding /></ErrorBoundary></ProtectedRoute>} />
               <Route path="/settings/language" element={<LanguageSettings />} />
               {/* Public booking portal */}
-              <Route path="/book/:slug" element={<BookingPage />} />
+              <Route path="/book/:slug" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BookingPage /></ErrorBoundary>} />
               <Route path="/book/:slug/confirmed" element={<BookingConfirmation />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

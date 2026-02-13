@@ -1,56 +1,72 @@
 const {
   getAllTables,
-  getActiveServiceRecords
+  getActiveServiceRecords,
+  supabaseAdmin
 } = require('./_lib/supabase');
 
-const axios = require('axios');
 const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('Analytics');
 
-const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
-const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
-const RESERVATIONS_TABLE_ID = process.env.RESERVATIONS_TABLE_ID;
-const SERVICE_RECORDS_TABLE_ID = process.env.SERVICE_RECORDS_TABLE_ID;
-
-async function getAllReservations() {
+async function getAllReservations(restaurantId) {
   try {
-    const url = 'https://api.airtable.com/v0/' + AIRTABLE_BASE_ID + '/' + RESERVATIONS_TABLE_ID;
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: 'Bearer ' + AIRTABLE_API_KEY,
-        ContentType: 'application/json'
-      }
-    });
-    return { success: true, records: response.data.records };
+    const { data, error } = await supabaseAdmin
+      .from('reservations')
+      .select('*')
+      .eq('restaurant_id', restaurantId);
+
+    if (error) throw error;
+
+    // Map to Airtable-compatible format so the rest of the code works unchanged
+    const records = (data || []).map(r => ({
+      fields: {
+        Date: r.date,
+        Time: r.time,
+        Status: r.status,
+        'Party Size': r.party_size,
+        'Customer Name': r.customer_name,
+        'Reservation ID': r.reservation_id,
+      },
+      createdTime: r.created_at,
+    }));
+    return { success: true, records };
   } catch (error) {
-    logger.error('Error:', error);
+    logger.error('Error fetching reservations:', error.message);
     return { success: false, error: error.message };
   }
 }
 
-async function getAllServiceRecordsData() {
+async function getAllServiceRecordsData(restaurantId) {
   try {
-    const url = 'https://api.airtable.com/v0/' + AIRTABLE_BASE_ID + '/' + SERVICE_RECORDS_TABLE_ID;
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: 'Bearer ' + AIRTABLE_API_KEY,
-        ContentType: 'application/json'
+    const { data, error } = await supabaseAdmin
+      .from('service_records')
+      .select('*')
+      .eq('restaurant_id', restaurantId);
+
+    if (error) throw error;
+
+    // Map to Airtable-compatible format
+    const records = (data || []).map(r => ({
+      fields: {
+        Status: r.status,
+        'Seated At': r.seated_at,
+        'Departed At': r.departed_at,
+        'Table IDs': r.table_ids ? r.table_ids.join(',') : '',
       }
-    });
-    return { success: true, records: response.data.records };
+    }));
+    return { success: true, records };
   } catch (error) {
-    logger.error('Error:', error);
+    logger.error('Error fetching service records:', error.message);
     return { success: false, error: error.message };
   }
 }
 
 async function calculateAnalytics(restaurantId) {
   const results = await Promise.all([
-    getAllReservations(),
-    getAllServiceRecordsData(),
+    getAllReservations(restaurantId),
+    getAllServiceRecordsData(restaurantId),
     getAllTables(restaurantId),
     getActiveServiceRecords(restaurantId)
   ]);

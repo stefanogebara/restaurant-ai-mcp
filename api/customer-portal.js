@@ -32,7 +32,7 @@ module.exports = async (req, res) => {
     }
 
     // Get the origin for return URL
-    const origin = req.headers.origin || process.env.CLIENT_URL || 'http://localhost:8086';
+    const origin = req.headers.origin || process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
 
     // Create a portal session
     const portalSession = await stripe.billingPortal.sessions.create({

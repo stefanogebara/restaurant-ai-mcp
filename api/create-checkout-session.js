@@ -36,7 +36,7 @@ module.exports = async (req, res) => {
     const restaurantId = auth.user?.restaurant_id || null;
 
     // Get the origin for success/cancel URLs
-    const origin = req.headers.origin || process.env.CLIENT_URL || 'http://localhost:8086';
+    const origin = req.headers.origin || process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
 
     // Build line items: base subscription + metered prices
     const lineItems = [

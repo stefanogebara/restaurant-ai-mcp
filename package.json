@@ -36,10 +36,6 @@
     "@types/jest": "^30.0.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
-    "jest": "^30.2.0",
-    "ml-cart": "^2.1.1",
-    "ml-matrix": "^6.12.1",
-    "random-forest-classifier": "^0.6.0",
-    "sharp": "^0.34.5"
+    "jest": "^30.2.0"
   }
 }

@@ -139,7 +139,7 @@ async function handleAuthorize(req, res) {
   }
 
   // Build authorization URL
-  const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+  const clientUrl = process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
   const redirectUri = `${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : clientUrl}/api/square-oauth?action=callback`;
 
   const authUrl = new URL(SQUARE_OAUTH_URL);
@@ -194,7 +194,7 @@ async function handleCallback(req, res) {
   }
 
   // Exchange code for tokens
-  const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+  const clientUrl = process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
   const redirectUri = `${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : clientUrl}/api/square-oauth?action=callback`;
 
   try {
@@ -417,7 +417,7 @@ async function handleStatus(req, res) {
  * Redirect with error message
  */
 function redirectWithError(res, message) {
-  const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+  const clientUrl = process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
   const errorUrl = new URL(`${clientUrl}/host-dashboard/settings`);
   errorUrl.searchParams.set('pos_error', message);
   res.redirect(302, errorUrl.toString());
