@@ -50,6 +50,27 @@ function cleanupProcessedMessages() {
 // Clean up every 2 minutes
 setInterval(cleanupProcessedMessages, 2 * 60 * 1000);
 
+// Per-phone rate limiting (10 messages per minute)
+const phoneRateLimits = new Map();
+function isRateLimited(phone) {
+  const now = Date.now();
+  const oneMinuteAgo = now - 60 * 1000;
+  let timestamps = phoneRateLimits.get(phone) || [];
+  timestamps = timestamps.filter(ts => ts > oneMinuteAgo);
+  if (timestamps.length >= 10) return true;
+  timestamps.push(now);
+  phoneRateLimits.set(phone, timestamps);
+  return false;
+}
+setInterval(() => {
+  const oneMinuteAgo = Date.now() - 60 * 1000;
+  for (const [phone, timestamps] of phoneRateLimits) {
+    const active = timestamps.filter(ts => ts > oneMinuteAgo);
+    if (active.length === 0) phoneRateLimits.delete(phone);
+    else phoneRateLimits.set(phone, active);
+  }
+}, 5 * 60 * 1000);
+
 /**
  * Send a WhatsApp message via Meta Cloud API
  */
@@ -1118,6 +1139,12 @@ module.exports = async (req, res) => {
         }
         if (messageId) {
           processedMessages.set(messageId, Date.now());
+        }
+
+        // Rate limit: max 10 messages per minute per phone
+        if (isRateLimited(from)) {
+          logger.info(` Rate limited ${from}`);
+          return res.status(200).json({ status: 'ok' });
         }
 
         // Get or create session for this phone number

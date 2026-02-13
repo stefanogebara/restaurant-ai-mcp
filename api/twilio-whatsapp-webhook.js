@@ -35,6 +35,39 @@ const { getMultiTenantClient } = require('./_lib/multi-tenant-supabase');
 const { centralSupabase } = require('./_lib/central-supabase');
 const { canAccommodateParty } = require('./_lib/supabase');
 
+// In-memory message deduplication (prevents Twilio retry from reprocessing)
+// Map<messageSid, timestamp> - entries auto-expire after 5 minutes
+const processedMessages = new Map();
+function cleanupProcessedMessages() {
+  const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+  for (const [id, ts] of processedMessages) {
+    if (ts < fiveMinutesAgo) processedMessages.delete(id);
+  }
+}
+setInterval(cleanupProcessedMessages, 2 * 60 * 1000);
+
+// Per-phone rate limiting (10 messages per minute)
+const phoneRateLimits = new Map();
+function isRateLimited(phone) {
+  const now = Date.now();
+  const oneMinuteAgo = now - 60 * 1000;
+  let timestamps = phoneRateLimits.get(phone) || [];
+  timestamps = timestamps.filter(ts => ts > oneMinuteAgo);
+  if (timestamps.length >= 10) return true;
+  timestamps.push(now);
+  phoneRateLimits.set(phone, timestamps);
+  return false;
+}
+// Clean up rate limit entries every 5 minutes
+setInterval(() => {
+  const oneMinuteAgo = Date.now() - 60 * 1000;
+  for (const [phone, timestamps] of phoneRateLimits) {
+    const active = timestamps.filter(ts => ts > oneMinuteAgo);
+    if (active.length === 0) phoneRateLimits.delete(phone);
+    else phoneRateLimits.set(phone, active);
+  }
+}, 5 * 60 * 1000);
+
 /**
  * Parse natural language date into YYYY-MM-DD format
  * Handles: "today", "tomorrow", "2026-01-19", "January 19", "19/01/2026", etc.
@@ -1459,11 +1492,26 @@ module.exports = async (req, res) => {
         return res.status(200).send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
       }
 
+      // Deduplicate: Twilio retries on timeout, ignore messages we've already seen
+      if (MessageSid && processedMessages.has(MessageSid)) {
+        logger.info(` Duplicate message ${MessageSid}, skipping`);
+        return res.status(200).send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
+      }
+      if (MessageSid) {
+        processedMessages.set(MessageSid, Date.now());
+      }
+
       // Extract phone number (remove 'whatsapp:' prefix)
       const fromNumber = From.replace('whatsapp:', '');
       const messageText = Body.trim();
 
       logger.info(` Message from ${fromNumber} (${ProfileName}): ${messageText}`);
+
+      // Rate limit: max 10 messages per minute per phone
+      if (isRateLimited(fromNumber)) {
+        logger.info(` Rate limited ${fromNumber}`);
+        return res.status(200).send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
+      }
 
       // Handle media messages (not supported yet)
       if (NumMedia && parseInt(NumMedia) > 0) {
