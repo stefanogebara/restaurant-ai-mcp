@@ -15,6 +15,7 @@ const { checkTimeSlotAvailability, getSuggestedTimes, getDiningDuration } = requ
 const { generateSecureReservationId } = require('./_lib/secure-id');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { trackUsage } = require('./_lib/usage-tracking');
+const { Resend } = require('resend');
 
 module.exports = async (req, res) => {
   // CORS for public portal
@@ -408,6 +409,20 @@ async function handleCreateReservation(req, res) {
   // Track usage for metered billing
   trackUsage(restaurant_id, 'portal_booking');
 
+  // Send confirmation email (fire-and-forget)
+  if (customer_email) {
+    sendConfirmationEmail({
+      customerEmail: customer_email.trim(),
+      customerName: customer_name.trim(),
+      restaurantName: restaurant.restaurant_name,
+      reservationId,
+      partySize,
+      date,
+      time,
+      specialRequests: special_requests,
+    }).catch(err => console.error('[Portal] Email send failed:', err.message));
+  }
+
   return res.status(201).json({
     success: true,
     message: `Reservation confirmed for ${partySize} guests on ${date} at ${time}`,
@@ -420,5 +435,81 @@ async function handleCreateReservation(req, res) {
       status: newRes.status,
       restaurant_name: restaurant.restaurant_name
     }
+  });
+}
+
+/**
+ * Send reservation confirmation email via Resend
+ */
+async function sendConfirmationEmail({ customerEmail, customerName, restaurantName, reservationId, partySize, date, time, specialRequests }) {
+  if (!process.env.RESEND_API_KEY) return;
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  await resend.emails.send({
+    from: 'Seatable <bookings@seatable.io>',
+    to: customerEmail,
+    subject: `Reservation Confirmed - ${restaurantName}`,
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        <div style="text-align: center; margin-bottom: 32px;">
+          <h1 style="font-size: 28px; color: #1C1917; margin: 0;">
+            Seatable<span style="color: #9F1239;">.</span>
+          </h1>
+        </div>
+
+        <div style="background: #FAFAF9; border: 1px solid #E7E5E4; border-radius: 16px; padding: 32px; margin-bottom: 24px;">
+          <h2 style="font-size: 22px; color: #1C1917; margin: 0 0 8px 0;">
+            Your reservation is confirmed!
+          </h2>
+          <p style="color: #57534E; margin: 0 0 24px 0;">
+            Hi ${customerName}, here are your booking details:
+          </p>
+
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Restaurant</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${restaurantName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Date</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${formattedDate}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Time</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${time}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Party Size</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${partySize} ${partySize === 1 ? 'guest' : 'guests'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; color: #78716C; font-size: 14px;">Confirmation ID</td>
+              <td style="padding: 12px 0; color: #9F1239; font-weight: 700; text-align: right; font-family: monospace;">${reservationId}</td>
+            </tr>
+          </table>
+
+          ${specialRequests ? `
+          <div style="margin-top: 16px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #E7E5E4;">
+            <p style="color: #78716C; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">Special Requests</p>
+            <p style="color: #1C1917; margin: 0; font-size: 14px;">${specialRequests}</p>
+          </div>
+          ` : ''}
+        </div>
+
+        <p style="color: #78716C; font-size: 13px; text-align: center; margin: 0;">
+          Need to modify or cancel? Contact the restaurant directly.
+        </p>
+
+        <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #E7E5E4;">
+          <p style="color: #A8A29E; font-size: 12px; margin: 0;">
+            Powered by Seatable - AI Restaurant Management
+          </p>
+        </div>
+      </div>
+    `,
   });
 }
