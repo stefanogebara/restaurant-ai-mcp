@@ -23,9 +23,21 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // Redirect to welcome page if already logged in
+  // Redirect if already logged in
   if (!loading && user) {
     return <Navigate to="/welcome" replace />;
+  }
+
+  // While auth is resolving (e.g. returning from OAuth callback), show spinner
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FAFAF9] flex flex-col items-center justify-center gap-4">
+        <div className="font-serif text-2xl text-[#1C1917] opacity-50">
+          Seatable<span className="text-[#9F1239]">.</span>
+        </div>
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#E7E5E4] border-t-[#9F1239]" />
+      </div>
+    );
   }
 
   const handleGoogleSignIn = async () => {
@@ -62,14 +74,6 @@ export default function Login() {
       setIsSigningIn(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-2 border-[#9F1239] border-t-transparent"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex">

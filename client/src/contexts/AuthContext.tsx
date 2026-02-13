@@ -25,25 +25,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-
-      // Store email in localStorage for onboarding
-      if (session?.user?.email) {
-        localStorage.setItem('customer_email', session.user.email);
-      }
-
-      setLoading(false);
-    };
-
-    getInitialSession();
-
-    // Listen for auth changes
+    // Use onAuthStateChange as the single source of truth.
+    // INITIAL_SESSION fires once on setup and waits for URL token exchange
+    // (OAuth callback) to complete before firing — this avoids the race
+    // condition where getSession() returns null while tokens are still
+    // being exchanged from the URL hash.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
 
@@ -51,6 +39,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.user?.email) {
           localStorage.setItem('customer_email', session.user.email);
         } else {
+          localStorage.removeItem('customer_email');
+        }
+
+        // Clear stale state when sign-out or token refresh fails
+        if (event === 'SIGNED_OUT') {
           localStorage.removeItem('customer_email');
         }
 
@@ -69,13 +62,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       options: {
         redirectTo: `${window.location.origin}/welcome`,
         queryParams: {
+          access_type: 'offline',
           prompt: 'select_account',
         },
       },
     });
 
     if (error) {
-      console.error('Error signing in with Google:', error);
       throw error;
     }
   };
@@ -100,12 +93,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error signing out:', error);
-      throw error;
-    }
     localStorage.removeItem('customer_email');
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // Even if signOut fails (e.g. stale session), clear local state
+      setUser(null);
+      setSession(null);
+    }
   };
 
   return (
