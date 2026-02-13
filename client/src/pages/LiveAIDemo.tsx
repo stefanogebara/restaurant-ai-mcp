@@ -224,7 +224,7 @@ export default function LiveAIDemo() {
                 </motion.div>
               </div>
 
-              {/* ElevenLabs Widget Container */}
+              {/* AI Voice Widget Container */}
               <div className="flex items-center justify-center min-h-[300px]">
                 <ElevenLabsWidget agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID || 'YOUR_AGENT_ID_HERE'} />
               </div>
@@ -240,7 +240,7 @@ export default function LiveAIDemo() {
                         To activate the live AI demo, configure the AI agent in your environment settings.
                       </p>
                       <code className="text-xs text-[#9F1239] bg-[#FAFAF9] px-2 py-1 rounded border border-[#E7E5E4]">
-                        VITE_ELEVENLABS_AGENT_ID=your_agent_id
+                        VITE_AI_AGENT_ID=your_agent_id
                       </code>
                     </div>
                   </div>
@@ -317,7 +317,7 @@ export default function LiveAIDemo() {
         </motion.div>
       </div>
 
-      {/* Fixed pulsing indicator pointing to the ElevenLabs chat widget */}
+      {/* Fixed pulsing indicator pointing to the AI chat widget */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}

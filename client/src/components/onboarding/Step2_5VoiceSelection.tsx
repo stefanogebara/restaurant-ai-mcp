@@ -20,7 +20,7 @@ interface Step2_5Props {
 }
 
 const PAGE_SIZE = 12;
-const DEFAULT_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel - ElevenLabs default
+const DEFAULT_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel - default voice
 const DEFAULT_VOICE_LANGUAGE = 'en';
 
 export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }: Step2_5Props) {
