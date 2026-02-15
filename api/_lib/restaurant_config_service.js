@@ -21,6 +21,7 @@ class RestaurantConfigService {
    */
   async getAIAgentContext(userId) {
     const { data, error } = await this.supabase
+      .schema('restaurant')
       .from('restaurant_config')
       .select('*')
       .eq('user_id', userId)
@@ -52,6 +53,7 @@ class RestaurantConfigService {
    */
   async getConfigByPhone(phoneNumber) {
     const { data, error } = await this.supabase
+      .schema('restaurant')
       .from('restaurant_config')
       .select('*')
       .eq('phone', phoneNumber)
@@ -75,6 +77,7 @@ class RestaurantConfigService {
    */
   async getHoursForDay(userId, dayName) {
     const { data, error } = await this.supabase
+      .schema('restaurant')
       .from('restaurant_config')
       .select('business_hours')
       .eq('user_id', userId)
@@ -89,6 +92,7 @@ class RestaurantConfigService {
    */
   async getWeekSchedule(userId) {
     const { data, error } = await this.supabase
+      .schema('restaurant')
       .from('restaurant_config')
       .select('business_hours')
       .eq('user_id', userId)
@@ -108,6 +112,7 @@ class RestaurantConfigService {
    */
   async getTablesForPartySize(userId, partySize) {
     const { data, error } = await this.supabase
+      .schema('restaurant')
       .from('restaurant_config')
       .select('table_configuration')
       .eq('user_id', userId)
@@ -137,6 +142,7 @@ class RestaurantConfigService {
    */
   async getTableSummary(userId) {
     const { data, error } = await this.supabase
+      .schema('restaurant')
       .from('restaurant_config')
       .select('table_configuration')
       .eq('user_id', userId)
@@ -157,6 +163,7 @@ class RestaurantConfigService {
    */
   async getReservationPolicies(userId) {
     const { data, error } = await this.supabase
+      .schema('restaurant')
       .from('restaurant_config')
       .select('reservation_settings, average_dining_duration_minutes')
       .eq('user_id', userId)
@@ -186,6 +193,7 @@ class RestaurantConfigService {
    */
   async getVoiceConfig(userId) {
     const { data, error } = await this.supabase
+      .schema('restaurant')
       .from('restaurant_config')
       .select('voice_id, ai_config')
       .eq('user_id', userId)
@@ -208,6 +216,7 @@ class RestaurantConfigService {
    */
   async getTeamMembers(userId) {
     const { data, error } = await this.supabase
+      .schema('restaurant')
       .from('restaurant_config')
       .select('team_members')
       .eq('user_id', userId)
@@ -235,6 +244,7 @@ class RestaurantConfigService {
    */
   async updateDayHours(userId, day, hours) {
     const { data, error } = await this.supabase
+      .schema('restaurant')
       .from('restaurant_config')
       .select('business_hours')
       .eq('user_id', userId)
@@ -248,6 +258,7 @@ class RestaurantConfigService {
     };
 
     const { error: updateError } = await this.supabase
+      .schema('restaurant')
       .from('restaurant_config')
       .update({ business_hours: updated })
       .eq('user_id', userId);
@@ -261,6 +272,7 @@ class RestaurantConfigService {
    */
   async updateReservationSettings(userId, settings) {
     const { data, error } = await this.supabase
+      .schema('restaurant')
       .from('restaurant_config')
       .select('reservation_settings')
       .eq('user_id', userId)
@@ -274,6 +286,7 @@ class RestaurantConfigService {
     };
 
     const { error: updateError } = await this.supabase
+      .schema('restaurant')
       .from('restaurant_config')
       .update({ reservation_settings: updated })
       .eq('user_id', userId);
@@ -287,6 +300,7 @@ class RestaurantConfigService {
    */
   async addTeamMember(userId, member) {
     const { data, error } = await this.supabase
+      .schema('restaurant')
       .from('restaurant_config')
       .select('team_members')
       .eq('user_id', userId)
@@ -297,6 +311,7 @@ class RestaurantConfigService {
     const updated = [...data.team_members, member];
 
     const { error: updateError } = await this.supabase
+      .schema('restaurant')
       .from('restaurant_config')
       .update({ team_members: updated })
       .eq('user_id', userId);
@@ -310,6 +325,7 @@ class RestaurantConfigService {
    */
   async updateAIConfig(userId, aiSettings) {
     const { data, error } = await this.supabase
+      .schema('restaurant')
       .from('restaurant_config')
       .select('ai_config')
       .eq('user_id', userId)
@@ -323,6 +339,7 @@ class RestaurantConfigService {
     };
 
     const { error: updateError } = await this.supabase
+      .schema('restaurant')
       .from('restaurant_config')
       .update({ ai_config: updated })
       .eq('user_id', userId);

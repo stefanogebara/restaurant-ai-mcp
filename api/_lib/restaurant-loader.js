@@ -27,6 +27,7 @@ async function getRestaurantByPhone(phoneNumber) {
   try {
     // Query restaurant_config by phone number
     const result = await query
+      .schema('restaurant')
       .from('restaurant_config')
       .select('*')
       .eq('phone', phoneNumber)
@@ -94,6 +95,7 @@ async function getRestaurantById(restaurantId) {
   try {
     // Try restaurant_config first (onboarded restaurants)
     const result = await query
+      .schema('restaurant')
       .from('restaurant_config')
       .select('*')
       .eq('id', restaurantId)
@@ -130,6 +132,7 @@ async function getRestaurantById(restaurantId) {
     // Fallback to restaurant_info table
     logger.info(`[RestaurantLoader] Not found in restaurant_config, trying restaurant_info`);
     const infoResult = await query
+      .schema('restaurant')
       .from('restaurant_info')
       .select('*')
       .eq('id', restaurantId)
@@ -172,6 +175,7 @@ async function getAllRestaurants() {
 
   try {
     const result = await query
+      .schema('restaurant')
       .from('restaurant_config')
       .select('id, restaurant_name, phone, city, country, voice_id, ai_config')
       .eq('is_active', true)
@@ -200,8 +204,65 @@ async function getAllRestaurants() {
   }
 }
 
+/**
+ * Get restaurant configuration by ElevenLabs agent ID
+ * Used for routing webhooks from per-restaurant agents
+ * @param {string} agentId - ElevenLabs agent ID
+ * @returns {Promise<Object>} Restaurant configuration
+ */
+async function getRestaurantByAgentId(agentId) {
+  if (!agentId) {
+    throw new Error('Agent ID is required for restaurant lookup');
+  }
+
+  logger.info(`[RestaurantLoader] Looking up restaurant by agent_id: ${agentId}`);
+
+  try {
+    const result = await query
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('*')
+      .eq('elevenlabs_agent_id', agentId)
+      .eq('is_active', true)
+      .single();
+
+    if (result.error || !result.data) {
+      throw new Error(`Restaurant not found for agent_id: ${agentId}`);
+    }
+
+    const restaurant = result.data;
+    logger.info(`[RestaurantLoader] Found restaurant by agent_id: ${restaurant.restaurant_name}`);
+
+    return {
+      id: restaurant.id,
+      name: restaurant.restaurant_name,
+      restaurant_name: restaurant.restaurant_name,
+      city: restaurant.city,
+      country: restaurant.country,
+      phone: restaurant.phone,
+      email: restaurant.email,
+      website: restaurant.website,
+      voice_id: restaurant.voice_id,
+      ai_config: restaurant.ai_config,
+      language: restaurant.ai_config?.language || 'en-US',
+      greeting_message: restaurant.ai_config?.greeting_message,
+      farewell_message: restaurant.ai_config?.farewell_message,
+      business_hours: restaurant.business_hours,
+      timezone: restaurant.timezone || 'UTC',
+      average_dining_duration_minutes: restaurant.average_dining_duration_minutes || 90,
+      table_configuration: restaurant.table_configuration,
+      reservation_settings: restaurant.reservation_settings,
+      team_members: restaurant.team_members || []
+    };
+  } catch (error) {
+    logger.error('[RestaurantLoader] Error loading restaurant by agent_id:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   getRestaurantByPhone,
   getRestaurantById,
+  getRestaurantByAgentId,
   getAllRestaurants
 };

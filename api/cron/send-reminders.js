@@ -93,6 +93,7 @@ module.exports = async (req, res) => {
 
     // Get restaurant info for the restaurant name
     const { data: restaurantInfo, error: restaurantError } = await supabaseAdmin
+      .schema('restaurant')
       .from('restaurant_info')
       .select('restaurant_name')
       .limit(1)

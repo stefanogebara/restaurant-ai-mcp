@@ -89,6 +89,7 @@ async function handleRegisterPhoneNumber(req, res) {
 
   // Get restaurant info to check if agent exists
   const { data: restaurant, error: fetchError } = await supabaseAdmin
+    .schema('restaurant')
     .from('restaurant_info')
     .select('elevenlabs_agent_id, restaurant_name')
     .eq('id', restaurant_id)
@@ -110,6 +111,7 @@ async function handleRegisterPhoneNumber(req, res) {
 
   // Update status to pending
   await supabaseAdmin
+    .schema('restaurant')
     .from('restaurant_info')
     .update({
       phone_integration_status: 'pending',
@@ -143,6 +145,7 @@ async function handleRegisterPhoneNumber(req, res) {
 
       // Update status to error
       await supabaseAdmin
+        .schema('restaurant')
         .from('restaurant_info')
         .update({
           phone_integration_status: 'error',
@@ -181,6 +184,7 @@ async function handleRegisterPhoneNumber(req, res) {
 
       // Phone is imported but agent not assigned - partial success
       await supabaseAdmin
+        .schema('restaurant')
         .from('restaurant_info')
         .update({
           twilio_account_sid,
@@ -204,6 +208,7 @@ async function handleRegisterPhoneNumber(req, res) {
 
     // Step 3: Save successful configuration
     await supabaseAdmin
+      .schema('restaurant')
       .from('restaurant_info')
       .update({
         twilio_account_sid,
@@ -235,6 +240,7 @@ async function handleRegisterPhoneNumber(req, res) {
     logger.error('[Phone Integration] Registration error:', error);
 
     await supabaseAdmin
+      .schema('restaurant')
       .from('restaurant_info')
       .update({
         phone_integration_status: 'error',
@@ -266,6 +272,7 @@ async function handleUnregisterPhoneNumber(req, res) {
 
   // Get current phone number ID
   const { data: restaurant, error: fetchError } = await supabaseAdmin
+    .schema('restaurant')
     .from('restaurant_info')
     .select('elevenlabs_phone_number_id, twilio_phone_number')
     .eq('id', restaurant_id)
@@ -309,6 +316,7 @@ async function handleUnregisterPhoneNumber(req, res) {
 
     // Clear database fields
     await supabaseAdmin
+      .schema('restaurant')
       .from('restaurant_info')
       .update({
         twilio_account_sid: null,
@@ -350,6 +358,7 @@ async function handleGetStatus(req, res) {
   }
 
   const { data: restaurant, error: fetchError } = await supabaseAdmin
+    .schema('restaurant')
     .from('restaurant_info')
     .select(`
       elevenlabs_agent_id,
@@ -402,6 +411,7 @@ async function handleAssignAgent(req, res) {
   }
 
   const { data: restaurant, error: fetchError } = await supabaseAdmin
+    .schema('restaurant')
     .from('restaurant_info')
     .select('elevenlabs_agent_id, elevenlabs_phone_number_id')
     .eq('id', restaurant_id)
@@ -453,6 +463,7 @@ async function handleAssignAgent(req, res) {
     }
 
     await supabaseAdmin
+      .schema('restaurant')
       .from('restaurant_info')
       .update({
         phone_integration_status: 'active',

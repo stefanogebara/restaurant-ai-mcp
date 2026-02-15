@@ -44,6 +44,7 @@ async function handleGet(req, res) {
   try {
     // Get restaurant info to find agent_id
     const { data: restaurant, error: dbError } = await supabaseAdmin
+      .schema('restaurant')
       .from('restaurant_info')
       .select('id, elevenlabs_agent_id, agent_voice_id, agent_language, voice_settings, tts_model_id, agent_updated_at, restaurant_name')
       .limit(1)
@@ -148,6 +149,7 @@ async function handlePatch(req, res) {
 
     // Get restaurant info
     const { data: restaurant, error: dbError } = await supabaseAdmin
+      .schema('restaurant')
       .from('restaurant_info')
       .select('id, elevenlabs_agent_id, agent_language, restaurant_name')
       .limit(1)
@@ -255,6 +257,7 @@ async function handlePatch(req, res) {
     if (tts_model_id) dbUpdates.tts_model_id = tts_model_id;
 
     const { error: updateError } = await supabaseAdmin
+      .schema('restaurant')
       .from('restaurant_info')
       .update(dbUpdates)
       .eq('id', restaurant.id);

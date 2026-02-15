@@ -101,6 +101,7 @@ async function handleRegister(req, res) {
 
   // Get restaurant info
   const { data: restaurant, error: fetchError } = await supabaseAdmin
+    .schema('restaurant')
     .from('restaurant_info')
     .select('elevenlabs_agent_id, restaurant_name')
     .eq('id', restaurant_id)
@@ -123,6 +124,7 @@ async function handleRegister(req, res) {
 
   // Update status to pending
   await supabaseAdmin
+    .schema('restaurant')
     .from('restaurant_info')
     .update({
       phone_integration_status: 'pending',
@@ -273,6 +275,7 @@ async function handleRegister(req, res) {
 
     // Step 4: Save successful configuration
     await supabaseAdmin
+      .schema('restaurant')
       .from('restaurant_info')
       .update({
         twilio_phone_number: PLATFORM_TWILIO_NUMBER,
@@ -328,6 +331,7 @@ async function handleUnregister(req, res) {
 
   // Clear phone fields from restaurant (but don't delete from ElevenLabs - reusable)
   await supabaseAdmin
+    .schema('restaurant')
     .from('restaurant_info')
     .update({
       twilio_phone_number: null,
@@ -366,6 +370,7 @@ async function handleStatus(req, res) {
   }
 
   const { data: restaurant, error: fetchError } = await supabaseAdmin
+    .schema('restaurant')
     .from('restaurant_info')
     .select(`
       restaurant_name,
@@ -420,6 +425,7 @@ async function handleTestCall(req, res) {
 
   // Get restaurant to verify it's configured
   const { data: restaurant } = await supabaseAdmin
+    .schema('restaurant')
     .from('restaurant_info')
     .select('restaurant_name, phone_integration_status, elevenlabs_agent_id')
     .eq('id', restaurant_id)
@@ -494,6 +500,7 @@ async function handleFixTools(req, res) {
   }
 
   const { data: restaurant } = await supabaseAdmin
+    .schema('restaurant')
     .from('restaurant_info')
     .select('restaurant_name, elevenlabs_agent_id')
     .eq('id', restaurant_id)
@@ -531,6 +538,7 @@ async function handleDiagnose(req, res) {
   }
 
   const { data: restaurant } = await supabaseAdmin
+    .schema('restaurant')
     .from('restaurant_info')
     .select('restaurant_name, elevenlabs_agent_id, phone_integration_status')
     .eq('id', restaurant_id)
@@ -737,6 +745,7 @@ async function createAndAssignTools(restaurant_id, agent_id) {
  */
 async function updateError(restaurant_id, errorMessage) {
   await supabaseAdmin
+    .schema('restaurant')
     .from('restaurant_info')
     .update({
       phone_integration_status: 'error',

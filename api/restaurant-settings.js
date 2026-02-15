@@ -138,6 +138,7 @@ export default async function handler(req, res) {
     // GET /profile
     if (method === 'GET' && path.includes('/profile')) {
       const { data: restaurant, error } = await supabase
+        .schema('restaurant')
         .from('restaurant_info')
         .select('metric_profile, language')
         .eq('id', restaurantId)
@@ -170,6 +171,7 @@ export default async function handler(req, res) {
       }
 
       const { data, error } = await supabase
+        .schema('restaurant')
         .from('restaurant_info')
         .update({ metric_profile })
         .eq('id', restaurantId)
@@ -201,6 +203,7 @@ export default async function handler(req, res) {
     // GET / - Basic settings
     if (method === 'GET' && !path.includes('/profile')) {
       const { data: restaurant, error } = await supabase
+        .schema('restaurant')
         .from('restaurant_info')
         .select('language, restaurant_name, city, country')
         .eq('id', restaurantId)
@@ -247,6 +250,7 @@ export default async function handler(req, res) {
       }
 
       const { data, error } = await supabase
+        .schema('restaurant')
         .from('restaurant_info')
         .update(updates)
         .eq('id', restaurantId)

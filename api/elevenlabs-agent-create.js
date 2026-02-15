@@ -12,11 +12,12 @@
  * 2. Collect the returned tool IDs
  * 3. Reference them in the agent via conversation_config.agent.prompt.tool_ids
  *
- * Related: MVP_PLAN_SIMPLIFICATION.md Phase 2
+ * Creates per-restaurant agents during onboarding
  */
 
 const fetch = require('node-fetch');
 const { verifyAuth } = require('./_lib/auth');
+const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('ElevenLabsAgentCreate');
 
@@ -215,6 +216,24 @@ module.exports = async (req, res) => {
 
     const agentData = await agentResponse.json();
     const agent_id = agentData.agent_id;
+
+    // Save agent_id to restaurant_config for webhook routing
+    if (restaurant_id && agent_id) {
+      try {
+        await supabaseAdmin
+          .schema('restaurant')
+          .from('restaurant_config')
+          .update({
+            elevenlabs_agent_id: agent_id,
+            agent_language: language
+          })
+          .eq('id', restaurant_id);
+
+        logger.info(`Saved agent_id to restaurant_config for restaurant: ${restaurant_id}`);
+      } catch (dbError) {
+        logger.warn('Could not save agent_id to restaurant_config:', dbError.message);
+      }
+    }
 
     // Return agent details
     return res.status(200).json({
