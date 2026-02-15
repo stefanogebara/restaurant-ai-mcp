@@ -151,8 +151,8 @@ async function checkReservationLimits(req, res, next) {
 
     const plan = req.subscription.plan_name?.toLowerCase();
 
-    // Professional and Enterprise have unlimited reservations
-    if (plan === 'professional' || plan === 'enterprise') {
+    // Professional plan has unlimited reservations
+    if (plan === 'professional') {
       return next();
     }
 

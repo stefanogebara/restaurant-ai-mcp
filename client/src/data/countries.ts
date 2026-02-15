@@ -1,6 +1,6 @@
 /**
  * Countries Data for Restaurant Onboarding
- * Only includes countries where we have Cartesia AI voice support
+ * Only includes countries where we have AI voice support
  * Organized by language groups with major cities
  */
 
@@ -12,7 +12,7 @@ export interface City {
 export interface Country {
   code: string; // ISO 3166-1 alpha-2
   name: string;
-  language: string; // Cartesia voice language code
+  language: string; // Voice language code
   flag: string; // Emoji flag
   cities: City[];
 }

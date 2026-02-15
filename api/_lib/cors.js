@@ -19,8 +19,6 @@ const WEBHOOK_ORIGINS = [
   'https://api.elevenlabs.io',
   'https://api.stripe.com',
   'https://api.twilio.com',
-  'https://connect.squareup.com',
-  'https://connect.squareupsandbox.com'
 ];
 
 /**

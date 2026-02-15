@@ -359,15 +359,15 @@ export default function CallTrackingDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-[#FAFAF9] p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <div className="dashboard min-h-screen bg-[#FAFAF9] p-6">
+        <div className="max-w-7xl mx-auto space-y-8">
         {/* Breadcrumb Navigation */}
         <Breadcrumb items={breadcrumbConfigs.calls} />
 
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-[#1C1917] font-serif">AI Agent Dashboard</h1>
+            <h1 className="text-3xl font-semibold text-[#1C1917]">AI Agent Dashboard</h1>
             <p className="text-[#57534E] mt-1">Monitor AI agent performance, calls, and phone settings</p>
           </div>
           <button
@@ -379,18 +379,10 @@ export default function CallTrackingDashboard() {
         </div>
 
         {/* Phone Status Card */}
-        <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-sm">
+        <div className="bg-white rounded-xl border border-[#E7E5E4] p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                phoneStatus?.status === 'active'
-                  ? 'bg-green-500/10'
-                  : phoneStatus?.status === 'error'
-                    ? 'bg-red-500/10'
-                    : 'bg-gray-500/10'
-              }`}>
-                <ThiingsIcon name="phone-call" pxSize={24} />
-              </div>
+              <ThiingsIcon name="phone-call" pxSize={24} />
               <div>
                 <h2 className="text-lg font-semibold text-[#1C1917]">Phone Status</h2>
                 <p className="text-sm text-[#57534E]">
@@ -546,12 +538,10 @@ export default function CallTrackingDashboard() {
 
         {/* Agent Diagnostics Panel */}
         {showDiagnosePanel && (
-          <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-sm">
+          <div className="bg-white rounded-xl border border-[#E7E5E4] p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center">
-                  <ThiingsIcon name="stethoscope" size="sm" />
-                </div>
+                <ThiingsIcon name="stethoscope" size="sm" />
                 <h2 className="text-lg font-semibold text-[#1C1917]">Agent Diagnostics</h2>
               </div>
               <button
@@ -602,7 +592,7 @@ export default function CallTrackingDashboard() {
                       {diagnoseData.tools.map((tool, idx) => (
                         <span
                           key={idx}
-                          className="px-2.5 py-1 bg-blue-500/10 text-blue-600 text-xs font-medium rounded-full"
+                          className="px-2.5 py-1 bg-[#F5F5F4] text-[#1C1917] text-xs font-medium rounded-full"
                         >
                           {tool.name}
                         </span>
@@ -619,7 +609,7 @@ export default function CallTrackingDashboard() {
                       {diagnoseData.tool_ids.map((id, idx) => (
                         <span
                           key={idx}
-                          className="px-2.5 py-1 bg-purple-500/10 text-purple-600 text-xs font-mono rounded-full"
+                          className="px-2.5 py-1 bg-[#F5F5F4] text-[#57534E] text-xs font-mono rounded-full"
                           title={id}
                         >
                           {id.substring(0, 16)}...
@@ -684,7 +674,7 @@ export default function CallTrackingDashboard() {
         )}
 
         {/* Filters */}
-        <div className="bg-white rounded-xl border border-[#E7E5E4] p-4 shadow-sm">
+        <div className="bg-white rounded-xl border border-[#E7E5E4] p-4">
           <div className="flex gap-4 flex-wrap">
             <div>
               <label className="text-sm font-medium text-[#1C1917] block mb-1">Time Period</label>
@@ -737,61 +727,33 @@ export default function CallTrackingDashboard() {
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Total Calls */}
-            <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-sm">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-full bg-[#9F1239]/10 flex items-center justify-center">
-                  <ThiingsIcon name="phone" size="sm" />
-                </div>
-                <div>
-                  <p className="text-sm text-[#57534E]">Total Calls</p>
-                  <p className="text-2xl font-bold text-[#1C1917]">{stats.overview.total_calls}</p>
-                </div>
-              </div>
+            <div className="bg-white rounded-xl border border-[#E7E5E4] p-6">
+              <p className="text-xs font-medium text-[#78716C] uppercase tracking-wider">Total Calls</p>
+              <p className="text-4xl font-semibold text-[#1C1917] tracking-tight tabular-nums mt-1">{stats.overview.total_calls}</p>
             </div>
 
             {/* Successful Bookings */}
-            <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-sm">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-full bg-[#16a34a]/10 flex items-center justify-center">
-                  <ThiingsIcon name="check-circle" size="sm" />
-                </div>
-                <div>
-                  <p className="text-sm text-[#57534E]">Reservations</p>
-                  <p className="text-2xl font-bold text-[#1C1917]">{stats.overview.successful_bookings}</p>
-                </div>
-              </div>
+            <div className="bg-white rounded-xl border border-[#E7E5E4] p-6">
+              <p className="text-xs font-medium text-[#78716C] uppercase tracking-wider">Reservations</p>
+              <p className="text-4xl font-semibold text-[#1C1917] tracking-tight tabular-nums mt-1">{stats.overview.successful_bookings}</p>
             </div>
 
             {/* Success Rate */}
-            <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-sm">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-full bg-[#9F1239]/10 flex items-center justify-center">
-                  <ThiingsIcon name="trending-up" size="sm" />
-                </div>
-                <div>
-                  <p className="text-sm text-[#57534E]">Success Rate</p>
-                  <p className="text-2xl font-bold text-[#1C1917]">{stats.overview.success_rate}%</p>
-                </div>
-              </div>
+            <div className="bg-white rounded-xl border border-[#E7E5E4] p-6">
+              <p className="text-xs font-medium text-[#78716C] uppercase tracking-wider">Success Rate</p>
+              <p className="text-4xl font-semibold text-[#1C1917] tracking-tight tabular-nums mt-1">{stats.overview.success_rate}%</p>
             </div>
 
             {/* Average Duration */}
-            <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-sm">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-full bg-[#d97706]/10 flex items-center justify-center">
-                  <ThiingsIcon name="clock" size="sm" />
-                </div>
-                <div>
-                  <p className="text-sm text-[#57534E]">Avg Duration</p>
-                  <p className="text-2xl font-bold text-[#1C1917]">{stats.overview.average_duration_formatted}</p>
-                </div>
-              </div>
+            <div className="bg-white rounded-xl border border-[#E7E5E4] p-6">
+              <p className="text-xs font-medium text-[#78716C] uppercase tracking-wider">Avg Duration</p>
+              <p className="text-4xl font-semibold text-[#1C1917] tracking-tight tabular-nums mt-1">{stats.overview.average_duration_formatted}</p>
             </div>
           </div>
         )}
 
         {/* Call History Table */}
-        <div className="bg-white rounded-xl border border-[#E7E5E4] overflow-hidden shadow-sm">
+        <div className="bg-white rounded-xl border border-[#E7E5E4] overflow-hidden">
           <div className="p-4 border-b border-[#E7E5E4]">
             <h2 className="text-lg font-semibold text-[#1C1917]">Call History</h2>
           </div>

@@ -4,7 +4,7 @@
  * 6-step onboarding flow for new restaurant customers:
  * 1. Welcome & Restaurant Info
  * 2. Contact & Business Hours
- * 3. AI Voice Selection (choose Cartesia voice for phone agent)
+ * 3. AI Voice Selection (choose ElevenLabs voice for phone agent)
  * 4. Table Configuration
  * 5. Reservation Settings
  * 6. Team Setup (Pro+ only)

@@ -42,10 +42,6 @@ export interface PlanFeatures {
   systemObservability: boolean;      // System health monitoring
   prioritySupport: boolean;          // Priority support with SLA
 
-  // Deprecated (kept for backwards compatibility)
-  pricingRules?: boolean;
-  pricingAnalytics?: boolean;
-  segoviaInsights?: boolean;
 }
 
 export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
@@ -86,10 +82,6 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     systemObservability: false,
     prioritySupport: false,
 
-    // Deprecated
-    pricingRules: false,
-    pricingAnalytics: false,
-    segoviaInsights: false,
   },
 
   professional: {
@@ -129,10 +121,6 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     systemObservability: false,
     prioritySupport: false,
 
-    // Deprecated
-    pricingRules: true,
-    pricingAnalytics: true,
-    segoviaInsights: false,
   },
 
   trial: {
@@ -172,10 +160,6 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     systemObservability: false,
     prioritySupport: false,
 
-    // Deprecated
-    pricingRules: true,
-    pricingAnalytics: true,
-    segoviaInsights: false,
   },
 };
 

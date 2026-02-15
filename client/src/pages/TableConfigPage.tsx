@@ -4,6 +4,7 @@ import { tableConfigAPI } from '../services/api';
 import type { TableConfig } from '../services/api';
 import { Link } from 'react-router-dom';
 import { SkeletonTableConfig } from '../components/common/Skeleton';
+import DashboardLayout from '../components/layout/DashboardLayout';
 
 interface TableFormData {
   table_number: number;
@@ -152,23 +153,24 @@ export default function TableConfigPage() {
   const locations = [...new Set(tables.map((t: TableConfig) => t.location))] as string[];
 
   if (isLoading) {
-    return <SkeletonTableConfig />;
+    return <DashboardLayout><SkeletonTableConfig /></DashboardLayout>;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <DashboardLayout>
+    <div className="dashboard min-h-screen bg-[#FAFAF9]">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-slate-200 sticky top-0 z-50">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-[#E7E5E4] sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">Table Configuration</h1>
-              <p className="text-sm text-slate-500 mt-1">Manage tables, capacity, and combination rules</p>
+              <h1 className="text-2xl font-semibold text-[#1C1917]">Table Configuration</h1>
+              <p className="text-sm text-[#78716C] mt-1">Manage tables, capacity, and combination rules</p>
             </div>
             <div className="flex items-center gap-3">
               <Link
                 to="/host-dashboard/simple"
-                className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                className="px-4 py-2 text-sm text-[#57534E] hover:text-[#1C1917] border border-[#E7E5E4] rounded-lg hover:border-[#A8A29E] transition-colors"
               >
                 Back to Dashboard
               </Link>
@@ -177,7 +179,7 @@ export default function TableConfigPage() {
                   setFormData(defaultFormData);
                   setShowAddModal(true);
                 }}
-                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+                className="px-4 py-2 bg-[#1C1917] text-white rounded-lg hover:bg-[#292524] transition-colors font-medium"
               >
                 + Add Table
               </button>
@@ -189,35 +191,34 @@ export default function TableConfigPage() {
       {/* Stats Cards */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-            <div className="text-3xl font-bold text-slate-800">{stats.active || 0}</div>
-            <div className="text-sm text-slate-500">Active Tables</div>
+          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]">
+            <div className="text-3xl font-semibold text-[#1C1917] tabular-nums">{stats.active || 0}</div>
+            <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Active Tables</div>
           </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-            <div className="text-3xl font-bold text-emerald-600">{stats.flexible || 0}</div>
-            <div className="text-sm text-slate-500">Flexible (Combinable)</div>
+          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]">
+            <div className="text-3xl font-semibold text-[#1C1917] tabular-nums">{stats.flexible || 0}</div>
+            <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Flexible</div>
           </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-            <div className="text-3xl font-bold text-amber-600">{stats.fixed || 0}</div>
-            <div className="text-sm text-slate-500">Fixed (Booths/Round)</div>
+          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]">
+            <div className="text-3xl font-semibold text-[#1C1917] tabular-nums">{stats.fixed || 0}</div>
+            <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Fixed</div>
           </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-            <div className="text-3xl font-bold text-blue-600">{stats.total_capacity || 0}</div>
-            <div className="text-sm text-slate-500">Total Capacity</div>
+          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]">
+            <div className="text-3xl font-semibold text-[#1C1917] tabular-nums">{stats.total_capacity || 0}</div>
+            <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Total Capacity</div>
           </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-            <div className="text-3xl font-bold text-slate-600">{stats.locations?.length || 0}</div>
-            <div className="text-sm text-slate-500">Locations</div>
+          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]">
+            <div className="text-3xl font-semibold text-[#1C1917] tabular-nums">{stats.locations?.length || 0}</div>
+            <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Locations</div>
           </div>
         </div>
 
         {/* Tables by Location */}
         {Object.entries(tablesByLocation).map(([location, locationTables]) => (
           <div key={location} className="mb-8">
-            <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
+            <h2 className="text-lg font-semibold text-[#1C1917] mb-4 flex items-center gap-2">
               {location}
-              <span className="text-sm font-normal text-slate-500">
+              <span className="text-sm font-normal text-[#78716C]">
                 ({(locationTables as TableConfig[]).filter(t => t.is_active).length} tables)
               </span>
             </h2>
@@ -228,23 +229,23 @@ export default function TableConfigPage() {
                 .map((table) => (
                   <div
                     key={table.id}
-                    className={`bg-white rounded-xl p-4 shadow-sm border-2 transition-all hover:shadow-md cursor-pointer ${
+                    className={`bg-white rounded-xl p-4 border-2 transition-all cursor-pointer ${
                       table.is_fixed
-                        ? 'border-amber-200 hover:border-amber-400'
-                        : 'border-emerald-200 hover:border-emerald-400'
+                        ? 'border-[#E7E5E4] hover:border-[#A8A29E]'
+                        : 'border-[#E7E5E4] hover:border-[#A8A29E]'
                     }`}
                     onClick={() => openEditModal(table)}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <div className="text-xl font-bold text-slate-800">Table {table.table_number}</div>
-                        <div className="text-sm text-slate-500">{table.capacity} seats</div>
+                        <div className="text-xl font-semibold text-[#1C1917]">Table {table.table_number}</div>
+                        <div className="text-sm text-[#78716C]">{table.capacity} seats</div>
                       </div>
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
                           table.is_fixed
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-emerald-100 text-emerald-700'
+                            ? 'bg-[#F5F5F4] text-[#78716C]'
+                            : 'bg-[#F5F5F4] text-[#1C1917]'
                         }`}
                       >
                         {table.is_fixed ? 'Fixed' : 'Flexible'}
@@ -395,14 +396,15 @@ export default function TableConfigPage() {
       {/* Toast Notification */}
       {toast && (
         <div
-          className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
-            toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
+          className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg z-50 ${
+            toast.type === 'success' ? 'bg-[#1C1917] text-white' : 'bg-red-600 text-white'
           }`}
         >
           {toast.message}
         </div>
       )}
     </div>
+    </DashboardLayout>
   );
 }
 
@@ -528,7 +530,7 @@ function TableForm({
         <button
           onClick={onSubmit}
           disabled={isLoading}
-          className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
+          className="flex-1 px-4 py-2 bg-[#1C1917] text-white rounded-lg hover:bg-[#292524] transition-colors disabled:opacity-50"
         >
           {isLoading ? 'Saving...' : submitLabel}
         </button>
@@ -587,8 +589,8 @@ function AdjacencyModal({
                   onClick={() => toggleTable(t.id)}
                   className={`p-3 rounded-lg border-2 transition-all text-left ${
                     selectedIds.includes(t.id)
-                      ? 'border-emerald-500 bg-emerald-50'
-                      : 'border-slate-200 hover:border-slate-300'
+                      ? 'border-[#1C1917] bg-[#F5F5F4]'
+                      : 'border-[#E7E5E4] hover:border-[#A8A29E]'
                   }`}
                 >
                   <div className="font-medium text-slate-800">Table {t.table_number}</div>
@@ -615,7 +617,7 @@ function AdjacencyModal({
           <button
             onClick={() => onSave(selectedIds)}
             disabled={isLoading}
-            className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-[#1C1917] text-white rounded-lg hover:bg-[#292524] transition-colors disabled:opacity-50"
           >
             {isLoading ? 'Saving...' : `Save (${selectedIds.length} selected)`}
           </button>

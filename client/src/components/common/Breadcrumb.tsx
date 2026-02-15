@@ -64,7 +64,6 @@ export const breadcrumbConfigs = {
   reports: [{ label: 'Weekly Reports' }],
   ltv: [{ label: 'Customer Lifetime Value' }],
   dna: [{ label: 'Customer DNA' }],
-  segovia: [{ label: 'Segovia Insights' }],
   calls: [{ label: 'Call Tracking' }],
   advanced: [{ label: 'Advanced Dashboard' }],
   waitlist: [{ label: 'Waitlist' }],

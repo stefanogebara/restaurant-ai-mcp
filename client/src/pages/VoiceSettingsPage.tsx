@@ -304,12 +304,12 @@ export default function VoiceSettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 lg:p-8 max-w-5xl">
+      <div className="dashboard p-6 lg:p-8 max-w-5xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <Breadcrumb items={breadcrumbConfigs.voiceSettings} className="mb-2" />
-            <h1 className="font-serif text-2xl font-bold text-[#1C1917]">
+            <h1 className="text-2xl font-bold text-[#1C1917]">
               Voice & Language Settings
             </h1>
             <p className="text-sm text-[#57534E] mt-1">

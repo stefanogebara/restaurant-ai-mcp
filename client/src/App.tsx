@@ -15,10 +15,8 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 const LandingPage = lazy(() => import('./landing/pages/LandingPage'));
 const Login = lazy(() => import('./pages/Login'));
 const LiveAIDemo = lazy(() => import('./pages/LiveAIDemo'));
-const SimpleDashboard = lazy(() => import('./pages/SimpleDashboard'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const WeeklyReport = lazy(() => import('./pages/WeeklyReport'));
-const SegoviaInsightsPage = lazy(() => import('./pages/SegoviaInsightsPage'));
 const AnalyticsDashboard = lazy(() => import('./pages/AnalyticsDashboard'));
 const CallTrackingDashboard = lazy(() => import('./pages/CallTrackingDashboard'));
 const CustomerPortal = lazy(() => import('./pages/CustomerPortal'));
@@ -96,9 +94,7 @@ function App() {
               {/* Dashboard - New unified dashboard (default) */}
               <Route path="/host-dashboard" element={<Navigate to="/host-dashboard/simple" replace />} />
               <Route path="/host-dashboard/simple" element={<ErrorBoundary fallback={<RouteErrorFallback />}><Dashboard /></ErrorBoundary>} />
-              <Route path="/host-dashboard/legacy" element={<SimpleDashboard />} />
               <Route path="/host-dashboard/reports" element={<WeeklyReport />} />
-              <Route path="/host-dashboard/segovia" element={<SegoviaInsightsPage />} />
               <Route path="/host-dashboard/calls" element={<CallTrackingDashboard />} />
               <Route path="/host-dashboard/tables" element={<TableConfigPage />} />
               <Route path="/host-dashboard/voice-settings" element={<VoiceSettingsPage />} />

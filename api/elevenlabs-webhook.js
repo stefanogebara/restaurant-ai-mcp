@@ -17,7 +17,7 @@
  */
 
 const crypto = require('crypto');
-const { getRestaurantByPhone, getRestaurantById } = require('./_lib/restaurant-loader');
+const { getRestaurantByPhone, getRestaurantById, getRestaurantByAgentId } = require('./_lib/restaurant-loader');
 const conversationLogger = require('./services/conversationLogger');
 const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 const { trackUsage } = require('./_lib/usage-tracking');
@@ -125,6 +125,7 @@ module.exports = async (req, res) => {
       // Try multiple methods to identify which restaurant is being called
       const calledNumber = req.headers['x-called-number'] || req.query.phone || req.body?.phone;
       const restaurantId = req.query.restaurant_id || req.body?.restaurant_id;
+      const agentId = req.headers['x-agent-id'] || req.query.agent_id || req.body?.agent_id;
       const senderPhone = req.headers['x-caller-number'] || req.body?.sender_phone || req.body?.caller_phone;
 
       // Method 0: Multi-tenant session lookup (for WhatsApp)
@@ -167,7 +168,18 @@ module.exports = async (req, res) => {
         }
       }
 
-      // Method 2: Look up by restaurant ID (fallback)
+      // Method 2: Look up by ElevenLabs agent ID (per-restaurant agents)
+      if (!restaurant && agentId) {
+        try {
+          logger.debug(`Looking up restaurant by agent_id: ${agentId}`);
+          restaurant = await getRestaurantByAgentId(agentId);
+          logger.info(`Loaded restaurant by agent_id: ${restaurant.name}`);
+        } catch (error) {
+          logger.warn(`Restaurant not found for agent_id ${agentId}:`, { message: error.message });
+        }
+      }
+
+      // Method 3: Look up by restaurant ID (fallback)
       if (!restaurant && restaurantId) {
         try {
           logger.debug(`Looking up restaurant by ID: ${restaurantId}`);

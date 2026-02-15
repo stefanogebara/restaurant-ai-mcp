@@ -58,7 +58,6 @@ module.exports = async (req, res) => {
     const planMapping = {
       [process.env.STRIPE_BASIC_PRICE_ID]: 'Basic',
       [process.env.STRIPE_PROFESSIONAL_PRICE_ID]: 'Professional',
-      [process.env.STRIPE_ENTERPRISE_PRICE_ID]: 'Enterprise',
     };
 
     const planName = planMapping[priceId] || 'Unknown Plan';

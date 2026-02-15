@@ -46,40 +46,12 @@ const PLAN_LIMITS = {
     whiteLabel: false,
     phoneSupport: false,
   },
-  enterprise: {
-    name: 'Enterprise',
-    maxReservationsPerMonth: -1, // unlimited
-    features: [
-      'ai_reservations',
-      'host_dashboard',
-      'basic_analytics',
-      'advanced_analytics',
-      'waitlist_management',
-      'priority_support',
-      'sms_notifications',
-      'email_support',
-      'multi_location',
-      'custom_integrations',
-      'white_label',
-      'phone_support',
-      'dedicated_account_manager',
-      'sla_guarantee',
-    ],
-    analyticsLevel: 'enterprise',
-    smsNotifications: true,
-    waitlistManagement: true,
-    multiLocation: true,
-    customIntegrations: true,
-    whiteLabel: true,
-    phoneSupport: true,
-  },
 };
 
 // Map Stripe price IDs to plan names
 const PRICE_ID_TO_PLAN = {
   'price_1SMyEOKf4yCMjmH5kXx1RUyo': 'basic',       // Basic plan
   'price_1SMyFUKf4yCMjmH5jh4mReyI': 'professional', // Professional plan
-  'price_1SMyHPKf4yCMjmH5t2Jig9cU': 'enterprise',   // Enterprise plan
 };
 
 /**
@@ -169,7 +141,7 @@ function getUpgradeMessage(featureName, currentPlan) {
   };
 
   const message = featureMessages[featureName] || 'This premium feature';
-  return `${message} is available on Professional and Enterprise plans.`;
+  return `${message} is available on the Professional plan.`;
 }
 
 module.exports = {

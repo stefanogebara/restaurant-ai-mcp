@@ -127,10 +127,8 @@ export default function WeeklyReport() {
         <div className="p-8">
           <Breadcrumb items={breadcrumbConfigs.reports} className="mb-4" />
           <div className="flex flex-col items-center justify-center min-h-[50vh]">
-            <div className="bg-white rounded-2xl border border-[#E7E5E4] p-12 max-w-lg text-center shadow-lg">
-              <div className="w-16 h-16 bg-[#9F1239]/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <ThiingsIcon name="lock" pxSize={32} />
-              </div>
+            <div className="bg-white rounded-2xl border border-[#E7E5E4] p-12 max-w-lg text-center">
+              <ThiingsIcon name="lock" pxSize={32} className="mx-auto mb-6" />
               <h2 className="text-2xl font-bold text-[#1C1917] mb-3">Weekly Reports</h2>
               <p className="text-[#57534E] mb-6">
                 Detailed weekly analytics and performance reports. Available on the Professional plan.
@@ -179,7 +177,7 @@ export default function WeeklyReport() {
 
   return (
     <DashboardLayout>
-    <div className="min-h-screen bg-background p-6">
+    <div className="dashboard min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
         {/* Breadcrumb Navigation */}
         <Breadcrumb items={breadcrumbConfigs.reports} className="mb-4 print:hidden" />
@@ -201,7 +199,7 @@ export default function WeeklyReport() {
             </button>
             <button
               onClick={() => fetchReport()}
-              className="flex items-center gap-2 px-4 py-2 bg-[#57534E] hover:bg-[#44403C] text-white rounded-lg transition"
+              className="flex items-center gap-2 px-4 py-2 border border-[#E7E5E4] hover:border-[#A8A29E] text-[#57534E] rounded-lg transition"
             >
               <ThiingsIcon name="refresh" size="xs" />
               Refresh
@@ -309,9 +307,7 @@ export default function WeeklyReport() {
               {busiest.days.map((day, index) => (
                 <div key={day.day} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#9F1239]/20 flex items-center justify-center">
-                      <span className="text-[#9F1239] font-bold text-sm">#{index + 1}</span>
-                    </div>
+                    <span className="text-sm font-medium text-[#78716C] w-5">#{index + 1}</span>
                     <span className="text-foreground font-medium">{day.day}</span>
                   </div>
                   <span className="text-2xl font-bold text-foreground">{day.covers}</span>
@@ -330,9 +326,7 @@ export default function WeeklyReport() {
               {busiest.times.map((time, index) => (
                 <div key={time.time} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#d97706]/20 flex items-center justify-center">
-                      <span className="text-[#d97706] font-bold text-sm">#{index + 1}</span>
-                    </div>
+                    <span className="text-sm font-medium text-[#78716C] w-5">#{index + 1}</span>
                     <span className="text-foreground font-medium">{time.time}</span>
                   </div>
                   <span className="text-2xl font-bold text-foreground">{time.covers}</span>
@@ -350,28 +344,28 @@ export default function WeeklyReport() {
           </div>
           <div className="grid grid-cols-4 gap-6">
             <div className="text-center">
-              <div className="text-4xl font-bold text-[#9F1239] mb-2">{demographics.tourist_percentage}%</div>
-              <div className="text-sm text-muted-foreground">Tourists</div>
-              <div className="text-xs text-foreground mt-1">{demographics.tourist_count} visitors</div>
+              <div className="text-4xl font-semibold text-[#1C1917] tracking-tight tabular-nums mb-2">{demographics.tourist_percentage}%</div>
+              <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider">Tourists</div>
+              <div className="text-sm text-[#A8A29E] mt-1">{demographics.tourist_count} visitors</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-[#16a34a] mb-2">
+              <div className="text-4xl font-semibold text-[#1C1917] tracking-tight tabular-nums mb-2">
                 {demographics.tourist_count + demographics.local_count > 0
                   ? Math.round((demographics.local_count / (demographics.tourist_count + demographics.local_count)) * 100)
                   : 0}%
               </div>
-              <div className="text-sm text-muted-foreground">Locals</div>
-              <div className="text-xs text-foreground mt-1">{demographics.local_count} residents</div>
+              <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider">Locals</div>
+              <div className="text-sm text-[#A8A29E] mt-1">{demographics.local_count} residents</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-[#d97706] mb-2">{demographics.first_time_visitors}</div>
-              <div className="text-sm text-muted-foreground">First-Time</div>
-              <div className="text-xs text-foreground mt-1">New customers</div>
+              <div className="text-4xl font-semibold text-[#1C1917] tracking-tight tabular-nums mb-2">{demographics.first_time_visitors}</div>
+              <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider">First-Time</div>
+              <div className="text-sm text-[#A8A29E] mt-1">New customers</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-[#7c3aed] mb-2">{demographics.repeat_customers}</div>
-              <div className="text-sm text-muted-foreground">Repeat</div>
-              <div className="text-xs text-foreground mt-1">Returning guests</div>
+              <div className="text-4xl font-semibold text-[#1C1917] tracking-tight tabular-nums mb-2">{demographics.repeat_customers}</div>
+              <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider">Repeat</div>
+              <div className="text-sm text-[#A8A29E] mt-1">Returning guests</div>
             </div>
           </div>
         </div>
@@ -391,7 +385,7 @@ export default function WeeklyReport() {
                   .map(([restriction, count]) => (
                     <div key={restriction} className="flex items-center justify-between p-2 bg-background rounded">
                       <span className="text-foreground">{restriction}</span>
-                      <span className="text-xl font-bold text-[#16a34a]">{count}</span>
+                      <span className="text-xl font-semibold text-[#1C1917] tabular-nums">{count}</span>
                     </div>
                   ))}
               </div>
@@ -411,7 +405,7 @@ export default function WeeklyReport() {
                   .map(([language, count]) => (
                     <div key={language} className="flex items-center justify-between p-2 bg-background rounded">
                       <span className="text-foreground">{language}</span>
-                      <span className="text-xl font-bold text-[#7c3aed]">{count}</span>
+                      <span className="text-xl font-semibold text-[#1C1917] tabular-nums">{count}</span>
                     </div>
                   ))}
               </div>
@@ -431,7 +425,7 @@ export default function WeeklyReport() {
                   .map(([seating, count]) => (
                     <div key={seating} className="flex items-center justify-between p-2 bg-background rounded">
                       <span className="text-foreground">{seating}</span>
-                      <span className="text-xl font-bold text-[#d97706]">{count}</span>
+                      <span className="text-xl font-semibold text-[#1C1917] tabular-nums">{count}</span>
                     </div>
                   ))}
               </div>
@@ -451,7 +445,7 @@ export default function WeeklyReport() {
                   .map(([occasion, count]) => (
                     <div key={occasion} className="flex items-center justify-between p-2 bg-background rounded">
                       <span className="text-foreground">{occasion}</span>
-                      <span className="text-xl font-bold text-[#9F1239]">{count}</span>
+                      <span className="text-xl font-semibold text-[#1C1917] tabular-nums">{count}</span>
                     </div>
                   ))}
               </div>
