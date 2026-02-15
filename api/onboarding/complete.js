@@ -240,6 +240,7 @@ module.exports = async (req, res) => {
       for (const tableConfig of area.tables || []) {
         for (let i = 0; i < tableConfig.count; i++) {
           tablesToInsert.push({
+            restaurant_id: restaurantInfoResult.id,
             table_number: tableNumber,
             capacity: tableConfig.capacity,
             location: area.name,
