@@ -46,8 +46,9 @@ function generateSlug(name) {
 async function generateUniqueSlug(name, supabaseClient) {
   const baseSlug = generateSlug(name);
 
-  // Check if this slug already exists
+  // Check if this slug already exists (restaurant_config is in 'restaurant' schema)
   const { data: existing } = await supabaseClient
+    .schema('restaurant')
     .from('restaurant_config')
     .select('id')
     .eq('slug', baseSlug)
@@ -63,6 +64,7 @@ async function generateUniqueSlug(name, supabaseClient) {
 
   // Verify the suffixed slug is also unique (extremely unlikely collision but safe)
   const { data: existingWithSuffix } = await supabaseClient
+    .schema('restaurant')
     .from('restaurant_config')
     .select('id')
     .eq('slug', slugWithSuffix)
@@ -179,8 +181,9 @@ module.exports = async (req, res) => {
       }
     };
 
-    // Check if restaurant_info record exists
+    // Check if restaurant_info record exists (lives in 'restaurant' schema)
     const { data: existingInfo, error: fetchError } = await supabaseAdmin
+      .schema('restaurant')
       .from('restaurant_info')
       .select('*')
       .limit(1)
@@ -190,6 +193,7 @@ module.exports = async (req, res) => {
     if (existingInfo) {
       // Update existing record
       const { data, error } = await supabaseAdmin
+        .schema('restaurant')
         .from('restaurant_info')
         .update(restaurantInfoData)
         .eq('id', existingInfo.id)
@@ -202,6 +206,7 @@ module.exports = async (req, res) => {
     } else {
       // Insert new record
       const { data, error } = await supabaseAdmin
+        .schema('restaurant')
         .from('restaurant_info')
         .insert(restaurantInfoData)
         .select()
@@ -418,7 +423,7 @@ module.exports = async (req, res) => {
       email: email || customer_email,
       phone: phone_number,
       website: website || null,
-      voice_id: selected_voice_id || 'default_cartesia_voice',
+      voice_id: selected_voice_id || 'default',
       business_hours: business_hours.reduce((acc, day) => {
         acc[day.day.toLowerCase()] = {
           is_open: day.is_open,
@@ -468,6 +473,7 @@ module.exports = async (req, res) => {
       let configResult;
       if (userId) {
         const { data: existingConfig } = await supabaseAdmin
+          .schema('restaurant')
           .from('restaurant_config')
           .select('*')
           .eq('user_id', userId)
@@ -476,6 +482,7 @@ module.exports = async (req, res) => {
         if (existingConfig) {
           // Update existing config
           const { data, error } = await supabaseAdmin
+            .schema('restaurant')
             .from('restaurant_config')
             .update(restaurantConfigData)
             .eq('user_id', userId)
@@ -488,6 +495,7 @@ module.exports = async (req, res) => {
         } else {
           // Insert new config
           const { data, error } = await supabaseAdmin
+            .schema('restaurant')
             .from('restaurant_config')
             .insert(restaurantConfigData)
             .select()
@@ -538,7 +546,8 @@ module.exports = async (req, res) => {
       const agentResponse = await fetch(agentCreateEndpoint, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': req.headers.authorization || ''
         },
         body: JSON.stringify({
           restaurant_id: generatedRestaurantId,
@@ -560,6 +569,7 @@ module.exports = async (req, res) => {
         // Update restaurant_info with agent details
         const voiceIdToSave = selected_voice_id || '21m00Tcm4TlvDq8ikWAM';
         await supabaseAdmin
+          .schema('restaurant')
           .from('restaurant_info')
           .update({
             elevenlabs_agent_id: agentId,
@@ -569,7 +579,21 @@ module.exports = async (req, res) => {
           })
           .eq('id', restaurantInfoResult.id);
 
-        logger.info(' ✅ ElevenLabs agent created:', agentId);
+        // Also save agent_id to restaurant_config for webhook routing
+        if (userId) {
+          await supabaseAdmin
+            .schema('restaurant')
+            .from('restaurant_config')
+            .update({
+              elevenlabs_agent_id: agentId,
+              agent_language: selected_voice_language || 'en'
+            })
+            .eq('user_id', userId);
+
+          logger.info(' Agent saved to restaurant_config');
+        }
+
+        logger.info(' ElevenLabs agent created:', agentId);
         logger.info(' Agent URL: https://elevenlabs.io/app/conversational-ai/' + agentId);
       } else {
         const errorText = await agentResponse.text();
