@@ -25,12 +25,14 @@ export default function SubscriptionManage() {
   useEffect(() => {
     const fetchSubscription = async () => {
       try {
-        // Get customer ID from localStorage (stored after successful checkout)
-        // In production with full auth, this would come from your user session
         const customerId =
           searchParams.get('customer_id') ||
-          localStorage.getItem('stripe_customer_id') ||
-          'cus_placeholder';
+          localStorage.getItem('stripe_customer_id');
+
+        if (!customerId) {
+          setSubscription({ status: 'none', planName: 'No Plan', planPrice: 'N/A' });
+          return;
+        }
 
         const apiUrl = import.meta.env.VITE_API_URL
           ? `${import.meta.env.VITE_API_URL}/api/get-subscription`
@@ -46,12 +48,7 @@ export default function SubscriptionManage() {
         setSubscription(data);
       } catch (error) {
         console.error('Error fetching subscription:', error);
-        // Set to 'none' if there's an error
-        setSubscription({
-          status: 'none',
-          planName: 'No Plan',
-          planPrice: 'N/A',
-        });
+        setSubscription({ status: 'none', planName: 'No Plan', planPrice: 'N/A' });
       } finally {
         setLoading(false);
       }
@@ -64,11 +61,13 @@ export default function SubscriptionManage() {
     try {
       setManagingSubscription(true);
 
-      // Get customer ID from localStorage (stored after successful checkout)
-      // In production with full auth, this would come from your user session
-      const customerId =
-        localStorage.getItem('stripe_customer_id') ||
-        'cus_placeholder';
+      const customerId = localStorage.getItem('stripe_customer_id');
+
+      if (!customerId) {
+        alert('No subscription found. Please subscribe first.');
+        setManagingSubscription(false);
+        return;
+      }
 
       const apiUrl = import.meta.env.VITE_API_URL
         ? `${import.meta.env.VITE_API_URL}/api/customer-portal`
