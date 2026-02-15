@@ -169,7 +169,8 @@ async function handleGetAvailability(req, res) {
   const dayHours = businessHours[dayKey];
 
   // Check if restaurant is open that day
-  if (!dayHours || dayHours.closed) {
+  // Business hours use { is_open, open_time, close_time } format
+  if (!dayHours || dayHours.is_open === false || dayHours.closed) {
     return res.status(200).json({
       success: true,
       available: false,
@@ -178,8 +179,8 @@ async function handleGetAvailability(req, res) {
     });
   }
 
-  const openTime = dayHours.open || '12:00';
-  const closeTime = dayHours.close || '22:00';
+  const openTime = dayHours.open_time || dayHours.open || '12:00';
+  const closeTime = dayHours.close_time || dayHours.close || '22:00';
 
   // Get existing reservations for this date
   const { data: reservations, error: resError } = await supabaseAdmin
