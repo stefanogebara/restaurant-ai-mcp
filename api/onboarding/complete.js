@@ -469,9 +469,9 @@ module.exports = async (req, res) => {
       restaurantConfigData.user_id = userId;
     }
 
+    let configResult;
     try {
       // Check if config already exists for this user
-      let configResult;
       if (userId) {
         const { data: existingConfig } = await supabaseAdmin
           .schema('restaurant')
@@ -509,6 +509,21 @@ module.exports = async (req, res) => {
       } else {
         // No user_id, skip restaurant_config creation
         logger.info(' Skipping restaurant_config creation (no user_id)');
+      }
+      // STEP 3b: Update tables to use restaurant_config.id as restaurant_id
+      // The dashboard resolves restaurant_id from restaurant_config, so tables must match
+      if (configResult && configResult.id !== restaurantInfoResult.id) {
+        logger.info(' Step 3b: Aligning tables restaurant_id with config id...');
+        const { error: alignError } = await supabaseAdmin
+          .from('tables')
+          .update({ restaurant_id: configResult.id })
+          .eq('restaurant_id', restaurantInfoResult.id);
+
+        if (alignError) {
+          logger.warn(' Could not align table restaurant_ids:', alignError);
+        } else {
+          logger.info(` Tables aligned to config id: ${configResult.id}`);
+        }
       }
     } catch (configError) {
       logger.error(' Error saving restaurant_config:', configError);
@@ -620,11 +635,13 @@ module.exports = async (req, res) => {
       const now = new Date();
       const trialEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days
 
+      // Use restaurant_config.id as canonical restaurant_id (matches dashboard auth)
+      const canonicalRestaurantId = configResult?.id || restaurantInfoResult.id;
       const { data: subData, error: subError } = await supabaseAdmin
         .from('subscriptions')
         .insert({
-          restaurant_id: restaurantInfoResult.id,
-          subscription_id: `trial_${restaurantInfoResult.id}`,
+          restaurant_id: canonicalRestaurantId,
+          subscription_id: `trial_${canonicalRestaurantId}`,
           customer_id: userId || `user_${Date.now()}`,
           customer_email: customer_email,
           plan_name: plan || 'Professional',
