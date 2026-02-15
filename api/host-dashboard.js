@@ -266,8 +266,8 @@ async function handleDashboard(req, res) {
       // Floor plan positioning
       position_x: t.position_x || 0,
       position_y: t.position_y || 0,
-      width: t.width || 1,
-      height: t.height || 1,
+      width: t.width ?? null,
+      height: t.height ?? null,
       rotation: t.rotation || 0,
       // Legacy fields
       is_fixed: t.is_fixed || false
