@@ -36,3 +36,25 @@ lambda/package/
 lambda/lambda-package.zip
 lambda/trust-policy.json
 .env*.local
+
+# Local scripts and one-off utilities
+scripts/
+
+# Database migration drafts
+database/
+
+# Planning docs
+docs/plans/
+
+# Test/CI output files
+test-output.txt
+test-results.txt
+playwright-output.txt
+playwright-results.txt
+playwright-report/
+
+# Agent workspace
+parallel-agents/
+
+# Windows artifact
+nul
