@@ -352,6 +352,39 @@ export default function FloorPlanEditor() {
     tables.filter(t => (t.location || 'Main') === activeLocation),
   [tables, activeLocation]);
 
+  // Detect if tables need auto-layout (all at 0,0)
+  const needsAutoLayout = useMemo(() => {
+    if (filteredTables.length <= 1) return false;
+    return !filteredTables.some(t =>
+      (t.position_x !== undefined && t.position_x !== null && t.position_x !== 0) ||
+      (t.position_y !== undefined && t.position_y !== null && t.position_y !== 0),
+    );
+  }, [filteredTables]);
+
+  // Compute auto-layout positions when tables are all stacked at 0,0
+  const autoPositions = useMemo(() => {
+    if (!needsAutoLayout) return new Map<string, { gx: number; gy: number }>();
+    const map = new Map<string, { gx: number; gy: number }>();
+    const sorted = [...filteredTables].sort((a, b) => (Number(a.table_number) || 0) - (Number(b.table_number) || 0));
+    const GAP = 1; // 1 grid cell gap between tables
+    let curCol = 1, curRow = 1, rowMaxH = 0;
+    sorted.forEach(t => {
+      const shape = (t.shape?.toLowerCase() || 'round') as TableShape;
+      const gridSize = getTableGridSize(shape, t.capacity || 2);
+      const tw = t.width || gridSize.width;
+      const th = t.height || gridSize.height;
+      if (curCol + tw + GAP > GRID_COLS - 1 && curCol > 1) {
+        curCol = 1;
+        curRow += rowMaxH + GAP + 1;
+        rowMaxH = 0;
+      }
+      map.set(t.id, { gx: curCol, gy: curRow });
+      curCol += tw + GAP + 1;
+      rowMaxH = Math.max(rowMaxH, th);
+    });
+    return map;
+  }, [needsAutoLayout, filteredTables]);
+
   const nextTableNumber = useMemo(() =>
     Math.max(0, ...tables.map(t => Number(t.table_number) || 0)) + 1,
   [tables]);
@@ -391,13 +424,16 @@ export default function FloorPlanEditor() {
     e.stopPropagation();
     (e.target as SVGElement).setPointerCapture?.(e.pointerId);
     const pt = svgPoint(e.clientX, e.clientY);
-    const tableX = (table.position_x || 0) * CELL;
-    const tableY = (table.position_y || 0) * CELL;
+    const autoPos = autoPositions.get(table.id);
+    const gx = autoPos ? autoPos.gx : (table.position_x || 0);
+    const gy = autoPos ? autoPos.gy : (table.position_y || 0);
+    const tableX = gx * CELL;
+    const tableY = gy * CELL;
     setDragOffset({ x: pt.x - tableX, y: pt.y - tableY });
     setDraggingId(table.id);
     setDragPos({ x: tableX, y: tableY });
     setSelectedTable(null);
-  }, [linkMode, svgPoint]);
+  }, [linkMode, svgPoint, autoPositions]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!draggingId) return;
@@ -443,7 +479,6 @@ export default function FloorPlanEditor() {
           queryClient.invalidateQueries({ queryKey: ['floorPlanTables'] });
           showSaved();
         }).catch(() => {
-          setSaveStatus('idle');
           setSaveStatus('idle');
         });
         setLinkSource(null);
@@ -510,12 +545,15 @@ export default function FloorPlanEditor() {
     const map = new Map<string, { cx: number; cy: number }>();
     filteredTables.forEach(t => {
       const { w, h } = getTablePxSize(t);
-      const x = (t.position_x || 0) * CELL;
-      const y = (t.position_y || 0) * CELL;
+      const autoPos = autoPositions.get(t.id);
+      const gx = autoPos ? autoPos.gx : (t.position_x || 0);
+      const gy = autoPos ? autoPos.gy : (t.position_y || 0);
+      const x = gx * CELL;
+      const y = gy * CELL;
       map.set(t.id, { cx: x + w / 2, cy: y + h / 2 });
     });
     return map;
-  }, [filteredTables]);
+  }, [filteredTables, autoPositions]);
 
   // ── Render ──
   return (
@@ -671,8 +709,11 @@ export default function FloorPlanEditor() {
                     x = dragPos.x;
                     y = dragPos.y;
                   } else {
-                    x = (table.position_x || 0) * CELL;
-                    y = (table.position_y || 0) * CELL;
+                    const autoPos = autoPositions.get(table.id);
+                    const gx = autoPos ? autoPos.gx : (table.position_x || 0);
+                    const gy = autoPos ? autoPos.gy : (table.position_y || 0);
+                    x = gx * CELL;
+                    y = gy * CELL;
                   }
 
                   const cx = x + w / 2;
