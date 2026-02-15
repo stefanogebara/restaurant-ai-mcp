@@ -37,6 +37,20 @@ const navItems: NavItem[] = [
     iconName: 'volume',
     description: 'AI Voice Settings',
     requiredFeature: 'aiAgentTracking'
+  },
+  {
+    path: '/analytics',
+    label: 'Analytics',
+    iconName: 'bar-chart',
+    description: 'Performance & Trends',
+    requiredFeature: 'advancedAnalytics'
+  },
+  {
+    path: '/host-dashboard/reports',
+    label: 'Reports',
+    iconName: 'file-text',
+    description: 'Weekly Reports',
+    requiredFeature: 'weeklyReports'
   }
 ];
 
