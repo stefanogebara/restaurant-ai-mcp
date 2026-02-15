@@ -90,16 +90,16 @@ export default function RevenueOpportunities() {
   return (
     <div className="bg-card border border-border rounded-lg overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-6">
-        <h2 className="text-2xl font-bold text-white mb-2">💰 Revenue Optimization Opportunities</h2>
-        <p className="text-white/90 text-sm">
+      <div className="p-6 border-b border-[#E7E5E4]">
+        <h2 className="text-lg font-semibold text-[#1C1917] tracking-tight mb-1">Revenue Opportunities</h2>
+        <p className="text-sm text-[#78716C]">
           Data-driven insights to maximize revenue and improve operational efficiency
         </p>
       </div>
 
       {/* Summary Stats */}
       {summary && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-gradient-to-b from-green-50 to-transparent border-b border-border">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-muted/30 border-b border-[#E7E5E4]">
           <div className="text-center">
             <div className="text-3xl font-bold text-green-600">{formatCurrency(summary.total_potential_revenue)}</div>
             <div className="text-xs text-muted-foreground mt-1">Total Potential</div>
@@ -194,7 +194,7 @@ export default function RevenueOpportunities() {
       </div>
 
       {/* Footer Info */}
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-t border-border">
+      <div className="bg-muted/30 px-6 py-4 border-t border-[#E7E5E4]">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />

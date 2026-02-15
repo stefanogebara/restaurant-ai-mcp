@@ -12,88 +12,52 @@ interface AnalyticsStatsProps {
 
 export default function AnalyticsStats({ overview }: AnalyticsStatsProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <StatCard
-        label="Total Reservations"
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-0">
+      <StatBlock
         value={overview.total_reservations}
-        icon="📅"
-        subtitle="Last 30 days"
-        color="primary"
+        label="Reservations"
+        sublabel="Last 30 days"
       />
-      <StatCard
-        label="Completed Services"
+      <StatBlock
         value={overview.total_completed_services}
-        icon="✅"
-        subtitle="Successfully served"
-        color="accent"
+        label="Completed"
+        sublabel="Successfully served"
+        showDivider
       />
-      <StatCard
-        label="Avg Party Size"
+      <StatBlock
         value={overview.avg_party_size.toFixed(1)}
-        icon="👥"
-        subtitle="Guests per reservation"
-        color="muted"
+        label="Avg Party Size"
+        sublabel="Guests per reservation"
+        showDivider
       />
-      <StatCard
-        label="Avg Service Time"
+      <StatBlock
         value={`${overview.avg_service_time_minutes} min`}
-        icon="⏱️"
-        subtitle="Table turnover"
-        color="secondary"
+        label="Avg Service Time"
+        sublabel="Table turnover"
+        showDivider
       />
     </div>
   );
 }
 
-interface StatCardProps {
-  label: string;
+interface StatBlockProps {
   value: number | string;
-  icon: string;
-  subtitle: string;
-  color: 'primary' | 'accent' | 'muted' | 'secondary';
+  label: string;
+  sublabel: string;
+  showDivider?: boolean;
 }
 
-function StatCard({ label, value, icon, subtitle, color }: StatCardProps) {
-  const colorConfig = {
-    primary: {
-      bg: 'bg-primary/10 border-primary/20 hover:border-primary/40',
-      icon: 'bg-primary/20 text-primary',
-      text: 'text-foreground',
-      subtitle: 'text-muted-foreground',
-    },
-    accent: {
-      bg: 'bg-accent border-border hover:border-accent-foreground/40',
-      icon: 'bg-accent-foreground/20 text-accent-foreground',
-      text: 'text-foreground',
-      subtitle: 'text-muted-foreground',
-    },
-    muted: {
-      bg: 'bg-muted border-border hover:border-muted-foreground/40',
-      icon: 'bg-muted-foreground/20 text-muted-foreground',
-      text: 'text-foreground',
-      subtitle: 'text-muted-foreground',
-    },
-    secondary: {
-      bg: 'bg-secondary border-border hover:border-secondary-foreground/40',
-      icon: 'bg-secondary-foreground/20 text-secondary-foreground',
-      text: 'text-foreground',
-      subtitle: 'text-muted-foreground',
-    },
-  };
-
-  const config = colorConfig[color];
-
+function StatBlock({ value, label, sublabel, showDivider }: StatBlockProps) {
   return (
-    <div className={`${config.bg} border-2 rounded-lg p-6 shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1`}>
-      <div className="flex items-center justify-between mb-4">
-        <div className={`w-12 h-12 ${config.icon} rounded-lg flex items-center justify-center text-2xl`}>
-          {icon}
-        </div>
+    <div className={`px-6 py-2 ${showDivider ? 'sm:border-l sm:border-[#E7E5E4]' : ''}`}>
+      <div className="text-4xl font-semibold text-[#1C1917] tracking-tight tabular-nums">
+        {value}
       </div>
-      <div>
-        <p className={`text-sm font-medium ${config.subtitle} mb-1`}>{label}</p>
-        <p className={`text-3xl font-bold ${config.text} mb-1`}>{value}</p>
-        <p className={`text-xs ${config.subtitle}`}>{subtitle}</p>
+      <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">
+        {label}
+      </div>
+      <div className="text-sm text-[#A8A29E] mt-0.5">
+        {sublabel}
       </div>
     </div>
   );

@@ -81,9 +81,9 @@ export default function NoShowPredictions() {
   return (
     <div className="bg-card border border-border rounded-lg overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary to-primary/80 p-6">
-        <h2 className="text-2xl font-bold text-primary-foreground mb-2">🔮 No-Show Risk Predictions</h2>
-        <p className="text-primary-foreground/90 text-sm">
+      <div className="p-6 border-b border-[#E7E5E4]">
+        <h2 className="text-lg font-semibold text-[#1C1917] tracking-tight mb-1">No-Show Risk Predictions</h2>
+        <p className="text-sm text-[#78716C]">
           AI-powered analysis of upcoming reservations with high no-show probability
         </p>
       </div>
@@ -114,9 +114,8 @@ export default function NoShowPredictions() {
       <div className="p-6">
         {predictions.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-6xl mb-4">✅</div>
-            <div className="text-xl text-muted-foreground">No high-risk reservations found!</div>
-            <p className="text-sm text-muted-foreground mt-2">All upcoming reservations look good.</p>
+            <div className="text-lg font-medium text-[#1C1917] mb-1">No high-risk reservations</div>
+            <p className="text-sm text-[#78716C]">All upcoming reservations look good.</p>
           </div>
         ) : (
           <div className="space-y-3">

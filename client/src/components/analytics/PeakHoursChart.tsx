@@ -38,9 +38,9 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg p-6 shadow-lg">
+    <div className="bg-card border border-[#E7E5E4] rounded-lg p-6">
       <div className="mb-6">
-        <h3 className="text-xl font-bold text-foreground mb-1">⏰ Peak Hours Analysis</h3>
+        <h3 className="text-lg font-semibold text-[#1C1917] tracking-tight mb-1">Peak Hours</h3>
         <p className="text-sm text-muted-foreground">Reservations by time slot</p>
       </div>
 

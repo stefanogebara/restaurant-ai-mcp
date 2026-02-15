@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { authFetch } from '../services/api';
 import { SkeletonAnalytics } from '../components/common/Skeleton';
+import DashboardLayout from '../components/layout/DashboardLayout';
 import AnalyticsStats from '../components/analytics/AnalyticsStats';
 import ReservationTrendChart from '../components/analytics/ReservationTrendChart';
 import PeakHoursChart from '../components/analytics/PeakHoursChart';
@@ -69,43 +70,47 @@ export default function AnalyticsDashboard() {
   };
 
   if (isLoading) {
-    return <SkeletonAnalytics />;
+    return <DashboardLayout><SkeletonAnalytics /></DashboardLayout>;
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-background">
-        <div className="bg-card rounded-lg p-8 border border-destructive/30 max-w-md">
-          <div className="text-6xl mb-4 text-center">⚠️</div>
-          <div className="text-xl text-destructive mb-6 text-center font-semibold">Error loading analytics</div>
-          <p className="text-sm text-muted-foreground mb-6 text-center">{error}</p>
-          <button
-            onClick={() => fetchAnalytics()}
-            className="w-full px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg transition-all shadow-lg"
-          >
-            Retry
-          </button>
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center h-screen bg-background">
+          <div className="bg-card rounded-lg p-8 border border-destructive/30 max-w-md">
+            <div className="text-xl text-destructive mb-6 text-center font-semibold">Error loading analytics</div>
+            <p className="text-sm text-muted-foreground mb-6 text-center">{error}</p>
+            <button
+              onClick={() => fetchAnalytics()}
+              className="w-full px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg transition-all"
+            >
+              Retry
+            </button>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (!data) {
     return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <div className="text-xl text-muted-foreground">No analytics data available</div>
-      </div>
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-screen bg-background">
+          <div className="text-xl text-muted-foreground">No analytics data available</div>
+        </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <DashboardLayout>
+    <div className="dashboard min-h-screen bg-background">
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-40 backdrop-blur-sm bg-opacity-95">
         <div className="max-w-[1600px] mx-auto px-6 py-5">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-1">📊 Analytics Dashboard</h1>
+              <h1 className="text-3xl font-semibold text-[#1C1917] tracking-tight mb-1">Analytics Dashboard</h1>
               <p className="text-muted-foreground text-sm">Restaurant performance insights and trends</p>
             </div>
             <div className="flex items-center gap-3">
@@ -179,5 +184,6 @@ export default function AnalyticsDashboard() {
         </div>
       </div>
     </div>
+    </DashboardLayout>
   );
 }

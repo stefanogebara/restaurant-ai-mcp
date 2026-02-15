@@ -44,9 +44,9 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
   , sortedTables[0]);
 
   return (
-    <div className="bg-card border border-border rounded-lg p-6 shadow-lg">
+    <div className="bg-card border border-[#E7E5E4] rounded-lg p-6">
       <div className="mb-6">
-        <h3 className="text-xl font-bold text-foreground mb-1">🔥 Table Utilization Heatmap</h3>
+        <h3 className="text-lg font-semibold text-[#1C1917] tracking-tight mb-1">Table Utilization</h3>
         <p className="text-sm text-muted-foreground">Which tables are used most frequently</p>
       </div>
 
@@ -58,7 +58,7 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
             className={`
               ${getUtilizationColor(table.utilization_rate)}
               ${getTextColor(table.utilization_rate)}
-              border-2 rounded-lg p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl
+              border rounded-lg p-4 transition-colors duration-200
               flex flex-col items-center justify-center text-center
             `}
           >
