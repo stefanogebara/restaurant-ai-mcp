@@ -160,7 +160,6 @@ async function handleGetAvailability(req, res) {
   }
 
   // Determine day of week for business hours
-  const dayOfWeek = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'lowercase' });
   const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const dayIndex = new Date(date + 'T12:00:00').getDay();
   const dayKey = dayNames[dayIndex];
