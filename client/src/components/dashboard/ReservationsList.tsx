@@ -74,7 +74,7 @@ export default function ReservationsList({
   }
 
   return (
-    <div className="bg-white border border-[#E7E5E4] rounded-xl overflow-hidden">
+    <div className="bg-white border border-[#E7E5E4]/50 rounded-xl overflow-hidden shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-[#E7E5E4]">
         <div className="flex items-center gap-2">
@@ -104,7 +104,7 @@ export default function ReservationsList({
       <div className="divide-y divide-[#E7E5E4]/50">
         {displayed.length === 0 ? (
           <div className="text-center py-12 px-4">
-            <div className="w-14 h-14 bg-[#F5F5F4] rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <div className="w-14 h-14 bg-[#F5F5F4] rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
               <svg className="w-7 h-7 text-[#A8A29E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
@@ -155,17 +155,25 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
   const isHighRisk = reservation.ml_risk_level === 'high' || reservation.ml_risk_level === 'very-high';
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 sm:p-4">
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 sm:p-4 hover:bg-[#FAFAF9] transition-colors">
       {/* Time */}
       <div className="flex-shrink-0">
-        <div className="text-sm font-medium text-[#1C1917]">
+        <span className="bg-[#F5F5F4] px-2.5 py-1 rounded-lg text-sm font-semibold text-[#1C1917]">
           {formatTime(reservation.time)}
-        </div>
+        </span>
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0 pl-3">
         <div className="flex flex-wrap items-center gap-2 mb-0.5">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#9F1239]/15 to-[#7c3aed]/15 flex items-center justify-center text-xs font-bold text-[#9F1239] border border-[#9F1239]/20 flex-shrink-0">
+            {reservation.customer_name
+              .split(' ')
+              .map((n) => n[0])
+              .slice(0, 2)
+              .join('')
+              .toUpperCase()}
+          </div>
           <span className="font-medium text-[#1C1917] text-base truncate">
             {reservation.customer_name}
           </span>

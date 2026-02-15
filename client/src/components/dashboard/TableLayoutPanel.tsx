@@ -134,10 +134,13 @@ export default function TableLayoutPanel({
 
   return (
     <>
-      <div className="bg-white border border-[#E7E5E4] rounded-xl overflow-hidden">
+      <div className="bg-white border border-[#E7E5E4]/50 rounded-xl overflow-hidden shadow-sm">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b border-[#E7E5E4]">
-          <h2 className="text-base font-semibold text-[#1C1917]">{t.tableLayout}</h2>
+          <h2 className="text-base font-semibold text-[#1C1917]">
+            <span className="w-2 h-2 rounded-full bg-[#22c55e] inline-block mr-2" />
+            {t.tableLayout}
+          </h2>
 
           <div className="flex items-center gap-2 flex-wrap">
             {/* View Mode Toggle */}

@@ -149,11 +149,11 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       <div className="dashboard min-h-screen bg-[#FAFAF9] p-3 sm:p-4 md:p-6 lg:p-8 pb-28 sm:pb-20">
-        <div className="max-w-7xl mx-auto space-y-8">
+        <div className="max-w-7xl mx-auto space-y-6">
           {/* ---- Header ---- */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
             <div>
-              <h1 className="text-3xl md:text-4xl font-semibold text-[#1C1917] tracking-tight">
+              <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">
                 Today
               </h1>
               <p className="text-[#57534E] text-base font-medium">
@@ -165,7 +165,7 @@ export default function Dashboard() {
               {/* AI Agent */}
               <button
                 onClick={() => window.location.href = '/host-dashboard/calls'}
-                className="flex items-center gap-2 min-h-[40px] px-3 py-2 bg-[#9F1239] hover:bg-[#881337] text-white rounded-xl text-sm font-semibold transition-colors shadow-sm"
+                className="flex items-center gap-2 min-h-[40px] px-3 py-2 bg-[#9F1239] hover:bg-[#881337] text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-[#9F1239]/20"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -271,7 +271,7 @@ export default function Dashboard() {
         {/* ---- FAB: Add Walk-in ---- */}
         <button
           onClick={() => setShowWalkInModal(true)}
-          className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-[#1C1917] hover:bg-[#292524] text-white rounded-full shadow-lg transition-all duration-200 flex items-center justify-center"
+          className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-[#1C1917] hover:bg-[#292524] hover:scale-105 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
