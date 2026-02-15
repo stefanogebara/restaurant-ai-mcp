@@ -110,7 +110,7 @@ export default function AnalyticsDashboard() {
         <div className="max-w-[1600px] mx-auto px-6 py-5">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-semibold text-[#1C1917] tracking-tight mb-1">Analytics Dashboard</h1>
+              <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight mb-1">Analytics Dashboard</h1>
               <p className="text-muted-foreground text-sm">Restaurant performance insights and trends</p>
             </div>
             <div className="flex items-center gap-3">

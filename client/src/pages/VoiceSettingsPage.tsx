@@ -309,7 +309,7 @@ export default function VoiceSettingsPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <Breadcrumb items={breadcrumbConfigs.voiceSettings} className="mb-2" />
-            <h1 className="text-2xl font-bold text-[#1C1917]">
+            <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">
               Voice & Language Settings
             </h1>
             <p className="text-sm text-[#57534E] mt-1">

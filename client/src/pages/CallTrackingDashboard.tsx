@@ -367,7 +367,7 @@ export default function CallTrackingDashboard() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-semibold text-[#1C1917]">AI Agent Dashboard</h1>
+            <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">AI Agent Dashboard</h1>
             <p className="text-[#57534E] mt-1">Monitor AI agent performance, calls, and phone settings</p>
           </div>
           <button
