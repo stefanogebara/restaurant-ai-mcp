@@ -10,21 +10,29 @@ import { getTableSize as getTableGridSize } from '../types/host.types';
 
 const CELL = 40;
 const GRID_COLS = 24;
-const GRID_ROWS = 16;
+const GRID_ROWS = 20;
 const SVG_W = CELL * GRID_COLS;
 const SVG_H = CELL * GRID_ROWS;
+const TABLE_VISUAL_SCALE = 1.3;
 
-// ── Status Colors (light mode only for editor) ─────────────────────────────
+// ── Dark Theme Status Colors ────────────────────────────────────────────────
 
-const getStatusStyle = (status: string) => {
-  switch (status?.toLowerCase()) {
-    case 'available':     return { bg: '#f0fdf4', border: '#22c55e', text: '#14532d' };
-    case 'occupied':      return { bg: '#fef2f2', border: '#ef4444', text: '#7f1d1d' };
-    case 'reserved':      return { bg: '#faf5ff', border: '#a855f7', text: '#581c87' };
-    case 'being cleaned': return { bg: '#fffbeb', border: '#f59e0b', text: '#78350f' };
-    default:              return { bg: '#fafaf9', border: '#a8a29e', text: '#44403c' };
-  }
+const STATUS_COLORS: Record<string, { fill: string; glow: string; gradCenter: string; gradEdge: string }> = {
+  available: { fill: '#166534', glow: 'rgba(22,101,52,0.5)',  gradCenter: '#22c55e', gradEdge: '#14532d' },
+  occupied:  { fill: '#1e3a5f', glow: 'rgba(30,58,95,0.5)',  gradCenter: '#3b82f6', gradEdge: '#1e3a5f' },
+  reserved:  { fill: '#581c87', glow: 'rgba(88,28,135,0.5)', gradCenter: '#a855f7', gradEdge: '#581c87' },
+  cleaning:  { fill: '#78350f', glow: 'rgba(120,53,15,0.5)', gradCenter: '#f59e0b', gradEdge: '#78350f' },
+  default:   { fill: '#374151', glow: 'rgba(55,65,81,0.4)',  gradCenter: '#6b7280', gradEdge: '#374151' },
 };
+
+const getStatusKey = (status: string): string => {
+  const s = status?.toLowerCase() || '';
+  if (s === 'being cleaned') return 'cleaning';
+  if (STATUS_COLORS[s]) return s;
+  return 'default';
+};
+
+const getStatusColors = (status: string) => STATUS_COLORS[getStatusKey(status)] || STATUS_COLORS.default;
 
 // ── Table pixel size from grid size ─────────────────────────────────────────
 
@@ -37,16 +45,16 @@ function getTablePxSize(table: Table) {
   };
 }
 
-// ── Chair Rendering ─────────────────────────────────────────────────────────
+// ── Chair Rendering (enhanced for dark theme) ───────────────────────────────
 
 function renderChairs(
   cx: number, cy: number, w: number, h: number,
-  capacity: number, shape: string, color: string,
+  capacity: number, shape: string,
 ) {
   const chairs: React.ReactElement[] = [];
   const isRound = shape === 'round' || shape === 'circle';
-  const r = 4;
-  const gap = 7;
+  const r = 6;
+  const gap = 8;
 
   if (isRound) {
     const orbit = w / 2 + gap + r;
@@ -54,7 +62,7 @@ function renderChairs(
       const a = (2 * Math.PI * i) / capacity - Math.PI / 2;
       chairs.push(
         <circle key={`c${i}`} cx={cx + orbit * Math.cos(a)} cy={cy + orbit * Math.sin(a)}
-          r={r} fill={color} opacity={0.22} />,
+          r={r} fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.4)" strokeWidth={1.5} />,
       );
     }
   } else {
@@ -63,11 +71,17 @@ function renderChairs(
     const bot = capacity - top;
     for (let i = 0; i < top; i++) {
       const xp = cx - w / 2 + (w / (top + 1)) * (i + 1);
-      chairs.push(<circle key={`ct${i}`} cx={xp} cy={cy - halfH} r={r} fill={color} opacity={0.22} />);
+      chairs.push(
+        <circle key={`ct${i}`} cx={xp} cy={cy - halfH}
+          r={r} fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.4)" strokeWidth={1.5} />,
+      );
     }
     for (let i = 0; i < bot; i++) {
       const xp = cx - w / 2 + (w / (bot + 1)) * (i + 1);
-      chairs.push(<circle key={`cb${i}`} cx={xp} cy={cy + halfH} r={r} fill={color} opacity={0.22} />);
+      chairs.push(
+        <circle key={`cb${i}`} cx={xp} cy={cy + halfH}
+          r={r} fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.4)" strokeWidth={1.5} />,
+      );
     }
   }
   return chairs;
@@ -78,7 +92,12 @@ function renderChairs(
 const EDITOR_CSS = `
   @keyframes fpLinkDash { to { stroke-dashoffset: -20 } }
   @keyframes linkPulse { 0%,100% { opacity:0.7 } 50% { opacity:1 } }
+  @keyframes glowPulse { 0%,100% { opacity:0.35 } 50% { opacity:0.6 } }
+  @keyframes occupiedPulse { 0%,100% { opacity:0.4 } 50% { opacity:0.7 } }
   .link-active { animation: linkPulse 1.2s ease-in-out infinite }
+  .glow-pulse { animation: glowPulse 3s ease-in-out infinite }
+  .occupied-pulse { animation: occupiedPulse 2.5s ease-in-out infinite }
+  .table-group:hover { filter: brightness(1.12) }
 `;
 
 // ── Add Table Modal ─────────────────────────────────────────────────────────
@@ -230,7 +249,7 @@ function AddTableModal({ onClose, onAdd, nextNumber, locations, activeLocation, 
   );
 }
 
-// ── Table Properties Popover ────────────────────────────────────────────────
+// ── Table Properties Popover (dark themed) ──────────────────────────────────
 
 interface TablePopoverProps {
   table: Table;
@@ -259,38 +278,38 @@ function TablePopover({ table, position, onClose, onDelete, onUpdateProps }: Tab
 
   return (
     <div ref={popoverRef}
-      className="absolute z-30 bg-white rounded-xl border border-[#E7E5E4] shadow-xl w-56"
-      style={{ left: position.x, top: position.y }}>
-      <div className="p-3 border-b border-[#E7E5E4] flex items-center justify-between">
-        <span className="font-bold text-sm text-[#1C1917]">Table {table.table_number}</span>
-        <button onClick={onClose} className="p-1 hover:bg-[#F5F5F4] rounded-lg">
+      className="absolute z-30 rounded-xl border border-[#44403C] shadow-xl w-56"
+      style={{ left: position.x, top: position.y, background: '#292524' }}>
+      <div className="p-3 border-b border-[#44403C] flex items-center justify-between">
+        <span className="font-bold text-sm text-white">Table {table.table_number}</span>
+        <button onClick={onClose} className="p-1 hover:bg-[#44403C] rounded-lg text-[#A8A29E]">
           <ThiingsIcon name="close" pxSize={14} />
         </button>
       </div>
       <div className="p-3 space-y-3">
         <div>
-          <label className="text-xs font-medium text-[#78716C] mb-1 block">Shape</label>
+          <label className="text-xs font-medium text-[#A8A29E] mb-1 block">Shape</label>
           <select value={shape} onChange={e => setShape(e.target.value as TableShape)}
-            className="w-full px-2 py-1.5 border border-[#E7E5E4] rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30">
+            className="w-full px-2 py-1.5 bg-[#1C1917] border border-[#44403C] rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/50">
             {SHAPES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
         </div>
         <div>
-          <label className="text-xs font-medium text-[#78716C] mb-1 block">Capacity</label>
+          <label className="text-xs font-medium text-[#A8A29E] mb-1 block">Capacity</label>
           <div className="flex gap-1">
             {CAPACITIES.map(c => (
               <button key={c} type="button" onClick={() => setCapacity(c)}
                 className={`flex-1 py-1 rounded-lg text-xs font-semibold border transition-all ${
                   capacity === c
                     ? 'bg-[#9F1239] text-white border-[#9F1239]'
-                    : 'border-[#E7E5E4] text-[#57534E] hover:border-[#9F1239]'
+                    : 'border-[#44403C] text-[#A8A29E] hover:border-[#9F1239]'
                 }`}>
                 {c}
               </button>
             ))}
           </div>
         </div>
-        <div className="text-xs text-[#A8A29E]">
+        <div className="text-xs text-[#78716C]">
           {table.location || 'Main'} &middot; {table.status || 'Available'}
         </div>
         <div className="flex gap-2 pt-1">
@@ -301,7 +320,7 @@ function TablePopover({ table, position, onClose, onDelete, onUpdateProps }: Tab
             </button>
           )}
           <button onClick={() => { if (confirm(`Delete table ${table.table_number}?`)) { onDelete(table.id); onClose(); } }}
-            className="flex-1 py-1.5 border border-red-200 text-red-600 text-xs font-semibold rounded-lg hover:bg-red-50 transition-colors">
+            className="flex-1 py-1.5 border border-red-900/50 text-red-400 text-xs font-semibold rounded-lg hover:bg-red-900/20 transition-colors">
             Delete
           </button>
         </div>
@@ -593,15 +612,15 @@ export default function FloorPlanEditor() {
           </div>
         </div>
 
-        {/* Location Tabs */}
+        {/* Location Tabs — dark segmented pill */}
         {locations.length > 0 && (
-          <div className="flex items-center gap-1 mb-4 overflow-x-auto pb-1">
+          <div className="inline-flex items-center gap-0.5 p-1 bg-[#292524] rounded-full mb-4">
             {locations.map(loc => (
               <button key={loc} onClick={() => { setActiveLocation(loc); setSelectedTable(null); setLinkSource(null); }}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${
+                className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
                   activeLocation === loc
-                    ? 'bg-[#1C1917] text-white'
-                    : 'bg-white text-[#57534E] border border-[#E7E5E4] hover:border-[#1C1917]'
+                    ? 'bg-[#9F1239] text-white shadow-sm'
+                    : 'text-[#A8A29E] hover:text-white'
                 }`}>
                 {loc}
                 <span className="ml-1.5 text-xs opacity-60">
@@ -612,216 +631,298 @@ export default function FloorPlanEditor() {
           </div>
         )}
 
-        {/* Link mode banner */}
+        {/* Link mode banner — dark themed */}
         {linkMode && (
-          <div className="mb-4 px-4 py-2.5 bg-[#9F1239]/5 border border-[#9F1239]/20 rounded-xl flex items-center gap-3">
-            <ThiingsIcon name="link" pxSize={18} />
-            <span className="text-sm text-[#9F1239] font-medium">
+          <div className="mb-4 px-4 py-2.5 bg-[#292524] border border-[#44403C] rounded-xl flex items-center gap-3">
+            <span className="text-[#f472b6]"><ThiingsIcon name="link" pxSize={18} /></span>
+            <span className="text-sm text-[#f472b6] font-medium">
               {linkSource
                 ? `Click another table to ${tables.find(t => t.id === linkSource)?.joinable_with?.length ? 'link or unlink' : 'link'}`
                 : 'Click the first table to start linking'}
             </span>
             <button onClick={() => { setLinkMode(false); setLinkSource(null); }}
-              className="ml-auto text-xs text-[#9F1239] hover:underline font-medium">Cancel</button>
+              className="ml-auto text-xs text-[#f472b6] hover:underline font-medium">Cancel</button>
           </div>
         )}
 
-        {/* SVG Canvas */}
+        {/* SVG Canvas — dark container */}
         <div className="relative">
-          <div className="rounded-xl border border-[#E7E5E4] bg-white overflow-hidden"
-            style={{ maxWidth: '100%', overflowX: 'auto' }}>
+          <div className="rounded-xl bg-[#1C1917] overflow-hidden"
+            style={{ boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.3)' }}>
             {isLoading ? (
               <div className="flex items-center justify-center" style={{ height: 400 }}>
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#E7E5E4] border-t-[#9F1239]" />
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#44403C] border-t-[#9F1239]" />
               </div>
             ) : filteredTables.length === 0 ? (
               <div className="flex flex-col items-center justify-center text-center py-16 px-6">
-                <ThiingsIcon name="map" pxSize={48} />
-                <p className="mt-4 font-semibold text-[#1C1917]">No tables in {activeLocation}</p>
-                <p className="text-sm text-[#78716C] mt-1">Click "Add Table" to get started</p>
+                <span className="text-[#57534E]"><ThiingsIcon name="map" pxSize={48} /></span>
+                <p className="mt-4 font-semibold text-[#D6D3D1]">No tables in {activeLocation}</p>
+                <p className="text-sm text-[#78716C] mt-1">Click &quot;Add Table&quot; to get started</p>
               </div>
             ) : (
-              <svg
-                ref={svgRef}
-                width="100%"
-                viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-                className="block select-none"
-                style={{ minHeight: 320, minWidth: 400, maxWidth: '100%', touchAction: 'none' }}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerLeave={handlePointerUp}
-              >
-                <defs>
-                  <style>{EDITOR_CSS}</style>
-                  <filter id="edShad" x="-8%" y="-8%" width="116%" height="124%">
-                    <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#000" floodOpacity="0.06" />
-                  </filter>
-                  <filter id="edShadDrag" x="-12%" y="-12%" width="124%" height="136%">
-                    <feDropShadow dx="0" dy="6" stdDeviation="10" floodColor="#000" floodOpacity="0.15" />
-                  </filter>
-                  <pattern id="edFloor" patternUnits="userSpaceOnUse" width="24" height="24">
-                    <circle cx="12" cy="12" r="0.6" fill="#d6d3d1" opacity="0.4" />
-                  </pattern>
-                  <pattern id="edGrid" patternUnits="userSpaceOnUse" width={CELL} height={CELL}>
-                    <path d={`M ${CELL} 0 L 0 0 0 ${CELL}`} fill="none" stroke="#E7E5E4" strokeWidth="0.5" opacity="0.5" />
-                  </pattern>
-                </defs>
+              <div className="p-6" style={{ overflowX: 'auto' }}>
+                <svg
+                  ref={svgRef}
+                  width="100%"
+                  viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+                  className="block select-none"
+                  style={{ minHeight: 360, minWidth: 400, maxWidth: '100%', touchAction: 'none', borderRadius: 8 }}
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp}
+                  onPointerLeave={handlePointerUp}
+                >
+                  <defs>
+                    <style>{EDITOR_CSS}</style>
 
-                {/* Background */}
-                <rect width="100%" height="100%" fill="url(#edFloor)" />
-                <rect width="100%" height="100%" fill="url(#edGrid)" />
+                    {/* Dark floor tile pattern */}
+                    <pattern id="edFloor" patternUnits="userSpaceOnUse" width="24" height="24">
+                      <circle cx="12" cy="12" r="0.7" fill="#44403C" opacity="0.35" />
+                    </pattern>
 
-                {/* Link lines (behind tables) */}
-                {(() => {
-                  const lines: React.ReactElement[] = [];
-                  const processed = new Set<string>();
-                  filteredTables.forEach(t => {
-                    if (!t.is_joinable || !t.joinable_with?.length) return;
-                    t.joinable_with.forEach(linkedId => {
-                      const key = [t.id, linkedId].sort().join('-');
-                      if (processed.has(key)) return;
-                      processed.add(key);
-                      const a = posMap.get(t.id);
-                      const b = posMap.get(linkedId);
-                      if (!a || !b) return;
-                      lines.push(
-                        <line key={key}
-                          x1={a.cx} y1={a.cy} x2={b.cx} y2={b.cy}
-                          stroke="#9F1239" strokeWidth="2.5"
-                          strokeDasharray="6,4" opacity="0.45"
-                          style={{ animation: 'fpLinkDash 1.2s linear infinite' }}
-                        />,
-                      );
+                    {/* Grid pattern — subtle on dark */}
+                    <pattern id="edGrid" patternUnits="userSpaceOnUse" width={CELL} height={CELL}>
+                      <path d={`M ${CELL} 0 L 0 0 0 ${CELL}`} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
+                    </pattern>
+
+                    {/* Radial gradients per status */}
+                    <radialGradient id="grad-available" cx="50%" cy="40%" r="60%">
+                      <stop offset="0%" stopColor="#22c55e" />
+                      <stop offset="100%" stopColor="#14532d" />
+                    </radialGradient>
+                    <radialGradient id="grad-occupied" cx="50%" cy="40%" r="60%">
+                      <stop offset="0%" stopColor="#3b82f6" />
+                      <stop offset="100%" stopColor="#1e3a5f" />
+                    </radialGradient>
+                    <radialGradient id="grad-reserved" cx="50%" cy="40%" r="60%">
+                      <stop offset="0%" stopColor="#a855f7" />
+                      <stop offset="100%" stopColor="#581c87" />
+                    </radialGradient>
+                    <radialGradient id="grad-cleaning" cx="50%" cy="40%" r="60%">
+                      <stop offset="0%" stopColor="#f59e0b" />
+                      <stop offset="100%" stopColor="#78350f" />
+                    </radialGradient>
+                    <radialGradient id="grad-default" cx="50%" cy="40%" r="60%">
+                      <stop offset="0%" stopColor="#6b7280" />
+                      <stop offset="100%" stopColor="#374151" />
+                    </radialGradient>
+
+                    {/* Glow blur filter */}
+                    <filter id="edGlow" x="-50%" y="-50%" width="200%" height="200%">
+                      <feGaussianBlur in="SourceGraphic" stdDeviation="10" />
+                    </filter>
+
+                    {/* Table drop shadow */}
+                    <filter id="edShad" x="-12%" y="-12%" width="124%" height="136%">
+                      <feDropShadow dx="0" dy="3" stdDeviation="5" floodColor="#000" floodOpacity="0.3" />
+                    </filter>
+
+                    {/* Drag shadow (elevated) */}
+                    <filter id="edShadDrag" x="-16%" y="-16%" width="132%" height="148%">
+                      <feDropShadow dx="0" dy="8" stdDeviation="14" floodColor="#000" floodOpacity="0.4" />
+                    </filter>
+
+                    {/* Text shadow for white labels */}
+                    <filter id="edTextShadow" x="-10%" y="-10%" width="120%" height="120%">
+                      <feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="#000" floodOpacity="0.5" />
+                    </filter>
+                  </defs>
+
+                  {/* Dark canvas background */}
+                  <rect width="100%" height="100%" fill="#1C1917" />
+                  <rect width="100%" height="100%" fill="url(#edFloor)" />
+                  <rect width="100%" height="100%" fill="url(#edGrid)" />
+
+                  {/* Link lines (behind tables) — pink/magenta */}
+                  {(() => {
+                    const lines: React.ReactElement[] = [];
+                    const processed = new Set<string>();
+                    filteredTables.forEach(t => {
+                      if (!t.is_joinable || !t.joinable_with?.length) return;
+                      t.joinable_with.forEach(linkedId => {
+                        const key = [t.id, linkedId].sort().join('-');
+                        if (processed.has(key)) return;
+                        processed.add(key);
+                        const a = posMap.get(t.id);
+                        const b = posMap.get(linkedId);
+                        if (!a || !b) return;
+                        lines.push(
+                          <line key={key}
+                            x1={a.cx} y1={a.cy} x2={b.cx} y2={b.cy}
+                            stroke="#f472b6" strokeWidth="2.5"
+                            strokeDasharray="6,4" opacity="0.6"
+                            style={{ animation: 'fpLinkDash 1.2s linear infinite' }}
+                          />,
+                        );
+                      });
                     });
-                  });
-                  return lines;
-                })()}
+                    return lines;
+                  })()}
 
-                {/* Tables */}
-                {filteredTables.map(table => {
-                  const isDragging = table.id === draggingId;
-                  const pxSize = getTablePxSize(table);
-                  const w = pxSize.w;
-                  const h = pxSize.h;
+                  {/* Tables */}
+                  {filteredTables.map(table => {
+                    const isDragging = table.id === draggingId;
+                    const pxSize = getTablePxSize(table);
+                    const w = pxSize.w;
+                    const h = pxSize.h;
 
-                  let x: number, y: number;
-                  if (isDragging && dragPos) {
-                    x = dragPos.x;
-                    y = dragPos.y;
-                  } else {
-                    const autoPos = autoPositions.get(table.id);
-                    const gx = autoPos ? autoPos.gx : (table.position_x || 0);
-                    const gy = autoPos ? autoPos.gy : (table.position_y || 0);
-                    x = gx * CELL;
-                    y = gy * CELL;
-                  }
+                    // Visual dimensions (scaled up)
+                    const vw = w * TABLE_VISUAL_SCALE;
+                    const vh = h * TABLE_VISUAL_SCALE;
 
-                  const cx = x + w / 2;
-                  const cy = y + h / 2;
-                  const st = getStatusStyle(table.status);
-                  const shape = table.shape?.toLowerCase() || 'round';
-                  const isRound = shape === 'round' || shape === 'circle';
-                  const isLinkSource = linkSource === table.id;
+                    let x: number, y: number;
+                    if (isDragging && dragPos) {
+                      x = dragPos.x;
+                      y = dragPos.y;
+                    } else {
+                      const autoPos = autoPositions.get(table.id);
+                      const gx = autoPos ? autoPos.gx : (table.position_x || 0);
+                      const gy = autoPos ? autoPos.gy : (table.position_y || 0);
+                      x = gx * CELL;
+                      y = gy * CELL;
+                    }
 
-                  return (
-                    <g key={table.id}
-                      className={linkMode ? 'cursor-pointer' : 'cursor-grab'}
-                      style={{
-                        opacity: isDragging ? 0.85 : 1,
-                        transition: isDragging ? 'none' : 'transform 0.15s ease',
-                      }}
-                      filter={isDragging ? 'url(#edShadDrag)' : 'url(#edShad)'}
-                      onPointerDown={e => handlePointerDown(e, table)}
-                      onClick={e => handleTableClick(e, table)}
-                    >
-                      {/* Link mode highlight */}
-                      {linkMode && (
-                        isRound ? (
-                          <circle cx={cx} cy={cy} r={w / 2 + 6}
-                            fill="none" stroke="#9F1239" strokeWidth={isLinkSource ? 3 : 1.5}
-                            opacity={isLinkSource ? 0.9 : 0.3}
-                            className={isLinkSource ? 'link-active' : ''} />
+                    // Centers based on grid footprint
+                    const cx = x + w / 2;
+                    const cy = y + h / 2;
+                    // Visual position (centered on same point)
+                    const vx = cx - vw / 2;
+                    const vy = cy - vh / 2;
+
+                    const statusKey = getStatusKey(table.status);
+                    const st = getStatusColors(table.status);
+                    const shape = table.shape?.toLowerCase() || 'round';
+                    const isRound = shape === 'round' || shape === 'circle';
+                    const isLinkSource = linkSource === table.id;
+                    const gradId = `url(#grad-${statusKey})`;
+                    const glowClass = statusKey === 'occupied' ? 'occupied-pulse' : 'glow-pulse';
+
+                    return (
+                      <g key={table.id}
+                        className={`${linkMode ? 'cursor-pointer' : 'cursor-grab'} table-group`}
+                        style={{
+                          opacity: isDragging ? 0.85 : 1,
+                          transition: isDragging ? 'none' : 'transform 0.15s ease',
+                        }}
+                        filter={isDragging ? 'url(#edShadDrag)' : 'url(#edShad)'}
+                        onPointerDown={e => handlePointerDown(e, table)}
+                        onClick={e => handleTableClick(e, table)}
+                      >
+                        {/* Glow aura layer */}
+                        {isRound ? (
+                          <circle cx={cx} cy={cy} r={vw / 2 + 12}
+                            fill={st.glow} filter="url(#edGlow)" className={glowClass} />
                         ) : (
-                          <rect x={x - 6} y={y - 6} width={w + 12} height={h + 12}
-                            rx={16} fill="none" stroke="#9F1239" strokeWidth={isLinkSource ? 3 : 1.5}
-                            opacity={isLinkSource ? 0.9 : 0.3}
-                            className={isLinkSource ? 'link-active' : ''} />
-                        )
-                      )}
+                          <rect x={vx - 12} y={vy - 12} width={vw + 24} height={vh + 24}
+                            rx={18} fill={st.glow} filter="url(#edGlow)" className={glowClass} />
+                        )}
 
-                      {/* Chairs */}
-                      {renderChairs(cx, cy, w, h, table.capacity || 2, shape, st.border)}
+                        {/* Link mode highlight */}
+                        {linkMode && (
+                          isRound ? (
+                            <circle cx={cx} cy={cy} r={vw / 2 + 8}
+                              fill="none" stroke="#f472b6" strokeWidth={isLinkSource ? 3 : 1.5}
+                              opacity={isLinkSource ? 0.9 : 0.3}
+                              className={isLinkSource ? 'link-active' : ''} />
+                          ) : (
+                            <rect x={vx - 8} y={vy - 8} width={vw + 16} height={vh + 16}
+                              rx={16} fill="none" stroke="#f472b6" strokeWidth={isLinkSource ? 3 : 1.5}
+                              opacity={isLinkSource ? 0.9 : 0.3}
+                              className={isLinkSource ? 'link-active' : ''} />
+                          )
+                        )}
 
-                      {/* Table shape */}
-                      {isRound ? (
-                        <circle cx={cx} cy={cy} r={w / 2}
-                          fill={st.bg} stroke={st.border} strokeWidth={2} />
-                      ) : shape === 'booth' ? (
-                        <>
-                          <rect x={x} y={y} width={w} height={h} rx={12}
-                            fill={st.bg} stroke={st.border} strokeWidth={2} />
-                          <rect x={x + 3} y={y + h - 8} width={w - 6} height={7}
-                            rx={3.5} fill={st.border} opacity={0.1} />
-                        </>
-                      ) : shape === 'bar-stool' ? (
-                        <circle cx={cx} cy={cy} r={w / 2 - 2}
-                          fill={st.bg} stroke={st.border} strokeWidth={2} />
-                      ) : (
-                        <rect x={x} y={y} width={w} height={h}
-                          rx={shape === 'rectangle' || shape === 'oval' ? 10 : 12}
-                          fill={st.bg} stroke={st.border} strokeWidth={2} />
-                      )}
+                        {/* Chairs (positioned around visual table) */}
+                        {renderChairs(cx, cy, vw, vh, table.capacity || 2, shape)}
 
-                      {/* Table number */}
-                      <text x={cx} y={cy - 3} textAnchor="middle" dominantBaseline="middle"
-                        fill={st.text} fontSize={16} fontWeight={700}
-                        fontFamily="system-ui,-apple-system,sans-serif"
-                        style={{ pointerEvents: 'none' }}>
-                        {table.table_number}
-                      </text>
+                        {/* Table shape — 3D gradient fill */}
+                        {isRound ? (
+                          <circle cx={cx} cy={cy} r={vw / 2}
+                            fill={gradId} stroke="rgba(0,0,0,0.4)" strokeWidth={2} />
+                        ) : shape === 'booth' ? (
+                          <>
+                            <rect x={vx} y={vy} width={vw} height={vh} rx={14}
+                              fill={gradId} stroke="rgba(0,0,0,0.4)" strokeWidth={2} />
+                            <rect x={vx + 4} y={vy + vh - 10} width={vw - 8} height={8}
+                              rx={4} fill="rgba(0,0,0,0.15)" />
+                          </>
+                        ) : shape === 'bar-stool' ? (
+                          <circle cx={cx} cy={cy} r={vw / 2 - 2}
+                            fill={gradId} stroke="rgba(0,0,0,0.4)" strokeWidth={2} />
+                        ) : (
+                          <rect x={vx} y={vy} width={vw} height={vh}
+                            rx={shape === 'rectangle' || shape === 'oval' ? 10 : 14}
+                            fill={gradId} stroke="rgba(0,0,0,0.4)" strokeWidth={2} />
+                        )}
 
-                      {/* Capacity label */}
-                      <text x={cx} y={cy + 13} textAnchor="middle" dominantBaseline="middle"
-                        fill={st.text} fontSize={9} opacity={0.5}
-                        fontFamily="system-ui,-apple-system,sans-serif"
-                        style={{ pointerEvents: 'none' }}>
-                        {table.capacity} seats
-                      </text>
+                        {/* Inner highlight ring — 3D depth */}
+                        {isRound ? (
+                          <circle cx={cx} cy={cy} r={vw / 2 - 4}
+                            fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={1} />
+                        ) : (
+                          <rect x={vx + 4} y={vy + 4} width={vw - 8} height={vh - 8}
+                            rx={shape === 'booth' ? 10 : shape === 'rectangle' ? 7 : 10}
+                            fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={1} />
+                        )}
 
-                      {/* Joinable badge */}
-                      {table.is_joinable && table.joinable_with?.length > 0 && (
-                        <g>
-                          <circle cx={x + 2} cy={y + 2} r={8}
-                            fill="#9F1239" opacity={0.9} />
-                          <text x={x + 2} y={y + 3.5} textAnchor="middle"
-                            dominantBaseline="middle" fontSize={9} fill="#fff"
-                            style={{ pointerEvents: 'none' }}>
-                            &#x26D3;
-                          </text>
-                        </g>
-                      )}
+                        {/* Table number — white bold with shadow */}
+                        <text x={cx} y={cy - 4} textAnchor="middle" dominantBaseline="middle"
+                          fill="#fff" fontSize={16} fontWeight={700}
+                          fontFamily="system-ui,-apple-system,sans-serif"
+                          filter="url(#edTextShadow)"
+                          style={{ pointerEvents: 'none' }}>
+                          {table.table_number}
+                        </text>
 
-                      {/* Invisible hit area */}
-                      {isRound ? (
-                        <circle cx={cx} cy={cy} r={Math.max(w, h) / 2 + 10} fill="transparent" />
-                      ) : (
-                        <rect x={x - 10} y={y - 10} width={w + 20} height={h + 20}
-                          rx={14} fill="transparent" />
-                      )}
-                    </g>
-                  );
-                })}
+                        {/* Capacity label */}
+                        <text x={cx} y={cy + 12} textAnchor="middle" dominantBaseline="middle"
+                          fill="rgba(255,255,255,0.6)" fontSize={10}
+                          fontFamily="system-ui,-apple-system,sans-serif"
+                          style={{ pointerEvents: 'none' }}>
+                          {table.capacity} seats
+                        </text>
 
-                {/* Snap indicator while dragging */}
-                {draggingId && dragPos && (() => {
-                  const { gx, gy } = snapToGrid(dragPos.x, dragPos.y);
-                  return (
-                    <rect x={gx * CELL} y={gy * CELL} width={CELL} height={CELL}
-                      fill="#9F1239" opacity={0.08} rx={6}
-                      style={{ pointerEvents: 'none' }} />
-                  );
-                })()}
-              </svg>
+                        {/* Status indicator dot */}
+                        <circle cx={cx} cy={vy + vh - 7} r={3}
+                          fill={st.gradCenter} opacity={0.9} />
+
+                        {/* Joinable badge — with glow */}
+                        {table.is_joinable && table.joinable_with?.length > 0 && (
+                          <g>
+                            <circle cx={vx + 4} cy={vy + 4} r={10}
+                              fill={st.glow} filter="url(#edGlow)" opacity={0.6} />
+                            <circle cx={vx + 4} cy={vy + 4} r={9}
+                              fill="#9F1239" opacity={0.9} />
+                            <text x={vx + 4} y={vy + 5.5} textAnchor="middle"
+                              dominantBaseline="middle" fontSize={10} fill="#fff"
+                              style={{ pointerEvents: 'none' }}>
+                              &#x26D3;
+                            </text>
+                          </g>
+                        )}
+
+                        {/* Invisible hit area */}
+                        {isRound ? (
+                          <circle cx={cx} cy={cy} r={Math.max(vw, vh) / 2 + 10} fill="transparent" />
+                        ) : (
+                          <rect x={vx - 10} y={vy - 10} width={vw + 20} height={vh + 20}
+                            rx={14} fill="transparent" />
+                        )}
+                      </g>
+                    );
+                  })}
+
+                  {/* Snap indicator while dragging — white ring with glow */}
+                  {draggingId && dragPos && (() => {
+                    const { gx, gy } = snapToGrid(dragPos.x, dragPos.y);
+                    return (
+                      <rect x={gx * CELL - 1} y={gy * CELL - 1} width={CELL + 2} height={CELL + 2}
+                        fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth={1.5}
+                        rx={6} filter="url(#edTextShadow)"
+                        style={{ pointerEvents: 'none' }} />
+                    );
+                  })()}
+                </svg>
+              </div>
             )}
           </div>
 
@@ -837,26 +938,41 @@ export default function FloorPlanEditor() {
           )}
         </div>
 
-        {/* Legend */}
+        {/* Legend — glowing status dots */}
         <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-[#78716C]">
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full border-2 border-[#22c55e] bg-[#f0fdf4]" />
+            <span className="w-3 h-3 rounded-full" style={{
+              backgroundColor: '#22c55e',
+              boxShadow: '0 0 6px rgba(22,101,52,0.6), 0 0 12px rgba(22,101,52,0.3)',
+            }} />
             Available
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full border-2 border-[#ef4444] bg-[#fef2f2]" />
+            <span className="w-3 h-3 rounded-full" style={{
+              backgroundColor: '#3b82f6',
+              boxShadow: '0 0 6px rgba(30,58,95,0.6), 0 0 12px rgba(30,58,95,0.3)',
+            }} />
             Occupied
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full border-2 border-[#a855f7] bg-[#faf5ff]" />
+            <span className="w-3 h-3 rounded-full" style={{
+              backgroundColor: '#a855f7',
+              boxShadow: '0 0 6px rgba(88,28,135,0.6), 0 0 12px rgba(88,28,135,0.3)',
+            }} />
             Reserved
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full border-2 border-[#f59e0b] bg-[#fffbeb]" />
+            <span className="w-3 h-3 rounded-full" style={{
+              backgroundColor: '#f59e0b',
+              boxShadow: '0 0 6px rgba(120,53,15,0.6), 0 0 12px rgba(120,53,15,0.3)',
+            }} />
             Cleaning
           </div>
           <div className="flex items-center gap-1.5 ml-auto text-[#A8A29E]">
-            <ThiingsIcon name="link" pxSize={12} />
+            <span className="w-3 h-3 rounded-full" style={{
+              backgroundColor: '#f472b6',
+              boxShadow: '0 0 6px rgba(244,114,182,0.4), 0 0 10px rgba(244,114,182,0.2)',
+            }} />
             Dashed line = linked tables
           </div>
         </div>
