@@ -25,6 +25,13 @@ const navItems: NavItem[] = [
     requiredFeature: 'overview'
   },
   {
+    path: '/host-dashboard/floor-plan',
+    label: 'Floor Plan',
+    iconName: 'map',
+    description: 'Arrange Tables',
+    requiredFeature: 'overview'
+  },
+  {
     path: '/host-dashboard/calls',
     label: 'AI Agent',
     iconName: 'phone',

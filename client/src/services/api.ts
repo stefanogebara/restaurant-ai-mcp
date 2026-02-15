@@ -92,8 +92,13 @@ export const hostAPI = {
     api.post('/host-dashboard?action=auto-assign-shapes', {}),
 
   // Floor Plan Editor methods
-  updateTablePosition: (tableId: string, position_x: number, position_y: number) =>
-    api.post('/host-dashboard?action=update-table-position', { table_id: tableId, position_x, position_y }),
+  updateTablePosition: (tableId: string, position_x: number, position_y: number, width?: number, height?: number, rotation?: number) =>
+    api.post('/host-dashboard?action=update-table-position', {
+      table_id: tableId, position_x, position_y,
+      ...(width !== undefined && { width }),
+      ...(height !== undefined && { height }),
+      ...(rotation !== undefined && { rotation }),
+    }),
 
   updateTableProperties: (data: {
     table_id: string;

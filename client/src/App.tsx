@@ -29,6 +29,7 @@ const TableConfigPage = lazy(() => import('./pages/TableConfigPage'));
 const VoiceSettingsPage = lazy(() => import('./pages/VoiceSettingsPage'));
 const BookingPage = lazy(() => import('./pages/BookingPage'));
 const BookingConfirmation = lazy(() => import('./pages/BookingConfirmation'));
+const FloorPlanEditor = lazy(() => import('./pages/FloorPlanEditor'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -97,6 +98,7 @@ function App() {
               <Route path="/host-dashboard/reports" element={<WeeklyReport />} />
               <Route path="/host-dashboard/calls" element={<CallTrackingDashboard />} />
               <Route path="/host-dashboard/tables" element={<TableConfigPage />} />
+              <Route path="/host-dashboard/floor-plan" element={<FloorPlanEditor />} />
               <Route path="/host-dashboard/voice-settings" element={<VoiceSettingsPage />} />
               <Route path="/analytics" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AnalyticsDashboard /></ErrorBoundary>} />
               <Route path="/customer" element={<CustomerPortal />} />
