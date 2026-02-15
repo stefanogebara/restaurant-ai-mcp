@@ -53,7 +53,9 @@ module.exports = async (req, res) => {
     logger.error('[Portal] Unhandled error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Something went wrong. Please try again.'
+      message: 'Something went wrong. Please try again.',
+      debug_error: error.message,
+      debug_stack: error.stack
     });
   }
 };
