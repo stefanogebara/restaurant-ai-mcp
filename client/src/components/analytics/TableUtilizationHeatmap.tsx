@@ -4,18 +4,19 @@ interface TableUtilizationHeatmapProps {
     capacity: number;
     location: string;
     times_used: number;
-    utilization_rate: string;
+    utilization_rate: string | number;
   }>;
 }
 
 export default function TableUtilizationHeatmap({ tableUtilization }: TableUtilizationHeatmapProps) {
   // Get utilization as number for color calculations
-  const getUtilizationValue = (percentage: string): number => {
-    return parseFloat(percentage.replace('%', ''));
+  const getUtilizationValue = (percentage: string | number): number => {
+    if (typeof percentage === 'number') return percentage;
+    return parseFloat(String(percentage).replace('%', '')) || 0;
   };
 
   // Determine color based on utilization percentage
-  const getUtilizationColor = (percentage: string): string => {
+  const getUtilizationColor = (percentage: string | number): string => {
     const value = getUtilizationValue(percentage);
 
     if (value >= 75) return 'bg-primary/80 border-primary'; // High utilization
@@ -25,7 +26,7 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
   };
 
   // Get text color for contrast
-  const getTextColor = (percentage: string): string => {
+  const getTextColor = (percentage: string | number): string => {
     const value = getUtilizationValue(percentage);
     return value >= 50 ? 'text-primary-foreground' : 'text-foreground';
   };
