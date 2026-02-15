@@ -40,8 +40,8 @@ function getTablePxSize(table: Table) {
   const shape = (table.shape?.toLowerCase() || 'round') as TableShape;
   const gridSize = getTableGridSize(shape, table.capacity || 2);
   return {
-    w: (table.width || gridSize.width) * CELL,
-    h: (table.height || gridSize.height) * CELL,
+    w: gridSize.width * CELL,
+    h: gridSize.height * CELL,
   };
 }
 
@@ -390,8 +390,8 @@ export default function FloorPlanEditor() {
     sorted.forEach(t => {
       const shape = (t.shape?.toLowerCase() || 'round') as TableShape;
       const gridSize = getTableGridSize(shape, t.capacity || 2);
-      const tw = t.width || gridSize.width;
-      const th = t.height || gridSize.height;
+      const tw = gridSize.width;
+      const th = gridSize.height;
       if (curCol + tw + GAP > GRID_COLS - 1 && curCol > 1) {
         curCol = 1;
         curRow += rowMaxH + GAP + 1;
