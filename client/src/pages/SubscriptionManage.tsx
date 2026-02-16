@@ -340,7 +340,7 @@ export default function SubscriptionManage() {
             <p className="text-sm text-[#A8A29E]">
               Need help?{' '}
               <a
-                href="mailto:stefanogebara@gmail.com"
+                href="mailto:hello@seatable.io"
                 className="text-[#9F1239] hover:text-[#881337] transition-colors"
               >
                 Contact our support team

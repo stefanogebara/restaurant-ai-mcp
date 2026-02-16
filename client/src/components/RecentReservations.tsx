@@ -259,7 +259,7 @@ export default function RecentReservations() {
         {/* Call to Action */}
         <div className="mt-6 p-4 bg-[#FAFAF9] rounded-xl border border-[#E7E5E4] text-center">
           <p className="text-[#57534E] text-sm mb-2">
-            We look forward to seeing you at La Bella Vista!
+            We look forward to seeing you!
           </p>
           <p className="text-[#A8A29E] text-xs">
             A confirmation has been sent to your contact information
