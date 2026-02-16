@@ -191,24 +191,29 @@ export default function TableConfigPage() {
       {/* Stats Cards */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]">
-            <div className="text-3xl font-semibold text-[#1C1917] tabular-nums">{stats.active || 0}</div>
+          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
+            <div className="h-1 w-12 rounded-full mb-3 bg-[#22c55e]" />
+            <div className="text-3xl font-bold text-[#1C1917] tabular-nums">{stats.active || 0}</div>
             <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Active Tables</div>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]">
-            <div className="text-3xl font-semibold text-[#1C1917] tabular-nums">{stats.flexible || 0}</div>
+          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
+            <div className="h-1 w-12 rounded-full mb-3 bg-[#d97706]" />
+            <div className="text-3xl font-bold text-[#1C1917] tabular-nums">{stats.flexible || 0}</div>
             <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Flexible</div>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]">
-            <div className="text-3xl font-semibold text-[#1C1917] tabular-nums">{stats.fixed || 0}</div>
+          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
+            <div className="h-1 w-12 rounded-full mb-3 bg-[#9F1239]" />
+            <div className="text-3xl font-bold text-[#1C1917] tabular-nums">{stats.fixed || 0}</div>
             <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Fixed</div>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]">
-            <div className="text-3xl font-semibold text-[#1C1917] tabular-nums">{stats.total_capacity || 0}</div>
+          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
+            <div className="h-1 w-12 rounded-full mb-3 bg-[#1C1917]" />
+            <div className="text-3xl font-bold text-[#1C1917] tabular-nums">{stats.total_capacity || 0}</div>
             <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Total Capacity</div>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]">
-            <div className="text-3xl font-semibold text-[#1C1917] tabular-nums">{stats.locations?.length || 0}</div>
+          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
+            <div className="h-1 w-12 rounded-full mb-3 bg-[#7c3aed]" />
+            <div className="text-3xl font-bold text-[#1C1917] tabular-nums">{stats.locations?.length || 0}</div>
             <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Locations</div>
           </div>
         </div>

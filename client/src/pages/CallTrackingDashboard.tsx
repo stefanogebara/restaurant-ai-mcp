@@ -725,29 +725,33 @@ export default function CallTrackingDashboard() {
 
         {/* Stats Overview */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Total Calls */}
-            <div className="bg-white rounded-xl border border-[#E7E5E4] p-6">
-              <p className="text-xs font-medium text-[#78716C] uppercase tracking-wider">Total Calls</p>
-              <p className="text-4xl font-semibold text-[#1C1917] tracking-tight tabular-nums mt-1">{stats.overview.total_calls}</p>
+            <div className="bg-white rounded-xl border border-[#E7E5E4]/50 p-4 shadow-sm hover:shadow-md transition-shadow">
+              <div className="h-1 w-12 rounded-full mb-3 bg-[#1C1917]" />
+              <p className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{stats.overview.total_calls}</p>
+              <p className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Total Calls</p>
             </div>
 
             {/* Successful Bookings */}
-            <div className="bg-white rounded-xl border border-[#E7E5E4] p-6">
-              <p className="text-xs font-medium text-[#78716C] uppercase tracking-wider">Reservations</p>
-              <p className="text-4xl font-semibold text-[#1C1917] tracking-tight tabular-nums mt-1">{stats.overview.successful_bookings}</p>
+            <div className="bg-white rounded-xl border border-[#E7E5E4]/50 p-4 shadow-sm hover:shadow-md transition-shadow">
+              <div className="h-1 w-12 rounded-full mb-3 bg-[#22c55e]" />
+              <p className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{stats.overview.successful_bookings}</p>
+              <p className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Reservations</p>
             </div>
 
             {/* Success Rate */}
-            <div className="bg-white rounded-xl border border-[#E7E5E4] p-6">
-              <p className="text-xs font-medium text-[#78716C] uppercase tracking-wider">Success Rate</p>
-              <p className="text-4xl font-semibold text-[#1C1917] tracking-tight tabular-nums mt-1">{stats.overview.success_rate}%</p>
+            <div className="bg-white rounded-xl border border-[#E7E5E4]/50 p-4 shadow-sm hover:shadow-md transition-shadow">
+              <div className="h-1 w-12 rounded-full mb-3 bg-[#9F1239]" />
+              <p className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{stats.overview.success_rate}%</p>
+              <p className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Success Rate</p>
             </div>
 
             {/* Average Duration */}
-            <div className="bg-white rounded-xl border border-[#E7E5E4] p-6">
-              <p className="text-xs font-medium text-[#78716C] uppercase tracking-wider">Avg Duration</p>
-              <p className="text-4xl font-semibold text-[#1C1917] tracking-tight tabular-nums mt-1">{stats.overview.average_duration_formatted}</p>
+            <div className="bg-white rounded-xl border border-[#E7E5E4]/50 p-4 shadow-sm hover:shadow-md transition-shadow">
+              <div className="h-1 w-12 rounded-full mb-3 bg-[#d97706]" />
+              <p className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{stats.overview.average_duration_formatted}</p>
+              <p className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Avg Duration</p>
             </div>
           </div>
         )}

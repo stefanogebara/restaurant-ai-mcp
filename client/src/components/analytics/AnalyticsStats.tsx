@@ -10,55 +10,37 @@ interface AnalyticsStatsProps {
   };
 }
 
+const statConfig = [
+  { key: 'reservations', color: 'bg-[#9F1239]' },
+  { key: 'completed', color: 'bg-[#22c55e]' },
+  { key: 'partySize', color: 'bg-[#d97706]' },
+  { key: 'serviceTime', color: 'bg-[#1C1917]' },
+] as const;
+
 export default function AnalyticsStats({ overview }: AnalyticsStatsProps) {
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-0">
-      <StatBlock
-        value={overview.total_reservations}
-        label="Reservations"
-        sublabel="Last 30 days"
-      />
-      <StatBlock
-        value={overview.total_completed_services}
-        label="Completed"
-        sublabel="Successfully served"
-        showDivider
-      />
-      <StatBlock
-        value={overview.avg_party_size.toFixed(1)}
-        label="Avg Party Size"
-        sublabel="Guests per reservation"
-        showDivider
-      />
-      <StatBlock
-        value={`${overview.avg_service_time_minutes} min`}
-        label="Avg Service Time"
-        sublabel="Table turnover"
-        showDivider
-      />
-    </div>
-  );
-}
+  const stats = [
+    { value: overview.total_reservations, label: 'Reservations', sublabel: 'Last 30 days', color: statConfig[0].color },
+    { value: overview.total_completed_services, label: 'Completed', sublabel: 'Successfully served', color: statConfig[1].color },
+    { value: overview.avg_party_size.toFixed(1), label: 'Avg Party Size', sublabel: 'Guests per reservation', color: statConfig[2].color },
+    { value: `${overview.avg_service_time_minutes} min`, label: 'Avg Service Time', sublabel: 'Table turnover', color: statConfig[3].color },
+  ];
 
-interface StatBlockProps {
-  value: number | string;
-  label: string;
-  sublabel: string;
-  showDivider?: boolean;
-}
-
-function StatBlock({ value, label, sublabel, showDivider }: StatBlockProps) {
   return (
-    <div className={`px-6 py-2 ${showDivider ? 'sm:border-l sm:border-[#E7E5E4]' : ''}`}>
-      <div className="text-4xl font-semibold text-[#1C1917] tracking-tight tabular-nums">
-        {value}
-      </div>
-      <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">
-        {label}
-      </div>
-      <div className="text-sm text-[#A8A29E] mt-0.5">
-        {sublabel}
-      </div>
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      {stats.map((stat) => (
+        <div key={stat.label} className="bg-white rounded-xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
+          <div className={`h-1 w-12 rounded-full mb-3 ${stat.color}`} />
+          <div className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">
+            {stat.value}
+          </div>
+          <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">
+            {stat.label}
+          </div>
+          <div className="text-sm text-[#A8A29E] mt-0.5">
+            {stat.sublabel}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
