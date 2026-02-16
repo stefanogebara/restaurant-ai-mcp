@@ -164,7 +164,7 @@ export default function WeeklyReport() {
   if (!report) {
     return (
       <DashboardLayout>
-        <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
           <div className="text-center">
             <p className="text-[#1C1917]">No data available</p>
           </div>
@@ -177,7 +177,7 @@ export default function WeeklyReport() {
 
   return (
     <DashboardLayout>
-    <div className="dashboard min-h-screen bg-background p-6">
+    <div className="dashboard min-h-screen bg-[#FAFAF9] p-6">
       <div className="max-w-7xl mx-auto">
         {/* Breadcrumb Navigation */}
         <Breadcrumb items={breadcrumbConfigs.reports} className="mb-4 print:hidden" />

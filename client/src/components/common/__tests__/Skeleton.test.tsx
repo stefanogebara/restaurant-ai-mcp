@@ -15,7 +15,7 @@ describe('Skeleton', () => {
     const el = container.firstChild as HTMLElement;
     expect(el).toBeInTheDocument();
     expect(el.className).toContain('animate-pulse');
-    expect(el.className).toContain('bg-muted');
+    expect(el.className).toContain('bg-[#E7E5E4]');
     expect(el.className).toContain('rounded');
   });
 
@@ -38,7 +38,7 @@ describe('SkeletonStatCard', () => {
     const { container } = render(<SkeletonStatCard />);
     const card = container.firstChild as HTMLElement;
     expect(card).toHaveAttribute('aria-hidden', 'true');
-    expect(card.className).toContain('bg-card');
+    expect(card.className).toContain('bg-white');
     expect(card.className).toContain('rounded-xl');
   });
 
@@ -70,7 +70,7 @@ describe('SkeletonTableCard', () => {
     const { container } = render(<SkeletonTableCard />);
     const card = container.firstChild as HTMLElement;
     expect(card).toHaveAttribute('aria-hidden', 'true');
-    expect(card.className).toContain('bg-card');
+    expect(card.className).toContain('bg-white');
     expect(card.className).toContain('rounded-xl');
   });
 
@@ -112,7 +112,7 @@ describe('DashboardSkeleton', () => {
     const statsGrid = grids[0];
     expect(statsGrid).toBeDefined();
     const statCards = statsGrid.children;
-    expect(statCards.length).toBe(6);
+    expect(statCards.length).toBe(4);
   });
 
   it('renders table card skeletons inside the table grid', () => {

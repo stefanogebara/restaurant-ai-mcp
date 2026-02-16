@@ -54,19 +54,19 @@ describe('Button', () => {
   it('renders with primary variant by default', () => {
     render(<Button>Primary</Button>);
     const button = screen.getByRole('button', { name: 'Primary' });
-    expect(button.className).toContain('bg-primary');
+    expect(button.className).toContain('bg-[#9F1239]');
   });
 
   it('applies secondary variant styles', () => {
     render(<Button variant="secondary">Secondary</Button>);
     const button = screen.getByRole('button', { name: 'Secondary' });
-    expect(button.className).toContain('bg-secondary');
+    expect(button.className).toContain('bg-[#F5F5F4]');
   });
 
   it('applies danger variant styles', () => {
     render(<Button variant="danger">Danger</Button>);
     const button = screen.getByRole('button', { name: 'Danger' });
-    expect(button.className).toContain('bg-destructive');
+    expect(button.className).toContain('bg-red-600');
   });
 
   it('applies ghost variant styles', () => {
@@ -174,7 +174,7 @@ describe('IconButton', () => {
       />
     );
     const button = screen.getByRole('button', { name: 'Close' });
-    expect(button.className).toContain('bg-primary');
+    expect(button.className).toContain('bg-[#9F1239]');
   });
 
   it('handles click events', () => {

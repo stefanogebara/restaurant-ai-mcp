@@ -100,7 +100,7 @@ export default function RiskScoreBadge({
       </div>
 
       {showConfidence && confidence && (
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs text-[#78716C]">
           {confidence}% confidence
         </div>
       )}

@@ -22,19 +22,19 @@ export default function UpgradePromptInline({
   };
 
   return (
-    <div className="bg-card rounded-lg shadow-lg p-6 border border-border relative overflow-hidden">
+    <div className="bg-white rounded-xl shadow-sm p-6 border border-[#E7E5E4] relative overflow-hidden">
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#9F1239]/5 via-transparent to-[#F5F5F4]/50 pointer-events-none" />
 
       <div className="relative">
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-primary/10 rounded-lg">
+          <div className="p-2 bg-[#9F1239]/10 rounded-xl">
             <ThiingsIcon name="lock" pxSize={20} />
           </div>
           <div>
-            <h3 className="font-semibold text-foreground">{feature}</h3>
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <h3 className="font-semibold text-[#1C1917]">{feature}</h3>
+            <span className="text-xs text-[#78716C] flex items-center gap-1">
               <ThiingsIcon name="sparkles" pxSize={12} />
               {requiredPlan} Feature
             </span>
@@ -43,7 +43,7 @@ export default function UpgradePromptInline({
 
         {/* Description */}
         {description && (
-          <p className="text-sm text-muted-foreground mb-4">
+          <p className="text-sm text-[#78716C] mb-4">
             {description}
           </p>
         )}
@@ -51,7 +51,7 @@ export default function UpgradePromptInline({
         {/* CTA Button */}
         <button
           onClick={handleUpgrade}
-          className="w-full bg-primary/10 hover:bg-primary/20 text-primary font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
+          className="w-full bg-[#9F1239]/10 hover:bg-[#9F1239]/20 text-[#9F1239] font-medium py-2 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
         >
           <span>Upgrade to {requiredPlan}</span>
           <ThiingsIcon name="arrow-right" pxSize={16} />

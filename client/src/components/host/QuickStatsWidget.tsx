@@ -57,8 +57,8 @@ export default function QuickStatsWidget() {
 
   if (error) {
     return (
-      <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
-        <div className="flex items-center gap-2 text-muted-foreground">
+      <div className="bg-white rounded-xl border border-[#E7E5E4] p-4 shadow-sm">
+        <div className="flex items-center gap-2 text-[#78716C]">
           <ThiingsIcon name="alert-circle" size="xs" />
           <span className="text-sm">ML stats temporarily unavailable</span>
         </div>
@@ -68,17 +68,17 @@ export default function QuickStatsWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-card rounded-xl border border-border p-4 shadow-sm">
+      <div className="bg-white rounded-xl border border-[#E7E5E4] p-4 shadow-sm">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-5 h-5 bg-muted rounded animate-pulse"></div>
-          <div className="h-4 w-32 bg-muted rounded animate-pulse"></div>
+          <div className="w-5 h-5 bg-[#F5F5F4] rounded animate-pulse"></div>
+          <div className="h-4 w-32 bg-[#F5F5F4] rounded animate-pulse"></div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => (
             <div key={i} className="space-y-2">
-              <div className="h-3 w-20 bg-muted rounded animate-pulse"></div>
-              <div className="h-7 w-16 bg-muted rounded animate-pulse"></div>
-              <div className="h-3 w-24 bg-muted rounded animate-pulse"></div>
+              <div className="h-3 w-20 bg-[#F5F5F4] rounded animate-pulse"></div>
+              <div className="h-7 w-16 bg-[#F5F5F4] rounded animate-pulse"></div>
+              <div className="h-3 w-24 bg-[#F5F5F4] rounded animate-pulse"></div>
             </div>
           ))}
         </div>
@@ -97,7 +97,7 @@ export default function QuickStatsWidget() {
       case 'exceeds': return 'text-green-600';
       case 'meets': return 'text-green-600';
       case 'below': return 'text-amber-600';
-      default: return 'text-foreground';
+      default: return 'text-[#1C1917]';
     }
   };
 
@@ -107,7 +107,7 @@ export default function QuickStatsWidget() {
       case 'exceeds': return 'bg-green-50';
       case 'meets': return 'bg-green-50';
       case 'below': return 'bg-amber-50';
-      default: return 'bg-muted';
+      default: return 'bg-[#F5F5F4]';
     }
   };
 
@@ -117,7 +117,7 @@ export default function QuickStatsWidget() {
       case 'good': return 'text-green-600';
       case 'fair': return 'text-amber-600';
       case 'needs_improvement': return 'text-red-600';
-      default: return 'text-foreground';
+      default: return 'text-[#1C1917]';
     }
   };
 
@@ -127,17 +127,17 @@ export default function QuickStatsWidget() {
       case 'good': return 'bg-green-50';
       case 'fair': return 'bg-amber-50';
       case 'needs_improvement': return 'bg-red-50';
-      default: return 'bg-muted';
+      default: return 'bg-[#F5F5F4]';
     }
   };
 
   return (
-    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl border border-[#E7E5E4] shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#E7E5E4] bg-[#F5F5F4]/30">
         <div className="flex items-center gap-2">
           <ThiingsIcon name="target" size="sm" />
-          <span className="font-semibold text-foreground">ML Performance Snapshot</span>
+          <span className="font-semibold text-[#1C1917]">ML Performance Snapshot</span>
         </div>
         <a
           href="/host-dashboard/ml"
@@ -159,10 +159,10 @@ export default function QuickStatsWidget() {
               </div>
               <span className="text-xs font-medium text-blue-600 uppercase tracking-wide">Today</span>
             </div>
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-2xl font-bold text-[#1C1917]">
               {stats.today_interventions}
             </div>
-            <div className="text-xs text-muted-foreground mt-1">
+            <div className="text-xs text-[#78716C] mt-1">
               {stats.today_change}
             </div>
           </div>
@@ -178,7 +178,7 @@ export default function QuickStatsWidget() {
             <div className={`text-2xl font-bold ${getRoiColor(stats.roi_status)}`}>
               {stats.weekly_roi}%
             </div>
-            <div className="text-xs text-muted-foreground mt-1">
+            <div className="text-xs text-[#78716C] mt-1">
               {!hasData ? 'Awaiting data' : (
                 <>
                   {stats.roi_status === 'exceeds' && 'Exceeds target'}
@@ -197,10 +197,10 @@ export default function QuickStatsWidget() {
               </div>
               <span className="text-xs font-medium text-emerald-600 uppercase tracking-wide">30-Day Saved</span>
             </div>
-            <div className="text-2xl font-bold text-foreground">
+            <div className="text-2xl font-bold text-[#1C1917]">
               {'\u20AC'}{stats.value_saved_30d.toFixed(0)}
             </div>
-            <div className="text-xs text-muted-foreground mt-1">
+            <div className="text-xs text-[#78716C] mt-1">
               {stats.value_saved_trend}
             </div>
           </div>
@@ -216,7 +216,7 @@ export default function QuickStatsWidget() {
             <div className={`text-2xl font-bold ${getSuccessColor(stats.success_status)}`}>
               {stats.success_rate}%
             </div>
-            <div className="text-xs text-muted-foreground mt-1">
+            <div className="text-xs text-[#78716C] mt-1">
               {!hasData ? 'Awaiting data' : (
                 <>
                   {stats.success_status === 'good' && 'Excellent performance'}

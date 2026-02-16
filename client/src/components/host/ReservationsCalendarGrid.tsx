@@ -112,12 +112,12 @@ export default function ReservationsCalendarGrid({
   };
 
   return (
-    <div className="bg-card rounded-xl shadow-lg overflow-hidden">
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
       {/* Calendar Header */}
-      <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+      <div className="px-6 py-4 border-b border-[#E7E5E4] flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h2 className="text-xl font-bold text-foreground">Reservations Calendar</h2>
-          <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+          <h2 className="text-xl font-bold text-[#1C1917]">Reservations Calendar</h2>
+          <span className="px-3 py-1 bg-[#9F1239]/10 text-[#9F1239] rounded-full text-sm font-medium">
             {reservations.length} upcoming
           </span>
         </div>
@@ -126,16 +126,16 @@ export default function ReservationsCalendarGrid({
             onClick={() => setWeekOffset(0)}
             className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
               weekOffset === 0
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:bg-muted'
+                ? 'bg-[#9F1239] text-white'
+                : 'text-[#78716C] hover:bg-[#F5F5F4]'
             }`}
           >
             Today
           </button>
-          <div className="flex items-center border border-border rounded-lg">
+          <div className="flex items-center border border-[#E7E5E4] rounded-lg">
             <button
               onClick={() => setWeekOffset(prev => prev - 1)}
-              className="p-2 hover:bg-muted transition-colors rounded-l-lg"
+              className="p-2 hover:bg-[#F5F5F4] transition-colors rounded-l-lg"
             >
               <ThiingsIcon name="chevron-left" pxSize={16} />
             </button>
@@ -144,7 +144,7 @@ export default function ReservationsCalendarGrid({
             </span>
             <button
               onClick={() => setWeekOffset(prev => prev + 1)}
-              className="p-2 hover:bg-muted transition-colors rounded-r-lg"
+              className="p-2 hover:bg-[#F5F5F4] transition-colors rounded-r-lg"
             >
               <ThiingsIcon name="chevron-right" pxSize={16} />
             </button>
@@ -156,8 +156,8 @@ export default function ReservationsCalendarGrid({
       <div className="overflow-x-auto">
         <div className="min-w-[900px]">
           {/* Day Headers */}
-          <div className="grid grid-cols-8 border-b border-border bg-muted/30">
-            <div className="p-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          <div className="grid grid-cols-8 border-b border-[#E7E5E4] bg-[#F5F5F4]/30">
+            <div className="p-3 text-xs font-medium text-[#78716C] uppercase tracking-wider">
               Time
             </div>
             {weekDates.map((date, idx) => {
@@ -165,12 +165,12 @@ export default function ReservationsCalendarGrid({
               return (
                 <div
                   key={idx}
-                  className={`p-3 text-center ${isToday ? 'bg-primary/10' : ''}`}
+                  className={`p-3 text-center ${isToday ? 'bg-[#9F1239]/10' : ''}`}
                 >
-                  <div className="text-xs font-medium text-muted-foreground uppercase">
+                  <div className="text-xs font-medium text-[#78716C] uppercase">
                     {dayName}
                   </div>
-                  <div className={`text-lg font-bold ${isToday ? 'text-primary' : 'text-foreground'}`}>
+                  <div className={`text-lg font-bold ${isToday ? 'text-[#9F1239]' : 'text-[#1C1917]'}`}>
                     {dayNum}
                   </div>
                 </div>
@@ -181,9 +181,9 @@ export default function ReservationsCalendarGrid({
           {/* Time Slots */}
           <div ref={scrollContainerRef} className="max-h-[500px] overflow-y-auto">
             {TIME_SLOTS.map((time) => (
-              <div key={time} className="grid grid-cols-8 border-b border-border/50 min-h-[48px]">
+              <div key={time} className="grid grid-cols-8 border-b border-[#E7E5E4]/50 min-h-[48px]">
                 {/* Time Label */}
-                <div className="p-2 text-xs text-muted-foreground font-medium border-r border-border/50 flex items-start">
+                <div className="p-2 text-xs text-[#78716C] font-medium border-r border-[#E7E5E4]/50 flex items-start">
                   {time}
                 </div>
 
@@ -196,9 +196,9 @@ export default function ReservationsCalendarGrid({
                   return (
                     <div
                       key={dayIdx}
-                      className={`p-1 border-r border-border/50 min-h-[48px] ${
-                        isToday ? 'bg-primary/5' : ''
-                      } ${cellReservations.length > 0 ? '' : 'hover:bg-muted/50'}`}
+                      className={`p-1 border-r border-[#E7E5E4]/50 min-h-[48px] ${
+                        isToday ? 'bg-[#9F1239]/5' : ''
+                      } ${cellReservations.length > 0 ? '' : 'hover:bg-[#F5F5F4]/50'}`}
                     >
                       {cellReservations.map((res, resIdx) => {
                         const colors = getStatusColor(res.status || 'pending');
@@ -232,12 +232,12 @@ export default function ReservationsCalendarGrid({
       </div>
 
       {/* Status Legend */}
-      <div className="px-6 py-3 border-t border-border bg-muted/30 flex items-center gap-4 flex-wrap">
-        <span className="text-xs font-medium text-muted-foreground">Status:</span>
+      <div className="px-6 py-3 border-t border-[#E7E5E4] bg-[#F5F5F4]/30 flex items-center gap-4 flex-wrap">
+        <span className="text-xs font-medium text-[#78716C]">Status:</span>
         {Object.entries(STATUS_COLORS).map(([status, colors]) => (
           <div key={status} className="flex items-center gap-1.5">
             <div className={`w-3 h-3 rounded ${colors.bg} border ${colors.border}`}></div>
-            <span className="text-xs text-muted-foreground capitalize">{status}</span>
+            <span className="text-xs text-[#78716C] capitalize">{status}</span>
           </div>
         ))}
       </div>
@@ -245,12 +245,12 @@ export default function ReservationsCalendarGrid({
       {/* Reservation Detail Modal */}
       {selectedReservation && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-card rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
-            <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-              <h3 className="text-lg font-bold text-foreground">Reservation Details</h3>
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div className="px-6 py-4 border-b border-[#E7E5E4] flex items-center justify-between">
+              <h3 className="text-lg font-bold text-[#1C1917]">Reservation Details</h3>
               <button
                 onClick={() => setSelectedReservation(null)}
-                className="p-1 hover:bg-muted rounded-lg transition-colors"
+                className="p-1 hover:bg-[#F5F5F4] rounded-lg transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -260,23 +260,23 @@ export default function ReservationsCalendarGrid({
 
             <div className="p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-foreground">{selectedReservation.customer_name}</span>
+                <span className="text-2xl font-bold text-[#1C1917]">{selectedReservation.customer_name}</span>
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedReservation.status || 'pending').bg} ${getStatusColor(selectedReservation.status || 'pending').text}`}>
                   {selectedReservation.status}
                 </span>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="flex items-center gap-2 text-[#78716C]">
                   <ThiingsIcon name="clock" pxSize={16} />
                   <span>{selectedReservation.time?.substring(0, 5)}</span>
                 </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="flex items-center gap-2 text-[#78716C]">
                   <ThiingsIcon name="users" pxSize={16} />
                   <span>{selectedReservation.party_size} guests</span>
                 </div>
                 {selectedReservation.table_ids && selectedReservation.table_ids.length > 0 && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="flex items-center gap-2 text-[#78716C]">
                     <ThiingsIcon name="map-pin" pxSize={16} />
                     <span>Table {selectedReservation.table_ids.join(', ')}</span>
                   </div>
@@ -284,9 +284,9 @@ export default function ReservationsCalendarGrid({
               </div>
 
               {selectedReservation.special_requests && (
-                <div className="p-3 bg-muted rounded-lg">
-                  <div className="text-xs font-medium text-muted-foreground mb-1">Special Requests</div>
-                  <div className="text-sm text-foreground">{selectedReservation.special_requests}</div>
+                <div className="p-3 bg-[#F5F5F4] rounded-lg">
+                  <div className="text-xs font-medium text-[#78716C] mb-1">Special Requests</div>
+                  <div className="text-sm text-[#1C1917]">{selectedReservation.special_requests}</div>
                 </div>
               )}
 
@@ -297,7 +297,7 @@ export default function ReservationsCalendarGrid({
                       onCheckIn(selectedReservation);
                       setSelectedReservation(null);
                     }}
-                    className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
+                    className="flex-1 px-4 py-2.5 bg-[#9F1239] text-white font-medium rounded-lg hover:bg-[#881337] transition-colors"
                   >
                     Check In
                   </button>
@@ -315,7 +315,7 @@ export default function ReservationsCalendarGrid({
                 )}
                 <button
                   onClick={() => setSelectedReservation(null)}
-                  className="px-4 py-2.5 border border-border text-foreground font-medium rounded-lg hover:bg-muted transition-colors"
+                  className="px-4 py-2.5 border border-[#E7E5E4] text-[#1C1917] font-medium rounded-lg hover:bg-[#F5F5F4] transition-colors"
                 >
                   Close
                 </button>
