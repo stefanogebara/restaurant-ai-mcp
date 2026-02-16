@@ -170,7 +170,7 @@ export default function TableConfigPage() {
             <div className="flex items-center gap-3">
               <Link
                 to="/host-dashboard/simple"
-                className="px-4 py-2 text-sm text-[#57534E] hover:text-[#1C1917] border border-[#E7E5E4] rounded-lg hover:border-[#A8A29E] transition-colors"
+                className="px-4 py-2 text-sm text-[#57534E] hover:text-[#1C1917] border border-[#E7E5E4] rounded-xl hover:border-[#A8A29E] transition-colors"
               >
                 Back to Dashboard
               </Link>
@@ -179,7 +179,7 @@ export default function TableConfigPage() {
                   setFormData(defaultFormData);
                   setShowAddModal(true);
                 }}
-                className="px-4 py-2 bg-[#1C1917] text-white rounded-lg hover:bg-[#292524] transition-colors font-medium"
+                className="px-4 py-2 bg-[#1C1917] text-white rounded-xl hover:bg-[#292524] transition-colors font-medium"
               >
                 + Add Table
               </button>
@@ -222,6 +222,7 @@ export default function TableConfigPage() {
         {Object.entries(tablesByLocation).map(([location, locationTables]) => (
           <div key={location} className="mb-8">
             <h2 className="text-lg font-semibold text-[#1C1917] mb-4 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#22c55e] inline-block" />
               {location}
               <span className="text-sm font-normal text-[#78716C]">
                 ({(locationTables as TableConfig[]).filter(t => t.is_active).length} tables)
@@ -234,11 +235,7 @@ export default function TableConfigPage() {
                 .map((table) => (
                   <div
                     key={table.id}
-                    className={`bg-white rounded-xl p-4 border-2 transition-all cursor-pointer ${
-                      table.is_fixed
-                        ? 'border-[#E7E5E4] hover:border-[#A8A29E]'
-                        : 'border-[#E7E5E4] hover:border-[#A8A29E]'
-                    }`}
+                    className={`bg-white rounded-xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow cursor-pointer`}
                     onClick={() => openEditModal(table)}
                   >
                     <div className="flex items-start justify-between mb-3">
@@ -292,7 +289,7 @@ export default function TableConfigPage() {
                           e.stopPropagation();
                           openEditModal(table);
                         }}
-                        className="flex-1 px-3 py-1.5 text-xs bg-[#F5F5F4] text-[#57534E] rounded-lg hover:bg-[#E7E5E4] transition-colors"
+                        className="flex-1 px-3 py-1.5 text-xs bg-[#F5F5F4] text-[#57534E] rounded-xl hover:bg-[#E7E5E4] transition-colors"
                       >
                         Edit
                       </button>
@@ -302,7 +299,7 @@ export default function TableConfigPage() {
                             e.stopPropagation();
                             openAdjacencyModal(table);
                           }}
-                          className="flex-1 px-3 py-1.5 text-xs bg-[#9F1239]/10 text-[#9F1239] rounded-lg hover:bg-[#9F1239]/20 transition-colors"
+                          className="flex-1 px-3 py-1.5 text-xs bg-[#9F1239]/10 text-[#9F1239] rounded-xl hover:bg-[#9F1239]/20 transition-colors"
                         >
                           Set Adjacent
                         </button>
@@ -339,8 +336,8 @@ export default function TableConfigPage() {
 
       {/* Add Table Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
             <h3 className="text-xl font-bold text-[#1C1917] mb-4">Add New Table</h3>
             <TableForm
               formData={formData}
@@ -357,8 +354,8 @@ export default function TableConfigPage() {
 
       {/* Edit Table Modal */}
       {showEditModal && selectedTable && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
             <h3 className="text-xl font-bold text-[#1C1917] mb-4">Edit Table {selectedTable.table_number}</h3>
             <TableForm
               formData={formData}
@@ -575,8 +572,8 @@ function AdjacencyModal({
   });
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 max-h-[80vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 max-h-[80vh] overflow-y-auto">
         <h3 className="text-xl font-bold text-[#1C1917] mb-2">
           Set Adjacent Tables for Table {table.table_number}
         </h3>

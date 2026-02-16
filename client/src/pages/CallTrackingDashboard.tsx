@@ -407,7 +407,7 @@ export default function CallTrackingDashboard() {
           {phoneStatus && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
               {/* Connection Status */}
-              <div className="bg-[#F5F5F4]/30 rounded-lg p-3">
+              <div className="bg-[#F5F5F4]/30 rounded-lg p-3 border border-[#E7E5E4]/50">
                 <p className="text-xs text-[#57534E] mb-1">Connection</p>
                 <div className="flex items-center gap-2">
                   {phoneStatus.status === 'active' ? (
@@ -422,7 +422,7 @@ export default function CallTrackingDashboard() {
               </div>
 
               {/* Phone Number */}
-              <div className="bg-[#F5F5F4]/30 rounded-lg p-3">
+              <div className="bg-[#F5F5F4]/30 rounded-lg p-3 border border-[#E7E5E4]/50">
                 <p className="text-xs text-[#57534E] mb-1">Phone Number</p>
                 <p className="text-sm font-medium text-[#1C1917]">
                   {phoneStatus.phone_number || 'None assigned'}
@@ -430,7 +430,7 @@ export default function CallTrackingDashboard() {
               </div>
 
               {/* Agent ID */}
-              <div className="bg-[#F5F5F4]/30 rounded-lg p-3">
+              <div className="bg-[#F5F5F4]/30 rounded-lg p-3 border border-[#E7E5E4]/50">
                 <p className="text-xs text-[#57534E] mb-1">Agent ID</p>
                 <p className="text-sm font-medium text-[#1C1917] font-mono truncate" title={phoneStatus.agent_id || undefined}>
                   {phoneStatus.agent_id
@@ -441,7 +441,7 @@ export default function CallTrackingDashboard() {
               </div>
 
               {/* Configured Date */}
-              <div className="bg-[#F5F5F4]/30 rounded-lg p-3">
+              <div className="bg-[#F5F5F4]/30 rounded-lg p-3 border border-[#E7E5E4]/50">
                 <p className="text-xs text-[#57534E] mb-1">Configured</p>
                 <p className="text-sm font-medium text-[#1C1917]">
                   {formatConfiguredDate(phoneStatus.configured_at)}
@@ -465,7 +465,7 @@ export default function CallTrackingDashboard() {
               <button
                 onClick={handleSetupPhone}
                 disabled={setupLoading}
-                className="px-4 py-2 bg-[#9F1239] text-white rounded-lg font-medium hover:bg-[#881337] transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-[#9F1239] text-white rounded-xl font-medium hover:bg-[#881337] transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {setupLoading ? (
                   <>
@@ -486,7 +486,7 @@ export default function CallTrackingDashboard() {
               <button
                 onClick={handleDiagnose}
                 disabled={diagnoseLoading}
-                className="px-4 py-2 bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#1C1917] rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#1C1917] rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {diagnoseLoading ? (
                   <>
@@ -507,7 +507,7 @@ export default function CallTrackingDashboard() {
               <button
                 onClick={handleDisconnect}
                 disabled={disconnectLoading}
-                className="px-4 py-2 bg-[#dc2626]/10 hover:bg-[#dc2626]/20 text-[#dc2626] rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-[#dc2626]/10 hover:bg-[#dc2626]/20 text-[#dc2626] rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {disconnectLoading ? (
                   <>
@@ -592,7 +592,7 @@ export default function CallTrackingDashboard() {
                       {diagnoseData.tools.map((tool, idx) => (
                         <span
                           key={idx}
-                          className="px-2.5 py-1 bg-[#F5F5F4] text-[#1C1917] text-xs font-medium rounded-full"
+                          className="px-2.5 py-1 bg-[#F5F5F4] text-[#1C1917] text-xs font-medium rounded-full border border-[#E7E5E4]/50"
                         >
                           {tool.name}
                         </span>
@@ -609,7 +609,7 @@ export default function CallTrackingDashboard() {
                       {diagnoseData.tool_ids.map((id, idx) => (
                         <span
                           key={idx}
-                          className="px-2.5 py-1 bg-[#F5F5F4] text-[#57534E] text-xs font-mono rounded-full"
+                          className="px-2.5 py-1 bg-[#F5F5F4] text-[#57534E] text-xs font-mono rounded-full border border-[#E7E5E4]/50"
                           title={id}
                         >
                           {id.substring(0, 16)}...
@@ -646,7 +646,7 @@ export default function CallTrackingDashboard() {
                         <button
                           onClick={handleFixTools}
                           disabled={fixToolsLoading}
-                          className="mt-3 px-4 py-2 bg-[#d97706] hover:bg-[#b45309] text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                          className="mt-3 px-4 py-2 bg-[#d97706] hover:bg-[#b45309] text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
                         >
                           {fixToolsLoading ? (
                             <>
@@ -764,7 +764,7 @@ export default function CallTrackingDashboard() {
 
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-[#F5F5F4]/50">
+              <thead className="bg-[#FAFAF9]">
                 <tr>
                   <th className="text-left p-4 text-sm font-medium text-[#57534E]">Time</th>
                   <th className="text-left p-4 text-sm font-medium text-[#57534E]">Customer</th>
@@ -784,7 +784,7 @@ export default function CallTrackingDashboard() {
                   </tr>
                 ) : (
                   conversations.map((conv) => (
-                    <tr key={conv.id} className="hover:bg-[#F5F5F4]/30 transition-colors">
+                    <tr key={conv.id} className="hover:bg-[#FAFAF9] transition-colors">
                       <td className="p-4">
                         <div className="flex items-center gap-2">
                           <ThiingsIcon name="calendar" size="xs" />
@@ -825,7 +825,7 @@ export default function CallTrackingDashboard() {
                       <td className="p-4">
                         <button
                           onClick={() => viewConversation(conv.id)}
-                          className="px-3 py-1 bg-[#9F1239]/10 hover:bg-[#9F1239]/20 text-[#9F1239] rounded text-sm font-medium transition-colors"
+                          className="px-3 py-1 bg-[#9F1239]/5 hover:bg-[#9F1239]/10 text-[#9F1239] rounded-xl text-sm font-medium transition-colors"
                         >
                           View
                         </button>
@@ -841,7 +841,7 @@ export default function CallTrackingDashboard() {
         {/* Conversation Detail Modal */}
         {selectedConversation && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl border border-[#E7E5E4] shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-2xl border border-[#E7E5E4] shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               {/* Modal Header */}
               <div className="sticky top-0 bg-white border-b border-[#E7E5E4] p-6 flex items-center justify-between">
                 <div>
@@ -852,7 +852,7 @@ export default function CallTrackingDashboard() {
                 </div>
                 <button
                   onClick={() => setSelectedConversation(null)}
-                  className="p-2 hover:bg-[#F5F5F4] rounded-lg transition-colors"
+                  className="p-2 hover:bg-[#F5F5F4] rounded-xl transition-colors"
                 >
                   <ThiingsIcon name="close" size="sm" />
                 </button>
@@ -964,7 +964,7 @@ export default function CallTrackingDashboard() {
               <div className="sticky bottom-0 bg-white border-t border-[#E7E5E4] p-4">
                 <button
                   onClick={() => setSelectedConversation(null)}
-                  className="w-full px-4 py-2 bg-[#9F1239] text-white rounded-lg font-medium hover:bg-[#881337] transition-colors"
+                  className="w-full px-4 py-2 bg-[#9F1239] text-white rounded-xl font-medium hover:bg-[#881337] transition-colors"
                 >
                   Close
                 </button>
