@@ -209,11 +209,12 @@ export default function BookingPage() {
   return (
     <div className="min-h-screen bg-[#FAFAF9]">
       {/* Header */}
-      <header className="bg-white border-b border-[#E7E5E4] px-4 py-4">
-        <div className="max-w-lg mx-auto">
+      <header className="bg-white border-b border-[#E7E5E4] sticky top-0 z-50">
+        <div className="h-1 bg-gradient-to-r from-[#9F1239] to-[#be185d]" />
+        <div className="max-w-lg mx-auto px-4 py-4">
           <h1 className="text-xl font-serif font-bold text-[#1C1917]">{restaurant.name}</h1>
           <p className="text-sm text-[#57534E]">
-            {restaurant.type} &middot; {restaurant.city}, {restaurant.country}
+            {restaurant.type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} &middot; {restaurant.city}, {restaurant.country}
           </p>
         </div>
       </header>
@@ -221,15 +222,20 @@ export default function BookingPage() {
       <main className="max-w-lg mx-auto px-4 py-6 pb-24">
         {/* Progress Steps */}
         <div className="flex items-center gap-1 mb-6">
-          {(['details', 'time', 'contact', 'confirm'] as BookingStep[]).map((s, i) => (
-            <div key={s} className="flex items-center gap-1 flex-1">
-              <div className={`h-1.5 flex-1 rounded-full transition-colors ${
-                i <= ['details', 'time', 'contact', 'confirm'].indexOf(step)
-                  ? 'bg-[#9F1239]'
-                  : 'bg-[#E7E5E4]'
-              }`} />
-            </div>
-          ))}
+          {(['details', 'time', 'contact', 'confirm'] as BookingStep[]).map((s, i) => {
+            const labels = ['Details', 'Time', 'Contact', 'Confirm'];
+            const isActive = i <= ['details', 'time', 'contact', 'confirm'].indexOf(step);
+            return (
+              <div key={s} className="flex flex-col items-center gap-1.5 flex-1">
+                <div className={`h-1.5 w-full rounded-full transition-colors ${
+                  isActive ? 'bg-[#9F1239]' : 'bg-[#E7E5E4]'
+                }`} />
+                <span className={`text-[10px] font-medium transition-colors ${
+                  isActive ? 'text-[#9F1239]' : 'text-[#A8A29E]'
+                }`}>{labels[i]}</span>
+              </div>
+            );
+          })}
         </div>
 
         {/* Step 1: Party Size + Date */}
@@ -282,16 +288,17 @@ export default function BookingPage() {
             <div>
               <label className="block text-sm font-semibold text-[#1C1917] mb-2">Date</label>
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[240px] overflow-y-auto pr-1">
-                {availableDates.slice(0, 28).map(d => (
+                {availableDates.slice(0, 28).map((d, idx) => (
                   <button
                     key={d.value}
                     onClick={() => setSelectedDate(d.value)}
-                    className={`px-3 py-2.5 rounded-xl text-xs font-medium transition-all text-center ${
+                    className={`px-3 py-2.5 rounded-xl text-xs font-medium transition-all text-center relative ${
                       selectedDate === d.value
                         ? 'bg-[#9F1239] text-white shadow-md shadow-[#9F1239]/20'
                         : 'bg-white border border-[#E7E5E4] text-[#57534E] hover:border-[#9F1239]/30'
                     }`}
                   >
+                    {idx === 0 && <span className={`block text-[9px] font-bold uppercase tracking-wider mb-0.5 ${selectedDate === d.value ? 'text-white/80' : 'text-[#9F1239]'}`}>Today</span>}
                     {d.label}
                   </button>
                 ))}
@@ -455,7 +462,7 @@ export default function BookingPage() {
               <p className="text-sm text-[#57534E]">Please review your details before confirming.</p>
             </div>
 
-            <div className="bg-white border border-[#E7E5E4] rounded-xl p-5 space-y-4">
+            <div className="bg-white border border-[#E7E5E4]/50 rounded-xl p-5 space-y-4 shadow-sm">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-xs text-[#A8A29E] uppercase tracking-wider font-medium">Restaurant</p>

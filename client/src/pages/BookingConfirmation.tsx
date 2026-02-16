@@ -49,8 +49,9 @@ export default function BookingConfirmation() {
   return (
     <div className="min-h-screen bg-[#FAFAF9]">
       {/* Header */}
-      <header className="bg-white border-b border-[#E7E5E4] px-4 py-4">
-        <div className="max-w-lg mx-auto">
+      <header className="bg-white border-b border-[#E7E5E4]">
+        <div className="h-1 bg-gradient-to-r from-[#9F1239] to-[#be185d]" />
+        <div className="max-w-lg mx-auto px-4 py-4">
           <h1 className="text-xl font-serif font-bold text-[#1C1917]">{reservation.restaurant_name}</h1>
         </div>
       </header>
