@@ -92,7 +92,7 @@ export default function QuickStatsWidget() {
   const hasData = stats.today_interventions > 0 || stats.value_saved_30d > 0;
 
   const getRoiColor = (status: string) => {
-    if (!hasData) return 'text-gray-500';
+    if (!hasData) return 'text-[#78716C]';
     switch (status) {
       case 'exceeds': return 'text-green-600';
       case 'meets': return 'text-green-600';
@@ -102,7 +102,7 @@ export default function QuickStatsWidget() {
   };
 
   const getRoiBg = (status: string) => {
-    if (!hasData) return 'bg-gray-50';
+    if (!hasData) return 'bg-[#FAFAF9]';
     switch (status) {
       case 'exceeds': return 'bg-green-50';
       case 'meets': return 'bg-green-50';
@@ -112,7 +112,7 @@ export default function QuickStatsWidget() {
   };
 
   const getSuccessColor = (status: string) => {
-    if (!hasData) return 'text-gray-500';
+    if (!hasData) return 'text-[#78716C]';
     switch (status) {
       case 'good': return 'text-green-600';
       case 'fair': return 'text-amber-600';
@@ -122,7 +122,7 @@ export default function QuickStatsWidget() {
   };
 
   const getSuccessBg = (status: string) => {
-    if (!hasData) return 'bg-gray-50';
+    if (!hasData) return 'bg-[#FAFAF9]';
     switch (status) {
       case 'good': return 'bg-green-50';
       case 'fair': return 'bg-amber-50';
@@ -168,9 +168,9 @@ export default function QuickStatsWidget() {
           </div>
 
           {/* Weekly ROI */}
-          <div className={`${getRoiBg(stats.roi_status)} rounded-lg p-4 border ${!hasData ? 'border-gray-200' : 'border-green-100'}`}>
+          <div className={`${getRoiBg(stats.roi_status)} rounded-lg p-4 border ${!hasData ? 'border-[#E7E5E4]' : 'border-green-100'}`}>
             <div className="flex items-center gap-2 mb-2">
-              <div className={`w-8 h-8 ${!hasData ? 'bg-gray-100' : stats.roi_status === 'below' ? 'bg-amber-100' : 'bg-green-100'} rounded-lg flex items-center justify-center`}>
+              <div className={`w-8 h-8 ${!hasData ? 'bg-[#F5F5F4]' : stats.roi_status === 'below' ? 'bg-amber-100' : 'bg-green-100'} rounded-lg flex items-center justify-center`}>
                 <ThiingsIcon name="trending-up" size="xs" />
               </div>
               <span className={`text-xs font-medium uppercase tracking-wide ${getRoiColor(stats.roi_status)}`}>7-Day ROI</span>
@@ -206,9 +206,9 @@ export default function QuickStatsWidget() {
           </div>
 
           {/* Success Rate */}
-          <div className={`${getSuccessBg(stats.success_status)} rounded-lg p-4 border ${!hasData ? 'border-gray-200' : stats.success_status === 'good' ? 'border-green-100' : stats.success_status === 'fair' ? 'border-amber-100' : 'border-red-100'}`}>
+          <div className={`${getSuccessBg(stats.success_status)} rounded-lg p-4 border ${!hasData ? 'border-[#E7E5E4]' : stats.success_status === 'good' ? 'border-green-100' : stats.success_status === 'fair' ? 'border-amber-100' : 'border-red-100'}`}>
             <div className="flex items-center gap-2 mb-2">
-              <div className={`w-8 h-8 ${!hasData ? 'bg-gray-100' : stats.success_status === 'good' ? 'bg-green-100' : stats.success_status === 'fair' ? 'bg-amber-100' : 'bg-red-100'} rounded-lg flex items-center justify-center`}>
+              <div className={`w-8 h-8 ${!hasData ? 'bg-[#F5F5F4]' : stats.success_status === 'good' ? 'bg-green-100' : stats.success_status === 'fair' ? 'bg-amber-100' : 'bg-red-100'} rounded-lg flex items-center justify-center`}>
                 <ThiingsIcon name="check-circle" size="xs" />
               </div>
               <span className={`text-xs font-medium uppercase tracking-wide ${getSuccessColor(stats.success_status)}`}>Success Rate</span>

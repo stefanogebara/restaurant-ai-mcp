@@ -28,7 +28,7 @@ const STATUS_COLORS: Record<string, { bg: string; border: string; text: string }
   confirmed: { bg: 'bg-emerald-100', border: 'border-emerald-400', text: 'text-emerald-800' },
   pending: { bg: 'bg-amber-100', border: 'border-amber-400', text: 'text-amber-800' },
   seated: { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-800' },
-  completed: { bg: 'bg-gray-100', border: 'border-gray-400', text: 'text-gray-600' },
+  completed: { bg: 'bg-[#F5F5F4]', border: 'border-[#A8A29E]', text: 'text-[#57534E]' },
   cancelled: { bg: 'bg-red-100', border: 'border-red-400', text: 'text-red-800' },
   'no-show': { bg: 'bg-red-200', border: 'border-red-500', text: 'text-red-900' },
 };

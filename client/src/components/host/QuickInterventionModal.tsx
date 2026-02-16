@@ -104,7 +104,7 @@ export default function QuickInterventionModal({
     { id: 'sms_reminder', label: t.sentSMS, icon: 'chat', color: 'bg-green-500' },
     { id: 'whatsapp_reminder', label: t.sentWhatsApp, icon: 'chat', color: 'bg-emerald-500' },
     { id: 'deposit_required', label: t.depositRequired, icon: 'credit-card', color: 'bg-purple-500' },
-    { id: 'other', label: t.other, icon: 'check-circle', color: 'bg-gray-500' }
+    { id: 'other', label: t.other, icon: 'check-circle', color: 'bg-[#78716C]' }
   ];
 
   const getRiskColor = (level?: string) => {

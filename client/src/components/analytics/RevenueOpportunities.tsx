@@ -54,7 +54,7 @@ export default function RevenueOpportunities() {
       case 'high': return 'bg-red-500';
       case 'medium': return 'bg-yellow-500';
       case 'low': return 'bg-green-500';
-      default: return 'bg-gray-500';
+      default: return 'bg-[#78716C]';
     }
   };
 
@@ -63,7 +63,7 @@ export default function RevenueOpportunities() {
       case 'low': return 'bg-green-100 text-green-800';
       case 'medium': return 'bg-yellow-100 text-yellow-800';
       case 'high': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-[#F5F5F4] text-[#292524]';
     }
   };
 

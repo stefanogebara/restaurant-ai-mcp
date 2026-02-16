@@ -54,7 +54,7 @@ export default function NoShowPredictions() {
       case 'high': return 'text-red-600 bg-red-50 border-red-200';
       case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
       case 'low': return 'text-green-600 bg-green-50 border-green-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+      default: return 'text-[#57534E] bg-[#FAFAF9] border-[#E7E5E4]';
     }
   };
 
@@ -63,7 +63,7 @@ export default function NoShowPredictions() {
       case 'high': return 'bg-red-600 text-white';
       case 'medium': return 'bg-yellow-500 text-white';
       case 'low': return 'bg-green-600 text-white';
-      default: return 'bg-gray-600 text-white';
+      default: return 'bg-[#57534E] text-white';
     }
   };
 

@@ -301,8 +301,8 @@ export default function CallTrackingDashboard() {
       case 'reservation_created': return 'bg-green-500/10 text-green-600';
       case 'information_only': return 'bg-blue-500/10 text-blue-600';
       case 'error': return 'bg-red-500/10 text-red-600';
-      case 'abandoned': return 'bg-gray-500/10 text-gray-600';
-      default: return 'bg-gray-500/10 text-gray-600';
+      case 'abandoned': return 'bg-[#78716C]/10 text-[#57534E]';
+      default: return 'bg-[#78716C]/10 text-[#57534E]';
     }
   };
 
@@ -341,7 +341,7 @@ export default function CallTrackingDashboard() {
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-500/10 text-gray-600 text-xs font-semibold rounded-full">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#78716C]/10 text-[#57534E] text-xs font-semibold rounded-full">
             <ThiingsIcon name="wifi-off" size="xs" />
             Not Configured
           </span>

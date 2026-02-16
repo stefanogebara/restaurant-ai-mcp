@@ -78,7 +78,7 @@ export default function LanguageSelector({
     return (
       <div className="space-y-2">
         {showLabel && (
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-[#57534E]">
             {t('common.language')}
           </label>
         )}
@@ -93,8 +93,8 @@ export default function LanguageSelector({
                 flex items-center gap-2 rounded-lg border-2 transition-all
                 ${
                   currentLanguage === lang.code
-                    ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold'
-                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                    ? 'border-[#9F1239] bg-[#9F1239]/5 text-[#9F1239] font-semibold'
+                    : 'border-[#E7E5E4] bg-white text-[#57534E] hover:border-[#A8A29E]'
                 }
                 ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                 disabled:opacity-50 disabled:cursor-not-allowed
@@ -116,7 +116,7 @@ export default function LanguageSelector({
   return (
     <div className="space-y-2">
       {showLabel && (
-        <label htmlFor="language-selector" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="language-selector" className="block text-sm font-medium text-[#57534E]">
           {t('common.language')}
         </label>
       )}
@@ -128,8 +128,8 @@ export default function LanguageSelector({
           disabled={isLoading}
           className={`
             ${sizeClasses[size]}
-            block w-full rounded-lg border-gray-300 shadow-sm
-            focus:border-blue-500 focus:ring-blue-500
+            block w-full rounded-lg border-[#E7E5E4] shadow-sm
+            focus:border-[#9F1239] focus:ring-[#9F1239]
             disabled:opacity-50 disabled:cursor-not-allowed
             bg-white
           `}
@@ -142,7 +142,7 @@ export default function LanguageSelector({
         </select>
         {isLoading && (
           <div className="absolute right-10 top-1/2 transform -translate-y-1/2">
-            <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+            <div className="animate-spin h-4 w-4 border-2 border-[#9F1239] border-t-transparent rounded-full"></div>
           </div>
         )}
       </div>

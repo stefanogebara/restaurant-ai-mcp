@@ -78,8 +78,8 @@ export default function RiskScoreBadge({
         };
       default:
         return {
-          bg: 'bg-gray-500/10 border-gray-500/30',
-          text: 'text-gray-600 dark:text-gray-400',
+          bg: 'bg-[#78716C]/10 border-[#78716C]/30',
+          text: 'text-[#57534E]',
           iconName: 'info',
           label: 'Unknown'
         };
