@@ -17,7 +17,7 @@ interface UpgradePromptProps {
 export default function UpgradePrompt({
   feature,
   featureDescription,
-  currentPlan = 'Basic',
+  currentPlan = 'Starter',
   size = 'medium',
 }: UpgradePromptProps) {
   const handleUpgrade = () => {
@@ -68,7 +68,7 @@ export default function UpgradePrompt({
       {/* Description */}
       <p className="text-[#57534E] mb-4">
         {featureDescription ||
-          `${feature} is available on Professional and Enterprise plans`}
+          `${feature} is available on Growth or Scale plans`}
       </p>
 
       {/* Current Plan Badge */}

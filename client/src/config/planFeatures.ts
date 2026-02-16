@@ -3,7 +3,7 @@
  * Defines which features are available for each subscription tier
  */
 
-export type PlanType = 'basic' | 'professional' | 'trial';
+export type PlanType = 'starter' | 'growth' | 'scale' | 'trial';
 
 export interface PlanFeatures {
   // Core Dashboard
@@ -27,6 +27,7 @@ export interface PlanFeatures {
   customerHistory: boolean | 'basic';  // Customer history depth
 
   // AI Agent Features
+  voiceAI: boolean;                      // Voice AI agent access
   aiAgentTracking: boolean;              // AI Agent call tracking & analytics
 
   // Waitlist Features
@@ -45,7 +46,7 @@ export interface PlanFeatures {
 }
 
 export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
-  basic: {
+  starter: {
     // Core Dashboard
     overview: true,
 
@@ -66,7 +67,8 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     customerDNA: false,
     customerHistory: 'basic',
 
-    // AI Agent - All plans get access
+    // AI Agent
+    voiceAI: false,
     aiAgentTracking: true,
 
     // Waitlist - Basic
@@ -84,7 +86,7 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
 
   },
 
-  professional: {
+  growth: {
     // Core Dashboard
     overview: true,
 
@@ -94,9 +96,9 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     interventionPanel: true,
     interventionActions: 'limited',  // 5 interventions per day
 
-    // Analytics & Reporting - View Only
+    // Analytics & Reporting - Full + Waitlist
     advancedAnalytics: true,
-    weeklyReports: 'email',  // Email reports only
+    weeklyReports: 'email',
     customReportScheduling: false,
     revenueOpportunities: false,
 
@@ -105,7 +107,8 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     customerDNA: true,
     customerHistory: true,
 
-    // AI Agent - All plans get access
+    // AI Agent - Voice AI included
+    voiceAI: true,
     aiAgentTracking: true,
 
     // Waitlist - Standard
@@ -123,8 +126,48 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
 
   },
 
+  scale: {
+    // Core Dashboard
+    overview: true,
+
+    // ML & Intelligence - Full Access
+    mlPerformance: true,
+    quickStatsWidget: true,
+    interventionPanel: true,
+    interventionActions: 'unlimited',
+
+    // Analytics & Reporting - Full + Priority support
+    advancedAnalytics: true,
+    weeklyReports: 'pdf',
+    customReportScheduling: true,
+    revenueOpportunities: true,
+
+    // Customer Intelligence - Full
+    customerLTV: true,
+    customerDNA: true,
+    customerHistory: true,
+
+    // AI Agent - All channels
+    voiceAI: true,
+    aiAgentTracking: true,
+
+    // Waitlist - Full
+    waitlistManagement: true,
+    waitlistPriorityTiers: true,
+    waitlistSMSNotifications: true,
+    smartWaitTimePredictions: true,
+
+    // Enterprise Features
+    multiLocation: false,
+    whiteLabel: false,
+    apiAccess: true,
+    systemObservability: true,
+    prioritySupport: true,
+
+  },
+
   trial: {
-    // Trial gets all Professional features for 14 days
+    // Trial gets all Growth features for 14 days
     overview: true,
 
     // ML & Intelligence
@@ -144,7 +187,8 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     customerDNA: true,
     customerHistory: true,
 
-    // AI Agent - All plans get access
+    // AI Agent
+    voiceAI: true,
     aiAgentTracking: true,
 
     // Waitlist
@@ -164,28 +208,32 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
 };
 
 export const PLAN_PRICES = {
-  basic: 49.99,
-  professional: 99.99,
+  starter: 29,
+  growth: 99,
+  scale: 199,
 } as const;
 
 export const PLAN_NAMES = {
-  basic: 'Basic',
-  professional: 'Professional',
+  starter: 'Starter',
+  growth: 'Growth',
+  scale: 'Scale',
   trial: 'Trial',
 } as const;
 
 export const PLAN_DESCRIPTIONS = {
-  basic: 'Perfect for single-location restaurants getting started',
-  professional: 'Advanced features for growing restaurants',
-  trial: '14-day trial with Professional features',
+  starter: 'Perfect for small restaurants getting started',
+  growth: 'Advanced features for growing restaurants',
+  scale: 'Full platform for high-volume restaurants',
+  trial: '14-day trial with Growth features',
 } as const;
 
 /**
  * Intervention limits per plan (daily)
  */
 export const INTERVENTION_LIMITS = {
-  basic: 0,
-  professional: 5,
+  starter: 0,
+  growth: 5,
+  scale: Infinity,
   trial: 5,
 } as const;
 
@@ -209,8 +257,9 @@ export function hasFeatureAccess(
  * Get the minimum plan required for a feature
  */
 export function getRequiredPlan(feature: keyof PlanFeatures): PlanType | null {
-  if (hasFeatureAccess('basic', feature)) return 'basic';
-  if (hasFeatureAccess('professional', feature)) return 'professional';
+  if (hasFeatureAccess('starter', feature)) return 'starter';
+  if (hasFeatureAccess('growth', feature)) return 'growth';
+  if (hasFeatureAccess('scale', feature)) return 'scale';
   return null;
 }
 

@@ -5,12 +5,12 @@
  * Used for feature gating in middleware and frontend.
  */
 
-const { BASIC_PLAN_MONTHLY_RESERVATIONS } = require('../_lib/constants');
+const { STARTER_PLAN_MONTHLY_RESERVATIONS, GROWTH_PLAN_MONTHLY_RESERVATIONS } = require('../_lib/constants');
 
 const PLAN_LIMITS = {
-  basic: {
-    name: 'Basic',
-    maxReservationsPerMonth: BASIC_PLAN_MONTHLY_RESERVATIONS,
+  starter: {
+    name: 'Starter',
+    maxReservationsPerMonth: STARTER_PLAN_MONTHLY_RESERVATIONS,
     features: [
       'ai_reservations',
       'host_dashboard',
@@ -20,13 +20,36 @@ const PLAN_LIMITS = {
     analyticsLevel: 'basic',
     smsNotifications: false,
     waitlistManagement: false,
+    voiceAI: false,
     multiLocation: false,
     customIntegrations: false,
     whiteLabel: false,
     phoneSupport: false,
   },
-  professional: {
-    name: 'Professional',
+  growth: {
+    name: 'Growth',
+    maxReservationsPerMonth: GROWTH_PLAN_MONTHLY_RESERVATIONS,
+    features: [
+      'ai_reservations',
+      'host_dashboard',
+      'basic_analytics',
+      'advanced_analytics',
+      'waitlist_management',
+      'sms_notifications',
+      'email_support',
+      'voice_ai',
+    ],
+    analyticsLevel: 'advanced',
+    smsNotifications: true,
+    waitlistManagement: true,
+    voiceAI: true,
+    multiLocation: false,
+    customIntegrations: false,
+    whiteLabel: false,
+    phoneSupport: false,
+  },
+  scale: {
+    name: 'Scale',
     maxReservationsPerMonth: -1, // unlimited
     features: [
       'ai_reservations',
@@ -37,21 +60,25 @@ const PLAN_LIMITS = {
       'priority_support',
       'sms_notifications',
       'email_support',
+      'voice_ai',
+      'custom_integrations',
     ],
     analyticsLevel: 'advanced',
     smsNotifications: true,
     waitlistManagement: true,
+    voiceAI: true,
     multiLocation: false,
-    customIntegrations: false,
+    customIntegrations: true,
     whiteLabel: false,
-    phoneSupport: false,
+    phoneSupport: true,
   },
 };
 
 // Map Stripe price IDs to plan names
 const PRICE_ID_TO_PLAN = {
-  'price_1SMyEOKf4yCMjmH5kXx1RUyo': 'basic',       // Basic plan
-  'price_1SMyFUKf4yCMjmH5jh4mReyI': 'professional', // Professional plan
+  [process.env.STRIPE_STARTER_PRICE_ID]: 'starter',
+  [process.env.STRIPE_GROWTH_PRICE_ID]: 'growth',
+  [process.env.STRIPE_SCALE_PRICE_ID]: 'scale',
 };
 
 /**
@@ -141,7 +168,7 @@ function getUpgradeMessage(featureName, currentPlan) {
   };
 
   const message = featureMessages[featureName] || 'This premium feature';
-  return `${message} is available on the Professional plan.`;
+  return `${message} is available on the Growth plan.`;
 }
 
 module.exports = {

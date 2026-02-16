@@ -151,12 +151,12 @@ async function checkReservationLimits(req, res, next) {
 
     const plan = req.subscription.plan_name?.toLowerCase();
 
-    // Professional plan has unlimited reservations
-    if (plan === 'professional') {
+    // Scale plan has unlimited reservations
+    if (plan === 'scale') {
       return next();
     }
 
-    // For Basic plan, check monthly reservation count
+    // For Starter and Growth plans, check monthly reservation count
     const restaurantId = req.user?.restaurant_id;
     const currentMonthReservations = await getMonthlyReservationCount(restaurantId, req.customerEmail);
 

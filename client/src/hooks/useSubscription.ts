@@ -90,18 +90,18 @@ export function useFeatureAccess(featureName: string, email?: string) {
 
     // Feature access by plan
     const featureMap: Record<string, string[]> = {
-      basic: ['ai_reservations', 'host_dashboard', 'basic_analytics', 'email_support'],
-      professional: [
+      starter: ['ai_reservations', 'host_dashboard', 'basic_analytics', 'email_support'],
+      growth: [
         'ai_reservations',
         'host_dashboard',
         'basic_analytics',
         'advanced_analytics',
         'waitlist_management',
-        'priority_support',
         'sms_notifications',
         'email_support',
+        'voice_ai',
       ],
-      enterprise: [
+      scale: [
         'ai_reservations',
         'host_dashboard',
         'basic_analytics',
@@ -110,12 +110,8 @@ export function useFeatureAccess(featureName: string, email?: string) {
         'priority_support',
         'sms_notifications',
         'email_support',
-        'multi_location',
+        'voice_ai',
         'custom_integrations',
-        'white_label',
-        'phone_support',
-        'dedicated_account_manager',
-        'sla_guarantee',
       ],
     };
 
@@ -143,9 +139,9 @@ export function usePlanInfo(email?: string) {
   const getPlanColor = () => {
     if (!data?.subscription) return 'gray';
     const plan = data.subscription.plan.toLowerCase();
-    if (plan === 'basic') return 'blue';
-    if (plan === 'professional') return 'purple';
-    if (plan === 'enterprise') return 'gold';
+    if (plan === 'starter') return 'gray';
+    if (plan === 'growth') return 'purple';
+    if (plan === 'scale') return 'gold';
     return 'gray';
   };
 

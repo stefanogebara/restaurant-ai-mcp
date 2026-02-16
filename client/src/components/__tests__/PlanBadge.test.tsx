@@ -14,38 +14,38 @@ vi.mock('../common/ThiingsIcon', () => ({
 // ------------------------------------------------------------------
 
 describe('PlanBadge', () => {
-  it('renders the plan name text for Basic plan', () => {
-    render(<PlanBadge plan="Basic" />);
+  it('renders the plan name text for Starter plan', () => {
+    render(<PlanBadge plan="Starter" />);
 
-    expect(screen.getByText('Basic')).toBeInTheDocument();
+    expect(screen.getByText('Starter')).toBeInTheDocument();
   });
 
-  it('renders the zap icon for Basic plan', () => {
-    render(<PlanBadge plan="Basic" />);
+  it('renders the zap icon for Starter plan', () => {
+    render(<PlanBadge plan="Starter" />);
 
     expect(screen.getByTestId('icon-zap')).toBeInTheDocument();
   });
 
-  it('renders the plan name text for Professional plan', () => {
-    render(<PlanBadge plan="Professional" />);
+  it('renders the plan name text for Growth plan', () => {
+    render(<PlanBadge plan="Growth" />);
 
-    expect(screen.getByText('Professional')).toBeInTheDocument();
+    expect(screen.getByText('Growth')).toBeInTheDocument();
   });
 
-  it('renders the star icon for Professional plan', () => {
-    render(<PlanBadge plan="Professional" />);
+  it('renders the star icon for Growth plan', () => {
+    render(<PlanBadge plan="Growth" />);
 
     expect(screen.getByTestId('icon-star')).toBeInTheDocument();
   });
 
-  it('renders the plan name text for Enterprise plan', () => {
-    render(<PlanBadge plan="Enterprise" />);
+  it('renders the plan name text for Scale plan', () => {
+    render(<PlanBadge plan="Scale" />);
 
-    expect(screen.getByText('Enterprise')).toBeInTheDocument();
+    expect(screen.getByText('Scale')).toBeInTheDocument();
   });
 
-  it('renders the crown icon for Enterprise plan', () => {
-    render(<PlanBadge plan="Enterprise" />);
+  it('renders the crown icon for Scale plan', () => {
+    render(<PlanBadge plan="Scale" />);
 
     expect(screen.getByTestId('icon-crown')).toBeInTheDocument();
   });
@@ -58,25 +58,25 @@ describe('PlanBadge', () => {
   });
 
   it('does not show Free Trial badge when isTrial is false', () => {
-    render(<PlanBadge plan="Basic" isTrial={false} />);
+    render(<PlanBadge plan="Starter" isTrial={false} />);
 
     expect(screen.queryByText('Free Trial')).not.toBeInTheDocument();
   });
 
   it('shows Free Trial badge when isTrial is true', () => {
-    render(<PlanBadge plan="Professional" isTrial={true} />);
+    render(<PlanBadge plan="Growth" isTrial={true} />);
 
     expect(screen.getByText('Free Trial')).toBeInTheDocument();
   });
 
   it('does not show Free Trial badge by default (isTrial defaults to false)', () => {
-    render(<PlanBadge plan="Basic" />);
+    render(<PlanBadge plan="Starter" />);
 
     expect(screen.queryByText('Free Trial')).not.toBeInTheDocument();
   });
 
   it('renders small size variant', () => {
-    const { container } = render(<PlanBadge plan="Basic" size="small" />);
+    const { container } = render(<PlanBadge plan="Starter" size="small" />);
 
     // Small size uses text-xs class
     const badge = container.querySelector('.text-xs');
@@ -84,7 +84,7 @@ describe('PlanBadge', () => {
   });
 
   it('renders medium size variant by default', () => {
-    const { container } = render(<PlanBadge plan="Basic" />);
+    const { container } = render(<PlanBadge plan="Starter" />);
 
     // Medium size uses text-sm class
     const badge = container.querySelector('.text-sm');
@@ -92,7 +92,7 @@ describe('PlanBadge', () => {
   });
 
   it('renders large size variant', () => {
-    const { container } = render(<PlanBadge plan="Basic" size="large" />);
+    const { container } = render(<PlanBadge plan="Starter" size="large" />);
 
     // Large size uses text-base class
     const badge = container.querySelector('.text-base');
@@ -100,10 +100,10 @@ describe('PlanBadge', () => {
   });
 
   it('is case-insensitive for plan name matching (renders correct icon)', () => {
-    render(<PlanBadge plan="PROFESSIONAL" />);
+    render(<PlanBadge plan="GROWTH" />);
 
     // Plan name is displayed as-is (preserves case)
-    expect(screen.getByText('PROFESSIONAL')).toBeInTheDocument();
+    expect(screen.getByText('GROWTH')).toBeInTheDocument();
     // But icon matching is case-insensitive
     expect(screen.getByTestId('icon-star')).toBeInTheDocument();
   });

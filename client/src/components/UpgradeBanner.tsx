@@ -26,7 +26,7 @@ export default function UpgradeBanner({
           <ThiingsIcon name="sparkles" pxSize={16} className="flex-shrink-0" />
           <span className="text-sm text-[#57534E]">
             <span className="font-semibold text-[#1C1917]">{feature}</span> available
-            on Pro
+            on Growth
           </span>
         </div>
         <button
@@ -53,7 +53,7 @@ export default function UpgradeBanner({
             Unlock {feature}
           </h4>
           <p className="text-sm text-[#57534E] mb-3">
-            Upgrade to Professional or Enterprise to access this feature
+            Upgrade to Growth or Scale to access this feature
           </p>
 
           <button

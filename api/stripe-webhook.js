@@ -206,8 +206,8 @@ module.exports = async (req, res) => {
           logger.info('Subscription canceled in database:', subscriptionDeleted.id);
         }
 
-        // Downgrade restaurant plan to Basic when subscription is cancelled
-        await updateRestaurantPlan(deleteRestaurantId, 'Basic');
+        // Downgrade restaurant plan to Starter when subscription is cancelled
+        await updateRestaurantPlan(deleteRestaurantId, 'Starter');
 
         break;
 

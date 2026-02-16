@@ -31,15 +31,16 @@ module.exports = async (req, res) => {
 
     // Map Stripe price IDs to plan names
     const planMapping = {
-      [process.env.STRIPE_BASIC_PRICE_ID]: 'Basic',
-      [process.env.STRIPE_PROFESSIONAL_PRICE_ID]: 'Professional',
+      [process.env.STRIPE_STARTER_PRICE_ID]: 'Starter',
+      [process.env.STRIPE_GROWTH_PRICE_ID]: 'Growth',
+      [process.env.STRIPE_SCALE_PRICE_ID]: 'Scale',
     };
 
     // Extract plan from line items
-    let plan = 'Basic'; // Default to Basic
+    let plan = 'Starter'; // Default to Starter
     if (session.line_items && session.line_items.data.length > 0) {
       const priceId = session.line_items.data[0].price.id;
-      plan = planMapping[priceId] || 'Basic';
+      plan = planMapping[priceId] || 'Starter';
     }
 
     // Return relevant session information

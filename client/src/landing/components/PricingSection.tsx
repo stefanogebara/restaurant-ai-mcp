@@ -114,7 +114,7 @@ export default function PricingSection() {
         </motion.div>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {PRICING_TIERS.map((tier, index) => (
             <motion.div
               key={index}
@@ -122,7 +122,7 @@ export default function PricingSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className={`relative bg-white p-8 md:p-10 rounded-[2rem] border transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 ${
+              className={`relative bg-white p-6 md:p-8 rounded-[2rem] border transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 ${
                 tier.highlighted
                   ? 'border-[#9F1239] shadow-xl'
                   : 'border-[#E7E5E4]'
