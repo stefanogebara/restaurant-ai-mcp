@@ -365,14 +365,14 @@ export default function CallTrackingDashboard() {
         <Breadcrumb items={breadcrumbConfigs.calls} />
 
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">AI Agent Dashboard</h1>
             <p className="text-[#57534E] mt-1">Monitor AI agent performance, calls, and phone settings</p>
           </div>
           <button
             onClick={fetchData}
-            className="px-4 py-2 bg-[#9F1239] text-white rounded-xl hover:bg-[#881337] transition-colors font-medium text-sm"
+            className="px-4 py-2 bg-[#9F1239] text-white rounded-xl hover:bg-[#881337] transition-colors font-medium text-sm self-start sm:self-auto"
           >
             Refresh
           </button>
@@ -380,7 +380,7 @@ export default function CallTrackingDashboard() {
 
         {/* Phone Status Card */}
         <div className="bg-white rounded-xl border border-[#E7E5E4] p-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
               <ThiingsIcon name="phone-call" pxSize={24} />
               <div>

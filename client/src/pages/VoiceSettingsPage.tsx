@@ -306,7 +306,7 @@ export default function VoiceSettingsPage() {
     <DashboardLayout>
       <div className="dashboard p-6 lg:p-8 max-w-5xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
             <Breadcrumb items={breadcrumbConfigs.voiceSettings} className="mb-2" />
             <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">
@@ -319,7 +319,7 @@ export default function VoiceSettingsPage() {
           <button
             onClick={handleSave}
             disabled={!isDirty || isSaving}
-            className="px-6 py-2.5 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl shadow-sm shadow-[#9F1239]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-6 py-2.5 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl shadow-sm shadow-[#9F1239]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 self-start sm:self-auto"
           >
             {isSaving ? <Spinner size="sm" className="border-white border-t-white/30" /> : null}
             {isSaving ? 'Saving...' : 'Save Changes'}
@@ -334,7 +334,7 @@ export default function VoiceSettingsPage() {
               Current Voice
             </h2>
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <p className="text-base font-semibold text-[#1C1917]">
                   {pendingVoiceId ? (

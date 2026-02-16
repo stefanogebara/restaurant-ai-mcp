@@ -213,10 +213,10 @@ export default function Sidebar() {
                   to={item.path}
                   onClick={() => setIsMobileOpen(false)}
                   className={`
-                    flex items-center gap-3 px-4 py-3 rounded-lg transition-all
+                    flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
                     ${active
-                      ? 'bg-[#9F1239] text-white shadow-lg'
-                      : 'hover:bg-[#F5F5F4] text-[#57534E] hover:text-[#1C1917]'
+                      ? 'bg-[#9F1239] text-white shadow-md shadow-[#9F1239]/25'
+                      : 'hover:bg-[#F5F5F4] text-[#57534E] hover:text-[#1C1917] hover:shadow-sm'
                     }
                     ${isCollapsed ? 'justify-center' : ''}
                   `}
@@ -234,7 +234,7 @@ export default function Sidebar() {
             <button
               onClick={() => setIsSettingsOpen(!isSettingsOpen)}
               className={`
-                w-full p-4 flex items-center gap-3 hover:bg-[#F5F5F4] transition-colors
+                w-full p-4 flex items-center gap-3 hover:bg-[#F5F5F4] transition-all duration-200
                 ${isCollapsed ? 'justify-center' : ''}
               `}
               title={isCollapsed ? 'Settings' : undefined}
@@ -268,7 +268,7 @@ export default function Sidebar() {
             {/* Settings Dropdown */}
             {isSettingsOpen && (
               <div className={`
-                absolute bottom-20 bg-white border border-[#E7E5E4] rounded-lg shadow-xl overflow-hidden
+                absolute bottom-20 bg-white border border-[#E7E5E4]/50 rounded-xl shadow-xl overflow-hidden
                 ${isCollapsed ? 'left-20 w-56' : 'left-4 right-4'}
               `}>
                 {/* Language Selector */}

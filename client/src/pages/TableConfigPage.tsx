@@ -162,7 +162,7 @@ export default function TableConfigPage() {
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-[#E7E5E4] sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">Table Configuration</h1>
               <p className="text-sm text-[#78716C] mt-1">Manage tables, capacity, and combination rules</p>

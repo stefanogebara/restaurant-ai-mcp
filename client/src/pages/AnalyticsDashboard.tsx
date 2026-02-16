@@ -108,7 +108,7 @@ export default function AnalyticsDashboard() {
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-40 backdrop-blur-sm bg-opacity-95">
         <div className="max-w-[1600px] mx-auto px-6 py-5">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight mb-1">Analytics Dashboard</h1>
               <p className="text-muted-foreground text-sm">Restaurant performance insights and trends</p>
