@@ -18,9 +18,9 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
-          <p className="text-sm font-semibold text-foreground mb-1">{payload[0].payload.time}</p>
-          <p className="text-sm text-primary">
+        <div className="bg-white border border-[#E7E5E4]/50 rounded-xl p-3 shadow-lg">
+          <p className="text-sm font-semibold text-[#1C1917] mb-1">{payload[0].payload.time}</p>
+          <p className="text-sm text-[#9F1239]">
             Reservations: <span className="font-bold">{payload[0].value}</span>
           </p>
         </div>
@@ -32,16 +32,16 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
   // Dynamic color based on count (darker = more reservations)
   const getBarColor = (count: number) => {
     const intensity = count / maxCount;
-    if (intensity > 0.7) return 'hsl(var(--primary))';
-    if (intensity > 0.4) return 'hsl(var(--accent-foreground))';
-    return 'hsl(var(--muted-foreground))';
+    if (intensity > 0.7) return '#9F1239';
+    if (intensity > 0.4) return '#57534E';
+    return '#78716C';
   };
 
   return (
-    <div className="bg-card border border-[#E7E5E4] rounded-lg p-6">
+    <div className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-[#1C1917] tracking-tight mb-1">Peak Hours</h3>
-        <p className="text-sm text-muted-foreground">Reservations by time slot</p>
+        <p className="text-sm text-[#78716C]">Reservations by time slot</p>
       </div>
 
       <ResponsiveContainer width="100%" height={300}>
@@ -49,17 +49,17 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
           data={chartData}
           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" opacity={0.3} />
           <XAxis
             dataKey="time"
-            stroke="hsl(var(--muted-foreground))"
+            stroke="#78716C"
             style={{ fontSize: '12px' }}
             angle={-45}
             textAnchor="end"
             height={80}
           />
           <YAxis
-            stroke="hsl(var(--muted-foreground))"
+            stroke="#78716C"
             style={{ fontSize: '12px' }}
           />
           <Tooltip content={<CustomTooltip />} />
@@ -72,17 +72,17 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
       </ResponsiveContainer>
 
       {/* Legend explaining color intensity */}
-      <div className="mt-4 flex items-center justify-center gap-6 text-xs text-muted-foreground">
+      <div className="mt-4 flex items-center justify-center gap-6 text-xs text-[#78716C]">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(var(--primary))' }}></div>
+          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#9F1239' }}></div>
           <span>High Demand</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(var(--accent-foreground))' }}></div>
+          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#57534E' }}></div>
           <span>Medium Demand</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(var(--muted-foreground))' }}></div>
+          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#78716C' }}></div>
           <span>Low Demand</span>
         </div>
       </div>

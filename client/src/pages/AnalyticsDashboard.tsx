@@ -76,13 +76,13 @@ export default function AnalyticsDashboard() {
   if (error) {
     return (
       <DashboardLayout>
-        <div className="flex flex-col items-center justify-center h-screen bg-background">
-          <div className="bg-card rounded-lg p-8 border border-destructive/30 max-w-md">
-            <div className="text-xl text-destructive mb-6 text-center font-semibold">Error loading analytics</div>
-            <p className="text-sm text-muted-foreground mb-6 text-center">{error}</p>
+        <div className="flex flex-col items-center justify-center h-screen bg-[#FAFAF9]">
+          <div className="bg-white rounded-xl p-8 border border-red-500/20 shadow-sm max-w-md">
+            <div className="text-xl text-red-600 mb-6 text-center font-semibold">Error loading analytics</div>
+            <p className="text-sm text-[#78716C] mb-6 text-center">{error}</p>
             <button
               onClick={() => fetchAnalytics()}
-              className="w-full px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg transition-all"
+              className="w-full px-6 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-all"
             >
               Retry
             </button>
@@ -95,8 +95,8 @@ export default function AnalyticsDashboard() {
   if (!data) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-screen bg-background">
-          <div className="text-xl text-muted-foreground">No analytics data available</div>
+        <div className="flex items-center justify-center h-screen bg-[#FAFAF9]">
+          <div className="text-xl text-[#78716C]">No analytics data available</div>
         </div>
       </DashboardLayout>
     );
@@ -104,19 +104,19 @@ export default function AnalyticsDashboard() {
 
   return (
     <DashboardLayout>
-    <div className="dashboard min-h-screen bg-background">
+    <div className="dashboard min-h-screen bg-[#FAFAF9]">
       {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-40 backdrop-blur-sm bg-opacity-95">
+      <header className="bg-white/95 border-b border-[#E7E5E4] sticky top-0 z-40 backdrop-blur-sm">
         <div className="max-w-[1600px] mx-auto px-6 py-5">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight mb-1">Analytics Dashboard</h1>
-              <p className="text-muted-foreground text-sm">Restaurant performance insights and trends</p>
+              <p className="text-[#78716C] text-sm">Restaurant performance insights and trends</p>
             </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => fetchAnalytics()}
-                className="px-4 py-2 bg-muted hover:bg-muted/80 text-foreground font-medium rounded-lg transition-all flex items-center gap-2"
+                className="px-4 py-2 bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#1C1917] font-medium rounded-lg transition-all flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -125,7 +125,7 @@ export default function AnalyticsDashboard() {
               </button>
               <a
                 href="/host-dashboard"
-                className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-all"
+                className="px-4 py-2 bg-[#9F1239] hover:bg-[#881337] text-white font-medium rounded-xl transition-all shadow-sm shadow-[#9F1239]/20"
               >
                 Back to Dashboard
               </a>
@@ -175,8 +175,8 @@ export default function AnalyticsDashboard() {
 
       {/* Footer Info */}
       <div className="max-w-[1600px] mx-auto px-6 pb-8">
-        <div className="bg-muted/50 border border-border rounded-lg p-4 text-center">
-          <p className="text-xs text-muted-foreground">
+        <div className="bg-[#F5F5F4]/50 border border-[#E7E5E4]/50 rounded-xl p-4 text-center">
+          <p className="text-xs text-[#78716C]">
             Analytics data is calculated from the last 30 days of restaurant activity.
             <br />
             Data refreshes automatically every 5 minutes or manually via the Refresh button.

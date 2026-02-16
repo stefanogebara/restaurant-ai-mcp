@@ -19,16 +19,16 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
   const getUtilizationColor = (percentage: string | number): string => {
     const value = getUtilizationValue(percentage);
 
-    if (value >= 75) return 'bg-primary/80 border-primary'; // High utilization
-    if (value >= 50) return 'bg-accent/60 border-accent-foreground'; // Medium-high
-    if (value >= 25) return 'bg-muted-foreground/40 border-muted-foreground'; // Medium-low
-    return 'bg-muted/30 border-muted'; // Low utilization
+    if (value >= 75) return 'bg-[#9F1239]/80 border-[#9F1239]'; // High utilization
+    if (value >= 50) return 'bg-[#d97706]/60 border-[#d97706]'; // Medium-high
+    if (value >= 25) return 'bg-[#78716C]/40 border-[#78716C]'; // Medium-low
+    return 'bg-[#F5F5F4] border-[#A8A29E]'; // Low utilization
   };
 
   // Get text color for contrast
   const getTextColor = (percentage: string | number): string => {
     const value = getUtilizationValue(percentage);
-    return value >= 50 ? 'text-primary-foreground' : 'text-foreground';
+    return value >= 50 ? 'text-white' : 'text-[#1C1917]';
   };
 
   // Sort tables by number
@@ -44,10 +44,10 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
   , sortedTables[0]);
 
   return (
-    <div className="bg-card border border-[#E7E5E4] rounded-lg p-6">
+    <div className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-[#1C1917] tracking-tight mb-1">Table Utilization</h3>
-        <p className="text-sm text-muted-foreground">Which tables are used most frequently</p>
+        <p className="text-sm text-[#78716C]">Which tables are used most frequently</p>
       </div>
 
       {/* Heatmap Grid */}
@@ -78,34 +78,34 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
       {/* Legend */}
       <div className="flex items-center justify-center gap-4 mb-4 text-xs flex-wrap">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-primary/80 border-2 border-primary"></div>
-          <span className="text-muted-foreground">High (75%+)</span>
+          <div className="w-4 h-4 rounded bg-[#9F1239]/80 border-2 border-[#9F1239]"></div>
+          <span className="text-[#78716C]">High (75%+)</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-accent/60 border-2 border-accent-foreground"></div>
-          <span className="text-muted-foreground">Medium-High (50-74%)</span>
+          <div className="w-4 h-4 rounded bg-[#d97706]/60 border-2 border-[#d97706]"></div>
+          <span className="text-[#78716C]">Medium-High (50-74%)</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-muted-foreground/40 border-2 border-muted-foreground"></div>
-          <span className="text-muted-foreground">Medium-Low (25-49%)</span>
+          <div className="w-4 h-4 rounded bg-[#78716C]/40 border-2 border-[#78716C]"></div>
+          <span className="text-[#78716C]">Medium-Low (25-49%)</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-muted/30 border-2 border-muted"></div>
-          <span className="text-muted-foreground">Low (&lt;25%)</span>
+          <div className="w-4 h-4 rounded bg-[#F5F5F4] border-2 border-[#A8A29E]"></div>
+          <span className="text-[#78716C]">Low (&lt;25%)</span>
         </div>
       </div>
 
       {/* Insights */}
       <div className="space-y-2">
-        <div className="p-3 bg-primary/10 border border-primary/30 rounded-lg">
-          <p className="text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">Most Used:</span>{' '}
+        <div className="p-3 bg-[#9F1239]/10 border border-[#9F1239]/20 rounded-lg">
+          <p className="text-xs text-[#78716C]">
+            <span className="font-semibold text-[#1C1917]">Most Used:</span>{' '}
             Table {mostUsed.table_number} ({mostUsed.utilization_rate}%) - {mostUsed.times_used} services
           </p>
         </div>
-        <div className="p-3 bg-muted/50 border border-border rounded-lg">
-          <p className="text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">Least Used:</span>{' '}
+        <div className="p-3 bg-[#F5F5F4]/50 border border-[#E7E5E4]/50 rounded-lg">
+          <p className="text-xs text-[#78716C]">
+            <span className="font-semibold text-[#1C1917]">Least Used:</span>{' '}
             Table {leastUsed.table_number} ({leastUsed.utilization_rate}%) - {leastUsed.times_used} services
           </p>
         </div>

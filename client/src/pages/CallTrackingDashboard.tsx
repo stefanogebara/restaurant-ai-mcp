@@ -379,7 +379,7 @@ export default function CallTrackingDashboard() {
         </div>
 
         {/* Phone Status Card */}
-        <div className="bg-white rounded-xl border border-[#E7E5E4] p-6">
+        <div className="bg-white rounded-xl border border-[#E7E5E4]/50 shadow-sm p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
               <ThiingsIcon name="phone-call" pxSize={24} />
@@ -538,7 +538,7 @@ export default function CallTrackingDashboard() {
 
         {/* Agent Diagnostics Panel */}
         {showDiagnosePanel && (
-          <div className="bg-white rounded-xl border border-[#E7E5E4] p-6">
+          <div className="bg-white rounded-xl border border-[#E7E5E4]/50 shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <ThiingsIcon name="stethoscope" size="sm" />
@@ -674,7 +674,7 @@ export default function CallTrackingDashboard() {
         )}
 
         {/* Filters */}
-        <div className="bg-white rounded-xl border border-[#E7E5E4] p-4">
+        <div className="bg-white rounded-xl border border-[#E7E5E4]/50 shadow-sm p-4">
           <div className="flex gap-4 flex-wrap">
             <div>
               <label className="text-sm font-medium text-[#1C1917] block mb-1">Time Period</label>
@@ -727,28 +727,28 @@ export default function CallTrackingDashboard() {
         {stats && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Total Calls */}
-            <div className="bg-white rounded-xl border border-[#E7E5E4]/50 p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-xl border border-[#E7E5E4]/50 shadow-sm/50 p-4 shadow-sm hover:shadow-md transition-shadow">
               <div className="h-1 w-12 rounded-full mb-3 bg-[#1C1917]" />
               <p className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{stats.overview.total_calls}</p>
               <p className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Total Calls</p>
             </div>
 
             {/* Successful Bookings */}
-            <div className="bg-white rounded-xl border border-[#E7E5E4]/50 p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-xl border border-[#E7E5E4]/50 shadow-sm/50 p-4 shadow-sm hover:shadow-md transition-shadow">
               <div className="h-1 w-12 rounded-full mb-3 bg-[#22c55e]" />
               <p className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{stats.overview.successful_bookings}</p>
               <p className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Reservations</p>
             </div>
 
             {/* Success Rate */}
-            <div className="bg-white rounded-xl border border-[#E7E5E4]/50 p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-xl border border-[#E7E5E4]/50 shadow-sm/50 p-4 shadow-sm hover:shadow-md transition-shadow">
               <div className="h-1 w-12 rounded-full mb-3 bg-[#9F1239]" />
               <p className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{stats.overview.success_rate}%</p>
               <p className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Success Rate</p>
             </div>
 
             {/* Average Duration */}
-            <div className="bg-white rounded-xl border border-[#E7E5E4]/50 p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-xl border border-[#E7E5E4]/50 shadow-sm/50 p-4 shadow-sm hover:shadow-md transition-shadow">
               <div className="h-1 w-12 rounded-full mb-3 bg-[#d97706]" />
               <p className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{stats.overview.average_duration_formatted}</p>
               <p className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Avg Duration</p>
@@ -757,7 +757,7 @@ export default function CallTrackingDashboard() {
         )}
 
         {/* Call History Table */}
-        <div className="bg-white rounded-xl border border-[#E7E5E4] overflow-hidden">
+        <div className="bg-white rounded-xl border border-[#E7E5E4]/50 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-[#E7E5E4]">
             <h2 className="text-lg font-semibold text-[#1C1917]">Call History</h2>
           </div>
@@ -774,7 +774,7 @@ export default function CallTrackingDashboard() {
                   <th className="text-left p-4 text-sm font-medium text-[#57534E]">Details</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-[#E7E5E4]/50">
                 {conversations.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="p-8 text-center text-[#57534E]">
