@@ -340,7 +340,7 @@ export default function VoiceSettingsPage() {
                   {pendingVoiceId ? (
                     <span>
                       {selectedBrowserVoice?.name || pendingVoiceId}
-                      <span className="ml-2 text-xs font-normal text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                      <span className="ml-2 text-xs font-normal text-[#d97706] bg-[#d97706]/10 px-2 py-0.5 rounded-full">
                         pending
                       </span>
                     </span>
@@ -515,7 +515,7 @@ export default function VoiceSettingsPage() {
             </div>
 
             {pendingLanguage && pendingLanguage !== config?.language && (
-              <p className="mt-3 text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+              <p className="mt-3 text-xs text-[#d97706] bg-[#d97706]/10 rounded-lg px-3 py-2">
                 Changing the language will update your agent's greeting message. The voice will speak in the selected language using its multilingual capabilities.
               </p>
             )}

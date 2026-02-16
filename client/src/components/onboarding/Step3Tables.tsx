@@ -358,7 +358,7 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
               {data.areas.length > 1 && (
                 <button
                   onClick={() => removeArea(areaIndex)}
-                  className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors"
+                  className="p-2 hover:bg-[#dc2626]/10 text-[#dc2626] rounded-lg transition-colors"
                   title="Remove area"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

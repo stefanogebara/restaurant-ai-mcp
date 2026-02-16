@@ -106,7 +106,7 @@ export default function LanguageSelector({
           ))}
         </div>
         {error && (
-          <p className="text-sm text-red-600 mt-2">{error}</p>
+          <p className="text-sm text-[#dc2626] mt-2">{error}</p>
         )}
       </div>
     );
@@ -147,7 +147,7 @@ export default function LanguageSelector({
         )}
       </div>
       {error && (
-        <p className="text-sm text-red-600 mt-2">{error}</p>
+        <p className="text-sm text-[#dc2626] mt-2">{error}</p>
       )}
     </div>
   );

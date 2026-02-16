@@ -245,7 +245,7 @@ export default function WeeklyReport() {
             <div className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{summary.total_covers}</div>
             <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Total Covers</div>
             {summary.previous_covers >= 3 ? (
-              <div className={`text-sm font-semibold mt-1 ${summary.covers_change_percent >= 0 ? 'text-[#22c55e]' : 'text-red-500'}`}>
+              <div className={`text-sm font-semibold mt-1 ${summary.covers_change_percent >= 0 ? 'text-[#22c55e]' : 'text-[#dc2626]'}`}>
                 {summary.covers_change_percent >= 0 ? '+' : ''}{summary.covers_change_percent}% vs last week
               </div>
             ) : (

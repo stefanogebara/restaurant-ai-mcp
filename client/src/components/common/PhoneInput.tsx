@@ -187,18 +187,18 @@ export default function PhoneInput({
             onChange={handleNumberChange}
             placeholder={selectedCountry.placeholder}
             className={`w-full px-4 py-3 bg-[#F5F5F4] border rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all ${
-              error ? 'border-[#9F1239]' : localNumber && !isValid ? 'border-amber-500' : 'border-[#E7E5E4]'
+              error ? 'border-[#9F1239]' : localNumber && !isValid ? 'border-[#d97706]' : 'border-[#E7E5E4]'
             }`}
           />
           {/* Validation indicator */}
           {localNumber && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
               {isValid ? (
-                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-[#16a34a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               ) : (
-                <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-[#d97706]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               )}
@@ -217,7 +217,7 @@ export default function PhoneInput({
         <p className="mt-1 text-sm text-[#9F1239]">{error}</p>
       )}
       {localNumber && !isValid && !error && (
-        <p className="mt-1 text-sm text-amber-600">
+        <p className="mt-1 text-sm text-[#d97706]">
           Please enter a valid {selectedCountry.name} phone number
         </p>
       )}

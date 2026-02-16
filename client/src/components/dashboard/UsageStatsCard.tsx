@@ -39,7 +39,7 @@ export default function UsageStatsCard() {
         <h3 className="text-sm font-semibold text-[#78716C] uppercase tracking-wider">
           Usage This Month
         </h3>
-        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium">
+        <span className="text-xs px-2 py-0.5 rounded-full bg-[#9F1239]/10 text-[#9F1239] font-medium">
           {planName}{isTrial ? ' (Trial)' : ''}
         </span>
       </div>

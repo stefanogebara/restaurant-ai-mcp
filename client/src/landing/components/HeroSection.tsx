@@ -161,16 +161,16 @@ export default function HeroSection() {
                   { id: 10, status: 'occupied', seats: 4, guest: 'Dubois', time: '15m', pax: 2 },
                 ].map((table) => {
                   const cardStyles: Record<string, string> = {
-                    available: 'bg-emerald-50/80 border-emerald-200/60',
-                    occupied: 'bg-white border-red-200/60',
-                    reserved: 'bg-purple-50/80 border-purple-200/60',
-                    cleaning: 'bg-amber-50/80 border-amber-200/60',
+                    available: 'bg-[#10b981]/10 border-[#10b981]/20',
+                    occupied: 'bg-white border-[#dc2626]/20',
+                    reserved: 'bg-[#8b5cf6]/10 border-[#8b5cf6]/20',
+                    cleaning: 'bg-[#f59e0b]/10 border-[#f59e0b]/20',
                   };
                   const statusColors: Record<string, string> = {
-                    available: 'bg-emerald-400',
-                    occupied: 'bg-red-400',
-                    reserved: 'bg-purple-400',
-                    cleaning: 'bg-amber-400',
+                    available: 'bg-[#34d399]',
+                    occupied: 'bg-[#f87171]',
+                    reserved: 'bg-[#a78bfa]',
+                    cleaning: 'bg-[#fbbf24]',
                   };
                   const statusLabels: Record<string, string> = {
                     available: 'Open',
@@ -211,10 +211,10 @@ export default function HeroSection() {
               {/* Legend */}
               <div className="flex items-center gap-4 mt-3 justify-end">
                 {[
-                  { color: 'bg-emerald-400', label: 'Open' },
-                  { color: 'bg-red-400', label: 'Seated' },
-                  { color: 'bg-purple-400', label: 'Reserved' },
-                  { color: 'bg-amber-400', label: 'Cleaning' },
+                  { color: 'bg-[#34d399]', label: 'Open' },
+                  { color: 'bg-[#f87171]', label: 'Seated' },
+                  { color: 'bg-[#a78bfa]', label: 'Reserved' },
+                  { color: 'bg-[#fbbf24]', label: 'Cleaning' },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center gap-1">
                     <div className={`w-1.5 h-1.5 rounded-full ${item.color}`} />

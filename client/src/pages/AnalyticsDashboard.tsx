@@ -77,8 +77,8 @@ export default function AnalyticsDashboard() {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center h-screen bg-[#FAFAF9]">
-          <div className="bg-white rounded-xl p-8 border border-red-500/20 shadow-sm max-w-md">
-            <div className="text-xl text-red-600 mb-6 text-center font-semibold">Error loading analytics</div>
+          <div className="bg-white rounded-xl p-8 border border-[#dc2626]/20 shadow-sm max-w-md">
+            <div className="text-xl text-[#dc2626] mb-6 text-center font-semibold">Error loading analytics</div>
             <p className="text-sm text-[#78716C] mb-6 text-center">{error}</p>
             <button
               onClick={() => fetchAnalytics()}

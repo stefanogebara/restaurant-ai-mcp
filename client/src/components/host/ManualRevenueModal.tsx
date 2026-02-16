@@ -205,9 +205,9 @@ export default function ManualRevenueModal({
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white px-6 py-4 border-b border-[#E7E5E4] flex items-center justify-between rounded-t-2xl">
+        <div className="sticky top-0 bg-white px-6 py-4 border-b border-[#E7E5E4] flex items-center justify-between rounded-t-xl">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-[#16a34a]/10 rounded-lg">
               <ThiingsIcon name="dollar" size="sm" />
@@ -413,7 +413,7 @@ export default function ManualRevenueModal({
 
           {/* Error Message */}
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="p-3 bg-[#dc2626]/10 border border-[#dc2626]/20 rounded-lg text-[#dc2626] text-sm">
               {error}
             </div>
           )}

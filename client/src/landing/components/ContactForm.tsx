@@ -298,7 +298,7 @@ export default function ContactForm() {
 
               {/* Error Message */}
               {submitError && (
-                <p className="text-sm text-red-600 text-center">{submitError}</p>
+                <p className="text-sm text-[#dc2626] text-center">{submitError}</p>
               )}
 
               {/* Privacy Note */}

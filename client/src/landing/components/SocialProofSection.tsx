@@ -62,7 +62,7 @@ export default function SocialProofSection() {
               <div className="flex-1">
                 <div className="text-sm font-bold text-[#1C1917]">Seatable AI</div>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                  <div className="w-1.5 h-1.5 bg-[#10b981] rounded-full" />
                   <span className="text-[10px] text-[#A8A29E] uppercase tracking-wider">Online</span>
                 </div>
               </div>
@@ -113,9 +113,9 @@ export default function SocialProofSection() {
                 transition={{ duration: 0.4, delay: 1.8 }}
                 className="flex justify-center pt-2"
               >
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-full">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Reservation Confirmed</span>
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#10b981]/10 border border-[#10b981]/20 rounded-full">
+                  <CheckCircle2 className="w-4 h-4 text-[#059669]" />
+                  <span className="text-xs font-bold text-[#065f46] uppercase tracking-wider">Reservation Confirmed</span>
                 </div>
               </motion.div>
             </div>

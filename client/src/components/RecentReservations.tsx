@@ -133,10 +133,10 @@ export default function RecentReservations() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-white p-4 rounded-xl border-2 border-emerald-500/50 shadow-md"
+            className="bg-white p-4 rounded-xl border-2 border-[#10b981]/50 shadow-md"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#10b981] to-[#14b8a6] flex items-center justify-center">
                 <ThiingsIcon name="check" pxSize={24} />
               </div>
               <div className="flex-1">
@@ -248,9 +248,9 @@ export default function RecentReservations() {
           )}
 
           {/* Status Badge */}
-          <div className="flex items-center justify-center gap-2 bg-emerald-50 p-3 rounded-lg border border-emerald-200">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-            <span className="text-emerald-700 font-semibold">
+          <div className="flex items-center justify-center gap-2 bg-[#10b981]/10 p-3 rounded-lg border border-[#10b981]/20">
+            <div className="w-2 h-2 bg-[#10b981] rounded-full animate-pulse" />
+            <span className="text-[#065f46] font-semibold">
               {latestReservation.status || 'Confirmed'}
             </span>
           </div>

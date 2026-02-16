@@ -311,7 +311,7 @@ export default function Sidebar() {
                 {/* Logout Button */}
                 <button
                   onClick={handleLogout}
-                  className="w-full px-4 py-3 flex items-center gap-3 hover:bg-red-50 text-red-600 transition-colors"
+                  className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[#dc2626]/10 text-[#dc2626] transition-colors"
                 >
                   <ThiingsIcon name="logout" pxSize={16} />
                   <span className="text-sm">Sign Out</span>

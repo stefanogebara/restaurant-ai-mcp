@@ -215,7 +215,7 @@ export default function Login() {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm"
+                className="mb-6 p-4 bg-[#dc2626]/10 border border-[#dc2626]/20 rounded-xl text-[#dc2626] text-sm"
               >
                 {error}
               </motion.div>
@@ -226,7 +226,7 @@ export default function Login() {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm"
+                className="mb-6 p-4 bg-[#22c55e]/10 border border-[#22c55e]/20 rounded-xl text-[#15803d] text-sm"
               >
                 {successMessage}
               </motion.div>

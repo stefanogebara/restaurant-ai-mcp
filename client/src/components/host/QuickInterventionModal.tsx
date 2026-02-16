@@ -100,19 +100,19 @@ export default function QuickInterventionModal({
   const t = translations[language];
 
   const actionOptions: Array<{ id: string; label: string; icon: IconName; color: string }> = [
-    { id: 'phone_call', label: t.called, icon: 'phone', color: 'bg-blue-500' },
-    { id: 'sms_reminder', label: t.sentSMS, icon: 'chat', color: 'bg-green-500' },
-    { id: 'whatsapp_reminder', label: t.sentWhatsApp, icon: 'chat', color: 'bg-emerald-500' },
-    { id: 'deposit_required', label: t.depositRequired, icon: 'credit-card', color: 'bg-purple-500' },
+    { id: 'phone_call', label: t.called, icon: 'phone', color: 'bg-[#3b82f6]' },
+    { id: 'sms_reminder', label: t.sentSMS, icon: 'chat', color: 'bg-[#22c55e]' },
+    { id: 'whatsapp_reminder', label: t.sentWhatsApp, icon: 'chat', color: 'bg-[#10b981]' },
+    { id: 'deposit_required', label: t.depositRequired, icon: 'credit-card', color: 'bg-[#8b5cf6]' },
     { id: 'other', label: t.other, icon: 'check-circle', color: 'bg-[#78716C]' }
   ];
 
   const getRiskColor = (level?: string) => {
     switch (level) {
-      case 'very-high': return 'bg-red-100 text-red-800 border-red-300';
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-300';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-      default: return 'bg-green-100 text-green-800 border-green-300';
+      case 'very-high': return 'bg-[#dc2626]/15 text-[#991b1b] border-[#dc2626]/30';
+      case 'high': return 'bg-[#ea580c]/15 text-[#9a3412] border-[#ea580c]/30';
+      case 'medium': return 'bg-[#d97706]/15 text-[#92400e] border-[#d97706]/30';
+      default: return 'bg-[#22c55e]/15 text-[#065f46] border-[#22c55e]/30';
     }
   };
 
@@ -170,11 +170,11 @@ export default function QuickInterventionModal({
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white px-6 py-4 border-b border-[#E7E5E4] flex items-center justify-between rounded-t-2xl">
+        <div className="sticky top-0 bg-white px-6 py-4 border-b border-[#E7E5E4] flex items-center justify-between rounded-t-xl">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
+            <div className="p-2 bg-[#ea580c]/15 rounded-lg">
               <ThiingsIcon name="alert-triangle" size="sm" />
             </div>
             <h2 className="text-xl font-bold text-[#1C1917]">{t.title}</h2>
@@ -229,7 +229,7 @@ export default function QuickInterventionModal({
               <div className="space-y-1">
                 {reservation.ml_risk_factors.slice(0, 3).map((factor, idx) => (
                   <div key={idx} className="text-sm text-[#57534E] flex items-start gap-2">
-                    <span className="text-orange-500">•</span>
+                    <span className="text-[#ea580c]">•</span>
                     <span>{factor.description}</span>
                   </div>
                 ))}
@@ -239,12 +239,12 @@ export default function QuickInterventionModal({
 
           {/* Already taken indicator */}
           {reservation.intervention_taken && (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-2">
+            <div className="bg-[#22c55e]/10 border border-[#22c55e]/20 rounded-xl p-3 flex items-center gap-2">
               <ThiingsIcon name="check-circle" size="sm" />
               <div>
-                <span className="text-green-800 font-medium">{t.alreadyTaken}</span>
+                <span className="text-[#065f46] font-medium">{t.alreadyTaken}</span>
                 {reservation.intervention_type && (
-                  <span className="text-green-600 text-sm ml-2">
+                  <span className="text-[#16a34a] text-sm ml-2">
                     ({reservation.intervention_type.replace('_', ' ')})
                   </span>
                 )}
@@ -315,16 +315,16 @@ export default function QuickInterventionModal({
           {/* Success State */}
           {success && (
             <div className="text-center py-6">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-[#22c55e]/15 rounded-full flex items-center justify-center mx-auto mb-4">
                 <ThiingsIcon name="check-circle" pxSize={32} />
               </div>
-              <p className="text-lg font-semibold text-green-800">{t.success}</p>
+              <p className="text-lg font-semibold text-[#065f46]">{t.success}</p>
             </div>
           )}
 
           {/* Error Message */}
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="p-3 bg-[#dc2626]/10 border border-[#dc2626]/20 rounded-lg text-[#dc2626] text-sm">
               {error}
             </div>
           )}

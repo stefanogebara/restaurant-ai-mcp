@@ -97,16 +97,16 @@ export default function InteractiveDemoSection() {
                       'reserved', 'occupied', 'cleaning', 'occupied',
                     ].map((status, i) => {
                       const colors: Record<string, string> = {
-                        available: 'bg-emerald-50 border-emerald-200',
-                        occupied: 'bg-red-50 border-red-200',
-                        reserved: 'bg-purple-50 border-purple-200',
-                        cleaning: 'bg-amber-50 border-amber-200',
+                        available: 'bg-[#10b981]/10 border-[#10b981]/20',
+                        occupied: 'bg-[#dc2626]/10 border-[#dc2626]/20',
+                        reserved: 'bg-[#8b5cf6]/10 border-[#8b5cf6]/20',
+                        cleaning: 'bg-[#d97706]/10 border-[#d97706]/20',
                       };
                       const dots: Record<string, string> = {
-                        available: 'bg-emerald-400',
-                        occupied: 'bg-red-400',
-                        reserved: 'bg-purple-400',
-                        cleaning: 'bg-amber-400',
+                        available: 'bg-[#34d399]',
+                        occupied: 'bg-[#f87171]',
+                        reserved: 'bg-[#a78bfa]',
+                        cleaning: 'bg-[#fbbf24]',
                       };
                       return (
                         <div key={i} className={`${colors[status]} border rounded p-1.5 text-center`}>
@@ -133,7 +133,7 @@ export default function InteractiveDemoSection() {
 
             {/* Live Indicator */}
             <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-2 bg-white/90 rounded-full shadow-md">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+              <div className="w-2 h-2 bg-[#10b981] rounded-full animate-pulse" />
               <span className="text-xs text-[#1C1917] font-bold tracking-wider">LIVE</span>
             </div>
           </motion.div>

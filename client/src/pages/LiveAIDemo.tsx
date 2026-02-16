@@ -183,9 +183,9 @@ export default function LiveAIDemo() {
             className="relative"
           >
             <div className="bg-white p-8 rounded-[2rem] border border-[#E7E5E4] shadow-lg min-h-[600px] relative">
-              <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-2 bg-emerald-50 rounded-full border border-emerald-200">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                <span className="text-xs text-emerald-700 font-bold tracking-wider">AI READY</span>
+              <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-2 bg-[#10b981]/10 rounded-full border border-[#10b981]/20">
+                <div className="w-2 h-2 bg-[#10b981] rounded-full animate-pulse" />
+                <span className="text-xs text-[#065f46] font-bold tracking-wider">AI READY</span>
               </div>
 
               <div className="text-center space-y-4 mb-8">
@@ -231,7 +231,7 @@ export default function LiveAIDemo() {
 
               {/* Widget Not Configured Notice */}
               {!import.meta.env.VITE_ELEVENLABS_AGENT_ID && (
-                <div className="mt-6 p-4 bg-amber-50 rounded-xl border border-amber-200">
+                <div className="mt-6 p-4 bg-[#d97706]/10 rounded-xl border border-[#d97706]/20">
                   <div className="flex items-start gap-3">
                     <ThiingsIcon name="sparkles" size="sm" className="flex-shrink-0 mt-0.5" />
                     <div>
