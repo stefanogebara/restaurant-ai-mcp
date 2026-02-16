@@ -189,8 +189,8 @@ export default function BookingPage() {
     return (
       <div className="min-h-screen bg-[#FAFAF9] flex flex-col items-center justify-center p-6">
         <div className="bg-white border border-[#E7E5E4] rounded-2xl p-8 max-w-md text-center shadow-sm">
-          <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 bg-[#dc2626]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-[#dc2626]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
@@ -391,7 +391,7 @@ export default function BookingPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-[#1C1917] mb-1.5">
-                  Name <span className="text-red-500">*</span>
+                  Name <span className="text-[#dc2626]">*</span>
                 </label>
                 <input
                   type="text"
@@ -404,7 +404,7 @@ export default function BookingPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-[#1C1917] mb-1.5">
-                  Phone <span className="text-red-500">*</span>
+                  Phone <span className="text-[#dc2626]">*</span>
                 </label>
                 <input
                   type="tel"
@@ -505,8 +505,8 @@ export default function BookingPage() {
             </div>
 
             {submitError && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-                <p className="text-sm text-red-700">{submitError}</p>
+              <div className="bg-[#dc2626]/10 border border-[#dc2626]/20 rounded-xl p-3">
+                <p className="text-sm text-[#dc2626]">{submitError}</p>
               </div>
             )}
 

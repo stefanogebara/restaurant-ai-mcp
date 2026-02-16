@@ -59,8 +59,8 @@ export default function BookingConfirmation() {
       <main className="max-w-lg mx-auto px-4 py-8 pb-24">
         {/* Success Icon */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-20 h-20 bg-green-50 border-2 border-green-200 rounded-full flex items-center justify-center mb-4">
-            <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-20 h-20 bg-[#22c55e]/10 border-2 border-[#22c55e]/20 rounded-full flex items-center justify-center mb-4">
+            <svg className="w-10 h-10 text-[#16a34a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
             </svg>
           </div>
@@ -111,8 +111,8 @@ export default function BookingConfirmation() {
 
             {/* Status */}
             <div className="flex items-center justify-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full" />
-              <span className="text-sm font-medium text-green-700 capitalize">{reservation.status}</span>
+              <div className="w-2 h-2 bg-[#22c55e] rounded-full" />
+              <span className="text-sm font-medium text-[#16a34a] capitalize">{reservation.status}</span>
             </div>
           </div>
         </div>

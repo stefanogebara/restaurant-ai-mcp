@@ -262,10 +262,10 @@ export default function TableConfigPage() {
                       <span
                         className={`w-2 h-2 rounded-full ${
                           table.status === 'available'
-                            ? 'bg-green-500'
+                            ? 'bg-[#22c55e]'
                             : table.status === 'occupied'
-                            ? 'bg-red-500'
-                            : 'bg-yellow-500'
+                            ? 'bg-[#dc2626]'
+                            : 'bg-[#d97706]'
                         }`}
                       ></span>
                       <span className="text-sm text-[#78716C] capitalize">{table.status}</span>
@@ -280,7 +280,7 @@ export default function TableConfigPage() {
 
                     {/* Combination group */}
                     {table.combination_group && (
-                      <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                      <div className="text-xs text-[#9F1239] bg-[#9F1239]/10 px-2 py-1 rounded">
                         Group: {table.combination_group}
                       </div>
                     )}
@@ -302,7 +302,7 @@ export default function TableConfigPage() {
                             e.stopPropagation();
                             openAdjacencyModal(table);
                           }}
-                          className="flex-1 px-3 py-1.5 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                          className="flex-1 px-3 py-1.5 text-xs bg-[#9F1239]/10 text-[#9F1239] rounded-lg hover:bg-[#9F1239]/20 transition-colors"
                         >
                           Set Adjacent
                         </button>
@@ -340,7 +340,7 @@ export default function TableConfigPage() {
       {/* Add Table Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
             <h3 className="text-xl font-bold text-[#1C1917] mb-4">Add New Table</h3>
             <TableForm
               formData={formData}
@@ -358,7 +358,7 @@ export default function TableConfigPage() {
       {/* Edit Table Modal */}
       {showEditModal && selectedTable && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
             <h3 className="text-xl font-bold text-[#1C1917] mb-4">Edit Table {selectedTable.table_number}</h3>
             <TableForm
               formData={formData}
@@ -373,7 +373,7 @@ export default function TableConfigPage() {
               <button
                 onClick={handleDeleteTable}
                 disabled={deleteMutation.isPending}
-                className="w-full px-4 py-2 text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                className="w-full px-4 py-2 text-[#dc2626] border border-[#dc2626]/20 rounded-lg hover:bg-[#dc2626]/10 transition-colors"
               >
                 {deleteMutation.isPending ? 'Deactivating...' : 'Deactivate Table'}
               </button>
@@ -402,7 +402,7 @@ export default function TableConfigPage() {
       {toast && (
         <div
           className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg z-50 ${
-            toast.type === 'success' ? 'bg-[#1C1917] text-white' : 'bg-red-600 text-white'
+            toast.type === 'success' ? 'bg-[#1C1917] text-white' : 'bg-[#dc2626] text-white'
           }`}
         >
           {toast.message}
@@ -491,7 +491,7 @@ function TableForm({
               type="radio"
               checked={!formData.is_fixed}
               onChange={() => setFormData({ ...formData, is_fixed: false })}
-              className="w-4 h-4 text-emerald-600"
+              className="w-4 h-4 text-[#22c55e] accent-[#22c55e]"
             />
             <span className="text-sm text-[#78716C]">Flexible (can combine)</span>
           </label>
@@ -500,7 +500,7 @@ function TableForm({
               type="radio"
               checked={formData.is_fixed}
               onChange={() => setFormData({ ...formData, is_fixed: true })}
-              className="w-4 h-4 text-amber-600"
+              className="w-4 h-4 text-[#d97706] accent-[#d97706]"
             />
             <span className="text-sm text-[#78716C]">Fixed (booth/round)</span>
           </label>
@@ -576,7 +576,7 @@ function AdjacencyModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 max-h-[80vh] overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 max-h-[80vh] overflow-y-auto">
         <h3 className="text-xl font-bold text-[#1C1917] mb-2">
           Set Adjacent Tables for Table {table.table_number}
         </h3>
