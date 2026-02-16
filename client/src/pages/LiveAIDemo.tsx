@@ -156,19 +156,19 @@ export default function LiveAIDemo() {
               <h3 className="font-serif text-lg text-white mb-4">Demo Restaurant</h3>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-400 text-sm font-light">Name</span>
+                  <span className="text-[#A8A29E] text-sm font-light">Name</span>
                   <span className="text-white font-medium">La Bella Vista</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-400 text-sm font-light">Cuisine</span>
+                  <span className="text-[#A8A29E] text-sm font-light">Cuisine</span>
                   <span className="text-white font-medium">Fine Italian Dining</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-400 text-sm font-light">Tables</span>
+                  <span className="text-[#A8A29E] text-sm font-light">Tables</span>
                   <span className="text-white font-medium">12 tables</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-400 text-sm font-light">Current Occupancy</span>
+                  <span className="text-[#A8A29E] text-sm font-light">Current Occupancy</span>
                   <span className="text-[#9F1239] font-bold">67%</span>
                 </div>
               </div>
@@ -303,7 +303,7 @@ export default function LiveAIDemo() {
             <h3 className="font-serif text-2xl text-white mb-3">
               Ready to Implement This in Your Restaurant?
             </h3>
-            <p className="text-gray-400 font-light mb-6">
+            <p className="text-[#A8A29E] font-light mb-6">
               Schedule a personalized demo and discover how our AI can transform your operations
             </p>
             <button
