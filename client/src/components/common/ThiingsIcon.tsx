@@ -48,7 +48,11 @@ const SIZE_PX: Record<IconSize, number> = {
 /** Explicit remap for icon names that don't auto-convert to PascalCase Lucide names */
 const REMAP: Record<string, string> = {
   airplane: 'Plane',
+  'alert-circle': 'CircleAlert',
+  'alert-triangle': 'TriangleAlert',
+  'bar-chart': 'ChartBar',
   chat: 'MessageCircle',
+  'check-circle': 'CircleCheck',
   city: 'Building2',
   'classical-building': 'Landmark',
   close: 'X',
@@ -58,9 +62,12 @@ const REMAP: Record<string, string> = {
   dining: 'Utensils',
   dollar: 'DollarSign',
   edit: 'Pencil',
+  filter: 'Funnel',
   fire: 'Flame',
   gear: 'Settings',
   'green-check': 'CircleCheck',
+  'help-circle': 'CircleQuestionMark',
+  home: 'House',
   lightning: 'Zap',
   logout: 'LogOut',
   microphone: 'Mic',
@@ -75,6 +82,7 @@ const REMAP: Record<string, string> = {
   trash: 'Trash2',
   voice: 'AudioLines',
   volume: 'Volume2',
+  'x-circle': 'CircleX',
 };
 
 function toPascalCase(s: string): string {
