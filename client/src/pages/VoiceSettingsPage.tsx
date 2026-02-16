@@ -253,7 +253,7 @@ export default function VoiceSettingsPage() {
           <Skeleton className="h-8 w-64 mb-1" />
           <Skeleton className="h-4 w-80 mb-6" />
           <div className="space-y-6">
-            <div className="bg-white border border-[#E7E5E4] rounded-xl p-6">
+            <div className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
               <Skeleton className="h-5 w-32 mb-4" />
               <div className="flex items-center justify-between">
                 <div>
@@ -263,7 +263,7 @@ export default function VoiceSettingsPage() {
                 <Skeleton className="h-10 w-32 rounded-lg" />
               </div>
             </div>
-            <div className="bg-white border border-[#E7E5E4] rounded-xl p-6">
+            <div className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
               <Skeleton className="h-5 w-28 mb-4" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {Array.from({ length: 4 }).map((_, i) => (
@@ -319,7 +319,7 @@ export default function VoiceSettingsPage() {
           <button
             onClick={handleSave}
             disabled={!isDirty || isSaving}
-            className="px-6 py-2.5 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-6 py-2.5 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl shadow-sm shadow-[#9F1239]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isSaving ? <Spinner size="sm" className="border-white border-t-white/30" /> : null}
             {isSaving ? 'Saving...' : 'Save Changes'}
@@ -328,7 +328,7 @@ export default function VoiceSettingsPage() {
 
         <div className="space-y-6">
           {/* Section 1: Current Voice */}
-          <section className="bg-white border border-[#E7E5E4] rounded-xl p-6">
+          <section className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
             <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
               <ThiingsIcon name="volume" pxSize={20} />
               Current Voice
@@ -392,7 +392,7 @@ export default function VoiceSettingsPage() {
           </section>
 
           {/* Section 2: Voice Settings */}
-          <section className="bg-white border border-[#E7E5E4] rounded-xl p-6">
+          <section className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-[#1C1917] flex items-center gap-2">
                 <ThiingsIcon name="settings" pxSize={20} />
@@ -450,7 +450,7 @@ export default function VoiceSettingsPage() {
               />
             </div>
 
-            <div className="mt-4 pt-4 border-t border-[#E7E5E4]">
+            <div className="mt-4 pt-4 border-t border-[#E7E5E4]/50">
               <button
                 onClick={handlePreviewWithSettings}
                 disabled={!currentVoiceId || loadingAudio !== null}
@@ -464,7 +464,7 @@ export default function VoiceSettingsPage() {
 
           {/* Section 3: Voice Browser (collapsible) */}
           {isBrowserOpen && (
-            <section className="bg-white border border-[#E7E5E4] rounded-xl p-6">
+            <section className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
               <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
                 <ThiingsIcon name="search" pxSize={20} />
                 Voice Library
@@ -494,7 +494,7 @@ export default function VoiceSettingsPage() {
           )}
 
           {/* Section 4: Language Settings */}
-          <section className="bg-white border border-[#E7E5E4] rounded-xl p-6">
+          <section className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
             <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
               <ThiingsIcon name="globe" pxSize={20} />
               Language
@@ -504,7 +504,7 @@ export default function VoiceSettingsPage() {
               <select
                 value={currentLanguage}
                 onChange={(e) => handleLanguageChange(e.target.value)}
-                className="w-full px-3 py-2.5 text-sm border border-[#E7E5E4] rounded-lg bg-white text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#9F1239]/50"
+                className="w-full px-3 py-2.5 text-sm border border-[#E7E5E4]/50 rounded-xl bg-white text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#9F1239]/50"
               >
                 {SUPPORTED_LANGUAGES.map((lang) => (
                   <option key={lang.code} value={lang.code}>
@@ -522,7 +522,7 @@ export default function VoiceSettingsPage() {
           </section>
 
           {/* Section 5: Agent Info (read-only) */}
-          <section className="bg-white border border-[#E7E5E4] rounded-xl p-6">
+          <section className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
             <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
               <ThiingsIcon name="info" pxSize={20} />
               Agent Info

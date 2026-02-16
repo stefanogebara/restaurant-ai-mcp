@@ -185,7 +185,7 @@ export default function WeeklyReport() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8 print:mb-4">
           <div>
-            <h1 className="text-xl font-bold text-[#1C1917] tabular-nums tracking-tight">Weekly Report</h1>
+            <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">Weekly Report</h1>
             <p className="text-[#78716C]">{report.period.label}</p>
           </div>
 
