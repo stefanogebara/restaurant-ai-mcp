@@ -6,7 +6,7 @@ import UpgradeBanner from '../UpgradeBanner';
 // Mock ThiingsIcon to avoid loading actual image assets
 vi.mock('../common/ThiingsIcon', () => ({
   default: ({ name }: { name: string }) => (
-    <img data-testid={`icon-${name}`} alt={name} />
+    <span data-testid={`icon-${name}`} />
   ),
 }));
 

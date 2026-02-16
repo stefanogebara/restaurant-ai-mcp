@@ -5,7 +5,7 @@ import PlanBadge from '../PlanBadge';
 // Mock ThiingsIcon to avoid loading actual image assets
 vi.mock('../common/ThiingsIcon', () => ({
   default: ({ name, pxSize }: { name: string; pxSize?: number }) => (
-    <img data-testid={`icon-${name}`} alt={name} width={pxSize} height={pxSize} />
+    <span data-testid={`icon-${name}`} style={{ width: pxSize, height: pxSize }} />
   ),
 }));
 
