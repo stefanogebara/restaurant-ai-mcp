@@ -170,7 +170,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
   return (
     <>
       {/* Header */}
-      <div className="p-4 border-b border-[#E7E5E4]">
+      <div className="p-4 border-b border-[#E7E5E4]/50">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
             <div className="p-1.5 bg-[#9F1239]/10 rounded-lg">
@@ -185,7 +185,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-3 py-1.5 bg-[#9F1239] hover:bg-[#881337] text-white text-sm font-semibold rounded-lg transition-all"
+            className="px-3 py-1.5 bg-[#9F1239] hover:bg-[#881337] text-white text-sm font-semibold rounded-lg shadow-sm shadow-[#9F1239]/20 transition-all"
           >
             + Add Guest
           </button>
@@ -387,12 +387,12 @@ function WaitlistEntryCard({
   const tags = getTags(entry.special_requests);
 
   return (
-    <div className={`px-3 py-2.5 border-b border-[#E7E5E4]/50 hover:bg-[#F5F5F4]/50 transition-colors ${
+    <div className={`px-3 py-2.5 border-b border-[#E7E5E4]/50 hover:bg-[#FAFAF9] transition-colors ${
       isTableReady ? 'bg-[#16a34a]/5' : ''
     }`}>
       {/* Row 1: Avatar, Name, Party Size, Status */}
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#9F1239]/20 to-[#7c3aed]/20 flex items-center justify-center font-semibold text-xs border border-[#9F1239]/30 flex-shrink-0">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#9F1239]/15 to-[#7c3aed]/15 flex items-center justify-center font-bold text-xs text-[#9F1239] border border-[#9F1239]/20 flex-shrink-0">
           {initials}
         </div>
         <div className="flex-1 min-w-0">
@@ -470,7 +470,7 @@ function WaitlistEntryCard({
           <button
             onClick={() => onRemove(entry.id)}
             disabled={isRemoving}
-            className="px-2 py-1 text-[11px] border border-[#E7E5E4] text-[#57534E] hover:bg-[#F5F5F4] rounded transition-colors disabled:opacity-50 ml-auto"
+            className="px-2 py-1 text-[11px] bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#57534E] rounded transition-colors disabled:opacity-50 ml-auto"
           >
             Remove
           </button>
