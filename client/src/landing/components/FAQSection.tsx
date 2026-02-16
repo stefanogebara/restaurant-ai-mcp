@@ -92,7 +92,7 @@ export default function FAQSection() {
         >
           <div className="bg-[#1C1917] p-10 rounded-[2rem]">
             <h3 className="font-serif text-2xl text-white mb-3">Still have questions?</h3>
-            <p className="text-gray-400 mb-6 font-light">
+            <p className="text-[#A8A29E] mb-6 font-light">
               We're here to help. Reach out to our team anytime.
             </p>
             <button

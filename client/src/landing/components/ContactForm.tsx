@@ -101,7 +101,7 @@ export default function ContactForm() {
                     <Mail className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <div className="text-sm text-gray-400 mb-1 font-light">Email</div>
+                    <div className="text-sm text-[#A8A29E] mb-1 font-light">Email</div>
                     <a
                       href={`mailto:${CONTACT_INFO.email}`}
                       className="text-white font-medium hover:text-[#9F1239] transition-colors"
@@ -117,7 +117,7 @@ export default function ContactForm() {
                     <Clock className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <div className="text-sm text-gray-400 mb-1 font-light">Response Time</div>
+                    <div className="text-sm text-[#A8A29E] mb-1 font-light">Response Time</div>
                     <div className="text-white font-medium">Within 24 hours</div>
                   </div>
                 </div>

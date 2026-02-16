@@ -58,7 +58,7 @@ export default function FeaturesGrid() {
             <Utensils className="text-[#9F1239]" size={28} />
             <div>
               <h3 className="font-serif text-xl mb-2">Host Dashboard</h3>
-              <p className="text-gray-400 font-light text-sm">
+              <p className="text-[#A8A29E] font-light text-sm">
                 Real-time view of floor status, occupancy, and active parties.
               </p>
             </div>
