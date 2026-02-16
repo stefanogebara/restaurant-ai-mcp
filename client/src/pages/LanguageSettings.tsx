@@ -27,7 +27,7 @@ export default function LanguageSettings() {
               <ThiingsIcon name="globe" pxSize={32} />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-[#1C1917] flex items-center">
+              <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight flex items-center">
                 <span className="w-2 h-2 rounded-full bg-[#9F1239] inline-block mr-2" />
                 {t('settings.languageSettings')}
               </h1>
