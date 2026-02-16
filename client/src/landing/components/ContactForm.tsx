@@ -106,7 +106,7 @@ export default function ContactForm() {
                       href={`mailto:${CONTACT_INFO.email}`}
                       className="text-white font-medium hover:text-[#9F1239] transition-colors"
                     >
-                      {CONTACT_INFO.email}
+                      support@seatable.io
                     </a>
                   </div>
                 </div>

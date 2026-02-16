@@ -286,7 +286,7 @@ export const STATS = [
 ];
 
 export const CONTACT_INFO = {
-  email: "hello@seatable.io",
+  email: "stefanogebara@gmail.com",
   formFields: [
     { name: "name", label: "Full Name", type: "text", required: true },
     { name: "email", label: "Email Address", type: "email", required: true },

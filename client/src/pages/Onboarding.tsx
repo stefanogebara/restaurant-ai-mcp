@@ -315,7 +315,7 @@ export default function Onboarding() {
             <p className="text-sm text-[#57534E]">
               Need help?{' '}
               <a
-                href="mailto:hello@seatable.io"
+                href="mailto:stefanogebara@gmail.com"
                 className="text-[#9F1239] hover:text-[#881337] font-semibold transition-colors"
               >
                 Contact Support
