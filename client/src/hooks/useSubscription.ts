@@ -6,6 +6,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { authFetch } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 interface SubscriptionDetails {
   plan: string;
@@ -46,15 +47,19 @@ interface UseSubscriptionOptions {
  */
 export function useSubscription(options: UseSubscriptionOptions = {}) {
   const { email, enabled = true } = options;
+  const { user } = useAuth();
+  const sessionEmail = user?.email;
+
+  const queryEmail = email || sessionEmail || localStorage.getItem('customer_email') || '';
 
   return useQuery<SubscriptionResponse>({
-    queryKey: ['subscription', email || 'current-user'],
+    queryKey: ['subscription', queryEmail || 'current-user'],
     queryFn: async () => {
       const apiUrl = import.meta.env.VITE_API_URL || '';
 
-      // Get email from: 1) options, 2) localStorage (set by AuthContext), 3) fallback
-      const storedEmail = localStorage.getItem('customer_email');
-      const queryEmail = email || storedEmail || 'restaurant@seatable.io';
+      if (!queryEmail) {
+        return { has_subscription: false };
+      }
 
       const response = await authFetch(
         `${apiUrl}/api/subscription-status?email=${encodeURIComponent(queryEmail)}`
@@ -69,7 +74,7 @@ export function useSubscription(options: UseSubscriptionOptions = {}) {
 
       return response.json();
     },
-    enabled: enabled,  // Always enabled, no longer requires email
+    enabled: enabled && !!queryEmail,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 10 * 60 * 1000, // Refetch every 10 minutes
   });
