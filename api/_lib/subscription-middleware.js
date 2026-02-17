@@ -162,18 +162,15 @@ async function checkReservationLimits(req, res, next) {
 
     const limitCheck = checkReservationLimit(plan, currentMonthReservations);
 
-    if (!limitCheck.allowed) {
-      return res.status(429).json({
-        error: 'Reservation limit reached',
-        message: `You've reached your monthly limit of ${limitCheck.limit} reservations.`,
-        limit: limitCheck.limit,
-        current: limitCheck.current,
-        upgrade_url: `${process.env.CLIENT_URL || 'http://localhost:8086'}/#pricing`
-      });
-    }
-
     // Attach limit info to request
     req.reservationLimit = limitCheck;
+
+    if (!limitCheck.allowed) {
+      // Soft limit: allow overage but flag it for billing
+      req.isOverage = true;
+      req.overageCount = currentMonthReservations - limitCheck.limit + 1;
+      req.overagePlan = plan;
+    }
 
     next();
   } catch (error) {

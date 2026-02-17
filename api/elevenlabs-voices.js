@@ -8,6 +8,8 @@
  * New callers set page_size=12 for enhanced browsing.
  */
 
+const { verifyAuth } = require('./_lib/auth');
+const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('ElevenLabsVoices');
 
@@ -92,6 +94,22 @@ module.exports = async (req, res) => {
       error: 'Method not allowed. Use GET.'
     });
   }
+
+  // Verify authentication
+  const authResult = await verifyAuth(req, { required: true });
+  if (authResult.error) {
+    return res.status(authResult.status || 401).json({ success: false, error: authResult.error });
+  }
+  req.user = authResult.user;
+
+  // Check subscription + voice_ai feature access (Growth+ only)
+  let subscriptionChecked = false;
+  await checkSubscription(req, res, () => { subscriptionChecked = true; });
+  if (!subscriptionChecked) return;
+
+  let featureAllowed = false;
+  requireFeature('voice_ai')(req, res, () => { featureAllowed = true; });
+  if (!featureAllowed) return;
 
   try {
     const {

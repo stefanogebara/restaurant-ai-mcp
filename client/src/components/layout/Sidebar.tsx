@@ -43,7 +43,7 @@ const navItems: NavItem[] = [
     label: 'Voice & Language',
     iconName: 'volume',
     description: 'AI Voice Settings',
-    requiredFeature: 'aiAgentTracking'
+    requiredFeature: 'voiceAI'
   },
   {
     path: '/analytics',

@@ -18,11 +18,14 @@ import type { EnhancedVoice, VoiceSettings, VoiceFiltersState } from '../compone
 import { authFetch } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import { useVoiceSettings, useSaveVoiceSettings } from '../hooks/useVoiceSettings';
+import { useFeatureAccess } from '../hooks/useSubscription';
+import UpgradePrompt from '../components/common/UpgradePrompt';
 
 const PAGE_SIZE = 12;
 
 export default function VoiceSettingsPage() {
   const toast = useToast();
+  const { hasAccess, isLoading: isLoadingAccess } = useFeatureAccess('voice_ai');
 
   // Current agent config via React Query (cached 5 min)
   const { data: config, isLoading: isLoadingConfig } = useVoiceSettings();
@@ -245,7 +248,18 @@ export default function VoiceSettingsPage() {
   };
 
   // Loading state - skeleton layout
-  if (isLoadingConfig) {
+  // Gate Voice AI to Growth+ plans
+  if (!isLoadingAccess && !hasAccess()) {
+    return (
+      <UpgradePrompt
+        requiredPlan="growth"
+        feature="Voice AI Agent"
+        description="Configure your AI voice agent to handle phone reservations automatically. Available on Growth and Scale plans."
+      />
+    );
+  }
+
+  if (isLoadingConfig || isLoadingAccess) {
     return (
       <DashboardLayout>
         <div className="p-6 lg:p-8 max-w-5xl" role="status" aria-label="Loading voice settings">

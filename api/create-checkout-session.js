@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { priceId } = req.body;
+    const { priceId, planName } = req.body;
 
     if (!priceId) {
       return res.status(400).json({ error: 'Price ID is required' });
@@ -49,7 +49,14 @@ module.exports = async (req, res) => {
     // Add metered price items for usage-based billing
     const meteredPriceMap = getMeteredPriceMap();
     const addedPrices = new Set();
-    for (const meteredPriceId of Object.values(meteredPriceMap)) {
+    const planLower = (planName || '').toLowerCase();
+    for (const [metricType, meteredPriceId] of Object.entries(meteredPriceMap)) {
+      // Only attach the overage price matching this plan
+      if (metricType === 'reservation_overage_starter' && planLower !== 'starter') continue;
+      if (metricType === 'reservation_overage_growth' && planLower !== 'growth') continue;
+      // Scale has unlimited reservations — no overage price needed
+      if (metricType.startsWith('reservation_overage_') && planLower === 'scale') continue;
+
       if (!addedPrices.has(meteredPriceId)) {
         addedPrices.add(meteredPriceId);
         lineItems.push({ price: meteredPriceId });
@@ -67,13 +74,13 @@ module.exports = async (req, res) => {
       billing_address_collection: 'required',
       customer_email: req.body.email || undefined,
       metadata: {
-        plan_name: req.body.planName || 'Unknown Plan',
+        plan_name: planName || 'Unknown Plan',
         restaurant_id: restaurantId || '',
       },
       subscription_data: {
-        trial_period_days: 14, // 14-day free trial
+        ...(planName === 'Growth' ? { trial_period_days: 14 } : {}),
         metadata: {
-          plan_name: req.body.planName || 'Unknown Plan',
+          plan_name: planName || 'Unknown Plan',
           restaurant_id: restaurantId || '',
         },
       },

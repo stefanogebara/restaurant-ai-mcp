@@ -53,6 +53,14 @@ function getMeteredPriceMap() {
     map.whatsapp_reservation = process.env.STRIPE_METERED_PRICE_WHATSAPP;
   }
 
+  // Reservation overage prices (plan-specific)
+  if (process.env.STRIPE_OVERAGE_STARTER_PRICE_ID) {
+    map.reservation_overage_starter = process.env.STRIPE_OVERAGE_STARTER_PRICE_ID;
+  }
+  if (process.env.STRIPE_OVERAGE_GROWTH_PRICE_ID) {
+    map.reservation_overage_growth = process.env.STRIPE_OVERAGE_GROWTH_PRICE_ID;
+  }
+
   return map;
 }
 

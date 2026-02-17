@@ -167,6 +167,7 @@ export const PRICING_TIERS = [
     period: "/month",
     description: "Perfect for small restaurants",
     priceId: import.meta.env.VITE_STRIPE_STARTER_PRICE_ID || "",
+    annualPriceId: import.meta.env.VITE_STRIPE_STARTER_ANNUAL_PRICE_ID || "",
     features: [
       "AI reservations (Chat + WhatsApp)",
       "Host dashboard",
@@ -183,6 +184,7 @@ export const PRICING_TIERS = [
     period: "/month",
     description: "For growing restaurants",
     priceId: import.meta.env.VITE_STRIPE_GROWTH_PRICE_ID || "",
+    annualPriceId: import.meta.env.VITE_STRIPE_GROWTH_ANNUAL_PRICE_ID || "",
     features: [
       "Everything in Starter",
       "Voice AI agent",
@@ -200,6 +202,7 @@ export const PRICING_TIERS = [
     period: "/month",
     description: "For high-volume restaurants",
     priceId: import.meta.env.VITE_STRIPE_SCALE_PRICE_ID || "",
+    annualPriceId: import.meta.env.VITE_STRIPE_SCALE_ANNUAL_PRICE_ID || "",
     features: [
       "Everything in Growth",
       "Unlimited reservations",

@@ -18,6 +18,7 @@
 const fetch = require('node-fetch');
 const { verifyAuth } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
+const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('ElevenLabsAgentCreate');
 
@@ -35,6 +36,16 @@ module.exports = async (req, res) => {
   if (auth.error) {
     return res.status(auth.status).json({ success: false, error: auth.error });
   }
+  req.user = auth.user;
+
+  // Check subscription + voice_ai feature access (Growth+ only)
+  let subscriptionChecked = false;
+  await checkSubscription(req, res, () => { subscriptionChecked = true; });
+  if (!subscriptionChecked) return;
+
+  let featureAllowed = false;
+  requireFeature('voice_ai')(req, res, () => { featureAllowed = true; });
+  if (!featureAllowed) return;
 
   try {
     const {

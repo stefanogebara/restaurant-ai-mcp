@@ -74,7 +74,7 @@ export default function PricingSection() {
           </h2>
           <div className="w-16 h-0.5 bg-[#9F1239] mx-auto opacity-50 mb-6"></div>
           <p className="text-lg text-[#57534E] max-w-2xl mx-auto font-light">
-            Choose the plan that fits your restaurant. All plans include a 14-day free trial.
+            Choose the plan that fits your restaurant. Growth plan includes a 14-day free trial.
           </p>
         </motion.div>
 
@@ -181,7 +181,10 @@ export default function PricingSection() {
 
               {/* CTA Button */}
               <button
-                onClick={() => tier.priceId ? handleSubscribe(tier.priceId, tier.name) : scrollToContact()}
+                onClick={() => {
+                  const id = isAnnual ? tier.annualPriceId : tier.priceId;
+                  id ? handleSubscribe(id, tier.name) : scrollToContact();
+                }}
                 disabled={loadingPlan === tier.name}
                 className={`w-full px-6 py-4 font-bold text-sm tracking-widest uppercase transition-all duration-300 rounded-2xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   tier.highlighted

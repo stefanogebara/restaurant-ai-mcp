@@ -220,6 +220,14 @@ async function handleCreate(req, res, restaurantId) {
   // Track usage for metered billing
   trackUsage(restaurantId, 'reservation_created');
 
+  // Track overage if reservation exceeds plan limit
+  if (req.isOverage) {
+    const overageMetric = req.overagePlan === 'starter'
+      ? 'reservation_overage_starter'
+      : 'reservation_overage_growth';
+    trackUsage(restaurantId, overageMetric);
+  }
+
   // ============================================================================
   // CUSTOMER HISTORY TRACKING (ML Foundation)
   // ============================================================================
