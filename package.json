@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
-"@google-cloud/vertexai": "^1.10.0",
+    "@google-cloud/vertexai": "^1.10.0",
     "@sentry/node": "^10.22.0",
     "@stripe/stripe-js": "^8.2.0",
     "@supabase/supabase-js": "^2.78.0",
@@ -25,7 +25,8 @@
     "framer-motion": "^12.23.24",
     "resend": "^6.3.0",
     "stripe": "^19.1.0",
-    "twilio": "^5.10.3"
+    "twilio": "^5.10.3",
+    "ws": "^8.19.0"
   },
   "engines": {
     "node": ">=18.x"

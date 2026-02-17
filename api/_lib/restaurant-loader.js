@@ -58,6 +58,13 @@ async function getRestaurantByPhone(phoneNumber) {
       // Voice configuration
       voice_id: restaurant.voice_id,
 
+      // Voice engine configuration
+      voice_engine: restaurant.voice_engine || 'elevenlabs',
+      voice_engine_status: restaurant.voice_engine_status || 'active',
+      openai_voice_id: restaurant.openai_voice_id || 'alloy',
+      persona_prompt_override: restaurant.persona_prompt_override || null,
+      voice_ws_endpoint: restaurant.voice_ws_endpoint || null,
+
       // AI configuration
       ai_config: restaurant.ai_config,
       language: restaurant.ai_config?.language || 'en-US',
@@ -116,6 +123,11 @@ async function getRestaurantById(restaurantId) {
         email: restaurant.email,
         website: restaurant.website,
         voice_id: restaurant.voice_id,
+        voice_engine: restaurant.voice_engine || 'elevenlabs',
+        voice_engine_status: restaurant.voice_engine_status || 'active',
+        openai_voice_id: restaurant.openai_voice_id || 'alloy',
+        persona_prompt_override: restaurant.persona_prompt_override || null,
+        voice_ws_endpoint: restaurant.voice_ws_endpoint || null,
         ai_config: restaurant.ai_config,
         language: restaurant.ai_config?.language || 'en-US',
         greeting_message: restaurant.ai_config?.greeting_message,
@@ -243,6 +255,11 @@ async function getRestaurantByAgentId(agentId) {
       email: restaurant.email,
       website: restaurant.website,
       voice_id: restaurant.voice_id,
+      voice_engine: restaurant.voice_engine || 'elevenlabs',
+      voice_engine_status: restaurant.voice_engine_status || 'active',
+      openai_voice_id: restaurant.openai_voice_id || 'alloy',
+      persona_prompt_override: restaurant.persona_prompt_override || null,
+      voice_ws_endpoint: restaurant.voice_ws_endpoint || null,
       ai_config: restaurant.ai_config,
       language: restaurant.ai_config?.language || 'en-US',
       greeting_message: restaurant.ai_config?.greeting_message,
