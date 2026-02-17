@@ -18,6 +18,7 @@ export function useVoiceEngineSettings() {
       return result.data;
     },
     staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 }
 

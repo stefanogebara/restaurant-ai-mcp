@@ -44,7 +44,7 @@ export default function VoiceSettingsPage() {
   const saveMutation = useSaveVoiceSettings();
 
   // Voice engine config
-  const { data: engineConfig, isLoading: isLoadingEngine } = useVoiceEngineSettings();
+  const { data: engineConfig } = useVoiceEngineSettings();
   const saveEngineMutation = useSaveVoiceEngine();
 
   // Pending changes
@@ -326,7 +326,7 @@ export default function VoiceSettingsPage() {
     );
   }
 
-  if (isLoadingConfig || isLoadingAccess || isLoadingEngine) {
+  if (isLoadingConfig || isLoadingAccess) {
     return (
       <DashboardLayout>
         <div className="p-6 lg:p-8 max-w-5xl" role="status" aria-label="Loading voice settings">
