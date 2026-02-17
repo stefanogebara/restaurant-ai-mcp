@@ -19,6 +19,7 @@ class OpenAIRealtimeBackend extends BaseBackend {
     super('OpenAIRealtime');
     this.ws = null;
     this.sessionId = null;
+    this.isResponseActive = false;
   }
 
   async connect(config) {
@@ -233,9 +234,10 @@ class OpenAIRealtimeBackend extends BaseBackend {
   }
 
   async interrupt() {
-    if (!this.connected || !this.ws) return;
+    if (!this.connected || !this.ws || !this.isResponseActive) return;
 
     this._send({ type: 'response.cancel' });
+    this.isResponseActive = false;
   }
 
   async disconnect() {
@@ -312,6 +314,7 @@ class OpenAIRealtimeBackend extends BaseBackend {
         break;
 
       case 'response.done':
+        this.isResponseActive = false;
         // Full response completed - log usage for billing tracking
         this.logger.debug('Response completed', {
           usage: message.response?.usage
@@ -323,9 +326,12 @@ class OpenAIRealtimeBackend extends BaseBackend {
         this._emitError(message.error);
         break;
 
+      case 'response.created':
+        this.isResponseActive = true;
+        break;
+
       case 'input_audio_buffer.committed':
       case 'input_audio_buffer.cleared':
-      case 'response.created':
       case 'response.output_item.added':
       case 'response.output_item.done':
       case 'response.content_part.added':
