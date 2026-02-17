@@ -18,7 +18,7 @@ const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 const logger = createSecureLogger('TwilioVoiceConnect');
 
 // WebSocket server URL for the voice pipeline
-const VOICE_WS_URL = process.env.VOICE_WS_URL || 'wss://voice.seatable.io/ws';
+const VOICE_WS_URL = process.env.VOICE_WS_URL || 'wss://seatable-voice.fly.dev/ws';
 
 module.exports = async (req, res) => {
   setWebhookCors(req, res);

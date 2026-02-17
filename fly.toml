@@ -1,0 +1,26 @@
+app = 'seatable-voice'
+primary_region = 'cdg'
+
+[build]
+  dockerfile = 'api/voice-server/Dockerfile'
+
+[env]
+  NODE_ENV = 'production'
+  VOICE_WS_PORT = '8765'
+
+[http_service]
+  internal_port = 8765
+  force_https = true
+  auto_stop_machines = 'suspend'
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = 'connections'
+    hard_limit = 100
+    soft_limit = 80
+
+[[vm]]
+  memory = '512mb'
+  cpu_kind = 'shared'
+  cpus = 1
