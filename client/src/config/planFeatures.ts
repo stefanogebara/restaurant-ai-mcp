@@ -3,7 +3,7 @@
  * Defines which features are available for each subscription tier
  */
 
-export type PlanType = 'starter' | 'growth' | 'scale' | 'trial';
+export type PlanType = 'starter' | 'growth' | 'professional' | 'scale' | 'trial';
 
 export interface PlanFeatures {
   // Core Dashboard
@@ -126,6 +126,46 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
 
   },
 
+  professional: {
+    // Professional plan has same features as Growth
+    overview: true,
+
+    // ML & Intelligence - Full Access with Limits
+    mlPerformance: true,
+    quickStatsWidget: true,
+    interventionPanel: true,
+    interventionActions: 'limited',
+
+    // Analytics & Reporting
+    advancedAnalytics: true,
+    weeklyReports: 'email',
+    customReportScheduling: false,
+    revenueOpportunities: false,
+
+    // Customer Intelligence
+    customerLTV: true,
+    customerDNA: true,
+    customerHistory: true,
+
+    // AI Agent
+    voiceAI: true,
+    aiAgentTracking: true,
+
+    // Waitlist
+    waitlistManagement: true,
+    waitlistPriorityTiers: false,
+    waitlistSMSNotifications: true,
+    smartWaitTimePredictions: false,
+
+    // Enterprise Features
+    multiLocation: false,
+    whiteLabel: false,
+    apiAccess: false,
+    systemObservability: false,
+    prioritySupport: false,
+
+  },
+
   scale: {
     // Core Dashboard
     overview: true,
@@ -210,12 +250,14 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
 export const PLAN_PRICES = {
   starter: 29,
   growth: 99,
+  professional: 99,
   scale: 199,
 } as const;
 
 export const PLAN_NAMES = {
   starter: 'Starter',
   growth: 'Growth',
+  professional: 'Professional',
   scale: 'Scale',
   trial: 'Trial',
 } as const;
@@ -223,6 +265,7 @@ export const PLAN_NAMES = {
 export const PLAN_DESCRIPTIONS = {
   starter: 'Perfect for small restaurants getting started',
   growth: 'Advanced features for growing restaurants',
+  professional: 'Advanced features for growing restaurants',
   scale: 'Full platform for high-volume restaurants',
   trial: '14-day trial with Growth features',
 } as const;
@@ -233,6 +276,7 @@ export const PLAN_DESCRIPTIONS = {
 export const INTERVENTION_LIMITS = {
   starter: 0,
   growth: 5,
+  professional: 5,
   scale: Infinity,
   trial: 5,
 } as const;
@@ -259,6 +303,7 @@ export function hasFeatureAccess(
 export function getRequiredPlan(feature: keyof PlanFeatures): PlanType | null {
   if (hasFeatureAccess('starter', feature)) return 'starter';
   if (hasFeatureAccess('growth', feature)) return 'growth';
+  // professional has same features as growth, no need to check separately
   if (hasFeatureAccess('scale', feature)) return 'scale';
   return null;
 }
