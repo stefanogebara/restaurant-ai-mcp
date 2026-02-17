@@ -249,7 +249,7 @@ export default function VoiceSettingsPage() {
 
   // Loading state - skeleton layout
   // Gate Voice AI to Growth+ plans
-  if (!isLoadingAccess && !hasAccess()) {
+  if (!isLoadingAccess && !hasAccess) {
     return (
       <UpgradePrompt
         requiredPlan="growth"
