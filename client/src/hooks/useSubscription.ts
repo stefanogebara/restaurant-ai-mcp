@@ -94,28 +94,23 @@ export function useFeatureAccess(featureName: string, email?: string) {
     const plan = data.subscription.plan.toLowerCase();
 
     // Feature access by plan
+    const growthFeatures = [
+      'ai_reservations',
+      'host_dashboard',
+      'basic_analytics',
+      'advanced_analytics',
+      'waitlist_management',
+      'sms_notifications',
+      'email_support',
+      'voice_ai',
+    ];
     const featureMap: Record<string, string[]> = {
       starter: ['ai_reservations', 'host_dashboard', 'basic_analytics', 'email_support'],
-      growth: [
-        'ai_reservations',
-        'host_dashboard',
-        'basic_analytics',
-        'advanced_analytics',
-        'waitlist_management',
-        'sms_notifications',
-        'email_support',
-        'voice_ai',
-      ],
+      growth: growthFeatures,
+      professional: growthFeatures,
       scale: [
-        'ai_reservations',
-        'host_dashboard',
-        'basic_analytics',
-        'advanced_analytics',
-        'waitlist_management',
+        ...growthFeatures,
         'priority_support',
-        'sms_notifications',
-        'email_support',
-        'voice_ai',
         'custom_integrations',
       ],
     };
@@ -145,7 +140,7 @@ export function usePlanInfo(email?: string) {
     if (!data?.subscription) return 'gray';
     const plan = data.subscription.plan.toLowerCase();
     if (plan === 'starter') return 'gray';
-    if (plan === 'growth') return 'purple';
+    if (plan === 'growth' || plan === 'professional') return 'purple';
     if (plan === 'scale') return 'gold';
     return 'gray';
   };

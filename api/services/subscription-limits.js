@@ -48,6 +48,28 @@ const PLAN_LIMITS = {
     whiteLabel: false,
     phoneSupport: false,
   },
+  professional: {
+    name: 'Professional',
+    maxReservationsPerMonth: GROWTH_PLAN_MONTHLY_RESERVATIONS,
+    features: [
+      'ai_reservations',
+      'host_dashboard',
+      'basic_analytics',
+      'advanced_analytics',
+      'waitlist_management',
+      'sms_notifications',
+      'email_support',
+      'voice_ai',
+    ],
+    analyticsLevel: 'advanced',
+    smsNotifications: true,
+    waitlistManagement: true,
+    voiceAI: true,
+    multiLocation: false,
+    customIntegrations: false,
+    whiteLabel: false,
+    phoneSupport: false,
+  },
   scale: {
     name: 'Scale',
     maxReservationsPerMonth: -1, // unlimited
