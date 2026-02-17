@@ -37,12 +37,12 @@ router.get('/', async (req, res) => {
       .single();
 
     if (error) {
-      // No subscription found - return basic plan
+      // No subscription found - return starter plan
       if (error.code === 'PGRST116') {
         return res.json({
-          plan_name: 'basic',
+          plan_name: 'starter',
           status: 'active',
-          message: 'No subscription found - using basic plan'
+          message: 'No subscription found - using starter plan'
         });
       }
 

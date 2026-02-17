@@ -165,14 +165,14 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
 
   const { totalTables, totalCapacity } = calculateTotals();
 
-  // Check plan limits (Basic: 10 tables, Pro: unlimited)
+  // Check plan limits (Starter: 10 tables, Growth+: unlimited)
   const getPlanLimit = () => {
     // Check the actual plan from onboarding data
-    const plan = data.plan?.toLowerCase() || 'basic';
-    if (plan === 'professional' || plan === 'pro' || plan === 'enterprise') {
-      return Infinity; // Pro+ plans have unlimited tables
+    const plan = data.plan?.toLowerCase() || 'starter';
+    if (plan === 'growth' || plan === 'scale') {
+      return Infinity; // Growth+ plans have unlimited tables
     }
-    return 10; // Basic plan limit
+    return 10; // Starter plan limit
   };
 
   const validate = () => {

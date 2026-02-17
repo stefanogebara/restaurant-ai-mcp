@@ -45,7 +45,7 @@ export default function UpgradePrompt({ requiredPlan, feature, description }: Up
           {/* Benefits */}
           <div className="space-y-3 mb-8">
             <h3 className="font-semibold text-[#1C1917] text-lg mb-4">Unlock with {planName}:</h3>
-            {requiredPlan === 'professional' && (
+            {(requiredPlan === 'growth' || requiredPlan === 'scale') && (
               <ul className="space-y-2">
                 <li className="flex items-start gap-2 text-[#57534E]">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#9F1239] mt-2 flex-shrink-0" />
@@ -57,7 +57,7 @@ export default function UpgradePrompt({ requiredPlan, feature, description }: Up
                 </li>
                 <li className="flex items-start gap-2 text-[#57534E]">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#9F1239] mt-2 flex-shrink-0" />
-                  <span>Dynamic pricing rules and revenue optimization</span>
+                  <span>Voice AI agent and advanced analytics</span>
                 </li>
                 <li className="flex items-start gap-2 text-[#57534E]">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#9F1239] mt-2 flex-shrink-0" />

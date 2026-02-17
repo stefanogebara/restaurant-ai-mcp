@@ -143,8 +143,10 @@ export default function SubscriptionManage() {
 
   const getPlanIcon = (planName: string) => {
     switch (planName.toLowerCase()) {
-      case 'professional':
+      case 'growth':
         return <ThiingsIcon name="star" pxSize={24} />;
+      case 'scale':
+        return <ThiingsIcon name="crown" pxSize={24} />;
       default:
         return <ThiingsIcon name="credit-card" pxSize={24} />;
     }
