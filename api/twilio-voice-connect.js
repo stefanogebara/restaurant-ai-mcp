@@ -110,16 +110,29 @@ module.exports = async (req, res) => {
 async function lookupRestaurantByPhone(phoneNumber) {
   const normalizedPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
 
-  // Try exact match first, then normalized
-  const { data, error } = await supabaseAdmin
+  // Try exact match first
+  let { data, error } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
     .select('id, restaurant_name, phone, voice_engine, voice_engine_status, voice_ws_endpoint, elevenlabs_agent_id, ai_config')
-    .or(`phone.eq.${phoneNumber},phone.eq.${normalizedPhone}`)
+    .eq('phone', normalizedPhone)
     .eq('is_active', true)
     .eq('onboarding_completed', true)
     .limit(1)
     .maybeSingle();
+
+  // If not found and original differs, try original format
+  if (!data && !error && normalizedPhone !== phoneNumber) {
+    ({ data, error } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('id, restaurant_name, phone, voice_engine, voice_engine_status, voice_ws_endpoint, elevenlabs_agent_id, ai_config')
+      .eq('phone', phoneNumber)
+      .eq('is_active', true)
+      .eq('onboarding_completed', true)
+      .limit(1)
+      .maybeSingle());
+  }
 
   if (error) {
     logger.error('Restaurant lookup error:', { message: error.message });
