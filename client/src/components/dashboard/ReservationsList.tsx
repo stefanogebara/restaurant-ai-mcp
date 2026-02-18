@@ -205,6 +205,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
         {!reservation.checked_in && !isHighRisk ? (
           <button
             onClick={onCheckIn}
+            aria-label={t.checkIn}
             className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${statusBadge.classes}`}
           >
             {statusBadge.label}

@@ -50,7 +50,7 @@ describe('ActivePartiesPanel', () => {
   it('displays header with party count', () => {
     render(<ActivePartiesPanel {...defaultProps} />);
     expect(screen.getByText('Active Parties')).toBeInTheDocument();
-    expect(screen.getByText('(2)')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
   });
 
   it('displays customer names', () => {

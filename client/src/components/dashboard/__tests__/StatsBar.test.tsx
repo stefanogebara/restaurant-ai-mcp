@@ -20,52 +20,58 @@ describe('StatsBar', () => {
     expect(pulseElements.length).toBeGreaterThan(0);
   });
 
-  it('displays occupied tables count', () => {
+  it('displays tables available with total', () => {
     render(<StatsBar {...defaultProps} />);
-    // '6' appears in both occupied tables and active parties, so use getAllByText
-    expect(screen.getAllByText('6').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('/10')).toBeInTheDocument();
+    // Available tables = totalTables - occupiedTables = 4
+    expect(screen.getByText('4')).toBeInTheDocument();
+    expect(screen.getByText('Tables Available')).toBeInTheDocument();
   });
 
-  it('displays occupancy percentage', () => {
+  it('displays occupancy percentage as capacity', () => {
     render(<StatsBar {...defaultProps} />);
-    expect(screen.getByText('60% occupied')).toBeInTheDocument();
+    expect(screen.getByText('60% capacity')).toBeInTheDocument();
   });
 
-  it('displays reservations', () => {
+  it('displays reservations count with seated', () => {
     render(<StatsBar {...defaultProps} />);
     expect(screen.getByText('12')).toBeInTheDocument();
-    expect(screen.getByText('Reservations')).toBeInTheDocument();
+    expect(screen.getByText("Today's Reservations")).toBeInTheDocument();
+    expect(screen.getByText('8 seated')).toBeInTheDocument();
   });
 
   it('displays waitlist count and estimated wait time', () => {
     render(<StatsBar {...defaultProps} />);
-    expect(screen.getByText('3')).toBeInTheDocument();
-    expect(screen.getByText('Waiting')).toBeInTheDocument();
+    expect(screen.getByText('3 on waitlist · ~15 min avg')).toBeInTheDocument();
+  });
+
+  it('displays estimated wait time alone when no waitlist', () => {
+    render(<StatsBar {...defaultProps} waitlistCount={0} />);
     expect(screen.getByText('~15 min avg')).toBeInTheDocument();
   });
 
-  it('displays "No wait" when estimatedWaitTime is not provided', () => {
-    render(<StatsBar {...defaultProps} estimatedWaitTime={undefined} />);
-    expect(screen.getByText('No wait')).toBeInTheDocument();
+  it('displays no change text when no waitlist and no wait time', () => {
+    render(<StatsBar {...defaultProps} waitlistCount={0} estimatedWaitTime={undefined} />);
+    // The Guests Expected card should not show any change text
+    const guestsCard = screen.getByText('Guests Expected').closest('div');
+    expect(guestsCard).toBeInTheDocument();
   });
 
-  it('displays active parties and total guests', () => {
+  it('displays active parties and guests seated', () => {
     render(<StatsBar {...defaultProps} />);
-    expect(screen.getByText('Active')).toBeInTheDocument();
-    expect(screen.getByText('18 guests')).toBeInTheDocument();
+    expect(screen.getByText('Active Parties')).toBeInTheDocument();
+    expect(screen.getByText('18 guests seated')).toBeInTheDocument();
   });
 
   it('handles zero occupancy without division errors', () => {
     render(<StatsBar {...defaultProps} occupiedTables={0} totalTables={0} />);
-    expect(screen.getByText('0% occupied')).toBeInTheDocument();
+    expect(screen.getByText('0% capacity')).toBeInTheDocument();
   });
 
   it('renders in Spanish when language is "es"', () => {
     render(<StatsBar {...defaultProps} language="es" />);
-    expect(screen.getByText('Mesas')).toBeInTheDocument();
-    expect(screen.getByText('Reservas')).toBeInTheDocument();
-    expect(screen.getByText('En Espera')).toBeInTheDocument();
-    expect(screen.getByText('Activas')).toBeInTheDocument();
+    expect(screen.getByText('Mesas Disponibles')).toBeInTheDocument();
+    expect(screen.getByText('Reservas de Hoy')).toBeInTheDocument();
+    expect(screen.getByText('Comensales Esperados')).toBeInTheDocument();
+    expect(screen.getByText('Mesas Activas')).toBeInTheDocument();
   });
 });

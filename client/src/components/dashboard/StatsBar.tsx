@@ -40,6 +40,7 @@ export default function StatsBar({
   reservationsToday,
   seatedReservations,
   waitlistCount,
+  estimatedWaitTime,
   activeParties,
   totalGuests,
   language = 'en',
@@ -93,7 +94,9 @@ export default function StatsBar({
       <StatCard
         label={t.guests}
         value={String(totalGuests)}
-        change={waitlistCount > 0 ? `${waitlistCount} ${t.waiting}` : ''}
+        change={waitlistCount > 0
+          ? `${waitlistCount} ${t.waiting}${estimatedWaitTime ? ` · ~${estimatedWaitTime} min avg` : ''}`
+          : estimatedWaitTime ? `~${estimatedWaitTime} min avg` : ''}
         changeColor="text-[#d97706]"
         barPercent={totalGuests > 0 ? Math.min(Math.round((totalGuests / (reservationsToday * 3 || 1)) * 100), 100) : 0}
         barColor="#57534E"
