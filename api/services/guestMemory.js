@@ -329,48 +329,69 @@ async function importFromDNA(restaurantId, guestPhone) {
     }
 
     // Import from customer_behavioral_profiles
+    // DNA tables use customer_id (which IS the phone number) and have no restaurant_id column
     const { data: profile } = await supabaseAdmin
       .from('customer_behavioral_profiles')
       .select('*')
-      .eq('restaurant_id', restaurantId)
-      .eq('customer_phone', guestPhone)
+      .eq('customer_id', guestPhone)
       .maybeSingle();
 
     if (profile) {
-      // Convert profile fields to memories
+      // Convert profile fields to memories using actual column names
       const profileMemories = [];
 
-      if (profile.preferred_day) {
+      if (profile.preferred_day_type) {
         profileMemories.push({
-          content: `Typically visits on ${profile.preferred_day}s`,
+          content: `Typically visits on ${profile.preferred_day_type} days`,
           memoryType: 'observation',
           importance: 5
         });
       }
-      if (profile.preferred_time) {
+      if (profile.preferred_time_slot) {
         profileMemories.push({
-          content: `Usually dines around ${profile.preferred_time}`,
+          content: `Usually dines during ${profile.preferred_time_slot}`,
           memoryType: 'observation',
           importance: 5
         });
       }
-      if (profile.avg_party_size) {
+      if (profile.typical_party_size) {
         profileMemories.push({
-          content: `Average party size: ${profile.avg_party_size} guests`,
+          content: `Average party size: ${profile.typical_party_size} guests`,
           memoryType: 'observation',
           importance: 4
         });
       }
-      if (profile.total_visits) {
+      if (profile.dining_style) {
         profileMemories.push({
-          content: `Has visited ${profile.total_visits} times total`,
+          content: `Dining style: ${profile.dining_style}`,
           memoryType: 'observation',
+          importance: 5
+        });
+      }
+      if (profile.dietary_restrictions) {
+        profileMemories.push({
+          content: `Dietary restrictions: ${profile.dietary_restrictions}`,
+          memoryType: 'preference',
+          importance: 8
+        });
+      }
+      if (profile.preferred_seating) {
+        profileMemories.push({
+          content: `Prefers ${profile.preferred_seating} seating`,
+          memoryType: 'preference',
           importance: 6
         });
       }
-      if (profile.avg_spend_per_visit) {
+      if (profile.primary_occasion_type) {
         profileMemories.push({
-          content: `Average spend per visit: ${profile.avg_spend_per_visit}`,
+          content: `Primary dining occasion: ${profile.primary_occasion_type}`,
+          memoryType: 'observation',
+          importance: 4
+        });
+      }
+      if (profile.avg_check_per_person) {
+        profileMemories.push({
+          content: `Average spend per person: ${profile.avg_check_per_person}`,
           memoryType: 'observation',
           importance: 5
         });
@@ -386,40 +407,74 @@ async function importFromDNA(restaurantId, guestPhone) {
       }
     }
 
-    // Import from customer_text_signals
+    // Import from customer_text_signals (keyed by customer_id = phone)
     const { data: signals } = await supabaseAdmin
       .from('customer_text_signals')
       .select('*')
-      .eq('restaurant_id', restaurantId)
-      .eq('customer_phone', guestPhone);
+      .eq('customer_id', guestPhone)
+      .maybeSingle();
 
-    if (signals && signals.length > 0) {
-      for (const signal of signals) {
-        if (signal.signal_type && signal.signal_value) {
-          const result = await createMemory(restaurantId, guestPhone, {
-            content: `${signal.signal_type}: ${signal.signal_value}`,
-            memoryType: 'preference',
-            importance: 6,
-            sourceType: 'dna_import',
-            sourceId: signal.id
-          });
-          if (result) imported++;
-        }
+    if (signals) {
+      // customer_text_signals stores extracted signals as JSON fields
+      const signalMemories = [];
+
+      if (signals.dietary_restrictions) {
+        signalMemories.push({
+          content: `Dietary info from text: ${JSON.stringify(signals.dietary_restrictions)}`,
+          memoryType: 'preference',
+          importance: 7
+        });
+      }
+      if (signals.cuisine_preferences) {
+        signalMemories.push({
+          content: `Cuisine preferences: ${JSON.stringify(signals.cuisine_preferences)}`,
+          memoryType: 'preference',
+          importance: 6
+        });
+      }
+      if (signals.seating_preferences) {
+        signalMemories.push({
+          content: `Seating preferences: ${signals.seating_preferences}`,
+          memoryType: 'preference',
+          importance: 6
+        });
+      }
+      if (signals.vip_signals) {
+        signalMemories.push({
+          content: `VIP signals: ${JSON.stringify(signals.vip_signals)}`,
+          memoryType: 'observation',
+          importance: 7
+        });
+      }
+      if (signals.sentiment_summary) {
+        signalMemories.push({
+          content: `Overall sentiment: ${signals.sentiment_summary}`,
+          memoryType: 'observation',
+          importance: 5
+        });
+      }
+
+      for (const mem of signalMemories) {
+        const result = await createMemory(restaurantId, guestPhone, {
+          ...mem,
+          sourceType: 'dna_import',
+          sourceId: signals.id
+        });
+        if (result) imported++;
       }
     }
 
-    // Import from customer_occasions
+    // Import from customer_occasions (keyed by customer_id = phone)
     const { data: occasions } = await supabaseAdmin
       .from('customer_occasions')
       .select('*')
-      .eq('restaurant_id', restaurantId)
-      .eq('customer_phone', guestPhone);
+      .eq('customer_id', guestPhone);
 
     if (occasions && occasions.length > 0) {
       for (const occ of occasions) {
         if (occ.occasion_type && occ.occasion_date) {
           const result = await createMemory(restaurantId, guestPhone, {
-            content: `${occ.occasion_type}: ${occ.occasion_date}${occ.notes ? ' - ' + occ.notes : ''}`,
+            content: `${occ.occasion_type}: ${occ.occasion_date}${occ.special_requests ? ' - ' + occ.special_requests : ''}`,
             memoryType: 'occasion',
             importance: 7,
             sourceType: 'dna_import',

@@ -50,10 +50,10 @@ module.exports = async (req, res) => {
     }
 
     // Import all guests with behavioral profiles
+    // DNA tables use customer_id (which IS the phone number) and have no restaurant_id column
     const { data: profiles, error } = await supabaseAdmin
       .from('customer_behavioral_profiles')
-      .select('customer_phone')
-      .eq('restaurant_id', restaurantId);
+      .select('customer_id');
 
     if (error) throw error;
 
@@ -66,8 +66,8 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Deduplicate phone numbers
-    const uniquePhones = [...new Set(profiles.map(p => p.customer_phone).filter(Boolean))];
+    // Deduplicate phone numbers (customer_id is the phone)
+    const uniquePhones = [...new Set(profiles.map(p => p.customer_id).filter(Boolean))];
 
     let totalImported = 0;
     let processed = 0;

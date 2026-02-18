@@ -121,9 +121,10 @@ async function findUpcomingOccasions() {
  */
 async function findAtRiskCustomers() {
   try {
+    // customer_ltv has no restaurant_id column - it's keyed by customer_id (phone)
     const { data: atRisk, error } = await supabaseAdmin
       .from('customer_ltv')
-      .select('customer_id, restaurant_id, churn_risk_score, customer_tier, last_visit_date, total_visits')
+      .select('customer_id, customer_phone, churn_risk_score, customer_tier, last_visit_date, total_visits')
       .gte('churn_risk_score', 0.7)
       .gte('total_visits', 3)
       .order('churn_risk_score', { ascending: false })
@@ -133,8 +134,8 @@ async function findAtRiskCustomers() {
 
     return atRisk.map(c => ({
       type: 'churn_risk',
-      restaurant_id: c.restaurant_id,
       customer_id: c.customer_id,
+      guest_phone: c.customer_phone || c.customer_id,
       churn_risk: c.churn_risk_score,
       tier: c.customer_tier,
       last_visit: c.last_visit_date,
