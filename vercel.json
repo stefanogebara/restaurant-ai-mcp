@@ -79,6 +79,14 @@
     {
       "path": "/api/report-usage",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/generate-reflections",
+      "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/proactive-comms",
+      "schedule": "0 10 * * 0"
     }
   ]
 }

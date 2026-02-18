@@ -43,6 +43,9 @@ const { getLocalDate } = require('./_lib/timezone');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('Reservations');
 
+// Guest memory (fire-and-forget memory creation from booking requests)
+const { createMemory } = require('./services/guestMemory');
+
 // ============================================================================
 // SMS CONFIRMATION HELPER
 // ============================================================================
@@ -396,6 +399,35 @@ async function handleCreate(req, res, restaurantId) {
   } catch (error) {
     // Don't fail the reservation if SMS fails
     logger.error('Error sending SMS confirmation', error);
+  }
+
+  // ============================================================================
+  // GUEST MEMORY - Store booking observations (fire-and-forget)
+  // ============================================================================
+  try {
+    if (customer_phone && restaurantId) {
+      // Always log the booking as an observation
+      createMemory(restaurantId, customer_phone, {
+        content: `Booked a table for ${party_size} on ${date} at ${time}`,
+        memoryType: 'observation',
+        importance: 4,
+        sourceType: 'booking_portal',
+        sourceId: reservationId
+      }).catch(err => logger.warn('Memory creation failed (non-fatal):', err.message));
+
+      // Store special requests as a preference memory
+      if (special_requests) {
+        createMemory(restaurantId, customer_phone, {
+          content: `Booking request: ${special_requests}`,
+          memoryType: 'preference',
+          importance: 6,
+          sourceType: 'booking_portal',
+          sourceId: reservationId
+        }).catch(err => logger.warn('Memory creation failed (non-fatal):', err.message));
+      }
+    }
+  } catch (memErr) {
+    logger.warn('Guest memory error (non-fatal):', memErr.message);
   }
 
   return res.status(200).json({

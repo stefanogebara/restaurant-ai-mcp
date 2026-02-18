@@ -7,6 +7,7 @@
 
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
+const { extractMemoriesFromConversation } = require('./memoryExtractor');
 
 const logger = createSecureLogger('ConversationLogger');
 
@@ -199,6 +200,11 @@ async function endConversation(conversationId, outcomeData) {
     }
 
     logger.info(`✅ [ConversationLogger] Ended conversation ${conversationId} (outcome: ${outcome})`);
+
+    // Fire-and-forget memory extraction (don't block the response)
+    extractMemoriesFromConversation(conversationId).catch(err => {
+      logger.error('[ConversationLogger] Memory extraction failed:', err.message);
+    });
 
   } catch (error) {
     logger.error('[ConversationLogger] Exception ending conversation:', error);

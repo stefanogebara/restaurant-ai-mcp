@@ -22,6 +22,7 @@ import TableLayoutPanel from '../components/dashboard/TableLayoutPanel';
 import ReservationsList from '../components/dashboard/ReservationsList';
 import ActivePartiesPanel from '../components/dashboard/ActivePartiesPanel';
 import WaitlistPanel from '../components/host/WaitlistPanel';
+import ManagerNotesPanel from '../components/dashboard/ManagerNotesPanel';
 import WalkInModal from '../components/host/WalkInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
@@ -264,6 +265,8 @@ export default function Dashboard() {
                 onCompleteService={handleCompleteService}
                 isLoading={isLoading}
               />
+
+              <ManagerNotesPanel language="en" />
             </div>
           </div>
         </div>

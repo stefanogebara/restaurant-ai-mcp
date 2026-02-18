@@ -27,6 +27,8 @@ const { getRestaurantByName, getAllActiveRestaurants } = require('./_lib/restaur
 const { getMultiTenantClient } = require('./_lib/multi-tenant-supabase');
 const { canAccommodateParty } = require('./_lib/supabase');
 const { trackUsage } = require('./_lib/usage-tracking');
+const { extractMemoriesFromWhatsApp } = require('./services/memoryExtractor');
+const { buildGuestContext } = require('./services/guestMemory');
 
 // AI provider configuration - supports any OpenAI-compatible API
 const AI_CONFIG = {
@@ -905,6 +907,22 @@ Guidelines:
 - If they give a time like "7pm", convert to 24-hour format (19:00)
 `;
 
+  // Inject guest memory context if available
+  if (session?.restaurant?.id && session?.sender_phone) {
+    try {
+      const guestContext = await buildGuestContext(
+        session.restaurant.id,
+        session.sender_phone,
+        userMessage
+      );
+      if (guestContext) {
+        systemPrompt += guestContext;
+      }
+    } catch (ctxErr) {
+      logger.warn('Guest context injection failed (non-fatal):', ctxErr.message);
+    }
+  }
+
   // Build messages array with system prompt as first message
   const messages = [
     { role: 'system', content: systemPrompt },
@@ -1207,15 +1225,27 @@ module.exports = async (req, res) => {
         }
 
         // Save updated conversation history (append user message + assistant response)
+        const updatedHistory = [
+          ...conversationHistory,
+          { role: 'user', content: messageText },
+          { role: 'assistant', content: response }
+        ];
         try {
-          const updatedHistory = [
-            ...conversationHistory,
-            { role: 'user', content: messageText },
-            { role: 'assistant', content: response }
-          ];
           await updateSessionConversationHistory(session.id, updatedHistory);
         } catch (historyErr) {
           logger.error(' Failed to save conversation history (non-fatal):', historyErr.message);
+        }
+
+        // Fire-and-forget memory extraction from WhatsApp conversation
+        if (session?.restaurant?.id && updatedHistory.length >= 4) {
+          extractMemoriesFromWhatsApp(
+            session.restaurant.id,
+            from,
+            updatedHistory,
+            session.id
+          ).catch(err => {
+            logger.warn('WhatsApp memory extraction failed (non-fatal):', err.message);
+          });
         }
 
         // Send response back via WhatsApp

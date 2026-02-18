@@ -22,6 +22,7 @@ const { twilioToOpenAI, openAIToTwilio } = require('./audio-converter');
 const { createSession, getSession, destroySession, getActiveSessions } = require('./session-manager');
 const { executeToolCall } = require('./tool-handler');
 const OpenAIRealtimeBackend = require('./backends/openai-realtime');
+const { buildGuestContext } = require('../services/guestMemory');
 
 const logger = createSecureLogger('VoiceWSServer');
 
@@ -187,10 +188,30 @@ async function handleStreamStart(ws, message) {
     setupBackendHandlers(ws, session, backend);
 
     // Build persona prompt and connect
-    const systemPrompt = buildPersonaPrompt(restaurantConfig, {
+    let systemPrompt = buildPersonaPrompt(restaurantConfig, {
       language: restaurantConfig.language,
       promptOverride: restaurantConfig.persona_prompt_override
     });
+
+    // Inject guest memory context if caller is known
+    if (callerNumber && restaurantId) {
+      try {
+        const guestContext = await buildGuestContext(
+          restaurantId,
+          callerNumber,
+          'incoming_call'
+        );
+        if (guestContext) {
+          systemPrompt += guestContext;
+          logger.info('Guest context injected into voice prompt', {
+            callerNumber: callerNumber.slice(0, 4) + '***',
+            contextLength: guestContext.length
+          });
+        }
+      } catch (ctxErr) {
+        logger.warn('Guest context injection failed (non-fatal):', ctxErr.message);
+      }
+    }
 
     const firstMessage = buildFirstMessage(
       restaurantConfig,
