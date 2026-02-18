@@ -121,6 +121,7 @@ module.exports = async (req, res) => {
       plan, // Subscription plan from Stripe
       selected_voice_id, // Voice selection from Step 2.5
       selected_voice_language, // Language code from selected voice (e.g., 'es', 'fr', 'en')
+      restaurant_learning, // AI restaurant learning data (session_id, restaurant_profile)
     } = req.body;
 
     // Validate required fields
@@ -461,7 +462,10 @@ module.exports = async (req, res) => {
         transfer_phone: phone_number
       },
       is_active: true,
-      onboarding_completed: true
+      onboarding_completed: true,
+      ...(restaurant_learning?.restaurant_profile ? {
+        restaurant_profile: restaurant_learning.restaurant_profile
+      } : {}),
     };
 
     // If we have a user_id, add it; otherwise use service role to insert

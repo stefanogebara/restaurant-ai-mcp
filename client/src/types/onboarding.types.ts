@@ -53,6 +53,12 @@ export interface OnboardingData {
   language?: string;
   // Step 1.5: Restaurant Profile (Optional)
   profile_data?: ProfileQuestionnaireData;
+  // Step 1.5b: Restaurant Learning (AI)
+  restaurant_learning?: {
+    session_id?: string;
+    restaurant_profile?: any;
+    skipped?: boolean;
+  };
   // Step 2: Contact & Business Hours
   phone_number: string;
   email: string;

@@ -75,6 +75,12 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
   prompt += `Your role is to help customers make reservations in a friendly, professional manner.\n`;
   prompt += `${lang.capabilities}\n\n`;
 
+  // 1b. Restaurant Identity (from restaurant learning profile)
+  const identitySection = buildRestaurantIdentitySection(restaurantConfig);
+  if (identitySection) {
+    prompt += identitySection;
+  }
+
   // 2. Restaurant details
   if (restaurantConfig.phone) {
     prompt += `Restaurant Phone: ${restaurantConfig.phone}\n`;
@@ -142,6 +148,110 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
 }
 
 /**
+ * Build the restaurant identity section from restaurant_profile data
+ * Priority: persona_prompt_override > template + restaurant_profile > template only
+ *
+ * This section is injected between the role definition and tools section
+ * to give the AI deep knowledge about the restaurant's personality.
+ *
+ * @param {Object} restaurantConfig - Restaurant configuration from DB
+ * @returns {string|null} Identity section or null if no profile data
+ */
+function buildRestaurantIdentitySection(restaurantConfig) {
+  const profile = restaurantConfig.restaurant_profile;
+  if (!profile) return null;
+
+  let section = '=== Restaurant Identity ===\n\n';
+
+  // Cuisine identity
+  if (profile.cuisine_identity) {
+    const cuisine = profile.cuisine_identity;
+    section += 'Cuisine:\n';
+    if (cuisine.primary_cuisine) section += `- Type: ${cuisine.primary_cuisine}\n`;
+    if (cuisine.style) section += `- Style: ${cuisine.style}\n`;
+    if (cuisine.philosophy) section += `- Philosophy: ${cuisine.philosophy}\n`;
+    if (cuisine.influences?.length > 0) {
+      section += `- Influences: ${cuisine.influences.join(', ')}\n`;
+    }
+    section += '\n';
+  }
+
+  // Atmosphere
+  if (profile.atmosphere) {
+    const atmo = profile.atmosphere;
+    section += 'Atmosphere:\n';
+    if (atmo.vibe) section += `- Vibe: ${atmo.vibe}\n`;
+    if (atmo.description) section += `- ${atmo.description}\n`;
+    if (atmo.dress_code) section += `- Dress code: ${atmo.dress_code}\n`;
+    section += '\n';
+  }
+
+  // Signature dishes
+  if (profile.signature_dishes?.length > 0) {
+    section += 'Signature Dishes:\n';
+    for (const dish of profile.signature_dishes) {
+      if (dish.name) {
+        section += `- ${dish.name}`;
+        if (dish.description) section += `: ${dish.description}`;
+        section += '\n';
+      }
+    }
+    section += '\n';
+  }
+
+  // Communication style / personality
+  if (profile.communication_style) {
+    const style = profile.communication_style;
+    section += 'Your Personality:\n';
+    if (style.tone) section += `- Tone: ${style.tone}\n`;
+    if (style.personality_traits?.length > 0) {
+      section += `- Be: ${style.personality_traits.join(', ')}\n`;
+    }
+    if (style.phrases_to_use?.length > 0) {
+      section += `- Use phrases like: ${style.phrases_to_use.join('; ')}\n`;
+    }
+    if (style.phrases_to_avoid?.length > 0) {
+      section += `- Avoid: ${style.phrases_to_avoid.join('; ')}\n`;
+    }
+    section += '\n';
+  }
+
+  // Guest experience
+  if (profile.guest_experience) {
+    const exp = profile.guest_experience;
+    if (exp.special_occasions) {
+      section += `Special Occasions: ${exp.special_occasions}\n`;
+    }
+    if (exp.dietary_accommodations) {
+      section += `Dietary Accommodations: ${exp.dietary_accommodations}\n`;
+    }
+    section += '\n';
+  }
+
+  // Things to know
+  if (profile.things_to_know?.length > 0) {
+    section += 'Important Things to Know:\n';
+    for (const thing of profile.things_to_know) {
+      section += `- ${thing}\n`;
+    }
+    section += '\n';
+  }
+
+  // Unique differentiators
+  if (profile.unique_differentiators?.length > 0) {
+    section += 'What Makes Us Special:\n';
+    for (const diff of profile.unique_differentiators) {
+      section += `- ${diff}\n`;
+    }
+    section += '\n';
+  }
+
+  section += '=== End Restaurant Identity ===\n\n';
+
+  return section;
+}
+
+/**
  * Build the first message the AI says when answering a call
  * @param {Object} restaurantConfig - Restaurant configuration from DB
  * @param {string} language - Language override
@@ -174,5 +284,6 @@ function buildFirstMessage(restaurantConfig, language) {
 module.exports = {
   buildPersonaPrompt,
   buildFirstMessage,
+  buildRestaurantIdentitySection,
   LANGUAGE_CONFIG
 };

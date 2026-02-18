@@ -1,13 +1,14 @@
 /**
  * Restaurant Onboarding Wizard - Modern Elegant Design
  *
- * 6-step onboarding flow for new restaurant customers:
+ * 7-step onboarding flow for new restaurant customers:
  * 1. Welcome & Restaurant Info
- * 2. Contact & Business Hours
- * 3. AI Voice Selection (choose ElevenLabs voice for phone agent)
- * 4. Table Configuration
- * 5. Reservation Settings
- * 6. Team Setup (Pro+ only)
+ * 2. AI Learning (research + interview + persona)
+ * 3. Contact & Business Hours
+ * 4. AI Voice Selection (choose ElevenLabs voice for phone agent)
+ * 5. Table Configuration
+ * 6. Reservation Settings
+ * 7. Team Setup (Pro+ only)
  *
  * Design: Modern Elegant with warm white backgrounds, burgundy accents,
  * Playfair Display headings, and clean minimalist aesthetic
@@ -18,6 +19,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import Step1Welcome from '../components/onboarding/Step1Welcome';
+import Step1_5RestaurantLearning from '../components/onboarding/Step1_5RestaurantLearning';
 import Step2Contact from '../components/onboarding/Step2Contact';
 import Step2_5VoiceSelection from '../components/onboarding/Step2_5VoiceSelection';
 import Step3Tables from '../components/onboarding/Step3Tables';
@@ -98,7 +100,7 @@ export default function Onboarding() {
 
   // Navigate to next step
   const nextStep = () => {
-    if (currentStep < 6) {
+    if (currentStep < 7) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -150,6 +152,7 @@ export default function Onboarding() {
   // Step metadata for progress bar
   const stepNames = [
     'Restaurant Info',
+    'AI Learning',
     'Contact & Hours',
     'Voice Selection',
     'Tables',
@@ -178,7 +181,7 @@ export default function Onboarding() {
                 </h1>
               </div>
               <div className="text-sm text-[#57534E] font-medium">
-                Step {currentStep} of 6
+                Step {currentStep} of 7
               </div>
             </div>
 
@@ -261,6 +264,15 @@ export default function Onboarding() {
                   />
                 )}
                 {currentStep === 2 && (
+                  <Step1_5RestaurantLearning
+                    key="step1.5"
+                    data={onboardingData}
+                    updateData={updateData}
+                    onNext={nextStep}
+                    onBack={prevStep}
+                  />
+                )}
+                {currentStep === 3 && (
                   <Step2Contact
                     key="step2"
                     data={onboardingData}
@@ -269,7 +281,7 @@ export default function Onboarding() {
                     onBack={prevStep}
                   />
                 )}
-                {currentStep === 3 && (
+                {currentStep === 4 && (
                   <Step2_5VoiceSelection
                     key="step2.5"
                     data={onboardingData}
@@ -278,7 +290,7 @@ export default function Onboarding() {
                     onPrev={prevStep}
                   />
                 )}
-                {currentStep === 4 && (
+                {currentStep === 5 && (
                   <Step3Tables
                     key="step3"
                     data={onboardingData}
@@ -287,7 +299,7 @@ export default function Onboarding() {
                     onBack={prevStep}
                   />
                 )}
-                {currentStep === 5 && (
+                {currentStep === 6 && (
                   <Step4Settings
                     key="step4"
                     data={onboardingData}
@@ -296,7 +308,7 @@ export default function Onboarding() {
                     onBack={prevStep}
                   />
                 )}
-                {currentStep === 6 && (
+                {currentStep === 7 && (
                   <Step5Team
                     key="step5"
                     data={onboardingData}

@@ -1,0 +1,142 @@
+/**
+ * POST /api/restaurant-learning/research
+ *
+ * Triggers restaurant intelligence gathering and creates an interview session.
+ * Body: { restaurant_name, city, country, website? }
+ * Response: { session_id, research_results, initial_ai_message }
+ *
+ * Requires authentication (verifyAuth pattern).
+ */
+
+const { supabaseAdmin } = require('../_lib/supabase');
+const { createSecureLogger } = require('../_lib/secure-logger');
+const { verifyAuth } = require('../_lib/auth');
+const { checkAndApplyRateLimit } = require('../_lib/rate-limit');
+const { gatherRestaurantIntelligence, isUrlSafe } = require('../services/restaurantIntelligence');
+const { startOrResumeInterview } = require('../services/learningInterview');
+const crypto = require('crypto');
+
+const logger = createSecureLogger('RestaurantResearch');
+
+module.exports = async (req, res) => {
+  // CORS headers
+  const allowedOrigin = process.env.CLIENT_URL;
+  if (allowedOrigin) {
+    res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Rate limiting (chat tier - expensive AI operations)
+  const blocked = await checkAndApplyRateLimit(req, res, 'chat');
+  if (blocked) return;
+
+  // Require authentication
+  const auth = await verifyAuth(req);
+  if (auth.error) {
+    return res.status(auth.status).json({ error: auth.error });
+  }
+
+  const restaurantId = auth.user.restaurant_id;
+  if (!restaurantId) {
+    return res.status(400).json({ error: 'No restaurant associated with this account' });
+  }
+
+  try {
+    const { restaurant_name, city, country, website } = req.body;
+
+    if (!restaurant_name || !city || !country) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        required: ['restaurant_name', 'city', 'country']
+      });
+    }
+
+    // Input length validation
+    if (restaurant_name.length > 200 || city.length > 100 || country.length > 100) {
+      return res.status(400).json({ error: 'Input fields exceed maximum length' });
+    }
+
+    // SSRF protection: validate website URL if provided
+    if (website) {
+      if (typeof website !== 'string' || website.length > 2000 || !isUrlSafe(website)) {
+        return res.status(400).json({ error: 'Invalid or disallowed website URL' });
+      }
+    }
+
+    logger.info('Starting restaurant research:', { restaurant_name, city, country });
+
+    // Update learning status
+    if (supabaseAdmin) {
+      await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .update({ learning_status: 'scraping' })
+        .eq('id', restaurantId);
+    }
+
+    // Gather intelligence (all 3 tiers in parallel)
+    const intelligenceResults = await gatherRestaurantIntelligence({
+      restaurant_name,
+      city,
+      country,
+      website,
+      restaurant_config_id: restaurantId
+    });
+
+    // Update learning status
+    if (supabaseAdmin) {
+      await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .update({ learning_status: 'scraped' })
+        .eq('id', restaurantId);
+    }
+
+    // Create interview session
+    const sessionId = crypto.randomUUID();
+    const interviewState = await startOrResumeInterview(
+      sessionId,
+      restaurantId,
+      intelligenceResults
+    );
+
+    // Update learning status
+    if (supabaseAdmin) {
+      await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .update({ learning_status: 'interviewing' })
+        .eq('id', restaurantId);
+    }
+
+    logger.info('Research complete, interview started:', {
+      session_id: sessionId,
+      tiers_completed: intelligenceResults.tiers_completed
+    });
+
+    return res.status(200).json({
+      success: true,
+      session_id: sessionId,
+      research_results: {
+        summary: intelligenceResults.summary,
+        tiers_completed: intelligenceResults.tiers_completed
+      },
+      initial_ai_message: interviewState.ai_message,
+      topics_covered: []
+    });
+  } catch (error) {
+    logger.error('Research endpoint error:', error);
+    return res.status(500).json({
+      error: 'Failed to complete restaurant research'
+    });
+  }
+};

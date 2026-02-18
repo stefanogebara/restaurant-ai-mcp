@@ -87,6 +87,10 @@
     {
       "path": "/api/cron/proactive-comms",
       "schedule": "0 10 * * 0"
+    },
+    {
+      "path": "/api/cron/refresh-restaurant-profiles",
+      "schedule": "0 3 * * 1"
     }
   ]
 }
