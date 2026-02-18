@@ -97,7 +97,7 @@ export default function FAQSection() {
             </p>
             <button
               onClick={scrollToContact}
-              className="bg-[#9F1239] text-white px-8 py-4 text-sm tracking-widest uppercase font-bold hover:bg-[#881337] transition-all duration-300 rounded-2xl inline-flex items-center gap-2"
+              className="bg-[#9F1239] text-white px-8 py-4 text-[15px] font-semibold hover:bg-[#881337] transition-all duration-300 rounded-2xl inline-flex items-center gap-2"
             >
               Contact Support
               <ArrowRight className="w-4 h-4" />

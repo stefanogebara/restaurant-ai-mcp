@@ -88,13 +88,13 @@ export default function LandingNav() {
         >
           <button
             onClick={() => navigate('/login')}
-            className="text-[#1C1917] text-sm font-bold tracking-widest uppercase hover:text-[#9F1239] transition-colors"
+            className="text-[#1C1917] text-sm font-semibold hover:text-[#9F1239] transition-colors"
           >
             Login
           </button>
           <button
             onClick={() => navigate('/onboarding')}
-            className="bg-[#1C1917] text-[#FAFAF9] px-6 py-2.5 rounded-full hover:bg-[#9F1239] transition-colors duration-300 text-sm tracking-widest font-bold uppercase"
+            className="bg-[#1C1917] text-[#FAFAF9] px-6 py-2.5 rounded-full hover:bg-[#9F1239] transition-colors duration-300 text-sm font-semibold"
           >
             Get Started
           </button>
@@ -154,13 +154,13 @@ export default function LandingNav() {
           <div className="pt-4 border-t border-[#E7E5E4] space-y-3">
             <button
               onClick={() => { navigate('/login'); setIsMobileMenuOpen(false); }}
-              className="block w-full text-center text-sm font-bold tracking-widest uppercase text-[#1C1917] py-2"
+              className="block w-full text-center text-sm font-semibold text-[#1C1917] py-2"
             >
               Login
             </button>
             <button
               onClick={() => { navigate('/onboarding'); setIsMobileMenuOpen(false); }}
-              className="block w-full bg-[#9F1239] text-white text-center px-6 py-3 text-sm tracking-widest font-bold uppercase rounded-full"
+              className="block w-full bg-[#9F1239] text-white text-center px-6 py-3 text-sm font-semibold rounded-full"
             >
               Get Started
             </button>

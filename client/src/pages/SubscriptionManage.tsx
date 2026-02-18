@@ -183,7 +183,7 @@ export default function SubscriptionManage() {
               </p>
               <button
                 onClick={() => navigate('/#pricing')}
-                className="px-8 py-4 bg-[#9F1239] hover:bg-[#881337] text-white font-bold text-sm tracking-widest uppercase rounded-full inline-flex items-center gap-2 group transition-all duration-300 shadow-lg shadow-[#9F1239]/20"
+                className="px-8 py-4 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold text-[15px] rounded-full inline-flex items-center gap-2 group transition-all duration-300 shadow-lg shadow-[#9F1239]/20"
               >
                 View Pricing Plans
                 <ThiingsIcon name="arrow-right" size="xs" />
@@ -308,7 +308,7 @@ export default function SubscriptionManage() {
             <button
               onClick={handleManageSubscription}
               disabled={managingSubscription}
-              className="w-full px-6 py-4 bg-[#9F1239] hover:bg-[#881337] text-white font-bold text-sm tracking-widest uppercase rounded-full flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg shadow-[#9F1239]/20"
+              className="w-full px-6 py-4 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold text-[15px] rounded-full flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg shadow-[#9F1239]/20"
             >
               {managingSubscription ? (
                 <>
@@ -326,7 +326,7 @@ export default function SubscriptionManage() {
 
             <button
               onClick={() => navigate('/')}
-              className="w-full px-6 py-4 border border-[#E7E5E4] text-[#1C1917] hover:bg-[#F5F5F4] font-bold text-sm tracking-widest uppercase rounded-full transition-all duration-300"
+              className="w-full px-6 py-4 border border-[#E7E5E4] text-[#1C1917] hover:bg-[#F5F5F4] font-semibold text-[15px] rounded-full transition-all duration-300"
             >
               Back to Home
             </button>
@@ -342,7 +342,7 @@ export default function SubscriptionManage() {
             <p className="text-sm text-[#A8A29E]">
               Need help?{' '}
               <a
-                href="mailto:stefanogebara@gmail.com"
+                href="mailto:hello@seatable.io"
                 className="text-[#9F1239] hover:text-[#881337] transition-colors"
               >
                 Contact our support team

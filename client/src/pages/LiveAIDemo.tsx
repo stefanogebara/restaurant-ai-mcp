@@ -45,7 +45,7 @@ export default function LiveAIDemo() {
 
           <Link
             to="/onboarding"
-            className="px-5 py-2 bg-[#1C1917] text-white text-xs tracking-widest uppercase font-bold hover:bg-[#9F1239] transition-all duration-300 rounded-full"
+            className="px-5 py-2 bg-[#1C1917] text-white text-sm font-semibold hover:bg-[#9F1239] transition-all duration-300 rounded-full"
           >
             Get Started
           </Link>
@@ -308,7 +308,7 @@ export default function LiveAIDemo() {
             </p>
             <button
               onClick={() => navigate('/#contact')}
-              className="bg-[#9F1239] text-white px-8 py-4 text-sm tracking-widest uppercase font-bold hover:bg-[#881337] transition-all duration-300 rounded-full shadow-xl shadow-[#9F1239]/20 inline-flex items-center gap-2"
+              className="bg-[#9F1239] text-white px-8 py-4 text-[15px] font-semibold hover:bg-[#881337] transition-all duration-300 rounded-full shadow-xl shadow-[#9F1239]/20 inline-flex items-center gap-2"
             >
               Contact Sales
               <ThiingsIcon name="arrow-right" size="xs" />

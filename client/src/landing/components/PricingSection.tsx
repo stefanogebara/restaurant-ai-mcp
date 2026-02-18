@@ -186,7 +186,7 @@ export default function PricingSection() {
                   id ? handleSubscribe(id, tier.name) : scrollToContact();
                 }}
                 disabled={loadingPlan === tier.name}
-                className={`w-full px-6 py-4 font-bold text-sm tracking-widest uppercase transition-all duration-300 rounded-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`w-full px-6 py-4 font-semibold text-[15px] transition-all duration-300 rounded-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                   tier.highlighted
                     ? 'bg-[#9F1239] text-white hover:bg-[#881337] shadow-xl shadow-[#9F1239]/20'
                     : 'border border-[#1C1917] text-[#1C1917] hover:bg-[#1C1917] hover:text-white'
@@ -221,7 +221,7 @@ export default function PricingSection() {
           </p>
           <button
             onClick={scrollToContact}
-            className="text-[#9F1239] hover:text-[#881337] font-bold text-sm uppercase tracking-widest inline-flex items-center gap-2 transition-colors"
+            className="text-[#9F1239] hover:text-[#881337] font-semibold text-sm inline-flex items-center gap-2 transition-colors"
           >
             Contact us for enterprise pricing
             <ArrowRight className="w-4 h-4" />

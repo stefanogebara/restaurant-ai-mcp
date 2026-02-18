@@ -32,7 +32,7 @@ export default function Footer() {
             <button onClick={() => scrollToSection('faq')} className="hover:text-white transition-colors">
               FAQ
             </button>
-            <a href="mailto:stefanogebara@gmail.com" className="hover:text-white transition-colors">
+            <a href="mailto:hello@seatable.io" className="hover:text-white transition-colors">
               Contact
             </a>
           </div>

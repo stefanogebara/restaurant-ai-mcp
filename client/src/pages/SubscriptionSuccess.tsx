@@ -194,14 +194,14 @@ export default function SubscriptionSuccess() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
                   onClick={() => navigate('/onboarding')}
-                  className="flex-1 px-6 py-4 bg-[#9F1239] hover:bg-[#881337] text-white font-bold text-sm tracking-widest uppercase rounded-2xl flex items-center justify-center gap-2 group transition-all duration-300 shadow-lg shadow-[#9F1239]/20"
+                  className="flex-1 px-6 py-4 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold text-[15px] rounded-2xl flex items-center justify-center gap-2 group transition-all duration-300 shadow-lg shadow-[#9F1239]/20"
                 >
                   Continue to Onboarding
                   <ThiingsIcon name="arrow-right" size="xs" />
                 </button>
                 <button
                   onClick={() => navigate('/subscription/manage')}
-                  className="flex-1 px-6 py-4 border border-[#E7E5E4] text-[#1C1917] hover:bg-[#F5F5F4] font-bold text-sm tracking-widest uppercase rounded-2xl transition-all duration-300"
+                  className="flex-1 px-6 py-4 border border-[#E7E5E4] text-[#1C1917] hover:bg-[#F5F5F4] font-semibold text-[15px] rounded-2xl transition-all duration-300"
                 >
                   Manage Subscription
                 </button>
@@ -223,7 +223,7 @@ export default function SubscriptionSuccess() {
             >
               Need help getting started?{' '}
               <a
-                href="mailto:stefanogebara@gmail.com"
+                href="mailto:hello@seatable.io"
                 className="text-[#9F1239] hover:text-[#881337] transition-colors"
               >
                 Contact our support team

@@ -42,7 +42,7 @@ export default function FeaturesGrid() {
             </p>
             <button
               onClick={() => navigate('/live-demo')}
-              className="absolute bottom-8 left-8 md:bottom-10 md:left-10 flex items-center gap-2 text-[#9F1239] font-bold text-sm uppercase tracking-wider cursor-pointer group-hover:translate-x-2 transition-transform"
+              className="absolute bottom-8 left-8 md:bottom-10 md:left-10 flex items-center gap-2 text-[#9F1239] font-semibold text-sm cursor-pointer group-hover:translate-x-2 transition-transform"
             >
               Experience Demo <ArrowRight size={16} />
             </button>
@@ -139,7 +139,7 @@ export default function FeaturesGrid() {
         >
           <button
             onClick={() => navigate('/live-demo')}
-            className="bg-[#9F1239] text-white px-8 py-4 text-sm tracking-widest uppercase font-bold hover:bg-[#881337] transition-all duration-300 shadow-xl shadow-[#9F1239]/20 rounded-full inline-flex items-center gap-2"
+            className="bg-[#9F1239] text-white px-8 py-4 text-[15px] font-semibold hover:bg-[#881337] transition-all duration-300 shadow-xl shadow-[#9F1239]/20 rounded-full inline-flex items-center gap-2"
           >
             See It In Action
             <ArrowRight size={16} />

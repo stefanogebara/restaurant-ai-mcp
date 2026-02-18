@@ -57,13 +57,13 @@ export default function HeroSection() {
         >
           <button
             onClick={() => navigate('/live-demo')}
-            className="bg-[#9F1239] text-white px-8 py-4 text-sm tracking-widest uppercase font-bold hover:bg-[#881337] transition-all duration-300 shadow-xl shadow-[#9F1239]/20 rounded-full"
+            className="bg-[#9F1239] text-white px-8 py-4 text-[15px] font-semibold hover:bg-[#881337] transition-all duration-300 shadow-xl shadow-[#9F1239]/20 rounded-full"
           >
             Try Live Demo
           </button>
           <button
             onClick={() => navigate('/onboarding')}
-            className="border border-[#1C1917] text-[#1C1917] px-8 py-4 text-sm tracking-widest uppercase font-bold hover:bg-[#1C1917] hover:text-white transition-all duration-300 rounded-full"
+            className="border border-[#1C1917] text-[#1C1917] px-8 py-4 text-[15px] font-semibold hover:bg-[#1C1917] hover:text-white transition-all duration-300 rounded-full"
           >
             Start Free Trial
           </button>

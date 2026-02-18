@@ -17,13 +17,13 @@ export default function NotFound() {
         <div className="flex items-center justify-center gap-4">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 bg-[#9F1239] hover:bg-[#881337] text-white font-bold text-sm tracking-widest uppercase rounded-full px-6 py-3 shadow-sm transition-colors"
+            className="inline-flex items-center gap-2 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold text-[15px] rounded-full px-6 py-3 shadow-sm transition-colors"
           >
             Go Home
           </Link>
           <button
             onClick={() => window.history.back()}
-            className="inline-flex items-center gap-2 border border-[#1C1917] text-[#1C1917] hover:bg-[#1C1917] hover:text-white font-bold text-sm tracking-widest uppercase rounded-full px-6 py-3 transition-colors"
+            className="inline-flex items-center gap-2 border border-[#1C1917] text-[#1C1917] hover:bg-[#1C1917] hover:text-white font-semibold text-[15px] rounded-full px-6 py-3 transition-colors"
           >
             Go Back
           </button>
