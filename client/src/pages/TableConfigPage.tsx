@@ -158,13 +158,13 @@ export default function TableConfigPage() {
 
   return (
     <DashboardLayout>
-    <div className="dashboard min-h-screen bg-[#FAFAF9]">
+    <div className="dashboard min-h-screen bg-[#F5F5F4]">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-[#E7E5E4] sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">Table Configuration</h1>
+              <h1 className="text-2xl font-serif font-bold text-[#1C1917] tracking-tight">Table Configuration</h1>
               <p className="text-sm text-[#78716C] mt-1">Manage tables, capacity, and combination rules</p>
             </div>
             <div className="flex items-center gap-3">
@@ -191,27 +191,27 @@ export default function TableConfigPage() {
       {/* Stats Cards */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-2xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
             <div className="h-1 w-12 rounded-full mb-3 bg-[#22c55e]" />
             <div className="text-3xl font-bold text-[#1C1917] tabular-nums">{stats.active || 0}</div>
             <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Active Tables</div>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-2xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
             <div className="h-1 w-12 rounded-full mb-3 bg-[#d97706]" />
             <div className="text-3xl font-bold text-[#1C1917] tabular-nums">{stats.flexible || 0}</div>
             <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Flexible</div>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-2xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
             <div className="h-1 w-12 rounded-full mb-3 bg-[#9F1239]" />
             <div className="text-3xl font-bold text-[#1C1917] tabular-nums">{stats.fixed || 0}</div>
             <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Fixed</div>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-2xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
             <div className="h-1 w-12 rounded-full mb-3 bg-[#1C1917]" />
             <div className="text-3xl font-bold text-[#1C1917] tabular-nums">{stats.total_capacity || 0}</div>
             <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Total Capacity</div>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-2xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
             <div className="h-1 w-12 rounded-full mb-3 bg-[#7c3aed]" />
             <div className="text-3xl font-bold text-[#1C1917] tabular-nums">{stats.locations?.length || 0}</div>
             <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Locations</div>
@@ -235,7 +235,7 @@ export default function TableConfigPage() {
                 .map((table) => (
                   <div
                     key={table.id}
-                    className={`bg-white rounded-xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow cursor-pointer`}
+                    className={`bg-white rounded-2xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow cursor-pointer`}
                     onClick={() => openEditModal(table)}
                   >
                     <div className="flex items-start justify-between mb-3">

@@ -82,7 +82,7 @@ export default function SubscriptionSuccess() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-[#E7E5E4]">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="font-serif text-2xl text-[#1C1917]">
-            Seatable<span className="text-[#9F1239]">.</span>
+            seatable<span className="text-[#9F1239]">.</span>
           </Link>
         </div>
       </header>
@@ -113,7 +113,7 @@ export default function SubscriptionSuccess() {
               transition={{ delay: 0.3 }}
               className="font-serif text-4xl text-[#1C1917] mb-4"
             >
-              Welcome to Seatable!
+              Welcome to seatable!
             </motion.h1>
 
             {/* Plan Badge */}

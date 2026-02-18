@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seatable - Booking Confirmation</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #FAFAF9; color: #1C1917; -webkit-font-smoothing: antialiased; min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* -- TOP BAR -- */
+  .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 40px; border-bottom: 1px solid #E7E5E4; background: #fff; }
+  .topbar-logo { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 600; }
+  .topbar-logo span { color: #9F1239; }
+  .topbar-help { font-size: 13px; color: #78716C; }
+
+  /* -- CONFIRMATION -- */
+  .confirmation { flex: 1; display: flex; align-items: center; justify-content: center; padding: 48px; }
+  .confirm-container { max-width: 480px; width: 100%; text-align: center; }
+
+  /* Checkmark */
+  .confirm-icon { width: 80px; height: 80px; border-radius: 50%; background: rgba(159,18,57,0.08); display: flex; align-items: center; justify-content: center; margin: 0 auto 28px; }
+  .confirm-icon svg { width: 36px; height: 36px; }
+
+  .confirm-container h1 { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 500; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .confirm-container .subtitle { font-size: 15px; color: #78716C; font-weight: 300; margin-bottom: 40px; }
+
+  /* Details Card */
+  .details-card { background: #fff; border: 1px solid #E7E5E4; border-radius: 16px; padding: 32px; text-align: left; margin-bottom: 24px; }
+  .details-restaurant { display: flex; align-items: center; gap: 16px; padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid #F5F5F4; }
+  .details-restaurant-img { width: 56px; height: 56px; border-radius: 14px; background: linear-gradient(135deg, #292524, #44403C); flex-shrink: 0; }
+  .details-restaurant h3 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+  .details-restaurant p { font-size: 13px; color: #78716C; font-weight: 300; margin-top: 2px; }
+
+  .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
+  .detail-row:not(:last-child) { border-bottom: 1px solid #F5F5F4; }
+  .detail-label { font-size: 13px; color: #78716C; }
+  .detail-value { font-size: 14px; font-weight: 500; color: #1C1917; }
+  .detail-value.id { font-family: monospace; font-size: 13px; color: #9F1239; background: rgba(159,18,57,0.06); padding: 3px 10px; border-radius: 6px; }
+
+  .detail-divider { border: none; border-top: 1px dashed #E7E5E4; margin: 12px 0; }
+
+  /* Status Badge */
+  .status-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; background: rgba(22,163,74,0.06); border-radius: 100px; margin-bottom: 20px; }
+  .status-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: #16a34a; }
+  .status-badge span { font-size: 13px; font-weight: 600; color: #16a34a; }
+
+  /* Actions */
+  .confirm-actions { display: flex; gap: 12px; }
+  .btn-primary { flex: 1; padding: 14px; border: none; border-radius: 100px; font-size: 14px; font-weight: 600; background: #9F1239; color: #fff; cursor: pointer; font-family: inherit; }
+  .btn-secondary { flex: 1; padding: 14px; border: 1px solid #D6D3D1; border-radius: 100px; font-size: 14px; font-weight: 500; background: #fff; color: #57534E; cursor: pointer; font-family: inherit; }
+
+  /* Cancel Note */
+  .cancel-note { font-size: 12px; color: #A8A29E; margin-top: 20px; }
+</style>
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="topbar-logo">seatable<span>.</span></div>
+  <span class="topbar-help">Need help? Contact the restaurant</span>
+</div>
+
+<!-- Confirmation -->
+<div class="confirmation">
+  <div class="confirm-container">
+    <!-- Checkmark -->
+    <div class="confirm-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#9F1239" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    </div>
+
+    <div class="status-badge">
+      <div class="dot"></div>
+      <span>Confirmed</span>
+    </div>
+
+    <h1>Reservation Confirmed</h1>
+    <p class="subtitle">We've sent a confirmation to your email and phone.</p>
+
+    <!-- Details Card -->
+    <div class="details-card">
+      <div class="details-restaurant">
+        <div class="details-restaurant-img"></div>
+        <div>
+          <h3>Celeri</h3>
+          <p>Malasa&ntilde;a, Madrid</p>
+        </div>
+      </div>
+
+      <div class="detail-row">
+        <span class="detail-label">Date</span>
+        <span class="detail-value">Tuesday, February 18, 2026</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Time</span>
+        <span class="detail-value">19:30</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Party size</span>
+        <span class="detail-value">2 guests</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Guest</span>
+        <span class="detail-value">Maria Gonzalez</span>
+      </div>
+
+      <hr class="detail-divider">
+
+      <div class="detail-row">
+        <span class="detail-label">Confirmation ID</span>
+        <span class="detail-value id">CEL-2026-0218-A7K3</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Estimated duration</span>
+        <span class="detail-value">~1h 30min</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="confirm-actions">
+      <button class="btn-secondary">Add to Calendar</button>
+      <button class="btn-primary">New Reservation</button>
+    </div>
+
+    <p class="cancel-note">Free cancellation up to 2 hours before your reservation.</p>
+  </div>
+</div>
+
+</body>
+</html>

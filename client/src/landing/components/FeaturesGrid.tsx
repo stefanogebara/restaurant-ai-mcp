@@ -139,7 +139,7 @@ export default function FeaturesGrid() {
         >
           <button
             onClick={() => navigate('/live-demo')}
-            className="bg-[#9F1239] text-white px-8 py-4 text-sm tracking-widest uppercase font-bold hover:bg-[#881337] transition-all duration-300 shadow-xl shadow-[#9F1239]/20 rounded-2xl inline-flex items-center gap-2"
+            className="bg-[#9F1239] text-white px-8 py-4 text-sm tracking-widest uppercase font-bold hover:bg-[#881337] transition-all duration-300 shadow-xl shadow-[#9F1239]/20 rounded-full inline-flex items-center gap-2"
           >
             See It In Action
             <ArrowRight size={16} />

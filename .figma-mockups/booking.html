@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seatable - Booking Page Concept</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #FAFAF9; color: #1C1917; -webkit-font-smoothing: antialiased; min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* ── TOP BAR ── */
+  .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 40px; border-bottom: 1px solid #E7E5E4; background: #fff; }
+  .topbar-logo { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 600; }
+  .topbar-logo span { color: #9F1239; }
+  .topbar-help { font-size: 13px; color: #78716C; }
+
+  /* ── LAYOUT ── */
+  .booking-layout { display: flex; flex: 1; max-width: 1200px; margin: 48px auto; width: 100%; padding: 0 40px; gap: 64px; }
+
+  /* ── LEFT: RESTAURANT INFO ── */
+  .restaurant-col { flex: 0 0 340px; }
+  .restaurant-image { width: 100%; height: 220px; border-radius: 20px; background: linear-gradient(135deg, #292524 0%, #44403C 100%); margin-bottom: 28px; display: flex; align-items: flex-end; padding: 24px; }
+  .restaurant-image-overlay { color: #fff; }
+  .restaurant-image-overlay h2 { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 500; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .restaurant-image-overlay p { font-size: 13px; color: #D6D3D1; font-weight: 300; }
+
+  .restaurant-details { margin-bottom: 28px; }
+  .detail-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #F5F5F4; font-size: 14px; }
+  .detail-icon { width: 32px; height: 32px; border-radius: 8px; background: #F5F5F4; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #78716C; flex-shrink: 0; }
+  .detail-label { color: #A8A29E; font-size: 12px; }
+  .detail-value { font-weight: 500; color: #1C1917; }
+
+  .restaurant-rating { display: flex; align-items: center; gap: 8px; padding: 16px; background: #fff; border: 1px solid #E7E5E4; border-radius: 12px; }
+  .rating-score { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  .rating-stars { font-size: 14px; color: #d97706; letter-spacing: 2px; }
+  .rating-count { font-size: 12px; color: #A8A29E; }
+
+  /* ── RIGHT: BOOKING FORM ── */
+  .booking-col { flex: 1; max-width: 540px; }
+  .booking-header { margin-bottom: 36px; }
+  .booking-header h1 { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 500; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .booking-header p { font-size: 15px; color: #78716C; font-weight: 300; }
+
+  .form-section { margin-bottom: 32px; }
+  .form-label { font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: #78716C; margin-bottom: 12px; }
+
+  /* Date Picker */
+  .date-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 8px; }
+  .date-header { font-size: 11px; font-weight: 500; color: #A8A29E; text-align: center; padding: 8px 0; }
+  .date-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 13px; border-radius: 10px; cursor: pointer; font-weight: 400; color: #57534E; }
+  .date-cell:hover { background: #F5F5F4; }
+  .date-cell.today { font-weight: 600; color: #1C1917; }
+  .date-cell.selected { background: #1C1917; color: #fff; font-weight: 600; }
+  .date-cell.disabled { color: #D6D3D1; pointer-events: none; }
+
+  /* Time Slots */
+  .time-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .time-slot { padding: 12px; text-align: center; border-radius: 10px; border: 1px solid #E7E5E4; font-size: 14px; font-weight: 500; cursor: pointer; background: #fff; color: #57534E; }
+  .time-slot:hover { border-color: #D6D3D1; background: #FAFAF9; }
+  .time-slot.selected { border-color: #9F1239; background: rgba(159,18,57,0.04); color: #9F1239; font-weight: 600; }
+  .time-slot.unavailable { color: #D6D3D1; border-color: #F5F5F4; pointer-events: none; background: #FAFAF9; }
+
+  /* Party Size */
+  .party-grid { display: flex; gap: 8px; }
+  .party-btn { width: 48px; height: 48px; border-radius: 12px; border: 1px solid #E7E5E4; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 500; cursor: pointer; background: #fff; color: #57534E; }
+  .party-btn:hover { border-color: #D6D3D1; }
+  .party-btn.selected { border-color: #9F1239; background: rgba(159,18,57,0.04); color: #9F1239; font-weight: 700; }
+
+  /* Guest Info */
+  .input-group { margin-bottom: 14px; }
+  .input-group label { display: block; font-size: 13px; font-weight: 500; color: #57534E; margin-bottom: 6px; }
+  .input-group input, .input-group textarea { width: 100%; padding: 12px 16px; border: 1px solid #E7E5E4; border-radius: 10px; font-size: 14px; background: #fff; font-family: inherit; color: #1C1917; outline: none; }
+  .input-group input:focus, .input-group textarea:focus { border-color: #9F1239; box-shadow: 0 0 0 3px rgba(159,18,57,0.06); }
+  .input-group input::placeholder, .input-group textarea::placeholder { color: #D6D3D1; }
+  .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .input-group textarea { resize: none; height: 80px; }
+
+  /* Submit */
+  .submit-btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; background: #9F1239; color: #fff; cursor: pointer; font-family: inherit; letter-spacing: 0.2px; }
+  .submit-note { text-align: center; font-size: 12px; color: #A8A29E; margin-top: 12px; }
+
+  /* ── SUMMARY CARD ── */
+  .summary { background: #fff; border: 1px solid #E7E5E4; border-radius: 16px; padding: 24px; margin-top: 24px; }
+  .summary h3 { font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+  .summary-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; }
+  .summary-row .label { color: #78716C; }
+  .summary-row .value { font-weight: 500; }
+  .summary-divider { border: none; border-top: 1px dashed #E7E5E4; margin: 12px 0; }
+</style>
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="topbar-logo">seatable<span>.</span></div>
+  <span class="topbar-help">Need help? Contact the restaurant</span>
+</div>
+
+<!-- Layout -->
+<div class="booking-layout">
+  <!-- Left: Restaurant Info -->
+  <div class="restaurant-col">
+    <div class="restaurant-image">
+      <div class="restaurant-image-overlay">
+        <h2>Celeri</h2>
+        <p>Farm-to-table &middot; Malasa&ntilde;a, Madrid</p>
+      </div>
+    </div>
+
+    <div class="restaurant-details">
+      <div class="detail-row">
+        <div class="detail-icon">&#9737;</div>
+        <div><div class="detail-label">Cuisine</div><div class="detail-value">Mediterranean, Italian</div></div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-icon">&#9201;</div>
+        <div><div class="detail-label">Hours today</div><div class="detail-value">12:00 &ndash; 15:30, 19:00 &ndash; 23:00</div></div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-icon">&#9790;</div>
+        <div><div class="detail-label">Atmosphere</div><div class="detail-value">Intimate, candlelit</div></div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-icon">&#8364;</div>
+        <div><div class="detail-label">Price range</div><div class="detail-value">&euro;&euro;&euro;</div></div>
+      </div>
+    </div>
+
+    <div class="restaurant-rating">
+      <div>
+        <div class="rating-score">4.7</div>
+      </div>
+      <div>
+        <div class="rating-stars">&#9733;&#9733;&#9733;&#9733;&#9734;</div>
+        <div class="rating-count">284 reviews on Google</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Booking Form -->
+  <div class="booking-col">
+    <div class="booking-header">
+      <h1>Reserve a table</h1>
+      <p>Choose your date, time, and party size below.</p>
+    </div>
+
+    <!-- Date -->
+    <div class="form-section">
+      <div class="form-label">Select Date &mdash; February 2026</div>
+      <div class="date-grid">
+        <div class="date-header">Mon</div><div class="date-header">Tue</div><div class="date-header">Wed</div><div class="date-header">Thu</div><div class="date-header">Fri</div><div class="date-header">Sat</div><div class="date-header">Sun</div>
+        <div class="date-cell disabled">9</div><div class="date-cell disabled">10</div><div class="date-cell disabled">11</div><div class="date-cell disabled">12</div><div class="date-cell disabled">13</div><div class="date-cell disabled">14</div><div class="date-cell disabled">15</div>
+        <div class="date-cell disabled">16</div><div class="date-cell disabled">17</div><div class="date-cell today selected">18</div><div class="date-cell">19</div><div class="date-cell">20</div><div class="date-cell">21</div><div class="date-cell">22</div>
+        <div class="date-cell">23</div><div class="date-cell">24</div><div class="date-cell">25</div><div class="date-cell">26</div><div class="date-cell">27</div><div class="date-cell">28</div><div class="date-cell disabled"></div>
+      </div>
+    </div>
+
+    <!-- Time -->
+    <div class="form-section">
+      <div class="form-label">Select Time</div>
+      <div class="time-grid">
+        <div class="time-slot">12:00</div>
+        <div class="time-slot">12:30</div>
+        <div class="time-slot unavailable">13:00</div>
+        <div class="time-slot">13:30</div>
+        <div class="time-slot">19:00</div>
+        <div class="time-slot selected">19:30</div>
+        <div class="time-slot">20:00</div>
+        <div class="time-slot">20:30</div>
+        <div class="time-slot">21:00</div>
+        <div class="time-slot unavailable">21:30</div>
+        <div class="time-slot">22:00</div>
+        <div class="time-slot unavailable">22:30</div>
+      </div>
+    </div>
+
+    <!-- Party Size -->
+    <div class="form-section">
+      <div class="form-label">Party Size</div>
+      <div class="party-grid">
+        <div class="party-btn">1</div>
+        <div class="party-btn selected">2</div>
+        <div class="party-btn">3</div>
+        <div class="party-btn">4</div>
+        <div class="party-btn">5</div>
+        <div class="party-btn">6</div>
+        <div class="party-btn">7</div>
+        <div class="party-btn">8+</div>
+      </div>
+    </div>
+
+    <!-- Guest Info -->
+    <div class="form-section">
+      <div class="form-label">Your Details</div>
+      <div class="input-row">
+        <div class="input-group"><label>First name</label><input type="text" placeholder="Maria"></div>
+        <div class="input-group"><label>Last name</label><input type="text" placeholder="Gonzalez"></div>
+      </div>
+      <div class="input-row">
+        <div class="input-group"><label>Phone</label><input type="tel" placeholder="+34 612 345 678"></div>
+        <div class="input-group"><label>Email</label><input type="email" placeholder="maria@email.com"></div>
+      </div>
+      <div class="input-group"><label>Special requests <span style="color:#A8A29E;font-weight:400">(optional)</span></label><textarea placeholder="Allergies, celebrations, seating preferences..."></textarea></div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary">
+      <h3>Reservation Summary</h3>
+      <div class="summary-row"><span class="label">Restaurant</span><span class="value">Celeri</span></div>
+      <div class="summary-row"><span class="label">Date</span><span class="value">Tue, Feb 18, 2026</span></div>
+      <div class="summary-row"><span class="label">Time</span><span class="value">19:30</span></div>
+      <div class="summary-row"><span class="label">Party size</span><span class="value">2 guests</span></div>
+      <hr class="summary-divider">
+      <div class="summary-row"><span class="label">Estimated duration</span><span class="value">~1h 30min</span></div>
+    </div>
+
+    <!-- Submit -->
+    <div style="margin-top: 24px">
+      <button class="submit-btn">Confirm Reservation</button>
+      <p class="submit-note">Free cancellation up to 2 hours before your reservation.</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

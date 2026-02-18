@@ -163,7 +163,7 @@ export default function SubscriptionManage() {
         <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-[#E7E5E4]">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <Link to="/" className="font-serif text-2xl text-[#1C1917]">
-              Seatable<span className="text-[#9F1239]">.</span>
+              seatable<span className="text-[#9F1239]">.</span>
             </Link>
           </div>
         </header>
@@ -183,7 +183,7 @@ export default function SubscriptionManage() {
               </p>
               <button
                 onClick={() => navigate('/#pricing')}
-                className="px-8 py-4 bg-[#9F1239] hover:bg-[#881337] text-white font-bold text-sm tracking-widest uppercase rounded-2xl inline-flex items-center gap-2 group transition-all duration-300 shadow-lg shadow-[#9F1239]/20"
+                className="px-8 py-4 bg-[#9F1239] hover:bg-[#881337] text-white font-bold text-sm tracking-widest uppercase rounded-full inline-flex items-center gap-2 group transition-all duration-300 shadow-lg shadow-[#9F1239]/20"
               >
                 View Pricing Plans
                 <ThiingsIcon name="arrow-right" size="xs" />
@@ -201,7 +201,7 @@ export default function SubscriptionManage() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-[#E7E5E4]">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="font-serif text-2xl text-[#1C1917]">
-            Seatable<span className="text-[#9F1239]">.</span>
+            seatable<span className="text-[#9F1239]">.</span>
           </Link>
           <button
             onClick={() => navigate('/host-dashboard/simple')}
@@ -228,7 +228,7 @@ export default function SubscriptionManage() {
             <h1 className="font-serif text-4xl text-[#1C1917] mb-2">
               Manage Your Plan
             </h1>
-            <p className="text-[#57534E] font-light">View and manage your Seatable subscription</p>
+            <p className="text-[#57534E] font-light">View and manage your seatable subscription</p>
           </motion.div>
 
           {/* Current Subscription Card */}
@@ -308,7 +308,7 @@ export default function SubscriptionManage() {
             <button
               onClick={handleManageSubscription}
               disabled={managingSubscription}
-              className="w-full px-6 py-4 bg-[#9F1239] hover:bg-[#881337] text-white font-bold text-sm tracking-widest uppercase rounded-2xl flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg shadow-[#9F1239]/20"
+              className="w-full px-6 py-4 bg-[#9F1239] hover:bg-[#881337] text-white font-bold text-sm tracking-widest uppercase rounded-full flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg shadow-[#9F1239]/20"
             >
               {managingSubscription ? (
                 <>
@@ -326,7 +326,7 @@ export default function SubscriptionManage() {
 
             <button
               onClick={() => navigate('/')}
-              className="w-full px-6 py-4 border border-[#E7E5E4] text-[#1C1917] hover:bg-[#F5F5F4] font-bold text-sm tracking-widest uppercase rounded-2xl transition-all duration-300"
+              className="w-full px-6 py-4 border border-[#E7E5E4] text-[#1C1917] hover:bg-[#F5F5F4] font-bold text-sm tracking-widest uppercase rounded-full transition-all duration-300"
             >
               Back to Home
             </button>

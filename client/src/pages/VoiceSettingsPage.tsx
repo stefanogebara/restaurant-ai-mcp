@@ -334,7 +334,7 @@ export default function VoiceSettingsPage() {
           <Skeleton className="h-8 w-64 mb-1" />
           <Skeleton className="h-4 w-80 mb-6" />
           <div className="space-y-6">
-            <div className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
+            <div className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-6 shadow-sm">
               <Skeleton className="h-5 w-32 mb-4" />
               <div className="flex items-center justify-between">
                 <div>
@@ -344,7 +344,7 @@ export default function VoiceSettingsPage() {
                 <Skeleton className="h-10 w-32 rounded-lg" />
               </div>
             </div>
-            <div className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
+            <div className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-6 shadow-sm">
               <Skeleton className="h-5 w-28 mb-4" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {Array.from({ length: 4 }).map((_, i) => (
@@ -390,7 +390,7 @@ export default function VoiceSettingsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
             <Breadcrumb items={breadcrumbConfigs.voiceSettings} className="mb-2" />
-            <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">
+            <h1 className="text-2xl font-serif font-bold text-[#1C1917] tracking-tight">
               Voice & Language Settings
             </h1>
             <p className="text-sm text-[#57534E] mt-1">
@@ -409,7 +409,7 @@ export default function VoiceSettingsPage() {
 
         <div className="space-y-6">
           {/* Voice Engine Selector */}
-          <section className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
+          <section className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-6 shadow-sm">
             <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
               <ThiingsIcon name="settings" pxSize={20} />
               Voice Engine
@@ -489,7 +489,7 @@ export default function VoiceSettingsPage() {
           {currentEngine === 'elevenlabs' && (
             <>
               {/* Section 1: Current Voice */}
-              <section className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
+              <section className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-6 shadow-sm">
                 <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
                   <ThiingsIcon name="volume" pxSize={20} />
                   Current Voice
@@ -553,7 +553,7 @@ export default function VoiceSettingsPage() {
               </section>
 
               {/* Section 2: Voice Settings */}
-              <section className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
+              <section className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-bold text-[#1C1917] flex items-center gap-2">
                     <ThiingsIcon name="settings" pxSize={20} />
@@ -625,7 +625,7 @@ export default function VoiceSettingsPage() {
 
               {/* Section 3: Voice Browser (collapsible) */}
               {isBrowserOpen && (
-                <section className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
+                <section className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-6 shadow-sm">
                   <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
                     <ThiingsIcon name="search" pxSize={20} />
                     Voice Library
@@ -655,7 +655,7 @@ export default function VoiceSettingsPage() {
               )}
 
               {/* Section 4: Language Settings */}
-              <section className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
+              <section className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-6 shadow-sm">
                 <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
                   <ThiingsIcon name="globe" pxSize={20} />
                   Language
@@ -683,7 +683,7 @@ export default function VoiceSettingsPage() {
               </section>
 
               {/* Section 5: Agent Info (read-only) */}
-              <section className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
+              <section className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-6 shadow-sm">
                 <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
                   <ThiingsIcon name="info" pxSize={20} />
                   Agent Info
@@ -735,7 +735,7 @@ export default function VoiceSettingsPage() {
           {currentEngine === 'openai_realtime' && (
             <>
               {/* OpenAI Voice Picker */}
-              <section className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
+              <section className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-6 shadow-sm">
                 <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
                   <ThiingsIcon name="volume" pxSize={20} />
                   OpenAI Voice
@@ -772,7 +772,7 @@ export default function VoiceSettingsPage() {
               </section>
 
               {/* Engine Info (read-only) */}
-              <section className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
+              <section className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-6 shadow-sm">
                 <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
                   <ThiingsIcon name="info" pxSize={20} />
                   Engine Info

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seatable - Table Configuration</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #F5F5F4; color: #1C1917; -webkit-font-smoothing: antialiased; display: flex; min-height: 100vh; }
+
+  /* -- SIDEBAR -- */
+  .sidebar { width: 260px; background: #1C1917; color: #fff; padding: 32px 0; display: flex; flex-direction: column; flex-shrink: 0; }
+  .sidebar-logo { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; padding: 0 28px; margin-bottom: 40px; letter-spacing: -0.5px; }
+  .sidebar-logo span { color: #9F1239; }
+  .sidebar-nav { flex: 1; }
+  .nav-section { margin-bottom: 28px; }
+  .nav-section-label { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #57534E; padding: 0 28px; margin-bottom: 8px; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 28px; font-size: 14px; font-weight: 400; color: #A8A29E; cursor: pointer; border-left: 2px solid transparent; }
+  .nav-item:hover { color: #D6D3D1; background: rgba(255,255,255,0.03); }
+  .nav-item.active { color: #fff; background: rgba(159,18,57,0.1); border-left-color: #9F1239; font-weight: 500; }
+  .nav-item .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.4; flex-shrink: 0; }
+  .nav-item.active .dot { background: #9F1239; opacity: 1; }
+  .sidebar-footer { padding: 20px 28px; border-top: 1px solid #292524; }
+  .sidebar-user { display: flex; align-items: center; gap: 10px; }
+  .sidebar-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #9F1239, #be123c); }
+  .sidebar-user-info { font-size: 13px; font-weight: 500; color: #D6D3D1; }
+  .sidebar-user-info small { display: block; font-size: 11px; color: #78716C; font-weight: 400; }
+
+  /* -- MAIN -- */
+  .main { flex: 1; padding: 32px 40px; overflow-y: auto; }
+
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+  .header h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  .header h1 span { font-weight: 300; color: #78716C; }
+  .header-btn { padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; border: none; background: #9F1239; color: #fff; cursor: pointer; font-family: inherit; }
+
+  /* -- SUMMARY ROW -- */
+  .summary-row { display: flex; gap: 16px; margin-bottom: 32px; }
+  .summary-card { background: #fff; border: 1px solid #E7E5E4; border-radius: 16px; padding: 20px 24px; flex: 1; }
+  .summary-label { font-size: 12px; font-weight: 500; color: #A8A29E; margin-bottom: 4px; }
+  .summary-value { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+
+  /* -- TABLE LOCATION GROUPS -- */
+  .location-group { margin-bottom: 32px; }
+  .location-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .location-title { font-size: 14px; font-weight: 600; letter-spacing: -0.2px; display: flex; align-items: center; gap: 10px; }
+  .location-badge { font-size: 11px; font-weight: 500; color: #78716C; background: #F5F5F4; padding: 3px 10px; border-radius: 100px; }
+  .location-edit { font-size: 13px; color: #9F1239; font-weight: 500; cursor: pointer; }
+
+  /* Table Cards Grid */
+  .tables-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .table-card { background: #fff; border: 1px solid #E7E5E4; border-radius: 16px; padding: 24px; position: relative; }
+  .table-card:hover { border-color: #D6D3D1; }
+
+  .table-name { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+  .table-detail { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .table-detail-icon { width: 24px; height: 24px; border-radius: 6px; background: #F5F5F4; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #78716C; flex-shrink: 0; }
+  .table-detail span { font-size: 13px; color: #57534E; }
+
+  .table-status { position: absolute; top: 16px; right: 16px; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 100px; }
+  .table-status.active { background: rgba(22,163,74,0.08); color: #16a34a; }
+  .table-status.inactive { background: rgba(217,119,6,0.08); color: #d97706; }
+
+  .table-actions { display: flex; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid #F5F5F4; }
+  .table-action { font-size: 12px; font-weight: 500; color: #78716C; cursor: pointer; padding: 4px 0; }
+  .table-action:hover { color: #1C1917; }
+  .table-action.delete { color: #dc2626; }
+  .table-action.delete:hover { color: #b91c1c; }
+
+  /* Shape Icons */
+  .shape-visual { width: 32px; height: 20px; border: 2px solid #D6D3D1; border-radius: 4px; display: inline-block; }
+  .shape-visual.round { border-radius: 50%; width: 20px; }
+</style>
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">seatable<span>.</span></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Main</div>
+      <div class="nav-item"><span class="dot"></span>Dashboard</div>
+      <div class="nav-item"><span class="dot"></span>Reservations</div>
+      <div class="nav-item active"><span class="dot"></span>Tables</div>
+      <div class="nav-item"><span class="dot"></span>Waitlist</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">AI</div>
+      <div class="nav-item"><span class="dot"></span>Voice Agent</div>
+      <div class="nav-item"><span class="dot"></span>Call History</div>
+      <div class="nav-item"><span class="dot"></span>Guest Memory</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Insights</div>
+      <div class="nav-item"><span class="dot"></span>Analytics</div>
+      <div class="nav-item"><span class="dot"></span>Reports</div>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar"></div>
+      <div class="sidebar-user-info">Maria Gonzalez<small>Celeri Madrid</small></div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <div class="header">
+    <h1>Table Configuration <span>/ 18 tables</span></h1>
+    <button class="header-btn">+ Add Table</button>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary-row">
+    <div class="summary-card">
+      <div class="summary-label">Total Tables</div>
+      <div class="summary-value">18</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Total Seats</div>
+      <div class="summary-value">76</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Active Tables</div>
+      <div class="summary-value" style="color:#16a34a">16</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Inactive</div>
+      <div class="summary-value" style="color:#d97706">2</div>
+    </div>
+  </div>
+
+  <!-- Main Dining Room -->
+  <div class="location-group">
+    <div class="location-header">
+      <div class="location-title">Main Dining Room <span class="location-badge">12 tables</span></div>
+      <span class="location-edit">Edit section</span>
+    </div>
+    <div class="tables-grid">
+      <div class="table-card">
+        <span class="table-status active">Active</span>
+        <div class="table-name">Table 1</div>
+        <div class="table-detail"><div class="table-detail-icon">&#9673;</div><span>2 seats &middot; Round</span></div>
+        <div class="table-detail"><div class="table-detail-icon">&#9737;</div><span>Window seat</span></div>
+        <div class="table-actions">
+          <span class="table-action">Edit</span>
+          <span class="table-action delete">Delete</span>
+        </div>
+      </div>
+      <div class="table-card">
+        <span class="table-status active">Active</span>
+        <div class="table-name">Table 2</div>
+        <div class="table-detail"><div class="table-detail-icon">&#9634;</div><span>4 seats &middot; Square</span></div>
+        <div class="table-detail"><div class="table-detail-icon">&#9737;</div><span>Center floor</span></div>
+        <div class="table-actions">
+          <span class="table-action">Edit</span>
+          <span class="table-action delete">Delete</span>
+        </div>
+      </div>
+      <div class="table-card">
+        <span class="table-status active">Active</span>
+        <div class="table-name">Table 3</div>
+        <div class="table-detail"><div class="table-detail-icon">&#9673;</div><span>2 seats &middot; Round</span></div>
+        <div class="table-detail"><div class="table-detail-icon">&#9737;</div><span>Intimate corner</span></div>
+        <div class="table-actions">
+          <span class="table-action">Edit</span>
+          <span class="table-action delete">Delete</span>
+        </div>
+      </div>
+      <div class="table-card">
+        <span class="table-status active">Active</span>
+        <div class="table-name">Table 4</div>
+        <div class="table-detail"><div class="table-detail-icon">&#9634;</div><span>4 seats &middot; Rectangular</span></div>
+        <div class="table-detail"><div class="table-detail-icon">&#9737;</div><span>Near kitchen</span></div>
+        <div class="table-actions">
+          <span class="table-action">Edit</span>
+          <span class="table-action delete">Delete</span>
+        </div>
+      </div>
+      <div class="table-card">
+        <span class="table-status inactive">Inactive</span>
+        <div class="table-name">Table 5</div>
+        <div class="table-detail"><div class="table-detail-icon">&#9634;</div><span>6 seats &middot; Long</span></div>
+        <div class="table-detail"><div class="table-detail-icon">&#9737;</div><span>Being repaired</span></div>
+        <div class="table-actions">
+          <span class="table-action">Edit</span>
+          <span class="table-action delete">Delete</span>
+        </div>
+      </div>
+      <div class="table-card">
+        <span class="table-status active">Active</span>
+        <div class="table-name">Table 6</div>
+        <div class="table-detail"><div class="table-detail-icon">&#9673;</div><span>2 seats &middot; Round</span></div>
+        <div class="table-detail"><div class="table-detail-icon">&#9737;</div><span>Bar adjacent</span></div>
+        <div class="table-actions">
+          <span class="table-action">Edit</span>
+          <span class="table-action delete">Delete</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Terrace -->
+  <div class="location-group">
+    <div class="location-header">
+      <div class="location-title">Terrace <span class="location-badge">4 tables</span></div>
+      <span class="location-edit">Edit section</span>
+    </div>
+    <div class="tables-grid">
+      <div class="table-card">
+        <span class="table-status active">Active</span>
+        <div class="table-name">Terrace 1</div>
+        <div class="table-detail"><div class="table-detail-icon">&#9673;</div><span>4 seats &middot; Round</span></div>
+        <div class="table-detail"><div class="table-detail-icon">&#9728;</div><span>Full sun exposure</span></div>
+        <div class="table-actions">
+          <span class="table-action">Edit</span>
+          <span class="table-action delete">Delete</span>
+        </div>
+      </div>
+      <div class="table-card">
+        <span class="table-status active">Active</span>
+        <div class="table-name">Terrace 2</div>
+        <div class="table-detail"><div class="table-detail-icon">&#9634;</div><span>6 seats &middot; Long</span></div>
+        <div class="table-detail"><div class="table-detail-icon">&#9728;</div><span>Partially shaded</span></div>
+        <div class="table-actions">
+          <span class="table-action">Edit</span>
+          <span class="table-action delete">Delete</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Private Room -->
+  <div class="location-group">
+    <div class="location-header">
+      <div class="location-title">Private Room <span class="location-badge">2 tables</span></div>
+      <span class="location-edit">Edit section</span>
+    </div>
+    <div class="tables-grid">
+      <div class="table-card">
+        <span class="table-status active">Active</span>
+        <div class="table-name">Private 1</div>
+        <div class="table-detail"><div class="table-detail-icon">&#9634;</div><span>8 seats &middot; Oval</span></div>
+        <div class="table-detail"><div class="table-detail-icon">&#9733;</div><span>Business dinners</span></div>
+        <div class="table-actions">
+          <span class="table-action">Edit</span>
+          <span class="table-action delete">Delete</span>
+        </div>
+      </div>
+      <div class="table-card">
+        <span class="table-status inactive">Inactive</span>
+        <div class="table-name">Private 2</div>
+        <div class="table-detail"><div class="table-detail-icon">&#9634;</div><span>12 seats &middot; Long</span></div>
+        <div class="table-detail"><div class="table-detail-icon">&#9733;</div><span>Events & parties</span></div>
+        <div class="table-actions">
+          <span class="table-action">Edit</span>
+          <span class="table-action delete">Delete</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>

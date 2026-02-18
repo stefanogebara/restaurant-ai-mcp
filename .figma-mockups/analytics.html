@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seatable - Analytics Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #F5F5F4; color: #1C1917; -webkit-font-smoothing: antialiased; display: flex; min-height: 100vh; }
+
+  /* -- SIDEBAR (reused from dashboard) -- */
+  .sidebar { width: 260px; background: #1C1917; color: #fff; padding: 32px 0; display: flex; flex-direction: column; flex-shrink: 0; }
+  .sidebar-logo { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; padding: 0 28px; margin-bottom: 40px; letter-spacing: -0.5px; }
+  .sidebar-logo span { color: #9F1239; }
+  .sidebar-nav { flex: 1; }
+  .nav-section { margin-bottom: 28px; }
+  .nav-section-label { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #57534E; padding: 0 28px; margin-bottom: 8px; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 28px; font-size: 14px; font-weight: 400; color: #A8A29E; cursor: pointer; border-left: 2px solid transparent; }
+  .nav-item:hover { color: #D6D3D1; background: rgba(255,255,255,0.03); }
+  .nav-item.active { color: #fff; background: rgba(159,18,57,0.1); border-left-color: #9F1239; font-weight: 500; }
+  .nav-item .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.4; flex-shrink: 0; }
+  .nav-item.active .dot { background: #9F1239; opacity: 1; }
+  .sidebar-footer { padding: 20px 28px; border-top: 1px solid #292524; }
+  .sidebar-user { display: flex; align-items: center; gap: 10px; }
+  .sidebar-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #9F1239, #be123c); }
+  .sidebar-user-info { font-size: 13px; font-weight: 500; color: #D6D3D1; }
+  .sidebar-user-info small { display: block; font-size: 11px; color: #78716C; font-weight: 400; }
+
+  /* -- MAIN -- */
+  .main { flex: 1; padding: 32px 40px; overflow-y: auto; }
+
+  /* -- HEADER -- */
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+  .header h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  .header h1 span { font-weight: 300; color: #78716C; }
+  .header-actions { display: flex; gap: 10px; }
+  .header-btn { padding: 9px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; border: 1px solid #D6D3D1; background: #fff; color: #57534E; cursor: pointer; font-family: inherit; }
+  .header-btn.active { background: #1C1917; color: #fff; border-color: #1C1917; }
+
+  /* -- STATS -- */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card { background: #fff; border-radius: 16px; padding: 24px; border: 1px solid #E7E5E4; }
+  .stat-label { font-size: 12px; font-weight: 500; color: #A8A29E; margin-bottom: 8px; }
+  .stat-value { font-size: 32px; font-weight: 700; letter-spacing: -1px; }
+  .stat-change { font-size: 12px; color: #16a34a; font-weight: 500; margin-top: 4px; }
+  .stat-change.down { color: #dc2626; }
+
+  /* -- CHARTS ROW -- */
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .panel { background: #fff; border-radius: 16px; border: 1px solid #E7E5E4; overflow: hidden; }
+  .panel-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid #F5F5F4; }
+  .panel-title { font-size: 15px; font-weight: 600; letter-spacing: -0.2px; }
+  .panel-badge { font-size: 11px; font-weight: 600; background: rgba(159,18,57,0.08); color: #9F1239; padding: 3px 10px; border-radius: 100px; }
+
+  /* Line Chart Placeholder */
+  .chart-area { padding: 24px; height: 220px; position: relative; }
+  .chart-line { position: absolute; bottom: 40px; left: 24px; right: 24px; height: 120px; }
+  .chart-line svg { width: 100%; height: 100%; }
+  .chart-labels { display: flex; justify-content: space-between; position: absolute; bottom: 16px; left: 24px; right: 24px; }
+  .chart-labels span { font-size: 11px; color: #A8A29E; }
+
+  /* Bar Chart Placeholder */
+  .bar-chart { display: flex; align-items: flex-end; gap: 12px; padding: 24px; height: 220px; }
+  .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .bar { width: 100%; border-radius: 6px 6px 0 0; min-height: 4px; }
+  .bar-label { font-size: 11px; color: #A8A29E; }
+
+  /* -- BOTTOM ROW -- */
+  .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* Heatmap */
+  .heatmap { padding: 24px; }
+  .heatmap-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .heat-cell { aspect-ratio: 1; border-radius: 4px; }
+  .heat-label { font-size: 10px; color: #A8A29E; text-align: center; padding-top: 4px; }
+
+  /* Predictions & Revenue */
+  .insight-list { padding: 0; }
+  .insight-item { display: flex; align-items: center; gap: 14px; padding: 16px 24px; border-bottom: 1px solid #F5F5F4; }
+  .insight-item:last-child { border: none; }
+  .insight-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .insight-icon.warn { background: rgba(217,119,6,0.08); color: #d97706; }
+  .insight-icon.success { background: rgba(22,163,74,0.08); color: #16a34a; }
+  .insight-icon.info { background: rgba(59,130,246,0.08); color: #3b82f6; }
+  .insight-text { flex: 1; }
+  .insight-text strong { font-size: 14px; font-weight: 600; display: block; margin-bottom: 2px; }
+  .insight-text span { font-size: 12px; color: #78716C; }
+  .insight-value { font-size: 16px; font-weight: 700; letter-spacing: -0.5px; }
+</style>
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">seatable<span>.</span></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Main</div>
+      <div class="nav-item"><span class="dot"></span>Dashboard</div>
+      <div class="nav-item"><span class="dot"></span>Reservations</div>
+      <div class="nav-item"><span class="dot"></span>Tables</div>
+      <div class="nav-item"><span class="dot"></span>Waitlist</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">AI</div>
+      <div class="nav-item"><span class="dot"></span>Voice Agent</div>
+      <div class="nav-item"><span class="dot"></span>Call History</div>
+      <div class="nav-item"><span class="dot"></span>Guest Memory</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Insights</div>
+      <div class="nav-item active"><span class="dot"></span>Analytics</div>
+      <div class="nav-item"><span class="dot"></span>Reports</div>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar"></div>
+      <div class="sidebar-user-info">Maria Gonzalez<small>Celeri Madrid</small></div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <div class="header">
+    <h1>Analytics <span>/ Last 30 days</span></h1>
+    <div class="header-actions">
+      <button class="header-btn active">30 days</button>
+      <button class="header-btn">7 days</button>
+      <button class="header-btn">Today</button>
+      <button class="header-btn">Export</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">Total Reservations</div>
+      <div class="stat-value">847</div>
+      <div class="stat-change">+18% vs prev period</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">No-Show Rate</div>
+      <div class="stat-value" style="color:#dc2626">4.2%</div>
+      <div class="stat-change">-1.3% vs prev period</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Avg Party Size</div>
+      <div class="stat-value">3.4</div>
+      <div class="stat-change">+0.2 vs prev period</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Revenue Tracked</div>
+      <div class="stat-value" style="color:#9F1239">&euro;24.8k</div>
+      <div class="stat-change">+22% vs prev period</div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="charts-row">
+    <!-- Line Chart -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Reservations Over Time</span>
+        <span class="panel-badge">Trending Up</span>
+      </div>
+      <div class="chart-area">
+        <div class="chart-line">
+          <svg viewBox="0 0 400 120" preserveAspectRatio="none">
+            <path d="M0,100 C50,80 80,40 120,50 C160,60 180,20 220,30 C260,40 300,10 340,15 C360,18 380,5 400,8" fill="none" stroke="#9F1239" stroke-width="2"/>
+            <path d="M0,100 C50,80 80,40 120,50 C160,60 180,20 220,30 C260,40 300,10 340,15 C360,18 380,5 400,8 L400,120 L0,120 Z" fill="rgba(159,18,57,0.06)"/>
+          </svg>
+        </div>
+        <div class="chart-labels">
+          <span>Jan 19</span><span>Jan 26</span><span>Feb 2</span><span>Feb 9</span><span>Feb 16</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bar Chart -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Reservations by Day</span>
+      </div>
+      <div class="bar-chart">
+        <div class="bar-group"><div class="bar" style="height:60%;background:#E7E5E4"></div><div class="bar-label">Mon</div></div>
+        <div class="bar-group"><div class="bar" style="height:70%;background:#E7E5E4"></div><div class="bar-label">Tue</div></div>
+        <div class="bar-group"><div class="bar" style="height:55%;background:#E7E5E4"></div><div class="bar-label">Wed</div></div>
+        <div class="bar-group"><div class="bar" style="height:80%;background:#E7E5E4"></div><div class="bar-label">Thu</div></div>
+        <div class="bar-group"><div class="bar" style="height:95%;background:#9F1239"></div><div class="bar-label">Fri</div></div>
+        <div class="bar-group"><div class="bar" style="height:100%;background:#9F1239"></div><div class="bar-label">Sat</div></div>
+        <div class="bar-group"><div class="bar" style="height:45%;background:#E7E5E4"></div><div class="bar-label">Sun</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Row -->
+  <div class="bottom-row">
+    <!-- Heatmap -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Booking Heatmap</span>
+        <span class="panel-badge">Peak Hours</span>
+      </div>
+      <div class="heatmap">
+        <div style="display:flex;gap:4px;margin-bottom:4px">
+          <div style="width:40px"></div>
+          <div class="heatmap-grid" style="flex:1">
+            <div class="heat-label">Mon</div><div class="heat-label">Tue</div><div class="heat-label">Wed</div><div class="heat-label">Thu</div><div class="heat-label">Fri</div><div class="heat-label">Sat</div><div class="heat-label">Sun</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:4px;align-items:center">
+          <div style="width:40px;font-size:11px;color:#A8A29E;text-align:right">12:00</div>
+          <div class="heatmap-grid" style="flex:1">
+            <div class="heat-cell" style="background:rgba(159,18,57,0.1)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.15)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.08)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.2)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.35)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.4)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.1)"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:4px;align-items:center">
+          <div style="width:40px;font-size:11px;color:#A8A29E;text-align:right">14:00</div>
+          <div class="heatmap-grid" style="flex:1">
+            <div class="heat-cell" style="background:rgba(159,18,57,0.25)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.3)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.2)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.35)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.5)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.55)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.15)"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:4px;align-items:center">
+          <div style="width:40px;font-size:11px;color:#A8A29E;text-align:right">19:00</div>
+          <div class="heatmap-grid" style="flex:1">
+            <div class="heat-cell" style="background:rgba(159,18,57,0.3)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.35)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.4)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.5)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.7)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.85)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.25)"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:4px;align-items:center">
+          <div style="width:40px;font-size:11px;color:#A8A29E;text-align:right">21:00</div>
+          <div class="heatmap-grid" style="flex:1">
+            <div class="heat-cell" style="background:rgba(159,18,57,0.45)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.5)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.55)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.65)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.9)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,1)"></div>
+            <div class="heat-cell" style="background:rgba(159,18,57,0.35)"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No-Show Predictions & Revenue -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">AI Insights</span>
+      </div>
+      <div class="insight-list">
+        <div class="insight-item">
+          <div class="insight-icon warn">&#9888;</div>
+          <div class="insight-text">
+            <strong>No-Show Risk Tonight</strong>
+            <span>3 reservations flagged as high risk based on patterns</span>
+          </div>
+          <div class="insight-value" style="color:#d97706">3</div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-icon success">&#8593;</div>
+          <div class="insight-text">
+            <strong>Revenue Opportunity</strong>
+            <span>Saturday 20:00-21:00 has 4 open tables at peak demand</span>
+          </div>
+          <div class="insight-value" style="color:#16a34a">&euro;1.2k</div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-icon info">&#9673;</div>
+          <div class="insight-text">
+            <strong>Repeat Guest Rate</strong>
+            <span>32% of this month's bookings are returning guests</span>
+          </div>
+          <div class="insight-value" style="color:#3b82f6">32%</div>
+        </div>
+        <div class="insight-item">
+          <div class="insight-icon warn">&#9201;</div>
+          <div class="insight-text">
+            <strong>Avg Wait Time Rising</strong>
+            <span>Walk-in wait times up 12 min vs last week</span>
+          </div>
+          <div class="insight-value" style="color:#d97706">+12m</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>

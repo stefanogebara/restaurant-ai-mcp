@@ -41,7 +41,7 @@ export default function ActivePartiesPanel({
   const t = translations[language];
   if (isLoading) {
     return (
-      <div className="bg-white border border-[#E7E5E4] rounded-xl p-4">
+      <div className="bg-white border border-[#E7E5E4] rounded-2xl p-5">
         <div className="h-5 w-32 bg-[#E7E5E4] rounded animate-pulse mb-4" />
         <div className="space-y-3">
           {[1, 2].map((i) => (
@@ -56,12 +56,14 @@ export default function ActivePartiesPanel({
   }
 
   return (
-    <div className="bg-white border border-[#E7E5E4]/50 rounded-xl overflow-hidden shadow-sm">
+    <div className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-[#E7E5E4]">
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold text-[#1C1917]">{t.activeParties}</h2>
-          <span className="text-sm text-[#78716C]">({parties.length})</span>
+      <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
+        <div className="flex items-center gap-2.5">
+          <span className="text-[15px] font-semibold text-[#1C1917] tracking-tight">{t.activeParties}</span>
+          <span className="text-[11px] font-semibold bg-[rgba(159,18,57,0.08)] text-[#9F1239] px-2.5 py-0.5 rounded-full">
+            {parties.length}
+          </span>
         </div>
       </div>
 

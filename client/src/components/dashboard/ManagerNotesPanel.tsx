@@ -159,7 +159,7 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[#E7E5E4] p-5">
+    <div className="bg-white rounded-2xl border border-[#E7E5E4] p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm font-semibold text-[#78716C] uppercase tracking-wider">

@@ -149,41 +149,29 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="dashboard min-h-screen bg-[#FAFAF9] p-3 sm:p-4 md:p-6 lg:p-8 pb-28 sm:pb-20">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <div className="dashboard min-h-screen bg-[#F5F5F4] p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8 pb-28 sm:pb-20">
+        <div className="max-w-7xl mx-auto space-y-8">
           {/* ---- Header ---- */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
-            <div>
-              <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">
-                Today
-              </h1>
-              <p className="text-[#57534E] text-base font-medium">
-                {dayName}, {dateStr}
-              </p>
-            </div>
+            <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">
+              Dashboard <span className="font-light text-[#78716C]">/ {dayName}, {dateStr}</span>
+            </h1>
 
-            <div className="flex items-center gap-2">
-              {/* AI Agent */}
+            <div className="flex items-center gap-2.5">
+              <span className="text-[13px] text-[#78716C] bg-white border border-[#E7E5E4] px-4 py-2 rounded-[10px] hidden sm:inline-block">
+                Week view
+              </span>
               <button
                 onClick={() => window.location.href = '/host-dashboard/calls'}
-                className="flex items-center gap-2 min-h-[40px] px-3 py-2 bg-[#9F1239] hover:bg-[#881337] text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-[#9F1239]/20"
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-[#D6D3D1] text-[#57534E] hover:border-[#A8A29E] rounded-[10px] text-[13px] font-medium transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                <span className="hidden sm:inline">AI Agent</span>
+                Export
               </button>
-
-              {/* Table Config */}
               <button
-                onClick={() => window.location.href = '/host-dashboard/tables'}
-                className="flex items-center gap-2 min-h-[40px] px-3 py-2 bg-transparent border border-[#E7E5E4] text-[#57534E] hover:border-[#A8A29E] rounded-xl text-sm font-semibold transition-colors"
+                onClick={() => setShowWalkInModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-[#9F1239] hover:bg-[#881337] text-white rounded-[10px] text-[13px] font-medium transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span className="hidden sm:inline">Tables</span>
+                + Walk-in
               </button>
             </div>
           </div>
@@ -235,9 +223,9 @@ export default function Dashboard() {
           />
 
           {/* ---- Main Content: 2-column layout ---- */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column (2/3 width): Tables + Reservations */}
-            <div className="lg:col-span-2 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
+            {/* Left Column: Tables + Reservations */}
+            <div className="space-y-4">
               <TableLayoutPanel
                 tables={tables}
                 activeParties={activeParties}
@@ -254,9 +242,9 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Right Column (1/3 width): Waitlist + Active Parties */}
-            <div className="space-y-6">
-              <div className="bg-white border border-[#E7E5E4] rounded-xl flex flex-col overflow-hidden">
+            {/* Right Column: Waitlist + Active Parties */}
+            <div className="space-y-4">
+              <div className="bg-white border border-[#E7E5E4] rounded-2xl flex flex-col overflow-hidden">
                 <WaitlistPanel onSeatNow={handleSeatFromWaitlist} />
               </div>
 

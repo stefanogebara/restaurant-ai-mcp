@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seatable - Reports</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #F5F5F4; color: #1C1917; -webkit-font-smoothing: antialiased; display: flex; min-height: 100vh; }
+
+  /* -- SIDEBAR -- */
+  .sidebar { width: 260px; background: #1C1917; color: #fff; padding: 32px 0; display: flex; flex-direction: column; flex-shrink: 0; }
+  .sidebar-logo { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; padding: 0 28px; margin-bottom: 40px; letter-spacing: -0.5px; }
+  .sidebar-logo span { color: #9F1239; }
+  .sidebar-nav { flex: 1; }
+  .nav-section { margin-bottom: 28px; }
+  .nav-section-label { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #57534E; padding: 0 28px; margin-bottom: 8px; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 28px; font-size: 14px; font-weight: 400; color: #A8A29E; cursor: pointer; border-left: 2px solid transparent; }
+  .nav-item:hover { color: #D6D3D1; background: rgba(255,255,255,0.03); }
+  .nav-item.active { color: #fff; background: rgba(159,18,57,0.1); border-left-color: #9F1239; font-weight: 500; }
+  .nav-item .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.4; flex-shrink: 0; }
+  .nav-item.active .dot { background: #9F1239; opacity: 1; }
+  .sidebar-footer { padding: 20px 28px; border-top: 1px solid #292524; }
+  .sidebar-user { display: flex; align-items: center; gap: 10px; }
+  .sidebar-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #9F1239, #be123c); }
+  .sidebar-user-info { font-size: 13px; font-weight: 500; color: #D6D3D1; }
+  .sidebar-user-info small { display: block; font-size: 11px; color: #78716C; font-weight: 400; }
+
+  /* -- MAIN -- */
+  .main { flex: 1; padding: 32px 40px; overflow-y: auto; }
+
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+  .header h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  .header h1 span { font-weight: 300; color: #78716C; }
+  .header-actions { display: flex; gap: 10px; }
+  .date-selector { display: flex; align-items: center; gap: 8px; padding: 9px 18px; border-radius: 10px; border: 1px solid #D6D3D1; background: #fff; font-size: 13px; font-weight: 500; color: #57534E; cursor: pointer; }
+  .header-btn { padding: 9px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; border: 1px solid #D6D3D1; background: #fff; color: #57534E; cursor: pointer; font-family: inherit; }
+  .header-btn.primary { background: #9F1239; color: #fff; border-color: #9F1239; }
+
+  /* -- SUMMARY METRICS -- */
+  .metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
+  .metric-card { background: #fff; border-radius: 16px; padding: 20px; border: 1px solid #E7E5E4; text-align: center; }
+  .metric-label { font-size: 11px; font-weight: 500; color: #A8A29E; margin-bottom: 6px; letter-spacing: 0.3px; }
+  .metric-value { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  .metric-change { font-size: 11px; font-weight: 500; margin-top: 4px; }
+  .metric-change.up { color: #16a34a; }
+  .metric-change.down { color: #dc2626; }
+
+  /* -- PANELS -- */
+  .panel { background: #fff; border-radius: 16px; border: 1px solid #E7E5E4; overflow: hidden; margin-bottom: 24px; }
+  .panel-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid #F5F5F4; }
+  .panel-title { font-size: 15px; font-weight: 600; }
+
+  /* Busiest Times Bar Chart */
+  .times-chart { padding: 24px; }
+  .time-bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .time-bar-row:last-child { margin-bottom: 0; }
+  .time-bar-label { width: 50px; font-size: 13px; color: #78716C; text-align: right; flex-shrink: 0; }
+  .time-bar-track { flex: 1; height: 24px; background: #F5F5F4; border-radius: 6px; overflow: hidden; }
+  .time-bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 10px; }
+  .time-bar-val { font-size: 11px; font-weight: 600; color: #fff; }
+
+  /* -- BOTTOM GRID -- */
+  .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* Guest Demographics */
+  .demo-row { display: flex; align-items: center; padding: 14px 24px; border-bottom: 1px solid #F5F5F4; gap: 14px; }
+  .demo-row:last-child { border: none; }
+  .demo-bar { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .demo-info { flex: 1; }
+  .demo-info strong { font-size: 14px; font-weight: 600; display: block; }
+  .demo-info span { font-size: 12px; color: #78716C; }
+  .demo-pct { font-size: 16px; font-weight: 700; }
+
+  /* Preferences Pills */
+  .prefs-body { padding: 24px; }
+  .prefs-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pref-pill { padding: 8px 16px; border-radius: 100px; font-size: 13px; font-weight: 500; border: 1px solid #E7E5E4; background: #FAFAF9; color: #57534E; }
+  .pref-pill.top { background: rgba(159,18,57,0.06); border-color: rgba(159,18,57,0.15); color: #9F1239; font-weight: 600; }
+</style>
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">seatable<span>.</span></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Main</div>
+      <div class="nav-item"><span class="dot"></span>Dashboard</div>
+      <div class="nav-item"><span class="dot"></span>Reservations</div>
+      <div class="nav-item"><span class="dot"></span>Tables</div>
+      <div class="nav-item"><span class="dot"></span>Waitlist</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">AI</div>
+      <div class="nav-item"><span class="dot"></span>Voice Agent</div>
+      <div class="nav-item"><span class="dot"></span>Call History</div>
+      <div class="nav-item"><span class="dot"></span>Guest Memory</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Insights</div>
+      <div class="nav-item"><span class="dot"></span>Analytics</div>
+      <div class="nav-item active"><span class="dot"></span>Reports</div>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar"></div>
+      <div class="sidebar-user-info">Maria Gonzalez<small>Celeri Madrid</small></div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <div class="header">
+    <h1>Reports <span>/ Weekly</span></h1>
+    <div class="header-actions">
+      <div class="date-selector">&#9776; Feb 10 &ndash; Feb 16, 2026</div>
+      <button class="header-btn">Download PDF</button>
+      <button class="header-btn primary">Share Report</button>
+    </div>
+  </div>
+
+  <!-- Summary Metrics -->
+  <div class="metrics">
+    <div class="metric-card">
+      <div class="metric-label">Total Reservations</div>
+      <div class="metric-value">186</div>
+      <div class="metric-change up">+12% vs prev week</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Walk-ins</div>
+      <div class="metric-value">43</div>
+      <div class="metric-change up">+5%</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">No-Shows</div>
+      <div class="metric-value" style="color:#dc2626">7</div>
+      <div class="metric-change down">+2 vs prev</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Avg Wait Time</div>
+      <div class="metric-value">8m</div>
+      <div class="metric-change up">-3m vs prev</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">AI Calls Handled</div>
+      <div class="metric-value" style="color:#9F1239">68</div>
+      <div class="metric-change up">+24% vs prev</div>
+    </div>
+  </div>
+
+  <!-- Busiest Times -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Busiest Times</span>
+    </div>
+    <div class="times-chart">
+      <div class="time-bar-row">
+        <div class="time-bar-label">12:00</div>
+        <div class="time-bar-track"><div class="time-bar-fill" style="width:45%;background:#D6D3D1"><span class="time-bar-val" style="color:#57534E">18</span></div></div>
+      </div>
+      <div class="time-bar-row">
+        <div class="time-bar-label">13:00</div>
+        <div class="time-bar-track"><div class="time-bar-fill" style="width:65%;background:#A8A29E"><span class="time-bar-val">26</span></div></div>
+      </div>
+      <div class="time-bar-row">
+        <div class="time-bar-label">14:00</div>
+        <div class="time-bar-track"><div class="time-bar-fill" style="width:50%;background:#D6D3D1"><span class="time-bar-val" style="color:#57534E">20</span></div></div>
+      </div>
+      <div class="time-bar-row">
+        <div class="time-bar-label">19:00</div>
+        <div class="time-bar-track"><div class="time-bar-fill" style="width:75%;background:#57534E"><span class="time-bar-val">30</span></div></div>
+      </div>
+      <div class="time-bar-row">
+        <div class="time-bar-label">20:00</div>
+        <div class="time-bar-track"><div class="time-bar-fill" style="width:95%;background:#9F1239"><span class="time-bar-val">38</span></div></div>
+      </div>
+      <div class="time-bar-row">
+        <div class="time-bar-label">21:00</div>
+        <div class="time-bar-track"><div class="time-bar-fill" style="width:100%;background:#9F1239"><span class="time-bar-val">42</span></div></div>
+      </div>
+      <div class="time-bar-row">
+        <div class="time-bar-label">22:00</div>
+        <div class="time-bar-track"><div class="time-bar-fill" style="width:35%;background:#E7E5E4"><span class="time-bar-val" style="color:#78716C">12</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Grid -->
+  <div class="bottom-grid">
+    <!-- Guest Demographics -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Guest Demographics</span>
+      </div>
+      <div class="demo-row">
+        <div class="demo-bar" style="background:rgba(159,18,57,0.08);color:#9F1239">1</div>
+        <div class="demo-info"><strong>Couples</strong><span>Party size 2</span></div>
+        <div class="demo-pct" style="color:#9F1239">38%</div>
+      </div>
+      <div class="demo-row">
+        <div class="demo-bar" style="background:rgba(28,25,23,0.06);color:#1C1917">2</div>
+        <div class="demo-info"><strong>Small Groups</strong><span>Party size 3-4</span></div>
+        <div class="demo-pct">29%</div>
+      </div>
+      <div class="demo-row">
+        <div class="demo-bar" style="background:rgba(59,130,246,0.08);color:#3b82f6">3</div>
+        <div class="demo-info"><strong>Large Groups</strong><span>Party size 5-8</span></div>
+        <div class="demo-pct" style="color:#3b82f6">18%</div>
+      </div>
+      <div class="demo-row">
+        <div class="demo-bar" style="background:rgba(124,58,237,0.08);color:#7c3aed">4</div>
+        <div class="demo-info"><strong>Solo Diners</strong><span>Party size 1</span></div>
+        <div class="demo-pct" style="color:#7c3aed">15%</div>
+      </div>
+    </div>
+
+    <!-- Preferences -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Top Guest Preferences</span>
+      </div>
+      <div class="prefs-body">
+        <div class="prefs-pills">
+          <span class="pref-pill top">Window seat (24)</span>
+          <span class="pref-pill top">Outdoor terrace (19)</span>
+          <span class="pref-pill top">Quiet area (16)</span>
+          <span class="pref-pill">Vegetarian menu (12)</span>
+          <span class="pref-pill">Gluten-free (9)</span>
+          <span class="pref-pill">Anniversary (8)</span>
+          <span class="pref-pill">Birthday (7)</span>
+          <span class="pref-pill">High chair (6)</span>
+          <span class="pref-pill">Wheelchair access (4)</span>
+          <span class="pref-pill">Business dinner (4)</span>
+          <span class="pref-pill">Lactose-free (3)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>

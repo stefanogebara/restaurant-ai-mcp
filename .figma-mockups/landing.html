@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seatable - Landing Page Concept</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #FAFAF9; color: #1C1917; -webkit-font-smoothing: antialiased; }
+  .serif { font-family: 'Playfair Display', Georgia, serif; }
+
+  /* ── NAV ── */
+  nav { display: flex; align-items: center; justify-content: space-between; padding: 24px 64px; background: rgba(250,250,249,0.8); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 50; border-bottom: 1px solid #E7E5E4; }
+  .logo { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 600; letter-spacing: -0.5px; color: #1C1917; }
+  .logo span { color: #9F1239; }
+  .nav-links { display: flex; gap: 36px; }
+  .nav-links a { font-size: 14px; font-weight: 500; color: #57534E; text-decoration: none; letter-spacing: 0.2px; }
+  .nav-links a:hover { color: #1C1917; }
+  .nav-cta { font-size: 14px; font-weight: 600; color: #fff; background: #1C1917; padding: 10px 24px; border-radius: 100px; text-decoration: none; letter-spacing: 0.2px; }
+
+  /* ── HERO ── */
+  .hero { padding: 120px 64px 100px; max-width: 1200px; margin: 0 auto; text-align: center; }
+  .hero-badge { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: #9F1239; border: 1px solid rgba(159,18,57,0.15); padding: 6px 16px; border-radius: 100px; margin-bottom: 32px; background: rgba(159,18,57,0.06); }
+  .hero h1 { font-family: 'Playfair Display', serif; font-size: 72px; font-weight: 500; line-height: 1.05; letter-spacing: -2px; color: #1C1917; margin-bottom: 28px; }
+  .hero h1 em { font-style: italic; color: #9F1239; }
+  .hero p { font-size: 19px; line-height: 1.7; color: #78716C; max-width: 560px; margin: 0 auto 48px; font-weight: 300; }
+  .hero-actions { display: flex; gap: 16px; justify-content: center; }
+  .btn-primary { font-size: 15px; font-weight: 600; color: #fff; background: #9F1239; padding: 14px 32px; border-radius: 100px; text-decoration: none; border: none; cursor: pointer; }
+  .btn-secondary { font-size: 15px; font-weight: 500; color: #57534E; background: transparent; padding: 14px 32px; border-radius: 100px; text-decoration: none; border: 1px solid #D6D3D1; }
+  .hero-proof { margin-top: 64px; display: flex; align-items: center; justify-content: center; gap: 32px; }
+  .hero-proof .avatars { display: flex; }
+  .hero-proof .avatar { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #FAFAF9; margin-left: -10px; background: linear-gradient(135deg, #E7E5E4, #D6D3D1); }
+  .hero-proof .avatar:first-child { margin-left: 0; }
+  .hero-proof .proof-text { font-size: 14px; color: #78716C; }
+  .hero-proof .proof-text strong { color: #1C1917; font-weight: 600; }
+
+  /* ── LOGOS ── */
+  .logos { padding: 64px; text-align: center; border-top: 1px solid #E7E5E4; border-bottom: 1px solid #E7E5E4; }
+  .logos p { font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #A8A29E; margin-bottom: 32px; }
+  .logos-row { display: flex; justify-content: center; gap: 56px; align-items: center; opacity: 0.4; }
+  .logos-row span { font-size: 20px; font-weight: 700; color: #57534E; letter-spacing: 1px; }
+
+  /* ── FEATURES ── */
+  .features { padding: 120px 64px; max-width: 1200px; margin: 0 auto; }
+  .section-label { font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #9F1239; margin-bottom: 16px; }
+  .features h2 { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 500; line-height: 1.15; letter-spacing: -1px; margin-bottom: 16px; }
+  .features .subtitle { font-size: 17px; color: #78716C; font-weight: 300; margin-bottom: 72px; max-width: 480px; line-height: 1.7; }
+  .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; background: #E7E5E4; border-radius: 16px; overflow: hidden; }
+  .feature-card { background: #fff; padding: 48px 36px; transition: background 0.15s; }
+  .feature-card:hover { background: #FAFAF9; }
+  .feature-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(159,18,57,0.06); display: flex; align-items: center; justify-content: center; margin-bottom: 24px; color: #9F1239; font-size: 20px; }
+  .feature-card h3 { font-size: 18px; font-weight: 600; margin-bottom: 12px; letter-spacing: -0.3px; }
+  .feature-card p { font-size: 14px; color: #78716C; line-height: 1.65; font-weight: 300; }
+
+  /* ── HOW IT WORKS ── */
+  .how { padding: 120px 64px; max-width: 1200px; margin: 0 auto; }
+  .how h2 { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 500; letter-spacing: -1px; margin-bottom: 72px; text-align: center; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; }
+  .step { text-align: center; }
+  .step-num { font-family: 'Playfair Display', serif; font-size: 56px; font-weight: 400; color: rgba(159,18,57,0.12); margin-bottom: 20px; line-height: 1; }
+  .step h3 { font-size: 18px; font-weight: 600; margin-bottom: 10px; }
+  .step p { font-size: 14px; color: #78716C; line-height: 1.65; font-weight: 300; }
+
+  /* ── PRICING ── */
+  .pricing { padding: 120px 64px; background: #fff; border-top: 1px solid #E7E5E4; }
+  .pricing-inner { max-width: 1100px; margin: 0 auto; text-align: center; }
+  .pricing h2 { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 500; letter-spacing: -1px; margin-bottom: 12px; }
+  .pricing .subtitle { font-size: 17px; color: #78716C; font-weight: 300; margin-bottom: 64px; }
+  .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; background: #E7E5E4; border-radius: 16px; overflow: hidden; }
+  .price-card { background: #FAFAF9; padding: 48px 36px; text-align: left; position: relative; }
+  .price-card.featured { background: #1C1917; color: #fff; }
+  .price-card.featured .price-desc { color: #A8A29E; }
+  .price-card.featured .price-feature { color: #D6D3D1; border-color: #292524; }
+  .price-card.featured .price-amount { color: #fff; }
+  .price-label { font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: #78716C; margin-bottom: 8px; }
+  .price-card.featured .price-label { color: #9F1239; }
+  .price-amount { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 500; letter-spacing: -1px; margin-bottom: 4px; }
+  .price-amount span { font-size: 18px; font-weight: 400; color: #A8A29E; }
+  .price-desc { font-size: 14px; color: #78716C; margin-bottom: 32px; font-weight: 300; }
+  .price-features { list-style: none; margin-bottom: 36px; }
+  .price-feature { font-size: 14px; padding: 12px 0; border-bottom: 1px solid #E7E5E4; font-weight: 400; display: flex; align-items: center; gap: 10px; }
+  .price-feature::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #9F1239; flex-shrink: 0; }
+  .price-btn { display: block; width: 100%; text-align: center; padding: 14px; border-radius: 100px; font-size: 14px; font-weight: 600; text-decoration: none; border: 1px solid #D6D3D1; color: #1C1917; background: transparent; }
+  .price-card.featured .price-btn { background: #9F1239; color: #fff; border-color: #9F1239; }
+
+  /* ── TESTIMONIAL ── */
+  .testimonial { padding: 120px 64px; max-width: 800px; margin: 0 auto; text-align: center; }
+  .testimonial blockquote { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 400; font-style: italic; line-height: 1.5; color: #1C1917; margin-bottom: 32px; letter-spacing: -0.5px; }
+  .testimonial cite { font-style: normal; font-size: 14px; color: #78716C; }
+  .testimonial cite strong { color: #1C1917; font-weight: 600; display: block; margin-bottom: 2px; }
+
+  /* ── CTA ── */
+  .cta { padding: 120px 64px; text-align: center; }
+  .cta-box { max-width: 700px; margin: 0 auto; background: #1C1917; border-radius: 24px; padding: 80px 64px; color: #fff; }
+  .cta-box h2 { font-family: 'Playfair Display', serif; font-size: 40px; font-weight: 500; margin-bottom: 16px; letter-spacing: -0.5px; }
+  .cta-box p { font-size: 16px; color: #A8A29E; margin-bottom: 36px; font-weight: 300; }
+  .cta-box .btn-primary { background: #9F1239; display: inline-block; }
+
+  /* ── FOOTER ── */
+  footer { padding: 64px; border-top: 1px solid #E7E5E4; display: flex; justify-content: space-between; align-items: center; }
+  footer .logo { font-size: 20px; }
+  footer p { font-size: 13px; color: #A8A29E; }
+</style>
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="logo">seatable<span>.</span></div>
+  <div class="nav-links">
+    <a href="#">Features</a>
+    <a href="#">Pricing</a>
+    <a href="#">Demo</a>
+    <a href="#">Contact</a>
+  </div>
+  <a href="#" class="nav-cta">Get Started</a>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-badge">AI-Powered Restaurant Management</div>
+  <h1>Your restaurant,<br><em>reimagined.</em></h1>
+  <p>Effortlessly manage reservations, delight guests, and grow your business with an AI that truly understands your restaurant.</p>
+  <div class="hero-actions">
+    <a href="#" class="btn-primary">Start Free Trial</a>
+    <a href="#" class="btn-secondary">Watch Demo</a>
+  </div>
+  <div class="hero-proof">
+    <div class="avatars">
+      <div class="avatar" style="background: linear-gradient(135deg, #9F1239, #be123c)"></div>
+      <div class="avatar" style="background: linear-gradient(135deg, #57534E, #78716C)"></div>
+      <div class="avatar" style="background: linear-gradient(135deg, #D6D3D1, #E7E5E4)"></div>
+      <div class="avatar" style="background: linear-gradient(135deg, #1C1917, #44403C)"></div>
+    </div>
+    <p class="proof-text"><strong>320+ restaurants</strong> already using Seatable</p>
+  </div>
+</section>
+
+<!-- Trusted By -->
+<section class="logos">
+  <p>Trusted by restaurants across Europe</p>
+  <div class="logos-row">
+    <span>NOBU</span>
+    <span>ARZAK</span>
+    <span>CELERI</span>
+    <span>NOMA</span>
+    <span>CELLER</span>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features">
+  <div class="section-label">Features</div>
+  <h2>Everything you need,<br>nothing you don't.</h2>
+  <p class="subtitle">A complete suite designed for modern restaurants that value simplicity and results.</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">&#9742;</div>
+      <h3>AI Voice Agent</h3>
+      <p>An AI receptionist that answers calls, takes reservations, and speaks naturally in your restaurant's voice and personality.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#9993;</div>
+      <h3>WhatsApp Booking</h3>
+      <p>Guests book through WhatsApp with natural conversation. The AI handles availability, confirmations, and reminders automatically.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#9881;</div>
+      <h3>Smart Dashboard</h3>
+      <p>Real-time view of reservations, walk-ins, and table assignments. Everything your host team needs on one screen.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#9733;</div>
+      <h3>Guest Memory</h3>
+      <p>The AI remembers dietary preferences, birthdays, and favorite tables. Every returning guest feels recognized.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#9673;</div>
+      <h3>Table Management</h3>
+      <p>Intelligent table assignment optimizes seating. Manage walk-ins, no-shows, and waitlists without the chaos.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">&#9670;</div>
+      <h3>Analytics & Insights</h3>
+      <p>Understand your busiest hours, no-show patterns, and customer lifetime value with beautiful, actionable reports.</p>
+    </div>
+  </div>
+</section>
+
+<!-- How it Works -->
+<section class="how">
+  <div class="section-label" style="text-align:center">How It Works</div>
+  <h2>Three steps to<br>a smarter restaurant.</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <h3>Tell us about your restaurant</h3>
+      <p>Our AI researches your restaurant online, then asks a few questions to understand your unique personality and style.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <h3>We build your AI persona</h3>
+      <p>From web intelligence and your input, we create an authentic AI agent that sounds and feels like your restaurant.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <h3>Go live in minutes</h3>
+      <p>Connect your phone, WhatsApp, and booking page. Your AI starts handling reservations immediately.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing -->
+<section class="pricing">
+  <div class="pricing-inner">
+    <div class="section-label">Pricing</div>
+    <h2>Simple, transparent pricing.</h2>
+    <p class="subtitle">No hidden fees. Cancel anytime.</p>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="price-label">Starter</div>
+        <div class="price-amount">&euro;29<span>/mo</span></div>
+        <p class="price-desc">For small restaurants getting started.</p>
+        <ul class="price-features">
+          <li class="price-feature">AI Chat & WhatsApp reservations</li>
+          <li class="price-feature">Host dashboard</li>
+          <li class="price-feature">Basic analytics</li>
+          <li class="price-feature">Up to 50 reservations/month</li>
+          <li class="price-feature">Email support</li>
+        </ul>
+        <a href="#" class="price-btn">Get Started</a>
+      </div>
+      <div class="price-card featured">
+        <div class="price-label">Growth</div>
+        <div class="price-amount">&euro;99<span>/mo</span></div>
+        <p class="price-desc">For growing restaurants that want more.</p>
+        <ul class="price-features">
+          <li class="price-feature">Everything in Starter</li>
+          <li class="price-feature">AI Voice agent</li>
+          <li class="price-feature">Advanced analytics</li>
+          <li class="price-feature">Up to 150 reservations/month</li>
+          <li class="price-feature">SMS notifications</li>
+        </ul>
+        <a href="#" class="price-btn">Start 14-Day Trial</a>
+      </div>
+      <div class="price-card">
+        <div class="price-label">Scale</div>
+        <div class="price-amount">&euro;199<span>/mo</span></div>
+        <p class="price-desc">For high-volume restaurants.</p>
+        <ul class="price-features">
+          <li class="price-feature">Everything in Growth</li>
+          <li class="price-feature">Unlimited reservations</li>
+          <li class="price-feature">Unlimited SMS</li>
+          <li class="price-feature">Priority support</li>
+          <li class="price-feature">Custom integrations</li>
+        </ul>
+        <a href="#" class="price-btn">Contact Sales</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Testimonial -->
+<section class="testimonial">
+  <blockquote>&ldquo;Seatable transformed how we handle reservations. Our AI agent sounds exactly like us &mdash; warm, knowledgeable, and always available.&rdquo;</blockquote>
+  <cite>
+    <strong>Maria Gonzalez</strong>
+    Owner, Celeri Madrid
+  </cite>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="cta-box">
+    <h2>Ready to reimagine<br>your restaurant?</h2>
+    <p>Join 320+ restaurants already using Seatable. Start your free trial today.</p>
+    <a href="#" class="btn-primary">Start Free Trial</a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="logo">seatable<span>.</span></div>
+  <p>&copy; 2026 Seatable. All rights reserved.</p>
+</footer>
+
+</body>
+</html>

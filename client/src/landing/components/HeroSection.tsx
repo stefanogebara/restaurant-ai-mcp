@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, TrendingUp } from 'lucide-react';
+// lucide icons no longer needed for sidebar mockup
 
 export default function HeroSection() {
   const navigate = useNavigate();
@@ -57,13 +57,13 @@ export default function HeroSection() {
         >
           <button
             onClick={() => navigate('/live-demo')}
-            className="bg-[#9F1239] text-white px-8 py-4 text-sm tracking-widest uppercase font-bold hover:bg-[#881337] transition-all duration-300 shadow-xl shadow-[#9F1239]/20 rounded-2xl"
+            className="bg-[#9F1239] text-white px-8 py-4 text-sm tracking-widest uppercase font-bold hover:bg-[#881337] transition-all duration-300 shadow-xl shadow-[#9F1239]/20 rounded-full"
           >
             Try Live Demo
           </button>
           <button
             onClick={() => navigate('/onboarding')}
-            className="border border-[#1C1917] text-[#1C1917] px-8 py-4 text-sm tracking-widest uppercase font-bold hover:bg-[#1C1917] hover:text-white transition-all duration-300 rounded-2xl"
+            className="border border-[#1C1917] text-[#1C1917] px-8 py-4 text-sm tracking-widest uppercase font-bold hover:bg-[#1C1917] hover:text-white transition-all duration-300 rounded-full"
           >
             Start Free Trial
           </button>
@@ -113,19 +113,28 @@ export default function HeroSection() {
 
           {/* Dashboard Content */}
           <div className="flex">
-            {/* Mini Sidebar */}
-            <div className="hidden md:flex flex-col w-48 bg-[#FAFAF9] border-r border-[#E7E5E4] p-4 gap-2">
-              <div className="flex items-center gap-2 px-3 py-2 bg-[#9F1239] text-white rounded-lg text-xs font-medium">
-                <LayoutDashboard className="w-3.5 h-3.5" />
-                Overview
+            {/* Mini Sidebar (Dark) */}
+            <div className="hidden md:flex flex-col w-48 bg-[#1C1917] p-4 gap-1">
+              <div className="font-serif text-sm font-semibold text-white mb-4 px-2">
+                seatable<span className="text-[#9F1239]">.</span>
               </div>
-              <div className="flex items-center gap-2 px-3 py-2 text-[#A8A29E] text-xs">
-                <Users className="w-3.5 h-3.5" />
-                Customer DNA
+              <div className="text-[9px] font-semibold tracking-[1.5px] uppercase text-[#57534E] px-2 mb-1">Main</div>
+              <div className="flex items-center gap-2 px-3 py-1.5 text-white bg-[rgba(159,18,57,0.1)] border-l-2 border-[#9F1239] text-xs font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#9F1239]" />
+                Dashboard
               </div>
-              <div className="flex items-center gap-2 px-3 py-2 text-[#A8A29E] text-xs">
-                <TrendingUp className="w-3.5 h-3.5" />
-                Analytics
+              <div className="flex items-center gap-2 px-3 py-1.5 text-[#A8A29E] text-xs border-l-2 border-transparent">
+                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-40" />
+                Tables
+              </div>
+              <div className="text-[9px] font-semibold tracking-[1.5px] uppercase text-[#57534E] px-2 mt-3 mb-1">AI</div>
+              <div className="flex items-center gap-2 px-3 py-1.5 text-[#A8A29E] text-xs border-l-2 border-transparent">
+                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-40" />
+                Voice Agent
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1.5 text-[#A8A29E] text-xs border-l-2 border-transparent">
+                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-40" />
+                Call History
               </div>
             </div>
 

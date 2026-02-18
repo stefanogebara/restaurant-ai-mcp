@@ -36,7 +36,7 @@ export default function BookingConfirmation() {
           {slug && (
             <button
               onClick={() => navigate(`/book/${slug}`)}
-              className="px-6 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-colors"
+              className="px-6 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-full transition-colors"
             >
               Make a Reservation
             </button>
@@ -64,7 +64,7 @@ export default function BookingConfirmation() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-[#1C1917] mb-1">Reservation Confirmed</h2>
+          <h2 className="text-2xl font-serif font-bold text-[#1C1917] mb-1">Reservation Confirmed</h2>
           <p className="text-sm text-[#57534E]">We look forward to seeing you!</p>
         </div>
 
@@ -129,7 +129,7 @@ export default function BookingConfirmation() {
           {slug && (
             <button
               onClick={() => navigate(`/book/${slug}`)}
-              className="w-full py-3 bg-white border border-[#E7E5E4] hover:bg-[#F5F5F4] text-[#57534E] font-semibold rounded-xl transition-colors text-sm"
+              className="w-full py-3 bg-white border border-[#E7E5E4] hover:bg-[#F5F5F4] text-[#57534E] font-semibold rounded-full transition-colors text-sm"
             >
               Make Another Reservation
             </button>
@@ -140,7 +140,7 @@ export default function BookingConfirmation() {
       {/* Footer */}
       <footer className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-[#E7E5E4] py-3 text-center">
         <p className="text-xs text-[#A8A29E]">
-          Powered by <span className="font-serif font-semibold text-[#57534E]">Seatable<span className="text-[#9F1239]">.</span></span>
+          Powered by <span className="font-serif font-semibold text-[#57534E]">seatable<span className="text-[#9F1239]">.</span></span>
         </p>
       </footer>
     </div>

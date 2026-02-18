@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seatable - Onboarding</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #FAFAF9; color: #1C1917; -webkit-font-smoothing: antialiased; min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* -- TOP BAR -- */
+  .topbar { display: flex; justify-content: space-between; align-items: center; padding: 20px 48px; border-bottom: 1px solid #E7E5E4; background: #fff; }
+  .topbar-logo { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 600; }
+  .topbar-logo span { color: #9F1239; }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .topbar-step { font-size: 13px; color: #78716C; }
+  .topbar-save { font-size: 13px; color: #9F1239; font-weight: 500; cursor: pointer; }
+
+  /* -- PROGRESS BAR -- */
+  .progress-bar { height: 3px; background: #E7E5E4; }
+  .progress-fill { height: 100%; background: #9F1239; width: 14.3%; transition: width 0.3s; border-radius: 0 100px 100px 0; }
+
+  /* -- LAYOUT -- */
+  .onboarding-layout { flex: 1; display: flex; max-width: 1000px; margin: 48px auto; width: 100%; padding: 0 48px; gap: 64px; }
+
+  /* -- STEP INDICATOR (Left) -- */
+  .step-sidebar { flex: 0 0 220px; padding-top: 8px; }
+  .step-list { display: flex; flex-direction: column; gap: 0; }
+  .step-item { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; position: relative; }
+  .step-item:not(:last-child)::after { content: ''; position: absolute; left: 15px; top: 48px; bottom: 0; width: 1px; background: #E7E5E4; }
+  .step-item.active::after { background: linear-gradient(to bottom, #9F1239 50%, #E7E5E4 50%); }
+  .step-item.completed::after { background: #9F1239; }
+
+  .step-number { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #E7E5E4; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #A8A29E; flex-shrink: 0; background: #fff; position: relative; z-index: 1; }
+  .step-item.active .step-number { border-color: #9F1239; color: #9F1239; background: rgba(159,18,57,0.06); }
+  .step-item.completed .step-number { border-color: #9F1239; background: #9F1239; color: #fff; }
+  .step-label { font-size: 14px; font-weight: 500; color: #A8A29E; padding-top: 5px; }
+  .step-item.active .step-label { color: #1C1917; font-weight: 600; }
+  .step-item.completed .step-label { color: #57534E; }
+
+  /* -- FORM CONTENT (Right) -- */
+  .form-content { flex: 1; max-width: 480px; }
+  .form-header { margin-bottom: 40px; }
+  .form-header h1 { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 500; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .form-header p { font-size: 15px; color: #78716C; font-weight: 300; line-height: 1.6; }
+
+  .form-section { margin-bottom: 28px; }
+  .form-section-label { font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: #78716C; margin-bottom: 16px; }
+
+  .form-group { margin-bottom: 18px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 500; color: #57534E; margin-bottom: 6px; }
+  .form-group input, .form-group select { width: 100%; padding: 12px 16px; border: 1px solid #E7E5E4; border-radius: 10px; font-size: 14px; background: #fff; font-family: inherit; color: #1C1917; outline: none; -webkit-appearance: none; }
+  .form-group input:focus, .form-group select:focus { border-color: #9F1239; box-shadow: 0 0 0 3px rgba(159,18,57,0.06); }
+  .form-group input::placeholder { color: #D6D3D1; }
+  .form-group .hint { font-size: 12px; color: #A8A29E; margin-top: 6px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* -- ACTIONS -- */
+  .form-actions { display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid #E7E5E4; margin-top: 40px; }
+  .btn-back { font-size: 14px; font-weight: 500; color: #78716C; background: none; border: none; cursor: pointer; font-family: inherit; padding: 12px 0; }
+  .btn-next { font-size: 14px; font-weight: 600; color: #fff; background: #9F1239; border: none; padding: 12px 32px; border-radius: 100px; cursor: pointer; font-family: inherit; }
+  .btn-next:hover { background: #881337; }
+</style>
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="topbar-logo">seatable<span>.</span></div>
+  <div class="topbar-right">
+    <span class="topbar-step">Step 1 of 7</span>
+    <span class="topbar-save">Save & Exit</span>
+  </div>
+</div>
+
+<!-- Progress Bar -->
+<div class="progress-bar">
+  <div class="progress-fill"></div>
+</div>
+
+<!-- Layout -->
+<div class="onboarding-layout">
+  <!-- Step Indicator -->
+  <div class="step-sidebar">
+    <div class="step-list">
+      <div class="step-item active">
+        <div class="step-number">1</div>
+        <div class="step-label">Restaurant Info</div>
+      </div>
+      <div class="step-item">
+        <div class="step-number">2</div>
+        <div class="step-label">AI Research</div>
+      </div>
+      <div class="step-item">
+        <div class="step-number">3</div>
+        <div class="step-label">Personality</div>
+      </div>
+      <div class="step-item">
+        <div class="step-number">4</div>
+        <div class="step-label">Operating Hours</div>
+      </div>
+      <div class="step-item">
+        <div class="step-number">5</div>
+        <div class="step-label">Table Setup</div>
+      </div>
+      <div class="step-item">
+        <div class="step-number">6</div>
+        <div class="step-label">Voice Agent</div>
+      </div>
+      <div class="step-item">
+        <div class="step-number">7</div>
+        <div class="step-label">Review & Launch</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Content -->
+  <div class="form-content">
+    <div class="form-header">
+      <h1>Tell us about your restaurant</h1>
+      <p>We'll use this information to research your restaurant online and start building your AI persona.</p>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-label">Basic Information</div>
+      <div class="form-group">
+        <label>Restaurant name</label>
+        <input type="text" placeholder="e.g. Celeri" value="Celeri">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>City</label>
+          <input type="text" placeholder="e.g. Madrid" value="Madrid">
+        </div>
+        <div class="form-group">
+          <label>Country</label>
+          <select>
+            <option>Spain</option>
+            <option>France</option>
+            <option>Italy</option>
+            <option>Germany</option>
+            <option>United Kingdom</option>
+            <option>Portugal</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Neighborhood / Area <span style="color:#A8A29E;font-weight:400">(optional)</span></label>
+        <input type="text" placeholder="e.g. Malasa&ntilde;a" value="Malasa&ntilde;a">
+        <div class="hint">Helps our AI research find the right restaurant</div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-label">Cuisine & Style</div>
+      <div class="form-group">
+        <label>Cuisine type</label>
+        <input type="text" placeholder="e.g. Mediterranean, Italian, Japanese">
+      </div>
+      <div class="form-group">
+        <label>Price range</label>
+        <select>
+          <option>Select price range</option>
+          <option>&euro; &mdash; Budget-friendly</option>
+          <option>&euro;&euro; &mdash; Mid-range</option>
+          <option>&euro;&euro;&euro; &mdash; Fine dining</option>
+          <option>&euro;&euro;&euro;&euro; &mdash; Premium</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <button class="btn-back">Back</button>
+      <button class="btn-next">Continue</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

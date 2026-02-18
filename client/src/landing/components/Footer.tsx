@@ -15,7 +15,7 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-12">
           {/* Logo */}
           <a href="/" className="font-serif text-2xl font-bold tracking-tight">
-            Seatable<span className="text-[#9F1239]">.</span>
+            seatable<span className="text-[#9F1239]">.</span>
           </a>
 
           {/* Navigation Links */}
@@ -41,7 +41,7 @@ export default function Footer() {
         {/* Divider */}
         <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[#57534E] text-xs font-light">
-            &copy; {currentYear} Seatable AI. All rights reserved.
+            &copy; {currentYear} seatable AI. All rights reserved.
           </p>
           <div className="flex gap-6 text-xs text-[#57534E]">
             <a href="/onboarding" className="hover:text-[#A8A29E] transition-colors">

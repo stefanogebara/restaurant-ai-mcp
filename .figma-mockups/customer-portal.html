@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seatable - Customer Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #FAFAF9; color: #1C1917; -webkit-font-smoothing: antialiased; min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* -- TOP BAR -- */
+  .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 40px; border-bottom: 1px solid #E7E5E4; background: #fff; }
+  .topbar-logo { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 600; }
+  .topbar-logo span { color: #9F1239; }
+  .topbar-help { font-size: 13px; color: #78716C; }
+
+  /* -- MAIN -- */
+  .portal { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 64px 40px; }
+  .portal-container { max-width: 520px; width: 100%; }
+
+  .portal-header { text-align: center; margin-bottom: 40px; }
+  .portal-header h1 { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 500; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .portal-header p { font-size: 15px; color: #78716C; font-weight: 300; }
+
+  /* -- LOOKUP FORM -- */
+  .lookup-card { background: #fff; border: 1px solid #E7E5E4; border-radius: 16px; padding: 32px; margin-bottom: 24px; }
+  .lookup-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 20px; }
+
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 500; color: #57534E; margin-bottom: 6px; }
+  .form-group input { width: 100%; padding: 12px 16px; border: 1px solid #E7E5E4; border-radius: 10px; font-size: 14px; background: #fff; font-family: inherit; color: #1C1917; outline: none; }
+  .form-group input:focus { border-color: #9F1239; box-shadow: 0 0 0 3px rgba(159,18,57,0.06); }
+  .form-group input::placeholder { color: #D6D3D1; }
+
+  .divider { display: flex; align-items: center; gap: 16px; margin: 16px 0; }
+  .divider-line { flex: 1; height: 1px; background: #E7E5E4; }
+  .divider-text { font-size: 12px; color: #A8A29E; font-weight: 500; }
+
+  .lookup-btn { width: 100%; padding: 14px; border: none; border-radius: 100px; font-size: 14px; font-weight: 600; background: #9F1239; color: #fff; cursor: pointer; font-family: inherit; margin-top: 8px; }
+
+  /* -- RESULT CARD -- */
+  .result-card { background: #fff; border: 1px solid #E7E5E4; border-radius: 16px; overflow: hidden; }
+  .result-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid #F5F5F4; }
+  .result-header h3 { font-size: 15px; font-weight: 600; }
+  .result-status { font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 100px; }
+  .result-status.confirmed { background: rgba(22,163,74,0.08); color: #16a34a; }
+
+  .result-body { padding: 24px; }
+  .result-restaurant { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+  .result-restaurant-img { width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #292524, #44403C); flex-shrink: 0; }
+  .result-restaurant h4 { font-size: 16px; font-weight: 600; }
+  .result-restaurant p { font-size: 13px; color: #78716C; font-weight: 300; }
+
+  .result-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #F5F5F4; }
+  .result-row:last-child { border: none; }
+  .result-label { font-size: 13px; color: #78716C; }
+  .result-value { font-size: 14px; font-weight: 500; }
+
+  .result-actions { display: flex; gap: 10px; padding: 20px 24px; border-top: 1px solid #F5F5F4; }
+  .btn-edit { flex: 1; padding: 12px; border: 1px solid #E7E5E4; border-radius: 10px; font-size: 13px; font-weight: 500; background: #fff; color: #57534E; cursor: pointer; font-family: inherit; text-align: center; }
+  .btn-cancel { flex: 1; padding: 12px; border: 1px solid rgba(220,38,38,0.2); border-radius: 10px; font-size: 13px; font-weight: 500; background: rgba(220,38,38,0.04); color: #dc2626; cursor: pointer; font-family: inherit; text-align: center; }
+</style>
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="topbar-logo">seatable<span>.</span></div>
+  <span class="topbar-help">Need help? Contact the restaurant</span>
+</div>
+
+<!-- Portal -->
+<div class="portal">
+  <div class="portal-container">
+    <div class="portal-header">
+      <h1>Manage your reservation</h1>
+      <p>Look up your reservation by phone number or confirmation ID.</p>
+    </div>
+
+    <!-- Lookup Form -->
+    <div class="lookup-card">
+      <h3>Find your reservation</h3>
+      <div class="form-group">
+        <label>Phone number</label>
+        <input type="tel" placeholder="+34 612 345 678" value="+34 612 345 678">
+      </div>
+      <div class="divider">
+        <div class="divider-line"></div>
+        <span class="divider-text">or</span>
+        <div class="divider-line"></div>
+      </div>
+      <div class="form-group">
+        <label>Confirmation ID</label>
+        <input type="text" placeholder="e.g. CEL-2026-0218-A7K3">
+      </div>
+      <button class="lookup-btn">Look Up Reservation</button>
+    </div>
+
+    <!-- Result Card -->
+    <div class="result-card">
+      <div class="result-header">
+        <h3>Your Reservation</h3>
+        <span class="result-status confirmed">Confirmed</span>
+      </div>
+      <div class="result-body">
+        <div class="result-restaurant">
+          <div class="result-restaurant-img"></div>
+          <div>
+            <h4>Celeri</h4>
+            <p>Malasa&ntilde;a, Madrid</p>
+          </div>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Date</span>
+          <span class="result-value">Tue, Feb 18, 2026</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Time</span>
+          <span class="result-value">19:30</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Party size</span>
+          <span class="result-value">2 guests</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Guest</span>
+          <span class="result-value">Maria Gonzalez</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Confirmation</span>
+          <span class="result-value" style="font-family:monospace;font-size:13px;color:#9F1239">CEL-2026-0218-A7K3</span>
+        </div>
+      </div>
+      <div class="result-actions">
+        <button class="btn-edit">Edit Reservation</button>
+        <button class="btn-cancel">Cancel Reservation</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

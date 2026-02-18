@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seatable - Dashboard Concept</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #F5F5F4; color: #1C1917; -webkit-font-smoothing: antialiased; display: flex; min-height: 100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar { width: 260px; background: #1C1917; color: #fff; padding: 32px 0; display: flex; flex-direction: column; flex-shrink: 0; }
+  .sidebar-logo { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; padding: 0 28px; margin-bottom: 40px; letter-spacing: -0.5px; }
+  .sidebar-logo span { color: #9F1239; }
+  .sidebar-nav { flex: 1; }
+  .nav-section { margin-bottom: 28px; }
+  .nav-section-label { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #57534E; padding: 0 28px; margin-bottom: 8px; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 28px; font-size: 14px; font-weight: 400; color: #A8A29E; cursor: pointer; border-left: 2px solid transparent; transition: all 0.15s; }
+  .nav-item:hover { color: #D6D3D1; background: rgba(255,255,255,0.03); }
+  .nav-item.active { color: #fff; background: rgba(159,18,57,0.1); border-left-color: #9F1239; font-weight: 500; }
+  .nav-item .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.4; flex-shrink: 0; }
+  .nav-item.active .dot { background: #9F1239; opacity: 1; }
+  .sidebar-footer { padding: 20px 28px; border-top: 1px solid #292524; }
+  .sidebar-user { display: flex; align-items: center; gap: 10px; }
+  .sidebar-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #9F1239, #be123c); }
+  .sidebar-user-info { font-size: 13px; font-weight: 500; color: #D6D3D1; }
+  .sidebar-user-info small { display: block; font-size: 11px; color: #78716C; font-weight: 400; }
+
+  /* ── MAIN ── */
+  .main { flex: 1; padding: 32px 40px; overflow-y: auto; }
+
+  /* ── HEADER ── */
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 36px; }
+  .header h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  .header h1 span { font-weight: 300; color: #78716C; }
+  .header-actions { display: flex; gap: 10px; align-items: center; }
+  .header-btn { padding: 9px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; border: 1px solid #D6D3D1; background: #fff; color: #57534E; cursor: pointer; }
+  .header-btn.primary { background: #9F1239; color: #fff; border-color: #9F1239; }
+  .date-badge { font-size: 13px; color: #78716C; background: #fff; border: 1px solid #E7E5E4; padding: 9px 16px; border-radius: 10px; }
+
+  /* ── STATS ── */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .stat-card { background: #fff; border-radius: 16px; padding: 24px; border: 1px solid #E7E5E4; }
+  .stat-label { font-size: 12px; font-weight: 500; color: #A8A29E; letter-spacing: 0.3px; margin-bottom: 8px; }
+  .stat-value { font-size: 32px; font-weight: 700; letter-spacing: -1px; color: #1C1917; }
+  .stat-value.burgundy { color: #9F1239; }
+  .stat-change { font-size: 12px; color: #16a34a; font-weight: 500; margin-top: 6px; }
+  .stat-change.down { color: #dc2626; }
+  .stat-bar { width: 100%; height: 4px; background: #F5F5F4; border-radius: 100px; margin-top: 12px; overflow: hidden; }
+  .stat-bar-fill { height: 100%; border-radius: 100px; }
+
+  /* ── CONTENT GRID ── */
+  .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 32px; }
+
+  /* ── RESERVATIONS ── */
+  .panel { background: #fff; border-radius: 16px; border: 1px solid #E7E5E4; overflow: hidden; }
+  .panel-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid #F5F5F4; }
+  .panel-title { font-size: 15px; font-weight: 600; letter-spacing: -0.2px; }
+  .panel-badge { font-size: 11px; font-weight: 600; background: rgba(159,18,57,0.08); color: #9F1239; padding: 3px 10px; border-radius: 100px; }
+  .panel-tabs { display: flex; gap: 0; }
+  .panel-tab { font-size: 12px; font-weight: 500; color: #A8A29E; padding: 6px 14px; border-radius: 8px; cursor: pointer; }
+  .panel-tab.active { color: #1C1917; background: #F5F5F4; }
+
+  .reservation-row { display: flex; align-items: center; padding: 16px 24px; border-bottom: 1px solid #FAFAF9; gap: 16px; }
+  .reservation-row:last-child { border: none; }
+  .res-avatar { width: 36px; height: 36px; border-radius: 10px; background: #F5F5F4; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #78716C; flex-shrink: 0; }
+  .res-info { flex: 1; min-width: 0; }
+  .res-name { font-size: 14px; font-weight: 600; letter-spacing: -0.2px; }
+  .res-detail { font-size: 12px; color: #A8A29E; margin-top: 2px; }
+  .res-time { font-size: 13px; font-weight: 500; color: #57534E; text-align: right; }
+  .res-time small { display: block; font-size: 11px; color: #A8A29E; font-weight: 400; }
+  .res-status { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 100px; }
+  .res-status.confirmed { background: rgba(22,163,74,0.08); color: #16a34a; }
+  .res-status.pending { background: rgba(217,119,6,0.08); color: #d97706; }
+  .res-status.seated { background: rgba(124,58,237,0.08); color: #7c3aed; }
+
+  /* ── TABLES GRID ── */
+  .tables-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 16px; }
+  .table-cell { aspect-ratio: 1; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; border: 1px solid transparent; }
+  .table-cell.available { background: #F5F5F4; color: #78716C; border-color: #E7E5E4; }
+  .table-cell.occupied { background: rgba(159,18,57,0.06); color: #9F1239; border-color: rgba(159,18,57,0.15); }
+  .table-cell.reserved { background: rgba(124,58,237,0.06); color: #7c3aed; border-color: rgba(124,58,237,0.15); }
+  .table-cell small { font-size: 10px; font-weight: 400; margin-top: 2px; opacity: 0.6; }
+
+  /* ── ACTIVITY FEED ── */
+  .activity-item { display: flex; gap: 12px; padding: 14px 24px; border-bottom: 1px solid #FAFAF9; align-items: flex-start; }
+  .activity-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .activity-dot.call { background: #9F1239; }
+  .activity-dot.booking { background: #16a34a; }
+  .activity-dot.walkin { background: #3b82f6; }
+  .activity-dot.cancel { background: #dc2626; }
+  .activity-text { font-size: 13px; color: #57534E; line-height: 1.5; }
+  .activity-text strong { color: #1C1917; font-weight: 600; }
+  .activity-time { font-size: 11px; color: #A8A29E; margin-top: 2px; }
+</style>
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">seatable<span>.</span></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Main</div>
+      <div class="nav-item active"><span class="dot"></span>Dashboard</div>
+      <div class="nav-item"><span class="dot"></span>Reservations</div>
+      <div class="nav-item"><span class="dot"></span>Tables</div>
+      <div class="nav-item"><span class="dot"></span>Waitlist</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">AI</div>
+      <div class="nav-item"><span class="dot"></span>Voice Agent</div>
+      <div class="nav-item"><span class="dot"></span>Call History</div>
+      <div class="nav-item"><span class="dot"></span>Guest Memory</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Insights</div>
+      <div class="nav-item"><span class="dot"></span>Analytics</div>
+      <div class="nav-item"><span class="dot"></span>Reports</div>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar"></div>
+      <div class="sidebar-user-info">Maria Gonzalez<small>Celeri Madrid</small></div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main Content -->
+<main class="main">
+  <!-- Header -->
+  <div class="header">
+    <h1>Dashboard <span>/ Tuesday, Feb 18</span></h1>
+    <div class="header-actions">
+      <div class="date-badge">Week view</div>
+      <button class="header-btn">Export</button>
+      <button class="header-btn primary">+ Walk-in</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">Today's Reservations</div>
+      <div class="stat-value">24</div>
+      <div class="stat-change">+12% vs last Tuesday</div>
+      <div class="stat-bar"><div class="stat-bar-fill" style="width:75%; background:#9F1239"></div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Tables Available</div>
+      <div class="stat-value burgundy">8<span style="font-size:16px;color:#A8A29E;font-weight:400"> / 18</span></div>
+      <div class="stat-change">44% capacity</div>
+      <div class="stat-bar"><div class="stat-bar-fill" style="width:56%; background:#16a34a"></div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Guests Expected</div>
+      <div class="stat-value">67</div>
+      <div class="stat-change">+8% vs avg</div>
+      <div class="stat-bar"><div class="stat-bar-fill" style="width:67%; background:#57534E"></div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">AI Calls Handled</div>
+      <div class="stat-value">12</div>
+      <div class="stat-change down">-3 vs yesterday</div>
+      <div class="stat-bar"><div class="stat-bar-fill" style="width:48%; background:#d97706"></div></div>
+    </div>
+  </div>
+
+  <!-- Content Grid -->
+  <div class="content-grid">
+    <!-- Reservations Panel -->
+    <div class="panel">
+      <div class="panel-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="panel-title">Upcoming Reservations</span>
+          <span class="panel-badge">24</span>
+        </div>
+        <div class="panel-tabs">
+          <span class="panel-tab active">Today</span>
+          <span class="panel-tab">Tomorrow</span>
+          <span class="panel-tab">Week</span>
+        </div>
+      </div>
+      <div class="reservation-row">
+        <div class="res-avatar">MG</div>
+        <div class="res-info"><div class="res-name">Marco Gutierrez</div><div class="res-detail">4 guests &middot; Table 7 &middot; Window seat</div></div>
+        <div class="res-time">12:30<small>Lunch</small></div>
+        <span class="res-status confirmed">Confirmed</span>
+      </div>
+      <div class="reservation-row">
+        <div class="res-avatar">SL</div>
+        <div class="res-info"><div class="res-name">Sophie Laurent</div><div class="res-detail">2 guests &middot; Table 3 &middot; Anniversary</div></div>
+        <div class="res-time">13:00<small>Lunch</small></div>
+        <span class="res-status confirmed">Confirmed</span>
+      </div>
+      <div class="reservation-row">
+        <div class="res-avatar">AK</div>
+        <div class="res-info"><div class="res-name">Ahmed Khalil</div><div class="res-detail">6 guests &middot; Private room &middot; Business dinner</div></div>
+        <div class="res-time">19:30<small>Dinner</small></div>
+        <span class="res-status pending">Pending</span>
+      </div>
+      <div class="reservation-row">
+        <div class="res-avatar">EC</div>
+        <div class="res-info"><div class="res-name">Elena Castillo</div><div class="res-detail">2 guests &middot; Bar area &middot; Returning guest</div></div>
+        <div class="res-time">20:00<small>Dinner</small></div>
+        <span class="res-status confirmed">Confirmed</span>
+      </div>
+      <div class="reservation-row">
+        <div class="res-avatar">JB</div>
+        <div class="res-info"><div class="res-name">James Bennett</div><div class="res-detail">8 guests &middot; Large table &middot; Birthday</div></div>
+        <div class="res-time">20:30<small>Dinner</small></div>
+        <span class="res-status seated">Seated</span>
+      </div>
+    </div>
+
+    <!-- Right Column -->
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <!-- Tables -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Table Status</span>
+          <span class="panel-badge">Live</span>
+        </div>
+        <div class="tables-grid">
+          <div class="table-cell occupied">T1<small>2/2</small></div>
+          <div class="table-cell available">T2<small>4 seats</small></div>
+          <div class="table-cell reserved">T3<small>13:00</small></div>
+          <div class="table-cell occupied">T4<small>4/4</small></div>
+          <div class="table-cell available">T5<small>6 seats</small></div>
+          <div class="table-cell available">T6<small>2 seats</small></div>
+          <div class="table-cell occupied">T7<small>3/4</small></div>
+          <div class="table-cell reserved">T8<small>19:30</small></div>
+          <div class="table-cell available">T9<small>4 seats</small></div>
+        </div>
+      </div>
+
+      <!-- Activity Feed -->
+      <div class="panel" style="flex:1">
+        <div class="panel-header">
+          <span class="panel-title">Activity</span>
+        </div>
+        <div class="activity-item"><div class="activity-dot call"></div><div><div class="activity-text"><strong>AI call</strong> handled reservation for Marco G.</div><div class="activity-time">2 min ago</div></div></div>
+        <div class="activity-item"><div class="activity-dot booking"></div><div><div class="activity-text"><strong>New booking</strong> via WhatsApp &mdash; Sophie L.</div><div class="activity-time">15 min ago</div></div></div>
+        <div class="activity-item"><div class="activity-dot walkin"></div><div><div class="activity-text"><strong>Walk-in</strong> party of 3 seated at T1</div><div class="activity-time">28 min ago</div></div></div>
+        <div class="activity-item"><div class="activity-dot cancel"></div><div><div class="activity-text"><strong>Cancellation</strong> &mdash; Park, J. (tonight 21:00)</div><div class="activity-time">45 min ago</div></div></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>

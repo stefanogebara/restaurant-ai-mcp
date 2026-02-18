@@ -76,13 +76,13 @@ export default function AnalyticsDashboard() {
   if (error) {
     return (
       <DashboardLayout>
-        <div className="flex flex-col items-center justify-center h-screen bg-[#FAFAF9]">
-          <div className="bg-white rounded-xl p-8 border border-[#dc2626]/20 shadow-sm max-w-md">
+        <div className="flex flex-col items-center justify-center h-screen bg-[#F5F5F4]">
+          <div className="bg-white rounded-2xl p-8 border border-[#dc2626]/20 shadow-sm max-w-md">
             <div className="text-xl text-[#dc2626] mb-6 text-center font-semibold">Error loading analytics</div>
             <p className="text-sm text-[#78716C] mb-6 text-center">{error}</p>
             <button
               onClick={() => fetchAnalytics()}
-              className="w-full px-6 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-all"
+              className="w-full px-6 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-full transition-all"
             >
               Retry
             </button>
@@ -95,7 +95,7 @@ export default function AnalyticsDashboard() {
   if (!data) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-screen bg-[#FAFAF9]">
+        <div className="flex items-center justify-center h-screen bg-[#F5F5F4]">
           <div className="text-xl text-[#78716C]">No analytics data available</div>
         </div>
       </DashboardLayout>
@@ -104,13 +104,13 @@ export default function AnalyticsDashboard() {
 
   return (
     <DashboardLayout>
-    <div className="dashboard min-h-screen bg-[#FAFAF9]">
+    <div className="dashboard min-h-screen bg-[#F5F5F4]">
       {/* Header */}
       <header className="bg-white/95 border-b border-[#E7E5E4] sticky top-0 z-40 backdrop-blur-sm">
         <div className="max-w-[1600px] mx-auto px-6 py-5">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight mb-1">Analytics Dashboard</h1>
+              <h1 className="text-2xl font-serif font-bold text-[#1C1917] tracking-tight mb-1">Analytics</h1>
               <p className="text-[#78716C] text-sm">Restaurant performance insights and trends</p>
             </div>
             <div className="flex items-center gap-3">
@@ -125,7 +125,7 @@ export default function AnalyticsDashboard() {
               </button>
               <a
                 href="/host-dashboard"
-                className="px-4 py-2 bg-[#9F1239] hover:bg-[#881337] text-white font-medium rounded-xl transition-all shadow-sm shadow-[#9F1239]/20"
+                className="px-4 py-2 bg-[#9F1239] hover:bg-[#881337] text-white font-medium rounded-full transition-all shadow-sm shadow-[#9F1239]/20"
               >
                 Back to Dashboard
               </a>
@@ -175,7 +175,7 @@ export default function AnalyticsDashboard() {
 
       {/* Footer Info */}
       <div className="max-w-[1600px] mx-auto px-6 pb-8">
-        <div className="bg-[#F5F5F4]/50 border border-[#E7E5E4]/50 rounded-xl p-4 text-center">
+        <div className="bg-[#F5F5F4]/50 border border-[#E7E5E4]/50 rounded-2xl p-4 text-center">
           <p className="text-xs text-[#78716C]">
             Analytics data is calculated from the last 30 days of restaurant activity.
             <br />

@@ -33,7 +33,7 @@ export default function Login() {
     return (
       <div className="min-h-screen bg-[#FAFAF9] flex flex-col items-center justify-center gap-4">
         <div className="font-serif text-2xl text-[#1C1917] opacity-50">
-          Seatable<span className="text-[#9F1239]">.</span>
+          seatable<span className="text-[#9F1239]">.</span>
         </div>
         <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#E7E5E4] border-t-[#9F1239]" />
       </div>
@@ -100,7 +100,7 @@ export default function Login() {
           >
             <Link to="/" className="inline-block">
               <span className="font-serif text-3xl tracking-tight text-white">
-                Seatable<span className="text-[#9F1239]">.</span>
+                seatable<span className="text-[#9F1239]">.</span>
               </span>
             </Link>
           </motion.div>
@@ -112,34 +112,29 @@ export default function Login() {
             transition={{ delay: 0.4 }}
             className="space-y-8"
           >
-            <div>
-              <h2 className="font-serif text-4xl xl:text-5xl text-white leading-tight mb-4">
-                Your restaurant,<br />
-                <span className="italic text-[#F5F5F4]/80">powered by AI</span>
-              </h2>
-              <p className="text-[#A8A29E] text-lg font-light max-w-md">
-                Join restaurants using AI to handle reservations, reduce no-shows, and delight customers.
-              </p>
-            </div>
+            <p className="font-serif text-4xl xl:text-[36px] font-normal italic leading-[1.35] tracking-tight text-[#F5F5F4] mb-10">
+              &ldquo;An AI that truly <em className="text-[#9F1239]">understands</em> your restaurant.&rdquo;
+            </p>
 
             {/* Feature highlights */}
-            <div className="space-y-4">
+            <div className="space-y-5">
               {[
-                { icon: 'phone' as const, text: 'AI answers calls 24/7 in 6+ languages' },
-                { icon: 'dashboard' as const, text: 'Real-time dashboard with table management' },
-                { icon: 'trending-up' as const, text: 'Analytics that reduce no-shows by 35%' },
+                { title: 'AI Voice Agent', desc: "Handles calls and reservations in your restaurant's unique voice and personality." },
+                { title: 'Smart Dashboard', desc: 'Real-time reservations, walk-ins, and table management on one screen.' },
+                { title: 'Guest Memory', desc: 'Every returning guest feels recognized with personalized experiences.' },
               ].map((feature, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.6 + i * 0.15 }}
-                  className="flex items-center gap-3"
+                  className="flex items-start gap-3.5"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                    <ThiingsIcon name={feature.icon} size="sm" />
+                  <div className="w-2 h-2 rounded-full bg-[#9F1239] flex-shrink-0 mt-1.5" />
+                  <div>
+                    <h4 className="text-sm font-semibold text-[#F5F5F4] mb-1">{feature.title}</h4>
+                    <p className="text-[13px] text-[#78716C] font-light leading-relaxed">{feature.desc}</p>
                   </div>
-                  <span className="text-[#E7E5E4] text-sm font-light">{feature.text}</span>
                 </motion.div>
               ))}
             </div>
@@ -199,7 +194,7 @@ export default function Login() {
             <div className="text-center mb-8">
               <Link to="/" className="inline-block mb-6 lg:hidden">
                 <span className="font-serif text-3xl tracking-tight text-[#1C1917]">
-                  Seatable<span className="text-[#9F1239]">.</span>
+                  seatable<span className="text-[#9F1239]">.</span>
                 </span>
               </Link>
               <h1 className="font-serif text-2xl text-[#1C1917] mb-2">
@@ -238,8 +233,8 @@ export default function Login() {
               disabled={isSigningIn}
               className={`
                 w-full flex items-center justify-center gap-3 px-6 py-4
-                bg-white border-2 border-[#E7E5E4] hover:border-[#1C1917]
-                text-[#1C1917] font-medium text-sm rounded-2xl
+                bg-white border border-[#E7E5E4] hover:border-[#D6D3D1] hover:bg-[#FAFAF9]
+                text-[#1C1917] font-medium text-[15px] rounded-xl
                 transition-all duration-300
                 ${isSigningIn ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-md'}
               `}
@@ -289,7 +284,7 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@restaurant.com"
                   required
-                  className="w-full px-4 py-3 border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-all"
+                  className="w-full px-4 py-3 border border-[#E7E5E4] rounded-[10px] text-sm text-[#1C1917] placeholder-[#D6D3D1] focus:outline-none focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)] focus:border-[#9F1239] transition-all"
                 />
               </div>
               <div>
@@ -304,7 +299,7 @@ export default function Login() {
                   placeholder={mode === 'signup' ? 'Min. 6 characters' : 'Your password'}
                   required
                   minLength={6}
-                  className="w-full px-4 py-3 border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-all"
+                  className="w-full px-4 py-3 border border-[#E7E5E4] rounded-[10px] text-sm text-[#1C1917] placeholder-[#D6D3D1] focus:outline-none focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)] focus:border-[#9F1239] transition-all"
                 />
               </div>
 
@@ -314,7 +309,7 @@ export default function Login() {
                 className={`
                   w-full flex items-center justify-center gap-3 px-6 py-4
                   bg-[#1C1917] hover:bg-[#9F1239]
-                  text-white font-bold text-sm tracking-widest uppercase rounded-2xl
+                  text-white font-semibold text-[15px] rounded-full
                   transition-all duration-300 shadow-lg
                   ${isSigningIn ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-xl hover:shadow-[#9F1239]/20'}
                 `}
@@ -330,7 +325,7 @@ export default function Login() {
             <div className="text-center mt-6">
               {mode === 'signin' ? (
                 <p className="text-[#57534E] text-sm">
-                  New to Seatable?{' '}
+                  New to seatable?{' '}
                   <button
                     onClick={() => { setMode('signup'); setError(null); setSuccessMessage(null); }}
                     className="text-[#9F1239] font-semibold hover:underline"

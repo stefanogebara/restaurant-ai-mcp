@@ -121,7 +121,7 @@ export default function TableLayoutPanel({
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-[#E7E5E4] rounded-xl p-5">
+      <div className="bg-white border border-[#E7E5E4] rounded-2xl p-6">
         <div className="h-6 w-40 bg-[#E7E5E4] rounded-lg animate-pulse mb-4" />
         <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
           {Array.from({ length: 10 }).map((_, i) => (
@@ -134,13 +134,13 @@ export default function TableLayoutPanel({
 
   return (
     <>
-      <div className="bg-white border border-[#E7E5E4]/50 rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b border-[#E7E5E4]">
-          <h2 className="text-base font-semibold text-[#1C1917]">
-            <span className="w-2 h-2 rounded-full bg-[#22c55e] inline-block mr-2" />
-            {t.tableLayout}
-          </h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-5 border-b border-[#F5F5F4]">
+          <div className="flex items-center gap-2.5">
+            <span className="text-[15px] font-semibold text-[#1C1917] tracking-tight">{t.tableLayout}</span>
+            <span className="text-[11px] font-semibold bg-[rgba(159,18,57,0.08)] text-[#9F1239] px-2.5 py-0.5 rounded-full">Live</span>
+          </div>
 
           <div className="flex items-center gap-2 flex-wrap">
             {/* View Mode Toggle */}

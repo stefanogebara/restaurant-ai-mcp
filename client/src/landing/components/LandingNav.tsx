@@ -43,7 +43,7 @@ export default function LandingNav() {
           className="font-serif text-2xl font-bold tracking-tight text-[#1C1917] cursor-pointer"
           onClick={() => navigate('/')}
         >
-          Seatable<span className="text-[#9F1239]">.</span>
+          seatable<span className="text-[#9F1239]">.</span>
         </motion.div>
 
         {/* Desktop Navigation */}
@@ -94,7 +94,7 @@ export default function LandingNav() {
           </button>
           <button
             onClick={() => navigate('/onboarding')}
-            className="bg-[#1C1917] text-[#FAFAF9] px-6 py-2.5 rounded-xl hover:bg-[#9F1239] transition-colors duration-300 text-sm tracking-widest font-bold uppercase"
+            className="bg-[#1C1917] text-[#FAFAF9] px-6 py-2.5 rounded-full hover:bg-[#9F1239] transition-colors duration-300 text-sm tracking-widest font-bold uppercase"
           >
             Get Started
           </button>
@@ -160,7 +160,7 @@ export default function LandingNav() {
             </button>
             <button
               onClick={() => { navigate('/onboarding'); setIsMobileMenuOpen(false); }}
-              className="block w-full bg-[#9F1239] text-white text-center px-6 py-3 text-sm tracking-widest font-bold uppercase rounded-xl"
+              className="block w-full bg-[#9F1239] text-white text-center px-6 py-3 text-sm tracking-widest font-bold uppercase rounded-full"
             >
               Get Started
             </button>

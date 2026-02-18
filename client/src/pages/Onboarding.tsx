@@ -177,7 +177,7 @@ export default function Onboarding() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <h1 className="font-serif text-2xl font-bold text-[#1C1917]">
-                  Seatable<span className="text-[#9F1239]">.</span>
+                  seatable<span className="text-[#9F1239]">.</span>
                 </h1>
               </div>
               <div className="text-sm text-[#57534E] font-medium">

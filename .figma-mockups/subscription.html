@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seatable - Subscription Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #FAFAF9; color: #1C1917; -webkit-font-smoothing: antialiased; min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* -- TOP BAR -- */
+  .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 40px; border-bottom: 1px solid #E7E5E4; background: #fff; }
+  .topbar-logo { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 600; }
+  .topbar-logo span { color: #9F1239; }
+  .topbar-back { font-size: 13px; color: #78716C; text-decoration: none; display: flex; align-items: center; gap: 6px; }
+
+  /* -- MAIN -- */
+  .subscription { padding: 48px 64px; max-width: 1100px; margin: 0 auto; width: 100%; }
+
+  .sub-header { margin-bottom: 40px; }
+  .sub-header h1 { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 500; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .sub-header p { font-size: 15px; color: #78716C; font-weight: 300; }
+
+  /* -- CURRENT PLAN CARD -- */
+  .current-plan { background: #fff; border: 1px solid #E7E5E4; border-radius: 16px; padding: 28px 32px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 48px; }
+  .plan-info { display: flex; align-items: center; gap: 20px; }
+  .plan-badge { font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #9F1239; background: rgba(159,18,57,0.08); padding: 6px 14px; border-radius: 100px; }
+  .plan-name { font-size: 20px; font-weight: 700; }
+  .plan-price { font-size: 14px; color: #78716C; margin-top: 2px; }
+  .plan-status { display: flex; align-items: center; gap: 20px; }
+  .plan-status-badge { font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 100px; background: rgba(22,163,74,0.08); color: #16a34a; }
+  .plan-billing { font-size: 13px; color: #78716C; }
+  .plan-manage-btn { padding: 10px 20px; border: 1px solid #E7E5E4; border-radius: 10px; font-size: 13px; font-weight: 500; background: #fff; color: #57534E; cursor: pointer; font-family: inherit; }
+
+  /* -- PLAN COMPARISON -- */
+  .plans-label { font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #9F1239; margin-bottom: 12px; }
+  .plans-title { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 500; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .plans-subtitle { font-size: 15px; color: #78716C; font-weight: 300; margin-bottom: 36px; }
+
+  .plans-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; background: #E7E5E4; border-radius: 20px; overflow: hidden; }
+  .plan-card { background: #FAFAF9; padding: 40px 32px; position: relative; }
+  .plan-card.featured { background: #1C1917; color: #fff; }
+  .plan-card.current { background: #fff; border: 2px solid #9F1239; }
+  .plan-card.featured .plan-card-desc { color: #A8A29E; }
+  .plan-card.featured .plan-feature { color: #D6D3D1; border-color: #292524; }
+
+  .plan-card-label { font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: #78716C; margin-bottom: 8px; }
+  .plan-card.featured .plan-card-label { color: #9F1239; }
+  .plan-card-amount { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 500; letter-spacing: -1px; margin-bottom: 4px; }
+  .plan-card-amount span { font-size: 18px; font-weight: 400; color: #A8A29E; }
+  .plan-card.featured .plan-card-amount { color: #fff; }
+  .plan-card-desc { font-size: 14px; color: #78716C; margin-bottom: 28px; font-weight: 300; }
+
+  .plan-features { list-style: none; margin-bottom: 32px; }
+  .plan-feature { font-size: 14px; padding: 10px 0; border-bottom: 1px solid #E7E5E4; display: flex; align-items: center; gap: 10px; }
+  .plan-feature::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #9F1239; flex-shrink: 0; }
+
+  .plan-btn { display: block; width: 100%; text-align: center; padding: 13px; border-radius: 100px; font-size: 14px; font-weight: 600; text-decoration: none; border: 1px solid #D6D3D1; color: #1C1917; background: transparent; cursor: pointer; font-family: inherit; }
+  .plan-card.featured .plan-btn { background: #9F1239; color: #fff; border-color: #9F1239; }
+  .plan-current-badge { font-size: 12px; font-weight: 600; color: #9F1239; background: rgba(159,18,57,0.08); padding: 4px 12px; border-radius: 100px; position: absolute; top: 16px; right: 16px; }
+
+  /* -- SUCCESS VARIANT -- */
+  .success-card { background: #fff; border: 1px solid #E7E5E4; border-radius: 16px; padding: 48px; text-align: center; margin-top: 48px; }
+  .success-icon { width: 64px; height: 64px; border-radius: 50%; background: rgba(22,163,74,0.08); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+  .success-card h3 { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 500; margin-bottom: 8px; }
+  .success-card p { font-size: 14px; color: #78716C; font-weight: 300; margin-bottom: 24px; }
+  .success-btn { padding: 12px 28px; border-radius: 100px; font-size: 14px; font-weight: 600; background: #1C1917; color: #fff; border: none; cursor: pointer; font-family: inherit; }
+</style>
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="topbar-logo">seatable<span>.</span></div>
+  <a href="#" class="topbar-back">&larr; Back to Dashboard</a>
+</div>
+
+<!-- Subscription -->
+<div class="subscription">
+  <div class="sub-header">
+    <h1>Subscription & Billing</h1>
+    <p>Manage your plan, billing info, and usage.</p>
+  </div>
+
+  <!-- Current Plan -->
+  <div class="current-plan">
+    <div class="plan-info">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+          <span class="plan-name">Growth Plan</span>
+          <span class="plan-badge">Current</span>
+        </div>
+        <div class="plan-price">&euro;99/month &middot; Billed monthly</div>
+      </div>
+    </div>
+    <div class="plan-status">
+      <div>
+        <span class="plan-status-badge">Active</span>
+        <div class="plan-billing" style="margin-top:6px">Next billing: March 18, 2026</div>
+      </div>
+      <button class="plan-manage-btn">Manage Billing</button>
+    </div>
+  </div>
+
+  <!-- Plan Comparison -->
+  <div class="plans-label">Plans</div>
+  <div class="plans-title">Choose the right plan</div>
+  <p class="plans-subtitle">No hidden fees. Cancel anytime.</p>
+
+  <div class="plans-grid">
+    <div class="plan-card">
+      <div class="plan-card-label">Starter</div>
+      <div class="plan-card-amount">&euro;29<span>/mo</span></div>
+      <p class="plan-card-desc">For small restaurants getting started.</p>
+      <ul class="plan-features">
+        <li class="plan-feature">AI Chat & WhatsApp</li>
+        <li class="plan-feature">Host dashboard</li>
+        <li class="plan-feature">Basic analytics</li>
+        <li class="plan-feature">50 reservations/mo</li>
+        <li class="plan-feature">Email support</li>
+      </ul>
+      <button class="plan-btn">Downgrade</button>
+    </div>
+    <div class="plan-card featured">
+      <div class="plan-current-badge" style="background:rgba(159,18,57,0.3);color:#fff">Current Plan</div>
+      <div class="plan-card-label">Growth</div>
+      <div class="plan-card-amount">&euro;99<span>/mo</span></div>
+      <p class="plan-card-desc">For growing restaurants that want more.</p>
+      <ul class="plan-features">
+        <li class="plan-feature">Everything in Starter</li>
+        <li class="plan-feature">AI Voice agent</li>
+        <li class="plan-feature">Advanced analytics</li>
+        <li class="plan-feature">150 reservations/mo</li>
+        <li class="plan-feature">SMS notifications</li>
+      </ul>
+      <button class="plan-btn">Current Plan</button>
+    </div>
+    <div class="plan-card">
+      <div class="plan-card-label">Scale</div>
+      <div class="plan-card-amount">&euro;199<span>/mo</span></div>
+      <p class="plan-card-desc">For high-volume restaurants.</p>
+      <ul class="plan-features">
+        <li class="plan-feature">Everything in Growth</li>
+        <li class="plan-feature">Unlimited reservations</li>
+        <li class="plan-feature">Unlimited SMS</li>
+        <li class="plan-feature">Priority support</li>
+        <li class="plan-feature">Custom integrations</li>
+      </ul>
+      <button class="plan-btn">Upgrade</button>
+    </div>
+  </div>
+
+  <!-- Success Variant -->
+  <div class="success-card">
+    <div class="success-icon">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    </div>
+    <h3>Welcome to Growth!</h3>
+    <p>Your upgrade is active. You now have access to the AI Voice Agent and advanced analytics.</p>
+    <button class="success-btn">Go to Dashboard</button>
+  </div>
+</div>
+
+</body>
+</html>

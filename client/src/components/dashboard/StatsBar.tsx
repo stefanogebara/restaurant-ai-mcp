@@ -13,26 +13,24 @@ interface StatsBarProps {
 
 const translations = {
   en: {
-    tables: 'Tables',
-    reservations: 'Reservations',
-    waiting: 'Waiting',
-    active: 'Active',
-    occupied: 'occupied',
+    reservations: "Today's Reservations",
+    tables: 'Tables Available',
+    guests: 'Guests Expected',
+    aiCalls: 'Active Parties',
     seated: 'seated',
-    avgWait: '~%d min avg',
-    noWait: 'No wait',
-    guests: '%d guests',
+    capacity: 'capacity',
+    vsAvg: 'vs avg',
+    waiting: 'on waitlist',
   },
   es: {
-    tables: 'Mesas',
-    reservations: 'Reservas',
-    waiting: 'En Espera',
-    active: 'Activas',
-    occupied: 'ocupación',
+    reservations: 'Reservas de Hoy',
+    tables: 'Mesas Disponibles',
+    guests: 'Comensales Esperados',
+    aiCalls: 'Mesas Activas',
     seated: 'sentados',
-    avgWait: '~%d min prom',
-    noWait: 'Sin espera',
-    guests: '%d comensales',
+    capacity: 'capacidad',
+    vsAvg: 'vs prom',
+    waiting: 'en espera',
   },
 };
 
@@ -42,82 +40,111 @@ export default function StatsBar({
   reservationsToday,
   seatedReservations,
   waitlistCount,
-  estimatedWaitTime,
   activeParties,
   totalGuests,
   language = 'en',
   isLoading,
 }: StatsBarProps) {
   const t = translations[language];
+  const availableTables = totalTables - occupiedTables;
   const occupancyPercent = totalTables > 0 ? Math.round((occupiedTables / totalTables) * 100) : 0;
+  const seatedPercent = reservationsToday > 0 ? Math.round((seatedReservations / reservationsToday) * 100) : 0;
 
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="bg-white rounded-xl p-4 shadow-sm border border-[#E7E5E4]/50">
-            <div className="h-1 w-12 bg-[#E7E5E4] rounded-full mb-3 animate-pulse" />
+          <div key={i} className="bg-white rounded-2xl p-6 border border-[#E7E5E4]">
+            <div className="h-3 w-20 bg-[#E7E5E4] rounded-full animate-pulse mb-3" />
             <div className="h-9 w-16 bg-[#E7E5E4] rounded-lg animate-pulse mb-2" />
-            <div className="h-3 w-20 bg-[#F5F5F4] rounded animate-pulse mb-1" />
-            <div className="h-3 w-24 bg-[#F5F5F4] rounded animate-pulse" />
+            <div className="h-3 w-24 bg-[#F5F5F4] rounded animate-pulse mb-3" />
+            <div className="h-1 w-full bg-[#F5F5F4] rounded-full animate-pulse" />
           </div>
         ))}
       </div>
     );
   }
 
-  const waitSublabel = estimatedWaitTime
-    ? t.avgWait.replace('%d', String(estimatedWaitTime))
-    : t.noWait;
-
-  const guestsSublabel = t.guests.replace('%d', String(totalGuests));
-
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      {/* Tables */}
-      <div className="bg-white rounded-xl p-4 shadow-sm border border-[#E7E5E4]/50 hover:shadow-md transition-shadow">
-        <div className="h-1 w-12 rounded-full mb-3 bg-[#22c55e]" />
-        <div className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">
-          {occupiedTables}<span className="text-[#A8A29E]">/{totalTables}</span>
-        </div>
-        <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">{t.tables}</div>
-        <div className="text-sm text-[#A8A29E] mt-0.5">{occupancyPercent}% {t.occupied}</div>
-        <div className="mt-2 h-1.5 bg-[#F5F5F4] rounded-full overflow-hidden">
-          <div
-            className="h-full bg-[#22c55e] rounded-full transition-all"
-            style={{ width: `${occupancyPercent}%` }}
-          />
-        </div>
-      </div>
+      {/* Today's Reservations */}
+      <StatCard
+        label={t.reservations}
+        value={String(reservationsToday)}
+        change={`${seatedReservations} ${t.seated}`}
+        changeColor="text-[#16a34a]"
+        barPercent={seatedPercent}
+        barColor="#9F1239"
+      />
 
-      {/* Reservations */}
-      <div className="bg-white rounded-xl p-4 shadow-sm border border-[#E7E5E4]/50 hover:shadow-md transition-shadow">
-        <div className="h-1 w-12 rounded-full mb-3 bg-[#9F1239]" />
-        <div className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">
-          {reservationsToday}
-        </div>
-        <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">{t.reservations}</div>
-        <div className="text-sm text-[#A8A29E] mt-0.5">{seatedReservations} {t.seated}</div>
-      </div>
+      {/* Tables Available */}
+      <StatCard
+        label={t.tables}
+        value={String(availableTables)}
+        valueSuffix={` / ${totalTables}`}
+        valueColor="text-[#9F1239]"
+        change={`${occupancyPercent}% ${t.capacity}`}
+        changeColor="text-[#16a34a]"
+        barPercent={100 - occupancyPercent}
+        barColor="#16a34a"
+      />
 
-      {/* Waiting */}
-      <div className="bg-white rounded-xl p-4 shadow-sm border border-[#E7E5E4]/50 hover:shadow-md transition-shadow">
-        <div className="h-1 w-12 rounded-full mb-3 bg-[#d97706]" />
-        <div className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">
-          {waitlistCount}
-        </div>
-        <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">{t.waiting}</div>
-        <div className="text-sm text-[#A8A29E] mt-0.5">{waitSublabel}</div>
-      </div>
+      {/* Guests Expected */}
+      <StatCard
+        label={t.guests}
+        value={String(totalGuests)}
+        change={waitlistCount > 0 ? `${waitlistCount} ${t.waiting}` : ''}
+        changeColor="text-[#d97706]"
+        barPercent={totalGuests > 0 ? Math.min(Math.round((totalGuests / (reservationsToday * 3 || 1)) * 100), 100) : 0}
+        barColor="#57534E"
+      />
 
-      {/* Active */}
-      <div className="bg-white rounded-xl p-4 shadow-sm border border-[#E7E5E4]/50 hover:shadow-md transition-shadow">
-        <div className="h-1 w-12 rounded-full mb-3 bg-[#1C1917]" />
-        <div className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">
-          {activeParties}
+      {/* Active Parties */}
+      <StatCard
+        label={t.aiCalls}
+        value={String(activeParties)}
+        change={totalGuests > 0 ? `${totalGuests} guests seated` : ''}
+        changeColor="text-[#57534E]"
+        barPercent={totalTables > 0 ? Math.round((activeParties / totalTables) * 100) : 0}
+        barColor="#d97706"
+      />
+    </div>
+  );
+}
+
+interface StatCardProps {
+  label: string;
+  value: string;
+  valueSuffix?: string;
+  valueColor?: string;
+  change: string;
+  changeColor: string;
+  barPercent: number;
+  barColor: string;
+}
+
+function StatCard({ label, value, valueSuffix, valueColor, change, changeColor, barPercent, barColor }: StatCardProps) {
+  return (
+    <div className="bg-white rounded-2xl p-6 border border-[#E7E5E4]">
+      <div className="text-xs font-medium text-[#A8A29E] tracking-wide mb-2">
+        {label}
+      </div>
+      <div className={`text-[32px] font-bold tracking-tight leading-none ${valueColor || 'text-[#1C1917]'}`}>
+        {value}
+        {valueSuffix && (
+          <span className="text-base text-[#A8A29E] font-normal">{valueSuffix}</span>
+        )}
+      </div>
+      {change && (
+        <div className={`text-xs font-medium mt-1.5 ${changeColor}`}>
+          {change}
         </div>
-        <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">{t.active}</div>
-        <div className="text-sm text-[#A8A29E] mt-0.5">{guestsSublabel}</div>
+      )}
+      <div className="w-full h-1 bg-[#F5F5F4] rounded-full mt-3 overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${barPercent}%`, background: barColor }}
+        />
       </div>
     </div>
   );

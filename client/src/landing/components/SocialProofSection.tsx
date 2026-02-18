@@ -60,7 +60,7 @@ export default function SocialProofSection() {
                 <Bot className="w-4.5 h-4.5 text-white" />
               </div>
               <div className="flex-1">
-                <div className="text-sm font-bold text-[#1C1917]">Seatable AI</div>
+                <div className="text-sm font-bold text-[#1C1917]">seatable AI</div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 bg-[#10b981] rounded-full" />
                   <span className="text-[10px] text-[#A8A29E] uppercase tracking-wider">Online</span>

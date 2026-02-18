@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import ThiingsIcon, { type IconName } from '../common/ThiingsIcon';
+import ThiingsIcon from '../common/ThiingsIcon';
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSidebar } from '../../contexts/SidebarContext';
@@ -11,53 +11,35 @@ import { languageOptions } from '../../i18n/config';
 interface NavItem {
   path: string;
   label: string;
-  iconName: IconName;
-  description: string;
   requiredFeature: keyof PlanFeatures;
 }
 
-const navItems: NavItem[] = [
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
+
+const navSections: NavSection[] = [
   {
-    path: '/host-dashboard/simple',
-    label: 'Overview',
-    iconName: 'dashboard',
-    description: 'Tables & Active Parties',
-    requiredFeature: 'overview'
+    label: 'Main',
+    items: [
+      { path: '/host-dashboard/simple', label: 'Dashboard', requiredFeature: 'overview' },
+      { path: '/host-dashboard/floor-plan', label: 'Tables', requiredFeature: 'overview' },
+    ]
   },
   {
-    path: '/host-dashboard/floor-plan',
-    label: 'Floor Plan',
-    iconName: 'map',
-    description: 'Arrange Tables',
-    requiredFeature: 'overview'
+    label: 'AI',
+    items: [
+      { path: '/host-dashboard/voice-settings', label: 'Voice Agent', requiredFeature: 'voiceAI' },
+      { path: '/host-dashboard/calls', label: 'Call History', requiredFeature: 'aiAgentTracking' },
+    ]
   },
   {
-    path: '/host-dashboard/calls',
-    label: 'AI Agent',
-    iconName: 'phone',
-    description: 'Call Tracking & Analytics',
-    requiredFeature: 'aiAgentTracking'
-  },
-  {
-    path: '/host-dashboard/voice-settings',
-    label: 'Voice & Language',
-    iconName: 'volume',
-    description: 'AI Voice Settings',
-    requiredFeature: 'voiceAI'
-  },
-  {
-    path: '/analytics',
-    label: 'Analytics',
-    iconName: 'bar-chart',
-    description: 'Performance & Trends',
-    requiredFeature: 'advancedAnalytics'
-  },
-  {
-    path: '/host-dashboard/reports',
-    label: 'Reports',
-    iconName: 'file-text',
-    description: 'Weekly Reports',
-    requiredFeature: 'weeklyReports'
+    label: 'Insights',
+    items: [
+      { path: '/analytics', label: 'Analytics', requiredFeature: 'advancedAnalytics' },
+      { path: '/host-dashboard/reports', label: 'Reports', requiredFeature: 'weeklyReports' },
+    ]
   }
 ];
 
@@ -75,7 +57,6 @@ export default function Sidebar() {
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
 
-  // Close settings menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
@@ -111,12 +92,15 @@ export default function Sidebar() {
     return location.pathname.startsWith(path);
   };
 
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  const userEmail = user?.email || 'Not signed in';
+
   return (
     <>
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-white rounded-lg shadow-lg border border-[#E7E5E4] focus:outline-none focus:ring-2 focus:ring-[#9F1239]"
+        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-[#1C1917] rounded-lg shadow-lg border border-[#292524] text-white focus:outline-none focus:ring-2 focus:ring-[#9F1239]"
         aria-label={isMobileOpen ? "Close navigation menu" : "Open navigation menu"}
         aria-expanded={isMobileOpen}
       >
@@ -126,7 +110,7 @@ export default function Sidebar() {
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
@@ -134,133 +118,150 @@ export default function Sidebar() {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-full bg-white border-r border-[#E7E5E4] z-40
+          fixed top-0 left-0 h-full bg-[#1C1917] z-40
           transition-all duration-300 ease-in-out
-          ${isCollapsed ? 'w-20' : 'w-64'}
+          ${isCollapsed ? 'w-20' : 'w-[260px]'}
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0
         `}
       >
         <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="p-6 border-b border-[#E7E5E4] flex items-center justify-between">
-            {!isCollapsed && (
-              <div>
-                <h1 className="text-xl font-bold text-[#1C1917]">Seatable</h1>
-                <p className="text-xs text-[#57534E] mt-1">AI Restaurant Management</p>
-              </div>
+          {/* Logo */}
+          <div className={`py-8 ${isCollapsed ? 'px-4' : 'px-7'} flex items-center justify-between`}>
+            {!isCollapsed ? (
+              <h1 className="font-serif text-[22px] font-semibold text-white tracking-tight">
+                seatable<span className="text-[#9F1239]">.</span>
+              </h1>
+            ) : (
+              <h1 className="font-serif text-[22px] font-semibold text-white tracking-tight mx-auto">
+                s<span className="text-[#9F1239]">.</span>
+              </h1>
             )}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hidden lg:block p-2 hover:bg-[#F5F5F4] rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#9F1239]"
+              className="hidden lg:block p-1.5 hover:bg-white/5 rounded-lg transition-colors text-[#57534E] hover:text-[#A8A29E] focus:outline-none"
               aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              <span className={`inline-flex transition-transform ${isCollapsed ? 'rotate-180' : ''}`}><ThiingsIcon name="chevron-left" pxSize={20} /></span>
+              <span className={`inline-flex transition-transform ${isCollapsed ? 'rotate-180' : ''}`}>
+                <ThiingsIcon name="chevron-left" pxSize={18} />
+              </span>
             </button>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto p-4 space-y-2">
-            {navItems.map((item) => {
-              const active = isActive(item.path);
-              const hasAccess = hasFeatureAccess(planType, item.requiredFeature);
-              // While subscription data is loading, default to unlocked to prevent flash of lock icons
-              const isLocked = isSubscriptionLoading ? false : !hasAccess;
+          <nav className="flex-1 overflow-y-auto">
+            {navSections.map((section) => (
+              <div key={section.label} className="mb-7">
+                {/* Section Label */}
+                {!isCollapsed && (
+                  <div className="px-7 mb-2 text-[10px] font-semibold tracking-[2px] uppercase text-[#57534E]">
+                    {section.label}
+                  </div>
+                )}
+                {isCollapsed && (
+                  <div className="w-full flex justify-center mb-2">
+                    <div className="w-6 h-px bg-[#292524]" />
+                  </div>
+                )}
 
-              // For locked items, don't navigate - just show as disabled
-              const itemContent = (
-                <>
-                  <span className={active ? 'scale-110' : ''}><ThiingsIcon name={item.iconName} pxSize={20} /></span>
-                  {!isCollapsed && (
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm flex items-center gap-2">
-                        {item.label}
-                        {isLocked && <ThiingsIcon name="lock" pxSize={12} />}
-                      </div>
-                      <div className="text-xs opacity-70 truncate">{item.description}</div>
-                    </div>
-                  )}
-                </>
-              );
+                {/* Nav Items */}
+                {section.items.map((item) => {
+                  const active = isActive(item.path);
+                  const hasAccess = hasFeatureAccess(planType, item.requiredFeature);
+                  const isLocked = isSubscriptionLoading ? false : !hasAccess;
 
-              if (isLocked) {
-                // Locked item - show as disabled button with upgrade info
-                const tooltipText = isCollapsed
-                  ? `${item.label} - Upgrade to Professional to unlock`
-                  : 'Upgrade to Professional plan to unlock this feature';
-                return (
-                  <button
-                    key={item.path}
-                    onClick={() => {/* Prevent navigation - could show upgrade modal */}}
-                    className={`
-                      flex items-center gap-3 px-4 py-3 rounded-lg transition-all w-full text-left
-                      opacity-50 cursor-not-allowed text-[#57534E]
-                      ${isCollapsed ? 'justify-center' : ''}
-                    `}
-                    title={tooltipText}
-                    aria-label={`${item.label} - Locked feature`}
-                    aria-disabled="true"
-                  >
-                    {itemContent}
-                  </button>
-                );
-              }
+                  if (isLocked) {
+                    return (
+                      <button
+                        key={item.path}
+                        className={`
+                          w-full flex items-center gap-3 text-left transition-all duration-150
+                          opacity-30 cursor-not-allowed text-[#A8A29E]
+                          ${isCollapsed ? 'justify-center px-4 py-2.5' : 'px-7 py-2.5'}
+                        `}
+                        title={isCollapsed
+                          ? `${item.label} - Upgrade to unlock`
+                          : 'Upgrade to Professional plan to unlock'}
+                        aria-label={`${item.label} - Locked feature`}
+                        aria-disabled="true"
+                      >
+                        <span
+                          className="w-1.5 h-1.5 rounded-full bg-current opacity-40 flex-shrink-0"
+                        />
+                        {!isCollapsed && (
+                          <span className="text-sm flex items-center gap-2">
+                            {item.label}
+                            <ThiingsIcon name="lock" pxSize={10} />
+                          </span>
+                        )}
+                      </button>
+                    );
+                  }
 
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setIsMobileOpen(false)}
-                  className={`
-                    flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
-                    ${active
-                      ? 'bg-[#9F1239] text-white shadow-md shadow-[#9F1239]/25'
-                      : 'hover:bg-[#F5F5F4] text-[#57534E] hover:text-[#1C1917] hover:shadow-sm'
-                    }
-                    ${isCollapsed ? 'justify-center' : ''}
-                  `}
-                  title={isCollapsed ? item.label : undefined}
-                >
-                  {itemContent}
-                </Link>
-              );
-            })}
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      onClick={() => setIsMobileOpen(false)}
+                      className={`
+                        flex items-center gap-3 transition-all duration-150
+                        ${isCollapsed ? 'justify-center px-4 py-2.5' : 'px-7 py-2.5'}
+                        ${active
+                          ? 'text-white bg-[rgba(159,18,57,0.1)] border-l-2 border-l-[#9F1239] font-medium'
+                          : 'text-[#A8A29E] hover:text-[#D6D3D1] hover:bg-white/[0.03] border-l-2 border-l-transparent'
+                        }
+                      `}
+                      title={isCollapsed ? item.label : undefined}
+                    >
+                      <span
+                        className={`
+                          w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors
+                          ${active ? 'bg-[#9F1239]' : 'bg-current opacity-40'}
+                        `}
+                      />
+                      {!isCollapsed && (
+                        <span className="text-sm">{item.label}</span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
           </nav>
 
-          {/* User Settings Section */}
-          <div className="border-t border-[#E7E5E4]" ref={settingsRef}>
-            {/* Settings Menu Button */}
+          {/* User Footer */}
+          <div className="border-t border-[#292524]" ref={settingsRef}>
             <button
               onClick={() => setIsSettingsOpen(!isSettingsOpen)}
               className={`
-                w-full p-4 flex items-center gap-3 hover:bg-[#F5F5F4] transition-all duration-200
+                w-full p-5 flex items-center gap-2.5 hover:bg-white/[0.03] transition-all duration-200
                 ${isCollapsed ? 'justify-center' : ''}
               `}
-              title={isCollapsed ? 'Settings' : undefined}
+              title={isCollapsed ? userName : undefined}
             >
               {user?.user_metadata?.avatar_url ? (
                 <img
                   src={user.user_metadata.avatar_url}
                   alt="Profile"
-                  className="w-8 h-8 rounded-full"
+                  className="w-8 h-8 rounded-full flex-shrink-0"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-[#9F1239]/10 flex items-center justify-center">
-                  <ThiingsIcon name="user" pxSize={16} />
-                </div>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#9F1239] to-[#be123c] flex-shrink-0" />
               )}
               {!isCollapsed && (
                 <>
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-sm font-medium text-[#1C1917] truncate">
-                      {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}
+                    <p className="text-[13px] font-medium text-[#D6D3D1] truncate">
+                      {userName}
                     </p>
-                    <p className="text-xs text-[#57534E] truncate">
-                      {user?.email || 'Not signed in'}
+                    <p className="text-[11px] text-[#78716C] truncate">
+                      {userEmail}
                     </p>
                   </div>
-                  <span className={`inline-flex transition-transform ${isSettingsOpen ? '' : 'rotate-180'}`}><ThiingsIcon name="chevron-up" pxSize={16} /></span>
+                  <span className={`inline-flex transition-transform text-[#57534E] ${isSettingsOpen ? '' : 'rotate-180'}`}>
+                    <ThiingsIcon name="chevron-up" pxSize={14} />
+                  </span>
                 </>
               )}
             </button>
@@ -268,30 +269,29 @@ export default function Sidebar() {
             {/* Settings Dropdown */}
             {isSettingsOpen && (
               <div className={`
-                absolute bottom-20 bg-white border border-[#E7E5E4]/50 rounded-xl shadow-xl overflow-hidden
+                absolute bottom-20 bg-[#292524] border border-[#3a3533] rounded-xl shadow-2xl overflow-hidden
                 ${isCollapsed ? 'left-20 w-56' : 'left-4 right-4'}
               `}>
                 {/* Language Selector */}
                 <div className="relative">
                   <button
                     onClick={() => setIsLanguageOpen(!isLanguageOpen)}
-                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[#F5F5F4] transition-colors text-left"
+                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/[0.05] transition-colors text-left text-[#D6D3D1]"
                   >
                     <ThiingsIcon name="globe" pxSize={16} />
                     <span className="flex-1 text-sm">Language</span>
-                    <span className="text-sm text-[#57534E]">{currentLanguage.flag} {currentLanguage.name}</span>
+                    <span className="text-sm text-[#78716C]">{currentLanguage.flag} {currentLanguage.name}</span>
                   </button>
 
-                  {/* Language Options */}
                   {isLanguageOpen && (
-                    <div className="border-t border-[#E7E5E4] bg-[#F5F5F4]/50">
+                    <div className="border-t border-[#3a3533] bg-[#1C1917]">
                       {languageOptions.map((lang) => (
                         <button
                           key={lang.code}
                           onClick={() => handleLanguageChange(lang.code)}
                           className={`
-                            w-full px-4 py-2 flex items-center gap-3 hover:bg-[#F5F5F4] transition-colors text-left text-sm
-                            ${i18n.language === lang.code ? 'bg-[#9F1239]/10 text-[#9F1239] font-medium' : ''}
+                            w-full px-4 py-2 flex items-center gap-3 hover:bg-white/[0.05] transition-colors text-left text-sm
+                            ${i18n.language === lang.code ? 'bg-[rgba(159,18,57,0.15)] text-[#e11d48] font-medium' : 'text-[#A8A29E]'}
                           `}
                         >
                           <span className="text-lg">{lang.flag}</span>
@@ -305,10 +305,9 @@ export default function Sidebar() {
                   )}
                 </div>
 
-                {/* Divider */}
-                <div className="border-t border-[#E7E5E4]" />
+                <div className="border-t border-[#3a3533]" />
 
-                {/* Logout Button */}
+                {/* Logout */}
                 <button
                   onClick={handleLogout}
                   className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[#dc2626]/10 text-[#dc2626] transition-colors"
@@ -319,15 +318,6 @@ export default function Sidebar() {
               </div>
             )}
           </div>
-
-          {/* Footer */}
-          {!isCollapsed && (
-            <div className="px-4 pb-3 pt-2">
-              <div className="text-xs text-[#57534E] text-center">
-                <p>Powered by AI</p>
-              </div>
-            </div>
-          )}
         </div>
       </aside>
     </>

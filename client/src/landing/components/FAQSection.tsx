@@ -33,7 +33,7 @@ export default function FAQSection() {
           </h2>
           <div className="w-16 h-0.5 bg-[#9F1239] mx-auto opacity-50 mb-6"></div>
           <p className="text-lg text-[#57534E] font-light">
-            Everything you need to know about Seatable
+            Everything you need to know about seatable
           </p>
         </motion.div>
 

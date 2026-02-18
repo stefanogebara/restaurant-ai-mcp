@@ -78,7 +78,7 @@ export default function ContactForm() {
           </h2>
           <div className="w-16 h-0.5 bg-[#9F1239] mx-auto opacity-50 mb-6"></div>
           <p className="text-lg text-[#57534E] max-w-2xl mx-auto font-light">
-            Schedule a personalized demo and discover how Seatable can transform your operations
+            Schedule a personalized demo and discover how seatable can transform your operations
           </p>
         </motion.div>
 
@@ -268,7 +268,7 @@ export default function ContactForm() {
                   onChange={handleChange}
                   rows={4}
                   className="w-full px-4 py-3 bg-white border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-all resize-none"
-                  placeholder="I'm interested in implementing Seatable for my restaurant..."
+                  placeholder="I'm interested in implementing seatable for my restaurant..."
                 />
               </div>
 

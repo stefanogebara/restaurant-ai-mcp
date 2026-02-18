@@ -177,7 +177,7 @@ export default function WeeklyReport() {
 
   return (
     <DashboardLayout>
-    <div className="dashboard min-h-screen bg-[#FAFAF9] p-6">
+    <div className="dashboard min-h-screen bg-[#F5F5F4] p-6">
       <div className="max-w-7xl mx-auto">
         {/* Breadcrumb Navigation */}
         <Breadcrumb items={breadcrumbConfigs.reports} className="mb-4 print:hidden" />
@@ -185,7 +185,7 @@ export default function WeeklyReport() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8 print:mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">Weekly Report</h1>
+            <h1 className="text-2xl font-serif font-bold text-[#1C1917] tracking-tight">Weekly Report</h1>
             <p className="text-[#78716C]">{report.period.label}</p>
           </div>
 
@@ -208,7 +208,7 @@ export default function WeeklyReport() {
         </div>
 
         {/* Date Range Selector */}
-        <div className="mb-6 p-4 bg-white rounded-xl border border-[#E7E5E4]/50 shadow-sm print:hidden">
+        <div className="mb-6 p-4 bg-white rounded-2xl border border-[#E7E5E4]/50 shadow-sm print:hidden">
           <div className="flex items-center gap-4">
             <div>
               <label className="block text-sm text-[#78716C] mb-1">Start Date</label>
@@ -240,7 +240,7 @@ export default function WeeklyReport() {
         {/* Key Metrics Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           {/* Total Covers */}
-          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-2xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
             <div className="h-1 w-12 rounded-full mb-3 bg-[#22c55e]" />
             <div className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{summary.total_covers}</div>
             <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Total Covers</div>
@@ -254,7 +254,7 @@ export default function WeeklyReport() {
           </div>
 
           {/* Reservations */}
-          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-2xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
             <div className="h-1 w-12 rounded-full mb-3 bg-[#9F1239]" />
             <div className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{summary.total_reservations}</div>
             <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Reservations</div>
@@ -264,7 +264,7 @@ export default function WeeklyReport() {
           </div>
 
           {/* Average Party Size */}
-          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-2xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
             <div className="h-1 w-12 rounded-full mb-3 bg-[#d97706]" />
             <div className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{summary.avg_party_size}</div>
             <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Avg Party Size</div>
@@ -272,7 +272,7 @@ export default function WeeklyReport() {
           </div>
 
           {/* Cancellation Rate */}
-          <div className="bg-white rounded-xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-2xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
             <div className="h-1 w-12 rounded-full mb-3 bg-[#1C1917]" />
             <div className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{summary.cancellation_rate}%</div>
             <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Cancellation Rate</div>
@@ -283,7 +283,7 @@ export default function WeeklyReport() {
         {/* Busiest Times */}
         <div className="grid grid-cols-2 gap-6 mb-8">
           {/* Busiest Days */}
-          <div className="bg-white p-6 rounded-xl border border-[#E7E5E4]/50 shadow-sm">
+          <div className="bg-white p-6 rounded-2xl border border-[#E7E5E4]/50 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <ThiingsIcon name="calendar" size="sm" />
               <h2 className="text-base font-semibold text-[#1C1917]">Busiest Days</h2>
@@ -302,7 +302,7 @@ export default function WeeklyReport() {
           </div>
 
           {/* Busiest Times */}
-          <div className="bg-white p-6 rounded-xl border border-[#E7E5E4]/50 shadow-sm">
+          <div className="bg-white p-6 rounded-2xl border border-[#E7E5E4]/50 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <ThiingsIcon name="clock" size="sm" />
               <h2 className="text-base font-semibold text-[#1C1917]">Busiest Times</h2>
@@ -322,7 +322,7 @@ export default function WeeklyReport() {
         </div>
 
         {/* Customer Demographics */}
-        <div className="bg-white p-6 rounded-xl border border-[#E7E5E4]/50 shadow-sm mb-8">
+        <div className="bg-white p-6 rounded-2xl border border-[#E7E5E4]/50 shadow-sm mb-8">
           <div className="flex items-center gap-2 mb-6">
             <ThiingsIcon name="users" size="sm" />
             <h2 className="text-base font-semibold text-[#1C1917]">Customer Demographics</h2>
@@ -359,7 +359,7 @@ export default function WeeklyReport() {
         <div className="grid grid-cols-2 gap-6">
           {/* Dietary Restrictions */}
           {Object.keys(preferences.dietary_restrictions).length > 0 && (
-            <div className="bg-white p-6 rounded-xl border border-[#E7E5E4]/50 shadow-sm">
+            <div className="bg-white p-6 rounded-2xl border border-[#E7E5E4]/50 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <ThiingsIcon name="utensils" size="sm" />
                 <h2 className="text-base font-semibold text-[#1C1917]">Dietary Restrictions</h2>
@@ -379,7 +379,7 @@ export default function WeeklyReport() {
 
           {/* Languages */}
           {Object.keys(preferences.languages).length > 0 && (
-            <div className="bg-white p-6 rounded-xl border border-[#E7E5E4]/50 shadow-sm">
+            <div className="bg-white p-6 rounded-2xl border border-[#E7E5E4]/50 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <ThiingsIcon name="languages" size="sm" />
                 <h2 className="text-base font-semibold text-[#1C1917]">Languages</h2>
@@ -399,7 +399,7 @@ export default function WeeklyReport() {
 
           {/* Seating Preferences */}
           {Object.keys(preferences.seating).length > 0 && (
-            <div className="bg-white p-6 rounded-xl border border-[#E7E5E4]/50 shadow-sm">
+            <div className="bg-white p-6 rounded-2xl border border-[#E7E5E4]/50 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <ThiingsIcon name="map-pin" size="sm" />
                 <h2 className="text-base font-semibold text-[#1C1917]">Seating Preferences</h2>
@@ -419,7 +419,7 @@ export default function WeeklyReport() {
 
           {/* Special Occasions */}
           {Object.keys(preferences.occasions).length > 0 && (
-            <div className="bg-white p-6 rounded-xl border border-[#E7E5E4]/50 shadow-sm">
+            <div className="bg-white p-6 rounded-2xl border border-[#E7E5E4]/50 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <ThiingsIcon name="calendar" size="sm" />
                 <h2 className="text-base font-semibold text-[#1C1917]">Special Occasions</h2>

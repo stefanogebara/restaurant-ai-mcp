@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seatable - Voice Agent Settings</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #F5F5F4; color: #1C1917; -webkit-font-smoothing: antialiased; display: flex; min-height: 100vh; }
+
+  /* -- SIDEBAR -- */
+  .sidebar { width: 260px; background: #1C1917; color: #fff; padding: 32px 0; display: flex; flex-direction: column; flex-shrink: 0; }
+  .sidebar-logo { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; padding: 0 28px; margin-bottom: 40px; letter-spacing: -0.5px; }
+  .sidebar-logo span { color: #9F1239; }
+  .sidebar-nav { flex: 1; }
+  .nav-section { margin-bottom: 28px; }
+  .nav-section-label { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #57534E; padding: 0 28px; margin-bottom: 8px; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 28px; font-size: 14px; font-weight: 400; color: #A8A29E; cursor: pointer; border-left: 2px solid transparent; }
+  .nav-item:hover { color: #D6D3D1; background: rgba(255,255,255,0.03); }
+  .nav-item.active { color: #fff; background: rgba(159,18,57,0.1); border-left-color: #9F1239; font-weight: 500; }
+  .nav-item .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.4; flex-shrink: 0; }
+  .nav-item.active .dot { background: #9F1239; opacity: 1; }
+  .sidebar-footer { padding: 20px 28px; border-top: 1px solid #292524; }
+  .sidebar-user { display: flex; align-items: center; gap: 10px; }
+  .sidebar-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #9F1239, #be123c); }
+  .sidebar-user-info { font-size: 13px; font-weight: 500; color: #D6D3D1; }
+  .sidebar-user-info small { display: block; font-size: 11px; color: #78716C; font-weight: 400; }
+
+  /* -- MAIN -- */
+  .main { flex: 1; padding: 32px 40px; overflow-y: auto; }
+
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+  .header h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  .header h1 span { font-weight: 300; color: #78716C; }
+  .save-btn { padding: 10px 24px; border-radius: 100px; font-size: 13px; font-weight: 600; border: none; background: #9F1239; color: #fff; cursor: pointer; font-family: inherit; }
+
+  /* -- ENGINE TOGGLE -- */
+  .panel { background: #fff; border-radius: 16px; border: 1px solid #E7E5E4; overflow: hidden; margin-bottom: 24px; }
+  .panel-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid #F5F5F4; }
+  .panel-title { font-size: 15px; font-weight: 600; }
+  .panel-badge { font-size: 11px; font-weight: 600; background: rgba(22,163,74,0.08); color: #16a34a; padding: 3px 10px; border-radius: 100px; }
+
+  .engine-toggle { padding: 24px; display: flex; gap: 12px; }
+  .engine-option { flex: 1; padding: 20px; border: 2px solid #E7E5E4; border-radius: 12px; cursor: pointer; }
+  .engine-option.active { border-color: #9F1239; background: rgba(159,18,57,0.02); }
+  .engine-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .engine-desc { font-size: 13px; color: #78716C; font-weight: 300; }
+  .engine-badge { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; margin-top: 8px; }
+  .engine-badge.recommended { background: rgba(159,18,57,0.08); color: #9F1239; }
+  .engine-badge.premium { background: rgba(124,58,237,0.08); color: #7c3aed; }
+
+  /* -- VOICE GRID -- */
+  .voice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 24px; }
+  .voice-card { border: 2px solid #E7E5E4; border-radius: 12px; padding: 20px; cursor: pointer; position: relative; }
+  .voice-card:hover { border-color: #D6D3D1; }
+  .voice-card.active { border-color: #9F1239; background: rgba(159,18,57,0.02); }
+  .voice-card.active::after { content: ''; position: absolute; top: 12px; right: 12px; width: 20px; height: 20px; border-radius: 50%; background: #9F1239; }
+
+  .voice-avatar { width: 48px; height: 48px; border-radius: 50%; margin-bottom: 12px; }
+  .voice-name { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+  .voice-style { font-size: 13px; color: #78716C; margin-bottom: 12px; }
+  .voice-play { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #9F1239; cursor: pointer; padding: 6px 14px; border-radius: 100px; background: rgba(159,18,57,0.06); border: none; font-family: inherit; }
+
+  /* -- TUNING SLIDERS -- */
+  .tuning-section { padding: 24px; }
+  .tuning-group { margin-bottom: 24px; }
+  .tuning-group:last-child { margin-bottom: 0; }
+  .tuning-label { display: flex; justify-content: space-between; margin-bottom: 8px; }
+  .tuning-label span { font-size: 13px; font-weight: 500; color: #57534E; }
+  .tuning-label .value { font-size: 13px; font-weight: 600; color: #9F1239; }
+  .slider-track { width: 100%; height: 6px; background: #E7E5E4; border-radius: 100px; position: relative; }
+  .slider-fill { height: 100%; background: #9F1239; border-radius: 100px; }
+  .slider-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid #9F1239; position: absolute; top: -6px; transform: translateX(-50%); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+  /* -- LANGUAGE SELECTOR -- */
+  .language-section { padding: 24px; }
+  .lang-grid { display: flex; gap: 8px; flex-wrap: wrap; }
+  .lang-chip { padding: 8px 16px; border-radius: 100px; border: 1px solid #E7E5E4; font-size: 13px; font-weight: 500; color: #57534E; cursor: pointer; background: #fff; }
+  .lang-chip.active { border-color: #9F1239; background: rgba(159,18,57,0.06); color: #9F1239; font-weight: 600; }
+</style>
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">seatable<span>.</span></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Main</div>
+      <div class="nav-item"><span class="dot"></span>Dashboard</div>
+      <div class="nav-item"><span class="dot"></span>Reservations</div>
+      <div class="nav-item"><span class="dot"></span>Tables</div>
+      <div class="nav-item"><span class="dot"></span>Waitlist</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">AI</div>
+      <div class="nav-item active"><span class="dot"></span>Voice Agent</div>
+      <div class="nav-item"><span class="dot"></span>Call History</div>
+      <div class="nav-item"><span class="dot"></span>Guest Memory</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Insights</div>
+      <div class="nav-item"><span class="dot"></span>Analytics</div>
+      <div class="nav-item"><span class="dot"></span>Reports</div>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar"></div>
+      <div class="sidebar-user-info">Maria Gonzalez<small>Celeri Madrid</small></div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <div class="header">
+    <h1>Voice Agent <span>/ Settings</span></h1>
+    <button class="save-btn">Save Changes</button>
+  </div>
+
+  <!-- Engine Toggle -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Voice Engine</span>
+      <span class="panel-badge">Active</span>
+    </div>
+    <div class="engine-toggle">
+      <div class="engine-option active">
+        <div class="engine-name">ElevenLabs</div>
+        <div class="engine-desc">Ultra-realistic voice synthesis with emotional range and natural pacing.</div>
+        <div class="engine-badge recommended">Recommended</div>
+      </div>
+      <div class="engine-option">
+        <div class="engine-name">Cartesia</div>
+        <div class="engine-desc">Low-latency voice engine optimized for real-time phone conversations.</div>
+        <div class="engine-badge premium">Premium</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Voice Selection -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Choose a Voice</span>
+    </div>
+    <div class="voice-grid">
+      <div class="voice-card">
+        <div class="voice-avatar" style="background: linear-gradient(135deg, #E7E5E4, #D6D3D1)"></div>
+        <div class="voice-name">Sofia</div>
+        <div class="voice-style">Warm &middot; Friendly &middot; Spanish accent</div>
+        <button class="voice-play">&#9654; Preview</button>
+      </div>
+      <div class="voice-card active">
+        <div class="voice-avatar" style="background: linear-gradient(135deg, #9F1239, #be123c)"></div>
+        <div class="voice-name">Isabella</div>
+        <div class="voice-style">Elegant &middot; Professional &middot; Neutral</div>
+        <button class="voice-play">&#9654; Preview</button>
+      </div>
+      <div class="voice-card">
+        <div class="voice-avatar" style="background: linear-gradient(135deg, #57534E, #78716C)"></div>
+        <div class="voice-name">Miguel</div>
+        <div class="voice-style">Deep &middot; Calm &middot; Confident</div>
+        <button class="voice-play">&#9654; Preview</button>
+      </div>
+      <div class="voice-card">
+        <div class="voice-avatar" style="background: linear-gradient(135deg, #44403C, #292524)"></div>
+        <div class="voice-name">Carlos</div>
+        <div class="voice-style">Energetic &middot; Young &middot; Casual</div>
+        <button class="voice-play">&#9654; Preview</button>
+      </div>
+      <div class="voice-card">
+        <div class="voice-avatar" style="background: linear-gradient(135deg, #D6D3D1, #A8A29E)"></div>
+        <div class="voice-name">Marie</div>
+        <div class="voice-style">Soft &middot; French accent &middot; Refined</div>
+        <button class="voice-play">&#9654; Preview</button>
+      </div>
+      <div class="voice-card">
+        <div class="voice-avatar" style="background: linear-gradient(135deg, #1C1917, #57534E)"></div>
+        <div class="voice-name">James</div>
+        <div class="voice-style">British &middot; Articulate &middot; Warm</div>
+        <button class="voice-play">&#9654; Preview</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tuning -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Voice Tuning</span>
+    </div>
+    <div class="tuning-section">
+      <div class="tuning-group">
+        <div class="tuning-label"><span>Speaking Speed</span><span class="value">1.1x</span></div>
+        <div class="slider-track">
+          <div class="slider-fill" style="width:55%"></div>
+          <div class="slider-thumb" style="left:55%"></div>
+        </div>
+      </div>
+      <div class="tuning-group">
+        <div class="tuning-label"><span>Pitch</span><span class="value">+2</span></div>
+        <div class="slider-track">
+          <div class="slider-fill" style="width:60%"></div>
+          <div class="slider-thumb" style="left:60%"></div>
+        </div>
+      </div>
+      <div class="tuning-group">
+        <div class="tuning-label"><span>Warmth</span><span class="value">High</span></div>
+        <div class="slider-track">
+          <div class="slider-fill" style="width:80%"></div>
+          <div class="slider-thumb" style="left:80%"></div>
+        </div>
+      </div>
+      <div class="tuning-group">
+        <div class="tuning-label"><span>Stability</span><span class="value">Medium</span></div>
+        <div class="slider-track">
+          <div class="slider-fill" style="width:50%"></div>
+          <div class="slider-thumb" style="left:50%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Language -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Languages</span>
+    </div>
+    <div class="language-section">
+      <div class="lang-grid">
+        <span class="lang-chip active">Spanish (ES)</span>
+        <span class="lang-chip active">English (EN)</span>
+        <span class="lang-chip">French (FR)</span>
+        <span class="lang-chip">Italian (IT)</span>
+        <span class="lang-chip">German (DE)</span>
+        <span class="lang-chip">Portuguese (PT)</span>
+        <span class="lang-chip">Dutch (NL)</span>
+        <span class="lang-chip">Japanese (JA)</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>
