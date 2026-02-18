@@ -131,7 +131,6 @@ export function useRestaurantLearning(): UseRestaurantLearningReturn {
         body: JSON.stringify({
           session_id: sessionId,
           message: content.trim(),
-          messages_history: messages.map(m => ({ role: m.role, content: m.content })),
         }),
         signal: abortControllerRef.current.signal,
       });
@@ -182,8 +181,6 @@ export function useRestaurantLearning(): UseRestaurantLearningReturn {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           session_id: sessionId,
-          messages_history: messages.map(m => ({ role: m.role, content: m.content })),
-          research: researchResult,
         }),
         signal: abortControllerRef.current.signal,
       });
@@ -206,7 +203,7 @@ export function useRestaurantLearning(): UseRestaurantLearningReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [sessionId, messages, researchResult]);
+  }, [sessionId]);
 
   const restart = useCallback(() => {
     abortControllerRef.current?.abort();

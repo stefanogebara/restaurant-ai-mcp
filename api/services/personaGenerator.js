@@ -8,9 +8,9 @@
  * tone, knowledge, and conversational style.
  */
 
-const Anthropic = require('@anthropic-ai/sdk');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
+const { getAnthropicClient } = require('./restaurantIntelligence');
 
 const logger = createSecureLogger('PersonaGenerator');
 
@@ -19,9 +19,9 @@ const logger = createSecureLogger('PersonaGenerator');
  * @param {string} sessionId - Interview session ID
  * @returns {object} Generated persona with profile and greeting preview
  */
-async function generatePersona(sessionId) {
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  if (!anthropicKey) {
+async function generatePersona(sessionId, { version } = {}) {
+  const anthropic = getAnthropicClient();
+  if (!anthropic) {
     throw new Error('ANTHROPIC_API_KEY not configured');
   }
 
@@ -63,15 +63,17 @@ async function generatePersona(sessionId) {
   const interviewKnowledge = session.extracted_knowledge || {};
   const intelligenceData = intelligence?.intelligence_data?.summary || {};
 
-  // Use Claude to synthesize everything into a structured persona
-  const anthropic = new Anthropic({ apiKey: anthropicKey });
+  // Use Claude to synthesize everything into a structured persona (with timeout)
+  const personaController = new AbortController();
+  const personaTimeout = setTimeout(() => personaController.abort(), 30000);
 
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 2000,
+    signal: personaController.signal,
     messages: [{
       role: 'user',
-      content: `You are creating an AI receptionist persona for "${restaurantName}". Based on the following data, generate a complete restaurant profile. Return ONLY valid JSON.
+      content: `You are creating an AI receptionist persona for a restaurant. Based on the following data, generate a complete restaurant profile. Return ONLY valid JSON.
 
 INTELLIGENCE DATA (from web research):
 ${JSON.stringify(intelligenceData, null, 2)}
@@ -125,6 +127,8 @@ Generate this JSON structure:
     }]
   });
 
+  clearTimeout(personaTimeout);
+
   const responseText = response.content[0]?.text || '';
   const jsonMatch = responseText.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
@@ -145,7 +149,7 @@ Generate this JSON structure:
     generated_at: new Date().toISOString(),
     session_id: sessionId,
     intelligence_available: !!intelligence,
-    version: 1
+    version: version || 1
   };
 
   // Store on restaurant_config
@@ -219,22 +223,8 @@ async function regeneratePersona(restaurantConfigId) {
 
   const currentVersion = config?.restaurant_profile?.version || 0;
 
-  const result = await generatePersona(interview.id);
-
-  // Increment version
-  if (result?.restaurant_profile) {
-    const updatedProfile = {
-      ...result.restaurant_profile,
-      version: currentVersion + 1,
-      regenerated_at: new Date().toISOString()
-    };
-
-    await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_config')
-      .update({ restaurant_profile: updatedProfile })
-      .eq('id', restaurantConfigId);
-  }
+  // Pass the incremented version to avoid double-write
+  const result = await generatePersona(interview.id, { version: currentVersion + 1 });
 
   logger.info('Persona regenerated for:', restaurantConfigId);
   return result;

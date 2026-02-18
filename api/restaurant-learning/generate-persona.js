@@ -47,6 +47,9 @@ module.exports = async (req, res) => {
   }
 
   const restaurantId = auth.user.restaurant_id;
+  if (!restaurantId) {
+    return res.status(400).json({ error: 'No restaurant associated with this account' });
+  }
 
   try {
     const { session_id } = req.body;

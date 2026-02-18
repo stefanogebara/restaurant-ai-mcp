@@ -15,6 +15,20 @@ const { createSecureLogger } = require('../_lib/secure-logger');
 
 const logger = createSecureLogger('RestaurantIntelligence');
 
+// Singleton Anthropic client (reuses connections, enables SDK retry/pooling)
+let _anthropicClient = null;
+function getAnthropicClient() {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return null;
+  if (!_anthropicClient) {
+    _anthropicClient = new Anthropic({ apiKey });
+  }
+  return _anthropicClient;
+}
+
+// Max response body size for website fetches (2MB)
+const MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
+
 // ============ URL Safety (SSRF Protection) ============
 
 /**
@@ -32,17 +46,23 @@ function isUrlSafe(inputUrl) {
 
     const hostname = parsed.hostname.toLowerCase();
 
-    // Block localhost and loopback
+    // Block localhost and loopback (IPv4 + IPv6)
     if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') return false;
-    if (hostname === '0.0.0.0') return false;
+    if (hostname === '0.0.0.0' || hostname === '[::]') return false;
 
     // Block private IP ranges (RFC 1918)
     if (hostname.startsWith('10.')) return false;
     if (hostname.startsWith('192.168.')) return false;
     if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname)) return false;
 
-    // Block link-local
+    // Block link-local (IPv4 + IPv6)
     if (hostname.startsWith('169.254.')) return false;
+    if (hostname.startsWith('fe80')) return false;
+
+    // Block IPv6 private ranges
+    if (hostname.startsWith('fc') || hostname.startsWith('fd')) return false; // Unique Local (fc00::/7)
+    if (hostname.startsWith('::ffff:')) return false; // IPv4-mapped IPv6
+    if (hostname === '::' || hostname === '[::1]') return false;
 
     // Block cloud metadata endpoints
     if (hostname === '169.254.169.254') return false;
@@ -53,6 +73,9 @@ function isUrlSafe(inputUrl) {
 
     // Block non-standard ports commonly used for internal services
     if (parsed.port && !['80', '443', ''].includes(parsed.port)) return false;
+
+    // Block bracket-wrapped IPv6 that might bypass other checks
+    if (hostname.startsWith('[')) return false;
 
     return true;
   } catch {
@@ -163,12 +186,6 @@ async function fetchAndExtractWebsite(websiteUrl, restaurantName) {
     return null;
   }
 
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  if (!anthropicKey) {
-    logger.warn('ANTHROPIC_API_KEY not configured, skipping website extraction');
-    return null;
-  }
-
   try {
     // Fetch website content with timeout
     const controller = new AbortController();
@@ -180,16 +197,54 @@ async function fetchAndExtractWebsite(websiteUrl, restaurantName) {
         'User-Agent': 'SeutableBot/1.0 (restaurant-intelligence)',
         'Accept': 'text/html,application/xhtml+xml'
       },
-      redirect: 'follow'
+      redirect: 'manual' // Prevent redirect-chain SSRF bypass
     });
     clearTimeout(timeout);
 
-    if (!response.ok) {
+    // Handle redirects manually with SSRF validation
+    if ([301, 302, 303, 307, 308].includes(response.status)) {
+      const redirectUrl = response.headers.get('location');
+      if (!redirectUrl || !isUrlSafe(new URL(redirectUrl, websiteUrl).href)) {
+        logger.warn('Redirect blocked by SSRF protection:', { redirect: redirectUrl });
+        return null;
+      }
+      // Follow one redirect only (no chains)
+      const redirectController = new AbortController();
+      const redirectTimeout = setTimeout(() => redirectController.abort(), 8000);
+      const redirectResponse = await fetch(new URL(redirectUrl, websiteUrl).href, {
+        signal: redirectController.signal,
+        headers: { 'User-Agent': 'SeutableBot/1.0', 'Accept': 'text/html' },
+        redirect: 'manual'
+      });
+      clearTimeout(redirectTimeout);
+      if (!redirectResponse.ok) {
+        logger.warn('Redirect target fetch failed:', { status: redirectResponse.status });
+        return null;
+      }
+      // Check content-length to prevent huge responses
+      const redirectLength = parseInt(redirectResponse.headers.get('content-length') || '0', 10);
+      if (redirectLength > MAX_RESPONSE_BYTES) {
+        logger.warn('Redirect response too large:', { size: redirectLength });
+        return null;
+      }
+      var html = await redirectResponse.text();
+    } else if (!response.ok) {
       logger.warn('Website fetch failed:', { status: response.status });
       return null;
+    } else {
+      // Check content-length to prevent huge responses
+      const contentLength = parseInt(response.headers.get('content-length') || '0', 10);
+      if (contentLength > MAX_RESPONSE_BYTES) {
+        logger.warn('Response too large, skipping:', { size: contentLength });
+        return null;
+      }
+      var html = await response.text();
+      // Enforce size limit even without content-length header
+      if (html.length > MAX_RESPONSE_BYTES) {
+        logger.warn('Response body exceeded size limit');
+        html = html.slice(0, MAX_RESPONSE_BYTES);
+      }
     }
-
-    const html = await response.text();
 
     // Strip HTML to plain text (basic cleanup)
     const textContent = html
@@ -206,14 +261,22 @@ async function fetchAndExtractWebsite(websiteUrl, restaurantName) {
     }
 
     // Use Claude Haiku to extract structured data
-    const anthropic = new Anthropic({ apiKey: anthropicKey });
+    const anthropic = getAnthropicClient();
+    if (!anthropic) {
+      logger.warn('ANTHROPIC_API_KEY not configured, skipping website extraction');
+      return null;
+    }
+
+    const extractionController = new AbortController();
+    const extractionTimeout = setTimeout(() => extractionController.abort(), 30000);
 
     const extraction = await anthropic.messages.create({
       model: 'claude-haiku-4-20250414',
       max_tokens: 1500,
+      signal: extractionController.signal,
       messages: [{
         role: 'user',
-        content: `Extract restaurant information from this website text for "${restaurantName}". Return JSON only with these fields (use null for missing data):
+        content: `Extract restaurant information from this website text for a restaurant. Return JSON only with these fields (use null for missing data):
 
 {
   "description": "Brief restaurant description (2-3 sentences)",
@@ -231,6 +294,8 @@ Website text:
 ${textContent}`
       }]
     });
+
+    clearTimeout(extractionTimeout);
 
     const responseText = extraction.content[0]?.text || '';
 
@@ -421,5 +486,6 @@ module.exports = {
   fetchAndExtractWebsite,
   fetchSearchResults,
   synthesizeProfile,
-  isUrlSafe
+  isUrlSafe,
+  getAnthropicClient
 };

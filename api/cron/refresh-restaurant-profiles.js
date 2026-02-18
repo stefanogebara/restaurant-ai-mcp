@@ -20,6 +20,11 @@ const PER_RESTAURANT_TIMEOUT = 30000;
 const MAX_TOTAL_RUNTIME = 4 * 60 * 1000;
 
 module.exports = async (req, res) => {
+  // Only allow GET (Vercel cron) and POST
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Method not allowed' });
+  }
+
   // Verify cron secret
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret) {
@@ -89,9 +94,10 @@ module.exports = async (req, res) => {
     for (const record of needsRefresh) {
       // Check total runtime budget
       if (Date.now() - startTime > MAX_TOTAL_RUNTIME) {
-        const remaining = needsRefresh.length - refreshed.length - errors.length;
+        const processedSoFar = refreshed.length + errors.length + skipped.length;
+        const remaining = needsRefresh.length - processedSoFar;
         logger.warn(`Runtime budget exceeded, skipping ${remaining} remaining restaurants`);
-        skipped.push(...needsRefresh.slice(refreshed.length + errors.length).map(r => r.restaurant_config_id));
+        skipped.push(...needsRefresh.slice(processedSoFar).map(r => r.restaurant_config_id));
         break;
       }
 

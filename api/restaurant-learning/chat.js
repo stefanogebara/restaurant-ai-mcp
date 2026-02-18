@@ -47,6 +47,9 @@ module.exports = async (req, res) => {
   }
 
   const restaurantId = auth.user.restaurant_id;
+  if (!restaurantId) {
+    return res.status(400).json({ error: 'No restaurant associated with this account' });
+  }
 
   try {
     const { session_id, message } = req.body;
@@ -89,11 +92,6 @@ module.exports = async (req, res) => {
 
     const result = await processInterviewMessage(session_id, message.trim());
 
-    // Compute topics_covered array from completion data
-    const topicsCovered = INTERVIEW_TOPICS
-      .slice(0, Math.round((result.completion_percentage / 100) * INTERVIEW_TOPICS.length))
-      .map(t => t.id);
-
     return res.status(200).json({
       success: true,
       ai_message: result.ai_message,
@@ -103,7 +101,7 @@ module.exports = async (req, res) => {
       is_complete: result.is_complete,
       current_topic: result.current_topic,
       current_topic_label: result.current_topic_label,
-      topics_covered: topicsCovered
+      topics_covered: result.topics_covered
     });
   } catch (error) {
     logger.error('Chat endpoint error:', error);

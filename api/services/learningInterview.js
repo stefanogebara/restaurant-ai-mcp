@@ -9,11 +9,14 @@
  *         unique_differentiators, communication_style, special_occasions, things_to_know
  */
 
-const Anthropic = require('@anthropic-ai/sdk');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
+const { getAnthropicClient } = require('./restaurantIntelligence');
 
 const logger = createSecureLogger('LearningInterview');
+
+// Anthropic API call timeout (25s, leaving buffer for Vercel 60s limit)
+const ANTHROPIC_TIMEOUT_MS = 25000;
 
 const INTERVIEW_TOPICS = [
   {
@@ -106,6 +109,8 @@ async function startOrResumeInterview(sessionId, restaurantConfigId, intelligenc
     logger.info('Resuming interview session:', sessionId);
     const currentTopicIndex = existingSession.current_topic_index || 0;
     const currentTopic = INTERVIEW_TOPICS[currentTopicIndex];
+    const sessionMessages = existingSession.messages || [];
+    const lastAiMsg = [...sessionMessages].reverse().find(m => m.role === 'assistant');
 
     return {
       session_id: sessionId,
@@ -116,7 +121,8 @@ async function startOrResumeInterview(sessionId, restaurantConfigId, intelligenc
       topics_completed: currentTopicIndex,
       total_topics: INTERVIEW_TOPICS.length,
       completion_percentage: Math.round((currentTopicIndex / INTERVIEW_TOPICS.length) * 100),
-      messages: existingSession.messages || [],
+      ai_message: lastAiMsg?.content || null,
+      messages: sessionMessages,
       extracted_knowledge: existingSession.extracted_knowledge || {}
     };
   }
@@ -177,8 +183,12 @@ async function startOrResumeInterview(sessionId, restaurantConfigId, intelligenc
  * @returns {object} AI response, extracted data, completion info
  */
 async function processInterviewMessage(sessionId, userMessage) {
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  if (!anthropicKey) {
+  if (!supabaseAdmin) {
+    throw new Error('Database not available');
+  }
+
+  const anthropic = getAnthropicClient();
+  if (!anthropic) {
     throw new Error('ANTHROPIC_API_KEY not configured');
   }
 
@@ -216,38 +226,43 @@ async function processInterviewMessage(sessionId, userMessage) {
     }
   ];
 
-  // Build conversation for Claude
-  const anthropic = new Anthropic({ apiKey: anthropicKey });
-
+  // Build conversation for Claude (use sliding window to limit tokens)
   const contextInfo = `
 Current topic: ${currentTopic.label} (${currentTopicIndex + 1}/${INTERVIEW_TOPICS.length})
 Topic description: ${currentTopic.description}
-${session.intelligence_context ? `\nPre-gathered intelligence:\n${session.intelligence_context}` : ''}
-${Object.keys(session.extracted_knowledge || {}).length > 0 ? `\nAlready learned:\n${JSON.stringify(session.extracted_knowledge, null, 2)}` : ''}`;
+${session.intelligence_context ? `\nPre-gathered intelligence:\n${session.intelligence_context}` : ''}`;
 
-  const claudeMessages = updatedMessages.map(m => ({
+  // Sliding window: send last 20 messages to avoid unbounded token growth
+  const recentMessages = updatedMessages.slice(-20);
+  const claudeMessages = recentMessages.map(m => ({
     role: m.role === 'assistant' ? 'assistant' : 'user',
     content: m.content
   }));
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 500,
-    system: `${SYSTEM_PROMPT}\n\n${contextInfo}`,
-    messages: claudeMessages
-  });
+  // Run Sonnet conversation and Haiku extraction in parallel (independent)
+  const conversationController = new AbortController();
+  const conversationTimeout = setTimeout(() => conversationController.abort(), ANTHROPIC_TIMEOUT_MS);
+
+  const [response, newKnowledge] = await Promise.all([
+    anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 500,
+      system: `${SYSTEM_PROMPT}\n\n${contextInfo}`,
+      messages: claudeMessages,
+      signal: conversationController.signal
+    }),
+    extractInterviewKnowledge(
+      session.extracted_knowledge || {},
+      currentTopic.id,
+      userMessage,
+      anthropic
+    )
+  ]);
+  clearTimeout(conversationTimeout);
 
   let aiMessage = response.content[0]?.text || '';
   const topicComplete = aiMessage.includes('[TOPIC_COMPLETE]');
   aiMessage = aiMessage.replace('[TOPIC_COMPLETE]', '').trim();
-
-  // Extract knowledge from the exchange
-  const newKnowledge = await extractInterviewKnowledge(
-    session.extracted_knowledge || {},
-    currentTopic.id,
-    userMessage,
-    anthropicKey
-  );
 
   let nextTopicIndex = currentTopicIndex;
   let status = 'in_progress';
@@ -296,9 +311,13 @@ ${Object.keys(session.extracted_knowledge || {}).length > 0 ? `\nAlready learned
 
   if (updateError) {
     logger.error('Failed to update interview session:', updateError);
+    throw new Error('Failed to save interview progress');
   }
 
   const completionPercentage = Math.round((nextTopicIndex / INTERVIEW_TOPICS.length) * 100);
+
+  // Return the actual topic IDs covered (avoids lossy round-trip in the API layer)
+  const topicsCovered = INTERVIEW_TOPICS.slice(0, nextTopicIndex).map(t => t.id);
 
   return {
     ai_message: aiMessage,
@@ -307,7 +326,8 @@ ${Object.keys(session.extracted_knowledge || {}).length > 0 ? `\nAlready learned
     completion_percentage: completionPercentage,
     is_complete: status === 'ready_for_persona',
     current_topic: INTERVIEW_TOPICS[nextTopicIndex]?.id || 'completed',
-    current_topic_label: INTERVIEW_TOPICS[nextTopicIndex]?.label || 'Completed'
+    current_topic_label: INTERVIEW_TOPICS[nextTopicIndex]?.label || 'Completed',
+    topics_covered: topicsCovered
   };
 }
 
@@ -319,25 +339,31 @@ ${Object.keys(session.extracted_knowledge || {}).length > 0 ? `\nAlready learned
  * @param {string} anthropicKey - API key
  * @returns {object} Updated knowledge object
  */
-async function extractInterviewKnowledge(existingKnowledge, topicId, userMessage, anthropicKey) {
+async function extractInterviewKnowledge(existingKnowledge, topicId, userMessage, anthropicClient) {
   try {
-    const anthropic = new Anthropic({ apiKey: anthropicKey });
+    const anthropic = typeof anthropicClient === 'object' ? anthropicClient : getAnthropicClient();
+    if (!anthropic) return existingKnowledge;
+
+    const extractionController = new AbortController();
+    const extractionTimeout = setTimeout(() => extractionController.abort(), 15000);
 
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-20250414',
       max_tokens: 500,
+      signal: extractionController.signal,
       messages: [{
         role: 'user',
-        content: `Extract key facts from this restaurant owner's response about "${topicId}". Return a JSON object with the topic ID as key and an array of extracted facts. Only include concrete, specific information.
+        content: `Extract key facts from this restaurant owner's response about the topic "${topicId}". Return a JSON object with the topic ID as key and an array of extracted facts. Only include concrete, specific information.
+
+Return format: { "${topicId}": ["fact 1", "fact 2"] }
+Merge with any existing facts for this topic. Return ONLY valid JSON.
 
 Existing knowledge: ${JSON.stringify(existingKnowledge)}
 
-Owner's response: "${userMessage}"
-
-Return format: { "${topicId}": ["fact 1", "fact 2"] }
-Merge with any existing facts for this topic. Return ONLY valid JSON.`
+Owner's response: ${JSON.stringify(userMessage)}`
       }]
     });
+    clearTimeout(extractionTimeout);
 
     const responseText = response.content[0]?.text || '';
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);

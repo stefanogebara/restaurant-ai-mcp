@@ -60,6 +60,11 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Type validation
+    if (typeof restaurant_name !== 'string' || typeof city !== 'string' || typeof country !== 'string') {
+      return res.status(400).json({ error: 'Invalid input types' });
+    }
+
     // Input length validation
     if (restaurant_name.length > 200 || city.length > 100 || country.length > 100) {
       return res.status(400).json({ error: 'Input fields exceed maximum length' });
@@ -135,6 +140,17 @@ module.exports = async (req, res) => {
     });
   } catch (error) {
     logger.error('Research endpoint error:', error);
+
+    // Reset learning status so user can retry
+    if (supabaseAdmin && restaurantId) {
+      await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .update({ learning_status: 'pending' })
+        .eq('id', restaurantId)
+        .catch(cleanupErr => logger.error('Failed to reset learning_status:', cleanupErr));
+    }
+
     return res.status(500).json({
       error: 'Failed to complete restaurant research'
     });
