@@ -143,336 +143,194 @@ export default function CustomerPortal() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
-      {/* Header */}
-      <header className="bg-white/95 border-b border-[#E7E5E4] sticky top-0 z-40 backdrop-blur-sm">
-        <div className="max-w-4xl mx-auto px-6 py-5">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-serif font-bold text-[#1C1917] tracking-tight">Customer Portal</h1>
-              <p className="text-[#78716C] text-sm">Manage your reservations</p>
-            </div>
-            <a
-              href="/host-dashboard"
-              className="px-4 py-2 bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#1C1917] font-medium rounded-full transition-colors"
-            >
-              Staff Dashboard
-            </a>
-          </div>
+    <div className="min-h-screen bg-[#FAFAF9] flex flex-col">
+      {/* Top Bar */}
+      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-[#E7E5E4] bg-white">
+        <div className="font-serif text-lg font-semibold text-[#1C1917]">
+          seatable<span className="text-[#9F1239]">.</span>
         </div>
+        <span className="text-[13px] text-[#78716C]">Need help? Contact the restaurant</span>
       </header>
 
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        {!reservation ? (
-          /* Lookup Section */
-          <div className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-8 shadow-sm">
-            <h2 className="text-2xl font-serif font-bold text-[#1C1917] mb-6">Find Your Reservation</h2>
+      <div className="flex-1 flex justify-center px-6 py-16">
+        <div className="max-w-[520px] w-full">
+          {/* Header */}
+          <div className="text-center mb-10">
+            <h1 className="font-serif text-[32px] font-medium text-[#1C1917] tracking-tight mb-2">
+              Manage your reservation
+            </h1>
+            <p className="text-[15px] text-[#78716C] font-light">
+              Look up your reservation by phone number or confirmation ID.
+            </p>
+          </div>
 
-            {/* Lookup Method Toggle */}
-            <div className="flex gap-3 mb-6">
-              <button
-                onClick={() => setLookupMethod('id')}
-                className={`flex-1 py-3 rounded-xl font-medium transition-colors ${
-                  lookupMethod === 'id'
-                    ? 'bg-[#9F1239] text-white shadow-sm'
-                    : 'bg-[#F5F5F4] text-[#78716C] hover:bg-[#E7E5E4]'
-                }`}
-              >
-                Reservation ID
-              </button>
-              <button
-                onClick={() => setLookupMethod('phone')}
-                className={`flex-1 py-3 rounded-xl font-medium transition-colors ${
-                  lookupMethod === 'phone'
-                    ? 'bg-[#9F1239] text-white shadow-sm'
-                    : 'bg-[#F5F5F4] text-[#78716C] hover:bg-[#E7E5E4]'
-                }`}
-              >
-                Phone Number
-              </button>
-            </div>
+          {!reservation ? (
+            <>
+              {/* Lookup Card */}
+              <div className="bg-white border border-[#E7E5E4] rounded-2xl p-8 mb-6">
+                <h3 className="text-[15px] font-semibold text-[#1C1917] mb-5">Find your reservation</h3>
 
-            {lookupMethod === 'id' ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#1C1917] mb-2">
-                    Reservation ID
-                  </label>
-                  <input
-                    type="text"
-                    value={reservationId}
-                    onChange={(e) => setReservationId(e.target.value)}
-                    placeholder="RES-20251026-1234"
-                    className="w-full px-4 py-3 bg-[#FAFAF9] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-[#9F1239]"
-                    onKeyPress={(e) => e.key === 'Enter' && handleLookup()}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#1C1917] mb-2">
-                    Phone Number
-                  </label>
+                {/* Phone Input */}
+                <div className="mb-4">
+                  <label className="block text-[13px] font-medium text-[#57534E] mb-1.5">Phone number</label>
                   <input
                     type="tel"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="555-1234"
-                    className="w-full px-4 py-3 bg-[#FAFAF9] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-[#9F1239]"
-                    onKeyPress={(e) => e.key === 'Enter' && handleLookup()}
+                    onChange={(e) => { setPhone(e.target.value); setLookupMethod('phone'); }}
+                    placeholder="+34 612 345 678"
+                    className="w-full px-4 py-3 border border-[#E7E5E4] rounded-[10px] text-sm bg-white text-[#1C1917] placeholder:text-[#D6D3D1] focus:outline-none focus:border-[#9F1239] focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
+                    onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
                   />
                 </div>
+
+                {/* Divider */}
+                <div className="flex items-center gap-4 my-4">
+                  <div className="flex-1 h-px bg-[#E7E5E4]" />
+                  <span className="text-xs font-medium text-[#A8A29E]">or</span>
+                  <div className="flex-1 h-px bg-[#E7E5E4]" />
+                </div>
+
+                {/* Confirmation ID Input */}
+                <div className="mb-2">
+                  <label className="block text-[13px] font-medium text-[#57534E] mb-1.5">Confirmation ID</label>
+                  <input
+                    type="text"
+                    value={reservationId}
+                    onChange={(e) => { setReservationId(e.target.value); setLookupMethod('id'); }}
+                    placeholder="e.g. CEL-2026-0218-A7K3"
+                    className="w-full px-4 py-3 border border-[#E7E5E4] rounded-[10px] text-sm bg-white text-[#1C1917] placeholder:text-[#D6D3D1] focus:outline-none focus:border-[#9F1239] focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
+                    onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
+                  />
+                </div>
+
+                <button
+                  onClick={handleLookup}
+                  disabled={isLoading}
+                  className="w-full mt-4 py-3.5 bg-[#9F1239] hover:bg-[#881337] text-white text-sm font-semibold rounded-full transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Looking up...
+                    </>
+                  ) : (
+                    'Look Up Reservation'
+                  )}
+                </button>
               </div>
-            )}
-
-            <button
-              onClick={handleLookup}
-              disabled={isLoading}
-              className="w-full mt-6 px-6 py-4 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-full transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-            >
-              {isLoading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Looking up...</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <span>Find Reservation</span>
-                </>
-              )}
-            </button>
-
-            <div className="mt-6 p-4 bg-[#F5F5F4]/50 border border-[#E7E5E4] rounded-xl">
-              <p className="text-sm text-[#78716C] text-center">
-                Your reservation ID was sent to you via email when you booked.
-              </p>
-            </div>
-          </div>
-        ) : (
-          /* Reservation Details Section */
-          <div className="space-y-6">
-            {/* Reservation Card */}
-            <div className="bg-white border border-[#E7E5E4]/50 rounded-2xl overflow-hidden shadow-sm">
-              <div className="bg-gradient-to-r from-[#9F1239] to-[#881337] p-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-2xl font-bold text-white mb-1">
-                      {reservation.customer_name}
-                    </h2>
-                    <p className="text-white/80">
-                      Reservation {reservation.reservation_id}
-                    </p>
-                  </div>
-                  <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
+            </>
+          ) : (
+            <div className="space-y-4">
+              {/* Result Card */}
+              <div className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
+                  <span className="text-[15px] font-semibold">Your Reservation</span>
+                  <span className={`text-[11px] font-semibold px-3 py-1 rounded-full ${
                     reservation.status === 'Confirmed'
-                      ? 'bg-[#22c55e] text-white'
+                      ? 'bg-[rgba(22,163,74,0.08)] text-[#16a34a]'
                       : reservation.status === 'Cancelled'
-                      ? 'bg-[#dc2626] text-white'
-                      : 'bg-[#d97706] text-white'
+                      ? 'bg-[rgba(220,38,38,0.08)] text-[#dc2626]'
+                      : 'bg-[rgba(217,119,6,0.08)] text-[#d97706]'
                   }`}>
                     {reservation.status}
                   </span>
                 </div>
-              </div>
 
-              <div className="p-6 space-y-4">
-                {!isModifying ? (
-                  <>
-                    {/* View Mode */}
-                    <div className="grid grid-cols-2 gap-4">
+                {/* Body */}
+                <div className="px-6 py-5">
+                  {!isModifying ? (
+                    <>
                       {(() => {
                         const { date, time } = parseReservationDateTime(reservation);
                         return (
-                          <>
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-[#9F1239]/10 flex items-center justify-center">
-                                <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                              </div>
-                              <div>
-                                <div className="text-xs text-[#78716C]">Date</div>
-                                <div className="font-semibold text-[#1C1917]">
-                                  {date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
-                                    weekday: 'long',
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric'
-                                  }) : 'Not set'}
-                                </div>
-                              </div>
+                          <div className="space-y-0">
+                            <div className="flex justify-between py-2.5 border-b border-[#F5F5F4]">
+                              <span className="text-[13px] text-[#78716C]">Date</span>
+                              <span className="text-sm font-medium text-[#1C1917]">
+                                {date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
+                                  weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+                                }) : 'Not set'}
+                              </span>
                             </div>
-
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-[#9F1239]/10 flex items-center justify-center">
-                                <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                              </div>
-                              <div>
-                                <div className="text-xs text-[#78716C]">Time</div>
-                                <div className="font-semibold text-[#1C1917]">{time || 'Not set'}</div>
-                              </div>
+                            <div className="flex justify-between py-2.5 border-b border-[#F5F5F4]">
+                              <span className="text-[13px] text-[#78716C]">Time</span>
+                              <span className="text-sm font-medium text-[#1C1917]">{time || 'Not set'}</span>
                             </div>
-                          </>
+                            <div className="flex justify-between py-2.5 border-b border-[#F5F5F4]">
+                              <span className="text-[13px] text-[#78716C]">Party size</span>
+                              <span className="text-sm font-medium text-[#1C1917]">{reservation.party_size} guests</span>
+                            </div>
+                            <div className="flex justify-between py-2.5 border-b border-[#F5F5F4]">
+                              <span className="text-[13px] text-[#78716C]">Guest</span>
+                              <span className="text-sm font-medium text-[#1C1917]">{reservation.customer_name}</span>
+                            </div>
+                            <div className="flex justify-between py-2.5">
+                              <span className="text-[13px] text-[#78716C]">Confirmation</span>
+                              <span className="text-[13px] font-mono font-medium text-[#9F1239]">{reservation.reservation_id}</span>
+                            </div>
+                          </div>
                         );
                       })()}
 
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[#9F1239]/10 flex items-center justify-center">
-                          <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                          </svg>
+                      {reservation.special_requests && (
+                        <div className="mt-4 pt-4 border-t border-[#E7E5E4]">
+                          <div className="text-xs text-[#78716C] mb-1.5">Special Requests</div>
+                          <div className="text-sm text-[#1C1917] bg-[#F5F5F4] p-3 rounded-lg">{reservation.special_requests}</div>
                         </div>
-                        <div>
-                          <div className="text-xs text-[#78716C]">Party Size</div>
-                          <div className="font-semibold text-[#1C1917]">{reservation.party_size} guests</div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[#9F1239]/10 flex items-center justify-center">
-                          <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <div className="text-xs text-[#78716C]">Phone</div>
-                          <div className="font-semibold text-[#1C1917]">{reservation.customer_phone}</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {reservation.special_requests && (
-                      <div className="pt-4 border-t border-[#E7E5E4]">
-                        <div className="text-xs text-[#78716C] mb-2">Special Requests</div>
-                        <div className="text-[#1C1917] bg-[#F5F5F4]/50 p-3 rounded-xl">
-                          {reservation.special_requests}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Action Buttons */}
-                    {reservation.status !== 'Cancelled' && (
-                      <div className="flex gap-3 pt-4">
-                        <button
-                          onClick={() => setIsModifying(true)}
-                          className="flex-1 px-4 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                          Modify
-                        </button>
-                        <button
-                          onClick={handleCancel}
-                          disabled={isLoading}
-                          className="flex-1 px-4 py-3 bg-[#dc2626] hover:bg-[#b91c1c] text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                          Cancel Reservation
-                        </button>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    {/* Edit Mode */}
+                      )}
+                    </>
+                  ) : (
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-[#1C1917] mb-2">Date</label>
-                        <input
-                          type="date"
-                          value={modifiedData.date}
-                          onChange={(e) => setModifiedData({ ...modifiedData, date: e.target.value })}
-                          className="w-full px-4 py-3 bg-[#FAFAF9] border border-[#E7E5E4] rounded-xl text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-[#9F1239]"
-                        />
+                        <label className="block text-[13px] font-medium text-[#57534E] mb-1.5">Date</label>
+                        <input type="date" value={modifiedData.date} onChange={(e) => setModifiedData({ ...modifiedData, date: e.target.value })} className="w-full px-4 py-3 border border-[#E7E5E4] rounded-[10px] text-sm bg-white text-[#1C1917] focus:outline-none focus:border-[#9F1239]" />
                       </div>
-
                       <div>
-                        <label className="block text-sm font-medium text-[#1C1917] mb-2">Time</label>
-                        <input
-                          type="time"
-                          value={modifiedData.time}
-                          onChange={(e) => setModifiedData({ ...modifiedData, time: e.target.value })}
-                          className="w-full px-4 py-3 bg-[#FAFAF9] border border-[#E7E5E4] rounded-xl text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-[#9F1239]"
-                        />
+                        <label className="block text-[13px] font-medium text-[#57534E] mb-1.5">Time</label>
+                        <input type="time" value={modifiedData.time} onChange={(e) => setModifiedData({ ...modifiedData, time: e.target.value })} className="w-full px-4 py-3 border border-[#E7E5E4] rounded-[10px] text-sm bg-white text-[#1C1917] focus:outline-none focus:border-[#9F1239]" />
                       </div>
-
                       <div>
-                        <label className="block text-sm font-medium text-[#1C1917] mb-2">Party Size</label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="20"
-                          value={modifiedData.party_size}
-                          onChange={(e) => setModifiedData({ ...modifiedData, party_size: parseInt(e.target.value) })}
-                          className="w-full px-4 py-3 bg-[#FAFAF9] border border-[#E7E5E4] rounded-xl text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-[#9F1239]"
-                        />
+                        <label className="block text-[13px] font-medium text-[#57534E] mb-1.5">Party Size</label>
+                        <input type="number" min="1" max="20" value={modifiedData.party_size} onChange={(e) => setModifiedData({ ...modifiedData, party_size: parseInt(e.target.value) })} className="w-full px-4 py-3 border border-[#E7E5E4] rounded-[10px] text-sm bg-white text-[#1C1917] focus:outline-none focus:border-[#9F1239]" />
                       </div>
-
                       <div>
-                        <label className="block text-sm font-medium text-[#1C1917] mb-2">Special Requests</label>
-                        <textarea
-                          value={modifiedData.special_requests || ''}
-                          onChange={(e) => setModifiedData({ ...modifiedData, special_requests: e.target.value })}
-                          rows={3}
-                          placeholder="Any dietary restrictions, occasion, seating preferences..."
-                          className="w-full px-4 py-3 bg-[#FAFAF9] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-[#9F1239]"
-                        />
+                        <label className="block text-[13px] font-medium text-[#57534E] mb-1.5">Special Requests</label>
+                        <textarea value={modifiedData.special_requests || ''} onChange={(e) => setModifiedData({ ...modifiedData, special_requests: e.target.value })} rows={3} placeholder="Allergies, celebrations, seating preferences..." className="w-full px-4 py-3 border border-[#E7E5E4] rounded-[10px] text-sm bg-white text-[#1C1917] placeholder:text-[#D6D3D1] focus:outline-none focus:border-[#9F1239] resize-none" />
                       </div>
-
-                      <div className="flex gap-3 pt-4">
-                        <button
-                          onClick={() => {
-                            setIsModifying(false);
-                            setModifiedData(reservation);
-                          }}
-                          className="flex-1 px-4 py-3 bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#1C1917] font-semibold rounded-xl transition-colors"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={handleModify}
-                          disabled={isLoading}
-                          className="flex-1 px-4 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                          {isLoading ? (
-                            <>
-                              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                              Saving...
-                            </>
-                          ) : (
-                            'Save Changes'
-                          )}
+                      <div className="flex gap-2.5 pt-2">
+                        <button onClick={() => { setIsModifying(false); setModifiedData(reservation); }} className="flex-1 py-3 border border-[#E7E5E4] bg-white text-[#57534E] font-medium rounded-[10px] text-[13px] hover:border-[#A8A29E] transition-colors">Cancel</button>
+                        <button onClick={handleModify} disabled={isLoading} className="flex-1 py-3 bg-[#9F1239] text-white font-semibold rounded-[10px] text-[13px] hover:bg-[#881337] transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                          {isLoading ? (<><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Saving...</>) : 'Save Changes'}
                         </button>
                       </div>
                     </div>
-                  </>
+                  )}
+                </div>
+
+                {/* Actions */}
+                {!isModifying && reservation.status !== 'Cancelled' && (
+                  <div className="flex gap-2.5 px-6 py-5 border-t border-[#F5F5F4]">
+                    <button onClick={() => setIsModifying(true)} className="flex-1 py-3 border border-[#E7E5E4] bg-white text-[#57534E] font-medium rounded-[10px] text-[13px] hover:border-[#A8A29E] transition-colors">
+                      Edit Reservation
+                    </button>
+                    <button onClick={handleCancel} disabled={isLoading} className="flex-1 py-3 border border-[rgba(220,38,38,0.2)] bg-[rgba(220,38,38,0.04)] text-[#dc2626] font-medium rounded-[10px] text-[13px] hover:bg-[rgba(220,38,38,0.08)] transition-colors disabled:opacity-50">
+                      Cancel Reservation
+                    </button>
+                  </div>
                 )}
               </div>
-            </div>
 
-            {/* Back Button */}
-            <button
-              onClick={() => {
-                setReservation(null);
-                setReservationId('');
-                setPhone('');
-                setIsModifying(false);
-              }}
-              className="w-full px-4 py-3 bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#1C1917] font-medium rounded-xl transition-colors"
-            >
-              ← Look up another reservation
-            </button>
-          </div>
-        )}
+              {/* Back Button */}
+              <button
+                onClick={() => { setReservation(null); setReservationId(''); setPhone(''); setIsModifying(false); }}
+                className="w-full text-sm text-[#78716C] hover:text-[#57534E] transition-colors py-2"
+              >
+                &larr; Look up another reservation
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

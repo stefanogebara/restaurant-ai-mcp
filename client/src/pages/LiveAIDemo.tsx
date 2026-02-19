@@ -1,10 +1,6 @@
 /// <reference path="../types/elevenlabs.d.ts" />
 import { useEffect } from 'react';
 import ElevenLabsWidget from '../components/ElevenLabsWidget';
-import RecentReservations from '../components/RecentReservations';
-import { motion } from 'framer-motion';
-import ThiingsIcon from '../components/common/ThiingsIcon';
-import type { IconName } from '../components/common/ThiingsIcon';
 import { useNavigate, Link } from 'react-router-dom';
 
 export default function LiveAIDemo() {
@@ -28,316 +24,98 @@ export default function LiveAIDemo() {
 
   return (
     <div className="min-h-screen bg-[#FAFAF9]">
-      {/* Navigation Bar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-[#E7E5E4]">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-[#57534E] hover:text-[#1C1917] transition-colors text-sm"
-          >
-            <ThiingsIcon name="arrow-left" size="xs" />
-            Back to Home
-          </Link>
-
-          <Link to="/" className="font-serif text-xl tracking-tight text-[#1C1917]">
-            seatable<span className="text-[#9F1239]">.</span>
-          </Link>
-
-          <Link
-            to="/#pricing"
-            className="px-5 py-2 bg-[#1C1917] text-white text-sm font-semibold hover:bg-[#9F1239] transition-all duration-300 rounded-full"
-          >
-            Get Started
-          </Link>
+      {/* Nav */}
+      <nav className="flex items-center justify-between px-6 sm:px-16 py-6 bg-[rgba(250,250,249,0.8)] backdrop-blur-xl border-b border-[#E7E5E4]">
+        <Link to="/" className="font-serif text-2xl font-semibold text-[#1C1917] tracking-tight">
+          seatable<span className="text-[#9F1239]">.</span>
+        </Link>
+        <div className="hidden md:flex items-center gap-9">
+          <Link to="/#features" className="text-sm font-medium text-[#57534E] hover:text-[#1C1917] transition-colors">Features</Link>
+          <Link to="/#pricing" className="text-sm font-medium text-[#57534E] hover:text-[#1C1917] transition-colors">Pricing</Link>
+          <Link to="/live-demo" className="text-sm font-medium text-[#1C1917]">Demo</Link>
+          <Link to="/#contact" className="text-sm font-medium text-[#57534E] hover:text-[#1C1917] transition-colors">Contact</Link>
         </div>
+        <Link
+          to="/#pricing"
+          className="px-6 py-2.5 bg-[#1C1917] text-white text-sm font-semibold rounded-full hover:bg-[#292524] transition-colors"
+        >
+          Get Started
+        </Link>
       </nav>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 pt-28 pb-20">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="text-center mb-16"
-        >
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#9F1239]/10 rounded-full mb-6">
-            <ThiingsIcon name="sparkles" size="xs" />
-            <span className="text-sm text-[#9F1239] font-medium">Live AI Demonstration</span>
-          </div>
-
-          <h1 className="font-serif text-4xl md:text-5xl italic text-[#1C1917] mb-6">
-            Talk to Our AI Restaurant Assistant
-          </h1>
-
-          <div className="w-16 h-0.5 bg-[#9F1239] mx-auto opacity-50 mb-6"></div>
-
-          <p className="text-lg text-[#57534E] max-w-2xl mx-auto font-light">
-            Experience the future of restaurant reservations. Our AI understands natural language,
-            checks real-time availability, and books your table—all through conversation.
-          </p>
-        </motion.div>
-
-        <div className="grid lg:grid-cols-2 gap-12">
-          {/* Left Column - Instructions */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="space-y-6"
-          >
-            {/* How It Works */}
-            <div className="bg-white p-8 rounded-[2rem] border border-[#E7E5E4] shadow-md">
-              <h2 className="font-serif text-2xl text-[#1C1917] mb-6 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#9F1239] flex items-center justify-center">
-                  <ThiingsIcon name="microphone" size="sm" />
-                </div>
-                How It Works
-              </h2>
-
-              <div className="space-y-5">
-                {[
-                  { step: 1, title: 'Open the Chat Widget', desc: 'Look for the chat bubble in the bottom-right corner of your screen and click it', color: 'bg-[#9F1239]' },
-                  { step: 2, title: 'Allow Microphone Access', desc: 'Grant permission to use your microphone for voice interaction', color: 'bg-[#1C1917]' },
-                  { step: 3, title: 'Start Talking', desc: 'Speak naturally - say "I\'d like to make a reservation for 2 people tonight at 7 PM"', color: 'bg-[#57534E]' },
-                  { step: 4, title: 'Watch the Magic', desc: 'Our AI will check availability, confirm details, and complete your reservation', color: 'bg-[#9F1239]' },
-                ].map((item) => (
-                  <div key={item.step} className="flex gap-4">
-                    <div className={`w-8 h-8 rounded-lg ${item.color} flex items-center justify-center flex-shrink-0 font-bold text-white text-sm`}>
-                      {item.step}
-                    </div>
-                    <div>
-                      <h3 className="text-[#1C1917] font-medium mb-1">{item.title}</h3>
-                      <p className="text-[#57534E] text-sm font-light">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* No microphone note */}
-              <div className="mt-6 flex items-start gap-3 p-4 bg-[#FAFAF9] rounded-xl border border-[#E7E5E4]">
-                <ThiingsIcon name="keyboard" size="sm" className="flex-shrink-0 mt-0.5" />
-                <p className="text-[#57534E] text-sm font-light">
-                  <span className="font-medium text-[#1C1917]">No microphone?</span> You can also type your request in the chat widget.
-                </p>
-              </div>
-            </div>
-
-            {/* Sample Phrases */}
-            <div className="bg-white p-8 rounded-[2rem] border border-[#E7E5E4] shadow-md">
-              <h2 className="font-serif text-2xl text-[#1C1917] mb-6 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#1C1917] flex items-center justify-center">
-                  <ThiingsIcon name="chat" size="sm" />
-                </div>
-                Try Saying...
-              </h2>
-
-              <div className="space-y-3">
-                {[
-                  "I'd like to make a reservation for 4 people this Friday at 7 PM",
-                  "Do you have any tables available for 2 tonight?",
-                  "Book a table for 6 people tomorrow at 8 o'clock",
-                  "I need a reservation for 3 on Saturday evening",
-                  "Can I reserve a table for my anniversary dinner?",
-                ].map((phrase, index) => (
-                  <div
-                    key={index}
-                    className="bg-[#FAFAF9] p-4 rounded-xl flex items-start gap-3 hover:bg-[#F5F5F4] transition-all cursor-pointer group border border-[#E7E5E4]"
-                  >
-                    <ThiingsIcon name="volume" size="xs" className="flex-shrink-0 mt-0.5" />
-                    <span className="text-[#57534E] text-sm italic font-light">"{phrase}"</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Demo Restaurant Info */}
-            <div className="bg-[#1C1917] p-6 rounded-[2rem]">
-              <h3 className="font-serif text-lg text-white mb-4">Demo Restaurant</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-[#A8A29E] text-sm font-light">Name</span>
-                  <span className="text-white font-medium">La Bella Vista</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[#A8A29E] text-sm font-light">Cuisine</span>
-                  <span className="text-white font-medium">Fine Italian Dining</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[#A8A29E] text-sm font-light">Tables</span>
-                  <span className="text-white font-medium">12 tables</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[#A8A29E] text-sm font-light">Current Occupancy</span>
-                  <span className="text-[#9F1239] font-bold">67%</span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Right Column - AI Widget */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-            className="relative"
-          >
-            <div className="bg-white p-8 rounded-[2rem] border border-[#E7E5E4] shadow-lg min-h-[600px] relative">
-              <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-2 bg-[#10b981]/10 rounded-full border border-[#10b981]/20">
-                <div className="w-2 h-2 bg-[#10b981] rounded-full animate-pulse" />
-                <span className="text-xs text-[#065f46] font-bold tracking-wider">AI READY</span>
-              </div>
-
-              <div className="text-center space-y-4 mb-8">
-                <div className="w-20 h-20 rounded-[1.5rem] bg-[#9F1239]/10 mx-auto flex items-center justify-center">
-                  <div className="w-10 h-10 rounded-full bg-[#9F1239] flex items-center justify-center">
-                    <ThiingsIcon name="microphone" size="sm" />
-                  </div>
-                </div>
-                <h3 className="font-serif text-2xl text-[#1C1917]">AI Reservation Assistant</h3>
-                <p className="text-[#57534E] font-light text-sm">
-                  Use the chat widget in the bottom-right corner to start your conversation
-                </p>
-
-                {/* Animated indicator pointing to the chat widget */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1 }}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-[#9F1239]/10 rounded-full border border-[#9F1239]/20"
-                >
-                  <motion.div
-                    animate={{ x: [0, 4, 0], y: [0, 4, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                  >
-                    <ThiingsIcon name="arrow-right" size="xs" />
-                  </motion.div>
-                  <span className="text-xs text-[#9F1239] font-medium">
-                    Look for the chat bubble in the bottom-right corner
-                  </span>
-                  <motion.div
-                    animate={{ x: [0, 4, 0], y: [0, 4, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                  >
-                    <ThiingsIcon name="arrow-right" size="xs" />
-                  </motion.div>
-                </motion.div>
-              </div>
-
-              {/* AI Voice Widget Container */}
-              <div className="flex items-center justify-center min-h-[300px]">
-                <ElevenLabsWidget agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID || 'YOUR_AGENT_ID_HERE'} />
-              </div>
-
-              {/* Widget Not Configured Notice */}
-              {!import.meta.env.VITE_ELEVENLABS_AGENT_ID && (
-                <div className="mt-6 p-4 bg-[#d97706]/10 rounded-xl border border-[#d97706]/20">
-                  <div className="flex items-start gap-3">
-                    <ThiingsIcon name="sparkles" size="sm" className="flex-shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="text-[#1C1917] font-medium mb-1">Configuration Required</h4>
-                      <p className="text-[#57534E] text-sm font-light mb-2">
-                        To activate the live AI demo, configure the AI agent in your environment settings.
-                      </p>
-                      <code className="text-xs text-[#9F1239] bg-[#FAFAF9] px-2 py-1 rounded border border-[#E7E5E4]">
-                        VITE_AI_AGENT_ID=your_agent_id
-                      </code>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Info Cards */}
-            <div className="grid grid-cols-2 gap-4 mt-6">
-              <div className="bg-white p-5 rounded-2xl border border-[#E7E5E4] text-center shadow-md">
-                <div className="text-2xl font-serif font-bold text-[#9F1239] mb-1">2.3s</div>
-                <div className="text-xs text-[#57534E] uppercase tracking-wider">Avg Response Time</div>
-              </div>
-              <div className="bg-white p-5 rounded-2xl border border-[#E7E5E4] text-center shadow-md">
-                <div className="text-2xl font-serif font-bold text-[#1C1917] mb-1">94%</div>
-                <div className="text-xs text-[#57534E] uppercase tracking-wider">Accuracy Rate</div>
-              </div>
-            </div>
-
-            {/* AI Capabilities */}
-            <div className="bg-white p-6 rounded-[2rem] border border-[#E7E5E4] shadow-md mt-6">
-              <h3 className="font-serif text-lg text-[#1C1917] mb-4">AI Capabilities</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {([
-                  { icon: 'phone' as IconName, label: 'Voice Recognition' },
-                  { icon: 'chat' as IconName, label: 'Natural Language' },
-                  { icon: 'sparkles' as IconName, label: 'Smart Responses' },
-                  { icon: 'volume' as IconName, label: 'Text-to-Speech' },
-                ] as const).map((feature, index) => (
-                  <div key={index} className="bg-[#FAFAF9] p-4 rounded-xl text-center border border-[#E7E5E4]">
-                    <div className="w-10 h-10 rounded-xl bg-[#9F1239]/10 mx-auto mb-2 flex items-center justify-center">
-                      <ThiingsIcon name={feature.icon} size="sm" />
-                    </div>
-                    <div className="text-sm text-[#57534E]">{feature.label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
+      {/* Hero */}
+      <section className="pt-24 pb-20 text-center max-w-[1200px] mx-auto px-6 sm:px-16">
+        <div className="inline-block text-xs font-semibold tracking-[1.5px] uppercase text-[#9F1239] bg-[rgba(159,18,57,0.06)] border border-[rgba(159,18,57,0.15)] px-4 py-1.5 rounded-full mb-7">
+          Live Demo
         </div>
+        <h1 className="font-serif text-4xl sm:text-[56px] font-medium leading-[1.1] tracking-tight mb-4">
+          Hear the AI in <em className="text-[#9F1239]">action.</em>
+        </h1>
+        <p className="text-[17px] text-[#78716C] font-light leading-relaxed max-w-[520px] mx-auto">
+          Call our demo restaurant and experience the AI voice agent that handles reservations naturally, just like your best host would.
+        </p>
+      </section>
 
-        {/* Recent Reservations Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mt-16"
-        >
-          <RecentReservations />
-        </motion.div>
+      {/* Demo Widget */}
+      <section className="max-w-[720px] mx-auto px-6 sm:px-16 pb-20">
+        <div className="bg-white border border-[#E7E5E4] rounded-[20px] p-8 sm:p-12 text-center">
+          <div className="text-xs font-semibold tracking-[1.5px] uppercase text-[#A8A29E] mb-5">Demo Restaurant</div>
+          <h2 className="font-serif text-[28px] font-medium mb-2">Celeri Madrid</h2>
+          <p className="text-sm text-[#78716C] font-light mb-9">Mediterranean &middot; Farm-to-table &middot; Malasa&ntilde;a</p>
 
-        {/* Bottom CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="text-center mt-16"
-        >
-          <div className="bg-[#1C1917] p-10 rounded-[2rem] max-w-2xl mx-auto">
-            <h3 className="font-serif text-2xl text-white mb-3">
-              Ready to Implement This in Your Restaurant?
-            </h3>
-            <p className="text-[#A8A29E] font-light mb-6">
-              Schedule a personalized demo and discover how our AI can transform your operations
-            </p>
-            <button
-              onClick={() => navigate('/#contact')}
-              className="bg-[#9F1239] text-white px-8 py-4 text-[15px] font-semibold hover:bg-[#881337] transition-all duration-300 rounded-full shadow-xl shadow-[#9F1239]/20 inline-flex items-center gap-2"
-            >
-              Contact Sales
-              <ThiingsIcon name="arrow-right" size="xs" />
-            </button>
+          {/* ElevenLabs Widget */}
+          <div className="flex items-center justify-center min-h-[200px] mb-6">
+            <ElevenLabsWidget agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID || 'YOUR_AGENT_ID_HERE'} />
           </div>
-        </motion.div>
-      </div>
 
-      {/* Fixed pulsing indicator pointing to the AI chat widget */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 2 }}
-        className="fixed bottom-24 right-6 z-40 flex items-center gap-2 pointer-events-none"
-      >
-        <motion.div
-          animate={{ opacity: [1, 0.6, 1] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-          className="bg-[#9F1239] text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-[#9F1239]/30 pointer-events-none whitespace-nowrap"
-        >
-          Start your demo here
-        </motion.div>
-        <motion.div
-          animate={{ y: [0, 6, 0] }}
-          transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <ThiingsIcon name="arrow-right" size="sm" />
-        </motion.div>
-      </motion.div>
+          {!import.meta.env.VITE_ELEVENLABS_AGENT_ID && (
+            <div className="mt-4 p-4 bg-[rgba(217,119,6,0.08)] rounded-xl border border-[rgba(217,119,6,0.2)] text-left">
+              <h4 className="text-sm font-medium text-[#1C1917] mb-1">Configuration Required</h4>
+              <p className="text-[13px] text-[#57534E] font-light">
+                Set <code className="text-xs text-[#9F1239] bg-[#FAFAF9] px-1.5 py-0.5 rounded border border-[#E7E5E4]">VITE_ELEVENLABS_AGENT_ID</code> to activate.
+              </p>
+            </div>
+          )}
+
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[rgba(22,163,74,0.06)] rounded-full mt-6">
+            <div className="w-2 h-2 rounded-full bg-[#16a34a]" />
+            <span className="text-[13px] font-medium text-[#16a34a]">AI Agent Online</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Feature Callouts */}
+      <section className="max-w-[900px] mx-auto px-6 sm:px-16 pb-24">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { icon: '\u260E', title: 'Natural Conversation', desc: 'The AI speaks naturally, handling complex requests like dietary needs, special occasions, and group bookings.' },
+            { icon: '\u2605', title: 'Restaurant Personality', desc: "Each AI agent is trained on your restaurant's style, menu, and values to sound authentically yours." },
+            { icon: '\u23F1', title: 'Always Available', desc: 'Never miss a reservation. The AI handles calls 24/7 in multiple languages with instant availability checks.' },
+          ].map((item, i) => (
+            <div key={i} className="bg-white border border-[#E7E5E4] rounded-2xl p-8">
+              <div className="w-10 h-10 rounded-[10px] bg-[rgba(159,18,57,0.06)] flex items-center justify-center mb-4 text-lg text-[#9F1239]">
+                {item.icon}
+              </div>
+              <h3 className="text-base font-semibold text-[#1C1917] mb-2 tracking-tight">{item.title}</h3>
+              <p className="text-[13px] text-[#78716C] font-light leading-relaxed">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="px-6 sm:px-16 pb-24">
+        <div className="max-w-[700px] mx-auto bg-[#1C1917] rounded-3xl p-10 sm:p-16 text-center">
+          <h2 className="font-serif text-3xl sm:text-4xl font-medium text-white mb-3 tracking-tight">Ready for your own AI host?</h2>
+          <p className="text-[15px] text-[#A8A29E] font-light mb-8">Set up in 5 minutes. No technical knowledge required.</p>
+          <button
+            onClick={() => navigate('/#pricing')}
+            className="px-8 py-3.5 bg-[#9F1239] hover:bg-[#881337] text-white text-[15px] font-semibold rounded-full transition-colors"
+          >
+            Start Free Trial
+          </button>
+        </div>
+      </section>
     </div>
   );
 }

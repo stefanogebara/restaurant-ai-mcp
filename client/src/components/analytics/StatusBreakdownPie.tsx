@@ -46,15 +46,12 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
     return null;
   };
 
-  // Calculate total
-  const totalReservations = chartData.reduce((sum, entry) => sum + entry.value, 0);
-
   return (
-    <div className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-[#1C1917] tracking-tight mb-1">Status Breakdown</h3>
-        <p className="text-sm text-[#78716C]">Reservation distribution by status</p>
+    <div className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
+        <span className="text-[15px] font-semibold tracking-tight">Status Breakdown</span>
       </div>
+      <div className="p-6">
 
       <div className="flex items-center justify-center">
         <ResponsiveContainer width="100%" height={300}>
@@ -88,13 +85,6 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
         </ResponsiveContainer>
       </div>
 
-      {/* Total count */}
-      <div className="mt-4 text-center p-4 bg-[#F5F5F4]/50 border border-[#E7E5E4]/50 rounded-lg">
-        <p className="text-sm text-[#78716C]">
-          <span className="font-semibold text-[#1C1917] text-2xl">{totalReservations}</span>
-          <br />
-          <span className="text-xs">Total Reservations</span>
-        </p>
       </div>
     </div>
   );

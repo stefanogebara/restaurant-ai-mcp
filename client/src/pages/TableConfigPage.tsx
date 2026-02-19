@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tableConfigAPI } from '../services/api';
 import type { TableConfig } from '../services/api';
-import { Link } from 'react-router-dom';
+
 import { SkeletonTableConfig } from '../components/common/Skeleton';
 import DashboardLayout from '../components/layout/DashboardLayout';
 
@@ -158,84 +158,60 @@ export default function TableConfigPage() {
 
   return (
     <DashboardLayout>
-    <div className="dashboard min-h-screen bg-[#F5F5F4]">
+    <div className="dashboard p-6 lg:p-8">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-[#E7E5E4] sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-serif font-bold text-[#1C1917] tracking-tight">Table Configuration</h1>
-              <p className="text-sm text-[#78716C] mt-1">Manage tables, capacity, and combination rules</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Link
-                to="/host-dashboard/simple"
-                className="px-4 py-2 text-sm text-[#57534E] hover:text-[#1C1917] border border-[#E7E5E4] rounded-xl hover:border-[#A8A29E] transition-colors"
-              >
-                Back to Dashboard
-              </Link>
-              <button
-                onClick={() => {
-                  setFormData(defaultFormData);
-                  setShowAddModal(true);
-                }}
-                className="px-4 py-2 bg-[#1C1917] text-white rounded-xl hover:bg-[#292524] transition-colors font-medium"
-              >
-                + Add Table
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">
+          Table Configuration <span className="font-light text-[#78716C]">/ {tables.length} tables</span>
+        </h1>
+        <button
+          onClick={() => {
+            setFormData(defaultFormData);
+            setShowAddModal(true);
+          }}
+          className="px-5 py-2.5 bg-[#9F1239] hover:bg-[#881337] text-white text-[13px] font-semibold rounded-[10px] transition-colors"
+        >
+          + Add Table
+        </button>
+      </div>
 
-      {/* Stats Cards */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-          <div className="bg-white rounded-2xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
-            <div className="h-1 w-12 rounded-full mb-3 bg-[#22c55e]" />
-            <div className="text-3xl font-bold text-[#1C1917] tabular-nums">{stats.active || 0}</div>
-            <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Active Tables</div>
-          </div>
-          <div className="bg-white rounded-2xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
-            <div className="h-1 w-12 rounded-full mb-3 bg-[#d97706]" />
-            <div className="text-3xl font-bold text-[#1C1917] tabular-nums">{stats.flexible || 0}</div>
-            <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Flexible</div>
-          </div>
-          <div className="bg-white rounded-2xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
-            <div className="h-1 w-12 rounded-full mb-3 bg-[#9F1239]" />
-            <div className="text-3xl font-bold text-[#1C1917] tabular-nums">{stats.fixed || 0}</div>
-            <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Fixed</div>
-          </div>
-          <div className="bg-white rounded-2xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
-            <div className="h-1 w-12 rounded-full mb-3 bg-[#1C1917]" />
-            <div className="text-3xl font-bold text-[#1C1917] tabular-nums">{stats.total_capacity || 0}</div>
-            <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Total Capacity</div>
-          </div>
-          <div className="bg-white rounded-2xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
-            <div className="h-1 w-12 rounded-full mb-3 bg-[#7c3aed]" />
-            <div className="text-3xl font-bold text-[#1C1917] tabular-nums">{stats.locations?.length || 0}</div>
-            <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Locations</div>
-          </div>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white rounded-2xl p-6 border border-[#E7E5E4]">
+          <div className="text-xs font-medium text-[#A8A29E] mb-2">Total Tables</div>
+          <div className="text-[32px] font-bold tracking-tight leading-none text-[#1C1917]">{tables.length}</div>
         </div>
+        <div className="bg-white rounded-2xl p-6 border border-[#E7E5E4]">
+          <div className="text-xs font-medium text-[#A8A29E] mb-2">Total Seats</div>
+          <div className="text-[32px] font-bold tracking-tight leading-none text-[#1C1917]">{stats.total_capacity || 0}</div>
+        </div>
+        <div className="bg-white rounded-2xl p-6 border border-[#E7E5E4]">
+          <div className="text-xs font-medium text-[#A8A29E] mb-2">Active Tables</div>
+          <div className="text-[32px] font-bold tracking-tight leading-none text-[#16a34a]">{stats.active || 0}</div>
+        </div>
+        <div className="bg-white rounded-2xl p-6 border border-[#E7E5E4]">
+          <div className="text-xs font-medium text-[#A8A29E] mb-2">Locations</div>
+          <div className="text-[32px] font-bold tracking-tight leading-none text-[#1C1917]">{stats.locations?.length || 0}</div>
+        </div>
+      </div>
 
         {/* Tables by Location */}
         {Object.entries(tablesByLocation).map(([location, locationTables]) => (
           <div key={location} className="mb-8">
-            <h2 className="text-lg font-semibold text-[#1C1917] mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#22c55e] inline-block" />
-              {location}
-              <span className="text-sm font-normal text-[#78716C]">
-                ({(locationTables as TableConfig[]).filter(t => t.is_active).length} tables)
+            <div className="flex items-center gap-2.5 mb-4">
+              <span className="text-sm font-semibold text-[#1C1917] tracking-tight">{location}</span>
+              <span className="text-[11px] font-medium text-[#78716C] bg-[#F5F5F4] px-2.5 py-1 rounded-full">
+                {(locationTables as TableConfig[]).filter(t => t.is_active).length} tables
               </span>
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {(locationTables as TableConfig[])
                 .filter(t => t.is_active)
                 .sort((a, b) => a.table_number - b.table_number)
                 .map((table) => (
                   <div
                     key={table.id}
-                    className={`bg-white rounded-2xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow cursor-pointer`}
+                    className="bg-white rounded-2xl p-6 border border-[#E7E5E4] cursor-pointer hover:border-[#D6D3D1] transition-colors relative"
                     onClick={() => openEditModal(table)}
                   >
                     <div className="flex items-start justify-between mb-3">
@@ -283,7 +259,7 @@ export default function TableConfigPage() {
                     )}
 
                     {/* Actions */}
-                    <div className="flex gap-2 mt-3 pt-3 border-t border-[#E7E5E4]/50">
+                    <div className="flex gap-2 mt-3 pt-3 border-t border-[#F5F5F4]">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -332,7 +308,6 @@ export default function TableConfigPage() {
             </div>
           </div>
         )}
-      </div>
 
       {/* Add Table Modal */}
       {showAddModal && (

@@ -14,7 +14,6 @@ import ThiingsIcon from '../components/common/ThiingsIcon';
 import Spinner from '../components/common/Spinner';
 import { SkeletonWeeklyReport } from '../components/common/Skeleton';
 import { Link } from 'react-router-dom';
-import Breadcrumb, { breadcrumbConfigs } from '../components/common/Breadcrumb';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { authFetch } from '../services/api';
 import { useSubscription } from '../hooks/useSubscription';
@@ -111,8 +110,7 @@ export default function WeeklyReport() {
   if (subscription.isLoading) {
     return (
       <DashboardLayout>
-        <div className="p-8">
-          <Breadcrumb items={breadcrumbConfigs.reports} className="mb-4" />
+        <div className="min-h-screen bg-[#F5F5F4] p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
           <div className="flex items-center justify-center min-h-[50vh]">
             <Spinner size="lg" />
           </div>
@@ -124,8 +122,7 @@ export default function WeeklyReport() {
   if (!hasAccess) {
     return (
       <DashboardLayout>
-        <div className="p-8">
-          <Breadcrumb items={breadcrumbConfigs.reports} className="mb-4" />
+        <div className="min-h-screen bg-[#F5F5F4] p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
           <div className="flex flex-col items-center justify-center min-h-[50vh]">
             <div className="bg-white rounded-2xl border border-[#E7E5E4] p-12 max-w-lg text-center">
               <ThiingsIcon name="lock" pxSize={32} className="mx-auto mb-6" />
@@ -139,7 +136,7 @@ export default function WeeklyReport() {
               </div>
               <Link
                 to="/welcome"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-[#9F1239] text-white rounded-xl hover:bg-[#881337] transition-colors font-medium"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#9F1239] text-white rounded-full hover:bg-[#881337] transition-colors font-medium"
               >
                 Upgrade Plan
               </Link>
@@ -153,8 +150,7 @@ export default function WeeklyReport() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="p-8">
-          <Breadcrumb items={breadcrumbConfigs.reports} className="mb-4" />
+        <div className="min-h-screen bg-[#F5F5F4] p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
           <SkeletonWeeklyReport />
         </div>
       </DashboardLayout>
@@ -175,267 +171,192 @@ export default function WeeklyReport() {
 
   const { summary, busiest, demographics, preferences } = report;
 
+  // Gather all preferences as pills
+  const allPreferencePills = [
+    ...Object.entries(preferences.seating).map(([k, v]) => ({ label: k, count: v })),
+    ...Object.entries(preferences.dietary_restrictions).map(([k, v]) => ({ label: k, count: v })),
+    ...Object.entries(preferences.occasions).map(([k, v]) => ({ label: k, count: v })),
+  ].sort((a, b) => b.count - a.count);
+
+  const topPillThreshold = allPreferencePills.length > 3 ? allPreferencePills[2]?.count : 0;
+
+  // Get max covers for bar width calculation
+  const maxTimeCovers = Math.max(...busiest.times.map(t => t.covers), 1);
+
+  // Bar color based on intensity
+  const getBarColor = (covers: number) => {
+    const ratio = covers / maxTimeCovers;
+    if (ratio > 0.85) return '#9F1239';
+    if (ratio > 0.6) return '#57534E';
+    if (ratio > 0.35) return '#A8A29E';
+    return '#D6D3D1';
+  };
+  const getBarTextColor = (covers: number) => {
+    const ratio = covers / maxTimeCovers;
+    return ratio > 0.35 ? '#fff' : '#78716C';
+  };
+
+  // Demographics ranked rows
+  const demoRows = [
+    { rank: 1, label: 'Tourists', detail: `${demographics.tourist_count} visitors`, pct: demographics.tourist_percentage, color: '#9F1239' },
+    { rank: 2, label: 'Locals', detail: `${demographics.local_count} residents`, pct: demographics.tourist_count + demographics.local_count > 0 ? Math.round((demographics.local_count / (demographics.tourist_count + demographics.local_count)) * 100) : 0, color: '#1C1917' },
+    { rank: 3, label: 'First-Time', detail: `${demographics.first_time_visitors} new customers`, pct: null, count: demographics.first_time_visitors, color: '#3b82f6' },
+    { rank: 4, label: 'Repeat', detail: `${demographics.repeat_customers} returning`, pct: null, count: demographics.repeat_customers, color: '#7c3aed' },
+  ];
+
   return (
     <DashboardLayout>
-    <div className="dashboard min-h-screen bg-[#F5F5F4] p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Breadcrumb Navigation */}
-        <Breadcrumb items={breadcrumbConfigs.reports} className="mb-4 print:hidden" />
-
+    <div className="min-h-screen bg-[#F5F5F4] p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8 print:mb-4">
-          <div>
-            <h1 className="text-2xl font-serif font-bold text-[#1C1917] tracking-tight">Weekly Report</h1>
-            <p className="text-[#78716C]">{report.period.label}</p>
-          </div>
-
-          <div className="flex gap-3 print:hidden">
-            <button
-              onClick={handlePrint}
-              className="flex items-center gap-2 px-4 py-2 bg-[#9F1239] hover:bg-[#881337] text-white rounded-xl shadow-sm shadow-[#9F1239]/20 transition"
-            >
-              <ThiingsIcon name="download" size="xs" />
-              Download/Print
-            </button>
-            <button
-              onClick={() => fetchReport()}
-              className="flex items-center gap-2 px-4 py-2 border border-[#E7E5E4] hover:border-[#A8A29E] text-[#57534E] rounded-xl transition"
-            >
-              <ThiingsIcon name="refresh" size="xs" />
-              Refresh
-            </button>
-          </div>
-        </div>
-
-        {/* Date Range Selector */}
-        <div className="mb-6 p-4 bg-white rounded-2xl border border-[#E7E5E4]/50 shadow-sm print:hidden">
-          <div className="flex items-center gap-4">
-            <div>
-              <label className="block text-sm text-[#78716C] mb-1">Start Date</label>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
+          <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">
+            Reports <span className="font-light text-[#78716C]">/ Weekly</span>
+          </h1>
+          <div className="flex items-center gap-2.5 print:hidden">
+            <div className="flex items-center gap-1.5 px-4 py-2 bg-white border border-[#D6D3D1] rounded-[10px] text-[13px] font-medium text-[#57534E]">
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="px-3 py-2 bg-[#F5F5F4] border border-[#E7E5E4] rounded-lg text-[#1C1917]"
+                className="bg-transparent border-0 text-[13px] text-[#57534E] w-[110px] cursor-pointer"
               />
-            </div>
-            <div>
-              <label className="block text-sm text-[#78716C] mb-1">End Date</label>
+              <span className="text-[#A8A29E]">&ndash;</span>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="px-3 py-2 bg-[#F5F5F4] border border-[#E7E5E4] rounded-lg text-[#1C1917]"
+                className="bg-transparent border-0 text-[13px] text-[#57534E] w-[110px] cursor-pointer"
               />
+              <button onClick={handleDateChange} className="ml-1 text-[#9F1239] font-semibold text-xs">Go</button>
             </div>
             <button
-              onClick={handleDateChange}
-              className="px-4 py-2 bg-[#9F1239] hover:bg-[#881337] text-white rounded-xl shadow-sm shadow-[#9F1239]/20 transition mt-6"
+              onClick={handlePrint}
+              className="px-4 py-2 bg-white border border-[#D6D3D1] text-[#57534E] hover:border-[#A8A29E] rounded-[10px] text-[13px] font-medium transition-colors"
             >
-              Update Report
+              Download PDF
+            </button>
+            <button
+              onClick={() => fetchReport()}
+              className="px-4 py-2 bg-[#9F1239] text-white hover:bg-[#881337] rounded-[10px] text-[13px] font-medium transition-colors"
+            >
+              Share Report
             </button>
           </div>
         </div>
 
-        {/* Key Metrics Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-          {/* Total Covers */}
-          <div className="bg-white rounded-2xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
-            <div className="h-1 w-12 rounded-full mb-3 bg-[#22c55e]" />
-            <div className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{summary.total_covers}</div>
-            <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Total Covers</div>
-            {summary.previous_covers >= 3 ? (
-              <div className={`text-sm font-semibold mt-1 ${summary.covers_change_percent >= 0 ? 'text-[#22c55e]' : 'text-[#dc2626]'}`}>
-                {summary.covers_change_percent >= 0 ? '+' : ''}{summary.covers_change_percent}% vs last week
+        {/* Summary Metrics — 5 columns */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+          <div className="bg-white rounded-2xl p-5 border border-[#E7E5E4] text-center">
+            <div className="text-[11px] font-medium text-[#A8A29E] mb-1.5 tracking-wide">Total Reservations</div>
+            <div className="text-2xl font-bold tracking-tight">{summary.total_reservations}</div>
+            {summary.previous_covers >= 3 && (
+              <div className={`text-[11px] font-medium mt-1 ${summary.covers_change_percent >= 0 ? 'text-[#16a34a]' : 'text-[#dc2626]'}`}>
+                {summary.covers_change_percent >= 0 ? '+' : ''}{summary.covers_change_percent}% vs prev week
               </div>
-            ) : (
-              <div className="text-sm text-[#A8A29E] mt-0.5">First week of data</div>
             )}
           </div>
-
-          {/* Reservations */}
-          <div className="bg-white rounded-2xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
-            <div className="h-1 w-12 rounded-full mb-3 bg-[#9F1239]" />
-            <div className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{summary.total_reservations}</div>
-            <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Reservations</div>
-            <div className="text-sm text-[#A8A29E] mt-0.5">
-              {summary.reservation_count} seated · {summary.walk_in_count} walk-ins
-            </div>
+          <div className="bg-white rounded-2xl p-5 border border-[#E7E5E4] text-center">
+            <div className="text-[11px] font-medium text-[#A8A29E] mb-1.5 tracking-wide">Walk-ins</div>
+            <div className="text-2xl font-bold tracking-tight">{summary.walk_in_count}</div>
           </div>
-
-          {/* Average Party Size */}
-          <div className="bg-white rounded-2xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
-            <div className="h-1 w-12 rounded-full mb-3 bg-[#d97706]" />
-            <div className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{summary.avg_party_size}</div>
-            <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Avg Party Size</div>
-            <div className="text-sm text-[#A8A29E] mt-0.5">{summary.total_covers} guests total</div>
+          <div className="bg-white rounded-2xl p-5 border border-[#E7E5E4] text-center">
+            <div className="text-[11px] font-medium text-[#A8A29E] mb-1.5 tracking-wide">Cancellations</div>
+            <div className="text-2xl font-bold tracking-tight text-[#dc2626]">{summary.cancelled_count}</div>
+            <div className="text-[11px] font-medium text-[#78716C] mt-1">{summary.cancellation_rate}% rate</div>
           </div>
-
-          {/* Cancellation Rate */}
-          <div className="bg-white rounded-2xl p-4 border border-[#E7E5E4]/50 shadow-sm hover:shadow-md transition-shadow">
-            <div className="h-1 w-12 rounded-full mb-3 bg-[#1C1917]" />
-            <div className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{summary.cancellation_rate}%</div>
-            <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Cancellation Rate</div>
-            <div className="text-sm text-[#A8A29E] mt-0.5">{summary.cancelled_count} cancelled</div>
+          <div className="bg-white rounded-2xl p-5 border border-[#E7E5E4] text-center">
+            <div className="text-[11px] font-medium text-[#A8A29E] mb-1.5 tracking-wide">Avg Party Size</div>
+            <div className="text-2xl font-bold tracking-tight">{summary.avg_party_size}</div>
+            <div className="text-[11px] font-medium text-[#78716C] mt-1">{summary.total_covers} covers total</div>
+          </div>
+          <div className="bg-white rounded-2xl p-5 border border-[#E7E5E4] text-center">
+            <div className="text-[11px] font-medium text-[#A8A29E] mb-1.5 tracking-wide">Total Covers</div>
+            <div className="text-2xl font-bold tracking-tight text-[#9F1239]">{summary.total_covers}</div>
+            {summary.previous_covers >= 3 && (
+              <div className={`text-[11px] font-medium mt-1 ${summary.covers_change_percent >= 0 ? 'text-[#16a34a]' : 'text-[#dc2626]'}`}>
+                {summary.covers_change_percent >= 0 ? '+' : ''}{summary.covers_change_percent}%
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Busiest Times */}
-        <div className="grid grid-cols-2 gap-6 mb-8">
-          {/* Busiest Days */}
-          <div className="bg-white p-6 rounded-2xl border border-[#E7E5E4]/50 shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <ThiingsIcon name="calendar" size="sm" />
-              <h2 className="text-base font-semibold text-[#1C1917]">Busiest Days</h2>
-            </div>
-            <div className="space-y-3">
-              {busiest.days.map((day, index) => (
-                <div key={day.day} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-[#78716C] w-5">#{index + 1}</span>
-                    <span className="text-[#1C1917] font-medium">{day.day}</span>
+        {/* Busiest Times — bar chart panel */}
+        <div className="bg-white rounded-2xl border border-[#E7E5E4] overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
+            <span className="text-[15px] font-semibold tracking-tight">Busiest Times</span>
+          </div>
+          <div className="p-6 space-y-3">
+            {busiest.times.map((time) => {
+              const widthPct = Math.max((time.covers / maxTimeCovers) * 100, 5);
+              return (
+                <div key={time.time} className="flex items-center gap-3">
+                  <div className="w-[50px] text-[13px] text-[#78716C] text-right flex-shrink-0">{time.time}</div>
+                  <div className="flex-1 h-6 bg-[#F5F5F4] rounded-md overflow-hidden">
+                    <div
+                      className="h-full rounded-md flex items-center pl-2.5"
+                      style={{ width: `${widthPct}%`, background: getBarColor(time.covers) }}
+                    >
+                      <span className="text-[11px] font-semibold" style={{ color: getBarTextColor(time.covers) }}>{time.covers}</span>
+                    </div>
                   </div>
-                  <span className="text-xl font-bold text-[#1C1917] tabular-nums">{day.covers}</span>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Busiest Times */}
-          <div className="bg-white p-6 rounded-2xl border border-[#E7E5E4]/50 shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <ThiingsIcon name="clock" size="sm" />
-              <h2 className="text-base font-semibold text-[#1C1917]">Busiest Times</h2>
-            </div>
-            <div className="space-y-3">
-              {busiest.times.map((time, index) => (
-                <div key={time.time} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-[#78716C] w-5">#{index + 1}</span>
-                    <span className="text-[#1C1917] font-medium">{time.time}</span>
-                  </div>
-                  <span className="text-xl font-bold text-[#1C1917] tabular-nums">{time.covers}</span>
-                </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Customer Demographics */}
-        <div className="bg-white p-6 rounded-2xl border border-[#E7E5E4]/50 shadow-sm mb-8">
-          <div className="flex items-center gap-2 mb-6">
-            <ThiingsIcon name="users" size="sm" />
-            <h2 className="text-base font-semibold text-[#1C1917]">Customer Demographics</h2>
+        {/* Bottom Grid: Demographics + Preferences */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Guest Demographics */}
+          <div className="bg-white rounded-2xl border border-[#E7E5E4] overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
+              <span className="text-[15px] font-semibold tracking-tight">Guest Demographics</span>
+            </div>
+            {demoRows.map((row) => (
+              <div key={row.rank} className="flex items-center px-6 py-3.5 border-b border-[#F5F5F4] last:border-b-0 gap-3.5">
+                <div
+                  className="w-10 h-10 rounded-[10px] flex items-center justify-center text-[13px] font-bold flex-shrink-0"
+                  style={{ background: `${row.color}12`, color: row.color }}
+                >
+                  {row.rank}
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-semibold text-[#1C1917]">{row.label}</div>
+                  <div className="text-xs text-[#78716C]">{row.detail}</div>
+                </div>
+                <div className="text-base font-bold" style={{ color: row.rank <= 2 ? row.color : '#1C1917' }}>
+                  {row.pct !== null ? `${row.pct}%` : row.count}
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums mb-2">{demographics.tourist_percentage}%</div>
-              <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider">Tourists</div>
-              <div className="text-sm text-[#A8A29E] mt-1">{demographics.tourist_count} visitors</div>
+
+          {/* Top Guest Preferences */}
+          <div className="bg-white rounded-2xl border border-[#E7E5E4] overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
+              <span className="text-[15px] font-semibold tracking-tight">Top Guest Preferences</span>
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums mb-2">
-                {demographics.tourist_count + demographics.local_count > 0
-                  ? Math.round((demographics.local_count / (demographics.tourist_count + demographics.local_count)) * 100)
-                  : 0}%
+            <div className="p-6">
+              <div className="flex flex-wrap gap-2">
+                {allPreferencePills.map((pill) => (
+                  <span
+                    key={pill.label}
+                    className={`px-4 py-2 rounded-full text-[13px] font-medium border ${
+                      pill.count >= topPillThreshold
+                        ? 'bg-[rgba(159,18,57,0.06)] border-[rgba(159,18,57,0.15)] text-[#9F1239] font-semibold'
+                        : 'bg-[#FAFAF9] border-[#E7E5E4] text-[#57534E]'
+                    }`}
+                  >
+                    {pill.label} ({pill.count})
+                  </span>
+                ))}
+                {allPreferencePills.length === 0 && (
+                  <p className="text-sm text-[#A8A29E]">No preference data for this period</p>
+                )}
               </div>
-              <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider">Locals</div>
-              <div className="text-sm text-[#A8A29E] mt-1">{demographics.local_count} residents</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums mb-2">{demographics.first_time_visitors}</div>
-              <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider">First-Time</div>
-              <div className="text-sm text-[#A8A29E] mt-1">New customers</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums mb-2">{demographics.repeat_customers}</div>
-              <div className="text-xs font-medium text-[#78716C] uppercase tracking-wider">Repeat</div>
-              <div className="text-sm text-[#A8A29E] mt-1">Returning guests</div>
             </div>
           </div>
-        </div>
-
-        {/* Preferences Grid */}
-        <div className="grid grid-cols-2 gap-6">
-          {/* Dietary Restrictions */}
-          {Object.keys(preferences.dietary_restrictions).length > 0 && (
-            <div className="bg-white p-6 rounded-2xl border border-[#E7E5E4]/50 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <ThiingsIcon name="utensils" size="sm" />
-                <h2 className="text-base font-semibold text-[#1C1917]">Dietary Restrictions</h2>
-              </div>
-              <div className="space-y-2">
-                {Object.entries(preferences.dietary_restrictions)
-                  .sort((a, b) => b[1] - a[1])
-                  .map(([restriction, count]) => (
-                    <div key={restriction} className="flex items-center justify-between px-3 py-2 bg-[#F5F5F4] rounded-lg">
-                      <span className="text-[#1C1917]">{restriction}</span>
-                      <span className="text-xl font-semibold text-[#1C1917] tabular-nums">{count}</span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
-
-          {/* Languages */}
-          {Object.keys(preferences.languages).length > 0 && (
-            <div className="bg-white p-6 rounded-2xl border border-[#E7E5E4]/50 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <ThiingsIcon name="languages" size="sm" />
-                <h2 className="text-base font-semibold text-[#1C1917]">Languages</h2>
-              </div>
-              <div className="space-y-2">
-                {Object.entries(preferences.languages)
-                  .sort((a, b) => b[1] - a[1])
-                  .map(([language, count]) => (
-                    <div key={language} className="flex items-center justify-between px-3 py-2 bg-[#F5F5F4] rounded-lg">
-                      <span className="text-[#1C1917]">{language}</span>
-                      <span className="text-xl font-semibold text-[#1C1917] tabular-nums">{count}</span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
-
-          {/* Seating Preferences */}
-          {Object.keys(preferences.seating).length > 0 && (
-            <div className="bg-white p-6 rounded-2xl border border-[#E7E5E4]/50 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <ThiingsIcon name="map-pin" size="sm" />
-                <h2 className="text-base font-semibold text-[#1C1917]">Seating Preferences</h2>
-              </div>
-              <div className="space-y-2">
-                {Object.entries(preferences.seating)
-                  .sort((a, b) => b[1] - a[1])
-                  .map(([seating, count]) => (
-                    <div key={seating} className="flex items-center justify-between px-3 py-2 bg-[#F5F5F4] rounded-lg">
-                      <span className="text-[#1C1917]">{seating}</span>
-                      <span className="text-xl font-semibold text-[#1C1917] tabular-nums">{count}</span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
-
-          {/* Special Occasions */}
-          {Object.keys(preferences.occasions).length > 0 && (
-            <div className="bg-white p-6 rounded-2xl border border-[#E7E5E4]/50 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <ThiingsIcon name="calendar" size="sm" />
-                <h2 className="text-base font-semibold text-[#1C1917]">Special Occasions</h2>
-              </div>
-              <div className="space-y-2">
-                {Object.entries(preferences.occasions)
-                  .sort((a, b) => b[1] - a[1])
-                  .map(([occasion, count]) => (
-                    <div key={occasion} className="flex items-center justify-between px-3 py-2 bg-[#F5F5F4] rounded-lg">
-                      <span className="text-[#1C1917]">{occasion}</span>
-                      <span className="text-xl font-semibold text-[#1C1917] tabular-nums">{count}</span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

@@ -15,7 +15,6 @@
  */
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import Step1Welcome from '../components/onboarding/Step1Welcome';
@@ -160,270 +159,170 @@ export default function Onboarding() {
     'Team'
   ];
 
+  const progressPercent = ((currentStep) / 7) * 100;
+
   return (
-    <div className="min-h-screen bg-[#FAFAF9] relative overflow-hidden">
-      {/* Subtle background pattern */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#E7E5E4] rounded-full blur-3xl opacity-40" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#E7E5E4] rounded-full blur-3xl opacity-30" />
+    <div className="min-h-screen bg-[#FAFAF9] flex flex-col">
+      {/* Top Bar */}
+      <header className="flex items-center justify-between px-6 sm:px-12 py-5 border-b border-[#E7E5E4] bg-white">
+        <div className="font-serif text-xl font-semibold text-[#1C1917]">
+          seatable<span className="text-[#9F1239]">.</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <span className="text-[13px] text-[#78716C]">Step {currentStep} of 7</span>
+          <button
+            onClick={() => navigate('/')}
+            className="text-[13px] text-[#9F1239] font-medium hover:text-[#881337] transition-colors"
+          >
+            Save &amp; Exit
+          </button>
+        </div>
+      </header>
+
+      {/* Progress Bar */}
+      <div className="h-[3px] bg-[#E7E5E4]">
+        <div
+          className="h-full bg-[#9F1239] rounded-r-full transition-all duration-300"
+          style={{ width: `${progressPercent}%` }}
+        />
       </div>
 
-      {/* Content Container */}
-      <div className="relative z-10">
-        {/* Header with Progress Bar */}
-        <div className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-[#E7E5E4]">
-          <div className="max-w-4xl mx-auto px-6 py-4">
-            {/* Logo and Step Counter */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <h1 className="font-serif text-2xl font-bold text-[#1C1917]">
-                  seatable<span className="text-[#9F1239]">.</span>
-                </h1>
-              </div>
-              <div className="text-sm text-[#57534E] font-medium">
-                Step {currentStep} of 7
-              </div>
-            </div>
+      {/* Layout */}
+      <div className="flex-1 flex max-w-[1000px] mx-auto w-full px-6 sm:px-12 py-12 gap-16">
+        {/* Step Sidebar */}
+        <div className="hidden md:block flex-shrink-0 w-[220px] pt-2">
+          <div className="flex flex-col">
+            {stepNames.map((name, index) => {
+              const stepNumber = index + 1;
+              const isActive = stepNumber === currentStep;
+              const isCompleted = stepNumber < currentStep;
+              const isLast = index === stepNames.length - 1;
 
-            {/* Progress Steps */}
-            <div className="flex items-center">
-              {stepNames.map((name, index) => {
-                const stepNumber = index + 1;
-                const isActive = stepNumber === currentStep;
-                const isCompleted = stepNumber < currentStep;
-                const isLast = index === stepNames.length - 1;
-
-                return (
-                  <div key={stepNumber} className="flex items-center flex-1 last:flex-none">
-                    {/* Step Circle + Label */}
-                    <div className="flex flex-col items-center gap-1">
-                      <div
-                        className={`
-                          w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300
-                          ${isCompleted
-                            ? 'bg-[#9F1239] text-white'
-                            : isActive
-                              ? 'bg-[#9F1239] text-white ring-4 ring-[#9F1239]/20'
-                              : 'bg-[#E7E5E4] text-[#A8A29E]'
-                          }
-                        `}
-                      >
-                        {isCompleted ? (
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : (
-                          stepNumber
-                        )}
-                      </div>
-                      <span
-                        className={`
-                          hidden md:block text-[10px] font-medium transition-colors duration-300 whitespace-nowrap
-                          ${isActive ? 'text-[#9F1239]' : isCompleted ? 'text-[#1C1917]' : 'text-[#A8A29E]'}
-                        `}
-                      >
-                        {name}
-                      </span>
-                    </div>
-                    {/* Connecting Line */}
-                    {!isLast && (
-                      <div className={`flex-1 h-0.5 mx-1.5 transition-colors duration-500 ${isCompleted ? 'bg-[#9F1239]' : 'bg-[#E7E5E4]'}`} />
+              return (
+                <div key={stepNumber} className="flex items-start gap-4 py-4 relative">
+                  {/* Connecting line */}
+                  {!isLast && (
+                    <div
+                      className={`absolute left-[15px] top-[48px] bottom-0 w-px ${
+                        isCompleted ? 'bg-[#9F1239]' : isActive ? 'bg-gradient-to-b from-[#9F1239] to-[#E7E5E4]' : 'bg-[#E7E5E4]'
+                      }`}
+                    />
+                  )}
+                  {/* Step number */}
+                  <div
+                    className={`relative z-10 w-8 h-8 rounded-full border-2 flex items-center justify-center text-[13px] font-semibold flex-shrink-0 ${
+                      isCompleted
+                        ? 'border-[#9F1239] bg-[#9F1239] text-white'
+                        : isActive
+                          ? 'border-[#9F1239] bg-[rgba(159,18,57,0.06)] text-[#9F1239]'
+                          : 'border-[#E7E5E4] bg-white text-[#A8A29E]'
+                    }`}
+                  >
+                    {isCompleted ? (
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      stepNumber
                     )}
                   </div>
-                );
-              })}
-            </div>
+                  {/* Step label */}
+                  <span
+                    className={`text-sm pt-[5px] ${
+                      isActive ? 'font-semibold text-[#1C1917]' : isCompleted ? 'font-medium text-[#57534E]' : 'font-medium text-[#A8A29E]'
+                    }`}
+                  >
+                    {name}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Step Content - With top padding for fixed header */}
-        <div className="pt-32 pb-12 px-6">
-          <motion.div
-            key={currentStep}
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="max-w-4xl mx-auto"
-          >
-            <div className="
-              bg-white
-              border border-[#E7E5E4]
-              rounded-[2rem]
-              p-8 md:p-12
-              shadow-xl shadow-black/5
-            "
-            >
-              <AnimatePresence mode="wait">
-                {currentStep === 1 && (
-                  <Step1Welcome
-                    key="step1"
-                    data={onboardingData}
-                    updateData={updateData}
-                    onNext={nextStep}
-                  />
-                )}
-                {currentStep === 2 && (
-                  <Step1_5RestaurantLearning
-                    key="step1.5"
-                    data={onboardingData}
-                    updateData={updateData}
-                    onNext={nextStep}
-                    onBack={prevStep}
-                  />
-                )}
-                {currentStep === 3 && (
-                  <Step2Contact
-                    key="step2"
-                    data={onboardingData}
-                    updateData={updateData}
-                    onNext={nextStep}
-                    onBack={prevStep}
-                  />
-                )}
-                {currentStep === 4 && (
-                  <Step2_5VoiceSelection
-                    key="step2.5"
-                    data={onboardingData}
-                    onUpdate={updateData}
-                    onNext={nextStep}
-                    onPrev={prevStep}
-                  />
-                )}
-                {currentStep === 5 && (
-                  <Step3Tables
-                    key="step3"
-                    data={onboardingData}
-                    updateData={updateData}
-                    onNext={nextStep}
-                    onBack={prevStep}
-                  />
-                )}
-                {currentStep === 6 && (
-                  <Step4Settings
-                    key="step4"
-                    data={onboardingData}
-                    updateData={updateData}
-                    onNext={nextStep}
-                    onBack={prevStep}
-                  />
-                )}
-                {currentStep === 7 && (
-                  <Step5Team
-                    key="step5"
-                    data={onboardingData}
-                    updateData={updateData}
-                    onComplete={completeOnboarding}
-                    onBack={prevStep}
-                    isSubmitting={isSubmitting}
-                  />
-                )}
-              </AnimatePresence>
-            </div>
-          </motion.div>
-
-          {/* Help Text */}
-          <div className="text-center mt-6 max-w-4xl mx-auto">
-            <p className="text-sm text-[#57534E]">
-              Need help?{' '}
-              <a
-                href="mailto:hello@seatable.io"
-                className="text-[#9F1239] hover:text-[#881337] font-semibold transition-colors"
-              >
-                Contact Support
-              </a>
-            </p>
-          </div>
+        {/* Form Content */}
+        <div className="flex-1 max-w-[480px]">
+          {currentStep === 1 && (
+            <Step1Welcome
+              data={onboardingData}
+              updateData={updateData}
+              onNext={nextStep}
+            />
+          )}
+          {currentStep === 2 && (
+            <Step1_5RestaurantLearning
+              data={onboardingData}
+              updateData={updateData}
+              onNext={nextStep}
+              onBack={prevStep}
+            />
+          )}
+          {currentStep === 3 && (
+            <Step2Contact
+              data={onboardingData}
+              updateData={updateData}
+              onNext={nextStep}
+              onBack={prevStep}
+            />
+          )}
+          {currentStep === 4 && (
+            <Step2_5VoiceSelection
+              data={onboardingData}
+              onUpdate={updateData}
+              onNext={nextStep}
+              onPrev={prevStep}
+            />
+          )}
+          {currentStep === 5 && (
+            <Step3Tables
+              data={onboardingData}
+              updateData={updateData}
+              onNext={nextStep}
+              onBack={prevStep}
+            />
+          )}
+          {currentStep === 6 && (
+            <Step4Settings
+              data={onboardingData}
+              updateData={updateData}
+              onNext={nextStep}
+              onBack={prevStep}
+            />
+          )}
+          {currentStep === 7 && (
+            <Step5Team
+              data={onboardingData}
+              updateData={updateData}
+              onComplete={completeOnboarding}
+              onBack={prevStep}
+              isSubmitting={isSubmitting}
+            />
+          )}
         </div>
       </div>
 
       {/* Success Modal */}
-      <AnimatePresence>
-        {showSuccessModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-6"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
-              className="
-                bg-white
-                border border-[#E7E5E4]
-                rounded-[2rem]
-                p-12
-                max-w-md
-                w-full
-                shadow-2xl
-              "
-            >
-              <div className="text-center">
-                {/* Success Icon */}
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                  className="
-                    w-20 h-20
-                    bg-[#9F1239]
-                    rounded-full
-                    flex items-center justify-center
-                    mx-auto mb-6
-                  "
-                >
-                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                  </svg>
-                </motion.div>
-
-                {/* Success Message */}
-                <motion.h2
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="
-                    font-serif text-3xl font-bold
-                    text-[#1C1917]
-                    mb-3
-                  "
-                >
-                  Welcome Aboard!
-                </motion.h2>
-
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="
-                    text-base
-                    text-[#57534E]
-                    mb-6
-                  "
-                >
-                  Your restaurant is ready. Let's start managing reservations!
-                </motion.p>
-
-                {/* Loading Animation */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                  className="flex items-center justify-center gap-2"
-                >
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#E7E5E4] border-t-[#9F1239]"></div>
-                  <span className="text-sm text-[#57534E]">
-                    Redirecting to dashboard...
-                  </span>
-                </motion.div>
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+          <div className="bg-white border border-[#E7E5E4] rounded-2xl p-12 max-w-md w-full">
+            <div className="text-center">
+              <div className="w-20 h-20 bg-[#9F1239] rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <h2 className="font-serif text-3xl font-medium text-[#1C1917] mb-3">Welcome Aboard!</h2>
+              <p className="text-[15px] text-[#57534E] font-light mb-6">
+                Your restaurant is ready. Let&apos;s start managing reservations!
+              </p>
+              <div className="flex items-center justify-center gap-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#E7E5E4] border-t-[#9F1239]" />
+                <span className="text-sm text-[#57534E]">Redirecting to dashboard...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

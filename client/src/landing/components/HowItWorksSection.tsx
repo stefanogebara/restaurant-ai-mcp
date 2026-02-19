@@ -1,86 +1,43 @@
-import { motion } from 'framer-motion';
-import { Phone, Bot, CalendarCheck } from 'lucide-react';
-
 const steps = [
   {
     number: '01',
-    icon: Phone,
-    title: 'Customer Calls or Chats',
-    description: 'A customer contacts your restaurant via phone or web chat to make a reservation.',
-    accent: 'bg-[#9F1239]',
+    title: 'Tell us about your restaurant',
+    description: 'Our AI researches your restaurant online, then asks a few questions to understand your unique personality and style.',
   },
   {
     number: '02',
-    icon: Bot,
-    title: 'AI Handles Everything',
-    description: 'Our AI checks real-time availability, understands preferences, and confirms the booking in seconds.',
-    accent: 'bg-[#1C1917]',
+    title: 'We build your AI persona',
+    description: 'From web intelligence and your input, we create an authentic AI agent that sounds and feels like your restaurant.',
   },
   {
     number: '03',
-    icon: CalendarCheck,
-    title: 'Reservation Confirmed',
-    description: 'The guest receives a confirmation. Your dashboard updates instantly. No manual work needed.',
-    accent: 'bg-[#9F1239]',
+    title: 'Go live in minutes',
+    description: 'Connect your phone, WhatsApp, and booking page. Your AI starts handling reservations immediately.',
   },
 ];
 
 export default function HowItWorksSection() {
   return (
-    <section className="py-20 px-6 bg-[#FAFAF9]">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <h2 className="font-serif text-3xl md:text-4xl italic mb-4 text-[#1C1917]">
-            How It Works
-          </h2>
-          <div className="w-16 h-0.5 bg-[#9F1239] mx-auto opacity-50 mb-6"></div>
-          <p className="text-lg text-[#57534E] max-w-2xl mx-auto font-light">
-            From first call to confirmed reservation in under 30 seconds
-          </p>
-        </motion.div>
+    <section className="py-24 px-6 sm:px-16 max-w-[1200px] mx-auto">
+      {/* Header */}
+      <div className="text-center mb-16">
+        <div className="text-xs font-semibold tracking-[2px] uppercase text-[#9F1239] mb-4">How It Works</div>
+        <h2 className="font-serif text-4xl sm:text-[48px] font-medium tracking-tight text-[#1C1917]">
+          Three steps to<br />a smarter restaurant.
+        </h2>
+      </div>
 
-        {/* Steps */}
-        <div className="grid md:grid-cols-3 gap-8 relative">
-          {/* Connecting line (desktop only) */}
-          <div className="hidden md:block absolute top-16 left-[20%] right-[20%] h-px bg-[#E7E5E4]" />
-
-          {steps.map((step, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.2 }}
-              className="text-center relative hover:-translate-y-1 transition-transform duration-300"
-            >
-              {/* Icon Circle */}
-              <div className={`w-16 h-16 ${step.accent} rounded-2xl mx-auto mb-6 flex items-center justify-center relative z-10 shadow-lg`}>
-                <step.icon className="w-7 h-7 text-white" />
-              </div>
-
-              {/* Step Number */}
-              <div className="text-xs text-[#A8A29E] uppercase tracking-[0.2em] font-bold mb-3">
-                Step {step.number}
-              </div>
-
-              {/* Title */}
-              <h3 className="font-serif text-xl text-[#1C1917] mb-3">
-                {step.title}
-              </h3>
-
-              {/* Description */}
-              <p className="text-sm text-[#57534E] font-light leading-relaxed max-w-xs mx-auto">
-                {step.description}
-              </p>
-            </motion.div>
-          ))}
-        </div>
+      {/* Steps */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
+        {steps.map((step) => (
+          <div key={step.number}>
+            <div className="font-serif text-[56px] font-normal text-[rgba(159,18,57,0.12)] leading-none mb-5">
+              {step.number}
+            </div>
+            <h3 className="text-lg font-semibold text-[#1C1917] tracking-tight mb-3">{step.title}</h3>
+            <p className="text-sm text-[#78716C] font-light leading-relaxed">{step.description}</p>
+          </div>
+        ))}
       </div>
     </section>
   );

@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ArrowRight } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { FAQS } from '../data/demoData';
 
 export default function FAQSection() {
@@ -18,92 +17,55 @@ export default function FAQSection() {
   };
 
   return (
-    <section id="faq" className="py-24 px-6 bg-white">
-      <div className="max-w-3xl mx-auto">
-        {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <h2 className="font-serif text-3xl md:text-4xl italic mb-4 text-[#1C1917]">
-            Frequently Asked Questions
+    <section id="faq" className="py-24 px-6 sm:px-16 bg-[#FAFAF9]">
+      <div className="max-w-[700px] mx-auto">
+        {/* Header */}
+        <div className="text-center mb-14">
+          <div className="text-xs font-semibold tracking-[2px] uppercase text-[#9F1239] mb-4">FAQ</div>
+          <h2 className="font-serif text-4xl sm:text-[48px] font-medium tracking-tight text-[#1C1917] mb-3">
+            Frequently asked questions
           </h2>
-          <div className="w-16 h-0.5 bg-[#9F1239] mx-auto opacity-50 mb-6"></div>
-          <p className="text-lg text-[#57534E] font-light">
-            Everything you need to know about seatable
-          </p>
-        </motion.div>
+          <p className="text-[17px] text-[#78716C] font-light">Everything you need to know about Seatable</p>
+        </div>
 
-        {/* FAQ Accordion */}
-        <div className="space-y-4">
+        {/* Accordion */}
+        <div className="space-y-3">
           {FAQS.map((faq, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-[#FAFAF9] rounded-2xl border border-[#E7E5E4] overflow-hidden"
-            >
+            <div key={index} className="bg-white rounded-2xl border border-[#E7E5E4] overflow-hidden">
               <button
                 onClick={() => toggleFAQ(index)}
                 aria-expanded={openIndex === index}
-                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-[#F5F5F4] transition-colors"
+                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-[#FAFAF9] transition-colors"
               >
-                <span className="text-lg font-serif text-[#1C1917] pr-8">{faq.question}</span>
-                <motion.div
-                  animate={{ rotate: openIndex === index ? 180 : 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="flex-shrink-0"
-                >
-                  <ChevronDown className="w-5 h-5 text-[#9F1239]" />
-                </motion.div>
+                <span className="text-[15px] font-medium text-[#1C1917] pr-8">{faq.question}</span>
+                <ChevronDown
+                  className={`w-5 h-5 text-[#9F1239] flex-shrink-0 transition-transform duration-200 ${
+                    openIndex === index ? 'rotate-180' : ''
+                  }`}
+                />
               </button>
-
-              <AnimatePresence>
-                {openIndex === index && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="px-6 pb-5 text-[#57534E] leading-relaxed border-t border-[#E7E5E4] pt-4 font-light">
-                      {faq.answer}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
+              {openIndex === index && (
+                <div className="px-6 pb-5 text-sm text-[#78716C] font-light leading-relaxed border-t border-[#E7E5E4] pt-4">
+                  {faq.answer}
+                </div>
+              )}
+            </div>
           ))}
         </div>
 
-        {/* Still have questions? */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-          className="text-center mt-16"
-        >
-          <div className="bg-[#1C1917] p-10 rounded-[2rem]">
-            <h3 className="font-serif text-2xl text-white mb-3">Still have questions?</h3>
-            <p className="text-[#A8A29E] mb-6 font-light">
-              We're here to help. Reach out to our team anytime.
-            </p>
-            <button
-              onClick={scrollToContact}
-              className="bg-[#9F1239] text-white px-8 py-4 text-[15px] font-semibold hover:bg-[#881337] transition-all duration-300 rounded-2xl inline-flex items-center gap-2"
-            >
-              Contact Support
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </motion.div>
+        {/* CTA Card */}
+        <div className="bg-[#1C1917] rounded-3xl p-10 sm:p-14 text-center mt-16">
+          <h3 className="font-serif text-2xl sm:text-3xl font-medium text-white mb-3 tracking-tight">Still have questions?</h3>
+          <p className="text-[15px] text-[#A8A29E] font-light mb-8">
+            We&apos;re here to help. Reach out to our team anytime.
+          </p>
+          <button
+            onClick={scrollToContact}
+            className="px-8 py-3.5 bg-[#9F1239] hover:bg-[#881337] text-white text-[15px] font-semibold rounded-full transition-colors"
+          >
+            Contact Support
+          </button>
+        </div>
       </div>
     </section>
   );

@@ -73,10 +73,10 @@ export default function ContactForm() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="font-serif text-3xl md:text-4xl italic mb-4 text-[#1C1917]">
-            Get Started Today
+          <div className="text-xs font-semibold tracking-[2px] uppercase text-[#9F1239] mb-4">Contact</div>
+          <h2 className="font-serif text-4xl sm:text-[48px] font-medium tracking-tight text-[#1C1917] mb-3">
+            Get started today
           </h2>
-          <div className="w-16 h-0.5 bg-[#9F1239] mx-auto opacity-50 mb-6"></div>
           <p className="text-lg text-[#57534E] max-w-2xl mx-auto font-light">
             Schedule a personalized demo and discover how seatable can transform your operations
           </p>
@@ -91,7 +91,7 @@ export default function ContactForm() {
             transition={{ duration: 0.6 }}
             className="space-y-6"
           >
-            <div className="bg-[#1C1917] p-8 rounded-[2rem]">
+            <div className="bg-[#1C1917] p-8 rounded-2xl">
               <h3 className="font-serif text-2xl text-white mb-6">Contact Information</h3>
 
               <div className="space-y-6">
@@ -125,7 +125,7 @@ export default function ContactForm() {
             </div>
 
             {/* What to Expect */}
-            <div className="bg-[#FAFAF9] p-6 rounded-[2rem] border border-[#E7E5E4]">
+            <div className="bg-[#FAFAF9] p-6 rounded-2xl border border-[#E7E5E4]">
               <h4 className="font-serif text-lg text-[#1C1917] mb-4">What to Expect</h4>
               <div className="space-y-3">
                 {[
@@ -145,7 +145,7 @@ export default function ContactForm() {
             </div>
 
             {/* Trust Indicators */}
-            <div className="bg-[#FAFAF9] p-6 rounded-[2rem] border border-[#E7E5E4]">
+            <div className="bg-[#FAFAF9] p-6 rounded-2xl border border-[#E7E5E4]">
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <div className="text-2xl font-serif font-bold text-[#9F1239]">24/7</div>
@@ -170,7 +170,7 @@ export default function ContactForm() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <form onSubmit={handleSubmit} className="bg-[#FAFAF9] p-8 rounded-[2rem] border border-[#E7E5E4] space-y-5">
+            <form onSubmit={handleSubmit} className="bg-[#FAFAF9] p-8 rounded-2xl border border-[#E7E5E4] space-y-5">
               {/* Name */}
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-[#1C1917] mb-2">
@@ -276,7 +276,7 @@ export default function ContactForm() {
               <button
                 type="submit"
                 disabled={isSubmitting || isSubmitted}
-                className="w-full px-6 py-4 bg-[#9F1239] text-white text-[15px] font-semibold hover:bg-[#881337] transition-all duration-300 rounded-2xl shadow-xl shadow-[#9F1239]/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-4 bg-[#9F1239] text-white text-[15px] font-semibold hover:bg-[#881337] transition-all duration-300 rounded-2xl  flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitted ? (
                   <>

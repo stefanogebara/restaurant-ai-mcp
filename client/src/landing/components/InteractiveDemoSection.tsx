@@ -21,10 +21,10 @@ export default function InteractiveDemoSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="font-serif text-3xl md:text-4xl italic mb-4 text-[#1C1917]">
-            Experience the Platform Live
+          <div className="text-xs font-semibold tracking-[2px] uppercase text-[#9F1239] mb-4">Live Demo</div>
+          <h2 className="font-serif text-4xl sm:text-[48px] font-medium tracking-tight text-[#1C1917] mb-3">
+            Experience the platform live
           </h2>
-          <div className="w-16 h-0.5 bg-[#9F1239] mx-auto opacity-50 mb-6"></div>
           <p className="text-lg text-[#57534E] max-w-2xl mx-auto font-light">
             Interact with our demo restaurant and see how the AI handles reservations in real-time
           </p>
@@ -37,7 +37,7 @@ export default function InteractiveDemoSection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="bg-white p-3 rounded-[2rem] border border-[#E7E5E4] shadow-lg relative"
+            className="bg-white p-3 rounded-2xl border border-[#E7E5E4] shadow-lg relative"
           >
             <div className="rounded-[1.5rem] overflow-hidden border border-[#E7E5E4]">
               {/* Mini Browser Chrome */}
@@ -123,7 +123,7 @@ export default function InteractiveDemoSection() {
             {/* Open Dashboard CTA overlay */}
             <a
               href="/live-demo"
-              className="absolute inset-0 rounded-[2rem] flex items-end justify-center pb-6 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"
+              className="absolute inset-0 rounded-2xl flex items-end justify-center pb-6 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"
             >
               <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-[#1C1917] text-sm font-semibold rounded-xl shadow-lg">
                 Try Live Demo
@@ -147,7 +147,7 @@ export default function InteractiveDemoSection() {
             className="space-y-6"
           >
             {/* Try the AI Chat */}
-            <div className="bg-white p-6 rounded-[2rem] border border-[#E7E5E4] shadow-lg hover:shadow-xl transition-shadow">
+            <div className="bg-white p-6 rounded-2xl border border-[#E7E5E4] shadow-lg hover:shadow-xl transition-shadow">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-[#9F1239] flex items-center justify-center flex-shrink-0">
                   <MessageSquare className="w-5 h-5 text-white" />
@@ -169,7 +169,7 @@ export default function InteractiveDemoSection() {
             </div>
 
             {/* Voice Reservations */}
-            <div className="bg-white p-6 rounded-[2rem] border border-[#E7E5E4] shadow-md hover:shadow-lg transition-shadow">
+            <div className="bg-white p-6 rounded-2xl border border-[#E7E5E4] shadow-md hover:shadow-lg transition-shadow">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-[#1C1917] flex items-center justify-center flex-shrink-0">
                   <Phone className="w-5 h-5 text-white" />
@@ -191,7 +191,7 @@ export default function InteractiveDemoSection() {
             </div>
 
             {/* Demo Restaurant Info */}
-            <div className="bg-[#FAFAF9] p-6 rounded-[2rem] border border-[#E7E5E4]">
+            <div className="bg-[#FAFAF9] p-6 rounded-2xl border border-[#E7E5E4]">
               <h4 className="font-serif text-lg text-[#1C1917] mb-4">Demo Restaurant</h4>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
@@ -220,7 +220,7 @@ export default function InteractiveDemoSection() {
               </p>
               <button
                 onClick={scrollToContact}
-                className="bg-[#9F1239] text-white px-8 py-4 text-[15px] font-semibold hover:bg-[#881337] transition-all duration-300 rounded-2xl shadow-xl shadow-[#9F1239]/20 inline-flex items-center gap-2"
+                className="bg-[#9F1239] text-white px-8 py-4 text-[15px] font-semibold hover:bg-[#881337] transition-all duration-300 rounded-2xl  inline-flex items-center gap-2"
               >
                 Get Started Today
                 <ArrowRight className="w-4 h-4" />

@@ -39,10 +39,13 @@ interface AnalyticsData {
   }>;
 }
 
+type DateRange = '30d' | '7d' | 'today';
+
 export default function AnalyticsDashboard() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange>('30d');
 
   useEffect(() => {
     fetchAnalytics();
@@ -76,13 +79,18 @@ export default function AnalyticsDashboard() {
   if (error) {
     return (
       <DashboardLayout>
-        <div className="flex flex-col items-center justify-center h-screen bg-[#F5F5F4]">
-          <div className="bg-white rounded-2xl p-8 border border-[#dc2626]/20 shadow-sm max-w-md">
-            <div className="text-xl text-[#dc2626] mb-6 text-center font-semibold">Error loading analytics</div>
-            <p className="text-sm text-[#78716C] mb-6 text-center">{error}</p>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
+          <div className="bg-white rounded-2xl p-8 border border-[#E7E5E4] max-w-md text-center">
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-[#dc2626]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-[#1C1917] mb-2">Error loading analytics</h3>
+            <p className="text-sm text-[#78716C] mb-6">{error}</p>
             <button
               onClick={() => fetchAnalytics()}
-              className="w-full px-6 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-full transition-all"
+              className="px-6 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-colors"
             >
               Retry
             </button>
@@ -95,95 +103,72 @@ export default function AnalyticsDashboard() {
   if (!data) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-screen bg-[#F5F5F4]">
-          <div className="text-xl text-[#78716C]">No analytics data available</div>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <p className="text-[#78716C]">No analytics data available</p>
         </div>
       </DashboardLayout>
     );
   }
 
+  const dateRangeLabel = dateRange === '30d' ? 'Last 30 days' : dateRange === '7d' ? 'Last 7 days' : 'Today';
+
   return (
     <DashboardLayout>
-    <div className="dashboard min-h-screen bg-[#F5F5F4]">
-      {/* Header */}
-      <header className="bg-white/95 border-b border-[#E7E5E4] sticky top-0 z-40 backdrop-blur-sm">
-        <div className="max-w-[1600px] mx-auto px-6 py-5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-serif font-bold text-[#1C1917] tracking-tight mb-1">Analytics</h1>
-              <p className="text-[#78716C] text-sm">Restaurant performance insights and trends</p>
-            </div>
-            <div className="flex items-center gap-3">
+      <div className="min-h-screen bg-[#F5F5F4] p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
+            <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">
+              Analytics <span className="font-light text-[#78716C]">/ {dateRangeLabel}</span>
+            </h1>
+            <div className="flex items-center gap-2.5">
+              {(['30d', '7d', 'today'] as const).map((range) => (
+                <button
+                  key={range}
+                  onClick={() => setDateRange(range)}
+                  className={`px-4 py-2 rounded-[10px] text-[13px] font-medium transition-colors ${
+                    dateRange === range
+                      ? 'bg-[#1C1917] text-white border border-[#1C1917]'
+                      : 'bg-white border border-[#D6D3D1] text-[#57534E] hover:border-[#A8A29E]'
+                  }`}
+                >
+                  {range === '30d' ? '30 days' : range === '7d' ? '7 days' : 'Today'}
+                </button>
+              ))}
               <button
                 onClick={() => fetchAnalytics()}
-                className="px-4 py-2 bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#1C1917] font-medium rounded-lg transition-all flex items-center gap-2"
+                className="px-4 py-2 bg-white border border-[#D6D3D1] text-[#57534E] hover:border-[#A8A29E] rounded-[10px] text-[13px] font-medium transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Refresh
+                Export
               </button>
-              <a
-                href="/host-dashboard"
-                className="px-4 py-2 bg-[#9F1239] hover:bg-[#881337] text-white font-medium rounded-full transition-all shadow-sm shadow-[#9F1239]/20"
-              >
-                Back to Dashboard
-              </a>
             </div>
           </div>
-        </div>
-      </header>
 
-      {/* Stats Overview */}
-      <div className="max-w-[1600px] mx-auto px-6 py-8">
-        <AnalyticsStats overview={data.overview} />
-      </div>
+          {/* Stats */}
+          <AnalyticsStats overview={data.overview} />
 
-      {/* Main Analytics Grid */}
-      <div className="max-w-[1600px] mx-auto px-6 pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Reservation Trend - Full width on top */}
-          <div className="lg:col-span-2">
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <ReservationTrendChart dailyTrend={data.daily_trend} />
+            <DayOfWeekChart reservationsByDay={data.reservations_by_day} />
           </div>
 
-          {/* Peak Hours and Day of Week */}
-          <PeakHoursChart reservationsByTimeSlot={data.reservations_by_time_slot} />
-          <DayOfWeekChart reservationsByDay={data.reservations_by_day} />
+          {/* Bottom Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <TableUtilizationHeatmap tableUtilization={data.table_utilization} />
+            <PeakHoursChart reservationsByTimeSlot={data.reservations_by_time_slot} />
+          </div>
 
-          {/* No-Show Predictions - Full width */}
-          <div className="lg:col-span-2">
+          {/* AI Insights */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <NoShowPredictions />
-          </div>
-
-          {/* Revenue Optimization Opportunities - Full width */}
-          <div className="lg:col-span-2">
             <RevenueOpportunities />
           </div>
 
-          {/* Table Utilization Heatmap - Full width */}
-          <div className="lg:col-span-2">
-            <TableUtilizationHeatmap tableUtilization={data.table_utilization} />
-          </div>
-
-          {/* Status Breakdown Pie */}
-          <div className="lg:col-span-2">
-            <StatusBreakdownPie reservationsByStatus={data.reservations_by_status} />
-          </div>
+          {/* Status Breakdown */}
+          <StatusBreakdownPie reservationsByStatus={data.reservations_by_status} />
         </div>
       </div>
-
-      {/* Footer Info */}
-      <div className="max-w-[1600px] mx-auto px-6 pb-8">
-        <div className="bg-[#F5F5F4]/50 border border-[#E7E5E4]/50 rounded-2xl p-4 text-center">
-          <p className="text-xs text-[#78716C]">
-            Analytics data is calculated from the last 30 days of restaurant activity.
-            <br />
-            Data refreshes automatically every 5 minutes or manually via the Refresh button.
-          </p>
-        </div>
-      </div>
-    </div>
     </DashboardLayout>
   );
 }

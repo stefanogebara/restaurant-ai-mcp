@@ -5,7 +5,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
-import Breadcrumb, { breadcrumbConfigs } from '../components/common/Breadcrumb';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import Spinner from '../components/common/Spinner';
 import { Skeleton } from '../components/common/Skeleton';
@@ -334,7 +333,7 @@ export default function VoiceSettingsPage() {
           <Skeleton className="h-8 w-64 mb-1" />
           <Skeleton className="h-4 w-80 mb-6" />
           <div className="space-y-6">
-            <div className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-6 shadow-sm">
+            <div className="bg-white border border-[#E7E5E4] rounded-2xl p-6">
               <Skeleton className="h-5 w-32 mb-4" />
               <div className="flex items-center justify-between">
                 <div>
@@ -344,7 +343,7 @@ export default function VoiceSettingsPage() {
                 <Skeleton className="h-10 w-32 rounded-lg" />
               </div>
             </div>
-            <div className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-6 shadow-sm">
+            <div className="bg-white border border-[#E7E5E4] rounded-2xl p-6">
               <Skeleton className="h-5 w-28 mb-4" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {Array.from({ length: 4 }).map((_, i) => (
@@ -366,7 +365,6 @@ export default function VoiceSettingsPage() {
     return (
       <DashboardLayout>
         <div className="p-6 lg:p-8">
-          <Breadcrumb items={breadcrumbConfigs.voiceSettings} />
           <div className="mt-8 text-center py-16">
             <div className="bg-[#9F1239]/5 border border-[#9F1239]/20 rounded-xl p-8 max-w-md mx-auto">
               <ThiingsIcon name="volume" pxSize={48} className="mx-auto mb-4" />
@@ -387,20 +385,14 @@ export default function VoiceSettingsPage() {
     <DashboardLayout>
       <div className="dashboard p-6 lg:p-8 max-w-5xl">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div>
-            <Breadcrumb items={breadcrumbConfigs.voiceSettings} className="mb-2" />
-            <h1 className="text-2xl font-serif font-bold text-[#1C1917] tracking-tight">
-              Voice & Language Settings
-            </h1>
-            <p className="text-sm text-[#57534E] mt-1">
-              Customize your AI agent's voice, tuning, and language.
-            </p>
-          </div>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">
+            Voice Agent <span className="font-light text-[#78716C]">/ Settings</span>
+          </h1>
           <button
             onClick={handleSave}
             disabled={!isDirty || isSaving}
-            className="px-6 py-2.5 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl shadow-sm shadow-[#9F1239]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 self-start sm:self-auto"
+            className="px-6 py-2.5 bg-[#9F1239] hover:bg-[#881337] text-white text-[13px] font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isSaving ? <Spinner size="sm" className="border-white border-t-white/30" /> : null}
             {isSaving ? 'Saving...' : 'Save Changes'}
@@ -409,13 +401,23 @@ export default function VoiceSettingsPage() {
 
         <div className="space-y-6">
           {/* Voice Engine Selector */}
-          <section className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
-              <ThiingsIcon name="settings" pxSize={20} />
-              Voice Engine
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <section className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
+              <span className="text-[15px] font-semibold">Voice Engine</span>
+              {engineConfig?.voice_engine_status && (
+                <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
+                  engineConfig.voice_engine_status === 'active'
+                    ? 'bg-[rgba(22,163,74,0.08)] text-[#16a34a]'
+                    : engineConfig.voice_engine_status === 'testing'
+                    ? 'bg-[rgba(217,119,6,0.08)] text-[#d97706]'
+                    : 'bg-[#F5F5F4] text-[#57534E]'
+                }`}>
+                  {engineConfig.voice_engine_status.charAt(0).toUpperCase() + engineConfig.voice_engine_status.slice(1)}
+                </span>
+              )}
+            </div>
+            <div className="p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* ElevenLabs Card */}
               <button
                 type="button"
@@ -423,7 +425,7 @@ export default function VoiceSettingsPage() {
                 className={`text-left p-4 rounded-xl border-2 transition-all ${
                   currentEngine === 'elevenlabs'
                     ? 'border-[#9F1239] bg-[#9F1239]/5'
-                    : 'border-[#E7E5E4]/50 hover:border-[#A8A29E]'
+                    : 'border-[#E7E5E4] hover:border-[#A8A29E]'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
@@ -446,7 +448,7 @@ export default function VoiceSettingsPage() {
                 className={`text-left p-4 rounded-xl border-2 transition-all ${
                   currentEngine === 'openai_realtime'
                     ? 'border-[#9F1239] bg-[#9F1239]/5'
-                    : 'border-[#E7E5E4]/50 hover:border-[#A8A29E]'
+                    : 'border-[#E7E5E4] hover:border-[#A8A29E]'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
@@ -469,32 +471,18 @@ export default function VoiceSettingsPage() {
               </p>
             )}
 
-            {engineConfig?.voice_engine_status && (
-              <div className="mt-3 flex items-center gap-2">
-                <span className="text-xs text-[#A8A29E]">Status:</span>
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                  engineConfig.voice_engine_status === 'active'
-                    ? 'text-emerald-700 bg-emerald-50'
-                    : engineConfig.voice_engine_status === 'testing'
-                    ? 'text-amber-700 bg-amber-50'
-                    : 'text-stone-500 bg-stone-100'
-                }`}>
-                  {engineConfig.voice_engine_status.charAt(0).toUpperCase() + engineConfig.voice_engine_status.slice(1)}
-                </span>
-              </div>
-            )}
+            </div>
           </section>
 
           {/* ElevenLabs-specific sections */}
           {currentEngine === 'elevenlabs' && (
             <>
               {/* Section 1: Current Voice */}
-              <section className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-6 shadow-sm">
-                <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
-                  <ThiingsIcon name="volume" pxSize={20} />
-                  Current Voice
-                </h2>
-
+              <section className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
+                <div className="px-6 py-5 border-b border-[#F5F5F4]">
+                  <span className="text-[15px] font-semibold">Choose a Voice</span>
+                </div>
+                <div className="p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
                     <p className="text-base font-semibold text-[#1C1917]">
@@ -550,15 +538,13 @@ export default function VoiceSettingsPage() {
                     </button>
                   </div>
                 </div>
+                </div>
               </section>
 
               {/* Section 2: Voice Settings */}
-              <section className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-[#1C1917] flex items-center gap-2">
-                    <ThiingsIcon name="settings" pxSize={20} />
-                    Voice Tuning
-                  </h2>
+              <section className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
+                <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
+                  <span className="text-[15px] font-semibold">Voice Tuning</span>
                   <button
                     onClick={handleResetSettings}
                     className="text-xs text-[#9F1239] hover:underline"
@@ -566,7 +552,7 @@ export default function VoiceSettingsPage() {
                     Reset to defaults
                   </button>
                 </div>
-
+                <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <VoiceSlider
                     label="Stability"
@@ -611,7 +597,7 @@ export default function VoiceSettingsPage() {
                   />
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-[#E7E5E4]/50">
+                <div className="mt-4 pt-4 border-t border-[#E7E5E4]">
                   <button
                     onClick={handlePreviewWithSettings}
                     disabled={!currentVoiceId || loadingAudio !== null}
@@ -621,11 +607,12 @@ export default function VoiceSettingsPage() {
                     Preview with settings
                   </button>
                 </div>
+                </div>
               </section>
 
               {/* Section 3: Voice Browser (collapsible) */}
               {isBrowserOpen && (
-                <section className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-6 shadow-sm">
+                <section className="bg-white border border-[#E7E5E4] rounded-2xl p-6">
                   <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
                     <ThiingsIcon name="search" pxSize={20} />
                     Voice Library
@@ -655,35 +642,37 @@ export default function VoiceSettingsPage() {
               )}
 
               {/* Section 4: Language Settings */}
-              <section className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-6 shadow-sm">
-                <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
-                  <ThiingsIcon name="globe" pxSize={20} />
-                  Language
-                </h2>
-
-                <div className="max-w-xs">
-                  <select
-                    value={currentLanguage}
-                    onChange={(e) => handleLanguageChange(e.target.value)}
-                    className="w-full px-3 py-2.5 text-sm border border-[#E7E5E4]/50 rounded-xl bg-white text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#9F1239]/50"
-                  >
-                    {SUPPORTED_LANGUAGES.map((lang) => (
-                      <option key={lang.code} value={lang.code}>
-                        {lang.flag} {lang.label}
-                      </option>
-                    ))}
-                  </select>
+              <section className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
+                <div className="px-6 py-5 border-b border-[#F5F5F4]">
+                  <span className="text-[15px] font-semibold">Languages</span>
                 </div>
+                <div className="p-6">
+                  <div className="flex gap-2 flex-wrap">
+                    {SUPPORTED_LANGUAGES.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => handleLanguageChange(lang.code)}
+                        className={`px-4 py-2 rounded-full text-[13px] font-medium border transition-colors ${
+                          currentLanguage === lang.code
+                            ? 'border-[#9F1239] bg-[rgba(159,18,57,0.06)] text-[#9F1239] font-semibold'
+                            : 'border-[#E7E5E4] text-[#57534E] bg-white hover:border-[#A8A29E]'
+                        }`}
+                      >
+                        {lang.flag} {lang.label}
+                      </button>
+                    ))}
+                  </div>
 
-                {pendingLanguage && pendingLanguage !== config?.language && (
-                  <p className="mt-3 text-xs text-[#d97706] bg-[#d97706]/10 rounded-lg px-3 py-2">
-                    Changing the language will update your agent's greeting message. The voice will speak in the selected language using its multilingual capabilities.
-                  </p>
-                )}
+                  {pendingLanguage && pendingLanguage !== config?.language && (
+                    <p className="mt-3 text-xs text-[#d97706] bg-[#d97706]/10 rounded-lg px-3 py-2">
+                      Changing the language will update your agent's greeting message. The voice will speak in the selected language using its multilingual capabilities.
+                    </p>
+                  )}
+                </div>
               </section>
 
               {/* Section 5: Agent Info (read-only) */}
-              <section className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-6 shadow-sm">
+              <section className="bg-white border border-[#E7E5E4] rounded-2xl p-6">
                 <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
                   <ThiingsIcon name="info" pxSize={20} />
                   Agent Info
@@ -735,7 +724,7 @@ export default function VoiceSettingsPage() {
           {currentEngine === 'openai_realtime' && (
             <>
               {/* OpenAI Voice Picker */}
-              <section className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-6 shadow-sm">
+              <section className="bg-white border border-[#E7E5E4] rounded-2xl p-6">
                 <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
                   <ThiingsIcon name="volume" pxSize={20} />
                   OpenAI Voice
@@ -750,7 +739,7 @@ export default function VoiceSettingsPage() {
                       className={`text-left p-4 rounded-xl border-2 transition-all ${
                         currentOpenAIVoice === voice.id
                           ? 'border-[#9F1239] bg-[#9F1239]/5'
-                          : 'border-[#E7E5E4]/50 hover:border-[#A8A29E]'
+                          : 'border-[#E7E5E4] hover:border-[#A8A29E]'
                       }`}
                     >
                       <p className="text-sm font-semibold text-[#1C1917]">{voice.name}</p>
@@ -772,7 +761,7 @@ export default function VoiceSettingsPage() {
               </section>
 
               {/* Engine Info (read-only) */}
-              <section className="bg-white border border-[#E7E5E4]/50 rounded-2xl p-6 shadow-sm">
+              <section className="bg-white border border-[#E7E5E4] rounded-2xl p-6">
                 <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
                   <ThiingsIcon name="info" pxSize={20} />
                   Engine Info

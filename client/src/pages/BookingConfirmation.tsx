@@ -47,102 +47,105 @@ export default function BookingConfirmation() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
-      {/* Header */}
-      <header className="bg-white border-b border-[#E7E5E4]">
-        <div className="h-1 bg-gradient-to-r from-[#9F1239] to-[#be185d]" />
-        <div className="max-w-lg mx-auto px-4 py-4">
-          <h1 className="text-xl font-serif font-bold text-[#1C1917]">{reservation.restaurant_name}</h1>
+    <div className="min-h-screen bg-[#FAFAF9] flex flex-col">
+      {/* Top Bar */}
+      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-[#E7E5E4] bg-white">
+        <div className="font-serif text-lg font-semibold text-[#1C1917]">
+          seatable<span className="text-[#9F1239]">.</span>
         </div>
+        <span className="text-[13px] text-[#78716C]">Need help? Contact the restaurant</span>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-8 pb-24">
-        {/* Success Icon */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-20 h-20 bg-[#22c55e]/10 border-2 border-[#22c55e]/20 rounded-full flex items-center justify-center mb-4">
-            <svg className="w-10 h-10 text-[#16a34a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+      {/* Confirmation */}
+      <main className="flex-1 flex items-center justify-center p-6 sm:p-12">
+        <div className="max-w-[480px] w-full text-center">
+          {/* Burgundy Checkmark */}
+          <div className="w-20 h-20 rounded-full bg-[rgba(159,18,57,0.08)] flex items-center justify-center mx-auto mb-7">
+            <svg className="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="#9F1239" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <h2 className="text-2xl font-serif font-bold text-[#1C1917] mb-1">Reservation Confirmed</h2>
-          <p className="text-sm text-[#57534E]">We look forward to seeing you!</p>
-        </div>
 
-        {/* Reservation Card */}
-        <div className="bg-white border border-[#E7E5E4] rounded-2xl shadow-sm overflow-hidden">
-          {/* Top accent */}
-          <div className="h-1.5 bg-gradient-to-r from-[#9F1239] to-[#be185d]" />
+          {/* Status Badge */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[rgba(22,163,74,0.06)] rounded-full mb-5">
+            <div className="w-2 h-2 rounded-full bg-[#16a34a]" />
+            <span className="text-[13px] font-semibold text-[#16a34a]">Confirmed</span>
+          </div>
 
-          <div className="p-6 space-y-5">
-            {/* Confirmation ID */}
-            <div className="bg-[#F5F5F4] rounded-xl p-3 text-center">
-              <p className="text-[10px] text-[#A8A29E] uppercase tracking-wider font-medium mb-0.5">Confirmation ID</p>
-              <p className="text-sm font-mono font-bold text-[#1C1917] tracking-wide">{reservation.id}</p>
+          <h1 className="font-serif text-4xl font-medium text-[#1C1917] tracking-tight mb-2">Reservation Confirmed</h1>
+          <p className="text-[15px] text-[#78716C] font-light mb-10">
+            We've sent a confirmation to your email and phone.
+          </p>
+
+          {/* Details Card */}
+          <div className="bg-white border border-[#E7E5E4] rounded-2xl p-8 text-left mb-6">
+            {/* Restaurant Row */}
+            <div className="flex items-center gap-4 pb-5 mb-5 border-b border-[#F5F5F4]">
+              <div className="w-14 h-14 rounded-[14px] bg-gradient-to-br from-[#292524] to-[#44403C] flex-shrink-0" />
+              <div>
+                <h3 className="text-lg font-semibold text-[#1C1917] tracking-tight">{reservation.restaurant_name}</h3>
+                <p className="text-[13px] text-[#78716C] font-light">Reservation details</p>
+              </div>
             </div>
 
-            {/* Details Grid */}
-            <div className="grid grid-cols-2 gap-y-4 gap-x-6">
-              <div>
-                <p className="text-xs text-[#A8A29E] uppercase tracking-wider font-medium mb-0.5">Date</p>
-                <p className="text-sm font-semibold text-[#1C1917]">
+            {/* Detail Rows */}
+            <div className="space-y-0">
+              <div className="flex justify-between items-center py-2.5 border-b border-[#F5F5F4]">
+                <span className="text-[13px] text-[#78716C]">Date</span>
+                <span className="text-sm font-medium text-[#1C1917]">
                   {new Date(reservation.date + 'T12:00:00').toLocaleDateString('en-US', {
-                    weekday: 'short',
+                    weekday: 'long',
                     month: 'long',
                     day: 'numeric',
                     year: 'numeric'
                   })}
-                </p>
+                </span>
               </div>
-              <div>
-                <p className="text-xs text-[#A8A29E] uppercase tracking-wider font-medium mb-0.5">Time</p>
-                <p className="text-sm font-semibold text-[#1C1917]">{formatTime(reservation.time)}</p>
+              <div className="flex justify-between items-center py-2.5 border-b border-[#F5F5F4]">
+                <span className="text-[13px] text-[#78716C]">Time</span>
+                <span className="text-sm font-medium text-[#1C1917]">{formatTime(reservation.time)}</span>
               </div>
-              <div>
-                <p className="text-xs text-[#A8A29E] uppercase tracking-wider font-medium mb-0.5">Guests</p>
-                <p className="text-sm font-semibold text-[#1C1917]">{reservation.party_size}</p>
+              <div className="flex justify-between items-center py-2.5 border-b border-[#F5F5F4]">
+                <span className="text-[13px] text-[#78716C]">Party size</span>
+                <span className="text-sm font-medium text-[#1C1917]">{reservation.party_size} guest{reservation.party_size !== 1 ? 's' : ''}</span>
               </div>
-              <div>
-                <p className="text-xs text-[#A8A29E] uppercase tracking-wider font-medium mb-0.5">Name</p>
-                <p className="text-sm font-semibold text-[#1C1917]">{reservation.name}</p>
+              <div className="flex justify-between items-center py-2.5">
+                <span className="text-[13px] text-[#78716C]">Guest</span>
+                <span className="text-sm font-medium text-[#1C1917]">{reservation.name}</span>
               </div>
             </div>
 
-            <div className="h-px bg-[#E7E5E4]" />
+            <hr className="border-0 border-t border-dashed border-[#E7E5E4] my-3" />
 
-            {/* Status */}
-            <div className="flex items-center justify-center gap-2">
-              <div className="w-2 h-2 bg-[#22c55e] rounded-full" />
-              <span className="text-sm font-medium text-[#16a34a] capitalize">{reservation.status}</span>
+            <div className="flex justify-between items-center py-2.5">
+              <span className="text-[13px] text-[#78716C]">Confirmation ID</span>
+              <span className="text-[13px] font-mono font-medium text-[#9F1239] bg-[rgba(159,18,57,0.06)] px-2.5 py-0.5 rounded-md">{reservation.id}</span>
             </div>
           </div>
-        </div>
 
-        {/* Actions */}
-        <div className="mt-6 space-y-3">
-          <p className="text-xs text-[#57534E] text-center">
-            Save your confirmation ID: <span className="font-mono font-bold">{reservation.id}</span>
-          </p>
-          <p className="text-xs text-[#A8A29E] text-center">
-            You can use this ID to look up or modify your reservation.
-          </p>
-
-          {slug && (
+          {/* Action Buttons */}
+          <div className="flex gap-3">
             <button
-              onClick={() => navigate(`/book/${slug}`)}
-              className="w-full py-3 bg-white border border-[#E7E5E4] hover:bg-[#F5F5F4] text-[#57534E] font-semibold rounded-full transition-colors text-sm"
+              onClick={() => navigate('/customer')}
+              className="flex-1 py-3.5 border border-[#D6D3D1] bg-white text-[#57534E] font-medium rounded-full text-sm hover:border-[#A8A29E] transition-colors"
             >
-              Make Another Reservation
+              Manage Reservation
             </button>
-          )}
+            {slug && (
+              <button
+                onClick={() => navigate(`/book/${slug}`)}
+                className="flex-1 py-3.5 bg-[#9F1239] text-white font-semibold rounded-full text-sm hover:bg-[#881337] transition-colors"
+              >
+                New Reservation
+              </button>
+            )}
+          </div>
+
+          <p className="text-xs text-[#A8A29E] mt-5">
+            Free cancellation up to 2 hours before your reservation.
+          </p>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-[#E7E5E4] py-3 text-center">
-        <p className="text-xs text-[#A8A29E]">
-          Powered by <span className="font-serif font-semibold text-[#57534E]">seatable<span className="text-[#9F1239]">.</span></span>
-        </p>
-      </footer>
     </div>
   );
 }

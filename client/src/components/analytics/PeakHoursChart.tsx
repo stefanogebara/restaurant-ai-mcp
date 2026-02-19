@@ -38,13 +38,12 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
   };
 
   return (
-    <div className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-[#1C1917] tracking-tight mb-1">Peak Hours</h3>
-        <p className="text-sm text-[#78716C]">Reservations by time slot</p>
+    <div className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
+        <span className="text-[15px] font-semibold tracking-tight">Peak Hours</span>
       </div>
-
-      <ResponsiveContainer width="100%" height={300}>
+      <div className="p-6">
+      <ResponsiveContainer width="100%" height={220}>
         <BarChart
           data={chartData}
           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
@@ -71,20 +70,6 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
         </BarChart>
       </ResponsiveContainer>
 
-      {/* Legend explaining color intensity */}
-      <div className="mt-4 flex items-center justify-center gap-6 text-xs text-[#78716C]">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#9F1239' }}></div>
-          <span>High Demand</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#57534E' }}></div>
-          <span>Medium Demand</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#78716C' }}></div>
-          <span>Low Demand</span>
-        </div>
       </div>
     </div>
   );

@@ -44,11 +44,12 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
   , sortedTables[0]);
 
   return (
-    <div className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-[#1C1917] tracking-tight mb-1">Table Utilization</h3>
-        <p className="text-sm text-[#78716C]">Which tables are used most frequently</p>
+    <div className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
+        <span className="text-[15px] font-semibold tracking-tight">Booking Heatmap</span>
+        <span className="text-[11px] font-semibold bg-[rgba(159,18,57,0.08)] text-[#9F1239] px-2.5 py-0.5 rounded-full">Peak Hours</span>
       </div>
+      <div className="p-6">
 
       {/* Heatmap Grid */}
       <div className="grid grid-cols-5 gap-3 mb-6">
@@ -109,6 +110,7 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
             Table {leastUsed.table_number} ({leastUsed.utilization_rate}%) - {leastUsed.times_used} services
           </p>
         </div>
+      </div>
       </div>
     </div>
   );

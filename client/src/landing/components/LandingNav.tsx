@@ -1,20 +1,10 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function LandingNav() {
   const navigate = useNavigate();
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -25,157 +15,89 @@ export default function LandingNav() {
   };
 
   return (
-    <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      className={`fixed w-full top-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? 'bg-[#FAFAF9]/95 backdrop-blur-md border-b border-[#E7E5E4] py-4'
-          : 'bg-transparent py-6'
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-6 md:px-12 flex justify-between items-center">
-        {/* Logo */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-          className="font-serif text-2xl font-bold tracking-tight text-[#1C1917] cursor-pointer"
-          onClick={() => navigate('/')}
-        >
-          seatable<span className="text-[#9F1239]">.</span>
-        </motion.div>
+    <nav className="sticky top-0 z-50 flex items-center justify-between px-6 sm:px-16 py-6 bg-[rgba(250,250,249,0.8)] backdrop-blur-xl border-b border-[#E7E5E4]">
+      {/* Logo */}
+      <div
+        className="font-serif text-2xl font-semibold text-[#1C1917] tracking-tight cursor-pointer"
+        onClick={() => navigate('/')}
+      >
+        seatable<span className="text-[#9F1239]">.</span>
+      </div>
 
-        {/* Desktop Navigation */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="hidden md:flex gap-8 text-sm font-medium tracking-wide text-[#57534E] uppercase"
-        >
-          <button
-            onClick={() => navigate('/live-demo')}
-            className="hover:text-[#9F1239] transition-colors"
-          >
-            Live Demo
-          </button>
-          <button
-            onClick={() => scrollToSection('features')}
-            className="hover:text-[#9F1239] transition-colors"
-          >
-            Features
-          </button>
-          <button
-            onClick={() => scrollToSection('pricing')}
-            className="hover:text-[#9F1239] transition-colors"
-          >
-            Pricing
-          </button>
-          <button
-            onClick={() => scrollToSection('faq')}
-            className="hover:text-[#9F1239] transition-colors"
-          >
-            FAQ
-          </button>
-        </motion.div>
-
-        {/* Desktop CTA Buttons */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.4 }}
-          className="hidden md:flex gap-6 items-center"
-        >
-          <button
-            onClick={() => navigate('/login')}
-            className="text-[#1C1917] text-sm font-semibold hover:text-[#9F1239] transition-colors"
-          >
-            Login
-          </button>
-          <button
-            onClick={() => {
-              const el = document.getElementById('pricing');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-              else navigate('/#pricing');
-            }}
-            className="bg-[#1C1917] text-[#FAFAF9] px-6 py-2.5 rounded-full hover:bg-[#9F1239] transition-colors duration-300 text-sm font-semibold"
-          >
-            Get Started
-          </button>
-        </motion.div>
-
-        {/* Mobile Menu Button */}
-        <button
-          className="md:hidden text-[#1C1917]"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
-          aria-expanded={isMobileMenuOpen}
-        >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+      {/* Desktop Navigation */}
+      <div className="hidden md:flex items-center gap-9">
+        <button onClick={() => scrollToSection('features')} className="text-sm font-medium text-[#57534E] hover:text-[#1C1917] transition-colors">
+          Features
+        </button>
+        <button onClick={() => scrollToSection('pricing')} className="text-sm font-medium text-[#57534E] hover:text-[#1C1917] transition-colors">
+          Pricing
+        </button>
+        <button onClick={() => navigate('/live-demo')} className="text-sm font-medium text-[#57534E] hover:text-[#1C1917] transition-colors">
+          Demo
+        </button>
+        <button onClick={() => scrollToSection('contact')} className="text-sm font-medium text-[#57534E] hover:text-[#1C1917] transition-colors">
+          Contact
         </button>
       </div>
 
-      {/* Mobile Menu Backdrop */}
-      {isMobileMenuOpen && (
-        <div
-          className="md:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-[-1]"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
+      {/* Desktop CTA */}
+      <button
+        onClick={() => {
+          const el = document.getElementById('pricing');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+          else navigate('/#pricing');
+        }}
+        className="hidden md:block px-6 py-2.5 bg-[#1C1917] text-white text-sm font-semibold rounded-full hover:bg-[#292524] transition-colors"
+      >
+        Get Started
+      </button>
+
+      {/* Mobile Menu Button */}
+      <button
+        className="md:hidden text-[#1C1917]"
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+        aria-expanded={isMobileMenuOpen}
+      >
+        {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className="md:hidden bg-[#FAFAF9]/95 backdrop-blur-md border-t border-[#E7E5E4] px-6 py-6 space-y-4"
-        >
-          <button
-            onClick={() => { navigate('/live-demo'); setIsMobileMenuOpen(false); }}
-            className="block w-full text-left text-sm font-medium tracking-wide text-[#57534E] uppercase hover:text-[#9F1239] transition-colors py-2"
-          >
-            Live Demo
-          </button>
-          <button
-            onClick={() => scrollToSection('features')}
-            className="block w-full text-left text-sm font-medium tracking-wide text-[#57534E] uppercase hover:text-[#9F1239] transition-colors py-2"
-          >
-            Features
-          </button>
-          <button
-            onClick={() => scrollToSection('pricing')}
-            className="block w-full text-left text-sm font-medium tracking-wide text-[#57534E] uppercase hover:text-[#9F1239] transition-colors py-2"
-          >
-            Pricing
-          </button>
-          <button
-            onClick={() => scrollToSection('faq')}
-            className="block w-full text-left text-sm font-medium tracking-wide text-[#57534E] uppercase hover:text-[#9F1239] transition-colors py-2"
-          >
-            FAQ
-          </button>
-          <div className="pt-4 border-t border-[#E7E5E4] space-y-3">
-            <button
-              onClick={() => { navigate('/login'); setIsMobileMenuOpen(false); }}
-              className="block w-full text-center text-sm font-semibold text-[#1C1917] py-2"
-            >
-              Login
+        <>
+          <div
+            className="md:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-[-1]"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-[#E7E5E4] px-6 py-6 space-y-4">
+            <button onClick={() => scrollToSection('features')} className="block w-full text-left text-sm font-medium text-[#57534E] hover:text-[#1C1917] transition-colors py-2">
+              Features
             </button>
-            <button
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                const el = document.getElementById('pricing');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-                else navigate('/#pricing');
-              }}
-              className="block w-full bg-[#9F1239] text-white text-center px-6 py-3 text-sm font-semibold rounded-full"
-            >
-              Get Started
+            <button onClick={() => scrollToSection('pricing')} className="block w-full text-left text-sm font-medium text-[#57534E] hover:text-[#1C1917] transition-colors py-2">
+              Pricing
             </button>
+            <button onClick={() => { navigate('/live-demo'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-sm font-medium text-[#57534E] hover:text-[#1C1917] transition-colors py-2">
+              Demo
+            </button>
+            <button onClick={() => scrollToSection('contact')} className="block w-full text-left text-sm font-medium text-[#57534E] hover:text-[#1C1917] transition-colors py-2">
+              Contact
+            </button>
+            <div className="pt-4 border-t border-[#E7E5E4]">
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  const el = document.getElementById('pricing');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  else navigate('/#pricing');
+                }}
+                className="block w-full bg-[#1C1917] text-white text-center px-6 py-3 text-sm font-semibold rounded-full"
+              >
+                Get Started
+              </button>
+            </div>
           </div>
-        </motion.div>
+        </>
       )}
-    </motion.nav>
+    </nav>
   );
 }

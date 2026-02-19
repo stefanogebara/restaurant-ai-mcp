@@ -28,11 +28,12 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
   };
 
   return (
-    <div className="bg-white border border-[#E7E5E4]/50 rounded-xl p-6 shadow-sm">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-[#1C1917] tracking-tight mb-1">Reservation Trends</h3>
-        <p className="text-sm text-[#78716C]">Last 7 days activity</p>
+    <div className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
+        <span className="text-[15px] font-semibold tracking-tight">Reservations Over Time</span>
+        <span className="text-[11px] font-semibold bg-[rgba(159,18,57,0.08)] text-[#9F1239] px-2.5 py-0.5 rounded-full">Trending Up</span>
       </div>
+      <div className="p-6">
 
       <ResponsiveContainer width="100%" height={300}>
         <LineChart
@@ -77,6 +78,7 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
           />
         </LineChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 }

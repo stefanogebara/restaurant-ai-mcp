@@ -11,7 +11,6 @@ import ThiingsIcon from '../components/common/ThiingsIcon';
 import Spinner from '../components/common/Spinner';
 import { SkeletonCallTracking } from '../components/common/Skeleton';
 import DashboardLayout from '../components/layout/DashboardLayout';
-import Breadcrumb, { breadcrumbConfigs } from '../components/common/Breadcrumb';
 import { useToast } from '../contexts/ToastContext';
 import { authFetch } from '../services/api';
 
@@ -359,27 +358,28 @@ export default function CallTrackingDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="dashboard min-h-screen bg-[#F5F5F4] p-6">
-        <div className="max-w-7xl mx-auto space-y-8">
-        {/* Breadcrumb Navigation */}
-        <Breadcrumb items={breadcrumbConfigs.calls} />
-
+      <div className="min-h-screen bg-[#F5F5F4] p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
+        <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-serif font-bold text-[#1C1917] tracking-tight">AI Agent Dashboard</h1>
-            <p className="text-[#57534E] mt-1">Monitor AI agent performance, calls, and phone settings</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
+          <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">
+            Call History <span className="font-light text-[#78716C]">/ Today</span>
+          </h1>
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={fetchData}
+              className="px-4 py-2 bg-white border border-[#D6D3D1] text-[#57534E] hover:border-[#A8A29E] rounded-[10px] text-[13px] font-medium transition-colors"
+            >
+              Refresh
+            </button>
+            <button className="px-4 py-2 bg-white border border-[#D6D3D1] text-[#57534E] hover:border-[#A8A29E] rounded-[10px] text-[13px] font-medium transition-colors">
+              Export
+            </button>
           </div>
-          <button
-            onClick={fetchData}
-            className="px-4 py-2 bg-[#9F1239] text-white rounded-full hover:bg-[#881337] transition-colors font-medium text-sm self-start sm:self-auto"
-          >
-            Refresh
-          </button>
         </div>
 
         {/* Phone Status Card */}
-        <div className="bg-white rounded-2xl border border-[#E7E5E4]/50 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-[#E7E5E4] overflow-hidden p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
               <ThiingsIcon name="phone-call" pxSize={24} />
@@ -538,7 +538,7 @@ export default function CallTrackingDashboard() {
 
         {/* Agent Diagnostics Panel */}
         {showDiagnosePanel && (
-          <div className="bg-white rounded-2xl border border-[#E7E5E4]/50 shadow-sm p-6">
+          <div className="bg-white rounded-2xl border border-[#E7E5E4] overflow-hidden p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <ThiingsIcon name="stethoscope" size="sm" />
@@ -674,50 +674,58 @@ export default function CallTrackingDashboard() {
         )}
 
         {/* Filters */}
-        <div className="bg-white rounded-2xl border border-[#E7E5E4]/50 shadow-sm p-4">
-          <div className="flex gap-4 flex-wrap">
-            <div>
-              <label className="text-sm font-medium text-[#1C1917] block mb-1">Time Period</label>
-              <select
-                value={filter.period}
-                onChange={(e) => setFilter({ ...filter, period: e.target.value })}
-                className="px-3 py-2 bg-[#FAFAF9] border border-[#E7E5E4] rounded-lg text-[#1C1917]"
-              >
-                <option value="1d">Last 24 Hours</option>
-                <option value="7d">Last 7 Days</option>
-                <option value="30d">Last 30 Days</option>
-                <option value="90d">Last 90 Days</option>
-              </select>
+        <div className="bg-white rounded-2xl border border-[#E7E5E4] overflow-hidden">
+          <div className="flex items-center gap-6 px-6 py-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-[#A8A29E]">Period</span>
+              <div className="flex gap-0">
+                {[
+                  { value: '1d', label: '24h' },
+                  { value: '7d', label: '7 days' },
+                  { value: '30d', label: '30 days' },
+                  { value: '90d', label: '90 days' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setFilter({ ...filter, period: opt.value })}
+                    className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
+                      filter.period === opt.value
+                        ? 'text-[#1C1917] bg-[#F5F5F4]'
+                        : 'text-[#A8A29E] hover:text-[#57534E]'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
-
-            <div>
-              <label className="text-sm font-medium text-[#1C1917] block mb-1">Outcome</label>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-[#A8A29E]">Outcome</span>
               <select
                 value={filter.outcome}
                 onChange={(e) => setFilter({ ...filter, outcome: e.target.value })}
-                className="px-3 py-2 bg-[#FAFAF9] border border-[#E7E5E4] rounded-lg text-[#1C1917]"
+                className="text-xs font-medium px-3 py-1.5 bg-[#F5F5F4] border-0 rounded-lg text-[#1C1917] cursor-pointer"
               >
-                <option value="all">All Outcomes</option>
-                <option value="reservation_created">Reservations Created</option>
-                <option value="information_only">Information Only</option>
+                <option value="all">All</option>
+                <option value="reservation_created">Booked</option>
+                <option value="information_only">Info</option>
                 <option value="error">Errors</option>
                 <option value="abandoned">Abandoned</option>
               </select>
             </div>
-
-            <div>
-              <label className="text-sm font-medium text-[#1C1917] block mb-1">Language</label>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-[#A8A29E]">Language</span>
               <select
                 value={filter.language}
                 onChange={(e) => setFilter({ ...filter, language: e.target.value })}
-                className="px-3 py-2 bg-[#FAFAF9] border border-[#E7E5E4] rounded-lg text-[#1C1917]"
+                className="text-xs font-medium px-3 py-1.5 bg-[#F5F5F4] border-0 rounded-lg text-[#1C1917] cursor-pointer"
               >
-                <option value="all">All Languages</option>
-                <option value="en">English</option>
-                <option value="es">Spanish</option>
-                <option value="pt">Portuguese</option>
-                <option value="fr">French</option>
-                <option value="it">Italian</option>
+                <option value="all">All</option>
+                <option value="en">EN</option>
+                <option value="es">ES</option>
+                <option value="pt">PT</option>
+                <option value="fr">FR</option>
+                <option value="it">IT</option>
               </select>
             </div>
           </div>
@@ -726,116 +734,119 @@ export default function CallTrackingDashboard() {
         {/* Stats Overview */}
         {stats && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Total Calls */}
-            <div className="bg-white rounded-2xl border border-[#E7E5E4]/50 p-4 shadow-sm hover:shadow-md transition-shadow">
-              <div className="h-1 w-12 rounded-full mb-3 bg-[#1C1917]" />
-              <p className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{stats.overview.total_calls}</p>
-              <p className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Total Calls</p>
+            <div className="bg-white rounded-2xl border border-[#E7E5E4] p-6">
+              <div className="text-xs font-medium text-[#A8A29E] mb-2">Total Calls Today</div>
+              <div className="text-[32px] font-bold tracking-tight leading-none text-[#1C1917]">{stats.overview.total_calls}</div>
+              <div className="text-xs text-[#78716C] mt-1">{stats.overview.successful_bookings} successful bookings</div>
             </div>
-
-            {/* Successful Bookings */}
-            <div className="bg-white rounded-2xl border border-[#E7E5E4]/50 p-4 shadow-sm hover:shadow-md transition-shadow">
-              <div className="h-1 w-12 rounded-full mb-3 bg-[#22c55e]" />
-              <p className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{stats.overview.successful_bookings}</p>
-              <p className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Reservations</p>
+            <div className="bg-white rounded-2xl border border-[#E7E5E4] p-6">
+              <div className="text-xs font-medium text-[#A8A29E] mb-2">Success Rate</div>
+              <div className="text-[32px] font-bold tracking-tight leading-none text-[#16a34a]">{stats.overview.success_rate}%</div>
+              <div className="text-xs text-[#78716C] mt-1">{stats.overview.successful_bookings} of {stats.overview.total_calls} calls resolved</div>
             </div>
-
-            {/* Success Rate */}
-            <div className="bg-white rounded-2xl border border-[#E7E5E4]/50 p-4 shadow-sm hover:shadow-md transition-shadow">
-              <div className="h-1 w-12 rounded-full mb-3 bg-[#9F1239]" />
-              <p className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{stats.overview.success_rate}%</p>
-              <p className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Success Rate</p>
+            <div className="bg-white rounded-2xl border border-[#E7E5E4] p-6">
+              <div className="text-xs font-medium text-[#A8A29E] mb-2">Avg Duration</div>
+              <div className="text-[32px] font-bold tracking-tight leading-none text-[#1C1917]">{stats.overview.average_duration_formatted}</div>
+              <div className="text-xs text-[#78716C] mt-1">minutes per call</div>
             </div>
-
-            {/* Average Duration */}
-            <div className="bg-white rounded-2xl border border-[#E7E5E4]/50 p-4 shadow-sm hover:shadow-md transition-shadow">
-              <div className="h-1 w-12 rounded-full mb-3 bg-[#d97706]" />
-              <p className="text-3xl font-bold text-[#1C1917] tracking-tight tabular-nums">{stats.overview.average_duration_formatted}</p>
-              <p className="text-xs font-medium text-[#78716C] uppercase tracking-wider mt-1">Avg Duration</p>
+            <div className="bg-white rounded-2xl border border-[#E7E5E4] p-6">
+              <div className="text-xs font-medium text-[#A8A29E] mb-2">Bookings via Call</div>
+              <div className="text-[32px] font-bold tracking-tight leading-none text-[#9F1239]">{stats.overview.successful_bookings}</div>
+              <div className="text-xs text-[#78716C] mt-1">
+                {stats.overview.total_calls > 0
+                  ? `${Math.round((stats.overview.successful_bookings / stats.overview.total_calls) * 100)}% conversion rate`
+                  : 'No calls yet'}
+              </div>
             </div>
           </div>
         )}
 
-        {/* Call History Table */}
-        <div className="bg-white rounded-2xl border border-[#E7E5E4]/50 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-[#E7E5E4]">
-            <h2 className="text-lg font-semibold text-[#1C1917]">Call History</h2>
+        {/* Call History */}
+        <div className="bg-white rounded-2xl border border-[#E7E5E4] overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
+            <span className="text-[15px] font-semibold tracking-tight">Recent Calls</span>
+            <div className="flex gap-0">
+              {[
+                { value: 'all', label: 'All' },
+                { value: 'reservation_created', label: 'Booked' },
+                { value: 'error', label: 'Missed' },
+              ].map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => setFilter({ ...filter, outcome: tab.value })}
+                  className={`text-xs font-medium px-3.5 py-1.5 rounded-lg transition-colors ${
+                    filter.outcome === tab.value
+                      ? 'text-[#1C1917] bg-[#F5F5F4]'
+                      : 'text-[#A8A29E] hover:text-[#57534E]'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-[#FAFAF9]">
-                <tr>
-                  <th className="text-left p-4 text-sm font-medium text-[#57534E]">Time</th>
-                  <th className="text-left p-4 text-sm font-medium text-[#57534E]">Customer</th>
-                  <th className="text-left p-4 text-sm font-medium text-[#57534E]">Duration</th>
-                  <th className="text-left p-4 text-sm font-medium text-[#57534E]">Language</th>
-                  <th className="text-left p-4 text-sm font-medium text-[#57534E]">Outcome</th>
-                  <th className="text-left p-4 text-sm font-medium text-[#57534E]">Details</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E7E5E4]/50">
-                {conversations.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="p-8 text-center text-[#57534E]">
-                      <p className="font-medium mb-1">No calls recorded yet</p>
-                      <p className="text-sm">Once your AI agent starts taking calls, conversations will appear here. Try adjusting your filters if you expect to see results.</p>
-                    </td>
-                  </tr>
-                ) : (
-                  conversations.map((conv) => (
-                    <tr key={conv.id} className="hover:bg-[#FAFAF9] transition-colors">
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          <ThiingsIcon name="calendar" size="xs" />
-                          <span className="text-sm text-[#1C1917]">{formatDate(conv.started_at)}</span>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div>
-                          {conv.customer_name ? (
-                            <>
-                              <p className="text-sm font-medium text-[#1C1917]">{conv.customer_name}</p>
-                              <p className="text-xs text-[#57534E]">{conv.caller_phone}</p>
-                            </>
-                          ) : (
-                            <p className="text-sm text-[#57534E]">{conv.caller_phone || 'Unknown'}</p>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          <ThiingsIcon name="clock" size="xs" />
-                          <span className="text-sm text-[#1C1917]">
-                            {conv.duration_seconds ? `${Math.floor(conv.duration_seconds / 60)}m ${conv.duration_seconds % 60}s` : 'In progress'}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          <ThiingsIcon name="globe" size="xs" />
-                          <span className="text-sm text-[#1C1917] uppercase">{conv.language}</span>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getOutcomeColor(conv.outcome)}`}>
-                          {getOutcomeLabel(conv.outcome)}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <button
-                          onClick={() => viewConversation(conv.id)}
-                          className="px-3 py-1 bg-[#9F1239]/5 hover:bg-[#9F1239]/10 text-[#9F1239] rounded-xl text-sm font-medium transition-colors"
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          {conversations.length === 0 ? (
+            <div className="p-12 text-center">
+              <p className="text-sm font-medium text-[#1C1917] mb-1">No calls recorded yet</p>
+              <p className="text-xs text-[#A8A29E]">Once your AI agent starts taking calls, conversations will appear here.</p>
+            </div>
+          ) : (
+            <div>
+              {conversations.map((conv) => {
+                const getCallIconStyle = (outcome?: string) => {
+                  switch (outcome) {
+                    case 'reservation_created': return 'bg-[rgba(22,163,74,0.08)] text-[#16a34a]';
+                    case 'information_only': return 'bg-[rgba(59,130,246,0.08)] text-[#3b82f6]';
+                    case 'error': return 'bg-[rgba(220,38,38,0.08)] text-[#dc2626]';
+                    case 'abandoned': return 'bg-[rgba(217,119,6,0.08)] text-[#d97706]';
+                    default: return 'bg-[#F5F5F4] text-[#57534E]';
+                  }
+                };
+                const getOutcomePill = (outcome?: string) => {
+                  switch (outcome) {
+                    case 'reservation_created': return 'bg-[rgba(22,163,74,0.08)] text-[#16a34a]';
+                    case 'information_only': return 'bg-[rgba(59,130,246,0.08)] text-[#3b82f6]';
+                    case 'error': return 'bg-[rgba(220,38,38,0.08)] text-[#dc2626]';
+                    case 'abandoned': return 'bg-[rgba(217,119,6,0.08)] text-[#d97706]';
+                    default: return 'bg-[#F5F5F4] text-[#57534E]';
+                  }
+                };
+                return (
+                  <div
+                    key={conv.id}
+                    className="flex items-center px-6 py-4 border-b border-[#FAFAF9] gap-4 cursor-pointer hover:bg-[#FAFAF9] transition-colors"
+                    onClick={() => viewConversation(conv.id)}
+                  >
+                    <div className={`w-10 h-10 rounded-[10px] flex items-center justify-center flex-shrink-0 ${getCallIconStyle(conv.outcome)}`}>
+                      <ThiingsIcon name="phone-call" size="sm" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-[#1C1917] tracking-[-0.2px]">
+                        {conv.customer_name || 'Unknown Caller'}
+                      </div>
+                      <div className="text-xs text-[#A8A29E] mt-0.5 truncate">
+                        {conv.caller_phone || 'No number'}{conv.party_size ? ` · Party of ${conv.party_size}` : ''}{conv.language ? ` · ${conv.language.toUpperCase()}` : ''}
+                      </div>
+                    </div>
+                    <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ${getOutcomePill(conv.outcome)}`}>
+                      {getOutcomeLabel(conv.outcome)}
+                    </span>
+                    <div className="text-right flex-shrink-0 ml-2">
+                      <div className="text-[13px] font-medium text-[#57534E]">
+                        {new Date(conv.started_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                      <div className="text-[11px] text-[#A8A29E] mt-0.5">
+                        {conv.duration_seconds
+                          ? `${Math.floor(conv.duration_seconds / 60)}:${String(conv.duration_seconds % 60).padStart(2, '0')}`
+                          : 'Live'}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Conversation Detail Modal */}

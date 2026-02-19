@@ -78,7 +78,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Brand + Features (hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#1C1917] relative overflow-hidden">
+      <div className="hidden lg:flex lg:flex-[0_0_480px] bg-[#1C1917] relative overflow-hidden">
         {/* Subtle pattern overlay */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute top-0 left-0 w-full h-full" style={{
@@ -274,8 +274,8 @@ export default function Login() {
             {/* Email/Password Form */}
             <form onSubmit={handleEmailSubmit} className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-[#1C1917] mb-1.5">
-                  Email
+                <label htmlFor="email" className="block text-[13px] font-medium text-[#57534E] mb-1.5">
+                  Email address
                 </label>
                 <input
                   id="email"
@@ -288,7 +288,7 @@ export default function Login() {
                 />
               </div>
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-[#1C1917] mb-1.5">
+                <label htmlFor="password" className="block text-[13px] font-medium text-[#57534E] mb-1.5">
                   Password
                 </label>
                 <input
@@ -307,11 +307,11 @@ export default function Login() {
                 type="submit"
                 disabled={isSigningIn}
                 className={`
-                  w-full flex items-center justify-center gap-3 px-6 py-4
-                  bg-[#1C1917] hover:bg-[#9F1239]
+                  w-full flex items-center justify-center gap-3 px-6 py-3.5
+                  bg-[#9F1239] hover:bg-[#881337]
                   text-white font-semibold text-[15px] rounded-full
-                  transition-all duration-300 shadow-lg
-                  ${isSigningIn ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-xl hover:shadow-[#9F1239]/20'}
+                  transition-all duration-200
+                  ${isSigningIn ? 'opacity-70 cursor-not-allowed' : ''}
                 `}
               >
                 {isSigningIn && email ? (
