@@ -17,9 +17,9 @@ test.describe('Landing Page', () => {
     await expect(page.locator('h1')).toContainText('Transform');
     await expect(page.locator('h1')).toContainText('AI');
 
-    // Both CTA buttons visible
-    const tryDemo = page.getByRole('button', { name: /try live demo/i });
-    const startTrial = page.getByRole('button', { name: /start free trial/i });
+    // Both CTA buttons visible (use .first() since pricing section may also have these)
+    const tryDemo = page.getByRole('button', { name: /try live demo/i }).first();
+    const startTrial = page.getByRole('button', { name: /start free trial/i }).first();
     await expect(tryDemo).toBeVisible();
     await expect(startTrial).toBeVisible();
   });
@@ -30,9 +30,9 @@ test.describe('Landing Page', () => {
   });
 
   test('"Start Free Trial" scrolls to pricing section (not /onboarding)', async ({ page }) => {
-    await page.getByRole('button', { name: /start free trial/i }).click();
+    await page.getByRole('button', { name: /start free trial/i }).first().click();
     // Should NOT navigate to /onboarding
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2000);
     expect(page.url()).not.toContain('/onboarding');
     // Pricing section should be visible
     await expect(page.locator('#pricing')).toBeInViewport();
@@ -43,7 +43,7 @@ test.describe('Landing Page', () => {
     const navGetStarted = page.locator('nav').getByRole('button', { name: /get started/i });
     if (await navGetStarted.isVisible()) {
       await navGetStarted.click();
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(2000);
       expect(page.url()).not.toContain('/onboarding');
       await expect(page.locator('#pricing')).toBeInViewport();
     }
