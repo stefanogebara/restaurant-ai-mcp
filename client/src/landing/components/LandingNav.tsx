@@ -93,7 +93,11 @@ export default function LandingNav() {
             Login
           </button>
           <button
-            onClick={() => navigate('/onboarding')}
+            onClick={() => {
+              const el = document.getElementById('pricing');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+              else navigate('/#pricing');
+            }}
             className="bg-[#1C1917] text-[#FAFAF9] px-6 py-2.5 rounded-full hover:bg-[#9F1239] transition-colors duration-300 text-sm font-semibold"
           >
             Get Started
@@ -159,7 +163,12 @@ export default function LandingNav() {
               Login
             </button>
             <button
-              onClick={() => { navigate('/onboarding'); setIsMobileMenuOpen(false); }}
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                const el = document.getElementById('pricing');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                else navigate('/#pricing');
+              }}
               className="block w-full bg-[#9F1239] text-white text-center px-6 py-3 text-sm font-semibold rounded-full"
             >
               Get Started

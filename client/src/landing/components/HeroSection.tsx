@@ -62,7 +62,11 @@ export default function HeroSection() {
             Try Live Demo
           </button>
           <button
-            onClick={() => navigate('/onboarding')}
+            onClick={() => {
+              const el = document.getElementById('pricing');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+              else navigate('/#pricing');
+            }}
             className="border border-[#1C1917] text-[#1C1917] px-8 py-4 text-[15px] font-semibold hover:bg-[#1C1917] hover:text-white transition-all duration-300 rounded-full"
           >
             Start Free Trial

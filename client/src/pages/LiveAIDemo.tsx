@@ -44,7 +44,7 @@ export default function LiveAIDemo() {
           </Link>
 
           <Link
-            to="/onboarding"
+            to="/#pricing"
             className="px-5 py-2 bg-[#1C1917] text-white text-sm font-semibold hover:bg-[#9F1239] transition-all duration-300 rounded-full"
           >
             Get Started

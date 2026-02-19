@@ -44,7 +44,7 @@ export default function Footer() {
             &copy; {currentYear} seatable AI. All rights reserved.
           </p>
           <div className="flex gap-6 text-xs text-[#57534E]">
-            <a href="/onboarding" className="hover:text-[#A8A29E] transition-colors">
+            <a href="/#pricing" className="hover:text-[#A8A29E] transition-colors">
               Get Started
             </a>
             <a href="/login" className="hover:text-[#A8A29E] transition-colors">
