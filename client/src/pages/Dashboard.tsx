@@ -42,7 +42,7 @@ export default function Dashboard() {
 
   // ---- Data fetching ----
   const { data: dashboardData, refetch, isLoading, isError } = useQuery({
-    queryKey: ['dashboard'],
+    queryKey: ['hostDashboard'],
     queryFn: hostAPI.getDashboard,
     refetchInterval: 30000,
   });
@@ -81,18 +81,27 @@ export default function Dashboard() {
     setShowSeatModal(true);
   };
 
-  const handleCompleteService = async (party: ActiveParty) => {
+  const handleCompleteService = (party: ActiveParty) => {
+    setServiceToComplete(party);
+    setShowCompleteModal(true);
+  };
+
+  const confirmCompleteService = async () => {
+    if (!serviceToComplete) return;
     try {
       const response = await authFetch('/api/host-dashboard?action=complete-service', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ service_record_id: party.service_id }),
+        body: JSON.stringify({ service_record_id: serviceToComplete.service_id }),
       });
       if (response.ok) {
         refetch();
       }
     } catch (error) {
       console.error('Error completing service:', error);
+    } finally {
+      setShowCompleteModal(false);
+      setServiceToComplete(null);
     }
   };
 
@@ -162,7 +171,21 @@ export default function Dashboard() {
                 Week view
               </span>
               <button
-                onClick={() => window.location.href = '/host-dashboard/calls'}
+                onClick={() => {
+                  if (!dashboardData?.data) return;
+                  const rows = [['Name', 'Date', 'Time', 'Party Size', 'Status', 'Phone']];
+                  reservations.forEach(r => {
+                    rows.push([r.customer_name, r.date, r.time, String(r.party_size), r.status || '', r.customer_phone || '']);
+                  });
+                  const csv = rows.map(r => r.map(c => `"${(c || '').replace(/"/g, '""')}"`).join(',')).join('\n');
+                  const blob = new Blob([csv], { type: 'text/csv' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `reservations-${today}.csv`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
                 className="flex items-center gap-2 px-4 py-2 bg-white border border-[#D6D3D1] text-[#57534E] hover:border-[#A8A29E] rounded-[10px] text-[13px] font-medium transition-colors"
               >
                 Export
@@ -335,11 +358,7 @@ export default function Dashboard() {
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  handleCompleteService(serviceToComplete);
-                  setShowCompleteModal(false);
-                  setServiceToComplete(null);
-                }}
+                onClick={confirmCompleteService}
                 className="flex-1 px-4 py-2.5 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-colors"
               >
                 Complete

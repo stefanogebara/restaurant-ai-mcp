@@ -224,17 +224,12 @@ export default function BookingPage() {
           <div className="mb-7">
             <DetailRow icon="\u2739" label="Cuisine" value={restaurantType} />
             <DetailRow icon="\u23F1" label="Hours today" value={getTodayHours()} />
-            <DetailRow icon="\u263E" label="Atmosphere" value="Intimate, candlelit" />
-            <DetailRow icon="\u20AC" label="Price range" value="\u20AC\u20AC\u20AC" />
-          </div>
-
-          {/* Rating */}
-          <div className="flex items-center gap-3 p-4 bg-white border border-[#E7E5E4] rounded-xl">
-            <div className="text-2xl font-bold tracking-tight text-[#1C1917]">4.7</div>
-            <div>
-              <div className="text-sm text-[#d97706] tracking-wider">{'\u2605\u2605\u2605\u2605\u2606'}</div>
-              <div className="text-xs text-[#A8A29E]">284 reviews on Google</div>
-            </div>
+            {restaurant.phone && (
+              <DetailRow icon="\u260E" label="Phone" value={restaurant.phone} />
+            )}
+            {restaurant.email && (
+              <DetailRow icon="\u2709" label="Email" value={restaurant.email} />
+            )}
           </div>
         </div>
 

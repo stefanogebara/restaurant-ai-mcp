@@ -48,15 +48,15 @@ export default function AnalyticsDashboard() {
   const [dateRange, setDateRange] = useState<DateRange>('30d');
 
   useEffect(() => {
-    fetchAnalytics();
-  }, []);
+    fetchAnalytics(dateRange);
+  }, [dateRange]);
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = async (period: DateRange) => {
     try {
       setIsLoading(true);
       setError(null);
 
-      const response = await authFetch('/api/analytics');
+      const response = await authFetch(`/api/analytics?period=${period}`);
       const result = await response.json();
 
       if (!result.success) {
@@ -89,7 +89,7 @@ export default function AnalyticsDashboard() {
             <h3 className="text-lg font-bold text-[#1C1917] mb-2">Error loading analytics</h3>
             <p className="text-sm text-[#78716C] mb-6">{error}</p>
             <button
-              onClick={() => fetchAnalytics()}
+              onClick={() => fetchAnalytics(dateRange)}
               className="px-6 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-colors"
             >
               Retry
@@ -136,7 +136,7 @@ export default function AnalyticsDashboard() {
                 </button>
               ))}
               <button
-                onClick={() => fetchAnalytics()}
+                onClick={() => fetchAnalytics(dateRange)}
                 className="px-4 py-2 bg-white border border-[#D6D3D1] text-[#57534E] hover:border-[#A8A29E] rounded-[10px] text-[13px] font-medium transition-colors"
               >
                 Export

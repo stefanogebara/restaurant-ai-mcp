@@ -52,15 +52,29 @@ async function predictForRestaurant(restaurantId, timezone = 'UTC') {
     return { predictions_made: 0, already_predicted: reservations.length, total: reservations.length, errors: [] };
   }
 
+  // Batch fetch customer stats in parallel (fixes N+1 query pattern)
+  const customerStatsMap = new Map();
+  const statsPromises = needsPrediction.map(async (reservation) => {
+    const key = `${reservation.customer_email || ''}|${reservation.customer_phone}`;
+    if (!customerStatsMap.has(key)) {
+      try {
+        const stats = await getCustomerStats(reservation.customer_email, reservation.customer_phone);
+        customerStatsMap.set(key, stats);
+      } catch {
+        customerStatsMap.set(key, null);
+      }
+    }
+  });
+  await Promise.all(statsPromises);
+
   const results = [];
   const errors = [];
 
+  // Process predictions sequentially (writes depend on each other for rate limiting)
   for (const reservation of needsPrediction) {
     try {
-      const customerHistory = await getCustomerStats(
-        reservation.customer_email,
-        reservation.customer_phone
-      );
+      const key = `${reservation.customer_email || ''}|${reservation.customer_phone}`;
+      const customerHistory = customerStatsMap.get(key) || {};
 
       const reservationForPrediction = {
         reservation_id: reservation.reservation_id,
