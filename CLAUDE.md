@@ -262,6 +262,106 @@ Push to `main` branch triggers automatic Vercel deployment.
 
 ---
 
+## Completed Phases
+
+### Phase 1: Figma HTML Mockups (DONE)
+15 HTML mockup files created in `.figma-mockups/` covering all pages.
+
+### Phase 2: Implement Figma Designs into React (DONE - Feb 19, 2026)
+All 15 designs implemented. Commit `5d64fc7b`. 30 files changed, +1,576/-3,115 lines.
+Design system: Playfair Display + Inter, burgundy `#9F1239`, charcoal `#1C1917`, warm-white `#FAFAF9`.
+
+---
+
+## Current Roadmap
+
+### Phase 3: Security Hardening (CRITICAL - Code Done, SQL Migration Pending)
+- [x] **RLS Policy Fixes** (migration created: `database/migrations/20260220_security_hardening.sql`)
+  - [x] Remove `USING(true)` on reservations, service_records, customer_history (exposes PII)
+  - [x] Revoke anon GRANT on pos_connections, revenue_records, customer_ltv
+  - [x] Add proper restaurant-scoped RLS using JWT claims
+  - [ ] **PENDING: Run migration in Supabase SQL Editor**
+- [x] **Server-side IDOR Fixes**
+  - [x] `api/ltv.js` - now uses `req.user.restaurant_id` from JWT
+  - [x] `api/agent-conversations.js` - now uses `req.user.restaurant_id` from JWT
+  - [x] `api/ml-performance.js` - now uses `req.user.restaurant_id` from JWT
+  - [x] `api/restaurant-settings.js` - added auth + uses `req.user.restaurant_id`
+  - [x] `api/portal.js` - public availability endpoint (intentional, not IDOR)
+  - [x] `api/batch-predict.js` - cron uses CRON_SECRET, auth path uses JWT (OK)
+  - [x] `api/get-wait-time.js` - public endpoint (intentional, non-sensitive)
+- [x] **Frontend IDOR Fixes**
+  - [x] `CallTrackingDashboard.tsx` - removed restaurant_id from agent-conversations calls
+  - [x] `QuickStatsWidget.tsx` - removed restaurant_id from ml-performance calls
+  - [x] `LanguageSelector.tsx` - switched from axios+x-restaurant-id to authFetch
+- [ ] **Remaining**: `phone-integration-simple.js` has no auth (Twilio webhook endpoint)
+
+### Phase 4: Reliability & Bug Fixes (HIGH)
+- [ ] Fix analytics date filter (cosmetic only - never triggers refetch)
+- [ ] Fix hardcoded booking data (4.7 stars, "candlelit atmosphere" on ALL restaurants)
+- [ ] Fix Dashboard Export button (navigates to wrong page `/host-dashboard/calls`)
+- [ ] Fix N+1 queries in `api/batch-predict.js`
+- [ ] Fix dashboard cache key mismatch (`['dashboard']` vs `['hostDashboard']`)
+- [ ] Remove dead `showCompleteModal` state in Dashboard.tsx
+- [ ] Add proper error handling (replace silent catch blocks)
+- [ ] Setup Sentry error monitoring
+
+### Phase 5: Code Quality & Technical Debt
+- [ ] Split `api/_lib/supabase.js` god file (1909 lines → domain modules)
+- [ ] Remove Airtable-era field mapping layer
+- [ ] Fix 17 `any` type annotations across 5 pages
+- [ ] Remove duplicate UpgradePrompt components
+- [ ] Remove duplicate Supabase client on frontend
+- [ ] Add missing dialog ARIA attributes on inline modals
+- [ ] Add missing label associations in BookingPage
+- [ ] Wire up i18n system (defined but unused in all pages)
+- [ ] Use design system tokens instead of raw hex values
+
+### Phase 6: Brazil Launch Preparation
+- [ ] Connect WhatsApp integration (code exists, not connected to real account)
+- [ ] Add PT-BR translation (currently EN/ES only)
+- [ ] Add BRL pricing + Pix payment support
+- [ ] Create freemium tier for Brazil market
+- [ ] Simplify onboarding (7 steps → 3-4)
+- [ ] Create Brazilian demo restaurant
+- [ ] Remove fabricated "320+ restaurants" claim on landing page
+- [ ] Increase Starter plan reservation limit (50/month too restrictive)
+
+### Phase 7: Testing & Quality Assurance
+- [ ] Add E2E tests (Playwright - currently 0 E2E tests)
+- [ ] Increase test coverage to 80%+
+- [ ] Stress test with concurrent users
+- [ ] Add API documentation
+
+---
+
+## Strategic Context
+
+- **Target**: Brazil-first, Q2 2026 launch
+- **Goal**: 10+ paying restaurants in 6 months
+- **Founder**: Solo bootstrapped developer
+- **Monetization**: Freemium for Brazil, EUR pricing for Europe
+- **Top Priority**: Reliability/bugs, then WhatsApp integration
+
+---
+
+## Known Security Issues (from Feb 2026 audit)
+
+| Severity | Issue | File | Status |
+|----------|-------|------|--------|
+| CRITICAL | RLS bypassed - all queries use supabaseAdmin | `api/_lib/supabase.js` | All queries scoped by restaurant_id at app layer |
+| CRITICAL | Public read on reservations (`USING(true)`) | `seatable-eu-migration.sql:894` | Migration created, pending execution |
+| CRITICAL | Anon access to POS OAuth tokens | `20260126_pos_and_revenue.sql:153` | Migration created, pending execution |
+| CRITICAL | IDOR via localStorage restaurant_id | `CallTrackingDashboard.tsx:107` | FIXED (Feb 20) |
+| CRITICAL | IDOR in ltv.js, agent-conversations.js, ml-performance.js | Multiple API files | FIXED (Feb 20) |
+| CRITICAL | No auth on restaurant-settings.js | `api/restaurant-settings.js` | FIXED (Feb 20) |
+| HIGH | Analytics date filter cosmetic only | `AnalyticsDashboard.tsx:50` | Needs fix |
+| HIGH | Hardcoded fake restaurant data | `BookingPage.tsx:227` | Needs fix |
+| MEDIUM | phone-integration-simple.js has no auth | `api/phone-integration-simple.js` | Needs fix |
+| MEDIUM | 17 `any` types across pages | Multiple files | Needs fix |
+| LOW | Fabricated "320+ restaurants" on landing | Landing components | Needs fix |
+
+---
+
 ## Contact
 
 - **Email**: hello@seatable.io
@@ -269,4 +369,4 @@ Push to `main` branch triggers automatic Vercel deployment.
 
 ---
 
-**Last Updated**: February 13, 2026
+**Last Updated**: February 20, 2026

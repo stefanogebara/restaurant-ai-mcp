@@ -34,11 +34,7 @@ export default function QuickStatsWidget() {
 
   const fetchQuickStats = async () => {
     try {
-      // Get restaurant_id from localStorage for multi-tenant filtering
-      const restaurant_id = localStorage.getItem('restaurant_id') || '';
-      const restaurantParam = restaurant_id ? `&restaurant_id=${restaurant_id}` : '';
-
-      const response = await authFetch(`/api/ml-performance?action=quick-stats${restaurantParam}`);
+      const response = await authFetch('/api/ml-performance?action=quick-stats');
       const result = await response.json();
 
       if (result.success) {

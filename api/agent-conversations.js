@@ -28,6 +28,7 @@ module.exports = async (req, res) => {
   if (auth.error) {
     return res.status(auth.status).json({ error: auth.error });
   }
+  req.user = auth.user;
 
   try {
     const action = req.query.action;
@@ -70,12 +71,12 @@ async function handleListConversations(req, res) {
     date_to,
     outcome,
     language,
-    restaurant_id,
     limit = 50,
     offset = 0,
     order_by = 'started_at',
     order_direction = 'desc'
   } = req.query;
+  const restaurant_id = req.user?.restaurant_id;
 
   try {
     // REQUIRED: Always require restaurant_id for multi-tenant filtering
@@ -214,7 +215,8 @@ async function handleGetConversation(req, res) {
  * GET /api/agent-conversations?action=stats&period=7d
  */
 async function handleGetStats(req, res) {
-  const { period = '7d', date_from, date_to, restaurant_id } = req.query;
+  const { period = '7d', date_from, date_to } = req.query;
+  const restaurant_id = req.user?.restaurant_id;
 
   try {
     // REQUIRED: Always require restaurant_id for multi-tenant filtering

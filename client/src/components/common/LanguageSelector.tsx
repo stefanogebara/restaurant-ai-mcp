@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { languageOptions } from '../../i18n/config';
-import axios from 'axios';
+import { authFetch } from '../../services/api';
 
 interface LanguageSelectorProps {
   onLanguageChange?: (language: string) => void;
@@ -35,24 +35,15 @@ export default function LanguageSelector({
       // Save to localStorage
       localStorage.setItem('i18nextLng', languageCode);
 
-      // Try to save to database if restaurant is logged in
-      const restaurantId = localStorage.getItem('restaurant_id');
-      if (restaurantId) {
-        try {
-          await axios.put(
-            `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/restaurant-settings`,
-            { language: languageCode },
-            {
-              headers: {
-                'Content-Type': 'application/json',
-                'x-restaurant-id': restaurantId,
-              },
-            }
-          );
-        } catch (dbError) {
-          console.warn('Failed to save language to database:', dbError);
-          // Continue anyway - local storage will persist the change
-        }
+      // Try to save to database if authenticated
+      try {
+        await authFetch('/api/restaurant-settings', {
+          method: 'PUT',
+          body: JSON.stringify({ language: languageCode }),
+        });
+      } catch (dbError) {
+        console.warn('Failed to save language to database:', dbError);
+        // Continue anyway - local storage will persist the change
       }
 
       // Call custom callback if provided

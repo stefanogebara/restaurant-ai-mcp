@@ -226,10 +226,8 @@ export default function CallTrackingDashboard() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const restaurantParam = restaurant_id ? `&restaurant_id=${restaurant_id}` : '';
-
       const conversationsRes = await authFetch(
-        `/api/agent-conversations?action=list&limit=50&offset=0${restaurantParam}${
+        `/api/agent-conversations?action=list&limit=50&offset=0${
           filter.outcome !== 'all' ? `&outcome=${filter.outcome}` : ''
         }${
           filter.language !== 'all' ? `&language=${filter.language}` : ''
@@ -237,7 +235,7 @@ export default function CallTrackingDashboard() {
       );
       const conversationsData = await conversationsRes.json();
 
-      const statsRes = await authFetch(`/api/agent-conversations?action=stats&period=${filter.period}${restaurantParam}`);
+      const statsRes = await authFetch(`/api/agent-conversations?action=stats&period=${filter.period}`);
       const statsData = await statsRes.json();
 
       if (conversationsData.success) {
@@ -252,7 +250,7 @@ export default function CallTrackingDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [filter, restaurant_id]);
+  }, [filter]);
 
   useEffect(() => {
     fetchData();

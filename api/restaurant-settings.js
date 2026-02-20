@@ -5,6 +5,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { createSecureLogger } from './_lib/secure-logger';
+import { verifyAuth } from './_lib/auth';
 const logger = createSecureLogger('RestaurantSettings');
 
 const supabase = createClient(
@@ -126,9 +127,19 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
+  // Verify authentication - settings require authenticated access
+  const authResult = await verifyAuth(req, { required: true });
+  if (authResult.error) {
+    return res.status(authResult.status || 401).json({
+      error: authResult.error,
+      message: 'Authentication required to access restaurant settings'
+    });
+  }
+  req.user = authResult.user;
+
   try {
     const { method } = req;
-    const restaurantId = req.headers['x-restaurant-id'] || req.query.restaurant_id;
+    const restaurantId = req.user.restaurant_id;
     const path = req.url.split('?')[0];
 
     if (!restaurantId && !path.includes('/profile/recommend')) {
