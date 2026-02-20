@@ -79,7 +79,7 @@ export default function RiskExplanationModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl border border-[#E7E5E4] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div role="dialog" aria-modal="true" aria-label="No-Show Risk Analysis" className="bg-white rounded-2xl border border-[#E7E5E4] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-[#E7E5E4] p-6 flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">

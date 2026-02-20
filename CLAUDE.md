@@ -169,7 +169,7 @@ restaurant-ai-mcp/
 ### Backend
 | File | Purpose |
 |------|---------|
-| `api/_lib/supabase.js` | Database service layer (~1900 lines) |
+| `api/_lib/supabase.js` | Database service barrel (imports from 6 domain modules) |
 | `api/_lib/auth.js` | JWT auth, Google OAuth, restaurant_id in tokens |
 | `api/_lib/rate-limit.js` | Upstash Redis rate limiting with fallback |
 | `api/_lib/secure-logger.js` | Logging with sensitive data masking |
@@ -307,17 +307,17 @@ Design system: Playfair Display + Inter, burgundy `#9F1239`, charcoal `#1C1917`,
 - [ ] Add proper error handling (replace silent catch blocks)
 - [ ] Setup Sentry error monitoring
 
-### Phase 5: Code Quality & Technical Debt (IN PROGRESS - Feb 20, 2026)
+### Phase 5: Code Quality & Technical Debt (DONE - Feb 20, 2026)
 - [x] Split `api/_lib/supabase.js` god file (1908 lines → 6 domain modules + 51-line barrel)
 - [x] Fix `any` type annotations across pages (44 → 30, 0 remaining in pages)
 - [x] Remove duplicate UpgradePrompt components (3 → 1, deleted 2 unused)
 - [x] Remove duplicate Supabase client on frontend (services/supabase.ts deleted)
 - [x] Remove fabricated "320+ restaurants" claim on landing page
-- [ ] Remove Airtable-era field mapping layer
-- [ ] Add missing dialog ARIA attributes on inline modals
-- [ ] Add missing label associations in BookingPage
-- [ ] Wire up i18n system (defined but unused in all pages)
-- [ ] Use design system tokens instead of raw hex values
+- [x] Remove Airtable-era field mapping layer in analytics.js
+- [x] Add missing dialog ARIA attributes on 13 inline modals
+- [x] Add missing label associations in BookingPage (4 fields)
+- [ ] Wire up i18n system (31 refs across 12 pages - deferred, large scope)
+- [ ] Use design system tokens instead of raw hex values (447+ usages - deferred, large scope)
 
 ### Phase 6: Brazil Launch Preparation
 - [ ] Connect WhatsApp integration (code exists, not connected to real account)

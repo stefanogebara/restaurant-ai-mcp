@@ -56,7 +56,7 @@ export default function CheckInModal({ isOpen, reservation, onClose, onSuccess, 
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl border border-[#E7E5E4] p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div role="dialog" aria-modal="true" aria-label="Check In Reservation" className="bg-white rounded-xl shadow-2xl border border-[#E7E5E4] p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <h2 className="text-2xl font-bold text-[#1C1917] mb-4">Check In Reservation</h2>
 
         {/* Reservation Details */}

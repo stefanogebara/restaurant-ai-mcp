@@ -352,8 +352,9 @@ export default function BookingPage() {
             </div>
             <div className="grid grid-cols-2 gap-3.5 mb-3.5">
               <div>
-                <label className="block text-[13px] font-medium text-[#57534E] mb-1.5">Name</label>
+                <label htmlFor="booking-name" className="block text-[13px] font-medium text-[#57534E] mb-1.5">Name</label>
                 <input
+                  id="booking-name"
                   type="text"
                   value={customerName}
                   onChange={e => setCustomerName(e.target.value)}
@@ -362,8 +363,9 @@ export default function BookingPage() {
                 />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#57534E] mb-1.5">Phone</label>
+                <label htmlFor="booking-phone" className="block text-[13px] font-medium text-[#57534E] mb-1.5">Phone</label>
                 <input
+                  id="booking-phone"
                   type="tel"
                   value={customerPhone}
                   onChange={e => setCustomerPhone(e.target.value)}
@@ -373,8 +375,9 @@ export default function BookingPage() {
               </div>
             </div>
             <div className="mb-3.5">
-              <label className="block text-[13px] font-medium text-[#57534E] mb-1.5">Email <span className="text-[#A8A29E] font-normal">(optional)</span></label>
+              <label htmlFor="booking-email" className="block text-[13px] font-medium text-[#57534E] mb-1.5">Email <span className="text-[#A8A29E] font-normal">(optional)</span></label>
               <input
+                id="booking-email"
                 type="email"
                 value={customerEmail}
                 onChange={e => setCustomerEmail(e.target.value)}
@@ -383,10 +386,11 @@ export default function BookingPage() {
               />
             </div>
             <div>
-              <label className="block text-[13px] font-medium text-[#57534E] mb-1.5">
+              <label htmlFor="booking-requests" className="block text-[13px] font-medium text-[#57534E] mb-1.5">
                 Special requests <span className="text-[#A8A29E] font-normal">(optional)</span>
               </label>
               <textarea
+                id="booking-requests"
                 value={specialRequests}
                 onChange={e => setSpecialRequests(e.target.value)}
                 placeholder="Allergies, celebrations, seating preferences..."

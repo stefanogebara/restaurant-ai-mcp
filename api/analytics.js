@@ -10,53 +10,30 @@ const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('Analytics');
 
-async function getAllReservations(restaurantId) {
+async function getReservationRows(restaurantId) {
   try {
     const { data, error } = await supabaseAdmin
       .from('reservations')
-      .select('*')
+      .select('date, time, status, party_size, customer_name, reservation_id, created_at')
       .eq('restaurant_id', restaurantId);
 
     if (error) throw error;
-
-    // Map to Airtable-compatible format so the rest of the code works unchanged
-    const records = (data || []).map(r => ({
-      fields: {
-        Date: r.date,
-        Time: r.time,
-        Status: r.status,
-        'Party Size': r.party_size,
-        'Customer Name': r.customer_name,
-        'Reservation ID': r.reservation_id,
-      },
-      createdTime: r.created_at,
-    }));
-    return { success: true, records };
+    return { success: true, rows: data || [] };
   } catch (error) {
     logger.error('Error fetching reservations:', error.message);
     return { success: false, error: error.message };
   }
 }
 
-async function getAllServiceRecordsData(restaurantId) {
+async function getServiceRecordRows(restaurantId) {
   try {
     const { data, error } = await supabaseAdmin
       .from('service_records')
-      .select('*')
+      .select('status, seated_at, departed_at, table_ids')
       .eq('restaurant_id', restaurantId);
 
     if (error) throw error;
-
-    // Map to Airtable-compatible format
-    const records = (data || []).map(r => ({
-      fields: {
-        Status: r.status,
-        'Seated At': r.seated_at,
-        'Departed At': r.departed_at,
-        'Table IDs': r.table_ids ? r.table_ids.join(',') : '',
-      }
-    }));
-    return { success: true, records };
+    return { success: true, rows: data || [] };
   } catch (error) {
     logger.error('Error fetching service records:', error.message);
     return { success: false, error: error.message };
@@ -65,12 +42,12 @@ async function getAllServiceRecordsData(restaurantId) {
 
 async function calculateAnalytics(restaurantId, period = '30d') {
   const results = await Promise.all([
-    getAllReservations(restaurantId),
-    getAllServiceRecordsData(restaurantId),
+    getReservationRows(restaurantId),
+    getServiceRecordRows(restaurantId),
     getAllTables(restaurantId),
     getActiveServiceRecords(restaurantId)
   ]);
-  
+
   const reservationsResult = results[0];
   const serviceRecordsResult = results[1];
   const tablesResult = results[2];
@@ -80,8 +57,8 @@ async function calculateAnalytics(restaurantId, period = '30d') {
     return { success: false, error: 'Failed to fetch analytics data' };
   }
 
-  const reservations = reservationsResult.records || [];
-  const serviceRecords = serviceRecordsResult.records || [];
+  const reservations = reservationsResult.rows;
+  const serviceRecords = serviceRecordsResult.rows;
   const tables = tablesResult.tables || [];
   const activeParties = activePartiesResult.service_records || [];
 
@@ -90,12 +67,12 @@ async function calculateAnalytics(restaurantId, period = '30d') {
   const periodStart = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000);
 
   const recentReservations = reservations.filter(r => {
-    const resDate = new Date(r.fields.Date || r.createdTime);
+    const resDate = new Date(r.date || r.created_at);
     return resDate >= periodStart;
   });
 
   const completedServiceRecords = serviceRecords.filter(r =>
-    r.fields.Status === 'Completed' && r.fields['Departed At']
+    r.status === 'Completed' && r.departed_at
   );
 
   const totalReservations = recentReservations.length;
@@ -105,15 +82,15 @@ async function calculateAnalytics(restaurantId, period = '30d') {
 
   let avgPartySize = 0;
   if (recentReservations.length > 0) {
-    const total = recentReservations.reduce((sum, r) => sum + (r.fields['Party Size'] || 0), 0);
+    const total = recentReservations.reduce((sum, r) => sum + (r.party_size || 0), 0);
     avgPartySize = total / recentReservations.length;
   }
 
   const serviceDurations = completedServiceRecords
-    .filter(r => r.fields['Seated At'] && r.fields['Departed At'])
+    .filter(r => r.seated_at && r.departed_at)
     .map(r => {
-      const seatedAt = new Date(r.fields['Seated At']);
-      const departedAt = new Date(r.fields['Departed At']);
+      const seatedAt = new Date(r.seated_at);
+      const departedAt = new Date(r.departed_at);
       return (departedAt - seatedAt) / 60000;
     });
 
@@ -123,13 +100,13 @@ async function calculateAnalytics(restaurantId, period = '30d') {
 
   const statusCounts = {};
   recentReservations.forEach(r => {
-    const status = r.fields.Status || 'pending';
+    const status = r.status || 'pending';
     statusCounts[status] = (statusCounts[status] || 0) + 1;
   });
 
   const dayOfWeekCounts = {};
   recentReservations.forEach(r => {
-    const date = new Date(r.fields.Date);
+    const date = new Date(r.date);
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayName = days[date.getDay()];
     dayOfWeekCounts[dayName] = (dayOfWeekCounts[dayName] || 0) + 1;
@@ -137,7 +114,7 @@ async function calculateAnalytics(restaurantId, period = '30d') {
 
   const timeSlotCounts = {};
   recentReservations.forEach(r => {
-    const time = r.fields.Time || '';
+    const time = r.time || '';
     const hour = parseInt(time.split(':')[0]) || 0;
     let slot = 'Other';
     if (hour >= 11 && hour < 14) slot = 'Lunch (11AM-2PM)';
@@ -149,13 +126,13 @@ async function calculateAnalytics(restaurantId, period = '30d') {
 
   const tableUtilization = tables.map(table => {
     const timesUsed = completedServiceRecords.filter(r => {
-      const tableIds = r.fields['Table IDs'] || '';
-      const tableArray = typeof tableIds === 'string' ? tableIds.split(',') : [];
+      const tableIds = r.table_ids || [];
+      const tableArray = Array.isArray(tableIds) ? tableIds.map(String) : [];
       return tableArray.includes(table.table_number.toString());
     }).length;
 
     const rate = totalCompletedServices > 0 ? (timesUsed / totalCompletedServices * 100).toFixed(1) : 0;
-    
+
     return {
       table_number: table.table_number,
       capacity: table.capacity,
@@ -179,14 +156,14 @@ async function calculateAnalytics(restaurantId, period = '30d') {
   }
 
   recentReservations.forEach(r => {
-    const resDate = new Date(r.fields.Date).toISOString().split('T')[0];
+    const resDate = new Date(r.date).toISOString().split('T')[0];
     const dayObj = last7Days.find(d => d.date === resDate);
     if (dayObj) dayObj.reservations++;
   });
 
   completedServiceRecords.forEach(r => {
-    if (!r.fields['Departed At']) return;
-    const depDate = new Date(r.fields['Departed At']).toISOString().split('T')[0];
+    if (!r.departed_at) return;
+    const depDate = new Date(r.departed_at).toISOString().split('T')[0];
     const dayObj = last7Days.find(d => d.date === depDate);
     if (dayObj) dayObj.completed_services++;
   });

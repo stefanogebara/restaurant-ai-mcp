@@ -346,7 +346,7 @@ export default function Dashboard() {
       {/* Complete Service Confirmation */}
       {showCompleteModal && serviceToComplete && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-[#E7E5E4] p-6 max-w-sm w-full">
+          <div role="dialog" aria-modal="true" aria-label="Complete Service" className="bg-white rounded-2xl shadow-2xl border border-[#E7E5E4] p-6 max-w-sm w-full">
             <h3 className="text-lg font-bold text-[#1C1917] mb-2">Complete Service</h3>
             <p className="text-sm text-[#57534E] mb-6">
               Complete service for <span className="font-semibold">{serviceToComplete.customer_name}</span>?
