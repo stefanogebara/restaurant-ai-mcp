@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import WhatsAppButton from '../components/booking/WhatsAppButton';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
@@ -18,6 +19,8 @@ interface RestaurantInfo {
   min_party_size: number;
   advance_booking_days: number;
   average_dining_duration: number;
+  whatsapp_enabled?: boolean;
+  wa_me_link?: string | null;
 }
 
 interface TimeSlot {
@@ -452,6 +455,11 @@ export default function BookingPage() {
           </p>
         </div>
       </div>
+
+      {/* WhatsApp floating button */}
+      {restaurant.whatsapp_enabled && restaurant.wa_me_link && (
+        <WhatsAppButton waMeLink={restaurant.wa_me_link} restaurantName={restaurant.name} />
+      )}
     </div>
   );
 }

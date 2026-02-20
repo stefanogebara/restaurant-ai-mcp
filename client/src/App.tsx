@@ -30,6 +30,7 @@ const VoiceSettingsPage = lazy(() => import('./pages/VoiceSettingsPage'));
 const BookingPage = lazy(() => import('./pages/BookingPage'));
 const BookingConfirmation = lazy(() => import('./pages/BookingConfirmation'));
 const FloorPlanEditor = lazy(() => import('./pages/FloorPlanEditor'));
+const WhatsAppSettingsPage = lazy(() => import('./pages/WhatsAppSettingsPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -100,6 +101,7 @@ function App() {
               <Route path="/host-dashboard/tables" element={<TableConfigPage />} />
               <Route path="/host-dashboard/floor-plan" element={<FloorPlanEditor />} />
               <Route path="/host-dashboard/voice-settings" element={<VoiceSettingsPage />} />
+              <Route path="/host-dashboard/whatsapp" element={<WhatsAppSettingsPage />} />
               <Route path="/analytics" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AnalyticsDashboard /></ErrorBoundary>} />
               <Route path="/customer" element={<CustomerPortal />} />
               <Route path="/subscription/success" element={<SubscriptionSuccess />} />

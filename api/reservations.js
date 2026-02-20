@@ -24,6 +24,9 @@ const { logReservationCreated, logCustomerCancelled } = require('./ml/data-logge
 // Twilio for SMS confirmations
 const twilio = require('twilio');
 
+// WhatsApp sender for reservation confirmations
+const { sendReservationConfirmation, isWhatsAppConfigured } = require('./_lib/whatsapp-sender');
+
 // CORS utility for secure cross-origin requests
 const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 
@@ -50,7 +53,7 @@ const { createMemory } = require('./services/guestMemory');
 // SMS CONFIRMATION HELPER
 // ============================================================================
 async function sendReservationConfirmationSMS(customerPhone, reservationDetails) {
-  const { reservationId, customerName, partySize, date, time } = reservationDetails;
+  const { reservationId, customerName, partySize, date, time, restaurantName = 'Your Restaurant' } = reservationDetails;
 
   // Skip if Twilio not configured
   if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
@@ -84,7 +87,7 @@ async function sendReservationConfirmationSMS(customerPhone, reservationDetails)
     }
 
     const message = await twilioClient.messages.create({
-      body: `Chez Ambiance: ${customerName}, ${partySize}p on ${date} at ${time}. Conf# ${reservationId}`,
+      body: `${restaurantName}: ${customerName}, ${partySize}p on ${date} at ${time}. Conf# ${reservationId}`,
       from: process.env.TWILIO_PHONE_NUMBER,
       to: formattedPhone
     });
@@ -382,25 +385,63 @@ async function handleCreate(req, res, restaurantId) {
   }
 
   // ============================================================================
-  // SMS CONFIRMATION (Send reservation details to customer)
+  // CONFIRMATION: WhatsApp first (if enabled), SMS fallback
   // ============================================================================
   try {
-    const smsResult = await sendReservationConfirmationSMS(customer_phone, {
-      reservationId,
-      customerName: customer_name,
-      partySize: party_size,
-      date,
-      time
-    });
+    let confirmationSent = false;
 
-    if (smsResult.success) {
-      logger.info(`SMS confirmation sent for ${reservationId}`);
-    } else {
-      logger.info(`SMS not sent for ${reservationId}`, { reason: smsResult.reason });
+    // Check if restaurant has WhatsApp enabled
+    const { data: waConfig } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('whatsapp_enabled, restaurant_name, agent_language')
+      .eq('id', restaurantId)
+      .single();
+
+    const restaurantName = waConfig?.restaurant_name || 'Your Restaurant';
+    const language = waConfig?.agent_language?.toLowerCase() || 'en';
+
+    // Try WhatsApp first if enabled and API configured
+    if (waConfig?.whatsapp_enabled && isWhatsAppConfigured()) {
+      const waResult = await sendReservationConfirmation(customer_phone, {
+        reservationId,
+        customerName: customer_name,
+        partySize: party_size,
+        date,
+        time,
+        restaurantName,
+        language,
+      });
+
+      if (waResult.success) {
+        logger.info(`WhatsApp confirmation sent for ${reservationId}`);
+        trackUsage(restaurantId, 'whatsapp');
+        confirmationSent = true;
+      } else {
+        logger.info(`WhatsApp failed for ${reservationId}, falling back to SMS`, { error: waResult.error });
+      }
+    }
+
+    // SMS fallback (or primary if WhatsApp not enabled)
+    if (!confirmationSent) {
+      const smsResult = await sendReservationConfirmationSMS(customer_phone, {
+        reservationId,
+        customerName: customer_name,
+        partySize: party_size,
+        date,
+        time,
+        restaurantName,
+      });
+
+      if (smsResult.success) {
+        logger.info(`SMS confirmation sent for ${reservationId}`);
+      } else {
+        logger.info(`SMS not sent for ${reservationId}`, { reason: smsResult.reason });
+      }
     }
   } catch (error) {
-    // Don't fail the reservation if SMS fails
-    logger.error('Error sending SMS confirmation', error);
+    // Don't fail the reservation if confirmation fails
+    logger.error('Error sending confirmation', error);
   }
 
   // ============================================================================

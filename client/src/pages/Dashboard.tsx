@@ -23,6 +23,7 @@ import ReservationsList from '../components/dashboard/ReservationsList';
 import ActivePartiesPanel from '../components/dashboard/ActivePartiesPanel';
 import WaitlistPanel from '../components/host/WaitlistPanel';
 import ManagerNotesPanel from '../components/dashboard/ManagerNotesPanel';
+import WhatsAppStatsCard from '../components/dashboard/WhatsAppStatsCard';
 import WalkInModal from '../components/host/WalkInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
@@ -279,6 +280,7 @@ export default function Dashboard() {
               />
 
               <ManagerNotesPanel language="en" />
+              <WhatsAppStatsCard />
             </div>
           </div>
         </div>
