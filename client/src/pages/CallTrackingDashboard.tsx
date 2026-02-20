@@ -29,9 +29,9 @@ interface Conversation {
   party_size?: number;
   successful_booking?: boolean;
   customer_sentiment?: string;
-  tools_used?: any[];
-  errors_encountered?: any[];
-  transcript?: any[];
+  tools_used?: Array<{ tool_name: string; success?: boolean; result?: string }>;
+  errors_encountered?: Array<{ error_type?: string; message: string; timestamp?: string }>;
+  transcript?: Array<{ role: string; content: string; timestamp?: string }>;
   summary?: string;
 }
 
@@ -934,7 +934,7 @@ export default function CallTrackingDashboard() {
                   <div>
                     <h3 className="font-semibold text-[#1C1917] mb-3">Transcript</h3>
                     <div className="space-y-3 max-h-96 overflow-y-auto">
-                      {selectedConversation.transcript.map((message: any, idx: number) => (
+                      {selectedConversation.transcript.map((message, idx) => (
                         <div
                           key={idx}
                           className={`p-3 rounded-lg ${
@@ -958,7 +958,7 @@ export default function CallTrackingDashboard() {
                   <div>
                     <h3 className="font-semibold text-[#dc2626] mb-3">Errors Encountered</h3>
                     <div className="space-y-2">
-                      {selectedConversation.errors_encountered.map((error: any, idx: number) => (
+                      {selectedConversation.errors_encountered.map((error, idx) => (
                         <div key={idx} className="bg-[#dc2626]/10 border border-[#dc2626]/20 rounded-lg p-3">
                           <p className="text-sm font-medium text-[#1C1917]">{error.error_type}</p>
                           <p className="text-xs text-[#57534E] mt-1">{error.message}</p>

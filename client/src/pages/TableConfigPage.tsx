@@ -50,8 +50,8 @@ export default function TableConfigPage() {
       setFormData(defaultFormData);
       showToast('Table created successfully', 'success');
     },
-    onError: (error: any) => {
-      showToast(error.response?.data?.error || 'Failed to create table', 'error');
+    onError: (error: Error) => {
+      showToast(error.message || 'Failed to create table', 'error');
     },
   });
 
@@ -64,8 +64,8 @@ export default function TableConfigPage() {
       setSelectedTable(null);
       showToast('Table updated successfully', 'success');
     },
-    onError: (error: any) => {
-      showToast(error.response?.data?.error || 'Failed to update table', 'error');
+    onError: (error: Error) => {
+      showToast(error.message || 'Failed to update table', 'error');
     },
   });
 
@@ -78,8 +78,8 @@ export default function TableConfigPage() {
       setSelectedTable(null);
       showToast('Table deactivated successfully', 'success');
     },
-    onError: (error: any) => {
-      showToast(error.response?.data?.error || 'Failed to delete table', 'error');
+    onError: (error: Error) => {
+      showToast(error.message || 'Failed to delete table', 'error');
     },
   });
 
@@ -93,8 +93,8 @@ export default function TableConfigPage() {
       setSelectedTable(null);
       showToast('Adjacency relationships updated', 'success');
     },
-    onError: (error: any) => {
-      showToast(error.response?.data?.error || 'Failed to update adjacency', 'error');
+    onError: (error: Error) => {
+      showToast(error.message || 'Failed to update adjacency', 'error');
     },
   });
 

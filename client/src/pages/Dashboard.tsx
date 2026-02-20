@@ -27,16 +27,16 @@ import WalkInModal from '../components/host/WalkInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
 import QuickInterventionModal from '../components/host/QuickInterventionModal';
-import type { UpcomingReservation, ActiveParty } from '../types/host.types';
+import type { UpcomingReservation, ActiveParty, Table, SeatPartyRequest } from '../types/host.types';
 
 export default function Dashboard() {
   // ---- Modal state ----
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [showSeatModal, setShowSeatModal] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
-  const [selectedParty, setSelectedParty] = useState<any>(null);
+  const [selectedParty, setSelectedParty] = useState<SeatPartyRequest | null>(null);
   const [selectedReservation, setSelectedReservation] = useState<UpcomingReservation | null>(null);
-  const [interventionReservation, setInterventionReservation] = useState<any>(null);
+  const [interventionReservation, setInterventionReservation] = useState<UpcomingReservation | null>(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [serviceToComplete, setServiceToComplete] = useState<ActiveParty | null>(null);
 
@@ -58,13 +58,13 @@ export default function Dashboard() {
   const todayReservations = reservations.filter((r) => r.date === today);
   const tomorrowReservations = reservations.filter((r) => r.date === tomorrow);
 
-  const occupiedTables = tables.filter((t: any) => t.status === 'Occupied').length;
+  const occupiedTables = tables.filter((t: Table) => t.status === 'Occupied').length;
   const totalTables = tables.length;
   const totalGuests = activeParties.reduce((sum, p) => sum + (p.party_size || 0), 0);
-  const availableTables = tables.filter((t: any) => t.status === 'Available');
+  const availableTables = tables.filter((t: Table) => t.status === 'Available');
 
   // ---- Handlers ----
-  const handleWalkInSuccess = (partyData: any) => {
+  const handleWalkInSuccess = (partyData: SeatPartyRequest) => {
     setSelectedParty(partyData);
     setShowWalkInModal(false);
     setShowSeatModal(true);
@@ -75,7 +75,7 @@ export default function Dashboard() {
     setShowCheckInModal(true);
   };
 
-  const handleCheckInSuccess = (reservationData: any) => {
+  const handleCheckInSuccess = (reservationData: UpcomingReservation) => {
     setSelectedReservation(reservationData);
     setShowCheckInModal(false);
     setShowSeatModal(true);
@@ -105,13 +105,14 @@ export default function Dashboard() {
     }
   };
 
-  const handleSeatFromWaitlist = (entry: any) => {
+  const handleSeatFromWaitlist = (entry: { id: string; customer_name: string; customer_phone: string; party_size: number; special_requests?: string }) => {
     setSelectedParty({
+      type: 'walk-in',
       customer_name: entry.customer_name,
       customer_phone: entry.customer_phone,
       party_size: entry.party_size,
       special_requests: entry.special_requests,
-      waitlist_entry_id: entry.id,
+      table_ids: [],
     });
     setShowSeatModal(true);
   };

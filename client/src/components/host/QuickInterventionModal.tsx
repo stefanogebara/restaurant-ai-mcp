@@ -20,7 +20,7 @@ interface Reservation {
   time: string;
   ml_risk_score?: number;
   ml_risk_level?: string;
-  ml_risk_factors?: Array<{ factor: string; description: string; weight: number }>;
+  ml_risk_factors?: Array<{ factor: string; description: string; weight?: number; impact?: number }>;
   special_requests?: string;
   intervention_taken?: boolean;
   intervention_type?: string;

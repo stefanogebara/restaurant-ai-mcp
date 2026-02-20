@@ -297,22 +297,23 @@ Design system: Playfair Display + Inter, burgundy `#9F1239`, charcoal `#1C1917`,
   - [x] `LanguageSelector.tsx` - switched from axios+x-restaurant-id to authFetch
 - [ ] **Remaining**: `phone-integration-simple.js` has no auth (Twilio webhook endpoint)
 
-### Phase 4: Reliability & Bug Fixes (HIGH)
-- [ ] Fix analytics date filter (cosmetic only - never triggers refetch)
-- [ ] Fix hardcoded booking data (4.7 stars, "candlelit atmosphere" on ALL restaurants)
-- [ ] Fix Dashboard Export button (navigates to wrong page `/host-dashboard/calls`)
-- [ ] Fix N+1 queries in `api/batch-predict.js`
-- [ ] Fix dashboard cache key mismatch (`['dashboard']` vs `['hostDashboard']`)
-- [ ] Remove dead `showCompleteModal` state in Dashboard.tsx
+### Phase 4: Reliability & Bug Fixes (DONE - Feb 20, 2026)
+- [x] Fix analytics date filter - now passes `period` param to API and refetches on change
+- [x] Fix hardcoded booking data - removed fake rating/atmosphere/price, show real phone/email
+- [x] Fix Dashboard Export button - now exports reservations as CSV instead of navigating away
+- [x] Fix N+1 queries in `api/batch-predict.js` - parallelized customer stats fetching
+- [x] Fix dashboard cache key mismatch (`['dashboard']` → `['hostDashboard']`)
+- [x] Wire up dead `showCompleteModal` - confirmation dialog now shows before completing service
 - [ ] Add proper error handling (replace silent catch blocks)
 - [ ] Setup Sentry error monitoring
 
-### Phase 5: Code Quality & Technical Debt
-- [ ] Split `api/_lib/supabase.js` god file (1909 lines → domain modules)
+### Phase 5: Code Quality & Technical Debt (IN PROGRESS - Feb 20, 2026)
+- [x] Split `api/_lib/supabase.js` god file (1908 lines → 6 domain modules + 51-line barrel)
+- [x] Fix `any` type annotations across pages (44 → 30, 0 remaining in pages)
+- [x] Remove duplicate UpgradePrompt components (3 → 1, deleted 2 unused)
+- [x] Remove duplicate Supabase client on frontend (services/supabase.ts deleted)
+- [x] Remove fabricated "320+ restaurants" claim on landing page
 - [ ] Remove Airtable-era field mapping layer
-- [ ] Fix 17 `any` type annotations across 5 pages
-- [ ] Remove duplicate UpgradePrompt components
-- [ ] Remove duplicate Supabase client on frontend
 - [ ] Add missing dialog ARIA attributes on inline modals
 - [ ] Add missing label associations in BookingPage
 - [ ] Wire up i18n system (defined but unused in all pages)
@@ -356,11 +357,11 @@ Design system: Playfair Display + Inter, burgundy `#9F1239`, charcoal `#1C1917`,
 | CRITICAL | IDOR via localStorage restaurant_id | `CallTrackingDashboard.tsx:107` | FIXED (Feb 20) |
 | CRITICAL | IDOR in ltv.js, agent-conversations.js, ml-performance.js | Multiple API files | FIXED (Feb 20) |
 | CRITICAL | No auth on restaurant-settings.js | `api/restaurant-settings.js` | FIXED (Feb 20) |
-| HIGH | Analytics date filter cosmetic only | `AnalyticsDashboard.tsx:50` | Needs fix |
-| HIGH | Hardcoded fake restaurant data | `BookingPage.tsx:227` | Needs fix |
+| HIGH | Analytics date filter cosmetic only | `AnalyticsDashboard.tsx:50` | FIXED (Feb 20) |
+| HIGH | Hardcoded fake restaurant data | `BookingPage.tsx:227` | FIXED (Feb 20) |
 | MEDIUM | phone-integration-simple.js has no auth | `api/phone-integration-simple.js` | Needs fix |
 | MEDIUM | 17 `any` types across pages | Multiple files | Needs fix |
-| LOW | Fabricated "320+ restaurants" on landing | Landing components | Needs fix |
+| LOW | Fabricated "320+ restaurants" on landing | Landing components | FIXED (Feb 20) |
 
 ---
 

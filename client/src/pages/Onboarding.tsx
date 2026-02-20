@@ -140,8 +140,8 @@ export default function Onboarding() {
       setTimeout(() => {
         navigate('/host-dashboard');
       }, 3000);
-    } catch (err: any) {
-      showError(err.message || 'Failed to complete onboarding. Please try again.');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Failed to complete onboarding. Please try again.');
       console.error('[Onboarding Error]', err);
     } finally {
       setIsSubmitting(false);
