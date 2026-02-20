@@ -275,12 +275,14 @@ Design system: Playfair Display + Inter, burgundy `#9F1239`, charcoal `#1C1917`,
 
 ## Current Roadmap
 
-### Phase 3: Security Hardening (CRITICAL - Code Done, SQL Migration Pending)
-- [x] **RLS Policy Fixes** (migration created: `database/migrations/20260220_security_hardening.sql`)
-  - [x] Remove `USING(true)` on reservations, service_records, customer_history (exposes PII)
-  - [x] Revoke anon GRANT on pos_connections, revenue_records, customer_ltv
-  - [x] Add proper restaurant-scoped RLS using JWT claims
-  - [ ] **PENDING: Run migration in Supabase SQL Editor**
+### Phase 3: Security Hardening (CRITICAL - DONE)
+- [x] **RLS Policy Fixes** (migration executed: `database/migrations/20260220_security_hardening.sql`)
+  - [x] Remove `USING(true)` on reservations, service_records, customer_history, ml_interventions, agent_conversations
+  - [x] Restrict all sensitive tables from anon/public to authenticated-only
+  - [x] Fix `public.users` RLS to own-data-only (`auth.uid()`)
+  - [x] Revoke blanket `GRANT SELECT ON ALL TABLES IN SCHEMA restaurant` from anon
+  - [x] Re-grant only `restaurant_info` (public profiles) and `sms_logs` (webhook) to anon
+  - [x] **Migration executed in Supabase SQL Editor (2026-02-20)**
 - [x] **Server-side IDOR Fixes**
   - [x] `api/ltv.js` - now uses `req.user.restaurant_id` from JWT
   - [x] `api/agent-conversations.js` - now uses `req.user.restaurant_id` from JWT
@@ -349,8 +351,8 @@ Design system: Playfair Display + Inter, burgundy `#9F1239`, charcoal `#1C1917`,
 | Severity | Issue | File | Status |
 |----------|-------|------|--------|
 | CRITICAL | RLS bypassed - all queries use supabaseAdmin | `api/_lib/supabase.js` | All queries scoped by restaurant_id at app layer |
-| CRITICAL | Public read on reservations (`USING(true)`) | `seatable-eu-migration.sql:894` | Migration created, pending execution |
-| CRITICAL | Anon access to POS OAuth tokens | `20260126_pos_and_revenue.sql:153` | Migration created, pending execution |
+| CRITICAL | Public read on reservations (`USING(true)`) | `seatable-eu-migration.sql:894` | FIXED (Feb 20) - Migration executed |
+| CRITICAL | Anon access to POS OAuth tokens | `20260126_pos_and_revenue.sql:153` | FIXED (Feb 20) - Anon grants revoked |
 | CRITICAL | IDOR via localStorage restaurant_id | `CallTrackingDashboard.tsx:107` | FIXED (Feb 20) |
 | CRITICAL | IDOR in ltv.js, agent-conversations.js, ml-performance.js | Multiple API files | FIXED (Feb 20) |
 | CRITICAL | No auth on restaurant-settings.js | `api/restaurant-settings.js` | FIXED (Feb 20) |
@@ -369,4 +371,4 @@ Design system: Playfair Display + Inter, burgundy `#9F1239`, charcoal `#1C1917`,
 
 ---
 
-**Last Updated**: February 20, 2026
+**Last Updated**: February 20, 2026 (Phase 3 security migration executed)
