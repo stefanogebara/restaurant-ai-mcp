@@ -75,7 +75,7 @@ async function handleGetRestaurant(req, res) {
   const { data, error } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, restaurant_type, city, country, phone, email, website, business_hours, reservation_settings, average_dining_duration_minutes, slug, whatsapp_enabled')
+    .select('id, restaurant_name, restaurant_type, city, country, phone, email, website, business_hours, reservation_settings, average_dining_duration_minutes, slug, whatsapp_enabled, whatsapp_phone_number')
     .eq('slug', slug)
     .eq('is_active', true)
     .eq('onboarding_completed', true)
@@ -110,8 +110,8 @@ async function handleGetRestaurant(req, res) {
       advance_booking_days: reservationSettings.advance_booking_days || 30,
       average_dining_duration: data.average_dining_duration_minutes || 90,
       whatsapp_enabled: data.whatsapp_enabled || false,
-      wa_me_link: data.whatsapp_enabled && process.env.WHATSAPP_DISPLAY_PHONE_NUMBER
-        ? `https://wa.me/${process.env.WHATSAPP_DISPLAY_PHONE_NUMBER.replace(/\D/g, '')}`
+      wa_me_link: data.whatsapp_enabled && data.whatsapp_phone_number
+        ? `https://wa.me/${data.whatsapp_phone_number.replace(/\D/g, '')}`
         : null,
     }
   });
