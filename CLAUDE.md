@@ -20,7 +20,7 @@
 | **Deployment** | Vercel (auto-deploy on push to main) |
 | **State** | React Query (@tanstack/react-query) |
 | **Rate Limiting** | Upstash Redis (with in-memory fallback) |
-| **Testing** | Jest (backend, 164 tests), Vitest + RTL (frontend, 100 tests) |
+| **Testing** | Jest (backend, 283 tests), Vitest + RTL (frontend, 295 tests), Playwright (E2E) |
 | **Logging** | createSecureLogger (masks sensitive data) |
 
 ---
@@ -197,28 +197,44 @@ restaurant-ai-mcp/
 
 ### Backend (Jest)
 ```bash
-npx jest --forceExit    # 164 tests across 3 suites
+npx jest --forceExit    # 283 tests across 9 suites
+npm run test:all        # Run backend + frontend tests together
 ```
 
 Test files:
 - `api/__tests__/auth.test.js` - JWT, middleware, restaurant lookup
 - `api/__tests__/multi-tenancy.test.js` - Restaurant isolation
 - `api/__tests__/supabase.test.js` - Database operations
+- `api/__tests__/reservations.test.js` - Reservation CRUD (create, lookup, list, modify, cancel)
+- `api/__tests__/waitlist.test.js` - Waitlist GET/POST/PATCH/DELETE
+- `api/__tests__/host-dashboard.test.js` - Dashboard, check-in, complete-service, create-table
+- `api/__tests__/whatsapp-templates.test.js` - WhatsApp template rendering, i18n, interpolation
+- `api/__tests__/onboarding-complete.test.js` - Brazil free plan vs Growth trial logic
+- `api/__tests__/subscription-limits.test.js` - Plan limits, features, reservation checks
 
 ### Frontend (Vitest + React Testing Library)
 ```bash
-cd client && npx vitest run    # 100 tests across 8 suites
+cd client && npx vitest run    # 295 tests across 20 suites
 ```
 
 Test files:
 - `client/src/utils/__tests__/timeFormatting.test.ts` - Time formatting utilities
 - `client/src/utils/__tests__/tableCombinations.test.ts` - Table combination algorithm
+- `client/src/utils/__tests__/currency.test.ts` - Currency detection + formatting (BRL/EUR)
+- `client/src/config/__tests__/planFeatures.test.ts` - Plan features, limits, access checks
 - `client/src/components/dashboard/__tests__/StatsBar.test.tsx` - Stats bar
 - `client/src/components/dashboard/__tests__/ReservationsList.test.tsx` - Reservations list
 - `client/src/components/dashboard/__tests__/ActivePartiesPanel.test.tsx` - Active parties
 - `client/src/components/common/__tests__/PhoneInput.test.tsx` - Phone input
 - `client/src/components/host/__tests__/WaitlistPanel.test.tsx` - Waitlist panel
 - `client/src/components/host/__tests__/WalkInModal.test.tsx` - Walk-in modal
+
+### E2E (Playwright)
+```bash
+npx playwright test                           # All E2E tests
+npx playwright test e2e/critical-flows.spec.ts  # Critical flows only
+npx playwright test e2e/brazil-launch.spec.ts   # Brazil launch smoke tests
+```
 
 ---
 
@@ -337,8 +353,13 @@ Design system: Playfair Display + Inter, burgundy `#9F1239`, charcoal `#1C1917`,
 - [x] WhatsApp connection prep (model updated to claude-sonnet-4, env vars documented)
 - [x] Create Brazilian demo restaurant ("Boteco do Samba", São Paulo, seed script)
 
-### Phase 7: Testing & Quality Assurance
-- [ ] Add E2E tests (Playwright - currently 0 E2E tests)
+### Phase 7: Testing & Quality Assurance (IN PROGRESS - Feb 20, 2026)
+- [x] Add unit tests for Phase 6 code (currency.ts, planFeatures.ts, subscription-limits.js) - 103 tests
+- [x] Add API endpoint tests (reservations, waitlist, host-dashboard) - 39 tests
+- [x] Add WhatsApp templates + onboarding tests - 50 tests
+- [x] Add E2E tests (Playwright: brazil-launch.spec.ts + updated critical-flows.spec.ts)
+- [x] Add `test:all` script, include api/ml/** in coverage config
+- [x] Fix production bug: timezone scoping in reservations.js handleCreate
 - [ ] Increase test coverage to 80%+
 - [ ] Stress test with concurrent users
 - [ ] Add API documentation

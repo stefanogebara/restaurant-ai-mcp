@@ -164,6 +164,8 @@ async function handleCreate(req, res, restaurantId) {
     special_requests
   } = req.method === 'POST' ? req.body : req.query;
 
+  const timezone = req.user?.timezone || 'UTC';
+
   if (!date || !time || !party_size || !customer_name || !customer_phone) {
     return res.status(400).json({
       message: 'I need a few more details to complete your reservation. Please provide the date, time, party size, your name, and phone number.'
