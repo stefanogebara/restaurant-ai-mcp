@@ -20,7 +20,7 @@
 | **Deployment** | Vercel (auto-deploy on push to main) |
 | **State** | React Query (@tanstack/react-query) |
 | **Rate Limiting** | Upstash Redis (with in-memory fallback) |
-| **Testing** | Jest (backend, 283 tests), Vitest + RTL (frontend, 295 tests), Playwright (E2E) |
+| **Testing** | Jest (backend, 496 tests), Vitest + RTL (frontend, 295 tests), Playwright (E2E) |
 | **Logging** | createSecureLogger (masks sensitive data) |
 
 ---
@@ -197,7 +197,7 @@ restaurant-ai-mcp/
 
 ### Backend (Jest)
 ```bash
-npx jest --forceExit    # 283 tests across 9 suites
+npx jest --forceExit    # 496 tests across 16 suites
 npm run test:all        # Run backend + frontend tests together
 ```
 
@@ -211,6 +211,13 @@ Test files:
 - `api/__tests__/whatsapp-templates.test.js` - WhatsApp template rendering, i18n, interpolation
 - `api/__tests__/onboarding-complete.test.js` - Brazil free plan vs Growth trial logic
 - `api/__tests__/subscription-limits.test.js` - Plan limits, features, reservation checks
+- `api/__tests__/validation.test.js` - Input validation, sanitization, XSS prevention (98% coverage)
+- `api/__tests__/availability-calculator.test.js` - Time slots, capacity, dining duration (96% coverage)
+- `api/__tests__/table-assignment.test.js` - Table matching, combinations, adjacency (95% coverage)
+- `api/__tests__/customer-history.test.js` - Airtable customer CRUD, stats, backfill (95% coverage)
+- `api/__tests__/portal.test.js` - Public booking portal: restaurant lookup, availability, reserve
+- `api/__tests__/analytics.test.js` - Analytics dashboard: auth, period filtering, data structure
+- `api/__tests__/stripe-webhook.test.js` - All 7 Stripe event types: subscription lifecycle, invoices (87% coverage)
 
 ### Frontend (Vitest + React Testing Library)
 ```bash
