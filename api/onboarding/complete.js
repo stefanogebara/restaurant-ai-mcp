@@ -631,41 +631,70 @@ module.exports = async (req, res) => {
       logger.warn(' Continuing without agent creation');
     }
 
-    // STEP 5: Create trial subscription (14-day free trial, no payment required)
-    logger.info(' Step 5: Creating trial subscription...');
+    // STEP 5: Create subscription (free plan for Brazil, trial for others)
+    logger.info(' Step 5: Creating subscription...');
+
+    const isBrazil = (country || '').toLowerCase() === 'brazil' || (country || '').toLowerCase() === 'brasil';
 
     let trialSubscription = null;
     try {
       const now = new Date();
-      const trialEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days
-
-      // Use restaurant_config.id as canonical restaurant_id (matches dashboard auth)
       const canonicalRestaurantId = configResult?.id || restaurantInfoResult.id;
-      const { data: subData, error: subError } = await supabaseAdmin
-        .from('subscriptions')
-        .insert({
-          restaurant_id: canonicalRestaurantId,
-          subscription_id: `trial_${canonicalRestaurantId}`,
-          customer_id: userId || `user_${Date.now()}`,
-          customer_email: customer_email,
-          plan_name: plan || 'Growth',
-          price_id: 'trial',
-          status: 'trialing',
-          current_period_start: now.toISOString(),
-          current_period_end: trialEnd.toISOString(),
-          trial_end: trialEnd.toISOString()
-        })
-        .select()
-        .single();
 
-      if (subError) {
-        logger.warn(' Could not create trial subscription:', subError.message);
+      if (isBrazil && (!plan || plan === 'Free' || plan === 'free')) {
+        // Brazil free plan: no expiry, active immediately
+        logger.info(' Brazil detected - creating free plan subscription');
+        const { data: subData, error: subError } = await supabaseAdmin
+          .from('subscriptions')
+          .insert({
+            restaurant_id: canonicalRestaurantId,
+            subscription_id: `free_${canonicalRestaurantId}`,
+            customer_id: userId || `user_${Date.now()}`,
+            customer_email: customer_email,
+            plan_name: 'Free',
+            price_id: 'free',
+            status: 'active',
+            current_period_start: now.toISOString(),
+            current_period_end: new Date('2099-12-31').toISOString(),
+          })
+          .select()
+          .single();
+
+        if (subError) {
+          logger.warn(' Could not create free subscription:', subError.message);
+        } else {
+          trialSubscription = subData;
+          logger.info(' Free plan subscription created for Brazil');
+        }
       } else {
-        trialSubscription = subData;
-        logger.info(' Trial subscription created (expires:', trialEnd.toISOString(), ')');
+        // Non-Brazil: 14-day Growth trial
+        const trialEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+        const { data: subData, error: subError } = await supabaseAdmin
+          .from('subscriptions')
+          .insert({
+            restaurant_id: canonicalRestaurantId,
+            subscription_id: `trial_${canonicalRestaurantId}`,
+            customer_id: userId || `user_${Date.now()}`,
+            customer_email: customer_email,
+            plan_name: plan || 'Growth',
+            price_id: 'trial',
+            status: 'trialing',
+            current_period_start: now.toISOString(),
+            current_period_end: trialEnd.toISOString(),
+            trial_end: trialEnd.toISOString()
+          })
+          .select()
+          .single();
+
+        if (subError) {
+          logger.warn(' Could not create trial subscription:', subError.message);
+        } else {
+          trialSubscription = subData;
+          logger.info(' Trial subscription created (expires:', trialEnd.toISOString(), ')');
+        }
       }
     } catch (trialError) {
-      logger.warn(' Trial subscription error (non-fatal):', trialError.message);
+      logger.warn(' Subscription error (non-fatal):', trialError.message);
     }
 
     logger.info(' Onboarding complete!');

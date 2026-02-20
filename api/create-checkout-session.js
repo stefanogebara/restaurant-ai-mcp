@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { priceId, planName } = req.body;
+    const { priceId, planName, currency } = req.body;
 
     if (!priceId) {
       return res.status(400).json({ error: 'Price ID is required' });
@@ -63,10 +63,14 @@ module.exports = async (req, res) => {
       }
     }
 
+    // Payment methods: add boleto for BRL customers
+    const isBRL = currency === 'BRL';
+    const paymentMethodTypes = isBRL ? ['card', 'boleto'] : ['card'];
+
     // Create Checkout Session
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
-      payment_method_types: ['card'],
+      payment_method_types: paymentMethodTypes,
       line_items: lineItems,
       success_url: `${origin}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/#pricing`,
@@ -76,6 +80,7 @@ module.exports = async (req, res) => {
       metadata: {
         plan_name: planName || 'Unknown Plan',
         restaurant_id: restaurantId || '',
+        currency: currency || 'EUR',
       },
       subscription_data: {
         ...(planName === 'Growth' ? { trial_period_days: 14 } : {}),

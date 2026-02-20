@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SkeletonSubscription } from '../components/common/Skeleton';
 import { authFetch } from '../services/api';
+import { detectCurrency } from '../utils/currency';
 
 interface SubscriptionData {
   status: 'active' | 'trialing' | 'canceled' | 'past_due' | 'none';
@@ -12,15 +13,23 @@ interface SubscriptionData {
   trialEnd?: string;
 }
 
-const plans = [
-  { name: 'Starter', price: '€29', desc: 'For small restaurants getting started.', features: ['AI Chat & WhatsApp', 'Host dashboard', 'Basic analytics', '50 reservations/mo', 'Email support'] },
-  { name: 'Growth', price: '€99', desc: 'For growing restaurants that want more.', features: ['Everything in Starter', 'AI Voice agent', 'Advanced analytics', '150 reservations/mo', 'SMS notifications'], featured: true },
-  { name: 'Scale', price: '€199', desc: 'For high-volume restaurants.', features: ['Everything in Growth', 'Unlimited reservations', 'Unlimited SMS', 'Priority support', 'Custom integrations'] },
+const plansEUR = [
+  { name: 'Starter', price: '\u20AC29', desc: 'For small restaurants getting started.', features: ['AI Chat & WhatsApp', 'Host dashboard', 'Basic analytics', '100 reservations/mo', 'Email support'] },
+  { name: 'Growth', price: '\u20AC99', desc: 'For growing restaurants that want more.', features: ['Everything in Starter', 'AI Voice agent', 'Advanced analytics', '150 reservations/mo', 'SMS notifications'], featured: true },
+  { name: 'Scale', price: '\u20AC199', desc: 'For high-volume restaurants.', features: ['Everything in Growth', 'Unlimited reservations', 'Unlimited SMS', 'Priority support', 'Custom integrations'] },
 ];
 
-const planTiers = ['starter', 'growth', 'scale'];
+const plansBRL = [
+  { name: 'Free', price: 'R$0', desc: 'Comece sem custo.', features: ['Chat + WhatsApp IA', 'Painel do restaurante', 'Análises básicas', '30 reservas/mês'] },
+  { name: 'Starter', price: 'R$149', desc: 'Para restaurantes em crescimento.', features: ['Tudo do Free', '100 reservas/mês', 'Suporte por e-mail', 'Análises avançadas'] },
+  { name: 'Growth', price: 'R$499', desc: 'Recursos avançados.', features: ['Tudo do Starter', 'Agente de voz IA', '150 reservas/mês', 'SMS'], featured: true },
+  { name: 'Scale', price: 'R$999', desc: 'Alto volume.', features: ['Tudo do Growth', 'Reservas ilimitadas', 'SMS ilimitado', 'Suporte prioritário'] },
+];
 
 export default function SubscriptionManage() {
+  const currency = useMemo(() => detectCurrency(), []);
+  const plans = currency === 'BRL' ? plansBRL : plansEUR;
+  const planTiers = plans.map(p => p.name.toLowerCase());
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);

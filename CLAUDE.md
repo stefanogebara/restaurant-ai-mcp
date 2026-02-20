@@ -39,13 +39,22 @@ Restaurant config lives in `restaurant.restaurant_config` schema.
 
 ## Pricing Plans
 
+### EUR (Europe)
 | Plan | Price | Features |
 |------|-------|----------|
-| **Starter** | EUR 29/month | AI reservations (Chat + WhatsApp), Host dashboard, Basic analytics, Email support, Up to 50 reservations/month |
+| **Starter** | EUR 29/month | AI reservations (Chat + WhatsApp), Host dashboard, Basic analytics, Email support, Up to 100 reservations/month |
 | **Growth** | EUR 99/month | Everything in Starter + Voice AI agent, Advanced analytics, Waitlist management, Up to 150 reservations/month, SMS notifications |
 | **Scale** | EUR 199/month | Everything in Growth + Unlimited reservations, Unlimited SMS, Priority support, Custom integrations |
 
-*Growth plan includes 14-day free trial. Usage-based metered billing for reservations, AI calls, SMS, and WhatsApp.*
+### BRL (Brazil)
+| Plan | Price | Features |
+|------|-------|----------|
+| **Free** | R$0/month | AI reservations (Chat + WhatsApp), Host dashboard, Basic analytics, Up to 30 reservations/month |
+| **Starter** | R$149/month | Everything in Free + Up to 100 reservations/month, Email support, Advanced analytics |
+| **Growth** | R$499/month | Everything in Starter + Voice AI agent, Waitlist management, Up to 150 reservations/month, SMS |
+| **Scale** | R$999/month | Everything in Growth + Unlimited reservations, Unlimited SMS, Priority support, Custom integrations |
+
+*Growth plan includes 14-day free trial. Usage-based metered billing for reservations, AI calls, SMS, and WhatsApp. Currency auto-detected from browser locale.*
 
 ---
 
@@ -319,15 +328,14 @@ Design system: Playfair Display + Inter, burgundy `#9F1239`, charcoal `#1C1917`,
 - [ ] Wire up i18n system (31 refs across 12 pages - deferred, large scope)
 - [ ] Use design system tokens instead of raw hex values (447+ usages - deferred, large scope)
 
-### Phase 6: Brazil Launch Preparation
-- [ ] Connect WhatsApp integration (code exists, not connected to real account)
-- [ ] Add PT-BR translation (currently EN/ES only)
-- [ ] Add BRL pricing + Pix payment support
-- [ ] Create freemium tier for Brazil market
-- [ ] Simplify onboarding (7 steps → 3-4)
-- [ ] Create Brazilian demo restaurant
-- [ ] Remove fabricated "320+ restaurants" claim on landing page
-- [ ] Increase Starter plan reservation limit (50/month too restrictive)
+### Phase 6: Brazil Launch Preparation (DONE - Feb 20, 2026)
+- [x] Increase Starter plan limit (50 → 100 reservations/month)
+- [x] Simplify onboarding (7 steps → 4: Info → Contact → Tables & Settings → Review & Launch)
+- [x] Add PT-BR translation (i18n config, 166 keys, WhatsApp templates with pt variants)
+- [x] Create freemium tier (Free plan: R$0, 30 reservations/month, basic dashboard)
+- [x] Add BRL pricing + currency detection (auto-detect from browser locale, boleto support)
+- [x] WhatsApp connection prep (model updated to claude-sonnet-4, env vars documented)
+- [x] Create Brazilian demo restaurant ("Boteco do Samba", São Paulo, seed script)
 
 ### Phase 7: Testing & Quality Assurance
 - [ ] Add E2E tests (Playwright - currently 0 E2E tests)

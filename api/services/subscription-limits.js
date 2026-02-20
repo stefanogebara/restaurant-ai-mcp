@@ -5,9 +5,26 @@
  * Used for feature gating in middleware and frontend.
  */
 
-const { STARTER_PLAN_MONTHLY_RESERVATIONS, GROWTH_PLAN_MONTHLY_RESERVATIONS } = require('../_lib/constants');
+const { FREE_PLAN_MONTHLY_RESERVATIONS, STARTER_PLAN_MONTHLY_RESERVATIONS, GROWTH_PLAN_MONTHLY_RESERVATIONS } = require('../_lib/constants');
 
 const PLAN_LIMITS = {
+  free: {
+    name: 'Free',
+    maxReservationsPerMonth: FREE_PLAN_MONTHLY_RESERVATIONS,
+    features: [
+      'ai_reservations',
+      'host_dashboard',
+      'basic_analytics',
+    ],
+    analyticsLevel: 'basic',
+    smsNotifications: false,
+    waitlistManagement: false,
+    voiceAI: false,
+    multiLocation: false,
+    customIntegrations: false,
+    whiteLabel: false,
+    phoneSupport: false,
+  },
   starter: {
     name: 'Starter',
     maxReservationsPerMonth: STARTER_PLAN_MONTHLY_RESERVATIONS,

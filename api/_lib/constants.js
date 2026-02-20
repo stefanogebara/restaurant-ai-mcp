@@ -31,6 +31,11 @@ const LATE_THRESHOLD_MINUTES = 20;
 // ============ BUSINESS LIMITS ============
 
 /**
+ * Free plan monthly reservation limit (Brazil freemium)
+ */
+const FREE_PLAN_MONTHLY_RESERVATIONS = 30;
+
+/**
  * Maximum party size allowed for reservations
  */
 const MAX_PARTY_SIZE = 20;
@@ -43,7 +48,7 @@ const MAX_ADVANCE_BOOKING_DAYS = 90;
 /**
  * Starter plan monthly reservation limit
  */
-const STARTER_PLAN_MONTHLY_RESERVATIONS = 50;
+const STARTER_PLAN_MONTHLY_RESERVATIONS = 100;
 
 /**
  * Growth plan monthly reservation limit
@@ -79,6 +84,7 @@ module.exports = {
   LATE_THRESHOLD_MINUTES,
 
   // Business limits
+  FREE_PLAN_MONTHLY_RESERVATIONS,
   MAX_PARTY_SIZE,
   MAX_ADVANCE_BOOKING_DAYS,
   STARTER_PLAN_MONTHLY_RESERVATIONS,

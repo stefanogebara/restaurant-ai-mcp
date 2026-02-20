@@ -3,7 +3,7 @@
  * Defines which features are available for each subscription tier
  */
 
-export type PlanType = 'starter' | 'growth' | 'professional' | 'scale' | 'trial';
+export type PlanType = 'free' | 'starter' | 'growth' | 'professional' | 'scale' | 'trial';
 
 export interface PlanFeatures {
   // Core Dashboard
@@ -46,6 +46,46 @@ export interface PlanFeatures {
 }
 
 export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
+  free: {
+    // Core Dashboard
+    overview: true,
+
+    // ML & Intelligence - None
+    mlPerformance: false,
+    quickStatsWidget: false,
+    interventionPanel: false,
+    interventionActions: 'none',
+
+    // Analytics & Reporting - Basic Only
+    advancedAnalytics: false,
+    weeklyReports: false,
+    customReportScheduling: false,
+    revenueOpportunities: false,
+
+    // Customer Intelligence - None
+    customerLTV: false,
+    customerDNA: false,
+    customerHistory: 'basic',
+
+    // AI Agent - No voice
+    voiceAI: false,
+    aiAgentTracking: false,
+
+    // Waitlist - Basic
+    waitlistManagement: 'basic',
+    waitlistPriorityTiers: false,
+    waitlistSMSNotifications: false,
+    smartWaitTimePredictions: false,
+
+    // Enterprise Features
+    multiLocation: false,
+    whiteLabel: false,
+    apiAccess: false,
+    systemObservability: false,
+    prioritySupport: false,
+
+  },
+
   starter: {
     // Core Dashboard
     overview: true,
@@ -248,6 +288,7 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
 };
 
 export const PLAN_PRICES = {
+  free: 0,
   starter: 29,
   growth: 99,
   professional: 99,
@@ -255,6 +296,7 @@ export const PLAN_PRICES = {
 } as const;
 
 export const PLAN_NAMES = {
+  free: 'Free',
   starter: 'Starter',
   growth: 'Growth',
   professional: 'Professional',
@@ -263,6 +305,7 @@ export const PLAN_NAMES = {
 } as const;
 
 export const PLAN_DESCRIPTIONS = {
+  free: 'Get started with AI reservations at no cost',
   starter: 'Perfect for small restaurants getting started',
   growth: 'Advanced features for growing restaurants',
   professional: 'Advanced features for growing restaurants',
@@ -274,6 +317,7 @@ export const PLAN_DESCRIPTIONS = {
  * Intervention limits per plan (daily)
  */
 export const INTERVENTION_LIMITS = {
+  free: 0,
   starter: 0,
   growth: 5,
   professional: 5,
@@ -301,6 +345,7 @@ export function hasFeatureAccess(
  * Get the minimum plan required for a feature
  */
 export function getRequiredPlan(feature: keyof PlanFeatures): PlanType | null {
+  if (hasFeatureAccess('free', feature)) return 'free';
   if (hasFeatureAccess('starter', feature)) return 'starter';
   if (hasFeatureAccess('growth', feature)) return 'growth';
   // professional has same features as growth, no need to check separately

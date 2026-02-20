@@ -1,14 +1,14 @@
 /**
- * Restaurant Onboarding Wizard - Modern Elegant Design
+ * Restaurant Onboarding Wizard - Simplified 4-Step Flow
  *
- * 7-step onboarding flow for new restaurant customers:
- * 1. Welcome & Restaurant Info
- * 2. AI Learning (research + interview + persona)
- * 3. Contact & Business Hours
- * 4. AI Voice Selection (choose ElevenLabs voice for phone agent)
- * 5. Table Configuration
- * 6. Reservation Settings
- * 7. Team Setup (Pro+ only)
+ * 4-step onboarding for new restaurant customers:
+ * 1. Restaurant Info (name, type, location)
+ * 2. Contact & Business Hours (phone, email, schedule)
+ * 3. Tables & Settings (table config + reservation preferences)
+ * 4. Review & Launch (summary with edit links, launch CTA)
+ *
+ * AI Learning, Voice Selection, and Team Setup are available
+ * post-onboarding in the dashboard settings.
  *
  * Design: Modern Elegant with warm white backgrounds, burgundy accents,
  * Playfair Display headings, and clean minimalist aesthetic
@@ -18,15 +18,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import Step1Welcome from '../components/onboarding/Step1Welcome';
-import Step1_5RestaurantLearning from '../components/onboarding/Step1_5RestaurantLearning';
 import Step2Contact from '../components/onboarding/Step2Contact';
-import Step2_5VoiceSelection from '../components/onboarding/Step2_5VoiceSelection';
-import Step3Tables from '../components/onboarding/Step3Tables';
-import Step4Settings from '../components/onboarding/Step4Settings';
-import Step5Team from '../components/onboarding/Step5Team';
+import Step3TablesAndSettings from '../components/onboarding/Step3TablesAndSettings';
+import Step4Review from '../components/onboarding/Step4Review';
 import type { OnboardingData } from '../types/onboarding.types';
 import { authFetch } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+
+const TOTAL_STEPS = 4;
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -77,12 +76,12 @@ export default function Onboarding() {
         ]
       }
     ],
-    // Step 4: Reservation Settings
+    // Step 3: Reservation Settings (merged with tables)
     advance_booking_days: 30,
     buffer_time: 15,
     cancellation_policy: 'Free cancellation up to 2 hours before reservation',
     special_notes: '',
-    // Step 5: Team Setup
+    // Team setup deferred to post-onboarding
     team_members: [],
   });
 
@@ -99,7 +98,7 @@ export default function Onboarding() {
 
   // Navigate to next step
   const nextStep = () => {
-    if (currentStep < 7) {
+    if (currentStep < TOTAL_STEPS) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -108,6 +107,13 @@ export default function Onboarding() {
   const prevStep = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+    }
+  };
+
+  // Jump to a specific step (used by Review step's edit links)
+  const goToStep = (step: number) => {
+    if (step >= 1 && step <= TOTAL_STEPS) {
+      setCurrentStep(step);
     }
   };
 
@@ -151,15 +157,12 @@ export default function Onboarding() {
   // Step metadata for progress bar
   const stepNames = [
     'Restaurant Info',
-    'AI Learning',
     'Contact & Hours',
-    'Voice Selection',
-    'Tables',
-    'Settings',
-    'Team'
+    'Tables & Settings',
+    'Review & Launch',
   ];
 
-  const progressPercent = ((currentStep) / 7) * 100;
+  const progressPercent = (currentStep / TOTAL_STEPS) * 100;
 
   return (
     <div className="min-h-screen bg-[#FAFAF9] flex flex-col">
@@ -169,7 +172,7 @@ export default function Onboarding() {
           seatable<span className="text-[#9F1239]">.</span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-[13px] text-[#78716C]">Step {currentStep} of 7</span>
+          <span className="text-[13px] text-[#78716C]">Step {currentStep} of {TOTAL_STEPS}</span>
           <button
             onClick={() => navigate('/')}
             className="text-[13px] text-[#9F1239] font-medium hover:text-[#881337] transition-colors"
@@ -250,14 +253,6 @@ export default function Onboarding() {
             />
           )}
           {currentStep === 2 && (
-            <Step1_5RestaurantLearning
-              data={onboardingData}
-              updateData={updateData}
-              onNext={nextStep}
-              onBack={prevStep}
-            />
-          )}
-          {currentStep === 3 && (
             <Step2Contact
               data={onboardingData}
               updateData={updateData}
@@ -265,37 +260,22 @@ export default function Onboarding() {
               onBack={prevStep}
             />
           )}
+          {currentStep === 3 && (
+            <Step3TablesAndSettings
+              data={onboardingData}
+              updateData={updateData}
+              onNext={nextStep}
+              onBack={prevStep}
+            />
+          )}
           {currentStep === 4 && (
-            <Step2_5VoiceSelection
-              data={onboardingData}
-              onUpdate={updateData}
-              onNext={nextStep}
-              onPrev={prevStep}
-            />
-          )}
-          {currentStep === 5 && (
-            <Step3Tables
-              data={onboardingData}
-              updateData={updateData}
-              onNext={nextStep}
-              onBack={prevStep}
-            />
-          )}
-          {currentStep === 6 && (
-            <Step4Settings
-              data={onboardingData}
-              updateData={updateData}
-              onNext={nextStep}
-              onBack={prevStep}
-            />
-          )}
-          {currentStep === 7 && (
-            <Step5Team
+            <Step4Review
               data={onboardingData}
               updateData={updateData}
               onComplete={completeOnboarding}
               onBack={prevStep}
               isSubmitting={isSubmitting}
+              goToStep={goToStep}
             />
           )}
         </div>

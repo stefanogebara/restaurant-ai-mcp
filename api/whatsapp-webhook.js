@@ -34,7 +34,7 @@ const { buildGuestContext } = require('./services/guestMemory');
 const AI_CONFIG = {
   apiKey: process.env.OPENROUTER_API_KEY || process.env.MOONSHOT_API_KEY,
   baseUrl: process.env.AI_BASE_URL || 'https://openrouter.ai/api/v1',
-  model: process.env.AI_MODEL || 'moonshotai/kimi-k2.5',
+  model: process.env.AI_MODEL || 'anthropic/claude-sonnet-4-20250514',
 };
 
 // WhatsApp API base URL
