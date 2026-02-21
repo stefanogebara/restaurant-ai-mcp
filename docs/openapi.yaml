@@ -1,0 +1,2138 @@
+openapi: 3.0.3
+
+info:
+  title: Seatable API
+  description: |
+    AI-powered restaurant management platform API.
+
+    **Base URL**: https://restaurant-ai-mcp.vercel.app
+
+    ## Authentication
+
+    All dashboard/management endpoints require a JWT in the `Authorization` header:
+
+    ```
+    Authorization: Bearer <your-jwt-token>
+    ```
+
+    JWT tokens are issued by Supabase Auth on Google OAuth login and carry `restaurant_id`
+    and `timezone` claims for multi-tenant isolation.
+
+    ## Rate Limiting
+
+    All endpoints are rate-limited. Exceeding limits returns `429 Too Many Requests` with a
+    `retryAfter` field in seconds.
+
+    | Endpoint type | Limit |
+    |---------------|-------|
+    | `reservation` | 20 req/hour/IP |
+    | `api` (default) | 60 req/min/IP |
+
+  version: "1.0.0"
+  contact:
+    email: hello@seatable.io
+
+servers:
+  - url: https://restaurant-ai-mcp.vercel.app
+    description: Production
+
+tags:
+  - name: Portal
+    description: Public customer-facing booking portal (no auth required)
+  - name: AI Agent
+    description: Endpoints called by ElevenLabs voice agents
+  - name: Reservations
+    description: Reservation CRUD operations
+  - name: Waitlist
+    description: Walk-in waitlist management
+  - name: Dashboard
+    description: Host dashboard BFF (Backend for Frontend)
+  - name: Analytics
+    description: Business analytics (Growth/Scale plans only)
+  - name: Settings
+    description: Restaurant settings and configuration
+  - name: WhatsApp
+    description: WhatsApp Business integration
+  - name: Manager Notes
+    description: AI memory instructions for specific guests
+  - name: Billing
+    description: Subscription and usage tracking
+  - name: Webhooks
+    description: Inbound webhook receivers
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase-signed JWT carrying restaurant_id and timezone claims
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+        message:
+          type: string
+          description: Optional additional context
+
+    ValidationError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Validation failed
+        details:
+          type: array
+          items:
+            type: string
+
+    Reservation:
+      type: object
+      properties:
+        reservation_id:
+          type: string
+          example: RES-ABC123
+        customer_name:
+          type: string
+          example: María García
+        customer_phone:
+          type: string
+          example: "+34612345678"
+        customer_email:
+          type: string
+          format: email
+          nullable: true
+        party_size:
+          type: integer
+          minimum: 1
+          maximum: 20
+        date:
+          type: string
+          format: date
+          example: "2026-03-15"
+        time:
+          type: string
+          pattern: '^\d{2}:\d{2}$'
+          example: "20:00"
+        special_requests:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [confirmed, pending, cancelled, no-show, Seated]
+        created_at:
+          type: string
+          format: date-time
+
+    WaitlistEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customer_name:
+          type: string
+        customer_phone:
+          type: string
+        party_size:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+          enum: [waiting, notified, seated, cancelled, no_show]
+        estimated_wait_minutes:
+          type: integer
+        notes:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    Table:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        table_number:
+          type: string
+          example: "T1"
+        capacity:
+          type: integer
+        location:
+          type: string
+          example: Terraza
+        status:
+          type: string
+          enum: [Available, Occupied, Reserved, Cleaning]
+        current_service_id:
+          type: string
+          nullable: true
+        shape:
+          type: string
+          enum: [square, round, rectangle]
+        is_fixed_seating:
+          type: boolean
+        is_joinable:
+          type: boolean
+        joinable_with:
+          type: array
+          items:
+            type: string
+        position_x:
+          type: number
+        position_y:
+          type: number
+        width:
+          type: number
+          nullable: true
+        height:
+          type: number
+          nullable: true
+        rotation:
+          type: number
+
+    ActiveParty:
+      type: object
+      properties:
+        service_id:
+          type: string
+          example: SVC-001
+        customer_name:
+          type: string
+        customer_phone:
+          type: string
+        party_size:
+          type: integer
+        tables:
+          type: array
+          items:
+            type: string
+        seated_at:
+          type: string
+          format: date-time
+        estimated_departure:
+          type: string
+          format: date-time
+        time_elapsed_minutes:
+          type: integer
+        time_remaining_minutes:
+          type: integer
+        is_overdue:
+          type: boolean
+
+    MetricProfile:
+      type: object
+      properties:
+        template:
+          type: string
+          enum: [simple, balanced, advanced]
+        restaurant_type:
+          type: string
+          enum: [traditional, modern, fast-casual, fine-dining]
+        size:
+          type: string
+          enum: [small, medium, large]
+        location_type:
+          type: string
+          enum: [tourist, residential, business, town_center]
+        primary_concerns:
+          type: array
+          items:
+            type: string
+        visible_metrics:
+          type: array
+          items:
+            type: string
+        hidden_metrics:
+          type: array
+          items:
+            type: string
+        customizations:
+          type: object
+          properties:
+            risk_display:
+              type: string
+              enum: [simple, detailed, technical]
+            time_format:
+              type: string
+              enum: ["24h", "12h"]
+            currency:
+              type: string
+              example: EUR
+            show_technical_details:
+              type: boolean
+            font_size:
+              type: string
+              enum: [small, medium, large]
+            language:
+              type: string
+              enum: [en, es, pt, fr, it]
+            color_scheme:
+              type: string
+              enum: [default, dark, high-contrast]
+            notification_level:
+              type: string
+              enum: [essential, all]
+
+    Subscription:
+      type: object
+      properties:
+        plan:
+          type: string
+          enum: [Free, Starter, Growth, Scale]
+        status:
+          type: string
+          enum: [active, trialing, past_due, cancelled]
+        current_period_end:
+          type: string
+          format: date-time
+        trial_end:
+          type: string
+          format: date-time
+          nullable: true
+        is_active:
+          type: boolean
+        is_trial:
+          type: boolean
+
+    TimeSlot:
+      type: object
+      properties:
+        time:
+          type: string
+          pattern: '^\d{2}:\d{2}$'
+          example: "20:00"
+        available:
+          type: boolean
+        available_seats:
+          type: integer
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid JWT token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+
+    Forbidden:
+      description: Authenticated but no restaurant associated with account
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "No restaurant associated with your account. Please complete onboarding first."
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    RateLimited:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Too many requests
+              retryAfter:
+                type: integer
+                example: 60
+
+paths:
+
+  # ============================================================
+  # PUBLIC PORTAL
+  # ============================================================
+
+  /api/portal:
+    get:
+      tags: [Portal]
+      summary: Portal actions (GET)
+      description: |
+        Multi-action public booking portal endpoint. Action is selected via the `action` query parameter.
+
+        | Action | Description |
+        |--------|-------------|
+        | `restaurant` | Look up restaurant by slug |
+        | `availability` | Get available time slots |
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [restaurant, availability]
+        - name: slug
+          in: query
+          description: Required when action=restaurant
+          schema:
+            type: string
+            example: el-tapas-barcelona
+        - name: restaurant_id
+          in: query
+          description: Required when action=availability
+          schema:
+            type: string
+            format: uuid
+        - name: date
+          in: query
+          description: Required when action=availability (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: party_size
+          in: query
+          description: Required when action=availability (1-20)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - description: Restaurant info (action=restaurant)
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          name:
+                            type: string
+                          type:
+                            type: string
+                          city:
+                            type: string
+                          country:
+                            type: string
+                          phone:
+                            type: string
+                          email:
+                            type: string
+                          website:
+                            type: string
+                          slug:
+                            type: string
+                          business_hours:
+                            type: object
+                            additionalProperties:
+                              type: object
+                              properties:
+                                is_open:
+                                  type: boolean
+                                open_time:
+                                  type: string
+                                close_time:
+                                  type: string
+                          max_party_size:
+                            type: integer
+                          min_party_size:
+                            type: integer
+                          advance_booking_days:
+                            type: integer
+                          average_dining_duration:
+                            type: integer
+                          whatsapp_enabled:
+                            type: boolean
+                          wa_me_link:
+                            type: string
+                            nullable: true
+                  - description: Availability (action=availability)
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                      restaurant_name:
+                        type: string
+                      date:
+                        type: string
+                        format: date
+                      party_size:
+                        type: integer
+                      operating_hours:
+                        type: object
+                        properties:
+                          open:
+                            type: string
+                          close:
+                            type: string
+                      slots:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TimeSlot'
+        '400':
+          description: Bad Request – missing required parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+    post:
+      tags: [Portal]
+      summary: Create reservation (Portal)
+      description: |
+        Create a reservation from the public booking portal.
+
+        **Action**: `reserve`
+
+        **Side effects**:
+        - Sends confirmation email (if customer_email provided and Resend configured)
+        - Tracks `portal_booking` usage metric
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [reserve]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [restaurant_id, customer_name, customer_phone, party_size, date, time]
+              properties:
+                restaurant_id:
+                  type: string
+                  format: uuid
+                customer_name:
+                  type: string
+                  example: María García
+                customer_phone:
+                  type: string
+                  example: "+34612345678"
+                customer_email:
+                  type: string
+                  format: email
+                party_size:
+                  type: integer
+                  minimum: 1
+                  maximum: 20
+                date:
+                  type: string
+                  format: date
+                  description: Must not be in the past
+                time:
+                  type: string
+                  pattern: '^\d{2}:\d{2}$'
+                  example: "20:00"
+                special_requests:
+                  type: string
+      responses:
+        '201':
+          description: Reservation created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  reservation:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      party_size:
+                        type: integer
+                      date:
+                        type: string
+                        format: date
+                      time:
+                        type: string
+                      status:
+                        type: string
+                      restaurant_name:
+                        type: string
+        '400':
+          description: Invalid or missing fields
+        '404':
+          description: Restaurant not found or inactive
+        '409':
+          description: Time slot no longer available
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                  available_seats:
+                    type: integer
+
+  # ============================================================
+  # AI AGENT ENDPOINTS
+  # ============================================================
+
+  /api/check-availability:
+    get:
+      tags: [AI Agent]
+      summary: Check specific time slot availability
+      description: |
+        Checks whether a specific time/date is available for a party size.
+        Returns alternative time suggestions when unavailable.
+        Called by ElevenLabs voice agent tools.
+      parameters:
+        - name: restaurant_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: time
+          in: query
+          required: true
+          schema:
+            type: string
+            example: "20:00"
+        - name: party_size
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Availability result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  available:
+                    type: boolean
+                  message:
+                    type: string
+                  timezone:
+                    type: string
+                  details:
+                    type: object
+                    properties:
+                      estimated_duration:
+                        type: string
+                      occupied_seats:
+                        type: integer
+                      available_seats:
+                        type: integer
+                  alternative_times:
+                    type: array
+                    description: Only present when available=false
+                    items:
+                      type: object
+                      properties:
+                        time:
+                          type: string
+                        available_seats:
+                          type: integer
+                        message:
+                          type: string
+
+    post:
+      tags: [AI Agent]
+      summary: Check specific time slot availability (POST)
+      description: Same as GET but accepts parameters in request body (ElevenLabs webhook compatibility)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [restaurant_id, date, time, party_size]
+              properties:
+                restaurant_id:
+                  type: string
+                  format: uuid
+                date:
+                  type: string
+                  format: date
+                time:
+                  type: string
+                party_size:
+                  type: integer
+      responses:
+        '200':
+          description: Availability result (same as GET)
+
+  /api/get-current-datetime:
+    get:
+      tags: [AI Agent]
+      summary: Get current date and time
+      description: Returns current date/time in multiple formats. Used by AI agents to resolve relative dates.
+      parameters:
+        - name: timezone
+          in: query
+          schema:
+            type: string
+            example: Europe/Madrid
+            default: UTC
+      responses:
+        '200':
+          description: Date/time information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  timestamp:
+                    type: string
+                    format: date-time
+                  date:
+                    type: string
+                    format: date
+                  time:
+                    type: string
+                    example: "15:30"
+                  datetime:
+                    type: string
+                    example: "2026-02-21 15:30"
+                  day_of_week:
+                    type: string
+                    example: Saturday
+                  timezone:
+                    type: string
+                  relative_dates:
+                    type: object
+                    properties:
+                      today:
+                        type: string
+                        format: date
+                      tomorrow:
+                        type: string
+                        format: date
+                      yesterday:
+                        type: string
+                        format: date
+                      next_week:
+                        type: string
+                        format: date
+                  unix_timestamp:
+                    type: integer
+
+  /api/get-wait-time:
+    get:
+      tags: [AI Agent]
+      summary: Get estimated walk-in wait time
+      description: |
+        Returns current estimated wait time based on upcoming reservations.
+        Auth is optional – JWT provides restaurant_id; query param is fallback.
+      security:
+        - {}
+        - BearerAuth: []
+      parameters:
+        - name: restaurant_id
+          in: query
+          description: Required when not authenticated
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Wait time estimate
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  estimated_wait_minutes:
+                    type: integer
+                  message:
+                    type: string
+                  is_peak_hour:
+                    type: boolean
+                  occupancy_percentage:
+                    type: integer
+
+  # ============================================================
+  # RESERVATIONS
+  # ============================================================
+
+  /api/reservations:
+    get:
+      tags: [Reservations]
+      summary: Reservation actions (GET)
+      description: |
+        Multi-action reservation endpoint. Select action via `action` query parameter.
+
+        | Action | Description |
+        |--------|-------------|
+        | `lookup` | Find a reservation |
+        | `list` | List recent reservations |
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [lookup, list]
+        - name: reservation_id
+          in: query
+          description: For action=lookup
+          schema:
+            type: string
+        - name: customer_phone
+          in: query
+          description: For action=lookup
+          schema:
+            type: string
+        - name: customer_name
+          in: query
+          description: For action=lookup
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: For action=list (default 5)
+          schema:
+            type: integer
+            default: 5
+        - name: sort
+          in: query
+          description: For action=list
+          schema:
+            type: string
+            enum: [created_at_desc, created_at_asc]
+            default: created_at_desc
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - description: Lookup result
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                      reservation:
+                        $ref: '#/components/schemas/Reservation'
+                      message:
+                        type: string
+                  - description: List result
+                    type: object
+                    properties:
+                      reservations:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Reservation'
+                      total:
+                        type: integer
+        '400':
+          description: Missing required parameters
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Reservation not found
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+    post:
+      tags: [Reservations]
+      summary: Reservation actions (POST)
+      description: |
+        Multi-action reservation endpoint (POST variant for ElevenLabs compatibility).
+
+        | Action | Description |
+        |--------|-------------|
+        | `create` | Create a new reservation |
+        | `lookup` | Find a reservation |
+        | `modify` | Modify an existing reservation |
+        | `cancel` | Cancel a reservation |
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [create, lookup, modify, cancel]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - description: Create
+                  type: object
+                  required: [date, time, party_size, customer_name, customer_phone]
+                  properties:
+                    date:
+                      type: string
+                      format: date
+                    time:
+                      type: string
+                      example: "20:00"
+                    party_size:
+                      type: integer
+                    customer_name:
+                      type: string
+                    customer_phone:
+                      type: string
+                    customer_email:
+                      type: string
+                      format: email
+                    special_requests:
+                      type: string
+                - description: Lookup
+                  type: object
+                  properties:
+                    reservation_id:
+                      type: string
+                    customer_phone:
+                      type: string
+                    customer_name:
+                      type: string
+                - description: Modify
+                  type: object
+                  required: [reservation_id]
+                  properties:
+                    reservation_id:
+                      type: string
+                    date:
+                      type: string
+                      format: date
+                    time:
+                      type: string
+                    party_size:
+                      type: integer
+                    special_requests:
+                      type: string
+                - description: Cancel
+                  type: object
+                  required: [reservation_id]
+                  properties:
+                    reservation_id:
+                      type: string
+      responses:
+        '200':
+          description: Action completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Human-readable confirmation (designed for TTS)
+                  success:
+                    type: boolean
+                  reservation:
+                    $ref: '#/components/schemas/Reservation'
+        '400':
+          description: Missing required parameters
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  # ============================================================
+  # WAITLIST
+  # ============================================================
+
+  /api/waitlist:
+    get:
+      tags: [Waitlist]
+      summary: Get waitlist entries
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [waiting, notified, seated, cancelled, no_show]
+        - name: active
+          in: query
+          description: When "true", returns only waiting/notified entries
+          schema:
+            type: string
+            enum: ["true", "false"]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: Waitlist entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  count:
+                    type: integer
+                  waitlist:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WaitlistEntry'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Waitlist]
+      summary: Add to waitlist
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [customer_name, customer_phone, party_size]
+              properties:
+                customer_name:
+                  type: string
+                customer_phone:
+                  type: string
+                customer_email:
+                  type: string
+                  format: email
+                party_size:
+                  type: integer
+                  minimum: 1
+                special_requests:
+                  type: string
+                estimated_wait:
+                  type: integer
+                  description: Override auto-calculated wait time (minutes)
+      responses:
+        '201':
+          description: Added to waitlist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  waitlist_entry:
+                    $ref: '#/components/schemas/WaitlistEntry'
+        '400':
+          description: Validation failed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    patch:
+      tags: [Waitlist]
+      summary: Update waitlist entry
+      description: |
+        Update status, wait time, or notes. When status changes to `notified`,
+        an SMS is automatically sent to the guest.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [waiting, notified, seated, cancelled, no_show]
+                estimated_wait:
+                  type: integer
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Entry updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  waitlist_entry:
+                    $ref: '#/components/schemas/WaitlistEntry'
+        '400':
+          description: No fields to update or invalid status
+        '404':
+          description: Entry not found
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    delete:
+      tags: [Waitlist]
+      summary: Remove from waitlist
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Entry removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  deleted_id:
+                    type: string
+
+  # ============================================================
+  # HOST DASHBOARD
+  # ============================================================
+
+  /api/host-dashboard:
+    get:
+      tags: [Dashboard]
+      summary: Dashboard actions (GET)
+      description: |
+        Use `action=dashboard` to fetch the complete real-time dashboard state.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [dashboard]
+      responses:
+        '200':
+          description: Full dashboard state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  restaurant_id:
+                    type: string
+                    format: uuid
+                  timezone:
+                    type: string
+                  slug:
+                    type: string
+                  summary:
+                    type: object
+                    properties:
+                      total_capacity:
+                        type: integer
+                      available_seats:
+                        type: integer
+                      occupied_seats:
+                        type: integer
+                      occupancy_percentage:
+                        type: integer
+                      active_parties:
+                        type: integer
+                      upcoming_reservations:
+                        type: integer
+                      estimated_wait_time:
+                        type: integer
+                      avg_duration_minutes:
+                        type: integer
+                        nullable: true
+                      peak_hours:
+                        type: string
+                        nullable: true
+                      max_single_party_size:
+                        type: integer
+                      flexible_tables_available:
+                        type: integer
+                      fixed_tables_available:
+                        type: integer
+                  tables:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Table'
+                  active_parties:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ActiveParty'
+                  upcoming_reservations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reservation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Dashboard]
+      summary: Dashboard actions (POST)
+      description: |
+        All operational dashboard mutations use POST.
+
+        | Action | Required body fields | Description |
+        |--------|---------------------|-------------|
+        | `check-in` | `reservation_id` | Mark reservation as arrived |
+        | `check-walk-in` | `party_size` | Check capacity for walk-in |
+        | `seat-party` | `customer_name`, `party_size`, `table_ids` | Seat a party |
+        | `complete-service` | `service_id` | Party has left |
+        | `mark-table-clean` | `table_id` | Mark table clean |
+        | `update-table-status` | `table_id`, `status` | Set table status |
+        | `update-reservation` | `reservation_id` | Update reservation |
+        | `create-table` | `table_number`, `capacity` | Add new table |
+        | `delete-table` | `table_id` | Remove table |
+        | `update-table-position` | `table_id`, `position_x`, `position_y` | Floor plan |
+        | `update-table-properties` | `table_id` + properties | Table config |
+        | `link-tables` | `table_id`, `link_with` | Mark tables as combinable |
+        | `unlink-tables` | `table_id`, `unlink_from` | Remove link |
+        | `auto-assign-shapes` | _(none)_ | Auto-assign shapes by capacity |
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - check-in
+              - check-walk-in
+              - seat-party
+              - complete-service
+              - mark-table-clean
+              - update-table-status
+              - update-reservation
+              - create-table
+              - delete-table
+              - update-table-position
+              - update-table-properties
+              - link-tables
+              - unlink-tables
+              - auto-assign-shapes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Fields depend on action (see action descriptions)
+              examples:
+                check-in:
+                  value:
+                    reservation_id: RES-ABC123
+                seat-party:
+                  value:
+                    customer_name: María García
+                    customer_phone: "+34612345678"
+                    party_size: 4
+                    table_ids: ["T1", "T2"]
+                    reservation_id: RES-ABC123
+                create-table:
+                  value:
+                    table_number: T10
+                    capacity: 4
+                    location: Main
+                    shape: round
+                    position_x: 200
+                    position_y: 300
+      responses:
+        '200':
+          description: Action completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Missing required fields or invalid action
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Reservation/service/table not found
+
+  # ============================================================
+  # ANALYTICS
+  # ============================================================
+
+  /api/analytics:
+    get:
+      tags: [Analytics]
+      summary: Get business analytics
+      description: |
+        Returns analytics for the requested time period.
+
+        **Requires**: `advanced_analytics` feature (Growth/Scale plans).
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [today, 7d, 30d]
+            default: 30d
+      responses:
+        '200':
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  analytics:
+                    type: object
+                    properties:
+                      overview:
+                        type: object
+                        properties:
+                          total_reservations:
+                            type: integer
+                          total_completed_services:
+                            type: integer
+                          avg_party_size:
+                            type: number
+                          avg_service_time_minutes:
+                            type: integer
+                          total_capacity:
+                            type: integer
+                          current_occupancy:
+                            type: integer
+                          current_occupancy_percentage:
+                            type: string
+                      reservations_by_status:
+                        type: object
+                        additionalProperties:
+                          type: integer
+                        example:
+                          confirmed: 120
+                          no-show: 15
+                          cancelled: 12
+                      reservations_by_day:
+                        type: object
+                        additionalProperties:
+                          type: integer
+                        example:
+                          Friday: 32
+                          Saturday: 41
+                      reservations_by_time_slot:
+                        type: object
+                        additionalProperties:
+                          type: integer
+                        example:
+                          "Lunch (11AM-2PM)": 18
+                          "Prime Dinner (7PM-10PM)": 89
+                      table_utilization:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            table_number:
+                              type: string
+                            capacity:
+                              type: integer
+                            location:
+                              type: string
+                            times_used:
+                              type: integer
+                            utilization_rate:
+                              type: string
+                      daily_trend:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            date:
+                              type: string
+                              format: date
+                            dayName:
+                              type: string
+                            reservations:
+                              type: integer
+                            completed_services:
+                              type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Plan does not include advanced_analytics feature
+
+  # ============================================================
+  # RESTAURANT SETTINGS
+  # ============================================================
+
+  /api/restaurant-settings:
+    get:
+      tags: [Settings]
+      summary: Get basic restaurant settings
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Restaurant settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      language:
+                        type: string
+                        enum: [en, es, pt, fr, it]
+                      restaurant_name:
+                        type: string
+                      city:
+                        type: string
+                      country:
+                        type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      tags: [Settings]
+      summary: Update basic restaurant settings
+      description: |
+        Allowed fields: `language`, `restaurant_name`, `city`, `country`, `phone`, `email`, `business_hours`, `timezone`
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                language:
+                  type: string
+                  enum: [en, es, pt, fr, it]
+                restaurant_name:
+                  type: string
+                city:
+                  type: string
+                country:
+                  type: string
+                phone:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                timezone:
+                  type: string
+                  example: Europe/Madrid
+      responses:
+        '200':
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      language:
+                        type: string
+                      restaurant_name:
+                        type: string
+        '400':
+          description: Invalid language or no updates provided
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/restaurant-settings/profile:
+    get:
+      tags: [Settings]
+      summary: Get metric display profile
+      description: Returns the dashboard metric profile. Returns default `simple/traditional` profile if not configured.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Metric profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/MetricProfile'
+
+    put:
+      tags: [Settings]
+      summary: Update metric display profile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [metric_profile]
+              properties:
+                metric_profile:
+                  $ref: '#/components/schemas/MetricProfile'
+      responses:
+        '200':
+          description: Profile updated
+        '400':
+          description: Invalid profile fields
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/restaurant-settings/profile/recommend:
+    post:
+      tags: [Settings]
+      summary: Get AI-recommended metric profile
+      description: |
+        Returns a recommended dashboard profile based on restaurant characteristics.
+
+        Template selection logic:
+        - `traditional` → `simple`
+        - `modern` or `fast-casual` → `advanced`
+        - other → `balanced`
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [restaurant_type, size, location_type, primary_concerns]
+              properties:
+                restaurant_type:
+                  type: string
+                  enum: [traditional, modern, fast-casual, fine-dining]
+                size:
+                  type: string
+                  enum: [small, medium, large]
+                location_type:
+                  type: string
+                  enum: [tourist, residential, business, town_center]
+                primary_concerns:
+                  type: array
+                  items:
+                    type: string
+                    enum: [no_shows, regular_customers, revenue, table_turnover, waitlist]
+      responses:
+        '200':
+          description: Profile recommendation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      recommended_profile:
+                        $ref: '#/components/schemas/MetricProfile'
+                      reasoning:
+                        type: string
+        '400':
+          description: Missing required fields
+
+  # ============================================================
+  # WHATSAPP SETTINGS
+  # ============================================================
+
+  /api/whatsapp-settings:
+    get:
+      tags: [WhatsApp]
+      summary: Get WhatsApp status or stats
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [status, stats]
+      responses:
+        '200':
+          description: WhatsApp configuration
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - description: Status (action=status)
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                      data:
+                        type: object
+                        properties:
+                          enabled:
+                            type: boolean
+                          phone_number:
+                            type: string
+                            nullable: true
+                          restaurant_name:
+                            type: string
+                          api_configured:
+                            type: boolean
+                          wa_me_link:
+                            type: string
+                            nullable: true
+                          display_phone:
+                            type: string
+                  - description: Stats (action=stats)
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                      data:
+                        type: object
+                        properties:
+                          active_sessions:
+                            type: integer
+                          total_sessions:
+                            type: integer
+                          messages_this_month:
+                            type: integer
+
+    patch:
+      tags: [WhatsApp]
+      summary: Update WhatsApp settings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [update]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+                phone_number:
+                  type: string
+                  description: E.164 format, 10-15 digits
+      responses:
+        '200':
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      enabled:
+                        type: boolean
+                      phone_number:
+                        type: string
+        '400':
+          description: No valid fields or invalid phone number
+
+    post:
+      tags: [WhatsApp]
+      summary: Send WhatsApp test message
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [test]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone_number]
+              properties:
+                phone_number:
+                  type: string
+                  example: "+34612345678"
+      responses:
+        '200':
+          description: Test message sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  messageId:
+                    type: string
+        '400':
+          description: Missing phone or API not configured
+
+  # ============================================================
+  # MANAGER NOTES
+  # ============================================================
+
+  /api/manager-notes:
+    get:
+      tags: [Manager Notes]
+      summary: List manager notes
+      description: Lists AI memory notes for a restaurant or specific guest.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guest_phone
+          in: query
+          description: Filter to a specific guest
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Manager notes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  notes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        content:
+                          type: string
+                        guest_phone:
+                          type: string
+                          nullable: true
+                        importance:
+                          type: integer
+                          minimum: 1
+                          maximum: 10
+                        is_policy:
+                          type: boolean
+                          description: True when note applies to all guests (restaurant-wide policy)
+                        created_at:
+                          type: string
+                          format: date-time
+                  total:
+                    type: integer
+
+    post:
+      tags: [Manager Notes]
+      summary: Create manager note
+      description: |
+        Creates a high-importance AI memory that influences voice agent behavior.
+
+        Importance levels:
+        - `vip_instruction`: 9 (VIP guest overrides)
+        - `general_policy`: 8 (restaurant-wide rules)
+        - `guest_preference`: 7 (guest preferences)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  example: "Carlos Ruiz is a VIP regular. Always offer the terrace table."
+                note_type:
+                  type: string
+                  enum: [vip_instruction, general_policy, guest_preference]
+                  default: vip_instruction
+                guest_phone:
+                  type: string
+                  description: Omit for restaurant-wide policies
+      responses:
+        '201':
+          description: Note created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  note:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      content:
+                        type: string
+                      type:
+                        type: string
+                      guest_phone:
+                        type: string
+                        nullable: true
+                      importance:
+                        type: integer
+                      created_at:
+                        type: string
+                        format: date-time
+        '400':
+          description: Content is required
+
+    delete:
+      tags: [Manager Notes]
+      summary: Delete manager note
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Note deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  deleted:
+                    type: string
+                    format: uuid
+        '400':
+          description: ID is required
+
+  # ============================================================
+  # BILLING
+  # ============================================================
+
+  /api/subscription-status:
+    get:
+      tags: [Billing]
+      summary: Get subscription status
+      description: Returns subscription details for a given customer email.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Subscription found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  has_subscription:
+                    type: boolean
+                  subscription:
+                    $ref: '#/components/schemas/Subscription'
+        '400':
+          description: Missing email parameter
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: No subscription found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+                  has_subscription:
+                    type: boolean
+                    example: false
+
+  /api/usage-stats:
+    get:
+      tags: [Billing]
+      summary: Get usage statistics
+      description: Returns usage metrics for billing. Defaults to current month; use `start`/`end` for custom range.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: start
+          in: query
+          description: Start date (YYYY-MM-DD) for custom range
+          schema:
+            type: string
+            format: date
+        - name: end
+          in: query
+          description: End date (YYYY-MM-DD) for custom range
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Usage data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  restaurant_id:
+                    type: string
+                    format: uuid
+                  period:
+                    oneOf:
+                      - type: string
+                        example: current_month
+                      - type: object
+                        properties:
+                          start:
+                            type: string
+                            format: date
+                          end:
+                            type: string
+                            format: date
+                  usage:
+                    type: object
+                    additionalProperties:
+                      type: integer
+                    example:
+                      reservation_created: 47
+                      portal_booking: 23
+                      whatsapp: 89
+                      ai_call: 12
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/verify-session:
+    get:
+      tags: [Billing]
+      summary: Verify Stripe checkout session
+      description: Verifies a Stripe checkout session after payment. No auth required – session ID is proof of payment.
+      parameters:
+        - name: session_id
+          in: query
+          required: true
+          schema:
+            type: string
+            description: Stripe checkout session ID (cs_...)
+      responses:
+        '200':
+          description: Session verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [paid, unpaid, no_payment_required]
+                  customer_id:
+                    type: string
+                    example: cus_XXXXXXXX
+                  customer_email:
+                    type: string
+                    format: email
+                  subscription_id:
+                    type: string
+                    example: sub_XXXXXXXX
+                  amount_total:
+                    type: integer
+                    description: Amount in smallest currency unit (e.g. cents)
+                  currency:
+                    type: string
+                    example: eur
+                  plan:
+                    type: string
+                    enum: [Starter, Growth, Scale]
+        '400':
+          description: Missing session_id
+
+  # ============================================================
+  # WEBHOOKS
+  # ============================================================
+
+  /api/stripe-webhook:
+    post:
+      tags: [Webhooks]
+      summary: Stripe event webhook
+      description: |
+        Receives Stripe subscription lifecycle events. Validates webhook signature using `STRIPE_WEBHOOK_SECRET`.
+
+        Handled events:
+        - `customer.subscription.created`
+        - `customer.subscription.updated`
+        - `customer.subscription.deleted`
+        - `invoice.payment_succeeded`
+        - `invoice.payment_failed`
+        - `checkout.session.completed`
+        - `customer.subscription.trial_will_end`
+      parameters:
+        - name: Stripe-Signature
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Stripe event object
+      responses:
+        '200':
+          description: Event received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received:
+                    type: boolean
+                    example: true
+        '400':
+          description: Invalid webhook signature
+
+  /api/whatsapp-webhook:
+    get:
+      tags: [Webhooks]
+      summary: WhatsApp webhook verification
+      description: Meta Cloud API webhook verification endpoint.
+      parameters:
+        - name: hub.verify_token
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: hub.challenge
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: hub.mode
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns hub.challenge value for verification
+
+    post:
+      tags: [Webhooks]
+      summary: WhatsApp incoming message
+      description: Processes incoming WhatsApp messages via Claude AI and sends replies.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Meta Cloud API webhook payload
+      responses:
+        '200':
+          description: Message processed
