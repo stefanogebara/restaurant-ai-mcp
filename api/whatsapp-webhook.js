@@ -27,7 +27,6 @@ const { getRestaurantByName, getAllActiveRestaurants } = require('./_lib/restaur
 const { getMultiTenantClient } = require('./_lib/multi-tenant-supabase');
 const { canAccommodateParty } = require('./_lib/supabase');
 const { trackUsage } = require('./_lib/usage-tracking');
-const { sendWhatsAppMessage, sendTemplateMessage } = require('./_lib/whatsapp-sender');
 const { extractMemoriesFromWhatsApp } = require('./services/memoryExtractor');
 const { buildGuestContext } = require('./services/guestMemory');
 
@@ -35,8 +34,11 @@ const { buildGuestContext } = require('./services/guestMemory');
 const AI_CONFIG = {
   apiKey: process.env.OPENROUTER_API_KEY || process.env.MOONSHOT_API_KEY,
   baseUrl: process.env.AI_BASE_URL || 'https://openrouter.ai/api/v1',
-  model: process.env.AI_MODEL || 'anthropic/claude-sonnet-4-20250514',
+  model: process.env.AI_MODEL || 'moonshotai/kimi-k2.5',
 };
+
+// WhatsApp API base URL
+const WHATSAPP_API_URL = 'https://graph.facebook.com/v18.0';
 
 // In-memory message deduplication (prevents Meta retry from reprocessing)
 // Map<messageId, timestamp> - entries auto-expire after 5 minutes
@@ -71,7 +73,120 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
-// sendWhatsAppMessage and sendTemplateMessage are imported from ./_lib/whatsapp-sender.js
+/**
+ * Send a WhatsApp message via Meta Cloud API
+ */
+async function sendWhatsAppMessage(to, message) {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+
+  if (!phoneNumberId || !accessToken) {
+    logger.error(' Missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN');
+    return { success: false, error: 'WhatsApp not configured' };
+  }
+
+  try {
+    const response = await fetch(`${WHATSAPP_API_URL}/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: to,
+        type: 'text',
+        text: { body: message }
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      logger.error(' Send error:', { status: response.status, data: JSON.stringify(data) });
+      return { success: false, error: data.error?.message || 'Failed to send' };
+    }
+
+    logger.info(` Message sent to ${to}, status=${response.status}, msgId=${data.messages?.[0]?.id}, contacts=${JSON.stringify(data.contacts)}`);
+    return { success: true, messageId: data.messages?.[0]?.id };
+  } catch (error) {
+    logger.error(' Send exception:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Send a WhatsApp template message via Meta Cloud API
+ * Used for business-initiated messages (outside 24-hour window)
+ * Templates must be pre-approved in Meta Business Manager
+ *
+ * @param {string} to - Recipient phone number
+ * @param {string} templateName - Name of approved template (e.g., 'reservation_confirmed')
+ * @param {string} languageCode - Template language (e.g., 'en', 'es')
+ * @param {Array} bodyParameters - Array of strings for {{1}}, {{2}}, etc. placeholders
+ * @returns {object} Result with success status
+ */
+async function sendTemplateMessage(to, templateName, languageCode = 'en', bodyParameters = []) {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+
+  if (!phoneNumberId || !accessToken) {
+    logger.error(' Missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN');
+    return { success: false, error: 'WhatsApp not configured' };
+  }
+
+  try {
+    // Build template components
+    const components = [];
+
+    if (bodyParameters.length > 0) {
+      components.push({
+        type: 'body',
+        parameters: bodyParameters.map(param => ({
+          type: 'text',
+          text: String(param)
+        }))
+      });
+    }
+
+    const payload = {
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to: to,
+      type: 'template',
+      template: {
+        name: templateName,
+        language: { code: languageCode },
+        components: components
+      }
+    };
+
+    logger.info(` Sending template '${templateName}' to ${to}:`, JSON.stringify(payload, null, 2));
+
+    const response = await fetch(`${WHATSAPP_API_URL}/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      logger.error(' Template send error:', data);
+      return { success: false, error: data.error?.message || 'Failed to send template' };
+    }
+
+    logger.info(` Template '${templateName}' sent to ${to}, messageId: ${data.messages?.[0]?.id}`);
+    return { success: true, messageId: data.messages?.[0]?.id };
+  } catch (error) {
+    logger.error(' Template send exception:', error);
+    return { success: false, error: error.message };
+  }
+}
 
 /**
  * Get current date/time in restaurant timezone

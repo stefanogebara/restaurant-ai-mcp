@@ -24,9 +24,6 @@ const { logReservationCreated, logCustomerCancelled } = require('./ml/data-logge
 // Twilio for SMS confirmations
 const twilio = require('twilio');
 
-// WhatsApp sender for reservation confirmations
-const { sendReservationConfirmation, isWhatsAppConfigured } = require('./_lib/whatsapp-sender');
-
 // CORS utility for secure cross-origin requests
 const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 
@@ -46,9 +43,6 @@ const { getLocalDate } = require('./_lib/timezone');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('Reservations');
 
-// Error tracking
-const { captureException } = require('./_lib/sentry');
-
 // Guest memory (fire-and-forget memory creation from booking requests)
 const { createMemory } = require('./services/guestMemory');
 
@@ -56,7 +50,7 @@ const { createMemory } = require('./services/guestMemory');
 // SMS CONFIRMATION HELPER
 // ============================================================================
 async function sendReservationConfirmationSMS(customerPhone, reservationDetails) {
-  const { reservationId, customerName, partySize, date, time, restaurantName = 'Your Restaurant' } = reservationDetails;
+  const { reservationId, customerName, partySize, date, time } = reservationDetails;
 
   // Skip if Twilio not configured
   if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
@@ -90,7 +84,7 @@ async function sendReservationConfirmationSMS(customerPhone, reservationDetails)
     }
 
     const message = await twilioClient.messages.create({
-      body: `${restaurantName}: ${customerName}, ${partySize}p on ${date} at ${time}. Conf# ${reservationId}`,
+      body: `Chez Ambiance: ${customerName}, ${partySize}p on ${date} at ${time}. Conf# ${reservationId}`,
       from: process.env.TWILIO_PHONE_NUMBER,
       to: formattedPhone
     });
@@ -152,7 +146,6 @@ module.exports = async (req, res) => {
         });
     }
   } catch (error) {
-    captureException(error, { url: req.url, method: req.method });
     logger.error('Reservation error', error);
     return res.status(500).json({
       message: 'I apologize, but something went wrong processing your request. Please try again or contact the restaurant directly.'
@@ -170,8 +163,6 @@ async function handleCreate(req, res, restaurantId) {
     customer_email,
     special_requests
   } = req.method === 'POST' ? req.body : req.query;
-
-  const timezone = req.user?.timezone || 'UTC';
 
   if (!date || !time || !party_size || !customer_name || !customer_phone) {
     return res.status(400).json({
@@ -389,63 +380,25 @@ async function handleCreate(req, res, restaurantId) {
   }
 
   // ============================================================================
-  // CONFIRMATION: WhatsApp first (if enabled), SMS fallback
+  // SMS CONFIRMATION (Send reservation details to customer)
   // ============================================================================
   try {
-    let confirmationSent = false;
+    const smsResult = await sendReservationConfirmationSMS(customer_phone, {
+      reservationId,
+      customerName: customer_name,
+      partySize: party_size,
+      date,
+      time
+    });
 
-    // Check if restaurant has WhatsApp enabled
-    const { data: waConfig } = await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_config')
-      .select('whatsapp_enabled, restaurant_name, agent_language')
-      .eq('id', restaurantId)
-      .single();
-
-    const restaurantName = waConfig?.restaurant_name || 'Your Restaurant';
-    const language = waConfig?.agent_language?.toLowerCase() || 'en';
-
-    // Try WhatsApp first if enabled and API configured
-    if (waConfig?.whatsapp_enabled && isWhatsAppConfigured()) {
-      const waResult = await sendReservationConfirmation(customer_phone, {
-        reservationId,
-        customerName: customer_name,
-        partySize: party_size,
-        date,
-        time,
-        restaurantName,
-        language,
-      });
-
-      if (waResult.success) {
-        logger.info(`WhatsApp confirmation sent for ${reservationId}`);
-        trackUsage(restaurantId, 'whatsapp');
-        confirmationSent = true;
-      } else {
-        logger.info(`WhatsApp failed for ${reservationId}, falling back to SMS`, { error: waResult.error });
-      }
-    }
-
-    // SMS fallback (or primary if WhatsApp not enabled)
-    if (!confirmationSent) {
-      const smsResult = await sendReservationConfirmationSMS(customer_phone, {
-        reservationId,
-        customerName: customer_name,
-        partySize: party_size,
-        date,
-        time,
-        restaurantName,
-      });
-
-      if (smsResult.success) {
-        logger.info(`SMS confirmation sent for ${reservationId}`);
-      } else {
-        logger.info(`SMS not sent for ${reservationId}`, { reason: smsResult.reason });
-      }
+    if (smsResult.success) {
+      logger.info(`SMS confirmation sent for ${reservationId}`);
+    } else {
+      logger.info(`SMS not sent for ${reservationId}`, { reason: smsResult.reason });
     }
   } catch (error) {
-    // Don't fail the reservation if confirmation fails
-    logger.error('Error sending confirmation', error);
+    // Don't fail the reservation if SMS fails
+    logger.error('Error sending SMS confirmation', error);
   }
 
   // ============================================================================

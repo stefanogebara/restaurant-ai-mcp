@@ -3,10 +3,8 @@
  * Handles restaurant settings including language preferences and metric profiles
  */
 
-const { createClient } = require('@supabase/supabase-js');
-const { createSecureLogger } = require('./_lib/secure-logger');
-const { captureException } = require('./_lib/sentry');
-const { verifyAuth } = require('./_lib/auth');
+import { createClient } from '@supabase/supabase-js';
+import { createSecureLogger } from './_lib/secure-logger';
 const logger = createSecureLogger('RestaurantSettings');
 
 const supabase = createClient(
@@ -119,7 +117,7 @@ function recommendProfile(characteristics) {
   };
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Restaurant-ID');
@@ -128,19 +126,9 @@ module.exports = async function handler(req, res) {
     return res.status(200).end();
   }
 
-  // Verify authentication - settings require authenticated access
-  const authResult = await verifyAuth(req, { required: true });
-  if (authResult.error) {
-    return res.status(authResult.status || 401).json({
-      error: authResult.error,
-      message: 'Authentication required to access restaurant settings'
-    });
-  }
-  req.user = authResult.user;
-
   try {
     const { method } = req;
-    const restaurantId = req.user.restaurant_id;
+    const restaurantId = req.headers['x-restaurant-id'] || req.query.restaurant_id;
     const path = req.url.split('?')[0];
 
     if (!restaurantId && !path.includes('/profile/recommend')) {
@@ -283,8 +271,7 @@ module.exports = async function handler(req, res) {
 
     return res.status(405).json({ success: false, error: `Method ${method} not allowed for path ${path}` });
   } catch (error) {
-    captureException(error, { url: req.url, method: req.method });
     logger.error('Restaurant settings API error:', error);
     return res.status(500).json({ success: false, error: 'Internal server error', details: error.message });
   }
-};
+}

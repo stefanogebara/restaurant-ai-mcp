@@ -23,27 +23,26 @@ import ReservationsList from '../components/dashboard/ReservationsList';
 import ActivePartiesPanel from '../components/dashboard/ActivePartiesPanel';
 import WaitlistPanel from '../components/host/WaitlistPanel';
 import ManagerNotesPanel from '../components/dashboard/ManagerNotesPanel';
-import WhatsAppStatsCard from '../components/dashboard/WhatsAppStatsCard';
 import WalkInModal from '../components/host/WalkInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
 import QuickInterventionModal from '../components/host/QuickInterventionModal';
-import type { UpcomingReservation, ActiveParty, Table, SeatPartyRequest } from '../types/host.types';
+import type { UpcomingReservation, ActiveParty } from '../types/host.types';
 
 export default function Dashboard() {
   // ---- Modal state ----
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [showSeatModal, setShowSeatModal] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
-  const [selectedParty, setSelectedParty] = useState<SeatPartyRequest | null>(null);
+  const [selectedParty, setSelectedParty] = useState<any>(null);
   const [selectedReservation, setSelectedReservation] = useState<UpcomingReservation | null>(null);
-  const [interventionReservation, setInterventionReservation] = useState<UpcomingReservation | null>(null);
+  const [interventionReservation, setInterventionReservation] = useState<any>(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [serviceToComplete, setServiceToComplete] = useState<ActiveParty | null>(null);
 
   // ---- Data fetching ----
   const { data: dashboardData, refetch, isLoading, isError } = useQuery({
-    queryKey: ['hostDashboard'],
+    queryKey: ['dashboard'],
     queryFn: hostAPI.getDashboard,
     refetchInterval: 30000,
   });
@@ -59,13 +58,13 @@ export default function Dashboard() {
   const todayReservations = reservations.filter((r) => r.date === today);
   const tomorrowReservations = reservations.filter((r) => r.date === tomorrow);
 
-  const occupiedTables = tables.filter((t: Table) => t.status === 'Occupied').length;
+  const occupiedTables = tables.filter((t: any) => t.status === 'Occupied').length;
   const totalTables = tables.length;
   const totalGuests = activeParties.reduce((sum, p) => sum + (p.party_size || 0), 0);
-  const availableTables = tables.filter((t: Table) => t.status === 'Available');
+  const availableTables = tables.filter((t: any) => t.status === 'Available');
 
   // ---- Handlers ----
-  const handleWalkInSuccess = (partyData: SeatPartyRequest) => {
+  const handleWalkInSuccess = (partyData: any) => {
     setSelectedParty(partyData);
     setShowWalkInModal(false);
     setShowSeatModal(true);
@@ -76,44 +75,34 @@ export default function Dashboard() {
     setShowCheckInModal(true);
   };
 
-  const handleCheckInSuccess = (reservationData: UpcomingReservation) => {
+  const handleCheckInSuccess = (reservationData: any) => {
     setSelectedReservation(reservationData);
     setShowCheckInModal(false);
     setShowSeatModal(true);
   };
 
-  const handleCompleteService = (party: ActiveParty) => {
-    setServiceToComplete(party);
-    setShowCompleteModal(true);
-  };
-
-  const confirmCompleteService = async () => {
-    if (!serviceToComplete) return;
+  const handleCompleteService = async (party: ActiveParty) => {
     try {
       const response = await authFetch('/api/host-dashboard?action=complete-service', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ service_record_id: serviceToComplete.service_id }),
+        body: JSON.stringify({ service_record_id: party.service_id }),
       });
       if (response.ok) {
         refetch();
       }
     } catch (error) {
       console.error('Error completing service:', error);
-    } finally {
-      setShowCompleteModal(false);
-      setServiceToComplete(null);
     }
   };
 
-  const handleSeatFromWaitlist = (entry: { id: string; customer_name: string; customer_phone: string; party_size: number; special_requests?: string }) => {
+  const handleSeatFromWaitlist = (entry: any) => {
     setSelectedParty({
-      type: 'walk-in',
       customer_name: entry.customer_name,
       customer_phone: entry.customer_phone,
       party_size: entry.party_size,
       special_requests: entry.special_requests,
-      table_ids: [],
+      waitlist_entry_id: entry.id,
     });
     setShowSeatModal(true);
   };
@@ -173,21 +162,7 @@ export default function Dashboard() {
                 Week view
               </span>
               <button
-                onClick={() => {
-                  if (!dashboardData?.data) return;
-                  const rows = [['Name', 'Date', 'Time', 'Party Size', 'Status', 'Phone']];
-                  reservations.forEach(r => {
-                    rows.push([r.customer_name, r.date, r.time, String(r.party_size), r.status || '', r.customer_phone || '']);
-                  });
-                  const csv = rows.map(r => r.map(c => `"${(c || '').replace(/"/g, '""')}"`).join(',')).join('\n');
-                  const blob = new Blob([csv], { type: 'text/csv' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = `reservations-${today}.csv`;
-                  a.click();
-                  URL.revokeObjectURL(url);
-                }}
+                onClick={() => window.location.href = '/host-dashboard/calls'}
                 className="flex items-center gap-2 px-4 py-2 bg-white border border-[#D6D3D1] text-[#57534E] hover:border-[#A8A29E] rounded-[10px] text-[13px] font-medium transition-colors"
               >
                 Export
@@ -280,7 +255,6 @@ export default function Dashboard() {
               />
 
               <ManagerNotesPanel language="en" />
-              <WhatsAppStatsCard />
             </div>
           </div>
         </div>
@@ -348,7 +322,7 @@ export default function Dashboard() {
       {/* Complete Service Confirmation */}
       {showCompleteModal && serviceToComplete && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div role="dialog" aria-modal="true" aria-label="Complete Service" className="bg-white rounded-2xl shadow-2xl border border-[#E7E5E4] p-6 max-w-sm w-full">
+          <div className="bg-white rounded-2xl shadow-2xl border border-[#E7E5E4] p-6 max-w-sm w-full">
             <h3 className="text-lg font-bold text-[#1C1917] mb-2">Complete Service</h3>
             <p className="text-sm text-[#57534E] mb-6">
               Complete service for <span className="font-semibold">{serviceToComplete.customer_name}</span>?
@@ -361,7 +335,11 @@ export default function Dashboard() {
                 Cancel
               </button>
               <button
-                onClick={confirmCompleteService}
+                onClick={() => {
+                  handleCompleteService(serviceToComplete);
+                  setShowCompleteModal(false);
+                  setServiceToComplete(null);
+                }}
                 className="flex-1 px-4 py-2.5 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-colors"
               >
                 Complete

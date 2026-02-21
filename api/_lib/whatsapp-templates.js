@@ -2,7 +2,7 @@
  * WhatsApp Message Templates
  *
  * Reusable message templates for WhatsApp notifications.
- * Supports EN, ES, and PT-BR languages with variable interpolation.
+ * Supports EN and ES languages with variable interpolation.
  *
  * Usage:
  *   const { getTemplate } = require('./whatsapp-templates');
@@ -33,14 +33,6 @@ const TEMPLATES = {
       `Personas: ${partySize}\n` +
       `Confirmacion: ${reservationId}\n\n` +
       `Responde MODIFICAR para cambiar o CANCELAR para cancelar.`,
-
-    pt: ({ name, restaurant, date, time, partySize, reservationId }) =>
-      `Oi ${name}, sua reserva no ${restaurant} está confirmada!\n\n` +
-      `Data: ${date}\n` +
-      `Horário: ${time}\n` +
-      `Pessoas: ${partySize}\n` +
-      `Confirmação: ${reservationId}\n\n` +
-      `Responda MODIFICAR para alterar ou CANCELAR para cancelar.`,
   },
 
   reservation_modified: {
@@ -57,13 +49,6 @@ const TEMPLATES = {
       `Nueva hora: ${time}\n` +
       `Personas: ${partySize}\n\n` +
       `Responde CANCELAR si necesitas cancelar.`,
-
-    pt: ({ name, reservationId, date, time, partySize }) =>
-      `Oi ${name}, sua reserva ${reservationId} foi atualizada.\n\n` +
-      `Nova data: ${date}\n` +
-      `Novo horário: ${time}\n` +
-      `Pessoas: ${partySize}\n\n` +
-      `Responda CANCELAR se precisar cancelar.`,
   },
 
   reservation_cancelled: {
@@ -74,10 +59,6 @@ const TEMPLATES = {
     es: ({ name, reservationId, restaurant }) =>
       `Hola ${name}, tu reserva ${reservationId} en ${restaurant} ha sido cancelada.\n\n` +
       `Esperamos verte pronto! Responde RESERVAR para hacer una nueva reserva.`,
-
-    pt: ({ name, reservationId, restaurant }) =>
-      `Oi ${name}, sua reserva ${reservationId} no ${restaurant} foi cancelada.\n\n` +
-      `Esperamos vê-lo em breve! Responda RESERVAR para fazer uma nova reserva.`,
   },
 
   reservation_reminder: {
@@ -94,13 +75,6 @@ const TEMPLATES = {
       `Hora: ${time}\n` +
       `Personas: ${partySize}\n\n` +
       `Responde CANCELAR si no puedes asistir.`,
-
-    pt: ({ name, restaurant, date, time, partySize }) =>
-      `Oi ${name}, lembrando da sua reserva no ${restaurant}.\n\n` +
-      `Data: ${date}\n` +
-      `Horário: ${time}\n` +
-      `Pessoas: ${partySize}\n\n` +
-      `Responda CANCELAR se não puder comparecer.`,
   },
 
   welcome: {
@@ -119,14 +93,6 @@ const TEMPLATES = {
       `- Consultar disponibilidad\n` +
       `- Modificar o cancelar una reserva\n\n` +
       `Como puedo ayudarte hoy?`,
-
-    pt: ({ restaurant }) =>
-      `Bem-vindo ao ${restaurant}! Sou seu assistente de reservas com IA.\n\n` +
-      `Posso ajudá-lo a:\n` +
-      `- Reservar uma mesa\n` +
-      `- Verificar disponibilidade\n` +
-      `- Modificar ou cancelar uma reserva\n\n` +
-      `Como posso ajudá-lo hoje?`,
   },
 
   waitlist_added: {
@@ -141,12 +107,6 @@ const TEMPLATES = {
       `Personas: ${partySize}\n` +
       `Espera estimada: ${estimatedWait} minutos\n\n` +
       `Te avisaremos cuando tu mesa este lista!`,
-
-    pt: ({ name, restaurant, partySize, estimatedWait }) =>
-      `Oi ${name}, você foi adicionado à lista de espera do ${restaurant}.\n\n` +
-      `Pessoas: ${partySize}\n` +
-      `Espera estimada: ${estimatedWait} minutos\n\n` +
-      `Avisaremos quando sua mesa estiver pronta!`,
   },
 
   table_ready: {
@@ -157,10 +117,6 @@ const TEMPLATES = {
     es: ({ name, restaurant }) =>
       `Hola ${name}, buenas noticias! Tu mesa en ${restaurant} esta lista.\n\n` +
       `Por favor dirigete a la entrada. Reservaremos tu mesa por 10 minutos.`,
-
-    pt: ({ name, restaurant }) =>
-      `Oi ${name}, ótima notícia! Sua mesa no ${restaurant} está pronta.\n\n` +
-      `Por favor, dirija-se à recepção. Guardaremos sua mesa por 10 minutos.`,
   },
 };
 
@@ -172,7 +128,7 @@ const TEMPLATES = {
  * Get a formatted message from a template.
  *
  * @param {string} templateName - Template key (e.g. 'reservation_confirmed')
- * @param {string} lang        - Language code ('en', 'es', 'pt', or 'pt-BR'), defaults to 'en'
+ * @param {string} lang        - Language code ('en' or 'es'), defaults to 'en'
  * @param {object} vars        - Variables to interpolate into the template
  * @returns {string|null}      - Formatted message or null if template not found
  */
@@ -183,9 +139,7 @@ function getTemplate(templateName, lang = 'en', vars = {}) {
     return null;
   }
 
-  // Normalize pt-BR → pt for template lookup
-  const normalizedLang = lang.startsWith('pt') ? 'pt' : lang;
-  const langTemplate = template[normalizedLang] || template['en'];
+  const langTemplate = template[lang] || template['en'];
   if (!langTemplate) {
     logger.warn(`Language ${lang} not found for template ${templateName}`);
     return null;

@@ -19,8 +19,6 @@ const { Resend } = require('resend');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('Portal');
 
-const { captureException } = require('./_lib/sentry');
-
 module.exports = async (req, res) => {
   // CORS for public portal
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -52,7 +50,6 @@ module.exports = async (req, res) => {
         });
     }
   } catch (error) {
-    captureException(error, { url: req.url, method: req.method });
     logger.error('[Portal] Unhandled error:', error);
     return res.status(500).json({
       success: false,
@@ -78,7 +75,7 @@ async function handleGetRestaurant(req, res) {
   const { data, error } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, restaurant_type, city, country, phone, email, website, business_hours, reservation_settings, average_dining_duration_minutes, slug, whatsapp_enabled, whatsapp_phone_number')
+    .select('id, restaurant_name, restaurant_type, city, country, phone, email, website, business_hours, reservation_settings, average_dining_duration_minutes, slug')
     .eq('slug', slug)
     .eq('is_active', true)
     .eq('onboarding_completed', true)
@@ -111,11 +108,7 @@ async function handleGetRestaurant(req, res) {
       max_party_size: reservationSettings.max_party_size || 12,
       min_party_size: reservationSettings.min_party_size || 1,
       advance_booking_days: reservationSettings.advance_booking_days || 30,
-      average_dining_duration: data.average_dining_duration_minutes || 90,
-      whatsapp_enabled: data.whatsapp_enabled || false,
-      wa_me_link: data.whatsapp_enabled && data.whatsapp_phone_number
-        ? `https://wa.me/${data.whatsapp_phone_number.replace(/\D/g, '')}`
-        : null,
+      average_dining_duration: data.average_dining_duration_minutes || 90
     }
   });
 }

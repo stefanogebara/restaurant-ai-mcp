@@ -13,7 +13,6 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const fetch = require('node-fetch');
 const { createSecureLogger } = require('../_lib/secure-logger');
-const { captureException } = require('../_lib/sentry');
 const { verifyAuth } = require('../_lib/auth');
 const { suggestTimezone } = require('../_lib/timezone');
 const logger = createSecureLogger('Onboarding');
@@ -123,8 +122,6 @@ module.exports = async (req, res) => {
       selected_voice_id, // Voice selection from Step 2.5
       selected_voice_language, // Language code from selected voice (e.g., 'es', 'fr', 'en')
       restaurant_learning, // AI restaurant learning data (session_id, restaurant_profile)
-      whatsapp_enabled, // WhatsApp reservation toggle
-      whatsapp_phone_number, // WhatsApp business phone number
     } = req.body;
 
     // Validate required fields
@@ -466,8 +463,6 @@ module.exports = async (req, res) => {
       },
       is_active: true,
       onboarding_completed: true,
-      whatsapp_enabled: whatsapp_enabled === true,
-      whatsapp_phone_number: whatsapp_phone_number || null,
       ...(restaurant_learning?.restaurant_profile ? {
         restaurant_profile: restaurant_learning.restaurant_profile
       } : {}),
@@ -636,70 +631,41 @@ module.exports = async (req, res) => {
       logger.warn(' Continuing without agent creation');
     }
 
-    // STEP 5: Create subscription (free plan for Brazil, trial for others)
-    logger.info(' Step 5: Creating subscription...');
-
-    const isBrazil = (country || '').toLowerCase() === 'brazil' || (country || '').toLowerCase() === 'brasil';
+    // STEP 5: Create trial subscription (14-day free trial, no payment required)
+    logger.info(' Step 5: Creating trial subscription...');
 
     let trialSubscription = null;
     try {
       const now = new Date();
+      const trialEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days
+
+      // Use restaurant_config.id as canonical restaurant_id (matches dashboard auth)
       const canonicalRestaurantId = configResult?.id || restaurantInfoResult.id;
+      const { data: subData, error: subError } = await supabaseAdmin
+        .from('subscriptions')
+        .insert({
+          restaurant_id: canonicalRestaurantId,
+          subscription_id: `trial_${canonicalRestaurantId}`,
+          customer_id: userId || `user_${Date.now()}`,
+          customer_email: customer_email,
+          plan_name: plan || 'Growth',
+          price_id: 'trial',
+          status: 'trialing',
+          current_period_start: now.toISOString(),
+          current_period_end: trialEnd.toISOString(),
+          trial_end: trialEnd.toISOString()
+        })
+        .select()
+        .single();
 
-      if (isBrazil && (!plan || plan === 'Free' || plan === 'free')) {
-        // Brazil free plan: no expiry, active immediately
-        logger.info(' Brazil detected - creating free plan subscription');
-        const { data: subData, error: subError } = await supabaseAdmin
-          .from('subscriptions')
-          .insert({
-            restaurant_id: canonicalRestaurantId,
-            subscription_id: `free_${canonicalRestaurantId}`,
-            customer_id: userId || `user_${Date.now()}`,
-            customer_email: customer_email,
-            plan_name: 'Free',
-            price_id: 'free',
-            status: 'active',
-            current_period_start: now.toISOString(),
-            current_period_end: new Date('2099-12-31').toISOString(),
-          })
-          .select()
-          .single();
-
-        if (subError) {
-          logger.warn(' Could not create free subscription:', subError.message);
-        } else {
-          trialSubscription = subData;
-          logger.info(' Free plan subscription created for Brazil');
-        }
+      if (subError) {
+        logger.warn(' Could not create trial subscription:', subError.message);
       } else {
-        // Non-Brazil: 14-day Growth trial
-        const trialEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-        const { data: subData, error: subError } = await supabaseAdmin
-          .from('subscriptions')
-          .insert({
-            restaurant_id: canonicalRestaurantId,
-            subscription_id: `trial_${canonicalRestaurantId}`,
-            customer_id: userId || `user_${Date.now()}`,
-            customer_email: customer_email,
-            plan_name: plan || 'Growth',
-            price_id: 'trial',
-            status: 'trialing',
-            current_period_start: now.toISOString(),
-            current_period_end: trialEnd.toISOString(),
-            trial_end: trialEnd.toISOString()
-          })
-          .select()
-          .single();
-
-        if (subError) {
-          logger.warn(' Could not create trial subscription:', subError.message);
-        } else {
-          trialSubscription = subData;
-          logger.info(' Trial subscription created (expires:', trialEnd.toISOString(), ')');
-        }
+        trialSubscription = subData;
+        logger.info(' Trial subscription created (expires:', trialEnd.toISOString(), ')');
       }
     } catch (trialError) {
-      logger.warn(' Subscription error (non-fatal):', trialError.message);
+      logger.warn(' Trial subscription error (non-fatal):', trialError.message);
     }
 
     logger.info(' Onboarding complete!');
@@ -720,7 +686,6 @@ module.exports = async (req, res) => {
       },
     });
   } catch (error) {
-    captureException(error, { url: req.url });
     logger.error(' Error:', error);
     return res.status(500).json({
       error: 'Failed to complete onboarding',

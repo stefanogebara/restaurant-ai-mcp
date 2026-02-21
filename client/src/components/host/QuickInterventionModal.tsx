@@ -20,7 +20,7 @@ interface Reservation {
   time: string;
   ml_risk_score?: number;
   ml_risk_level?: string;
-  ml_risk_factors?: Array<{ factor: string; description: string; weight?: number; impact?: number }>;
+  ml_risk_factors?: Array<{ factor: string; description: string; weight: number }>;
   special_requests?: string;
   intervention_taken?: boolean;
   intervention_type?: string;
@@ -170,7 +170,7 @@ export default function QuickInterventionModal({
       />
 
       {/* Modal */}
-      <div role="dialog" aria-modal="true" aria-label="Take Action" className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white px-6 py-4 border-b border-[#E7E5E4] flex items-center justify-between rounded-t-xl">
           <div className="flex items-center gap-3">

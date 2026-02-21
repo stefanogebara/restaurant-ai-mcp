@@ -475,15 +475,13 @@ module.exports = async (req, res) => {
   if (auth.error) {
     return res.status(auth.status).json({ error: auth.error });
   }
-  req.user = auth.user;
 
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { action = 'all', period = 30 } = req.query;
-    const restaurant_id = req.user?.restaurant_id;
+    const { action = 'all', period = 30, restaurant_id } = req.query;
 
     // REQUIRED: Restaurant ID for multi-tenant filtering
     // Return empty data if no restaurant_id provided

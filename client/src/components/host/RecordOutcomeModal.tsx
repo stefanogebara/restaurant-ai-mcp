@@ -71,7 +71,7 @@ export default function RecordOutcomeModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div role="dialog" aria-modal="true" aria-label="Record Outcome" className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#E7E5E4]">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#E7E5E4]">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-[#E7E5E4] p-6 flex items-center justify-between rounded-t-2xl">
           <div>

@@ -46,8 +46,8 @@ export default function Login() {
 
     try {
       await signInWithGoogle();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign in with Google');
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign in with Google');
       setIsSigningIn(false);
     }
   };
@@ -69,8 +69,8 @@ export default function Login() {
           return;
         }
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : `Failed to ${mode === 'signin' ? 'sign in' : 'create account'}`);
+    } catch (err: any) {
+      setError(err.message || `Failed to ${mode === 'signin' ? 'sign in' : 'create account'}`);
       setIsSigningIn(false);
     }
   };

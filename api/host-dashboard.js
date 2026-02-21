@@ -29,7 +29,6 @@ const { verifyAuth } = require('./_lib/auth');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { getDiningDuration, DEFAULT_DINING_DURATION_MINUTES } = require('./_lib/constants');
 const { createSecureLogger } = require('./_lib/secure-logger');
-const { captureException } = require('./_lib/sentry');
 
 const logger = createSecureLogger('HostDashboard');
 
@@ -97,7 +96,6 @@ module.exports = async (req, res) => {
         });
     }
   } catch (error) {
-    captureException(error, { url: req.url, method: req.method });
     logger.error('Host dashboard error', error);
     return res.status(500).json({
       success: false,

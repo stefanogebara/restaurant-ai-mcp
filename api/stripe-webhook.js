@@ -1,7 +1,6 @@
 const Stripe = require('stripe');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const { createSecureLogger } = require('./_lib/secure-logger');
-const { captureException } = require('./_lib/sentry');
 const logger = createSecureLogger('StripeWebhook');
 const { getPlanFromPriceId } = require('./services/subscription-limits');
 const {
@@ -287,7 +286,6 @@ module.exports = async (req, res) => {
     // Return a 200 response to acknowledge receipt of the event
     res.status(200).json({ received: true });
   } catch (error) {
-    captureException(error, { eventType: event?.type });
     logger.error('Error processing webhook:', error);
     return res.status(500).json({
       error: 'Webhook processing failed',

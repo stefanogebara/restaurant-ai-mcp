@@ -63,8 +63,6 @@ export interface OnboardingData {
   phone_number: string;
   email: string;
   website?: string;
-  whatsapp_enabled?: boolean;
-  whatsapp_phone_number?: string;
   business_hours: BusinessHours[];
   average_dining_duration: number;
   // Step 2.5: Voice Selection

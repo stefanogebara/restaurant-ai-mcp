@@ -5,8 +5,6 @@ node_modules
 .env.*
 *.log
 .claude/settings.local.json
-.claude/worktrees/
-.claude/agent-memory-local/
 gcp-credentials.json
 *-credentials.json
 

@@ -1,17 +1,13 @@
 import { Loader2 } from 'lucide-react';
-import { PRICING_TIERS, PRICING_TIERS_BRL } from '../data/demoData';
-import { useState, useMemo } from 'react';
+import { PRICING_TIERS } from '../data/demoData';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../../services/api';
 import { supabase } from '../../lib/supabase';
-import { detectCurrency } from '../../utils/currency';
 
 export default function PricingSection() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const navigate = useNavigate();
-
-  const currency = useMemo(() => detectCurrency(), []);
-  const tiers = currency === 'BRL' ? PRICING_TIERS_BRL : PRICING_TIERS;
 
   const scrollToContact = () => {
     const element = document.getElementById('contact');
@@ -38,7 +34,7 @@ export default function PricingSection() {
       const response = await authFetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId, planName, currency }),
+        body: JSON.stringify({ priceId, planName }),
       });
 
       if (!response.ok) {
@@ -54,40 +50,21 @@ export default function PricingSection() {
     }
   };
 
-  const handleTierClick = (tier: typeof tiers[number]) => {
-    // Free tier goes directly to onboarding
-    if ('isFree' in tier && tier.isFree) {
-      navigate('/onboarding');
-      return;
-    }
-
-    const id = tier.priceId;
-    if (id) {
-      handleSubscribe(id, tier.name);
-    } else {
-      scrollToContact();
-    }
-  };
-
   return (
     <section id="pricing" className="py-24 px-6 sm:px-16 bg-white border-t border-[#E7E5E4]">
       <div className="max-w-[1100px] mx-auto">
         {/* Header */}
         <div className="text-center mb-16">
-          <div className="text-xs font-semibold tracking-[2px] uppercase text-[#9F1239] mb-4">
-            {currency === 'BRL' ? 'Planos e Preços' : 'Pricing'}
-          </div>
+          <div className="text-xs font-semibold tracking-[2px] uppercase text-[#9F1239] mb-4">Pricing</div>
           <h2 className="font-serif text-4xl sm:text-[48px] font-medium tracking-tight text-[#1C1917] mb-3">
-            {currency === 'BRL' ? 'Simples e transparente.' : 'Simple, transparent pricing.'}
+            Simple, transparent pricing.
           </h2>
-          <p className="text-[17px] text-[#78716C] font-light">
-            {currency === 'BRL' ? 'Sem taxas ocultas. Cancele quando quiser.' : 'No hidden fees. Cancel anytime.'}
-          </p>
+          <p className="text-[17px] text-[#78716C] font-light">No hidden fees. Cancel anytime.</p>
         </div>
 
         {/* Pricing Grid */}
-        <div className={`grid grid-cols-1 ${tiers.length === 4 ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-[2px] bg-[#E7E5E4] rounded-[20px] overflow-hidden`}>
-          {tiers.map((tier, index) => {
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-[2px] bg-[#E7E5E4] rounded-[20px] overflow-hidden">
+          {PRICING_TIERS.map((tier, index) => {
             const isFeatured = !!tier.highlighted;
             return (
               <div key={index} className={`relative px-8 sm:px-9 py-12 ${isFeatured ? 'bg-[#1C1917]' : 'bg-[#FAFAF9]'}`}>
@@ -123,7 +100,10 @@ export default function PricingSection() {
 
                 {/* CTA Button */}
                 <button
-                  onClick={() => handleTierClick(tier)}
+                  onClick={() => {
+                    const id = tier.priceId;
+                    id ? handleSubscribe(id, tier.name) : scrollToContact();
+                  }}
                   disabled={loadingPlan === tier.name}
                   className={`w-full py-3.5 rounded-full text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 ${
                     isFeatured
@@ -147,21 +127,10 @@ export default function PricingSection() {
 
         {/* Bottom Note */}
         <p className="text-center text-sm text-[#A8A29E] mt-10">
-          {currency === 'BRL' ? (
-            <>
-              Precisa de uma solução personalizada?{' '}
-              <button onClick={scrollToContact} className="text-[#9F1239] hover:text-[#881337] font-medium transition-colors">
-                Entre em contato
-              </button>
-            </>
-          ) : (
-            <>
-              Need a custom solution?{' '}
-              <button onClick={scrollToContact} className="text-[#9F1239] hover:text-[#881337] font-medium transition-colors">
-                Contact us for enterprise pricing
-              </button>
-            </>
-          )}
+          Need a custom solution?{' '}
+          <button onClick={scrollToContact} className="text-[#9F1239] hover:text-[#881337] font-medium transition-colors">
+            Contact us for enterprise pricing
+          </button>
         </p>
       </div>
     </section>

@@ -55,9 +55,6 @@ export default function Modal({
       }}
     >
       <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={title || 'Dialog'}
         className={`
           bg-white shadow-2xl border border-[#E7E5E4] w-full max-h-[90vh] overflow-y-auto
           ${mobileSheet ? 'rounded-t-2xl sm:rounded-2xl' : 'rounded-2xl'}

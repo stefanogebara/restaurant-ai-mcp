@@ -1,49 +1,52 @@
 /**
  * Cron Job: Send Reservation Reminders
  *
- * Sends WhatsApp reminders to customers with reservations scheduled for today.
- * Uses Meta Cloud API when the restaurant has WhatsApp enabled,
- * falls back to Twilio Content Templates otherwise.
+ * Sends WhatsApp template reminders to customers with reservations scheduled for today.
+ * Uses Twilio Content Templates for WhatsApp messaging.
  *
  * Runs daily at 9 AM via Vercel Cron Jobs
  */
 
-require('../_lib/sentry');
 const twilio = require('twilio');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
-const { sendWhatsAppMessage, isWhatsAppConfigured } = require('../_lib/whatsapp-sender');
-
 const logger = createSecureLogger('CronReminders');
 
 /**
- * Send a WhatsApp template message via Twilio (fallback)
+ * Send a WhatsApp template message via Twilio
+ * (Standalone version for cron job)
  */
-async function sendTwilioReminder(to, contentSid, contentVariables = {}) {
+async function sendTemplateMessage(to, contentSid, contentVariables = {}) {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const twilioWhatsAppNumber = process.env.TWILIO_WHATSAPP_NUMBER;
 
   if (!accountSid || !authToken || !twilioWhatsAppNumber) {
+    logger.error(' Missing Twilio configuration');
     return { success: false, error: 'Twilio not configured' };
   }
 
   try {
     const client = twilio(accountSid, authToken);
+
     const toNumber = to.startsWith('whatsapp:') ? to : `whatsapp:${to}`;
     const fromNumber = twilioWhatsAppNumber.startsWith('whatsapp:')
       ? twilioWhatsAppNumber
       : `whatsapp:${twilioWhatsAppNumber}`;
 
+    logger.info(` Sending template ${contentSid} to ${to}`);
+
     const result = await client.messages.create({
       from: fromNumber,
       to: toNumber,
-      contentSid,
+      contentSid: contentSid,
       contentVariables: JSON.stringify(contentVariables)
     });
 
+    logger.info(` Template sent to ${to}, messageId: ${result.sid}`);
     return { success: true, messageId: result.sid };
   } catch (error) {
+    logger.error(' Template send exception:', error);
     return { success: false, error: error.message };
   }
 }
@@ -63,35 +66,46 @@ function formatTime(time24) {
   }
 }
 
-/**
- * Build a text reminder message for Meta API
- */
-function buildReminderText(customerName, restaurantName, formattedTime, partySize) {
-  return `Hi ${customerName}! This is a reminder about your reservation at ${restaurantName} today at ${formattedTime} for ${partySize} guest${partySize !== 1 ? 's' : ''}. We look forward to seeing you!`;
-}
-
 module.exports = async (req, res) => {
+  // Verify this is a cron request (Vercel adds this header)
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret) {
     logger.error('CRON_SECRET not configured - denying request');
     return res.status(500).json({ success: false, error: 'Cron not configured' });
   }
-  if (req.headers.authorization !== `Bearer ${cronSecret}`) {
+  const authHeader = req.headers.authorization;
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 
+  // Verify Supabase admin client is available
   if (!supabaseAdmin) {
-    logger.error('supabaseAdmin not initialized');
+    logger.error('supabaseAdmin not initialized - missing Supabase credentials');
     return res.status(500).json({ success: false, error: 'Database not configured' });
   }
 
   try {
-    logger.info('Starting reservation reminder job...');
+    logger.info(' Starting reservation reminder job...');
 
+    // Get today's date in YYYY-MM-DD format
     const today = new Date().toISOString().split('T')[0];
-    logger.info(`Looking for reservations on ${today}`);
+    logger.info(` Looking for reservations on ${today}`);
 
-    // Fetch all confirmed reservations for today with a phone number
+    // Get restaurant info for the restaurant name
+    const { data: restaurantInfo, error: restaurantError } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_info')
+      .select('restaurant_name')
+      .limit(1)
+      .single();
+
+    if (restaurantError) {
+      logger.error(' Error fetching restaurant info:', restaurantError);
+    }
+
+    const restaurantName = restaurantInfo?.restaurant_name || 'the restaurant';
+
+    // Find all confirmed reservations for today that have a phone number
     const { data: reservations, error } = await supabaseAdmin
       .from('reservations')
       .select('*')
@@ -100,119 +114,139 @@ module.exports = async (req, res) => {
       .not('customer_phone', 'is', null);
 
     if (error) {
-      logger.error('Error fetching reservations:', error);
-      return res.status(500).json({ success: false, error: 'Failed to fetch reservations', details: error.message });
+      logger.error(' Error fetching reservations:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to fetch reservations',
+        details: error.message
+      });
     }
 
-    logger.info(`Found ${reservations?.length || 0} confirmed reservations for today`);
+    logger.info(` Found ${reservations?.length || 0} confirmed reservations for today`);
 
-    // Group reservations by restaurant_id for efficient config lookups
-    const byRestaurant = {};
-    for (const r of (reservations || [])) {
-      if (!byRestaurant[r.restaurant_id]) byRestaurant[r.restaurant_id] = [];
-      byRestaurant[r.restaurant_id].push(r);
-    }
+    const results = {
+      sent: 0,
+      failed: 0,
+      skipped: 0,
+      details: []
+    };
 
-    // Fetch restaurant configs for all involved restaurants in one query
-    const restaurantIds = Object.keys(byRestaurant);
-    const restaurantConfigs = {};
-
-    if (restaurantIds.length > 0) {
-      const { data: configs } = await supabaseAdmin
-        .schema('restaurant')
-        .from('restaurant_config')
-        .select('id, restaurant_name, whatsapp_enabled, whatsapp_phone_number, agent_language')
-        .in('id', restaurantIds);
-
-      for (const cfg of (configs || [])) {
-        restaurantConfigs[cfg.id] = cfg;
-      }
-    }
-
-    const results = { sent: 0, failed: 0, skipped: 0, details: [] };
-    const metaConfigured = isWhatsAppConfigured();
-
+    // Send reminder to each reservation
     for (const reservation of (reservations || [])) {
-      const { customer_name, customer_phone, time, party_size, reservation_id, restaurant_id } = reservation;
+      const {
+        customer_name,
+        customer_phone,
+        time,
+        party_size,
+        reservation_id
+      } = reservation;
 
+      // Skip if no phone number
       if (!customer_phone) {
+        logger.info(` Skipping ${reservation_id} - no phone number`);
         results.skipped++;
-        results.details.push({ reservation_id, status: 'skipped', reason: 'No phone number' });
+        results.details.push({
+          reservation_id,
+          status: 'skipped',
+          reason: 'No phone number'
+        });
         continue;
       }
 
-      const config = restaurantConfigs[restaurant_id] || {};
-      const restaurantName = config.restaurant_name || 'the restaurant';
+      // Format the time for display
       const formattedTime = formatTime(time);
-      const useWhatsApp = config.whatsapp_enabled && metaConfigured;
 
-      let sendResult;
+      // Get the reminder template SID
+      const reminderTemplateSid = process.env.TWILIO_TEMPLATE_RESERVATION_REMINDER;
+      if (!reminderTemplateSid) {
+        logger.error(' Missing TWILIO_TEMPLATE_RESERVATION_REMINDER environment variable');
+        results.failed++;
+        results.details.push({
+          reservation_id,
+          customer_name,
+          status: 'failed',
+          error: 'Reminder template SID not configured'
+        });
+        continue;
+      }
 
-      if (useWhatsApp) {
-        // Meta Cloud API - plain text reminder
-        const message = buildReminderText(customer_name, restaurantName, formattedTime, party_size);
-        sendResult = await sendWhatsAppMessage(customer_phone, message);
-        logger.info(`Meta API reminder -> ${customer_name} (${customer_phone})`);
-      } else {
-        // Twilio fallback with Content Template
-        const reminderTemplateSid = process.env.TWILIO_TEMPLATE_RESERVATION_REMINDER;
-        if (!reminderTemplateSid) {
-          logger.error('Missing TWILIO_TEMPLATE_RESERVATION_REMINDER');
-          results.failed++;
-          results.details.push({ reservation_id, customer_name, status: 'failed', error: 'Reminder template SID not configured' });
-          continue;
-        }
-        sendResult = await sendTwilioReminder(customer_phone, reminderTemplateSid, {
+      // Send the reminder template via Twilio
+      // Content variables: {{1}}=name, {{2}}=restaurant, {{3}}=time, {{4}}=party_size
+      const sendResult = await sendTemplateMessage(
+        customer_phone,
+        reminderTemplateSid,
+        {
           '1': customer_name,
           '2': restaurantName,
           '3': formattedTime,
           '4': party_size.toString()
-        });
-        logger.info(`Twilio reminder -> ${customer_name} (${customer_phone})`);
-      }
+        }
+      );
 
       if (sendResult.success) {
+        logger.info(` ✓ Reminder sent to ${customer_name} (${customer_phone})`);
         results.sent++;
-        results.details.push({ reservation_id, customer_name, status: 'sent', messageId: sendResult.messageId });
+        results.details.push({
+          reservation_id,
+          customer_name,
+          status: 'sent',
+          messageId: sendResult.messageId
+        });
       } else {
-        logger.error(`Failed to send reminder to ${customer_name}:`, sendResult.error);
+        logger.error(` ✗ Failed to send reminder to ${customer_name}:`, sendResult.error);
         results.failed++;
-        results.details.push({ reservation_id, customer_name, status: 'failed', error: sendResult.error });
+        results.details.push({
+          reservation_id,
+          customer_name,
+          status: 'failed',
+          error: sendResult.error
+        });
       }
 
-      // Small delay to avoid rate limiting
+      // Small delay between messages to avoid rate limiting
       await new Promise(resolve => setTimeout(resolve, 500));
     }
 
     // ========================================================================
-    // HIGH-RISK RESERVATIONS: Log automatic interventions
+    // HIGH-RISK RESERVATIONS: Additional Handling
+    // Send extra reminders and log automatic interventions
     // ========================================================================
     const highRiskReservations = (reservations || []).filter(r =>
       r.ml_risk_level === 'high' || r.ml_risk_level === 'very-high'
     );
 
-    const highRiskResults = { total: highRiskReservations.length, interventions_logged: 0 };
+    const highRiskResults = {
+      total: highRiskReservations.length,
+      interventions_logged: 0
+    };
 
-    for (const reservation of highRiskReservations) {
-      try {
-        if (!reservation.intervention_taken) {
-          const { error: updateError } = await supabaseAdmin
-            .from('reservations')
-            .update({
-              intervention_taken: true,
-              intervention_type: 'automatic_reminder',
-              intervention_notes: `Automatic high-risk reminder sent by system (${reservation.ml_risk_level} risk, score: ${reservation.ml_risk_score})`,
-              intervention_timestamp: new Date().toISOString(),
-              intervention_by: 'system'
-            })
-            .eq('reservation_id', reservation.reservation_id);
+    if (highRiskReservations.length > 0) {
+      logger.info(` Found ${highRiskReservations.length} high-risk reservations`);
 
-          if (!updateError) {
-            highRiskResults.interventions_logged++;
+      for (const reservation of highRiskReservations) {
+        try {
+          // Log automatic intervention for high-risk reservations
+          // This helps track that the system sent extra attention to these
+          if (!reservation.intervention_taken) {
+            const { error: updateError } = await supabaseAdmin
+              .from('reservations')
+              .update({
+                intervention_taken: true,
+                intervention_type: 'automatic_reminder',
+                intervention_notes: `Automatic high-risk reminder sent by system (${reservation.ml_risk_level} risk, score: ${reservation.ml_risk_score})`,
+                intervention_timestamp: new Date().toISOString(),
+                intervention_by: 'system'
+              })
+              .eq('reservation_id', reservation.reservation_id);
+
+            if (!updateError) {
+              highRiskResults.interventions_logged++;
+              logger.info(` Logged automatic intervention for high-risk reservation ${reservation.reservation_id}`);
+            }
           }
+        } catch (error) {
+          logger.error(` Error processing high-risk reservation ${reservation.reservation_id}:`, error);
         }
-      } catch (error) {
-        logger.error(`Error processing high-risk reservation ${reservation.reservation_id}:`, error);
       }
     }
 
@@ -228,10 +262,15 @@ module.exports = async (req, res) => {
       details: results.details
     };
 
-    logger.info('Reminder job complete:', JSON.stringify(summary, null, 2));
+    logger.info(' Reminder job complete:', JSON.stringify(summary, null, 2));
+
     return res.status(200).json(summary);
   } catch (error) {
-    logger.error('Fatal error in reminder job:', error);
-    return res.status(500).json({ success: false, error: 'Internal server error', message: error.message });
+    logger.error(' Fatal error in reminder job:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: error.message
+    });
   }
 };

@@ -8,47 +8,69 @@ const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
-const { captureException } = require('./_lib/sentry');
 const logger = createSecureLogger('Analytics');
 
-async function getReservationRows(restaurantId) {
+async function getAllReservations(restaurantId) {
   try {
     const { data, error } = await supabaseAdmin
       .from('reservations')
-      .select('date, time, status, party_size, customer_name, reservation_id, created_at')
+      .select('*')
       .eq('restaurant_id', restaurantId);
 
     if (error) throw error;
-    return { success: true, rows: data || [] };
+
+    // Map to Airtable-compatible format so the rest of the code works unchanged
+    const records = (data || []).map(r => ({
+      fields: {
+        Date: r.date,
+        Time: r.time,
+        Status: r.status,
+        'Party Size': r.party_size,
+        'Customer Name': r.customer_name,
+        'Reservation ID': r.reservation_id,
+      },
+      createdTime: r.created_at,
+    }));
+    return { success: true, records };
   } catch (error) {
     logger.error('Error fetching reservations:', error.message);
     return { success: false, error: error.message };
   }
 }
 
-async function getServiceRecordRows(restaurantId) {
+async function getAllServiceRecordsData(restaurantId) {
   try {
     const { data, error } = await supabaseAdmin
       .from('service_records')
-      .select('status, seated_at, departed_at, table_ids')
+      .select('*')
       .eq('restaurant_id', restaurantId);
 
     if (error) throw error;
-    return { success: true, rows: data || [] };
+
+    // Map to Airtable-compatible format
+    const records = (data || []).map(r => ({
+      fields: {
+        Status: r.status,
+        'Seated At': r.seated_at,
+        'Departed At': r.departed_at,
+        'Table IDs': r.table_ids ? r.table_ids.join(',') : '',
+      }
+    }));
+    return { success: true, records };
   } catch (error) {
     logger.error('Error fetching service records:', error.message);
     return { success: false, error: error.message };
   }
 }
 
-async function calculateAnalytics(restaurantId, period = '30d') {
+async function calculateAnalytics(restaurantId) {
   const results = await Promise.all([
-    getReservationRows(restaurantId),
-    getServiceRecordRows(restaurantId),
+    getAllReservations(restaurantId),
+    getAllServiceRecordsData(restaurantId),
     getAllTables(restaurantId),
     getActiveServiceRecords(restaurantId)
   ]);
-
+  
   const reservationsResult = results[0];
   const serviceRecordsResult = results[1];
   const tablesResult = results[2];
@@ -58,22 +80,21 @@ async function calculateAnalytics(restaurantId, period = '30d') {
     return { success: false, error: 'Failed to fetch analytics data' };
   }
 
-  const reservations = reservationsResult.rows;
-  const serviceRecords = serviceRecordsResult.rows;
+  const reservations = reservationsResult.records || [];
+  const serviceRecords = serviceRecordsResult.records || [];
   const tables = tablesResult.tables || [];
   const activeParties = activePartiesResult.service_records || [];
 
   const now = new Date();
-  const periodDays = period === 'today' ? 1 : period === '7d' ? 7 : 30;
-  const periodStart = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000);
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
   const recentReservations = reservations.filter(r => {
-    const resDate = new Date(r.date || r.created_at);
-    return resDate >= periodStart;
+    const resDate = new Date(r.fields.Date || r.createdTime);
+    return resDate >= thirtyDaysAgo;
   });
 
   const completedServiceRecords = serviceRecords.filter(r =>
-    r.status === 'Completed' && r.departed_at
+    r.fields.Status === 'Completed' && r.fields['Departed At']
   );
 
   const totalReservations = recentReservations.length;
@@ -83,15 +104,15 @@ async function calculateAnalytics(restaurantId, period = '30d') {
 
   let avgPartySize = 0;
   if (recentReservations.length > 0) {
-    const total = recentReservations.reduce((sum, r) => sum + (r.party_size || 0), 0);
+    const total = recentReservations.reduce((sum, r) => sum + (r.fields['Party Size'] || 0), 0);
     avgPartySize = total / recentReservations.length;
   }
 
   const serviceDurations = completedServiceRecords
-    .filter(r => r.seated_at && r.departed_at)
+    .filter(r => r.fields['Seated At'] && r.fields['Departed At'])
     .map(r => {
-      const seatedAt = new Date(r.seated_at);
-      const departedAt = new Date(r.departed_at);
+      const seatedAt = new Date(r.fields['Seated At']);
+      const departedAt = new Date(r.fields['Departed At']);
       return (departedAt - seatedAt) / 60000;
     });
 
@@ -101,13 +122,13 @@ async function calculateAnalytics(restaurantId, period = '30d') {
 
   const statusCounts = {};
   recentReservations.forEach(r => {
-    const status = r.status || 'pending';
+    const status = r.fields.Status || 'pending';
     statusCounts[status] = (statusCounts[status] || 0) + 1;
   });
 
   const dayOfWeekCounts = {};
   recentReservations.forEach(r => {
-    const date = new Date(r.date);
+    const date = new Date(r.fields.Date);
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayName = days[date.getDay()];
     dayOfWeekCounts[dayName] = (dayOfWeekCounts[dayName] || 0) + 1;
@@ -115,7 +136,7 @@ async function calculateAnalytics(restaurantId, period = '30d') {
 
   const timeSlotCounts = {};
   recentReservations.forEach(r => {
-    const time = r.time || '';
+    const time = r.fields.Time || '';
     const hour = parseInt(time.split(':')[0]) || 0;
     let slot = 'Other';
     if (hour >= 11 && hour < 14) slot = 'Lunch (11AM-2PM)';
@@ -127,13 +148,13 @@ async function calculateAnalytics(restaurantId, period = '30d') {
 
   const tableUtilization = tables.map(table => {
     const timesUsed = completedServiceRecords.filter(r => {
-      const tableIds = r.table_ids || [];
-      const tableArray = Array.isArray(tableIds) ? tableIds.map(String) : [];
+      const tableIds = r.fields['Table IDs'] || '';
+      const tableArray = typeof tableIds === 'string' ? tableIds.split(',') : [];
       return tableArray.includes(table.table_number.toString());
     }).length;
 
     const rate = totalCompletedServices > 0 ? (timesUsed / totalCompletedServices * 100).toFixed(1) : 0;
-
+    
     return {
       table_number: table.table_number,
       capacity: table.capacity,
@@ -157,14 +178,14 @@ async function calculateAnalytics(restaurantId, period = '30d') {
   }
 
   recentReservations.forEach(r => {
-    const resDate = new Date(r.date).toISOString().split('T')[0];
+    const resDate = new Date(r.fields.Date).toISOString().split('T')[0];
     const dayObj = last7Days.find(d => d.date === resDate);
     if (dayObj) dayObj.reservations++;
   });
 
   completedServiceRecords.forEach(r => {
-    if (!r.departed_at) return;
-    const depDate = new Date(r.departed_at).toISOString().split('T')[0];
+    if (!r.fields['Departed At']) return;
+    const depDate = new Date(r.fields['Departed At']).toISOString().split('T')[0];
     const dayObj = last7Days.find(d => d.date === depDate);
     if (dayObj) dayObj.completed_services++;
   });
@@ -229,11 +250,9 @@ module.exports = async (req, res) => {
 
   try {
     const restaurantId = req.user.restaurant_id;
-    const period = req.query.period || '30d';
-    const result = await calculateAnalytics(restaurantId, period);
+    const result = await calculateAnalytics(restaurantId);
     return res.status(200).json(result);
   } catch (error) {
-    captureException(error, { url: req.url, restaurantId: req.user?.restaurant_id });
     logger.error('Analytics error:', error);
     return res.status(500).json({ success: false, error: 'Failed to calculate analytics' });
   }

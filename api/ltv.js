@@ -26,8 +26,7 @@ const logger = createSecureLogger('LTV');
  */
 async function handleCalculateSingle(req, res) {
   try {
-    const { customer_id } = req.query;
-    const restaurant_id = req.user.restaurant_id;
+    const { customer_id, restaurant_id } = req.query;
 
     if (!customer_id) {
       return res.status(400).json({
@@ -60,7 +59,7 @@ async function handleCalculateSingle(req, res) {
  */
 async function handleCalculateAll(req, res) {
   try {
-    const restaurant_id = req.user.restaurant_id;
+    const { restaurant_id } = req.query;
     logger.info(`Starting batch LTV calculation${restaurant_id ? ` for restaurant ${restaurant_id}` : ''}...`);
     const results = await calculateAllCustomerLTV(restaurant_id || null);
 
@@ -132,8 +131,7 @@ async function handleGet(req, res) {
  */
 async function handleList(req, res) {
   try {
-    const { tier, limit = 100, offset = 0 } = req.query;
-    const restaurant_id = req.user.restaurant_id;
+    const { tier, restaurant_id, limit = 100, offset = 0 } = req.query;
 
     let query = supabaseAdmin
       .from('customer_ltv')
@@ -141,7 +139,7 @@ async function handleList(req, res) {
       .order('lifetime_value', { ascending: false })
       .range(offset, offset + parseInt(limit) - 1);
 
-    // Always filter by authenticated user's restaurant
+    // Filter by restaurant if specified
     if (restaurant_id) {
       query = query.eq('restaurant_id', restaurant_id);
     }
@@ -184,14 +182,14 @@ async function handleList(req, res) {
  */
 async function handleStats(req, res) {
   try {
-    const restaurant_id = req.user.restaurant_id;
+    const { restaurant_id } = req.query;
 
     // Get all customer LTV data
     let query = supabaseAdmin
       .from('customer_ltv')
       .select('*');
 
-    // Always filter by authenticated user's restaurant
+    // Filter by restaurant if specified
     if (restaurant_id) {
       query = query.eq('restaurant_id', restaurant_id);
     }
@@ -254,8 +252,7 @@ async function handleStats(req, res) {
  */
 async function handleTrends(req, res) {
   try {
-    const { period = '30d' } = req.query;
-    const restaurant_id = req.user.restaurant_id;
+    const { period = '30d', restaurant_id } = req.query;
 
     // Calculate date range
     const daysBack = period === '7d' ? 7 : period === '30d' ? 30 : period === '90d' ? 90 : 30;
@@ -269,7 +266,6 @@ async function handleTrends(req, res) {
       .gte('service_date', startDateStr)
       .order('service_date', { ascending: true });
 
-    // Always filter by authenticated user's restaurant
     if (restaurant_id) {
       query = query.eq('restaurant_id', restaurant_id);
     }

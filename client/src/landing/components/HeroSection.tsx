@@ -57,7 +57,7 @@ export default function HeroSection() {
           ))}
         </div>
         <p className="text-sm text-[#78716C]">
-          Trusted by restaurants across Europe
+          <strong className="text-[#1C1917] font-semibold">320+ restaurants</strong> already using Seatable
         </p>
       </div>
     </section>

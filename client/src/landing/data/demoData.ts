@@ -173,7 +173,7 @@ export const PRICING_TIERS = [
       "Host dashboard",
       "Basic analytics",
       "Email support",
-      "Up to 100 reservations/month",
+      "Up to 50 reservations/month",
     ],
     cta: "Get Started",
     highlighted: false,
@@ -213,77 +213,6 @@ export const PRICING_TIERS = [
     cta: "Contact Sales",
     highlighted: false,
   }
-];
-
-export const PRICING_TIERS_BRL = [
-  {
-    name: "Free",
-    price: "R$0",
-    period: "",
-    description: "Comece sem custo",
-    priceId: "",
-    annualPriceId: "",
-    features: [
-      "Reservas por IA (Chat + WhatsApp)",
-      "Painel do restaurante",
-      "Análises básicas",
-      "Até 30 reservas/mês",
-    ],
-    cta: "Começar Grátis",
-    highlighted: false,
-    isFree: true,
-  },
-  {
-    name: "Starter",
-    price: "R$149",
-    period: "/mês",
-    description: "Para restaurantes em crescimento",
-    priceId: import.meta.env.VITE_STRIPE_STARTER_BRL_PRICE_ID || "",
-    annualPriceId: "",
-    features: [
-      "Tudo do plano Free",
-      "Até 100 reservas/mês",
-      "Suporte por e-mail",
-      "Análises avançadas",
-    ],
-    cta: "Assinar",
-    highlighted: false,
-  },
-  {
-    name: "Growth",
-    price: "R$499",
-    period: "/mês",
-    description: "Recursos avançados para crescer",
-    priceId: import.meta.env.VITE_STRIPE_GROWTH_BRL_PRICE_ID || "",
-    annualPriceId: "",
-    features: [
-      "Tudo do Starter",
-      "Agente de voz com IA",
-      "Análises avançadas",
-      "Lista de espera",
-      "Até 150 reservas/mês",
-      "Notificações SMS",
-    ],
-    cta: "Iniciar Teste Grátis",
-    highlighted: true,
-  },
-  {
-    name: "Scale",
-    price: "R$999",
-    period: "/mês",
-    description: "Para restaurantes de alto volume",
-    priceId: import.meta.env.VITE_STRIPE_SCALE_BRL_PRICE_ID || "",
-    annualPriceId: "",
-    features: [
-      "Tudo do Growth",
-      "Reservas ilimitadas",
-      "SMS ilimitado",
-      "Suporte prioritário",
-      "Integrações customizadas",
-    ],
-    cta: "Falar com Vendas",
-    highlighted: false,
-  },
 ];
 
 export const FAQS = [
@@ -372,56 +301,6 @@ export const STATS = [
     value: "99.9%",
     label: "Uptime Guarantee",
     description: "Reliable service you can count on",
-  },
-];
-
-// Brazilian Demo Restaurant Data
-export const DEMO_RESTAURANT_BR = {
-  name: "Boteco do Samba",
-  tagline: "Autêntica Culinária Brasileira",
-  phone: "+55 11 99999-0001",
-  email: "demo-br@seatable.io",
-  address: "Rua Augusta, 1234, São Paulo - SP",
-  tables: 10,
-  capacity: 42,
-  active_parties: 4,
-  reservations: 6,
-  waitlist: 3,
-  occupancy: 72,
-};
-
-export const DEMO_RESERVATIONS_BR = [
-  {
-    reservation_id: "RES-BR-001",
-    customer_name: "João Silva",
-    customer_phone: "+55 11 98765-4321",
-    party_size: 4,
-    date: "2026-02-21",
-    time: "19:30",
-    reservation_time: "2026-02-21T19:30:00",
-    special_requests: "Mesa perto da janela",
-    status: "confirmed",
-  },
-  {
-    reservation_id: "RES-BR-002",
-    customer_name: "Maria Santos",
-    customer_phone: "+55 11 91234-5678",
-    party_size: 2,
-    date: "2026-02-21",
-    time: "20:00",
-    reservation_time: "2026-02-21T20:00:00",
-    status: "confirmed",
-  },
-  {
-    reservation_id: "RES-BR-003",
-    customer_name: "Carlos Oliveira",
-    customer_phone: "+55 11 99876-5432",
-    party_size: 6,
-    date: "2026-02-22",
-    time: "12:30",
-    reservation_time: "2026-02-22T12:30:00",
-    special_requests: "Aniversário - bolo surpresa",
-    status: "confirmed",
   },
 ];
 

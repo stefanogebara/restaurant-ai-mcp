@@ -39,17 +39,10 @@ function initSentry() {
         return event;
       },
 
-    });
-
-    // Capture unhandled promise rejections
-    process.on('unhandledRejection', (reason) => {
-      Sentry.captureException(reason);
-    });
-
-    // Capture uncaught exceptions
-    process.on('uncaughtException', (error) => {
-      Sentry.captureException(error);
-      process.exit(1);
+      // Integrations
+      integrations: [
+        new Sentry.Integrations.Http({ tracing: true }),
+      ],
     });
 
     logger.info('Sentry initialized for error tracking');
@@ -127,10 +120,6 @@ function withErrorTracking(handler) {
     }
   };
 }
-
-// Auto-initialize when required so any serverless function that requires
-// this module gets Sentry running without an explicit initSentry() call.
-initSentry();
 
 module.exports = {
   initSentry,

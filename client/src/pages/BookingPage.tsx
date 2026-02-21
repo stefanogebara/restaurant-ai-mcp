@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import WhatsAppButton from '../components/booking/WhatsAppButton';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
@@ -19,8 +18,6 @@ interface RestaurantInfo {
   min_party_size: number;
   advance_booking_days: number;
   average_dining_duration: number;
-  whatsapp_enabled?: boolean;
-  wa_me_link?: string | null;
 }
 
 interface TimeSlot {
@@ -140,11 +137,7 @@ export default function BookingPage() {
       const data = await res.json();
       if (data.success) {
         navigate(`/book/${slug}/confirmed`, {
-          state: {
-            reservation: data.reservation,
-            restaurant_name: restaurant.name,
-            wa_me_link: restaurant.wa_me_link ?? null
-          }
+          state: { reservation: data.reservation, restaurant_name: restaurant.name }
         });
       } else {
         setSubmitError(data.message || 'Could not complete reservation');
@@ -231,12 +224,17 @@ export default function BookingPage() {
           <div className="mb-7">
             <DetailRow icon="\u2739" label="Cuisine" value={restaurantType} />
             <DetailRow icon="\u23F1" label="Hours today" value={getTodayHours()} />
-            {restaurant.phone && (
-              <DetailRow icon="\u260E" label="Phone" value={restaurant.phone} />
-            )}
-            {restaurant.email && (
-              <DetailRow icon="\u2709" label="Email" value={restaurant.email} />
-            )}
+            <DetailRow icon="\u263E" label="Atmosphere" value="Intimate, candlelit" />
+            <DetailRow icon="\u20AC" label="Price range" value="\u20AC\u20AC\u20AC" />
+          </div>
+
+          {/* Rating */}
+          <div className="flex items-center gap-3 p-4 bg-white border border-[#E7E5E4] rounded-xl">
+            <div className="text-2xl font-bold tracking-tight text-[#1C1917]">4.7</div>
+            <div>
+              <div className="text-sm text-[#d97706] tracking-wider">{'\u2605\u2605\u2605\u2605\u2606'}</div>
+              <div className="text-xs text-[#A8A29E]">284 reviews on Google</div>
+            </div>
           </div>
         </div>
 
@@ -359,9 +357,8 @@ export default function BookingPage() {
             </div>
             <div className="grid grid-cols-2 gap-3.5 mb-3.5">
               <div>
-                <label htmlFor="booking-name" className="block text-[13px] font-medium text-[#57534E] mb-1.5">Name</label>
+                <label className="block text-[13px] font-medium text-[#57534E] mb-1.5">Name</label>
                 <input
-                  id="booking-name"
                   type="text"
                   value={customerName}
                   onChange={e => setCustomerName(e.target.value)}
@@ -370,9 +367,8 @@ export default function BookingPage() {
                 />
               </div>
               <div>
-                <label htmlFor="booking-phone" className="block text-[13px] font-medium text-[#57534E] mb-1.5">Phone</label>
+                <label className="block text-[13px] font-medium text-[#57534E] mb-1.5">Phone</label>
                 <input
-                  id="booking-phone"
                   type="tel"
                   value={customerPhone}
                   onChange={e => setCustomerPhone(e.target.value)}
@@ -382,9 +378,8 @@ export default function BookingPage() {
               </div>
             </div>
             <div className="mb-3.5">
-              <label htmlFor="booking-email" className="block text-[13px] font-medium text-[#57534E] mb-1.5">Email <span className="text-[#A8A29E] font-normal">(optional)</span></label>
+              <label className="block text-[13px] font-medium text-[#57534E] mb-1.5">Email <span className="text-[#A8A29E] font-normal">(optional)</span></label>
               <input
-                id="booking-email"
                 type="email"
                 value={customerEmail}
                 onChange={e => setCustomerEmail(e.target.value)}
@@ -393,11 +388,10 @@ export default function BookingPage() {
               />
             </div>
             <div>
-              <label htmlFor="booking-requests" className="block text-[13px] font-medium text-[#57534E] mb-1.5">
+              <label className="block text-[13px] font-medium text-[#57534E] mb-1.5">
                 Special requests <span className="text-[#A8A29E] font-normal">(optional)</span>
               </label>
               <textarea
-                id="booking-requests"
                 value={specialRequests}
                 onChange={e => setSpecialRequests(e.target.value)}
                 placeholder="Allergies, celebrations, seating preferences..."
@@ -459,11 +453,6 @@ export default function BookingPage() {
           </p>
         </div>
       </div>
-
-      {/* WhatsApp floating button */}
-      {restaurant.whatsapp_enabled && restaurant.wa_me_link && (
-        <WhatsAppButton waMeLink={restaurant.wa_me_link} restaurantName={restaurant.name} />
-      )}
     </div>
   );
 }

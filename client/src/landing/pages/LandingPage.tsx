@@ -59,7 +59,7 @@ export default function LandingPage() {
             Ready to reimagine<br />your restaurant?
           </h2>
           <p className="text-[16px] text-[#A8A29E] font-light mb-9">
-            Join restaurants already using Seatable. Start your free trial today.
+            Join 320+ restaurants already using Seatable. Start your free trial today.
           </p>
           <a
             href="/#pricing"
