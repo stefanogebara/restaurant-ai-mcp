@@ -3,9 +3,9 @@
  * Handles restaurant settings including language preferences and metric profiles
  */
 
-import { createClient } from '@supabase/supabase-js';
-import { createSecureLogger } from './_lib/secure-logger';
-import { verifyAuth } from './_lib/auth';
+const { createClient } = require('@supabase/supabase-js');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const { verifyAuth } = require('./_lib/auth');
 const logger = createSecureLogger('RestaurantSettings');
 
 const supabase = createClient(
@@ -118,7 +118,7 @@ function recommendProfile(characteristics) {
   };
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Restaurant-ID');
@@ -285,4 +285,4 @@ export default async function handler(req, res) {
     logger.error('Restaurant settings API error:', error);
     return res.status(500).json({ success: false, error: 'Internal server error', details: error.message });
   }
-}
+};
