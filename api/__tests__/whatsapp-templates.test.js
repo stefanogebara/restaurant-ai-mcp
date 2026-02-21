@@ -232,3 +232,61 @@ describe('TEMPLATES structure', () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// Missing Spanish (es) variants – cover lines 55-62, 75, 140, 158
+// ---------------------------------------------------------------------------
+describe('getTemplate - Spanish missing variants', () => {
+  test('reservation_modified in Spanish (line 55)', () => {
+    const msg = getTemplate('reservation_modified', 'es', TEST_VARS);
+    expect(msg).toContain('Hola João');
+    expect(msg).toContain('actualizada');
+    expect(msg).toContain('CANCELAR');
+    expect(msg).toContain('RES-20260315-ABC123');
+  });
+
+  test('reservation_cancelled in Spanish (line 75)', () => {
+    const msg = getTemplate('reservation_cancelled', 'es', TEST_VARS);
+    expect(msg).toContain('Hola João');
+    expect(msg).toContain('cancelada');
+    expect(msg).toContain('RESERVAR');
+    expect(msg).toContain('Boteco do Samba');
+  });
+
+  test('waitlist_added in Spanish (line 140)', () => {
+    const msg = getTemplate('waitlist_added', 'es', TEST_VARS);
+    expect(msg).toContain('Hola João');
+    expect(msg).toContain('lista de espera');
+    expect(msg).toContain('20 minutos');
+    expect(msg).toContain('Boteco do Samba');
+  });
+
+  test('table_ready in Spanish (line 158)', () => {
+    const msg = getTemplate('table_ready', 'es', TEST_VARS);
+    expect(msg).toContain('Hola João');
+    expect(msg).toContain('lista');
+    expect(msg).toContain('10 minutos');
+    expect(msg).toContain('Boteco do Samba');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Missing Portuguese (pt) variants – cover lines 61-66, 99
+// ---------------------------------------------------------------------------
+describe('getTemplate - Portuguese missing variants', () => {
+  test('reservation_modified in Portuguese (lines 61-66)', () => {
+    const msg = getTemplate('reservation_modified', 'pt', TEST_VARS);
+    expect(msg).toContain('Oi João');
+    expect(msg).toContain('atualizada');
+    expect(msg).toContain('CANCELAR');
+    expect(msg).toContain('RES-20260315-ABC123');
+  });
+
+  test('reservation_reminder in Portuguese (line 99)', () => {
+    const msg = getTemplate('reservation_reminder', 'pt', TEST_VARS);
+    expect(msg).toContain('Oi João');
+    expect(msg).toContain('lembrando');
+    expect(msg).toContain('CANCELAR');
+    expect(msg).toContain('Boteco do Samba');
+  });
+});
