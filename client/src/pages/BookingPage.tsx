@@ -140,7 +140,11 @@ export default function BookingPage() {
       const data = await res.json();
       if (data.success) {
         navigate(`/book/${slug}/confirmed`, {
-          state: { reservation: data.reservation, restaurant_name: restaurant.name }
+          state: {
+            reservation: data.reservation,
+            restaurant_name: restaurant.name,
+            wa_me_link: restaurant.wa_me_link ?? null
+          }
         });
       } else {
         setSubmitError(data.message || 'Could not complete reservation');

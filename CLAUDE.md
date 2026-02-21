@@ -360,6 +360,20 @@ Design system: Playfair Display + Inter, burgundy `#9F1239`, charcoal `#1C1917`,
 - [x] WhatsApp connection prep (model updated to claude-sonnet-4, env vars documented)
 - [x] Create Brazilian demo restaurant ("Boteco do Samba", São Paulo, seed script)
 
+### Phase 8: WhatsApp Integration (DONE - Feb 21, 2026)
+- [x] **Database**: Added `whatsapp_enabled` + `whatsapp_phone_number` to `restaurant.restaurant_config`
+- [x] **Shared sender library**: `api/_lib/whatsapp-sender.js` - `sendWhatsAppMessage`, `sendTemplateMessage`, `sendReservationConfirmation`, `isWhatsAppConfigured`
+- [x] **Settings API**: `api/whatsapp-settings.js` - status, stats, update (PATCH), test message (POST)
+- [x] **WhatsApp-first reservations**: `api/reservations.js` - Meta API first, SMS fallback, dynamic restaurant name
+- [x] **Per-restaurant reminders**: `api/cron/send-reminders.js` - Meta API per-restaurant, Twilio fallback
+- [x] **Portal API**: `api/portal.js` - includes `whatsapp_enabled` + per-restaurant `wa_me_link`
+- [x] **Onboarding**: WhatsApp toggle + phone in Step 2 Contact, saved via `api/onboarding/complete.js`
+- [x] **Frontend settings page**: `client/src/pages/WhatsAppSettingsPage.tsx` + React Query hooks
+- [x] **Booking page**: Floating WhatsApp button (`WhatsAppButton.tsx`) when restaurant has WhatsApp enabled
+- [x] **Booking confirmation**: WhatsApp CTA button when `wa_me_link` is in navigation state
+- [x] **Dashboard**: `WhatsAppStatsCard.tsx` auto-shown when WhatsApp enabled
+- [x] **Tests**: 40 new tests covering `whatsapp-sender` + `whatsapp-settings` APIs
+
 ### Phase 7: Testing & Quality Assurance (IN PROGRESS - Feb 20, 2026)
 - [x] Add unit tests for Phase 6 code (currency.ts, planFeatures.ts, subscription-limits.js) - 103 tests
 - [x] Add API endpoint tests (reservations, waitlist, host-dashboard) - 39 tests

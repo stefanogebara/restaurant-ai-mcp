@@ -122,6 +122,8 @@ module.exports = async (req, res) => {
       selected_voice_id, // Voice selection from Step 2.5
       selected_voice_language, // Language code from selected voice (e.g., 'es', 'fr', 'en')
       restaurant_learning, // AI restaurant learning data (session_id, restaurant_profile)
+      whatsapp_enabled, // WhatsApp reservation toggle
+      whatsapp_phone_number, // WhatsApp business phone number
     } = req.body;
 
     // Validate required fields
@@ -463,6 +465,8 @@ module.exports = async (req, res) => {
       },
       is_active: true,
       onboarding_completed: true,
+      whatsapp_enabled: whatsapp_enabled === true,
+      whatsapp_phone_number: whatsapp_phone_number || null,
       ...(restaurant_learning?.restaurant_profile ? {
         restaurant_profile: restaurant_learning.restaurant_profile
       } : {}),
