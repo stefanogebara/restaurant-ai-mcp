@@ -20,7 +20,7 @@
 | **Deployment** | Vercel (auto-deploy on push to main) |
 | **State** | React Query (@tanstack/react-query) |
 | **Rate Limiting** | Upstash Redis (with in-memory fallback) |
-| **Testing** | Jest (backend, 496 tests), Vitest + RTL (frontend, 295 tests), Playwright (E2E) |
+| **Testing** | Jest (backend, 917 tests, 94.66% coverage), Vitest + RTL (frontend, 295 tests), Playwright (E2E) |
 | **Logging** | createSecureLogger (masks sensitive data) |
 
 ---
@@ -381,7 +381,7 @@ Design system: Playfair Display + Inter, burgundy `#9F1239`, charcoal `#1C1917`,
 - [x] Add E2E tests (Playwright: brazil-launch.spec.ts + updated critical-flows.spec.ts)
 - [x] Add `test:all` script, include api/ml/** in coverage config
 - [x] Fix production bug: timezone scoping in reservations.js handleCreate
-- [ ] Increase test coverage to 80%+
+- [x] Increase test coverage to 80%+ (achieved: 94.66% statements, 84.28% branches, 917 tests)
 - [ ] Stress test with concurrent users
 - [ ] Add API documentation
 
