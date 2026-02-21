@@ -12,6 +12,13 @@ const mockInsert = jest.fn();
 const mockFrom = jest.fn();
 const mockSchema = jest.fn();
 
+// Controls the resolved value when a chain is awaited directly (e.g. .in().then)
+const mockChainResolve = jest.fn();
+
+// Availability calculator mocks
+const mockCheckTimeSlotAvailability = jest.fn(() => ({ available: true, availableSeats: 40, reason: '' }));
+const mockGetDiningDuration = jest.fn(() => 90);
+
 function mockCreateChainableMock() {
   const chain = new Proxy({}, {
     get(target, prop) {
@@ -20,6 +27,8 @@ function mockCreateChainableMock() {
       if (prop === 'in') return (...args) => { mockIn(...args); return chain; };
       if (prop === 'single') return () => mockSingle();
       if (prop === 'insert') return (...args) => { mockInsert(...args); return chain; };
+      // Allow `await chain` to resolve (used after .in(), .eq() chains without .single())
+      if (prop === 'then') return (resolve, reject) => { Promise.resolve(mockChainResolve()).then(resolve, reject); };
       return () => chain;
     },
   });
@@ -64,6 +73,12 @@ jest.mock('../_lib/secure-logger', () => ({
   }),
 }));
 
+jest.mock('../_lib/availability-calculator', () => ({
+  checkTimeSlotAvailability: (...args) => mockCheckTimeSlotAvailability(...args),
+  getSuggestedTimes: jest.fn(() => []),
+  getDiningDuration: (...args) => mockGetDiningDuration(...args),
+}));
+
 const handler = require('../portal');
 
 // Helper
@@ -86,6 +101,10 @@ function createMockReqRes(overrides = {}) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  // Default: awaiting a chain resolves with empty data
+  mockChainResolve.mockReturnValue({ data: [], error: null });
+  mockCheckTimeSlotAvailability.mockReturnValue({ available: true, availableSeats: 40, reason: '' });
+  mockGetDiningDuration.mockReturnValue(90);
 });
 
 // ============================================================
@@ -295,5 +314,186 @@ describe('Portal: reserve action', () => {
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
       message: expect.stringContaining('past'),
     }));
+  });
+
+  test('returns 404 when restaurant not found during reserve', async () => {
+    mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'Not found' } });
+
+    const { req, res } = createMockReqRes({
+      method: 'POST',
+      body: {
+        action: 'reserve',
+        restaurant_id: 'nonexistent',
+        customer_name: 'Test User',
+        customer_phone: '+5511999999999',
+        party_size: 2,
+        date: '2026-04-01',
+        time: '19:00',
+      },
+    });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+
+  test('returns 409 when slot is unavailable', async () => {
+    // Restaurant found
+    mockSingle.mockResolvedValueOnce({
+      data: {
+        id: 'r1',
+        restaurant_name: 'Test Restaurant',
+        reservation_settings: { max_party_size: 10 },
+        business_hours: {},
+        average_dining_duration_minutes: 90,
+      },
+      error: null,
+    });
+    // Existing reservations (full)
+    mockChainResolve.mockReturnValueOnce({ data: [{ time: '19:00', party_size: 40, status: 'confirmed' }], error: null });
+    // Tables
+    mockChainResolve.mockReturnValueOnce({ data: [{ capacity: 40 }], error: null });
+    // checkTimeSlotAvailability returns unavailable
+    mockCheckTimeSlotAvailability.mockReturnValueOnce({ available: false, availableSeats: 0, reason: 'Restaurant is fully booked at this time.' });
+
+    const { req, res } = createMockReqRes({
+      method: 'POST',
+      body: {
+        action: 'reserve',
+        restaurant_id: 'r1',
+        customer_name: 'Test User',
+        customer_phone: '+5511999999999',
+        party_size: 4,
+        date: '2026-04-01',
+        time: '19:00',
+      },
+    });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(409);
+  });
+
+  test('creates reservation and returns 201', async () => {
+    // Restaurant found
+    mockSingle.mockResolvedValueOnce({
+      data: {
+        id: 'r1',
+        restaurant_name: 'Test Restaurant',
+        reservation_settings: { max_party_size: 10 },
+        business_hours: {},
+        average_dining_duration_minutes: 90,
+      },
+      error: null,
+    });
+    // Existing reservations (empty)
+    mockChainResolve.mockReturnValueOnce({ data: [], error: null });
+    // Tables
+    mockChainResolve.mockReturnValueOnce({ data: [{ capacity: 40 }], error: null });
+    // Slot available
+    mockCheckTimeSlotAvailability.mockReturnValueOnce({ available: true, availableSeats: 38 });
+    // Created reservation
+    mockSingle.mockResolvedValueOnce({
+      data: {
+        id: 'db-uuid-1',
+        reservation_id: 'RES-TEST-123',
+        customer_name: 'Test User',
+        party_size: 2,
+        date: '2026-04-01',
+        time: '19:00',
+        status: 'confirmed',
+      },
+      error: null,
+    });
+
+    const { req, res } = createMockReqRes({
+      method: 'POST',
+      body: {
+        action: 'reserve',
+        restaurant_id: 'r1',
+        customer_name: 'Test User',
+        customer_phone: '+5511999999999',
+        party_size: 2,
+        date: '2026-04-01',
+        time: '19:00',
+      },
+    });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: true,
+      reservation: expect.objectContaining({
+        id: 'RES-TEST-123',
+        name: 'Test User',
+      }),
+    }));
+  });
+});
+
+// ============================================================
+// action=availability (slot generation)
+// ============================================================
+describe('Portal: availability slot generation', () => {
+  // 2026-03-02 is a Monday
+  const MONDAY = '2026-03-02';
+
+  function restaurantConfig(overrides = {}) {
+    return {
+      id: 'r1',
+      restaurant_name: 'Test Restaurant',
+      business_hours: {
+        monday: { is_open: true, open_time: '12:00', close_time: '14:00' },
+      },
+      reservation_settings: { max_party_size: 10 },
+      average_dining_duration_minutes: 90,
+      ...overrides,
+    };
+  }
+
+  test('returns slots for open restaurant', async () => {
+    mockSingle.mockResolvedValueOnce({ data: restaurantConfig(), error: null });
+    mockChainResolve.mockReturnValueOnce({ data: [], error: null });    // reservations
+    mockChainResolve.mockReturnValueOnce({ data: [{ capacity: 40 }], error: null }); // tables
+
+    const { req, res } = createMockReqRes({
+      query: { action: 'availability', restaurant_id: 'r1', date: MONDAY, party_size: '2' },
+    });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: true,
+      slots: expect.any(Array),
+      operating_hours: { open: '12:00', close: '14:00' },
+    }));
+  });
+
+  test('returns empty slots for closed day', async () => {
+    // Monday marked as closed
+    mockSingle.mockResolvedValueOnce({
+      data: restaurantConfig({
+        business_hours: {
+          monday: { is_open: false, open_time: '12:00', close_time: '22:00' },
+        },
+      }),
+      error: null,
+    });
+
+    const { req, res } = createMockReqRes({
+      query: { action: 'availability', restaurant_id: 'r1', date: MONDAY, party_size: '2' },
+    });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: true,
+      available: false,
+      slots: [],
+    }));
+  });
+
+  test('returns 500 when reservations fetch fails', async () => {
+    mockSingle.mockResolvedValueOnce({ data: restaurantConfig(), error: null });
+    mockChainResolve.mockReturnValueOnce({ data: null, error: { message: 'DB error' } });
+
+    const { req, res } = createMockReqRes({
+      query: { action: 'availability', restaurant_id: 'r1', date: MONDAY, party_size: '2' },
+    });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(500);
   });
 });

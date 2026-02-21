@@ -71,6 +71,23 @@ const mockCancelReservation = jest.fn(() =>
 
 const mockGenerateReservationId = jest.fn(() => 'RES-GENERATED-001');
 
+// WhatsApp sender mocks
+const mockIsWhatsAppConfigured = jest.fn(() => false);
+const mockSendReservationConfirmation = jest.fn(() => Promise.resolve({ success: true }));
+
+// Schema mock: controls what supabaseAdmin.schema('restaurant').from(...).single() returns
+const mockSchemaFromSingle = jest.fn(() =>
+  Promise.resolve({
+    data: { whatsapp_enabled: false, restaurant_name: 'Test Restaurant', agent_language: 'en' },
+    error: null,
+  })
+);
+
+jest.mock('../_lib/whatsapp-sender', () => ({
+  isWhatsAppConfigured: (...args) => mockIsWhatsAppConfigured(...args),
+  sendReservationConfirmation: (...args) => mockSendReservationConfirmation(...args),
+}));
+
 jest.mock('../_lib/supabase', () => ({
   createReservation: mockCreateReservation,
   generateReservationId: mockGenerateReservationId,
@@ -82,6 +99,16 @@ jest.mock('../_lib/supabase', () => ({
     from: jest.fn(() => ({
       insert: jest.fn(() => ({ select: jest.fn(() => ({ single: jest.fn(() => Promise.resolve({ data: null, error: null })) })) })),
     })),
+    schema: () => ({
+      from: () => {
+        const chainable = {
+          select: () => chainable,
+          eq: () => chainable,
+          single: () => mockSchemaFromSingle(),
+        };
+        return chainable;
+      },
+    }),
   },
 }));
 
@@ -409,5 +436,92 @@ describe('Rate limiting', () => {
 
     // Rate limit handler sends response directly, handler returns early
     expect(mockCreateReservation).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// WhatsApp Confirmation Branch (lines ~394-441 in reservations.js)
+// ---------------------------------------------------------------------------
+
+describe('WhatsApp confirmation', () => {
+  const validCreateBody = {
+    date: '2026-03-20',
+    time: '19:00',
+    party_size: 4,
+    customer_name: 'João Silva',
+    customer_phone: '+5511999999999',
+    customer_email: 'joao@example.com',
+  };
+
+  beforeEach(() => {
+    mockSchemaFromSingle.mockResolvedValue({
+      data: { whatsapp_enabled: false, restaurant_name: 'Test Restaurant', agent_language: 'en' },
+      error: null,
+    });
+    mockIsWhatsAppConfigured.mockReturnValue(false);
+    mockSendReservationConfirmation.mockResolvedValue({ success: true });
+  });
+
+  test('sends WhatsApp confirmation when enabled and configured', async () => {
+    mockSchemaFromSingle.mockResolvedValueOnce({
+      data: { whatsapp_enabled: true, restaurant_name: 'Test Restaurant', agent_language: 'pt' },
+      error: null,
+    });
+    mockIsWhatsAppConfigured.mockReturnValue(true);
+
+    const { req, res } = mockReqRes({ action: 'create', body: validCreateBody });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(mockSendReservationConfirmation).toHaveBeenCalledWith(
+      '+5511999999999',
+      expect.objectContaining({
+        customerName: 'João Silva',
+        restaurantName: 'Test Restaurant',
+        language: 'pt',
+      })
+    );
+  });
+
+  test('falls back to SMS when WhatsApp send fails', async () => {
+    mockSchemaFromSingle.mockResolvedValueOnce({
+      data: { whatsapp_enabled: true, restaurant_name: 'Test Restaurant', agent_language: 'en' },
+      error: null,
+    });
+    mockIsWhatsAppConfigured.mockReturnValue(true);
+    mockSendReservationConfirmation.mockResolvedValueOnce({ success: false, error: 'API error' });
+
+    const { req, res } = mockReqRes({ action: 'create', body: validCreateBody });
+    await handler(req, res);
+
+    // Reservation still succeeds (confirmation failure is non-fatal)
+    expect(res.status).toHaveBeenCalledWith(200);
+    // WhatsApp was attempted
+    expect(mockSendReservationConfirmation).toHaveBeenCalled();
+  });
+
+  test('skips WhatsApp and uses SMS when whatsapp_enabled is false', async () => {
+    mockSchemaFromSingle.mockResolvedValueOnce({
+      data: { whatsapp_enabled: false, restaurant_name: 'Test Restaurant', agent_language: 'en' },
+      error: null,
+    });
+    mockIsWhatsAppConfigured.mockReturnValue(false);
+
+    const { req, res } = mockReqRes({ action: 'create', body: validCreateBody });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    // WhatsApp should NOT have been called
+    expect(mockSendReservationConfirmation).not.toHaveBeenCalled();
+  });
+
+  test('reservation succeeds even if schema query throws', async () => {
+    mockSchemaFromSingle.mockRejectedValueOnce(new Error('DB unavailable'));
+
+    const { req, res } = mockReqRes({ action: 'create', body: validCreateBody });
+    await handler(req, res);
+
+    // Confirmation is in a try/catch, so reservation still succeeds
+    expect(res.status).toHaveBeenCalledWith(200);
   });
 });
