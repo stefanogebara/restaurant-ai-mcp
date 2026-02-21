@@ -337,7 +337,7 @@ Design system: Playfair Display + Inter, burgundy `#9F1239`, charcoal `#1C1917`,
 - [x] Fix dashboard cache key mismatch (`['dashboard']` → `['hostDashboard']`)
 - [x] Wire up dead `showCompleteModal` - confirmation dialog now shows before completing service
 - [ ] Add proper error handling (replace silent catch blocks)
-- [ ] Setup Sentry error monitoring
+- [x] Setup Sentry error monitoring (SENTRY_DSN added to Vercel, captureException in all 10 API endpoints)
 
 ### Phase 5: Code Quality & Technical Debt (DONE - Feb 20, 2026)
 - [x] Split `api/_lib/supabase.js` god file (1908 lines → 6 domain modules + 51-line barrel)
