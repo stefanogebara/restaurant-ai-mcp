@@ -3,7 +3,6 @@ import type { UpcomingReservation } from '../../types/host.types';
 import ReservationDetailsModal from './ReservationDetailsModal';
 import RiskBadge from './RiskBadge';
 import { hostAPI } from '../../services/api';
-import { useToast } from '../../contexts/ToastContext';
 
 interface ReservationsCalendarProps {
   reservations: UpcomingReservation[];
@@ -13,7 +12,6 @@ interface ReservationsCalendarProps {
 }
 
 export default function ReservationsCalendar({ reservations, onCheckIn, onRecordOutcome, onReservationUpdated }: ReservationsCalendarProps) {
-  const { error: showError } = useToast();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [detailsReservation, setDetailsReservation] = useState<UpcomingReservation | null>(null);
 
@@ -33,7 +31,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
       }
     } catch (error) {
       console.error('Failed to update reservation:', error);
-      showError('Failed to update reservation notes. Please try again.');
+      alert('Failed to update reservation notes. Please try again.');
     }
   };
 

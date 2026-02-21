@@ -10,7 +10,6 @@ import { useState } from 'react';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { UpcomingReservation } from '../../types/host.types';
 import RiskScoreBadge from './RiskScoreBadge';
-import { useToast } from '../../contexts/ToastContext';
 
 interface RecordOutcomeModalProps {
   reservation: UpcomingReservation | null;
@@ -38,8 +37,6 @@ export default function RecordOutcomeModal({
   const [interventionCost, setInterventionCost] = useState(0);
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const { error: showError } = useToast();
 
   if (!reservation) return null;
 
@@ -47,11 +44,10 @@ export default function RecordOutcomeModal({
     e.preventDefault();
 
     if (!outcome) {
-      setValidationError('Please select an outcome');
+      alert('Please select an outcome');
       return;
     }
 
-    setValidationError(null);
     setIsSubmitting(true);
 
     try {
@@ -67,7 +63,7 @@ export default function RecordOutcomeModal({
       onClose();
     } catch (error) {
       console.error('Error recording outcome:', error);
-      showError('Failed to record outcome. Please try again.');
+      alert('Failed to record outcome. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -256,11 +252,6 @@ export default function RecordOutcomeModal({
               placeholder="Any additional context about this reservation..."
             />
           </div>
-
-          {/* Validation error */}
-          {validationError && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{validationError}</p>
-          )}
 
           {/* Actions */}
           <div className="flex gap-3 pt-4">

@@ -5,11 +5,9 @@ import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../../services/api';
 import { supabase } from '../../lib/supabase';
 import { detectCurrency } from '../../utils/currency';
-import { useToast } from '../../contexts/ToastContext';
 
 export default function PricingSection() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
-  const { error: showError } = useToast();
   const navigate = useNavigate();
 
   const currency = useMemo(() => detectCurrency(), []);
@@ -51,7 +49,7 @@ export default function PricingSection() {
       window.location.href = url;
     } catch (error) {
       console.error('Error creating checkout session:', error);
-      showError('Failed to start checkout. Please try again.');
+      alert('Failed to start checkout. Please try again.');
       setLoadingPlan(null);
     }
   };

@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SkeletonSubscription } from '../components/common/Skeleton';
 import { authFetch } from '../services/api';
 import { detectCurrency } from '../utils/currency';
-import { useToast } from '../contexts/ToastContext';
 
 interface SubscriptionData {
   status: 'active' | 'trialing' | 'canceled' | 'past_due' | 'none';
@@ -28,7 +27,6 @@ const plansBRL = [
 ];
 
 export default function SubscriptionManage() {
-  const { error: showError } = useToast();
   const currency = useMemo(() => detectCurrency(), []);
   const plans = currency === 'BRL' ? plansBRL : plansEUR;
   const planTiers = plans.map(p => p.name.toLowerCase());
@@ -80,7 +78,7 @@ export default function SubscriptionManage() {
       const customerId = localStorage.getItem('stripe_customer_id');
 
       if (!customerId) {
-        showError('No subscription found. Please subscribe first.');
+        alert('No subscription found. Please subscribe first.');
         setManagingSubscription(false);
         return;
       }
@@ -109,7 +107,7 @@ export default function SubscriptionManage() {
       window.location.href = url;
     } catch (error) {
       console.error('Error accessing customer portal:', error);
-      showError('Failed to open subscription management. Please try again.');
+      alert('Failed to open subscription management. Please try again.');
       setManagingSubscription(false);
     }
   };
