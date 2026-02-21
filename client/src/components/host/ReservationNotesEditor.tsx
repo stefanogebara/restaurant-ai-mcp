@@ -72,18 +72,18 @@ export default function ReservationNotesEditor({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div role="dialog" aria-modal="true" aria-label="Reservation Notes" className="bg-white rounded-2xl shadow-2xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-[#E7E5E4]">
+      <div role="dialog" aria-modal="true" aria-label="Reservation Notes" className="bg-white rounded-2xl shadow-2xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-border-gray">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-[#1C1917]">Reservation Notes</h2>
-            <p className="text-[#57534E] text-sm">{reservation.customer_name} · {reservation.party_size} guests</p>
+            <h2 className="text-2xl font-bold text-deep-charcoal">Reservation Notes</h2>
+            <p className="text-stone-gray text-sm">{reservation.customer_name} · {reservation.party_size} guests</p>
           </div>
           <button
             onClick={onCancel}
-            className="p-2 hover:bg-[#F5F5F4] rounded-lg transition"
+            className="p-2 hover:bg-soft-gray rounded-lg transition"
           >
-            <svg className="w-6 h-6 text-[#57534E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-stone-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -94,16 +94,16 @@ export default function ReservationNotesEditor({
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <ThiingsIcon name="users" pxSize={20} />
-              <h3 className="text-lg font-semibold text-[#1C1917]">Customer Type</h3>
+              <h3 className="text-lg font-semibold text-deep-charcoal">Customer Type</h3>
             </div>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={firstTimeVisitor}
                 onChange={(e) => setFirstTimeVisitor(e.target.checked)}
-                className="w-4 h-4 rounded border-[#E7E5E4] bg-[#F5F5F4] text-[#9F1239] focus:ring-[#9F1239]"
+                className="w-4 h-4 rounded border-border-gray bg-soft-gray text-burgundy focus:ring-burgundy"
               />
-              <span className="text-sm text-[#57534E]">First Time Visitor</span>
+              <span className="text-sm text-stone-gray">First Time Visitor</span>
               <ThiingsIcon name="star" pxSize={16} />
             </label>
           </div>
@@ -112,13 +112,13 @@ export default function ReservationNotesEditor({
               onClick={() => setCustomerType('Tourist')}
               className={`p-4 rounded-xl border-2 transition-all ${
                 customerType === 'Tourist'
-                  ? 'bg-[#9F1239]/10 border-[#9F1239] text-[#9F1239]'
-                  : 'bg-[#F5F5F4] border-[#E7E5E4] text-[#57534E] hover:border-[#9F1239]/50'
+                  ? 'bg-burgundy/10 border-burgundy text-burgundy'
+                  : 'bg-soft-gray border-border-gray text-stone-gray hover:border-burgundy/50'
               }`}
             >
               <div className="text-center">
                 <div className="text-lg font-semibold">🗺️ Tourist</div>
-                <div className="text-xs mt-1 text-[#A8A29E]">International visitor</div>
+                <div className="text-xs mt-1 text-muted-stone">International visitor</div>
               </div>
             </button>
             <button
@@ -126,12 +126,12 @@ export default function ReservationNotesEditor({
               className={`p-4 rounded-xl border-2 transition-all ${
                 customerType === 'Local'
                   ? 'bg-[#16a34a]/10 border-[#16a34a] text-[#16a34a]'
-                  : 'bg-[#F5F5F4] border-[#E7E5E4] text-[#57534E] hover:border-[#16a34a]/50'
+                  : 'bg-soft-gray border-border-gray text-stone-gray hover:border-[#16a34a]/50'
               }`}
             >
               <div className="text-center">
                 <div className="text-lg font-semibold">🏠 Local</div>
-                <div className="text-xs mt-1 text-[#A8A29E]">Segovia resident</div>
+                <div className="text-xs mt-1 text-muted-stone">Segovia resident</div>
               </div>
             </button>
           </div>
@@ -141,8 +141,8 @@ export default function ReservationNotesEditor({
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
             <ThiingsIcon name="utensils" pxSize={20} />
-            <h3 className="text-lg font-semibold text-[#1C1917]">Dietary Restrictions</h3>
-            <span className="text-xs text-[#A8A29E]">(Important for cochinillo alternatives)</span>
+            <h3 className="text-lg font-semibold text-deep-charcoal">Dietary Restrictions</h3>
+            <span className="text-xs text-muted-stone">(Important for cochinillo alternatives)</span>
           </div>
           <div className="grid grid-cols-3 gap-3">
             {['Vegetarian', 'Vegan', 'Gluten-Free', 'Lactose-Free', 'Halal', 'Kosher'].map((restriction) => (
@@ -152,7 +152,7 @@ export default function ReservationNotesEditor({
                 className={`p-3 rounded-xl border-2 transition-all flex items-center justify-between ${
                   dietaryRestrictions.includes(restriction)
                     ? 'bg-[#16a34a]/10 border-[#16a34a] text-[#16a34a]'
-                    : 'bg-[#F5F5F4] border-[#E7E5E4] text-[#57534E] hover:border-[#16a34a]/50'
+                    : 'bg-soft-gray border-border-gray text-stone-gray hover:border-[#16a34a]/50'
                 }`}
               >
                 <span className="font-medium">{restriction}</span>
@@ -166,7 +166,7 @@ export default function ReservationNotesEditor({
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
             <ThiingsIcon name="languages" pxSize={20} />
-            <h3 className="text-lg font-semibold text-[#1C1917]">Language Preference</h3>
+            <h3 className="text-lg font-semibold text-deep-charcoal">Language Preference</h3>
           </div>
           <div className="grid grid-cols-4 gap-3">
             {[
@@ -181,7 +181,7 @@ export default function ReservationNotesEditor({
                 className={`p-3 rounded-xl border-2 transition-all ${
                   languagePreference === lang.code
                     ? 'bg-[#7c3aed]/10 border-[#7c3aed] text-[#7c3aed]'
-                    : 'bg-[#F5F5F4] border-[#E7E5E4] text-[#57534E] hover:border-[#7c3aed]/50'
+                    : 'bg-soft-gray border-border-gray text-stone-gray hover:border-[#7c3aed]/50'
                 }`}
               >
                 <div className="text-2xl mb-1">{lang.flag}</div>
@@ -195,7 +195,7 @@ export default function ReservationNotesEditor({
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
             <ThiingsIcon name="map-pin" pxSize={20} />
-            <h3 className="text-lg font-semibold text-[#1C1917]">Seating Preference</h3>
+            <h3 className="text-lg font-semibold text-deep-charcoal">Seating Preference</h3>
           </div>
           <div className="grid grid-cols-4 gap-3">
             {[
@@ -210,12 +210,12 @@ export default function ReservationNotesEditor({
                 className={`p-3 rounded-xl border-2 transition-all ${
                   seatingPreference === seat.value
                     ? 'bg-[#d97706]/10 border-[#d97706] text-[#d97706]'
-                    : 'bg-[#F5F5F4] border-[#E7E5E4] text-[#57534E] hover:border-[#d97706]/50'
+                    : 'bg-soft-gray border-border-gray text-stone-gray hover:border-[#d97706]/50'
                 }`}
               >
                 <div className="text-2xl mb-1">{seat.icon}</div>
                 <div className="text-sm font-medium">{seat.label}</div>
-                <div className="text-xs text-[#A8A29E]">{seat.desc}</div>
+                <div className="text-xs text-muted-stone">{seat.desc}</div>
               </button>
             ))}
           </div>
@@ -225,7 +225,7 @@ export default function ReservationNotesEditor({
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
             <ThiingsIcon name="calendar" pxSize={20} />
-            <h3 className="text-lg font-semibold text-[#1C1917]">Special Occasion</h3>
+            <h3 className="text-lg font-semibold text-deep-charcoal">Special Occasion</h3>
           </div>
           <div className="grid grid-cols-4 gap-3">
             {['Birthday', 'Anniversary', 'Business', 'Tourism'].map((occasion) => (
@@ -234,8 +234,8 @@ export default function ReservationNotesEditor({
                 onClick={() => setSpecialOccasion(occasion)}
                 className={`p-3 rounded-xl border-2 transition-all ${
                   specialOccasion === occasion
-                    ? 'bg-[#9F1239]/10 border-[#9F1239] text-[#9F1239]'
-                    : 'bg-[#F5F5F4] border-[#E7E5E4] text-[#57534E] hover:border-[#9F1239]/50'
+                    ? 'bg-burgundy/10 border-burgundy text-burgundy'
+                    : 'bg-soft-gray border-border-gray text-stone-gray hover:border-burgundy/50'
                 }`}
               >
                 <div className="font-medium">{occasion}</div>
@@ -248,7 +248,7 @@ export default function ReservationNotesEditor({
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
             <ThiingsIcon name="accessibility" pxSize={20} />
-            <h3 className="text-lg font-semibold text-[#1C1917]">Accessibility Needs</h3>
+            <h3 className="text-lg font-semibold text-deep-charcoal">Accessibility Needs</h3>
           </div>
           <div className="grid grid-cols-3 gap-3">
             {['None', 'Wheelchair', 'High Chair'].map((need) => (
@@ -258,7 +258,7 @@ export default function ReservationNotesEditor({
                 className={`p-3 rounded-xl border-2 transition-all ${
                   accessibilityNeeds === need
                     ? 'bg-[#0891b2]/10 border-[#0891b2] text-[#0891b2]'
-                    : 'bg-[#F5F5F4] border-[#E7E5E4] text-[#57534E] hover:border-[#0891b2]/50'
+                    : 'bg-soft-gray border-border-gray text-stone-gray hover:border-[#0891b2]/50'
                 }`}
               >
                 <div className="font-medium">{need}</div>
@@ -271,14 +271,14 @@ export default function ReservationNotesEditor({
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
             <ThiingsIcon name="file-text" pxSize={20} />
-            <h3 className="text-lg font-semibold text-[#1C1917]">Internal Notes</h3>
-            <span className="text-xs text-[#A8A29E]">(Staff only - not shown to customer)</span>
+            <h3 className="text-lg font-semibold text-deep-charcoal">Internal Notes</h3>
+            <span className="text-xs text-muted-stone">(Staff only - not shown to customer)</span>
           </div>
           <textarea
             value={internalNotes}
             onChange={(e) => setInternalNotes(e.target.value)}
             placeholder="VIP status, previous visits, preferences..."
-            className="w-full p-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent"
+            className="w-full p-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
             rows={3}
           />
         </div>
@@ -287,13 +287,13 @@ export default function ReservationNotesEditor({
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 px-4 py-3 border border-[#E7E5E4] text-[#57534E] rounded-xl hover:bg-[#F5F5F4] transition font-medium"
+            className="flex-1 px-4 py-3 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition font-medium"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="flex-1 px-4 py-3 bg-[#9F1239] text-white rounded-xl hover:bg-[#881337] transition font-semibold"
+            className="flex-1 px-4 py-3 bg-burgundy text-white rounded-xl hover:bg-burgundy-dark transition font-semibold"
           >
             Save Notes
           </button>

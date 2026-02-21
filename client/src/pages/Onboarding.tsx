@@ -165,17 +165,17 @@ export default function Onboarding() {
   const progressPercent = (currentStep / TOTAL_STEPS) * 100;
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] flex flex-col">
+    <div className="min-h-screen bg-warm-white flex flex-col">
       {/* Top Bar */}
-      <header className="flex items-center justify-between px-6 sm:px-12 py-5 border-b border-[#E7E5E4] bg-white">
-        <div className="font-serif text-xl font-semibold text-[#1C1917]">
-          seatable<span className="text-[#9F1239]">.</span>
+      <header className="flex items-center justify-between px-6 sm:px-12 py-5 border-b border-border-gray bg-white">
+        <div className="font-serif text-xl font-semibold text-deep-charcoal">
+          seatable<span className="text-burgundy">.</span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-[13px] text-[#78716C]">Step {currentStep} of {TOTAL_STEPS}</span>
+          <span className="text-[13px] text-warm-stone">Step {currentStep} of {TOTAL_STEPS}</span>
           <button
             onClick={() => navigate('/')}
-            className="text-[13px] text-[#9F1239] font-medium hover:text-[#881337] transition-colors"
+            className="text-[13px] text-burgundy font-medium hover:text-burgundy-dark transition-colors"
           >
             Save &amp; Exit
           </button>
@@ -183,9 +183,9 @@ export default function Onboarding() {
       </header>
 
       {/* Progress Bar */}
-      <div className="h-[3px] bg-[#E7E5E4]">
+      <div className="h-[3px] bg-border-gray">
         <div
-          className="h-full bg-[#9F1239] rounded-r-full transition-all duration-300"
+          className="h-full bg-burgundy rounded-r-full transition-all duration-300"
           style={{ width: `${progressPercent}%` }}
         />
       </div>
@@ -207,7 +207,7 @@ export default function Onboarding() {
                   {!isLast && (
                     <div
                       className={`absolute left-[15px] top-[48px] bottom-0 w-px ${
-                        isCompleted ? 'bg-[#9F1239]' : isActive ? 'bg-gradient-to-b from-[#9F1239] to-[#E7E5E4]' : 'bg-[#E7E5E4]'
+                        isCompleted ? 'bg-burgundy' : isActive ? 'bg-gradient-to-b from-burgundy to-border-gray' : 'bg-border-gray'
                       }`}
                     />
                   )}
@@ -215,10 +215,10 @@ export default function Onboarding() {
                   <div
                     className={`relative z-10 w-8 h-8 rounded-full border-2 flex items-center justify-center text-[13px] font-semibold flex-shrink-0 ${
                       isCompleted
-                        ? 'border-[#9F1239] bg-[#9F1239] text-white'
+                        ? 'border-burgundy bg-burgundy text-white'
                         : isActive
-                          ? 'border-[#9F1239] bg-[rgba(159,18,57,0.06)] text-[#9F1239]'
-                          : 'border-[#E7E5E4] bg-white text-[#A8A29E]'
+                          ? 'border-burgundy bg-[rgba(159,18,57,0.06)] text-burgundy'
+                          : 'border-border-gray bg-white text-muted-stone'
                     }`}
                   >
                     {isCompleted ? (
@@ -232,7 +232,7 @@ export default function Onboarding() {
                   {/* Step label */}
                   <span
                     className={`text-sm pt-[5px] ${
-                      isActive ? 'font-semibold text-[#1C1917]' : isCompleted ? 'font-medium text-[#57534E]' : 'font-medium text-[#A8A29E]'
+                      isActive ? 'font-semibold text-deep-charcoal' : isCompleted ? 'font-medium text-stone-gray' : 'font-medium text-muted-stone'
                     }`}
                   >
                     {name}
@@ -284,20 +284,20 @@ export default function Onboarding() {
       {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-          <div className="bg-white border border-[#E7E5E4] rounded-2xl p-12 max-w-md w-full">
+          <div className="bg-white border border-border-gray rounded-2xl p-12 max-w-md w-full">
             <div className="text-center">
-              <div className="w-20 h-20 bg-[#9F1239] rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="w-20 h-20 bg-burgundy rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h2 className="font-serif text-3xl font-medium text-[#1C1917] mb-3">Welcome Aboard!</h2>
-              <p className="text-[15px] text-[#57534E] font-light mb-6">
+              <h2 className="font-serif text-3xl font-medium text-deep-charcoal mb-3">Welcome Aboard!</h2>
+              <p className="text-[15px] text-stone-gray font-light mb-6">
                 Your restaurant is ready. Let&apos;s start managing reservations!
               </p>
               <div className="flex items-center justify-center gap-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#E7E5E4] border-t-[#9F1239]" />
-                <span className="text-sm text-[#57534E]">Redirecting to dashboard...</span>
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-border-gray border-t-burgundy" />
+                <span className="text-sm text-stone-gray">Redirecting to dashboard...</span>
               </div>
             </div>
           </div>

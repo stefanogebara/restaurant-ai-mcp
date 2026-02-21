@@ -154,37 +154,37 @@ function AddTableModal({ onClose, onAdd, nextNumber, locations, activeLocation, 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-[#E7E5E4]"
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-border-gray"
         onClick={e => e.stopPropagation()}>
-        <div className="p-6 border-b border-[#E7E5E4] flex items-center justify-between">
-          <h2 className="text-lg font-bold text-[#1C1917]">Add Table</h2>
-          <button onClick={onClose} className="p-1.5 hover:bg-[#F5F5F4] rounded-lg transition-colors">
+        <div className="p-6 border-b border-border-gray flex items-center justify-between">
+          <h2 className="text-lg font-bold text-deep-charcoal">Add Table</h2>
+          <button onClick={onClose} className="p-1.5 hover:bg-soft-gray rounded-lg transition-colors">
             <ThiingsIcon name="close" pxSize={18} />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* Table Number */}
           <div>
-            <label className="block text-sm font-medium text-[#1C1917] mb-1.5">Table Number</label>
+            <label className="block text-sm font-medium text-deep-charcoal mb-1.5">Table Number</label>
             <input
               type="number"
               value={tableNumber}
               onChange={e => setTableNumber(Number(e.target.value))}
               min={1}
-              className="w-full px-3 py-2 border border-[#E7E5E4] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9F1239]/30 focus:border-[#9F1239]"
+              className="w-full px-3 py-2 border border-border-gray rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
             />
           </div>
 
           {/* Capacity */}
           <div>
-            <label className="block text-sm font-medium text-[#1C1917] mb-1.5">Capacity</label>
+            <label className="block text-sm font-medium text-deep-charcoal mb-1.5">Capacity</label>
             <div className="flex gap-2">
               {CAPACITIES.map(c => (
                 <button key={c} type="button" onClick={() => setCapacity(c)}
                   className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-all ${
                     capacity === c
-                      ? 'bg-[#9F1239] text-white border-[#9F1239]'
-                      : 'bg-white text-[#57534E] border-[#E7E5E4] hover:border-[#9F1239]'
+                      ? 'bg-burgundy text-white border-burgundy'
+                      : 'bg-white text-stone-gray border-border-gray hover:border-burgundy'
                   }`}>
                   {c}
                 </button>
@@ -194,14 +194,14 @@ function AddTableModal({ onClose, onAdd, nextNumber, locations, activeLocation, 
 
           {/* Shape */}
           <div>
-            <label className="block text-sm font-medium text-[#1C1917] mb-1.5">Shape</label>
+            <label className="block text-sm font-medium text-deep-charcoal mb-1.5">Shape</label>
             <div className="grid grid-cols-3 gap-2">
               {SHAPES.map(s => (
                 <button key={s.value} type="button" onClick={() => setShape(s.value)}
                   className={`py-2 px-3 rounded-xl text-sm font-medium border transition-all ${
                     shape === s.value
-                      ? 'bg-[#9F1239] text-white border-[#9F1239]'
-                      : 'bg-white text-[#57534E] border-[#E7E5E4] hover:border-[#9F1239]'
+                      ? 'bg-burgundy text-white border-burgundy'
+                      : 'bg-white text-stone-gray border-border-gray hover:border-burgundy'
                   }`}>
                   {s.label}
                 </button>
@@ -211,15 +211,15 @@ function AddTableModal({ onClose, onAdd, nextNumber, locations, activeLocation, 
 
           {/* Location */}
           <div>
-            <label className="block text-sm font-medium text-[#1C1917] mb-1.5">Location</label>
+            <label className="block text-sm font-medium text-deep-charcoal mb-1.5">Location</label>
             {!showNewLoc ? (
               <div className="flex gap-2">
                 <select value={location} onChange={e => setLocation(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-[#E7E5E4] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9F1239]/30 focus:border-[#9F1239]">
+                  className="flex-1 px-3 py-2 border border-border-gray rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy">
                   {locations.map(l => <option key={l} value={l}>{l}</option>)}
                 </select>
                 <button type="button" onClick={() => setShowNewLoc(true)}
-                  className="px-3 py-2 border border-[#E7E5E4] rounded-xl text-sm text-[#57534E] hover:border-[#9F1239] transition-colors">
+                  className="px-3 py-2 border border-border-gray rounded-xl text-sm text-stone-gray hover:border-burgundy transition-colors">
                   + New
                 </button>
               </div>
@@ -229,10 +229,10 @@ function AddTableModal({ onClose, onAdd, nextNumber, locations, activeLocation, 
                   type="text" value={newLocation} onChange={e => setNewLocation(e.target.value)}
                   placeholder="e.g. Terrace"
                   autoFocus
-                  className="flex-1 px-3 py-2 border border-[#E7E5E4] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#9F1239]/30 focus:border-[#9F1239]"
+                  className="flex-1 px-3 py-2 border border-border-gray rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
                 />
                 <button type="button" onClick={() => setShowNewLoc(false)}
-                  className="px-3 py-2 border border-[#E7E5E4] rounded-xl text-sm text-[#57534E] hover:border-[#9F1239] transition-colors">
+                  className="px-3 py-2 border border-border-gray rounded-xl text-sm text-stone-gray hover:border-burgundy transition-colors">
                   Cancel
                 </button>
               </div>
@@ -240,7 +240,7 @@ function AddTableModal({ onClose, onAdd, nextNumber, locations, activeLocation, 
           </div>
 
           <button type="submit"
-            className="w-full py-2.5 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-colors text-sm">
+            className="w-full py-2.5 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors text-sm">
             Add Table
           </button>
         </form>
@@ -282,40 +282,40 @@ function TablePopover({ table, position, onClose, onDelete, onUpdateProps }: Tab
       style={{ left: position.x, top: position.y, background: '#292524' }}>
       <div className="p-3 border-b border-[#44403C] flex items-center justify-between">
         <span className="font-bold text-sm text-white">Table {table.table_number}</span>
-        <button onClick={onClose} className="p-1 hover:bg-[#44403C] rounded-lg text-[#A8A29E]">
+        <button onClick={onClose} className="p-1 hover:bg-[#44403C] rounded-lg text-muted-stone">
           <ThiingsIcon name="close" pxSize={14} />
         </button>
       </div>
       <div className="p-3 space-y-3">
         <div>
-          <label className="text-xs font-medium text-[#A8A29E] mb-1 block">Shape</label>
+          <label className="text-xs font-medium text-muted-stone mb-1 block">Shape</label>
           <select value={shape} onChange={e => setShape(e.target.value as TableShape)}
-            className="w-full px-2 py-1.5 bg-[#1C1917] border border-[#44403C] rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/50">
+            className="w-full px-2 py-1.5 bg-deep-charcoal border border-[#44403C] rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-burgundy/50">
             {SHAPES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
         </div>
         <div>
-          <label className="text-xs font-medium text-[#A8A29E] mb-1 block">Capacity</label>
+          <label className="text-xs font-medium text-muted-stone mb-1 block">Capacity</label>
           <div className="flex gap-1">
             {CAPACITIES.map(c => (
               <button key={c} type="button" onClick={() => setCapacity(c)}
                 className={`flex-1 py-1 rounded-lg text-xs font-semibold border transition-all ${
                   capacity === c
-                    ? 'bg-[#9F1239] text-white border-[#9F1239]'
-                    : 'border-[#44403C] text-[#A8A29E] hover:border-[#9F1239]'
+                    ? 'bg-burgundy text-white border-burgundy'
+                    : 'border-[#44403C] text-muted-stone hover:border-burgundy'
                 }`}>
                 {c}
               </button>
             ))}
           </div>
         </div>
-        <div className="text-xs text-[#78716C]">
+        <div className="text-xs text-warm-stone">
           {table.location || 'Main'} &middot; {table.status || 'Available'}
         </div>
         <div className="flex gap-2 pt-1">
           {hasChanges && (
             <button onClick={() => { onUpdateProps({ table_id: table.id, shape, capacity }); onClose(); }}
-              className="flex-1 py-1.5 bg-[#9F1239] text-white text-xs font-semibold rounded-lg hover:bg-[#881337] transition-colors">
+              className="flex-1 py-1.5 bg-burgundy text-white text-xs font-semibold rounded-lg hover:bg-burgundy-dark transition-colors">
               Save
             </button>
           )}
@@ -581,13 +581,13 @@ export default function FloorPlanEditor() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">Floor Plan</h1>
-            <p className="text-sm text-[#78716C] mt-1">Drag tables to arrange your layout</p>
+            <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">Floor Plan</h1>
+            <p className="text-sm text-warm-stone mt-1">Drag tables to arrange your layout</p>
           </div>
           <div className="flex items-center gap-2">
             {/* Save status */}
             <span className={`text-xs font-medium mr-2 transition-opacity ${saveStatus === 'idle' ? 'opacity-0' : 'opacity-100'} ${
-              saveStatus === 'saving' ? 'text-[#A8A29E]' : 'text-green-600'
+              saveStatus === 'saving' ? 'text-muted-stone' : 'text-green-600'
             }`}>
               {saveStatus === 'saving' ? 'Saving...' : 'Saved'}
             </span>
@@ -596,8 +596,8 @@ export default function FloorPlanEditor() {
               onClick={() => { setLinkMode(!linkMode); setLinkSource(null); setSelectedTable(null); }}
               className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all flex items-center gap-2 ${
                 linkMode
-                  ? 'bg-[#9F1239] text-white border-[#9F1239]'
-                  : 'bg-white text-[#1C1917] border-[#E7E5E4] hover:border-[#9F1239]'
+                  ? 'bg-burgundy text-white border-burgundy'
+                  : 'bg-white text-deep-charcoal border-border-gray hover:border-burgundy'
               }`}>
               <ThiingsIcon name="link" pxSize={16} />
               {linkMode ? 'Linking...' : 'Link Tables'}
@@ -605,7 +605,7 @@ export default function FloorPlanEditor() {
             {/* Add table */}
             <button
               onClick={() => { setShowAddModal(true); setSelectedTable(null); }}
-              className="px-4 py-2 rounded-xl text-sm font-semibold bg-[#9F1239] text-white hover:bg-[#881337] transition-colors flex items-center gap-2">
+              className="px-4 py-2 rounded-xl text-sm font-semibold bg-burgundy text-white hover:bg-burgundy-dark transition-colors flex items-center gap-2">
               <ThiingsIcon name="plus" pxSize={16} />
               Add Table
             </button>
@@ -614,13 +614,13 @@ export default function FloorPlanEditor() {
 
         {/* Location Tabs — dark segmented pill */}
         {locations.length > 0 && (
-          <div className="inline-flex items-center gap-0.5 p-1 bg-[#292524] rounded-full mb-4">
+          <div className="inline-flex items-center gap-0.5 p-1 bg-charcoal-dark rounded-full mb-4">
             {locations.map(loc => (
               <button key={loc} onClick={() => { setActiveLocation(loc); setSelectedTable(null); setLinkSource(null); }}
                 className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
                   activeLocation === loc
-                    ? 'bg-[#9F1239] text-white shadow-sm'
-                    : 'text-[#A8A29E] hover:text-white'
+                    ? 'bg-burgundy text-white shadow-sm'
+                    : 'text-muted-stone hover:text-white'
                 }`}>
                 {loc}
                 <span className="ml-1.5 text-xs opacity-60">
@@ -633,7 +633,7 @@ export default function FloorPlanEditor() {
 
         {/* Link mode banner — dark themed */}
         {linkMode && (
-          <div className="mb-4 px-4 py-2.5 bg-[#292524] border border-[#44403C] rounded-xl flex items-center gap-3">
+          <div className="mb-4 px-4 py-2.5 bg-charcoal-dark border border-[#44403C] rounded-xl flex items-center gap-3">
             <span className="text-[#f472b6]"><ThiingsIcon name="link" pxSize={18} /></span>
             <span className="text-sm text-[#f472b6] font-medium">
               {linkSource
@@ -647,17 +647,17 @@ export default function FloorPlanEditor() {
 
         {/* SVG Canvas — dark container */}
         <div className="relative">
-          <div className="rounded-xl bg-[#1C1917] overflow-hidden"
+          <div className="rounded-xl bg-deep-charcoal overflow-hidden"
             style={{ boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.3)' }}>
             {isLoading ? (
               <div className="flex items-center justify-center" style={{ height: 400 }}>
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#44403C] border-t-[#9F1239]" />
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#44403C] border-t-burgundy" />
               </div>
             ) : filteredTables.length === 0 ? (
               <div className="flex flex-col items-center justify-center text-center py-16 px-6">
-                <span className="text-[#57534E]"><ThiingsIcon name="map" pxSize={48} /></span>
+                <span className="text-stone-gray"><ThiingsIcon name="map" pxSize={48} /></span>
                 <p className="mt-4 font-semibold text-[#D6D3D1]">No tables in {activeLocation}</p>
-                <p className="text-sm text-[#78716C] mt-1">Click &quot;Add Table&quot; to get started</p>
+                <p className="text-sm text-warm-stone mt-1">Click &quot;Add Table&quot; to get started</p>
               </div>
             ) : (
               <div className="p-6" style={{ overflowX: 'auto' }}>
@@ -939,7 +939,7 @@ export default function FloorPlanEditor() {
         </div>
 
         {/* Legend — glowing status dots */}
-        <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-[#78716C]">
+        <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-warm-stone">
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-full" style={{
               backgroundColor: '#22c55e',
@@ -968,7 +968,7 @@ export default function FloorPlanEditor() {
             }} />
             Cleaning
           </div>
-          <div className="flex items-center gap-1.5 ml-auto text-[#A8A29E]">
+          <div className="flex items-center gap-1.5 ml-auto text-muted-stone">
             <span className="w-3 h-3 rounded-full" style={{
               backgroundColor: '#f472b6',
               boxShadow: '0 0 6px rgba(244,114,182,0.4), 0 0 10px rgba(244,114,182,0.2)',

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 /**
  * Voice & Language Settings Page
  * Post-onboarding management of AI voice, voice tuning, and language configuration.
@@ -35,6 +36,7 @@ const OPENAI_VOICES = [
 const PAGE_SIZE = 12;
 
 export default function VoiceSettingsPage() {
+  const { t } = useTranslation();
   const toast = useToast();
   const { hasAccess, isLoading: isLoadingAccess } = useFeatureAccess('voice_ai');
 
@@ -333,7 +335,7 @@ export default function VoiceSettingsPage() {
           <Skeleton className="h-8 w-64 mb-1" />
           <Skeleton className="h-4 w-80 mb-6" />
           <div className="space-y-6">
-            <div className="bg-white border border-[#E7E5E4] rounded-2xl p-6">
+            <div className="bg-white border border-border-gray rounded-2xl p-6">
               <Skeleton className="h-5 w-32 mb-4" />
               <div className="flex items-center justify-between">
                 <div>
@@ -343,7 +345,7 @@ export default function VoiceSettingsPage() {
                 <Skeleton className="h-10 w-32 rounded-lg" />
               </div>
             </div>
-            <div className="bg-white border border-[#E7E5E4] rounded-2xl p-6">
+            <div className="bg-white border border-border-gray rounded-2xl p-6">
               <Skeleton className="h-5 w-28 mb-4" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {Array.from({ length: 4 }).map((_, i) => (
@@ -366,10 +368,10 @@ export default function VoiceSettingsPage() {
       <DashboardLayout>
         <div className="p-6 lg:p-8">
           <div className="mt-8 text-center py-16">
-            <div className="bg-[#9F1239]/5 border border-[#9F1239]/20 rounded-xl p-8 max-w-md mx-auto">
+            <div className="bg-burgundy/5 border border-burgundy/20 rounded-xl p-8 max-w-md mx-auto">
               <ThiingsIcon name="volume" pxSize={48} className="mx-auto mb-4" />
-              <h2 className="text-lg font-bold text-[#1C1917] mb-2">No AI Agent Configured</h2>
-              <p className="text-sm text-[#57534E]">
+              <h2 className="text-lg font-bold text-deep-charcoal mb-2">No AI Agent Configured</h2>
+              <p className="text-sm text-stone-gray">
                 Complete the onboarding process to set up your AI voice agent, then return here to customize voice settings.
               </p>
             </div>
@@ -386,13 +388,13 @@ export default function VoiceSettingsPage() {
       <div className="dashboard p-6 lg:p-8 max-w-5xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">
-            Voice Agent <span className="font-light text-[#78716C]">/ Settings</span>
+          <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
+            Voice Agent <span className="font-light text-warm-stone">/ Settings</span>
           </h1>
           <button
             onClick={handleSave}
             disabled={!isDirty || isSaving}
-            className="px-6 py-2.5 bg-[#9F1239] hover:bg-[#881337] text-white text-[13px] font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-6 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-[13px] font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isSaving ? <Spinner size="sm" className="border-white border-t-white/30" /> : null}
             {isSaving ? 'Saving...' : 'Save Changes'}
@@ -401,8 +403,8 @@ export default function VoiceSettingsPage() {
 
         <div className="space-y-6">
           {/* Voice Engine Selector */}
-          <section className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
+          <section className="bg-white border border-border-gray rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
               <span className="text-[15px] font-semibold">Voice Engine</span>
               {engineConfig?.voice_engine_status && (
                 <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
@@ -410,7 +412,7 @@ export default function VoiceSettingsPage() {
                     ? 'bg-[rgba(22,163,74,0.08)] text-[#16a34a]'
                     : engineConfig.voice_engine_status === 'testing'
                     ? 'bg-[rgba(217,119,6,0.08)] text-[#d97706]'
-                    : 'bg-[#F5F5F4] text-[#57534E]'
+                    : 'bg-soft-gray text-stone-gray'
                 }`}>
                   {engineConfig.voice_engine_status.charAt(0).toUpperCase() + engineConfig.voice_engine_status.slice(1)}
                 </span>
@@ -424,19 +426,19 @@ export default function VoiceSettingsPage() {
                 onClick={() => handleEngineSwitch('elevenlabs')}
                 className={`text-left p-4 rounded-xl border-2 transition-all ${
                   currentEngine === 'elevenlabs'
-                    ? 'border-[#9F1239] bg-[#9F1239]/5'
-                    : 'border-[#E7E5E4] hover:border-[#A8A29E]'
+                    ? 'border-burgundy bg-burgundy/5'
+                    : 'border-border-gray hover:border-muted-stone'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-base font-semibold text-[#1C1917]">ElevenLabs</span>
+                  <span className="text-base font-semibold text-deep-charcoal">ElevenLabs</span>
                   {currentEngine === 'elevenlabs' && (
-                    <span className="text-xs font-medium text-[#9F1239] bg-[#9F1239]/10 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-medium text-burgundy bg-burgundy/10 px-2 py-0.5 rounded-full">
                       Current
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-[#57534E]">
+                <p className="text-sm text-stone-gray">
                   Managed voice agent with premium voice quality, voice cloning, and multilingual support.
                 </p>
               </button>
@@ -447,19 +449,19 @@ export default function VoiceSettingsPage() {
                 onClick={() => handleEngineSwitch('openai_realtime')}
                 className={`text-left p-4 rounded-xl border-2 transition-all ${
                   currentEngine === 'openai_realtime'
-                    ? 'border-[#9F1239] bg-[#9F1239]/5'
-                    : 'border-[#E7E5E4] hover:border-[#A8A29E]'
+                    ? 'border-burgundy bg-burgundy/5'
+                    : 'border-border-gray hover:border-muted-stone'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-base font-semibold text-[#1C1917]">OpenAI Realtime</span>
+                  <span className="text-base font-semibold text-deep-charcoal">OpenAI Realtime</span>
                   {currentEngine === 'openai_realtime' && (
-                    <span className="text-xs font-medium text-[#9F1239] bg-[#9F1239]/10 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-medium text-burgundy bg-burgundy/10 px-2 py-0.5 rounded-full">
                       Current
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-[#57534E]">
+                <p className="text-sm text-stone-gray">
                   Lower cost, native tool calling with WebSocket-based real-time voice.
                 </p>
               </button>
@@ -478,14 +480,14 @@ export default function VoiceSettingsPage() {
           {currentEngine === 'elevenlabs' && (
             <>
               {/* Section 1: Current Voice */}
-              <section className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
-                <div className="px-6 py-5 border-b border-[#F5F5F4]">
+              <section className="bg-white border border-border-gray rounded-2xl overflow-hidden">
+                <div className="px-6 py-5 border-b border-soft-gray">
                   <span className="text-[15px] font-semibold">Choose a Voice</span>
                 </div>
                 <div className="p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
-                    <p className="text-base font-semibold text-[#1C1917]">
+                    <p className="text-base font-semibold text-deep-charcoal">
                       {pendingVoiceId ? (
                         <span>
                           {selectedBrowserVoice?.name || pendingVoiceId}
@@ -497,7 +499,7 @@ export default function VoiceSettingsPage() {
                         config.voice_id || 'No voice set'
                       )}
                     </p>
-                    <div className="flex items-center gap-3 mt-1 text-sm text-[#57534E]">
+                    <div className="flex items-center gap-3 mt-1 text-sm text-stone-gray">
                       <span className="capitalize">{selectedBrowserVoice?.gender || '—'}</span>
                       <span>-</span>
                       <span>{currentLanguage.toUpperCase()}</span>
@@ -518,7 +520,7 @@ export default function VoiceSettingsPage() {
                           handlePlayVoice(currentVoiceId, text);
                         }}
                         disabled={loadingAudio === currentVoiceId}
-                        className="px-4 py-2 text-sm font-medium bg-[#F5F5F4] hover:bg-[#E7E5E4] rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                        className="px-4 py-2 text-sm font-medium bg-soft-gray hover:bg-border-gray rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
                       >
                         {loadingAudio === currentVoiceId ? (
                           <Spinner size="sm" />
@@ -532,7 +534,7 @@ export default function VoiceSettingsPage() {
                     )}
                     <button
                       onClick={() => setIsBrowserOpen(!isBrowserOpen)}
-                      className="px-4 py-2 text-sm font-medium text-[#9F1239] bg-[#9F1239]/5 hover:bg-[#9F1239]/10 rounded-lg transition-colors"
+                      className="px-4 py-2 text-sm font-medium text-burgundy bg-burgundy/5 hover:bg-burgundy/10 rounded-lg transition-colors"
                     >
                       {isBrowserOpen ? 'Hide Voice Browser' : 'Change Voice'}
                     </button>
@@ -542,12 +544,12 @@ export default function VoiceSettingsPage() {
               </section>
 
               {/* Section 2: Voice Settings */}
-              <section className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
-                <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
+              <section className="bg-white border border-border-gray rounded-2xl overflow-hidden">
+                <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
                   <span className="text-[15px] font-semibold">Voice Tuning</span>
                   <button
                     onClick={handleResetSettings}
-                    className="text-xs text-[#9F1239] hover:underline"
+                    className="text-xs text-burgundy hover:underline"
                   >
                     Reset to defaults
                   </button>
@@ -597,11 +599,11 @@ export default function VoiceSettingsPage() {
                   />
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-[#E7E5E4]">
+                <div className="mt-4 pt-4 border-t border-border-gray">
                   <button
                     onClick={handlePreviewWithSettings}
                     disabled={!currentVoiceId || loadingAudio !== null}
-                    className="px-5 py-2.5 text-sm font-medium bg-[#F5F5F4] hover:bg-[#E7E5E4] rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                    className="px-5 py-2.5 text-sm font-medium bg-soft-gray hover:bg-border-gray rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
                   >
                     {loadingAudio ? <Spinner size="sm" /> : <ThiingsIcon name="play" pxSize={16} />}
                     Preview with settings
@@ -612,8 +614,8 @@ export default function VoiceSettingsPage() {
 
               {/* Section 3: Voice Browser (collapsible) */}
               {isBrowserOpen && (
-                <section className="bg-white border border-[#E7E5E4] rounded-2xl p-6">
-                  <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
+                <section className="bg-white border border-border-gray rounded-2xl p-6">
+                  <h2 className="text-lg font-bold text-deep-charcoal mb-4 flex items-center gap-2">
                     <ThiingsIcon name="search" pxSize={20} />
                     Voice Library
                   </h2>
@@ -642,8 +644,8 @@ export default function VoiceSettingsPage() {
               )}
 
               {/* Section 4: Language Settings */}
-              <section className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
-                <div className="px-6 py-5 border-b border-[#F5F5F4]">
+              <section className="bg-white border border-border-gray rounded-2xl overflow-hidden">
+                <div className="px-6 py-5 border-b border-soft-gray">
                   <span className="text-[15px] font-semibold">Languages</span>
                 </div>
                 <div className="p-6">
@@ -654,8 +656,8 @@ export default function VoiceSettingsPage() {
                         onClick={() => handleLanguageChange(lang.code)}
                         className={`px-4 py-2 rounded-full text-[13px] font-medium border transition-colors ${
                           currentLanguage === lang.code
-                            ? 'border-[#9F1239] bg-[rgba(159,18,57,0.06)] text-[#9F1239] font-semibold'
-                            : 'border-[#E7E5E4] text-[#57534E] bg-white hover:border-[#A8A29E]'
+                            ? 'border-burgundy bg-[rgba(159,18,57,0.06)] text-burgundy font-semibold'
+                            : 'border-border-gray text-stone-gray bg-white hover:border-muted-stone'
                         }`}
                       >
                         {lang.flag} {lang.label}
@@ -672,27 +674,27 @@ export default function VoiceSettingsPage() {
               </section>
 
               {/* Section 5: Agent Info (read-only) */}
-              <section className="bg-white border border-[#E7E5E4] rounded-2xl p-6">
-                <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
+              <section className="bg-white border border-border-gray rounded-2xl p-6">
+                <h2 className="text-lg font-bold text-deep-charcoal mb-4 flex items-center gap-2">
                   <ThiingsIcon name="info" pxSize={20} />
                   Agent Info
                 </h2>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-[#A8A29E] text-xs mb-1">Voice Engine</p>
-                    <p className="text-[#1C1917] font-mono">turbo_v2.5</p>
+                    <p className="text-muted-stone text-xs mb-1">Voice Engine</p>
+                    <p className="text-deep-charcoal font-mono">turbo_v2.5</p>
                   </div>
                   <div>
-                    <p className="text-[#A8A29E] text-xs mb-1">Agent ID</p>
+                    <p className="text-muted-stone text-xs mb-1">Agent ID</p>
                     <div className="flex items-center gap-2">
-                      <p className="text-[#1C1917] font-mono truncate">{config.agent_id}</p>
+                      <p className="text-deep-charcoal font-mono truncate">{config.agent_id}</p>
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(config.agent_id);
                           toast.info('Agent ID copied');
                         }}
-                        className="text-[#9F1239] hover:text-[#881337] flex-shrink-0"
+                        className="text-burgundy hover:text-burgundy-dark flex-shrink-0"
                         title="Copy Agent ID"
                       >
                         <ThiingsIcon name="clipboard" pxSize={14} />
@@ -701,16 +703,16 @@ export default function VoiceSettingsPage() {
                   </div>
                   {config.agent_updated_at && (
                     <div>
-                      <p className="text-[#A8A29E] text-xs mb-1">Last Updated</p>
-                      <p className="text-[#1C1917]">
+                      <p className="text-muted-stone text-xs mb-1">Last Updated</p>
+                      <p className="text-deep-charcoal">
                         {new Date(config.agent_updated_at).toLocaleString()}
                       </p>
                     </div>
                   )}
                   {config.created_at && (
                     <div>
-                      <p className="text-[#A8A29E] text-xs mb-1">Created</p>
-                      <p className="text-[#1C1917]">
+                      <p className="text-muted-stone text-xs mb-1">Created</p>
+                      <p className="text-deep-charcoal">
                         {new Date(config.created_at).toLocaleString()}
                       </p>
                     </div>
@@ -724,8 +726,8 @@ export default function VoiceSettingsPage() {
           {currentEngine === 'openai_realtime' && (
             <>
               {/* OpenAI Voice Picker */}
-              <section className="bg-white border border-[#E7E5E4] rounded-2xl p-6">
-                <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
+              <section className="bg-white border border-border-gray rounded-2xl p-6">
+                <h2 className="text-lg font-bold text-deep-charcoal mb-4 flex items-center gap-2">
                   <ThiingsIcon name="volume" pxSize={20} />
                   OpenAI Voice
                 </h2>
@@ -738,14 +740,14 @@ export default function VoiceSettingsPage() {
                       onClick={() => setPendingOpenAIVoice(voice.id)}
                       className={`text-left p-4 rounded-xl border-2 transition-all ${
                         currentOpenAIVoice === voice.id
-                          ? 'border-[#9F1239] bg-[#9F1239]/5'
-                          : 'border-[#E7E5E4] hover:border-[#A8A29E]'
+                          ? 'border-burgundy bg-burgundy/5'
+                          : 'border-border-gray hover:border-muted-stone'
                       }`}
                     >
-                      <p className="text-sm font-semibold text-[#1C1917]">{voice.name}</p>
-                      <p className="text-xs text-[#57534E] mt-1">{voice.description}</p>
+                      <p className="text-sm font-semibold text-deep-charcoal">{voice.name}</p>
+                      <p className="text-xs text-stone-gray mt-1">{voice.description}</p>
                       {currentOpenAIVoice === voice.id && (
-                        <span className="inline-block mt-2 text-xs font-medium text-[#9F1239]">
+                        <span className="inline-block mt-2 text-xs font-medium text-burgundy">
                           Selected
                         </span>
                       )}
@@ -761,23 +763,23 @@ export default function VoiceSettingsPage() {
               </section>
 
               {/* Engine Info (read-only) */}
-              <section className="bg-white border border-[#E7E5E4] rounded-2xl p-6">
-                <h2 className="text-lg font-bold text-[#1C1917] mb-4 flex items-center gap-2">
+              <section className="bg-white border border-border-gray rounded-2xl p-6">
+                <h2 className="text-lg font-bold text-deep-charcoal mb-4 flex items-center gap-2">
                   <ThiingsIcon name="info" pxSize={20} />
                   Engine Info
                 </h2>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-[#A8A29E] text-xs mb-1">Engine</p>
-                    <p className="text-[#1C1917] font-mono">OpenAI Realtime API</p>
+                    <p className="text-muted-stone text-xs mb-1">Engine</p>
+                    <p className="text-deep-charcoal font-mono">OpenAI Realtime API</p>
                   </div>
                   <div>
-                    <p className="text-[#A8A29E] text-xs mb-1">WebSocket Endpoint</p>
-                    <p className="text-[#1C1917] font-mono truncate">seatable-voice.fly.dev</p>
+                    <p className="text-muted-stone text-xs mb-1">WebSocket Endpoint</p>
+                    <p className="text-deep-charcoal font-mono truncate">seatable-voice.fly.dev</p>
                   </div>
                   <div>
-                    <p className="text-[#A8A29E] text-xs mb-1">Status</p>
+                    <p className="text-muted-stone text-xs mb-1">Status</p>
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                       engineConfig?.voice_engine_status === 'active'
                         ? 'text-emerald-700 bg-emerald-50'
@@ -789,8 +791,8 @@ export default function VoiceSettingsPage() {
                     </span>
                   </div>
                   <div>
-                    <p className="text-[#A8A29E] text-xs mb-1">Voice</p>
-                    <p className="text-[#1C1917] font-mono">{currentOpenAIVoice}</p>
+                    <p className="text-muted-stone text-xs mb-1">Voice</p>
+                    <p className="text-deep-charcoal font-mono">{currentOpenAIVoice}</p>
                   </div>
                 </div>
               </section>
@@ -805,9 +807,9 @@ export default function VoiceSettingsPage() {
           title="Switch Voice Engine?"
           size="sm"
         >
-          <p className="text-sm text-[#57534E] mb-6">
+          <p className="text-sm text-stone-gray mb-6">
             Are you sure you want to switch to{' '}
-            <span className="font-semibold text-[#1C1917]">
+            <span className="font-semibold text-deep-charcoal">
               {engineSwitchTarget === 'openai_realtime' ? 'OpenAI Realtime' : 'ElevenLabs'}
             </span>
             ? This will change how incoming calls are handled.
@@ -815,13 +817,13 @@ export default function VoiceSettingsPage() {
           <div className="flex items-center justify-end gap-3">
             <button
               onClick={() => setShowEngineSwitchConfirm(false)}
-              className="px-4 py-2 text-sm font-medium text-[#57534E] hover:text-[#1C1917] transition-colors"
+              className="px-4 py-2 text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               onClick={confirmEngineSwitch}
-              className="px-5 py-2 text-sm font-semibold bg-[#9F1239] hover:bg-[#881337] text-white rounded-xl transition-colors"
+              className="px-5 py-2 text-sm font-semibold bg-burgundy hover:bg-burgundy-dark text-white rounded-xl transition-colors"
             >
               Switch Engine
             </button>

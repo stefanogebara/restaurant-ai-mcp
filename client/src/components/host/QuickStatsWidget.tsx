@@ -53,8 +53,8 @@ export default function QuickStatsWidget() {
 
   if (error) {
     return (
-      <div className="bg-white rounded-xl border border-[#E7E5E4] p-4 shadow-sm">
-        <div className="flex items-center gap-2 text-[#78716C]">
+      <div className="bg-white rounded-xl border border-border-gray p-4 shadow-sm">
+        <div className="flex items-center gap-2 text-warm-stone">
           <ThiingsIcon name="alert-circle" size="xs" />
           <span className="text-sm">ML stats temporarily unavailable</span>
         </div>
@@ -64,17 +64,17 @@ export default function QuickStatsWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl border border-[#E7E5E4] p-4 shadow-sm">
+      <div className="bg-white rounded-xl border border-border-gray p-4 shadow-sm">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-5 h-5 bg-[#F5F5F4] rounded animate-pulse"></div>
-          <div className="h-4 w-32 bg-[#F5F5F4] rounded animate-pulse"></div>
+          <div className="w-5 h-5 bg-soft-gray rounded animate-pulse"></div>
+          <div className="h-4 w-32 bg-soft-gray rounded animate-pulse"></div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => (
             <div key={i} className="space-y-2">
-              <div className="h-3 w-20 bg-[#F5F5F4] rounded animate-pulse"></div>
-              <div className="h-7 w-16 bg-[#F5F5F4] rounded animate-pulse"></div>
-              <div className="h-3 w-24 bg-[#F5F5F4] rounded animate-pulse"></div>
+              <div className="h-3 w-20 bg-soft-gray rounded animate-pulse"></div>
+              <div className="h-7 w-16 bg-soft-gray rounded animate-pulse"></div>
+              <div className="h-3 w-24 bg-soft-gray rounded animate-pulse"></div>
             </div>
           ))}
         </div>
@@ -88,56 +88,56 @@ export default function QuickStatsWidget() {
   const hasData = stats.today_interventions > 0 || stats.value_saved_30d > 0;
 
   const getRoiColor = (status: string) => {
-    if (!hasData) return 'text-[#78716C]';
+    if (!hasData) return 'text-warm-stone';
     switch (status) {
       case 'exceeds': return 'text-green-600';
       case 'meets': return 'text-green-600';
       case 'below': return 'text-amber-600';
-      default: return 'text-[#1C1917]';
+      default: return 'text-deep-charcoal';
     }
   };
 
   const getRoiBg = (status: string) => {
-    if (!hasData) return 'bg-[#FAFAF9]';
+    if (!hasData) return 'bg-warm-white';
     switch (status) {
       case 'exceeds': return 'bg-green-50';
       case 'meets': return 'bg-green-50';
       case 'below': return 'bg-amber-50';
-      default: return 'bg-[#F5F5F4]';
+      default: return 'bg-soft-gray';
     }
   };
 
   const getSuccessColor = (status: string) => {
-    if (!hasData) return 'text-[#78716C]';
+    if (!hasData) return 'text-warm-stone';
     switch (status) {
       case 'good': return 'text-green-600';
       case 'fair': return 'text-amber-600';
       case 'needs_improvement': return 'text-red-600';
-      default: return 'text-[#1C1917]';
+      default: return 'text-deep-charcoal';
     }
   };
 
   const getSuccessBg = (status: string) => {
-    if (!hasData) return 'bg-[#FAFAF9]';
+    if (!hasData) return 'bg-warm-white';
     switch (status) {
       case 'good': return 'bg-green-50';
       case 'fair': return 'bg-amber-50';
       case 'needs_improvement': return 'bg-red-50';
-      default: return 'bg-[#F5F5F4]';
+      default: return 'bg-soft-gray';
     }
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[#E7E5E4] shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl border border-border-gray shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#E7E5E4] bg-[#F5F5F4]/30">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border-gray bg-soft-gray/30">
         <div className="flex items-center gap-2">
           <ThiingsIcon name="target" size="sm" />
-          <span className="font-semibold text-[#1C1917]">ML Performance Snapshot</span>
+          <span className="font-semibold text-deep-charcoal">ML Performance Snapshot</span>
         </div>
         <a
           href="/host-dashboard/ml"
-          className="text-sm text-[#9F1239] hover:text-[#881337] font-medium flex items-center gap-1 transition-colors"
+          className="text-sm text-burgundy hover:text-burgundy-dark font-medium flex items-center gap-1 transition-colors"
         >
           View Details
           <ThiingsIcon name="external-link" size="xs" />
@@ -155,18 +155,18 @@ export default function QuickStatsWidget() {
               </div>
               <span className="text-xs font-medium text-blue-600 uppercase tracking-wide">Today</span>
             </div>
-            <div className="text-2xl font-bold text-[#1C1917]">
+            <div className="text-2xl font-bold text-deep-charcoal">
               {stats.today_interventions}
             </div>
-            <div className="text-xs text-[#78716C] mt-1">
+            <div className="text-xs text-warm-stone mt-1">
               {stats.today_change}
             </div>
           </div>
 
           {/* Weekly ROI */}
-          <div className={`${getRoiBg(stats.roi_status)} rounded-lg p-4 border ${!hasData ? 'border-[#E7E5E4]' : 'border-green-100'}`}>
+          <div className={`${getRoiBg(stats.roi_status)} rounded-lg p-4 border ${!hasData ? 'border-border-gray' : 'border-green-100'}`}>
             <div className="flex items-center gap-2 mb-2">
-              <div className={`w-8 h-8 ${!hasData ? 'bg-[#F5F5F4]' : stats.roi_status === 'below' ? 'bg-amber-100' : 'bg-green-100'} rounded-lg flex items-center justify-center`}>
+              <div className={`w-8 h-8 ${!hasData ? 'bg-soft-gray' : stats.roi_status === 'below' ? 'bg-amber-100' : 'bg-green-100'} rounded-lg flex items-center justify-center`}>
                 <ThiingsIcon name="trending-up" size="xs" />
               </div>
               <span className={`text-xs font-medium uppercase tracking-wide ${getRoiColor(stats.roi_status)}`}>7-Day ROI</span>
@@ -174,7 +174,7 @@ export default function QuickStatsWidget() {
             <div className={`text-2xl font-bold ${getRoiColor(stats.roi_status)}`}>
               {stats.weekly_roi}%
             </div>
-            <div className="text-xs text-[#78716C] mt-1">
+            <div className="text-xs text-warm-stone mt-1">
               {!hasData ? 'Awaiting data' : (
                 <>
                   {stats.roi_status === 'exceeds' && 'Exceeds target'}
@@ -193,18 +193,18 @@ export default function QuickStatsWidget() {
               </div>
               <span className="text-xs font-medium text-emerald-600 uppercase tracking-wide">30-Day Saved</span>
             </div>
-            <div className="text-2xl font-bold text-[#1C1917]">
+            <div className="text-2xl font-bold text-deep-charcoal">
               {'\u20AC'}{stats.value_saved_30d.toFixed(0)}
             </div>
-            <div className="text-xs text-[#78716C] mt-1">
+            <div className="text-xs text-warm-stone mt-1">
               {stats.value_saved_trend}
             </div>
           </div>
 
           {/* Success Rate */}
-          <div className={`${getSuccessBg(stats.success_status)} rounded-lg p-4 border ${!hasData ? 'border-[#E7E5E4]' : stats.success_status === 'good' ? 'border-green-100' : stats.success_status === 'fair' ? 'border-amber-100' : 'border-red-100'}`}>
+          <div className={`${getSuccessBg(stats.success_status)} rounded-lg p-4 border ${!hasData ? 'border-border-gray' : stats.success_status === 'good' ? 'border-green-100' : stats.success_status === 'fair' ? 'border-amber-100' : 'border-red-100'}`}>
             <div className="flex items-center gap-2 mb-2">
-              <div className={`w-8 h-8 ${!hasData ? 'bg-[#F5F5F4]' : stats.success_status === 'good' ? 'bg-green-100' : stats.success_status === 'fair' ? 'bg-amber-100' : 'bg-red-100'} rounded-lg flex items-center justify-center`}>
+              <div className={`w-8 h-8 ${!hasData ? 'bg-soft-gray' : stats.success_status === 'good' ? 'bg-green-100' : stats.success_status === 'fair' ? 'bg-amber-100' : 'bg-red-100'} rounded-lg flex items-center justify-center`}>
                 <ThiingsIcon name="check-circle" size="xs" />
               </div>
               <span className={`text-xs font-medium uppercase tracking-wide ${getSuccessColor(stats.success_status)}`}>Success Rate</span>
@@ -212,7 +212,7 @@ export default function QuickStatsWidget() {
             <div className={`text-2xl font-bold ${getSuccessColor(stats.success_status)}`}>
               {stats.success_rate}%
             </div>
-            <div className="text-xs text-[#78716C] mt-1">
+            <div className="text-xs text-warm-stone mt-1">
               {!hasData ? 'Awaiting data' : (
                 <>
                   {stats.success_status === 'good' && 'Excellent performance'}

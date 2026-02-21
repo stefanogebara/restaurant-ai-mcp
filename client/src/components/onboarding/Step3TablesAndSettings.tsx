@@ -196,20 +196,20 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
       className="space-y-6"
     >
       <div>
-        <h2 className="font-serif text-2xl font-bold text-[#1C1917] mb-2">Tables & Settings</h2>
-        <p className="text-[#57534E] text-sm">Set up your dining areas and reservation preferences</p>
+        <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">Tables & Settings</h2>
+        <p className="text-stone-gray text-sm">Set up your dining areas and reservation preferences</p>
       </div>
 
       {/* Total Capacity Summary */}
-      <div className="bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl p-4">
+      <div className="bg-soft-gray border border-border-gray rounded-xl p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[#1C1917] font-semibold text-lg">Total Capacity</p>
-            <p className="text-[#57534E] text-sm">Across all dining areas</p>
+            <p className="text-deep-charcoal font-semibold text-lg">Total Capacity</p>
+            <p className="text-stone-gray text-sm">Across all dining areas</p>
           </div>
           <div className="text-right">
-            <p className="text-3xl font-bold text-[#1C1917]">{totalCapacity} seats</p>
-            <p className="text-[#9F1239] text-sm font-medium">{totalTables} tables</p>
+            <p className="text-3xl font-bold text-deep-charcoal">{totalCapacity} seats</p>
+            <p className="text-burgundy text-sm font-medium">{totalTables} tables</p>
           </div>
         </div>
       </div>
@@ -217,13 +217,13 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
       {/* Areas Configuration */}
       <div className="space-y-4">
         {data.areas.map((area, areaIndex) => (
-          <div key={areaIndex} className="bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl p-5">
+          <div key={areaIndex} className="bg-soft-gray border border-border-gray rounded-xl p-5">
             <div className="flex items-center justify-between mb-4">
               <input
                 type="text"
                 value={area.name}
                 onChange={(e) => updateAreaName(areaIndex, e.target.value)}
-                className="text-lg font-semibold bg-transparent border-none text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#9F1239] rounded px-2 py-1"
+                className="text-lg font-semibold bg-transparent border-none text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy rounded px-2 py-1"
               />
               {data.areas.length > 1 && (
                 <button
@@ -240,14 +240,14 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
 
             <div className="space-y-4">
               {TABLE_CAPACITIES.map((capacity) => (
-                <div key={capacity} className="bg-white rounded-xl p-4 border border-[#E7E5E4]">
-                  <h4 className="text-sm font-semibold text-[#1C1917] mb-3">{capacity}-Person Tables</h4>
+                <div key={capacity} className="bg-white rounded-xl p-4 border border-border-gray">
+                  <h4 className="text-sm font-semibold text-deep-charcoal mb-3">{capacity}-Person Tables</h4>
                   <div className="grid grid-cols-2 gap-3">
                     {/* Round */}
-                    <div className="p-3 bg-[#F5F5F4] rounded-lg">
+                    <div className="p-3 bg-soft-gray rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-6 h-6 rounded-full border-2 border-[#9F1239]" />
-                        <span className="text-sm font-medium text-[#1C1917]">Round</span>
+                        <div className="w-6 h-6 rounded-full border-2 border-burgundy" />
+                        <span className="text-sm font-medium text-deep-charcoal">Round</span>
                       </div>
                       <input
                         type="number"
@@ -255,23 +255,23 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
                         value={getTableCount(areaIndex, capacity, 'round') || ''}
                         placeholder="0"
                         onChange={(e) => updateTableConfig(areaIndex, capacity, 'round', 'count', parseInt(e.target.value) || 0)}
-                        className="w-full px-3 py-2 bg-white border border-[#E7E5E4] rounded-lg text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] text-sm"
+                        className="w-full px-3 py-2 bg-white border border-border-gray rounded-lg text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy text-sm"
                       />
                       <div className="flex items-center gap-2 mt-2">
                         <input
                           type="checkbox"
                           checked={getTableConfig(areaIndex, capacity, 'round')?.is_fixed_seating || false}
                           onChange={(e) => updateTableConfig(areaIndex, capacity, 'round', 'is_fixed_seating', e.target.checked)}
-                          className="w-4 h-4 rounded border-[#E7E5E4] text-[#9F1239] focus:ring-[#9F1239]"
+                          className="w-4 h-4 rounded border-border-gray text-burgundy focus:ring-burgundy"
                         />
-                        <span className="text-xs text-[#57534E]">Fixed seating</span>
+                        <span className="text-xs text-stone-gray">Fixed seating</span>
                       </div>
                     </div>
                     {/* Square */}
-                    <div className="p-3 bg-[#F5F5F4] rounded-lg">
+                    <div className="p-3 bg-soft-gray rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-6 h-6 rounded border-2 border-[#9F1239]" />
-                        <span className="text-sm font-medium text-[#1C1917]">Square</span>
+                        <div className="w-6 h-6 rounded border-2 border-burgundy" />
+                        <span className="text-sm font-medium text-deep-charcoal">Square</span>
                       </div>
                       <input
                         type="number"
@@ -279,16 +279,16 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
                         value={getTableCount(areaIndex, capacity, 'square') || ''}
                         placeholder="0"
                         onChange={(e) => updateTableConfig(areaIndex, capacity, 'square', 'count', parseInt(e.target.value) || 0)}
-                        className="w-full px-3 py-2 bg-white border border-[#E7E5E4] rounded-lg text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] text-sm"
+                        className="w-full px-3 py-2 bg-white border border-border-gray rounded-lg text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy text-sm"
                       />
                       <div className="flex items-center gap-2 mt-2">
                         <input
                           type="checkbox"
                           checked={getTableConfig(areaIndex, capacity, 'square')?.is_fixed_seating || false}
                           onChange={(e) => updateTableConfig(areaIndex, capacity, 'square', 'is_fixed_seating', e.target.checked)}
-                          className="w-4 h-4 rounded border-[#E7E5E4] text-[#9F1239] focus:ring-[#9F1239]"
+                          className="w-4 h-4 rounded border-border-gray text-burgundy focus:ring-burgundy"
                         />
-                        <span className="text-xs text-[#57534E]">Fixed seating</span>
+                        <span className="text-xs text-stone-gray">Fixed seating</span>
                       </div>
                     </div>
                   </div>
@@ -301,14 +301,14 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
 
       {/* Add Area Buttons */}
       <div>
-        <p className="text-sm font-semibold text-[#1C1917] mb-2">Add another area:</p>
+        <p className="text-sm font-semibold text-deep-charcoal mb-2">Add another area:</p>
         <div className="flex flex-wrap gap-2">
           {AREA_TEMPLATES.map((template) => (
             <button
               key={template}
               onClick={() => addArea(template)}
               disabled={template !== 'Custom' && data.areas.some((a) => a.name === template)}
-              className="px-4 py-2 bg-white hover:bg-[#F5F5F4] disabled:bg-[#F5F5F4] disabled:text-[#A8A29E] disabled:cursor-not-allowed text-[#1C1917] border border-[#E7E5E4] rounded-lg transition-colors text-sm"
+              className="px-4 py-2 bg-white hover:bg-soft-gray disabled:bg-soft-gray disabled:text-muted-stone disabled:cursor-not-allowed text-deep-charcoal border border-border-gray rounded-lg transition-colors text-sm"
             >
               + {template}
             </button>
@@ -316,29 +316,29 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
         </div>
       </div>
 
-      {errors.areas && <p className="text-sm text-[#9F1239]">{errors.areas}</p>}
-      {errors.tables && <p className="text-sm text-[#9F1239]">{errors.tables}</p>}
+      {errors.areas && <p className="text-sm text-burgundy">{errors.areas}</p>}
+      {errors.tables && <p className="text-sm text-burgundy">{errors.tables}</p>}
 
       {/* Collapsible Reservation Settings */}
-      <div className="border border-[#E7E5E4] rounded-xl overflow-hidden">
+      <div className="border border-border-gray rounded-xl overflow-hidden">
         <button
           onClick={() => setShowSettings(!showSettings)}
-          className="w-full flex items-center justify-between px-5 py-4 bg-[#F5F5F4] hover:bg-[#EEECEB] transition-colors"
+          className="w-full flex items-center justify-between px-5 py-4 bg-soft-gray hover:bg-[#EEECEB] transition-colors"
         >
           <div className="flex items-center gap-3">
-            <svg className="w-5 h-5 text-[#57534E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-stone-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             <div className="text-left">
-              <span className="text-sm font-semibold text-[#1C1917]">Reservation Settings</span>
-              <p className="text-xs text-[#78716C]">
+              <span className="text-sm font-semibold text-deep-charcoal">Reservation Settings</span>
+              <p className="text-xs text-warm-stone">
                 Booking window: {data.advance_booking_days} days | Buffer: {data.buffer_time} min
               </p>
             </div>
           </div>
           <svg
-            className={`w-5 h-5 text-[#57534E] transition-transform ${showSettings ? 'rotate-180' : ''}`}
+            className={`w-5 h-5 text-stone-gray transition-transform ${showSettings ? 'rotate-180' : ''}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -351,14 +351,14 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
           <div className="px-5 py-4 space-y-4 bg-white">
             {/* Advance Booking Days */}
             <div>
-              <label htmlFor="advance_booking_days" className="block text-sm font-semibold text-[#1C1917] mb-2">
+              <label htmlFor="advance_booking_days" className="block text-sm font-semibold text-deep-charcoal mb-2">
                 How far in advance can customers book?
               </label>
               <select
                 id="advance_booking_days"
                 value={data.advance_booking_days}
                 onChange={(e) => updateData({ advance_booking_days: parseInt(e.target.value) })}
-                className="w-full px-4 py-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#9F1239]"
+                className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
               >
                 <option value={7}>7 days</option>
                 <option value={14}>14 days</option>
@@ -370,14 +370,14 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
 
             {/* Buffer Time */}
             <div>
-              <label htmlFor="buffer_time" className="block text-sm font-semibold text-[#1C1917] mb-2">
+              <label htmlFor="buffer_time" className="block text-sm font-semibold text-deep-charcoal mb-2">
                 Buffer time between reservations
               </label>
               <select
                 id="buffer_time"
                 value={data.buffer_time}
                 onChange={(e) => updateData({ buffer_time: parseInt(e.target.value) })}
-                className="w-full px-4 py-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#9F1239]"
+                className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
               >
                 <option value={0}>0 minutes (No buffer)</option>
                 <option value={15}>15 minutes (Recommended)</option>
@@ -389,14 +389,14 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
 
             {/* Cancellation Policy */}
             <div>
-              <label htmlFor="cancellation_policy" className="block text-sm font-semibold text-[#1C1917] mb-2">
+              <label htmlFor="cancellation_policy" className="block text-sm font-semibold text-deep-charcoal mb-2">
                 Cancellation Policy
               </label>
               <select
                 id="cancellation_policy"
                 value={data.cancellation_policy}
                 onChange={(e) => updateData({ cancellation_policy: e.target.value })}
-                className="w-full px-4 py-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#9F1239]"
+                className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
               >
                 {CANCELLATION_POLICIES.map((policy) => (
                   <option key={policy} value={policy}>{policy}</option>
@@ -407,7 +407,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
         )}
       </div>
 
-      <p className="text-xs text-[#A8A29E]">
+      <p className="text-xs text-muted-stone">
         You can always adjust tables and settings later in your dashboard.
       </p>
 
@@ -415,7 +415,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
       <div className="flex justify-between pt-4">
         <button
           onClick={onBack}
-          className="px-6 py-3 bg-white hover:bg-[#F5F5F4] border border-[#E7E5E4] text-[#1C1917] font-semibold rounded-xl transition-all flex items-center gap-2"
+          className="px-6 py-3 bg-white hover:bg-soft-gray border border-border-gray text-deep-charcoal font-semibold rounded-xl transition-all flex items-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -424,7 +424,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
         </button>
         <button
           onClick={handleContinue}
-          className="px-8 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300"
+          className="px-8 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300"
         >
           Continue
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

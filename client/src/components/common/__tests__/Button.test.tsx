@@ -54,13 +54,13 @@ describe('Button', () => {
   it('renders with primary variant by default', () => {
     render(<Button>Primary</Button>);
     const button = screen.getByRole('button', { name: 'Primary' });
-    expect(button.className).toContain('bg-[#9F1239]');
+    expect(button.className).toContain('bg-burgundy');
   });
 
   it('applies secondary variant styles', () => {
     render(<Button variant="secondary">Secondary</Button>);
     const button = screen.getByRole('button', { name: 'Secondary' });
-    expect(button.className).toContain('bg-[#F5F5F4]');
+    expect(button.className).toContain('bg-soft-gray');
   });
 
   it('applies danger variant styles', () => {
@@ -174,7 +174,7 @@ describe('IconButton', () => {
       />
     );
     const button = screen.getByRole('button', { name: 'Close' });
-    expect(button.className).toContain('bg-[#9F1239]');
+    expect(button.className).toContain('bg-burgundy');
   });
 
   it('handles click events', () => {

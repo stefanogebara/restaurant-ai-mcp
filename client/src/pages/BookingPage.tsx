@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import WhatsAppButton from '../components/booking/WhatsAppButton';
@@ -30,6 +31,7 @@ interface TimeSlot {
 }
 
 export default function BookingPage() {
+  const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
 
@@ -169,31 +171,31 @@ export default function BookingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FAFAF9] flex flex-col items-center justify-center gap-4">
-        <div className="font-serif text-2xl text-[#1C1917] opacity-50">
-          seatable<span className="text-[#9F1239]">.</span>
+      <div className="min-h-screen bg-warm-white flex flex-col items-center justify-center gap-4">
+        <div className="font-serif text-2xl text-deep-charcoal opacity-50">
+          seatable<span className="text-burgundy">.</span>
         </div>
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#E7E5E4] border-t-[#9F1239]" />
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy" />
       </div>
     );
   }
 
   if (error || !restaurant) {
     return (
-      <div className="min-h-screen bg-[#FAFAF9] flex flex-col items-center justify-center p-6">
-        <div className="bg-white border border-[#E7E5E4] rounded-2xl p-8 max-w-md text-center">
+      <div className="min-h-screen bg-warm-white flex flex-col items-center justify-center p-6">
+        <div className="bg-white border border-border-gray rounded-2xl p-8 max-w-md text-center">
           <div className="w-16 h-16 bg-[#dc2626]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-[#dc2626]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-[#1C1917] mb-2">Restaurant Not Found</h1>
-          <p className="text-sm text-[#57534E]">
+          <h1 className="text-xl font-bold text-deep-charcoal mb-2">Restaurant Not Found</h1>
+          <p className="text-sm text-stone-gray">
             {error || 'The restaurant you are looking for does not exist or is not accepting online reservations.'}
           </p>
         </div>
-        <p className="mt-6 text-xs text-[#A8A29E]">
-          Powered by <span className="font-serif">seatable<span className="text-[#9F1239]">.</span></span>
+        <p className="mt-6 text-xs text-muted-stone">
+          Powered by <span className="font-serif">seatable<span className="text-burgundy">.</span></span>
         </p>
       </div>
     );
@@ -202,13 +204,13 @@ export default function BookingPage() {
   const restaurantType = restaurant.type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
+    <div className="min-h-screen bg-warm-white">
       {/* Top Bar */}
-      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-[#E7E5E4] bg-white">
-        <div className="font-serif text-lg font-semibold text-[#1C1917]">
-          seatable<span className="text-[#9F1239]">.</span>
+      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
+        <div className="font-serif text-lg font-semibold text-deep-charcoal">
+          seatable<span className="text-burgundy">.</span>
         </div>
-        <span className="text-[13px] text-[#78716C]">Need help? Contact the restaurant</span>
+        <span className="text-[13px] text-warm-stone">Need help? Contact the restaurant</span>
       </header>
 
       {/* Two-column layout */}
@@ -216,7 +218,7 @@ export default function BookingPage() {
         {/* Left: Restaurant Info */}
         <div className="lg:flex-shrink-0 lg:w-[340px]">
           {/* Restaurant Image */}
-          <div className="w-full h-[220px] rounded-[20px] bg-gradient-to-br from-[#292524] to-[#44403C] mb-7 flex items-end p-6">
+          <div className="w-full h-[220px] rounded-[20px] bg-gradient-to-br from-charcoal-dark to-[#44403C] mb-7 flex items-end p-6">
             <div>
               <h2 className="font-serif text-[28px] font-medium text-white tracking-tight mb-1">
                 {restaurant.name}
@@ -244,17 +246,17 @@ export default function BookingPage() {
         <div className="flex-1 max-w-[540px]">
           {/* Header */}
           <div className="mb-9">
-            <h1 className="font-serif text-4xl font-medium text-[#1C1917] tracking-tight mb-2">
+            <h1 className="font-serif text-4xl font-medium text-deep-charcoal tracking-tight mb-2">
               Reserve a table
             </h1>
-            <p className="text-[15px] text-[#78716C] font-light">
+            <p className="text-[15px] text-warm-stone font-light">
               Choose your date, time, and party size below.
             </p>
           </div>
 
           {/* Date Selection */}
           <div className="mb-8">
-            <div className="text-xs font-semibold tracking-wider uppercase text-[#78716C] mb-3">
+            <div className="text-xs font-semibold tracking-wider uppercase text-warm-stone mb-3">
               Select Date
             </div>
             <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
@@ -264,10 +266,10 @@ export default function BookingPage() {
                   onClick={() => setSelectedDate(d.value)}
                   className={`aspect-square flex flex-col items-center justify-center rounded-[10px] text-[13px] transition-colors ${
                     selectedDate === d.value
-                      ? 'bg-[#1C1917] text-white font-semibold'
+                      ? 'bg-deep-charcoal text-white font-semibold'
                       : d.isToday
-                        ? 'text-[#1C1917] font-semibold hover:bg-[#F5F5F4]'
-                        : 'text-[#57534E] hover:bg-[#F5F5F4]'
+                        ? 'text-deep-charcoal font-semibold hover:bg-soft-gray'
+                        : 'text-stone-gray hover:bg-soft-gray'
                   }`}
                 >
                   <span>{d.dayNum}</span>
@@ -279,16 +281,16 @@ export default function BookingPage() {
           {/* Time Selection */}
           {selectedDate && (
             <div className="mb-8">
-              <div className="text-xs font-semibold tracking-wider uppercase text-[#78716C] mb-3">
+              <div className="text-xs font-semibold tracking-wider uppercase text-warm-stone mb-3">
                 Select Time
               </div>
               {loadingSlots ? (
                 <div className="flex items-center justify-center py-8 gap-3">
-                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-[#E7E5E4] border-t-[#9F1239]" />
-                  <span className="text-sm text-[#57534E]">Checking availability...</span>
+                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-border-gray border-t-burgundy" />
+                  <span className="text-sm text-stone-gray">Checking availability...</span>
                 </div>
               ) : timeSlots.length === 0 ? (
-                <p className="text-sm text-[#78716C] py-4">No available times for this date.</p>
+                <p className="text-sm text-warm-stone py-4">No available times for this date.</p>
               ) : (
                 <div className="grid grid-cols-4 gap-2">
                   {timeSlots.map(slot => (
@@ -298,10 +300,10 @@ export default function BookingPage() {
                       disabled={!slot.available}
                       className={`py-3 rounded-[10px] text-sm font-medium border transition-colors ${
                         selectedTime === slot.time
-                          ? 'border-[#9F1239] bg-[rgba(159,18,57,0.04)] text-[#9F1239] font-semibold'
+                          ? 'border-burgundy bg-[rgba(159,18,57,0.04)] text-burgundy font-semibold'
                           : slot.available
-                            ? 'border-[#E7E5E4] bg-white text-[#57534E] hover:border-[#D6D3D1] hover:bg-[#FAFAF9]'
-                            : 'border-[#F5F5F4] bg-[#FAFAF9] text-[#D6D3D1] cursor-not-allowed'
+                            ? 'border-border-gray bg-white text-stone-gray hover:border-[#D6D3D1] hover:bg-warm-white'
+                            : 'border-soft-gray bg-warm-white text-[#D6D3D1] cursor-not-allowed'
                       }`}
                     >
                       {formatTime(slot.time)}
@@ -314,7 +316,7 @@ export default function BookingPage() {
 
           {/* Party Size */}
           <div className="mb-8">
-            <div className="text-xs font-semibold tracking-wider uppercase text-[#78716C] mb-3">
+            <div className="text-xs font-semibold tracking-wider uppercase text-warm-stone mb-3">
               Party Size
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -324,8 +326,8 @@ export default function BookingPage() {
                   onClick={() => setPartySize(n)}
                   className={`w-12 h-12 rounded-xl border text-[15px] font-medium transition-colors ${
                     partySize === n
-                      ? 'border-[#9F1239] bg-[rgba(159,18,57,0.04)] text-[#9F1239] font-bold'
-                      : 'border-[#E7E5E4] bg-white text-[#57534E] hover:border-[#D6D3D1]'
+                      ? 'border-burgundy bg-[rgba(159,18,57,0.04)] text-burgundy font-bold'
+                      : 'border-border-gray bg-white text-stone-gray hover:border-[#D6D3D1]'
                   }`}
                 >
                   {n}
@@ -342,8 +344,8 @@ export default function BookingPage() {
                   }}
                   className={`w-12 h-12 rounded-xl border text-[15px] font-medium transition-colors ${
                     partySize > 7
-                      ? 'border-[#9F1239] bg-[rgba(159,18,57,0.04)] text-[#9F1239] font-bold'
-                      : 'border-[#E7E5E4] bg-white text-[#57534E] hover:border-[#D6D3D1]'
+                      ? 'border-burgundy bg-[rgba(159,18,57,0.04)] text-burgundy font-bold'
+                      : 'border-border-gray bg-white text-stone-gray hover:border-[#D6D3D1]'
                   }`}
                 >
                   {partySize > 7 ? partySize : '8+'}
@@ -354,47 +356,47 @@ export default function BookingPage() {
 
           {/* Guest Info */}
           <div className="mb-8">
-            <div className="text-xs font-semibold tracking-wider uppercase text-[#78716C] mb-3">
+            <div className="text-xs font-semibold tracking-wider uppercase text-warm-stone mb-3">
               Your Details
             </div>
             <div className="grid grid-cols-2 gap-3.5 mb-3.5">
               <div>
-                <label htmlFor="booking-name" className="block text-[13px] font-medium text-[#57534E] mb-1.5">Name</label>
+                <label htmlFor="booking-name" className="block text-[13px] font-medium text-stone-gray mb-1.5">Name</label>
                 <input
                   id="booking-name"
                   type="text"
                   value={customerName}
                   onChange={e => setCustomerName(e.target.value)}
                   placeholder="Your full name"
-                  className="w-full px-4 py-3 border border-[#E7E5E4] rounded-[10px] text-sm bg-white text-[#1C1917] placeholder:text-[#D6D3D1] focus:outline-none focus:border-[#9F1239] focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
+                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-[#D6D3D1] focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
                 />
               </div>
               <div>
-                <label htmlFor="booking-phone" className="block text-[13px] font-medium text-[#57534E] mb-1.5">Phone</label>
+                <label htmlFor="booking-phone" className="block text-[13px] font-medium text-stone-gray mb-1.5">Phone</label>
                 <input
                   id="booking-phone"
                   type="tel"
                   value={customerPhone}
                   onChange={e => setCustomerPhone(e.target.value)}
                   placeholder="+34 612 345 678"
-                  className="w-full px-4 py-3 border border-[#E7E5E4] rounded-[10px] text-sm bg-white text-[#1C1917] placeholder:text-[#D6D3D1] focus:outline-none focus:border-[#9F1239] focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
+                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-[#D6D3D1] focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
                 />
               </div>
             </div>
             <div className="mb-3.5">
-              <label htmlFor="booking-email" className="block text-[13px] font-medium text-[#57534E] mb-1.5">Email <span className="text-[#A8A29E] font-normal">(optional)</span></label>
+              <label htmlFor="booking-email" className="block text-[13px] font-medium text-stone-gray mb-1.5">Email <span className="text-muted-stone font-normal">(optional)</span></label>
               <input
                 id="booking-email"
                 type="email"
                 value={customerEmail}
                 onChange={e => setCustomerEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="w-full px-4 py-3 border border-[#E7E5E4] rounded-[10px] text-sm bg-white text-[#1C1917] placeholder:text-[#D6D3D1] focus:outline-none focus:border-[#9F1239] focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
+                className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-[#D6D3D1] focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
               />
             </div>
             <div>
-              <label htmlFor="booking-requests" className="block text-[13px] font-medium text-[#57534E] mb-1.5">
-                Special requests <span className="text-[#A8A29E] font-normal">(optional)</span>
+              <label htmlFor="booking-requests" className="block text-[13px] font-medium text-stone-gray mb-1.5">
+                Special requests <span className="text-muted-stone font-normal">(optional)</span>
               </label>
               <textarea
                 id="booking-requests"
@@ -402,15 +404,15 @@ export default function BookingPage() {
                 onChange={e => setSpecialRequests(e.target.value)}
                 placeholder="Allergies, celebrations, seating preferences..."
                 rows={3}
-                className="w-full px-4 py-3 border border-[#E7E5E4] rounded-[10px] text-sm bg-white text-[#1C1917] placeholder:text-[#D6D3D1] focus:outline-none focus:border-[#9F1239] focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)] resize-none"
+                className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-[#D6D3D1] focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)] resize-none"
               />
             </div>
           </div>
 
           {/* Summary Card */}
           {selectedDate && selectedTime && (
-            <div className="bg-white border border-[#E7E5E4] rounded-2xl p-6 mb-6">
-              <h3 className="text-sm font-semibold text-[#1C1917] mb-4">Reservation Summary</h3>
+            <div className="bg-white border border-border-gray rounded-2xl p-6 mb-6">
+              <h3 className="text-sm font-semibold text-deep-charcoal mb-4">Reservation Summary</h3>
               <SummaryRow label="Restaurant" value={restaurant.name} />
               <SummaryRow
                 label="Date"
@@ -422,7 +424,7 @@ export default function BookingPage() {
               <SummaryRow label="Party size" value={`${partySize} guest${partySize !== 1 ? 's' : ''}`} />
               {restaurant.average_dining_duration && (
                 <>
-                  <hr className="border-0 border-t border-dashed border-[#E7E5E4] my-3" />
+                  <hr className="border-0 border-t border-dashed border-border-gray my-3" />
                   <SummaryRow
                     label="Estimated duration"
                     value={`~${Math.floor(restaurant.average_dining_duration / 60)}h ${restaurant.average_dining_duration % 60}min`}
@@ -443,7 +445,7 @@ export default function BookingPage() {
           <button
             onClick={handleSubmit}
             disabled={!canSubmit || submitting}
-            className="w-full py-4 rounded-xl text-[15px] font-semibold bg-[#9F1239] hover:bg-[#881337] disabled:bg-[#E7E5E4] disabled:text-[#A8A29E] text-white transition-colors flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-xl text-[15px] font-semibold bg-burgundy hover:bg-burgundy-dark disabled:bg-border-gray disabled:text-muted-stone text-white transition-colors flex items-center justify-center gap-2"
           >
             {submitting ? (
               <>
@@ -451,10 +453,10 @@ export default function BookingPage() {
                 Confirming...
               </>
             ) : (
-              'Confirm Reservation'
+              t('common.confirm')
             )}
           </button>
-          <p className="text-center text-xs text-[#A8A29E] mt-3">
+          <p className="text-center text-xs text-muted-stone mt-3">
             Free cancellation up to 2 hours before your reservation.
           </p>
         </div>
@@ -470,13 +472,13 @@ export default function BookingPage() {
 
 function DetailRow({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-[#F5F5F4]">
-      <div className="w-8 h-8 rounded-lg bg-[#F5F5F4] flex items-center justify-center text-sm text-[#78716C] flex-shrink-0">
+    <div className="flex items-center gap-3 py-3 border-b border-soft-gray">
+      <div className="w-8 h-8 rounded-lg bg-soft-gray flex items-center justify-center text-sm text-warm-stone flex-shrink-0">
         {icon}
       </div>
       <div>
-        <div className="text-xs text-[#A8A29E]">{label}</div>
-        <div className="text-sm font-medium text-[#1C1917]">{value}</div>
+        <div className="text-xs text-muted-stone">{label}</div>
+        <div className="text-sm font-medium text-deep-charcoal">{value}</div>
       </div>
     </div>
   );
@@ -485,8 +487,8 @@ function DetailRow({ icon, label, value }: { icon: string; label: string; value:
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between py-2 text-[13px]">
-      <span className="text-[#78716C]">{label}</span>
-      <span className="font-medium text-[#1C1917]">{value}</span>
+      <span className="text-warm-stone">{label}</span>
+      <span className="font-medium text-deep-charcoal">{value}</span>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 /**
  * Unified Dashboard - Clean, modular replacement for SimpleDashboard
  *
@@ -31,6 +32,8 @@ import QuickInterventionModal from '../components/host/QuickInterventionModal';
 import type { UpcomingReservation, ActiveParty, Table, SeatPartyRequest } from '../types/host.types';
 
 export default function Dashboard() {
+  const { t } = useTranslation();
+
   // ---- Modal state ----
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [showSeatModal, setShowSeatModal] = useState(false);
@@ -160,16 +163,16 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="dashboard min-h-screen bg-[#F5F5F4] p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8 pb-28 sm:pb-20">
+      <div className="dashboard min-h-screen bg-soft-gray p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8 pb-28 sm:pb-20">
         <div className="max-w-7xl mx-auto space-y-8">
           {/* ---- Header ---- */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
-            <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">
-              Dashboard <span className="font-light text-[#78716C]">/ {dayName}, {dateStr}</span>
+            <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
+              Dashboard <span className="font-light text-warm-stone">/ {dayName}, {dateStr}</span>
             </h1>
 
             <div className="flex items-center gap-2.5">
-              <span className="text-[13px] text-[#78716C] bg-white border border-[#E7E5E4] px-4 py-2 rounded-[10px] hidden sm:inline-block">
+              <span className="text-[13px] text-warm-stone bg-white border border-border-gray px-4 py-2 rounded-[10px] hidden sm:inline-block">
                 Week view
               </span>
               <button
@@ -188,13 +191,13 @@ export default function Dashboard() {
                   a.click();
                   URL.revokeObjectURL(url);
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-[#D6D3D1] text-[#57534E] hover:border-[#A8A29E] rounded-[10px] text-[13px] font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-[#D6D3D1] text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors"
               >
                 Export
               </button>
               <button
                 onClick={() => setShowWalkInModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-[#9F1239] hover:bg-[#881337] text-white rounded-[10px] text-[13px] font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white rounded-[10px] text-[13px] font-medium transition-colors"
               >
                 + Walk-in
               </button>
@@ -227,7 +230,7 @@ export default function Dashboard() {
               </div>
               <button
                 onClick={() => window.location.href = '/#pricing'}
-                className="px-4 py-2 bg-[#9F1239] hover:bg-[#881337] text-white text-sm font-semibold rounded-xl transition-colors whitespace-nowrap"
+                className="px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors whitespace-nowrap"
               >
                 View Plans
               </button>
@@ -269,7 +272,7 @@ export default function Dashboard() {
 
             {/* Right Column: Waitlist + Active Parties */}
             <div className="space-y-4">
-              <div className="bg-white border border-[#E7E5E4] rounded-2xl flex flex-col overflow-hidden">
+              <div className="bg-white border border-border-gray rounded-2xl flex flex-col overflow-hidden">
                 <WaitlistPanel onSeatNow={handleSeatFromWaitlist} />
               </div>
 
@@ -288,7 +291,7 @@ export default function Dashboard() {
         {/* ---- FAB: Add Walk-in ---- */}
         <button
           onClick={() => setShowWalkInModal(true)}
-          className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-[#1C1917] hover:bg-[#292524] hover:scale-105 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
+          className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-deep-charcoal hover:bg-charcoal-dark hover:scale-105 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -348,21 +351,21 @@ export default function Dashboard() {
       {/* Complete Service Confirmation */}
       {showCompleteModal && serviceToComplete && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div role="dialog" aria-modal="true" aria-label="Complete Service" className="bg-white rounded-2xl shadow-2xl border border-[#E7E5E4] p-6 max-w-sm w-full">
-            <h3 className="text-lg font-bold text-[#1C1917] mb-2">Complete Service</h3>
-            <p className="text-sm text-[#57534E] mb-6">
+          <div role="dialog" aria-modal="true" aria-label="Complete Service" className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-sm w-full">
+            <h3 className="text-lg font-bold text-deep-charcoal mb-2">{t('dashboard.completeService')}</h3>
+            <p className="text-sm text-stone-gray mb-6">
               Complete service for <span className="font-semibold">{serviceToComplete.customer_name}</span>?
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => { setShowCompleteModal(false); setServiceToComplete(null); }}
-                className="flex-1 px-4 py-2.5 border border-[#E7E5E4] text-[#57534E] rounded-xl hover:bg-[#F5F5F4] transition-colors font-medium"
+                className="flex-1 px-4 py-2.5 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmCompleteService}
-                className="flex-1 px-4 py-2.5 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-colors"
+                className="flex-1 px-4 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors"
               >
                 Complete
               </button>

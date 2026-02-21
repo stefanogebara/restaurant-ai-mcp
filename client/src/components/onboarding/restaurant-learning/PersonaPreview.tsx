@@ -57,7 +57,7 @@ function getString(profile: Record<string, unknown>, ...path: string[]): string 
 function ProfileSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <h4 className="text-xs font-semibold text-[#78716C] uppercase tracking-wider mb-2">
+      <h4 className="text-xs font-semibold text-warm-stone uppercase tracking-wider mb-2">
         {label}
       </h4>
       {children}
@@ -93,17 +93,17 @@ export default function PersonaPreview({
       {/* Header */}
       <div className="text-center">
         <div
-          className="inline-flex items-center justify-center w-14 h-14 bg-[#9F1239]/10 rounded-full mb-3"
+          className="inline-flex items-center justify-center w-14 h-14 bg-burgundy/10 rounded-full mb-3"
           aria-hidden="true"
         >
-          <svg className="w-7 h-7 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-7 h-7 text-burgundy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
           </svg>
         </div>
-        <h3 id="persona-heading" className="font-serif text-xl font-bold text-[#1C1917]">
+        <h3 id="persona-heading" className="font-serif text-xl font-bold text-deep-charcoal">
           Your AI Persona
         </h3>
-        <p className="text-sm text-[#57534E] mt-1">
+        <p className="text-sm text-stone-gray mt-1">
           Here is how your AI will represent your restaurant
         </p>
       </div>
@@ -111,7 +111,7 @@ export default function PersonaPreview({
       {/* Persona summary — highlighted callout */}
       {persona.persona_summary && (
         <div
-          className="bg-[#9F1239]/5 border-l-4 border-[#9F1239]/40 rounded-r-xl px-4 py-3 text-sm text-[#1C1917] leading-relaxed"
+          className="bg-burgundy/5 border-l-4 border-burgundy/40 rounded-r-xl px-4 py-3 text-sm text-deep-charcoal leading-relaxed"
           aria-label="Persona summary"
         >
           {persona.persona_summary}
@@ -119,19 +119,19 @@ export default function PersonaPreview({
       )}
 
       {/* Persona detail card */}
-      <div className="bg-[#F5F5F4] border border-[#E7E5E4] rounded-2xl p-5 space-y-5 shadow-sm">
+      <div className="bg-soft-gray border border-border-gray rounded-2xl p-5 space-y-5 shadow-sm">
 
         {/* Tone */}
         {tone && (
           <ProfileSection label="Tone">
-            <p className="text-sm text-[#1C1917]">{tone}</p>
+            <p className="text-sm text-deep-charcoal">{tone}</p>
           </ProfileSection>
         )}
 
         {/* Greeting Style */}
         {greetingStyle && (
           <ProfileSection label="Greeting Style">
-            <p className="text-sm text-[#1C1917]">{greetingStyle}</p>
+            <p className="text-sm text-deep-charcoal">{greetingStyle}</p>
           </ProfileSection>
         )}
 
@@ -142,7 +142,7 @@ export default function PersonaPreview({
               {personalityTraits.map(trait => (
                 <span
                   key={trait}
-                  className="px-3 py-1 text-xs font-medium bg-white border border-[#E7E5E4] rounded-full text-[#1C1917] shadow-sm"
+                  className="px-3 py-1 text-xs font-medium bg-white border border-border-gray rounded-full text-deep-charcoal shadow-sm"
                 >
                   {trait}
                 </span>
@@ -156,9 +156,9 @@ export default function PersonaPreview({
           <ProfileSection label="What Makes Us Unique">
             <ul className="space-y-1.5" aria-label="Unique differentiators">
               {uniqueDifferentiators.map((item, i) => (
-                <li key={i} className="text-sm text-[#1C1917] flex items-start gap-2">
+                <li key={i} className="text-sm text-deep-charcoal flex items-start gap-2">
                   <svg
-                    className="w-3.5 h-3.5 text-[#9F1239] mt-0.5 flex-shrink-0"
+                    className="w-3.5 h-3.5 text-burgundy mt-0.5 flex-shrink-0"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                     aria-hidden="true"
@@ -177,9 +177,9 @@ export default function PersonaPreview({
           <ProfileSection label="Key Knowledge">
             <ul className="space-y-1.5" aria-label="Key knowledge points">
               {thingsToKnow.map((item, i) => (
-                <li key={i} className="text-sm text-[#1C1917] flex items-start gap-2">
+                <li key={i} className="text-sm text-deep-charcoal flex items-start gap-2">
                   <svg
-                    className="w-3.5 h-3.5 text-[#9F1239] mt-0.5 flex-shrink-0"
+                    className="w-3.5 h-3.5 text-burgundy mt-0.5 flex-shrink-0"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                     aria-hidden="true"
@@ -196,7 +196,7 @@ export default function PersonaPreview({
         {/* Sample Greeting — accent border quote style */}
         {greetingPreview && (
           <ProfileSection label="Sample Greeting">
-            <blockquote className="border-l-4 border-[#9F1239]/30 pl-3 text-sm text-[#1C1917] italic leading-relaxed">
+            <blockquote className="border-l-4 border-burgundy/30 pl-3 text-sm text-deep-charcoal italic leading-relaxed">
               &ldquo;{greetingPreview}&rdquo;
             </blockquote>
           </ProfileSection>
@@ -209,7 +209,7 @@ export default function PersonaPreview({
               {phrasesToUse.map((phrase, i) => (
                 <li
                   key={i}
-                  className="border-l-4 border-[#9F1239]/20 pl-3 text-sm text-[#1C1917] italic leading-relaxed"
+                  className="border-l-4 border-burgundy/20 pl-3 text-sm text-deep-charcoal italic leading-relaxed"
                 >
                   &ldquo;{phrase}&rdquo;
                 </li>
@@ -228,13 +228,13 @@ export default function PersonaPreview({
           aria-label="Approve this persona and continue to the next step"
           className="
             flex-1 px-6 py-3
-            bg-[#9F1239] hover:bg-[#881337]
+            bg-burgundy hover:bg-burgundy-dark
             text-white font-bold text-sm
             rounded-xl
             flex items-center justify-center gap-2
             transition-colors duration-150
             active:scale-[0.98]
-            focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:ring-offset-2
+            focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-offset-2
             disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
           "
         >
@@ -251,12 +251,12 @@ export default function PersonaPreview({
           aria-label="Go back to the interview to refine the persona"
           className="
             px-6 py-3
-            bg-white hover:bg-[#F5F5F4]
-            border border-[#E7E5E4] text-[#1C1917] font-semibold text-sm
+            bg-white hover:bg-soft-gray
+            border border-border-gray text-deep-charcoal font-semibold text-sm
             rounded-xl
             transition-colors duration-150
             active:scale-[0.98]
-            focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:ring-offset-2
+            focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-offset-2
             disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
           "
         >
@@ -272,10 +272,10 @@ export default function PersonaPreview({
           disabled={isLoading}
           aria-label="Discard this persona and restart the entire learning process"
           className="
-            text-xs text-[#A8A29E] hover:text-[#78716C]
+            text-xs text-muted-stone hover:text-warm-stone
             font-medium transition-colors duration-150
             underline underline-offset-2
-            focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:ring-offset-2 rounded
+            focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-offset-2 rounded
             disabled:opacity-50 disabled:cursor-not-allowed
           "
         >

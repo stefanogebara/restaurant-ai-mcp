@@ -101,7 +101,7 @@ export default function Sidebar() {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-[#1C1917] rounded-lg shadow-lg border border-[#292524] text-white focus:outline-none focus:ring-2 focus:ring-[#9F1239]"
+        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-deep-charcoal rounded-lg shadow-lg border border-charcoal-dark text-white focus:outline-none focus:ring-2 focus:ring-burgundy"
         aria-label={isMobileOpen ? "Close navigation menu" : "Open navigation menu"}
         aria-expanded={isMobileOpen}
       >
@@ -119,7 +119,7 @@ export default function Sidebar() {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-full bg-[#1C1917] z-40
+          fixed top-0 left-0 h-full bg-deep-charcoal z-40
           transition-all duration-300 ease-in-out
           ${isCollapsed ? 'w-20' : 'w-[260px]'}
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -131,16 +131,16 @@ export default function Sidebar() {
           <div className={`py-8 ${isCollapsed ? 'px-4' : 'px-7'} flex items-center justify-between`}>
             {!isCollapsed ? (
               <h1 className="font-serif text-[22px] font-semibold text-white tracking-tight">
-                seatable<span className="text-[#9F1239]">.</span>
+                seatable<span className="text-burgundy">.</span>
               </h1>
             ) : (
               <h1 className="font-serif text-[22px] font-semibold text-white tracking-tight mx-auto">
-                s<span className="text-[#9F1239]">.</span>
+                s<span className="text-burgundy">.</span>
               </h1>
             )}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hidden lg:block p-1.5 hover:bg-white/5 rounded-lg transition-colors text-[#57534E] hover:text-[#A8A29E] focus:outline-none"
+              className="hidden lg:block p-1.5 hover:bg-white/5 rounded-lg transition-colors text-stone-gray hover:text-muted-stone focus:outline-none"
               aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
@@ -156,13 +156,13 @@ export default function Sidebar() {
               <div key={section.label} className="mb-7">
                 {/* Section Label */}
                 {!isCollapsed && (
-                  <div className="px-7 mb-2 text-[10px] font-semibold tracking-[2px] uppercase text-[#57534E]">
+                  <div className="px-7 mb-2 text-[10px] font-semibold tracking-[2px] uppercase text-stone-gray">
                     {section.label}
                   </div>
                 )}
                 {isCollapsed && (
                   <div className="w-full flex justify-center mb-2">
-                    <div className="w-6 h-px bg-[#292524]" />
+                    <div className="w-6 h-px bg-charcoal-dark" />
                   </div>
                 )}
 
@@ -178,7 +178,7 @@ export default function Sidebar() {
                         key={item.path}
                         className={`
                           w-full flex items-center gap-3 text-left transition-all duration-150
-                          opacity-30 cursor-not-allowed text-[#A8A29E]
+                          opacity-30 cursor-not-allowed text-muted-stone
                           ${isCollapsed ? 'justify-center px-4 py-2.5' : 'px-7 py-2.5'}
                         `}
                         title={isCollapsed
@@ -209,8 +209,8 @@ export default function Sidebar() {
                         flex items-center gap-3 transition-all duration-150
                         ${isCollapsed ? 'justify-center px-4 py-2.5' : 'px-7 py-2.5'}
                         ${active
-                          ? 'text-white bg-[rgba(159,18,57,0.1)] border-l-2 border-l-[#9F1239] font-medium'
-                          : 'text-[#A8A29E] hover:text-[#D6D3D1] hover:bg-white/[0.03] border-l-2 border-l-transparent'
+                          ? 'text-white bg-[rgba(159,18,57,0.1)] border-l-2 border-l-burgundy font-medium'
+                          : 'text-muted-stone hover:text-[#D6D3D1] hover:bg-white/[0.03] border-l-2 border-l-transparent'
                         }
                       `}
                       title={isCollapsed ? item.label : undefined}
@@ -218,7 +218,7 @@ export default function Sidebar() {
                       <span
                         className={`
                           w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors
-                          ${active ? 'bg-[#9F1239]' : 'bg-current opacity-40'}
+                          ${active ? 'bg-burgundy' : 'bg-current opacity-40'}
                         `}
                       />
                       {!isCollapsed && (
@@ -232,7 +232,7 @@ export default function Sidebar() {
           </nav>
 
           {/* User Footer */}
-          <div className="border-t border-[#292524]" ref={settingsRef}>
+          <div className="border-t border-charcoal-dark" ref={settingsRef}>
             <button
               onClick={() => setIsSettingsOpen(!isSettingsOpen)}
               className={`
@@ -248,7 +248,7 @@ export default function Sidebar() {
                   className="w-8 h-8 rounded-full flex-shrink-0"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#9F1239] to-[#be123c] flex-shrink-0" />
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-burgundy to-[#be123c] flex-shrink-0" />
               )}
               {!isCollapsed && (
                 <>
@@ -256,11 +256,11 @@ export default function Sidebar() {
                     <p className="text-[13px] font-medium text-[#D6D3D1] truncate">
                       {userName}
                     </p>
-                    <p className="text-[11px] text-[#78716C] truncate">
+                    <p className="text-[11px] text-warm-stone truncate">
                       {userEmail}
                     </p>
                   </div>
-                  <span className={`inline-flex transition-transform text-[#57534E] ${isSettingsOpen ? '' : 'rotate-180'}`}>
+                  <span className={`inline-flex transition-transform text-stone-gray ${isSettingsOpen ? '' : 'rotate-180'}`}>
                     <ThiingsIcon name="chevron-up" pxSize={14} />
                   </span>
                 </>
@@ -270,7 +270,7 @@ export default function Sidebar() {
             {/* Settings Dropdown */}
             {isSettingsOpen && (
               <div className={`
-                absolute bottom-20 bg-[#292524] border border-[#3a3533] rounded-xl shadow-2xl overflow-hidden
+                absolute bottom-20 bg-charcoal-dark border border-[#3a3533] rounded-xl shadow-2xl overflow-hidden
                 ${isCollapsed ? 'left-20 w-56' : 'left-4 right-4'}
               `}>
                 {/* Language Selector */}
@@ -281,24 +281,24 @@ export default function Sidebar() {
                   >
                     <ThiingsIcon name="globe" pxSize={16} />
                     <span className="flex-1 text-sm">Language</span>
-                    <span className="text-sm text-[#78716C]">{currentLanguage.flag} {currentLanguage.name}</span>
+                    <span className="text-sm text-warm-stone">{currentLanguage.flag} {currentLanguage.name}</span>
                   </button>
 
                   {isLanguageOpen && (
-                    <div className="border-t border-[#3a3533] bg-[#1C1917]">
+                    <div className="border-t border-[#3a3533] bg-deep-charcoal">
                       {languageOptions.map((lang) => (
                         <button
                           key={lang.code}
                           onClick={() => handleLanguageChange(lang.code)}
                           className={`
                             w-full px-4 py-2 flex items-center gap-3 hover:bg-white/[0.05] transition-colors text-left text-sm
-                            ${i18n.language === lang.code ? 'bg-[rgba(159,18,57,0.15)] text-[#e11d48] font-medium' : 'text-[#A8A29E]'}
+                            ${i18n.language === lang.code ? 'bg-[rgba(159,18,57,0.15)] text-[#e11d48] font-medium' : 'text-muted-stone'}
                           `}
                         >
                           <span className="text-lg">{lang.flag}</span>
                           <span>{lang.name}</span>
                           {i18n.language === lang.code && (
-                            <span className="ml-auto text-[#9F1239]">✓</span>
+                            <span className="ml-auto text-burgundy">✓</span>
                           )}
                         </button>
                       ))}

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import { authFetch } from '../services/api';
 import { SkeletonAnalytics } from '../components/common/Skeleton';
@@ -42,6 +43,7 @@ interface AnalyticsData {
 type DateRange = '30d' | '7d' | 'today';
 
 export default function AnalyticsDashboard() {
+  const { t } = useTranslation();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,17 +82,17 @@ export default function AnalyticsDashboard() {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
-          <div className="bg-white rounded-2xl p-8 border border-[#E7E5E4] max-w-md text-center">
+          <div className="bg-white rounded-2xl p-8 border border-border-gray max-w-md text-center">
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-[#dc2626]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-bold text-[#1C1917] mb-2">Error loading analytics</h3>
-            <p className="text-sm text-[#78716C] mb-6">{error}</p>
+            <h3 className="text-lg font-bold text-deep-charcoal mb-2">{t('analytics.title')} — {t('common.error')}</h3>
+            <p className="text-sm text-warm-stone mb-6">{error}</p>
             <button
               onClick={() => fetchAnalytics(dateRange)}
-              className="px-6 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-colors"
+              className="px-6 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors"
             >
               Retry
             </button>
@@ -104,7 +106,7 @@ export default function AnalyticsDashboard() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <p className="text-[#78716C]">No analytics data available</p>
+          <p className="text-warm-stone">No analytics data available</p>
         </div>
       </DashboardLayout>
     );
@@ -114,12 +116,12 @@ export default function AnalyticsDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-[#F5F5F4] p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
+      <div className="min-h-screen bg-soft-gray p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
-            <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">
-              Analytics <span className="font-light text-[#78716C]">/ {dateRangeLabel}</span>
+            <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
+              Analytics <span className="font-light text-warm-stone">/ {dateRangeLabel}</span>
             </h1>
             <div className="flex items-center gap-2.5">
               {(['30d', '7d', 'today'] as const).map((range) => (
@@ -128,8 +130,8 @@ export default function AnalyticsDashboard() {
                   onClick={() => setDateRange(range)}
                   className={`px-4 py-2 rounded-[10px] text-[13px] font-medium transition-colors ${
                     dateRange === range
-                      ? 'bg-[#1C1917] text-white border border-[#1C1917]'
-                      : 'bg-white border border-[#D6D3D1] text-[#57534E] hover:border-[#A8A29E]'
+                      ? 'bg-deep-charcoal text-white border border-deep-charcoal'
+                      : 'bg-white border border-[#D6D3D1] text-stone-gray hover:border-muted-stone'
                   }`}
                 >
                   {range === '30d' ? '30 days' : range === '7d' ? '7 days' : 'Today'}
@@ -137,7 +139,7 @@ export default function AnalyticsDashboard() {
               ))}
               <button
                 onClick={() => fetchAnalytics(dateRange)}
-                className="px-4 py-2 bg-white border border-[#D6D3D1] text-[#57534E] hover:border-[#A8A29E] rounded-[10px] text-[13px] font-medium transition-colors"
+                className="px-4 py-2 bg-white border border-[#D6D3D1] text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors"
               >
                 Export
               </button>

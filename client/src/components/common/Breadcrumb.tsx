@@ -27,7 +27,7 @@ export default function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
       {/* Home/Overview link */}
       <Link
         to="/host-dashboard/simple"
-        className="flex items-center gap-1 text-[#78716C] hover:text-[#1C1917] transition-colors focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:ring-offset-2 rounded"
+        className="flex items-center gap-1 text-warm-stone hover:text-deep-charcoal transition-colors focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-offset-2 rounded"
         aria-label="Go to Dashboard Overview"
       >
         <ThiingsIcon name="home" pxSize={16} />
@@ -40,13 +40,13 @@ export default function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
           {item.href && index < items.length - 1 ? (
             <Link
               to={item.href}
-              className="text-[#78716C] hover:text-[#1C1917] transition-colors focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:ring-offset-2 rounded"
+              className="text-warm-stone hover:text-deep-charcoal transition-colors focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-offset-2 rounded"
             >
               {item.label}
             </Link>
           ) : (
             <span
-              className="text-[#1C1917] font-medium"
+              className="text-deep-charcoal font-medium"
               aria-current={index === items.length - 1 ? 'page' : undefined}
             >
               {item.label}

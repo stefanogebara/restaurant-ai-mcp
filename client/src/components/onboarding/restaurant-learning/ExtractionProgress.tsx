@@ -40,14 +40,14 @@ export default function ExtractionProgress({ topicsCovered }: ExtractionProgress
   const percentComplete = Math.round((coveredCount / totalCount) * 100);
 
   return (
-    <div className="px-4 py-3 bg-white border border-[#E7E5E4] rounded-xl shadow-sm">
+    <div className="px-4 py-3 bg-white border border-border-gray rounded-xl shadow-sm">
       {/* Header row */}
       <div className="flex items-center justify-between mb-2.5">
-        <span className="text-xs font-semibold text-[#57534E]" id="topics-progress-label">
+        <span className="text-xs font-semibold text-stone-gray" id="topics-progress-label">
           Topics covered
         </span>
         <span
-          className={`text-xs font-bold tabular-nums ${isComplete ? 'text-emerald-600' : 'text-[#9F1239]'}`}
+          className={`text-xs font-bold tabular-nums ${isComplete ? 'text-emerald-600' : 'text-burgundy'}`}
           aria-hidden="true"
         >
           {coveredCount}/{totalCount}
@@ -91,8 +91,8 @@ export default function ExtractionProgress({ topicsCovered }: ExtractionProgress
             All topics covered &mdash; ready to generate your persona
           </p>
         ) : nextTopic ? (
-          <p className="text-xs text-[#A8A29E]">
-            Next: <span className="text-[#57534E] font-medium">{nextTopic}</span>
+          <p className="text-xs text-muted-stone">
+            Next: <span className="text-stone-gray font-medium">{nextTopic}</span>
           </p>
         ) : null}
       </div>

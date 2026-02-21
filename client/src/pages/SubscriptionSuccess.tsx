@@ -62,21 +62,21 @@ export default function SubscriptionSuccess() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
+      <div className="min-h-screen bg-warm-white flex items-center justify-center">
         <div className="text-center">
           <Spinner size="lg" className="mx-auto mb-4" />
-          <p className="text-[15px] text-[#78716C] font-light">Verifying your subscription...</p>
+          <p className="text-[15px] text-warm-stone font-light">Verifying your subscription...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] flex flex-col">
+    <div className="min-h-screen bg-warm-white flex flex-col">
       {/* Top Bar */}
-      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-[#E7E5E4] bg-white">
-        <div className="font-serif text-lg font-semibold text-[#1C1917]">
-          seatable<span className="text-[#9F1239]">.</span>
+      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
+        <div className="font-serif text-lg font-semibold text-deep-charcoal">
+          seatable<span className="text-burgundy">.</span>
         </div>
       </header>
 
@@ -84,7 +84,7 @@ export default function SubscriptionSuccess() {
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="max-w-[480px] w-full">
           {/* Success Card */}
-          <div className="bg-white border border-[#E7E5E4] rounded-2xl p-12 text-center">
+          <div className="bg-white border border-border-gray rounded-2xl p-12 text-center">
             {/* Green Checkmark */}
             <div className="w-16 h-16 rounded-full bg-[rgba(22,163,74,0.08)] flex items-center justify-center mx-auto mb-5">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -92,8 +92,8 @@ export default function SubscriptionSuccess() {
               </svg>
             </div>
 
-            <h1 className="font-serif text-2xl font-medium text-[#1C1917] mb-2">Welcome to {plan}!</h1>
-            <p className="text-sm text-[#78716C] font-light mb-6">
+            <h1 className="font-serif text-2xl font-medium text-deep-charcoal mb-2">Welcome to {plan}!</h1>
+            <p className="text-sm text-warm-stone font-light mb-6">
               Your upgrade is active. You now have access to the AI Voice Agent and advanced analytics.
             </p>
 
@@ -105,7 +105,7 @@ export default function SubscriptionSuccess() {
 
             <button
               onClick={() => navigate('/host-dashboard/simple')}
-              className="px-7 py-3 bg-[#1C1917] hover:bg-[#292524] text-white text-sm font-semibold rounded-full transition-colors"
+              className="px-7 py-3 bg-deep-charcoal hover:bg-charcoal-dark text-white text-sm font-semibold rounded-full transition-colors"
             >
               Go to Dashboard
             </button>

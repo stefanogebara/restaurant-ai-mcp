@@ -140,10 +140,10 @@ export default function RecentReservations() {
                 <ThiingsIcon name="check" pxSize={24} />
               </div>
               <div className="flex-1">
-                <h3 className="text-[#1C1917] font-semibold text-lg">
+                <h3 className="text-deep-charcoal font-semibold text-lg">
                   Reservation Confirmed!
                 </h3>
-                <p className="text-[#A8A29E] text-sm">
+                <p className="text-muted-stone text-sm">
                   Your reservation has been successfully created
                 </p>
               </div>
@@ -157,51 +157,51 @@ export default function RecentReservations() {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white p-6 rounded-[2rem] border border-[#E7E5E4] shadow-md"
+        className="bg-white p-6 rounded-[2rem] border border-border-gray shadow-md"
       >
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-xl bg-[#9F1239] flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-burgundy flex items-center justify-center">
             <ThiingsIcon name="check" pxSize={24} />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-[#1C1917]">Latest Reservation</h3>
-            <p className="text-[#A8A29E] text-sm">Confirmed and ready</p>
+            <h3 className="text-xl font-bold text-deep-charcoal">Latest Reservation</h3>
+            <p className="text-muted-stone text-sm">Confirmed and ready</p>
           </div>
         </div>
 
         <div className="space-y-4">
           {/* Reservation ID */}
-          <div className="bg-[#F5F5F4] p-4 rounded-xl">
-            <div className="text-sm text-[#A8A29E] mb-1">Confirmation Number</div>
-            <div className="text-lg font-mono font-bold text-[#9F1239]">
+          <div className="bg-soft-gray p-4 rounded-xl">
+            <div className="text-sm text-muted-stone mb-1">Confirmation Number</div>
+            <div className="text-lg font-mono font-bold text-burgundy">
               {latestReservation.reservation_id}
             </div>
           </div>
 
           {/* Customer Info */}
           <div className="grid grid-cols-1 gap-3">
-            <div className="flex items-center gap-3 text-[#57534E]">
+            <div className="flex items-center gap-3 text-stone-gray">
               <ThiingsIcon name="users" pxSize={20} />
               <div>
-                <div className="text-sm text-[#A8A29E]">Customer</div>
-                <div className="font-semibold text-[#1C1917]">{latestReservation.customer_name}</div>
+                <div className="text-sm text-muted-stone">Customer</div>
+                <div className="font-semibold text-deep-charcoal">{latestReservation.customer_name}</div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 text-[#57534E]">
+            <div className="flex items-center gap-3 text-stone-gray">
               <ThiingsIcon name="phone" pxSize={20} />
               <div>
-                <div className="text-sm text-[#A8A29E]">Phone</div>
-                <div className="font-semibold text-[#1C1917]">{latestReservation.customer_phone}</div>
+                <div className="text-sm text-muted-stone">Phone</div>
+                <div className="font-semibold text-deep-charcoal">{latestReservation.customer_phone}</div>
               </div>
             </div>
 
             {latestReservation.customer_email && (
-              <div className="flex items-center gap-3 text-[#57534E]">
+              <div className="flex items-center gap-3 text-stone-gray">
                 <ThiingsIcon name="mail" pxSize={20} />
                 <div>
-                  <div className="text-sm text-[#A8A29E]">Email</div>
-                  <div className="font-semibold text-[#1C1917]">{latestReservation.customer_email}</div>
+                  <div className="text-sm text-muted-stone">Email</div>
+                  <div className="font-semibold text-deep-charcoal">{latestReservation.customer_email}</div>
                 </div>
               </div>
             )}
@@ -209,41 +209,41 @@ export default function RecentReservations() {
 
           {/* Reservation Details */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-[#F5F5F4] p-3 rounded-lg">
+            <div className="bg-soft-gray p-3 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <ThiingsIcon name="calendar" pxSize={16} />
-                <span className="text-xs text-[#A8A29E]">Date</span>
+                <span className="text-xs text-muted-stone">Date</span>
               </div>
-              <div className="font-semibold text-[#1C1917]">{latestReservation.date}</div>
+              <div className="font-semibold text-deep-charcoal">{latestReservation.date}</div>
             </div>
 
-            <div className="bg-[#F5F5F4] p-3 rounded-lg">
+            <div className="bg-soft-gray p-3 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <ThiingsIcon name="clock" pxSize={16} />
-                <span className="text-xs text-[#A8A29E]">Time</span>
+                <span className="text-xs text-muted-stone">Time</span>
               </div>
-              <div className="font-semibold text-[#1C1917]">{latestReservation.time}</div>
+              <div className="font-semibold text-deep-charcoal">{latestReservation.time}</div>
             </div>
           </div>
 
-          <div className="bg-[#F5F5F4] p-3 rounded-lg">
+          <div className="bg-soft-gray p-3 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <ThiingsIcon name="users" pxSize={16} />
-              <span className="text-xs text-[#A8A29E]">Party Size</span>
+              <span className="text-xs text-muted-stone">Party Size</span>
             </div>
-            <div className="font-semibold text-[#1C1917]">
+            <div className="font-semibold text-deep-charcoal">
               {latestReservation.party_size} {latestReservation.party_size === 1 ? 'Guest' : 'Guests'}
             </div>
           </div>
 
           {/* Special Requests */}
           {latestReservation.special_requests && (
-            <div className="bg-[#F5F5F4] p-4 rounded-xl">
+            <div className="bg-soft-gray p-4 rounded-xl">
               <div className="flex items-center gap-2 mb-2">
                 <ThiingsIcon name="chat" pxSize={16} />
-                <span className="text-sm text-[#A8A29E]">Special Requests</span>
+                <span className="text-sm text-muted-stone">Special Requests</span>
               </div>
-              <p className="text-[#1C1917] italic">"{latestReservation.special_requests}"</p>
+              <p className="text-deep-charcoal italic">"{latestReservation.special_requests}"</p>
             </div>
           )}
 
@@ -257,11 +257,11 @@ export default function RecentReservations() {
         </div>
 
         {/* Call to Action */}
-        <div className="mt-6 p-4 bg-[#FAFAF9] rounded-xl border border-[#E7E5E4] text-center">
-          <p className="text-[#57534E] text-sm mb-2">
+        <div className="mt-6 p-4 bg-warm-white rounded-xl border border-border-gray text-center">
+          <p className="text-stone-gray text-sm mb-2">
             We look forward to seeing you!
           </p>
-          <p className="text-[#A8A29E] text-xs">
+          <p className="text-muted-stone text-xs">
             A confirmation has been sent to your contact information
           </p>
         </div>
@@ -269,21 +269,21 @@ export default function RecentReservations() {
 
       {/* Show additional recent reservations if available */}
       {reservations.length > 1 && (
-        <div className="bg-white p-4 rounded-xl border border-[#E7E5E4] shadow-sm">
-          <h4 className="text-[#1C1917] font-semibold mb-3">Recent Activity</h4>
+        <div className="bg-white p-4 rounded-xl border border-border-gray shadow-sm">
+          <h4 className="text-deep-charcoal font-semibold mb-3">Recent Activity</h4>
           <div className="space-y-2">
             {reservations.slice(1, 4).map((res) => (
               <div
                 key={res.reservation_id}
-                className="flex items-center justify-between p-3 bg-[#F5F5F4] rounded-lg"
+                className="flex items-center justify-between p-3 bg-soft-gray rounded-lg"
               >
                 <div>
-                  <div className="text-[#1C1917] font-medium">{res.customer_name}</div>
-                  <div className="text-[#A8A29E] text-xs">
+                  <div className="text-deep-charcoal font-medium">{res.customer_name}</div>
+                  <div className="text-muted-stone text-xs">
                     {res.date} at {res.time} • Party of {res.party_size}
                   </div>
                 </div>
-                <div className="text-xs text-[#78716C] font-mono">
+                <div className="text-xs text-warm-stone font-mono">
                   {res.reservation_id.slice(-6)}
                 </div>
               </div>

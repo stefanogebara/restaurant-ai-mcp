@@ -51,20 +51,20 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
       className="space-y-6"
     >
       <div>
-        <h2 className="font-serif text-2xl font-bold text-[#1C1917] mb-2">Reservation preferences</h2>
-        <p className="text-[#57534E] text-sm">Configure how customers can book and what policies apply to reservations</p>
+        <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">Reservation preferences</h2>
+        <p className="text-stone-gray text-sm">Configure how customers can book and what policies apply to reservations</p>
       </div>
 
       {/* Advance Booking Days */}
       <div>
-        <label htmlFor="advance_booking_days" className="block text-sm font-semibold text-[#1C1917] mb-2">
+        <label htmlFor="advance_booking_days" className="block text-sm font-semibold text-deep-charcoal mb-2">
           How far in advance can customers book?
         </label>
         <select
           id="advance_booking_days"
           value={data.advance_booking_days}
           onChange={(e) => updateData({ advance_booking_days: parseInt(e.target.value) })}
-          className="w-full px-4 py-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
+          className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
         >
           <option value={7}>7 days</option>
           <option value={14}>14 days</option>
@@ -76,14 +76,14 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
 
       {/* Buffer Time */}
       <div>
-        <label htmlFor="buffer_time" className="block text-sm font-semibold text-[#1C1917] mb-2">
+        <label htmlFor="buffer_time" className="block text-sm font-semibold text-deep-charcoal mb-2">
           How much time between reservations?
         </label>
         <select
           id="buffer_time"
           value={data.buffer_time}
           onChange={(e) => updateData({ buffer_time: parseInt(e.target.value) })}
-          className="w-full px-4 py-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
+          className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
         >
           <option value={0}>0 minutes (No buffer)</option>
           <option value={15}>15 minutes (Recommended)</option>
@@ -91,12 +91,12 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
           <option value={45}>45 minutes</option>
           <option value={60}>60 minutes</option>
         </select>
-        <p className="mt-1 text-xs text-[#57534E]">Buffer time to clean tables between parties</p>
+        <p className="mt-1 text-xs text-stone-gray">Buffer time to clean tables between parties</p>
       </div>
 
       {/* Cancellation Policy */}
       <div>
-        <label htmlFor="cancellation_policy" className="block text-sm font-semibold text-[#1C1917] mb-2">
+        <label htmlFor="cancellation_policy" className="block text-sm font-semibold text-deep-charcoal mb-2">
           Cancellation Policy
         </label>
         <select
@@ -112,7 +112,7 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
               updateData({ cancellation_policy: selectedValue });
             }
           }}
-          className="w-full px-4 py-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
+          className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
         >
           {CANCELLATION_POLICIES.map((policy) => (
             <option key={policy} value={policy}>
@@ -121,14 +121,14 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
           ))}
         </select>
         {errors.cancellation_policy && (
-          <p className="mt-1 text-sm text-[#9F1239]">{errors.cancellation_policy}</p>
+          <p className="mt-1 text-sm text-burgundy">{errors.cancellation_policy}</p>
         )}
       </div>
 
       {/* Custom Cancellation Policy Input */}
       {isCustomPolicy && (
         <div>
-          <label htmlFor="custom_policy" className="block text-sm font-semibold text-[#1C1917] mb-2">
+          <label htmlFor="custom_policy" className="block text-sm font-semibold text-deep-charcoal mb-2">
             Enter your custom cancellation policy
           </label>
           <textarea
@@ -137,14 +137,14 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
             value={data.cancellation_policy}
             onChange={(e) => updateData({ cancellation_policy: e.target.value })}
             placeholder="e.g. Full refund if cancelled 24 hours before. 50% charge for late cancellations."
-            className="w-full px-4 py-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] resize-none focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
+            className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone resize-none focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
           />
         </div>
       )}
 
       {/* Special Notes */}
       <div>
-        <label htmlFor="special_notes" className="block text-sm font-semibold text-[#1C1917] mb-2">
+        <label htmlFor="special_notes" className="block text-sm font-semibold text-deep-charcoal mb-2">
           Special Notes (Optional)
         </label>
         <textarea
@@ -153,22 +153,22 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
           value={data.special_notes || ''}
           onChange={(e) => updateData({ special_notes: e.target.value })}
           placeholder="e.g. Vegan options available, outdoor seating is seasonal, live music on weekends"
-          className="w-full px-4 py-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] resize-none focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
+          className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone resize-none focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
         />
-        <p className="mt-1 text-xs text-[#A8A29E]">
+        <p className="mt-1 text-xs text-muted-stone">
           Displayed to customers during the booking process and communicated by the AI agent
         </p>
       </div>
 
       {/* Preview Card */}
-      <div className="bg-[#9F1239]/5 border border-[#9F1239]/20 rounded-xl p-5">
+      <div className="bg-burgundy/5 border border-burgundy/20 rounded-xl p-5">
         <div className="flex items-start gap-3 mb-3">
-          <svg className="w-6 h-6 text-[#9F1239] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 text-burgundy flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div>
-            <p className="text-[#1C1917] font-semibold text-sm mb-2">Preview: What customers will see</p>
-            <div className="space-y-1 text-[#57534E] text-sm">
+            <p className="text-deep-charcoal font-semibold text-sm mb-2">Preview: What customers will see</p>
+            <div className="space-y-1 text-stone-gray text-sm">
               <p>Bookings accepted up to {data.advance_booking_days} days in advance</p>
               <p>{data.buffer_time > 0 ? `${data.buffer_time}-minute buffer between reservations` : 'No buffer between reservations'}</p>
               {data.cancellation_policy && <p>{data.cancellation_policy}</p>}
@@ -182,7 +182,7 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
       <div className="flex justify-between pt-4">
         <button
           onClick={onBack}
-          className="px-6 py-3 bg-white hover:bg-[#F5F5F4] border border-[#E7E5E4] text-[#1C1917] font-semibold rounded-xl transition-all flex items-center gap-2"
+          className="px-6 py-3 bg-white hover:bg-soft-gray border border-border-gray text-deep-charcoal font-semibold rounded-xl transition-all flex items-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -191,7 +191,7 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
         </button>
         <button
           onClick={handleContinue}
-          className="px-8 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300"
+          className="px-8 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300"
         >
           Continue
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

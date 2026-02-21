@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useState, useMemo } from 'react';
 import { authFetch } from '../../services/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -49,16 +50,17 @@ function getTags(specialRequests?: string): string[] {
 // Status badge color helper
 function getStatusColor(status: string) {
   switch (status) {
-    case 'Waiting': return 'bg-[#9F1239]/10 text-[#9F1239]';
+    case 'Waiting': return 'bg-burgundy/10 text-burgundy';
     case 'Notified': return 'bg-[#d97706]/10 text-[#d97706]';
     case 'Seated': return 'bg-[#16a34a]/10 text-[#16a34a]';
     case 'Cancelled': return 'bg-red-500/10 text-red-500';
-    case 'No Show': return 'bg-[#57534E]/10 text-[#57534E]';
-    default: return 'bg-[#57534E]/10 text-[#57534E]';
+    case 'No Show': return 'bg-stone-gray/10 text-stone-gray';
+    default: return 'bg-stone-gray/10 text-stone-gray';
   }
 }
 
 export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanelProps) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [showAddModal, setShowAddModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'active' | 'seated' | 'removed'>('active');
@@ -153,7 +155,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
     return (
       <div className="p-6">
         <div className="flex items-center justify-center h-32">
-          <div className="text-[#57534E]">Loading waitlist...</div>
+          <div className="text-stone-gray">Loading waitlist...</div>
         </div>
       </div>
     );
@@ -170,22 +172,22 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
   return (
     <>
       {/* Header */}
-      <div className="p-4 border-b border-[#E7E5E4]/50">
+      <div className="p-4 border-b border-border-gray/50">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-3">
-            <div className="p-1.5 bg-[#9F1239]/10 rounded-lg">
-              <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-1.5 bg-burgundy/10 rounded-lg">
+              <svg className="w-5 h-5 text-burgundy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h2 className="text-lg font-bold text-[#1C1917]">Waitlist</h2>
-            <span className="px-2 py-0.5 bg-[#9F1239]/10 text-[#9F1239] rounded-lg text-xs font-bold">
+            <h2 className="text-lg font-bold text-deep-charcoal">{t('waitlist.title')}</h2>
+            <span className="px-2 py-0.5 bg-burgundy/10 text-burgundy rounded-lg text-xs font-bold">
               {activeCount}
             </span>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-3 py-1.5 bg-[#9F1239] hover:bg-[#881337] text-white text-sm font-semibold rounded-lg shadow-sm shadow-[#9F1239]/20 transition-all"
+            className="px-3 py-1.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-lg shadow-sm shadow-burgundy/20 transition-all"
           >
             + Add Guest
           </button>
@@ -193,7 +195,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
 
         {/* Status Tabs + Search in one row */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex gap-0.5 bg-[#F5F5F4] rounded-lg p-0.5" role="tablist" aria-label="Waitlist status filter">
+          <div className="flex gap-0.5 bg-soft-gray rounded-lg p-0.5" role="tablist" aria-label="Waitlist status filter">
             {[
               { key: 'active', label: 'Active', count: activeCount },
               { key: 'seated', label: 'Seated', count: seatedCount },
@@ -206,13 +208,13 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
                 onClick={() => setActiveTab(tab.key as typeof activeTab)}
                 className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
                   activeTab === tab.key
-                    ? 'bg-white text-[#1C1917] shadow-sm'
-                    : 'text-[#57534E] hover:text-[#1C1917]'
+                    ? 'bg-white text-deep-charcoal shadow-sm'
+                    : 'text-stone-gray hover:text-deep-charcoal'
                 }`}
               >
                 {tab.label}
                 <span className={`ml-1 px-1.5 py-0.5 text-[10px] rounded-full ${
-                  activeTab === tab.key ? 'bg-[#9F1239]/10 text-[#9F1239]' : 'bg-[#E7E5E4] text-[#57534E]'
+                  activeTab === tab.key ? 'bg-burgundy/10 text-burgundy' : 'bg-border-gray text-stone-gray'
                 }`}>
                   {tab.count}
                 </span>
@@ -222,14 +224,14 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
 
           {/* Search Input */}
           <div className="relative flex-1 min-w-[120px] max-w-[200px]">
-            <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#A8A29E]" />
+            <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-stone" />
             <input
               type="text"
               placeholder="Search..."
               aria-label="Search waitlist"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 bg-[#F5F5F4] border border-[#E7E5E4] rounded-lg text-xs focus:ring-2 focus:ring-[#9F1239] focus:border-transparent outline-none"
+              className="w-full pl-8 pr-3 py-1.5 bg-soft-gray border border-border-gray rounded-lg text-xs focus:ring-2 focus:ring-burgundy focus:border-transparent outline-none"
             />
           </div>
         </div>
@@ -238,7 +240,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
       {/* Waitlist Entries */}
       <div className="overflow-y-auto flex-1">
         {filteredWaitlist.length === 0 ? (
-          <div className="p-8 text-center text-[#57534E]">
+          <div className="p-8 text-center text-stone-gray">
             <div className="text-4xl mb-2">
               {activeTab === 'active' ? '📋' : activeTab === 'seated' ? '🍽️' : '📭'}
             </div>
@@ -248,7 +250,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
               {activeTab === 'removed' && 'No removed entries'}
             </div>
             {activeTab === 'active' && (
-              <div className="text-sm text-[#A8A29E]">Tap "+ Add Guest" above to add a walk-in to the waitlist</div>
+              <div className="text-sm text-muted-stone">Tap "+ Add Guest" above to add a walk-in to the waitlist</div>
             )}
           </div>
         ) : activeTab === 'active' ? (
@@ -280,8 +282,8 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
             {/* WAITING Section */}
             {waitingEntries.length > 0 && (
               <div>
-                <div className="px-4 py-2 bg-[#F5F5F4] border-l-4 border-[#57534E]">
-                  <span className="text-xs font-bold text-[#57534E] uppercase tracking-wide">
+                <div className="px-4 py-2 bg-soft-gray border-l-4 border-stone-gray">
+                  <span className="text-xs font-bold text-stone-gray uppercase tracking-wide">
                     Waiting ({waitingEntries.length})
                   </span>
                 </div>
@@ -330,15 +332,15 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
       {/* Remove Confirmation Modal */}
       {confirmRemove && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-[#E7E5E4] p-6 max-w-sm w-full">
-            <h3 className="text-lg font-bold text-[#1C1917] mb-2">Remove from Waitlist</h3>
-            <p className="text-sm text-[#57534E] mb-6">
-              Remove <span className="font-semibold text-[#1C1917]">{confirmRemove.name}</span> from the waitlist?
+          <div className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-sm w-full">
+            <h3 className="text-lg font-bold text-deep-charcoal mb-2">Remove from Waitlist</h3>
+            <p className="text-sm text-stone-gray mb-6">
+              Remove <span className="font-semibold text-deep-charcoal">{confirmRemove.name}</span> from the waitlist?
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmRemove(null)}
-                className="flex-1 px-4 py-2.5 border border-[#E7E5E4] text-[#57534E] rounded-xl hover:bg-[#F5F5F4] transition-colors font-medium"
+                className="flex-1 px-4 py-2.5 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors font-medium"
               >
                 Cancel
               </button>
@@ -387,25 +389,25 @@ function WaitlistEntryCard({
   const tags = getTags(entry.special_requests);
 
   return (
-    <div className={`px-3 py-2.5 border-b border-[#E7E5E4]/50 hover:bg-[#FAFAF9] transition-colors ${
+    <div className={`px-3 py-2.5 border-b border-border-gray/50 hover:bg-warm-white transition-colors ${
       isTableReady ? 'bg-[#16a34a]/5' : ''
     }`}>
       {/* Row 1: Avatar, Name, Party Size, Status */}
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#9F1239]/15 to-[#7c3aed]/15 flex items-center justify-center font-bold text-xs text-[#9F1239] border border-[#9F1239]/20 flex-shrink-0">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-burgundy/15 to-[#7c3aed]/15 flex items-center justify-center font-bold text-xs text-burgundy border border-burgundy/20 flex-shrink-0">
           {initials}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-[#1C1917] text-sm truncate">{entry.customer_name || 'Guest'}</span>
-            <span className="px-1.5 py-0.5 bg-[#F5F5F4] rounded text-[10px] font-medium text-[#57534E] flex-shrink-0">
+            <span className="font-semibold text-deep-charcoal text-sm truncate">{entry.customer_name || 'Guest'}</span>
+            <span className="px-1.5 py-0.5 bg-soft-gray rounded text-[10px] font-medium text-stone-gray flex-shrink-0">
               {entry.party_size}p
             </span>
             <span className={`px-1.5 py-0.5 text-[10px] font-semibold rounded ${getStatusColor(entry.status)} flex-shrink-0`}>
               {entry.status}
             </span>
           </div>
-          <div className="text-[11px] text-[#57534E]">{entry.customer_phone}</div>
+          <div className="text-[11px] text-stone-gray">{entry.customer_phone}</div>
         </div>
       </div>
 
@@ -425,7 +427,7 @@ function WaitlistEntryCard({
             </span>
           ))}
           {tags.length > 3 && (
-            <span className="px-1.5 py-0.5 text-[10px] bg-[#E7E5E4] text-[#57534E] rounded">
+            <span className="px-1.5 py-0.5 text-[10px] bg-border-gray text-stone-gray rounded">
               +{tags.length - 3}
             </span>
           )}
@@ -453,7 +455,7 @@ function WaitlistEntryCard({
               </button>
               <button
                 onClick={() => onSeatNow(entry)}
-                className="px-2 py-1 text-[11px] bg-[#9F1239] hover:bg-[#881337] text-white font-medium rounded transition-colors"
+                className="px-2 py-1 text-[11px] bg-burgundy hover:bg-burgundy-dark text-white font-medium rounded transition-colors"
               >
                 Seat
               </button>
@@ -462,7 +464,7 @@ function WaitlistEntryCard({
           {entry.status === 'Notified' && (
             <button
               onClick={() => onSeatNow(entry)}
-              className="px-2 py-1 text-[11px] bg-[#9F1239] hover:bg-[#881337] text-white font-medium rounded transition-colors"
+              className="px-2 py-1 text-[11px] bg-burgundy hover:bg-burgundy-dark text-white font-medium rounded transition-colors"
             >
               Seat Now
             </button>
@@ -470,7 +472,7 @@ function WaitlistEntryCard({
           <button
             onClick={() => onRemove(entry.id)}
             disabled={isRemoving}
-            className="px-2 py-1 text-[11px] bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#57534E] rounded transition-colors disabled:opacity-50 ml-auto"
+            className="px-2 py-1 text-[11px] bg-soft-gray hover:bg-border-gray text-stone-gray rounded transition-colors disabled:opacity-50 ml-auto"
           >
             Remove
           </button>
@@ -534,13 +536,13 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl border border-[#E7E5E4] max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl border border-border-gray max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
-          <h3 className="text-2xl font-bold text-[#1C1917] mb-6">Add to Waitlist</h3>
+          <h3 className="text-2xl font-bold text-deep-charcoal mb-6">Add to Waitlist</h3>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-[#1C1917] mb-2">
+              <label className="block text-sm font-medium text-deep-charcoal mb-2">
                 Customer Name *
               </label>
               <input
@@ -548,13 +550,13 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
                 required
                 value={formData.customer_name}
                 onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-                className="w-full px-4 py-2.5 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
+                className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
                 placeholder="John Smith"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#1C1917] mb-2">
+              <label className="block text-sm font-medium text-deep-charcoal mb-2">
                 Phone Number *
               </label>
               <input
@@ -562,33 +564,33 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
                 required
                 value={formData.customer_phone}
                 onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
-                className="w-full px-4 py-2.5 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
+                className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
                 placeholder="+1 234 567 8900"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#1C1917] mb-2">
+              <label className="block text-sm font-medium text-deep-charcoal mb-2">
                 Email (Optional)
               </label>
               <input
                 type="email"
                 value={formData.customer_email}
                 onChange={(e) => setFormData({ ...formData, customer_email: e.target.value })}
-                className="w-full px-4 py-2.5 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
+                className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
                 placeholder="john@example.com"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#1C1917] mb-2">
+              <label className="block text-sm font-medium text-deep-charcoal mb-2">
                 Party Size *
               </label>
               <select
                 required
                 value={formData.party_size}
                 onChange={(e) => setFormData({ ...formData, party_size: e.target.value })}
-                className="w-full px-4 py-2.5 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
+                className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
               >
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(size => (
                   <option key={size} value={size}>{size} {size === 1 ? 'guest' : 'guests'}</option>
@@ -597,7 +599,7 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#1C1917] mb-2">
+              <label className="block text-sm font-medium text-deep-charcoal mb-2">
                 Tags / Special Requests
               </label>
 
@@ -612,7 +614,7 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
                     className={`px-2.5 py-1 text-xs rounded-full transition-colors ${
                       currentTags.includes(tag)
                         ? 'bg-[#7c3aed]/20 text-[#7c3aed] cursor-not-allowed'
-                        : 'bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#57534E]'
+                        : 'bg-soft-gray hover:bg-border-gray text-stone-gray'
                     }`}
                   >
                     + {tag}
@@ -634,7 +636,7 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
               <textarea
                 value={formData.special_requests}
                 onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
-                className="w-full px-4 py-2.5 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all resize-none"
+                className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all resize-none"
                 rows={2}
                 placeholder="Add comma-separated tags or notes..."
               />
@@ -650,14 +652,14 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-4 py-2.5 border border-[#E7E5E4] text-[#57534E] rounded-xl hover:bg-[#F5F5F4] transition-all font-medium"
+                className="flex-1 px-4 py-2.5 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-all font-medium"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={addMutation.isPending}
-                className="flex-1 px-4 py-2.5 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-all shadow-lg shadow-[#9F1239]/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-all shadow-lg shadow-burgundy/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {addMutation.isPending ? 'Adding...' : 'Add to Waitlist'}
               </button>

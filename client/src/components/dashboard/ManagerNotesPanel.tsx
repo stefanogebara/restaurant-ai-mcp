@@ -159,17 +159,17 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E7E5E4] p-5">
+    <div className="bg-white rounded-2xl border border-border-gray p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-semibold text-[#78716C] uppercase tracking-wider">
+          <h3 className="text-sm font-semibold text-warm-stone uppercase tracking-wider">
             {t.title}
           </h3>
-          <p className="text-xs text-[#A8A29E] mt-0.5">{t.subtitle}</p>
+          <p className="text-xs text-muted-stone mt-0.5">{t.subtitle}</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="text-xs px-3 py-1.5 rounded-lg bg-[#9F1239] text-white font-medium hover:bg-[#881337] transition-colors"
+          className="text-xs px-3 py-1.5 rounded-lg bg-burgundy text-white font-medium hover:bg-burgundy-dark transition-colors"
         >
           {t.addNote}
         </button>
@@ -182,15 +182,15 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
       )}
 
       {showForm && (
-        <div className="mb-4 p-4 rounded-lg bg-[#FAFAF9] border border-[#E7E5E4] space-y-3">
+        <div className="mb-4 p-4 rounded-lg bg-warm-white border border-border-gray space-y-3">
           <div>
-            <label className="block text-xs font-medium text-[#57534E] mb-1">
+            <label className="block text-xs font-medium text-stone-gray mb-1">
               {t.typeLabel}
             </label>
             <select
               value={noteType}
               onChange={(e) => setNoteType(e.target.value as typeof noteType)}
-              className="w-full text-sm border border-[#D6D3D1] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239]"
+              className="w-full text-sm border border-[#D6D3D1] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
             >
               <option value="vip_instruction">{t.typeVip}</option>
               <option value="general_policy">{t.typePolicy}</option>
@@ -200,7 +200,7 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
 
           {noteType !== 'general_policy' && (
             <div>
-              <label className="block text-xs font-medium text-[#57534E] mb-1">
+              <label className="block text-xs font-medium text-stone-gray mb-1">
                 {t.guestPhone}
               </label>
               <input
@@ -208,13 +208,13 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
                 value={guestPhone}
                 onChange={(e) => setGuestPhone(e.target.value)}
                 placeholder={t.guestPhonePlaceholder}
-                className="w-full text-sm border border-[#D6D3D1] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239]"
+                className="w-full text-sm border border-[#D6D3D1] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-medium text-[#57534E] mb-1">
+            <label className="block text-xs font-medium text-stone-gray mb-1">
               {t.noteContent}
             </label>
             <textarea
@@ -222,14 +222,14 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
               onChange={(e) => setNoteContent(e.target.value)}
               placeholder={t.noteContentPlaceholder}
               rows={3}
-              className="w-full text-sm border border-[#D6D3D1] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] resize-none"
+              className="w-full text-sm border border-[#D6D3D1] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy resize-none"
             />
           </div>
 
           <button
             onClick={handleSave}
             disabled={isSaving || !noteContent.trim()}
-            className="w-full text-sm px-4 py-2 rounded-lg bg-[#9F1239] text-white font-medium hover:bg-[#881337] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full text-sm px-4 py-2 rounded-lg bg-burgundy text-white font-medium hover:bg-burgundy-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving ? t.saving : t.save}
           </button>
@@ -238,17 +238,17 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
 
       {isLoading ? (
         <div className="animate-pulse space-y-2">
-          <div className="h-4 bg-[#E7E5E4] rounded w-3/4" />
-          <div className="h-4 bg-[#E7E5E4] rounded w-1/2" />
+          <div className="h-4 bg-border-gray rounded w-3/4" />
+          <div className="h-4 bg-border-gray rounded w-1/2" />
         </div>
       ) : notes.length === 0 ? (
-        <p className="text-sm text-[#A8A29E]">{t.noNotes}</p>
+        <p className="text-sm text-muted-stone">{t.noNotes}</p>
       ) : (
         <div className="space-y-2 max-h-80 overflow-y-auto">
           {notes.map((note) => (
             <div
               key={note.id}
-              className="flex items-start gap-2 p-3 rounded-lg bg-[#FAFAF9] border border-[#E7E5E4] group"
+              className="flex items-start gap-2 p-3 rounded-lg bg-warm-white border border-border-gray group"
             >
               <span
                 className={`shrink-0 mt-0.5 text-[10px] px-1.5 py-0.5 rounded font-medium ${
@@ -260,14 +260,14 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
                 {note.is_policy ? t.policy : t.guest}
               </span>
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-[#1C1917]">{note.content}</p>
+                <p className="text-sm text-deep-charcoal">{note.content}</p>
                 {note.guest_phone && (
-                  <p className="text-xs text-[#A8A29E] mt-0.5">{note.guest_phone}</p>
+                  <p className="text-xs text-muted-stone mt-0.5">{note.guest_phone}</p>
                 )}
               </div>
               <button
                 onClick={() => handleDelete(note.id)}
-                className="shrink-0 opacity-0 group-hover:opacity-100 text-[#A8A29E] hover:text-red-500 transition-all p-1"
+                className="shrink-0 opacity-0 group-hover:opacity-100 text-muted-stone hover:text-red-500 transition-all p-1"
                 title="Delete"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -39,7 +39,7 @@ export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en'
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
       {/* Gender Toggle Pills */}
-      <div className="flex rounded-lg border border-[#E7E5E4] overflow-hidden">
+      <div className="flex rounded-lg border border-border-gray overflow-hidden">
         {GENDER_OPTIONS.map((opt) => (
           <button
             key={opt.value}
@@ -48,8 +48,8 @@ export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en'
             className={`
               px-4 py-2 text-sm font-medium transition-colors
               ${filters.gender === opt.value
-                ? 'bg-[#9F1239] text-white'
-                : 'bg-white text-[#57534E] hover:bg-[#F5F5F4]'
+                ? 'bg-burgundy text-white'
+                : 'bg-white text-stone-gray hover:bg-soft-gray'
               }
             `}
           >
@@ -62,7 +62,7 @@ export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en'
       <select
         value={filters.language || defaultLanguage}
         onChange={(e) => onChange({ ...filters, language: e.target.value })}
-        className="px-3 py-2 text-sm border border-[#E7E5E4] rounded-lg bg-white text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#9F1239]/50"
+        className="px-3 py-2 text-sm border border-border-gray rounded-lg bg-white text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/50"
       >
         {SUPPORTED_LANGUAGES.map((lang) => (
           <option key={lang.code} value={lang.code}>
@@ -74,7 +74,7 @@ export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en'
       {/* Search Input (hidden when using own_voices fallback since search doesn't work with that API) */}
       {!hideSearch && (
         <div className="relative flex-1 min-w-[180px]">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A8A29E]">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-stone">
             <ThiingsIcon name="search" pxSize={16} />
           </span>
           <input
@@ -82,7 +82,7 @@ export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en'
             placeholder="Search voices..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm border border-[#E7E5E4] rounded-lg bg-white text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239]/50"
+            className="w-full pl-9 pr-3 py-2 text-sm border border-border-gray rounded-lg bg-white text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/50"
           />
         </div>
       )}

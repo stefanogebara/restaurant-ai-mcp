@@ -24,19 +24,19 @@ export default function PlanBadge({
     switch (planLower) {
       case 'starter':
         return {
-          bg: 'bg-[#57534E]',
+          bg: 'bg-stone-gray',
           iconName: 'zap' as IconName,
-          textColor: 'text-[#57534E]',
-          bgLight: 'bg-[#F5F5F4]',
-          borderColor: 'border-[#E7E5E4]',
+          textColor: 'text-stone-gray',
+          bgLight: 'bg-soft-gray',
+          borderColor: 'border-border-gray',
         };
       case 'growth':
         return {
-          bg: 'bg-[#9F1239]',
+          bg: 'bg-burgundy',
           iconName: 'star' as IconName,
-          textColor: 'text-[#9F1239]',
-          bgLight: 'bg-[#9F1239]/10',
-          borderColor: 'border-[#9F1239]/30',
+          textColor: 'text-burgundy',
+          bgLight: 'bg-burgundy/10',
+          borderColor: 'border-burgundy/30',
         };
       case 'scale':
         return {
@@ -48,11 +48,11 @@ export default function PlanBadge({
         };
       default:
         return {
-          bg: 'bg-[#57534E]',
+          bg: 'bg-stone-gray',
           iconName: 'zap' as IconName,
-          textColor: 'text-[#57534E]',
-          bgLight: 'bg-[#F5F5F4]',
-          borderColor: 'border-[#E7E5E4]',
+          textColor: 'text-stone-gray',
+          bgLight: 'bg-soft-gray',
+          borderColor: 'border-border-gray',
         };
     }
   };

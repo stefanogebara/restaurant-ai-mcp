@@ -32,12 +32,12 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
       const total = chartData.reduce((sum, e) => sum + e.value, 0);
       const percent = ((payload[0].value / total) * 100).toFixed(1);
       return (
-        <div className="bg-white border border-[#E7E5E4]/50 rounded-xl p-3 shadow-lg">
-          <p className="text-sm font-semibold text-[#1C1917] mb-1">{payload[0].name}</p>
+        <div className="bg-white border border-border-gray/50 rounded-xl p-3 shadow-lg">
+          <p className="text-sm font-semibold text-deep-charcoal mb-1">{payload[0].name}</p>
           <p className="text-sm" style={{ color: payload[0].payload.fill }}>
             Count: <span className="font-bold">{payload[0].value}</span>
           </p>
-          <p className="text-xs text-[#78716C]">
+          <p className="text-xs text-warm-stone">
             {percent}% of total reservations
           </p>
         </div>
@@ -47,8 +47,8 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
   };
 
   return (
-    <div className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
+    <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
         <span className="text-[15px] font-semibold tracking-tight">Status Breakdown</span>
       </div>
       <div className="p-6">
@@ -76,7 +76,7 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
               verticalAlign="bottom"
               height={36}
               formatter={(value, entry: any) => (
-                <span className="text-sm text-[#1C1917]">
+                <span className="text-sm text-deep-charcoal">
                   {value} ({entry.payload.value})
                 </span>
               )}

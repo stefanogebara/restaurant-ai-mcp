@@ -75,7 +75,7 @@ function LiveCountdown({ seatedMinutesAgo, estimatedDurationMinutes }: { seatedM
   const { text, showWarning } = formatTime(remainingMinutes, isOverdue);
 
   return (
-    <span className={`font-semibold flex items-center gap-1 ${isOverdue ? 'text-[#9F1239]' : 'text-[#16a34a]'}`}>
+    <span className={`font-semibold flex items-center gap-1 ${isOverdue ? 'text-burgundy' : 'text-[#16a34a]'}`}>
       {showWarning && <ThiingsIcon name="alert-triangle" size="xs" />}
       {text}
     </span>
@@ -90,10 +90,10 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
   if (parties.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="w-16 h-16 mx-auto mb-3 bg-[#F5F5F4] rounded-xl flex items-center justify-center">
+        <div className="w-16 h-16 mx-auto mb-3 bg-soft-gray rounded-xl flex items-center justify-center">
           <ThiingsIcon name="dining" size="md" />
         </div>
-        <div className="text-sm text-[#57534E]">No active parties</div>
+        <div className="text-sm text-stone-gray">No active parties</div>
       </div>
     );
   }
@@ -114,16 +114,16 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
     <div className="space-y-3">
       {parties.map((party) => (
         <DraggablePartyCard key={party.service_id} party={party}>
-          <div className="bg-white border border-[#E7E5E4] rounded-xl p-4 hover:bg-[#F5F5F4] transition-all relative shadow-md">
+          <div className="bg-white border border-border-gray rounded-xl p-4 hover:bg-soft-gray transition-all relative shadow-md">
             {/* Drag handle indicator */}
-            <div className="absolute top-2 right-2 text-[#A8A29E] text-xs flex items-center gap-1">
+            <div className="absolute top-2 right-2 text-muted-stone text-xs flex items-center gap-1">
               <ThiingsIcon name="menu" size="xs" />
               <span>Drag to table</span>
             </div>
           <div className="flex justify-between items-start mb-3">
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <div className="font-semibold text-[#1C1917] text-lg">{party.customer_name}</div>
+                <div className="font-semibold text-deep-charcoal text-lg">{party.customer_name}</div>
                 {/* Running Late indicator - shows when less than 10 minutes remaining */}
                 {!party.is_overdue && party.time_remaining_minutes > 0 && party.time_remaining_minutes <= 10 && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#d97706]/10 text-[#d97706] text-xs font-semibold rounded-full animate-pulse">
@@ -132,18 +132,18 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
                   </span>
                 )}
               </div>
-              <div className="text-sm text-[#57534E] mt-0.5">Party of {party.party_size}</div>
+              <div className="text-sm text-stone-gray mt-0.5">Party of {party.party_size}</div>
             </div>
             <div className="text-right">
-              <div className="text-xs text-[#A8A29E] mb-1">Tables</div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#9F1239]/10 text-[#9F1239] rounded-lg text-sm font-semibold">
+              <div className="text-xs text-muted-stone mb-1">Tables</div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-burgundy/10 text-burgundy rounded-lg text-sm font-semibold">
                 {party.tables.join(', ')}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-xs mb-3 pb-3 border-b border-[#E7E5E4]">
-            <div className="flex items-center gap-1.5 text-[#57534E]">
+          <div className="flex items-center justify-between text-xs mb-3 pb-3 border-b border-border-gray">
+            <div className="flex items-center gap-1.5 text-stone-gray">
               <ThiingsIcon name="clock" size="xs" pxSize={14} />
               <span>Seated {formatTimeAgo(new Date(Date.now() - party.time_elapsed_minutes * 60000))}</span>
             </div>
@@ -157,7 +157,7 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
             <div className="flex gap-2">
               <button
                 onClick={() => setConfirmingServiceId(null)}
-                className="flex-1 px-3 py-2 text-sm bg-[#F5F5F4] text-[#57534E] border border-[#E7E5E4] rounded-lg hover:bg-[#E7E5E4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-3 py-2 text-sm bg-soft-gray text-stone-gray border border-border-gray rounded-lg hover:bg-border-gray transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={completeServiceMutation.isPending}
               >
                 Cancel
@@ -176,7 +176,7 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
           ) : (
             <button
               onClick={() => setConfirmingServiceId(party.service_id)}
-              className="w-full px-3 py-2 text-sm bg-[#1C1917] hover:bg-[#9F1239] text-white font-medium rounded-lg transition-all"
+              className="w-full px-3 py-2 text-sm bg-deep-charcoal hover:bg-burgundy text-white font-medium rounded-lg transition-all"
             >
               Complete Service
             </button>

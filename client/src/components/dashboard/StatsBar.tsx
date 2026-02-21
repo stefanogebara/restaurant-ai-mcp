@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 interface StatsBarProps {
   occupiedTables: number;
   totalTables: number;
@@ -7,32 +9,8 @@ interface StatsBarProps {
   estimatedWaitTime?: number;
   activeParties: number;
   totalGuests: number;
-  language?: 'en' | 'es';
   isLoading?: boolean;
 }
-
-const translations = {
-  en: {
-    reservations: "Today's Reservations",
-    tables: 'Tables Available',
-    guests: 'Guests Expected',
-    aiCalls: 'Active Parties',
-    seated: 'seated',
-    capacity: 'capacity',
-    vsAvg: 'vs avg',
-    waiting: 'on waitlist',
-  },
-  es: {
-    reservations: 'Reservas de Hoy',
-    tables: 'Mesas Disponibles',
-    guests: 'Comensales Esperados',
-    aiCalls: 'Mesas Activas',
-    seated: 'sentados',
-    capacity: 'capacidad',
-    vsAvg: 'vs prom',
-    waiting: 'en espera',
-  },
-};
 
 export default function StatsBar({
   occupiedTables,
@@ -43,10 +21,9 @@ export default function StatsBar({
   estimatedWaitTime,
   activeParties,
   totalGuests,
-  language = 'en',
   isLoading,
 }: StatsBarProps) {
-  const t = translations[language];
+  const { t } = useTranslation();
   const availableTables = totalTables - occupiedTables;
   const occupancyPercent = totalTables > 0 ? Math.round((occupiedTables / totalTables) * 100) : 0;
   const seatedPercent = reservationsToday > 0 ? Math.round((seatedReservations / reservationsToday) * 100) : 0;
@@ -55,11 +32,11 @@ export default function StatsBar({
     return (
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="bg-white rounded-2xl p-6 border border-[#E7E5E4]">
-            <div className="h-3 w-20 bg-[#E7E5E4] rounded-full animate-pulse mb-3" />
-            <div className="h-9 w-16 bg-[#E7E5E4] rounded-lg animate-pulse mb-2" />
-            <div className="h-3 w-24 bg-[#F5F5F4] rounded animate-pulse mb-3" />
-            <div className="h-1 w-full bg-[#F5F5F4] rounded-full animate-pulse" />
+          <div key={i} className="bg-white rounded-2xl p-6 border border-border-gray">
+            <div className="h-3 w-20 bg-border-gray rounded-full animate-pulse mb-3" />
+            <div className="h-9 w-16 bg-border-gray rounded-lg animate-pulse mb-2" />
+            <div className="h-3 w-24 bg-soft-gray rounded animate-pulse mb-3" />
+            <div className="h-1 w-full bg-soft-gray rounded-full animate-pulse" />
           </div>
         ))}
       </div>
@@ -70,9 +47,9 @@ export default function StatsBar({
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
       {/* Today's Reservations */}
       <StatCard
-        label={t.reservations}
+        label={t('dashboard.stats.reservations')}
         value={String(reservationsToday)}
-        change={`${seatedReservations} ${t.seated}`}
+        change={`${seatedReservations} ${t('dashboard.stats.seated')}`}
         changeColor="text-[#16a34a]"
         barPercent={seatedPercent}
         barColor="#9F1239"
@@ -80,11 +57,11 @@ export default function StatsBar({
 
       {/* Tables Available */}
       <StatCard
-        label={t.tables}
+        label={t('dashboard.stats.tables')}
         value={String(availableTables)}
         valueSuffix={` / ${totalTables}`}
-        valueColor="text-[#9F1239]"
-        change={`${occupancyPercent}% ${t.capacity}`}
+        valueColor="text-burgundy"
+        change={`${occupancyPercent}% ${t('dashboard.stats.capacity')}`}
         changeColor="text-[#16a34a]"
         barPercent={100 - occupancyPercent}
         barColor="#16a34a"
@@ -92,10 +69,10 @@ export default function StatsBar({
 
       {/* Guests Expected */}
       <StatCard
-        label={t.guests}
+        label={t('dashboard.stats.guests')}
         value={String(totalGuests)}
         change={waitlistCount > 0
-          ? `${waitlistCount} ${t.waiting}${estimatedWaitTime ? ` · ~${estimatedWaitTime} min avg` : ''}`
+          ? `${waitlistCount} ${t('dashboard.stats.waiting')}${estimatedWaitTime ? ` · ~${estimatedWaitTime} min avg` : ''}`
           : estimatedWaitTime ? `~${estimatedWaitTime} min avg` : ''}
         changeColor="text-[#d97706]"
         barPercent={totalGuests > 0 ? Math.min(Math.round((totalGuests / (reservationsToday * 3 || 1)) * 100), 100) : 0}
@@ -104,10 +81,10 @@ export default function StatsBar({
 
       {/* Active Parties */}
       <StatCard
-        label={t.aiCalls}
+        label={t('dashboard.stats.aiCalls')}
         value={String(activeParties)}
         change={totalGuests > 0 ? `${totalGuests} guests seated` : ''}
-        changeColor="text-[#57534E]"
+        changeColor="text-stone-gray"
         barPercent={totalTables > 0 ? Math.round((activeParties / totalTables) * 100) : 0}
         barColor="#d97706"
       />
@@ -128,14 +105,14 @@ interface StatCardProps {
 
 function StatCard({ label, value, valueSuffix, valueColor, change, changeColor, barPercent, barColor }: StatCardProps) {
   return (
-    <div className="bg-white rounded-2xl p-6 border border-[#E7E5E4]">
-      <div className="text-xs font-medium text-[#A8A29E] tracking-wide mb-2">
+    <div className="bg-white rounded-2xl p-6 border border-border-gray">
+      <div className="text-xs font-medium text-muted-stone tracking-wide mb-2">
         {label}
       </div>
-      <div className={`text-[32px] font-bold tracking-tight leading-none ${valueColor || 'text-[#1C1917]'}`}>
+      <div className={`text-[32px] font-bold tracking-tight leading-none ${valueColor || 'text-deep-charcoal'}`}>
         {value}
         {valueSuffix && (
-          <span className="text-base text-[#A8A29E] font-normal">{valueSuffix}</span>
+          <span className="text-base text-muted-stone font-normal">{valueSuffix}</span>
         )}
       </div>
       {change && (
@@ -143,7 +120,7 @@ function StatCard({ label, value, valueSuffix, valueColor, change, changeColor, 
           {change}
         </div>
       )}
-      <div className="w-full h-1 bg-[#F5F5F4] rounded-full mt-3 overflow-hidden">
+      <div className="w-full h-1 bg-soft-gray rounded-full mt-3 overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-500"
           style={{ width: `${barPercent}%`, background: barColor }}

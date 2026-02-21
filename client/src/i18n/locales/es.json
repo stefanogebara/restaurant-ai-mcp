@@ -40,7 +40,18 @@
     "occupancy": "Ocupación",
     "quickStats": "Estadísticas Rápidas",
     "upcomingReservations": "Próximas Reservas",
-    "recentActivity": "Actividad Reciente"
+    "recentActivity": "Actividad Reciente",
+    "completeService": "Completar Servicio",
+    "stats": {
+      "reservations": "Reservas de Hoy",
+      "tables": "Mesas Disponibles",
+      "guests": "Comensales Esperados",
+      "aiCalls": "Mesas Activas",
+      "seated": "sentados",
+      "capacity": "capacidad",
+      "vsAvg": "vs prom",
+      "waiting": "en espera"
+    }
   },
   "reservations": {
     "title": "Reservas",

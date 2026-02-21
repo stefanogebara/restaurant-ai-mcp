@@ -350,8 +350,8 @@ export default function FloorPlanView({
 
   if (tables.length === 0) {
     return (
-      <div className={`text-center py-12 ${darkMode ? 'text-[#A8A29E]' : 'text-[#57534E]'}`}>
-        <p className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-[#1C1917]'}`}>
+      <div className={`text-center py-12 ${darkMode ? 'text-muted-stone' : 'text-stone-gray'}`}>
+        <p className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-deep-charcoal'}`}>
           No tables set up yet
         </p>
         <p className="text-sm mt-2">Complete your restaurant onboarding or add tables in Settings to see your floor plan</p>
@@ -389,17 +389,17 @@ export default function FloorPlanView({
         return (
           <div key={location}>
             <h3 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${
-              darkMode ? 'text-white' : 'text-[#1C1917]'
+              darkMode ? 'text-white' : 'text-deep-charcoal'
             }`}>
-              <span className={`w-2 h-2 rounded-full ${darkMode ? 'bg-[#A8A29E]' : 'bg-[#9F1239]'}`} />
+              <span className={`w-2 h-2 rounded-full ${darkMode ? 'bg-muted-stone' : 'bg-burgundy'}`} />
               {location}
-              <span className={`text-xs font-normal ${darkMode ? 'text-[#78716c]' : 'text-[#a8a29e]'}`}>
+              <span className={`text-xs font-normal ${darkMode ? 'text-warm-stone' : 'text-muted-stone'}`}>
                 {locTables.length} tables
               </span>
             </h3>
 
             <div className={`rounded-xl overflow-hidden border ${
-              darkMode ? 'bg-[#1C1917] border-[#44403C]' : 'bg-white border-[#E7E5E4]'
+              darkMode ? 'bg-deep-charcoal border-[#44403C]' : 'bg-white border-border-gray'
             }`} style={{ maxWidth: '100%', overflowX: 'auto' }}>
               <svg
                 width="100%"

@@ -77,13 +77,13 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
       className="space-y-6"
     >
       <div>
-        <h2 className="font-serif text-2xl font-bold text-[#1C1917] mb-2">What's your restaurant called?</h2>
-        <p className="text-[#57534E] text-sm">Tell us a bit about your restaurant to get started</p>
+        <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">What's your restaurant called?</h2>
+        <p className="text-stone-gray text-sm">Tell us a bit about your restaurant to get started</p>
       </div>
 
       {/* Restaurant Name */}
       <div>
-        <label htmlFor="restaurant_name" className="block text-sm font-semibold text-[#1C1917] mb-2">
+        <label htmlFor="restaurant_name" className="block text-sm font-semibold text-deep-charcoal mb-2">
           Restaurant Name *
         </label>
         <input
@@ -92,16 +92,16 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
           value={data.restaurant_name}
           onChange={(e) => updateData({ restaurant_name: e.target.value })}
           placeholder="e.g. La Bella Vista"
-          className="w-full px-4 py-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
+          className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
         />
         {errors.restaurant_name && (
-          <p className="mt-1 text-sm text-[#9F1239]">{errors.restaurant_name}</p>
+          <p className="mt-1 text-sm text-burgundy">{errors.restaurant_name}</p>
         )}
       </div>
 
       {/* Restaurant Type - Card Selection */}
       <div>
-        <label className="block text-sm font-semibold text-[#1C1917] mb-3">
+        <label className="block text-sm font-semibold text-deep-charcoal mb-3">
           What type of restaurant? *
         </label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -113,8 +113,8 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
               className={`
                 p-4 rounded-xl border-2 transition-all duration-200 text-center font-semibold text-sm
                 ${data.restaurant_type === type
-                  ? 'border-[#9F1239] bg-[#9F1239]/10 text-[#9F1239]'
-                  : 'border-[#E7E5E4] bg-white text-[#57534E] hover:border-[#9F1239]/50 hover:bg-[#FAFAF9]'
+                  ? 'border-burgundy bg-burgundy/10 text-burgundy'
+                  : 'border-border-gray bg-white text-stone-gray hover:border-burgundy/50 hover:bg-warm-white'
                 }
               `}
             >
@@ -123,7 +123,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
           ))}
         </div>
         {errors.restaurant_type && (
-          <p className="mt-2 text-sm text-[#9F1239]">{errors.restaurant_type}</p>
+          <p className="mt-2 text-sm text-burgundy">{errors.restaurant_type}</p>
         )}
       </div>
 
@@ -141,19 +141,19 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
 
       {/* Auto-populated Language Info */}
       {data.language && (
-        <div className="bg-[#9F1239]/5 rounded-xl p-4 border border-[#9F1239]/20">
+        <div className="bg-burgundy/5 rounded-xl p-4 border border-burgundy/20">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#9F1239]/10 flex items-center justify-center">
-              <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-10 h-10 rounded-full bg-burgundy/10 flex items-center justify-center">
+              <svg className="w-5 h-5 text-burgundy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
             <div>
-              <p className="text-sm font-semibold text-[#1C1917]">
+              <p className="text-sm font-semibold text-deep-charcoal">
                 Language automatically set
               </p>
-              <p className="text-xs text-[#57534E]">
-                Based on your country selection: <span className="text-[#9F1239] font-medium">{data.language}</span>
+              <p className="text-xs text-stone-gray">
+                Based on your country selection: <span className="text-burgundy font-medium">{data.language}</span>
               </p>
             </div>
           </div>
@@ -164,7 +164,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
       <div className="flex justify-end pt-4">
         <button
           onClick={handleContinue}
-          className="px-8 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300"
+          className="px-8 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300"
         >
           Continue
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -59,7 +59,7 @@ export default function Modal({
         aria-modal="true"
         aria-label={title || 'Dialog'}
         className={`
-          bg-white shadow-2xl border border-[#E7E5E4] w-full max-h-[90vh] overflow-y-auto
+          bg-white shadow-2xl border border-border-gray w-full max-h-[90vh] overflow-y-auto
           ${mobileSheet ? 'rounded-t-2xl sm:rounded-2xl' : 'rounded-2xl'}
           ${sizeClasses[size]}
         `}
@@ -69,15 +69,15 @@ export default function Modal({
           <div className="flex items-start justify-between p-5 sm:p-6 pb-0">
             <div>
               {title && (
-                <h3 className="text-lg font-bold text-[#1C1917]">{title}</h3>
+                <h3 className="text-lg font-bold text-deep-charcoal">{title}</h3>
               )}
               {subtitle && (
-                <p className="text-sm text-[#57534E] mt-0.5">{subtitle}</p>
+                <p className="text-sm text-stone-gray mt-0.5">{subtitle}</p>
               )}
             </div>
             <button
               onClick={onClose}
-              className="text-[#A8A29E] hover:text-[#57534E] transition-colors p-1"
+              className="text-muted-stone hover:text-stone-gray transition-colors p-1"
               aria-label="Close"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
