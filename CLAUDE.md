@@ -327,7 +327,7 @@ Design system: Playfair Display + Inter, burgundy `#9F1239`, charcoal `#1C1917`,
   - [x] `CallTrackingDashboard.tsx` - removed restaurant_id from agent-conversations calls
   - [x] `QuickStatsWidget.tsx` - removed restaurant_id from ml-performance calls
   - [x] `LanguageSelector.tsx` - switched from axios+x-restaurant-id to authFetch
-- [ ] **Remaining**: `phone-integration-simple.js` has no auth (Twilio webhook endpoint)
+- [x] **Remaining**: `phone-integration-simple.js` - added JWT auth, restaurant_id from JWT claim (Feb 21)
 
 ### Phase 4: Reliability & Bug Fixes (DONE - Feb 20, 2026)
 - [x] Fix analytics date filter - now passes `period` param to API and refetches on change
@@ -409,7 +409,7 @@ Design system: Playfair Display + Inter, burgundy `#9F1239`, charcoal `#1C1917`,
 | CRITICAL | No auth on restaurant-settings.js | `api/restaurant-settings.js` | FIXED (Feb 20) |
 | HIGH | Analytics date filter cosmetic only | `AnalyticsDashboard.tsx:50` | FIXED (Feb 20) |
 | HIGH | Hardcoded fake restaurant data | `BookingPage.tsx:227` | FIXED (Feb 20) |
-| MEDIUM | phone-integration-simple.js has no auth | `api/phone-integration-simple.js` | Needs fix |
+| MEDIUM | phone-integration-simple.js has no auth | `api/phone-integration-simple.js` | FIXED (Feb 21) |
 | MEDIUM | 17 `any` types across pages | Multiple files | Needs fix |
 | LOW | Fabricated "320+ restaurants" on landing | Landing components | FIXED (Feb 20) |
 
