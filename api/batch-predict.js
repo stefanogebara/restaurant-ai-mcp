@@ -60,7 +60,8 @@ async function predictForRestaurant(restaurantId, timezone = 'UTC') {
       try {
         const stats = await getCustomerStats(reservation.customer_email, reservation.customer_phone);
         customerStatsMap.set(key, stats);
-      } catch {
+      } catch (statsErr) {
+        logger.warn(`Failed to fetch customer stats for key ${key}:`, statsErr.message);
         customerStatsMap.set(key, null);
       }
     }

@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../../services/api';
 import ThiingsIcon from '../common/ThiingsIcon';
+import { useToast } from '../../contexts/ToastContext';
 
 interface DNAStats {
   total_profiles: number;
@@ -52,6 +53,7 @@ interface CustomerListItem {
 
 export default function CustomerDNADashboard() {
   const navigate = useNavigate();
+  const { success, error: showError } = useToast();
   const [stats, setStats] = useState<DNAStats | null>(null);
   const [occasions, setOccasions] = useState<Occasion[]>([]);
   const [customers, setCustomers] = useState<CustomerListItem[]>([]);
@@ -125,14 +127,14 @@ export default function CustomerDNADashboard() {
       const result = await response.json();
 
       if (result.success) {
-        alert(`✅ Analyzed DNA for ${result.data.total_analyzed} customers!`);
+        success(`Analyzed DNA for ${result.data.total_analyzed} customers`);
         fetchDNAData(); // Refresh data
       } else {
-        alert('❌ Failed to analyze customer DNA');
+        showError('Failed to analyze customer DNA');
       }
     } catch (error) {
       console.error('Error analyzing customers:', error);
-      alert('❌ Failed to analyze customer DNA');
+      showError('Failed to analyze customer DNA');
     } finally {
       setIsLoading(false);
     }

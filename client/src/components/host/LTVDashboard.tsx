@@ -11,6 +11,7 @@ import Spinner from '../common/Spinner';
 import HelpTooltip from '../common/HelpTooltip';
 import { api } from '../../services/api';
 import { RetentionCampaignModal } from './RetentionCampaignModal';
+import { useToast } from '../../contexts/ToastContext';
 
 interface Customer {
   customer_id: string;
@@ -41,6 +42,7 @@ interface LTVStats {
 }
 
 export default function LTVDashboard() {
+  const { success, error: showError } = useToast();
   const [stats, setStats] = useState<LTVStats | null>(null);
   const [topVIPs, setTopVIPs] = useState<Customer[]>([]);
   const [atRiskCustomers, setAtRiskCustomers] = useState<Customer[]>([]);
@@ -384,11 +386,12 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
               try {
                 const response = await api.get('/ltv?action=calculate-all');
                 if (response.data.success) {
-                  alert(`Successfully calculated LTV for ${response.data.data.total_customers} customers!`);
+                  success(`Calculated LTV for ${response.data.data.total_customers} customers`);
                   fetchLTVData(); // Refresh data
                 }
               } catch (error) {
-                alert('Failed to calculate LTV for all customers');
+                console.error('Failed to calculate LTV:', error);
+                showError('Failed to calculate LTV for all customers');
               }
             }}
           >
