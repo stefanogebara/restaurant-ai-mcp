@@ -190,11 +190,72 @@
     "december": "Dezembro"
   },
   "landing": {
+    "badge": "Gestão de Restaurantes com IA",
+    "socialProof": {
+      "label": "Lançando agora no Brasil",
+      "heading": "Seja um dos primeiros restaurantes no Seatable.",
+      "subtext": "Buscamos primeiros usuários no Brasil. Plano gratuito disponível, sem cartão de crédito."
+    },
     "hero": {
-      "title": "Reservas com IA para seu Restaurante",
-      "subtitle": "Automatize reservas, gerencie mesas em tempo real e encante seus clientes com inteligência artificial.",
-      "cta": "Comece Grátis",
-      "demo": "Ver Demonstração"
+      "heading": "Seu restaurante,",
+      "headingEm": "reimaginado.",
+      "subtitle": "Gerencie reservas, encante seus clientes e cresça com uma IA que realmente entende o seu restaurante.",
+      "cta": "Começar Grátis",
+      "demo": "Ver Demo",
+      "earlyAccess": "Plano gratuito disponível · Sem cartão de crédito"
+    },
+    "features": {
+      "label": "Funcionalidades",
+      "heading": "Tudo que você precisa,",
+      "headingLine2": "nada que não precisa.",
+      "subtitle": "Uma suite completa para restaurantes modernos que valorizam simplicidade e resultados.",
+      "voice": {
+        "title": "Agente de Voz com IA",
+        "desc": "Um recepcionista de IA que atende ligações, recebe reservas e conversa naturalmente com a personalidade do seu restaurante."
+      },
+      "whatsapp": {
+        "title": "Reservas pelo WhatsApp",
+        "desc": "Os clientes reservam pelo WhatsApp de forma natural. A IA cuida da disponibilidade, confirmações e lembretes automaticamente."
+      },
+      "dashboard": {
+        "title": "Painel Inteligente",
+        "desc": "Visão em tempo real de reservas, walk-ins e distribuição de mesas. Tudo que sua equipe precisa em uma tela."
+      },
+      "memory": {
+        "title": "Memória do Cliente",
+        "desc": "A IA lembra preferências alimentares, aniversários e mesas favoritas. Cada cliente que volta se sente reconhecido."
+      },
+      "tables": {
+        "title": "Gestão de Mesas",
+        "desc": "Atribuição inteligente de mesas otimiza o atendimento. Gerencie walk-ins, no-shows e filas de espera sem caos."
+      },
+      "analytics": {
+        "title": "Análises e Insights",
+        "desc": "Entenda seus horários de pico, padrões de no-show e valor de vida do cliente com relatórios bonitos e acionáveis."
+      }
+    },
+    "howItWorks": {
+      "label": "Como Funciona",
+      "heading": "Três passos para",
+      "headingLine2": "um restaurante mais inteligente.",
+      "step1": {
+        "title": "Nos conte sobre seu restaurante",
+        "desc": "Nossa IA pesquisa seu restaurante online e faz algumas perguntas para entender sua personalidade e estilo únicos."
+      },
+      "step2": {
+        "title": "Criamos sua persona de IA",
+        "desc": "A partir de inteligência web e suas respostas, criamos um agente de IA autêntico que soa e se sente como seu restaurante."
+      },
+      "step3": {
+        "title": "Entre no ar em minutos",
+        "desc": "Conecte seu telefone, WhatsApp e página de reservas. Sua IA começa a atender reservas imediatamente."
+      }
+    },
+    "cta": {
+      "heading": "Pronto para reimaginar",
+      "headingLine2": "seu restaurante?",
+      "subtitle": "Seja um dos primeiros restaurantes a usar o Seatable no Brasil. Sem cartão de crédito.",
+      "button": "Começar Grátis"
     },
     "pricing": {
       "title": "Planos e Preços",

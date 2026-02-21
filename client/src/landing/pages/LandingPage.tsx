@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowUp } from 'lucide-react';
 import LandingNav from '../components/LandingNav';
 import HeroSection from '../components/HeroSection';
@@ -12,6 +13,7 @@ import ContactForm from '../components/ContactForm';
 import Footer from '../components/Footer';
 
 export default function LandingPage() {
+  const { t } = useTranslation();
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
@@ -41,31 +43,20 @@ export default function LandingPage() {
       <HowItWorksSection />
       <PricingSection />
 
-      {/* Testimonial */}
-      <section className="py-24 px-6 sm:px-16 max-w-[800px] mx-auto text-center">
-        <blockquote className="font-serif text-2xl sm:text-[32px] font-normal italic leading-[1.5] text-[#1C1917] tracking-tight mb-8">
-          &ldquo;Seatable transformed how we handle reservations. Our AI agent sounds exactly like us &mdash; warm, knowledgeable, and always available.&rdquo;
-        </blockquote>
-        <cite className="not-italic text-sm text-[#78716C]">
-          <strong className="text-[#1C1917] font-semibold block mb-0.5">Maria Gonzalez</strong>
-          Owner, Celeri Madrid
-        </cite>
-      </section>
-
       {/* CTA */}
       <section className="px-6 sm:px-16 pb-24">
-        <div className="max-w-[700px] mx-auto bg-[#1C1917] rounded-3xl p-16 sm:p-20 text-center">
+        <div className="max-w-[700px] mx-auto bg-deep-charcoal rounded-3xl p-16 sm:p-20 text-center">
           <h2 className="font-serif text-3xl sm:text-[40px] font-medium text-white mb-4 tracking-tight">
-            Ready to reimagine<br />your restaurant?
+            {t('landing.cta.heading')}<br />{t('landing.cta.headingLine2')}
           </h2>
-          <p className="text-[16px] text-[#A8A29E] font-light mb-9">
-            Join 320+ restaurants already using Seatable. Start your free trial today.
+          <p className="text-[16px] text-muted-stone font-light mb-9">
+            {t('landing.cta.subtitle')}
           </p>
           <a
             href="/#pricing"
-            className="inline-block px-8 py-3.5 bg-[#9F1239] hover:bg-[#881337] text-white text-[15px] font-semibold rounded-full transition-colors"
+            className="inline-block px-8 py-3.5 bg-burgundy hover:bg-burgundy-dark text-white text-[15px] font-semibold rounded-full transition-colors"
           >
-            Start Free Trial
+            {t('landing.cta.button')}
           </a>
         </div>
       </section>

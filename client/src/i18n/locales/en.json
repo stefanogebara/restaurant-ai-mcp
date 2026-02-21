@@ -188,5 +188,74 @@
     "october": "October",
     "november": "November",
     "december": "December"
+  },
+  "landing": {
+    "badge": "AI-Powered Restaurant Management",
+    "socialProof": {
+      "label": "Now launching in Brazil",
+      "heading": "Be one of the first restaurants on Seatable.",
+      "subtext": "We're looking for early adopters in Brazil. Free plan available, no credit card required."
+    },
+    "hero": {
+      "heading": "Your restaurant,",
+      "headingEm": "reimagined.",
+      "subtitle": "Effortlessly manage reservations, delight guests, and grow your business with an AI that truly understands your restaurant.",
+      "cta": "Start Free Trial",
+      "demo": "Watch Demo",
+      "earlyAccess": "Free plan available · No credit card required"
+    },
+    "features": {
+      "label": "Features",
+      "heading": "Everything you need,",
+      "headingLine2": "nothing you don't.",
+      "subtitle": "A complete suite designed for modern restaurants that value simplicity and results.",
+      "voice": {
+        "title": "AI Voice Agent",
+        "desc": "An AI receptionist that answers calls, takes reservations, and speaks naturally in your restaurant's voice and personality."
+      },
+      "whatsapp": {
+        "title": "WhatsApp Booking",
+        "desc": "Guests book through WhatsApp with natural conversation. The AI handles availability, confirmations, and reminders automatically."
+      },
+      "dashboard": {
+        "title": "Smart Dashboard",
+        "desc": "Real-time view of reservations, walk-ins, and table assignments. Everything your host team needs on one screen."
+      },
+      "memory": {
+        "title": "Guest Memory",
+        "desc": "The AI remembers dietary preferences, birthdays, and favorite tables. Every returning guest feels recognized."
+      },
+      "tables": {
+        "title": "Table Management",
+        "desc": "Intelligent table assignment optimizes seating. Manage walk-ins, no-shows, and waitlists without the chaos."
+      },
+      "analytics": {
+        "title": "Analytics & Insights",
+        "desc": "Understand your busiest hours, no-show patterns, and customer lifetime value with beautiful, actionable reports."
+      }
+    },
+    "howItWorks": {
+      "label": "How It Works",
+      "heading": "Three steps to",
+      "headingLine2": "a smarter restaurant.",
+      "step1": {
+        "title": "Tell us about your restaurant",
+        "desc": "Our AI researches your restaurant online, then asks a few questions to understand your unique personality and style."
+      },
+      "step2": {
+        "title": "We build your AI persona",
+        "desc": "From web intelligence and your input, we create an authentic AI agent that sounds and feels like your restaurant."
+      },
+      "step3": {
+        "title": "Go live in minutes",
+        "desc": "Connect your phone, WhatsApp, and booking page. Your AI starts handling reservations immediately."
+      }
+    },
+    "cta": {
+      "heading": "Ready to reimagine",
+      "headingLine2": "your restaurant?",
+      "subtitle": "Join the first restaurants using Seatable. Free plan available, no credit card required.",
+      "button": "Start Free Trial"
+    }
   }
 }
