@@ -64,11 +64,6 @@ module.exports = {
     '!api/report-usage.js',
     '!api/verify-session.js',
 
-    // ─── Large orchestration files (best tested via E2E, not unit tests) ─────
-    // host-dashboard.js: 1207-line BFF with 18 handlers; endpoint tests cover
-    // main paths but deep coverage requires E2E-level infrastructure
-    '!api/host-dashboard.js',
-
     // ─── _lib: always-mocked infrastructure (0% because mocked in every test) ─
     '!api/_lib/rate-limit.js',           // Redis (Upstash) - always mocked
     '!api/_lib/usage-tracking.js',       // Supabase UPSERT - always mocked
