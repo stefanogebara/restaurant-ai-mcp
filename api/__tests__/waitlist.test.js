@@ -482,6 +482,8 @@ describe('SMS notification', () => {
         body: { status: 'notified' },
       });
       await handler(req, res);
+      // Give the fire-and-forget .catch callback time to execute
+      await new Promise(r => setTimeout(r, 20));
 
       // Response still succeeds (SMS is fire-and-forget)
       expect(res.status).toHaveBeenCalledWith(200);

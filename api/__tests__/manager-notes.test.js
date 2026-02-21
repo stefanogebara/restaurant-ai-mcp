@@ -220,4 +220,14 @@ describe('manager-notes handler', () => {
       expect(res._status).toBe(405);
     });
   });
+
+  describe('top-level catch block (lines 46-47)', () => {
+    it('returns 500 when createMemory throws an error', async () => {
+      mockCreateMemory.mockRejectedValueOnce(new Error('DB connection lost'));
+      const { req, res } = mkReqRes('POST', { content: 'Valid content' });
+      await handler(req, res);
+      expect(res._status).toBe(500);
+      expect(res._json).toMatchObject({ message: 'Internal server error' });
+    });
+  });
 });

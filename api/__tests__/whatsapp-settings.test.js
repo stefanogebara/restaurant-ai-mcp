@@ -349,3 +349,47 @@ describe('WhatsApp Settings: stats', () => {
     expect(typeof json.data.messages_this_month).toBe('number');
   });
 });
+
+// ============================================================
+// Top-level catch block (lines 65-67)
+// ============================================================
+describe('WhatsApp Settings: top-level error catch', () => {
+  test('returns 500 when sub-handler throws (lines 65-67)', async () => {
+    // Make the .single() call throw to cause handleStatus to reject
+    mockSingle.mockImplementationOnce(() => { throw new Error('DB connection lost'); });
+
+    const { req, res } = mkReqRes({ query: { action: 'status' } });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: false,
+      error: 'Something went wrong. Please try again.',
+    }));
+  });
+});
+
+// ============================================================
+// handleUpdate DB error (lines 186-187)
+// ============================================================
+describe('WhatsApp Settings: handleUpdate DB error', () => {
+  test('returns 500 when DB update fails (lines 186-187)', async () => {
+    mockSingle.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'Update constraint violation' },
+    });
+
+    const { req, res } = mkReqRes({
+      method: 'PATCH',
+      query: { action: 'update' },
+      body: { enabled: true },
+    });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: false,
+      error: 'Failed to update settings',
+    }));
+  });
+});
