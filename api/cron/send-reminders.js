@@ -8,6 +8,7 @@
  * Runs daily at 9 AM via Vercel Cron Jobs
  */
 
+require('../_lib/sentry');
 const twilio = require('twilio');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');

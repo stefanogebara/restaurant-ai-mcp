@@ -7,6 +7,7 @@
  * Runs every 5 minutes via Vercel Cron Jobs
  */
 
+require('../_lib/sentry');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 

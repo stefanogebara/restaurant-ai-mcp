@@ -19,6 +19,8 @@ const { Resend } = require('resend');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('Portal');
 
+const { captureException } = require('./_lib/sentry');
+
 module.exports = async (req, res) => {
   // CORS for public portal
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -50,6 +52,7 @@ module.exports = async (req, res) => {
         });
     }
   } catch (error) {
+    captureException(error, { url: req.url, method: req.method });
     logger.error('[Portal] Unhandled error:', error);
     return res.status(500).json({
       success: false,

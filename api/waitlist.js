@@ -7,6 +7,7 @@ const {
 const twilio = require('twilio');
 const { Resend } = require('resend');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { captureException } = require('./_lib/sentry');
 const { verifyAuth } = require('./_lib/auth');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
@@ -60,6 +61,7 @@ module.exports = async (req, res) => {
         return res.status(405).json({ error: 'Method not allowed' });
     }
   } catch (error) {
+    captureException(error, { url: req.url, method: req.method });
     logger.error('Waitlist API error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }

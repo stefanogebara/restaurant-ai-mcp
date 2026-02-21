@@ -46,6 +46,9 @@ const { getLocalDate } = require('./_lib/timezone');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('Reservations');
 
+// Error tracking
+const { captureException } = require('./_lib/sentry');
+
 // Guest memory (fire-and-forget memory creation from booking requests)
 const { createMemory } = require('./services/guestMemory');
 
@@ -149,6 +152,7 @@ module.exports = async (req, res) => {
         });
     }
   } catch (error) {
+    captureException(error, { url: req.url, method: req.method });
     logger.error('Reservation error', error);
     return res.status(500).json({
       message: 'I apologize, but something went wrong processing your request. Please try again or contact the restaurant directly.'

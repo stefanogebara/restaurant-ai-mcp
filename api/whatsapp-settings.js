@@ -16,6 +16,7 @@ const { supabaseAdmin } = require('./_lib/supabase');
 const { isWhatsAppConfigured, sendWhatsAppMessage } = require('./_lib/whatsapp-sender');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { captureException } = require('./_lib/sentry');
 
 const logger = createSecureLogger('WhatsAppSettings');
 
@@ -61,6 +62,7 @@ module.exports = async (req, res) => {
         });
     }
   } catch (error) {
+    captureException(error, { url: req.url, method: req.method });
     logger.error('WhatsApp settings error:', error);
     return res.status(500).json({
       success: false,
