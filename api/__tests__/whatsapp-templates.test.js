@@ -290,3 +290,32 @@ describe('getTemplate - Portuguese missing variants', () => {
     expect(msg).toContain('Boteco do Samba');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Edge cases in getTemplate (lines 189-198)
+// ---------------------------------------------------------------------------
+describe('getTemplate - error edge cases', () => {
+  test('returns null and warns when language not found and no en fallback (lines 190-191)', () => {
+    // Inject a test template that only has 'de', no 'en' or 'fr'
+    TEMPLATES['__test_no_en__'] = { de: (vars) => `Hallo ${vars.name}` };
+    try {
+      const result = getTemplate('__test_no_en__', 'fr', TEST_VARS);
+      expect(result).toBeNull();
+    } finally {
+      delete TEMPLATES['__test_no_en__'];
+    }
+  });
+
+  test('returns null and logs error when template function throws (lines 197-198)', () => {
+    // Inject a test template whose render function throws
+    TEMPLATES['__test_throws__'] = {
+      en: () => { throw new Error('Template render failed'); },
+    };
+    try {
+      const result = getTemplate('__test_throws__', 'en', TEST_VARS);
+      expect(result).toBeNull();
+    } finally {
+      delete TEMPLATES['__test_throws__'];
+    }
+  });
+});

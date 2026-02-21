@@ -469,4 +469,32 @@ describe('Analytics: Error paths', () => {
     // handler returns 200 with { success: false }
     expect(res.status).toHaveBeenCalledWith(200);
   });
+
+  test('getServiceRecordRows catch block (lines 38-39): service_records error', async () => {
+    verifyAuth.mockResolvedValueOnce({
+      user: { restaurant_id: 'rest-1', email: 'test@test.com' },
+    });
+    // Force service_records DB to return an error → getServiceRecordRows throws → catch returns { success: false }
+    mockTableData.service_records = { data: null, error: { message: 'service_records error' } };
+
+    const { req, res } = createMockReqRes();
+    await handler(req, res);
+    // calculateAnalytics sees !serviceResult.success → returns { success: false }
+    expect(res.status).toHaveBeenCalledWith(200);
+    const data = res.json.mock.calls[0][0];
+    expect(data.success).toBe(false);
+  });
+
+  test('handler top-level catch (lines 235-236): calculateAnalytics throws', async () => {
+    verifyAuth.mockResolvedValueOnce({
+      user: { restaurant_id: 'rest-1', email: 'test@test.com' },
+    });
+    // Make getAllTables throw (not just return failure) to cause Promise.all to reject
+    getAllTables.mockRejectedValueOnce(new Error('DB catastrophic failure'));
+
+    const { req, res } = createMockReqRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ success: false, error: 'Failed to calculate analytics' });
+  });
 });
