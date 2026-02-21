@@ -12,10 +12,7 @@
     "test:coverage": "jest --coverage",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
-    "test:all": "jest --forceExit && cd client && npx vitest run",
-    "test:stress": "artillery run stress-test/artillery.yml",
-    "stress:verify": "node stress-test/verify.js",
-    "stress:cleanup": "node stress-test/cleanup.js"
+    "test:all": "jest --forceExit && cd client && npx vitest run"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
@@ -38,7 +35,6 @@
   "devDependencies": {
     "@playwright/test": "^1.58.1",
     "@types/jest": "^30.0.0",
-    "artillery": "^2.0.30",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "jest": "^30.2.0"
