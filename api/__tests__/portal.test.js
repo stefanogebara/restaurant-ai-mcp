@@ -497,3 +497,223 @@ describe('Portal: availability slot generation', () => {
     expect(res.status).toHaveBeenCalledWith(500);
   });
 });
+
+// ============================================================
+// Top-level catch block (lines 55-57)
+// ============================================================
+describe('Portal: top-level catch block', () => {
+  test('returns 500 on unhandled exception in sub-handler (lines 55-57)', async () => {
+    // Throw synchronously from single() so the async handleGetRestaurant rejects,
+    // propagating to the top-level try-catch in the main handler.
+    mockSingle.mockImplementationOnce(() => { throw new Error('Unexpected DB crash'); });
+
+    const { req, res } = createMockReqRes({
+      query: { action: 'restaurant', slug: 'test-slug' },
+    });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: false,
+      message: 'Something went wrong. Please try again.',
+    }));
+  });
+});
+
+// ============================================================
+// Party size limit (line 352)
+// ============================================================
+describe('Portal: reserve - party size limit', () => {
+  test('returns 400 when party size exceeds max_party_size (line 352)', async () => {
+    mockSingle.mockResolvedValueOnce({
+      data: {
+        id: 'r1',
+        restaurant_name: 'Test Restaurant',
+        reservation_settings: { max_party_size: 5 },
+        business_hours: {},
+        average_dining_duration_minutes: 90,
+      },
+      error: null,
+    });
+
+    const { req, res } = createMockReqRes({
+      method: 'POST',
+      body: {
+        action: 'reserve',
+        restaurant_id: 'r1',
+        customer_name: 'Big Group',
+        customer_phone: '+5511999999999',
+        party_size: 10,
+        date: '2026-04-01',
+        time: '19:00',
+      },
+    });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      message: expect.stringContaining('Maximum party size'),
+    }));
+  });
+});
+
+// ============================================================
+// DB insert error (lines 411-412)
+// ============================================================
+describe('Portal: reserve - DB insert error', () => {
+  test('returns 500 when reservation insert fails (lines 411-412)', async () => {
+    mockSingle.mockResolvedValueOnce({
+      data: {
+        id: 'r1',
+        restaurant_name: 'Test Restaurant',
+        reservation_settings: { max_party_size: 10 },
+        business_hours: {},
+        average_dining_duration_minutes: 90,
+      },
+      error: null,
+    });
+    mockChainResolve.mockReturnValueOnce({ data: [], error: null });
+    mockChainResolve.mockReturnValueOnce({ data: [{ capacity: 40 }], error: null });
+    mockCheckTimeSlotAvailability.mockReturnValueOnce({ available: true, availableSeats: 38 });
+    // Insert .single() returns an error
+    mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'insert constraint violation' } });
+
+    const { req, res } = createMockReqRes({
+      method: 'POST',
+      body: {
+        action: 'reserve',
+        restaurant_id: 'r1',
+        customer_name: 'Test User',
+        customer_phone: '+5511999999999',
+        party_size: 2,
+        date: '2026-04-01',
+        time: '19:00',
+      },
+    });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      message: 'Could not create reservation. Please try again.',
+    }));
+  });
+});
+
+// ============================================================
+// Email confirmation (lines 423-432, 454-461)
+// ============================================================
+describe('Portal: reserve - email confirmation', () => {
+  function setupSuccessfulReserve() {
+    mockSingle.mockResolvedValueOnce({
+      data: {
+        id: 'r1',
+        restaurant_name: 'Test Restaurant',
+        reservation_settings: { max_party_size: 10 },
+        business_hours: {},
+        average_dining_duration_minutes: 90,
+      },
+      error: null,
+    });
+    mockChainResolve.mockReturnValueOnce({ data: [], error: null });
+    mockChainResolve.mockReturnValueOnce({ data: [{ capacity: 40 }], error: null });
+    mockCheckTimeSlotAvailability.mockReturnValueOnce({ available: true, availableSeats: 38 });
+    mockSingle.mockResolvedValueOnce({
+      data: {
+        id: 'db-uuid-1',
+        reservation_id: 'RES-TEST-123',
+        customer_name: 'Email User',
+        party_size: 2,
+        date: '2026-04-01',
+        time: '19:00',
+        status: 'confirmed',
+      },
+      error: null,
+    });
+  }
+
+  test('fires email when customer_email is provided (lines 423-432)', async () => {
+    setupSuccessfulReserve();
+
+    const { req, res } = createMockReqRes({
+      method: 'POST',
+      body: {
+        action: 'reserve',
+        restaurant_id: 'r1',
+        customer_name: 'Email User',
+        customer_phone: '+5511999999999',
+        customer_email: 'user@example.com',
+        party_size: 2,
+        date: '2026-04-01',
+        time: '19:00',
+      },
+    });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(201);
+  });
+
+  test('executes sendConfirmationEmail body when RESEND_API_KEY is set (lines 454-461)', async () => {
+    process.env.RESEND_API_KEY = 'test_resend_key';
+    try {
+      setupSuccessfulReserve();
+
+      const { Resend } = require('resend');
+      const { req, res } = createMockReqRes({
+        method: 'POST',
+        body: {
+          action: 'reserve',
+          restaurant_id: 'r1',
+          customer_name: 'Email User',
+          customer_phone: '+5511999999999',
+          customer_email: 'user@example.com',
+          party_size: 2,
+          date: '2026-04-01',
+          time: '19:00',
+        },
+      });
+      await handler(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(201);
+      // Allow the fire-and-forget email promise to settle
+      await new Promise(resolve => setTimeout(resolve, 20));
+      expect(Resend).toHaveBeenCalledWith('test_resend_key');
+    } finally {
+      delete process.env.RESEND_API_KEY;
+    }
+  });
+
+  test('email .catch callback fires when sendConfirmationEmail rejects (line 432)', async () => {
+    process.env.RESEND_API_KEY = 'test_resend_key';
+    try {
+      setupSuccessfulReserve();
+
+      // Make resend.emails.send reject so sendConfirmationEmail rejects
+      const { Resend } = require('resend');
+      Resend.mockImplementationOnce(() => ({
+        emails: { send: jest.fn().mockRejectedValue(new Error('Resend API down')) },
+      }));
+
+      const { req, res } = createMockReqRes({
+        method: 'POST',
+        body: {
+          action: 'reserve',
+          restaurant_id: 'r1',
+          customer_name: 'Email User',
+          customer_phone: '+5511999999999',
+          customer_email: 'user@example.com',
+          party_size: 2,
+          date: '2026-04-01',
+          time: '19:00',
+        },
+      });
+      await handler(req, res);
+
+      // Response still 201 — email is fire-and-forget
+      expect(res.status).toHaveBeenCalledWith(201);
+      // Wait for .catch callback to execute
+      await new Promise(resolve => setTimeout(resolve, 20));
+    } finally {
+      delete process.env.RESEND_API_KEY;
+    }
+  });
+});

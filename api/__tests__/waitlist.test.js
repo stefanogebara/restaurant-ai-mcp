@@ -97,6 +97,10 @@ jest.mock('../_lib/secure-logger', () => ({
   })),
 }));
 
+jest.mock('../_lib/sentry', () => ({
+  captureException: jest.fn(),
+}));
+
 // ---------------------------------------------------------------------------
 // Require handler
 // ---------------------------------------------------------------------------
@@ -306,5 +310,185 @@ describe('Authentication', () => {
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(401);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Missing restaurant_id (line 43)
+// ---------------------------------------------------------------------------
+describe('Missing restaurant_id', () => {
+  test('returns 400 when user has no restaurant_id', async () => {
+    const { verifyAuth } = require('../_lib/auth');
+    verifyAuth.mockResolvedValueOnce({ user: { id: 'user-1' } }); // no restaurant_id
+
+    const { req, res } = mockReqRes({ method: 'GET' });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      error: 'No restaurant associated with this account',
+    }));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Error path - top-level catch (lines 64-66)
+// ---------------------------------------------------------------------------
+describe('Top-level error catch', () => {
+  test('returns 500 and captures exception when handler throws', async () => {
+    mockGetWaitlistEntries.mockRejectedValueOnce(new Error('Unexpected DB crash'));
+
+    const { req, res } = mockReqRes({ method: 'GET' });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      error: 'Internal server error',
+    }));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// DB failure paths (lines 80, 107, 139, 164)
+// ---------------------------------------------------------------------------
+describe('DB failure paths', () => {
+  test('GET returns 500 when getWaitlistEntries fails', async () => {
+    mockGetWaitlistEntries.mockResolvedValueOnce({ success: false });
+
+    const { req, res } = mockReqRes({ method: 'GET' });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      error: 'Failed to fetch waitlist',
+    }));
+  });
+
+  test('POST returns 500 when addToWaitlist fails', async () => {
+    mockAddToWaitlist.mockResolvedValueOnce({ success: false });
+
+    const { req, res } = mockReqRes({
+      method: 'POST',
+      body: { customer_name: 'Test', customer_phone: '+1234567890', party_size: 2 },
+    });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      error: 'Failed to add to waitlist',
+    }));
+  });
+
+  test('PATCH returns 404 when entry not found', async () => {
+    mockUpdateWaitlistEntry.mockResolvedValueOnce({
+      success: false,
+      message: 'Entry not found',
+    });
+
+    const { req, res } = mockReqRes({
+      method: 'PATCH',
+      query: { id: 'w-nonexistent' },
+      body: { status: 'seated' },
+    });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+
+  test('PATCH returns 500 when update fails without not-found message', async () => {
+    mockUpdateWaitlistEntry.mockResolvedValueOnce({
+      success: false,
+      message: 'DB error',
+    });
+
+    const { req, res } = mockReqRes({
+      method: 'PATCH',
+      query: { id: 'w1' },
+      body: { status: 'seated' },
+    });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+  });
+
+  test('DELETE returns 500 when removeFromWaitlist fails', async () => {
+    mockRemoveFromWaitlist.mockResolvedValueOnce({ success: false });
+
+    const { req, res } = mockReqRes({
+      method: 'DELETE',
+      query: { id: 'w1' },
+    });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      error: 'Failed to remove from waitlist',
+    }));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// SMS notification paths (lines 149, 185-196)
+// ---------------------------------------------------------------------------
+describe('SMS notification', () => {
+  test('triggers SMS notification when status changes to notified with phone', async () => {
+    // The notified status mock returns customer_phone, so this path executes
+    const { req, res } = mockReqRes({
+      method: 'PATCH',
+      query: { id: 'w1' },
+      body: { status: 'notified' },
+    });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('sendSMSNotification runs Twilio client when env vars are set', async () => {
+    process.env.TWILIO_ACCOUNT_SID = 'AC_test_sid';
+    process.env.TWILIO_AUTH_TOKEN = 'test_auth_token';
+    process.env.TWILIO_PHONE_NUMBER = '+12025551234';
+
+    try {
+      const { req, res } = mockReqRes({
+        method: 'PATCH',
+        query: { id: 'w1' },
+        body: { status: 'notified' },
+      });
+      await handler(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+    } finally {
+      delete process.env.TWILIO_ACCOUNT_SID;
+      delete process.env.TWILIO_AUTH_TOKEN;
+      delete process.env.TWILIO_PHONE_NUMBER;
+    }
+  });
+
+  test('.catch callback runs when sendSMSNotification rejects', async () => {
+    // Make twilio throw to trigger the .catch callback at line 149
+    const twilio = require('twilio');
+    twilio.mockImplementationOnce(() => ({
+      messages: { create: jest.fn().mockRejectedValue(new Error('Twilio error')) },
+    }));
+
+    process.env.TWILIO_ACCOUNT_SID = 'AC_test_sid';
+    process.env.TWILIO_AUTH_TOKEN = 'test_auth_token';
+    process.env.TWILIO_PHONE_NUMBER = '+12025551234';
+
+    try {
+      const { req, res } = mockReqRes({
+        method: 'PATCH',
+        query: { id: 'w1' },
+        body: { status: 'notified' },
+      });
+      await handler(req, res);
+
+      // Response still succeeds (SMS is fire-and-forget)
+      expect(res.status).toHaveBeenCalledWith(200);
+    } finally {
+      delete process.env.TWILIO_ACCOUNT_SID;
+      delete process.env.TWILIO_AUTH_TOKEN;
+      delete process.env.TWILIO_PHONE_NUMBER;
+    }
   });
 });

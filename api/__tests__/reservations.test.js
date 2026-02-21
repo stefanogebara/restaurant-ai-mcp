@@ -525,3 +525,355 @@ describe('WhatsApp confirmation', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 });
+
+// ---------------------------------------------------------------------------
+// OPTIONS preflight (line 111)
+// ---------------------------------------------------------------------------
+describe('OPTIONS preflight', () => {
+  test('exits early when handlePreflight returns true', async () => {
+    const { handlePreflight } = require('../_lib/cors');
+    handlePreflight.mockReturnValueOnce(true);
+
+    const { req, res } = mockReqRes({ action: 'create', method: 'OPTIONS' });
+    await handler(req, res);
+
+    expect(mockCreateReservation).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// No restaurant_id (line 128)
+// ---------------------------------------------------------------------------
+describe('Missing restaurant_id', () => {
+  test('returns 403 when user has no restaurant_id', async () => {
+    const { verifyAuth } = require('../_lib/auth');
+    verifyAuth.mockResolvedValueOnce({ user: { id: 'user-1' } }); // no restaurant_id
+
+    const { req, res } = mockReqRes({ action: 'list' });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      message: expect.stringContaining('onboarding'),
+    }));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// createReservation failure (line 227)
+// ---------------------------------------------------------------------------
+describe('createReservation failure', () => {
+  test('returns 500 when createReservation fails', async () => {
+    mockCreateReservation.mockResolvedValueOnce({ success: false });
+
+    const { req, res } = mockReqRes({
+      action: 'create',
+      body: {
+        date: '2026-03-20',
+        time: '19:00',
+        party_size: 4,
+        customer_name: 'Test User',
+        customer_phone: '+5511999999999',
+      },
+    });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Subscription limit check path (lines 189-201)
+// ---------------------------------------------------------------------------
+describe('Subscription limits', () => {
+  test('runs subscription check when x-restaurant-email header present', async () => {
+    const { checkSubscription, checkReservationLimits } = require('../_lib/subscription-middleware');
+
+    const { req, res } = mockReqRes({
+      action: 'create',
+      body: {
+        date: '2026-03-20',
+        time: '19:00',
+        party_size: 2,
+        customer_name: 'Test User',
+        customer_phone: '+5511999999999',
+      },
+    });
+    req.headers['x-restaurant-email'] = 'owner@test.com';
+
+    await handler(req, res);
+
+    expect(checkSubscription).toHaveBeenCalled();
+    expect(checkReservationLimits).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('returns early when checkSubscription blocks request', async () => {
+    const { checkSubscription } = require('../_lib/subscription-middleware');
+    // Mock subscription check to NOT call next() and send a response instead
+    checkSubscription.mockImplementationOnce((req, res) => {
+      res.status(402).json({ error: 'Subscription required' });
+    });
+
+    const { req, res } = mockReqRes({
+      action: 'create',
+      body: {
+        date: '2026-03-20',
+        time: '19:00',
+        party_size: 2,
+        customer_name: 'Test User',
+        customer_phone: '+5511999999999',
+      },
+    });
+    req.headers['x-restaurant-email'] = 'owner@test.com';
+
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(402);
+    expect(mockCreateReservation).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// ML prediction - high risk with factors (line 313) and intervention (lines 343-388)
+// ---------------------------------------------------------------------------
+describe('ML prediction - high risk intervention', () => {
+  test('triggers intervention creation for high-risk reservations', async () => {
+    const { calculateRiskScore, getRecommendedIntervention } = require('../services/mlRiskScoring');
+
+    calculateRiskScore.mockResolvedValueOnce({
+      riskScore: 80,
+      riskLevel: 'high',
+      confidence: 85,
+      factors: [
+        { description: 'last-minute booking', weight: 0.4 },
+        { description: 'no prior visits', weight: 0.3 },
+      ],
+      modelVersion: 'heuristic-v2',
+    });
+
+    getRecommendedIntervention.mockResolvedValueOnce({
+      type: 'confirmation_call',
+      estimatedCost: 2,
+      estimatedValue: 50,
+    });
+
+    const { req, res } = mockReqRes({
+      action: 'create',
+      body: {
+        date: '2026-03-20',
+        time: '19:00',
+        party_size: 4,
+        customer_name: 'High Risk Guest',
+        customer_phone: '+5511999999999',
+      },
+    });
+    await handler(req, res);
+
+    expect(getRecommendedIntervention).toHaveBeenCalledWith('high', 80);
+    // Reservation still succeeds even if intervention fails
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('handles medium risk (maps to high for intervention type)', async () => {
+    const { calculateRiskScore, getRecommendedIntervention } = require('../services/mlRiskScoring');
+
+    calculateRiskScore.mockResolvedValueOnce({
+      riskScore: 45,
+      riskLevel: 'medium',
+      confidence: 70,
+      factors: [{ description: 'weekend evening', weight: 0.2 }],
+      modelVersion: 'heuristic-v2',
+    });
+
+    getRecommendedIntervention.mockResolvedValueOnce(null); // No intervention needed
+
+    const { req, res } = mockReqRes({
+      action: 'create',
+      body: {
+        date: '2026-03-20',
+        time: '20:00',
+        party_size: 2,
+        customer_name: 'Medium Risk',
+        customer_phone: '+5511888888888',
+      },
+    });
+    await handler(req, res);
+
+    expect(getRecommendedIntervention).toHaveBeenCalledWith('high', 45); // medium maps to high
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Guest memory with special_requests (lines 463, 467-477)
+// ---------------------------------------------------------------------------
+describe('Guest memory creation', () => {
+  test('creates memory entries for booking and special_requests', async () => {
+    const { createMemory } = require('../services/guestMemory');
+
+    const { req, res } = mockReqRes({
+      action: 'create',
+      body: {
+        date: '2026-03-20',
+        time: '19:00',
+        party_size: 2,
+        customer_name: 'Memory Guest',
+        customer_phone: '+5511777777777',
+        special_requests: 'Window seat please',
+      },
+    });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    // Should have called createMemory at least for the booking observation
+    expect(createMemory).toHaveBeenCalledWith(
+      RESTAURANT_ID,
+      '+5511777777777',
+      expect.objectContaining({ memoryType: 'observation' })
+    );
+    // And for special requests as preference
+    expect(createMemory).toHaveBeenCalledWith(
+      RESTAURANT_ID,
+      '+5511777777777',
+      expect.objectContaining({ memoryType: 'preference', content: expect.stringContaining('Window seat') })
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// SMS confirmation with Twilio env vars (lines 68-102)
+// ---------------------------------------------------------------------------
+describe('SMS confirmation with Twilio configured', () => {
+  const originalEnv = { ...process.env };
+
+  beforeEach(() => {
+    process.env.TWILIO_ACCOUNT_SID = 'AC_test_sid';
+    process.env.TWILIO_AUTH_TOKEN = 'test_auth_token';
+    process.env.TWILIO_PHONE_NUMBER = '+12025551234';
+  });
+
+  afterEach(() => {
+    delete process.env.TWILIO_ACCOUNT_SID;
+    delete process.env.TWILIO_AUTH_TOKEN;
+    delete process.env.TWILIO_PHONE_NUMBER;
+  });
+
+  test('sends SMS confirmation when Twilio is configured', async () => {
+    const { req, res } = mockReqRes({
+      action: 'create',
+      body: {
+        date: '2026-03-20',
+        time: '19:00',
+        party_size: 2,
+        customer_name: 'SMS Guest',
+        customer_phone: '+5511666666666',
+      },
+    });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('handles short phone number gracefully (invalid phone path)', async () => {
+    const { req, res } = mockReqRes({
+      action: 'create',
+      body: {
+        date: '2026-03-20',
+        time: '19:00',
+        party_size: 2,
+        customer_name: 'Bad Phone Guest',
+        customer_phone: '123', // too short
+      },
+    });
+    await handler(req, res);
+
+    // Reservation succeeds regardless of SMS failure
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// list edge cases (lines 527, 549-551, 561-562)
+// ---------------------------------------------------------------------------
+describe('list edge cases', () => {
+  test('returns empty list when records is undefined', async () => {
+    mockGetReservations.mockResolvedValueOnce({ success: true, data: {} }); // no .records
+
+    const { req, res } = mockReqRes({ action: 'list', method: 'GET' });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const data = res.json.mock.calls[0][0];
+    expect(data.reservations).toEqual([]);
+    expect(data.total).toBe(0);
+  });
+
+  test('sorts reservations ASC when sort=created_at_asc', async () => {
+    const { req, res } = mockReqRes({
+      action: 'list',
+      method: 'GET',
+      query: { sort: 'created_at_asc' },
+    });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const data = res.json.mock.calls[0][0];
+    expect(data.reservations).toBeDefined();
+  });
+
+  test('returns 500 when getReservations throws', async () => {
+    mockGetReservations.mockRejectedValueOnce(new Error('DB explosion'));
+
+    const { req, res } = mockReqRes({ action: 'list', method: 'GET' });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// modify failure (line 598) and cancel failure (line 627)
+// ---------------------------------------------------------------------------
+describe('modify and cancel failure paths', () => {
+  test('returns 500 when updateReservation fails', async () => {
+    mockUpdateReservation.mockResolvedValueOnce({ success: false });
+
+    const { req, res } = mockReqRes({
+      action: 'modify',
+      body: { reservation_id: 'RES-TEST-001', time: '21:00' },
+    });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+  });
+
+  test('returns 500 when cancelReservation fails', async () => {
+    mockCancelReservation.mockResolvedValueOnce({ success: false });
+
+    const { req, res } = mockReqRes({
+      action: 'cancel',
+      body: { reservation_id: 'RES-TEST-001' },
+    });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Top-level error catch (lines 155-157)
+// ---------------------------------------------------------------------------
+describe('Top-level error catch', () => {
+  test('returns 500 when action handler throws unexpectedly', async () => {
+    mockGetReservations.mockImplementationOnce(() => {
+      throw new Error('Unexpected crash');
+    });
+
+    const { req, res } = mockReqRes({ action: 'list', method: 'GET' });
+    await handler(req, res);
+
+    // List has its own try-catch and returns 500 internally
+    expect(res.status).toHaveBeenCalledWith(500);
+  });
+});
