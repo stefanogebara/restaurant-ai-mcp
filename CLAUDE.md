@@ -336,7 +336,7 @@ Design system: Playfair Display + Inter, burgundy `#9F1239`, charcoal `#1C1917`,
 - [x] Fix N+1 queries in `api/batch-predict.js` - parallelized customer stats fetching
 - [x] Fix dashboard cache key mismatch (`['dashboard']` → `['hostDashboard']`)
 - [x] Wire up dead `showCompleteModal` - confirmation dialog now shows before completing service
-- [ ] Add proper error handling (replace silent catch blocks)
+- [x] Add proper error handling (replaced 11 alert() calls with toast notifications, added missing error logging)
 - [x] Setup Sentry error monitoring (SENTRY_DSN added to Vercel, captureException in all 10 API endpoints)
 
 ### Phase 5: Code Quality & Technical Debt (DONE - Feb 20, 2026)
