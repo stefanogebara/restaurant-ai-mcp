@@ -19,16 +19,16 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
   const getUtilizationColor = (percentage: string | number): string => {
     const value = getUtilizationValue(percentage);
 
-    if (value >= 75) return 'bg-burgundy/80 border-burgundy'; // High utilization
+    if (value >= 75) return 'bg-[#9F1239]/80 border-[#9F1239]'; // High utilization
     if (value >= 50) return 'bg-[#d97706]/60 border-[#d97706]'; // Medium-high
-    if (value >= 25) return 'bg-warm-stone/40 border-warm-stone'; // Medium-low
-    return 'bg-soft-gray border-muted-stone'; // Low utilization
+    if (value >= 25) return 'bg-[#78716C]/40 border-[#78716C]'; // Medium-low
+    return 'bg-[#F5F5F4] border-[#A8A29E]'; // Low utilization
   };
 
   // Get text color for contrast
   const getTextColor = (percentage: string | number): string => {
     const value = getUtilizationValue(percentage);
-    return value >= 50 ? 'text-white' : 'text-deep-charcoal';
+    return value >= 50 ? 'text-white' : 'text-[#1C1917]';
   };
 
   // Sort tables by number
@@ -44,10 +44,10 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
   , sortedTables[0]);
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
+    <div className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
         <span className="text-[15px] font-semibold tracking-tight">Booking Heatmap</span>
-        <span className="text-[11px] font-semibold bg-[rgba(159,18,57,0.08)] text-burgundy px-2.5 py-0.5 rounded-full">Peak Hours</span>
+        <span className="text-[11px] font-semibold bg-[rgba(159,18,57,0.08)] text-[#9F1239] px-2.5 py-0.5 rounded-full">Peak Hours</span>
       </div>
       <div className="p-6">
 
@@ -79,34 +79,34 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
       {/* Legend */}
       <div className="flex items-center justify-center gap-4 mb-4 text-xs flex-wrap">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-burgundy/80 border-2 border-burgundy"></div>
-          <span className="text-warm-stone">High (75%+)</span>
+          <div className="w-4 h-4 rounded bg-[#9F1239]/80 border-2 border-[#9F1239]"></div>
+          <span className="text-[#78716C]">High (75%+)</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded bg-[#d97706]/60 border-2 border-[#d97706]"></div>
-          <span className="text-warm-stone">Medium-High (50-74%)</span>
+          <span className="text-[#78716C]">Medium-High (50-74%)</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-warm-stone/40 border-2 border-warm-stone"></div>
-          <span className="text-warm-stone">Medium-Low (25-49%)</span>
+          <div className="w-4 h-4 rounded bg-[#78716C]/40 border-2 border-[#78716C]"></div>
+          <span className="text-[#78716C]">Medium-Low (25-49%)</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-soft-gray border-2 border-muted-stone"></div>
-          <span className="text-warm-stone">Low (&lt;25%)</span>
+          <div className="w-4 h-4 rounded bg-[#F5F5F4] border-2 border-[#A8A29E]"></div>
+          <span className="text-[#78716C]">Low (&lt;25%)</span>
         </div>
       </div>
 
       {/* Insights */}
       <div className="space-y-2">
-        <div className="p-3 bg-burgundy/10 border border-burgundy/20 rounded-lg">
-          <p className="text-xs text-warm-stone">
-            <span className="font-semibold text-deep-charcoal">Most Used:</span>{' '}
+        <div className="p-3 bg-[#9F1239]/10 border border-[#9F1239]/20 rounded-lg">
+          <p className="text-xs text-[#78716C]">
+            <span className="font-semibold text-[#1C1917]">Most Used:</span>{' '}
             Table {mostUsed.table_number} ({mostUsed.utilization_rate}%) - {mostUsed.times_used} services
           </p>
         </div>
-        <div className="p-3 bg-soft-gray/50 border border-border-gray/50 rounded-lg">
-          <p className="text-xs text-warm-stone">
-            <span className="font-semibold text-deep-charcoal">Least Used:</span>{' '}
+        <div className="p-3 bg-[#F5F5F4]/50 border border-[#E7E5E4]/50 rounded-lg">
+          <p className="text-xs text-[#78716C]">
+            <span className="font-semibold text-[#1C1917]">Least Used:</span>{' '}
             Table {leastUsed.table_number} ({leastUsed.utilization_rate}%) - {leastUsed.times_used} services
           </p>
         </div>

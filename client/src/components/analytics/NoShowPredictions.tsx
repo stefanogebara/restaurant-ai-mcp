@@ -54,7 +54,7 @@ export default function NoShowPredictions() {
       case 'high': return 'text-[#dc2626] bg-[#dc2626]/10 border-[#dc2626]/20';
       case 'medium': return 'text-[#d97706] bg-[#d97706]/10 border-[#d97706]/20';
       case 'low': return 'text-[#16a34a] bg-[#22c55e]/10 border-[#22c55e]/20';
-      default: return 'text-stone-gray bg-warm-white border-border-gray';
+      default: return 'text-[#57534E] bg-[#FAFAF9] border-[#E7E5E4]';
     }
   };
 
@@ -63,49 +63,49 @@ export default function NoShowPredictions() {
       case 'high': return 'bg-[#dc2626] text-white';
       case 'medium': return 'bg-[#d97706] text-white';
       case 'low': return 'bg-[#16a34a] text-white';
-      default: return 'bg-stone-gray text-white';
+      default: return 'bg-[#57534E] text-white';
     }
   };
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-border-gray/50 rounded-xl p-8 shadow-sm">
+      <div className="bg-white border border-[#E7E5E4]/50 rounded-xl p-8 shadow-sm">
         <div className="flex items-center justify-center">
-          <div className="w-8 h-8 border-4 border-burgundy border-t-transparent rounded-full animate-spin"></div>
-          <span className="ml-3 text-warm-stone">Loading predictions...</span>
+          <div className="w-8 h-8 border-4 border-[#9F1239] border-t-transparent rounded-full animate-spin"></div>
+          <span className="ml-3 text-[#78716C]">Loading predictions...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white border border-border-gray/50 rounded-xl overflow-hidden shadow-sm">
+    <div className="bg-white border border-[#E7E5E4]/50 rounded-xl overflow-hidden shadow-sm">
       {/* Header */}
-      <div className="p-6 border-b border-border-gray">
-        <h2 className="text-lg font-semibold text-deep-charcoal tracking-tight mb-1">No-Show Risk Predictions</h2>
-        <p className="text-sm text-warm-stone">
+      <div className="p-6 border-b border-[#E7E5E4]">
+        <h2 className="text-lg font-semibold text-[#1C1917] tracking-tight mb-1">No-Show Risk Predictions</h2>
+        <p className="text-sm text-[#78716C]">
           AI-powered analysis of upcoming reservations with high no-show probability
         </p>
       </div>
 
       {/* Summary Stats */}
       {summary && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-soft-gray/30 border-b border-border-gray">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-[#F5F5F4]/30 border-b border-[#E7E5E4]">
           <div className="text-center">
-            <div className="text-3xl font-bold text-deep-charcoal">{summary.total_upcoming}</div>
-            <div className="text-xs text-warm-stone mt-1">Upcoming (7 days)</div>
+            <div className="text-3xl font-bold text-[#1C1917]">{summary.total_upcoming}</div>
+            <div className="text-xs text-[#78716C] mt-1">Upcoming (7 days)</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-[#dc2626]">{summary.high_risk}</div>
-            <div className="text-xs text-warm-stone mt-1">High Risk</div>
+            <div className="text-xs text-[#78716C] mt-1">High Risk</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-[#d97706]">{summary.medium_risk}</div>
-            <div className="text-xs text-warm-stone mt-1">Medium Risk</div>
+            <div className="text-xs text-[#78716C] mt-1">Medium Risk</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-burgundy">{summary.historical_no_show_rate}%</div>
-            <div className="text-xs text-warm-stone mt-1">Historical Rate</div>
+            <div className="text-3xl font-bold text-[#9F1239]">{summary.historical_no_show_rate}%</div>
+            <div className="text-xs text-[#78716C] mt-1">Historical Rate</div>
           </div>
         </div>
       )}
@@ -114,8 +114,8 @@ export default function NoShowPredictions() {
       <div className="p-6">
         {predictions.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-lg font-medium text-deep-charcoal mb-1">No high-risk reservations</div>
-            <p className="text-sm text-warm-stone">All upcoming reservations look good.</p>
+            <div className="text-lg font-medium text-[#1C1917] mb-1">No high-risk reservations</div>
+            <p className="text-sm text-[#78716C]">All upcoming reservations look good.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -132,7 +132,7 @@ export default function NoShowPredictions() {
                         {prediction.risk_score}% Risk
                       </span>
                       <span className="font-bold text-lg">{prediction.customer_name}</span>
-                      <span className="text-sm text-warm-stone">Party of {prediction.party_size}</span>
+                      <span className="text-sm text-[#78716C]">Party of {prediction.party_size}</span>
                     </div>
                     <div className="flex items-center gap-4 mt-2 text-sm">
                       <span className="flex items-center gap-1">
@@ -141,7 +141,7 @@ export default function NoShowPredictions() {
                         </svg>
                         {new Date(prediction.date).toLocaleDateString()} at {prediction.time}
                       </span>
-                      <span className="text-warm-stone">
+                      <span className="text-[#78716C]">
                         {prediction.days_until === 0 ? 'Today' : prediction.days_until === 1 ? 'Tomorrow' : `In ${prediction.days_until} days`}
                       </span>
                     </div>
@@ -170,7 +170,7 @@ export default function NoShowPredictions() {
                     <ul className="space-y-2">
                       {prediction.recommendations.map((rec, idx) => (
                         <li key={idx} className="flex items-start gap-2 text-sm">
-                          <span className="text-burgundy mt-0.5">•</span>
+                          <span className="text-[#9F1239] mt-0.5">•</span>
                           <span>{rec}</span>
                         </li>
                       ))}
@@ -184,8 +184,8 @@ export default function NoShowPredictions() {
       </div>
 
       {/* Footer Info */}
-      <div className="bg-soft-gray/30 px-6 py-4 border-t border-border-gray">
-        <div className="flex items-center gap-2 text-xs text-warm-stone">
+      <div className="bg-[#F5F5F4]/30 px-6 py-4 border-t border-[#E7E5E4]">
+        <div className="flex items-center gap-2 text-xs text-[#78716C]">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>

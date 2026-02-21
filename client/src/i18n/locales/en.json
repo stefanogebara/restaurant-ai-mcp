@@ -40,18 +40,7 @@
     "occupancy": "Occupancy",
     "quickStats": "Quick Stats",
     "upcomingReservations": "Upcoming Reservations",
-    "recentActivity": "Recent Activity",
-    "completeService": "Complete Service",
-    "stats": {
-      "reservations": "Today's Reservations",
-      "tables": "Tables Available",
-      "guests": "Guests Expected",
-      "aiCalls": "Active Parties",
-      "seated": "seated",
-      "capacity": "capacity",
-      "vsAvg": "vs avg",
-      "waiting": "on waitlist"
-    }
+    "recentActivity": "Recent Activity"
   },
   "reservations": {
     "title": "Reservations",

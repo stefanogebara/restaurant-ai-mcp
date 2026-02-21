@@ -56,33 +56,33 @@ export default function CheckInModal({ isOpen, reservation, onClose, onSuccess, 
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div role="dialog" aria-modal="true" aria-label="Check In Reservation" className="bg-white rounded-xl shadow-2xl border border-border-gray p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold text-deep-charcoal mb-4">Check In Reservation</h2>
+      <div role="dialog" aria-modal="true" aria-label="Check In Reservation" className="bg-white rounded-xl shadow-2xl border border-[#E7E5E4] p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <h2 className="text-2xl font-bold text-[#1C1917] mb-4">Check In Reservation</h2>
 
         {/* Reservation Details */}
-        <div className="bg-soft-gray rounded-xl p-4 mb-4 border border-border-gray">
+        <div className="bg-[#F5F5F4] rounded-xl p-4 mb-4 border border-[#E7E5E4]">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="text-sm text-stone-gray">Customer</div>
-              <div className="font-semibold text-deep-charcoal text-lg">{reservation.customer_name}</div>
+              <div className="text-sm text-[#57534E]">Customer</div>
+              <div className="font-semibold text-[#1C1917] text-lg">{reservation.customer_name}</div>
             </div>
             <div>
-              <div className="text-sm text-stone-gray">Party Size</div>
-              <div className="font-semibold text-deep-charcoal text-lg">{reservation.party_size} guests</div>
+              <div className="text-sm text-[#57534E]">Party Size</div>
+              <div className="font-semibold text-[#1C1917] text-lg">{reservation.party_size} guests</div>
             </div>
             <div>
-              <div className="text-sm text-stone-gray">Time</div>
-              <div className="font-semibold text-deep-charcoal text-lg">{reservation.reservation_time}</div>
+              <div className="text-sm text-[#57534E]">Time</div>
+              <div className="font-semibold text-[#1C1917] text-lg">{reservation.reservation_time}</div>
             </div>
             <div>
-              <div className="text-sm text-stone-gray">Phone</div>
-              <div className="font-semibold text-deep-charcoal text-lg">{reservation.customer_phone}</div>
+              <div className="text-sm text-[#57534E]">Phone</div>
+              <div className="font-semibold text-[#1C1917] text-lg">{reservation.customer_phone}</div>
             </div>
           </div>
           {reservation.special_requests && (
-            <div className="mt-3 pt-3 border-t border-border-gray">
-              <div className="text-sm text-stone-gray font-medium">Special Requests</div>
-              <div className="text-sm text-deep-charcoal italic mt-1">{reservation.special_requests}</div>
+            <div className="mt-3 pt-3 border-t border-[#E7E5E4]">
+              <div className="text-sm text-[#57534E] font-medium">Special Requests</div>
+              <div className="text-sm text-[#1C1917] italic mt-1">{reservation.special_requests}</div>
             </div>
           )}
         </div>
@@ -92,13 +92,13 @@ export default function CheckInModal({ isOpen, reservation, onClose, onSuccess, 
           <div className="flex gap-3">
             <button
               onClick={handleClose}
-              className="flex-1 px-4 py-3 border border-border-gray text-stone-gray font-medium rounded-xl hover:bg-soft-gray transition-colors"
+              className="flex-1 px-4 py-3 border border-[#E7E5E4] text-[#57534E] font-medium rounded-xl hover:bg-[#F5F5F4] transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleCheckIn}
-              className="flex-1 px-4 py-3 bg-burgundy text-white font-medium rounded-xl hover:bg-burgundy-dark transition-colors"
+              className="flex-1 px-4 py-3 bg-[#9F1239] text-white font-medium rounded-xl hover:bg-[#881337] transition-colors"
             >
               Check In & Find Tables
             </button>
@@ -119,13 +119,13 @@ export default function CheckInModal({ isOpen, reservation, onClose, onSuccess, 
             <div className="flex gap-3 pt-4">
               <button
                 onClick={handleBack}
-                className="flex-1 px-4 py-3 border border-border-gray text-stone-gray font-medium rounded-xl hover:bg-soft-gray transition-colors"
+                className="flex-1 px-4 py-3 border border-[#E7E5E4] text-[#57534E] font-medium rounded-xl hover:bg-[#F5F5F4] transition-colors"
               >
                 Back
               </button>
               <button
                 onClick={handleProceedToSeat}
-                className="flex-1 px-4 py-3 bg-[#16a34a] text-white font-medium rounded-xl hover:bg-[#15803d] disabled:bg-muted-stone disabled:cursor-not-allowed transition-colors"
+                className="flex-1 px-4 py-3 bg-[#16a34a] text-white font-medium rounded-xl hover:bg-[#15803d] disabled:bg-[#A8A29E] disabled:cursor-not-allowed transition-colors"
                 disabled={selectedTableIds.length === 0}
               >
                 Proceed to Seat

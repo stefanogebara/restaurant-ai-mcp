@@ -55,12 +55,12 @@ export default function ResearchLoadingState({ restaurantName, onSkip }: Researc
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
-          className="absolute inset-0 rounded-full border-2 border-dashed border-burgundy/25"
+          className="absolute inset-0 rounded-full border-2 border-dashed border-[#9F1239]/25"
         />
 
         {/* Inner filled circle */}
-        <div className="absolute inset-3 rounded-full bg-gradient-to-br from-burgundy/10 to-burgundy/25 flex items-center justify-center shadow-inner">
-          <svg className="w-8 h-8 text-burgundy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="absolute inset-3 rounded-full bg-gradient-to-br from-[#9F1239]/10 to-[#9F1239]/25 flex items-center justify-center shadow-inner">
+          <svg className="w-8 h-8 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
           </svg>
         </div>
@@ -73,7 +73,7 @@ export default function ResearchLoadingState({ restaurantName, onSkip }: Researc
           return (
             <motion.div
               key={i}
-              className="absolute w-2.5 h-2.5 rounded-full bg-burgundy shadow-sm"
+              className="absolute w-2.5 h-2.5 rounded-full bg-[#9F1239] shadow-sm"
               style={{
                 top: '50%',
                 left: '50%',
@@ -102,7 +102,7 @@ export default function ResearchLoadingState({ restaurantName, onSkip }: Researc
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="font-serif text-xl font-bold text-deep-charcoal text-center px-4"
+        className="font-serif text-xl font-bold text-[#1C1917] text-center px-4"
       >
         Learning about {restaurantName}
       </motion.h3>
@@ -116,7 +116,7 @@ export default function ResearchLoadingState({ restaurantName, onSkip }: Researc
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.3 }}
-            className="text-sm text-stone-gray text-center absolute inset-x-4"
+            className="text-sm text-[#57534E] text-center absolute inset-x-4"
           >
             {LOADING_MESSAGES[messageIndex]}
           </motion.p>
@@ -124,15 +124,15 @@ export default function ResearchLoadingState({ restaurantName, onSkip }: Researc
       </div>
 
       {/* Time estimate */}
-      <p className="text-xs text-muted-stone text-center">
+      <p className="text-xs text-[#A8A29E] text-center">
         Usually takes 10&ndash;30 seconds
       </p>
 
       {/* Indeterminate progress bar */}
       <div className="w-full max-w-xs px-4" role="progressbar" aria-label="Research in progress" aria-valuemin={0} aria-valuemax={100}>
-        <div className="h-1.5 bg-border-gray rounded-full overflow-hidden">
+        <div className="h-1.5 bg-[#E7E5E4] rounded-full overflow-hidden">
           <motion.div
-            className="h-full w-2/5 bg-gradient-to-r from-burgundy/60 to-burgundy rounded-full"
+            className="h-full w-2/5 bg-gradient-to-r from-[#9F1239]/60 to-[#9F1239] rounded-full"
             animate={{ x: ['-110%', '280%'] }}
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
             aria-hidden="true"
@@ -145,7 +145,7 @@ export default function ResearchLoadingState({ restaurantName, onSkip }: Researc
         <button
           type="button"
           onClick={onSkip}
-          className="text-sm text-muted-stone hover:text-stone-gray font-medium transition-colors underline underline-offset-2 focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-offset-2 rounded"
+          className="text-sm text-[#A8A29E] hover:text-[#57534E] font-medium transition-colors underline underline-offset-2 focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:ring-offset-2 rounded"
         >
           Skip this step
         </button>

@@ -348,8 +348,8 @@ Design system: Playfair Display + Inter, burgundy `#9F1239`, charcoal `#1C1917`,
 - [x] Remove Airtable-era field mapping layer in analytics.js
 - [x] Add missing dialog ARIA attributes on 13 inline modals
 - [x] Add missing label associations in BookingPage (4 fields)
-- [x] Wire up i18n system (useTranslation wired to 12 pages/components, StatsBar migrated from custom translations obj)
-- [x] Use design system tokens instead of raw hex values (4,346 occurrences replaced, 10 tokens total)
+- [ ] Wire up i18n system (31 refs across 12 pages - deferred, large scope)
+- [ ] Use design system tokens instead of raw hex values (447+ usages - deferred, large scope)
 
 ### Phase 6: Brazil Launch Preparation (DONE - Feb 20, 2026)
 - [x] Increase Starter plan limit (50 → 100 reservations/month)

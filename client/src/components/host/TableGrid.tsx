@@ -9,8 +9,8 @@ interface TableGridProps {
 export default function TableGrid({ tables, onTableClick }: TableGridProps) {
   if (!tables || tables.length === 0) {
     return (
-      <div className="text-center py-12 text-stone-gray">
-        <p className="font-semibold text-lg text-deep-charcoal">No tables configured yet</p>
+      <div className="text-center py-12 text-[#57534E]">
+        <p className="font-semibold text-lg text-[#1C1917]">No tables configured yet</p>
         <p className="text-sm mt-2">Tables will appear here after onboarding</p>
       </div>
     );
@@ -30,7 +30,7 @@ export default function TableGrid({ tables, onTableClick }: TableGridProps) {
     <div className="space-y-6">
       {Object.entries(tablesByLocation).map(([location, locationTables]) => (
         <div key={location}>
-          <h3 className="text-sm font-semibold text-deep-charcoal mb-3">{location}</h3>
+          <h3 className="text-sm font-semibold text-[#1C1917] mb-3">{location}</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {locationTables.map((table) => (
               <TableCard

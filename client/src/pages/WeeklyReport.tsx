@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 /**
  * Weekly Report Page for Segovia Basic Plan
  *
@@ -57,7 +56,6 @@ interface WeeklyReportData {
 }
 
 export default function WeeklyReport() {
-  const { t } = useTranslation();
   const subscription = useSubscription();
   const currentPlan = (subscription.data?.subscription?.plan?.toLowerCase() as PlanType) || undefined;
   const hasAccess = currentPlan ? hasFeatureAccess(currentPlan, 'weeklyReports') : false;
@@ -112,7 +110,7 @@ export default function WeeklyReport() {
   if (subscription.isLoading) {
     return (
       <DashboardLayout>
-        <div className="min-h-screen bg-soft-gray p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
+        <div className="min-h-screen bg-[#F5F5F4] p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
           <div className="flex items-center justify-center min-h-[50vh]">
             <Spinner size="lg" />
           </div>
@@ -124,21 +122,21 @@ export default function WeeklyReport() {
   if (!hasAccess) {
     return (
       <DashboardLayout>
-        <div className="min-h-screen bg-soft-gray p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
+        <div className="min-h-screen bg-[#F5F5F4] p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
           <div className="flex flex-col items-center justify-center min-h-[50vh]">
-            <div className="bg-white rounded-2xl border border-border-gray p-12 max-w-lg text-center">
+            <div className="bg-white rounded-2xl border border-[#E7E5E4] p-12 max-w-lg text-center">
               <ThiingsIcon name="lock" pxSize={32} className="mx-auto mb-6" />
-              <h2 className="text-2xl font-bold text-deep-charcoal mb-3">{t('navigation.reports')}</h2>
-              <p className="text-stone-gray mb-6">
+              <h2 className="text-2xl font-bold text-[#1C1917] mb-3">Weekly Reports</h2>
+              <p className="text-[#57534E] mb-6">
                 Detailed weekly analytics and performance reports. Available on the Professional plan.
               </p>
-              <div className="flex items-center justify-center gap-2 text-sm text-burgundy font-medium mb-6">
+              <div className="flex items-center justify-center gap-2 text-sm text-[#9F1239] font-medium mb-6">
                 <ThiingsIcon name="crown" size="xs" />
                 Professional Plan Feature
               </div>
               <Link
                 to="/welcome"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-burgundy text-white rounded-full hover:bg-burgundy-dark transition-colors font-medium"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#9F1239] text-white rounded-full hover:bg-[#881337] transition-colors font-medium"
               >
                 Upgrade Plan
               </Link>
@@ -152,7 +150,7 @@ export default function WeeklyReport() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="min-h-screen bg-soft-gray p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
+        <div className="min-h-screen bg-[#F5F5F4] p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
           <SkeletonWeeklyReport />
         </div>
       </DashboardLayout>
@@ -162,9 +160,9 @@ export default function WeeklyReport() {
   if (!report) {
     return (
       <DashboardLayout>
-        <div className="min-h-screen bg-warm-white flex items-center justify-center">
+        <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
           <div className="text-center">
-            <p className="text-deep-charcoal">No data available</p>
+            <p className="text-[#1C1917]">No data available</p>
           </div>
         </div>
       </DashboardLayout>
@@ -208,39 +206,39 @@ export default function WeeklyReport() {
 
   return (
     <DashboardLayout>
-    <div className="min-h-screen bg-soft-gray p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
+    <div className="min-h-screen bg-[#F5F5F4] p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
-          <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
-            Reports <span className="font-light text-warm-stone">/ Weekly</span>
+          <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">
+            Reports <span className="font-light text-[#78716C]">/ Weekly</span>
           </h1>
           <div className="flex items-center gap-2.5 print:hidden">
-            <div className="flex items-center gap-1.5 px-4 py-2 bg-white border border-[#D6D3D1] rounded-[10px] text-[13px] font-medium text-stone-gray">
+            <div className="flex items-center gap-1.5 px-4 py-2 bg-white border border-[#D6D3D1] rounded-[10px] text-[13px] font-medium text-[#57534E]">
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="bg-transparent border-0 text-[13px] text-stone-gray w-[110px] cursor-pointer"
+                className="bg-transparent border-0 text-[13px] text-[#57534E] w-[110px] cursor-pointer"
               />
-              <span className="text-muted-stone">&ndash;</span>
+              <span className="text-[#A8A29E]">&ndash;</span>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="bg-transparent border-0 text-[13px] text-stone-gray w-[110px] cursor-pointer"
+                className="bg-transparent border-0 text-[13px] text-[#57534E] w-[110px] cursor-pointer"
               />
-              <button onClick={handleDateChange} className="ml-1 text-burgundy font-semibold text-xs">Go</button>
+              <button onClick={handleDateChange} className="ml-1 text-[#9F1239] font-semibold text-xs">Go</button>
             </div>
             <button
               onClick={handlePrint}
-              className="px-4 py-2 bg-white border border-[#D6D3D1] text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors"
+              className="px-4 py-2 bg-white border border-[#D6D3D1] text-[#57534E] hover:border-[#A8A29E] rounded-[10px] text-[13px] font-medium transition-colors"
             >
               Download PDF
             </button>
             <button
               onClick={() => fetchReport()}
-              className="px-4 py-2 bg-burgundy text-white hover:bg-burgundy-dark rounded-[10px] text-[13px] font-medium transition-colors"
+              className="px-4 py-2 bg-[#9F1239] text-white hover:bg-[#881337] rounded-[10px] text-[13px] font-medium transition-colors"
             >
               Share Report
             </button>
@@ -249,8 +247,8 @@ export default function WeeklyReport() {
 
         {/* Summary Metrics — 5 columns */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-          <div className="bg-white rounded-2xl p-5 border border-border-gray text-center">
-            <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">Total Reservations</div>
+          <div className="bg-white rounded-2xl p-5 border border-[#E7E5E4] text-center">
+            <div className="text-[11px] font-medium text-[#A8A29E] mb-1.5 tracking-wide">Total Reservations</div>
             <div className="text-2xl font-bold tracking-tight">{summary.total_reservations}</div>
             {summary.previous_covers >= 3 && (
               <div className={`text-[11px] font-medium mt-1 ${summary.covers_change_percent >= 0 ? 'text-[#16a34a]' : 'text-[#dc2626]'}`}>
@@ -258,23 +256,23 @@ export default function WeeklyReport() {
               </div>
             )}
           </div>
-          <div className="bg-white rounded-2xl p-5 border border-border-gray text-center">
-            <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">Walk-ins</div>
+          <div className="bg-white rounded-2xl p-5 border border-[#E7E5E4] text-center">
+            <div className="text-[11px] font-medium text-[#A8A29E] mb-1.5 tracking-wide">Walk-ins</div>
             <div className="text-2xl font-bold tracking-tight">{summary.walk_in_count}</div>
           </div>
-          <div className="bg-white rounded-2xl p-5 border border-border-gray text-center">
-            <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">Cancellations</div>
+          <div className="bg-white rounded-2xl p-5 border border-[#E7E5E4] text-center">
+            <div className="text-[11px] font-medium text-[#A8A29E] mb-1.5 tracking-wide">Cancellations</div>
             <div className="text-2xl font-bold tracking-tight text-[#dc2626]">{summary.cancelled_count}</div>
-            <div className="text-[11px] font-medium text-warm-stone mt-1">{summary.cancellation_rate}% rate</div>
+            <div className="text-[11px] font-medium text-[#78716C] mt-1">{summary.cancellation_rate}% rate</div>
           </div>
-          <div className="bg-white rounded-2xl p-5 border border-border-gray text-center">
-            <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">Avg Party Size</div>
+          <div className="bg-white rounded-2xl p-5 border border-[#E7E5E4] text-center">
+            <div className="text-[11px] font-medium text-[#A8A29E] mb-1.5 tracking-wide">Avg Party Size</div>
             <div className="text-2xl font-bold tracking-tight">{summary.avg_party_size}</div>
-            <div className="text-[11px] font-medium text-warm-stone mt-1">{summary.total_covers} covers total</div>
+            <div className="text-[11px] font-medium text-[#78716C] mt-1">{summary.total_covers} covers total</div>
           </div>
-          <div className="bg-white rounded-2xl p-5 border border-border-gray text-center">
-            <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">Total Covers</div>
-            <div className="text-2xl font-bold tracking-tight text-burgundy">{summary.total_covers}</div>
+          <div className="bg-white rounded-2xl p-5 border border-[#E7E5E4] text-center">
+            <div className="text-[11px] font-medium text-[#A8A29E] mb-1.5 tracking-wide">Total Covers</div>
+            <div className="text-2xl font-bold tracking-tight text-[#9F1239]">{summary.total_covers}</div>
             {summary.previous_covers >= 3 && (
               <div className={`text-[11px] font-medium mt-1 ${summary.covers_change_percent >= 0 ? 'text-[#16a34a]' : 'text-[#dc2626]'}`}>
                 {summary.covers_change_percent >= 0 ? '+' : ''}{summary.covers_change_percent}%
@@ -284,8 +282,8 @@ export default function WeeklyReport() {
         </div>
 
         {/* Busiest Times — bar chart panel */}
-        <div className="bg-white rounded-2xl border border-border-gray overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
+        <div className="bg-white rounded-2xl border border-[#E7E5E4] overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
             <span className="text-[15px] font-semibold tracking-tight">Busiest Times</span>
           </div>
           <div className="p-6 space-y-3">
@@ -293,8 +291,8 @@ export default function WeeklyReport() {
               const widthPct = Math.max((time.covers / maxTimeCovers) * 100, 5);
               return (
                 <div key={time.time} className="flex items-center gap-3">
-                  <div className="w-[50px] text-[13px] text-warm-stone text-right flex-shrink-0">{time.time}</div>
-                  <div className="flex-1 h-6 bg-soft-gray rounded-md overflow-hidden">
+                  <div className="w-[50px] text-[13px] text-[#78716C] text-right flex-shrink-0">{time.time}</div>
+                  <div className="flex-1 h-6 bg-[#F5F5F4] rounded-md overflow-hidden">
                     <div
                       className="h-full rounded-md flex items-center pl-2.5"
                       style={{ width: `${widthPct}%`, background: getBarColor(time.covers) }}
@@ -311,12 +309,12 @@ export default function WeeklyReport() {
         {/* Bottom Grid: Demographics + Preferences */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Guest Demographics */}
-          <div className="bg-white rounded-2xl border border-border-gray overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
+          <div className="bg-white rounded-2xl border border-[#E7E5E4] overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
               <span className="text-[15px] font-semibold tracking-tight">Guest Demographics</span>
             </div>
             {demoRows.map((row) => (
-              <div key={row.rank} className="flex items-center px-6 py-3.5 border-b border-soft-gray last:border-b-0 gap-3.5">
+              <div key={row.rank} className="flex items-center px-6 py-3.5 border-b border-[#F5F5F4] last:border-b-0 gap-3.5">
                 <div
                   className="w-10 h-10 rounded-[10px] flex items-center justify-center text-[13px] font-bold flex-shrink-0"
                   style={{ background: `${row.color}12`, color: row.color }}
@@ -324,8 +322,8 @@ export default function WeeklyReport() {
                   {row.rank}
                 </div>
                 <div className="flex-1">
-                  <div className="text-sm font-semibold text-deep-charcoal">{row.label}</div>
-                  <div className="text-xs text-warm-stone">{row.detail}</div>
+                  <div className="text-sm font-semibold text-[#1C1917]">{row.label}</div>
+                  <div className="text-xs text-[#78716C]">{row.detail}</div>
                 </div>
                 <div className="text-base font-bold" style={{ color: row.rank <= 2 ? row.color : '#1C1917' }}>
                   {row.pct !== null ? `${row.pct}%` : row.count}
@@ -335,8 +333,8 @@ export default function WeeklyReport() {
           </div>
 
           {/* Top Guest Preferences */}
-          <div className="bg-white rounded-2xl border border-border-gray overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
+          <div className="bg-white rounded-2xl border border-[#E7E5E4] overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
               <span className="text-[15px] font-semibold tracking-tight">Top Guest Preferences</span>
             </div>
             <div className="p-6">
@@ -346,15 +344,15 @@ export default function WeeklyReport() {
                     key={pill.label}
                     className={`px-4 py-2 rounded-full text-[13px] font-medium border ${
                       pill.count >= topPillThreshold
-                        ? 'bg-[rgba(159,18,57,0.06)] border-[rgba(159,18,57,0.15)] text-burgundy font-semibold'
-                        : 'bg-warm-white border-border-gray text-stone-gray'
+                        ? 'bg-[rgba(159,18,57,0.06)] border-[rgba(159,18,57,0.15)] text-[#9F1239] font-semibold'
+                        : 'bg-[#FAFAF9] border-[#E7E5E4] text-[#57534E]'
                     }`}
                   >
                     {pill.label} ({pill.count})
                   </span>
                 ))}
                 {allPreferencePills.length === 0 && (
-                  <p className="text-sm text-muted-stone">No preference data for this period</p>
+                  <p className="text-sm text-[#A8A29E]">No preference data for this period</p>
                 )}
               </div>
             </div>

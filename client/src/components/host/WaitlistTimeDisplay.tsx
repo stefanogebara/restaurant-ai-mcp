@@ -37,7 +37,7 @@ export default function WaitlistTimeDisplay({ addedAt, estimatedWait, compact = 
   if (compact) {
     return (
       <div className="flex items-center gap-2">
-        <div className="flex-1 h-1.5 bg-border-gray rounded-full overflow-hidden">
+        <div className="flex-1 h-1.5 bg-[#E7E5E4] rounded-full overflow-hidden">
           <div
             className={`h-full ${getProgressColor()} transition-all duration-500`}
             style={{ width: `${progress}%` }}
@@ -54,26 +54,26 @@ export default function WaitlistTimeDisplay({ addedAt, estimatedWait, compact = 
     <div className="flex items-center gap-4">
       {/* Quoted Time */}
       <div className="text-center min-w-[50px]">
-        <div className="text-[10px] text-muted-stone uppercase tracking-wide">Quoted</div>
-        <div className="font-bold text-deep-charcoal text-sm">{estimatedWait}m</div>
+        <div className="text-[10px] text-[#A8A29E] uppercase tracking-wide">Quoted</div>
+        <div className="font-bold text-[#1C1917] text-sm">{estimatedWait}m</div>
       </div>
 
       {/* Progress Bar */}
       <div className="flex-1">
-        <div className="h-2 bg-border-gray rounded-full overflow-hidden">
+        <div className="h-2 bg-[#E7E5E4] rounded-full overflow-hidden">
           <div
             className={`h-full ${getProgressColor()} transition-all duration-500`}
             style={{ width: `${progress}%` }}
           />
         </div>
         <div className="flex justify-between mt-1">
-          <span className="text-[10px] text-muted-stone">{elapsedMinutes}m elapsed</span>
+          <span className="text-[10px] text-[#A8A29E]">{elapsedMinutes}m elapsed</span>
         </div>
       </div>
 
       {/* Remaining / Overdue */}
       <div className="text-center min-w-[60px]">
-        <div className="text-[10px] text-muted-stone uppercase tracking-wide">
+        <div className="text-[10px] text-[#A8A29E] uppercase tracking-wide">
           {isOverdue ? 'Overdue' : 'Remaining'}
         </div>
         <div className={`font-bold text-sm ${getTextColor()}`}>

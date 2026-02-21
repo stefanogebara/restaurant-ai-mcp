@@ -250,14 +250,14 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
-          <div className="inline-flex items-center justify-center w-10 h-10 bg-burgundy/10 rounded-full">
+          <div className="inline-flex items-center justify-center w-10 h-10 bg-[#9F1239]/10 rounded-full">
             <ThiingsIcon name="volume" pxSize={20} />
           </div>
-          <h2 className="font-serif text-2xl font-bold text-deep-charcoal">
+          <h2 className="font-serif text-2xl font-bold text-[#1C1917]">
             Choose Your AI Voice
           </h2>
         </div>
-        <p className="text-sm text-stone-gray">
+        <p className="text-sm text-[#57534E]">
           Select the voice that will represent your restaurant when customers call. Click play to preview.
         </p>
       </div>
@@ -288,12 +288,12 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
       {/* No Voices Message */}
       {!isLoading && voices.length === 0 && !filters.search && (
         <div className="text-center py-12">
-          <div className="bg-burgundy/5 border border-burgundy/20 rounded-xl p-6 max-w-lg mx-auto">
+          <div className="bg-[#9F1239]/5 border border-[#9F1239]/20 rounded-xl p-6 max-w-lg mx-auto">
             <ThiingsIcon name="volume" pxSize={40} className="mx-auto mb-3" />
-            <p className="text-base font-semibold text-deep-charcoal mb-1">
+            <p className="text-base font-semibold text-[#1C1917] mb-1">
               A default voice has been selected
             </p>
-            <p className="text-sm text-stone-gray">
+            <p className="text-sm text-[#57534E]">
               You can change the voice anytime from your dashboard settings.
             </p>
           </div>
@@ -305,7 +305,7 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
         <button
           type="button"
           onClick={onPrev}
-          className="px-6 py-3 bg-white hover:bg-soft-gray border border-border-gray text-deep-charcoal font-semibold rounded-xl transition-all flex items-center gap-2"
+          className="px-6 py-3 bg-white hover:bg-[#F5F5F4] border border-[#E7E5E4] text-[#1C1917] font-semibold rounded-xl transition-all flex items-center gap-2"
         >
           <ThiingsIcon name="chevron-left" pxSize={20} />
           Back
@@ -314,7 +314,7 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
           type="button"
           onClick={handleContinue}
           disabled={!selectedVoiceId}
-          className="px-8 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-8 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Continue
           <ThiingsIcon name="arrow-right" pxSize={20} />

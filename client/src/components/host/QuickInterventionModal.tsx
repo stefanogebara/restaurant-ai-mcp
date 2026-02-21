@@ -104,7 +104,7 @@ export default function QuickInterventionModal({
     { id: 'sms_reminder', label: t.sentSMS, icon: 'chat', color: 'bg-[#22c55e]' },
     { id: 'whatsapp_reminder', label: t.sentWhatsApp, icon: 'chat', color: 'bg-[#10b981]' },
     { id: 'deposit_required', label: t.depositRequired, icon: 'credit-card', color: 'bg-[#8b5cf6]' },
-    { id: 'other', label: t.other, icon: 'check-circle', color: 'bg-warm-stone' }
+    { id: 'other', label: t.other, icon: 'check-circle', color: 'bg-[#78716C]' }
   ];
 
   const getRiskColor = (level?: string) => {
@@ -172,16 +172,16 @@ export default function QuickInterventionModal({
       {/* Modal */}
       <div role="dialog" aria-modal="true" aria-label="Take Action" className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white px-6 py-4 border-b border-border-gray flex items-center justify-between rounded-t-xl">
+        <div className="sticky top-0 bg-white px-6 py-4 border-b border-[#E7E5E4] flex items-center justify-between rounded-t-xl">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-[#ea580c]/15 rounded-lg">
               <ThiingsIcon name="alert-triangle" size="sm" />
             </div>
-            <h2 className="text-xl font-bold text-deep-charcoal">{t.title}</h2>
+            <h2 className="text-xl font-bold text-[#1C1917]">{t.title}</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-soft-gray rounded-lg transition-colors"
+            className="p-2 hover:bg-[#F5F5F4] rounded-lg transition-colors"
           >
             <ThiingsIcon name="x-circle" size="sm" />
           </button>
@@ -190,17 +190,17 @@ export default function QuickInterventionModal({
         {/* Content */}
         <div className="p-6 space-y-5">
           {/* Reservation Info */}
-          <div className="bg-soft-gray rounded-xl p-4">
+          <div className="bg-[#F5F5F4] rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <ThiingsIcon name="user" size="xs" />
-                <span className="font-semibold text-deep-charcoal">{reservation.customer_name}</span>
+                <span className="font-semibold text-[#1C1917]">{reservation.customer_name}</span>
               </div>
               <div className={`px-2 py-1 rounded-lg border text-xs font-bold ${getRiskColor(reservation.ml_risk_level)}`}>
                 {reservation.ml_risk_level?.toUpperCase().replace('-', ' ')} {reservation.ml_risk_score}%
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3 text-sm text-stone-gray">
+            <div className="grid grid-cols-3 gap-3 text-sm text-[#57534E]">
               <div className="flex items-center gap-1">
                 <ThiingsIcon name="calendar" pxSize={14} />
                 <span>{reservation.date}</span>
@@ -215,7 +215,7 @@ export default function QuickInterventionModal({
               </div>
             </div>
             {reservation.customer_phone && (
-              <div className="mt-2 text-sm text-stone-gray flex items-center gap-1">
+              <div className="mt-2 text-sm text-[#57534E] flex items-center gap-1">
                 <ThiingsIcon name="phone" pxSize={14} />
                 <span>{reservation.customer_phone}</span>
               </div>
@@ -225,10 +225,10 @@ export default function QuickInterventionModal({
           {/* Risk Factors */}
           {reservation.ml_risk_factors && reservation.ml_risk_factors.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-deep-charcoal mb-2">{t.riskFactors}</h3>
+              <h3 className="text-sm font-semibold text-[#1C1917] mb-2">{t.riskFactors}</h3>
               <div className="space-y-1">
                 {reservation.ml_risk_factors.slice(0, 3).map((factor, idx) => (
-                  <div key={idx} className="text-sm text-stone-gray flex items-start gap-2">
+                  <div key={idx} className="text-sm text-[#57534E] flex items-start gap-2">
                     <span className="text-[#ea580c]">•</span>
                     <span>{factor.description}</span>
                   </div>
@@ -256,7 +256,7 @@ export default function QuickInterventionModal({
           {!success && (
             <>
               <div>
-                <h3 className="text-sm font-semibold text-deep-charcoal mb-3">{t.quickActions}</h3>
+                <h3 className="text-sm font-semibold text-[#1C1917] mb-3">{t.quickActions}</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {actionOptions.map((action) => {
                     const isSelected = selectedAction === action.id;
@@ -266,14 +266,14 @@ export default function QuickInterventionModal({
                         onClick={() => setSelectedAction(action.id)}
                         className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
                           isSelected
-                            ? 'border-burgundy bg-burgundy/5'
-                            : 'border-border-gray hover:border-burgundy/50 hover:bg-soft-gray'
+                            ? 'border-[#9F1239] bg-[#9F1239]/5'
+                            : 'border-[#E7E5E4] hover:border-[#9F1239]/50 hover:bg-[#F5F5F4]'
                         }`}
                       >
                         <div className={`p-1.5 rounded-lg ${action.color}`}>
                           <ThiingsIcon name={action.icon} size="xs" />
                         </div>
-                        <span className={`text-sm font-medium ${isSelected ? 'text-burgundy' : 'text-deep-charcoal'}`}>
+                        <span className={`text-sm font-medium ${isSelected ? 'text-[#9F1239]' : 'text-[#1C1917]'}`}>
                           {action.label}
                         </span>
                       </button>
@@ -284,7 +284,7 @@ export default function QuickInterventionModal({
 
               {/* Staff Name */}
               <div>
-                <label className="block text-sm font-medium text-deep-charcoal mb-1">
+                <label className="block text-sm font-medium text-[#1C1917] mb-1">
                   {t.staffName}
                 </label>
                 <input
@@ -292,13 +292,13 @@ export default function QuickInterventionModal({
                   value={staffName}
                   onChange={(e) => setStaffName(e.target.value)}
                   placeholder={t.staffPlaceholder}
-                  className="w-full px-4 py-2 border border-border-gray rounded-lg focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                  className="w-full px-4 py-2 border border-[#E7E5E4] rounded-lg focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-colors"
                 />
               </div>
 
               {/* Notes */}
               <div>
-                <label className="block text-sm font-medium text-deep-charcoal mb-1">
+                <label className="block text-sm font-medium text-[#1C1917] mb-1">
                   {t.notes}
                 </label>
                 <textarea
@@ -306,7 +306,7 @@ export default function QuickInterventionModal({
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder={t.notesPlaceholder}
                   rows={2}
-                  className="w-full px-4 py-2 border border-border-gray rounded-lg focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors resize-none"
+                  className="w-full px-4 py-2 border border-[#E7E5E4] rounded-lg focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-colors resize-none"
                 />
               </div>
             </>
@@ -335,14 +335,14 @@ export default function QuickInterventionModal({
               <button
                 onClick={onClose}
                 disabled={isLoading}
-                className="flex-1 px-4 py-3 border border-border-gray rounded-xl text-stone-gray font-medium hover:bg-soft-gray transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-3 border border-[#E7E5E4] rounded-xl text-[#57534E] font-medium hover:bg-[#F5F5F4] transition-colors disabled:opacity-50"
               >
                 {t.cancel}
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={isLoading || !selectedAction}
-                className="flex-1 px-4 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-medium rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-medium rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isLoading ? (
                   <>

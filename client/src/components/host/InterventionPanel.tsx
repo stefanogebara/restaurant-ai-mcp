@@ -79,14 +79,14 @@ export default function InterventionPanel({
   // If no high-risk reservations, show success state
   if (highRiskReservations.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-border-gray p-6 shadow-md">
+      <div className="bg-white rounded-xl border border-[#E7E5E4] p-6 shadow-md">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-[#16a34a]/10 flex items-center justify-center">
             <ThiingsIcon name="star" pxSize={24} />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-deep-charcoal">All Clear!</h3>
-            <p className="text-sm text-stone-gray">No high-risk reservations need attention</p>
+            <h3 className="text-lg font-semibold text-[#1C1917]">All Clear!</h3>
+            <p className="text-sm text-[#57534E]">No high-risk reservations need attention</p>
           </div>
         </div>
       </div>
@@ -106,10 +106,10 @@ export default function InterventionPanel({
   });
 
   return (
-    <div className="bg-white rounded-xl border border-border-gray shadow-md">
+    <div className="bg-white rounded-xl border border-[#E7E5E4] shadow-md">
       {/* Header */}
       <div
-        className="p-4 border-b border-border-gray cursor-pointer hover:bg-soft-gray transition-colors rounded-t-xl"
+        className="p-4 border-b border-[#E7E5E4] cursor-pointer hover:bg-[#F5F5F4] transition-colors rounded-t-xl"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center justify-between">
@@ -118,8 +118,8 @@ export default function InterventionPanel({
               <ThiingsIcon name="alert-triangle" pxSize={20} />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-deep-charcoal">Intervention Needed</h3>
-              <p className="text-sm text-stone-gray">
+              <h3 className="text-lg font-semibold text-[#1C1917]">Intervention Needed</h3>
+              <p className="text-sm text-[#57534E]">
                 {highRiskReservations.length} high-risk reservation{highRiskReservations.length !== 1 ? 's' : ''} •
                 <span className="ml-1 font-medium text-[#d97706]">
                   €{sortedReservations.reduce((sum, r) => sum + calculatePotentialValue(r.party_size), 0)} at risk
@@ -137,7 +137,7 @@ export default function InterventionPanel({
 
       {/* Reservation List */}
       {isExpanded && (
-        <div className="divide-y divide-border-gray max-h-[600px] overflow-y-auto">
+        <div className="divide-y divide-[#E7E5E4] max-h-[600px] overflow-y-auto">
           {sortedReservations.map((reservation) => {
             const hasActed = actedReservations.has(reservation.reservation_id);
             const potentialValue = calculatePotentialValue(reservation.party_size);
@@ -146,13 +146,13 @@ export default function InterventionPanel({
             return (
               <div
                 key={reservation.reservation_id}
-                className={`p-4 transition-colors ${hasActed ? 'bg-[#16a34a]/5' : 'hover:bg-soft-gray'}`}
+                className={`p-4 transition-colors ${hasActed ? 'bg-[#16a34a]/5' : 'hover:bg-[#F5F5F4]'}`}
               >
                 <div className="flex items-start justify-between gap-4">
                   {/* Reservation Info */}
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2 flex-wrap">
-                      <h4 className="font-semibold text-deep-charcoal">{reservation.customer_name}</h4>
+                      <h4 className="font-semibold text-[#1C1917]">{reservation.customer_name}</h4>
                       <button
                         onClick={() => {
                           setSelectedReservation(reservation);
@@ -175,7 +175,7 @@ export default function InterventionPanel({
                       )}
                     </div>
 
-                    <div className="text-sm text-stone-gray space-y-1.5">
+                    <div className="text-sm text-[#57534E] space-y-1.5">
                       <div className="flex items-center gap-4 flex-wrap">
                         <span className="font-medium">Party of {reservation.party_size}</span>
                         <span>•</span>
@@ -188,7 +188,7 @@ export default function InterventionPanel({
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="text-xs bg-soft-gray px-2 py-0.5 rounded border border-border-gray">
+                        <span className="text-xs bg-[#F5F5F4] px-2 py-0.5 rounded border border-[#E7E5E4]">
                           {reservation.customer_phone}
                         </span>
                       </div>
@@ -198,7 +198,7 @@ export default function InterventionPanel({
                       </div>
 
                       {reservation.special_requests && (
-                        <div className="text-xs italic text-stone-gray bg-soft-gray p-2 rounded mt-2 border border-border-gray">
+                        <div className="text-xs italic text-[#57534E] bg-[#F5F5F4] p-2 rounded mt-2 border border-[#E7E5E4]">
                           "{reservation.special_requests}"
                         </div>
                       )}
@@ -211,7 +211,7 @@ export default function InterventionPanel({
                     <a
                       href={`tel:${reservation.customer_phone}`}
                       onClick={() => handleAction(reservation, 'confirmation_call')}
-                      className="px-3 py-2 bg-burgundy/10 hover:bg-burgundy/20 text-burgundy rounded-lg text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+                      className="px-3 py-2 bg-[#9F1239]/10 hover:bg-[#9F1239]/20 text-[#9F1239] rounded-lg text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
                       title="Call customer to confirm"
                     >
                       <ThiingsIcon name="phone" pxSize={16} />

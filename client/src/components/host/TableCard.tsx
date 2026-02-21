@@ -32,9 +32,9 @@ export default function TableCard({ table, onClick }: TableCardProps) {
         };
       case 'Occupied':
         return {
-          iconBg: 'bg-burgundy',
+          iconBg: 'bg-[#9F1239]',
           iconName: 'user',
-          statusPill: 'text-burgundy bg-burgundy/10',
+          statusPill: 'text-[#9F1239] bg-[#9F1239]/10',
         };
       case 'Being Cleaned':
         return {
@@ -50,9 +50,9 @@ export default function TableCard({ table, onClick }: TableCardProps) {
         };
       default:
         return {
-          iconBg: 'bg-stone-gray',
+          iconBg: 'bg-[#57534E]',
           iconName: 'check',
-          statusPill: 'text-stone-gray bg-stone-gray/10',
+          statusPill: 'text-[#57534E] bg-[#57534E]/10',
         };
     }
   };
@@ -72,10 +72,10 @@ export default function TableCard({ table, onClick }: TableCardProps) {
           }}
           className={`
             w-full p-4 rounded-xl transition-all duration-200
-            bg-white border border-border-gray shadow-md
-            hover:shadow-lg hover:bg-soft-gray
+            bg-white border border-[#E7E5E4] shadow-md
+            hover:shadow-lg hover:bg-[#F5F5F4]
             cursor-pointer group
-            ${isOver && table.status === 'Available' ? 'ring-2 ring-burgundy scale-[1.02] bg-soft-gray' : ''}
+            ${isOver && table.status === 'Available' ? 'ring-2 ring-[#9F1239] scale-[1.02] bg-[#F5F5F4]' : ''}
           `}
         >
           {/* Status Icon Badge & Actions */}
@@ -83,24 +83,24 @@ export default function TableCard({ table, onClick }: TableCardProps) {
             <div className={`w-10 h-10 rounded-lg ${config.iconBg} flex items-center justify-center`}>
               <ThiingsIcon name={config.iconName} size="sm" />
             </div>
-            <span className="text-xs text-muted-stone group-hover:text-stone-gray transition-colors">
+            <span className="text-xs text-[#A8A29E] group-hover:text-[#57534E] transition-colors">
               Tap to manage
             </span>
           </div>
 
           {/* Table Number */}
-          <div className="text-2xl font-bold text-deep-charcoal mb-2 text-left">
+          <div className="text-2xl font-bold text-[#1C1917] mb-2 text-left">
             {table.table_number}
           </div>
 
           {/* Capacity */}
-          <div className="flex items-center gap-1.5 text-stone-gray text-sm mb-2">
+          <div className="flex items-center gap-1.5 text-[#57534E] text-sm mb-2">
             <ThiingsIcon name="users" size="xs" />
             <span className="font-medium">{table.capacity} seats</span>
           </div>
 
           {/* Location */}
-          <div className="text-xs text-muted-stone mb-3 text-left">
+          <div className="text-xs text-[#A8A29E] mb-3 text-left">
             {table.location}
           </div>
 
@@ -115,10 +115,10 @@ export default function TableCard({ table, onClick }: TableCardProps) {
 
         {/* Drop Zone Indicator */}
         {isOver && table.status === 'Available' && (
-          <div className="absolute inset-0 bg-burgundy/20 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center gap-2 pointer-events-none ring-2 ring-burgundy ring-dashed">
+          <div className="absolute inset-0 bg-[#9F1239]/20 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center gap-2 pointer-events-none ring-2 ring-[#9F1239] ring-dashed">
             <ThiingsIcon name="arrow-down" size="md" />
-            <div className="text-deep-charcoal font-semibold">Drop to Assign</div>
-            <div className="text-burgundy text-sm">Table {table.table_number}</div>
+            <div className="text-[#1C1917] font-semibold">Drop to Assign</div>
+            <div className="text-[#9F1239] text-sm">Table {table.table_number}</div>
           </div>
         )}
       </div>

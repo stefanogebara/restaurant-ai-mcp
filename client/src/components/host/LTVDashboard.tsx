@@ -116,22 +116,22 @@ export default function LTVDashboard() {
   const getTierColor = (tier: string) => {
     switch (tier) {
       case 'vip': return 'text-[#7c3aed]';
-      case 'regular': return 'text-burgundy';
+      case 'regular': return 'text-[#9F1239]';
       case 'occasional': return 'text-[#16a34a]';
-      case 'new': return 'text-stone-gray';
+      case 'new': return 'text-[#57534E]';
       case 'at_risk': return 'text-[#d97706]';
-      default: return 'text-stone-gray';
+      default: return 'text-[#57534E]';
     }
   };
 
   const getTierBgColor = (tier: string) => {
     switch (tier) {
       case 'vip': return 'bg-[#7c3aed]/10 border-[#7c3aed]/30';
-      case 'regular': return 'bg-burgundy/10 border-burgundy/30';
+      case 'regular': return 'bg-[#9F1239]/10 border-[#9F1239]/30';
       case 'occasional': return 'bg-[#16a34a]/10 border-[#16a34a]/30';
-      case 'new': return 'bg-stone-gray/10 border-stone-gray/30';
+      case 'new': return 'bg-[#57534E]/10 border-[#57534E]/30';
       case 'at_risk': return 'bg-[#d97706]/10 border-[#d97706]/30';
-      default: return 'bg-stone-gray/10 border-stone-gray/30';
+      default: return 'bg-[#57534E]/10 border-[#57534E]/30';
     }
   };
 
@@ -157,16 +157,16 @@ export default function LTVDashboard() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-6 border border-border-gray">
+      <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-deep-charcoal flex items-center gap-2">
+          <h2 className="text-xl font-bold text-[#1C1917] flex items-center gap-2">
             <ThiingsIcon name="users" size="sm" />
             Customer Lifetime Value
           </h2>
         </div>
         <div className="flex flex-col items-center justify-center py-8">
           <Spinner size="lg" className="mb-4" />
-          <p className="text-stone-gray font-semibold">Loading analytics...</p>
+          <p className="text-[#57534E] font-semibold">Loading analytics...</p>
         </div>
       </div>
     );
@@ -174,14 +174,14 @@ export default function LTVDashboard() {
 
   if (!stats || stats.total_customers === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-6 border border-border-gray">
+      <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-soft-gray flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-[#F5F5F4] flex items-center justify-center">
             <ThiingsIcon name="users" pxSize={24} />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-deep-charcoal">No Customer Data Yet</h3>
-            <p className="text-sm text-stone-gray">LTV metrics will appear as customers visit</p>
+            <h3 className="text-lg font-semibold text-[#1C1917]">No Customer Data Yet</h3>
+            <p className="text-sm text-[#57534E]">LTV metrics will appear as customers visit</p>
           </div>
         </div>
       </div>
@@ -191,13 +191,13 @@ export default function LTVDashboard() {
   const totalTierCustomers = Object.values(stats.tiers).reduce((sum, count) => sum + count, 0);
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-border-gray">
+    <div className="bg-white rounded-xl shadow-lg border border-[#E7E5E4]">
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-6 flex items-center justify-between hover:bg-soft-gray/50 transition-colors rounded-t-xl"
+        className="w-full p-6 flex items-center justify-between hover:bg-[#F5F5F4]/50 transition-colors rounded-t-xl"
       >
-        <h2 className="text-xl font-bold text-deep-charcoal flex items-center gap-2">
+        <h2 className="text-xl font-bold text-[#1C1917] flex items-center gap-2">
           <ThiingsIcon name="users" size="sm" />
           Customer Lifetime Value
         </h2>
@@ -212,22 +212,22 @@ export default function LTVDashboard() {
           {/* Key Metrics Row */}
           <div className="grid grid-cols-3 gap-3">
             {/* Total Customers */}
-            <div className="p-4 bg-burgundy/10 rounded-xl border border-burgundy/20">
+            <div className="p-4 bg-[#9F1239]/10 rounded-xl border border-[#9F1239]/20">
               <div className="flex items-center justify-between mb-2">
                 <ThiingsIcon name="users" size="sm" />
-                <span className="text-2xl font-bold text-deep-charcoal">{stats.total_customers}</span>
+                <span className="text-2xl font-bold text-[#1C1917]">{stats.total_customers}</span>
               </div>
-              <div className="text-xs text-stone-gray">Total Customers</div>
+              <div className="text-xs text-[#57534E]">Total Customers</div>
             </div>
 
             {/* Average LTV */}
             <div className="p-4 bg-[#16a34a]/10 rounded-xl border border-[#16a34a]/20">
               <div className="flex items-center justify-between mb-2">
                 <ThiingsIcon name="trending-up" size="sm" />
-                <span className="text-2xl font-bold text-deep-charcoal">{formatCurrency(stats.avg_ltv)}</span>
+                <span className="text-2xl font-bold text-[#1C1917]">{formatCurrency(stats.avg_ltv)}</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="text-xs text-stone-gray">Avg Lifetime Value</div>
+                <div className="text-xs text-[#57534E]">Avg Lifetime Value</div>
                 <HelpTooltip
                   title="What is LTV?"
                   content="Total revenue a customer generates over their relationship with you.
@@ -250,17 +250,17 @@ Focus retention efforts on high-LTV customers"
             <div className="p-4 bg-[#7c3aed]/10 rounded-xl border border-[#7c3aed]/20">
               <div className="flex items-center justify-between mb-2">
                 <ThiingsIcon name="dollar" size="sm" />
-                <span className="text-2xl font-bold text-deep-charcoal">{formatCurrency(stats.total_ltv)}</span>
+                <span className="text-2xl font-bold text-[#1C1917]">{formatCurrency(stats.total_ltv)}</span>
               </div>
-              <div className="text-xs text-stone-gray">Total LTV</div>
+              <div className="text-xs text-[#57534E]">Total LTV</div>
             </div>
           </div>
 
           {/* Customer Tiers Breakdown */}
-          <div className="p-4 bg-soft-gray rounded-xl">
+          <div className="p-4 bg-[#F5F5F4] rounded-xl">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-deep-charcoal">Customer Segments</h3>
+                <h3 className="text-sm font-semibold text-[#1C1917]">Customer Segments</h3>
                 <HelpTooltip
                   title="Customer Segments"
                   content="VIP (€500+): Top 10% - Priority reservations, special offers
@@ -272,7 +272,7 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
                   size="sm"
                 />
               </div>
-              <span className="text-xs text-stone-gray">{totalTierCustomers} total</span>
+              <span className="text-xs text-[#57534E]">{totalTierCustomers} total</span>
             </div>
             <div className="space-y-2">
               {Object.entries(stats.tiers).map(([tier, count]) => {
@@ -286,12 +286,12 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-deep-charcoal capitalize">{tier}</span>
-                        <span className="text-sm text-stone-gray">{count} ({percentage.toFixed(0)}%)</span>
+                        <span className="text-sm font-medium text-[#1C1917] capitalize">{tier}</span>
+                        <span className="text-sm text-[#57534E]">{count} ({percentage.toFixed(0)}%)</span>
                       </div>
                       <div className="w-full bg-white h-2 rounded-full overflow-hidden">
                         <div
-                          className={`h-full ${tier === 'vip' ? 'bg-[#7c3aed]' : tier === 'regular' ? 'bg-burgundy' : tier === 'occasional' ? 'bg-[#16a34a]' : tier === 'new' ? 'bg-stone-gray' : 'bg-[#d97706]'}`}
+                          className={`h-full ${tier === 'vip' ? 'bg-[#7c3aed]' : tier === 'regular' ? 'bg-[#9F1239]' : tier === 'occasional' ? 'bg-[#16a34a]' : tier === 'new' ? 'bg-[#57534E]' : 'bg-[#d97706]'}`}
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
@@ -307,7 +307,7 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
             <div className="p-4 bg-[#7c3aed]/10 rounded-xl border border-[#7c3aed]/20">
               <div className="flex items-center gap-2 mb-3">
                 <ThiingsIcon name="star" size="xs" />
-                <h3 className="text-sm font-semibold text-deep-charcoal">Top VIP Customers</h3>
+                <h3 className="text-sm font-semibold text-[#1C1917]">Top VIP Customers</h3>
               </div>
               <div className="space-y-2">
                 {topVIPs.map((customer, index) => (
@@ -317,13 +317,13 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
                         <span className="text-xs font-bold text-[#7c3aed]">#{index + 1}</span>
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-deep-charcoal">{customer.customer_id}</div>
-                        <div className="text-xs text-stone-gray">{customer.total_visits} visits</div>
+                        <div className="text-sm font-medium text-[#1C1917]">{customer.customer_id}</div>
+                        <div className="text-xs text-[#57534E]">{customer.total_visits} visits</div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-bold text-[#7c3aed]">{formatCurrency(customer.lifetime_value)}</div>
-                      <div className="text-xs text-stone-gray">{formatCurrency(customer.total_revenue)} spent</div>
+                      <div className="text-xs text-[#57534E]">{formatCurrency(customer.total_revenue)} spent</div>
                     </div>
                   </div>
                 ))}
@@ -336,7 +336,7 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
             <div className="p-4 bg-[#d97706]/10 rounded-xl border border-[#d97706]/20">
               <div className="flex items-center gap-2 mb-3">
                 <ThiingsIcon name="alert-triangle" size="xs" />
-                <h3 className="text-sm font-semibold text-deep-charcoal">High Churn Risk ({stats.high_risk_customers})</h3>
+                <h3 className="text-sm font-semibold text-[#1C1917]">High Churn Risk ({stats.high_risk_customers})</h3>
               </div>
               <div className="space-y-2">
                 {atRiskCustomers.map((customer) => (
@@ -347,8 +347,8 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
                         <span className="text-xs font-bold text-[#d97706]">{customer.churn_risk_score}%</span>
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-deep-charcoal">{customer.customer_id}</div>
-                        <div className="text-xs text-stone-gray flex items-center gap-1">
+                        <div className="text-sm font-medium text-[#1C1917]">{customer.customer_id}</div>
+                        <div className="text-xs text-[#57534E] flex items-center gap-1">
                           <ThiingsIcon name="calendar" pxSize={12} />
                           Last: {new Date(customer.last_visit_date).toLocaleDateString()}
                         </div>
@@ -356,8 +356,8 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="text-right">
-                        <div className="text-sm font-bold text-deep-charcoal">{formatCurrency(customer.lifetime_value)} LTV</div>
-                        <div className="text-xs text-stone-gray">{customer.total_visits} visits</div>
+                        <div className="text-sm font-bold text-[#1C1917]">{formatCurrency(customer.lifetime_value)} LTV</div>
+                        <div className="text-xs text-[#57534E]">{customer.total_visits} visits</div>
                       </div>
                       <button
                         onClick={() => openCampaignModal(customer)}
@@ -381,7 +381,7 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
 
           {/* Calculate All Button */}
           <button
-            className="w-full px-4 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-burgundy/30 flex items-center justify-center gap-2"
+            className="w-full px-4 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-[#9F1239]/30 flex items-center justify-center gap-2"
             onClick={async () => {
               try {
                 const response = await api.get('/ltv?action=calculate-all');

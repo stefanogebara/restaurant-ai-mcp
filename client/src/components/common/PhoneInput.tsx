@@ -131,8 +131,8 @@ export default function PhoneInput({
   return (
     <div className={className}>
       {label && (
-        <label className="block text-sm font-semibold text-deep-charcoal mb-2">
-          {label} {required && <span className="text-burgundy">*</span>}
+        <label className="block text-sm font-semibold text-[#1C1917] mb-2">
+          {label} {required && <span className="text-[#9F1239]">*</span>}
         </label>
       )}
 
@@ -142,12 +142,12 @@ export default function PhoneInput({
           <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center gap-2 px-3 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal hover:bg-border-gray/50 focus:outline-none focus:ring-2 focus:ring-burgundy transition-all min-w-[120px]"
+            className="flex items-center gap-2 px-3 py-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] hover:bg-[#E7E5E4]/50 focus:outline-none focus:ring-2 focus:ring-[#9F1239] transition-all min-w-[120px]"
           >
             <span className="text-xl">{selectedCountry.flag}</span>
             <span className="text-sm font-medium">{selectedCountry.dial}</span>
             <svg
-              className={`w-4 h-4 text-stone-gray transition-transform ${isOpen ? 'rotate-180' : ''}`}
+              className={`w-4 h-4 text-[#57534E] transition-transform ${isOpen ? 'rotate-180' : ''}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -158,21 +158,21 @@ export default function PhoneInput({
 
           {/* Dropdown */}
           {isOpen && (
-            <div className="absolute z-50 mt-1 w-64 max-h-64 overflow-y-auto bg-white border border-border-gray rounded-xl shadow-xl">
+            <div className="absolute z-50 mt-1 w-64 max-h-64 overflow-y-auto bg-white border border-[#E7E5E4] rounded-xl shadow-xl">
               {COUNTRIES.map((country) => (
                 <button
                   key={country.code}
                   type="button"
                   onClick={() => handleCountrySelect(country)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-soft-gray transition-colors ${
-                    selectedCountry.code === country.code ? 'bg-burgundy/10' : ''
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-[#F5F5F4] transition-colors ${
+                    selectedCountry.code === country.code ? 'bg-[#9F1239]/10' : ''
                   }`}
                 >
                   <span className="text-xl">{country.flag}</span>
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm text-deep-charcoal truncate">{country.name}</span>
+                    <span className="text-sm text-[#1C1917] truncate">{country.name}</span>
                   </div>
-                  <span className="text-sm text-stone-gray">{country.dial}</span>
+                  <span className="text-sm text-[#57534E]">{country.dial}</span>
                 </button>
               ))}
             </div>
@@ -186,8 +186,8 @@ export default function PhoneInput({
             value={localNumber}
             onChange={handleNumberChange}
             placeholder={selectedCountry.placeholder}
-            className={`w-full px-4 py-3 bg-soft-gray border rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all ${
-              error ? 'border-burgundy' : localNumber && !isValid ? 'border-[#d97706]' : 'border-border-gray'
+            className={`w-full px-4 py-3 bg-[#F5F5F4] border rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all ${
+              error ? 'border-[#9F1239]' : localNumber && !isValid ? 'border-[#d97706]' : 'border-[#E7E5E4]'
             }`}
           />
           {/* Validation indicator */}
@@ -208,13 +208,13 @@ export default function PhoneInput({
       </div>
 
       {/* Helper text */}
-      <p className="mt-1 text-xs text-stone-gray">
+      <p className="mt-1 text-xs text-[#57534E]">
         Format: {selectedCountry.dial} {selectedCountry.format}
       </p>
 
       {/* Error message */}
       {error && (
-        <p className="mt-1 text-sm text-burgundy">{error}</p>
+        <p className="mt-1 text-sm text-[#9F1239]">{error}</p>
       )}
       {localNumber && !isValid && !error && (
         <p className="mt-1 text-sm text-[#d97706]">

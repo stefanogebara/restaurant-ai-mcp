@@ -21,8 +21,8 @@ export default function HowItWorksSection() {
     <section className="py-24 px-6 sm:px-16 max-w-[1200px] mx-auto">
       {/* Header */}
       <div className="text-center mb-16">
-        <div className="text-xs font-semibold tracking-[2px] uppercase text-burgundy mb-4">How It Works</div>
-        <h2 className="font-serif text-4xl sm:text-[48px] font-medium tracking-tight text-deep-charcoal">
+        <div className="text-xs font-semibold tracking-[2px] uppercase text-[#9F1239] mb-4">How It Works</div>
+        <h2 className="font-serif text-4xl sm:text-[48px] font-medium tracking-tight text-[#1C1917]">
           Three steps to<br />a smarter restaurant.
         </h2>
       </div>
@@ -34,8 +34,8 @@ export default function HowItWorksSection() {
             <div className="font-serif text-[56px] font-normal text-[rgba(159,18,57,0.12)] leading-none mb-5">
               {step.number}
             </div>
-            <h3 className="text-lg font-semibold text-deep-charcoal tracking-tight mb-3">{step.title}</h3>
-            <p className="text-sm text-warm-stone font-light leading-relaxed">{step.description}</p>
+            <h3 className="text-lg font-semibold text-[#1C1917] tracking-tight mb-3">{step.title}</h3>
+            <p className="text-sm text-[#78716C] font-light leading-relaxed">{step.description}</p>
           </div>
         ))}
       </div>

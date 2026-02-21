@@ -59,12 +59,12 @@ export default function Welcome() {
   // Show loading while checking
   if (authLoading || checking) {
     return (
-      <div className="min-h-screen bg-warm-white flex flex-col items-center justify-center gap-4">
-        <div className="font-serif text-2xl text-deep-charcoal opacity-50">
-          seatable<span className="text-burgundy">.</span>
+      <div className="min-h-screen bg-[#FAFAF9] flex flex-col items-center justify-center gap-4">
+        <div className="font-serif text-2xl text-[#1C1917] opacity-50">
+          seatable<span className="text-[#9F1239]">.</span>
         </div>
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy"></div>
-        <p className="text-sm text-stone-gray font-light">Setting things up...</p>
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#E7E5E4] border-t-[#9F1239]"></div>
+        <p className="text-sm text-[#57534E] font-light">Setting things up...</p>
       </div>
     );
   }

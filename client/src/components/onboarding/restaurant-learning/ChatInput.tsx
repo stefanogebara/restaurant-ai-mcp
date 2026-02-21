@@ -63,7 +63,7 @@ export default function ChatInput({ onSend, isLoading, placeholder = 'Type your 
           group flex items-center gap-2 px-3 py-2
           bg-white border rounded-xl
           transition-colors duration-150
-          ${isLoading ? 'border-border-gray bg-warm-white' : 'border-border-gray focus-within:border-burgundy/60 focus-within:ring-2 focus-within:ring-burgundy/20'}
+          ${isLoading ? 'border-[#E7E5E4] bg-[#FAFAF9]' : 'border-[#E7E5E4] focus-within:border-[#9F1239]/60 focus-within:ring-2 focus-within:ring-[#9F1239]/20'}
         `}
       >
         <input
@@ -80,7 +80,7 @@ export default function ChatInput({ onSend, isLoading, placeholder = 'Type your 
           spellCheck
           aria-label="Type your answer to the AI's question"
           aria-describedby={nearLimit ? 'chat-char-count' : undefined}
-          className="flex-1 min-w-0 bg-transparent py-1.5 text-sm text-deep-charcoal placeholder-muted-stone focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 min-w-0 bg-transparent py-1.5 text-sm text-[#1C1917] placeholder-[#A8A29E] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
         />
 
         <button
@@ -90,13 +90,13 @@ export default function ChatInput({ onSend, isLoading, placeholder = 'Type your 
           aria-label={isLoading ? 'Sending message' : 'Send message'}
           className="
             flex-shrink-0 w-11 h-11 rounded-lg
-            bg-burgundy text-white
+            bg-[#9F1239] text-white
             flex items-center justify-center
             transition-all duration-150
-            hover:bg-burgundy-dark
+            hover:bg-[#881337]
             active:scale-95
-            focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-offset-2
-            disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-burgundy disabled:active:scale-100
+            focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:ring-offset-2
+            disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-[#9F1239] disabled:active:scale-100
           "
         >
           {isLoading ? (
@@ -121,7 +121,7 @@ export default function ChatInput({ onSend, isLoading, placeholder = 'Type your 
       {nearLimit && (
         <p
           id="chat-char-count"
-          className={`text-xs text-right pr-1 tabular-nums ${charCount >= MAX_LENGTH ? 'text-red-500 font-semibold' : 'text-muted-stone'}`}
+          className={`text-xs text-right pr-1 tabular-nums ${charCount >= MAX_LENGTH ? 'text-red-500 font-semibold' : 'text-[#A8A29E]'}`}
           aria-live="polite"
         >
           {charCount}/{MAX_LENGTH}

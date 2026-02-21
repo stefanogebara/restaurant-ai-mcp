@@ -41,13 +41,13 @@ export default function ActivePartiesPanel({
   const t = translations[language];
   if (isLoading) {
     return (
-      <div className="bg-white border border-border-gray rounded-2xl p-5">
-        <div className="h-5 w-32 bg-border-gray rounded animate-pulse mb-4" />
+      <div className="bg-white border border-[#E7E5E4] rounded-2xl p-5">
+        <div className="h-5 w-32 bg-[#E7E5E4] rounded animate-pulse mb-4" />
         <div className="space-y-3">
           {[1, 2].map((i) => (
-            <div key={i} className="p-3 bg-soft-gray rounded-xl">
-              <div className="h-4 w-24 bg-border-gray rounded animate-pulse mb-2" />
-              <div className="h-3 w-36 bg-soft-gray rounded animate-pulse" />
+            <div key={i} className="p-3 bg-[#F5F5F4] rounded-xl">
+              <div className="h-4 w-24 bg-[#E7E5E4] rounded animate-pulse mb-2" />
+              <div className="h-3 w-36 bg-[#F5F5F4] rounded animate-pulse" />
             </div>
           ))}
         </div>
@@ -56,12 +56,12 @@ export default function ActivePartiesPanel({
   }
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
+    <div className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
         <div className="flex items-center gap-2.5">
-          <span className="text-[15px] font-semibold text-deep-charcoal tracking-tight">{t.activeParties}</span>
-          <span className="text-[11px] font-semibold bg-[rgba(159,18,57,0.08)] text-burgundy px-2.5 py-0.5 rounded-full">
+          <span className="text-[15px] font-semibold text-[#1C1917] tracking-tight">{t.activeParties}</span>
+          <span className="text-[11px] font-semibold bg-[rgba(159,18,57,0.08)] text-[#9F1239] px-2.5 py-0.5 rounded-full">
             {parties.length}
           </span>
         </div>
@@ -70,16 +70,16 @@ export default function ActivePartiesPanel({
       {/* List */}
       {parties.length === 0 ? (
         <div className="text-center py-10 px-4">
-          <div className="w-14 h-14 bg-soft-gray rounded-2xl flex items-center justify-center mx-auto mb-3">
-            <svg className="w-7 h-7 text-muted-stone" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-14 h-14 bg-[#F5F5F4] rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <svg className="w-7 h-7 text-[#A8A29E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
           </div>
-          <p className="text-sm font-semibold text-deep-charcoal mb-1">{t.noActive}</p>
-          <p className="text-xs text-stone-gray">{t.addHint}</p>
+          <p className="text-sm font-semibold text-[#1C1917] mb-1">{t.noActive}</p>
+          <p className="text-xs text-[#57534E]">{t.addHint}</p>
         </div>
       ) : (
-        <div className="divide-y divide-border-gray/50 max-h-[400px] overflow-y-auto">
+        <div className="divide-y divide-[#E7E5E4]/50 max-h-[400px] overflow-y-auto">
           {parties.map((party) => (
             <PartyRow
               key={party.service_id}
@@ -115,7 +115,7 @@ function PartyRow({ party, onComplete, language }: PartyRowProps) {
     <div className={`p-3.5 ${isOverdue ? 'bg-red-50/50' : ''}`}>
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-burgundy/15 to-[#7c3aed]/15 flex items-center justify-center text-[10px] font-bold text-burgundy border border-burgundy/20 flex-shrink-0">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#9F1239]/15 to-[#7c3aed]/15 flex items-center justify-center text-[10px] font-bold text-[#9F1239] border border-[#9F1239]/20 flex-shrink-0">
             {party.customer_name
               .split(' ')
               .map((n) => n[0])
@@ -123,18 +123,18 @@ function PartyRow({ party, onComplete, language }: PartyRowProps) {
               .join('')
               .toUpperCase()}
           </div>
-          <div className="font-semibold text-deep-charcoal text-sm truncate">
+          <div className="font-semibold text-[#1C1917] text-sm truncate">
             {party.customer_name}
           </div>
         </div>
-        <span className="text-xs font-medium text-stone-gray flex-shrink-0 ml-2">
+        <span className="text-xs font-medium text-[#57534E] flex-shrink-0 ml-2">
           {formatTimestamp(party.seated_at)}
         </span>
       </div>
 
-      <div className="flex items-center gap-3 text-xs text-stone-gray mb-2">
+      <div className="flex items-center gap-3 text-xs text-[#57534E] mb-2">
         <span className="font-medium">{party.party_size} {t.guests}</span>
-        <span className="bg-soft-gray px-2 py-0.5 rounded text-xs font-semibold">{t.table} {party.tables?.join(', ')}</span>
+        <span className="bg-[#F5F5F4] px-2 py-0.5 rounded text-xs font-semibold">{t.table} {party.tables?.join(', ')}</span>
         {isOverdue && (
           <span className="text-red-600 font-semibold">{t.overdue}</span>
         )}
@@ -143,9 +143,9 @@ function PartyRow({ party, onComplete, language }: PartyRowProps) {
       {/* Time progress */}
       {party.time_elapsed_minutes !== undefined && (
         <div className="mb-2">
-          <div className="h-1.5 bg-border-gray rounded-full overflow-hidden">
+          <div className="h-1.5 bg-[#E7E5E4] rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all ${isOverdue ? 'bg-gradient-to-r from-red-500 to-red-400' : 'bg-gradient-to-r from-deep-charcoal to-stone-gray'}`}
+              className={`h-full rounded-full transition-all ${isOverdue ? 'bg-gradient-to-r from-red-500 to-red-400' : 'bg-gradient-to-r from-[#1C1917] to-[#57534E]'}`}
               style={{
                 width: `${Math.min(
                   ((party.time_elapsed_minutes) /
@@ -155,7 +155,7 @@ function PartyRow({ party, onComplete, language }: PartyRowProps) {
               }}
             />
           </div>
-          <div className="flex justify-between text-[10px] text-muted-stone mt-0.5">
+          <div className="flex justify-between text-[10px] text-[#A8A29E] mt-0.5">
             <span>{party.time_elapsed_minutes}m {t.elapsed}</span>
             <span>{party.time_remaining_minutes > 0 ? `${party.time_remaining_minutes}m ${t.left}` : t.overdue}</span>
           </div>
@@ -164,7 +164,7 @@ function PartyRow({ party, onComplete, language }: PartyRowProps) {
 
       <button
         onClick={onComplete}
-        className="w-full mt-2 px-3 py-2.5 min-h-[44px] bg-soft-gray hover:bg-border-gray text-deep-charcoal text-xs font-medium rounded-lg transition-colors"
+        className="w-full mt-2 px-3 py-2.5 min-h-[44px] bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#1C1917] text-xs font-medium rounded-lg transition-colors"
       >
         {t.completeService}
       </button>

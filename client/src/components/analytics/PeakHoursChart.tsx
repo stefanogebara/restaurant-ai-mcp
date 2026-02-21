@@ -18,9 +18,9 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white border border-border-gray/50 rounded-xl p-3 shadow-lg">
-          <p className="text-sm font-semibold text-deep-charcoal mb-1">{payload[0].payload.time}</p>
-          <p className="text-sm text-burgundy">
+        <div className="bg-white border border-[#E7E5E4]/50 rounded-xl p-3 shadow-lg">
+          <p className="text-sm font-semibold text-[#1C1917] mb-1">{payload[0].payload.time}</p>
+          <p className="text-sm text-[#9F1239]">
             Reservations: <span className="font-bold">{payload[0].value}</span>
           </p>
         </div>
@@ -38,8 +38,8 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
   };
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
+    <div className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
         <span className="text-[15px] font-semibold tracking-tight">Peak Hours</span>
       </div>
       <div className="p-6">

@@ -1,8 +1,6 @@
-import { describe, it, expect, afterEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import StatsBar from '../StatsBar';
-import i18n from '../../../i18n/config';
-import es from '../../../i18n/locales/es.json';
 
 const defaultProps = {
   occupiedTables: 6,
@@ -14,11 +12,6 @@ const defaultProps = {
   activeParties: 6,
   totalGuests: 18,
 };
-
-afterEach(() => {
-  // Reset to English after each test
-  act(() => { i18n.changeLanguage('en'); });
-});
 
 describe('StatsBar', () => {
   it('renders loading skeleton when isLoading is true', () => {
@@ -74,10 +67,8 @@ describe('StatsBar', () => {
     expect(screen.getByText('0% capacity')).toBeInTheDocument();
   });
 
-  it('renders in Spanish when i18n language is "es"', async () => {
-    i18n.addResourceBundle('es', 'translation', es, true, true);
-    await act(async () => { await i18n.changeLanguage('es'); });
-    render(<StatsBar {...defaultProps} />);
+  it('renders in Spanish when language is "es"', () => {
+    render(<StatsBar {...defaultProps} language="es" />);
     expect(screen.getByText('Mesas Disponibles')).toBeInTheDocument();
     expect(screen.getByText('Reservas de Hoy')).toBeInTheDocument();
     expect(screen.getByText('Comensales Esperados')).toBeInTheDocument();

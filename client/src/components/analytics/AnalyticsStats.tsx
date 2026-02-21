@@ -19,17 +19,17 @@ export default function AnalyticsStats({ overview }: AnalyticsStatsProps) {
     { value: overview.total_reservations, label: 'Total Reservations', change: null },
     { value: `${noShowRate}%`, label: 'No-Show Rate', color: parseFloat(noShowRate) > 5 ? 'text-[#dc2626]' : undefined },
     { value: overview.avg_party_size.toFixed(1), label: 'Avg Party Size', change: null },
-    { value: `${overview.current_occupancy_percentage}%`, label: 'Occupancy Rate', color: 'text-burgundy' },
+    { value: `${overview.current_occupancy_percentage}%`, label: 'Occupancy Rate', color: 'text-[#9F1239]' },
   ];
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
       {stats.map((stat) => (
-        <div key={stat.label} className="bg-white rounded-2xl p-6 border border-border-gray">
-          <div className="text-xs font-medium text-muted-stone mb-2 tracking-wide">
+        <div key={stat.label} className="bg-white rounded-2xl p-6 border border-[#E7E5E4]">
+          <div className="text-xs font-medium text-[#A8A29E] mb-2 tracking-wide">
             {stat.label}
           </div>
-          <div className={`text-[32px] font-bold tracking-tight leading-none ${stat.color || 'text-deep-charcoal'}`}>
+          <div className={`text-[32px] font-bold tracking-tight leading-none ${stat.color || 'text-[#1C1917]'}`}>
             {stat.value}
           </div>
         </div>

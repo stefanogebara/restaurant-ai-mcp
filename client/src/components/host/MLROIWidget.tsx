@@ -60,28 +60,28 @@ export default function MLROIWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-6 border border-border-gray">
+      <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-deep-charcoal flex items-center gap-2">
+          <h2 className="text-xl font-bold text-[#1C1917] flex items-center gap-2">
             <ThiingsIcon name="trending-up" size="sm" />
             ML Performance
           </h2>
         </div>
-        <div className="text-center py-4 text-stone-gray">Loading...</div>
+        <div className="text-center py-4 text-[#57534E]">Loading...</div>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-6 border border-border-gray">
+      <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-soft-gray flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-[#F5F5F4] flex items-center justify-center">
             <ThiingsIcon name="alert-triangle" pxSize={24} />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-deep-charcoal">No ML Data Yet</h3>
-            <p className="text-sm text-stone-gray">Start recording outcomes to see ROI</p>
+            <h3 className="text-lg font-semibold text-[#1C1917]">No ML Data Yet</h3>
+            <p className="text-sm text-[#57534E]">Start recording outcomes to see ROI</p>
           </div>
         </div>
       </div>
@@ -92,13 +92,13 @@ export default function MLROIWidget() {
   const meetsTarget = data.summary.meets_target;
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-border-gray">
+    <div className="bg-white rounded-xl shadow-lg border border-[#E7E5E4]">
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-6 flex items-center justify-between hover:bg-soft-gray/50 transition-colors rounded-t-xl"
+        className="w-full p-6 flex items-center justify-between hover:bg-[#F5F5F4]/50 transition-colors rounded-t-xl"
       >
-        <h2 className="text-xl font-bold text-deep-charcoal flex items-center gap-2">
+        <h2 className="text-xl font-bold text-[#1C1917] flex items-center gap-2">
           <ThiingsIcon name="trending-up" size="sm" />
           ML Performance
         </h2>
@@ -119,7 +119,7 @@ export default function MLROIWidget() {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <ThiingsIcon name="dollar" pxSize={24} />
-                <div className="text-sm font-semibold text-stone-gray">Return on Investment</div>
+                <div className="text-sm font-semibold text-[#57534E]">Return on Investment</div>
                 <HelpTooltip
                   title="What is ROI?"
                   content="For every €1 you spend on interventions (calls, emails), how much money do you save from prevented no-shows?
@@ -143,24 +143,24 @@ Example:
               <div className={`text-4xl font-bold ${meetsTarget ? 'text-[#16a34a]' : 'text-[#d97706]'}`}>
                 {roiValue}%
               </div>
-              <div className="text-sm text-stone-gray">
+              <div className="text-sm text-[#57534E]">
                 / {data.summary.target_roi} target
               </div>
             </div>
-            <div className="mt-2 text-xs text-stone-gray">
+            <div className="mt-2 text-xs text-[#57534E]">
               €{data.summary.total_value_saved} saved • €{data.summary.total_cost} spent
             </div>
           </div>
 
           {/* Success Rate */}
-          <div className="flex items-center justify-between p-3 bg-burgundy/10 rounded-xl border border-burgundy/20">
+          <div className="flex items-center justify-between p-3 bg-[#9F1239]/10 rounded-xl border border-[#9F1239]/20">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-burgundy/20 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-[#9F1239]/20 rounded-xl flex items-center justify-center">
                 <ThiingsIcon name="target" size="sm" />
               </div>
               <div>
                 <div className="flex items-center gap-1">
-                  <div className="text-xs text-stone-gray">Success Rate</div>
+                  <div className="text-xs text-[#57534E]">Success Rate</div>
                   <HelpTooltip
                     title="Success Rate Explained"
                     content="Percentage of interventions that successfully prevented a no-show.
@@ -176,10 +176,10 @@ Example:
                     size="sm"
                   />
                 </div>
-                <div className="text-sm text-stone-gray">Interventions worked</div>
+                <div className="text-sm text-[#57534E]">Interventions worked</div>
               </div>
             </div>
-            <div className="text-2xl font-bold text-deep-charcoal">
+            <div className="text-2xl font-bold text-[#1C1917]">
               {data.intervention_effectiveness.success_rate}
             </div>
           </div>
@@ -192,7 +192,7 @@ Example:
               </div>
               <div>
                 <div className="flex items-center gap-1">
-                  <div className="text-xs text-stone-gray">Total Interventions</div>
+                  <div className="text-xs text-[#57534E]">Total Interventions</div>
                   <HelpTooltip
                     title="What are Interventions?"
                     content="Actions taken to prevent no-shows based on ML risk predictions.
@@ -208,29 +208,29 @@ Each intervention has a cost and potential value saved."
                     size="sm"
                   />
                 </div>
-                <div className="text-sm text-stone-gray">Actions taken</div>
+                <div className="text-sm text-[#57534E]">Actions taken</div>
               </div>
             </div>
-            <div className="text-2xl font-bold text-deep-charcoal">
+            <div className="text-2xl font-bold text-[#1C1917]">
               {data.intervention_effectiveness.interventions_with_action}
             </div>
           </div>
 
           {/* Outcomes Breakdown */}
-          <div className="p-3 bg-soft-gray rounded-xl">
-            <div className="text-xs font-semibold text-stone-gray mb-2">Outcomes</div>
+          <div className="p-3 bg-[#F5F5F4] rounded-xl">
+            <div className="text-xs font-semibold text-[#57534E] mb-2">Outcomes</div>
             <div className="grid grid-cols-3 gap-2">
               <div className="text-center">
                 <div className="text-lg font-bold text-[#16a34a]">{data.outcomes.showed_up}</div>
-                <div className="text-xs text-stone-gray">Showed</div>
+                <div className="text-xs text-[#57534E]">Showed</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-burgundy">{data.outcomes.no_show}</div>
-                <div className="text-xs text-stone-gray">No-Show</div>
+                <div className="text-lg font-bold text-[#9F1239]">{data.outcomes.no_show}</div>
+                <div className="text-xs text-[#57534E]">No-Show</div>
               </div>
               <div className="text-center">
                 <div className="text-lg font-bold text-[#d97706]">{data.outcomes.cancelled}</div>
-                <div className="text-xs text-stone-gray">Cancelled</div>
+                <div className="text-xs text-[#57534E]">Cancelled</div>
               </div>
             </div>
           </div>
@@ -238,7 +238,7 @@ Each intervention has a cost and potential value saved."
           {/* Link to full ML analytics */}
           <a
             href="/analytics#ml-metrics"
-            className="flex items-center justify-center gap-2 w-full mt-4 px-4 py-2 text-center text-sm bg-soft-gray hover:bg-border-gray text-stone-gray font-medium rounded-xl transition-colors group"
+            className="flex items-center justify-center gap-2 w-full mt-4 px-4 py-2 text-center text-sm bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#57534E] font-medium rounded-xl transition-colors group"
           >
             View Full ML Analytics
             <ThiingsIcon name="arrow-right" size="xs" className="group-hover:translate-x-1 transition-transform" />

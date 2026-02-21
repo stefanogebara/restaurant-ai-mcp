@@ -35,7 +35,7 @@ export default function QuickReplyButtons({ replies, onSelect, disabled }: Quick
       className="space-y-2"
     >
       {/* Label — visually subtle, semantically linked via role="group" below */}
-      <p id="quick-replies-label" className="text-xs text-muted-stone font-medium tracking-wide uppercase">
+      <p id="quick-replies-label" className="text-xs text-[#A8A29E] font-medium tracking-wide uppercase">
         Quick replies
       </p>
 
@@ -57,12 +57,12 @@ export default function QuickReplyButtons({ replies, onSelect, disabled }: Quick
               px-4 py-2 text-sm font-medium
               max-w-[260px] sm:max-w-[300px]
               text-left truncate
-              border-2 border-burgundy text-burgundy
+              border-2 border-[#9F1239] text-[#9F1239]
               bg-white
               rounded-full
-              hover:bg-burgundy/10
-              active:bg-burgundy/15 active:scale-[0.97]
-              focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-offset-2
+              hover:bg-[#9F1239]/10
+              active:bg-[#9F1239]/15 active:scale-[0.97]
+              focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:ring-offset-2
               transition-all duration-150
               disabled:opacity-40 disabled:cursor-not-allowed
               disabled:hover:bg-white disabled:active:scale-100

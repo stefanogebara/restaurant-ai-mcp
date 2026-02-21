@@ -8,30 +8,30 @@ export default function LanguageSettings() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-warm-white py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAFAF9] py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         {/* Back button */}
         <button
           onClick={() => navigate(-1)}
-          className="mb-6 bg-soft-gray hover:bg-border-gray px-3 py-1.5 rounded-xl transition-colors inline-flex items-center gap-1"
+          className="mb-6 bg-[#F5F5F4] hover:bg-[#E7E5E4] px-3 py-1.5 rounded-xl transition-colors inline-flex items-center gap-1"
         >
           <ThiingsIcon name="arrow-left" size="sm" />
-          <span className="text-stone-gray">{t('common.back')}</span>
+          <span className="text-[#57534E]">{t('common.back')}</span>
         </button>
 
         {/* Settings card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-border-gray p-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-[#E7E5E4] p-8">
           {/* Header */}
           <div className="flex items-center gap-3 mb-8">
-            <div className="p-3 bg-burgundy/10 rounded-xl">
+            <div className="p-3 bg-[#9F1239]/10 rounded-xl">
               <ThiingsIcon name="globe" pxSize={32} />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight flex items-center">
-                <span className="w-2 h-2 rounded-full bg-burgundy inline-block mr-2" />
+              <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight flex items-center">
+                <span className="w-2 h-2 rounded-full bg-[#9F1239] inline-block mr-2" />
                 {t('settings.languageSettings')}
               </h1>
-              <p className="text-stone-gray mt-1">
+              <p className="text-[#57534E] mt-1">
                 {t('onboarding.languageDescription')}
               </p>
             </div>
@@ -39,7 +39,7 @@ export default function LanguageSettings() {
 
           {/* Language selector */}
           <div className="space-y-6">
-            <div className="p-6 bg-warm-white rounded-xl">
+            <div className="p-6 bg-[#FAFAF9] rounded-xl">
               <LanguageSelector
                 variant="buttons"
                 size="lg"
@@ -49,10 +49,10 @@ export default function LanguageSettings() {
             </div>
 
             {/* Info text */}
-            <div className="flex items-start gap-3 p-4 bg-burgundy/5 border border-burgundy/20 rounded-xl">
+            <div className="flex items-start gap-3 p-4 bg-[#9F1239]/5 border border-[#9F1239]/20 rounded-xl">
               <div className="flex-shrink-0">
                 <svg
-                  className="w-5 h-5 text-burgundy mt-0.5"
+                  className="w-5 h-5 text-[#9F1239] mt-0.5"
                   fill="none"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -63,8 +63,8 @@ export default function LanguageSettings() {
                   <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
               </div>
-              <div className="text-sm text-stone-gray">
-                <p className="font-medium mb-1 text-deep-charcoal">Language preferences</p>
+              <div className="text-sm text-[#57534E]">
+                <p className="font-medium mb-1 text-[#1C1917]">Language preferences</p>
                 <p>
                   Your language selection will be applied to the entire dashboard,
                   all customer communications, and AI interactions. This change takes
@@ -79,12 +79,12 @@ export default function LanguageSettings() {
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
           <button
             onClick={() => navigate('/host-dashboard')}
-            className="p-6 bg-white rounded-xl shadow-sm border border-border-gray hover:shadow-md transition-shadow text-left group"
+            className="p-6 bg-white rounded-xl shadow-sm border border-[#E7E5E4] hover:shadow-md transition-shadow text-left group"
           >
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-burgundy/10 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-[#9F1239]/10 flex items-center justify-center">
                 <svg
-                  className="w-5 h-5 text-burgundy"
+                  className="w-5 h-5 text-[#9F1239]"
                   fill="none"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -95,23 +95,23 @@ export default function LanguageSettings() {
                   <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
                 </svg>
               </div>
-              <h3 className="font-semibold text-deep-charcoal">
+              <h3 className="font-semibold text-[#1C1917]">
                 {t('navigation.dashboard')}
               </h3>
             </div>
-            <p className="text-sm text-stone-gray">
+            <p className="text-sm text-[#57534E]">
               Return to your main dashboard
             </p>
           </button>
 
           <button
             onClick={() => navigate('/subscription/manage')}
-            className="p-6 bg-white rounded-xl shadow-sm border border-border-gray hover:shadow-md transition-shadow text-left group"
+            className="p-6 bg-white rounded-xl shadow-sm border border-[#E7E5E4] hover:shadow-md transition-shadow text-left group"
           >
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-burgundy/10 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-[#9F1239]/10 flex items-center justify-center">
                 <svg
-                  className="w-5 h-5 text-burgundy"
+                  className="w-5 h-5 text-[#9F1239]"
                   fill="none"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -123,11 +123,11 @@ export default function LanguageSettings() {
                   <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
               </div>
-              <h3 className="font-semibold text-deep-charcoal">
+              <h3 className="font-semibold text-[#1C1917]">
                 {t('settings.general')}
               </h3>
             </div>
-            <p className="text-sm text-stone-gray">
+            <p className="text-sm text-[#57534E]">
               Manage your subscription and settings
             </p>
           </button>

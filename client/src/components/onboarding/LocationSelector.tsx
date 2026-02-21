@@ -104,17 +104,17 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     <div className="space-y-4">
       {/* Country Selector */}
       <div className="relative location-selector-dropdown">
-        <label className="block text-sm font-semibold text-deep-charcoal mb-2">
+        <label className="block text-sm font-semibold text-[#1C1917] mb-2">
           Country *
         </label>
         <button
           type="button"
           onClick={() => setIsCountryOpen(!isCountryOpen)}
-          className={`w-full px-4 py-3 rounded-xl bg-soft-gray border ${
+          className={`w-full px-4 py-3 rounded-xl bg-[#F5F5F4] border ${
             error?.country
-              ? 'border-burgundy focus:border-burgundy'
-              : 'border-border-gray focus:border-burgundy'
-          } text-left text-deep-charcoal flex items-center justify-between hover:bg-border-gray/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-burgundy`}
+              ? 'border-[#9F1239] focus:border-[#9F1239]'
+              : 'border-[#E7E5E4] focus:border-[#9F1239]'
+          } text-left text-[#1C1917] flex items-center justify-between hover:bg-[#E7E5E4]/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#9F1239]`}
         >
           <div className="flex items-center gap-3">
             <ThiingsIcon name="globe" pxSize={20} />
@@ -124,7 +124,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                 <span>{selectedCountry.name}</span>
               </span>
             ) : (
-              <span className="text-muted-stone">Select your country</span>
+              <span className="text-[#A8A29E]">Select your country</span>
             )}
           </div>
           <span className={`inline-flex transition-transform duration-200 ${isCountryOpen ? 'rotate-180' : ''}`}>
@@ -133,20 +133,20 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         </button>
 
         {error?.country && (
-          <p className="mt-1 text-sm text-burgundy">{error.country}</p>
+          <p className="mt-1 text-sm text-[#9F1239]">{error.country}</p>
         )}
 
         {/* Country Dropdown */}
         {isCountryOpen && (
-          <div className="absolute z-50 w-full mt-2 rounded-xl bg-white border border-border-gray shadow-xl max-h-96 overflow-hidden">
+          <div className="absolute z-50 w-full mt-2 rounded-xl bg-white border border-[#E7E5E4] shadow-xl max-h-96 overflow-hidden">
             {/* Search Input */}
-            <div className="p-3 border-b border-border-gray">
+            <div className="p-3 border-b border-[#E7E5E4]">
               <input
                 type="text"
                 placeholder="Search countries..."
                 value={countrySearchQuery}
                 onChange={(e) => setCountrySearchQuery(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-soft-gray border border-border-gray text-deep-charcoal placeholder-muted-stone focus:outline-none focus:border-burgundy focus:ring-2 focus:ring-burgundy transition-colors"
+                className="w-full px-3 py-2 rounded-lg bg-[#F5F5F4] border border-[#E7E5E4] text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:border-[#9F1239] focus:ring-2 focus:ring-[#9F1239] transition-colors"
                 autoFocus
               />
             </div>
@@ -154,15 +154,15 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             {/* Countries List */}
             <div className="overflow-y-auto max-h-80 custom-scrollbar">
               {filteredLanguageGroups.length === 0 ? (
-                <div className="p-4 text-center text-stone-gray">
+                <div className="p-4 text-center text-[#57534E]">
                   No countries found
                 </div>
               ) : (
                 filteredLanguageGroups.map((group) => (
-                  <div key={group.language} className="border-b border-border-gray last:border-0">
+                  <div key={group.language} className="border-b border-[#E7E5E4] last:border-0">
                     {/* Language Group Header */}
-                    <div className="px-4 py-2 bg-soft-gray">
-                      <span className="text-xs font-semibold text-stone-gray uppercase tracking-wider flex items-center gap-2">
+                    <div className="px-4 py-2 bg-[#F5F5F4]">
+                      <span className="text-xs font-semibold text-[#57534E] uppercase tracking-wider flex items-center gap-2">
                         <span className="text-base">{group.flag}</span>
                         {group.displayName}
                       </span>
@@ -174,10 +174,10 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                         key={country.code}
                         type="button"
                         onClick={() => handleCountrySelect(country)}
-                        className={`w-full px-4 py-3 text-left hover:bg-soft-gray transition-colors flex items-center gap-3 ${
+                        className={`w-full px-4 py-3 text-left hover:bg-[#F5F5F4] transition-colors flex items-center gap-3 ${
                           selectedCountryCode === country.code
-                            ? 'bg-burgundy/10 text-burgundy'
-                            : 'text-deep-charcoal'
+                            ? 'bg-[#9F1239]/10 text-[#9F1239]'
+                            : 'text-[#1C1917]'
                         }`}
                       >
                         <span className="text-xl">{country.flag}</span>
@@ -194,7 +194,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
       {/* City Selector */}
       <div className="relative location-selector-dropdown">
-        <label className="block text-sm font-semibold text-deep-charcoal mb-2">
+        <label className="block text-sm font-semibold text-[#1C1917] mb-2">
           City *
         </label>
         <button
@@ -205,14 +205,14 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             }
           }}
           disabled={!selectedCountryCode}
-          className={`w-full px-4 py-3 rounded-xl bg-soft-gray border ${
+          className={`w-full px-4 py-3 rounded-xl bg-[#F5F5F4] border ${
             !selectedCountryCode
-              ? 'border-border-gray cursor-not-allowed opacity-50'
+              ? 'border-[#E7E5E4] cursor-not-allowed opacity-50'
               : error?.city
-              ? 'border-burgundy focus:border-burgundy'
-              : 'border-border-gray focus:border-burgundy'
-          } text-left text-deep-charcoal flex items-center justify-between hover:bg-border-gray/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-burgundy ${
-            !selectedCountryCode ? 'hover:bg-soft-gray' : ''
+              ? 'border-[#9F1239] focus:border-[#9F1239]'
+              : 'border-[#E7E5E4] focus:border-[#9F1239]'
+          } text-left text-[#1C1917] flex items-center justify-between hover:bg-[#E7E5E4]/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#9F1239] ${
+            !selectedCountryCode ? 'hover:bg-[#F5F5F4]' : ''
           }`}
         >
           <div className="flex items-center gap-3">
@@ -220,7 +220,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             {selectedCity ? (
               <span>{selectedCity}</span>
             ) : (
-              <span className="text-muted-stone">
+              <span className="text-[#A8A29E]">
                 {selectedCountryCode ? 'Select your city' : 'Select country first'}
               </span>
             )}
@@ -231,20 +231,20 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         </button>
 
         {error?.city && (
-          <p className="mt-1 text-sm text-burgundy">{error.city}</p>
+          <p className="mt-1 text-sm text-[#9F1239]">{error.city}</p>
         )}
 
         {/* City Dropdown */}
         {isCityOpen && selectedCountryCode && (
-          <div className="absolute z-50 w-full mt-2 rounded-xl bg-white border border-border-gray shadow-xl max-h-96 overflow-hidden">
+          <div className="absolute z-50 w-full mt-2 rounded-xl bg-white border border-[#E7E5E4] shadow-xl max-h-96 overflow-hidden">
             {/* Search Input */}
-            <div className="p-3 border-b border-border-gray">
+            <div className="p-3 border-b border-[#E7E5E4]">
               <input
                 type="text"
                 placeholder="Search cities..."
                 value={citySearchQuery}
                 onChange={(e) => setCitySearchQuery(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-soft-gray border border-border-gray text-deep-charcoal placeholder-muted-stone focus:outline-none focus:border-burgundy focus:ring-2 focus:ring-burgundy transition-colors"
+                className="w-full px-3 py-2 rounded-lg bg-[#F5F5F4] border border-[#E7E5E4] text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:border-[#9F1239] focus:ring-2 focus:ring-[#9F1239] transition-colors"
                 autoFocus
               />
             </div>
@@ -252,7 +252,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             {/* Cities List */}
             <div className="overflow-y-auto max-h-80 custom-scrollbar">
               {filteredCities.length === 0 ? (
-                <div className="p-4 text-center text-stone-gray">
+                <div className="p-4 text-center text-[#57534E]">
                   No cities found
                 </div>
               ) : (
@@ -261,16 +261,16 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                     key={`${city.name}-${index}`}
                     type="button"
                     onClick={() => handleCitySelect(city)}
-                    className={`w-full px-4 py-3 text-left hover:bg-soft-gray transition-colors ${
+                    className={`w-full px-4 py-3 text-left hover:bg-[#F5F5F4] transition-colors ${
                       selectedCity === city.name
-                        ? 'bg-burgundy/10 text-burgundy'
-                        : 'text-deep-charcoal'
+                        ? 'bg-[#9F1239]/10 text-[#9F1239]'
+                        : 'text-[#1C1917]'
                     }`}
                   >
                     <div className="flex flex-col">
                       <span>{city.name}</span>
                       {city.region && (
-                        <span className="text-xs text-stone-gray mt-0.5">
+                        <span className="text-xs text-[#57534E] mt-0.5">
                           {city.region}
                         </span>
                       )}

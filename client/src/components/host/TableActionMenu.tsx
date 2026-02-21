@@ -39,7 +39,7 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
     {
       label: 'Mark as Occupied',
       iconName: 'red-x',
-      color: 'text-burgundy',
+      color: 'text-[#9F1239]',
       show: table.status !== 'Occupied',
       onClick: () => updateTableMutation.mutate({ status: 'Occupied' }),
     },
@@ -60,21 +60,21 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl max-w-sm w-full border border-border-gray"
+        className="bg-white rounded-2xl shadow-2xl max-w-sm w-full border border-[#E7E5E4]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-5 border-b border-border-gray">
+        <div className="px-6 py-5 border-b border-[#E7E5E4]">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-xl font-bold text-deep-charcoal">Table {table.table_number}</h3>
-              <p className="text-sm text-stone-gray mt-1">
+              <h3 className="text-xl font-bold text-[#1C1917]">Table {table.table_number}</h3>
+              <p className="text-sm text-[#57534E] mt-1">
                 {table.capacity} seats • {table.location}
               </p>
             </div>
             <button
               onClick={onClose}
-              className="text-stone-gray hover:text-deep-charcoal transition-colors"
+              className="text-[#57534E] hover:text-[#1C1917] transition-colors"
             >
               <ThiingsIcon name="close" size="sm" />
             </button>
@@ -89,10 +89,10 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
                   table.status === 'Available'
                     ? 'bg-[#16a34a]/10 text-[#16a34a]'
                     : table.status === 'Occupied'
-                    ? 'bg-burgundy/10 text-burgundy'
+                    ? 'bg-[#9F1239]/10 text-[#9F1239]'
                     : table.status === 'Being Cleaned'
                     ? 'bg-[#d97706]/10 text-[#d97706]'
-                    : 'bg-stone-gray/10 text-stone-gray'
+                    : 'bg-[#57534E]/10 text-[#57534E]'
                 }
               `}
             >
@@ -110,14 +110,14 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
                 key={index}
                 onClick={action.onClick}
                 disabled={updateTableMutation.isPending}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-soft-gray hover:bg-border-gray transition-colors text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-[#F5F5F4] hover:bg-[#E7E5E4] transition-colors text-left group disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {updateTableMutation.isPending ? (
-                  <div className="w-5 h-5 border-2 border-burgundy border-t-transparent rounded-full animate-spin"></div>
+                  <div className="w-5 h-5 border-2 border-[#9F1239] border-t-transparent rounded-full animate-spin"></div>
                 ) : (
                   <ThiingsIcon name={action.iconName} size="sm" />
                 )}
-                <span className={`font-medium ${action.color} group-hover:text-deep-charcoal transition-colors`}>
+                <span className={`font-medium ${action.color} group-hover:text-[#1C1917] transition-colors`}>
                   {action.label}
                 </span>
               </button>
@@ -126,10 +126,10 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-border-gray">
+        <div className="px-6 py-4 border-t border-[#E7E5E4]">
           <button
             onClick={onClose}
-            className="w-full px-4 py-2.5 bg-deep-charcoal hover:bg-burgundy text-white font-medium rounded-lg transition-colors"
+            className="w-full px-4 py-2.5 bg-[#1C1917] hover:bg-[#9F1239] text-white font-medium rounded-lg transition-colors"
           >
             Close
           </button>

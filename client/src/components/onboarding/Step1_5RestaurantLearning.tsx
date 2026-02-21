@@ -135,18 +135,18 @@ export default function Step1_5RestaurantLearning({ data, updateData, onNext, on
       <div>
         <div className="flex items-center gap-3 mb-2">
           <div
-            className="inline-flex items-center justify-center w-10 h-10 bg-burgundy/10 rounded-full flex-shrink-0"
+            className="inline-flex items-center justify-center w-10 h-10 bg-[#9F1239]/10 rounded-full flex-shrink-0"
             aria-hidden="true"
           >
-            <svg className="w-5 h-5 text-burgundy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
             </svg>
           </div>
-          <h2 className="font-serif text-2xl font-bold text-deep-charcoal">
+          <h2 className="font-serif text-2xl font-bold text-[#1C1917]">
             Let&apos;s teach your AI about {data.restaurant_name}
           </h2>
         </div>
-        <p className="text-sm text-stone-gray leading-relaxed">
+        <p className="text-sm text-[#57534E] leading-relaxed">
           We&apos;ll research your restaurant online, then ask a few questions to build a personalized AI persona.
         </p>
       </div>
@@ -164,7 +164,7 @@ export default function Step1_5RestaurantLearning({ data, updateData, onNext, on
                   aria-label={`Step ${i + 1}: ${PHASE_LABELS[p]}${isComplete ? ' (completed)' : isActive ? ' (current)' : ''}`}
                   className={`
                     flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold transition-colors duration-300
-                    ${isComplete ? 'bg-burgundy text-white' : isActive ? 'bg-burgundy/15 text-burgundy ring-2 ring-burgundy/50' : 'bg-border-gray text-muted-stone'}
+                    ${isComplete ? 'bg-[#9F1239] text-white' : isActive ? 'bg-[#9F1239]/15 text-[#9F1239] ring-2 ring-[#9F1239]/50' : 'bg-[#E7E5E4] text-[#A8A29E]'}
                   `}
                 >
                   {isComplete ? (
@@ -176,7 +176,7 @@ export default function Step1_5RestaurantLearning({ data, updateData, onNext, on
                   )}
                 </div>
                 <span
-                  className={`text-xs font-medium hidden sm:inline ${isActive ? 'text-burgundy' : isComplete ? 'text-stone-gray' : 'text-muted-stone'}`}
+                  className={`text-xs font-medium hidden sm:inline ${isActive ? 'text-[#9F1239]' : isComplete ? 'text-[#57534E]' : 'text-[#A8A29E]'}`}
                   aria-hidden="true"
                 >
                   {PHASE_LABELS[p]}
@@ -185,7 +185,7 @@ export default function Step1_5RestaurantLearning({ data, updateData, onNext, on
               {i < PHASES.length - 1 && (
                 <div
                   aria-hidden="true"
-                  className={`flex-1 h-px mx-2 transition-colors duration-300 ${isComplete ? 'bg-burgundy/40' : 'bg-border-gray'}`}
+                  className={`flex-1 h-px mx-2 transition-colors duration-300 ${isComplete ? 'bg-[#9F1239]/40' : 'bg-[#E7E5E4]'}`}
                 />
               )}
             </div>
@@ -241,11 +241,11 @@ export default function Step1_5RestaurantLearning({ data, updateData, onNext, on
           ? <ResearchLoadingState restaurantName={data.restaurant_name} onSkip={handleSkip} />
           : !error && (
             <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
-              <p className="text-sm text-stone-gray">Ready to start researching your restaurant.</p>
+              <p className="text-sm text-[#57534E]">Ready to start researching your restaurant.</p>
               <button
                 type="button"
                 onClick={() => startResearch(data.restaurant_name, data.city, data.country, data.website || undefined)}
-                className="px-6 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-bold rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-offset-2"
+                className="px-6 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-bold rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:ring-offset-2"
               >
                 Start Research
               </button>
@@ -283,34 +283,34 @@ export default function Step1_5RestaurantLearning({ data, updateData, onNext, on
           >
             {/* Layered spinner rings for visual depth */}
             <div className="relative w-14 h-14">
-              <div className="absolute inset-0 rounded-full border-4 border-burgundy/10" />
+              <div className="absolute inset-0 rounded-full border-4 border-[#9F1239]/10" />
               <motion.div
-                className="absolute inset-0 rounded-full border-4 border-transparent border-t-burgundy"
+                className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#9F1239]"
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
               />
               <div className="absolute inset-0 flex items-center justify-center">
-                <svg className="w-5 h-5 text-burgundy/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg className="w-5 h-5 text-[#9F1239]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
                 </svg>
               </div>
             </div>
             <div className="text-center space-y-1">
-              <p className="text-sm font-semibold text-deep-charcoal">Building your AI persona</p>
-              <p className="text-xs text-muted-stone">This usually takes a few seconds</p>
+              <p className="text-sm font-semibold text-[#1C1917]">Building your AI persona</p>
+              <p className="text-xs text-[#A8A29E]">This usually takes a few seconds</p>
             </div>
           </div>
         ) : null
       )}
 
       {/* Navigation */}
-      <div className="flex items-center justify-between pt-4 border-t border-border-gray">
+      <div className="flex items-center justify-between pt-4 border-t border-[#E7E5E4]">
         <button
           type="button"
           onClick={onBack}
           disabled={isLoading && phase === 'research'}
           aria-label={isLoading && phase === 'research' ? 'Back unavailable while researching' : 'Go back to previous step'}
-          className="px-5 py-2.5 bg-white hover:bg-soft-gray border border-border-gray text-deep-charcoal font-semibold rounded-xl transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-offset-2"
+          className="px-5 py-2.5 bg-white hover:bg-[#F5F5F4] border border-[#E7E5E4] text-[#1C1917] font-semibold rounded-xl transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:ring-offset-2"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -320,7 +320,7 @@ export default function Step1_5RestaurantLearning({ data, updateData, onNext, on
         <button
           type="button"
           onClick={handleSkip}
-          className="text-sm text-stone-gray hover:text-burgundy font-medium transition-colors underline underline-offset-2 focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-offset-2 rounded"
+          className="text-sm text-[#57534E] hover:text-[#9F1239] font-medium transition-colors underline underline-offset-2 focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:ring-offset-2 rounded"
         >
           Skip for now
         </button>

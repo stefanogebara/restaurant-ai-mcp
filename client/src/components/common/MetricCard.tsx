@@ -40,22 +40,22 @@ export default function MetricCard({
 
   if (loading) {
     return (
-      <div className="bg-white border border-border-gray rounded-xl p-6 animate-pulse">
-        <div className="h-4 bg-soft-gray rounded w-1/2 mb-4"></div>
-        <div className="h-8 bg-soft-gray rounded w-3/4 mb-2"></div>
-        <div className="h-3 bg-soft-gray rounded w-1/3"></div>
+      <div className="bg-white border border-[#E7E5E4] rounded-xl p-6 animate-pulse">
+        <div className="h-4 bg-[#F5F5F4] rounded w-1/2 mb-4"></div>
+        <div className="h-8 bg-[#F5F5F4] rounded w-3/4 mb-2"></div>
+        <div className="h-3 bg-[#F5F5F4] rounded w-1/3"></div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white border border-border-gray rounded-xl p-6 hover:shadow-lg transition-all duration-200">
+    <div className="bg-white border border-[#E7E5E4] rounded-xl p-6 hover:shadow-lg transition-all duration-200">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <p className="text-sm font-medium text-warm-stone mb-1">{title}</p>
+          <p className="text-sm font-medium text-[#78716C] mb-1">{title}</p>
           <div className="flex items-baseline gap-2">
-            <h3 className="text-3xl font-bold text-deep-charcoal">{value}</h3>
+            <h3 className="text-3xl font-bold text-[#1C1917]">{value}</h3>
             {trend && (
               <div
                 className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
@@ -72,10 +72,10 @@ export default function MetricCard({
             )}
           </div>
           {subtitle && (
-            <p className="text-sm text-warm-stone mt-1">{subtitle}</p>
+            <p className="text-sm text-[#78716C] mt-1">{subtitle}</p>
           )}
           {trend?.label && (
-            <p className="text-xs text-warm-stone mt-1">{trend.label}</p>
+            <p className="text-xs text-[#78716C] mt-1">{trend.label}</p>
           )}
         </div>
 

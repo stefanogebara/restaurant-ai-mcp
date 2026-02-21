@@ -15,7 +15,7 @@ describe('Skeleton', () => {
     const el = container.firstChild as HTMLElement;
     expect(el).toBeInTheDocument();
     expect(el.className).toContain('animate-pulse');
-    expect(el.className).toContain('bg-border-gray');
+    expect(el.className).toContain('bg-[#E7E5E4]');
     expect(el.className).toContain('rounded');
   });
 

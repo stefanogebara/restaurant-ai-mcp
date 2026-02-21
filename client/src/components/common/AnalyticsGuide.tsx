@@ -154,14 +154,14 @@ export default function AnalyticsGuide({ page = 'ml' }: AnalyticsGuideProps) {
   const guide = guides[page];
 
   return (
-    <div className="bg-burgundy/5 rounded-xl border-2 border-burgundy/20 p-6">
+    <div className="bg-[#9F1239]/5 rounded-xl border-2 border-[#9F1239]/20 p-6">
       <div className="flex items-start gap-4 mb-6">
-        <div className="w-12 h-12 bg-burgundy/20 rounded-full flex items-center justify-center flex-shrink-0">
+        <div className="w-12 h-12 bg-[#9F1239]/20 rounded-full flex items-center justify-center flex-shrink-0">
           <ThiingsIcon name={guide.iconName} pxSize={24} />
         </div>
         <div>
-          <h3 className="text-xl font-bold text-deep-charcoal mb-1">{guide.title}</h3>
-          <p className="text-sm text-stone-gray">
+          <h3 className="text-xl font-bold text-[#1C1917] mb-1">{guide.title}</h3>
+          <p className="text-sm text-[#57534E]">
             No MBA required - just simple explanations of what you're seeing
           </p>
         </div>
@@ -170,13 +170,13 @@ export default function AnalyticsGuide({ page = 'ml' }: AnalyticsGuideProps) {
       <div className="grid md:grid-cols-2 gap-4">
         {guide.metrics.map((metric, index) => {
           return (
-            <div key={index} className="bg-white rounded-xl border border-border-gray p-4 hover:border-burgundy/30 transition-colors shadow-md">
+            <div key={index} className="bg-white rounded-xl border border-[#E7E5E4] p-4 hover:border-[#9F1239]/30 transition-colors shadow-md">
               <div className="flex items-start gap-3 mb-2">
-                <div className="w-8 h-8 bg-burgundy/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 bg-[#9F1239]/10 rounded-lg flex items-center justify-center flex-shrink-0">
                   <ThiingsIcon name={metric.iconName} pxSize={16} />
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-bold text-deep-charcoal text-sm mb-1">{metric.term}</h4>
+                  <h4 className="font-bold text-[#1C1917] text-sm mb-1">{metric.term}</h4>
                   <p className="text-xs text-[#16a34a] font-semibold mb-2">
                     → {metric.simple}
                   </p>
@@ -185,12 +185,12 @@ export default function AnalyticsGuide({ page = 'ml' }: AnalyticsGuideProps) {
 
               <div className="ml-11 space-y-2">
                 <div className="text-xs">
-                  <span className="text-stone-gray font-semibold">Example:</span>
-                  <p className="text-stone-gray mt-1">{metric.example}</p>
+                  <span className="text-[#57534E] font-semibold">Example:</span>
+                  <p className="text-[#57534E] mt-1">{metric.example}</p>
                 </div>
                 <div className="text-xs">
                   <span className="text-[#16a34a] font-semibold">✓ What's Good:</span>
-                  <p className="text-stone-gray mt-1">{metric.good}</p>
+                  <p className="text-[#57534E] mt-1">{metric.good}</p>
                 </div>
               </div>
             </div>
@@ -203,7 +203,7 @@ export default function AnalyticsGuide({ page = 'ml' }: AnalyticsGuideProps) {
           <ThiingsIcon name="info" pxSize={20} className="flex-shrink-0 mt-0.5" />
           <div className="text-sm">
             <span className="font-semibold text-[#d97706]">Tip:</span>
-            <span className="text-stone-gray ml-2">
+            <span className="text-[#57534E] ml-2">
               Hover over any metric with a <ThiingsIcon name="info" pxSize={12} /> icon for more details.
               Don't worry if some numbers are zero - your data will build up over time!
             </span>

@@ -20,9 +20,6 @@ export default {
         'burgundy': '#9F1239',
         'burgundy-dark': '#881337',
         'border-gray': '#E7E5E4',
-        'warm-stone': '#78716C',
-        'muted-stone': '#A8A29E',
-        'charcoal-dark': '#292524',
         // CSS Variable Colors
         border: "var(--border)",
         input: "var(--input)",

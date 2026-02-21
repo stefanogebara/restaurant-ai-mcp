@@ -39,10 +39,10 @@ export default function HelpTooltip({
   };
 
   const arrowClasses = {
-    top: 'top-full left-1/2 -translate-x-1/2 border-t-deep-charcoal border-l-transparent border-r-transparent border-b-transparent',
-    bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-deep-charcoal border-l-transparent border-r-transparent border-t-transparent',
-    left: 'left-full top-1/2 -translate-y-1/2 border-l-deep-charcoal border-t-transparent border-b-transparent border-r-transparent',
-    right: 'right-full top-1/2 -translate-y-1/2 border-r-deep-charcoal border-t-transparent border-b-transparent border-l-transparent'
+    top: 'top-full left-1/2 -translate-x-1/2 border-t-[#1C1917] border-l-transparent border-r-transparent border-b-transparent',
+    bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-[#1C1917] border-l-transparent border-r-transparent border-t-transparent',
+    left: 'left-full top-1/2 -translate-y-1/2 border-l-[#1C1917] border-t-transparent border-b-transparent border-r-transparent',
+    right: 'right-full top-1/2 -translate-y-1/2 border-r-[#1C1917] border-t-transparent border-b-transparent border-l-transparent'
   };
 
   return (
@@ -53,7 +53,7 @@ export default function HelpTooltip({
         onMouseLeave={() => setIsVisible(false)}
         onFocus={() => setIsVisible(true)}
         onBlur={() => setIsVisible(false)}
-        className="inline-flex items-center justify-center text-stone-gray hover:text-deep-charcoal transition-colors cursor-help focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-offset-2 rounded-full"
+        className="inline-flex items-center justify-center text-[#57534E] hover:text-[#1C1917] transition-colors cursor-help focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:ring-offset-2 rounded-full"
         aria-label="Help information"
       >
         <ThiingsIcon name="help-circle" pxSize={sizePx[size]} />
@@ -65,11 +65,11 @@ export default function HelpTooltip({
           className={`absolute z-50 ${positionClasses[position]} w-64 pointer-events-none`}
           role="tooltip"
         >
-          <div className="bg-deep-charcoal text-white text-sm rounded-xl shadow-lg p-3 border border-stone-gray">
+          <div className="bg-[#1C1917] text-white text-sm rounded-xl shadow-lg p-3 border border-[#57534E]">
             {title && (
-              <div className="font-semibold mb-1 text-burgundy">{title}</div>
+              <div className="font-semibold mb-1 text-[#9F1239]">{title}</div>
             )}
-            <div className="text-border-gray leading-relaxed whitespace-pre-line">
+            <div className="text-[#E7E5E4] leading-relaxed whitespace-pre-line">
               {content}
             </div>
             {/* Arrow */}

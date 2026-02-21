@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 /**
  * Login Page
  * Email/password + Google OAuth sign-in for restaurant onboarding
@@ -14,7 +13,6 @@ import { motion } from 'framer-motion';
 type AuthMode = 'signin' | 'signup';
 
 export default function Login() {
-  const { t } = useTranslation();
   const { user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,11 +31,11 @@ export default function Login() {
   // While auth is resolving (e.g. returning from OAuth callback), show spinner
   if (loading) {
     return (
-      <div className="min-h-screen bg-warm-white flex flex-col items-center justify-center gap-4">
-        <div className="font-serif text-2xl text-deep-charcoal opacity-50">
-          seatable<span className="text-burgundy">.</span>
+      <div className="min-h-screen bg-[#FAFAF9] flex flex-col items-center justify-center gap-4">
+        <div className="font-serif text-2xl text-[#1C1917] opacity-50">
+          seatable<span className="text-[#9F1239]">.</span>
         </div>
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy" aria-label={t('common.loading')} />
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#E7E5E4] border-t-[#9F1239]" />
       </div>
     );
   }
@@ -80,7 +78,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Brand + Features (hidden on mobile) */}
-      <div className="hidden lg:flex lg:flex-[0_0_480px] bg-deep-charcoal relative overflow-hidden">
+      <div className="hidden lg:flex lg:flex-[0_0_480px] bg-[#1C1917] relative overflow-hidden">
         {/* Subtle pattern overlay */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute top-0 left-0 w-full h-full" style={{
@@ -90,8 +88,8 @@ export default function Login() {
         </div>
 
         {/* Decorative accent */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-burgundy/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-burgundy/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#9F1239]/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#9F1239]/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           {/* Logo */}
@@ -102,7 +100,7 @@ export default function Login() {
           >
             <Link to="/" className="inline-block">
               <span className="font-serif text-3xl tracking-tight text-white">
-                seatable<span className="text-burgundy">.</span>
+                seatable<span className="text-[#9F1239]">.</span>
               </span>
             </Link>
           </motion.div>
@@ -114,8 +112,8 @@ export default function Login() {
             transition={{ delay: 0.4 }}
             className="space-y-8"
           >
-            <p className="font-serif text-4xl xl:text-[36px] font-normal italic leading-[1.35] tracking-tight text-soft-gray mb-10">
-              &ldquo;An AI that truly <em className="text-burgundy">understands</em> your restaurant.&rdquo;
+            <p className="font-serif text-4xl xl:text-[36px] font-normal italic leading-[1.35] tracking-tight text-[#F5F5F4] mb-10">
+              &ldquo;An AI that truly <em className="text-[#9F1239]">understands</em> your restaurant.&rdquo;
             </p>
 
             {/* Feature highlights */}
@@ -132,10 +130,10 @@ export default function Login() {
                   transition={{ delay: 0.6 + i * 0.15 }}
                   className="flex items-start gap-3.5"
                 >
-                  <div className="w-2 h-2 rounded-full bg-burgundy flex-shrink-0 mt-1.5" />
+                  <div className="w-2 h-2 rounded-full bg-[#9F1239] flex-shrink-0 mt-1.5" />
                   <div>
-                    <h4 className="text-sm font-semibold text-soft-gray mb-1">{feature.title}</h4>
-                    <p className="text-[13px] text-warm-stone font-light leading-relaxed">{feature.desc}</p>
+                    <h4 className="text-sm font-semibold text-[#F5F5F4] mb-1">{feature.title}</h4>
+                    <p className="text-[13px] text-[#78716C] font-light leading-relaxed">{feature.desc}</p>
                   </div>
                 </motion.div>
               ))}
@@ -151,24 +149,24 @@ export default function Login() {
           >
             <div>
               <div className="text-2xl font-serif font-bold text-white">2.3s</div>
-              <div className="text-xs text-muted-stone uppercase tracking-wider">Avg Response</div>
+              <div className="text-xs text-[#A8A29E] uppercase tracking-wider">Avg Response</div>
             </div>
             <div className="w-px bg-white/10" />
             <div>
-              <div className="text-2xl font-serif font-bold text-burgundy">6+</div>
-              <div className="text-xs text-muted-stone uppercase tracking-wider">Languages</div>
+              <div className="text-2xl font-serif font-bold text-[#9F1239]">6+</div>
+              <div className="text-xs text-[#A8A29E] uppercase tracking-wider">Languages</div>
             </div>
             <div className="w-px bg-white/10" />
             <div>
               <div className="text-2xl font-serif font-bold text-white">24/7</div>
-              <div className="text-xs text-muted-stone uppercase tracking-wider">AI Booking</div>
+              <div className="text-xs text-[#A8A29E] uppercase tracking-wider">AI Booking</div>
             </div>
           </motion.div>
         </div>
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="w-full lg:w-1/2 bg-warm-white flex items-center justify-center px-6 py-12 relative">
+      <div className="w-full lg:w-1/2 bg-[#FAFAF9] flex items-center justify-center px-6 py-12 relative">
         {/* Back Button */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -177,7 +175,7 @@ export default function Login() {
         >
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-stone-gray hover:text-deep-charcoal transition-colors text-sm"
+            className="inline-flex items-center gap-2 text-[#57534E] hover:text-[#1C1917] transition-colors text-sm"
           >
             <ThiingsIcon name="arrow-left" size="xs" />
             Back to Home
@@ -191,18 +189,18 @@ export default function Login() {
           transition={{ duration: 0.5 }}
           className="w-full max-w-md"
         >
-          <div className="bg-white border border-border-gray rounded-[2rem] p-10 shadow-xl">
+          <div className="bg-white border border-[#E7E5E4] rounded-[2rem] p-10 shadow-xl">
             {/* Logo and Title */}
             <div className="text-center mb-8">
               <Link to="/" className="inline-block mb-6 lg:hidden">
-                <span className="font-serif text-3xl tracking-tight text-deep-charcoal">
-                  seatable<span className="text-burgundy">.</span>
+                <span className="font-serif text-3xl tracking-tight text-[#1C1917]">
+                  seatable<span className="text-[#9F1239]">.</span>
                 </span>
               </Link>
-              <h1 className="font-serif text-2xl text-deep-charcoal mb-2">
+              <h1 className="font-serif text-2xl text-[#1C1917] mb-2">
                 {mode === 'signin' ? 'Welcome back' : 'Create your account'}
               </h1>
-              <p className="text-stone-gray font-light">
+              <p className="text-[#57534E] font-light">
                 {mode === 'signin' ? 'Sign in to manage your restaurant' : 'Start your 14-day free trial'}
               </p>
             </div>
@@ -235,14 +233,14 @@ export default function Login() {
               disabled={isSigningIn}
               className={`
                 w-full flex items-center justify-center gap-3 px-6 py-4
-                bg-white border border-border-gray hover:border-[#D6D3D1] hover:bg-warm-white
-                text-deep-charcoal font-medium text-[15px] rounded-xl
+                bg-white border border-[#E7E5E4] hover:border-[#D6D3D1] hover:bg-[#FAFAF9]
+                text-[#1C1917] font-medium text-[15px] rounded-xl
                 transition-all duration-300
                 ${isSigningIn ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-md'}
               `}
             >
               {isSigningIn && !email ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-deep-charcoal border-t-transparent"></div>
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#1C1917] border-t-transparent"></div>
               ) : (
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
@@ -268,15 +266,15 @@ export default function Login() {
 
             {/* Divider */}
             <div className="flex items-center gap-4 my-6">
-              <div className="flex-1 h-px bg-border-gray"></div>
-              <span className="text-xs text-muted-stone uppercase tracking-wider">or</span>
-              <div className="flex-1 h-px bg-border-gray"></div>
+              <div className="flex-1 h-px bg-[#E7E5E4]"></div>
+              <span className="text-xs text-[#A8A29E] uppercase tracking-wider">or</span>
+              <div className="flex-1 h-px bg-[#E7E5E4]"></div>
             </div>
 
             {/* Email/Password Form */}
             <form onSubmit={handleEmailSubmit} className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-[13px] font-medium text-stone-gray mb-1.5">
+                <label htmlFor="email" className="block text-[13px] font-medium text-[#57534E] mb-1.5">
                   Email address
                 </label>
                 <input
@@ -286,11 +284,11 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@restaurant.com"
                   required
-                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-[#D6D3D1] focus:outline-none focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)] focus:border-burgundy transition-all"
+                  className="w-full px-4 py-3 border border-[#E7E5E4] rounded-[10px] text-sm text-[#1C1917] placeholder-[#D6D3D1] focus:outline-none focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)] focus:border-[#9F1239] transition-all"
                 />
               </div>
               <div>
-                <label htmlFor="password" className="block text-[13px] font-medium text-stone-gray mb-1.5">
+                <label htmlFor="password" className="block text-[13px] font-medium text-[#57534E] mb-1.5">
                   Password
                 </label>
                 <input
@@ -301,7 +299,7 @@ export default function Login() {
                   placeholder={mode === 'signup' ? 'Min. 6 characters' : 'Your password'}
                   required
                   minLength={6}
-                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-[#D6D3D1] focus:outline-none focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)] focus:border-burgundy transition-all"
+                  className="w-full px-4 py-3 border border-[#E7E5E4] rounded-[10px] text-sm text-[#1C1917] placeholder-[#D6D3D1] focus:outline-none focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)] focus:border-[#9F1239] transition-all"
                 />
               </div>
 
@@ -310,7 +308,7 @@ export default function Login() {
                 disabled={isSigningIn}
                 className={`
                   w-full flex items-center justify-center gap-3 px-6 py-3.5
-                  bg-burgundy hover:bg-burgundy-dark
+                  bg-[#9F1239] hover:bg-[#881337]
                   text-white font-semibold text-[15px] rounded-full
                   transition-all duration-200
                   ${isSigningIn ? 'opacity-70 cursor-not-allowed' : ''}
@@ -326,21 +324,21 @@ export default function Login() {
             {/* Toggle sign-in / sign-up */}
             <div className="text-center mt-6">
               {mode === 'signin' ? (
-                <p className="text-stone-gray text-sm">
+                <p className="text-[#57534E] text-sm">
                   New to seatable?{' '}
                   <button
                     onClick={() => { setMode('signup'); setError(null); setSuccessMessage(null); }}
-                    className="text-burgundy font-semibold hover:underline"
+                    className="text-[#9F1239] font-semibold hover:underline"
                   >
                     Create an account
                   </button>
                 </p>
               ) : (
-                <p className="text-stone-gray text-sm">
+                <p className="text-[#57534E] text-sm">
                   Already have an account?{' '}
                   <button
                     onClick={() => { setMode('signin'); setError(null); setSuccessMessage(null); }}
-                    className="text-burgundy font-semibold hover:underline"
+                    className="text-[#9F1239] font-semibold hover:underline"
                   >
                     Sign in
                   </button>
@@ -349,13 +347,13 @@ export default function Login() {
             </div>
 
             {/* Terms */}
-            <p className="mt-6 text-center text-xs text-muted-stone font-light">
+            <p className="mt-6 text-center text-xs text-[#A8A29E] font-light">
               By continuing, you agree to our{' '}
-              <a href="/terms" className="text-burgundy hover:underline">
+              <a href="/terms" className="text-[#9F1239] hover:underline">
                 Terms of Service
               </a>{' '}
               and{' '}
-              <a href="/privacy" className="text-burgundy hover:underline">
+              <a href="/privacy" className="text-[#9F1239] hover:underline">
                 Privacy Policy
               </a>
             </p>
@@ -364,18 +362,18 @@ export default function Login() {
           {/* Trust Indicators - Mobile only (desktop has left panel) */}
           <div className="mt-8 flex justify-center gap-8 text-center lg:hidden">
             <div>
-              <div className="text-xl font-serif font-bold text-deep-charcoal">2.3s</div>
-              <div className="text-xs text-stone-gray uppercase tracking-wider">Avg Response</div>
+              <div className="text-xl font-serif font-bold text-[#1C1917]">2.3s</div>
+              <div className="text-xs text-[#57534E] uppercase tracking-wider">Avg Response</div>
             </div>
-            <div className="w-px bg-border-gray"></div>
+            <div className="w-px bg-[#E7E5E4]"></div>
             <div>
-              <div className="text-xl font-serif font-bold text-burgundy">6+</div>
-              <div className="text-xs text-stone-gray uppercase tracking-wider">Languages</div>
+              <div className="text-xl font-serif font-bold text-[#9F1239]">6+</div>
+              <div className="text-xs text-[#57534E] uppercase tracking-wider">Languages</div>
             </div>
-            <div className="w-px bg-border-gray"></div>
+            <div className="w-px bg-[#E7E5E4]"></div>
             <div>
-              <div className="text-xl font-serif font-bold text-deep-charcoal">24/7</div>
-              <div className="text-xs text-stone-gray uppercase tracking-wider">AI Booking</div>
+              <div className="text-xl font-serif font-bold text-[#1C1917]">24/7</div>
+              <div className="text-xs text-[#57534E] uppercase tracking-wider">AI Booking</div>
             </div>
           </div>
         </motion.div>

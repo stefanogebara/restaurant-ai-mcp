@@ -153,23 +153,23 @@ export default function CustomerDNADashboard() {
 
   const getDiningStyleColor = (style: string) => {
     switch (style) {
-      case 'solo': return 'bg-stone-gray/10 border-stone-gray/30 text-stone-gray';
-      case 'couple': return 'bg-burgundy/10 border-burgundy/30 text-burgundy';
+      case 'solo': return 'bg-[#57534E]/10 border-[#57534E]/30 text-[#57534E]';
+      case 'couple': return 'bg-[#9F1239]/10 border-[#9F1239]/30 text-[#9F1239]';
       case 'family': return 'bg-[#7c3aed]/10 border-[#7c3aed]/30 text-[#7c3aed]';
       case 'business': return 'bg-[#d97706]/10 border-[#d97706]/30 text-[#d97706]';
       case 'group': return 'bg-[#16a34a]/10 border-[#16a34a]/30 text-[#16a34a]';
-      default: return 'bg-stone-gray/10 border-stone-gray/30 text-stone-gray';
+      default: return 'bg-[#57534E]/10 border-[#57534E]/30 text-[#57534E]';
     }
   };
 
   const getSpontaneityColor = (level: string) => {
     switch (level) {
-      case 'very_spontaneous': return 'bg-burgundy';
+      case 'very_spontaneous': return 'bg-[#9F1239]';
       case 'spontaneous': return 'bg-[#d97706]';
       case 'moderate': return 'bg-[#d97706]';
       case 'planner': return 'bg-[#16a34a]';
       case 'advance_planner': return 'bg-[#7c3aed]';
-      default: return 'bg-stone-gray';
+      default: return 'bg-[#57534E]';
     }
   };
 
@@ -179,33 +179,33 @@ export default function CustomerDNADashboard() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-6 border border-border-gray">
+      <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold font-serif text-deep-charcoal flex items-center gap-2">
+          <h2 className="text-xl font-bold font-serif text-[#1C1917] flex items-center gap-2">
             <ThiingsIcon name="brain" pxSize={20} />
             Customer DNA Profiling
           </h2>
         </div>
-        <div className="text-center py-8 text-stone-gray">Loading...</div>
+        <div className="text-center py-8 text-[#57534E]">Loading...</div>
       </div>
     );
   }
 
   if (!stats || stats.total_profiles === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-6 border border-border-gray">
+      <div className="bg-white rounded-xl shadow-lg p-6 border border-[#E7E5E4]">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-full bg-soft-gray flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-[#F5F5F4] flex items-center justify-center">
             <ThiingsIcon name="brain" pxSize={24} />
           </div>
           <div>
-            <h3 className="text-lg font-semibold font-serif text-deep-charcoal">No DNA Profiles Yet</h3>
-            <p className="text-sm text-stone-gray">Analyze customer behavior to unlock insights</p>
+            <h3 className="text-lg font-semibold font-serif text-[#1C1917]">No DNA Profiles Yet</h3>
+            <p className="text-sm text-[#57534E]">Analyze customer behavior to unlock insights</p>
           </div>
         </div>
         <button
           onClick={analyzeAllCustomers}
-          className="w-full px-4 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-burgundy/30 flex items-center justify-center gap-2"
+          className="w-full px-4 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-[#9F1239]/30 flex items-center justify-center gap-2"
         >
           <ThiingsIcon name="activity" pxSize={20} />
           Analyze All Customers
@@ -219,13 +219,13 @@ export default function CustomerDNADashboard() {
   const totalSpontaneity = Object.values(stats.spontaneity_distribution).reduce((sum, count) => sum + count, 0);
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-border-gray">
+    <div className="bg-white rounded-xl shadow-lg border border-[#E7E5E4]">
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-6 flex items-center justify-between hover:bg-soft-gray/50 transition-colors rounded-t-xl"
+        className="w-full p-6 flex items-center justify-between hover:bg-[#F5F5F4]/50 transition-colors rounded-t-xl"
       >
-        <h2 className="text-xl font-bold font-serif text-deep-charcoal flex items-center gap-2">
+        <h2 className="text-xl font-bold font-serif text-[#1C1917] flex items-center gap-2">
           <ThiingsIcon name="brain" pxSize={20} />
           Customer DNA Profiling
           <span className="px-2 py-1 bg-[#7c3aed]/20 text-[#7c3aed] text-sm rounded-full font-semibold">
@@ -233,7 +233,7 @@ export default function CustomerDNADashboard() {
           </span>
         </h2>
         <div className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
-          <svg className="w-5 h-5 text-stone-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-[#57534E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
@@ -248,35 +248,35 @@ export default function CustomerDNADashboard() {
             <div className="p-4 bg-[#7c3aed]/10 rounded-xl border border-[#7c3aed]/20">
               <div className="flex items-center justify-between mb-2">
                 <ThiingsIcon name="brain" pxSize={20} />
-                <span className="text-2xl font-bold text-deep-charcoal">{stats.total_profiles}</span>
+                <span className="text-2xl font-bold text-[#1C1917]">{stats.total_profiles}</span>
               </div>
-              <div className="text-xs text-stone-gray">DNA Profiles</div>
+              <div className="text-xs text-[#57534E]">DNA Profiles</div>
             </div>
 
             {/* Avg Confidence */}
             <div className="p-4 bg-[#16a34a]/10 rounded-xl border border-[#16a34a]/20">
               <div className="flex items-center justify-between mb-2">
                 <ThiingsIcon name="target" pxSize={20} />
-                <span className="text-2xl font-bold text-deep-charcoal">{stats.avg_confidence}%</span>
+                <span className="text-2xl font-bold text-[#1C1917]">{stats.avg_confidence}%</span>
               </div>
-              <div className="text-xs text-stone-gray">Avg Confidence</div>
+              <div className="text-xs text-[#57534E]">Avg Confidence</div>
             </div>
 
             {/* Occasions Detected */}
-            <div className="p-4 bg-burgundy/10 rounded-xl border border-burgundy/20">
+            <div className="p-4 bg-[#9F1239]/10 rounded-xl border border-[#9F1239]/20">
               <div className="flex items-center justify-between mb-2">
                 <ThiingsIcon name="calendar" pxSize={20} />
-                <span className="text-2xl font-bold text-deep-charcoal">{stats.total_occasions_detected}</span>
+                <span className="text-2xl font-bold text-[#1C1917]">{stats.total_occasions_detected}</span>
               </div>
-              <div className="text-xs text-stone-gray">Occasions Found</div>
+              <div className="text-xs text-[#57534E]">Occasions Found</div>
             </div>
           </div>
 
           {/* Dining Styles Breakdown */}
-          <div className="p-4 bg-soft-gray rounded-xl">
+          <div className="p-4 bg-[#F5F5F4] rounded-xl">
             <div className="flex items-center gap-2 mb-3">
               <ThiingsIcon name="users" pxSize={16} />
-              <h3 className="text-sm font-semibold font-serif text-deep-charcoal">Dining Styles</h3>
+              <h3 className="text-sm font-semibold font-serif text-[#1C1917]">Dining Styles</h3>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
               {Object.entries(stats.dining_styles).map(([style, count]) => {
@@ -296,10 +296,10 @@ export default function CustomerDNADashboard() {
           </div>
 
           {/* Day Type Preferences */}
-          <div className="p-4 bg-soft-gray rounded-xl">
+          <div className="p-4 bg-[#F5F5F4] rounded-xl">
             <div className="flex items-center gap-2 mb-3">
               <ThiingsIcon name="calendar" pxSize={16} />
-              <h3 className="text-sm font-semibold font-serif text-deep-charcoal">Day Preferences</h3>
+              <h3 className="text-sm font-semibold font-serif text-[#1C1917]">Day Preferences</h3>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {Object.entries(stats.day_type_preferences).map(([dayType, count]) => {
@@ -310,9 +310,9 @@ export default function CustomerDNADashboard() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         {isWeekend ? <ThiingsIcon name="sun" pxSize={16} /> : <ThiingsIcon name="moon" pxSize={16} />}
-                        <span className="text-sm font-medium text-deep-charcoal capitalize">{dayType}</span>
+                        <span className="text-sm font-medium text-[#1C1917] capitalize">{dayType}</span>
                       </div>
-                      <span className="text-xl font-bold text-deep-charcoal">{count}</span>
+                      <span className="text-xl font-bold text-[#1C1917]">{count}</span>
                     </div>
                     <div className="w-full bg-white h-2 rounded-full overflow-hidden">
                       <div
@@ -327,10 +327,10 @@ export default function CustomerDNADashboard() {
           </div>
 
           {/* Time Slot Preferences */}
-          <div className="p-4 bg-soft-gray rounded-xl">
+          <div className="p-4 bg-[#F5F5F4] rounded-xl">
             <div className="flex items-center gap-2 mb-3">
               <ThiingsIcon name="clock" pxSize={16} />
-              <h3 className="text-sm font-semibold font-serif text-deep-charcoal">Time Slot Preferences</h3>
+              <h3 className="text-sm font-semibold font-serif text-[#1C1917]">Time Slot Preferences</h3>
             </div>
             <div className="space-y-2">
               {Object.entries(stats.time_slot_preferences)
@@ -342,8 +342,8 @@ export default function CustomerDNADashboard() {
                     <div key={timeSlot} className="flex items-center gap-3">
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium text-deep-charcoal">{timeSlot}</span>
-                          <span className="text-sm text-stone-gray">{count} ({percentage.toFixed(0)}%)</span>
+                          <span className="text-sm font-medium text-[#1C1917]">{timeSlot}</span>
+                          <span className="text-sm text-[#57534E]">{count} ({percentage.toFixed(0)}%)</span>
                         </div>
                         <div className="w-full bg-white h-2 rounded-full overflow-hidden">
                           <div
@@ -359,10 +359,10 @@ export default function CustomerDNADashboard() {
           </div>
 
           {/* Spontaneity Distribution */}
-          <div className="p-4 bg-soft-gray rounded-xl">
+          <div className="p-4 bg-[#F5F5F4] rounded-xl">
             <div className="flex items-center gap-2 mb-3">
               <ThiingsIcon name="zap" pxSize={16} />
-              <h3 className="text-sm font-semibold font-serif text-deep-charcoal">Booking Spontaneity</h3>
+              <h3 className="text-sm font-semibold font-serif text-[#1C1917]">Booking Spontaneity</h3>
             </div>
             <div className="space-y-2">
               {Object.entries(stats.spontaneity_distribution)
@@ -373,8 +373,8 @@ export default function CustomerDNADashboard() {
                     <div key={level} className="flex items-center gap-3">
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium text-deep-charcoal">{getSpontaneityLabel(level)}</span>
-                          <span className="text-sm text-stone-gray">{count} ({percentage.toFixed(0)}%)</span>
+                          <span className="text-sm font-medium text-[#1C1917]">{getSpontaneityLabel(level)}</span>
+                          <span className="text-sm text-[#57534E]">{count} ({percentage.toFixed(0)}%)</span>
                         </div>
                         <div className="w-full bg-white h-2 rounded-full overflow-hidden">
                           <div
@@ -391,15 +391,15 @@ export default function CustomerDNADashboard() {
 
           {/* Upcoming Occasions */}
           {occasions.length > 0 && (
-            <div className="p-4 bg-burgundy/10 rounded-xl border border-burgundy/20">
+            <div className="p-4 bg-[#9F1239]/10 rounded-xl border border-[#9F1239]/20">
               <button
                 onClick={() => setShowOccasions(!showOccasions)}
                 className="w-full flex items-center justify-between mb-3"
               >
                 <div className="flex items-center gap-2">
                   <ThiingsIcon name="calendar" pxSize={16} />
-                  <h3 className="text-sm font-semibold font-serif text-deep-charcoal">Upcoming Special Occasions</h3>
-                  <span className="px-2 py-0.5 bg-burgundy/20 text-burgundy text-xs rounded-full font-semibold">
+                  <h3 className="text-sm font-semibold font-serif text-[#1C1917]">Upcoming Special Occasions</h3>
+                  <span className="px-2 py-0.5 bg-[#9F1239]/20 text-[#9F1239] text-xs rounded-full font-semibold">
                     {occasions.length}
                   </span>
                 </div>
@@ -411,18 +411,18 @@ export default function CustomerDNADashboard() {
                   {occasions.slice(0, 5).map((occasion) => (
                     <div key={occasion.id} className="p-2 bg-white/50 rounded-xl flex items-center justify-between">
                       <div>
-                        <div className="text-sm font-medium text-deep-charcoal capitalize">
+                        <div className="text-sm font-medium text-[#1C1917] capitalize">
                           {occasion.occasion_type.replace('_', ' ')}
                         </div>
-                        <div className="text-xs text-stone-gray">
+                        <div className="text-xs text-[#57534E]">
                           {occasion.customer_id} • Party of {occasion.party_size}
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-bold text-burgundy">
+                        <div className="text-sm font-bold text-[#9F1239]">
                           {new Date(occasion.next_predicted_date).toLocaleDateString()}
                         </div>
-                        <div className="text-xs text-stone-gray">
+                        <div className="text-xs text-[#57534E]">
                           {Math.round(occasion.probability_score * 100)}% confidence
                         </div>
                       </div>
@@ -438,9 +438,9 @@ export default function CustomerDNADashboard() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <ThiingsIcon name="trending-up" pxSize={16} />
-                <span className="text-sm font-semibold text-deep-charcoal">Total Predictions Made</span>
+                <span className="text-sm font-semibold text-[#1C1917]">Total Predictions Made</span>
               </div>
-              <span className="text-xl font-bold text-deep-charcoal">{stats.total_predictions_made}</span>
+              <span className="text-xl font-bold text-[#1C1917]">{stats.total_predictions_made}</span>
             </div>
           </div>
 
@@ -448,7 +448,7 @@ export default function CustomerDNADashboard() {
           <div className="flex gap-3">
             <button
               onClick={analyzeAllCustomers}
-              className="flex-1 px-4 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-burgundy/30 flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-[#9F1239]/30 flex items-center justify-center gap-2"
             >
               <ThiingsIcon name="activity" pxSize={20} />
               Analyze All Customers
@@ -456,11 +456,11 @@ export default function CustomerDNADashboard() {
           </div>
 
           {/* Customer List Section */}
-          <div className="p-4 bg-soft-gray rounded-xl">
+          <div className="p-4 bg-[#F5F5F4] rounded-xl">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <ThiingsIcon name="users" pxSize={16} />
-                <h3 className="text-sm font-semibold font-serif text-deep-charcoal">Customer Profiles</h3>
+                <h3 className="text-sm font-semibold font-serif text-[#1C1917]">Customer Profiles</h3>
               </div>
             </div>
 
@@ -473,7 +473,7 @@ export default function CustomerDNADashboard() {
                   placeholder="Search by name or phone..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/30 focus:border-[#7c3aed]"
+                  className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-[#E7E5E4] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/30 focus:border-[#7c3aed]"
                 />
               </div>
               <div className="relative">
@@ -481,7 +481,7 @@ export default function CustomerDNADashboard() {
                 <select
                   value={styleFilter}
                   onChange={(e) => setStyleFilter(e.target.value)}
-                  className="pl-9 pr-8 py-2 text-sm bg-white border border-border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/30 focus:border-[#7c3aed] appearance-none cursor-pointer"
+                  className="pl-9 pr-8 py-2 text-sm bg-white border border-[#E7E5E4] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/30 focus:border-[#7c3aed] appearance-none cursor-pointer"
                 >
                   <option value="">All Styles</option>
                   <option value="solo">Solo</option>
@@ -495,11 +495,11 @@ export default function CustomerDNADashboard() {
 
             {/* Customer Table */}
             {isLoadingList ? (
-              <div className="text-center py-4 text-sm text-stone-gray">Loading customers...</div>
+              <div className="text-center py-4 text-sm text-[#57534E]">Loading customers...</div>
             ) : customers.length > 0 ? (
               <div className="space-y-1">
                 {/* Table Header */}
-                <div className="hidden md:grid grid-cols-12 gap-2 px-3 py-2 text-xs font-semibold text-stone-gray uppercase">
+                <div className="hidden md:grid grid-cols-12 gap-2 px-3 py-2 text-xs font-semibold text-[#57534E] uppercase">
                   <div className="col-span-3">Name</div>
                   <div className="col-span-2">Style</div>
                   <div className="col-span-1 text-center">Visits</div>
@@ -518,17 +518,17 @@ export default function CustomerDNADashboard() {
                     {/* Mobile layout */}
                     <div className="flex md:hidden items-center justify-between">
                       <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium text-deep-charcoal truncate">
+                        <div className="text-sm font-medium text-[#1C1917] truncate">
                           {customer.customer_name || customer.customer_id}
                         </div>
                         <div className="flex items-center gap-2 mt-1">
                           <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border capitalize ${getDiningStyleColor(customer.dining_style)}`}>
                             {customer.dining_style}
                           </span>
-                          <span className="text-xs text-stone-gray">
+                          <span className="text-xs text-[#57534E]">
                             {customer.avg_check_per_person != null ? `€${customer.avg_check_per_person.toFixed(0)}` : '--'}
                           </span>
-                          <span className="text-xs text-stone-gray">{customer.profile_confidence}%</span>
+                          <span className="text-xs text-[#57534E]">{customer.profile_confidence}%</span>
                         </div>
                       </div>
                       <ThiingsIcon name="chevron-right" pxSize={16} className="ml-2" />
@@ -536,11 +536,11 @@ export default function CustomerDNADashboard() {
                     {/* Desktop layout */}
                     <div className="hidden md:grid grid-cols-12 gap-2 items-center">
                       <div className="col-span-3">
-                        <div className="text-sm font-medium text-deep-charcoal truncate">
+                        <div className="text-sm font-medium text-[#1C1917] truncate">
                           {customer.customer_name || customer.customer_id}
                         </div>
                         {customer.customer_name && (
-                          <div className="text-xs text-muted-stone truncate">{customer.customer_id}</div>
+                          <div className="text-xs text-[#A8A29E] truncate">{customer.customer_id}</div>
                         )}
                       </div>
                       <div className="col-span-2">
@@ -548,20 +548,20 @@ export default function CustomerDNADashboard() {
                           {customer.dining_style}
                         </span>
                       </div>
-                      <div className="col-span-1 text-center text-sm text-deep-charcoal">
+                      <div className="col-span-1 text-center text-sm text-[#1C1917]">
                         {Math.round(customer.typical_party_size)}
                       </div>
-                      <div className="col-span-2 text-right text-sm text-deep-charcoal">
+                      <div className="col-span-2 text-right text-sm text-[#1C1917]">
                         {customer.avg_check_per_person != null ? `€${customer.avg_check_per_person.toFixed(0)}` : '--'}
                       </div>
                       <div className="col-span-2 flex items-center justify-center gap-1">
-                        <div className="w-16 bg-border-gray h-1.5 rounded-full overflow-hidden">
+                        <div className="w-16 bg-[#E7E5E4] h-1.5 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-[#7c3aed] rounded-full"
                             style={{ width: `${customer.profile_confidence}%` }}
                           />
                         </div>
-                        <span className="text-xs text-stone-gray">{customer.profile_confidence}%</span>
+                        <span className="text-xs text-[#57534E]">{customer.profile_confidence}%</span>
                       </div>
                       <div className="col-span-2 flex justify-end">
                         <ThiingsIcon name="chevron-right" pxSize={16} />
@@ -571,7 +571,7 @@ export default function CustomerDNADashboard() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-4 text-sm text-stone-gray">
+              <div className="text-center py-4 text-sm text-[#57534E]">
                 {searchQuery || styleFilter ? 'No customers match your filters' : 'No customer profiles available'}
               </div>
             )}

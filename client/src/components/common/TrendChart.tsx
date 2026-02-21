@@ -35,10 +35,10 @@ export default function TrendChart({
   if (loading) {
     return (
       <div
-        className="bg-white border border-border-gray rounded-xl p-6 flex items-center justify-center animate-pulse"
+        className="bg-white border border-[#E7E5E4] rounded-xl p-6 flex items-center justify-center animate-pulse"
         style={{ height }}
       >
-        <div className="text-warm-stone">Loading chart...</div>
+        <div className="text-[#78716C]">Loading chart...</div>
       </div>
     );
   }
@@ -46,12 +46,12 @@ export default function TrendChart({
   if (!data || data.length === 0) {
     return (
       <div
-        className="bg-white border border-border-gray rounded-xl p-6 flex items-center justify-center"
+        className="bg-white border border-[#E7E5E4] rounded-xl p-6 flex items-center justify-center"
         style={{ height }}
       >
         <div className="text-center">
-          <p className="text-warm-stone">No data available</p>
-          <p className="text-sm text-warm-stone mt-1">
+          <p className="text-[#78716C]">No data available</p>
+          <p className="text-sm text-[#78716C] mt-1">
             Data will appear here once interventions are tracked
           </p>
         </div>
@@ -62,16 +62,16 @@ export default function TrendChart({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white border border-border-gray rounded-lg p-3 shadow-lg">
-          <p className="text-sm font-semibold text-deep-charcoal mb-2">{label}</p>
+        <div className="bg-white border border-[#E7E5E4] rounded-lg p-3 shadow-lg">
+          <p className="text-sm font-semibold text-[#1C1917] mb-2">{label}</p>
           {payload.map((entry: any, index: number) => (
             <div key={index} className="flex items-center gap-2 text-sm">
               <div
                 className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: entry.color }}
               />
-              <span className="text-warm-stone">{entry.name}:</span>
-              <span className="font-semibold text-deep-charcoal">{entry.value}</span>
+              <span className="text-[#78716C]">{entry.name}:</span>
+              <span className="font-semibold text-[#1C1917]">{entry.value}</span>
             </div>
           ))}
         </div>
@@ -82,7 +82,7 @@ export default function TrendChart({
 
   const chartConfig = {
     margin: { top: 5, right: 30, left: 20, bottom: 5 },
-    className: 'bg-white border border-border-gray rounded-xl p-6'
+    className: 'bg-white border border-[#E7E5E4] rounded-xl p-6'
   };
 
   return (
