@@ -1,32 +1,28 @@
 /**
- * Restaurant Onboarding Wizard - Modern Elegant Design
+ * Restaurant Onboarding Wizard - Simplified 4-Step Flow
  *
- * 7-step onboarding flow for new restaurant customers:
- * 1. Welcome & Restaurant Info
- * 2. AI Learning (research + interview + persona)
- * 3. Contact & Business Hours
- * 4. AI Voice Selection (choose ElevenLabs voice for phone agent)
- * 5. Table Configuration
- * 6. Reservation Settings
- * 7. Team Setup (Pro+ only)
+ * 1. Restaurant Info    — name, type, location, language
+ * 2. Contact & Hours   — phone, email, WhatsApp, business hours
+ * 3. Tables & Settings — dining areas + booking settings (collapsed)
+ * 4. Review & Launch   — summary with edit links, then submit
  *
- * Design: Modern Elegant with warm white backgrounds, burgundy accents,
- * Playfair Display headings, and clean minimalist aesthetic
+ * AI Learning, Voice Selection, and Team Setup have been moved
+ * to post-onboarding settings to reduce friction.
  */
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import Step1Welcome from '../components/onboarding/Step1Welcome';
-import Step1_5RestaurantLearning from '../components/onboarding/Step1_5RestaurantLearning';
 import Step2Contact from '../components/onboarding/Step2Contact';
-import Step2_5VoiceSelection from '../components/onboarding/Step2_5VoiceSelection';
-import Step3Tables from '../components/onboarding/Step3Tables';
-import Step4Settings from '../components/onboarding/Step4Settings';
-import Step5Team from '../components/onboarding/Step5Team';
+import Step3TablesAndSettings from '../components/onboarding/Step3TablesAndSettings';
+import Step4Review from '../components/onboarding/Step4Review';
 import type { OnboardingData } from '../types/onboarding.types';
 import { authFetch } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+
+const STEP_NAMES = ['Restaurant Info', 'Contact & Hours', 'Tables & Settings', 'Review & Launch'];
+const TOTAL_STEPS = 4;
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -36,24 +32,21 @@ export default function Onboarding() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // Get customer email from auth context (no longer requires URL params or Stripe checkout)
   const customerEmail = user?.email || localStorage.getItem('customer_email') || '';
 
-  // Onboarding data state
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
     customer_email: customerEmail,
     restaurant_id: '',
     plan: 'Professional',
-    // Step 1: Welcome & Restaurant Info
+    // Step 1
     restaurant_name: '',
     restaurant_type: '',
     city: '',
     country: '',
-    // Step 2: Contact & Business Hours
+    // Step 2
     phone_number: '',
     email: '',
     website: '',
-    // Default: Lunch & Dinner service (most common restaurant schedule)
     business_hours: [
       { day: 'Monday', is_open: true, open_time: '12:00', close_time: '23:00' },
       { day: 'Tuesday', is_open: true, open_time: '12:00', close_time: '23:00' },
@@ -64,7 +57,7 @@ export default function Onboarding() {
       { day: 'Sunday', is_open: true, open_time: '12:00', close_time: '22:00' },
     ],
     average_dining_duration: 90,
-    // Step 3: Table Configuration
+    // Step 3
     areas: [
       {
         name: 'Indoor',
@@ -73,45 +66,40 @@ export default function Onboarding() {
           { capacity: 2, count: 0, shape: 'square', is_fixed_seating: false, is_joinable: true },
           { capacity: 4, count: 0, shape: 'square', is_fixed_seating: false, is_joinable: true },
           { capacity: 6, count: 0, shape: 'square', is_fixed_seating: false, is_joinable: true },
-          { capacity: 8, count: 0, shape: 'square', is_fixed_seating: false, is_joinable: true }
-        ]
-      }
+          { capacity: 8, count: 0, shape: 'square', is_fixed_seating: false, is_joinable: true },
+        ],
+      },
     ],
-    // Step 4: Reservation Settings
     advance_booking_days: 30,
     buffer_time: 15,
     cancellation_policy: 'Free cancellation up to 2 hours before reservation',
     special_notes: '',
-    // Step 5: Team Setup
+    // Team setup moved to Settings post-onboarding
     team_members: [],
   });
 
-  // Save progress to localStorage
+  // Persist progress
   useEffect(() => {
     localStorage.setItem('onboarding_data', JSON.stringify(onboardingData));
     localStorage.setItem('onboarding_step', currentStep.toString());
   }, [onboardingData, currentStep]);
 
-  // Update onboarding data
   const updateData = (updates: Partial<OnboardingData>) => {
     setOnboardingData((prev) => ({ ...prev, ...updates }));
   };
 
-  // Navigate to next step
   const nextStep = () => {
-    if (currentStep < 7) {
-      setCurrentStep(currentStep + 1);
-    }
+    if (currentStep < TOTAL_STEPS) setCurrentStep(currentStep + 1);
   };
 
-  // Navigate to previous step
   const prevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
-  // Complete onboarding
+  const goToStep = (step: number) => {
+    if (step >= 1 && step <= TOTAL_STEPS) setCurrentStep(step);
+  };
+
   const completeOnboarding = async () => {
     setIsSubmitting(true);
     try {
@@ -129,14 +117,11 @@ export default function Onboarding() {
         throw new Error(`${errorMessage}${errorDetails}`);
       }
 
-      // Clear localStorage
       localStorage.removeItem('onboarding_data');
       localStorage.removeItem('onboarding_step');
 
-      // Show success modal
       setShowSuccessModal(true);
 
-      // Redirect to dashboard after 3 seconds
       setTimeout(() => {
         navigate('/host-dashboard');
       }, 3000);
@@ -148,31 +133,20 @@ export default function Onboarding() {
     }
   };
 
-  // Step metadata for progress bar
-  const stepNames = [
-    'Restaurant Info',
-    'AI Learning',
-    'Contact & Hours',
-    'Voice Selection',
-    'Tables',
-    'Settings',
-    'Team'
-  ];
-
-  const progressPercent = ((currentStep) / 7) * 100;
+  const progressPercent = (currentStep / TOTAL_STEPS) * 100;
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] flex flex-col">
+    <div className="min-h-screen bg-warm-white flex flex-col">
       {/* Top Bar */}
-      <header className="flex items-center justify-between px-6 sm:px-12 py-5 border-b border-[#E7E5E4] bg-white">
-        <div className="font-serif text-xl font-semibold text-[#1C1917]">
-          seatable<span className="text-[#9F1239]">.</span>
+      <header className="flex items-center justify-between px-6 sm:px-12 py-5 border-b border-border-gray bg-white">
+        <div className="font-serif text-xl font-semibold text-deep-charcoal">
+          seatable<span className="text-burgundy">.</span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-[13px] text-[#78716C]">Step {currentStep} of 7</span>
+          <span className="text-[13px] text-warm-stone">Step {currentStep} of {TOTAL_STEPS}</span>
           <button
             onClick={() => navigate('/')}
-            className="text-[13px] text-[#9F1239] font-medium hover:text-[#881337] transition-colors"
+            className="text-[13px] text-burgundy font-medium hover:text-burgundy-dark transition-colors"
           >
             Save &amp; Exit
           </button>
@@ -180,9 +154,9 @@ export default function Onboarding() {
       </header>
 
       {/* Progress Bar */}
-      <div className="h-[3px] bg-[#E7E5E4]">
+      <div className="h-[3px] bg-border-gray">
         <div
-          className="h-full bg-[#9F1239] rounded-r-full transition-all duration-300"
+          className="h-full bg-burgundy rounded-r-full transition-all duration-300"
           style={{ width: `${progressPercent}%` }}
         />
       </div>
@@ -192,30 +166,32 @@ export default function Onboarding() {
         {/* Step Sidebar */}
         <div className="hidden md:block flex-shrink-0 w-[220px] pt-2">
           <div className="flex flex-col">
-            {stepNames.map((name, index) => {
+            {STEP_NAMES.map((name, index) => {
               const stepNumber = index + 1;
               const isActive = stepNumber === currentStep;
               const isCompleted = stepNumber < currentStep;
-              const isLast = index === stepNames.length - 1;
+              const isLast = index === STEP_NAMES.length - 1;
 
               return (
                 <div key={stepNumber} className="flex items-start gap-4 py-4 relative">
-                  {/* Connecting line */}
                   {!isLast && (
                     <div
                       className={`absolute left-[15px] top-[48px] bottom-0 w-px ${
-                        isCompleted ? 'bg-[#9F1239]' : isActive ? 'bg-gradient-to-b from-[#9F1239] to-[#E7E5E4]' : 'bg-[#E7E5E4]'
+                        isCompleted
+                          ? 'bg-burgundy'
+                          : isActive
+                            ? 'bg-gradient-to-b from-burgundy to-border-gray'
+                            : 'bg-border-gray'
                       }`}
                     />
                   )}
-                  {/* Step number */}
                   <div
                     className={`relative z-10 w-8 h-8 rounded-full border-2 flex items-center justify-center text-[13px] font-semibold flex-shrink-0 ${
                       isCompleted
-                        ? 'border-[#9F1239] bg-[#9F1239] text-white'
+                        ? 'border-burgundy bg-burgundy text-white'
                         : isActive
-                          ? 'border-[#9F1239] bg-[rgba(159,18,57,0.06)] text-[#9F1239]'
-                          : 'border-[#E7E5E4] bg-white text-[#A8A29E]'
+                          ? 'border-burgundy bg-burgundy/[0.06] text-burgundy'
+                          : 'border-border-gray bg-white text-muted-stone'
                     }`}
                   >
                     {isCompleted ? (
@@ -226,10 +202,13 @@ export default function Onboarding() {
                       stepNumber
                     )}
                   </div>
-                  {/* Step label */}
                   <span
                     className={`text-sm pt-[5px] ${
-                      isActive ? 'font-semibold text-[#1C1917]' : isCompleted ? 'font-medium text-[#57534E]' : 'font-medium text-[#A8A29E]'
+                      isActive
+                        ? 'font-semibold text-deep-charcoal'
+                        : isCompleted
+                          ? 'font-medium text-stone-gray'
+                          : 'font-medium text-muted-stone'
                     }`}
                   >
                     {name}
@@ -250,14 +229,6 @@ export default function Onboarding() {
             />
           )}
           {currentStep === 2 && (
-            <Step1_5RestaurantLearning
-              data={onboardingData}
-              updateData={updateData}
-              onNext={nextStep}
-              onBack={prevStep}
-            />
-          )}
-          {currentStep === 3 && (
             <Step2Contact
               data={onboardingData}
               updateData={updateData}
@@ -265,37 +236,22 @@ export default function Onboarding() {
               onBack={prevStep}
             />
           )}
+          {currentStep === 3 && (
+            <Step3TablesAndSettings
+              data={onboardingData}
+              updateData={updateData}
+              onNext={nextStep}
+              onBack={prevStep}
+            />
+          )}
           {currentStep === 4 && (
-            <Step2_5VoiceSelection
-              data={onboardingData}
-              onUpdate={updateData}
-              onNext={nextStep}
-              onPrev={prevStep}
-            />
-          )}
-          {currentStep === 5 && (
-            <Step3Tables
+            <Step4Review
               data={onboardingData}
               updateData={updateData}
-              onNext={nextStep}
               onBack={prevStep}
-            />
-          )}
-          {currentStep === 6 && (
-            <Step4Settings
-              data={onboardingData}
-              updateData={updateData}
-              onNext={nextStep}
-              onBack={prevStep}
-            />
-          )}
-          {currentStep === 7 && (
-            <Step5Team
-              data={onboardingData}
-              updateData={updateData}
               onComplete={completeOnboarding}
-              onBack={prevStep}
               isSubmitting={isSubmitting}
+              goToStep={goToStep}
             />
           )}
         </div>
@@ -304,20 +260,20 @@ export default function Onboarding() {
       {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-          <div className="bg-white border border-[#E7E5E4] rounded-2xl p-12 max-w-md w-full">
+          <div className="bg-white border border-border-gray rounded-2xl p-12 max-w-md w-full">
             <div className="text-center">
-              <div className="w-20 h-20 bg-[#9F1239] rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="w-20 h-20 bg-burgundy rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h2 className="font-serif text-3xl font-medium text-[#1C1917] mb-3">Welcome Aboard!</h2>
-              <p className="text-[15px] text-[#57534E] font-light mb-6">
+              <h2 className="font-serif text-3xl font-medium text-deep-charcoal mb-3">Welcome Aboard!</h2>
+              <p className="text-[15px] text-stone-gray font-light mb-6">
                 Your restaurant is ready. Let&apos;s start managing reservations!
               </p>
               <div className="flex items-center justify-center gap-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#E7E5E4] border-t-[#9F1239]" />
-                <span className="text-sm text-[#57534E]">Redirecting to dashboard...</span>
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-border-gray border-t-burgundy" />
+                <span className="text-sm text-stone-gray">Redirecting to dashboard...</span>
               </div>
             </div>
           </div>
