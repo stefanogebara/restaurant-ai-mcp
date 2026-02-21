@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { detectCurrency, formatPrice, type SupportedCurrency } from '../currency';
+import { detectCurrency, formatPrice } from '../currency';
 
 describe('detectCurrency', () => {
   const originalNavigator = globalThis.navigator;

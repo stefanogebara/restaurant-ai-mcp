@@ -8,7 +8,6 @@ import {
   getRequiredPlan,
   getInterventionLimit,
   hasReachedInterventionLimit,
-  type PlanType,
 } from '../planFeatures';
 
 describe('PLAN_FEATURES - free plan', () => {
