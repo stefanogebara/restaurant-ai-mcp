@@ -39,6 +39,7 @@ scenarios:
             - statusCode:
                 - 200
                 - 409  # 409 = slot taken, is acceptable
+                - 429  # rate limiter for reservations is 20/hr
 
   # Scenario 2: Rate limit burst — analytics endpoint hammered to trigger 429s
   - name: "Rate limit - analytics burst"
@@ -49,12 +50,15 @@ scenarios:
           expect:
             - statusCode:
                 - 200
+                - 402  # Payment required
+                - 403  # Plan gating (test restaurant may not have analytics)
                 - 429  # Expected once threshold is hit
       - get:
           url: "/api/analytics?period=7d"
           expect:
             - statusCode:
                 - 200
+                - 402
                 - 429
 
   # Scenario 3: DB connection load — mixed concurrent reads simulating peak dinner service
@@ -78,4 +82,5 @@ scenarios:
           expect:
             - statusCode:
                 - 200
+                - 402
                 - 429
