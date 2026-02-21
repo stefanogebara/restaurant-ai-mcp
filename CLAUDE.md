@@ -383,7 +383,7 @@ Design system: Playfair Display + Inter, burgundy `#9F1239`, charcoal `#1C1917`,
 - [x] Fix production bug: timezone scoping in reservations.js handleCreate
 - [x] Increase test coverage to 80%+ (achieved: 94.66% statements, 84.28% branches, 917 tests)
 - [ ] Stress test with concurrent users
-- [ ] Add API documentation
+- [x] Add API documentation (see ## API Reference section below)
 
 ---
 
@@ -422,4 +422,379 @@ Design system: Playfair Display + Inter, burgundy `#9F1239`, charcoal `#1C1917`,
 
 ---
 
-**Last Updated**: February 20, 2026 (Phase 3 security migration executed)
+**Last Updated**: February 21, 2026 (Phase 7: API documentation added)
+
+---
+
+## API Reference
+
+**Base URL**: `https://restaurant-ai-mcp.vercel.app`
+**Auth**: `Authorization: Bearer {jwt}` on all authenticated endpoints
+**Rate limiting**: Applied to all endpoints (30–60 req/min by endpoint type)
+**Multi-tenancy**: `restaurant_id` is always read from the JWT server-side — never pass it from the client
+**Error envelope**: `{ error: string, message?: string }` or `{ success: false, error: string }`
+
+### Public Endpoints (no auth)
+
+---
+
+#### GET /api/portal?action=restaurant — Restaurant Info
+
+Look up a restaurant's public profile by slug.
+
+| Param | Required | Description |
+|-------|----------|-------------|
+| `action` | Yes | `restaurant` |
+| `slug` | Yes | URL-friendly restaurant identifier |
+
+**Response** `200`
+```json
+{
+  "success": true,
+  "data": {
+    "id": "abc-123",
+    "name": "Boteco do Samba",
+    "type": "traditional",
+    "city": "São Paulo",
+    "country": "Brazil",
+    "phone": "+5511999998888",
+    "email": "ola@botecosamba.com.br",
+    "slug": "boteco-do-samba",
+    "business_hours": { "monday": { "is_open": true, "open_time": "12:00", "close_time": "23:00" } },
+    "max_party_size": 12,
+    "advance_booking_days": 30,
+    "average_dining_duration": 90,
+    "whatsapp_enabled": true,
+    "wa_me_link": "https://wa.me/5511999998888"
+  }
+}
+```
+
+Errors: `400` missing slug · `404` not found or inactive
+
+---
+
+#### GET /api/portal?action=availability — Available Slots
+
+Get available time slots for a date + party size.
+
+| Param | Required | Description |
+|-------|----------|-------------|
+| `action` | Yes | `availability` |
+| `restaurant_id` | Yes | Restaurant UUID |
+| `date` | Yes | `YYYY-MM-DD` |
+| `party_size` | Yes | 1–20 |
+
+**Response** `200`
+```json
+{
+  "success": true,
+  "restaurant_name": "Boteco do Samba",
+  "date": "2026-03-15",
+  "party_size": 4,
+  "operating_hours": { "open": "12:00", "close": "23:00" },
+  "slots": [
+    { "time": "12:00", "available": true, "available_seats": 48 },
+    { "time": "20:00", "available": false, "available_seats": 0 }
+  ]
+}
+```
+
+Closed day returns `{ "success": true, "available": false, "slots": [] }`.
+Errors: `400` invalid params · `404` not found
+
+---
+
+#### POST /api/portal?action=reserve — Create Reservation
+
+Create a customer reservation through the public booking portal.
+
+**Body**
+```json
+{
+  "restaurant_id": "abc-123",
+  "customer_name": "João Silva",
+  "customer_phone": "+5511999998888",
+  "customer_email": "joao@example.com",
+  "party_size": 4,
+  "date": "2026-03-15",
+  "time": "19:30",
+  "special_requests": "Window seat preferred"
+}
+```
+
+`customer_email` is optional — triggers confirmation email if present.
+`date` must not be in the past. `time` format: `HH:MM` (24h).
+
+**Response** `201`
+```json
+{
+  "success": true,
+  "reservation": {
+    "id": "RES-1708512345-7890",
+    "name": "João Silva",
+    "party_size": 4,
+    "date": "2026-03-15",
+    "time": "19:30",
+    "status": "confirmed",
+    "restaurant_name": "Boteco do Samba"
+  }
+}
+```
+
+Errors: `400` bad fields/date · `404` restaurant not found · `409` slot no longer available
+
+---
+
+### Authenticated Endpoints (JWT required)
+
+All require `Authorization: Bearer {jwt}`. The JWT is issued on Google OAuth login and contains `restaurant_id`, which the server uses for all tenant scoping.
+
+---
+
+#### GET|POST /api/reservations?action={action} — Reservation CRUD
+
+Actions: `create`, `lookup`, `list`, `modify`, `cancel`
+
+**action=create** — Create a reservation (AI agent or dashboard)
+
+Body/query: `date` (YYYY-MM-DD), `time` (HH:MM), `party_size`, `customer_name`, `customer_phone`, optional `customer_email`, `special_requests`.
+Optional header `x-restaurant-email` triggers subscription limit checks.
+
+Response `200`: `{ "message": "Perfect! Your reservation is confirmed for ..." }`
+
+**action=lookup** — Find by confirmation ID, phone, or name
+
+Params (≥1 required): `reservation_id`, `customer_phone`, `customer_name`
+
+Response `200`: `{ "success": true, "reservation": { ... }, "message": "..." }`
+
+**action=list** — List recent reservations
+
+Query: optional `limit` (default 5), `sort` (`created_at_desc` | `created_at_asc`)
+
+Response `200`: `{ "reservations": [...], "total": 47 }`
+
+**action=modify** — Update a reservation
+
+Params: `reservation_id` (required) + any of `date`, `time`, `party_size`, `special_requests`
+
+Response `200`: `{ "message": "Your reservation has been successfully modified! ..." }`
+
+**action=cancel** — Cancel a reservation
+
+Params: `reservation_id` (required)
+
+Response `200`: `{ "message": "Your reservation has been cancelled. ..." }`
+
+Errors: `400` bad params · `401` no JWT · `403` no restaurant_id · `404` not found · `429` rate limit (20 req/hr)
+
+---
+
+#### GET|POST|PATCH|DELETE /api/waitlist — Waitlist Management
+
+**GET** — list entries. Optional query: `status`, `active=true`, `limit`.
+
+Response `200`: `{ "success": true, "count": 3, "waitlist": [{ "id", "customer_name", "party_size", "status", "estimated_wait_minutes" }] }`
+
+**POST** — add customer. Body: `customer_name`, `customer_phone`, `party_size` (required); `customer_email`, `special_requests`, `estimated_wait` (optional).
+
+Response `201`: `{ "success": true, "waitlist_entry": { "id", "status": "waiting", "estimated_wait_minutes": 20 } }`
+
+**PATCH `?id={entryId}`** — update status/wait. Body (≥1): `status`, `estimated_wait`, `notes`.
+
+Valid statuses: `waiting`, `notified`, `seated`, `cancelled`, `no_show`. Setting `notified` sends SMS to customer.
+
+Response `200`: `{ "success": true, "waitlist_entry": { "id", "status": "notified" } }`
+
+**DELETE `?id={entryId}`** — remove entry.
+
+Response `200`: `{ "success": true, "deleted_id": "wl-abc123" }`
+
+Errors: `400` bad params · `401` no JWT · `404` entry not found
+
+---
+
+#### GET|POST /api/host-dashboard?action={action} — Dashboard + Floor Plan
+
+**GET action=dashboard** — Full dashboard state (tables, active parties, upcoming reservations)
+
+Response `200`:
+```json
+{
+  "success": true,
+  "tables": [{ "id": "t-1", "label": "T1", "capacity": 4, "status": "available" }],
+  "active_parties": [{ "id": "sr-1", "table_ids": ["t-2"], "party_size": 3, "seated_at": "..." }],
+  "upcoming_reservations": [{ "reservation_id": "RES-...", "customer_name": "João Silva", "time": "20:00" }]
+}
+```
+
+**POST write actions**
+
+| action | Description |
+|--------|-------------|
+| `check-in` | Mark reservation as seated |
+| `check-walk-in` | Check availability for walk-in |
+| `seat-party` | Seat walk-in at a table |
+| `complete-service` | Mark service complete |
+| `mark-table-clean` | Mark table as clean/available |
+| `update-table-status` | Set table status directly |
+| `update-reservation` | Edit reservation from dashboard |
+| `create-table` | Add table to floor plan |
+| `update-table-position` | Move table on canvas |
+| `update-table-properties` | Update capacity/shape/label |
+| `link-tables` | Combine adjacent tables |
+| `unlink-tables` | Separate combined tables |
+| `delete-table` | Remove table from floor plan |
+| `auto-assign-shapes` | Auto-assign geometric shapes |
+
+Errors: `400` invalid action · `401` no JWT · `429` rate limit (60 req/min)
+
+---
+
+#### GET|PATCH|POST /api/whatsapp-settings?action={action} — WhatsApp Settings
+
+**GET action=status** — Connection status + wa.me link
+
+Response: `{ "success": true, "data": { "enabled": true, "phone_number": "...", "api_configured": true, "wa_me_link": "..." } }`
+
+**GET action=stats** — Usage stats for current month
+
+Response: `{ "success": true, "data": { "active_sessions": 2, "total_sessions": 47, "messages_this_month": 134 } }`
+
+**PATCH action=update** — Enable/disable or update phone. Body (≥1): `enabled` (boolean), `phone_number` (string)
+
+Response: `{ "success": true, "data": { "enabled": true, "phone_number": "..." } }`
+
+**POST action=test** — Send test message. Body: `{ "phone_number": "+5511999998888" }`
+
+Response: `{ "success": true, "message": "Test message sent successfully", "messageId": "wamid.xxx" }`
+
+Errors: `400` bad phone/missing fields/API not configured · `401` no JWT · `405` wrong method
+
+---
+
+#### GET /api/analytics?period={period} — Analytics
+
+Requires `advanced_analytics` plan feature (Growth+ plans).
+
+Query: `period` = `today` | `7d` | `30d` (default `30d`)
+
+Response `200`:
+```json
+{
+  "success": true,
+  "period": "30d",
+  "summary": { "total_reservations": 142, "avg_party_size": 3.2, "avg_service_time_minutes": 87 },
+  "by_status": { "confirmed": 89, "no_show": 11, "cancelled": 8 },
+  "by_day_of_week": { "Friday": 32, "Saturday": 41 },
+  "by_time_slot": { "Prime Dinner (7PM-10PM)": 67, "Lunch (11AM-2PM)": 24 },
+  "table_utilization": [{ "table_id": "t-1", "label": "T1", "times_used": 18 }]
+}
+```
+
+Errors: `401` no JWT · `402` plan does not include analytics
+
+---
+
+#### GET|PUT|POST /api/restaurant-settings — Settings + Metric Profiles
+
+**GET** — fetch settings and/or metric profile (`/profile` path suffix)
+
+**PUT /profile** — update metric display profile. Body: `{ "metric_profile": { "template", "restaurant_type", "size", "location_type", "primary_concerns", "visible_metrics", "hidden_metrics", "customizations" } }`
+
+Valid `template`: `simple` | `balanced` | `advanced`
+Valid `restaurant_type`: `traditional` | `modern` | `fast-casual` | `fine-dining`
+Valid `size`: `small` | `medium` | `large`
+Valid `location_type`: `tourist` | `residential` | `business` | `town_center`
+
+Errors: `400` invalid profile fields · `401` no JWT
+
+---
+
+#### GET /api/subscription-status?email={email} — Subscription Info
+
+Query: `email` (required) — restaurant owner email
+
+Response `200`: `{ "has_subscription": true, "subscription": { "plan": "Growth", "status": "trialing", "is_active": true, "is_trial": true, "trial_end": "...", "current_period_end": "..." } }`
+
+Errors: `400` missing email · `401` no JWT · `404` no subscription
+
+---
+
+#### GET /api/usage-stats — Metered Usage Metrics
+
+Optional query: `start` + `end` (`YYYY-MM-DD`) for custom range; omit for current month.
+
+Response `200`:
+```json
+{
+  "success": true,
+  "period": "current_month",
+  "usage": {
+    "reservations": 47,
+    "ai_calls": 23,
+    "sms": 41,
+    "whatsapp": 134,
+    "portal_booking": 12
+  }
+}
+```
+
+Errors: `401` no JWT · `403` no restaurant
+
+---
+
+#### POST /api/onboarding/complete — Complete Onboarding
+
+Creates/updates restaurant config, sets up tables, assigns slug, configures subscription.
+
+**Body**
+```json
+{
+  "customer_email": "owner@restaurant.com",
+  "restaurant_name": "Boteco do Samba",
+  "phone_number": "+5511999998888",
+  "email": "ola@botecosamba.com.br",
+  "restaurant_type": "traditional",
+  "city": "São Paulo",
+  "country": "Brazil",
+  "business_hours": { "monday": { "is_open": true, "open_time": "12:00", "close_time": "23:00" } },
+  "average_dining_duration": 90,
+  "areas": [{ "name": "Main Hall", "tables": [{ "capacity": 4 }] }],
+  "plan": "Growth",
+  "whatsapp_enabled": true,
+  "whatsapp_phone_number": "+5511999998888"
+}
+```
+
+Required: `customer_email`, `restaurant_name`, `phone_number`, `email`
+
+Response `200`: `{ "success": true, "restaurant_id": "REST-...", "slug": "boteco-do-samba" }`
+
+Errors: `400` missing required fields · `401` no JWT · `405` non-POST
+
+---
+
+### Rate Limits
+
+| Endpoint type | Limit |
+|---------------|-------|
+| Public portal | 30 req/min per IP |
+| Reservation creation | 20 req/hr per IP |
+| Authenticated API | 60 req/min per IP |
+
+`429` returned when exceeded. Uses Upstash Redis with in-memory fallback.
+
+### Plans and Feature Gating
+
+| Feature | Free | Starter | Growth | Scale |
+|---------|:----:|:-------:|:------:|:-----:|
+| AI reservations | Yes | Yes | Yes | Yes |
+| Host dashboard | Yes | Yes | Yes | Yes |
+| Basic analytics | Yes | Yes | Yes | Yes |
+| Advanced analytics | No | No | Yes | Yes |
+| Waitlist management | No | No | Yes | Yes |
+| Voice AI agent | No | No | Yes | Yes |
+| Reservations/month | 30 | 100 | 150 | Unlimited |
+| SMS notifications | No | No | Yes | Unlimited |

@@ -5,6 +5,7 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { captureException } = require('./_lib/sentry');
 const { verifyAuth } = require('./_lib/auth');
 const logger = createSecureLogger('RestaurantSettings');
 
@@ -282,6 +283,7 @@ module.exports = async function handler(req, res) {
 
     return res.status(405).json({ success: false, error: `Method ${method} not allowed for path ${path}` });
   } catch (error) {
+    captureException(error, { url: req.url, method: req.method });
     logger.error('Restaurant settings API error:', error);
     return res.status(500).json({ success: false, error: 'Internal server error', details: error.message });
   }

@@ -7,6 +7,7 @@
 const { getSubscriptionByEmail } = require('./_lib/supabase');
 const { verifyAuth } = require('./_lib/auth');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { captureException } = require('./_lib/sentry');
 const logger = createSecureLogger('SubscriptionStatus');
 
 module.exports = async (req, res) => {
@@ -69,6 +70,7 @@ module.exports = async (req, res) => {
       }
     });
   } catch (error) {
+    captureException(error, { url: req.url, email: req.query?.email });
     logger.error('Error fetching subscription status:', error);
     return res.status(500).json({
       error: 'Failed to fetch subscription status',

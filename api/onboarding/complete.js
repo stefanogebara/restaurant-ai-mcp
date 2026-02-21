@@ -13,6 +13,7 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const fetch = require('node-fetch');
 const { createSecureLogger } = require('../_lib/secure-logger');
+const { captureException } = require('../_lib/sentry');
 const { verifyAuth } = require('../_lib/auth');
 const { suggestTimezone } = require('../_lib/timezone');
 const logger = createSecureLogger('Onboarding');
@@ -719,6 +720,7 @@ module.exports = async (req, res) => {
       },
     });
   } catch (error) {
+    captureException(error, { url: req.url });
     logger.error(' Error:', error);
     return res.status(500).json({
       error: 'Failed to complete onboarding',

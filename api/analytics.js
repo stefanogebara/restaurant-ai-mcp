@@ -8,6 +8,7 @@ const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { captureException } = require('./_lib/sentry');
 const logger = createSecureLogger('Analytics');
 
 async function getReservationRows(restaurantId) {
@@ -232,6 +233,7 @@ module.exports = async (req, res) => {
     const result = await calculateAnalytics(restaurantId, period);
     return res.status(200).json(result);
   } catch (error) {
+    captureException(error, { url: req.url, restaurantId: req.user?.restaurant_id });
     logger.error('Analytics error:', error);
     return res.status(500).json({ success: false, error: 'Failed to calculate analytics' });
   }
