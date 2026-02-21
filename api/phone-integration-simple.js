@@ -12,9 +12,11 @@
  */
 
 const { supabaseAdmin } = require('./_lib/supabase');
+const { verifyAuth } = require('./_lib/auth');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('PhoneIntegrationSimple');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { captureException } = require('./_lib/sentry');
 
 // Platform Twilio credentials from environment
 const PLATFORM_TWILIO_SID = process.env.TWILIO_ACCOUNT_SID;
@@ -29,24 +31,34 @@ module.exports = async (req, res) => {
     return;
   }
 
+  // Require authentication for all actions
+  const auth = await verifyAuth(req);
+  if (auth.error) {
+    return res.status(auth.status || 401).json({ success: false, error: auth.error });
+  }
+  const restaurantId = auth.user.restaurant_id;
+  if (!restaurantId) {
+    return res.status(403).json({ success: false, error: 'No restaurant associated with your account.' });
+  }
+
   const action = req.query.action || req.body?.action;
 
   try {
     switch (action) {
       case 'register':
-        return await handleRegister(req, res);
+        return await handleRegister(req, res, restaurantId);
       case 'unregister':
-        return await handleUnregister(req, res);
+        return await handleUnregister(req, res, restaurantId);
       case 'status':
-        return await handleStatus(req, res);
+        return await handleStatus(req, res, restaurantId);
       case 'test-call':
-        return await handleTestCall(req, res);
+        return await handleTestCall(req, res, restaurantId);
       case 'list-phones':
         return await handleListPhones(req, res);
       case 'diagnose':
-        return await handleDiagnose(req, res);
+        return await handleDiagnose(req, res, restaurantId);
       case 'fix-tools':
-        return await handleFixTools(req, res);
+        return await handleFixTools(req, res, restaurantId);
       default:
         return res.status(400).json({
           success: false,
@@ -56,6 +68,7 @@ module.exports = async (req, res) => {
         });
     }
   } catch (error) {
+    captureException(error, { url: req.url, method: req.method });
     logger.error('Error:', error);
     return res.status(500).json({
       success: false,
@@ -68,18 +81,9 @@ module.exports = async (req, res) => {
  * Register platform phone number with ElevenLabs for a restaurant
  * Restaurant only needs to provide restaurant_id - we use platform Twilio creds
  */
-async function handleRegister(req, res) {
+async function handleRegister(req, res, restaurant_id) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
-  }
-
-  const { restaurant_id } = req.body;
-
-  if (!restaurant_id) {
-    return res.status(400).json({
-      success: false,
-      error: 'Missing required field: restaurant_id'
-    });
   }
 
   // Check platform configuration
@@ -315,18 +319,9 @@ async function handleRegister(req, res) {
 /**
  * Unregister phone from restaurant (but keep in ElevenLabs for reuse)
  */
-async function handleUnregister(req, res) {
+async function handleUnregister(req, res, restaurant_id) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
-  }
-
-  const { restaurant_id } = req.body;
-
-  if (!restaurant_id) {
-    return res.status(400).json({
-      success: false,
-      error: 'Missing required field: restaurant_id'
-    });
   }
 
   // Clear phone fields from restaurant (but don't delete from ElevenLabs - reusable)
@@ -354,20 +349,7 @@ async function handleUnregister(req, res) {
 /**
  * Get phone integration status
  */
-async function handleStatus(req, res) {
-  const restaurant_id = req.query.restaurant_id || req.body?.restaurant_id;
-
-  // Platform status (no restaurant_id needed)
-  if (!restaurant_id) {
-    return res.status(200).json({
-      success: true,
-      platform: {
-        twilio_configured: !!PLATFORM_TWILIO_SID && !!PLATFORM_TWILIO_TOKEN,
-        twilio_phone: PLATFORM_TWILIO_NUMBER,
-        elevenlabs_configured: !!ELEVENLABS_API_KEY && ELEVENLABS_API_KEY !== 'your-elevenlabs-key-here'
-      }
-    });
-  }
+async function handleStatus(req, res, restaurant_id) {
 
   const { data: restaurant, error: fetchError } = await supabaseAdmin
     .schema('restaurant')
@@ -413,13 +395,13 @@ async function handleStatus(req, res) {
 /**
  * Test the voice agent by initiating a call
  */
-async function handleTestCall(req, res) {
-  const { restaurant_id, to_number } = req.body || req.query;
+async function handleTestCall(req, res, restaurant_id) {
+  const { to_number } = req.body || req.query;
 
-  if (!restaurant_id || !to_number) {
+  if (!to_number) {
     return res.status(400).json({
       success: false,
-      error: 'Missing required fields: restaurant_id, to_number'
+      error: 'Missing required field: to_number'
     });
   }
 
@@ -488,15 +470,9 @@ async function handleListPhones(req, res) {
  * Fix agent tools - create webhook tools and attach to agent via tool_ids
  * Uses the new ElevenLabs API (post July 2025): create tools separately, then reference by ID
  */
-async function handleFixTools(req, res) {
+async function handleFixTools(req, res, restaurant_id) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
-  }
-
-  const { restaurant_id } = req.body;
-
-  if (!restaurant_id) {
-    return res.status(400).json({ success: false, error: 'Missing restaurant_id' });
   }
 
   const { data: restaurant } = await supabaseAdmin
@@ -530,12 +506,7 @@ async function handleFixTools(req, res) {
 /**
  * Diagnose agent configuration - check if tools/webhooks are set up
  */
-async function handleDiagnose(req, res) {
-  const restaurant_id = req.query.restaurant_id || req.body?.restaurant_id;
-
-  if (!restaurant_id) {
-    return res.status(400).json({ success: false, error: 'Missing restaurant_id' });
-  }
+async function handleDiagnose(req, res, restaurant_id) {
 
   const { data: restaurant } = await supabaseAdmin
     .schema('restaurant')
