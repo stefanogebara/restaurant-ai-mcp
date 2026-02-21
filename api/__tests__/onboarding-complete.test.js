@@ -349,4 +349,138 @@ describe('Validation', () => {
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(200);
   });
+
+  test('returns auth error when verifyAuth fails (line 99)', async () => {
+    const { verifyAuth } = require('../_lib/auth');
+    verifyAuth.mockResolvedValueOnce({ error: 'Unauthorized', status: 401 });
+
+    const { req, res } = mockReqRes(BASE_BODY);
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Unauthorized' }));
+  });
+});
+
+// ============================================================
+// Invalid restaurant_type (line 150)
+// ============================================================
+describe('restaurant_type validation', () => {
+  test('logs warning for invalid restaurant_type (line 150)', async () => {
+    const { req, res } = mockReqRes({
+      ...BASE_BODY,
+      restaurant_type: 'invalid-cuisine-type',
+    });
+    await handler(req, res);
+    // Still succeeds (type set to null, not a fatal error)
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+});
+
+// ============================================================
+// No tables (line 272)
+// ============================================================
+describe('Empty areas / no tables', () => {
+  test('succeeds when areas is empty (line 272)', async () => {
+    const { req, res } = mockReqRes({
+      ...BASE_BODY,
+      areas: [],
+    });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('succeeds when areas has tables with count 0', async () => {
+    const { req, res } = mockReqRes({
+      ...BASE_BODY,
+      areas: [{ name: 'Main', tables: [{ capacity: 4, count: 0 }] }],
+    });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+});
+
+// ============================================================
+// User management edge cases (lines 285, 291-292, 305, 313)
+// ============================================================
+describe('User management edge cases', () => {
+  test('logs warning when listUsers fails (line 285)', async () => {
+    mockSupabaseAdmin.auth.admin.listUsers.mockResolvedValueOnce({
+      data: { users: [] },
+      error: { message: 'Auth service unavailable' },
+    });
+
+    const { req, res } = mockReqRes(BASE_BODY);
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('uses existing user when found by email (lines 291-292)', async () => {
+    mockSupabaseAdmin.auth.admin.listUsers.mockResolvedValueOnce({
+      data: { users: [{ email: 'test@example.com', id: 'existing-user-uuid' }] },
+      error: null,
+    });
+
+    const { req, res } = mockReqRes(BASE_BODY);
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('logs warning when createUser fails (line 305)', async () => {
+    // listUsers returns empty → tries createUser → createUser fails
+    mockSupabaseAdmin.auth.admin.createUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: { message: 'Email already registered' },
+    });
+
+    const { req, res } = mockReqRes(BASE_BODY);
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('handles auth block throwing (line 313)', async () => {
+    // listUsers throws to trigger the catch block
+    mockSupabaseAdmin.auth.admin.listUsers.mockRejectedValueOnce(
+      new Error('Auth service crashed')
+    );
+
+    const { req, res } = mockReqRes(BASE_BODY);
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+});
+
+// ============================================================
+// ElevenLabs agent creation paths (lines 590-621, 631-635)
+// ============================================================
+describe('ElevenLabs agent creation', () => {
+  test('handles agent creation success (lines 590-621)', async () => {
+    const nodeFetch = require('node-fetch');
+    nodeFetch.mockImplementationOnce(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ agent_id: 'agent-elevenlabs-123' }),
+        text: () => Promise.resolve('success'),
+      })
+    );
+
+    const { req, res } = mockReqRes({
+      ...BASE_BODY,
+      selected_voice_id: 'voice-abc',
+      selected_voice_language: 'en',
+    });
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('handles agent creation network error (lines 631-635)', async () => {
+    const nodeFetch = require('node-fetch');
+    nodeFetch.mockImplementationOnce(() => Promise.reject(new Error('Network error')));
+
+    const { req, res } = mockReqRes(BASE_BODY);
+    await handler(req, res);
+    // Should not fail the whole onboarding
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
 });
