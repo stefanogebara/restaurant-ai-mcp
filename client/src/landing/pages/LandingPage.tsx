@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { trackLandingPageViewed } from '../../lib/analytics';
 import { ArrowUp } from 'lucide-react';
 import LandingNav from '../components/LandingNav';
 import HeroSection from '../components/HeroSection';
@@ -15,6 +16,10 @@ import Footer from '../components/Footer';
 export default function LandingPage() {
   const { t } = useTranslation();
   const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    trackLandingPageViewed();
+  }, []);
 
   useEffect(() => {
     document.documentElement.style.scrollBehavior = 'smooth';

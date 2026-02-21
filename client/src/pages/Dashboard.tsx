@@ -28,6 +28,14 @@ import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
 import QuickInterventionModal from '../components/host/QuickInterventionModal';
 import type { UpcomingReservation, ActiveParty } from '../types/host.types';
+import { trackFirstReservationCreated } from '../lib/analytics';
+
+function maybeTrackFirstReservation() {
+  if (!localStorage.getItem('seatable_first_reservation_tracked')) {
+    trackFirstReservationCreated();
+    localStorage.setItem('seatable_first_reservation_tracked', '1');
+  }
+}
 
 export default function Dashboard() {
   // ---- Modal state ----
@@ -65,6 +73,7 @@ export default function Dashboard() {
 
   // ---- Handlers ----
   const handleWalkInSuccess = (partyData: any) => {
+    maybeTrackFirstReservation();
     setSelectedParty(partyData);
     setShowWalkInModal(false);
     setShowSeatModal(true);

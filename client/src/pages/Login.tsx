@@ -9,6 +9,7 @@ import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { motion } from 'framer-motion';
+import { trackSignupStarted } from '../lib/analytics';
 
 type AuthMode = 'signin' | 'signup';
 
@@ -43,6 +44,7 @@ export default function Login() {
   const handleGoogleSignIn = async () => {
     setIsSigningIn(true);
     setError(null);
+    if (mode === 'signup') trackSignupStarted({ method: 'google' });
 
     try {
       await signInWithGoogle();
@@ -62,6 +64,7 @@ export default function Login() {
       if (mode === 'signin') {
         await signInWithEmail(email, password);
       } else {
+        trackSignupStarted({ method: 'email' });
         const { needsConfirmation } = await signUpWithEmail(email, password);
         if (needsConfirmation) {
           setSuccessMessage('Check your email for a confirmation link to complete your registration.');

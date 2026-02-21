@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../../services/api';
 import { supabase } from '../../lib/supabase';
+import { trackCtaClicked, trackPricingPlanClicked } from '../../lib/analytics';
 
 export default function PricingSection() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
@@ -16,7 +17,8 @@ export default function PricingSection() {
     }
   };
 
-  const handleSubscribe = async (priceId: string, planName: string) => {
+  const handleSubscribe = async (priceId: string, planName: string, price = 0) => {
+    trackPricingPlanClicked({ plan: planName, price });
     try {
       setLoadingPlan(planName);
 
@@ -102,7 +104,12 @@ export default function PricingSection() {
                 <button
                   onClick={() => {
                     const id = tier.priceId;
-                    id ? handleSubscribe(id, tier.name) : scrollToContact();
+                    if (id) {
+                      handleSubscribe(id, tier.name);
+                    } else {
+                      trackCtaClicked({ cta: 'pricing_cta', location: `pricing_${tier.name.toLowerCase()}` });
+                      scrollToContact();
+                    }
                   }}
                   disabled={loadingPlan === tier.name}
                   className={`w-full py-3.5 rounded-full text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 ${

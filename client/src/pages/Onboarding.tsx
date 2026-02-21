@@ -20,6 +20,7 @@ import Step4Review from '../components/onboarding/Step4Review';
 import type { OnboardingData } from '../types/onboarding.types';
 import { authFetch } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { trackOnboardingStepCompleted, trackOnboardingCompleted } from '../lib/analytics';
 
 const STEP_NAMES = ['Restaurant Info', 'Contact & Hours', 'Tables & Settings', 'Review & Launch'];
 const TOTAL_STEPS = 4;
@@ -89,7 +90,10 @@ export default function Onboarding() {
   };
 
   const nextStep = () => {
-    if (currentStep < TOTAL_STEPS) setCurrentStep(currentStep + 1);
+    if (currentStep < TOTAL_STEPS) {
+      trackOnboardingStepCompleted({ step: currentStep, step_name: STEP_NAMES[currentStep - 1] });
+      setCurrentStep(currentStep + 1);
+    }
   };
 
   const prevStep = () => {
@@ -119,6 +123,12 @@ export default function Onboarding() {
 
       localStorage.removeItem('onboarding_data');
       localStorage.removeItem('onboarding_step');
+
+      trackOnboardingCompleted({
+        plan: onboardingData.plan ?? 'unknown',
+        country: onboardingData.country,
+        restaurant_type: onboardingData.restaurant_type,
+      });
 
       setShowSuccessModal(true);
 
