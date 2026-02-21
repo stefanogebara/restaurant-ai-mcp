@@ -382,7 +382,7 @@ Design system: Playfair Display + Inter, burgundy `#9F1239`, charcoal `#1C1917`,
 - [x] Add `test:all` script, include api/ml/** in coverage config
 - [x] Fix production bug: timezone scoping in reservations.js handleCreate
 - [x] Increase test coverage to 80%+ (achieved: 94.66% statements, 84.28% branches, 917 tests)
-- [ ] Stress test with concurrent users
+- [x] Stress test with concurrent users (Artillery: 4 phases, 3570 VUs, 6697 req, 0 double-bookings, 0 500s)
 - [x] Add API documentation (see ## API Reference section below)
 
 ---
