@@ -25,6 +25,7 @@ module.exports = async (req, res) => {
   if (auth.error) {
     return res.status(auth.status).json({ error: auth.error });
   }
+  req.user = auth.user;
 
   const { action } = req.query;
 
@@ -136,8 +137,26 @@ async function handleRecordOutcome(req, res) {
     }
 
     // 2. Calculate value saved based on outcome
+    // Use actual average cover from service_records; fall back to €50 if no data yet
+    let avg_revenue_per_party = 50;
+    const restaurantId = reservation.restaurant_id || req.user?.restaurant_id;
+    if (restaurantId) {
+      const { data: revenueData } = await supabaseAdmin
+        .from('service_records')
+        .select('total_bill')
+        .eq('restaurant_id', restaurantId)
+        .not('total_bill', 'is', null)
+        .gt('total_bill', 0)
+        .limit(200);
+      if (revenueData && revenueData.length > 0) {
+        const totalBill = revenueData.reduce((sum, r) => sum + (r.total_bill || 0), 0);
+        avg_revenue_per_party = Math.round(totalBill / revenueData.length);
+        logger.info(`📊 Using actual avg cover €${avg_revenue_per_party} (from ${revenueData.length} service records)`);
+      } else {
+        logger.info('📊 No service_records data yet, using fallback €50 avg cover');
+      }
+    }
     let value_saved = 0;
-    const avg_revenue_per_party = 50; // €50 average revenue
 
     if (actual_outcome === 'showed_up' && intervention_taken) {
       // Intervention helped prevent no-show (we assume)
