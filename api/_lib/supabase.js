@@ -92,6 +92,38 @@ const handleSupabaseResponse = (data, error, operation = 'query') => {
   return { success: true, data };
 };
 
+// ============ RETRY UTILITY ============
+
+const TRANSIENT_PATTERNS = [
+  'fetch failed', 'network', 'timeout', 'econnreset',
+  '503', '502', '504', 'connection refused', 'service unavailable',
+];
+
+function isTransient(error) {
+  const msg = (error?.message || '').toLowerCase();
+  return TRANSIENT_PATTERNS.some(p => msg.includes(p));
+}
+
+/**
+ * Execute an async fn with exponential backoff retry for transient errors.
+ * @param {() => Promise<any>} fn
+ * @param {{ maxAttempts?: number, baseDelayMs?: number }} opts
+ * @returns {Promise<any>}
+ */
+function withRetry(fn, { maxAttempts = 3, baseDelayMs = 500 } = {}) {
+  function attempt(n) {
+    return Promise.resolve()
+      .then(() => fn())
+      .catch(err => {
+        if (!isTransient(err) || n >= maxAttempts - 1) return Promise.reject(err);
+        const delay = baseDelayMs * Math.pow(2, n) + Math.random() * 100;
+        logger.warn(`[withRetry] Transient error (attempt ${n + 1}/${maxAttempts}), retrying in ${Math.round(delay)}ms:`, err.message);
+        return new Promise(resolve => setTimeout(resolve, delay)).then(() => attempt(n + 1));
+      });
+  }
+  return attempt(0);
+}
+
 // ============ RESERVATIONS ============
 
 const getReservations = async (restaurantId, filter = {}) => {
@@ -1904,5 +1936,6 @@ module.exports = {
 
   // Utilities
   generateReservationId,
-  generateServiceId
+  generateServiceId,
+  withRetry,
 };
