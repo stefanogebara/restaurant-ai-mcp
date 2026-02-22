@@ -40,7 +40,7 @@ function setInternalCors(req, res) {
 
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Customer-Email');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Customer-Email, x-request-id');
 }
 
 /**
@@ -62,7 +62,7 @@ function setWebhookCors(req, res) {
 
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Called-Number, X-Caller-Number, Stripe-Signature, X-Twilio-Signature');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Called-Number, X-Caller-Number, Stripe-Signature, X-Twilio-Signature, x-request-id');
 }
 
 /**

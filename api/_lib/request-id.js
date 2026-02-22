@@ -4,6 +4,7 @@ const { randomUUID } = require('crypto');
 const REQUEST_ID_KEY = Symbol('requestId');
 
 function addRequestId(req, res) {
+  if (req[REQUEST_ID_KEY]) return req[REQUEST_ID_KEY];
   const id = req.headers['x-request-id'] || randomUUID();
   req[REQUEST_ID_KEY] = id;
   res.setHeader('x-request-id', id);

@@ -13,6 +13,7 @@ describe('request-id', () => {
     const req = { headers: { 'x-request-id': 'caller-id-123' } };
     addRequestId(req, res);
     expect(res.setHeader).toHaveBeenCalledWith('x-request-id', 'caller-id-123');
+    expect(getRequestId(req)).toBe('caller-id-123');
   });
 
   test('getRequestId returns the assigned id', () => {
