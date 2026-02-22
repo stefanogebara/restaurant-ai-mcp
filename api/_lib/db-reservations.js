@@ -11,21 +11,19 @@ const { getLocalDate, getLocalTime } = require('./timezone');
 // ============ RESERVATIONS ============
 
 const getReservations = async (restaurantId, filter = {}) => {
-  let query = supabase.from('reservations').select('*')
-    .eq('restaurant_id', restaurantId);
-
-  // Apply filters if provided
-  if (filter.status) {
-    query = query.eq('status', filter.status);
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() => {
+      let query = supabase.from('reservations').select('*')
+        .eq('restaurant_id', restaurantId);
+      if (filter.status) query = query.eq('status', filter.status);
+      if (filter.date) query = query.eq('date', filter.date);
+      if (filter.customer_phone) query = query.eq('customer_phone', filter.customer_phone);
+      return query.order('date', { ascending: true });
+    }));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'GET reservations');
   }
-  if (filter.date) {
-    query = query.eq('date', filter.date);
-  }
-  if (filter.customer_phone) {
-    query = query.eq('customer_phone', filter.customer_phone);
-  }
-
-  const { data, error } = await query.order('date', { ascending: true });
 
   if (error) return handleSupabaseResponse(null, error, 'GET reservations');
 
