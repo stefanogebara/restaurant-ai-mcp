@@ -339,7 +339,7 @@ async function handleCreateReservation(req, res) {
   const { data: restaurant, error: restError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, reservation_settings, business_hours, average_dining_duration_minutes')
+    .select('id, restaurant_name, reservation_settings, business_hours, average_dining_duration_minutes, table_configuration')
     .eq('id', restaurant_id)
     .eq('is_active', true)
     .eq('onboarding_completed', true)
@@ -376,9 +376,18 @@ async function handleCreateReservation(req, res) {
     .eq('restaurant_id', restaurant_id)
     .eq('is_active', true);
 
-  const totalCapacity = tables
+  let totalCapacity = (tables && tables.length > 0)
     ? tables.reduce((sum, t) => sum + (t.capacity || 0), 0)
-    : 60;
+    : 0;
+
+  if (totalCapacity === 0 && restaurant.table_configuration) {
+    const config = Array.isArray(restaurant.table_configuration) ? restaurant.table_configuration : [];
+    totalCapacity = config.reduce((sum, area) => {
+      return sum + (Array.isArray(area.tables) ? area.tables : []).reduce((s, t) => s + (t.capacity || 0), 0);
+    }, 0);
+  }
+
+  if (totalCapacity === 0) totalCapacity = 60;
 
   const formatted = (existingRes || []).map(r => ({
     fields: { 'Time': r.time, 'Party Size': r.party_size, 'Status': r.status }
