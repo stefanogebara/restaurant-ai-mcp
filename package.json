@@ -23,6 +23,7 @@
     "axios": "^1.12.2",
     "dotenv": "^17.2.3",
     "framer-motion": "^12.23.24",
+    "jwks-rsa": "^3.2.2",
     "resend": "^6.3.0",
     "stripe": "^19.1.0",
     "twilio": "^5.10.3",

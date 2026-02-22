@@ -5,18 +5,43 @@
  */
 
 const jwt = require('jsonwebtoken');
+const jwksClient = require('jwks-rsa');
 const { supabaseAdmin: supabase } = require('./supabase');
 const { createSecureLogger } = require('./secure-logger');
 const logger = createSecureLogger('Auth');
 
-// JWT_SECRET priority: explicit JWT_SECRET > Supabase JWT secret
+// JWT_SECRET for internally generated tokens (HS256)
 const JWT_SECRET = process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET;
 
 const JWT_EXPIRY = '24h';
 
-// Log error if no proper secret configured
-if (!JWT_SECRET) {
-  logger.error('[Auth] CRITICAL: No JWT_SECRET or SUPABASE_JWT_SECRET configured. JWT signing/verification will fail. Set JWT_SECRET in environment variables.');
+// JWKS client for verifying Supabase ECC (ES256) tokens
+// Supabase migrated from HS256 to ECC (P-256) signing
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const jwks = SUPABASE_URL ? jwksClient({
+  jwksUri: `${SUPABASE_URL}/auth/v1/.well-known/jwks.json`,
+  cache: true,
+  cacheMaxEntries: 5,
+  cacheMaxAge: 10 * 60 * 1000, // 10 minutes
+  rateLimit: true,
+}) : null;
+
+function getSigningKey(header, callback) {
+  if (!jwks) return callback(new Error('JWKS client not configured'));
+  jwks.getSigningKey(header.kid, (err, key) => {
+    if (err) return callback(err);
+    callback(null, key.getPublicKey());
+  });
+}
+
+async function verifyWithJWKS(token) {
+  if (!jwks) throw new Error('JWKS client not configured');
+  return new Promise((resolve, reject) => {
+    jwt.verify(token, getSigningKey, { algorithms: ['ES256', 'RS256'] }, (err, decoded) => {
+      if (err) reject(err);
+      else resolve(decoded);
+    });
+  });
 }
 
 // Cache user→restaurant mappings (TTL 5 minutes) to avoid repeated DB lookups
@@ -84,26 +109,34 @@ async function getRestaurantIdForUser(userId) {
 async function verifyJWT(token) {
   if (!token) return null;
 
+  // Check token cache first to avoid repeated verification calls
+  const cached = tokenCache.get(token);
+  if (cached && Date.now() - cached.timestamp < TOKEN_CACHE_TTL) {
+    return cached.decoded;
+  }
+
   let decoded = null;
 
-  // First try to verify with our JWT secret
+  // 1. Try HS256 verification with JWT_SECRET (for internally generated tokens)
   if (JWT_SECRET) {
     try {
-      decoded = jwt.verify(token, JWT_SECRET);
+      decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
     } catch (jwtError) {
-      // JWT verification failed, try Supabase fallback
-      logger.info('[Auth] JWT verification failed, trying Supabase fallback');
+      // Not a custom HS256 token — try JWKS next
     }
   }
 
-  // Fallback: verify with Supabase (handles Supabase session tokens)
-  if (!decoded && supabase) {
-    // Check token cache first to avoid repeated network calls
-    const cached = tokenCache.get(token);
-    if (cached && Date.now() - cached.timestamp < TOKEN_CACHE_TTL) {
-      return cached.decoded;
+  // 2. Try JWKS verification (for Supabase ECC/ES256 tokens)
+  if (!decoded && jwks) {
+    try {
+      decoded = await verifyWithJWKS(token);
+    } catch (jwksError) {
+      // JWKS verification failed — try Supabase API as final fallback
     }
+  }
 
+  // 3. Final fallback: Supabase API (handles edge cases, token refresh)
+  if (!decoded && supabase) {
     try {
       const { data: { user }, error } = await supabase.auth.getUser(token);
       if (error || !user) {
@@ -115,7 +148,6 @@ async function verifyJWT(token) {
         email: user.email,
         role: user.role || 'user'
       };
-      tokenCache.set(token, { decoded, timestamp: Date.now() });
     } catch (supabaseError) {
       logger.error('[Auth] Supabase verification error:', supabaseError.message);
       return null;
@@ -130,6 +162,17 @@ async function verifyJWT(token) {
     if (restaurant) {
       decoded.restaurant_id = restaurant.restaurantId;
       decoded.timezone = restaurant.timezone;
+    }
+  }
+
+  // Cache verified token to avoid repeated verification on subsequent requests
+  tokenCache.set(token, { decoded, timestamp: Date.now() });
+
+  // Evict old entries if cache grows too large
+  if (tokenCache.size > 1000) {
+    const now = Date.now();
+    for (const [key, val] of tokenCache.entries()) {
+      if (now - val.timestamp > TOKEN_CACHE_TTL) tokenCache.delete(key);
     }
   }
 
