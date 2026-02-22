@@ -52,6 +52,7 @@ test-results.txt
 playwright-output.txt
 playwright-results.txt
 playwright-report/
+coverage/
 
 # Agent workspace
 parallel-agents/
