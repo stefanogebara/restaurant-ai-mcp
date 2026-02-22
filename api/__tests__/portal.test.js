@@ -69,6 +69,15 @@ jest.mock('../_lib/email', () => ({
   wrapEmailHtml: jest.fn(html => html),
 }));
 
+// portal.js uses whatsapp-sender for restaurant owner WhatsApp alerts
+const mockSendNewBookingAlertWhatsApp = jest.fn().mockResolvedValue({ success: true });
+let mockIsWhatsAppConfigured = true;
+
+jest.mock('../_lib/whatsapp-sender', () => ({
+  sendNewBookingAlertWhatsApp: (...args) => mockSendNewBookingAlertWhatsApp(...args),
+  isWhatsAppConfigured: () => mockIsWhatsAppConfigured,
+}));
+
 jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({
     info: jest.fn(),
@@ -111,6 +120,8 @@ beforeEach(() => {
   mockGetDiningDuration.mockReturnValue(90);
   mockSendReservationConfirmationEmail.mockResolvedValue(undefined);
   mockSendNewBookingAlertEmail.mockResolvedValue(undefined);
+  mockSendNewBookingAlertWhatsApp.mockResolvedValue({ success: true });
+  mockIsWhatsAppConfigured = true;
 });
 
 // ============================================================
@@ -859,5 +870,119 @@ describe('Portal: reservation action (lookup by ID)', () => {
         restaurant_name: 'Restaurant',
       }),
     }));
+  });
+});
+
+// ============================================================
+// WhatsApp alert on new booking
+// ============================================================
+describe('Portal: reserve - WhatsApp owner alert', () => {
+  function setupSuccessfulReserveWhatsApp(restaurantData = {}) {
+    mockSingle.mockResolvedValueOnce({
+      data: {
+        id: 'r1',
+        restaurant_name: 'Test Restaurant',
+        email: 'owner@restaurant.com',
+        whatsapp_enabled: true,
+        whatsapp_phone_number: '+5511999999999',
+        reservation_settings: { max_party_size: 10 },
+        business_hours: {},
+        average_dining_duration_minutes: 90,
+        ...restaurantData,
+      },
+      error: null,
+    });
+    mockChainResolve.mockReturnValueOnce({ data: [], error: null });
+    mockChainResolve.mockReturnValueOnce({ data: [{ capacity: 40 }], error: null });
+    mockCheckTimeSlotAvailability.mockReturnValueOnce({ available: true, availableSeats: 38 });
+    mockSingle.mockResolvedValueOnce({
+      data: {
+        id: 'db-uuid-1',
+        reservation_id: 'RES-TEST-123',
+        customer_name: 'WA User',
+        party_size: 3,
+        date: '2026-04-01',
+        time: '20:00',
+        status: 'confirmed',
+      },
+      error: null,
+    });
+  }
+
+  const BASE_BODY = {
+    action: 'reserve',
+    restaurant_id: 'r1',
+    customer_name: 'WA User',
+    customer_phone: '+5511888888888',
+    party_size: 3,
+    date: '2026-04-01',
+    time: '20:00',
+  };
+
+  test('sends WhatsApp alert when whatsapp_enabled=true and configured', async () => {
+    setupSuccessfulReserveWhatsApp();
+    mockIsWhatsAppConfigured = true;
+
+    const { req, res } = createMockReqRes({ method: 'POST', body: BASE_BODY });
+    await handler(req, res);
+    await new Promise(resolve => setTimeout(resolve, 20));
+
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(mockSendNewBookingAlertWhatsApp).toHaveBeenCalledWith(
+      '+5511999999999',
+      expect.objectContaining({
+        reservationId: 'RES-TEST-123',
+        customerName: 'WA User',
+        customerPhone: '+5511888888888',
+        partySize: 3,
+        date: '2026-04-01',
+        time: '20:00',
+      })
+    );
+  });
+
+  test('does not send WhatsApp alert when whatsapp_enabled=false', async () => {
+    setupSuccessfulReserveWhatsApp({ whatsapp_enabled: false });
+    mockIsWhatsAppConfigured = true;
+
+    const { req, res } = createMockReqRes({ method: 'POST', body: BASE_BODY });
+    await handler(req, res);
+    await new Promise(resolve => setTimeout(resolve, 20));
+
+    expect(mockSendNewBookingAlertWhatsApp).not.toHaveBeenCalled();
+  });
+
+  test('does not send WhatsApp alert when whatsapp_phone_number is null', async () => {
+    setupSuccessfulReserveWhatsApp({ whatsapp_enabled: true, whatsapp_phone_number: null });
+    mockIsWhatsAppConfigured = true;
+
+    const { req, res } = createMockReqRes({ method: 'POST', body: BASE_BODY });
+    await handler(req, res);
+    await new Promise(resolve => setTimeout(resolve, 20));
+
+    expect(mockSendNewBookingAlertWhatsApp).not.toHaveBeenCalled();
+  });
+
+  test('does not send WhatsApp alert when WhatsApp is not configured (no env vars)', async () => {
+    setupSuccessfulReserveWhatsApp();
+    mockIsWhatsAppConfigured = false;
+
+    const { req, res } = createMockReqRes({ method: 'POST', body: BASE_BODY });
+    await handler(req, res);
+    await new Promise(resolve => setTimeout(resolve, 20));
+
+    expect(mockSendNewBookingAlertWhatsApp).not.toHaveBeenCalled();
+  });
+
+  test('response is 201 even when WhatsApp alert fails (fire-and-forget)', async () => {
+    setupSuccessfulReserveWhatsApp();
+    mockIsWhatsAppConfigured = true;
+    mockSendNewBookingAlertWhatsApp.mockRejectedValueOnce(new Error('WhatsApp API down'));
+
+    const { req, res } = createMockReqRes({ method: 'POST', body: BASE_BODY });
+    await handler(req, res);
+    await new Promise(resolve => setTimeout(resolve, 20));
+
+    expect(res.status).toHaveBeenCalledWith(201);
   });
 });

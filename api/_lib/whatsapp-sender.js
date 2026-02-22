@@ -177,9 +177,47 @@ async function sendReservationConfirmation(customerPhone, details) {
   return sendWhatsAppMessage(customerPhone, message);
 }
 
+/**
+ * Send a new booking alert to the restaurant owner via WhatsApp.
+ *
+ * @param {string} ownerPhone - Restaurant owner's phone number
+ * @param {object} details - Booking details
+ * @param {string} details.reservationId
+ * @param {string} details.customerName
+ * @param {string} details.customerPhone
+ * @param {number} details.partySize
+ * @param {string} details.date
+ * @param {string} details.time
+ * @param {string} [details.language='en']
+ * @returns {{ success: boolean, messageId?: string, error?: string }}
+ */
+async function sendNewBookingAlertWhatsApp(ownerPhone, details) {
+  const { reservationId, customerName, customerPhone, partySize, date, time, language = 'en' } = details;
+
+  if (!isWhatsAppConfigured()) {
+    return { success: false, error: 'WhatsApp not configured' };
+  }
+
+  const message = getTemplate('new_booking_alert', language, {
+    customerName,
+    partySize,
+    date,
+    time,
+    phone: customerPhone,
+    reservationId
+  });
+
+  if (!message) {
+    return { success: false, error: 'Failed to render template' };
+  }
+
+  return sendWhatsAppMessage(ownerPhone, message);
+}
+
 module.exports = {
   isWhatsAppConfigured,
   sendWhatsAppMessage,
   sendTemplateMessage,
   sendReservationConfirmation,
+  sendNewBookingAlertWhatsApp,
 };

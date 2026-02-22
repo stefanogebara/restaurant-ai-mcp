@@ -118,6 +118,35 @@ const TEMPLATES = {
       `Hola ${name}, buenas noticias! Tu mesa en ${restaurant} esta lista.\n\n` +
       `Por favor dirigete a la entrada. Reservaremos tu mesa por 10 minutos.`,
   },
+
+  new_booking_alert: {
+    en: ({ customerName, partySize, date, time, phone, reservationId }) =>
+      `New booking!\n\n` +
+      `Guest: ${customerName}\n` +
+      `Party: ${partySize} guest${partySize !== 1 ? 's' : ''}\n` +
+      `Date: ${date}\n` +
+      `Time: ${time}\n` +
+      `Phone: ${phone}\n` +
+      `Ref: ${reservationId}`,
+
+    es: ({ customerName, partySize, date, time, phone, reservationId }) =>
+      `Nueva reserva!\n\n` +
+      `Cliente: ${customerName}\n` +
+      `Personas: ${partySize}\n` +
+      `Fecha: ${date}\n` +
+      `Hora: ${time}\n` +
+      `Tel: ${phone}\n` +
+      `Ref: ${reservationId}`,
+
+    pt: ({ customerName, partySize, date, time, phone, reservationId }) =>
+      `Nova reserva!\n\n` +
+      `Cliente: ${customerName}\n` +
+      `Pessoas: ${partySize}\n` +
+      `Data: ${date}\n` +
+      `Horario: ${time}\n` +
+      `Tel: ${phone}\n` +
+      `Ref: ${reservationId}`,
+  },
 };
 
 // ============================================================
