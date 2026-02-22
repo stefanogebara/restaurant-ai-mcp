@@ -31,7 +31,7 @@ const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 const { checkSubscription, checkReservationLimits } = require('./_lib/subscription-middleware');
 
 // Rate limiting
-const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { checkAndApplyRateLimit, rejectOversizedBody } = require('./_lib/rate-limit');
 
 // Usage tracking (fire-and-forget)
 const { trackUsage } = require('./_lib/usage-tracking');
@@ -107,6 +107,9 @@ module.exports = async (req, res) => {
   if (handlePreflight(req, res)) {
     return;
   }
+
+  // Reject oversized payloads (> 1 MB)
+  if (rejectOversizedBody(req, res)) return;
 
   // Apply rate limiting (20 reservations per hour per IP)
   const rateLimited = await checkAndApplyRateLimit(req, res, 'reservation');

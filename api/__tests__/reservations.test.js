@@ -162,6 +162,7 @@ jest.mock('../_lib/subscription-middleware', () => ({
 
 jest.mock('../_lib/rate-limit', () => ({
   checkAndApplyRateLimit: jest.fn(() => Promise.resolve(false)),
+  rejectOversizedBody: jest.fn(() => false),
 }));
 
 jest.mock('../_lib/usage-tracking', () => ({

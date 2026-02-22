@@ -250,10 +250,51 @@ async function checkAndApplyRateLimit(req, res, endpointType = 'api') {
   return false; // Request allowed
 }
 
+// ============ MESSAGE DEDUPLICATION ============
+
+const MAX_BODY_BYTES = 1 * 1024 * 1024; // 1 MB
+
+/**
+ * Check if a message has already been processed (Redis-backed dedup).
+ * Falls back to allowing the message if Redis is unavailable.
+ * @param {string} messageId - Unique message identifier (e.g. Twilio MessageSid or Meta message ID)
+ * @param {number} ttlSeconds - How long to remember the message (default 5 min)
+ * @returns {Promise<boolean>} True if message is a duplicate and should be skipped
+ */
+async function isMessageDuplicate(messageId, ttlSeconds = 300) {
+  if (!redis) return false; // no Redis configured — allow (local dev)
+
+  try {
+    // SET NX: returns "OK" if key was new (not a duplicate), null if key existed (duplicate)
+    const result = await redis.set(`wa:dedup:${messageId}`, '1', { nx: true, ex: ttlSeconds });
+    return result === null; // null = key already existed = duplicate
+  } catch (err) {
+    logger.error('Redis dedup error, allowing message through:', err.message);
+    return false; // fail open — better to process twice than drop messages
+  }
+}
+
+/**
+ * Reject requests whose Content-Length exceeds the allowed limit.
+ * @param {object} req - Request object
+ * @param {object} res - Response object
+ * @returns {boolean} True if request was rejected (caller should return immediately)
+ */
+function rejectOversizedBody(req, res) {
+  const contentLength = parseInt(req.headers['content-length'] || '0', 10);
+  if (contentLength > MAX_BODY_BYTES) {
+    res.status(413).json({ error: 'Payload Too Large', message: 'Request body must not exceed 1 MB.' });
+    return true;
+  }
+  return false;
+}
+
 module.exports = {
   RATE_LIMITS,
   getClientId,
   checkRateLimit,
   rateLimitMiddleware,
   checkAndApplyRateLimit,
+  isMessageDuplicate,
+  rejectOversizedBody,
 };

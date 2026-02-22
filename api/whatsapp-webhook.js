@@ -16,6 +16,7 @@
 const crypto = require('crypto');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('WhatsApp');
+const { isMessageDuplicate, rejectOversizedBody } = require('./_lib/rate-limit');
 const {
   getOrCreateSession,
   setSessionRestaurant,
@@ -40,17 +41,9 @@ const AI_CONFIG = {
 // WhatsApp API base URL
 const WHATSAPP_API_URL = 'https://graph.facebook.com/v18.0';
 
-// In-memory message deduplication (prevents Meta retry from reprocessing)
-// Map<messageId, timestamp> - entries auto-expire after 5 minutes
-const processedMessages = new Map();
-function cleanupProcessedMessages() {
-  const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
-  for (const [id, ts] of processedMessages) {
-    if (ts < fiveMinutesAgo) processedMessages.delete(id);
-  }
-}
-// Clean up every 2 minutes
-setInterval(cleanupProcessedMessages, 2 * 60 * 1000);
+// Message deduplication is handled via Redis (shared across Vercel instances).
+// Falls back to allowing the message when Redis is unavailable.
+// See api/_lib/rate-limit.js → isMessageDuplicate()
 
 // Per-phone rate limiting (10 messages per minute)
 const phoneRateLimits = new Map();
@@ -987,6 +980,9 @@ module.exports = async (req, res) => {
     return res.status(200).end();
   }
 
+  // Reject oversized payloads (> 1 MB)
+  if (rejectOversizedBody(req, res)) return;
+
   // Webhook verification (GET request from Meta)
   if (req.method === 'GET') {
     const mode = req.query['hub.mode'];
@@ -1150,13 +1146,11 @@ module.exports = async (req, res) => {
         }
 
         // Deduplicate: Meta retries on timeout, ignore messages we've already seen
+        // Uses Redis so dedup works across all Vercel serverless instances
         const messageId = message.id;
-        if (messageId && processedMessages.has(messageId)) {
+        if (messageId && await isMessageDuplicate(messageId)) {
           logger.info(` Duplicate message ${messageId}, skipping`);
           return res.status(200).json({ status: 'ok' });
-        }
-        if (messageId) {
-          processedMessages.set(messageId, Date.now());
         }
 
         // Rate limit: max 10 messages per minute per phone

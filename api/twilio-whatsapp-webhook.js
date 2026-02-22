@@ -22,6 +22,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 const twilio = require('twilio');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('Twilio');
+const { isMessageDuplicate, rejectOversizedBody } = require('./_lib/rate-limit');
 const { trackUsage } = require('./_lib/usage-tracking');
 const {
   getOrCreateSession,
@@ -35,16 +36,9 @@ const { getMultiTenantClient } = require('./_lib/multi-tenant-supabase');
 const { centralSupabase } = require('./_lib/central-supabase');
 const { canAccommodateParty } = require('./_lib/supabase');
 
-// In-memory message deduplication (prevents Twilio retry from reprocessing)
-// Map<messageSid, timestamp> - entries auto-expire after 5 minutes
-const processedMessages = new Map();
-function cleanupProcessedMessages() {
-  const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
-  for (const [id, ts] of processedMessages) {
-    if (ts < fiveMinutesAgo) processedMessages.delete(id);
-  }
-}
-setInterval(cleanupProcessedMessages, 2 * 60 * 1000);
+// Message deduplication is handled via Redis (shared across Vercel instances).
+// Falls back to allowing the message when Redis is unavailable.
+// See api/_lib/rate-limit.js → isMessageDuplicate()
 
 // Per-phone rate limiting (10 messages per minute)
 const phoneRateLimits = new Map();
@@ -1450,6 +1444,9 @@ module.exports = async (req, res) => {
     });
   }
 
+  // Reject oversized payloads (> 1 MB)
+  if (rejectOversizedBody(req, res)) return;
+
   // Handle incoming messages (POST)
   if (req.method === 'POST') {
     // Verify Twilio signature
@@ -1493,12 +1490,10 @@ module.exports = async (req, res) => {
       }
 
       // Deduplicate: Twilio retries on timeout, ignore messages we've already seen
-      if (MessageSid && processedMessages.has(MessageSid)) {
+      // Uses Redis so dedup works across all Vercel serverless instances
+      if (MessageSid && await isMessageDuplicate(MessageSid)) {
         logger.info(` Duplicate message ${MessageSid}, skipping`);
         return res.status(200).send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
-      }
-      if (MessageSid) {
-        processedMessages.set(MessageSid, Date.now());
       }
 
       // Extract phone number (remove 'whatsapp:' prefix)
