@@ -41,6 +41,7 @@ const { getLocalDate } = require('./_lib/timezone');
 
 // Secure structured logging
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { captureException } = require('./_lib/sentry');
 const logger = createSecureLogger('Reservations');
 
 // Guest memory (fire-and-forget memory creation from booking requests)
@@ -153,6 +154,7 @@ module.exports = async (req, res) => {
     }
   } catch (error) {
     logger.error('Reservation error', error);
+    captureException(error, { method: req.method, url: req.url, action: req.query?.action });
     return res.status(500).json({
       message: 'I apologize, but something went wrong processing your request. Please try again or contact the restaurant directly.'
     });

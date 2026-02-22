@@ -12,6 +12,7 @@ const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { validateWaitlistEntry, sanitizeInput } = require('./_lib/validation');
 const { trackUsage } = require('./_lib/usage-tracking');
+const { captureException } = require('./_lib/sentry');
 
 const logger = createSecureLogger('Waitlist');
 
@@ -61,6 +62,7 @@ module.exports = async (req, res) => {
     }
   } catch (error) {
     logger.error('Waitlist API error:', error);
+    captureException(error, { method: req.method, url: req.url });
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
