@@ -35,6 +35,10 @@ module.exports = async (req, res) => {
     // Get restaurant_id from authenticated user for multi-tenancy
     const restaurantId = auth.user?.restaurant_id || null;
 
+    if (!restaurantId) {
+      return res.status(400).json({ error: 'Restaurant setup required before subscribing. Please complete onboarding first.' });
+    }
+
     // Get the origin for success/cancel URLs
     const origin = req.headers.origin || process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
 
