@@ -4,6 +4,17 @@
  */
 
 require('dotenv').config();
+
+const { validateCritical } = require('./api/_lib/validate-env');
+if (process.env.NODE_ENV !== 'test') {
+  try {
+    validateCritical();
+  } catch (err) {
+    console.error('[Startup] FATAL:', err.message);
+    process.exit(1);
+  }
+}
+
 const express = require('express');
 const cors = require('cors');
 
