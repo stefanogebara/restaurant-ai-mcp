@@ -23,6 +23,10 @@ if (!JWT_SECRET) {
 const restaurantCache = new Map();
 const CACHE_TTL = 5 * 60 * 1000;
 
+// Cache token→decoded user (TTL 1 minute) to avoid repeated Supabase getUser() calls
+const tokenCache = new Map();
+const TOKEN_CACHE_TTL = 60 * 1000;
+
 /**
  * Look up the restaurant_id for a given user ID
  * Uses restaurant.restaurant_config table (set during onboarding)
@@ -94,6 +98,12 @@ async function verifyJWT(token) {
 
   // Fallback: verify with Supabase (handles Supabase session tokens)
   if (!decoded && supabase) {
+    // Check token cache first to avoid repeated network calls
+    const cached = tokenCache.get(token);
+    if (cached && Date.now() - cached.timestamp < TOKEN_CACHE_TTL) {
+      return cached.decoded;
+    }
+
     try {
       const { data: { user }, error } = await supabase.auth.getUser(token);
       if (error || !user) {
@@ -105,6 +115,7 @@ async function verifyJWT(token) {
         email: user.email,
         role: user.role || 'user'
       };
+      tokenCache.set(token, { decoded, timestamp: Date.now() });
     } catch (supabaseError) {
       logger.error('[Auth] Supabase verification error:', supabaseError.message);
       return null;
