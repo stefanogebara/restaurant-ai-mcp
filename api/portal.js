@@ -147,7 +147,7 @@ async function handleGetAvailability(req, res) {
   const { data: restaurant, error: restError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, business_hours, reservation_settings, average_dining_duration_minutes')
+    .select('id, restaurant_name, business_hours, reservation_settings, average_dining_duration_minutes, table_configuration')
     .eq('id', restaurant_id)
     .eq('is_active', true)
     .single();
@@ -204,9 +204,23 @@ async function handleGetAvailability(req, res) {
     .eq('restaurant_id', restaurant_id)
     .eq('is_active', true);
 
-  const totalCapacity = tables
+  let totalCapacity = (tables && tables.length > 0)
     ? tables.reduce((sum, t) => sum + (t.capacity || 0), 0)
-    : 60; // fallback
+    : 0;
+
+  // Fallback: derive capacity from table_configuration in restaurant_config
+  if (totalCapacity === 0 && restaurant.table_configuration) {
+    const config = Array.isArray(restaurant.table_configuration)
+      ? restaurant.table_configuration
+      : [];
+    totalCapacity = config.reduce((sum, area) => {
+      const areaTables = Array.isArray(area.tables) ? area.tables : [];
+      return sum + areaTables.reduce((s, t) => s + (t.capacity || 0), 0);
+    }, 0);
+  }
+
+  // Final fallback
+  if (totalCapacity === 0) totalCapacity = 60;
 
   // Convert reservations to the format expected by availability calculator
   const formattedReservations = (reservations || []).map(r => ({
