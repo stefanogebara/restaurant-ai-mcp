@@ -34,13 +34,13 @@ export default function Step1_5Profile({ data, updateData, onNext, onBack }: Onb
     >
       {/* Header */}
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-[#1C1917] mb-2">
+        <h2 className="text-2xl font-bold text-deep-charcoal mb-2">
           Customize Your Dashboard Experience
         </h2>
-        <p className="text-[#57534E] text-sm">
+        <p className="text-stone-gray text-sm">
           Tell us about your restaurant so we can tailor the dashboard to your needs
         </p>
-        <p className="text-[#A8A29E] text-xs mt-2">
+        <p className="text-muted-stone text-xs mt-2">
           (Optional - you can skip this and customize later in Settings)
         </p>
       </div>
@@ -53,11 +53,11 @@ export default function Step1_5Profile({ data, updateData, onNext, onBack }: Onb
       />
 
       {/* Back Button */}
-      <div className="flex justify-start pt-4 border-t border-[#E7E5E4] mt-8">
+      <div className="flex justify-start pt-4 border-t border-border-gray mt-8">
         <button
           type="button"
           onClick={onBack}
-          className="px-6 py-3 bg-white hover:bg-[#F5F5F4] border border-[#E7E5E4] text-[#1C1917] font-semibold rounded-xl flex items-center gap-2 transition-colors"
+          className="px-6 py-3 bg-white hover:bg-soft-gray border border-border-gray text-deep-charcoal font-semibold rounded-xl flex items-center gap-2 transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />

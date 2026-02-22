@@ -78,8 +78,8 @@ export default function RiskScoreBadge({
         };
       default:
         return {
-          bg: 'bg-[#78716C]/10 border-[#78716C]/30',
-          text: 'text-[#57534E]',
+          bg: 'bg-warm-stone/10 border-warm-stone/30',
+          text: 'text-stone-gray',
           iconName: 'info',
           label: 'Unknown'
         };
@@ -100,7 +100,7 @@ export default function RiskScoreBadge({
       </div>
 
       {showConfidence && confidence && (
-        <div className="text-xs text-[#78716C]">
+        <div className="text-xs text-warm-stone">
           {confidence}% confidence
         </div>
       )}

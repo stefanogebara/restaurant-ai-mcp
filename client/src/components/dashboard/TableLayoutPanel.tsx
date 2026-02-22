@@ -121,11 +121,11 @@ export default function TableLayoutPanel({
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-[#E7E5E4] rounded-2xl p-6">
-        <div className="h-6 w-40 bg-[#E7E5E4] rounded-lg animate-pulse mb-4" />
+      <div className="bg-white border border-border-gray rounded-2xl p-6">
+        <div className="h-6 w-40 bg-border-gray rounded-lg animate-pulse mb-4" />
         <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
           {Array.from({ length: 10 }).map((_, i) => (
-            <div key={i} className="aspect-square bg-[#F5F5F4] rounded-xl animate-pulse" />
+            <div key={i} className="aspect-square bg-soft-gray rounded-xl animate-pulse" />
           ))}
         </div>
       </div>
@@ -134,23 +134,23 @@ export default function TableLayoutPanel({
 
   return (
     <>
-      <div className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
+      <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-5 border-b border-[#F5F5F4]">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-5 border-b border-soft-gray">
           <div className="flex items-center gap-2.5">
-            <span className="text-[15px] font-semibold text-[#1C1917] tracking-tight">{t.tableLayout}</span>
-            <span className="text-[11px] font-semibold bg-[rgba(159,18,57,0.08)] text-[#9F1239] px-2.5 py-0.5 rounded-full">Live</span>
+            <span className="text-[15px] font-semibold text-deep-charcoal tracking-tight">{t.tableLayout}</span>
+            <span className="text-[11px] font-semibold bg-[rgba(159,18,57,0.08)] text-burgundy px-2.5 py-0.5 rounded-full">Live</span>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
             {/* View Mode Toggle */}
-            <div className="flex items-center bg-[#F5F5F4] rounded-lg p-0.5">
+            <div className="flex items-center bg-soft-gray rounded-lg p-0.5">
               <button
                 onClick={() => setViewMode('floorplan')}
                 className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-md transition-colors ${
                   viewMode === 'floorplan'
-                    ? 'bg-[#1C1917] text-white'
-                    : 'text-[#78716C] hover:text-[#1C1917]'
+                    ? 'bg-deep-charcoal text-white'
+                    : 'text-warm-stone hover:text-deep-charcoal'
                 }`}
                 title="Floor Plan View"
               >
@@ -162,8 +162,8 @@ export default function TableLayoutPanel({
                 onClick={() => setViewMode('grid')}
                 className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-md transition-colors ${
                   viewMode === 'grid'
-                    ? 'bg-[#1C1917] text-white'
-                    : 'text-[#78716C] hover:text-[#1C1917]'
+                    ? 'bg-deep-charcoal text-white'
+                    : 'text-warm-stone hover:text-deep-charcoal'
                 }`}
                 title="Grid View"
               >
@@ -177,7 +177,7 @@ export default function TableLayoutPanel({
         </div>
 
         {/* Table View */}
-        <div className={`p-4 ${viewMode === 'grid' ? 'bg-[#F5F5F4]' : ''}`}>
+        <div className={`p-4 ${viewMode === 'grid' ? 'bg-soft-gray' : ''}`}>
           {viewMode === 'floorplan' ? (
             <FloorPlanView
               tables={tables}
@@ -200,22 +200,22 @@ export default function TableLayoutPanel({
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
           onClick={(e) => { if (e.target === e.currentTarget) setSelectedTable(null); }}
         >
-          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-[#E7E5E4] max-w-md w-full p-5 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-border-gray max-w-md w-full p-5 max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
                 <div>
-                  <h3 className="text-lg font-semibold text-[#1C1917]">
+                  <h3 className="text-lg font-semibold text-deep-charcoal">
                     {t.table} {selectedTable.table_number}
                   </h3>
-                  <p className="text-sm text-[#57534E]">
+                  <p className="text-sm text-stone-gray">
                     {selectedTable.capacity} {t.seats} &middot; {selectedTable.location}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setSelectedTable(null)}
-                className="text-[#A8A29E] hover:text-[#57534E] transition-colors p-1"
+                className="text-muted-stone hover:text-stone-gray transition-colors p-1"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -225,19 +225,19 @@ export default function TableLayoutPanel({
 
             {/* Joinable info */}
             {selectedTable.is_joinable && selectedTable.joinable_with?.length > 0 && (
-              <div className="mb-4 p-3 bg-[#9F1239]/5 border border-[#9F1239]/15 rounded-xl">
-                <div className="text-sm font-semibold text-[#9F1239] mb-1.5">{t.joinableTables}</div>
+              <div className="mb-4 p-3 bg-burgundy/5 border border-burgundy/15 rounded-xl">
+                <div className="text-sm font-semibold text-burgundy mb-1.5">{t.joinableTables}</div>
                 <div className="flex flex-wrap gap-1.5">
                   {selectedTable.joinable_with.map((linkedId: string) => {
                     const linked = tables.find((t) => t.id === linkedId);
                     return linked ? (
-                      <span key={linkedId} className="px-2 py-0.5 bg-white border border-[#E7E5E4] rounded-md text-xs font-medium">
+                      <span key={linkedId} className="px-2 py-0.5 bg-white border border-border-gray rounded-md text-xs font-medium">
                         {t.table} {linked.table_number}
                       </span>
                     ) : null;
                   })}
                 </div>
-                <p className="text-xs text-[#57534E] mt-1.5">
+                <p className="text-xs text-stone-gray mt-1.5">
                   {t.combinedCapacity}:{' '}
                   {selectedTable.capacity +
                     selectedTable.joinable_with.reduce((sum: number, id: string) => {

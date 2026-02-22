@@ -143,23 +143,23 @@ export default function CustomerPortal() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] flex flex-col">
+    <div className="min-h-screen bg-warm-white flex flex-col">
       {/* Top Bar */}
-      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-[#E7E5E4] bg-white">
-        <div className="font-serif text-lg font-semibold text-[#1C1917]">
-          seatable<span className="text-[#9F1239]">.</span>
+      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
+        <div className="font-serif text-lg font-semibold text-deep-charcoal">
+          seatable<span className="text-burgundy">.</span>
         </div>
-        <span className="text-[13px] text-[#78716C]">Need help? Contact the restaurant</span>
+        <span className="text-[13px] text-warm-stone">Need help? Contact the restaurant</span>
       </header>
 
       <div className="flex-1 flex justify-center px-6 py-16">
         <div className="max-w-[520px] w-full">
           {/* Header */}
           <div className="text-center mb-10">
-            <h1 className="font-serif text-[32px] font-medium text-[#1C1917] tracking-tight mb-2">
+            <h1 className="font-serif text-[32px] font-medium text-deep-charcoal tracking-tight mb-2">
               Manage your reservation
             </h1>
-            <p className="text-[15px] text-[#78716C] font-light">
+            <p className="text-[15px] text-warm-stone font-light">
               Look up your reservation by phone number or confirmation ID.
             </p>
           </div>
@@ -167,38 +167,38 @@ export default function CustomerPortal() {
           {!reservation ? (
             <>
               {/* Lookup Card */}
-              <div className="bg-white border border-[#E7E5E4] rounded-2xl p-8 mb-6">
-                <h3 className="text-[15px] font-semibold text-[#1C1917] mb-5">Find your reservation</h3>
+              <div className="bg-white border border-border-gray rounded-2xl p-8 mb-6">
+                <h3 className="text-[15px] font-semibold text-deep-charcoal mb-5">Find your reservation</h3>
 
                 {/* Phone Input */}
                 <div className="mb-4">
-                  <label className="block text-[13px] font-medium text-[#57534E] mb-1.5">Phone number</label>
+                  <label className="block text-[13px] font-medium text-stone-gray mb-1.5">Phone number</label>
                   <input
                     type="tel"
                     value={phone}
                     onChange={(e) => { setPhone(e.target.value); setLookupMethod('phone'); }}
                     placeholder="+34 612 345 678"
-                    className="w-full px-4 py-3 border border-[#E7E5E4] rounded-[10px] text-sm bg-white text-[#1C1917] placeholder:text-[#D6D3D1] focus:outline-none focus:border-[#9F1239] focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
+                    className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-[#D6D3D1] focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
                     onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
                   />
                 </div>
 
                 {/* Divider */}
                 <div className="flex items-center gap-4 my-4">
-                  <div className="flex-1 h-px bg-[#E7E5E4]" />
-                  <span className="text-xs font-medium text-[#A8A29E]">or</span>
-                  <div className="flex-1 h-px bg-[#E7E5E4]" />
+                  <div className="flex-1 h-px bg-border-gray" />
+                  <span className="text-xs font-medium text-muted-stone">or</span>
+                  <div className="flex-1 h-px bg-border-gray" />
                 </div>
 
                 {/* Confirmation ID Input */}
                 <div className="mb-2">
-                  <label className="block text-[13px] font-medium text-[#57534E] mb-1.5">Confirmation ID</label>
+                  <label className="block text-[13px] font-medium text-stone-gray mb-1.5">Confirmation ID</label>
                   <input
                     type="text"
                     value={reservationId}
                     onChange={(e) => { setReservationId(e.target.value); setLookupMethod('id'); }}
                     placeholder="e.g. CEL-2026-0218-A7K3"
-                    className="w-full px-4 py-3 border border-[#E7E5E4] rounded-[10px] text-sm bg-white text-[#1C1917] placeholder:text-[#D6D3D1] focus:outline-none focus:border-[#9F1239] focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
+                    className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-[#D6D3D1] focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
                     onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
                   />
                 </div>
@@ -206,7 +206,7 @@ export default function CustomerPortal() {
                 <button
                   onClick={handleLookup}
                   disabled={isLoading}
-                  className="w-full mt-4 py-3.5 bg-[#9F1239] hover:bg-[#881337] text-white text-sm font-semibold rounded-full transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full mt-4 py-3.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isLoading ? (
                     <>
@@ -222,9 +222,9 @@ export default function CustomerPortal() {
           ) : (
             <div className="space-y-4">
               {/* Result Card */}
-              <div className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
+              <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
+                <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
                   <span className="text-[15px] font-semibold">Your Reservation</span>
                   <span className={`text-[11px] font-semibold px-3 py-1 rounded-full ${
                     reservation.status === 'Confirmed'
@@ -245,62 +245,62 @@ export default function CustomerPortal() {
                         const { date, time } = parseReservationDateTime(reservation);
                         return (
                           <div className="space-y-0">
-                            <div className="flex justify-between py-2.5 border-b border-[#F5F5F4]">
-                              <span className="text-[13px] text-[#78716C]">Date</span>
-                              <span className="text-sm font-medium text-[#1C1917]">
+                            <div className="flex justify-between py-2.5 border-b border-soft-gray">
+                              <span className="text-[13px] text-warm-stone">Date</span>
+                              <span className="text-sm font-medium text-deep-charcoal">
                                 {date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
                                   weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
                                 }) : 'Not set'}
                               </span>
                             </div>
-                            <div className="flex justify-between py-2.5 border-b border-[#F5F5F4]">
-                              <span className="text-[13px] text-[#78716C]">Time</span>
-                              <span className="text-sm font-medium text-[#1C1917]">{time || 'Not set'}</span>
+                            <div className="flex justify-between py-2.5 border-b border-soft-gray">
+                              <span className="text-[13px] text-warm-stone">Time</span>
+                              <span className="text-sm font-medium text-deep-charcoal">{time || 'Not set'}</span>
                             </div>
-                            <div className="flex justify-between py-2.5 border-b border-[#F5F5F4]">
-                              <span className="text-[13px] text-[#78716C]">Party size</span>
-                              <span className="text-sm font-medium text-[#1C1917]">{reservation.party_size} guests</span>
+                            <div className="flex justify-between py-2.5 border-b border-soft-gray">
+                              <span className="text-[13px] text-warm-stone">Party size</span>
+                              <span className="text-sm font-medium text-deep-charcoal">{reservation.party_size} guests</span>
                             </div>
-                            <div className="flex justify-between py-2.5 border-b border-[#F5F5F4]">
-                              <span className="text-[13px] text-[#78716C]">Guest</span>
-                              <span className="text-sm font-medium text-[#1C1917]">{reservation.customer_name}</span>
+                            <div className="flex justify-between py-2.5 border-b border-soft-gray">
+                              <span className="text-[13px] text-warm-stone">Guest</span>
+                              <span className="text-sm font-medium text-deep-charcoal">{reservation.customer_name}</span>
                             </div>
                             <div className="flex justify-between py-2.5">
-                              <span className="text-[13px] text-[#78716C]">Confirmation</span>
-                              <span className="text-[13px] font-mono font-medium text-[#9F1239]">{reservation.reservation_id}</span>
+                              <span className="text-[13px] text-warm-stone">Confirmation</span>
+                              <span className="text-[13px] font-mono font-medium text-burgundy">{reservation.reservation_id}</span>
                             </div>
                           </div>
                         );
                       })()}
 
                       {reservation.special_requests && (
-                        <div className="mt-4 pt-4 border-t border-[#E7E5E4]">
-                          <div className="text-xs text-[#78716C] mb-1.5">Special Requests</div>
-                          <div className="text-sm text-[#1C1917] bg-[#F5F5F4] p-3 rounded-lg">{reservation.special_requests}</div>
+                        <div className="mt-4 pt-4 border-t border-border-gray">
+                          <div className="text-xs text-warm-stone mb-1.5">Special Requests</div>
+                          <div className="text-sm text-deep-charcoal bg-soft-gray p-3 rounded-lg">{reservation.special_requests}</div>
                         </div>
                       )}
                     </>
                   ) : (
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-[13px] font-medium text-[#57534E] mb-1.5">Date</label>
-                        <input type="date" value={modifiedData.date} onChange={(e) => setModifiedData({ ...modifiedData, date: e.target.value })} className="w-full px-4 py-3 border border-[#E7E5E4] rounded-[10px] text-sm bg-white text-[#1C1917] focus:outline-none focus:border-[#9F1239]" />
+                        <label className="block text-[13px] font-medium text-stone-gray mb-1.5">Date</label>
+                        <input type="date" value={modifiedData.date} onChange={(e) => setModifiedData({ ...modifiedData, date: e.target.value })} className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal focus:outline-none focus:border-burgundy" />
                       </div>
                       <div>
-                        <label className="block text-[13px] font-medium text-[#57534E] mb-1.5">Time</label>
-                        <input type="time" value={modifiedData.time} onChange={(e) => setModifiedData({ ...modifiedData, time: e.target.value })} className="w-full px-4 py-3 border border-[#E7E5E4] rounded-[10px] text-sm bg-white text-[#1C1917] focus:outline-none focus:border-[#9F1239]" />
+                        <label className="block text-[13px] font-medium text-stone-gray mb-1.5">Time</label>
+                        <input type="time" value={modifiedData.time} onChange={(e) => setModifiedData({ ...modifiedData, time: e.target.value })} className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal focus:outline-none focus:border-burgundy" />
                       </div>
                       <div>
-                        <label className="block text-[13px] font-medium text-[#57534E] mb-1.5">Party Size</label>
-                        <input type="number" min="1" max="20" value={modifiedData.party_size} onChange={(e) => setModifiedData({ ...modifiedData, party_size: parseInt(e.target.value) })} className="w-full px-4 py-3 border border-[#E7E5E4] rounded-[10px] text-sm bg-white text-[#1C1917] focus:outline-none focus:border-[#9F1239]" />
+                        <label className="block text-[13px] font-medium text-stone-gray mb-1.5">Party Size</label>
+                        <input type="number" min="1" max="20" value={modifiedData.party_size} onChange={(e) => setModifiedData({ ...modifiedData, party_size: parseInt(e.target.value) })} className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal focus:outline-none focus:border-burgundy" />
                       </div>
                       <div>
-                        <label className="block text-[13px] font-medium text-[#57534E] mb-1.5">Special Requests</label>
-                        <textarea value={modifiedData.special_requests || ''} onChange={(e) => setModifiedData({ ...modifiedData, special_requests: e.target.value })} rows={3} placeholder="Allergies, celebrations, seating preferences..." className="w-full px-4 py-3 border border-[#E7E5E4] rounded-[10px] text-sm bg-white text-[#1C1917] placeholder:text-[#D6D3D1] focus:outline-none focus:border-[#9F1239] resize-none" />
+                        <label className="block text-[13px] font-medium text-stone-gray mb-1.5">Special Requests</label>
+                        <textarea value={modifiedData.special_requests || ''} onChange={(e) => setModifiedData({ ...modifiedData, special_requests: e.target.value })} rows={3} placeholder="Allergies, celebrations, seating preferences..." className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-[#D6D3D1] focus:outline-none focus:border-burgundy resize-none" />
                       </div>
                       <div className="flex gap-2.5 pt-2">
-                        <button onClick={() => { setIsModifying(false); setModifiedData(reservation); }} className="flex-1 py-3 border border-[#E7E5E4] bg-white text-[#57534E] font-medium rounded-[10px] text-[13px] hover:border-[#A8A29E] transition-colors">Cancel</button>
-                        <button onClick={handleModify} disabled={isLoading} className="flex-1 py-3 bg-[#9F1239] text-white font-semibold rounded-[10px] text-[13px] hover:bg-[#881337] transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                        <button onClick={() => { setIsModifying(false); setModifiedData(reservation); }} className="flex-1 py-3 border border-border-gray bg-white text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">Cancel</button>
+                        <button onClick={handleModify} disabled={isLoading} className="flex-1 py-3 bg-burgundy text-white font-semibold rounded-[10px] text-[13px] hover:bg-burgundy-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                           {isLoading ? (<><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Saving...</>) : 'Save Changes'}
                         </button>
                       </div>
@@ -310,8 +310,8 @@ export default function CustomerPortal() {
 
                 {/* Actions */}
                 {!isModifying && reservation.status !== 'Cancelled' && (
-                  <div className="flex gap-2.5 px-6 py-5 border-t border-[#F5F5F4]">
-                    <button onClick={() => setIsModifying(true)} className="flex-1 py-3 border border-[#E7E5E4] bg-white text-[#57534E] font-medium rounded-[10px] text-[13px] hover:border-[#A8A29E] transition-colors">
+                  <div className="flex gap-2.5 px-6 py-5 border-t border-soft-gray">
+                    <button onClick={() => setIsModifying(true)} className="flex-1 py-3 border border-border-gray bg-white text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">
                       Edit Reservation
                     </button>
                     <button onClick={handleCancel} disabled={isLoading} className="flex-1 py-3 border border-[rgba(220,38,38,0.2)] bg-[rgba(220,38,38,0.04)] text-[#dc2626] font-medium rounded-[10px] text-[13px] hover:bg-[rgba(220,38,38,0.08)] transition-colors disabled:opacity-50">
@@ -324,7 +324,7 @@ export default function CustomerPortal() {
               {/* Back Button */}
               <button
                 onClick={() => { setReservation(null); setReservationId(''); setPhone(''); setIsModifying(false); }}
-                className="w-full text-sm text-[#78716C] hover:text-[#57534E] transition-colors py-2"
+                className="w-full text-sm text-warm-stone hover:text-stone-gray transition-colors py-2"
               >
                 &larr; Look up another reservation
               </button>

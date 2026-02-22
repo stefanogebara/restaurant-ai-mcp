@@ -82,13 +82,13 @@ export default function LearningChat({
                 role="status"
                 aria-live="polite"
                 aria-label="AI assistant is typing"
-                className="bg-[#F5F5F4] border border-[#E7E5E4] rounded-2xl rounded-bl-md px-4 py-3 shadow-sm"
+                className="bg-soft-gray border border-border-gray rounded-2xl rounded-bl-md px-4 py-3 shadow-sm"
               >
                 <div className="flex gap-1.5" aria-hidden="true">
                   {[0, 1, 2].map(i => (
                     <motion.div
                       key={i}
-                      className="w-2 h-2 rounded-full bg-[#A8A29E]"
+                      className="w-2 h-2 rounded-full bg-muted-stone"
                       animate={{ opacity: [0.3, 1, 0.3], y: [0, -2, 0] }}
                       transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.18, ease: 'easeInOut' }}
                     />
@@ -124,7 +124,7 @@ export default function LearningChat({
             transition={{ duration: 0.3 }}
             className="flex flex-col items-center gap-2 py-1"
           >
-            <p className="text-xs text-[#A8A29E] text-center">
+            <p className="text-xs text-muted-stone text-center">
               You can keep chatting to add more detail, or generate your persona now
             </p>
             <button
@@ -133,9 +133,9 @@ export default function LearningChat({
               aria-label={`Generate AI persona preview — ${topicsCovered.length} topics covered`}
               className="
                 px-5 py-2.5 text-sm font-semibold
-                text-[#9F1239] border-2 border-[#9F1239] rounded-full
-                hover:bg-[#9F1239]/10
-                focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:ring-offset-2
+                text-burgundy border-2 border-burgundy rounded-full
+                hover:bg-burgundy/10
+                focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-offset-2
                 transition-colors duration-200
                 active:scale-95
               "

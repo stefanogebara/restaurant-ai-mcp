@@ -55,11 +55,11 @@ export default function StatsBar({
     return (
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="bg-white rounded-2xl p-6 border border-[#E7E5E4]">
-            <div className="h-3 w-20 bg-[#E7E5E4] rounded-full animate-pulse mb-3" />
-            <div className="h-9 w-16 bg-[#E7E5E4] rounded-lg animate-pulse mb-2" />
-            <div className="h-3 w-24 bg-[#F5F5F4] rounded animate-pulse mb-3" />
-            <div className="h-1 w-full bg-[#F5F5F4] rounded-full animate-pulse" />
+          <div key={i} className="bg-white rounded-2xl p-6 border border-border-gray">
+            <div className="h-3 w-20 bg-border-gray rounded-full animate-pulse mb-3" />
+            <div className="h-9 w-16 bg-border-gray rounded-lg animate-pulse mb-2" />
+            <div className="h-3 w-24 bg-soft-gray rounded animate-pulse mb-3" />
+            <div className="h-1 w-full bg-soft-gray rounded-full animate-pulse" />
           </div>
         ))}
       </div>
@@ -83,7 +83,7 @@ export default function StatsBar({
         label={t.tables}
         value={String(availableTables)}
         valueSuffix={` / ${totalTables}`}
-        valueColor="text-[#9F1239]"
+        valueColor="text-burgundy"
         change={`${occupancyPercent}% ${t.capacity}`}
         changeColor="text-[#16a34a]"
         barPercent={100 - occupancyPercent}
@@ -107,7 +107,7 @@ export default function StatsBar({
         label={t.aiCalls}
         value={String(activeParties)}
         change={totalGuests > 0 ? `${totalGuests} guests seated` : ''}
-        changeColor="text-[#57534E]"
+        changeColor="text-stone-gray"
         barPercent={totalTables > 0 ? Math.round((activeParties / totalTables) * 100) : 0}
         barColor="#d97706"
       />
@@ -128,14 +128,14 @@ interface StatCardProps {
 
 function StatCard({ label, value, valueSuffix, valueColor, change, changeColor, barPercent, barColor }: StatCardProps) {
   return (
-    <div className="bg-white rounded-2xl p-6 border border-[#E7E5E4]">
-      <div className="text-xs font-medium text-[#A8A29E] tracking-wide mb-2">
+    <div className="bg-white rounded-2xl p-6 border border-border-gray">
+      <div className="text-xs font-medium text-muted-stone tracking-wide mb-2">
         {label}
       </div>
-      <div className={`text-[32px] font-bold tracking-tight leading-none ${valueColor || 'text-[#1C1917]'}`}>
+      <div className={`text-[32px] font-bold tracking-tight leading-none ${valueColor || 'text-deep-charcoal'}`}>
         {value}
         {valueSuffix && (
-          <span className="text-base text-[#A8A29E] font-normal">{valueSuffix}</span>
+          <span className="text-base text-muted-stone font-normal">{valueSuffix}</span>
         )}
       </div>
       {change && (
@@ -143,7 +143,7 @@ function StatCard({ label, value, valueSuffix, valueColor, change, changeColor, 
           {change}
         </div>
       )}
-      <div className="w-full h-1 bg-[#F5F5F4] rounded-full mt-3 overflow-hidden">
+      <div className="w-full h-1 bg-soft-gray rounded-full mt-3 overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-500"
           style={{ width: `${barPercent}%`, background: barColor }}

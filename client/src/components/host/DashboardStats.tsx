@@ -78,27 +78,27 @@ interface StatCardProps {
 function StatCard({ label, value, iconName, color }: StatCardProps) {
   const colorConfig = {
     slate: {
-      bg: 'bg-white border border-[#E7E5E4]',
-      iconBg: 'bg-[#57534E]',
+      bg: 'bg-white border border-border-gray',
+      iconBg: 'bg-stone-gray',
     },
     emerald: {
-      bg: 'bg-white border border-[#E7E5E4]',
+      bg: 'bg-white border border-border-gray',
       iconBg: 'bg-[#16a34a]',
     },
     red: {
-      bg: 'bg-white border border-[#E7E5E4]',
-      iconBg: 'bg-[#9F1239]',
+      bg: 'bg-white border border-border-gray',
+      iconBg: 'bg-burgundy',
     },
     blue: {
-      bg: 'bg-white border border-[#E7E5E4]',
-      iconBg: 'bg-[#9F1239]',
+      bg: 'bg-white border border-border-gray',
+      iconBg: 'bg-burgundy',
     },
     violet: {
-      bg: 'bg-white border border-[#E7E5E4]',
+      bg: 'bg-white border border-border-gray',
       iconBg: 'bg-[#7c3aed]',
     },
     amber: {
-      bg: 'bg-white border border-[#E7E5E4]',
+      bg: 'bg-white border border-border-gray',
       iconBg: 'bg-[#d97706]',
     },
   };
@@ -106,15 +106,15 @@ function StatCard({ label, value, iconName, color }: StatCardProps) {
   const config = colorConfig[color];
 
   return (
-    <div className={`${config.bg} rounded-xl p-5 shadow-md transition-all duration-200 hover:shadow-lg hover:bg-[#F5F5F4]`}>
+    <div className={`${config.bg} rounded-xl p-5 shadow-md transition-all duration-200 hover:shadow-lg hover:bg-soft-gray`}>
       <div className="flex items-center justify-between mb-3">
         <div className={`w-10 h-10 ${config.iconBg} rounded-lg flex items-center justify-center`}>
           <ThiingsIcon name={iconName} size="sm" />
         </div>
       </div>
       <div>
-        <p className="text-sm font-medium text-[#57534E] mb-1">{label}</p>
-        <p className="text-2xl font-bold text-[#1C1917]">{value}</p>
+        <p className="text-sm font-medium text-stone-gray mb-1">{label}</p>
+        <p className="text-2xl font-bold text-deep-charcoal">{value}</p>
       </div>
     </div>
   );

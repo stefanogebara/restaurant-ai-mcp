@@ -17,10 +17,10 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
+      <div className="min-h-screen bg-warm-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-2 border-[#9F1239] border-t-transparent mx-auto mb-4"></div>
-          <p className="text-[#57534E] font-light text-sm">Loading...</p>
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-burgundy border-t-transparent mx-auto mb-4"></div>
+          <p className="text-stone-gray font-light text-sm">Loading...</p>
         </div>
       </div>
     );

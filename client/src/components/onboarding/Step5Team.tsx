@@ -98,15 +98,15 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
       className="space-y-6"
     >
       <div>
-        <h2 className="font-serif text-2xl font-bold text-[#1C1917] mb-2">Invite your team</h2>
-        <p className="text-[#57534E] text-sm">
+        <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">Invite your team</h2>
+        <p className="text-stone-gray text-sm">
           Add team members who will help manage reservations. You can skip this step and invite them later.
         </p>
       </div>
 
       {/* Team Member Form */}
-      <div className="bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl p-5">
-        <label className="block text-sm font-semibold text-[#1C1917] mb-3">Add team members</label>
+      <div className="bg-soft-gray border border-border-gray rounded-xl p-5">
+        <label className="block text-sm font-semibold text-deep-charcoal mb-3">Add team members</label>
 
         <div className="space-y-3">
           <div>
@@ -116,10 +116,10 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
               onChange={(e) => setNewMemberEmail(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addTeamMember()}
               placeholder="colleague@yourrestaurant.com"
-              className="w-full px-4 py-3 bg-white border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
+              className="w-full px-4 py-3 bg-white border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
             />
             {errors.email && (
-              <p className="mt-1 text-sm text-[#9F1239]">{errors.email}</p>
+              <p className="mt-1 text-sm text-burgundy">{errors.email}</p>
             )}
           </div>
 
@@ -127,7 +127,7 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
             <select
               value={newMemberRole}
               onChange={(e) => setNewMemberRole(e.target.value as any)}
-              className="flex-1 px-4 py-3 bg-white border border-[#E7E5E4] rounded-xl text-[#1C1917] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent transition-all"
+              className="flex-1 px-4 py-3 bg-white border border-border-gray rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
             >
               {ROLES.map((role) => (
                 <option key={role.value} value={role.value}>
@@ -139,14 +139,14 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
             <button
               onClick={addTeamMember}
               disabled={!canAddMoreMembers()}
-              className="px-6 py-3 bg-[#9F1239] hover:bg-[#881337] disabled:bg-[#E7E5E4] disabled:text-[#A8A29E] disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all"
+              className="px-6 py-3 bg-burgundy hover:bg-burgundy-dark disabled:bg-border-gray disabled:text-muted-stone disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all"
             >
               Add
             </button>
           </div>
         </div>
 
-        <div className="mt-3 text-xs text-[#A8A29E]">
+        <div className="mt-3 text-xs text-muted-stone">
           {data.team_members.length} of {TEAM_LIMIT} team members added
         </div>
       </div>
@@ -154,19 +154,19 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
       {/* Team Members List */}
       {data.team_members.length > 0 && (
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-[#1C1917]">Team members ({data.team_members.length})</label>
+          <label className="block text-sm font-semibold text-deep-charcoal">Team members ({data.team_members.length})</label>
           {data.team_members.map((member, index) => (
             <div
               key={index}
-              className="flex items-center justify-between p-4 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl"
+              className="flex items-center justify-between p-4 bg-soft-gray border border-border-gray rounded-xl"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#9F1239] flex items-center justify-center text-white font-semibold">
+                <div className="w-10 h-10 rounded-full bg-burgundy flex items-center justify-center text-white font-semibold">
                   {member.email.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-[#1C1917] font-medium">{member.email}</p>
-                  <p className="text-[#57534E] text-sm">{member.role}</p>
+                  <p className="text-deep-charcoal font-medium">{member.email}</p>
+                  <p className="text-stone-gray text-sm">{member.role}</p>
                 </div>
               </div>
               <button
@@ -184,12 +184,12 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
       )}
 
       {/* Role Descriptions */}
-      <div className="bg-[#9F1239]/5 border border-[#9F1239]/20 rounded-xl p-4">
-        <p className="text-[#1C1917] font-semibold text-sm mb-2">Available roles:</p>
-        <ul className="space-y-1 text-[#57534E] text-sm">
+      <div className="bg-burgundy/5 border border-burgundy/20 rounded-xl p-4">
+        <p className="text-deep-charcoal font-semibold text-sm mb-2">Available roles:</p>
+        <ul className="space-y-1 text-stone-gray text-sm">
           {ROLES.map((role) => (
             <li key={role.value}>
-              <span className="font-semibold text-[#9F1239]">{role.value}</span> - {role.description}
+              <span className="font-semibold text-burgundy">{role.value}</span> - {role.description}
             </li>
           ))}
         </ul>
@@ -200,7 +200,7 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
         <button
           onClick={onBack}
           disabled={isSubmitting}
-          className="px-6 py-3 bg-white hover:bg-[#F5F5F4] disabled:opacity-50 disabled:cursor-not-allowed border border-[#E7E5E4] text-[#1C1917] font-semibold rounded-xl transition-all flex items-center gap-2"
+          className="px-6 py-3 bg-white hover:bg-soft-gray disabled:opacity-50 disabled:cursor-not-allowed border border-border-gray text-deep-charcoal font-semibold rounded-xl transition-all flex items-center gap-2"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -210,7 +210,7 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
         <button
           onClick={handleComplete}
           disabled={isSubmitting}
-          className="px-8 py-3 bg-[#9F1239] hover:bg-[#881337] text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-8 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? (
             <>

@@ -14,8 +14,8 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white border border-[#E7E5E4]/50 rounded-xl p-3 shadow-lg">
-          <p className="text-sm font-semibold text-[#1C1917] mb-2">{label}</p>
+        <div className="bg-white border border-border-gray/50 rounded-xl p-3 shadow-lg">
+          <p className="text-sm font-semibold text-deep-charcoal mb-2">{label}</p>
           {payload.map((entry: any, index: number) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
               {entry.name}: <span className="font-bold">{entry.value}</span>
@@ -28,10 +28,10 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
   };
 
   return (
-    <div className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
+    <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
         <span className="text-[15px] font-semibold tracking-tight">Reservations Over Time</span>
-        <span className="text-[11px] font-semibold bg-[rgba(159,18,57,0.08)] text-[#9F1239] px-2.5 py-0.5 rounded-full">Trending Up</span>
+        <span className="text-[11px] font-semibold bg-[rgba(159,18,57,0.08)] text-burgundy px-2.5 py-0.5 rounded-full">Trending Up</span>
       </div>
       <div className="p-6">
 

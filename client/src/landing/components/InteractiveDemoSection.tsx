@@ -11,7 +11,7 @@ export default function InteractiveDemoSection() {
   };
 
   return (
-    <section id="demo" className="py-24 px-6 bg-[#F5F5F4] border-t border-[#E7E5E4]">
+    <section id="demo" className="py-24 px-6 bg-soft-gray border-t border-border-gray">
       <div className="max-w-6xl mx-auto">
         {/* Section Header */}
         <motion.div
@@ -21,11 +21,11 @@ export default function InteractiveDemoSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <div className="text-xs font-semibold tracking-[2px] uppercase text-[#9F1239] mb-4">Live Demo</div>
-          <h2 className="font-serif text-4xl sm:text-[48px] font-medium tracking-tight text-[#1C1917] mb-3">
+          <div className="text-xs font-semibold tracking-[2px] uppercase text-burgundy mb-4">Live Demo</div>
+          <h2 className="font-serif text-4xl sm:text-[48px] font-medium tracking-tight text-deep-charcoal mb-3">
             Experience the platform live
           </h2>
-          <p className="text-lg text-[#57534E] max-w-2xl mx-auto font-light">
+          <p className="text-lg text-stone-gray max-w-2xl mx-auto font-light">
             Interact with our demo restaurant and see how the AI handles reservations in real-time
           </p>
         </motion.div>
@@ -37,36 +37,36 @@ export default function InteractiveDemoSection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="bg-white p-3 rounded-2xl border border-[#E7E5E4] shadow-lg relative"
+            className="bg-white p-3 rounded-2xl border border-border-gray shadow-lg relative"
           >
-            <div className="rounded-[1.5rem] overflow-hidden border border-[#E7E5E4]">
+            <div className="rounded-[1.5rem] overflow-hidden border border-border-gray">
               {/* Mini Browser Chrome */}
-              <div className="flex items-center gap-2 px-3 py-2 bg-[#F5F5F4] border-b border-[#E7E5E4]">
+              <div className="flex items-center gap-2 px-3 py-2 bg-soft-gray border-b border-border-gray">
                 <div className="flex gap-1">
-                  <div className="w-2 h-2 rounded-full bg-[#E7E5E4]" />
-                  <div className="w-2 h-2 rounded-full bg-[#E7E5E4]" />
-                  <div className="w-2 h-2 rounded-full bg-[#E7E5E4]" />
+                  <div className="w-2 h-2 rounded-full bg-border-gray" />
+                  <div className="w-2 h-2 rounded-full bg-border-gray" />
+                  <div className="w-2 h-2 rounded-full bg-border-gray" />
                 </div>
                 <div className="flex-1 mx-2">
-                  <div className="bg-white rounded px-3 py-1 text-[10px] text-[#A8A29E] text-center border border-[#E7E5E4]">
+                  <div className="bg-white rounded px-3 py-1 text-[10px] text-muted-stone text-center border border-border-gray">
                     app.seatable.io/host-dashboard
                   </div>
                 </div>
               </div>
 
               {/* Dashboard Content */}
-              <div className="flex bg-[#FAFAF9]">
+              <div className="flex bg-warm-white">
                 {/* Tiny Sidebar */}
-                <div className="hidden sm:flex flex-col w-36 bg-white border-r border-[#E7E5E4] p-3 gap-1.5">
-                  <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#9F1239] text-white rounded text-[10px] font-medium">
+                <div className="hidden sm:flex flex-col w-36 bg-white border-r border-border-gray p-3 gap-1.5">
+                  <div className="flex items-center gap-1.5 px-2 py-1.5 bg-burgundy text-white rounded text-[10px] font-medium">
                     <LayoutDashboard className="w-3 h-3" />
                     Overview
                   </div>
-                  <div className="flex items-center gap-1.5 px-2 py-1.5 text-[#A8A29E] text-[10px]">
+                  <div className="flex items-center gap-1.5 px-2 py-1.5 text-muted-stone text-[10px]">
                     <Users className="w-3 h-3" />
                     Customers
                   </div>
-                  <div className="flex items-center gap-1.5 px-2 py-1.5 text-[#A8A29E] text-[10px]">
+                  <div className="flex items-center gap-1.5 px-2 py-1.5 text-muted-stone text-[10px]">
                     <Clock className="w-3 h-3" />
                     Analytics
                   </div>
@@ -76,17 +76,17 @@ export default function InteractiveDemoSection() {
                 <div className="flex-1 p-3 md:p-4">
                   {/* Stats */}
                   <div className="grid grid-cols-3 gap-2 mb-3">
-                    <div className="bg-white rounded-lg p-2 text-center border border-[#E7E5E4]">
-                      <div className="text-sm font-bold text-[#1C1917]">8/12</div>
-                      <div className="text-[9px] text-[#A8A29E] uppercase">Tables</div>
+                    <div className="bg-white rounded-lg p-2 text-center border border-border-gray">
+                      <div className="text-sm font-bold text-deep-charcoal">8/12</div>
+                      <div className="text-[9px] text-muted-stone uppercase">Tables</div>
                     </div>
-                    <div className="bg-white rounded-lg p-2 text-center border border-[#E7E5E4]">
-                      <div className="text-sm font-bold text-[#9F1239]">67%</div>
-                      <div className="text-[9px] text-[#A8A29E] uppercase">Occupancy</div>
+                    <div className="bg-white rounded-lg p-2 text-center border border-border-gray">
+                      <div className="text-sm font-bold text-burgundy">67%</div>
+                      <div className="text-[9px] text-muted-stone uppercase">Occupancy</div>
                     </div>
-                    <div className="bg-white rounded-lg p-2 text-center border border-[#E7E5E4]">
-                      <div className="text-sm font-bold text-[#1C1917]">24</div>
-                      <div className="text-[9px] text-[#A8A29E] uppercase">Today</div>
+                    <div className="bg-white rounded-lg p-2 text-center border border-border-gray">
+                      <div className="text-sm font-bold text-deep-charcoal">24</div>
+                      <div className="text-[9px] text-muted-stone uppercase">Today</div>
                     </div>
                   </div>
 
@@ -110,7 +110,7 @@ export default function InteractiveDemoSection() {
                       };
                       return (
                         <div key={i} className={`${colors[status]} border rounded p-1.5 text-center`}>
-                          <div className="text-[10px] font-bold text-[#57534E]">T{i + 1}</div>
+                          <div className="text-[10px] font-bold text-stone-gray">T{i + 1}</div>
                           <div className={`w-1 h-1 rounded-full ${dots[status]} mx-auto mt-0.5`} />
                         </div>
                       );
@@ -125,7 +125,7 @@ export default function InteractiveDemoSection() {
               href="/live-demo"
               className="absolute inset-0 rounded-2xl flex items-end justify-center pb-6 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"
             >
-              <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-[#1C1917] text-sm font-semibold rounded-xl shadow-lg">
+              <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-deep-charcoal text-sm font-semibold rounded-xl shadow-lg">
                 Try Live Demo
                 <ExternalLink className="w-3.5 h-3.5" />
               </span>
@@ -134,7 +134,7 @@ export default function InteractiveDemoSection() {
             {/* Live Indicator */}
             <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-2 bg-white/90 rounded-full shadow-md">
               <div className="w-2 h-2 bg-[#10b981] rounded-full animate-pulse" />
-              <span className="text-xs text-[#1C1917] font-bold tracking-wider">LIVE</span>
+              <span className="text-xs text-deep-charcoal font-bold tracking-wider">LIVE</span>
             </div>
           </motion.div>
 
@@ -147,19 +147,19 @@ export default function InteractiveDemoSection() {
             className="space-y-6"
           >
             {/* Try the AI Chat */}
-            <div className="bg-white p-6 rounded-2xl border border-[#E7E5E4] shadow-lg hover:shadow-xl transition-shadow">
+            <div className="bg-white p-6 rounded-2xl border border-border-gray shadow-lg hover:shadow-xl transition-shadow">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#9F1239] flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-2xl bg-burgundy flex items-center justify-center flex-shrink-0">
                   <MessageSquare className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-serif text-xl text-[#1C1917] mb-2">Chat with Our AI</h3>
-                  <p className="text-[#57534E] mb-4 font-light text-sm">
+                  <h3 className="font-serif text-xl text-deep-charcoal mb-2">Chat with Our AI</h3>
+                  <p className="text-stone-gray mb-4 font-light text-sm">
                     Try making a reservation via our AI-powered chat. Speak naturally or type your request.
                   </p>
                   <a
                     href="/live-demo"
-                    className="px-5 py-3 bg-[#9F1239] text-white text-sm font-semibold hover:bg-[#881337] transition-all duration-300 rounded-xl inline-flex items-center gap-2 shadow-md shadow-[#9F1239]/20"
+                    className="px-5 py-3 bg-burgundy text-white text-sm font-semibold hover:bg-burgundy-dark transition-all duration-300 rounded-xl inline-flex items-center gap-2 shadow-md shadow-burgundy/20"
                   >
                     Start Chat
                     <ArrowRight className="w-4 h-4" />
@@ -169,19 +169,19 @@ export default function InteractiveDemoSection() {
             </div>
 
             {/* Voice Reservations */}
-            <div className="bg-white p-6 rounded-2xl border border-[#E7E5E4] shadow-md hover:shadow-lg transition-shadow">
+            <div className="bg-white p-6 rounded-2xl border border-border-gray shadow-md hover:shadow-lg transition-shadow">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#1C1917] flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-2xl bg-deep-charcoal flex items-center justify-center flex-shrink-0">
                   <Phone className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-serif text-xl text-[#1C1917] mb-2">Voice Reservations</h3>
-                  <p className="text-[#57534E] mb-4 font-light text-sm">
+                  <h3 className="font-serif text-xl text-deep-charcoal mb-2">Voice Reservations</h3>
+                  <p className="text-stone-gray mb-4 font-light text-sm">
                     Our AI handles phone calls in 6+ languages, takes reservations, and confirms bookings automatically.
                   </p>
                   <a
                     href="/live-demo"
-                    className="px-5 py-3 border border-[#1C1917] text-[#1C1917] text-sm font-semibold hover:bg-[#1C1917] hover:text-white transition-all duration-300 rounded-xl inline-flex items-center gap-2"
+                    className="px-5 py-3 border border-deep-charcoal text-deep-charcoal text-sm font-semibold hover:bg-deep-charcoal hover:text-white transition-all duration-300 rounded-xl inline-flex items-center gap-2"
                   >
                     Try Live Demo
                     <ExternalLink className="w-4 h-4" />
@@ -191,36 +191,36 @@ export default function InteractiveDemoSection() {
             </div>
 
             {/* Demo Restaurant Info */}
-            <div className="bg-[#FAFAF9] p-6 rounded-2xl border border-[#E7E5E4]">
-              <h4 className="font-serif text-lg text-[#1C1917] mb-4">Demo Restaurant</h4>
+            <div className="bg-warm-white p-6 rounded-2xl border border-border-gray">
+              <h4 className="font-serif text-lg text-deep-charcoal mb-4">Demo Restaurant</h4>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-[#57534E] text-sm font-light">Name</span>
-                  <span className="text-[#1C1917] font-medium">{DEMO_RESTAURANT.name}</span>
+                  <span className="text-stone-gray text-sm font-light">Name</span>
+                  <span className="text-deep-charcoal font-medium">{DEMO_RESTAURANT.name}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-[#57534E] text-sm font-light">Tables</span>
-                  <span className="text-[#1C1917] font-medium">{DEMO_RESTAURANT.tables}</span>
+                  <span className="text-stone-gray text-sm font-light">Tables</span>
+                  <span className="text-deep-charcoal font-medium">{DEMO_RESTAURANT.tables}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-[#57534E] text-sm font-light">Capacity</span>
-                  <span className="text-[#1C1917] font-medium">{DEMO_RESTAURANT.capacity} seats</span>
+                  <span className="text-stone-gray text-sm font-light">Capacity</span>
+                  <span className="text-deep-charcoal font-medium">{DEMO_RESTAURANT.capacity} seats</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-[#57534E] text-sm font-light">Occupancy</span>
-                  <span className="text-[#9F1239] font-bold">{DEMO_RESTAURANT.occupancy}%</span>
+                  <span className="text-stone-gray text-sm font-light">Occupancy</span>
+                  <span className="text-burgundy font-bold">{DEMO_RESTAURANT.occupancy}%</span>
                 </div>
               </div>
             </div>
 
             {/* CTA */}
             <div className="text-center pt-2">
-              <p className="text-[#57534E] mb-4 font-light text-sm">
+              <p className="text-stone-gray mb-4 font-light text-sm">
                 Ready to implement this for your restaurant?
               </p>
               <button
                 onClick={scrollToContact}
-                className="bg-[#9F1239] text-white px-8 py-4 text-[15px] font-semibold hover:bg-[#881337] transition-all duration-300 rounded-2xl  inline-flex items-center gap-2"
+                className="bg-burgundy text-white px-8 py-4 text-[15px] font-semibold hover:bg-burgundy-dark transition-all duration-300 rounded-2xl  inline-flex items-center gap-2"
               >
                 Get Started Today
                 <ArrowRight className="w-4 h-4" />

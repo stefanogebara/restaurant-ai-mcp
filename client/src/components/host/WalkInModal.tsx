@@ -65,8 +65,8 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl border border-[#E7E5E4] p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold text-[#1C1917] mb-4">
+      <div className="bg-white rounded-xl shadow-2xl border border-border-gray p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <h2 className="text-2xl font-bold text-deep-charcoal mb-4">
           {step === 1 ? 'Add Walk-in Customer' : 'Select Table'}
         </h2>
 
@@ -74,7 +74,7 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
         {step === 1 && (
           <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[#1C1917] mb-1">
+            <label className="block text-sm font-medium text-deep-charcoal mb-1">
               Party Size *
             </label>
             <input
@@ -85,12 +85,12 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
               aria-label="Party size"
               value={formData.party_size}
               onChange={(e) => setFormData({ ...formData, party_size: e.target.value })}
-              className="w-full px-4 py-2.5 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent"
+              className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#1C1917] mb-1">
+            <label className="block text-sm font-medium text-deep-charcoal mb-1">
               Customer Name *
             </label>
             <input
@@ -99,12 +99,12 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
               aria-label="Customer name"
               value={formData.customer_name}
               onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-              className="w-full px-4 py-2.5 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent"
+              className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#1C1917] mb-1">
+            <label className="block text-sm font-medium text-deep-charcoal mb-1">
               Customer Phone *
             </label>
             <input
@@ -114,20 +114,20 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
               placeholder="+1 (555) 123-4567"
               value={formData.customer_phone}
               onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
-              className="w-full px-4 py-3 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] placeholder-[#A8A29E] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent"
+              className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
             />
-            <p className="text-xs text-[#A8A29E] mt-1">Any format accepted, e.g. +1 (555) 123-4567</p>
+            <p className="text-xs text-muted-stone mt-1">Any format accepted, e.g. +1 (555) 123-4567</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#1C1917] mb-1">
+            <label className="block text-sm font-medium text-deep-charcoal mb-1">
               Preferred Location (Optional)
             </label>
             <select
               aria-label="Preferred location"
               value={formData.preferred_location}
               onChange={(e) => setFormData({ ...formData, preferred_location: e.target.value })}
-              className="w-full px-4 py-2.5 bg-[#F5F5F4] border border-[#E7E5E4] rounded-xl text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:border-transparent"
+              className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
             >
               <option value="">No preference</option>
               <option value="Main Room">Main Room</option>
@@ -141,13 +141,13 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
               <button
                 type="button"
                 onClick={handleClose}
-                className="flex-1 px-4 py-3 border border-[#E7E5E4] text-[#57534E] font-medium rounded-xl hover:bg-[#F5F5F4] transition-colors"
+                className="flex-1 px-4 py-3 border border-border-gray text-stone-gray font-medium rounded-xl hover:bg-soft-gray transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="flex-1 px-4 py-3 bg-[#9F1239] text-white font-medium rounded-xl hover:bg-[#881337] transition-colors"
+                className="flex-1 px-4 py-3 bg-burgundy text-white font-medium rounded-xl hover:bg-burgundy-dark transition-colors"
               >
                 Next: Select Table
               </button>
@@ -159,15 +159,15 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
         {step === 2 && (
           <>
             {/* Customer Info Summary */}
-            <div className="bg-[#F5F5F4] rounded-xl p-4 mb-4 border border-[#E7E5E4]">
+            <div className="bg-soft-gray rounded-xl p-4 mb-4 border border-border-gray">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-sm text-[#57534E]">Customer</div>
-                  <div className="font-semibold text-[#1C1917]">{formData.customer_name}</div>
+                  <div className="text-sm text-stone-gray">Customer</div>
+                  <div className="font-semibold text-deep-charcoal">{formData.customer_name}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-[#57534E]">Party Size</div>
-                  <div className="font-semibold text-[#1C1917]">{formData.party_size} guests</div>
+                  <div className="text-sm text-stone-gray">Party Size</div>
+                  <div className="font-semibold text-deep-charcoal">{formData.party_size} guests</div>
                 </div>
               </div>
             </div>
@@ -184,13 +184,13 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
             <div className="flex gap-3 pt-4">
               <button
                 onClick={handleBack}
-                className="flex-1 px-4 py-3 border border-[#E7E5E4] text-[#57534E] font-medium rounded-xl hover:bg-[#F5F5F4] transition-colors"
+                className="flex-1 px-4 py-3 border border-border-gray text-stone-gray font-medium rounded-xl hover:bg-soft-gray transition-colors"
               >
                 Back
               </button>
               <button
                 onClick={handleProceedToSeat}
-                className="flex-1 px-4 py-3 bg-[#16a34a] text-white font-medium rounded-xl hover:bg-[#15803d] disabled:bg-[#A8A29E] disabled:cursor-not-allowed transition-colors"
+                className="flex-1 px-4 py-3 bg-[#16a34a] text-white font-medium rounded-xl hover:bg-[#15803d] disabled:bg-muted-stone disabled:cursor-not-allowed transition-colors"
                 disabled={selectedTableIds.length === 0}
               >
                 Proceed to Seat

@@ -207,16 +207,16 @@ export default function ManualRevenueModal({
       {/* Modal */}
       <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white px-6 py-4 border-b border-[#E7E5E4] flex items-center justify-between rounded-t-xl">
+        <div className="sticky top-0 bg-white px-6 py-4 border-b border-border-gray flex items-center justify-between rounded-t-xl">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-[#16a34a]/10 rounded-lg">
               <ThiingsIcon name="dollar" size="sm" />
             </div>
-            <h2 className="text-xl font-bold text-[#1C1917]">{t.title}</h2>
+            <h2 className="text-xl font-bold text-deep-charcoal">{t.title}</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-[#F5F5F4] rounded-lg transition-colors"
+            className="p-2 hover:bg-soft-gray rounded-lg transition-colors"
           >
             <ThiingsIcon name="x-circle" size="sm" />
           </button>
@@ -226,7 +226,7 @@ export default function ManualRevenueModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Customer Search */}
           <div className="relative">
-            <label className="block text-sm font-medium text-[#1C1917] mb-1">
+            <label className="block text-sm font-medium text-deep-charcoal mb-1">
               {t.customerSearch}
             </label>
             <div className="relative">
@@ -236,7 +236,7 @@ export default function ManualRevenueModal({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t.searchPlaceholder}
-                className="w-full pl-10 pr-4 py-2 border border-[#E7E5E4] rounded-lg focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-colors"
+                className="w-full pl-10 pr-4 py-2 border border-border-gray rounded-lg focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
               />
               {isSearching && (
                 <Spinner size="sm" className="absolute right-3 top-1/2 -translate-y-1/2" />
@@ -245,21 +245,21 @@ export default function ManualRevenueModal({
 
             {/* Search Results */}
             {searchResults.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-[#E7E5E4] rounded-lg shadow-lg max-h-40 overflow-y-auto">
+              <div className="absolute z-10 w-full mt-1 bg-white border border-border-gray rounded-lg shadow-lg max-h-40 overflow-y-auto">
                 {searchResults.map((customer) => (
                   <button
                     key={customer.customer_id}
                     type="button"
                     onClick={() => selectCustomer(customer)}
-                    className="w-full px-4 py-2 text-left hover:bg-[#F5F5F4] transition-colors flex items-center gap-3"
+                    className="w-full px-4 py-2 text-left hover:bg-soft-gray transition-colors flex items-center gap-3"
                   >
                     <ThiingsIcon name="user" size="xs" />
                     <div>
-                      <div className="font-medium text-[#1C1917]">
+                      <div className="font-medium text-deep-charcoal">
                         {customer.customer_name || customer.customer_phone || customer.customer_email}
                       </div>
                       {customer.customer_phone && (
-                        <div className="text-xs text-[#57534E]">{customer.customer_phone}</div>
+                        <div className="text-xs text-stone-gray">{customer.customer_phone}</div>
                       )}
                     </div>
                   </button>
@@ -271,7 +271,7 @@ export default function ManualRevenueModal({
           {/* Customer Details */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#1C1917] mb-1">
+              <label className="block text-sm font-medium text-deep-charcoal mb-1">
                 <ThiingsIcon name="phone" size="xs" className="inline mr-1" />
                 {t.customerPhone}
               </label>
@@ -280,11 +280,11 @@ export default function ManualRevenueModal({
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
                 placeholder="+34 612 345 678"
-                className="w-full px-4 py-2 border border-[#E7E5E4] rounded-lg focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-colors"
+                className="w-full px-4 py-2 border border-border-gray rounded-lg focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1C1917] mb-1">
+              <label className="block text-sm font-medium text-deep-charcoal mb-1">
                 <ThiingsIcon name="user" size="xs" className="inline mr-1" />
                 {t.customerName}
               </label>
@@ -293,14 +293,14 @@ export default function ManualRevenueModal({
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="Maria Garcia"
-                className="w-full px-4 py-2 border border-[#E7E5E4] rounded-lg focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-colors"
+                className="w-full px-4 py-2 border border-border-gray rounded-lg focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
               />
             </div>
           </div>
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-[#1C1917] mb-1">
+            <label className="block text-sm font-medium text-deep-charcoal mb-1">
               {t.customerEmail}
             </label>
             <input
@@ -308,19 +308,19 @@ export default function ManualRevenueModal({
               value={customerEmail}
               onChange={(e) => setCustomerEmail(e.target.value)}
               placeholder="maria@example.com"
-              className="w-full px-4 py-2 border border-[#E7E5E4] rounded-lg focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-colors"
+              className="w-full px-4 py-2 border border-border-gray rounded-lg focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
             />
           </div>
 
           {/* Revenue & Tip */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#1C1917] mb-1">
+              <label className="block text-sm font-medium text-deep-charcoal mb-1">
                 <ThiingsIcon name="dollar" size="xs" className="inline mr-1" />
                 {t.totalRevenue} *
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#57534E]">€</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-gray">€</span>
                 <input
                   type="number"
                   step="0.01"
@@ -329,16 +329,16 @@ export default function ManualRevenueModal({
                   onChange={(e) => setTotalRevenue(e.target.value)}
                   placeholder="85.50"
                   required
-                  className="w-full pl-8 pr-4 py-2 border border-[#E7E5E4] rounded-lg focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-colors"
+                  className="w-full pl-8 pr-4 py-2 border border-border-gray rounded-lg focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1C1917] mb-1">
+              <label className="block text-sm font-medium text-deep-charcoal mb-1">
                 {t.tipAmount}
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#57534E]">€</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-gray">€</span>
                 <input
                   type="number"
                   step="0.01"
@@ -346,7 +346,7 @@ export default function ManualRevenueModal({
                   value={tipAmount}
                   onChange={(e) => setTipAmount(e.target.value)}
                   placeholder="10.00"
-                  className="w-full pl-8 pr-4 py-2 border border-[#E7E5E4] rounded-lg focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-colors"
+                  className="w-full pl-8 pr-4 py-2 border border-border-gray rounded-lg focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
                 />
               </div>
             </div>
@@ -355,7 +355,7 @@ export default function ManualRevenueModal({
           {/* Date, Time, Party Size */}
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#1C1917] mb-1">
+              <label className="block text-sm font-medium text-deep-charcoal mb-1">
                 <ThiingsIcon name="calendar" size="xs" className="inline mr-1" />
                 {t.serviceDate} *
               </label>
@@ -364,29 +364,29 @@ export default function ManualRevenueModal({
                 value={serviceDate}
                 onChange={(e) => setServiceDate(e.target.value)}
                 required
-                className="w-full px-4 py-2 border border-[#E7E5E4] rounded-lg focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-colors"
+                className="w-full px-4 py-2 border border-border-gray rounded-lg focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1C1917] mb-1">
+              <label className="block text-sm font-medium text-deep-charcoal mb-1">
                 {t.serviceTime}
               </label>
               <input
                 type="time"
                 value={serviceTime}
                 onChange={(e) => setServiceTime(e.target.value)}
-                className="w-full px-4 py-2 border border-[#E7E5E4] rounded-lg focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-colors"
+                className="w-full px-4 py-2 border border-border-gray rounded-lg focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1C1917] mb-1">
+              <label className="block text-sm font-medium text-deep-charcoal mb-1">
                 <ThiingsIcon name="users" size="xs" className="inline mr-1" />
                 {t.partySize}
               </label>
               <select
                 value={partySize}
                 onChange={(e) => setPartySize(e.target.value)}
-                className="w-full px-4 py-2 border border-[#E7E5E4] rounded-lg focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-colors"
+                className="w-full px-4 py-2 border border-border-gray rounded-lg focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
               >
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20].map((size) => (
                   <option key={size} value={size}>
@@ -399,7 +399,7 @@ export default function ManualRevenueModal({
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-[#1C1917] mb-1">
+            <label className="block text-sm font-medium text-deep-charcoal mb-1">
               {t.notes}
             </label>
             <textarea
@@ -407,7 +407,7 @@ export default function ManualRevenueModal({
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Anniversary dinner, special menu..."
               rows={2}
-              className="w-full px-4 py-2 border border-[#E7E5E4] rounded-lg focus:ring-2 focus:ring-[#9F1239]/20 focus:border-[#9F1239] transition-colors resize-none"
+              className="w-full px-4 py-2 border border-border-gray rounded-lg focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors resize-none"
             />
           </div>
 
@@ -424,7 +424,7 @@ export default function ManualRevenueModal({
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="flex-1 px-4 py-3 border border-[#E7E5E4] rounded-xl text-[#57534E] font-medium hover:bg-[#F5F5F4] transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-3 border border-border-gray rounded-xl text-stone-gray font-medium hover:bg-soft-gray transition-colors disabled:opacity-50"
             >
               {t.cancel}
             </button>

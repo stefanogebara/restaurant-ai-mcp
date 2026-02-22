@@ -161,15 +161,15 @@ export default function TableConfigPage() {
     <div className="dashboard p-6 lg:p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-[#1C1917] tracking-tight">
-          Table Configuration <span className="font-light text-[#78716C]">/ {tables.length} tables</span>
+        <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
+          Table Configuration <span className="font-light text-warm-stone">/ {tables.length} tables</span>
         </h1>
         <button
           onClick={() => {
             setFormData(defaultFormData);
             setShowAddModal(true);
           }}
-          className="px-5 py-2.5 bg-[#9F1239] hover:bg-[#881337] text-white text-[13px] font-semibold rounded-[10px] transition-colors"
+          className="px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-[13px] font-semibold rounded-[10px] transition-colors"
         >
           + Add Table
         </button>
@@ -177,21 +177,21 @@ export default function TableConfigPage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-2xl p-6 border border-[#E7E5E4]">
-          <div className="text-xs font-medium text-[#A8A29E] mb-2">Total Tables</div>
-          <div className="text-[32px] font-bold tracking-tight leading-none text-[#1C1917]">{tables.length}</div>
+        <div className="bg-white rounded-2xl p-6 border border-border-gray">
+          <div className="text-xs font-medium text-muted-stone mb-2">Total Tables</div>
+          <div className="text-[32px] font-bold tracking-tight leading-none text-deep-charcoal">{tables.length}</div>
         </div>
-        <div className="bg-white rounded-2xl p-6 border border-[#E7E5E4]">
-          <div className="text-xs font-medium text-[#A8A29E] mb-2">Total Seats</div>
-          <div className="text-[32px] font-bold tracking-tight leading-none text-[#1C1917]">{stats.total_capacity || 0}</div>
+        <div className="bg-white rounded-2xl p-6 border border-border-gray">
+          <div className="text-xs font-medium text-muted-stone mb-2">Total Seats</div>
+          <div className="text-[32px] font-bold tracking-tight leading-none text-deep-charcoal">{stats.total_capacity || 0}</div>
         </div>
-        <div className="bg-white rounded-2xl p-6 border border-[#E7E5E4]">
-          <div className="text-xs font-medium text-[#A8A29E] mb-2">Active Tables</div>
+        <div className="bg-white rounded-2xl p-6 border border-border-gray">
+          <div className="text-xs font-medium text-muted-stone mb-2">Active Tables</div>
           <div className="text-[32px] font-bold tracking-tight leading-none text-[#16a34a]">{stats.active || 0}</div>
         </div>
-        <div className="bg-white rounded-2xl p-6 border border-[#E7E5E4]">
-          <div className="text-xs font-medium text-[#A8A29E] mb-2">Locations</div>
-          <div className="text-[32px] font-bold tracking-tight leading-none text-[#1C1917]">{stats.locations?.length || 0}</div>
+        <div className="bg-white rounded-2xl p-6 border border-border-gray">
+          <div className="text-xs font-medium text-muted-stone mb-2">Locations</div>
+          <div className="text-[32px] font-bold tracking-tight leading-none text-deep-charcoal">{stats.locations?.length || 0}</div>
         </div>
       </div>
 
@@ -199,8 +199,8 @@ export default function TableConfigPage() {
         {Object.entries(tablesByLocation).map(([location, locationTables]) => (
           <div key={location} className="mb-8">
             <div className="flex items-center gap-2.5 mb-4">
-              <span className="text-sm font-semibold text-[#1C1917] tracking-tight">{location}</span>
-              <span className="text-[11px] font-medium text-[#78716C] bg-[#F5F5F4] px-2.5 py-1 rounded-full">
+              <span className="text-sm font-semibold text-deep-charcoal tracking-tight">{location}</span>
+              <span className="text-[11px] font-medium text-warm-stone bg-soft-gray px-2.5 py-1 rounded-full">
                 {(locationTables as TableConfig[]).filter(t => t.is_active).length} tables
               </span>
             </div>
@@ -211,19 +211,19 @@ export default function TableConfigPage() {
                 .map((table) => (
                   <div
                     key={table.id}
-                    className="bg-white rounded-2xl p-6 border border-[#E7E5E4] cursor-pointer hover:border-[#D6D3D1] transition-colors relative"
+                    className="bg-white rounded-2xl p-6 border border-border-gray cursor-pointer hover:border-[#D6D3D1] transition-colors relative"
                     onClick={() => openEditModal(table)}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <div className="text-xl font-semibold text-[#1C1917]">Table {table.table_number}</div>
-                        <div className="text-sm text-[#78716C]">{table.capacity} seats</div>
+                        <div className="text-xl font-semibold text-deep-charcoal">Table {table.table_number}</div>
+                        <div className="text-sm text-warm-stone">{table.capacity} seats</div>
                       </div>
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
                           table.is_fixed
-                            ? 'bg-[#F5F5F4] text-[#78716C]'
-                            : 'bg-[#F5F5F4] text-[#1C1917]'
+                            ? 'bg-soft-gray text-warm-stone'
+                            : 'bg-soft-gray text-deep-charcoal'
                         }`}
                       >
                         {table.is_fixed ? 'Fixed' : 'Flexible'}
@@ -241,31 +241,31 @@ export default function TableConfigPage() {
                             : 'bg-[#d97706]'
                         }`}
                       ></span>
-                      <span className="text-sm text-[#78716C] capitalize">{table.status}</span>
+                      <span className="text-sm text-warm-stone capitalize">{table.status}</span>
                     </div>
 
                     {/* Adjacency info */}
                     {table.adjacent_tables && table.adjacent_tables.length > 0 && (
-                      <div className="text-xs text-[#A8A29E] mb-2">
+                      <div className="text-xs text-muted-stone mb-2">
                         Adjacent to {table.adjacent_tables.length} table(s)
                       </div>
                     )}
 
                     {/* Combination group */}
                     {table.combination_group && (
-                      <div className="text-xs text-[#9F1239] bg-[#9F1239]/10 px-2 py-1 rounded">
+                      <div className="text-xs text-burgundy bg-burgundy/10 px-2 py-1 rounded">
                         Group: {table.combination_group}
                       </div>
                     )}
 
                     {/* Actions */}
-                    <div className="flex gap-2 mt-3 pt-3 border-t border-[#F5F5F4]">
+                    <div className="flex gap-2 mt-3 pt-3 border-t border-soft-gray">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           openEditModal(table);
                         }}
-                        className="flex-1 px-3 py-1.5 text-xs bg-[#F5F5F4] text-[#57534E] rounded-xl hover:bg-[#E7E5E4] transition-colors"
+                        className="flex-1 px-3 py-1.5 text-xs bg-soft-gray text-stone-gray rounded-xl hover:bg-border-gray transition-colors"
                       >
                         Edit
                       </button>
@@ -275,7 +275,7 @@ export default function TableConfigPage() {
                             e.stopPropagation();
                             openAdjacencyModal(table);
                           }}
-                          className="flex-1 px-3 py-1.5 text-xs bg-[#9F1239]/10 text-[#9F1239] rounded-xl hover:bg-[#9F1239]/20 transition-colors"
+                          className="flex-1 px-3 py-1.5 text-xs bg-burgundy/10 text-burgundy rounded-xl hover:bg-burgundy/20 transition-colors"
                         >
                           Set Adjacent
                         </button>
@@ -290,7 +290,7 @@ export default function TableConfigPage() {
         {/* Inactive Tables Section */}
         {tables.filter((t: TableConfig) => !t.is_active).length > 0 && (
           <div className="mt-8">
-            <h2 className="text-lg font-semibold text-[#A8A29E] mb-4">
+            <h2 className="text-lg font-semibold text-muted-stone mb-4">
               Inactive Tables ({tables.filter((t: TableConfig) => !t.is_active).length})
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -299,10 +299,10 @@ export default function TableConfigPage() {
                 .map((table: TableConfig) => (
                   <div
                     key={table.id}
-                    className="bg-[#F5F5F4] rounded-xl p-4 border border-[#E7E5E4] opacity-60"
+                    className="bg-soft-gray rounded-xl p-4 border border-border-gray opacity-60"
                   >
-                    <div className="text-lg font-bold text-[#A8A29E]">Table {table.table_number}</div>
-                    <div className="text-sm text-[#A8A29E]">{table.capacity} seats - {table.location}</div>
+                    <div className="text-lg font-bold text-muted-stone">Table {table.table_number}</div>
+                    <div className="text-sm text-muted-stone">{table.capacity} seats - {table.location}</div>
                   </div>
                 ))}
             </div>
@@ -313,7 +313,7 @@ export default function TableConfigPage() {
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-[#1C1917] mb-4">Add New Table</h3>
+            <h3 className="text-xl font-bold text-deep-charcoal mb-4">Add New Table</h3>
             <TableForm
               formData={formData}
               setFormData={setFormData}
@@ -331,7 +331,7 @@ export default function TableConfigPage() {
       {showEditModal && selectedTable && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-[#1C1917] mb-4">Edit Table {selectedTable.table_number}</h3>
+            <h3 className="text-xl font-bold text-deep-charcoal mb-4">Edit Table {selectedTable.table_number}</h3>
             <TableForm
               formData={formData}
               setFormData={setFormData}
@@ -341,7 +341,7 @@ export default function TableConfigPage() {
               isLoading={updateMutation.isPending}
               submitLabel="Save Changes"
             />
-            <div className="mt-4 pt-4 border-t border-[#E7E5E4]">
+            <div className="mt-4 pt-4 border-t border-border-gray">
               <button
                 onClick={handleDeleteTable}
                 disabled={deleteMutation.isPending}
@@ -374,7 +374,7 @@ export default function TableConfigPage() {
       {toast && (
         <div
           className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg z-50 ${
-            toast.type === 'success' ? 'bg-[#1C1917] text-white' : 'bg-[#dc2626] text-white'
+            toast.type === 'success' ? 'bg-deep-charcoal text-white' : 'bg-[#dc2626] text-white'
           }`}
         >
           {toast.message}
@@ -407,35 +407,35 @@ function TableForm({
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-[#57534E] mb-1">Table Number</label>
+          <label className="block text-sm font-medium text-stone-gray mb-1">Table Number</label>
           <input
             type="number"
             min="1"
             value={formData.table_number}
             onChange={(e) => setFormData({ ...formData, table_number: parseInt(e.target.value) || 1 })}
-            className="w-full px-3 py-2 border border-[#E7E5E4] rounded-lg focus:ring-2 focus:ring-[#9F1239]/30 focus:border-[#9F1239]"
+            className="w-full px-3 py-2 border border-border-gray rounded-lg focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-[#57534E] mb-1">Capacity</label>
+          <label className="block text-sm font-medium text-stone-gray mb-1">Capacity</label>
           <input
             type="number"
             min="1"
             max="20"
             value={formData.capacity}
             onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || 1 })}
-            className="w-full px-3 py-2 border border-[#E7E5E4] rounded-lg focus:ring-2 focus:ring-[#9F1239]/30 focus:border-[#9F1239]"
+            className="w-full px-3 py-2 border border-border-gray rounded-lg focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[#57534E] mb-1">Location</label>
+        <label className="block text-sm font-medium text-stone-gray mb-1">Location</label>
         <div className="flex gap-2">
           <select
             value={formData.location}
             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-            className="flex-1 px-3 py-2 border border-[#E7E5E4] rounded-lg focus:ring-2 focus:ring-[#9F1239]/30 focus:border-[#9F1239]"
+            className="flex-1 px-3 py-2 border border-border-gray rounded-lg focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           >
             {locations.map((loc) => (
               <option key={loc} value={loc}>
@@ -450,13 +450,13 @@ function TableForm({
             type="text"
             placeholder="Enter new location name"
             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-            className="mt-2 w-full px-3 py-2 border border-[#E7E5E4] rounded-lg focus:ring-2 focus:ring-[#9F1239]/30 focus:border-[#9F1239]"
+            className="mt-2 w-full px-3 py-2 border border-border-gray rounded-lg focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           />
         )}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[#57534E] mb-1">Table Type</label>
+        <label className="block text-sm font-medium text-stone-gray mb-1">Table Type</label>
         <div className="flex gap-3">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -465,7 +465,7 @@ function TableForm({
               onChange={() => setFormData({ ...formData, is_fixed: false })}
               className="w-4 h-4 text-[#22c55e] accent-[#22c55e]"
             />
-            <span className="text-sm text-[#78716C]">Flexible (can combine)</span>
+            <span className="text-sm text-warm-stone">Flexible (can combine)</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -474,14 +474,14 @@ function TableForm({
               onChange={() => setFormData({ ...formData, is_fixed: true })}
               className="w-4 h-4 text-[#d97706] accent-[#d97706]"
             />
-            <span className="text-sm text-[#78716C]">Fixed (booth/round)</span>
+            <span className="text-sm text-warm-stone">Fixed (booth/round)</span>
           </label>
         </div>
       </div>
 
       {!formData.is_fixed && (
         <div>
-          <label className="block text-sm font-medium text-[#57534E] mb-1">
+          <label className="block text-sm font-medium text-stone-gray mb-1">
             Combination Group (optional)
           </label>
           <input
@@ -489,9 +489,9 @@ function TableForm({
             value={formData.combination_group}
             onChange={(e) => setFormData({ ...formData, combination_group: e.target.value })}
             placeholder="e.g., window-row, center-section"
-            className="w-full px-3 py-2 border border-[#E7E5E4] rounded-lg focus:ring-2 focus:ring-[#9F1239]/30 focus:border-[#9F1239]"
+            className="w-full px-3 py-2 border border-border-gray rounded-lg focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           />
-          <p className="text-xs text-[#A8A29E] mt-1">
+          <p className="text-xs text-muted-stone mt-1">
             Tables in the same group can be combined together
           </p>
         </div>
@@ -500,14 +500,14 @@ function TableForm({
       <div className="flex gap-3 pt-4">
         <button
           onClick={onCancel}
-          className="flex-1 px-4 py-2 border border-[#E7E5E4] text-[#57534E] rounded-lg hover:bg-[#F5F5F4] transition-colors"
+          className="flex-1 px-4 py-2 border border-border-gray text-stone-gray rounded-lg hover:bg-soft-gray transition-colors"
         >
           Cancel
         </button>
         <button
           onClick={onSubmit}
           disabled={isLoading}
-          className="flex-1 px-4 py-2 bg-[#1C1917] text-white rounded-lg hover:bg-[#292524] transition-colors disabled:opacity-50"
+          className="flex-1 px-4 py-2 bg-deep-charcoal text-white rounded-lg hover:bg-charcoal-dark transition-colors disabled:opacity-50"
         >
           {isLoading ? 'Saving...' : submitLabel}
         </button>
@@ -549,16 +549,16 @@ function AdjacencyModal({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 max-h-[80vh] overflow-y-auto">
-        <h3 className="text-xl font-bold text-[#1C1917] mb-2">
+        <h3 className="text-xl font-bold text-deep-charcoal mb-2">
           Set Adjacent Tables for Table {table.table_number}
         </h3>
-        <p className="text-sm text-[#A8A29E] mb-4">
+        <p className="text-sm text-muted-stone mb-4">
           Select which tables can be combined with this table. Only flexible tables in the same location are shown.
         </p>
 
         {Object.entries(tablesByLocation).map(([location, locationTables]) => (
           <div key={location} className="mb-4">
-            <h4 className="text-sm font-medium text-[#78716C] mb-2">{location}</h4>
+            <h4 className="text-sm font-medium text-warm-stone mb-2">{location}</h4>
             <div className="grid grid-cols-3 gap-2">
               {locationTables.map((t) => (
                 <button
@@ -566,12 +566,12 @@ function AdjacencyModal({
                   onClick={() => toggleTable(t.id)}
                   className={`p-3 rounded-lg border-2 transition-all text-left ${
                     selectedIds.includes(t.id)
-                      ? 'border-[#1C1917] bg-[#F5F5F4]'
-                      : 'border-[#E7E5E4] hover:border-[#A8A29E]'
+                      ? 'border-deep-charcoal bg-soft-gray'
+                      : 'border-border-gray hover:border-muted-stone'
                   }`}
                 >
-                  <div className="font-medium text-[#1C1917]">Table {t.table_number}</div>
-                  <div className="text-xs text-[#A8A29E]">{t.capacity} seats</div>
+                  <div className="font-medium text-deep-charcoal">Table {t.table_number}</div>
+                  <div className="text-xs text-muted-stone">{t.capacity} seats</div>
                 </button>
               ))}
             </div>
@@ -579,22 +579,22 @@ function AdjacencyModal({
         ))}
 
         {allTables.length === 0 && (
-          <div className="text-center py-8 text-[#A8A29E]">
+          <div className="text-center py-8 text-muted-stone">
             No other flexible tables in this location
           </div>
         )}
 
-        <div className="flex gap-3 mt-6 pt-4 border-t border-[#E7E5E4]">
+        <div className="flex gap-3 mt-6 pt-4 border-t border-border-gray">
           <button
             onClick={onCancel}
-            className="flex-1 px-4 py-2 border border-[#E7E5E4] text-[#57534E] rounded-lg hover:bg-[#F5F5F4] transition-colors"
+            className="flex-1 px-4 py-2 border border-border-gray text-stone-gray rounded-lg hover:bg-soft-gray transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={() => onSave(selectedIds)}
             disabled={isLoading}
-            className="flex-1 px-4 py-2 bg-[#1C1917] text-white rounded-lg hover:bg-[#292524] transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-deep-charcoal text-white rounded-lg hover:bg-charcoal-dark transition-colors disabled:opacity-50"
           >
             {isLoading ? 'Saving...' : `Save (${selectedIds.length} selected)`}
           </button>

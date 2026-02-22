@@ -31,10 +31,10 @@ export default function ChatMessage({ message }: ChatMessageProps) {
       {/* AI avatar dot — visual anchor for AI messages */}
       {!isUser && (
         <div
-          className="flex-shrink-0 w-6 h-6 rounded-full bg-[#9F1239]/10 border border-[#9F1239]/20 flex items-center justify-center mr-2 mt-1"
+          className="flex-shrink-0 w-6 h-6 rounded-full bg-burgundy/10 border border-burgundy/20 flex items-center justify-center mr-2 mt-1"
           aria-hidden="true"
         >
-          <svg className="w-3 h-3 text-[#9F1239]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-3 h-3 text-burgundy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
           </svg>
         </div>
@@ -45,8 +45,8 @@ export default function ChatMessage({ message }: ChatMessageProps) {
         className={`
           max-w-[78%] sm:max-w-[72%] px-4 py-2.5 text-sm leading-relaxed break-words
           ${isUser
-            ? 'bg-[#9F1239] text-white rounded-2xl rounded-br-sm shadow-sm'
-            : 'bg-[#F5F5F4] border border-[#E7E5E4] text-[#1C1917] rounded-2xl rounded-bl-sm shadow-sm'
+            ? 'bg-burgundy text-white rounded-2xl rounded-br-sm shadow-sm'
+            : 'bg-soft-gray border border-border-gray text-deep-charcoal rounded-2xl rounded-bl-sm shadow-sm'
           }
         `}
       >

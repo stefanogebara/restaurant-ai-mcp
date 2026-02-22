@@ -43,16 +43,16 @@ const VoiceCard = forwardRef<HTMLDivElement, VoiceCardProps>(function VoiceCard(
       className={`
         relative bg-white border-2 rounded-xl p-5 cursor-pointer
         transition-all duration-200 hover:shadow-lg
-        focus:outline-none focus:ring-2 focus:ring-[#9F1239] focus:ring-offset-2
+        focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-offset-2
         ${isSelected
-          ? 'border-[#9F1239] shadow-md bg-[#9F1239]/5'
-          : 'border-[#E7E5E4] hover:border-[#9F1239]/50'
+          ? 'border-burgundy shadow-md bg-burgundy/5'
+          : 'border-border-gray hover:border-burgundy/50'
         }
       `}
     >
       {/* Selected Checkmark */}
       {isSelected && (
-        <div className="absolute top-3 right-3 text-[#9F1239]">
+        <div className="absolute top-3 right-3 text-burgundy">
           <ThiingsIcon name="check-circle" pxSize={22} />
         </div>
       )}
@@ -60,17 +60,17 @@ const VoiceCard = forwardRef<HTMLDivElement, VoiceCardProps>(function VoiceCard(
       {/* Voice Info */}
       <div className="mb-3">
         <div className="flex items-center gap-2 mb-1">
-          <h3 className="text-base font-bold text-[#1C1917] truncate pr-6">
+          <h3 className="text-base font-bold text-deep-charcoal truncate pr-6">
             {voice.name}
           </h3>
-          <span className="text-xs capitalize text-[#57534E]">
+          <span className="text-xs capitalize text-stone-gray">
             {voice.gender === 'male' ? '\u2642' : voice.gender === 'female' ? '\u2640' : ''}
           </span>
         </div>
 
         {/* Tags */}
         <div className="flex flex-wrap gap-1.5 mb-2">
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#9F1239]/10 text-[#9F1239]">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-burgundy/10 text-burgundy">
             {voice.language?.toUpperCase() || 'EN'}
           </span>
           {voice.accent && (
@@ -79,7 +79,7 @@ const VoiceCard = forwardRef<HTMLDivElement, VoiceCardProps>(function VoiceCard(
             </span>
           )}
           {voice.category && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#F5F5F4] text-[#57534E]">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-soft-gray text-stone-gray">
               {voice.category}
             </span>
           )}
@@ -87,7 +87,7 @@ const VoiceCard = forwardRef<HTMLDivElement, VoiceCardProps>(function VoiceCard(
 
         {/* Description */}
         {voice.description && (
-          <p className="text-xs text-[#78716C] line-clamp-2">
+          <p className="text-xs text-warm-stone line-clamp-2">
             {voice.description}
           </p>
         )}
@@ -104,8 +104,8 @@ const VoiceCard = forwardRef<HTMLDivElement, VoiceCardProps>(function VoiceCard(
           w-full py-2.5 px-4 rounded-lg font-semibold text-sm transition-all
           flex items-center justify-center gap-2
           ${isPlaying
-            ? 'bg-[#9F1239] text-white hover:bg-[#881337]'
-            : 'bg-[#F5F5F4] hover:bg-[#E7E5E4] text-[#1C1917]'
+            ? 'bg-burgundy text-white hover:bg-burgundy-dark'
+            : 'bg-soft-gray hover:bg-border-gray text-deep-charcoal'
           }
           disabled:opacity-50 disabled:cursor-not-allowed
         `}

@@ -15,27 +15,27 @@ export default function LandingNav() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 flex items-center justify-between px-6 sm:px-16 py-6 bg-[rgba(250,250,249,0.8)] backdrop-blur-xl border-b border-[#E7E5E4]">
+    <nav className="sticky top-0 z-50 flex items-center justify-between px-6 sm:px-16 py-6 bg-[rgba(250,250,249,0.8)] backdrop-blur-xl border-b border-border-gray">
       {/* Logo */}
       <div
-        className="font-serif text-2xl font-semibold text-[#1C1917] tracking-tight cursor-pointer"
+        className="font-serif text-2xl font-semibold text-deep-charcoal tracking-tight cursor-pointer"
         onClick={() => navigate('/')}
       >
-        seatable<span className="text-[#9F1239]">.</span>
+        seatable<span className="text-burgundy">.</span>
       </div>
 
       {/* Desktop Navigation */}
       <div className="hidden md:flex items-center gap-9">
-        <button onClick={() => scrollToSection('features')} className="text-sm font-medium text-[#57534E] hover:text-[#1C1917] transition-colors">
+        <button onClick={() => scrollToSection('features')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
           Features
         </button>
-        <button onClick={() => scrollToSection('pricing')} className="text-sm font-medium text-[#57534E] hover:text-[#1C1917] transition-colors">
+        <button onClick={() => scrollToSection('pricing')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
           Pricing
         </button>
-        <button onClick={() => navigate('/live-demo')} className="text-sm font-medium text-[#57534E] hover:text-[#1C1917] transition-colors">
+        <button onClick={() => navigate('/live-demo')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
           Demo
         </button>
-        <button onClick={() => scrollToSection('contact')} className="text-sm font-medium text-[#57534E] hover:text-[#1C1917] transition-colors">
+        <button onClick={() => scrollToSection('contact')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
           Contact
         </button>
       </div>
@@ -47,14 +47,14 @@ export default function LandingNav() {
           if (el) el.scrollIntoView({ behavior: 'smooth' });
           else navigate('/#pricing');
         }}
-        className="hidden md:block px-6 py-2.5 bg-[#1C1917] text-white text-sm font-semibold rounded-full hover:bg-[#292524] transition-colors"
+        className="hidden md:block px-6 py-2.5 bg-deep-charcoal text-white text-sm font-semibold rounded-full hover:bg-charcoal-dark transition-colors"
       >
         Get Started
       </button>
 
       {/* Mobile Menu Button */}
       <button
-        className="md:hidden text-[#1C1917]"
+        className="md:hidden text-deep-charcoal"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
         aria-expanded={isMobileMenuOpen}
@@ -69,20 +69,20 @@ export default function LandingNav() {
             className="md:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-[-1]"
             onClick={() => setIsMobileMenuOpen(false)}
           />
-          <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-[#E7E5E4] px-6 py-6 space-y-4">
-            <button onClick={() => scrollToSection('features')} className="block w-full text-left text-sm font-medium text-[#57534E] hover:text-[#1C1917] transition-colors py-2">
+          <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-border-gray px-6 py-6 space-y-4">
+            <button onClick={() => scrollToSection('features')} className="block w-full text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors py-2">
               Features
             </button>
-            <button onClick={() => scrollToSection('pricing')} className="block w-full text-left text-sm font-medium text-[#57534E] hover:text-[#1C1917] transition-colors py-2">
+            <button onClick={() => scrollToSection('pricing')} className="block w-full text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors py-2">
               Pricing
             </button>
-            <button onClick={() => { navigate('/live-demo'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-sm font-medium text-[#57534E] hover:text-[#1C1917] transition-colors py-2">
+            <button onClick={() => { navigate('/live-demo'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors py-2">
               Demo
             </button>
-            <button onClick={() => scrollToSection('contact')} className="block w-full text-left text-sm font-medium text-[#57534E] hover:text-[#1C1917] transition-colors py-2">
+            <button onClick={() => scrollToSection('contact')} className="block w-full text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors py-2">
               Contact
             </button>
-            <div className="pt-4 border-t border-[#E7E5E4]">
+            <div className="pt-4 border-t border-border-gray">
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);
@@ -90,7 +90,7 @@ export default function LandingNav() {
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                   else navigate('/#pricing');
                 }}
-                className="block w-full bg-[#1C1917] text-white text-center px-6 py-3 text-sm font-semibold rounded-full"
+                className="block w-full bg-deep-charcoal text-white text-center px-6 py-3 text-sm font-semibold rounded-full"
               >
                 Get Started
               </button>

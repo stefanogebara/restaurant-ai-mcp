@@ -18,9 +18,9 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
     if (active && payload && payload.length) {
       const fullDay = daysOrder[chartData.findIndex(d => d.day === payload[0].payload.day)];
       return (
-        <div className="bg-white border border-[#E7E5E4] rounded-xl p-3 shadow-lg">
-          <p className="text-sm font-semibold text-[#1C1917] mb-1">{fullDay}</p>
-          <p className="text-sm text-[#9F1239]">
+        <div className="bg-white border border-border-gray rounded-xl p-3 shadow-lg">
+          <p className="text-sm font-semibold text-deep-charcoal mb-1">{fullDay}</p>
+          <p className="text-sm text-burgundy">
             Reservations: <span className="font-bold">{payload[0].value}</span>
           </p>
         </div>
@@ -30,8 +30,8 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
   };
 
   return (
-    <div className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
+    <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
         <span className="text-[15px] font-semibold tracking-tight">Reservations by Day</span>
       </div>
       <div className="p-6">

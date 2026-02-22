@@ -57,17 +57,17 @@ export default function ReservationsList({
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-[#E7E5E4] rounded-2xl p-5">
-        <div className="h-6 w-52 bg-[#E7E5E4] rounded-lg animate-pulse mb-4" />
+      <div className="bg-white border border-border-gray rounded-2xl p-5">
+        <div className="h-6 w-52 bg-border-gray rounded-lg animate-pulse mb-4" />
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center gap-4 p-3 bg-[#FAFAF9] rounded-xl">
-              <div className="w-9 h-9 bg-[#E7E5E4] rounded-[10px] animate-pulse" />
+            <div key={i} className="flex items-center gap-4 p-3 bg-warm-white rounded-xl">
+              <div className="w-9 h-9 bg-border-gray rounded-[10px] animate-pulse" />
               <div className="flex-1">
-                <div className="h-4 w-32 bg-[#E7E5E4] rounded animate-pulse mb-2" />
-                <div className="h-3 w-20 bg-[#F5F5F4] rounded animate-pulse" />
+                <div className="h-4 w-32 bg-border-gray rounded animate-pulse mb-2" />
+                <div className="h-3 w-20 bg-soft-gray rounded animate-pulse" />
               </div>
-              <div className="h-9 w-20 bg-[#E7E5E4] rounded-lg animate-pulse" />
+              <div className="h-9 w-20 bg-border-gray rounded-lg animate-pulse" />
             </div>
           ))}
         </div>
@@ -76,12 +76,12 @@ export default function ReservationsList({
   }
 
   return (
-    <div className="bg-white border border-[#E7E5E4] rounded-2xl overflow-hidden">
+    <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
       {/* Panel Header */}
-      <div className="flex items-center justify-between px-6 py-5 border-b border-[#F5F5F4]">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
         <div className="flex items-center gap-2.5">
-          <span className="text-[15px] font-semibold text-[#1C1917] tracking-tight">{t.upcoming}</span>
-          <span className="text-[11px] font-semibold bg-[rgba(159,18,57,0.08)] text-[#9F1239] px-2.5 py-0.5 rounded-full">
+          <span className="text-[15px] font-semibold text-deep-charcoal tracking-tight">{t.upcoming}</span>
+          <span className="text-[11px] font-semibold bg-[rgba(159,18,57,0.08)] text-burgundy px-2.5 py-0.5 rounded-full">
             {displayed.length}
           </span>
         </div>
@@ -89,7 +89,7 @@ export default function ReservationsList({
           <button
             onClick={() => setShowTomorrow(false)}
             className={`text-xs font-medium px-3.5 py-1.5 rounded-lg transition-colors ${
-              !showTomorrow ? 'text-[#1C1917] bg-[#F5F5F4]' : 'text-[#A8A29E] hover:text-[#57534E]'
+              !showTomorrow ? 'text-deep-charcoal bg-soft-gray' : 'text-muted-stone hover:text-stone-gray'
             }`}
           >
             {t.today}
@@ -97,7 +97,7 @@ export default function ReservationsList({
           <button
             onClick={() => setShowTomorrow(true)}
             className={`text-xs font-medium px-3.5 py-1.5 rounded-lg transition-colors ${
-              showTomorrow ? 'text-[#1C1917] bg-[#F5F5F4]' : 'text-[#A8A29E] hover:text-[#57534E]'
+              showTomorrow ? 'text-deep-charcoal bg-soft-gray' : 'text-muted-stone hover:text-stone-gray'
             }`}
           >
             {t.tomorrow}
@@ -108,16 +108,16 @@ export default function ReservationsList({
       {/* List */}
       {displayed.length === 0 ? (
         <div className="text-center py-12 px-4">
-          <div className="w-14 h-14 bg-[#F5F5F4] rounded-2xl flex items-center justify-center mx-auto mb-3">
-            <svg className="w-7 h-7 text-[#A8A29E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-14 h-14 bg-soft-gray rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <svg className="w-7 h-7 text-muted-stone" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <p className="text-sm font-semibold text-[#1C1917] mb-1">{t.allClear}</p>
-          <p className="text-xs text-[#57534E]">
+          <p className="text-sm font-semibold text-deep-charcoal mb-1">{t.allClear}</p>
+          <p className="text-xs text-stone-gray">
             {showTomorrow ? t.noTomorrow : t.noUpcoming}
           </p>
-          {!showTomorrow && <p className="text-xs text-[#A8A29E] mt-1">{t.aiHint}</p>}
+          {!showTomorrow && <p className="text-xs text-muted-stone mt-1">{t.aiHint}</p>}
         </div>
       ) : (
         <div>
@@ -179,16 +179,16 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
     : { label: 'Confirmed', classes: 'bg-[rgba(22,163,74,0.08)] text-[#16a34a]' };
 
   return (
-    <div className="flex items-center px-6 py-4 border-b border-[#FAFAF9] last:border-b-0 gap-4 hover:bg-[#FAFAF9]/50 transition-colors">
+    <div className="flex items-center px-6 py-4 border-b border-warm-white last:border-b-0 gap-4 hover:bg-warm-white/50 transition-colors">
       {/* Avatar */}
-      <div className="w-9 h-9 rounded-[10px] bg-[#F5F5F4] flex items-center justify-center text-[13px] font-semibold text-[#78716C] flex-shrink-0">
+      <div className="w-9 h-9 rounded-[10px] bg-soft-gray flex items-center justify-center text-[13px] font-semibold text-warm-stone flex-shrink-0">
         {initials}
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-semibold text-[#1C1917] tracking-tight">{reservation.customer_name}</div>
-        <div className="text-xs text-[#A8A29E] mt-0.5">
+        <div className="text-sm font-semibold text-deep-charcoal tracking-tight">{reservation.customer_name}</div>
+        <div className="text-xs text-muted-stone mt-0.5">
           {reservation.party_size} guests
           {reservation.special_requests && ` \u00b7 ${reservation.special_requests}`}
         </div>
@@ -196,8 +196,8 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
 
       {/* Time */}
       <div className="text-right flex-shrink-0">
-        <div className="text-[13px] font-medium text-[#57534E]">{formatTime(reservation.time)}</div>
-        <div className="text-[11px] text-[#A8A29E]">{getMealPeriod(reservation.time)}</div>
+        <div className="text-[13px] font-medium text-stone-gray">{formatTime(reservation.time)}</div>
+        <div className="text-[11px] text-muted-stone">{getMealPeriod(reservation.time)}</div>
       </div>
 
       {/* Status / Action */}

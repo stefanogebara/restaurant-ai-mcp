@@ -48,46 +48,46 @@ export default function UpgradePrompt({
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`bg-white rounded-2xl shadow-lg border border-[#E7E5E4] ${sizeClasses[size]} text-center`}
+      className={`bg-white rounded-2xl shadow-lg border border-border-gray ${sizeClasses[size]} text-center`}
     >
       {/* Icon */}
       <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
-        className={`${iconSizes[size]} rounded-full bg-[#9F1239] flex items-center justify-center mx-auto mb-4`}
+        className={`${iconSizes[size]} rounded-full bg-burgundy flex items-center justify-center mx-auto mb-4`}
       >
         <ThiingsIcon name="lock" pxSize={size === 'small' ? 16 : size === 'medium' ? 24 : 32} />
       </motion.div>
 
       {/* Heading */}
-      <h3 className={`${headingSizes[size]} font-bold mb-2 text-[#1C1917]`}>
+      <h3 className={`${headingSizes[size]} font-bold mb-2 text-deep-charcoal`}>
         Upgrade Required
       </h3>
 
       {/* Description */}
-      <p className="text-[#57534E] mb-4">
+      <p className="text-stone-gray mb-4">
         {featureDescription ||
           `${feature} is available on Growth or Scale plans`}
       </p>
 
       {/* Current Plan Badge */}
       {currentPlan && (
-        <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#F5F5F4] rounded-full text-sm text-[#57534E] mb-4 border border-[#E7E5E4]">
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-soft-gray rounded-full text-sm text-stone-gray mb-4 border border-border-gray">
           <span>Current plan:</span>
-          <span className="font-semibold text-[#9F1239]">{currentPlan}</span>
+          <span className="font-semibold text-burgundy">{currentPlan}</span>
         </div>
       )}
 
       {/* Features List */}
-      <div className="bg-[#F5F5F4] p-4 rounded-xl mb-6 text-left border border-[#E7E5E4]">
+      <div className="bg-soft-gray p-4 rounded-xl mb-6 text-left border border-border-gray">
         <div className="flex items-center gap-2 mb-3">
           <ThiingsIcon name="sparkles" pxSize={16} />
-          <span className="text-sm font-semibold text-[#1C1917]">
+          <span className="text-sm font-semibold text-deep-charcoal">
             Upgrade to get:
           </span>
         </div>
-        <ul className="space-y-2 text-sm text-[#57534E]">
+        <ul className="space-y-2 text-sm text-stone-gray">
           <li className="flex items-start gap-2">
             <span className="text-[#16a34a] mt-0.5">✓</span>
             <span>Unlimited reservations</span>
@@ -114,14 +114,14 @@ export default function UpgradePrompt({
       {/* CTA Button */}
       <button
         onClick={handleUpgrade}
-        className="w-full px-6 py-3 bg-[#9F1239] hover:bg-[#881337] rounded-xl text-white font-semibold flex items-center justify-center gap-2 group transition-colors"
+        className="w-full px-6 py-3 bg-burgundy hover:bg-burgundy-dark rounded-xl text-white font-semibold flex items-center justify-center gap-2 group transition-colors"
       >
         Upgrade Now
         <span className="group-hover:translate-x-1 transition-transform inline-flex"><ThiingsIcon name="arrow-right" pxSize={16} /></span>
       </button>
 
       {/* Fine print */}
-      <p className="text-xs text-[#A8A29E] mt-3">
+      <p className="text-xs text-muted-stone mt-3">
         14-day free trial • Cancel anytime
       </p>
     </motion.div>
