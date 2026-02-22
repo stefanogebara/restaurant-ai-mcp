@@ -38,6 +38,7 @@ async function handleCreate(req, res) {
     }
 
     const { data, error } = await supabaseAdmin
+      .schema('restaurant')
       .from('retention_campaigns')
       .insert({
         customer_id,
@@ -56,20 +57,22 @@ async function handleCreate(req, res) {
     if (data.channel === 'email') {
       // Look up customer email from customer_history
       const { data: customer } = await supabaseAdmin
+        .schema('restaurant')
         .from('customer_history')
-        .select('email, customer_name')
-        .eq('id', customer_id)
+        .select('customer_email, customer_name')
+        .eq('customer_id', customer_id)
         .single();
 
-      if (customer?.email) {
+      if (customer?.customer_email) {
         const result = await sendRetentionCampaignEmail({
-          customerEmail: customer.email,
+          customerEmail: customer.customer_email,
           customerName: customer.customer_name,
           message,
           campaignType: campaign_type,
         });
 
         await supabaseAdmin
+          .schema('restaurant')
           .from('retention_campaigns')
           .update({
             status: result.sent ? 'sent' : 'failed',
@@ -79,6 +82,7 @@ async function handleCreate(req, res) {
       } else {
         logger.warn(`No email found for customer ${customer_id}, marking campaign as failed`);
         await supabaseAdmin
+          .schema('restaurant')
           .from('retention_campaigns')
           .update({ status: 'failed' })
           .eq('id', data.id);
@@ -109,6 +113,7 @@ async function handleList(req, res) {
     const { customer_id, limit = 50, offset = 0 } = req.query;
 
     let query = supabaseAdmin
+      .schema('restaurant')
       .from('retention_campaigns')
       .select('*')
       .order('created_at', { ascending: false })
@@ -144,6 +149,7 @@ async function handleList(req, res) {
 async function handleStats(req, res) {
   try {
     const { data, error } = await supabaseAdmin
+      .schema('restaurant')
       .from('retention_campaigns')
       .select('campaign_type, status, created_at');
 
