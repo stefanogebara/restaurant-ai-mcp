@@ -95,13 +95,17 @@ const handleSupabaseResponse = (data, error, operation = 'query') => {
 // ============ RETRY UTILITY ============
 
 const TRANSIENT_PATTERNS = [
-  'fetch failed', 'network', 'timeout', 'econnreset',
-  '503', '502', '504', 'connection refused', 'service unavailable',
+  'fetch failed', 'network error', 'timeout', 'econnreset',
+  'connection refused', 'service unavailable',
 ];
+
+const TRANSIENT_STATUS_CODES = new Set([502, 503, 504]);
 
 function isTransient(error) {
   const msg = (error?.message || '').toLowerCase();
-  return TRANSIENT_PATTERNS.some(p => msg.includes(p));
+  const status = error?.status ?? error?.statusCode;
+  return TRANSIENT_PATTERNS.some(p => msg.includes(p))
+    || (status != null && TRANSIENT_STATUS_CODES.has(Number(status)));
 }
 
 /**
