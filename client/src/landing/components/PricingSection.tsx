@@ -40,7 +40,13 @@ export default function PricingSection() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create checkout session');
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 400 && errorData.error?.includes('Restaurant setup required')) {
+          setLoadingPlan(null);
+          navigate('/onboarding?reason=subscribe');
+          return;
+        }
+        throw new Error(errorData.error || 'Failed to create checkout session');
       }
 
       const { url } = await response.json();

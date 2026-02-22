@@ -11,7 +11,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import Step1Welcome from '../components/onboarding/Step1Welcome';
 import Step2Contact from '../components/onboarding/Step2Contact';
@@ -27,8 +27,10 @@ const TOTAL_STEPS = 4;
 
 export default function Onboarding() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { error: showError } = useToast();
   const { user } = useAuth();
+  const showSubscribeBanner = searchParams.get('reason') === 'subscribe';
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -147,6 +149,12 @@ export default function Onboarding() {
 
   return (
     <div className="min-h-screen bg-warm-white flex flex-col">
+      {/* Subscribe redirect banner */}
+      {showSubscribeBanner && (
+        <div className="bg-burgundy text-white text-[13px] text-center py-2.5 px-4">
+          Complete your restaurant setup first, then you can choose a plan.
+        </div>
+      )}
       {/* Top Bar */}
       <header className="flex items-center justify-between px-6 sm:px-12 py-5 border-b border-border-gray bg-white">
         <div className="font-serif text-xl font-semibold text-deep-charcoal">
