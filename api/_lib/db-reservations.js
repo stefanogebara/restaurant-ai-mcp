@@ -280,14 +280,21 @@ const getUpcomingReservations = async (restaurantId, timezone) => {
   const today = timezone ? getLocalDate(timezone) : new Date().toISOString().split('T')[0];
   const currentTime = timezone ? getLocalTime(timezone) : new Date().toTimeString().slice(0, 5);
 
-  const { data, error } = await supabase
-    .from('reservations')
-    .select('*')
-    .eq('restaurant_id', restaurantId)
-    .or(`date.gt.${today},and(date.eq.${today},time.gte.${currentTime})`)
-    .in('status', ['confirmed', 'waitlist'])
-    .order('date', { ascending: true })
-    .order('time', { ascending: true });
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('reservations')
+        .select('*')
+        .eq('restaurant_id', restaurantId)
+        .or(`date.gt.${today},and(date.eq.${today},time.gte.${currentTime})`)
+        .in('status', ['confirmed', 'waitlist'])
+        .order('date', { ascending: true })
+        .order('time', { ascending: true })
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'GET upcoming reservations');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'GET upcoming reservations');
 
