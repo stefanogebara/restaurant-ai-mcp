@@ -6,6 +6,8 @@
  * - External webhooks: Allow specific trusted origins (ElevenLabs, Stripe, Twilio)
  */
 
+const { addRequestId } = require('./request-id');
+
 const ALLOWED_ORIGINS = [
   process.env.CLIENT_URL || 'http://localhost:5173',
   'http://localhost:5173',
@@ -26,6 +28,7 @@ const WEBHOOK_ORIGINS = [
  * Only allows requests from trusted client origins
  */
 function setInternalCors(req, res) {
+  addRequestId(req, res);
   const origin = req.headers.origin;
 
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
@@ -45,6 +48,7 @@ function setInternalCors(req, res) {
  * These need to accept requests from third-party services
  */
 function setWebhookCors(req, res) {
+  addRequestId(req, res);
   const origin = req.headers.origin;
 
   // For webhooks, we need to be more permissive since services like ElevenLabs

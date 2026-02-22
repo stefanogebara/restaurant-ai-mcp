@@ -17,11 +17,13 @@ if (process.env.NODE_ENV !== 'test') {
 
 const express = require('express');
 const cors = require('cors');
+const { addRequestId } = require('./api/_lib/request-id');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
+app.use((req, res, next) => { addRequestId(req, res); next(); });
 app.use(cors());
 app.use(express.json());
 
