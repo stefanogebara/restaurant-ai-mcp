@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useToast } from '../../contexts/ToastContext';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { IconName } from '../common/ThiingsIcon';
 import Spinner from '../common/Spinner';
@@ -41,6 +42,7 @@ interface LTVStats {
 }
 
 export default function LTVDashboard() {
+  const { success, error } = useToast();
   const [stats, setStats] = useState<LTVStats | null>(null);
   const [topVIPs, setTopVIPs] = useState<Customer[]>([]);
   const [atRiskCustomers, setAtRiskCustomers] = useState<Customer[]>([]);
@@ -384,11 +386,11 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
               try {
                 const response = await api.get('/ltv?action=calculate-all');
                 if (response.data.success) {
-                  alert(`Successfully calculated LTV for ${response.data.data.total_customers} customers!`);
-                  fetchLTVData(); // Refresh data
+                  success(`Calculated LTV for ${response.data.data.total_customers} customers`);
+                  fetchLTVData();
                 }
-              } catch (error) {
-                alert('Failed to calculate LTV for all customers');
+              } catch (err) {
+                error('Failed to calculate LTV for all customers');
               }
             }}
           >

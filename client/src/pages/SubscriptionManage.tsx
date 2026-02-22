@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SkeletonSubscription } from '../components/common/Skeleton';
 import { authFetch } from '../services/api';
+import { useToast } from '../contexts/ToastContext';
 
 interface SubscriptionData {
   status: 'active' | 'trialing' | 'canceled' | 'past_due' | 'none';
@@ -23,6 +24,7 @@ const planTiers = ['starter', 'growth', 'scale'];
 export default function SubscriptionManage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { error } = useToast();
   const [loading, setLoading] = useState(true);
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
   const [managingSubscription, setManagingSubscription] = useState(false);
@@ -69,7 +71,7 @@ export default function SubscriptionManage() {
       const customerId = localStorage.getItem('stripe_customer_id');
 
       if (!customerId) {
-        alert('No subscription found. Please subscribe first.');
+        error('No subscription found. Please subscribe first.');
         setManagingSubscription(false);
         return;
       }
@@ -96,9 +98,9 @@ export default function SubscriptionManage() {
 
       // Redirect to Stripe Customer Portal
       window.location.href = url;
-    } catch (error) {
-      console.error('Error accessing customer portal:', error);
-      alert('Failed to open subscription management. Please try again.');
+    } catch (err) {
+      console.error('Error accessing customer portal:', err);
+      error('Failed to open subscription management. Please try again.');
       setManagingSubscription(false);
     }
   };

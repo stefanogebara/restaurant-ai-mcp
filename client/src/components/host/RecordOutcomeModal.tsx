@@ -7,6 +7,7 @@
  */
 
 import { useState } from 'react';
+import { useToast } from '../../contexts/ToastContext';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { UpcomingReservation } from '../../types/host.types';
 import RiskScoreBadge from './RiskScoreBadge';
@@ -31,6 +32,7 @@ export default function RecordOutcomeModal({
   onClose,
   onSubmit
 }: RecordOutcomeModalProps) {
+  const { error } = useToast();
   const [outcome, setOutcome] = useState<'showed_up' | 'no_show' | 'cancelled' | null>(null);
   const [interventionTaken, setInterventionTaken] = useState(false);
   const [interventionType, setInterventionType] = useState<'confirmation_call' | 'deposit_required' | 'premium_seating' | 'none'>('none');
@@ -44,7 +46,7 @@ export default function RecordOutcomeModal({
     e.preventDefault();
 
     if (!outcome) {
-      alert('Please select an outcome');
+      error('Please select an outcome');
       return;
     }
 
@@ -61,9 +63,9 @@ export default function RecordOutcomeModal({
       });
 
       onClose();
-    } catch (error) {
-      console.error('Error recording outcome:', error);
-      alert('Failed to record outcome. Please try again.');
+    } catch (err) {
+      console.error('Error recording outcome:', err);
+      error('Failed to record outcome. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
