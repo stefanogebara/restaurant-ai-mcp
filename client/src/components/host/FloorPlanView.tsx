@@ -394,7 +394,7 @@ export default function FloorPlanView({
             }`}>
               <span className={`w-2 h-2 rounded-full ${darkMode ? 'bg-muted-stone' : 'bg-burgundy'}`} />
               {location}
-              <span className={`text-xs font-normal ${darkMode ? 'text-[#78716c]' : 'text-[#a8a29e]'}`}>
+              <span className={`text-xs font-normal ${darkMode ? 'text-warm-stone' : 'text-muted-stone'}`}>
                 {locTables.length} tables
               </span>
             </h3>
