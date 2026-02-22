@@ -322,7 +322,7 @@ describe('Create functions set restaurant_id on insert', () => {
     expect(insertCall.args[0]).toHaveProperty('restaurant_id', RESTAURANT_A);
   });
 
-  test('createSubscription includes restaurant_id in insert payload', async () => {
+  test('createSubscription includes restaurant_id in upsert payload', async () => {
     await db.createSubscription(RESTAURANT_A, {
       'Subscription ID': 'sub_test_123',
       'Customer ID': 'cus_test_456',
@@ -334,9 +334,9 @@ describe('Create functions set restaurant_id on insert', () => {
       'Current Period End': '2025-02-01',
     });
 
-    const insertCall = chainCalls().find((c) => c.method === 'insert');
-    expect(insertCall).toBeDefined();
-    expect(insertCall.args[0]).toHaveProperty('restaurant_id', RESTAURANT_A);
+    const upsertCall = chainCalls().find((c) => c.method === 'upsert');
+    expect(upsertCall).toBeDefined();
+    expect(upsertCall.args[0]).toHaveProperty('restaurant_id', RESTAURANT_A);
   });
 });
 

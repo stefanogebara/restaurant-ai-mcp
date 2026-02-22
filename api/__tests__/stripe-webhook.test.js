@@ -146,6 +146,7 @@ describe('StripeWebhook: checkout.session.completed', () => {
 describe('StripeWebhook: customer.subscription.created', () => {
   test('creates subscription in database', async () => {
     mockConstructEvent.mockReturnValueOnce({
+      id: 'evt_sub_create_001',
       type: 'customer.subscription.created',
       data: {
         object: {
@@ -172,7 +173,7 @@ describe('StripeWebhook: customer.subscription.created', () => {
       'Subscription ID': 'sub_test_123',
       'Plan Name': 'growth',
       'Status': 'active',
-    }));
+    }), expect.objectContaining({ idempotency_key: 'stripe-event-evt_sub_create_001' }));
     expect(updateRestaurantPlan).toHaveBeenCalledWith('rest-1', 'growth', 'test@restaurant.com');
     expect(res.status).toHaveBeenCalledWith(200);
   });

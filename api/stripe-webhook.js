@@ -126,7 +126,7 @@ module.exports = async (req, res) => {
           'Current Period End': new Date(subscriptionCreated.current_period_end * 1000).toISOString().split('T')[0],
           'Trial End': subscriptionCreated.trial_end ? new Date(subscriptionCreated.trial_end * 1000).toISOString().split('T')[0] : null,
           'Created At': new Date().toISOString().split('T')[0]
-        });
+        }, { idempotency_key: `stripe-event-${event.id}` });
 
         if (!createResult.success) {
           logger.error('Failed to create subscription in database:', createResult.message);

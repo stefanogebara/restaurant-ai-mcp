@@ -1232,21 +1232,24 @@ const getSubscriptionByEmail = async (restaurantId, email) => {
   };
 };
 
-const createSubscription = async (restaurantId, fields) => {
+const createSubscription = async (restaurantId, fields, opts = {}) => {
   const { data, error } = await supabase
     .from('subscriptions')
-    .insert({
-      restaurant_id: restaurantId,
-      subscription_id: fields['Subscription ID'],
-      customer_id: fields['Customer ID'],
-      customer_email: fields['Customer Email'],
-      plan_name: fields['Plan Name'],
-      price_id: fields['Price ID'],
-      status: fields['Status'],
-      current_period_start: fields['Current Period Start'],
-      current_period_end: fields['Current Period End'],
-      trial_end: fields['Trial End']
-    })
+    .upsert(
+      {
+        restaurant_id: restaurantId,
+        subscription_id: fields['Subscription ID'],
+        customer_id: fields['Customer ID'],
+        customer_email: fields['Customer Email'],
+        plan_name: fields['Plan Name'],
+        price_id: fields['Price ID'],
+        status: fields['Status'],
+        current_period_start: fields['Current Period Start'],
+        current_period_end: fields['Current Period End'],
+        trial_end: fields['Trial End']
+      },
+      { onConflict: 'subscription_id' }
+    )
     .select()
     .single();
 
