@@ -71,8 +71,8 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
     voiceAI: false,
     aiAgentTracking: false,
 
-    // Waitlist - None
-    waitlistManagement: false,
+    // Waitlist - Basic
+    waitlistManagement: 'basic',
     waitlistPriorityTiers: false,
     waitlistSMSNotifications: false,
     smartWaitTimePredictions: false,
@@ -344,6 +344,7 @@ export function hasFeatureAccess(
  * Get the minimum plan required for a feature
  */
 export function getRequiredPlan(feature: keyof PlanFeatures): PlanType | null {
+  if (hasFeatureAccess('free', feature)) return 'free';
   if (hasFeatureAccess('starter', feature)) return 'starter';
   if (hasFeatureAccess('growth', feature)) return 'growth';
   // professional has same features as growth, no need to check separately

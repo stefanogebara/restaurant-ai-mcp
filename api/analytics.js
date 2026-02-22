@@ -63,7 +63,7 @@ async function getAllServiceRecordsData(restaurantId) {
   }
 }
 
-async function calculateAnalytics(restaurantId) {
+async function calculateAnalytics(restaurantId, period = '30d') {
   const results = await Promise.all([
     getAllReservations(restaurantId),
     getAllServiceRecordsData(restaurantId),
@@ -86,11 +86,20 @@ async function calculateAnalytics(restaurantId) {
   const activeParties = activePartiesResult.service_records || [];
 
   const now = new Date();
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  let cutoffDate;
+  if (period === 'today') {
+    // Start of today (midnight UTC)
+    cutoffDate = new Date(now.toISOString().split('T')[0]);
+  } else if (period === '7d') {
+    cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  } else {
+    // Default: 30d
+    cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  }
 
   const recentReservations = reservations.filter(r => {
     const resDate = new Date(r.fields.Date || r.createdTime);
-    return resDate >= thirtyDaysAgo;
+    return resDate >= cutoffDate;
   });
 
   const completedServiceRecords = serviceRecords.filter(r =>
@@ -250,7 +259,8 @@ module.exports = async (req, res) => {
 
   try {
     const restaurantId = req.user.restaurant_id;
-    const result = await calculateAnalytics(restaurantId);
+    const period = req.query.period || '30d';
+    const result = await calculateAnalytics(restaurantId, period);
     return res.status(200).json(result);
   } catch (error) {
     logger.error('Analytics error:', error);

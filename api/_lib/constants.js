@@ -41,6 +41,11 @@ const MAX_PARTY_SIZE = 20;
 const MAX_ADVANCE_BOOKING_DAYS = 90;
 
 /**
+ * Free plan monthly reservation limit
+ */
+const FREE_PLAN_MONTHLY_RESERVATIONS = 30;
+
+/**
  * Starter plan monthly reservation limit
  */
 const STARTER_PLAN_MONTHLY_RESERVATIONS = 50;
@@ -81,6 +86,7 @@ module.exports = {
   // Business limits
   MAX_PARTY_SIZE,
   MAX_ADVANCE_BOOKING_DAYS,
+  FREE_PLAN_MONTHLY_RESERVATIONS,
   STARTER_PLAN_MONTHLY_RESERVATIONS,
   GROWTH_PLAN_MONTHLY_RESERVATIONS,
 

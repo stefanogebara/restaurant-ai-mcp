@@ -22,7 +22,7 @@ describe('PLAN_LIMITS structure', () => {
 
   test('starter plan exists with correct reservation limit', () => {
     expect(PLAN_LIMITS.starter).toBeDefined();
-    expect(PLAN_LIMITS.starter.maxReservationsPerMonth).toBe(100);
+    expect(PLAN_LIMITS.starter.maxReservationsPerMonth).toBe(50);
     expect(PLAN_LIMITS.starter.name).toBe('Starter');
   });
 
@@ -87,7 +87,7 @@ describe('getPlanLimits', () => {
   test('returns correct limits for starter', () => {
     const limits = getPlanLimits('starter');
     expect(limits).toBeDefined();
-    expect(limits.maxReservationsPerMonth).toBe(100);
+    expect(limits.maxReservationsPerMonth).toBe(50);
   });
 
   test('returns correct limits for growth', () => {
@@ -178,13 +178,13 @@ describe('checkReservationLimit', () => {
   });
 
   test('starter plan allows when under limit', () => {
-    const result = checkReservationLimit('starter', 50);
+    const result = checkReservationLimit('starter', 40);
     expect(result.allowed).toBe(true);
-    expect(result.limit).toBe(100);
+    expect(result.limit).toBe(50);
   });
 
-  test('starter plan blocks at 100', () => {
-    const result = checkReservationLimit('starter', 100);
+  test('starter plan blocks at 50', () => {
+    const result = checkReservationLimit('starter', 50);
     expect(result.allowed).toBe(false);
   });
 

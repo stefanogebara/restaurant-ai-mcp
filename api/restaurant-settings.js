@@ -3,8 +3,9 @@
  * Handles restaurant settings including language preferences and metric profiles
  */
 
-import { createClient } from '@supabase/supabase-js';
-import { createSecureLogger } from './_lib/secure-logger';
+const { createClient } = require('@supabase/supabase-js');
+const { verifyAuth } = require('./_lib/auth');
+const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('RestaurantSettings');
 
 const supabase = createClient(
@@ -117,7 +118,7 @@ function recommendProfile(characteristics) {
   };
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Restaurant-ID');
@@ -128,10 +129,19 @@ export default async function handler(req, res) {
 
   try {
     const { method } = req;
-    const restaurantId = req.headers['x-restaurant-id'] || req.query.restaurant_id;
     const path = req.url.split('?')[0];
 
-    if (!restaurantId && !path.includes('/profile/recommend')) {
+    // Verify authentication
+    const authResult = await verifyAuth(req, { required: true });
+    if (authResult.error) {
+      return res.status(authResult.status || 401).json({
+        success: false,
+        error: authResult.error,
+      });
+    }
+
+    const restaurantId = authResult.user.restaurant_id;
+    if (!restaurantId) {
       return res.status(400).json({ success: false, error: 'Restaurant ID is required' });
     }
 

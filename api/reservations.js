@@ -46,6 +46,9 @@ const logger = createSecureLogger('Reservations');
 // Guest memory (fire-and-forget memory creation from booking requests)
 const { createMemory } = require('./services/guestMemory');
 
+// WhatsApp confirmation for customers
+const { isWhatsAppConfigured, sendReservationConfirmation } = require('./_lib/whatsapp-sender');
+
 // ============================================================================
 // SMS CONFIRMATION HELPER
 // ============================================================================
@@ -131,7 +134,7 @@ module.exports = async (req, res) => {
   try {
     switch (action) {
       case 'create':
-        return await handleCreate(req, res, restaurantId);
+        return await handleCreate(req, res, restaurantId, timezone);
       case 'lookup':
         return await handleLookup(req, res, restaurantId);
       case 'list':
@@ -153,7 +156,7 @@ module.exports = async (req, res) => {
   }
 };
 
-async function handleCreate(req, res, restaurantId) {
+async function handleCreate(req, res, restaurantId, timezone) {
   const {
     date,
     time,
@@ -399,6 +402,32 @@ async function handleCreate(req, res, restaurantId) {
   } catch (error) {
     // Don't fail the reservation if SMS fails
     logger.error('Error sending SMS confirmation', error);
+  }
+
+  // ============================================================================
+  // WHATSAPP CONFIRMATION (fire-and-forget, non-fatal)
+  // ============================================================================
+  try {
+    const { data: config, error: configErr } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('whatsapp_enabled, restaurant_name, agent_language')
+      .eq('restaurant_id', restaurantId)
+      .single();
+
+    if (!configErr && config && config.whatsapp_enabled && isWhatsAppConfigured()) {
+      sendReservationConfirmation(customer_phone, {
+        customerName: customer_name,
+        restaurantName: config.restaurant_name,
+        language: config.agent_language || 'en',
+        reservationId,
+        date,
+        time,
+        partySize: party_size
+      }).catch(err => logger.warn('WhatsApp confirmation failed (non-fatal):', err.message));
+    }
+  } catch (error) {
+    logger.warn('Error fetching WhatsApp config (non-fatal)', error.message);
   }
 
   // ============================================================================

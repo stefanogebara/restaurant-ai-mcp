@@ -631,19 +631,36 @@ module.exports = async (req, res) => {
       logger.warn(' Continuing without agent creation');
     }
 
-    // STEP 5: Create trial subscription (14-day free trial, no payment required)
-    logger.info(' Step 5: Creating trial subscription...');
+    // STEP 5: Create subscription (Brazil gets free plan; all others get 14-day Growth trial)
+    logger.info(' Step 5: Creating subscription...');
+
+    const isBrazil = country && country.toLowerCase().includes('brazil') || country && country.toLowerCase() === 'brasil';
 
     let trialSubscription = null;
     try {
       const now = new Date();
-      const trialEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days
-
-      // Use restaurant_config.id as canonical restaurant_id (matches dashboard auth)
       const canonicalRestaurantId = configResult?.id || restaurantInfoResult.id;
-      const { data: subData, error: subError } = await supabaseAdmin
-        .from('subscriptions')
-        .insert({
+
+      let subscriptionData;
+      if (isBrazil) {
+        // Brazil: permanent free plan with far-future expiry
+        const farFuture = new Date('2099-12-31T23:59:59.000Z');
+        subscriptionData = {
+          restaurant_id: canonicalRestaurantId,
+          subscription_id: `free_${canonicalRestaurantId}`,
+          customer_id: userId || `user_${Date.now()}`,
+          customer_email: customer_email,
+          plan_name: 'Free',
+          price_id: 'free',
+          status: 'active',
+          current_period_start: now.toISOString(),
+          current_period_end: farFuture.toISOString(),
+          trial_end: null
+        };
+      } else {
+        // All other countries: 14-day Growth trial
+        const trialEnd = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+        subscriptionData = {
           restaurant_id: canonicalRestaurantId,
           subscription_id: `trial_${canonicalRestaurantId}`,
           customer_id: userId || `user_${Date.now()}`,
@@ -654,18 +671,23 @@ module.exports = async (req, res) => {
           current_period_start: now.toISOString(),
           current_period_end: trialEnd.toISOString(),
           trial_end: trialEnd.toISOString()
-        })
+        };
+      }
+
+      const { data: subData, error: subError } = await supabaseAdmin
+        .from('subscriptions')
+        .insert(subscriptionData)
         .select()
         .single();
 
       if (subError) {
-        logger.warn(' Could not create trial subscription:', subError.message);
+        logger.warn(' Could not create subscription:', subError.message);
       } else {
         trialSubscription = subData;
-        logger.info(' Trial subscription created (expires:', trialEnd.toISOString(), ')');
+        logger.info(' Subscription created:', subscriptionData.plan_name, isBrazil ? '(free/Brazil)' : '(trial)');
       }
     } catch (trialError) {
-      logger.warn(' Trial subscription error (non-fatal):', trialError.message);
+      logger.warn(' Subscription creation error (non-fatal):', trialError.message);
     }
 
     logger.info(' Onboarding complete!');

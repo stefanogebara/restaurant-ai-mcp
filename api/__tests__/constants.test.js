@@ -50,8 +50,8 @@ describe('constants: named exports', () => {
     expect(MAX_ADVANCE_BOOKING_DAYS).toBe(90);
   });
 
-  test('STARTER_PLAN_MONTHLY_RESERVATIONS is 100', () => {
-    expect(STARTER_PLAN_MONTHLY_RESERVATIONS).toBe(100);
+  test('STARTER_PLAN_MONTHLY_RESERVATIONS is 50', () => {
+    expect(STARTER_PLAN_MONTHLY_RESERVATIONS).toBe(50);
   });
 
   test('GROWTH_PLAN_MONTHLY_RESERVATIONS is 150', () => {
