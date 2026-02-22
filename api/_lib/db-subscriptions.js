@@ -5,18 +5,24 @@
  * Multi-tenant: every query is scoped by restaurant_id.
  */
 
-const { supabase, handleSupabaseResponse } = require('./db-clients');
+const { supabase, handleSupabaseResponse, withRetry } = require('./db-clients');
 
 // ============ RESTAURANT INFO ============
 
 const getRestaurantInfo = async (restaurantId) => {
-  // Query restaurant_config in the restaurant schema by ID
-  const { data, error } = await supabase
-    .schema('restaurant')
-    .from('restaurant_config')
-    .select('*')
-    .eq('id', restaurantId)
-    .single();
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('*')
+        .eq('id', restaurantId)
+        .single()
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'GET restaurant info');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'GET restaurant info');
 
@@ -40,13 +46,20 @@ const getRestaurantInfo = async (restaurantId) => {
 };
 
 const updateRestaurantPlan = async (restaurantId, plan, customerEmail = null) => {
-  // Get current restaurant config
-  const { data: current, error: fetchError } = await supabase
-    .schema('restaurant')
-    .from('restaurant_config')
-    .select('id, metric_profile')
-    .eq('id', restaurantId)
-    .single();
+  // Fetch current restaurant config
+  let current, fetchError;
+  try {
+    ({ data: current, error: fetchError } = await withRetry(() =>
+      supabase
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('id, metric_profile')
+        .eq('id', restaurantId)
+        .single()
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'FETCH restaurant info for plan update');
+  }
 
   if (fetchError) return handleSupabaseResponse(null, fetchError, 'FETCH restaurant info for plan update');
 
@@ -61,13 +74,20 @@ const updateRestaurantPlan = async (restaurantId, plan, customerEmail = null) =>
     updatedProfile.customer_email = customerEmail;
   }
 
-  const { data, error } = await supabase
-    .schema('restaurant')
-    .from('restaurant_config')
-    .update({ metric_profile: updatedProfile })
-    .eq('id', restaurantId)
-    .select()
-    .single();
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .schema('restaurant')
+        .from('restaurant_config')
+        .update({ metric_profile: updatedProfile })
+        .eq('id', restaurantId)
+        .select()
+        .single()
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'UPDATE restaurant plan');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'UPDATE restaurant plan');
 
@@ -83,17 +103,18 @@ const updateRestaurantPlan = async (restaurantId, plan, customerEmail = null) =>
 // ============ SUBSCRIPTIONS ============
 
 const getSubscriptions = async (restaurantId, filter = {}) => {
-  let query = supabase.from('subscriptions').select('*')
-    .eq('restaurant_id', restaurantId);
-
-  if (filter.customer_id) {
-    query = query.eq('customer_id', filter.customer_id);
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() => {
+      let query = supabase.from('subscriptions').select('*')
+        .eq('restaurant_id', restaurantId);
+      if (filter.customer_id) query = query.eq('customer_id', filter.customer_id);
+      if (filter.customer_email) query = query.eq('customer_email', filter.customer_email);
+      return query;
+    }));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'GET subscriptions');
   }
-  if (filter.customer_email) {
-    query = query.eq('customer_email', filter.customer_email);
-  }
-
-  const { data, error } = await query;
 
   if (error) return handleSupabaseResponse(null, error, 'GET subscriptions');
 
@@ -153,12 +174,19 @@ const getSubscriptionByCustomerId = async (restaurantId, customerId) => {
 
 const getSubscriptionByEmail = async (restaurantId, email) => {
   // First, try to get from subscriptions table
-  const { data: subscriptions, error: subError } = await supabase
-    .from('subscriptions')
-    .select('*')
-    .eq('restaurant_id', restaurantId)
-    .eq('customer_email', email)
-    .limit(1);
+  let subscriptions, subError;
+  try {
+    ({ data: subscriptions, error: subError } = await withRetry(() =>
+      supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('restaurant_id', restaurantId)
+        .eq('customer_email', email)
+        .limit(1)
+    ));
+  } catch (err) {
+    subError = err;
+  }
 
   if (!subError && subscriptions && subscriptions.length > 0) {
     const sub = subscriptions[0];
@@ -182,12 +210,19 @@ const getSubscriptionByEmail = async (restaurantId, email) => {
   }
 
   // Fallback: Check restaurant_config.metric_profile.plan (set during onboarding)
-  const { data: restaurantConfig, error: infoError } = await supabase
-    .schema('restaurant')
-    .from('restaurant_config')
-    .select('id, metric_profile')
-    .eq('id', restaurantId)
-    .single();
+  let restaurantConfig, infoError;
+  try {
+    ({ data: restaurantConfig, error: infoError } = await withRetry(() =>
+      supabase
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('id, metric_profile')
+        .eq('id', restaurantId)
+        .single()
+    ));
+  } catch (err) {
+    infoError = err;
+  }
 
   if (!infoError && restaurantConfig && restaurantConfig.metric_profile?.plan) {
     const plan = restaurantConfig.metric_profile.plan;
@@ -218,22 +253,29 @@ const getSubscriptionByEmail = async (restaurantId, email) => {
 };
 
 const createSubscription = async (restaurantId, fields) => {
-  const { data, error } = await supabase
-    .from('subscriptions')
-    .insert({
-      restaurant_id: restaurantId,
-      subscription_id: fields['Subscription ID'],
-      customer_id: fields['Customer ID'],
-      customer_email: fields['Customer Email'],
-      plan_name: fields['Plan Name'],
-      price_id: fields['Price ID'],
-      status: fields['Status'],
-      current_period_start: fields['Current Period Start'],
-      current_period_end: fields['Current Period End'],
-      trial_end: fields['Trial End']
-    })
-    .select()
-    .single();
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('subscriptions')
+        .insert({
+          restaurant_id: restaurantId,
+          subscription_id: fields['Subscription ID'],
+          customer_id: fields['Customer ID'],
+          customer_email: fields['Customer Email'],
+          plan_name: fields['Plan Name'],
+          price_id: fields['Price ID'],
+          status: fields['Status'],
+          current_period_start: fields['Current Period Start'],
+          current_period_end: fields['Current Period End'],
+          trial_end: fields['Trial End']
+        })
+        .select()
+        .single()
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'CREATE subscription');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'CREATE subscription');
 
@@ -257,13 +299,20 @@ const updateSubscription = async (restaurantId, subscriptionId, fields) => {
   if (fields['Current Period Start']) updates.current_period_start = fields['Current Period Start'];
   if (fields['Current Period End']) updates.current_period_end = fields['Current Period End'];
 
-  const { data, error } = await supabase
-    .from('subscriptions')
-    .update(updates)
-    .eq('restaurant_id', restaurantId)
-    .eq('subscription_id', subscriptionId)
-    .select()
-    .single();
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('subscriptions')
+        .update(updates)
+        .eq('restaurant_id', restaurantId)
+        .eq('subscription_id', subscriptionId)
+        .select()
+        .single()
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'UPDATE subscription');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'UPDATE subscription');
 

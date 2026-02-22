@@ -5,20 +5,23 @@
  * Multi-tenant: every query is scoped by restaurant_id.
  */
 
-const { supabase, handleSupabaseResponse, logger } = require('./db-clients');
+const { supabase, handleSupabaseResponse, logger, withRetry } = require('./db-clients');
 
 // ============ TABLES ============
 
 const getTables = async (restaurantId, filter = {}) => {
-  let query = supabase.from('tables').select('*')
-    .eq('restaurant_id', restaurantId)
-    .eq('is_active', true);
-
-  if (filter.status) {
-    query = query.eq('status', filter.status);
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() => {
+      let query = supabase.from('tables').select('*')
+        .eq('restaurant_id', restaurantId)
+        .eq('is_active', true);
+      if (filter.status) query = query.eq('status', filter.status);
+      return query.order('table_number', { ascending: true });
+    }));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'GET tables');
   }
-
-  const { data, error } = await query.order('table_number', { ascending: true });
 
   if (error) return handleSupabaseResponse(null, error, 'GET tables');
 
@@ -53,12 +56,19 @@ const getTables = async (restaurantId, filter = {}) => {
 };
 
 const getAvailableTables = async (restaurantId) => {
-  const { data, error } = await supabase
-    .from('tables')
-    .select('*')
-    .eq('restaurant_id', restaurantId)
-    .eq('status', 'available')
-    .eq('is_active', true);
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('tables')
+        .select('*')
+        .eq('restaurant_id', restaurantId)
+        .eq('status', 'available')
+        .eq('is_active', true)
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'GET available tables');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'GET available tables');
 
@@ -85,12 +95,19 @@ const getAvailableTables = async (restaurantId) => {
 };
 
 const getTableByNumber = async (restaurantId, tableNumber) => {
-  const { data, error } = await supabase
-    .from('tables')
-    .select('*')
-    .eq('restaurant_id', restaurantId)
-    .eq('table_number', tableNumber)
-    .single();
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('tables')
+        .select('*')
+        .eq('restaurant_id', restaurantId)
+        .eq('table_number', tableNumber)
+        .single()
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'GET table by number');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'GET table by number');
   if (!data) return { success: false, error: true, message: `Table ${tableNumber} not found` };
@@ -130,13 +147,21 @@ const updateTable = async (restaurantId, recordId, fields) => {
 
   logger.info(`[updateTable] Updating table ${recordId} with:`, updates);
 
-  const { data, error } = await supabase
-    .from('tables')
-    .update(updates)
-    .eq('restaurant_id', restaurantId)
-    .eq('id', recordId)
-    .select()
-    .single();
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('tables')
+        .update(updates)
+        .eq('restaurant_id', restaurantId)
+        .eq('id', recordId)
+        .select()
+        .single()
+    ));
+  } catch (err) {
+    logger.error(`[updateTable] Error updating table ${recordId}:`, err);
+    return handleSupabaseResponse(null, err, 'UPDATE table');
+  }
 
   if (error) {
     logger.error(`[updateTable] Error updating table ${recordId}:`, error);
@@ -175,36 +200,43 @@ const updateTableStatus = async (restaurantId, recordId, status) => {
  * @returns {Object} Created table
  */
 const createTable = async (restaurantId, fields) => {
-  const { data, error } = await supabase
-    .from('tables')
-    .insert({
-      restaurant_id: restaurantId,
-      table_number: fields.table_number,
-      capacity: fields.capacity,
-      location: fields.location || 'Main',
-      status: 'available',
-      is_active: true,
-      // Shape configuration
-      shape: fields.shape || 'square',
-      is_fixed_seating: fields.is_fixed_seating || false,
-      // Joinable table configuration
-      is_joinable: fields.is_joinable !== undefined ? fields.is_joinable : true,
-      joinable_with: fields.joinable_with || [],
-      // Floor plan positioning
-      position_x: fields.position_x || 0,
-      position_y: fields.position_y || 0,
-      width: fields.width || 1,
-      height: fields.height || 1,
-      rotation: fields.rotation || 0,
-      // Legacy fields (for backwards compatibility)
-      is_fixed: fields.is_fixed || false,
-      min_capacity: fields.min_capacity || 1,
-      max_capacity: fields.max_capacity || null,
-      adjacent_tables: fields.adjacent_tables || [],
-      combination_group: fields.combination_group || null
-    })
-    .select()
-    .single();
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('tables')
+        .insert({
+          restaurant_id: restaurantId,
+          table_number: fields.table_number,
+          capacity: fields.capacity,
+          location: fields.location || 'Main',
+          status: 'available',
+          is_active: true,
+          // Shape configuration
+          shape: fields.shape || 'square',
+          is_fixed_seating: fields.is_fixed_seating || false,
+          // Joinable table configuration
+          is_joinable: fields.is_joinable !== undefined ? fields.is_joinable : true,
+          joinable_with: fields.joinable_with || [],
+          // Floor plan positioning
+          position_x: fields.position_x || 0,
+          position_y: fields.position_y || 0,
+          width: fields.width || 1,
+          height: fields.height || 1,
+          rotation: fields.rotation || 0,
+          // Legacy fields (for backwards compatibility)
+          is_fixed: fields.is_fixed || false,
+          min_capacity: fields.min_capacity || 1,
+          max_capacity: fields.max_capacity || null,
+          adjacent_tables: fields.adjacent_tables || [],
+          combination_group: fields.combination_group || null
+        })
+        .select()
+        .single()
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'CREATE table');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'CREATE table');
 
@@ -278,13 +310,21 @@ const updateTableConfig = async (restaurantId, tableId, fields) => {
 
   logger.info(`[updateTableConfig] Updating table ${tableId} with:`, updates);
 
-  const { data, error } = await supabase
-    .from('tables')
-    .update(updates)
-    .eq('restaurant_id', restaurantId)
-    .eq('id', tableId)
-    .select()
-    .single();
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('tables')
+        .update(updates)
+        .eq('restaurant_id', restaurantId)
+        .eq('id', tableId)
+        .select()
+        .single()
+    ));
+  } catch (err) {
+    logger.error(`[updateTableConfig] Error:`, err);
+    return handleSupabaseResponse(null, err, 'UPDATE table config');
+  }
 
   if (error) {
     logger.error(`[updateTableConfig] Error:`, error);
@@ -332,19 +372,27 @@ const updateTablePositions = async (restaurantId, tablePositions) => {
   const errors = [];
 
   for (const pos of tablePositions) {
-    const { data, error } = await supabase
-      .from('tables')
-      .update({
-        position_x: pos.position_x,
-        position_y: pos.position_y,
-        width: pos.width !== undefined ? pos.width : 1,
-        height: pos.height !== undefined ? pos.height : 1,
-        rotation: pos.rotation !== undefined ? pos.rotation : 0
-      })
-      .eq('restaurant_id', restaurantId)
-      .eq('id', pos.id)
-      .select()
-      .single();
+    let data, error;
+    try {
+      ({ data, error } = await withRetry(() =>
+        supabase
+          .from('tables')
+          .update({
+            position_x: pos.position_x,
+            position_y: pos.position_y,
+            width: pos.width !== undefined ? pos.width : 1,
+            height: pos.height !== undefined ? pos.height : 1,
+            rotation: pos.rotation !== undefined ? pos.rotation : 0
+          })
+          .eq('restaurant_id', restaurantId)
+          .eq('id', pos.id)
+          .select()
+          .single()
+      ));
+    } catch (err) {
+      errors.push({ id: pos.id, error: err.message });
+      continue;
+    }
 
     if (error) {
       errors.push({ id: pos.id, error: error.message });
@@ -398,10 +446,15 @@ const linkTables = async (restaurantId, tableId1, tableId2) => {
   const newJoinable2 = [...new Set([...(table2.joinable_with || []), tableId1])];
 
   // Update both tables
-  const [update1, update2] = await Promise.all([
-    supabase.from('tables').update({ joinable_with: newJoinable1 }).eq('restaurant_id', restaurantId).eq('id', tableId1),
-    supabase.from('tables').update({ joinable_with: newJoinable2 }).eq('restaurant_id', restaurantId).eq('id', tableId2)
-  ]);
+  let update1, update2;
+  try {
+    [update1, update2] = await Promise.all([
+      withRetry(() => supabase.from('tables').update({ joinable_with: newJoinable1 }).eq('restaurant_id', restaurantId).eq('id', tableId1)),
+      withRetry(() => supabase.from('tables').update({ joinable_with: newJoinable2 }).eq('restaurant_id', restaurantId).eq('id', tableId2))
+    ]);
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'LINK tables');
+  }
 
   if (update1.error || update2.error) {
     return handleSupabaseResponse(null, update1.error || update2.error, 'LINK tables');
@@ -440,10 +493,15 @@ const unlinkTables = async (restaurantId, tableId1, tableId2) => {
   const newJoinable2 = (table2.joinable_with || []).filter(id => id !== tableId1);
 
   // Update both tables
-  const [update1, update2] = await Promise.all([
-    supabase.from('tables').update({ joinable_with: newJoinable1 }).eq('restaurant_id', restaurantId).eq('id', tableId1),
-    supabase.from('tables').update({ joinable_with: newJoinable2 }).eq('restaurant_id', restaurantId).eq('id', tableId2)
-  ]);
+  let update1, update2;
+  try {
+    [update1, update2] = await Promise.all([
+      withRetry(() => supabase.from('tables').update({ joinable_with: newJoinable1 }).eq('restaurant_id', restaurantId).eq('id', tableId1)),
+      withRetry(() => supabase.from('tables').update({ joinable_with: newJoinable2 }).eq('restaurant_id', restaurantId).eq('id', tableId2))
+    ]);
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'UNLINK tables');
+  }
 
   if (update1.error || update2.error) {
     return handleSupabaseResponse(null, update1.error || update2.error, 'UNLINK tables');
@@ -463,13 +521,20 @@ const unlinkTables = async (restaurantId, tableId1, tableId2) => {
  * @returns {Object} Result
  */
 const deleteTable = async (restaurantId, tableId) => {
-  const { data, error } = await supabase
-    .from('tables')
-    .update({ is_active: false })
-    .eq('restaurant_id', restaurantId)
-    .eq('id', tableId)
-    .select()
-    .single();
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('tables')
+        .update({ is_active: false })
+        .eq('restaurant_id', restaurantId)
+        .eq('id', tableId)
+        .select()
+        .single()
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'DELETE table');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'DELETE table');
 
@@ -487,12 +552,19 @@ const deleteTable = async (restaurantId, tableId) => {
  * @returns {Object} Table details
  */
 const getTableById = async (restaurantId, tableId) => {
-  const { data, error } = await supabase
-    .from('tables')
-    .select('*')
-    .eq('restaurant_id', restaurantId)
-    .eq('id', tableId)
-    .single();
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('tables')
+        .select('*')
+        .eq('restaurant_id', restaurantId)
+        .eq('id', tableId)
+        .single()
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'GET table by ID');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'GET table by ID');
   if (!data) return { success: false, error: true, message: 'Table not found' };
@@ -535,11 +607,18 @@ const getTableById = async (restaurantId, tableId) => {
  * @returns {Object} All tables
  */
 const getAllTablesAdmin = async (restaurantId) => {
-  const { data, error } = await supabase
-    .from('tables')
-    .select('*')
-    .eq('restaurant_id', restaurantId)
-    .order('table_number', { ascending: true });
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('tables')
+        .select('*')
+        .eq('restaurant_id', restaurantId)
+        .order('table_number', { ascending: true })
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'GET all tables admin');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'GET all tables admin');
 
@@ -580,12 +659,19 @@ const getAllTablesAdmin = async (restaurantId) => {
 // ============ TABLE HELPERS ============
 
 const getAllTables = async (restaurantId) => {
-  const { data, error } = await supabase
-    .from('tables')
-    .select('*')
-    .eq('restaurant_id', restaurantId)
-    .eq('is_active', true)
-    .order('table_number', { ascending: true });
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('tables')
+        .select('*')
+        .eq('restaurant_id', restaurantId)
+        .eq('is_active', true)
+        .order('table_number', { ascending: true })
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'GET all tables');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'GET all tables');
 

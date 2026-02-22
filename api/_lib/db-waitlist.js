@@ -5,7 +5,7 @@
  * Multi-tenant: every query is scoped by restaurant_id.
  */
 
-const { supabase, handleSupabaseResponse } = require('./db-clients');
+const { supabase, handleSupabaseResponse, withRetry } = require('./db-clients');
 
 // ============ WAITLIST FUNCTIONS ============
 
@@ -15,22 +15,28 @@ const { supabase, handleSupabaseResponse } = require('./db-clients');
  * @param {object} options - { status, active, limit }
  */
 const getWaitlistEntries = async (restaurantId, options = {}) => {
-  let query = supabase
-    .from('waitlist')
-    .select('*')
-    .eq('restaurant_id', restaurantId);
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() => {
+      let query = supabase
+        .from('waitlist')
+        .select('*')
+        .eq('restaurant_id', restaurantId);
 
-  if (options.active === true) {
-    query = query.in('status', ['waiting', 'notified']);
-  } else if (options.status) {
-    const statuses = options.status.split(',').map(s => s.trim());
-    query = query.in('status', statuses);
+      if (options.active === true) {
+        query = query.in('status', ['waiting', 'notified']);
+      } else if (options.status) {
+        const statuses = options.status.split(',').map(s => s.trim());
+        query = query.in('status', statuses);
+      }
+
+      query = query.order('added_at', { ascending: true });
+      query = query.limit(options.limit || 100);
+      return query;
+    }));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'GET waitlist entries');
   }
-
-  query = query.order('added_at', { ascending: true });
-  query = query.limit(options.limit || 100);
-
-  const { data, error } = await query;
 
   if (error) return handleSupabaseResponse(null, error, 'GET waitlist entries');
 
@@ -50,20 +56,27 @@ const addToWaitlist = async (restaurantId, entry) => {
   const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
   const waitlistId = `WAIT-${dateStr}-${Date.now()}`;
 
-  const { data, error } = await supabase
-    .from('waitlist')
-    .insert({
-      restaurant_id: restaurantId,
-      waitlist_id: waitlistId,
-      customer_name: entry.customer_name,
-      customer_phone: entry.customer_phone,
-      party_size: entry.party_size,
-      notes: entry.notes || null,
-      estimated_wait_minutes: entry.estimated_wait_minutes || null,
-      status: 'waiting'
-    })
-    .select()
-    .single();
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('waitlist')
+        .insert({
+          restaurant_id: restaurantId,
+          waitlist_id: waitlistId,
+          customer_name: entry.customer_name,
+          customer_phone: entry.customer_phone,
+          party_size: entry.party_size,
+          notes: entry.notes || null,
+          estimated_wait_minutes: entry.estimated_wait_minutes || null,
+          status: 'waiting'
+        })
+        .select()
+        .single()
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'ADD to waitlist');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'ADD to waitlist');
 
@@ -87,13 +100,20 @@ const updateWaitlistEntry = async (entryId, restaurantId, updates) => {
 
   allowedFields.updated_at = new Date().toISOString();
 
-  const { data, error } = await supabase
-    .from('waitlist')
-    .update(allowedFields)
-    .eq('id', entryId)
-    .eq('restaurant_id', restaurantId)
-    .select()
-    .single();
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('waitlist')
+        .update(allowedFields)
+        .eq('id', entryId)
+        .eq('restaurant_id', restaurantId)
+        .select()
+        .single()
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'UPDATE waitlist entry');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'UPDATE waitlist entry');
 
@@ -109,12 +129,19 @@ const updateWaitlistEntry = async (entryId, restaurantId, updates) => {
  * @param {string} restaurantId - For ownership verification
  */
 const removeFromWaitlist = async (entryId, restaurantId) => {
-  const { data, error } = await supabase
-    .from('waitlist')
-    .delete()
-    .eq('id', entryId)
-    .eq('restaurant_id', restaurantId)
-    .select();
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('waitlist')
+        .delete()
+        .eq('id', entryId)
+        .eq('restaurant_id', restaurantId)
+        .select()
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'DELETE waitlist entry');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'DELETE waitlist entry');
 
@@ -130,11 +157,18 @@ const removeFromWaitlist = async (entryId, restaurantId) => {
  * @param {string} restaurantId - Restaurant UUID
  */
 const getWaitlistCount = async (restaurantId) => {
-  const { count, error } = await supabase
-    .from('waitlist')
-    .select('*', { count: 'exact', head: true })
-    .eq('restaurant_id', restaurantId)
-    .in('status', ['waiting', 'notified']);
+  let count, error;
+  try {
+    ({ count, error } = await withRetry(() =>
+      supabase
+        .from('waitlist')
+        .select('*', { count: 'exact', head: true })
+        .eq('restaurant_id', restaurantId)
+        .in('status', ['waiting', 'notified'])
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'COUNT waitlist entries');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'COUNT waitlist entries');
 

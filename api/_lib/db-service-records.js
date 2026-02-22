@@ -5,19 +5,22 @@
  * Multi-tenant: every query is scoped by restaurant_id.
  */
 
-const { supabase, handleSupabaseResponse, logger } = require('./db-clients');
+const { supabase, handleSupabaseResponse, logger, withRetry } = require('./db-clients');
 
 // ============ SERVICE RECORDS ============
 
 const getServiceRecords = async (restaurantId, filter = {}) => {
-  let query = supabase.from('service_records').select('*')
-    .eq('restaurant_id', restaurantId);
-
-  if (filter.status) {
-    query = query.eq('status', filter.status);
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() => {
+      let query = supabase.from('service_records').select('*')
+        .eq('restaurant_id', restaurantId);
+      if (filter.status) query = query.eq('status', filter.status);
+      return query.order('seated_at', { ascending: false });
+    }));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'GET service records');
   }
-
-  const { data, error } = await query.order('seated_at', { ascending: false });
 
   if (error) return handleSupabaseResponse(null, error, 'GET service records');
 
@@ -45,11 +48,18 @@ const getServiceRecords = async (restaurantId, filter = {}) => {
 };
 
 const getActiveServiceRecords = async (restaurantId) => {
-  const { data, error } = await supabase
-    .from('service_records')
-    .select('*')
-    .eq('restaurant_id', restaurantId)
-    .eq('status', 'active');
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('service_records')
+        .select('*')
+        .eq('restaurant_id', restaurantId)
+        .eq('status', 'active')
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'GET active service records');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'GET active service records');
 
@@ -74,23 +84,30 @@ const getActiveServiceRecords = async (restaurantId) => {
 };
 
 const createServiceRecord = async (restaurantId, fields) => {
-  const { data, error } = await supabase
-    .from('service_records')
-    .insert({
-      restaurant_id: restaurantId,
-      service_id: fields['Service ID'],
-      reservation_id: fields['Reservation ID'] || null,
-      customer_name: fields['Customer Name'],
-      customer_phone: fields['Customer Phone'],
-      party_size: fields['Party Size'],
-      table_ids: fields['Table IDs'],
-      seated_at: fields['Seated At'] || new Date().toISOString(),
-      estimated_departure: fields['Estimated Departure'],
-      special_requests: fields['Special Requests'],
-      status: 'active'
-    })
-    .select()
-    .single();
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('service_records')
+        .insert({
+          restaurant_id: restaurantId,
+          service_id: fields['Service ID'],
+          reservation_id: fields['Reservation ID'] || null,
+          customer_name: fields['Customer Name'],
+          customer_phone: fields['Customer Phone'],
+          party_size: fields['Party Size'],
+          table_ids: fields['Table IDs'],
+          seated_at: fields['Seated At'] || new Date().toISOString(),
+          estimated_departure: fields['Estimated Departure'],
+          special_requests: fields['Special Requests'],
+          status: 'active'
+        })
+        .select()
+        .single()
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'CREATE service record');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'CREATE service record');
 
@@ -115,13 +132,21 @@ const updateServiceRecord = async (restaurantId, serviceId, fields) => {
 
   logger.info(`[updateServiceRecord] Updating service ${serviceId} with:`, updates);
 
-  const { data, error } = await supabase
-    .from('service_records')
-    .update(updates)
-    .eq('restaurant_id', restaurantId)
-    .eq('service_id', serviceId)
-    .select()
-    .single();
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('service_records')
+        .update(updates)
+        .eq('restaurant_id', restaurantId)
+        .eq('service_id', serviceId)
+        .select()
+        .single()
+    ));
+  } catch (err) {
+    logger.error(`[updateServiceRecord] Error updating service ${serviceId}:`, err);
+    return handleSupabaseResponse(null, err, 'UPDATE service record');
+  }
 
   if (error) {
     logger.error(`[updateServiceRecord] Error updating service ${serviceId}:`, error);
@@ -148,12 +173,19 @@ const completeServiceRecord = async (restaurantId, serviceId) => {
 };
 
 const deleteServiceRecord = async (restaurantId, serviceId) => {
-  const { data, error } = await supabase
-    .from('service_records')
-    .delete()
-    .eq('restaurant_id', restaurantId)
-    .eq('service_id', serviceId)
-    .select();
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('service_records')
+        .delete()
+        .eq('restaurant_id', restaurantId)
+        .eq('service_id', serviceId)
+        .select()
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'DELETE service record');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'DELETE service record');
 
