@@ -13,6 +13,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { hostAPI, authFetch } from '../services/api';
 import { usePlanInfo } from '../hooks/useSubscription';
@@ -38,6 +39,7 @@ function maybeTrackFirstReservation() {
 }
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   // ---- Modal state ----
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [showSeatModal, setShowSeatModal] = useState(false);
@@ -142,13 +144,13 @@ export default function Dashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-bold text-red-900 mb-2">Error loading data</h3>
-            <p className="text-sm text-red-700 mb-4">Could not connect to the server. Please try again.</p>
+            <h3 className="text-lg font-bold text-red-900 mb-2">{t('dashboard.errorTitle')}</h3>
+            <p className="text-sm text-red-700 mb-4">{t('errors.serverError')}</p>
             <button
               onClick={() => refetch()}
               className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition-colors"
             >
-              Retry
+              {t('common.retry')}
             </button>
           </div>
         </div>
@@ -163,24 +165,24 @@ export default function Dashboard() {
           {/* ---- Header ---- */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
             <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
-              Dashboard <span className="font-light text-warm-stone">/ {dayName}, {dateStr}</span>
+              {t('navigation.dashboard')} <span className="font-light text-warm-stone">/ {dayName}, {dateStr}</span>
             </h1>
 
             <div className="flex items-center gap-2.5">
               <span className="text-[13px] text-warm-stone bg-white border border-border-gray px-4 py-2 rounded-[10px] hidden sm:inline-block">
-                Week view
+                {t('dashboard.weekView')}
               </span>
               <button
                 onClick={() => window.location.href = '/host-dashboard/calls'}
                 className="flex items-center gap-2 px-4 py-2 bg-white border border-[#D6D3D1] text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors"
               >
-                Export
+                {t('common.export')}
               </button>
               <button
                 onClick={() => setShowWalkInModal(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white rounded-[10px] text-[13px] font-medium transition-colors"
               >
-                + Walk-in
+                {t('dashboard.addWalkIn')}
               </button>
             </div>
           </div>
@@ -202,10 +204,10 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <p className={`text-sm font-semibold ${trialDaysLeft <= 3 ? 'text-red-900' : 'text-[#9A3412]'}`}>
-                    Free Trial {trialDaysLeft === 0 ? 'expires today' : `\u2014 ${trialDaysLeft} day${trialDaysLeft !== 1 ? 's' : ''} remaining`}
+                    {t('dashboard.freeTrial')} {trialDaysLeft === 0 ? t('dashboard.trialExpiresToday') : `\u2014 ${trialDaysLeft} day${trialDaysLeft !== 1 ? 's' : ''} remaining`}
                   </p>
                   <p className={`text-xs ${trialDaysLeft <= 3 ? 'text-red-700' : 'text-[#C2410C]'}`}>
-                    Upgrade to keep all features after your trial ends.
+                    {t('dashboard.trialUpgradeHint')}
                   </p>
                 </div>
               </div>
@@ -213,7 +215,7 @@ export default function Dashboard() {
                 onClick={() => window.location.href = '/#pricing'}
                 className="px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors whitespace-nowrap"
               >
-                View Plans
+                {t('dashboard.viewPlans')}
               </button>
             </div>
           )}
@@ -332,7 +334,7 @@ export default function Dashboard() {
       {showCompleteModal && serviceToComplete && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-sm w-full">
-            <h3 className="text-lg font-bold text-deep-charcoal mb-2">Complete Service</h3>
+            <h3 className="text-lg font-bold text-deep-charcoal mb-2">{t('dashboard.completeService')}</h3>
             <p className="text-sm text-stone-gray mb-6">
               Complete service for <span className="font-semibold">{serviceToComplete.customer_name}</span>?
             </p>
@@ -341,7 +343,7 @@ export default function Dashboard() {
                 onClick={() => { setShowCompleteModal(false); setServiceToComplete(null); }}
                 className="flex-1 px-4 py-2.5 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors font-medium"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={() => {
@@ -351,7 +353,7 @@ export default function Dashboard() {
                 }}
                 className="flex-1 px-4 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors"
               >
-                Complete
+                {t('dashboard.complete')}
               </button>
             </div>
           </div>

@@ -10,6 +10,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import Spinner from '../components/common/Spinner';
 import { SkeletonWeeklyReport } from '../components/common/Skeleton';
@@ -56,6 +57,7 @@ interface WeeklyReportData {
 }
 
 export default function WeeklyReport() {
+  const { t } = useTranslation();
   const subscription = useSubscription();
   const currentPlan = (subscription.data?.subscription?.plan?.toLowerCase() as PlanType) || undefined;
   const hasAccess = currentPlan ? hasFeatureAccess(currentPlan, 'weeklyReports') : false;
@@ -126,19 +128,19 @@ export default function WeeklyReport() {
           <div className="flex flex-col items-center justify-center min-h-[50vh]">
             <div className="bg-white rounded-2xl border border-border-gray p-12 max-w-lg text-center">
               <ThiingsIcon name="lock" pxSize={32} className="mx-auto mb-6" />
-              <h2 className="text-2xl font-bold text-deep-charcoal mb-3">Weekly Reports</h2>
+              <h2 className="text-2xl font-bold text-deep-charcoal mb-3">{t('analytics.weeklyReports')}</h2>
               <p className="text-stone-gray mb-6">
-                Detailed weekly analytics and performance reports. Available on the Professional plan.
+                {t('analytics.weeklyReportsDesc')}
               </p>
               <div className="flex items-center justify-center gap-2 text-sm text-burgundy font-medium mb-6">
                 <ThiingsIcon name="crown" size="xs" />
-                Professional Plan Feature
+                {t('analytics.professionalPlanFeature')}
               </div>
               <Link
                 to="/welcome"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-burgundy text-white rounded-full hover:bg-burgundy-dark transition-colors font-medium"
               >
-                Upgrade Plan
+                {t('analytics.upgradePlan')}
               </Link>
             </div>
           </div>
@@ -228,19 +230,19 @@ export default function WeeklyReport() {
                 onChange={(e) => setEndDate(e.target.value)}
                 className="bg-transparent border-0 text-[13px] text-stone-gray w-[110px] cursor-pointer"
               />
-              <button onClick={handleDateChange} className="ml-1 text-burgundy font-semibold text-xs">Go</button>
+              <button onClick={handleDateChange} className="ml-1 text-burgundy font-semibold text-xs">{t('common.next')}</button>
             </div>
             <button
               onClick={handlePrint}
               className="px-4 py-2 bg-white border border-[#D6D3D1] text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors"
             >
-              Download PDF
+              {t('analytics.downloadPdf')}
             </button>
             <button
               onClick={() => fetchReport()}
               className="px-4 py-2 bg-burgundy text-white hover:bg-burgundy-dark rounded-[10px] text-[13px] font-medium transition-colors"
             >
-              Share Report
+              {t('analytics.shareReport')}
             </button>
           </div>
         </div>
@@ -248,7 +250,7 @@ export default function WeeklyReport() {
         {/* Summary Metrics — 5 columns */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
           <div className="bg-white rounded-2xl p-5 border border-border-gray text-center">
-            <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">Total Reservations</div>
+            <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">{t('analytics.totalReservations')}</div>
             <div className="text-2xl font-bold tracking-tight">{summary.total_reservations}</div>
             {summary.previous_covers >= 3 && (
               <div className={`text-[11px] font-medium mt-1 ${summary.covers_change_percent >= 0 ? 'text-[#16a34a]' : 'text-[#dc2626]'}`}>
@@ -257,21 +259,21 @@ export default function WeeklyReport() {
             )}
           </div>
           <div className="bg-white rounded-2xl p-5 border border-border-gray text-center">
-            <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">Walk-ins</div>
+            <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">{t('analytics.walkIns')}</div>
             <div className="text-2xl font-bold tracking-tight">{summary.walk_in_count}</div>
           </div>
           <div className="bg-white rounded-2xl p-5 border border-border-gray text-center">
-            <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">Cancellations</div>
+            <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">{t('analytics.cancellations')}</div>
             <div className="text-2xl font-bold tracking-tight text-[#dc2626]">{summary.cancelled_count}</div>
             <div className="text-[11px] font-medium text-warm-stone mt-1">{summary.cancellation_rate}% rate</div>
           </div>
           <div className="bg-white rounded-2xl p-5 border border-border-gray text-center">
-            <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">Avg Party Size</div>
+            <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">{t('analytics.avgPartySize')}</div>
             <div className="text-2xl font-bold tracking-tight">{summary.avg_party_size}</div>
             <div className="text-[11px] font-medium text-warm-stone mt-1">{summary.total_covers} covers total</div>
           </div>
           <div className="bg-white rounded-2xl p-5 border border-border-gray text-center">
-            <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">Total Covers</div>
+            <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">{t('analytics.totalCovers')}</div>
             <div className="text-2xl font-bold tracking-tight text-burgundy">{summary.total_covers}</div>
             {summary.previous_covers >= 3 && (
               <div className={`text-[11px] font-medium mt-1 ${summary.covers_change_percent >= 0 ? 'text-[#16a34a]' : 'text-[#dc2626]'}`}>
@@ -284,7 +286,7 @@ export default function WeeklyReport() {
         {/* Busiest Times — bar chart panel */}
         <div className="bg-white rounded-2xl border border-border-gray overflow-hidden">
           <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
-            <span className="text-[15px] font-semibold tracking-tight">Busiest Times</span>
+            <span className="text-[15px] font-semibold tracking-tight">{t('analytics.busiestTimes')}</span>
           </div>
           <div className="p-6 space-y-3">
             {busiest.times.map((time) => {
@@ -311,7 +313,7 @@ export default function WeeklyReport() {
           {/* Guest Demographics */}
           <div className="bg-white rounded-2xl border border-border-gray overflow-hidden">
             <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
-              <span className="text-[15px] font-semibold tracking-tight">Guest Demographics</span>
+              <span className="text-[15px] font-semibold tracking-tight">{t('analytics.guestDemographics')}</span>
             </div>
             {demoRows.map((row) => (
               <div key={row.rank} className="flex items-center px-6 py-3.5 border-b border-soft-gray last:border-b-0 gap-3.5">
@@ -335,7 +337,7 @@ export default function WeeklyReport() {
           {/* Top Guest Preferences */}
           <div className="bg-white rounded-2xl border border-border-gray overflow-hidden">
             <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
-              <span className="text-[15px] font-semibold tracking-tight">Top Guest Preferences</span>
+              <span className="text-[15px] font-semibold tracking-tight">{t('analytics.topGuestPreferences')}</span>
             </div>
             <div className="p-6">
               <div className="flex flex-wrap gap-2">
@@ -352,7 +354,7 @@ export default function WeeklyReport() {
                   </span>
                 ))}
                 {allPreferencePills.length === 0 && (
-                  <p className="text-sm text-muted-stone">No preference data for this period</p>
+                  <p className="text-sm text-muted-stone">{t('analytics.noPreferenceData')}</p>
                 )}
               </div>
             </div>

@@ -49,7 +49,7 @@ export default function Sidebar() {
   const { isCollapsed, setIsCollapsed } = useSidebar();
   const subscription = useSubscription();
   const { user, signOut } = useAuth();
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const isSubscriptionLoading = subscription.isLoading;
   const planType = subscription.data?.subscription?.plan?.toLowerCase() as PlanType | undefined;
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -84,6 +84,18 @@ export default function Sidebar() {
   };
 
   const currentLanguage = languageOptions.find(l => l.code === i18n.language) || languageOptions[0];
+
+  const NAV_KEYS: Record<string, string> = {
+    Dashboard: 'navigation.dashboard',
+    Tables: 'navigation.tables',
+    'Voice Agent': 'navigation.voiceAgent',
+    'Call History': 'navigation.callHistory',
+    Analytics: 'navigation.analytics',
+    Reports: 'navigation.reports',
+    Main: 'navigation.sectionMain',
+    AI: 'navigation.sectionAI',
+    Insights: 'navigation.sectionInsights',
+  };
 
   const isActive = (path: string) => {
     if (path === '/host-dashboard/simple') {
@@ -156,7 +168,7 @@ export default function Sidebar() {
                 {/* Section Label */}
                 {!isCollapsed && (
                   <div className="px-7 mb-2 text-[10px] font-semibold tracking-[2px] uppercase text-stone-gray">
-                    {section.label}
+                    {t(NAV_KEYS[section.label] ?? section.label, section.label)}
                   </div>
                 )}
                 {isCollapsed && (
@@ -191,7 +203,7 @@ export default function Sidebar() {
                         />
                         {!isCollapsed && (
                           <span className="text-sm flex items-center gap-2">
-                            {item.label}
+                            {t(NAV_KEYS[item.label] ?? item.label, item.label)}
                             <ThiingsIcon name="lock" pxSize={10} />
                           </span>
                         )}
@@ -221,7 +233,7 @@ export default function Sidebar() {
                         `}
                       />
                       {!isCollapsed && (
-                        <span className="text-sm">{item.label}</span>
+                        <span className="text-sm">{t(NAV_KEYS[item.label] ?? item.label, item.label)}</span>
                       )}
                     </Link>
                   );
@@ -279,7 +291,7 @@ export default function Sidebar() {
                     className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/[0.05] transition-colors text-left text-[#D6D3D1]"
                   >
                     <ThiingsIcon name="globe" pxSize={16} />
-                    <span className="flex-1 text-sm">Language</span>
+                    <span className="flex-1 text-sm">{t('common.language')}</span>
                     <span className="text-sm text-warm-stone">{currentLanguage.flag} {currentLanguage.name}</span>
                   </button>
 
@@ -313,7 +325,7 @@ export default function Sidebar() {
                   className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[#dc2626]/10 text-[#dc2626] transition-colors"
                 >
                   <ThiingsIcon name="logout" pxSize={16} />
-                  <span className="text-sm">Sign Out</span>
+                  <span className="text-sm">{t('common.signOut')}</span>
                 </button>
               </div>
             )}

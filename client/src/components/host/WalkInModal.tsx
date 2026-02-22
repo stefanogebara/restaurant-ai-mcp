@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Table } from '../../types/host.types';
 import TableCombinationSelector from './TableCombinationSelector';
 
@@ -10,6 +11,7 @@ interface WalkInModalProps {
 }
 
 export default function WalkInModal({ isOpen, onClose, onSuccess, availableTables }: WalkInModalProps) {
+  const { t } = useTranslation();
   const [step, setStep] = useState<1 | 2>(1);
   const [formData, setFormData] = useState({
     party_size: '',
@@ -67,7 +69,7 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl border border-border-gray p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <h2 className="text-2xl font-bold text-deep-charcoal mb-4">
-          {step === 1 ? 'Add Walk-in Customer' : 'Select Table'}
+          {step === 1 ? t('dashboard.walkIn.addCustomer') : t('dashboard.walkIn.selectTable')}
         </h2>
 
         {/* Step 1: Customer Information */}
@@ -75,7 +77,7 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
           <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-deep-charcoal mb-1">
-              Party Size *
+              {t('dashboard.walkIn.partySize')} *
             </label>
             <input
               type="number"
@@ -91,7 +93,7 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
 
           <div>
             <label className="block text-sm font-medium text-deep-charcoal mb-1">
-              Customer Name *
+              {t('dashboard.walkIn.customerName')} *
             </label>
             <input
               type="text"
@@ -105,7 +107,7 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
 
           <div>
             <label className="block text-sm font-medium text-deep-charcoal mb-1">
-              Customer Phone *
+              {t('dashboard.walkIn.customerPhone')} *
             </label>
             <input
               type="tel"
@@ -116,12 +118,12 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
               onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
               className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
             />
-            <p className="text-xs text-muted-stone mt-1">Any format accepted, e.g. +1 (555) 123-4567</p>
+            <p className="text-xs text-muted-stone mt-1">{t('dashboard.walkIn.phoneFormatHint')}</p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-deep-charcoal mb-1">
-              Preferred Location (Optional)
+              {t('dashboard.walkIn.preferredLocation')}
             </label>
             <select
               aria-label="Preferred location"
@@ -129,7 +131,7 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
               onChange={(e) => setFormData({ ...formData, preferred_location: e.target.value })}
               className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
             >
-              <option value="">No preference</option>
+              <option value="">{t('dashboard.walkIn.noPreference')}</option>
               <option value="Main Room">Main Room</option>
               <option value="Patio">Patio</option>
               <option value="Bar Area">Bar Area</option>
@@ -143,13 +145,13 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
                 onClick={handleClose}
                 className="flex-1 px-4 py-3 border border-border-gray text-stone-gray font-medium rounded-xl hover:bg-soft-gray transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 type="submit"
                 className="flex-1 px-4 py-3 bg-burgundy text-white font-medium rounded-xl hover:bg-burgundy-dark transition-colors"
               >
-                Next: Select Table
+                {t('dashboard.walkIn.nextSelectTable')}
               </button>
             </div>
           </form>
@@ -162,11 +164,11 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
             <div className="bg-soft-gray rounded-xl p-4 mb-4 border border-border-gray">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-sm text-stone-gray">Customer</div>
+                  <div className="text-sm text-stone-gray">{t('dashboard.walkIn.customer')}</div>
                   <div className="font-semibold text-deep-charcoal">{formData.customer_name}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-stone-gray">Party Size</div>
+                  <div className="text-sm text-stone-gray">{t('dashboard.walkIn.partySize')}</div>
                   <div className="font-semibold text-deep-charcoal">{formData.party_size} guests</div>
                 </div>
               </div>
@@ -186,14 +188,14 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
                 onClick={handleBack}
                 className="flex-1 px-4 py-3 border border-border-gray text-stone-gray font-medium rounded-xl hover:bg-soft-gray transition-colors"
               >
-                Back
+                {t('common.back')}
               </button>
               <button
                 onClick={handleProceedToSeat}
                 className="flex-1 px-4 py-3 bg-[#16a34a] text-white font-medium rounded-xl hover:bg-[#15803d] disabled:bg-muted-stone disabled:cursor-not-allowed transition-colors"
                 disabled={selectedTableIds.length === 0}
               >
-                Proceed to Seat
+                {t('dashboard.walkIn.proceedToSeat')}
               </button>
             </div>
           </>

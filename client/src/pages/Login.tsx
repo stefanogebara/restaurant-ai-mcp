@@ -10,10 +10,12 @@ import { useAuth } from '../contexts/AuthContext';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { motion } from 'framer-motion';
 import { trackSignupStarted } from '../lib/analytics';
+import { useTranslation } from 'react-i18next';
 
 type AuthMode = 'signin' | 'signup';
 
 export default function Login() {
+  const { t } = useTranslation();
   const { user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -181,7 +183,7 @@ export default function Login() {
             className="inline-flex items-center gap-2 text-stone-gray hover:text-deep-charcoal transition-colors text-sm"
           >
             <ThiingsIcon name="arrow-left" size="xs" />
-            Back to Home
+            {t('login.backToHome')}
           </Link>
         </motion.div>
 
@@ -201,10 +203,10 @@ export default function Login() {
                 </span>
               </Link>
               <h1 className="font-serif text-2xl text-deep-charcoal mb-2">
-                {mode === 'signin' ? 'Welcome back' : 'Create your account'}
+                {mode === 'signin' ? t('login.welcomeBack') : t('login.createAccount')}
               </h1>
               <p className="text-stone-gray font-light">
-                {mode === 'signin' ? 'Sign in to manage your restaurant' : 'Start your 14-day free trial'}
+                {mode === 'signin' ? t('login.signInSubtitle') : t('login.signUpSubtitle')}
               </p>
             </div>
 
@@ -264,7 +266,7 @@ export default function Login() {
                   />
                 </svg>
               )}
-              <span>Continue with Google</span>
+              <span>{t('login.continueWithGoogle')}</span>
             </button>
 
             {/* Divider */}
@@ -278,7 +280,7 @@ export default function Login() {
             <form onSubmit={handleEmailSubmit} className="space-y-4">
               <div>
                 <label htmlFor="email" className="block text-[13px] font-medium text-stone-gray mb-1.5">
-                  Email address
+                  {t('login.emailAddress')}
                 </label>
                 <input
                   id="email"
@@ -292,14 +294,14 @@ export default function Login() {
               </div>
               <div>
                 <label htmlFor="password" className="block text-[13px] font-medium text-stone-gray mb-1.5">
-                  Password
+                  {t('login.password')}
                 </label>
                 <input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={mode === 'signup' ? 'Min. 6 characters' : 'Your password'}
+                  placeholder={mode === 'signup' ? t('login.passwordMinChars') : t('login.yourPassword')}
                   required
                   minLength={6}
                   className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-[#D6D3D1] focus:outline-none focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)] focus:border-burgundy transition-all"
@@ -320,7 +322,7 @@ export default function Login() {
                 {isSigningIn && email ? (
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                 ) : null}
-                <span>{mode === 'signin' ? 'Sign In' : 'Create Account'}</span>
+                <span>{mode === 'signin' ? t('login.signIn') : t('login.createAccountBtn')}</span>
               </button>
             </form>
 
@@ -328,22 +330,22 @@ export default function Login() {
             <div className="text-center mt-6">
               {mode === 'signin' ? (
                 <p className="text-stone-gray text-sm">
-                  New to seatable?{' '}
+                  {t('login.newToSeatable')}{' '}
                   <button
                     onClick={() => { setMode('signup'); setError(null); setSuccessMessage(null); }}
                     className="text-burgundy font-semibold hover:underline"
                   >
-                    Create an account
+                    {t('login.createAnAccount')}
                   </button>
                 </p>
               ) : (
                 <p className="text-stone-gray text-sm">
-                  Already have an account?{' '}
+                  {t('login.alreadyHaveAccount')}{' '}
                   <button
                     onClick={() => { setMode('signin'); setError(null); setSuccessMessage(null); }}
                     className="text-burgundy font-semibold hover:underline"
                   >
-                    Sign in
+                    {t('login.signIn')}
                   </button>
                 </p>
               )}

@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import Spinner from '../components/common/Spinner';
@@ -35,6 +36,7 @@ const OPENAI_VOICES = [
 const PAGE_SIZE = 12;
 
 export default function VoiceSettingsPage() {
+  const { t } = useTranslation();
   const toast = useToast();
   const { hasAccess, isLoading: isLoadingAccess } = useFeatureAccess('voice_ai');
 
@@ -328,7 +330,7 @@ export default function VoiceSettingsPage() {
   if (isLoadingConfig || isLoadingAccess) {
     return (
       <DashboardLayout>
-        <div className="p-6 lg:p-8 max-w-5xl" role="status" aria-label="Loading voice settings">
+        <div className="p-6 lg:p-8 max-w-5xl" role="status" aria-label={t('settings.loadingVoice')}>
           <Skeleton className="h-4 w-48 mb-2" />
           <Skeleton className="h-8 w-64 mb-1" />
           <Skeleton className="h-4 w-80 mb-6" />
@@ -403,7 +405,7 @@ export default function VoiceSettingsPage() {
           {/* Voice Engine Selector */}
           <section className="bg-white border border-border-gray rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
-              <span className="text-[15px] font-semibold">Voice Engine</span>
+              <span className="text-[15px] font-semibold">{t('settings.voiceEngine')}</span>
               {engineConfig?.voice_engine_status && (
                 <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
                   engineConfig.voice_engine_status === 'active'

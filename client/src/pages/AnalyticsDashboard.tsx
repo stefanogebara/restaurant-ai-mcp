@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { authFetch } from '../services/api';
 import { SkeletonAnalytics } from '../components/common/Skeleton';
 import DashboardLayout from '../components/layout/DashboardLayout';
@@ -42,6 +43,7 @@ interface AnalyticsData {
 type DateRange = '30d' | '7d' | 'today';
 
 export default function AnalyticsDashboard() {
+  const { t } = useTranslation();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -86,13 +88,13 @@ export default function AnalyticsDashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-bold text-deep-charcoal mb-2">Error loading analytics</h3>
+            <h3 className="text-lg font-bold text-deep-charcoal mb-2">{t('analytics.errorTitle')}</h3>
             <p className="text-sm text-warm-stone mb-6">{error}</p>
             <button
               onClick={() => fetchAnalytics()}
               className="px-6 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors"
             >
-              Retry
+              {t('common.retry')}
             </button>
           </div>
         </div>
@@ -104,13 +106,13 @@ export default function AnalyticsDashboard() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <p className="text-warm-stone">No analytics data available</p>
+          <p className="text-warm-stone">{t('analytics.noData')}</p>
         </div>
       </DashboardLayout>
     );
   }
 
-  const dateRangeLabel = dateRange === '30d' ? 'Last 30 days' : dateRange === '7d' ? 'Last 7 days' : 'Today';
+  const dateRangeLabel = dateRange === '30d' ? t('analytics.lastThirtyDays') : dateRange === '7d' ? t('analytics.lastSevenDays') : t('analytics.today');
 
   return (
     <DashboardLayout>
@@ -119,7 +121,7 @@ export default function AnalyticsDashboard() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
             <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
-              Analytics <span className="font-light text-warm-stone">/ {dateRangeLabel}</span>
+              {t('analytics.title')} <span className="font-light text-warm-stone">/ {dateRangeLabel}</span>
             </h1>
             <div className="flex items-center gap-2.5">
               {(['30d', '7d', 'today'] as const).map((range) => (
@@ -132,14 +134,14 @@ export default function AnalyticsDashboard() {
                       : 'bg-white border border-[#D6D3D1] text-stone-gray hover:border-muted-stone'
                   }`}
                 >
-                  {range === '30d' ? '30 days' : range === '7d' ? '7 days' : 'Today'}
+                  {range === '30d' ? t('analytics.thirtyDays') : range === '7d' ? t('analytics.sevenDays') : t('analytics.today')}
                 </button>
               ))}
               <button
                 onClick={() => fetchAnalytics()}
                 className="px-4 py-2 bg-white border border-[#D6D3D1] text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors"
               >
-                Export
+                {t('common.export')}
               </button>
             </div>
           </div>

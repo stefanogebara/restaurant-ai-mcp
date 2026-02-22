@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 interface StatsBarProps {
   occupiedTables: number;
   totalTables: number;
@@ -7,32 +9,8 @@ interface StatsBarProps {
   estimatedWaitTime?: number;
   activeParties: number;
   totalGuests: number;
-  language?: 'en' | 'es';
   isLoading?: boolean;
 }
-
-const translations = {
-  en: {
-    reservations: "Today's Reservations",
-    tables: 'Tables Available',
-    guests: 'Guests Expected',
-    aiCalls: 'Active Parties',
-    seated: 'seated',
-    capacity: 'capacity',
-    vsAvg: 'vs avg',
-    waiting: 'on waitlist',
-  },
-  es: {
-    reservations: 'Reservas de Hoy',
-    tables: 'Mesas Disponibles',
-    guests: 'Comensales Esperados',
-    aiCalls: 'Mesas Activas',
-    seated: 'sentados',
-    capacity: 'capacidad',
-    vsAvg: 'vs prom',
-    waiting: 'en espera',
-  },
-};
 
 export default function StatsBar({
   occupiedTables,
@@ -43,10 +21,9 @@ export default function StatsBar({
   estimatedWaitTime,
   activeParties,
   totalGuests,
-  language = 'en',
   isLoading,
 }: StatsBarProps) {
-  const t = translations[language];
+  const { t } = useTranslation();
   const availableTables = totalTables - occupiedTables;
   const occupancyPercent = totalTables > 0 ? Math.round((occupiedTables / totalTables) * 100) : 0;
   const seatedPercent = reservationsToday > 0 ? Math.round((seatedReservations / reservationsToday) * 100) : 0;
@@ -70,9 +47,9 @@ export default function StatsBar({
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
       {/* Today's Reservations */}
       <StatCard
-        label={t.reservations}
+        label={t('dashboard.stats.reservations')}
         value={String(reservationsToday)}
-        change={`${seatedReservations} ${t.seated}`}
+        change={`${seatedReservations} ${t('dashboard.stats.seated')}`}
         changeColor="text-[#16a34a]"
         barPercent={seatedPercent}
         barColor="#9F1239"
@@ -80,11 +57,11 @@ export default function StatsBar({
 
       {/* Tables Available */}
       <StatCard
-        label={t.tables}
+        label={t('dashboard.stats.tables')}
         value={String(availableTables)}
         valueSuffix={` / ${totalTables}`}
         valueColor="text-burgundy"
-        change={`${occupancyPercent}% ${t.capacity}`}
+        change={`${occupancyPercent}% ${t('dashboard.stats.capacity')}`}
         changeColor="text-[#16a34a]"
         barPercent={100 - occupancyPercent}
         barColor="#16a34a"
@@ -92,10 +69,10 @@ export default function StatsBar({
 
       {/* Guests Expected */}
       <StatCard
-        label={t.guests}
+        label={t('dashboard.stats.guests')}
         value={String(totalGuests)}
         change={waitlistCount > 0
-          ? `${waitlistCount} ${t.waiting}${estimatedWaitTime ? ` · ~${estimatedWaitTime} min avg` : ''}`
+          ? `${waitlistCount} ${t('dashboard.stats.waiting')}${estimatedWaitTime ? ` · ~${estimatedWaitTime} min avg` : ''}`
           : estimatedWaitTime ? `~${estimatedWaitTime} min avg` : ''}
         changeColor="text-[#d97706]"
         barPercent={totalGuests > 0 ? Math.min(Math.round((totalGuests / (reservationsToday * 3 || 1)) * 100), 100) : 0}
@@ -104,7 +81,7 @@ export default function StatsBar({
 
       {/* Active Parties */}
       <StatCard
-        label={t.aiCalls}
+        label={t('dashboard.stats.aiCalls')}
         value={String(activeParties)}
         change={totalGuests > 0 ? `${totalGuests} guests seated` : ''}
         changeColor="text-stone-gray"

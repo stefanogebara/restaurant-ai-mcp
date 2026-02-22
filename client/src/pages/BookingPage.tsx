@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
@@ -28,6 +29,7 @@ interface TimeSlot {
 }
 
 export default function BookingPage() {
+  const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
 
@@ -157,7 +159,7 @@ export default function BookingPage() {
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const dayKey = dayNames[new Date().getDay()];
     const hours = restaurant.business_hours[dayKey];
-    if (!hours || hours.is_open === false || hours.closed) return 'Closed today';
+    if (!hours || hours.is_open === false || hours.closed) return t('reservations.closedToday');
     const open = hours.open_time || hours.open;
     const close = hours.close_time || hours.close;
     return `${open} – ${close}`;
@@ -183,7 +185,7 @@ export default function BookingPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-deep-charcoal mb-2">Restaurant Not Found</h1>
+          <h1 className="text-xl font-bold text-deep-charcoal mb-2">{t('reservations.restaurantNotFound')}</h1>
           <p className="text-sm text-stone-gray">
             {error || 'The restaurant you are looking for does not exist or is not accepting online reservations.'}
           </p>
@@ -204,7 +206,7 @@ export default function BookingPage() {
         <div className="font-serif text-lg font-semibold text-deep-charcoal">
           seatable<span className="text-burgundy">.</span>
         </div>
-        <span className="text-[13px] text-warm-stone">Need help? Contact the restaurant</span>
+        <span className="text-[13px] text-warm-stone">{t('reservations.needHelp')}</span>
       </header>
 
       {/* Two-column layout */}
@@ -225,10 +227,10 @@ export default function BookingPage() {
 
           {/* Details */}
           <div className="mb-7">
-            <DetailRow icon="✹" label="Cuisine" value={restaurantType} />
-            <DetailRow icon="⏱" label="Hours today" value={getTodayHours()} />
-            <DetailRow icon="☾" label="Atmosphere" value="Intimate, candlelit" />
-            <DetailRow icon="€" label="Price range" value="€€€" />
+            <DetailRow icon="✹" label={t('reservations.cuisine')} value={restaurantType} />
+            <DetailRow icon="⏱" label={t('reservations.hoursToday')} value={getTodayHours()} />
+            <DetailRow icon="☾" label={t('reservations.atmosphere')} value="Intimate, candlelit" />
+            <DetailRow icon="€" label={t('reservations.priceRange')} value="€€€" />
           </div>
 
           {/* Rating */}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tableConfigAPI } from '../services/api';
 import type { TableConfig } from '../services/api';
@@ -23,6 +24,7 @@ const defaultFormData: TableFormData = {
 };
 
 export default function TableConfigPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [selectedTable, setSelectedTable] = useState<TableConfig | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -162,7 +164,7 @@ export default function TableConfigPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
-          Table Configuration <span className="font-light text-warm-stone">/ {tables.length} tables</span>
+          {t('settings.tableConfig')} <span className="font-light text-warm-stone">/ {tables.length} tables</span>
         </h1>
         <button
           onClick={() => {
@@ -171,26 +173,26 @@ export default function TableConfigPage() {
           }}
           className="px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-[13px] font-semibold rounded-[10px] transition-colors"
         >
-          + Add Table
+          + {t('settings.addNewTable')}
         </button>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-2xl p-6 border border-border-gray">
-          <div className="text-xs font-medium text-muted-stone mb-2">Total Tables</div>
+          <div className="text-xs font-medium text-muted-stone mb-2">{t('settings.totalTables')}</div>
           <div className="text-[32px] font-bold tracking-tight leading-none text-deep-charcoal">{tables.length}</div>
         </div>
         <div className="bg-white rounded-2xl p-6 border border-border-gray">
-          <div className="text-xs font-medium text-muted-stone mb-2">Total Seats</div>
+          <div className="text-xs font-medium text-muted-stone mb-2">{t('settings.totalSeats')}</div>
           <div className="text-[32px] font-bold tracking-tight leading-none text-deep-charcoal">{stats.total_capacity || 0}</div>
         </div>
         <div className="bg-white rounded-2xl p-6 border border-border-gray">
-          <div className="text-xs font-medium text-muted-stone mb-2">Active Tables</div>
+          <div className="text-xs font-medium text-muted-stone mb-2">{t('settings.activeTables')}</div>
           <div className="text-[32px] font-bold tracking-tight leading-none text-[#16a34a]">{stats.active || 0}</div>
         </div>
         <div className="bg-white rounded-2xl p-6 border border-border-gray">
-          <div className="text-xs font-medium text-muted-stone mb-2">Locations</div>
+          <div className="text-xs font-medium text-muted-stone mb-2">{t('settings.locations')}</div>
           <div className="text-[32px] font-bold tracking-tight leading-none text-deep-charcoal">{stats.locations?.length || 0}</div>
         </div>
       </div>
@@ -267,7 +269,7 @@ export default function TableConfigPage() {
                         }}
                         className="flex-1 px-3 py-1.5 text-xs bg-soft-gray text-stone-gray rounded-xl hover:bg-border-gray transition-colors"
                       >
-                        Edit
+                        {t('common.edit')}
                       </button>
                       {!table.is_fixed && (
                         <button
@@ -277,7 +279,7 @@ export default function TableConfigPage() {
                           }}
                           className="flex-1 px-3 py-1.5 text-xs bg-burgundy/10 text-burgundy rounded-xl hover:bg-burgundy/20 transition-colors"
                         >
-                          Set Adjacent
+                          {t('settings.setAdjacent')}
                         </button>
                       )}
                     </div>
@@ -291,7 +293,7 @@ export default function TableConfigPage() {
         {tables.filter((t: TableConfig) => !t.is_active).length > 0 && (
           <div className="mt-8">
             <h2 className="text-lg font-semibold text-muted-stone mb-4">
-              Inactive Tables ({tables.filter((t: TableConfig) => !t.is_active).length})
+              {t('settings.inactiveTables')} ({tables.filter((t: TableConfig) => !t.is_active).length})
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {tables
@@ -313,7 +315,7 @@ export default function TableConfigPage() {
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-deep-charcoal mb-4">Add New Table</h3>
+            <h3 className="text-xl font-bold text-deep-charcoal mb-4">{t('settings.addNewTable')}</h3>
             <TableForm
               formData={formData}
               setFormData={setFormData}
@@ -331,7 +333,7 @@ export default function TableConfigPage() {
       {showEditModal && selectedTable && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-deep-charcoal mb-4">Edit Table {selectedTable.table_number}</h3>
+            <h3 className="text-xl font-bold text-deep-charcoal mb-4">{t('settings.editTable')} {selectedTable.table_number}</h3>
             <TableForm
               formData={formData}
               setFormData={setFormData}

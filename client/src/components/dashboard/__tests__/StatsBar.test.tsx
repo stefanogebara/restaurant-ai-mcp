@@ -67,11 +67,11 @@ describe('StatsBar', () => {
     expect(screen.getByText('0% capacity')).toBeInTheDocument();
   });
 
-  it('renders in Spanish when language is "es"', () => {
-    render(<StatsBar {...defaultProps} language="es" />);
-    expect(screen.getByText('Mesas Disponibles')).toBeInTheDocument();
-    expect(screen.getByText('Reservas de Hoy')).toBeInTheDocument();
-    expect(screen.getByText('Comensales Esperados')).toBeInTheDocument();
-    expect(screen.getByText('Mesas Activas')).toBeInTheDocument();
+  it('renders all four stat cards', () => {
+    render(<StatsBar {...defaultProps} />);
+    expect(screen.getByText("Today's Reservations")).toBeInTheDocument();
+    expect(screen.getByText('Tables Available')).toBeInTheDocument();
+    expect(screen.getByText('Guests Expected')).toBeInTheDocument();
+    expect(screen.getByText('Active Parties')).toBeInTheDocument();
   });
 });

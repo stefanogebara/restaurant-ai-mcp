@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import {
   useWhatsAppStatus,
@@ -8,6 +9,7 @@ import {
 } from '../hooks/useWhatsAppSettings';
 
 export default function WhatsAppSettingsPage() {
+  const { t } = useTranslation();
   const { data: status, isLoading: statusLoading } = useWhatsAppStatus();
   const { data: stats, isLoading: statsLoading } = useWhatsAppStats();
   const saveMutation = useSaveWhatsAppSettings();
@@ -59,16 +61,16 @@ export default function WhatsAppSettingsPage() {
       <div className="max-w-3xl mx-auto space-y-6 p-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-serif font-bold text-deep-charcoal">WhatsApp Integration</h1>
+          <h1 className="text-2xl font-serif font-bold text-deep-charcoal">{t('settings.whatsApp')}</h1>
           <p className="text-sm text-stone-gray mt-1">
-            Send reservation confirmations and chat with customers via WhatsApp.
+            {t('settings.whatsAppDesc')}
           </p>
         </div>
 
         {/* Connection Status Card */}
         <div className="bg-white border border-border-gray rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">Connection Status</h2>
+            <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">{t('settings.connectionStatus')}</h2>
             <span
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
                 status?.api_configured
@@ -77,7 +79,7 @@ export default function WhatsAppSettingsPage() {
               }`}
             >
               <span className={`w-1.5 h-1.5 rounded-full ${status?.api_configured ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-              {status?.api_configured ? 'API Connected' : 'API Not Configured'}
+              {status?.api_configured ? t('settings.apiConnected') : t('settings.apiNotConfigured')}
             </span>
           </div>
           {!status?.api_configured && (
@@ -95,8 +97,8 @@ export default function WhatsAppSettingsPage() {
           {/* Toggle */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-deep-charcoal">Enable WhatsApp</p>
-              <p className="text-xs text-warm-stone">Send reservation confirmations via WhatsApp instead of SMS</p>
+              <p className="text-sm font-medium text-deep-charcoal">{t('settings.enableWhatsApp')}</p>
+              <p className="text-xs text-warm-stone">{t('settings.enableWhatsAppDesc')}</p>
             </div>
             <button
               onClick={() => setPendingEnabled(!currentEnabled)}

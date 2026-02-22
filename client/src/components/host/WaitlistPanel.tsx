@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatTimeAgo } from '../../utils/timeFormatting';
@@ -59,6 +60,7 @@ function getStatusColor(status: string) {
 }
 
 export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanelProps) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [showAddModal, setShowAddModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'active' | 'seated' | 'removed'>('active');
@@ -153,7 +155,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
     return (
       <div className="p-6">
         <div className="flex items-center justify-center h-32">
-          <div className="text-stone-gray">Loading waitlist...</div>
+          <div className="text-stone-gray">{t('waitlist.loading')}</div>
         </div>
       </div>
     );
@@ -178,7 +180,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h2 className="text-lg font-bold text-deep-charcoal">Waitlist</h2>
+            <h2 className="text-lg font-bold text-deep-charcoal">{t('waitlist.title')}</h2>
             <span className="px-2 py-0.5 bg-burgundy/10 text-burgundy rounded-lg text-xs font-bold">
               {activeCount}
             </span>
@@ -187,7 +189,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
             onClick={() => setShowAddModal(true)}
             className="px-3 py-1.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-lg shadow-sm shadow-burgundy/20 transition-all"
           >
-            + Add Guest
+            + {t('waitlist.addGuest')}
           </button>
         </div>
 
@@ -195,9 +197,9 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex gap-0.5 bg-soft-gray rounded-lg p-0.5" role="tablist" aria-label="Waitlist status filter">
             {[
-              { key: 'active', label: 'Active', count: activeCount },
-              { key: 'seated', label: 'Seated', count: seatedCount },
-              { key: 'removed', label: 'Removed', count: removedCount }
+              { key: 'active', label: t('waitlist.tabActive'), count: activeCount },
+              { key: 'seated', label: t('waitlist.tabSeated'), count: seatedCount },
+              { key: 'removed', label: t('waitlist.tabRemoved'), count: removedCount }
             ].map(tab => (
               <button
                 key={tab.key}
@@ -243,12 +245,12 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
               {activeTab === 'active' ? '📋' : activeTab === 'seated' ? '🍽️' : '📭'}
             </div>
             <div className="font-medium">
-              {activeTab === 'active' && 'No one on the waitlist'}
-              {activeTab === 'seated' && 'No guests seated from the waitlist yet'}
-              {activeTab === 'removed' && 'No removed entries'}
+              {activeTab === 'active' && t('waitlist.noActive')}
+              {activeTab === 'seated' && t('waitlist.noSeated')}
+              {activeTab === 'removed' && t('waitlist.noRemoved')}
             </div>
             {activeTab === 'active' && (
-              <div className="text-sm text-muted-stone">Tap "+ Add Guest" above to add a walk-in to the waitlist</div>
+              <div className="text-sm text-muted-stone">{t('waitlist.addGuestHint')}</div>
             )}
           </div>
         ) : activeTab === 'active' ? (
@@ -259,7 +261,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
               <div className="mb-2">
                 <div className="px-4 py-2 bg-[#16a34a]/10 border-l-4 border-[#16a34a]">
                   <span className="text-xs font-bold text-[#16a34a] uppercase tracking-wide">
-                    Table Ready ({tableReadyEntries.length})
+                    {t('waitlist.tableReady')} ({tableReadyEntries.length})
                   </span>
                 </div>
                 {tableReadyEntries.map(entry => (
@@ -282,7 +284,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
               <div>
                 <div className="px-4 py-2 bg-soft-gray border-l-4 border-stone-gray">
                   <span className="text-xs font-bold text-stone-gray uppercase tracking-wide">
-                    Waiting ({waitingEntries.length})
+                    {t('waitlist.waiting')} ({waitingEntries.length})
                   </span>
                 </div>
                 {waitingEntries.map(entry => (
@@ -331,7 +333,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
       {confirmRemove && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-sm w-full">
-            <h3 className="text-lg font-bold text-deep-charcoal mb-2">Remove from Waitlist</h3>
+            <h3 className="text-lg font-bold text-deep-charcoal mb-2">{t('waitlist.removeFromWaitlist')}</h3>
             <p className="text-sm text-stone-gray mb-6">
               Remove <span className="font-semibold text-deep-charcoal">{confirmRemove.name}</span> from the waitlist?
             </p>
@@ -340,7 +342,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
                 onClick={() => setConfirmRemove(null)}
                 className="flex-1 px-4 py-2.5 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors font-medium"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={() => {
@@ -349,7 +351,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
                 }}
                 className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition-colors"
               >
-                Remove
+                {t('waitlist.remove')}
               </button>
             </div>
           </div>
@@ -381,6 +383,7 @@ function WaitlistEntryCard({
   isRemoving,
   showActions = true
 }: WaitlistEntryCardProps) {
+  const { t } = useTranslation();
   const initials = entry.customer_name
     ? entry.customer_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     : '?';
@@ -449,13 +452,13 @@ function WaitlistEntryCard({
                 disabled={isNotifying}
                 className="px-2 py-1 text-[11px] bg-[#16a34a] hover:bg-[#15803d] text-white font-medium rounded transition-colors disabled:opacity-50"
               >
-                Ready
+                {t('waitlist.ready')}
               </button>
               <button
                 onClick={() => onSeatNow(entry)}
                 className="px-2 py-1 text-[11px] bg-burgundy hover:bg-burgundy-dark text-white font-medium rounded transition-colors"
               >
-                Seat
+                {t('waitlist.seat')}
               </button>
             </>
           )}
@@ -464,7 +467,7 @@ function WaitlistEntryCard({
               onClick={() => onSeatNow(entry)}
               className="px-2 py-1 text-[11px] bg-burgundy hover:bg-burgundy-dark text-white font-medium rounded transition-colors"
             >
-              Seat Now
+              {t('waitlist.seatNow')}
             </button>
           )}
           <button
@@ -472,7 +475,7 @@ function WaitlistEntryCard({
             disabled={isRemoving}
             className="px-2 py-1 text-[11px] bg-soft-gray hover:bg-border-gray text-stone-gray rounded transition-colors disabled:opacity-50 ml-auto"
           >
-            Remove
+            {t('waitlist.remove')}
           </button>
         </div>
       )}
@@ -489,6 +492,7 @@ interface AddToWaitlistModalProps {
 const TAG_PRESETS = ['High Chair', 'Outdoor', 'Birthday', 'Anniversary', 'Wheelchair', 'VIP', 'Window', 'Quiet'];
 
 function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     customer_name: '',
     customer_phone: '',
@@ -536,12 +540,12 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl border border-border-gray max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
-          <h3 className="text-2xl font-bold text-deep-charcoal mb-6">Add to Waitlist</h3>
+          <h3 className="text-2xl font-bold text-deep-charcoal mb-6">{t('waitlist.addToWaitlist')}</h3>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-deep-charcoal mb-2">
-                Customer Name *
+                {t('waitlist.customerName')} *
               </label>
               <input
                 type="text"
@@ -555,7 +559,7 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
 
             <div>
               <label className="block text-sm font-medium text-deep-charcoal mb-2">
-                Phone Number *
+                {t('waitlist.phoneNumber')} *
               </label>
               <input
                 type="tel"
@@ -569,7 +573,7 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
 
             <div>
               <label className="block text-sm font-medium text-deep-charcoal mb-2">
-                Email (Optional)
+                {t('waitlist.emailOptional')}
               </label>
               <input
                 type="email"
@@ -582,7 +586,7 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
 
             <div>
               <label className="block text-sm font-medium text-deep-charcoal mb-2">
-                Party Size *
+                {t('waitlist.partySize')} *
               </label>
               <select
                 required
@@ -598,7 +602,7 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
 
             <div>
               <label className="block text-sm font-medium text-deep-charcoal mb-2">
-                Tags / Special Requests
+                {t('waitlist.specialRequests')}
               </label>
 
               {/* Tag Presets */}
@@ -652,14 +656,14 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
                 onClick={onClose}
                 className="flex-1 px-4 py-2.5 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-all font-medium"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 type="submit"
                 disabled={addMutation.isPending}
                 className="flex-1 px-4 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-all shadow-lg shadow-burgundy/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {addMutation.isPending ? 'Adding...' : 'Add to Waitlist'}
+                {addMutation.isPending ? t('waitlist.adding') : t('waitlist.addToWaitlist')}
               </button>
             </div>
           </form>
