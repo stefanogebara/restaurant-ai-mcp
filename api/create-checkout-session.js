@@ -46,17 +46,11 @@ module.exports = async (req, res) => {
       },
     ];
 
-    // Add metered price items for usage-based billing
+    // Add metered price items for usage-based billing (unique price IDs only)
     const meteredPriceMap = getMeteredPriceMap();
     const addedPrices = new Set();
-    const planLower = (planName || '').toLowerCase();
-    for (const [metricType, meteredPriceId] of Object.entries(meteredPriceMap)) {
-      // Only attach the overage price matching this plan
-      if (metricType === 'reservation_overage_starter' && planLower !== 'starter') continue;
-      if (metricType === 'reservation_overage_growth' && planLower !== 'growth') continue;
-      // Scale has unlimited reservations — no overage price needed
-      if (metricType.startsWith('reservation_overage_') && planLower === 'scale') continue;
-
+    for (const [, mapping] of Object.entries(meteredPriceMap)) {
+      const meteredPriceId = mapping.priceId;
       if (!addedPrices.has(meteredPriceId)) {
         addedPrices.add(meteredPriceId);
         lineItems.push({ price: meteredPriceId });
