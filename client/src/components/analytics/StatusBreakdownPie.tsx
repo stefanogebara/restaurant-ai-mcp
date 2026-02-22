@@ -1,4 +1,5 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { colors } from '../../utils/colors';
 
 interface StatusBreakdownPieProps {
   reservationsByStatus: Record<string, number>;
@@ -13,9 +14,9 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
 
   // Color mapping for each status
   const COLORS: Record<string, string> = {
-    Pending: '#78716C',
-    Confirmed: '#57534E',
-    Seated: '#9F1239',
+    Pending: colors.warmStone,
+    Confirmed: colors.stoneGray,
+    Seated: colors.burgundy,
     Completed: '#22c55e',
     Cancelled: '#ef4444',
   };
@@ -68,7 +69,7 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
               dataKey="value"
             >
               {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[entry.name] || '#A8A29E'} />
+                <Cell key={`cell-${index}`} fill={COLORS[entry.name] || colors.mutedStone} />
               ))}
             </Pie>
             <Tooltip content={<CustomTooltip />} />

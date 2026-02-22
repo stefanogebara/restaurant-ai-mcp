@@ -1,4 +1,5 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { colors } from '../../utils/colors';
 
 interface ReservationTrendChartProps {
   dailyTrend: Array<{
@@ -40,14 +41,14 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
           data={dailyTrend}
           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" opacity={0.3} />
+          <CartesianGrid strokeDasharray="3 3" stroke={colors.borderGray} opacity={0.3} />
           <XAxis
             dataKey="dayName"
-            stroke="#78716C"
+            stroke={colors.warmStone}
             style={{ fontSize: '12px' }}
           />
           <YAxis
-            stroke="#78716C"
+            stroke={colors.warmStone}
             style={{ fontSize: '12px' }}
           />
           <Tooltip content={<CustomTooltip />} />
@@ -62,18 +63,18 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
             type="monotone"
             dataKey="reservations"
             name="Reservations"
-            stroke="#9F1239"
+            stroke={colors.burgundy}
             strokeWidth={3}
-            dot={{ fill: '#9F1239', r: 5 }}
+            dot={{ fill: colors.burgundy, r: 5 }}
             activeDot={{ r: 7 }}
           />
           <Line
             type="monotone"
             dataKey="completed_services"
             name="Completed Services"
-            stroke="#57534E"
+            stroke={colors.stoneGray}
             strokeWidth={3}
-            dot={{ fill: '#57534E', r: 5 }}
+            dot={{ fill: colors.stoneGray, r: 5 }}
             activeDot={{ r: 7 }}
           />
         </LineChart>

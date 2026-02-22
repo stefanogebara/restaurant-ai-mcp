@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts';
+import { colors } from '../../utils/colors';
 
 interface TrendChartProps {
   data: any[];
@@ -90,19 +91,19 @@ export default function TrendChart({
       <ResponsiveContainer width="100%" height={height}>
         {type === 'line' ? (
           <LineChart data={data} margin={chartConfig.margin}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" />
+            <CartesianGrid strokeDasharray="3 3" stroke={colors.borderGray} />
             <XAxis
               dataKey={xAxisKey}
-              stroke="#78716C"
-              tick={{ fill: '#78716C' }}
+              stroke={colors.warmStone}
+              tick={{ fill: colors.warmStone }}
             />
             <YAxis
-              stroke="#78716C"
-              tick={{ fill: '#78716C' }}
+              stroke={colors.warmStone}
+              tick={{ fill: colors.warmStone }}
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend
-              wrapperStyle={{ color: '#1C1917' }}
+              wrapperStyle={{ color: colors.deepCharcoal }}
               iconType="circle"
             />
             {dataKeys.map((item) => (
@@ -120,19 +121,19 @@ export default function TrendChart({
           </LineChart>
         ) : (
           <BarChart data={data} margin={chartConfig.margin}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" />
+            <CartesianGrid strokeDasharray="3 3" stroke={colors.borderGray} />
             <XAxis
               dataKey={xAxisKey}
-              stroke="#78716C"
-              tick={{ fill: '#78716C' }}
+              stroke={colors.warmStone}
+              tick={{ fill: colors.warmStone }}
             />
             <YAxis
-              stroke="#78716C"
-              tick={{ fill: '#78716C' }}
+              stroke={colors.warmStone}
+              tick={{ fill: colors.warmStone }}
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend
-              wrapperStyle={{ color: '#1C1917' }}
+              wrapperStyle={{ color: colors.deepCharcoal }}
               iconType="square"
             />
             {dataKeys.map((item) => (

@@ -17,6 +17,7 @@ import { SkeletonWeeklyReport } from '../components/common/Skeleton';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { authFetch } from '../services/api';
+import { colors } from '../utils/colors';
 import { useSubscription } from '../hooks/useSubscription';
 import { hasFeatureAccess, type PlanType } from '../config/planFeatures';
 
@@ -188,20 +189,20 @@ export default function WeeklyReport() {
   // Bar color based on intensity
   const getBarColor = (covers: number) => {
     const ratio = covers / maxTimeCovers;
-    if (ratio > 0.85) return '#9F1239';
-    if (ratio > 0.6) return '#57534E';
-    if (ratio > 0.35) return '#A8A29E';
+    if (ratio > 0.85) return colors.burgundy;
+    if (ratio > 0.6) return colors.stoneGray;
+    if (ratio > 0.35) return colors.mutedStone;
     return '#D6D3D1';
   };
   const getBarTextColor = (covers: number) => {
     const ratio = covers / maxTimeCovers;
-    return ratio > 0.35 ? '#fff' : '#78716C';
+    return ratio > 0.35 ? '#fff' : colors.warmStone;
   };
 
   // Demographics ranked rows
   const demoRows = [
-    { rank: 1, label: 'Tourists', detail: `${demographics.tourist_count} visitors`, pct: demographics.tourist_percentage, color: '#9F1239' },
-    { rank: 2, label: 'Locals', detail: `${demographics.local_count} residents`, pct: demographics.tourist_count + demographics.local_count > 0 ? Math.round((demographics.local_count / (demographics.tourist_count + demographics.local_count)) * 100) : 0, color: '#1C1917' },
+    { rank: 1, label: 'Tourists', detail: `${demographics.tourist_count} visitors`, pct: demographics.tourist_percentage, color: colors.burgundy },
+    { rank: 2, label: 'Locals', detail: `${demographics.local_count} residents`, pct: demographics.tourist_count + demographics.local_count > 0 ? Math.round((demographics.local_count / (demographics.tourist_count + demographics.local_count)) * 100) : 0, color: colors.deepCharcoal },
     { rank: 3, label: 'First-Time', detail: `${demographics.first_time_visitors} new customers`, pct: null, count: demographics.first_time_visitors, color: '#3b82f6' },
     { rank: 4, label: 'Repeat', detail: `${demographics.repeat_customers} returning`, pct: null, count: demographics.repeat_customers, color: '#7c3aed' },
   ];
@@ -327,7 +328,7 @@ export default function WeeklyReport() {
                   <div className="text-sm font-semibold text-deep-charcoal">{row.label}</div>
                   <div className="text-xs text-warm-stone">{row.detail}</div>
                 </div>
-                <div className="text-base font-bold" style={{ color: row.rank <= 2 ? row.color : '#1C1917' }}>
+                <div className="text-base font-bold" style={{ color: row.rank <= 2 ? row.color : colors.deepCharcoal }}>
                   {row.pct !== null ? `${row.pct}%` : row.count}
                 </div>
               </div>

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { colors as tc } from '../../utils/colors';
 import type { Table, ActiveParty } from '../../types/host.types';
 
 interface FloorPlanViewProps {
@@ -49,7 +50,7 @@ const getStatusStyle = (status: string, darkMode = false) => {
       case 'occupied':       return { bg: '#2e1a1a', border: '#ef4444', text: '#fecaca', glow: '#ef4444' };
       case 'reserved':       return { bg: '#2a1a3e', border: '#a855f7', text: '#e9d5ff', glow: '#a855f7' };
       case 'being cleaned':  return { bg: '#2e2a1a', border: '#f59e0b', text: '#fef3c7', glow: '#f59e0b' };
-      default:               return { bg: '#292524', border: '#78716c', text: '#d6d3d1', glow: '#78716c' };
+      default:               return { bg: tc.charcoalDark, border: '#78716c', text: '#d6d3d1', glow: '#78716c' };
     }
   }
   switch (n) {
@@ -243,7 +244,7 @@ function HoverCard({ table, party, x, y, w, h, svgW, darkMode, allTables }: {
     <foreignObject x={cardX} y={cardY} width={cardW} height={cardH + 4}
       className="fp-card" style={{ pointerEvents: 'none', overflow: 'visible' }}>
       <div style={{
-        background: darkMode ? '#292524' : '#fff',
+        background: darkMode ? tc.charcoalDark : '#fff',
         border: `1px solid ${darkMode ? '#44403C' : '#e7e5e4'}`,
         borderRadius: 12,
         padding: '10px 14px',
@@ -441,7 +442,7 @@ export default function FloorPlanView({
                         <line key={pairKey}
                           x1={pos.x + pos.w / 2} y1={pos.y + pos.h / 2}
                           x2={linkedPos.x + linkedPos.w / 2} y2={linkedPos.y + linkedPos.h / 2}
-                          stroke="#9F1239" strokeWidth="2"
+                          stroke={tc.burgundy} strokeWidth="2"
                           strokeDasharray="6,4" opacity="0.5"
                           style={{ animation: 'fpLinkDash 1.2s linear infinite' }}
                         />
@@ -555,7 +556,7 @@ export default function FloorPlanView({
                       {table.is_joinable && table.joinable_with?.length > 0 && (
                         <g>
                           <circle cx={x + 2} cy={y + 2} r={9}
-                            fill={darkMode ? '#7f1d1d' : '#9F1239'} opacity={0.9} />
+                            fill={darkMode ? '#7f1d1d' : tc.burgundy} opacity={0.9} />
                           <text x={x + 2} y={y + 3.5} textAnchor="middle"
                             dominantBaseline="middle" fontSize={11} fill="#fff">
                             &#x26D3;

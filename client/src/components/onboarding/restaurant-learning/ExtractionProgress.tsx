@@ -16,6 +16,7 @@
  */
 
 import { motion } from 'framer-motion';
+import { colors } from '../../../utils/colors';
 
 const ALL_TOPICS = [
   'Cuisine Identity',
@@ -72,7 +73,7 @@ export default function ExtractionProgress({ topicsCovered }: ExtractionProgress
               aria-label={`${topic}: ${isCovered ? 'covered' : 'not yet covered'}`}
               initial={false}
               animate={{
-                backgroundColor: isCovered ? (isComplete ? '#059669' : '#9F1239') : '#E7E5E4',
+                backgroundColor: isCovered ? (isComplete ? '#059669' : colors.burgundy) : colors.borderGray,
               }}
               transition={{ duration: 0.35, ease: 'easeOut' }}
               whileInView={isCovered ? { scaleY: [0.7, 1.15, 1] } : {}}

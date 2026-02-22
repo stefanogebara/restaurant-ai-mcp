@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { colors } from '../utils/colors';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SkeletonSubscription } from '../components/common/Skeleton';
 import { authFetch } from '../services/api';
@@ -121,7 +122,7 @@ export default function SubscriptionManage() {
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="bg-white border border-border-gray rounded-2xl p-12 max-w-md text-center">
             <div className="w-16 h-16 rounded-full bg-soft-gray flex items-center justify-center mx-auto mb-5">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#A8A29E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={colors.mutedStone} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
             </div>
             <h1 className="font-serif text-2xl font-medium text-deep-charcoal mb-2">No Active Subscription</h1>
             <p className="text-[15px] text-warm-stone font-light mb-8">

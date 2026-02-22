@@ -1,4 +1,5 @@
 import type { TableShape, TableStatus } from '../../types/host.types';
+import { colors as tc } from '../../utils/colors';
 
 interface TableRendererProps {
   shape: TableShape;
@@ -19,18 +20,18 @@ interface TableRendererProps {
 // Status-based color schemes - outline-based design (like SevenRooms)
 // Light mode: neutral fill with colored outline
 const LIGHT_STATUS_COLORS: Record<TableStatus, { fill: string; stroke: string; strokeWidth: number; chairFill: string }> = {
-  'Available': { fill: '#FAFAF9', stroke: '#22c55e', strokeWidth: 3, chairFill: '#e5e5e5' },
-  'Occupied': { fill: '#FAFAF9', stroke: '#ef4444', strokeWidth: 3, chairFill: '#e5e5e5' },
-  'Reserved': { fill: '#FAFAF9', stroke: '#a855f7', strokeWidth: 3, chairFill: '#e5e5e5' },
-  'Being Cleaned': { fill: '#FAFAF9', stroke: '#f59e0b', strokeWidth: 3, chairFill: '#e5e5e5' },
+  'Available': { fill: tc.warmWhite, stroke: '#22c55e', strokeWidth: 3, chairFill: '#e5e5e5' },
+  'Occupied': { fill: tc.warmWhite, stroke: '#ef4444', strokeWidth: 3, chairFill: '#e5e5e5' },
+  'Reserved': { fill: tc.warmWhite, stroke: '#a855f7', strokeWidth: 3, chairFill: '#e5e5e5' },
+  'Being Cleaned': { fill: tc.warmWhite, stroke: '#f59e0b', strokeWidth: 3, chairFill: '#e5e5e5' },
 };
 
 // Dark mode colors
 const DARK_STATUS_COLORS: Record<TableStatus, { fill: string; stroke: string; strokeWidth: number; chairFill: string }> = {
-  'Available': { fill: '#292524', stroke: '#4ade80', strokeWidth: 3, chairFill: '#44403C' },
-  'Occupied': { fill: '#292524', stroke: '#f87171', strokeWidth: 3, chairFill: '#44403C' },
-  'Reserved': { fill: '#292524', stroke: '#c084fc', strokeWidth: 3, chairFill: '#44403C' },
-  'Being Cleaned': { fill: '#292524', stroke: '#fbbf24', strokeWidth: 3, chairFill: '#44403C' },
+  'Available': { fill: tc.charcoalDark, stroke: '#4ade80', strokeWidth: 3, chairFill: '#44403C' },
+  'Occupied': { fill: tc.charcoalDark, stroke: '#f87171', strokeWidth: 3, chairFill: '#44403C' },
+  'Reserved': { fill: tc.charcoalDark, stroke: '#c084fc', strokeWidth: 3, chairFill: '#44403C' },
+  'Being Cleaned': { fill: tc.charcoalDark, stroke: '#fbbf24', strokeWidth: 3, chairFill: '#44403C' },
 };
 
 // Get colors based on dark mode
@@ -54,7 +55,7 @@ function Chair({ x, y, size, fill, darkMode = false }: ChairProps & { darkMode?:
       cy={y}
       r={size / 2}
       fill={fill}
-      stroke={darkMode ? '#57534E' : '#a8a29e'}
+      stroke={darkMode ? tc.stoneGray : tc.mutedStone}
       strokeWidth="1"
     />
   );
@@ -276,8 +277,8 @@ function BoothTable({ width, height, fill, stroke, strokeWidth = 3, padding = 8 
       {/* Booth back (darker upholstery) */}
       <path
         d={boothPath}
-        fill="#78716c"
-        stroke="#57534E"
+        fill={tc.warmStone}
+        stroke={tc.stoneGray}
         strokeWidth="2"
         filter="url(#shadow)"
       />
@@ -369,7 +370,7 @@ export function TableRenderer({
         </filter>
         {isSelected && (
           <filter id="selectedGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#9F1239" floodOpacity="0.6" />
+            <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor={tc.burgundy} floodOpacity="0.6" />
           </filter>
         )}
       </defs>
@@ -409,7 +410,7 @@ export function TableRenderer({
       {isVIP && (
         <g transform={`translate(${width - 14}, 2)`}>
           <circle cx="6" cy="6" r="7" fill="#fbbf24" stroke="#f59e0b" strokeWidth="1" />
-          <text x="6" y="9" textAnchor="middle" fontSize="8" fill="#1C1917">★</text>
+          <text x="6" y="9" textAnchor="middle" fontSize="8" fill={tc.deepCharcoal}>★</text>
         </g>
       )}
 
@@ -455,7 +456,7 @@ export function TableRenderer({
             dominantBaseline="middle"
             fontSize={Math.min(10, fontSize)}
             fontWeight="600"
-            fill={darkMode ? '#FAFAF9' : '#1C1917'}
+            fill={darkMode ? tc.warmWhite : tc.deepCharcoal}
             style={{ pointerEvents: 'none' }}
           >
             {guestName.split(' ')[0].substring(0, 8)}
@@ -467,7 +468,7 @@ export function TableRenderer({
             textAnchor="middle"
             dominantBaseline="middle"
             fontSize={Math.min(8, capacityFontSize)}
-            fill={darkMode ? '#A8A29E' : '#57534E'}
+            fill={darkMode ? tc.mutedStone : tc.stoneGray}
             style={{ pointerEvents: 'none' }}
           >
             T{tableNumber}
@@ -483,7 +484,7 @@ export function TableRenderer({
             dominantBaseline="middle"
             fontSize={fontSize}
             fontWeight="bold"
-            fill={darkMode ? '#FAFAF9' : '#1C1917'}
+            fill={darkMode ? tc.warmWhite : tc.deepCharcoal}
             style={{ pointerEvents: 'none' }}
           >
             {tableNumber}
@@ -494,7 +495,7 @@ export function TableRenderer({
             textAnchor="middle"
             dominantBaseline="middle"
             fontSize={capacityFontSize}
-            fill={darkMode ? '#A8A29E' : '#57534E'}
+            fill={darkMode ? tc.mutedStone : tc.stoneGray}
             style={{ pointerEvents: 'none' }}
           >
             {capacity}p

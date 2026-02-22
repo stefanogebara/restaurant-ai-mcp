@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { colors } from '../../utils/colors';
 import ThiingsIcon from '../common/ThiingsIcon';
 import {
   LANGUAGE_GROUPS,
@@ -289,7 +290,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
           width: 8px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: #F5F5F4;
+          background: ${colors.softGray};
           border-radius: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {

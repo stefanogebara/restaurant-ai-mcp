@@ -10,6 +10,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { authFetch } from '../../services/api';
 import ThiingsIcon from '../common/ThiingsIcon';
 import Spinner from '../common/Spinner';
+import { colors } from '../../utils/colors';
 
 interface Profile {
   customer_id: string;
@@ -247,7 +248,7 @@ export default function CustomerProfileView() {
           <div className="text-center">
             <div className="relative w-16 h-16">
               <svg className="w-16 h-16 -rotate-90" viewBox="0 0 36 36">
-                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#E7E5E4" strokeWidth="3" />
+                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={colors.borderGray} strokeWidth="3" />
                 <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#7c3aed" strokeWidth="3" strokeDasharray={`${profile?.profile_confidence || 0}, 100`} />
               </svg>
               <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-deep-charcoal">

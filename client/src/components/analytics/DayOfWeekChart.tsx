@@ -1,4 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { colors } from '../../utils/colors';
 
 interface DayOfWeekChartProps {
   reservationsByDay: Record<string, number>;
@@ -40,16 +41,16 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
             data={chartData}
             margin={{ top: 5, right: 10, left: -10, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" opacity={0.3} />
+            <CartesianGrid strokeDasharray="3 3" stroke={colors.borderGray} opacity={0.3} />
             <XAxis
               dataKey="day"
-              stroke="#A8A29E"
+              stroke={colors.mutedStone}
               style={{ fontSize: '11px' }}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              stroke="#A8A29E"
+              stroke={colors.mutedStone}
               style={{ fontSize: '11px' }}
               tickLine={false}
               axisLine={false}
@@ -59,7 +60,7 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
               {chartData.map((entry) => (
                 <Cell
                   key={entry.day}
-                  fill={entry.count >= maxCount * 0.8 ? '#9F1239' : '#E7E5E4'}
+                  fill={entry.count >= maxCount * 0.8 ? colors.burgundy : colors.borderGray}
                 />
               ))}
             </Bar>

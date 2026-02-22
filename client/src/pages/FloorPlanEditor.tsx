@@ -5,6 +5,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import type { Table, TableShape } from '../types/host.types';
 import { getTableSize as getTableGridSize } from '../types/host.types';
+import { colors as tc } from '../utils/colors';
 
 // ── Grid Constants ──────────────────────────────────────────────────────────
 
@@ -279,7 +280,7 @@ function TablePopover({ table, position, onClose, onDelete, onUpdateProps }: Tab
   return (
     <div ref={popoverRef}
       className="absolute z-30 rounded-xl border border-[#44403C] shadow-xl w-56"
-      style={{ left: position.x, top: position.y, background: '#292524' }}>
+      style={{ left: position.x, top: position.y, background: tc.charcoalDark }}>
       <div className="p-3 border-b border-[#44403C] flex items-center justify-between">
         <span className="font-bold text-sm text-white">Table {table.table_number}</span>
         <button onClick={onClose} className="p-1 hover:bg-[#44403C] rounded-lg text-muted-stone">
@@ -728,7 +729,7 @@ export default function FloorPlanEditor() {
                   </defs>
 
                   {/* Dark canvas background */}
-                  <rect width="100%" height="100%" fill="#1C1917" />
+                  <rect width="100%" height="100%" fill={tc.deepCharcoal} />
                   <rect width="100%" height="100%" fill="url(#edFloor)" />
                   <rect width="100%" height="100%" fill="url(#edGrid)" />
 
@@ -891,7 +892,7 @@ export default function FloorPlanEditor() {
                             <circle cx={vx + 4} cy={vy + 4} r={10}
                               fill={st.glow} filter="url(#edGlow)" opacity={0.6} />
                             <circle cx={vx + 4} cy={vy + 4} r={9}
-                              fill="#9F1239" opacity={0.9} />
+                              fill={tc.burgundy} opacity={0.9} />
                             <text x={vx + 4} y={vy + 5.5} textAnchor="middle"
                               dominantBaseline="middle" fontSize={10} fill="#fff"
                               style={{ pointerEvents: 'none' }}>

@@ -2,6 +2,8 @@
  * Range slider for voice settings (stability, similarity, style, speed).
  */
 
+import { colors } from '../../utils/colors';
+
 interface VoiceSliderProps {
   label: string;
   value: number;
@@ -43,7 +45,7 @@ export default function VoiceSlider({
         onChange={(e) => onChange(parseFloat(e.target.value))}
         className="w-full h-2 rounded-full appearance-none cursor-pointer accent-burgundy"
         style={{
-          background: `linear-gradient(to right, #9F1239 0%, #9F1239 ${percentage}%, #E7E5E4 ${percentage}%, #E7E5E4 100%)`,
+          background: `linear-gradient(to right, ${colors.burgundy} 0%, ${colors.burgundy} ${percentage}%, ${colors.borderGray} ${percentage}%, ${colors.borderGray} 100%)`,
         }}
       />
       <div className="flex justify-between">

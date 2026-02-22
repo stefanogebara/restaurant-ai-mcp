@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { colors } from '../../utils/colors';
 
 interface StatsBarProps {
   occupiedTables: number;
@@ -52,7 +53,7 @@ export default function StatsBar({
         change={`${seatedReservations} ${t('dashboard.stats.seated')}`}
         changeColor="text-[#16a34a]"
         barPercent={seatedPercent}
-        barColor="#9F1239"
+        barColor={colors.burgundy}
       />
 
       {/* Tables Available */}
@@ -76,7 +77,7 @@ export default function StatsBar({
           : estimatedWaitTime ? `~${estimatedWaitTime} min avg` : ''}
         changeColor="text-[#d97706]"
         barPercent={totalGuests > 0 ? Math.min(Math.round((totalGuests / (reservationsToday * 3 || 1)) * 100), 100) : 0}
-        barColor="#57534E"
+        barColor={colors.stoneGray}
       />
 
       {/* Active Parties */}

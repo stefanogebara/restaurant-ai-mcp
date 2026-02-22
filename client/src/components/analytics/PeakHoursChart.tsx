@@ -1,4 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { colors } from '../../utils/colors';
 
 interface PeakHoursChartProps {
   reservationsByTimeSlot: Record<string, number>;
@@ -32,9 +33,9 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
   // Dynamic color based on count (darker = more reservations)
   const getBarColor = (count: number) => {
     const intensity = count / maxCount;
-    if (intensity > 0.7) return '#9F1239';
-    if (intensity > 0.4) return '#57534E';
-    return '#78716C';
+    if (intensity > 0.7) return colors.burgundy;
+    if (intensity > 0.4) return colors.stoneGray;
+    return colors.warmStone;
   };
 
   return (
@@ -48,17 +49,17 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
           data={chartData}
           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#E7E5E4" opacity={0.3} />
+          <CartesianGrid strokeDasharray="3 3" stroke={colors.borderGray} opacity={0.3} />
           <XAxis
             dataKey="time"
-            stroke="#78716C"
+            stroke={colors.warmStone}
             style={{ fontSize: '12px' }}
             angle={-45}
             textAnchor="end"
             height={80}
           />
           <YAxis
-            stroke="#78716C"
+            stroke={colors.warmStone}
             style={{ fontSize: '12px' }}
           />
           <Tooltip content={<CustomTooltip />} />
