@@ -76,7 +76,9 @@ module.exports = async (req, res) => {
 
   try {
     // Verify webhook signature
-    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    // Vercel exposes req.rawBody for webhook endpoints; fall back to re-serializing
+    const rawBody = req.rawBody ?? JSON.stringify(req.body);
+    event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
   } catch (err) {
     logger.error('Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);

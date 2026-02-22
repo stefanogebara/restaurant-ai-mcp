@@ -2,19 +2,20 @@
  * Stripe Usage Reporter
  *
  * Reports usage data from the usage_tracking table to Stripe's metered billing.
- * Stripe uses subscription items with metered prices to bill based on actual usage.
+ * Uses the Stripe Meter Events API (2025+) — meters are backed by Stripe Meters
+ * created via scripts/setup-stripe-metered-prices.js.
  *
  * Flow:
  *   1. Cron (or manual call) triggers reportAllUsage()
- *   2. For each active subscription with metered items, query usage_tracking
- *   3. Report unreported usage to Stripe via createUsageRecord()
+ *   2. For each active subscription, query usage_tracking for unreported rows
+ *   3. Report usage to Stripe via billing.meterEvents.create() per customer
  *   4. Mark usage as reported in DB
  *
- * Metric types and their Stripe metered price IDs are configured via env vars:
- *   STRIPE_METERED_PRICE_RESERVATION  - Per-reservation charge
- *   STRIPE_METERED_PRICE_AI_CALL      - Per-AI-call charge
- *   STRIPE_METERED_PRICE_SMS          - Per-SMS charge
- *   STRIPE_METERED_PRICE_WHATSAPP     - Per-WhatsApp-reservation charge
+ * Meter event names (configured in Stripe via setup script):
+ *   seatable_reservation  → STRIPE_METERED_PRICE_RESERVATION
+ *   seatable_ai_call      → STRIPE_METERED_PRICE_AI_CALL
+ *   seatable_sms          → STRIPE_METERED_PRICE_SMS
+ *   seatable_whatsapp     → STRIPE_METERED_PRICE_WHATSAPP
  */
 
 const Stripe = require('stripe');
@@ -25,40 +26,32 @@ const logger = createSecureLogger('StripeUsageReporter');
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
-// ============ METRIC → STRIPE PRICE MAPPING ============
+// ============ METRIC → STRIPE METER EVENT MAPPING ============
 
 /**
- * Maps internal metric types to Stripe metered price IDs.
+ * Maps internal metric types to Stripe Meter event names.
  * Only metrics with a configured price ID will be reported to Stripe.
+ * Meters were created via scripts/setup-stripe-metered-prices.js.
  */
 function getMeteredPriceMap() {
   const map = {};
 
   if (process.env.STRIPE_METERED_PRICE_RESERVATION) {
-    map.reservation_created = process.env.STRIPE_METERED_PRICE_RESERVATION;
-    map.portal_booking = process.env.STRIPE_METERED_PRICE_RESERVATION;
-    map.whatsapp_reservation = process.env.STRIPE_METERED_PRICE_RESERVATION;
+    map.reservation_created = { priceId: process.env.STRIPE_METERED_PRICE_RESERVATION, eventName: 'seatable_reservation' };
+    map.portal_booking      = { priceId: process.env.STRIPE_METERED_PRICE_RESERVATION, eventName: 'seatable_reservation' };
+    map.whatsapp_reservation = { priceId: process.env.STRIPE_METERED_PRICE_RESERVATION, eventName: 'seatable_reservation' };
   }
 
   if (process.env.STRIPE_METERED_PRICE_AI_CALL) {
-    map.ai_call_completed = process.env.STRIPE_METERED_PRICE_AI_CALL;
+    map.ai_call_completed = { priceId: process.env.STRIPE_METERED_PRICE_AI_CALL, eventName: 'seatable_ai_call' };
   }
 
   if (process.env.STRIPE_METERED_PRICE_SMS) {
-    map.sms_sent = process.env.STRIPE_METERED_PRICE_SMS;
+    map.sms_sent = { priceId: process.env.STRIPE_METERED_PRICE_SMS, eventName: 'seatable_sms' };
   }
 
   if (process.env.STRIPE_METERED_PRICE_WHATSAPP) {
-    // Override whatsapp-specific price if set separately
-    map.whatsapp_reservation = process.env.STRIPE_METERED_PRICE_WHATSAPP;
-  }
-
-  // Reservation overage prices (plan-specific)
-  if (process.env.STRIPE_OVERAGE_STARTER_PRICE_ID) {
-    map.reservation_overage_starter = process.env.STRIPE_OVERAGE_STARTER_PRICE_ID;
-  }
-  if (process.env.STRIPE_OVERAGE_GROWTH_PRICE_ID) {
-    map.reservation_overage_growth = process.env.STRIPE_OVERAGE_GROWTH_PRICE_ID;
+    map.whatsapp_reservation = { priceId: process.env.STRIPE_METERED_PRICE_WHATSAPP, eventName: 'seatable_whatsapp' };
   }
 
   return map;
@@ -95,20 +88,16 @@ async function reportUsageForSubscription(subscription) {
   let errors = 0;
 
   try {
-    // Fetch the Stripe subscription to get subscription item IDs
-    const stripeSub = await stripe.subscriptions.retrieve(stripeSubId, {
-      expand: ['items.data'],
-    });
-
+    // Verify the subscription is active in Stripe
+    const stripeSub = await stripe.subscriptions.retrieve(stripeSubId);
     if (stripeSub.status !== 'active' && stripeSub.status !== 'trialing') {
       return { reported: 0, errors: 0, skipped: `subscription_${stripeSub.status}` };
     }
 
-    // Build a map of price_id → subscription_item_id
-    const priceToItemId = {};
-    for (const item of stripeSub.items.data) {
-      priceToItemId[item.price.id] = item.id;
-    }
+    // Resolve the Stripe customer ID (needed for Meter Events)
+    const stripeCustomerId = typeof stripeSub.customer === 'string'
+      ? stripeSub.customer
+      : stripeSub.customer.id;
 
     // Get unreported usage since the billing period start
     const startDate = periodStart || new Date(stripeSub.current_period_start * 1000).toISOString().split('T')[0];
@@ -129,58 +118,56 @@ async function reportUsageForSubscription(subscription) {
       return { reported: 0, errors: 0, skipped: 'no_unreported_usage' };
     }
 
-    // Group by metric type and sum counts
-    const metricTotals = {};
-    const rowIds = [];
-    for (const row of usageRows) {
-      const priceId = meteredPriceMap[row.metric_type];
-      if (!priceId) continue; // Metric not billable
+    // Group by meter event name and sum counts
+    const eventTotals = {}; // { eventName: { total, rowIds } }
+    const allRowIds = [];
 
-      if (!metricTotals[priceId]) {
-        metricTotals[priceId] = 0;
+    for (const row of usageRows) {
+      const mapping = meteredPriceMap[row.metric_type];
+      if (!mapping) continue; // Metric not billable
+
+      const { eventName } = mapping;
+      if (!eventTotals[eventName]) {
+        eventTotals[eventName] = { total: 0, rowIds: [] };
       }
-      metricTotals[priceId] += row.count;
-      rowIds.push(row.id);
+      eventTotals[eventName].total += row.count;
+      eventTotals[eventName].rowIds.push(row.id);
+      allRowIds.push(row.id);
     }
 
-    // Report each metric total to Stripe
-    for (const [priceId, quantity] of Object.entries(metricTotals)) {
-      const subscriptionItemId = priceToItemId[priceId];
-      if (!subscriptionItemId) {
-        logger.warn('No subscription item for metered price', { priceId, stripeSubId });
-        continue;
-      }
-
+    // Report each metric total to Stripe via Meter Events API
+    for (const [eventName, { total }] of Object.entries(eventTotals)) {
       try {
-        await stripe.subscriptionItems.createUsageRecord(subscriptionItemId, {
-          quantity,
-          timestamp: Math.floor(Date.now() / 1000),
-          action: 'set', // 'set' replaces the current period total; 'increment' adds to it
+        await stripe.billing.meterEvents.create({
+          event_name: eventName,
+          payload: {
+            stripe_customer_id: stripeCustomerId,
+            value: String(total),
+          },
         });
 
-        reported += quantity;
-        logger.info('Reported usage to Stripe', {
-          subscriptionItemId,
-          priceId,
-          quantity,
+        reported += total;
+        logger.info('Reported meter event to Stripe', {
+          eventName,
+          total,
+          stripeCustomerId,
           restaurantId,
         });
       } catch (stripeErr) {
         errors++;
-        logger.error('Stripe createUsageRecord failed', {
-          subscriptionItemId,
-          priceId,
+        logger.error('Stripe meterEvents.create failed', {
+          eventName,
           error: stripeErr.message,
         });
       }
     }
 
     // Mark rows as reported
-    if (rowIds.length > 0 && reported > 0) {
+    if (allRowIds.length > 0 && reported > 0) {
       const { error: updateError } = await supabaseAdmin
         .from('usage_tracking')
         .update({ reported_to_stripe: new Date().toISOString() })
-        .in('id', rowIds);
+        .in('id', allRowIds);
 
       if (updateError) {
         logger.error('Failed to mark usage as reported', { error: updateError.message });

@@ -210,7 +210,7 @@ export const PRICING_TIERS = [
       "Priority support",
       "Custom integrations",
     ],
-    cta: "Contact Sales",
+    cta: "Start Free Trial",
     highlighted: false,
   }
 ];
