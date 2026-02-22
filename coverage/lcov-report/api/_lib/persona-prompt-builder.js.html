@@ -1,0 +1,952 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for api/_lib/persona-prompt-builder.js</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../prettify.css" />
+    <link rel="stylesheet" href="../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">api/_lib</a> persona-prompt-builder.js</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>0/138</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/104</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/3</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>0/127</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a>
+<a name='L145'></a><a href='#L145'>145</a>
+<a name='L146'></a><a href='#L146'>146</a>
+<a name='L147'></a><a href='#L147'>147</a>
+<a name='L148'></a><a href='#L148'>148</a>
+<a name='L149'></a><a href='#L149'>149</a>
+<a name='L150'></a><a href='#L150'>150</a>
+<a name='L151'></a><a href='#L151'>151</a>
+<a name='L152'></a><a href='#L152'>152</a>
+<a name='L153'></a><a href='#L153'>153</a>
+<a name='L154'></a><a href='#L154'>154</a>
+<a name='L155'></a><a href='#L155'>155</a>
+<a name='L156'></a><a href='#L156'>156</a>
+<a name='L157'></a><a href='#L157'>157</a>
+<a name='L158'></a><a href='#L158'>158</a>
+<a name='L159'></a><a href='#L159'>159</a>
+<a name='L160'></a><a href='#L160'>160</a>
+<a name='L161'></a><a href='#L161'>161</a>
+<a name='L162'></a><a href='#L162'>162</a>
+<a name='L163'></a><a href='#L163'>163</a>
+<a name='L164'></a><a href='#L164'>164</a>
+<a name='L165'></a><a href='#L165'>165</a>
+<a name='L166'></a><a href='#L166'>166</a>
+<a name='L167'></a><a href='#L167'>167</a>
+<a name='L168'></a><a href='#L168'>168</a>
+<a name='L169'></a><a href='#L169'>169</a>
+<a name='L170'></a><a href='#L170'>170</a>
+<a name='L171'></a><a href='#L171'>171</a>
+<a name='L172'></a><a href='#L172'>172</a>
+<a name='L173'></a><a href='#L173'>173</a>
+<a name='L174'></a><a href='#L174'>174</a>
+<a name='L175'></a><a href='#L175'>175</a>
+<a name='L176'></a><a href='#L176'>176</a>
+<a name='L177'></a><a href='#L177'>177</a>
+<a name='L178'></a><a href='#L178'>178</a>
+<a name='L179'></a><a href='#L179'>179</a>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a>
+<a name='L182'></a><a href='#L182'>182</a>
+<a name='L183'></a><a href='#L183'>183</a>
+<a name='L184'></a><a href='#L184'>184</a>
+<a name='L185'></a><a href='#L185'>185</a>
+<a name='L186'></a><a href='#L186'>186</a>
+<a name='L187'></a><a href='#L187'>187</a>
+<a name='L188'></a><a href='#L188'>188</a>
+<a name='L189'></a><a href='#L189'>189</a>
+<a name='L190'></a><a href='#L190'>190</a>
+<a name='L191'></a><a href='#L191'>191</a>
+<a name='L192'></a><a href='#L192'>192</a>
+<a name='L193'></a><a href='#L193'>193</a>
+<a name='L194'></a><a href='#L194'>194</a>
+<a name='L195'></a><a href='#L195'>195</a>
+<a name='L196'></a><a href='#L196'>196</a>
+<a name='L197'></a><a href='#L197'>197</a>
+<a name='L198'></a><a href='#L198'>198</a>
+<a name='L199'></a><a href='#L199'>199</a>
+<a name='L200'></a><a href='#L200'>200</a>
+<a name='L201'></a><a href='#L201'>201</a>
+<a name='L202'></a><a href='#L202'>202</a>
+<a name='L203'></a><a href='#L203'>203</a>
+<a name='L204'></a><a href='#L204'>204</a>
+<a name='L205'></a><a href='#L205'>205</a>
+<a name='L206'></a><a href='#L206'>206</a>
+<a name='L207'></a><a href='#L207'>207</a>
+<a name='L208'></a><a href='#L208'>208</a>
+<a name='L209'></a><a href='#L209'>209</a>
+<a name='L210'></a><a href='#L210'>210</a>
+<a name='L211'></a><a href='#L211'>211</a>
+<a name='L212'></a><a href='#L212'>212</a>
+<a name='L213'></a><a href='#L213'>213</a>
+<a name='L214'></a><a href='#L214'>214</a>
+<a name='L215'></a><a href='#L215'>215</a>
+<a name='L216'></a><a href='#L216'>216</a>
+<a name='L217'></a><a href='#L217'>217</a>
+<a name='L218'></a><a href='#L218'>218</a>
+<a name='L219'></a><a href='#L219'>219</a>
+<a name='L220'></a><a href='#L220'>220</a>
+<a name='L221'></a><a href='#L221'>221</a>
+<a name='L222'></a><a href='#L222'>222</a>
+<a name='L223'></a><a href='#L223'>223</a>
+<a name='L224'></a><a href='#L224'>224</a>
+<a name='L225'></a><a href='#L225'>225</a>
+<a name='L226'></a><a href='#L226'>226</a>
+<a name='L227'></a><a href='#L227'>227</a>
+<a name='L228'></a><a href='#L228'>228</a>
+<a name='L229'></a><a href='#L229'>229</a>
+<a name='L230'></a><a href='#L230'>230</a>
+<a name='L231'></a><a href='#L231'>231</a>
+<a name='L232'></a><a href='#L232'>232</a>
+<a name='L233'></a><a href='#L233'>233</a>
+<a name='L234'></a><a href='#L234'>234</a>
+<a name='L235'></a><a href='#L235'>235</a>
+<a name='L236'></a><a href='#L236'>236</a>
+<a name='L237'></a><a href='#L237'>237</a>
+<a name='L238'></a><a href='#L238'>238</a>
+<a name='L239'></a><a href='#L239'>239</a>
+<a name='L240'></a><a href='#L240'>240</a>
+<a name='L241'></a><a href='#L241'>241</a>
+<a name='L242'></a><a href='#L242'>242</a>
+<a name='L243'></a><a href='#L243'>243</a>
+<a name='L244'></a><a href='#L244'>244</a>
+<a name='L245'></a><a href='#L245'>245</a>
+<a name='L246'></a><a href='#L246'>246</a>
+<a name='L247'></a><a href='#L247'>247</a>
+<a name='L248'></a><a href='#L248'>248</a>
+<a name='L249'></a><a href='#L249'>249</a>
+<a name='L250'></a><a href='#L250'>250</a>
+<a name='L251'></a><a href='#L251'>251</a>
+<a name='L252'></a><a href='#L252'>252</a>
+<a name='L253'></a><a href='#L253'>253</a>
+<a name='L254'></a><a href='#L254'>254</a>
+<a name='L255'></a><a href='#L255'>255</a>
+<a name='L256'></a><a href='#L256'>256</a>
+<a name='L257'></a><a href='#L257'>257</a>
+<a name='L258'></a><a href='#L258'>258</a>
+<a name='L259'></a><a href='#L259'>259</a>
+<a name='L260'></a><a href='#L260'>260</a>
+<a name='L261'></a><a href='#L261'>261</a>
+<a name='L262'></a><a href='#L262'>262</a>
+<a name='L263'></a><a href='#L263'>263</a>
+<a name='L264'></a><a href='#L264'>264</a>
+<a name='L265'></a><a href='#L265'>265</a>
+<a name='L266'></a><a href='#L266'>266</a>
+<a name='L267'></a><a href='#L267'>267</a>
+<a name='L268'></a><a href='#L268'>268</a>
+<a name='L269'></a><a href='#L269'>269</a>
+<a name='L270'></a><a href='#L270'>270</a>
+<a name='L271'></a><a href='#L271'>271</a>
+<a name='L272'></a><a href='#L272'>272</a>
+<a name='L273'></a><a href='#L273'>273</a>
+<a name='L274'></a><a href='#L274'>274</a>
+<a name='L275'></a><a href='#L275'>275</a>
+<a name='L276'></a><a href='#L276'>276</a>
+<a name='L277'></a><a href='#L277'>277</a>
+<a name='L278'></a><a href='#L278'>278</a>
+<a name='L279'></a><a href='#L279'>279</a>
+<a name='L280'></a><a href='#L280'>280</a>
+<a name='L281'></a><a href='#L281'>281</a>
+<a name='L282'></a><a href='#L282'>282</a>
+<a name='L283'></a><a href='#L283'>283</a>
+<a name='L284'></a><a href='#L284'>284</a>
+<a name='L285'></a><a href='#L285'>285</a>
+<a name='L286'></a><a href='#L286'>286</a>
+<a name='L287'></a><a href='#L287'>287</a>
+<a name='L288'></a><a href='#L288'>288</a>
+<a name='L289'></a><a href='#L289'>289</a>
+<a name='L290'></a><a href='#L290'>290</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">const { createSecureLogger } = <span class="cstat-no" title="statement not covered" >require('./secure-logger');</span>
+const logger = <span class="cstat-no" title="statement not covered" >createSecureLogger('PersonaPromptBuilder');</span>
+&nbsp;
+const LANGUAGE_CONFIG = <span class="cstat-no" title="statement not covered" >{</span>
+  en: {
+    role: 'AI receptionist',
+    greeting: 'Thank you for calling',
+    help: 'How may I help you today?',
+    capabilities: 'I can help you with reservations, check availability, look up existing bookings, or answer questions about the restaurant.'
+  },
+  es: {
+    role: 'recepcionista de IA',
+    greeting: 'Gracias por llamar a',
+    help: '¿En qué puedo ayudarle hoy?',
+    capabilities: 'Puedo ayudarle con reservas, verificar disponibilidad, buscar reservas existentes o responder preguntas sobre el restaurante.'
+  },
+  fr: {
+    role: 'réceptionniste IA',
+    greeting: "Merci d'avoir appelé",
+    help: "Comment puis-je vous aider aujourd'hui?",
+    capabilities: 'Je peux vous aider avec les réservations, vérifier la disponibilité, rechercher des réservations existantes ou répondre à vos questions sur le restaurant.'
+  },
+  it: {
+    role: 'receptionist IA',
+    greeting: 'Grazie per aver chiamato',
+    help: 'Come posso aiutarla oggi?',
+    capabilities: 'Posso aiutarla con le prenotazioni, verificare la disponibilità, cercare prenotazioni esistenti o rispondere alle domande sul ristorante.'
+  },
+  pt: {
+    role: 'recepcionista de IA',
+    greeting: 'Obrigado por ligar para',
+    help: 'Como posso ajudá-lo hoje?',
+    capabilities: 'Posso ajudá-lo com reservas, verificar disponibilidade, procurar reservas existentes ou responder perguntas sobre o restaurante.'
+  },
+  de: {
+    role: 'KI-Rezeptionist',
+    greeting: 'Vielen Dank für Ihren Anruf bei',
+    help: 'Wie kann ich Ihnen heute helfen?',
+    capabilities: 'Ich kann Ihnen bei Reservierungen helfen, die Verfügbarkeit prüfen, bestehende Buchungen nachschlagen oder Fragen zum Restaurant beantworten.'
+  }
+};
+&nbsp;
+/**
+ * Build a complete system prompt for an AI voice agent
+ * @param {Object} restaurantConfig - Restaurant configuration from DB
+ * @param {Object} options - Additional options
+ * @param {string} options.language - Language code (en, es, fr, it, pt, de)
+ * @param {boolean} options.multiTenant - Whether this is multi-tenant mode
+ * @param {string} options.promptOverride - Custom prompt override (persona_prompt_override column)
+ * @returns {string} Complete system prompt
+ */
+function <span class="fstat-no" title="function not covered" >buildPersonaPrompt(</span>restaurantConfig, options = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
+<span class="cstat-no" title="statement not covered" >  if (!restaurantConfig) {</span>
+<span class="cstat-no" title="statement not covered" >    logger.error('buildPersonaPrompt called without restaurantConfig');</span>
+<span class="cstat-no" title="statement not covered" >    throw new Error('restaurantConfig is required');</span>
+  }
+&nbsp;
+  // If there's a prompt override, use it directly
+  const override = <span class="cstat-no" title="statement not covered" >options.promptOverride || restaurantConfig.persona_prompt_override;</span>
+<span class="cstat-no" title="statement not covered" >  if (override) {</span>
+<span class="cstat-no" title="statement not covered" >    return override;</span>
+  }
+&nbsp;
+  const language = <span class="cstat-no" title="statement not covered" >options.language</span>
+    || restaurantConfig.ai_config?.language
+    || restaurantConfig.language
+    || 'en';
+  const lang = <span class="cstat-no" title="statement not covered" >LANGUAGE_CONFIG[language] || LANGUAGE_CONFIG.en;</span>
+  const restaurantName = <span class="cstat-no" title="statement not covered" >restaurantConfig.restaurant_name || restaurantConfig.name || 'the restaurant';</span>
+&nbsp;
+  let prompt = <span class="cstat-no" title="statement not covered" >'';</span>
+&nbsp;
+  // 1. Role definition
+<span class="cstat-no" title="statement not covered" >  prompt += `You are the ${lang.role} for ${restaurantName}.\n\n`;</span>
+<span class="cstat-no" title="statement not covered" >  prompt += `Your role is to help customers make reservations in a friendly, professional manner.\n`;</span>
+<span class="cstat-no" title="statement not covered" >  prompt += `${lang.capabilities}\n\n`;</span>
+&nbsp;
+  // 1b. Restaurant Identity (from restaurant learning profile)
+  const identitySection = <span class="cstat-no" title="statement not covered" >buildRestaurantIdentitySection(restaurantConfig);</span>
+<span class="cstat-no" title="statement not covered" >  if (identitySection) {</span>
+<span class="cstat-no" title="statement not covered" >    prompt += identitySection;</span>
+  }
+&nbsp;
+  // 2. Restaurant details
+<span class="cstat-no" title="statement not covered" >  if (restaurantConfig.phone) {</span>
+<span class="cstat-no" title="statement not covered" >    prompt += `Restaurant Phone: ${restaurantConfig.phone}\n`;</span>
+  }
+<span class="cstat-no" title="statement not covered" >  if (restaurantConfig.email) {</span>
+<span class="cstat-no" title="statement not covered" >    prompt += `Restaurant Email: ${restaurantConfig.email}\n`;</span>
+  }
+<span class="cstat-no" title="statement not covered" >  if (restaurantConfig.website) {</span>
+<span class="cstat-no" title="statement not covered" >    prompt += `Restaurant Website: ${restaurantConfig.website}\n`;</span>
+  }
+<span class="cstat-no" title="statement not covered" >  if (restaurantConfig.address) {</span>
+<span class="cstat-no" title="statement not covered" >    prompt += `Restaurant Address: ${restaurantConfig.address}\n`;</span>
+  }
+<span class="cstat-no" title="statement not covered" >  if (restaurantConfig.city &amp;&amp; restaurantConfig.country) {</span>
+<span class="cstat-no" title="statement not covered" >    prompt += `Location: ${restaurantConfig.city}, ${restaurantConfig.country}\n`;</span>
+  }
+<span class="cstat-no" title="statement not covered" >  prompt += '\n';</span>
+&nbsp;
+  // 3. Business hours (supports both old and new format)
+  const hours = <span class="cstat-no" title="statement not covered" >restaurantConfig.business_hours;</span>
+<span class="cstat-no" title="statement not covered" >  if (hours &amp;&amp; typeof hours === 'object' &amp;&amp; Object.keys(hours).length &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >    prompt += 'Business Hours:\n';</span>
+    const days = <span class="cstat-no" title="statement not covered" >['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];</span>
+<span class="cstat-no" title="statement not covered" >    for (const day of days) {</span>
+      const dayHours = <span class="cstat-no" title="statement not covered" >hours[day];</span>
+<span class="cstat-no" title="statement not covered" >      if (!dayHours) <span class="cstat-no" title="statement not covered" >continue;</span></span>
+&nbsp;
+      // Support both formats: { isOpen, open, close } and { is_open, open_time, close_time }
+      const isOpen = <span class="cstat-no" title="statement not covered" >dayHours.is_open !== undefined ? dayHours.is_open : dayHours.isOpen;</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >      if (isOpen === false) {</span>
+<span class="cstat-no" title="statement not covered" >        prompt += `- ${day.charAt(0).toUpperCase() + day.slice(1)}: Closed\n`;</span>
+      } else {
+        const openTime = <span class="cstat-no" title="statement not covered" >dayHours.open_time || dayHours.open || '?';</span>
+        const closeTime = <span class="cstat-no" title="statement not covered" >dayHours.close_time || dayHours.close || '?';</span>
+<span class="cstat-no" title="statement not covered" >        prompt += `- ${day.charAt(0).toUpperCase() + day.slice(1)}: ${openTime} - ${closeTime}\n`;</span>
+      }
+    }
+<span class="cstat-no" title="statement not covered" >    prompt += '\n';</span>
+  }
+&nbsp;
+  // 4. Tool descriptions
+<span class="cstat-no" title="statement not covered" >  prompt += 'Available tools:\n';</span>
+<span class="cstat-no" title="statement not covered" >  prompt += '- get_current_datetime: Get current date/time. Use at conversation start.\n';</span>
+<span class="cstat-no" title="statement not covered" >  prompt += '- check_availability: Check if a table is available for a date, time, and party size.\n';</span>
+<span class="cstat-no" title="statement not covered" >  prompt += '- create_reservation: Book a table after confirming all details with customer.\n';</span>
+<span class="cstat-no" title="statement not covered" >  prompt += '- lookup_reservation: Find existing reservation by phone, name, or ID.\n';</span>
+<span class="cstat-no" title="statement not covered" >  prompt += '- modify_reservation: Change date, time, or party size of existing reservation.\n';</span>
+<span class="cstat-no" title="statement not covered" >  prompt += '- cancel_reservation: Cancel an existing reservation.\n';</span>
+<span class="cstat-no" title="statement not covered" >  prompt += '- get_wait_time: Get estimated wait time for walk-in customers.\n\n';</span>
+&nbsp;
+  // 5. Guidelines
+<span class="cstat-no" title="statement not covered" >  prompt += 'Important guidelines:\n';</span>
+<span class="cstat-no" title="statement not covered" >  prompt += '- Always be warm, professional, and helpful\n';</span>
+<span class="cstat-no" title="statement not covered" >  prompt += '- Confirm all details before creating a reservation\n';</span>
+<span class="cstat-no" title="statement not covered" >  prompt += '- Ask for name, phone number, and email when making reservations\n';</span>
+<span class="cstat-no" title="statement not covered" >  prompt += '- If a customer requests a time outside business hours, politely suggest alternative times\n';</span>
+<span class="cstat-no" title="statement not covered" >  prompt += '- Use create_reservation only after confirming all details with the customer\n';</span>
+<span class="cstat-no" title="statement not covered" >  prompt += '- NEVER mention specific table numbers, table combinations, or internal seating to customers\n';</span>
+<span class="cstat-no" title="statement not covered" >  prompt += '- When asked about availability, simply say "Yes, we can accommodate X guests" or "I\'m sorry, we\'re fully booked"\n';</span>
+<span class="cstat-no" title="statement not covered" >  prompt += '- Keep responses concise - this is a phone conversation, not a text chat\n';</span>
+<span class="cstat-no" title="statement not covered" >  prompt += '- Use natural speech patterns, not bullet points or formatted text\n';</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  return prompt;</span>
+}
+&nbsp;
+/**
+ * Build the restaurant identity section from restaurant_profile data
+ * Priority: persona_prompt_override &gt; template + restaurant_profile &gt; template only
+ *
+ * This section is injected between the role definition and tools section
+ * to give the AI deep knowledge about the restaurant's personality.
+ *
+ * @param {Object} restaurantConfig - Restaurant configuration from DB
+ * @returns {string|null} Identity section or null if no profile data
+ */
+function <span class="fstat-no" title="function not covered" >buildRestaurantIdentitySection(</span>restaurantConfig) {
+  const profile = <span class="cstat-no" title="statement not covered" >restaurantConfig.restaurant_profile;</span>
+<span class="cstat-no" title="statement not covered" >  if (!profile) <span class="cstat-no" title="statement not covered" >return null;</span></span>
+&nbsp;
+  let section = <span class="cstat-no" title="statement not covered" >'=== Restaurant Identity ===\n\n';</span>
+&nbsp;
+  // Cuisine identity
+<span class="cstat-no" title="statement not covered" >  if (profile.cuisine_identity) {</span>
+    const cuisine = <span class="cstat-no" title="statement not covered" >profile.cuisine_identity;</span>
+<span class="cstat-no" title="statement not covered" >    section += 'Cuisine:\n';</span>
+<span class="cstat-no" title="statement not covered" >    if (cuisine.primary_cuisine) <span class="cstat-no" title="statement not covered" >section += `- Type: ${cuisine.primary_cuisine}\n`;</span></span>
+<span class="cstat-no" title="statement not covered" >    if (cuisine.style) <span class="cstat-no" title="statement not covered" >section += `- Style: ${cuisine.style}\n`;</span></span>
+<span class="cstat-no" title="statement not covered" >    if (cuisine.philosophy) <span class="cstat-no" title="statement not covered" >section += `- Philosophy: ${cuisine.philosophy}\n`;</span></span>
+<span class="cstat-no" title="statement not covered" >    if (cuisine.influences?.length &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >      section += `- Influences: ${cuisine.influences.join(', ')}\n`;</span>
+    }
+<span class="cstat-no" title="statement not covered" >    section += '\n';</span>
+  }
+&nbsp;
+  // Atmosphere
+<span class="cstat-no" title="statement not covered" >  if (profile.atmosphere) {</span>
+    const atmo = <span class="cstat-no" title="statement not covered" >profile.atmosphere;</span>
+<span class="cstat-no" title="statement not covered" >    section += 'Atmosphere:\n';</span>
+<span class="cstat-no" title="statement not covered" >    if (atmo.vibe) <span class="cstat-no" title="statement not covered" >section += `- Vibe: ${atmo.vibe}\n`;</span></span>
+<span class="cstat-no" title="statement not covered" >    if (atmo.description) <span class="cstat-no" title="statement not covered" >section += `- ${atmo.description}\n`;</span></span>
+<span class="cstat-no" title="statement not covered" >    if (atmo.dress_code) <span class="cstat-no" title="statement not covered" >section += `- Dress code: ${atmo.dress_code}\n`;</span></span>
+<span class="cstat-no" title="statement not covered" >    section += '\n';</span>
+  }
+&nbsp;
+  // Signature dishes
+<span class="cstat-no" title="statement not covered" >  if (profile.signature_dishes?.length &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >    section += 'Signature Dishes:\n';</span>
+<span class="cstat-no" title="statement not covered" >    for (const dish of profile.signature_dishes) {</span>
+<span class="cstat-no" title="statement not covered" >      if (dish.name) {</span>
+<span class="cstat-no" title="statement not covered" >        section += `- ${dish.name}`;</span>
+<span class="cstat-no" title="statement not covered" >        if (dish.description) <span class="cstat-no" title="statement not covered" >section += `: ${dish.description}`;</span></span>
+<span class="cstat-no" title="statement not covered" >        section += '\n';</span>
+      }
+    }
+<span class="cstat-no" title="statement not covered" >    section += '\n';</span>
+  }
+&nbsp;
+  // Communication style / personality
+<span class="cstat-no" title="statement not covered" >  if (profile.communication_style) {</span>
+    const style = <span class="cstat-no" title="statement not covered" >profile.communication_style;</span>
+<span class="cstat-no" title="statement not covered" >    section += 'Your Personality:\n';</span>
+<span class="cstat-no" title="statement not covered" >    if (style.tone) <span class="cstat-no" title="statement not covered" >section += `- Tone: ${style.tone}\n`;</span></span>
+<span class="cstat-no" title="statement not covered" >    if (style.personality_traits?.length &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >      section += `- Be: ${style.personality_traits.join(', ')}\n`;</span>
+    }
+<span class="cstat-no" title="statement not covered" >    if (style.phrases_to_use?.length &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >      section += `- Use phrases like: ${style.phrases_to_use.join('; ')}\n`;</span>
+    }
+<span class="cstat-no" title="statement not covered" >    if (style.phrases_to_avoid?.length &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >      section += `- Avoid: ${style.phrases_to_avoid.join('; ')}\n`;</span>
+    }
+<span class="cstat-no" title="statement not covered" >    section += '\n';</span>
+  }
+&nbsp;
+  // Guest experience
+<span class="cstat-no" title="statement not covered" >  if (profile.guest_experience) {</span>
+    const exp = <span class="cstat-no" title="statement not covered" >profile.guest_experience;</span>
+<span class="cstat-no" title="statement not covered" >    if (exp.special_occasions) {</span>
+<span class="cstat-no" title="statement not covered" >      section += `Special Occasions: ${exp.special_occasions}\n`;</span>
+    }
+<span class="cstat-no" title="statement not covered" >    if (exp.dietary_accommodations) {</span>
+<span class="cstat-no" title="statement not covered" >      section += `Dietary Accommodations: ${exp.dietary_accommodations}\n`;</span>
+    }
+<span class="cstat-no" title="statement not covered" >    section += '\n';</span>
+  }
+&nbsp;
+  // Things to know
+<span class="cstat-no" title="statement not covered" >  if (profile.things_to_know?.length &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >    section += 'Important Things to Know:\n';</span>
+<span class="cstat-no" title="statement not covered" >    for (const thing of profile.things_to_know) {</span>
+<span class="cstat-no" title="statement not covered" >      section += `- ${thing}\n`;</span>
+    }
+<span class="cstat-no" title="statement not covered" >    section += '\n';</span>
+  }
+&nbsp;
+  // Unique differentiators
+<span class="cstat-no" title="statement not covered" >  if (profile.unique_differentiators?.length &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >    section += 'What Makes Us Special:\n';</span>
+<span class="cstat-no" title="statement not covered" >    for (const diff of profile.unique_differentiators) {</span>
+<span class="cstat-no" title="statement not covered" >      section += `- ${diff}\n`;</span>
+    }
+<span class="cstat-no" title="statement not covered" >    section += '\n';</span>
+  }
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  section += '=== End Restaurant Identity ===\n\n';</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  return section;</span>
+}
+&nbsp;
+/**
+ * Build the first message the AI says when answering a call
+ * @param {Object} restaurantConfig - Restaurant configuration from DB
+ * @param {string} language - Language override
+ * @returns {string} First message / greeting
+ */
+function <span class="fstat-no" title="function not covered" >buildFirstMessage(</span>restaurantConfig, language) {
+  const name = <span class="cstat-no" title="statement not covered" >restaurantConfig.restaurant_name || restaurantConfig.name || 'the restaurant';</span>
+&nbsp;
+  // Check for custom greeting in ai_config
+  const customGreeting = <span class="cstat-no" title="statement not covered" >restaurantConfig.ai_config?.greeting_message;</span>
+<span class="cstat-no" title="statement not covered" >  if (customGreeting) <span class="cstat-no" title="statement not covered" >return customGreeting;</span></span>
+&nbsp;
+  const lang = <span class="cstat-no" title="statement not covered" >language</span>
+    || restaurantConfig.ai_config?.language
+    || restaurantConfig.language
+    || 'en';
+&nbsp;
+  const greetings = <span class="cstat-no" title="statement not covered" >{</span>
+    en: `Thank you for calling ${name}. How may I help you today?`,
+    es: `Gracias por llamar a ${name}. ¿En qué puedo ayudarle hoy?`,
+    fr: `Merci d'avoir appelé ${name}. Comment puis-je vous aider aujourd'hui?`,
+    it: `Grazie per aver chiamato ${name}. Come posso aiutarla oggi?`,
+    pt: `Obrigado por ligar para ${name}. Como posso ajudá-lo hoje?`,
+    de: `Vielen Dank für Ihren Anruf bei ${name}. Wie kann ich Ihnen heute helfen?`
+  };
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  return greetings[lang] || greetings.en;</span>
+}
+&nbsp;
+<span class="cstat-no" title="statement not covered" >module.exports = {</span>
+  buildPersonaPrompt,
+  buildFirstMessage,
+  buildRestaurantIdentitySection,
+  LANGUAGE_CONFIG
+};
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-02-21T01:39:54.231Z
+            </div>
+        <script src="../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../sorter.js"></script>
+        <script src="../../block-navigation.js"></script>
+    </body>
+</html>
+    
