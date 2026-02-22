@@ -13,7 +13,7 @@ interface RestaurantInfo {
   email: string;
   website: string;
   slug: string;
-  business_hours: Record<string, { open?: string; close?: string; closed?: boolean }>;
+  business_hours: Record<string, { open_time?: string; close_time?: string; is_open?: boolean; open?: string; close?: string; closed?: boolean }>;
   max_party_size: number;
   min_party_size: number;
   advance_booking_days: number;
@@ -75,7 +75,7 @@ export default function BookingPage() {
       const value = d.toISOString().split('T')[0];
       const dayKey = dayNames[d.getDay()];
       const dayHours = restaurant.business_hours[dayKey];
-      if (!dayHours || dayHours.closed) continue;
+      if (!dayHours || dayHours.is_open === false || dayHours.closed) continue;
 
       const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
       days.push({ value, label, dayKey, dayNum: d.getDate(), isToday: value === todayStr });
@@ -156,8 +156,10 @@ export default function BookingPage() {
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const dayKey = dayNames[new Date().getDay()];
     const hours = restaurant.business_hours[dayKey];
-    if (!hours || hours.closed) return 'Closed today';
-    return `${hours.open} \u2013 ${hours.close}`;
+    if (!hours || hours.is_open === false || hours.closed) return 'Closed today';
+    const open = hours.open_time || hours.open;
+    const close = hours.close_time || hours.close;
+    return `${open} \u2013 ${close}`;
   };
 
   if (loading) {
