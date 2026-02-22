@@ -1232,6 +1232,15 @@ const getSubscriptionByEmail = async (restaurantId, email) => {
   };
 };
 
+/**
+ * Create or update a Stripe subscription record for a restaurant.
+ * Uses upsert with onConflict: 'subscription_id' to prevent duplicate records
+ * if Stripe retries the same webhook event.
+ * @param {string} restaurantId
+ * @param {object} fields - Subscription fields (Stripe field names)
+ * @param {object} opts - Reserved for future use (e.g. Supabase idempotency headers).
+ *                        Idempotency is currently enforced at DB level via UNIQUE(subscription_id).
+ */
 const createSubscription = async (restaurantId, fields, opts = {}) => {
   const { data, error } = await supabase
     .from('subscriptions')
