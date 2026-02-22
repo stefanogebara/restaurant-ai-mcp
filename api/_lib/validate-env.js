@@ -12,7 +12,7 @@ const CRITICAL_VARS = [
 ];
 
 function validateEnv(required) {
-  const missing = required.filter(k => !process.env[k]);
+  const missing = required.filter(k => !process.env[k]?.trim());
   if (missing.length > 0) {
     throw new Error(`Missing required env vars: ${missing.join(', ')}`);
   }

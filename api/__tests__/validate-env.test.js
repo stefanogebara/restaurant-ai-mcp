@@ -37,4 +37,19 @@ describe('validateEnv', () => {
     process.env.CRON_SECRET = 'cron-secret';
     expect(() => require('../_lib/validate-env').validateCritical()).not.toThrow();
   });
+
+  test('validateCritical throws when a critical var is missing', () => {
+    // Set all but one critical var
+    process.env.SUPABASE_URL = 'https://fake.supabase.co';
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key';
+    process.env.SUPABASE_ANON_KEY = 'anon-key';
+    process.env.JWT_SECRET = 'secret';
+    process.env.ANTHROPIC_API_KEY = 'key';
+    process.env.STRIPE_SECRET_KEY = 'sk_test_key';
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_key';
+    // CRON_SECRET intentionally absent
+    delete process.env.CRON_SECRET;
+    expect(() => require('../_lib/validate-env').validateCritical())
+      .toThrow('Missing required env vars: CRON_SECRET');
+  });
 });
