@@ -1,6 +1,7 @@
 const Stripe = require('stripe');
 const { verifyAuth } = require('./_lib/auth');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const { getSubscriptions } = require('./_lib/db-subscriptions');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('CustomerPortal');
 
@@ -24,11 +25,23 @@ module.exports = async (req, res) => {
     return res.status(auth.status).json({ error: auth.error });
   }
 
+  const restaurantId = auth.user.restaurant_id;
+  if (!restaurantId) {
+    return res.status(400).json({ error: 'Restaurant setup required' });
+  }
+
   try {
-    const { customerId } = req.body;
+    // Look up customerId from DB by restaurant_id (no need to pass from client)
+    const result = await getSubscriptions(restaurantId);
+
+    if (!result.success || !result.data.records || result.data.records.length === 0) {
+      return res.status(400).json({ error: 'No active subscription found' });
+    }
+
+    const customerId = result.data.records[0].fields['Customer ID'];
 
     if (!customerId) {
-      return res.status(400).json({ error: 'Customer ID is required' });
+      return res.status(400).json({ error: 'No Stripe customer found for this restaurant' });
     }
 
     // Get the origin for return URL

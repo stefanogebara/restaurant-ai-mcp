@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { colors } from '../utils/colors';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { SkeletonSubscription } from '../components/common/Skeleton';
 import { authFetch } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
@@ -24,7 +24,6 @@ const planTiers = ['starter', 'growth', 'scale'];
 
 export default function SubscriptionManage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { error } = useToast();
   const [loading, setLoading] = useState(true);
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
@@ -33,20 +32,11 @@ export default function SubscriptionManage() {
   useEffect(() => {
     const fetchSubscription = async () => {
       try {
-        const customerId =
-          searchParams.get('customer_id') ||
-          localStorage.getItem('stripe_customer_id');
-
-        if (!customerId) {
-          setSubscription({ status: 'none', planName: 'No Plan', planPrice: 'N/A' });
-          return;
-        }
-
         const apiUrl = import.meta.env.VITE_API_URL
           ? `${import.meta.env.VITE_API_URL}/api/get-subscription`
           : '/api/get-subscription';
 
-        const response = await authFetch(`${apiUrl}?customerId=${customerId}`);
+        const response = await authFetch(apiUrl);
 
         if (!response.ok) {
           throw new Error('Failed to fetch subscription');
@@ -63,19 +53,11 @@ export default function SubscriptionManage() {
     };
 
     fetchSubscription();
-  }, [searchParams]);
+  }, []);
 
   const handleManageSubscription = async () => {
     try {
       setManagingSubscription(true);
-
-      const customerId = localStorage.getItem('stripe_customer_id');
-
-      if (!customerId) {
-        error('No subscription found. Please subscribe first.');
-        setManagingSubscription(false);
-        return;
-      }
 
       const apiUrl = import.meta.env.VITE_API_URL
         ? `${import.meta.env.VITE_API_URL}/api/customer-portal`
@@ -86,9 +68,7 @@ export default function SubscriptionManage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          customerId,
-        }),
+        body: JSON.stringify({}),
       });
 
       if (!response.ok) {

@@ -1,6 +1,7 @@
 const Stripe = require('stripe');
 const { verifyAuth } = require('./_lib/auth');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const { getSubscriptions } = require('./_lib/db-subscriptions');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('GetSubscription');
 
@@ -24,61 +25,64 @@ module.exports = async (req, res) => {
     return res.status(auth.status).json({ error: auth.error });
   }
 
+  const restaurantId = auth.user.restaurant_id;
+  if (!restaurantId) {
+    return res.status(200).json({ status: 'none', planName: 'No Plan', planPrice: 'N/A' });
+  }
+
   try {
-    const { customerId } = req.query;
+    // Look up subscription from DB by restaurant_id (no customerId needed from client)
+    const result = await getSubscriptions(restaurantId);
 
-    if (!customerId) {
-      return res.status(400).json({ error: 'Customer ID is required' });
+    if (!result.success || !result.data.records || result.data.records.length === 0) {
+      return res.status(200).json({ status: 'none', planName: 'No Plan', planPrice: 'N/A' });
     }
 
-    // Fetch all subscriptions for this customer
-    const subscriptions = await stripe.subscriptions.list({
-      customer: customerId,
-      status: 'all',
-      limit: 1, // Get the most recent subscription
-    });
+    const sub = result.data.records[0].fields;
+    const customerId = sub['Customer ID'];
+    const subscriptionId = sub['Subscription ID'];
 
-    // If no subscriptions found
-    if (!subscriptions.data || subscriptions.data.length === 0) {
-      return res.status(200).json({
-        status: 'none',
-        planName: 'No Plan',
-        planPrice: 'N/A',
-      });
+    // If we have a real Stripe subscription, fetch live status from Stripe
+    if (subscriptionId && subscriptionId !== 'onboarding-plan' && customerId) {
+      try {
+        const stripeSub = await stripe.subscriptions.retrieve(subscriptionId);
+        const price = stripeSub.items.data[0].price;
+
+        const planMapping = {
+          [process.env.STRIPE_STARTER_PRICE_ID]: 'Starter',
+          [process.env.STRIPE_GROWTH_PRICE_ID]: 'Growth',
+          [process.env.STRIPE_SCALE_PRICE_ID]: 'Scale',
+        };
+
+        const response = {
+          status: stripeSub.status,
+          planName: planMapping[price.id] || sub['Plan Name'] || 'Unknown Plan',
+          planPrice: `€${(price.unit_amount / 100).toFixed(2)}/${price.recurring.interval}`,
+          currentPeriodEnd: new Date(stripeSub.current_period_end * 1000).toLocaleDateString(),
+          cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
+        };
+
+        if (stripeSub.status === 'trialing' && stripeSub.trial_end) {
+          response.trialEnd = new Date(stripeSub.trial_end * 1000).toLocaleDateString();
+        }
+
+        return res.status(200).json(response);
+      } catch (stripeErr) {
+        logger.error('Stripe lookup failed, falling back to DB data:', stripeErr.message);
+      }
     }
 
-    // Get the most recent subscription
-    const subscription = subscriptions.data[0];
+    // Fallback: return DB data directly
+    const planPriceMap = { Starter: '€29', Growth: '€99', Scale: '€199' };
+    const planName = sub['Plan Name'] || 'Starter';
 
-    // Get the price details
-    const priceId = subscription.items.data[0].price.id;
-    const price = subscription.items.data[0].price;
-
-    // Map price ID to plan name
-    const planMapping = {
-      [process.env.STRIPE_STARTER_PRICE_ID]: 'Starter',
-      [process.env.STRIPE_GROWTH_PRICE_ID]: 'Growth',
-      [process.env.STRIPE_SCALE_PRICE_ID]: 'Scale',
-    };
-
-    const planName = planMapping[priceId] || 'Unknown Plan';
-    const planPrice = `€${(price.unit_amount / 100).toFixed(2)}/${price.recurring.interval}`;
-
-    // Build response
-    const response = {
-      status: subscription.status, // active, trialing, canceled, past_due, etc.
+    return res.status(200).json({
+      status: sub['Status'] || 'active',
       planName,
-      planPrice,
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000).toLocaleDateString(),
-      cancelAtPeriodEnd: subscription.cancel_at_period_end,
-    };
-
-    // Add trial end date if in trial
-    if (subscription.status === 'trialing' && subscription.trial_end) {
-      response.trialEnd = new Date(subscription.trial_end * 1000).toLocaleDateString();
-    }
-
-    return res.status(200).json(response);
+      planPrice: `${planPriceMap[planName] || '€29'}/month`,
+      currentPeriodEnd: sub['Current Period End'] || null,
+      cancelAtPeriodEnd: false,
+    });
   } catch (error) {
     logger.error('Error fetching subscription:', error);
     return res.status(500).json({
