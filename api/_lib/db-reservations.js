@@ -198,18 +198,19 @@ const updateReservation = async (restaurantId, recordId, fields) => {
 // ============ RESERVATION HELPERS ============
 
 const findReservation = async (restaurantId, { reservation_id, customer_phone, customer_name }) => {
-  let query = supabase.from('reservations').select('*')
-    .eq('restaurant_id', restaurantId);
-
-  if (reservation_id) {
-    query = query.eq('reservation_id', reservation_id);
-  } else if (customer_phone) {
-    query = query.eq('customer_phone', customer_phone);
-  } else if (customer_name) {
-    query = query.ilike('customer_name', `%${customer_name}%`);
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() => {
+      let query = supabase.from('reservations').select('*')
+        .eq('restaurant_id', restaurantId);
+      if (reservation_id) query = query.eq('reservation_id', reservation_id);
+      else if (customer_phone) query = query.eq('customer_phone', customer_phone);
+      else if (customer_name) query = query.ilike('customer_name', `%${customer_name}%`);
+      return query.limit(1).single();
+    }));
+  } catch (err) {
+    return { success: false, error: true, message: 'Reservation not found' };
   }
-
-  const { data, error } = await query.limit(1).single();
 
   if (error || !data) {
     return {
