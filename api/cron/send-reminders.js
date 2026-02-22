@@ -10,6 +10,7 @@
 const twilio = require('twilio');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
+const { captureMessage } = require('../_lib/sentry');
 const logger = createSecureLogger('CronReminders');
 
 /**
@@ -248,6 +249,15 @@ module.exports = async (req, res) => {
           logger.error(` Error processing high-risk reservation ${reservation.reservation_id}:`, error);
         }
       }
+    }
+
+    if (results.failed > 0) {
+      const failedDetails = results.details.filter(d => d.status === 'failed');
+      captureMessage(
+        `CronReminders: ${results.failed} reminder(s) failed to send`,
+        'warning',
+        { errors: failedDetails, date: today }
+      );
     }
 
     const summary = {

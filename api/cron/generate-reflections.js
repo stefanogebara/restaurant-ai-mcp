@@ -16,6 +16,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { createMemory } = require('../services/guestMemory');
+const { captureMessage } = require('../_lib/sentry');
 
 const logger = createSecureLogger('CronReflections');
 
@@ -72,6 +73,7 @@ module.exports = async (req, res) => {
     logger.info(`Found ${eligibleGuests.length} guests eligible for reflection`);
 
     let totalReflections = 0;
+    const errors = [];
 
     // Process each eligible guest (limit to 20 per run to manage API costs)
     for (const guest of eligibleGuests.slice(0, 20)) {
@@ -83,7 +85,16 @@ module.exports = async (req, res) => {
         totalReflections += count;
       } catch (guestErr) {
         logger.error('Error generating reflections for guest:', guestErr.message);
+        errors.push({ restaurantId: guest.restaurantId, guestPhone: guest.guestPhone, error: guestErr.message });
       }
+    }
+
+    if (errors.length > 0) {
+      captureMessage(
+        `CronReflections: ${errors.length} guest(s) failed reflection generation`,
+        'warning',
+        { errors }
+      );
     }
 
     logger.info('Reflection generation complete', {

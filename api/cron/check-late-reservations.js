@@ -9,6 +9,7 @@
 
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
+const { captureMessage } = require('../_lib/sentry');
 
 const logger = createSecureLogger('CronLateReservations');
 const LATE_THRESHOLD_MINUTES = 20;
@@ -128,6 +129,14 @@ module.exports = async (req, res) => {
           error: error.message
         });
       }
+    }
+
+    if (errors.length > 0) {
+      captureMessage(
+        `CronLateReservations: ${errors.length} reservation(s) failed to update`,
+        'warning',
+        { errors, checked_at: now.toISOString() }
+      );
     }
 
     const summary = {

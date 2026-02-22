@@ -11,6 +11,7 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { regeneratePersona } = require('../services/personaGenerator');
+const { captureMessage } = require('../_lib/sentry');
 
 const logger = createSecureLogger('CronRefreshProfiles');
 
@@ -131,6 +132,14 @@ module.exports = async (req, res) => {
         });
         errors.push({ restaurant_config_id });
       }
+    }
+
+    if (errors.length > 0) {
+      captureMessage(
+        `CronRefreshProfiles: ${errors.length} restaurant(s) failed to regenerate`,
+        'warning',
+        { errors, checked_at: new Date().toISOString() }
+      );
     }
 
     const summary = {

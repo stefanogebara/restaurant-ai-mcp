@@ -10,6 +10,7 @@
 
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
+const { captureMessage } = require('../_lib/sentry');
 
 const logger = createSecureLogger('CronChurnScores');
 
@@ -52,6 +53,7 @@ module.exports = async (req, res) => {
     const today = new Date();
     let updated = 0;
     let atRiskCount = 0;
+    const errors = [];
 
     for (const customer of customers) {
       if (!customer.last_visit_date) continue;
@@ -104,7 +106,16 @@ module.exports = async (req, res) => {
         updated++;
       } else {
         logger.error(`Failed to update ${customer.customer_id}:`, updateError.message);
+        errors.push({ customer_id: customer.customer_id, error: updateError.message });
       }
+    }
+
+    if (errors.length > 0) {
+      captureMessage(
+        `CronChurnScores: ${errors.length} customer(s) failed to update`,
+        'warning',
+        { errors, updated_at: today.toISOString() }
+      );
     }
 
     logger.info(`Updated churn scores for ${updated} customers, ${atRiskCount} newly at risk`);
