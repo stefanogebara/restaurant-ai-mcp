@@ -28,6 +28,7 @@ jest.mock('../_lib/db-clients', () => ({
     return { success: true, data };
   }),
   logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn() },
+  withRetry: jest.fn((fn) => fn()),
 }));
 
 jest.mock('../_lib/timezone', () => ({

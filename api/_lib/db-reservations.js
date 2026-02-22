@@ -5,7 +5,7 @@
  * Multi-tenant: every query is scoped by restaurant_id.
  */
 
-const { supabase, handleSupabaseResponse, logger } = require('./db-clients');
+const { supabase, handleSupabaseResponse, logger, withRetry } = require('./db-clients');
 const { getLocalDate, getLocalTime } = require('./timezone');
 
 // ============ RESERVATIONS ============
@@ -90,25 +90,33 @@ const getReservationById = async (restaurantId, reservationId) => {
   };
 };
 
-const createReservation = async (restaurantId, fields) => {
-  const { data, error } = await supabase
-    .from('reservations')
-    .insert({
-      restaurant_id: restaurantId,
-      reservation_id: fields['Reservation ID'],
-      customer_name: fields['Customer Name'],
-      customer_phone: fields['Customer Phone'],
-      customer_email: fields['Customer Email'],
-      party_size: fields['Party Size'],
-      date: fields['Date'],
-      time: fields['Time'],
-      special_requests: fields['Special Requests'],
-      status: fields['Status'] || 'pending',
-      table_ids: fields['Table IDs'] || [],
-      notes: fields['Notes']
-    })
-    .select()
-    .single();
+const createReservation = async (restaurantId, fields, retryOpts) => {
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('reservations')
+        .insert({
+          restaurant_id: restaurantId,
+          reservation_id: fields['Reservation ID'],
+          customer_name: fields['Customer Name'],
+          customer_phone: fields['Customer Phone'],
+          customer_email: fields['Customer Email'],
+          party_size: fields['Party Size'],
+          date: fields['Date'],
+          time: fields['Time'],
+          special_requests: fields['Special Requests'],
+          status: fields['Status'] || 'pending',
+          table_ids: fields['Table IDs'] || [],
+          notes: fields['Notes']
+        })
+        .select()
+        .single(),
+      retryOpts
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'CREATE reservation');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'CREATE reservation');
 

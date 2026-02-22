@@ -24,6 +24,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { generateSecureReservationId, generateSecureServiceId } = require('./secure-id');
 const { getLocalDate, getLocalTime } = require('./timezone');
 const { createSecureLogger } = require('./secure-logger');
+const { withRetry: _withRetry } = require('./db-clients');
 const logger = createSecureLogger('Supabase');
 
 // ============ SUPABASE CLIENTS ============
@@ -93,40 +94,9 @@ const handleSupabaseResponse = (data, error, operation = 'query') => {
 };
 
 // ============ RETRY UTILITY ============
-
-const TRANSIENT_PATTERNS = [
-  'fetch failed', 'network error', 'timeout', 'econnreset',
-  'connection refused', 'service unavailable',
-];
-
-const TRANSIENT_STATUS_CODES = new Set([502, 503, 504]);
-
-function isTransient(error) {
-  const msg = (error?.message || '').toLowerCase();
-  const status = error?.status ?? error?.statusCode;
-  return TRANSIENT_PATTERNS.some(p => msg.includes(p))
-    || (status != null && TRANSIENT_STATUS_CODES.has(Number(status)));
-}
-
-/**
- * Execute an async fn with exponential backoff retry for transient errors.
- * @param {() => Promise<any>} fn
- * @param {{ maxAttempts?: number, baseDelayMs?: number }} opts
- * @returns {Promise<any>}
- */
-function withRetry(fn, { maxAttempts = 3, baseDelayMs = 500 } = {}) {
-  function attempt(n) {
-    return Promise.resolve()
-      .then(() => fn())
-      .catch(err => {
-        if (!isTransient(err) || n >= maxAttempts - 1) return Promise.reject(err);
-        const delay = baseDelayMs * Math.pow(2, n) + Math.random() * 100;
-        logger.warn(`[withRetry] Transient error (attempt ${n + 1}/${maxAttempts}), retrying in ${Math.round(delay)}ms:`, err.message);
-        return new Promise(resolve => setTimeout(resolve, delay)).then(() => attempt(n + 1));
-      });
-  }
-  return attempt(0);
-}
+// withRetry is defined in db-clients.js (canonical location) and re-exported
+// here for backward compatibility with any code that imports from supabase.js.
+const withRetry = _withRetry;
 
 // ============ RESERVATIONS ============
 
