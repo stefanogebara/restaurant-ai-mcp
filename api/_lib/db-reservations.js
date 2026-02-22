@@ -57,12 +57,19 @@ const getReservations = async (restaurantId, filter = {}) => {
 };
 
 const getReservationById = async (restaurantId, reservationId) => {
-  const { data, error } = await supabase
-    .from('reservations')
-    .select('*')
-    .eq('restaurant_id', restaurantId)
-    .eq('reservation_id', reservationId)
-    .single();
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('reservations')
+        .select('*')
+        .eq('restaurant_id', restaurantId)
+        .eq('reservation_id', reservationId)
+        .single()
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'GET reservation by ID');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'GET reservation by ID');
   if (!data) return { success: false, error: true, message: 'Reservation not found' };
