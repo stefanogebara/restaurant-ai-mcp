@@ -209,7 +209,7 @@ export default function ManualRevenueModal({
         {/* Header */}
         <div className="sticky top-0 bg-white px-6 py-4 border-b border-border-gray flex items-center justify-between rounded-t-xl">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-[#16a34a]/10 rounded-lg">
+            <div className="p-2 bg-green-600/10 rounded-lg">
               <ThiingsIcon name="dollar" size="sm" />
             </div>
             <h2 className="text-xl font-bold text-deep-charcoal">{t.title}</h2>
@@ -413,7 +413,7 @@ export default function ManualRevenueModal({
 
           {/* Error Message */}
           {error && (
-            <div className="p-3 bg-[#dc2626]/10 border border-[#dc2626]/20 rounded-lg text-[#dc2626] text-sm">
+            <div className="p-3 bg-red-600/10 border border-red-600/20 rounded-lg text-red-600 text-sm">
               {error}
             </div>
           )}
@@ -431,7 +431,7 @@ export default function ManualRevenueModal({
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 px-4 py-3 bg-[#16a34a] hover:bg-[#15803d] text-white font-medium rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>

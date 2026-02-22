@@ -297,9 +297,9 @@ export default function CallTrackingDashboard() {
 
   const getOutcomeColor = (outcome?: string) => {
     switch (outcome) {
-      case 'reservation_created': return 'bg-[#22c55e]/10 text-[#16a34a]';
-      case 'information_only': return 'bg-[#3b82f6]/10 text-[#2563eb]';
-      case 'error': return 'bg-[#dc2626]/10 text-[#dc2626]';
+      case 'reservation_created': return 'bg-green-500/10 text-green-600';
+      case 'information_only': return 'bg-blue-500/10 text-blue-600';
+      case 'error': return 'bg-red-600/10 text-red-600';
       case 'abandoned': return 'bg-warm-stone/10 text-stone-gray';
       default: return 'bg-warm-stone/10 text-stone-gray';
     }
@@ -319,21 +319,21 @@ export default function CallTrackingDashboard() {
     switch (status) {
       case 'active':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#22c55e]/10 text-[#16a34a] text-xs font-semibold rounded-full">
-            <span className="w-1.5 h-1.5 bg-[#22c55e] rounded-full animate-pulse" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-500/10 text-green-600 text-xs font-semibold rounded-full">
+            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
             Active
           </span>
         );
       case 'pending':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#d97706]/10 text-[#d97706] text-xs font-semibold rounded-full">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-600/10 text-amber-600 text-xs font-semibold rounded-full">
             <Spinner size="sm" />
             Pending
           </span>
         );
       case 'error':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#dc2626]/10 text-[#dc2626] text-xs font-semibold rounded-full">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-600/10 text-red-600 text-xs font-semibold rounded-full">
             <ThiingsIcon name="alert-circle" size="xs" />
             Error
           </span>
@@ -368,11 +368,11 @@ export default function CallTrackingDashboard() {
           <div className="flex items-center gap-2.5">
             <button
               onClick={fetchData}
-              className="px-4 py-2 bg-white border border-[#D6D3D1] text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors"
+              className="px-4 py-2 bg-white border border-stone-300 text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors"
             >
               Refresh
             </button>
-            <button className="px-4 py-2 bg-white border border-[#D6D3D1] text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors">
+            <button className="px-4 py-2 bg-white border border-stone-300 text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors">
               Export
             </button>
           </div>
@@ -452,9 +452,9 @@ export default function CallTrackingDashboard() {
 
           {/* Error message display */}
           {phoneStatus?.status === 'error' && phoneStatus.error && (
-            <div className="mt-4 bg-[#dc2626]/10 border border-[#dc2626]/20 rounded-lg p-3 flex items-start gap-2">
+            <div className="mt-4 bg-red-600/10 border border-red-600/20 rounded-lg p-3 flex items-start gap-2">
               <ThiingsIcon name="alert-circle" size="sm" className="shrink-0 mt-0.5" />
-              <p className="text-sm text-[#dc2626]">{phoneStatus.error}</p>
+              <p className="text-sm text-red-600">{phoneStatus.error}</p>
             </div>
           )}
 
@@ -507,7 +507,7 @@ export default function CallTrackingDashboard() {
               <button
                 onClick={handleDisconnect}
                 disabled={disconnectLoading}
-                className="px-4 py-2 bg-[#dc2626]/10 hover:bg-[#dc2626]/20 text-[#dc2626] rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-red-600/10 hover:bg-red-600/20 text-red-600 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {disconnectLoading ? (
                   <>
@@ -576,7 +576,7 @@ export default function CallTrackingDashboard() {
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium text-deep-charcoal">{diagnoseData.tool_ids_count} configured</p>
                       {diagnoseData.tool_ids_count === 0 && (
-                        <span className="px-1.5 py-0.5 bg-[#dc2626]/10 text-[#dc2626] text-xs rounded font-medium">
+                        <span className="px-1.5 py-0.5 bg-red-600/10 text-red-600 text-xs rounded font-medium">
                           Missing
                         </span>
                       )}
@@ -635,7 +635,7 @@ export default function CallTrackingDashboard() {
 
                 {/* Fix Tools Button - shown when tool_ids_count is 0 */}
                 {diagnoseData.tool_ids_count === 0 && (
-                  <div className="bg-[#d97706]/10 border border-[#d97706]/20 rounded-lg p-4">
+                  <div className="bg-amber-600/10 border border-amber-600/20 rounded-lg p-4">
                     <div className="flex items-start gap-3">
                       <ThiingsIcon name="alert-circle" size="sm" className="shrink-0 mt-0.5" />
                       <div className="flex-1">
@@ -646,7 +646,7 @@ export default function CallTrackingDashboard() {
                         <button
                           onClick={handleFixTools}
                           disabled={fixToolsLoading}
-                          className="mt-3 px-4 py-2 bg-[#d97706] hover:bg-[#b45309] text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                          className="mt-3 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
                         >
                           {fixToolsLoading ? (
                             <>
@@ -741,7 +741,7 @@ export default function CallTrackingDashboard() {
             </div>
             <div className="bg-white rounded-2xl border border-border-gray p-6">
               <div className="text-xs font-medium text-muted-stone mb-2">Success Rate</div>
-              <div className="text-[32px] font-bold tracking-tight leading-none text-[#16a34a]">{stats.overview.success_rate}%</div>
+              <div className="text-[32px] font-bold tracking-tight leading-none text-green-600">{stats.overview.success_rate}%</div>
               <div className="text-xs text-warm-stone mt-1">{stats.overview.successful_bookings} of {stats.overview.total_calls} calls resolved</div>
             </div>
             <div className="bg-white rounded-2xl border border-border-gray p-6">
@@ -796,19 +796,19 @@ export default function CallTrackingDashboard() {
               {conversations.map((conv) => {
                 const getCallIconStyle = (outcome?: string) => {
                   switch (outcome) {
-                    case 'reservation_created': return 'bg-[rgba(22,163,74,0.08)] text-[#16a34a]';
-                    case 'information_only': return 'bg-[rgba(59,130,246,0.08)] text-[#3b82f6]';
-                    case 'error': return 'bg-[rgba(220,38,38,0.08)] text-[#dc2626]';
-                    case 'abandoned': return 'bg-[rgba(217,119,6,0.08)] text-[#d97706]';
+                    case 'reservation_created': return 'bg-[rgba(22,163,74,0.08)] text-green-600';
+                    case 'information_only': return 'bg-[rgba(59,130,246,0.08)] text-blue-500';
+                    case 'error': return 'bg-[rgba(220,38,38,0.08)] text-red-600';
+                    case 'abandoned': return 'bg-[rgba(217,119,6,0.08)] text-amber-600';
                     default: return 'bg-soft-gray text-stone-gray';
                   }
                 };
                 const getOutcomePill = (outcome?: string) => {
                   switch (outcome) {
-                    case 'reservation_created': return 'bg-[rgba(22,163,74,0.08)] text-[#16a34a]';
-                    case 'information_only': return 'bg-[rgba(59,130,246,0.08)] text-[#3b82f6]';
-                    case 'error': return 'bg-[rgba(220,38,38,0.08)] text-[#dc2626]';
-                    case 'abandoned': return 'bg-[rgba(217,119,6,0.08)] text-[#d97706]';
+                    case 'reservation_created': return 'bg-[rgba(22,163,74,0.08)] text-green-600';
+                    case 'information_only': return 'bg-[rgba(59,130,246,0.08)] text-blue-500';
+                    case 'error': return 'bg-[rgba(220,38,38,0.08)] text-red-600';
+                    case 'abandoned': return 'bg-[rgba(217,119,6,0.08)] text-amber-600';
                     default: return 'bg-soft-gray text-stone-gray';
                   }
                 };
@@ -873,7 +873,7 @@ export default function CallTrackingDashboard() {
               <div className="p-6 space-y-6">
                 {/* Summary */}
                 {selectedConversation.summary && (
-                  <div className="bg-[#3b82f6]/10 border border-[#3b82f6]/20 rounded-lg p-4">
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
                     <div className="flex items-start gap-3">
                       <ThiingsIcon name="chat" size="sm" className="mt-0.5" />
                       <div>
@@ -941,8 +941,8 @@ export default function CallTrackingDashboard() {
                           key={idx}
                           className={`p-3 rounded-lg ${
                             message.role === 'user'
-                              ? 'bg-[#3b82f6]/10 ml-8'
-                              : 'bg-[#22c55e]/10 mr-8'
+                              ? 'bg-blue-500/10 ml-8'
+                              : 'bg-green-500/10 mr-8'
                           }`}
                         >
                           <p className="text-xs text-stone-gray mb-1">
@@ -958,10 +958,10 @@ export default function CallTrackingDashboard() {
                 {/* Errors */}
                 {selectedConversation.errors_encountered && selectedConversation.errors_encountered.length > 0 && (
                   <div>
-                    <h3 className="font-semibold text-[#dc2626] mb-3">Errors Encountered</h3>
+                    <h3 className="font-semibold text-red-600 mb-3">Errors Encountered</h3>
                     <div className="space-y-2">
                       {selectedConversation.errors_encountered.map((error: any, idx: number) => (
-                        <div key={idx} className="bg-[#dc2626]/10 border border-[#dc2626]/20 rounded-lg p-3">
+                        <div key={idx} className="bg-red-600/10 border border-red-600/20 rounded-lg p-3">
                           <p className="text-sm font-medium text-deep-charcoal">{error.error_type}</p>
                           <p className="text-xs text-stone-gray mt-1">{error.message}</p>
                         </div>

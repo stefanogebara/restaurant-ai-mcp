@@ -475,7 +475,7 @@ export default function RestaurantProfileQuestionnaire({
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="text-xl font-semibold text-deep-charcoal">{config.name}</h3>
                     {isRecommended && (
-                      <span className="px-2 py-1 text-xs font-semibold bg-[#22c55e]/15 text-[#22c55e] rounded-full">
+                      <span className="px-2 py-1 text-xs font-semibold bg-green-500/15 text-green-500 rounded-full">
                         Recommended
                       </span>
                     )}

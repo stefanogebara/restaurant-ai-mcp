@@ -113,8 +113,8 @@ export default function MLROIWidget() {
           {/* ROI Metric - Hero */}
           <div className={`p-4 rounded-xl border-2 ${
             meetsTarget
-              ? 'bg-[#16a34a]/10 border-[#16a34a]/30'
-              : 'bg-[#d97706]/10 border-[#d97706]/30'
+              ? 'bg-green-600/10 border-green-600/30'
+              : 'bg-amber-600/10 border-amber-600/30'
           }`}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -134,13 +134,13 @@ Example:
                 />
               </div>
               {meetsTarget && (
-                <span className="px-2 py-1 bg-[#16a34a]/20 text-[#16a34a] text-xs rounded-full font-semibold">
+                <span className="px-2 py-1 bg-green-600/20 text-green-600 text-xs rounded-full font-semibold">
                   Target Met!
                 </span>
               )}
             </div>
             <div className="flex items-baseline gap-2">
-              <div className={`text-4xl font-bold ${meetsTarget ? 'text-[#16a34a]' : 'text-[#d97706]'}`}>
+              <div className={`text-4xl font-bold ${meetsTarget ? 'text-green-600' : 'text-amber-600'}`}>
                 {roiValue}%
               </div>
               <div className="text-sm text-stone-gray">
@@ -185,9 +185,9 @@ Example:
           </div>
 
           {/* Total Interventions */}
-          <div className="flex items-center justify-between p-3 bg-[#7c3aed]/10 rounded-xl border border-[#7c3aed]/20">
+          <div className="flex items-center justify-between p-3 bg-violet-600/10 rounded-xl border border-violet-600/20">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#7c3aed]/20 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-violet-600/20 rounded-xl flex items-center justify-center">
                 <ThiingsIcon name="zap" size="sm" />
               </div>
               <div>
@@ -221,7 +221,7 @@ Each intervention has a cost and potential value saved."
             <div className="text-xs font-semibold text-stone-gray mb-2">Outcomes</div>
             <div className="grid grid-cols-3 gap-2">
               <div className="text-center">
-                <div className="text-lg font-bold text-[#16a34a]">{data.outcomes.showed_up}</div>
+                <div className="text-lg font-bold text-green-600">{data.outcomes.showed_up}</div>
                 <div className="text-xs text-stone-gray">Showed</div>
               </div>
               <div className="text-center">
@@ -229,7 +229,7 @@ Each intervention has a cost and potential value saved."
                 <div className="text-xs text-stone-gray">No-Show</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-[#d97706]">{data.outcomes.cancelled}</div>
+                <div className="text-lg font-bold text-amber-600">{data.outcomes.cancelled}</div>
                 <div className="text-xs text-stone-gray">Cancelled</div>
               </div>
             </div>

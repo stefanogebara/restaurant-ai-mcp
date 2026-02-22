@@ -17,7 +17,7 @@ export default function AnalyticsStats({ overview }: AnalyticsStatsProps) {
 
   const stats = [
     { value: overview.total_reservations, label: 'Total Reservations', change: null },
-    { value: `${noShowRate}%`, label: 'No-Show Rate', color: parseFloat(noShowRate) > 5 ? 'text-[#dc2626]' : undefined },
+    { value: `${noShowRate}%`, label: 'No-Show Rate', color: parseFloat(noShowRate) > 5 ? 'text-red-600' : undefined },
     { value: overview.avg_party_size.toFixed(1), label: 'Avg Party Size', change: null },
     { value: `${overview.current_occupancy_percentage}%`, label: 'Occupancy Rate', color: 'text-burgundy' },
   ];

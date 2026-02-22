@@ -103,8 +103,8 @@ export default function BookingConfirmation() {
 
           {/* Status Badge */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[rgba(22,163,74,0.06)] rounded-full mb-5">
-            <div className="w-2 h-2 rounded-full bg-[#16a34a]" />
-            <span className="text-[13px] font-semibold text-[#16a34a]">Confirmed</span>
+            <div className="w-2 h-2 rounded-full bg-green-600" />
+            <span className="text-[13px] font-semibold text-green-600">Confirmed</span>
           </div>
 
           <h1 className="font-serif text-4xl font-medium text-deep-charcoal tracking-tight mb-2">Reservation Confirmed</h1>
@@ -116,7 +116,7 @@ export default function BookingConfirmation() {
           <div className="bg-white border border-border-gray rounded-2xl p-8 text-left mb-6">
             {/* Restaurant Row */}
             <div className="flex items-center gap-4 pb-5 mb-5 border-b border-soft-gray">
-              <div className="w-14 h-14 rounded-[14px] bg-gradient-to-br from-charcoal-dark to-[#44403C] flex-shrink-0" />
+              <div className="w-14 h-14 rounded-[14px] bg-gradient-to-br from-charcoal-dark to-stone-700 flex-shrink-0" />
               <div>
                 <h3 className="text-lg font-semibold text-deep-charcoal tracking-tight">{reservation.restaurant_name}</h3>
                 <p className="text-[13px] text-warm-stone font-light">Reservation details</p>
@@ -162,7 +162,7 @@ export default function BookingConfirmation() {
           <div className="flex gap-3">
             <button
               onClick={() => navigate('/customer')}
-              className="flex-1 py-3.5 border border-[#D6D3D1] bg-white text-stone-gray font-medium rounded-full text-sm hover:border-muted-stone transition-colors"
+              className="flex-1 py-3.5 border border-stone-300 bg-white text-stone-gray font-medium rounded-full text-sm hover:border-muted-stone transition-colors"
             >
               Manage Reservation
             </button>

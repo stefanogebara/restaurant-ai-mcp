@@ -171,7 +171,7 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
               </div>
               <button
                 onClick={() => removeMember(index)}
-                className="p-2 hover:bg-[#dc2626]/10 text-[#dc2626] rounded-lg transition-colors"
+                className="p-2 hover:bg-red-600/10 text-red-600 rounded-lg transition-colors"
                 title="Remove member"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

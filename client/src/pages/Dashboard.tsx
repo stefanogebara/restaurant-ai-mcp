@@ -174,7 +174,7 @@ export default function Dashboard() {
               </span>
               <button
                 onClick={() => window.location.href = '/host-dashboard/calls'}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-[#D6D3D1] text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-stone-300 text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors"
               >
                 {t('common.export')}
               </button>
@@ -192,21 +192,21 @@ export default function Dashboard() {
             <div className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 rounded-xl border ${
               trialDaysLeft <= 3
                 ? 'bg-red-50 border-red-200'
-                : 'bg-[#FFF7ED] border-[#FDBA74]'
+                : 'bg-orange-50 border-orange-300'
             }`}>
               <div className="flex items-center gap-3">
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                  trialDaysLeft <= 3 ? 'bg-red-100' : 'bg-[#FDBA74]/30'
+                  trialDaysLeft <= 3 ? 'bg-red-100' : 'bg-orange-300/30'
                 }`}>
-                  <svg className={`w-4 h-4 ${trialDaysLeft <= 3 ? 'text-red-600' : 'text-[#EA580C]'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`w-4 h-4 ${trialDaysLeft <= 3 ? 'text-red-600' : 'text-orange-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div>
-                  <p className={`text-sm font-semibold ${trialDaysLeft <= 3 ? 'text-red-900' : 'text-[#9A3412]'}`}>
+                  <p className={`text-sm font-semibold ${trialDaysLeft <= 3 ? 'text-red-900' : 'text-orange-800'}`}>
                     {t('dashboard.freeTrial')} {trialDaysLeft === 0 ? t('dashboard.trialExpiresToday') : `\u2014 ${trialDaysLeft} day${trialDaysLeft !== 1 ? 's' : ''} remaining`}
                   </p>
-                  <p className={`text-xs ${trialDaysLeft <= 3 ? 'text-red-700' : 'text-[#C2410C]'}`}>
+                  <p className={`text-xs ${trialDaysLeft <= 3 ? 'text-red-700' : 'text-orange-700'}`}>
                     {t('dashboard.trialUpgradeHint')}
                   </p>
                 </div>

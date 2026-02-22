@@ -98,7 +98,7 @@ export default function TableCombinationSelector({
                     {formatTableNumbers(combination.tables)}
                   </div>
                   {index === 0 && (
-                    <span className="px-2 py-0.5 bg-[#d97706]/20 text-[#d97706] text-xs font-semibold rounded-full">
+                    <span className="px-2 py-0.5 bg-amber-600/20 text-amber-600 text-xs font-semibold rounded-full">
                       Best Match
                     </span>
                   )}
@@ -138,9 +138,9 @@ export default function TableCombinationSelector({
                   <div
                     className={`h-full transition-all ${
                       combination.score >= 140
-                        ? 'bg-[#16a34a]'
+                        ? 'bg-green-600'
                         : combination.score >= 100
-                        ? 'bg-[#d97706]'
+                        ? 'bg-amber-600'
                         : 'bg-burgundy'
                     }`}
                     style={{ width: `${Math.min((combination.score / 150) * 100, 100)}%` }}

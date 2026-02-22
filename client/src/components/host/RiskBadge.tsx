@@ -24,33 +24,33 @@ export default function RiskBadge({ riskLevel, riskScore, size = 'md', showToolt
   const configs = {
     'low': {
       iconName: 'green-check' as IconName,
-      color: 'text-[#4ade80]',
-      bg: 'bg-[#22c55e]/20',
-      border: 'border-[#22c55e]/30',
+      color: 'text-green-400',
+      bg: 'bg-green-500/20',
+      border: 'border-green-500/30',
       label: 'Low Risk',
       recommendation: 'Standard confirmation'
     },
     'medium': {
       iconName: 'alert-triangle' as IconName,
-      color: 'text-[#facc15]',
-      bg: 'bg-[#eab308]/20',
-      border: 'border-[#eab308]/30',
+      color: 'text-yellow-400',
+      bg: 'bg-yellow-500/20',
+      border: 'border-yellow-500/30',
       label: 'Medium Risk',
       recommendation: 'Send reminder notification'
     },
     'high': {
       iconName: 'alert-circle' as IconName,
-      color: 'text-[#fb923c]',
-      bg: 'bg-[#f97316]/20',
-      border: 'border-[#f97316]/30',
+      color: 'text-orange-400',
+      bg: 'bg-orange-500/20',
+      border: 'border-orange-500/30',
       label: 'High Risk',
       recommendation: 'Call to confirm'
     },
     'very-high': {
       iconName: 'red-x' as IconName,
-      color: 'text-[#f87171]',
-      bg: 'bg-[#ef4444]/20',
-      border: 'border-[#ef4444]/30',
+      color: 'text-red-400',
+      bg: 'bg-red-500/20',
+      border: 'border-red-500/30',
       label: 'Very High Risk',
       recommendation: 'Request deposit or call'
     }

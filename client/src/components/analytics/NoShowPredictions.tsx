@@ -51,18 +51,18 @@ export default function NoShowPredictions() {
 
   const getRiskColor = (level: string) => {
     switch (level) {
-      case 'high': return 'text-[#dc2626] bg-[#dc2626]/10 border-[#dc2626]/20';
-      case 'medium': return 'text-[#d97706] bg-[#d97706]/10 border-[#d97706]/20';
-      case 'low': return 'text-[#16a34a] bg-[#22c55e]/10 border-[#22c55e]/20';
+      case 'high': return 'text-red-600 bg-red-600/10 border-red-600/20';
+      case 'medium': return 'text-amber-600 bg-amber-600/10 border-amber-600/20';
+      case 'low': return 'text-green-600 bg-green-500/10 border-green-500/20';
       default: return 'text-stone-gray bg-warm-white border-border-gray';
     }
   };
 
   const getRiskBadgeColor = (level: string) => {
     switch (level) {
-      case 'high': return 'bg-[#dc2626] text-white';
-      case 'medium': return 'bg-[#d97706] text-white';
-      case 'low': return 'bg-[#16a34a] text-white';
+      case 'high': return 'bg-red-600 text-white';
+      case 'medium': return 'bg-amber-600 text-white';
+      case 'low': return 'bg-green-600 text-white';
       default: return 'bg-stone-gray text-white';
     }
   };
@@ -96,11 +96,11 @@ export default function NoShowPredictions() {
             <div className="text-xs text-warm-stone mt-1">Upcoming (7 days)</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-[#dc2626]">{summary.high_risk}</div>
+            <div className="text-3xl font-bold text-red-600">{summary.high_risk}</div>
             <div className="text-xs text-warm-stone mt-1">High Risk</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-[#d97706]">{summary.medium_risk}</div>
+            <div className="text-3xl font-bold text-amber-600">{summary.medium_risk}</div>
             <div className="text-xs text-warm-stone mt-1">Medium Risk</div>
           </div>
           <div className="text-center">

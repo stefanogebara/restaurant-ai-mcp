@@ -215,7 +215,7 @@ export default function Login() {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 bg-[#dc2626]/10 border border-[#dc2626]/20 rounded-xl text-[#dc2626] text-sm"
+                className="mb-6 p-4 bg-red-600/10 border border-red-600/20 rounded-xl text-red-600 text-sm"
               >
                 {error}
               </motion.div>
@@ -226,7 +226,7 @@ export default function Login() {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 bg-[#22c55e]/10 border border-[#22c55e]/20 rounded-xl text-[#15803d] text-sm"
+                className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-green-700 text-sm"
               >
                 {successMessage}
               </motion.div>
@@ -238,7 +238,7 @@ export default function Login() {
               disabled={isSigningIn}
               className={`
                 w-full flex items-center justify-center gap-3 px-6 py-4
-                bg-white border border-border-gray hover:border-[#D6D3D1] hover:bg-warm-white
+                bg-white border border-border-gray hover:border-stone-300 hover:bg-warm-white
                 text-deep-charcoal font-medium text-[15px] rounded-xl
                 transition-all duration-300
                 ${isSigningIn ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-md'}
@@ -289,7 +289,7 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@restaurant.com"
                   required
-                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-[#D6D3D1] focus:outline-none focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)] focus:border-burgundy transition-all"
+                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)] focus:border-burgundy transition-all"
                 />
               </div>
               <div>
@@ -304,7 +304,7 @@ export default function Login() {
                   placeholder={mode === 'signup' ? t('login.passwordMinChars') : t('login.yourPassword')}
                   required
                   minLength={6}
-                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-[#D6D3D1] focus:outline-none focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)] focus:border-burgundy transition-all"
+                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)] focus:border-burgundy transition-all"
                 />
               </div>
 

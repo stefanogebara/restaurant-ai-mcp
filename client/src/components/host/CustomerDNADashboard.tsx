@@ -155,9 +155,9 @@ export default function CustomerDNADashboard() {
     switch (style) {
       case 'solo': return 'bg-stone-gray/10 border-stone-gray/30 text-stone-gray';
       case 'couple': return 'bg-burgundy/10 border-burgundy/30 text-burgundy';
-      case 'family': return 'bg-[#7c3aed]/10 border-[#7c3aed]/30 text-[#7c3aed]';
-      case 'business': return 'bg-[#d97706]/10 border-[#d97706]/30 text-[#d97706]';
-      case 'group': return 'bg-[#16a34a]/10 border-[#16a34a]/30 text-[#16a34a]';
+      case 'family': return 'bg-violet-600/10 border-violet-600/30 text-violet-600';
+      case 'business': return 'bg-amber-600/10 border-amber-600/30 text-amber-600';
+      case 'group': return 'bg-green-600/10 border-green-600/30 text-green-600';
       default: return 'bg-stone-gray/10 border-stone-gray/30 text-stone-gray';
     }
   };
@@ -165,10 +165,10 @@ export default function CustomerDNADashboard() {
   const getSpontaneityColor = (level: string) => {
     switch (level) {
       case 'very_spontaneous': return 'bg-burgundy';
-      case 'spontaneous': return 'bg-[#d97706]';
-      case 'moderate': return 'bg-[#d97706]';
-      case 'planner': return 'bg-[#16a34a]';
-      case 'advance_planner': return 'bg-[#7c3aed]';
+      case 'spontaneous': return 'bg-amber-600';
+      case 'moderate': return 'bg-amber-600';
+      case 'planner': return 'bg-green-600';
+      case 'advance_planner': return 'bg-violet-600';
       default: return 'bg-stone-gray';
     }
   };
@@ -228,7 +228,7 @@ export default function CustomerDNADashboard() {
         <h2 className="text-xl font-bold font-serif text-deep-charcoal flex items-center gap-2">
           <ThiingsIcon name="brain" pxSize={20} />
           Customer DNA Profiling
-          <span className="px-2 py-1 bg-[#7c3aed]/20 text-[#7c3aed] text-sm rounded-full font-semibold">
+          <span className="px-2 py-1 bg-violet-600/20 text-violet-600 text-sm rounded-full font-semibold">
             {stats.total_profiles} Profiles
           </span>
         </h2>
@@ -245,7 +245,7 @@ export default function CustomerDNADashboard() {
           {/* Key Metrics Row */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {/* Total Profiles */}
-            <div className="p-4 bg-[#7c3aed]/10 rounded-xl border border-[#7c3aed]/20">
+            <div className="p-4 bg-violet-600/10 rounded-xl border border-violet-600/20">
               <div className="flex items-center justify-between mb-2">
                 <ThiingsIcon name="brain" pxSize={20} />
                 <span className="text-2xl font-bold text-deep-charcoal">{stats.total_profiles}</span>
@@ -254,7 +254,7 @@ export default function CustomerDNADashboard() {
             </div>
 
             {/* Avg Confidence */}
-            <div className="p-4 bg-[#16a34a]/10 rounded-xl border border-[#16a34a]/20">
+            <div className="p-4 bg-green-600/10 rounded-xl border border-green-600/20">
               <div className="flex items-center justify-between mb-2">
                 <ThiingsIcon name="target" pxSize={20} />
                 <span className="text-2xl font-bold text-deep-charcoal">{stats.avg_confidence}%</span>
@@ -306,7 +306,7 @@ export default function CustomerDNADashboard() {
                 const percentage = totalDayTypes > 0 ? (count / totalDayTypes) * 100 : 0;
                 const isWeekend = dayType === 'weekend';
                 return (
-                  <div key={dayType} className={`p-3 rounded-xl border ${isWeekend ? 'bg-[#d97706]/10 border-[#d97706]/30' : 'bg-[#7c3aed]/10 border-[#7c3aed]/30'}`}>
+                  <div key={dayType} className={`p-3 rounded-xl border ${isWeekend ? 'bg-amber-600/10 border-amber-600/30' : 'bg-violet-600/10 border-violet-600/30'}`}>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         {isWeekend ? <ThiingsIcon name="sun" pxSize={16} /> : <ThiingsIcon name="moon" pxSize={16} />}
@@ -316,7 +316,7 @@ export default function CustomerDNADashboard() {
                     </div>
                     <div className="w-full bg-white h-2 rounded-full overflow-hidden">
                       <div
-                        className={`h-full ${isWeekend ? 'bg-[#d97706]' : 'bg-[#7c3aed]'}`}
+                        className={`h-full ${isWeekend ? 'bg-amber-600' : 'bg-violet-600'}`}
                         style={{ width: `${percentage}%` }}
                       />
                     </div>
@@ -347,7 +347,7 @@ export default function CustomerDNADashboard() {
                         </div>
                         <div className="w-full bg-white h-2 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-[#7c3aed]"
+                            className="h-full bg-violet-600"
                             style={{ width: `${percentage}%` }}
                           />
                         </div>
@@ -434,7 +434,7 @@ export default function CustomerDNADashboard() {
           )}
 
           {/* Predictions Made */}
-          <div className="p-3 bg-[#16a34a]/10 rounded-xl border border-[#16a34a]/20">
+          <div className="p-3 bg-green-600/10 rounded-xl border border-green-600/20">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <ThiingsIcon name="trending-up" pxSize={16} />
@@ -473,7 +473,7 @@ export default function CustomerDNADashboard() {
                   placeholder="Search by name or phone..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/30 focus:border-[#7c3aed]"
+                  className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-600/30 focus:border-violet-600"
                 />
               </div>
               <div className="relative">
@@ -481,7 +481,7 @@ export default function CustomerDNADashboard() {
                 <select
                   value={styleFilter}
                   onChange={(e) => setStyleFilter(e.target.value)}
-                  className="pl-9 pr-8 py-2 text-sm bg-white border border-border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/30 focus:border-[#7c3aed] appearance-none cursor-pointer"
+                  className="pl-9 pr-8 py-2 text-sm bg-white border border-border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-600/30 focus:border-violet-600 appearance-none cursor-pointer"
                 >
                   <option value="">All Styles</option>
                   <option value="solo">Solo</option>
@@ -513,7 +513,7 @@ export default function CustomerDNADashboard() {
                   <button
                     key={customer.customer_id}
                     onClick={() => navigate(`/host-dashboard/dna/${encodeURIComponent(customer.customer_id)}`)}
-                    className="w-full px-3 py-3 bg-white rounded-lg border border-transparent hover:border-[#7c3aed]/30 hover:shadow-sm transition-all text-left"
+                    className="w-full px-3 py-3 bg-white rounded-lg border border-transparent hover:border-violet-600/30 hover:shadow-sm transition-all text-left"
                   >
                     {/* Mobile layout */}
                     <div className="flex md:hidden items-center justify-between">
@@ -557,7 +557,7 @@ export default function CustomerDNADashboard() {
                       <div className="col-span-2 flex items-center justify-center gap-1">
                         <div className="w-16 bg-border-gray h-1.5 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-[#7c3aed] rounded-full"
+                            className="h-full bg-violet-600 rounded-full"
                             style={{ width: `${customer.profile_confidence}%` }}
                           />
                         </div>

@@ -51,8 +51,8 @@ function getTags(specialRequests?: string): string[] {
 function getStatusColor(status: string) {
   switch (status) {
     case 'Waiting': return 'bg-burgundy/10 text-burgundy';
-    case 'Notified': return 'bg-[#d97706]/10 text-[#d97706]';
-    case 'Seated': return 'bg-[#16a34a]/10 text-[#16a34a]';
+    case 'Notified': return 'bg-amber-600/10 text-amber-600';
+    case 'Seated': return 'bg-green-600/10 text-green-600';
     case 'Cancelled': return 'bg-red-500/10 text-red-500';
     case 'No Show': return 'bg-stone-gray/10 text-stone-gray';
     default: return 'bg-stone-gray/10 text-stone-gray';
@@ -259,8 +259,8 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
             {/* TABLE READY Section */}
             {tableReadyEntries.length > 0 && (
               <div className="mb-2">
-                <div className="px-4 py-2 bg-[#16a34a]/10 border-l-4 border-[#16a34a]">
-                  <span className="text-xs font-bold text-[#16a34a] uppercase tracking-wide">
+                <div className="px-4 py-2 bg-green-600/10 border-l-4 border-green-600">
+                  <span className="text-xs font-bold text-green-600 uppercase tracking-wide">
                     {t('waitlist.tableReady')} ({tableReadyEntries.length})
                   </span>
                 </div>
@@ -391,11 +391,11 @@ function WaitlistEntryCard({
 
   return (
     <div className={`px-3 py-2.5 border-b border-border-gray/50 hover:bg-warm-white transition-colors ${
-      isTableReady ? 'bg-[#16a34a]/5' : ''
+      isTableReady ? 'bg-green-600/5' : ''
     }`}>
       {/* Row 1: Avatar, Name, Party Size, Status */}
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-burgundy/15 to-[#7c3aed]/15 flex items-center justify-center font-bold text-xs text-burgundy border border-burgundy/20 flex-shrink-0">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-burgundy/15 to-violet-600/15 flex items-center justify-center font-bold text-xs text-burgundy border border-burgundy/20 flex-shrink-0">
           {initials}
         </div>
         <div className="flex-1 min-w-0">
@@ -423,7 +423,7 @@ function WaitlistEntryCard({
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-1.5 ml-10">
           {tags.slice(0, 3).map((tag, i) => (
-            <span key={i} className="px-1.5 py-0.5 text-[10px] bg-[#7c3aed]/10 text-[#7c3aed] rounded">
+            <span key={i} className="px-1.5 py-0.5 text-[10px] bg-violet-600/10 text-violet-600 rounded">
               {tag}
             </span>
           ))}
@@ -437,7 +437,7 @@ function WaitlistEntryCard({
 
       {/* Notified timestamp */}
       {entry.status === 'Notified' && entry.notified_at && (
-        <div className="text-[10px] text-[#d97706] ml-10 mt-1">
+        <div className="text-[10px] text-amber-600 ml-10 mt-1">
           Notified {formatTimeAgo(entry.notified_at)}
         </div>
       )}
@@ -450,7 +450,7 @@ function WaitlistEntryCard({
               <button
                 onClick={() => onNotify(entry.id)}
                 disabled={isNotifying}
-                className="px-2 py-1 text-[11px] bg-[#16a34a] hover:bg-[#15803d] text-white font-medium rounded transition-colors disabled:opacity-50"
+                className="px-2 py-1 text-[11px] bg-green-600 hover:bg-green-700 text-white font-medium rounded transition-colors disabled:opacity-50"
               >
                 {t('waitlist.ready')}
               </button>
@@ -615,7 +615,7 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
                     disabled={currentTags.includes(tag)}
                     className={`px-2.5 py-1 text-xs rounded-full transition-colors ${
                       currentTags.includes(tag)
-                        ? 'bg-[#7c3aed]/20 text-[#7c3aed] cursor-not-allowed'
+                        ? 'bg-violet-600/20 text-violet-600 cursor-not-allowed'
                         : 'bg-soft-gray hover:bg-border-gray text-stone-gray'
                     }`}
                   >
@@ -628,7 +628,7 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
               {currentTags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2">
                   {currentTags.map((tag, i) => (
-                    <span key={i} className="px-2 py-0.5 text-xs bg-[#7c3aed]/10 text-[#7c3aed] rounded-full">
+                    <span key={i} className="px-2 py-0.5 text-xs bg-violet-600/10 text-violet-600 rounded-full">
                       {tag}
                     </span>
                   ))}

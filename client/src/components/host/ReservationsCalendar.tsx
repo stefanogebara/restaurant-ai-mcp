@@ -213,7 +213,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-semibold text-deep-charcoal">{reservation.customer_name}</span>
                             {reservation.checked_in && (
-                              <span className="px-2 py-0.5 bg-[#16a34a]/10 text-[#16a34a] text-xs rounded-full">
+                              <span className="px-2 py-0.5 bg-green-600/10 text-green-600 text-xs rounded-full">
                                 ✓ Checked In
                               </span>
                             )}
@@ -263,7 +263,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
                               e.stopPropagation();
                               onRecordOutcome(reservation);
                             }}
-                            className="px-3 py-2 text-sm bg-[#7c3aed] text-white rounded-lg hover:bg-[#6d28d9] transition font-medium"
+                            className="px-3 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition font-medium"
                             title="Record actual outcome for ML training"
                           >
                             📊 Outcome
@@ -291,7 +291,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
       {/* Export Button */}
       <button
         onClick={exportToCSV}
-        className="w-full px-4 py-3 bg-[#16a34a] hover:bg-[#15803d] text-white font-semibold rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+        className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -311,7 +311,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
             <div className="text-xs text-muted-stone">Days with Bookings</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-[#7c3aed]">
+            <div className="text-2xl font-bold text-violet-600">
               {reservations.reduce((sum, r) => sum + (r.party_size || 0), 0)}
             </div>
             <div className="text-xs text-muted-stone">Total Guests</div>

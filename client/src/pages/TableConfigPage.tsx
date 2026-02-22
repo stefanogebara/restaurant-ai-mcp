@@ -189,7 +189,7 @@ export default function TableConfigPage() {
         </div>
         <div className="bg-white rounded-2xl p-6 border border-border-gray">
           <div className="text-xs font-medium text-muted-stone mb-2">{t('settings.activeTables')}</div>
-          <div className="text-[32px] font-bold tracking-tight leading-none text-[#16a34a]">{stats.active || 0}</div>
+          <div className="text-[32px] font-bold tracking-tight leading-none text-green-600">{stats.active || 0}</div>
         </div>
         <div className="bg-white rounded-2xl p-6 border border-border-gray">
           <div className="text-xs font-medium text-muted-stone mb-2">{t('settings.locations')}</div>
@@ -213,7 +213,7 @@ export default function TableConfigPage() {
                 .map((table) => (
                   <div
                     key={table.id}
-                    className="bg-white rounded-2xl p-6 border border-border-gray cursor-pointer hover:border-[#D6D3D1] transition-colors relative"
+                    className="bg-white rounded-2xl p-6 border border-border-gray cursor-pointer hover:border-stone-300 transition-colors relative"
                     onClick={() => openEditModal(table)}
                   >
                     <div className="flex items-start justify-between mb-3">
@@ -237,10 +237,10 @@ export default function TableConfigPage() {
                       <span
                         className={`w-2 h-2 rounded-full ${
                           table.status === 'available'
-                            ? 'bg-[#22c55e]'
+                            ? 'bg-green-500'
                             : table.status === 'occupied'
-                            ? 'bg-[#dc2626]'
-                            : 'bg-[#d97706]'
+                            ? 'bg-red-600'
+                            : 'bg-amber-600'
                         }`}
                       ></span>
                       <span className="text-sm text-warm-stone capitalize">{table.status}</span>
@@ -347,7 +347,7 @@ export default function TableConfigPage() {
               <button
                 onClick={handleDeleteTable}
                 disabled={deleteMutation.isPending}
-                className="w-full px-4 py-2 text-[#dc2626] border border-[#dc2626]/20 rounded-lg hover:bg-[#dc2626]/10 transition-colors"
+                className="w-full px-4 py-2 text-red-600 border border-red-600/20 rounded-lg hover:bg-red-600/10 transition-colors"
               >
                 {deleteMutation.isPending ? 'Deactivating...' : 'Deactivate Table'}
               </button>
@@ -376,7 +376,7 @@ export default function TableConfigPage() {
       {toast && (
         <div
           className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg z-50 ${
-            toast.type === 'success' ? 'bg-deep-charcoal text-white' : 'bg-[#dc2626] text-white'
+            toast.type === 'success' ? 'bg-deep-charcoal text-white' : 'bg-red-600 text-white'
           }`}
         >
           {toast.message}
@@ -465,7 +465,7 @@ function TableForm({
               type="radio"
               checked={!formData.is_fixed}
               onChange={() => setFormData({ ...formData, is_fixed: false })}
-              className="w-4 h-4 text-[#22c55e] accent-[#22c55e]"
+              className="w-4 h-4 text-green-500 accent-green-500"
             />
             <span className="text-sm text-warm-stone">Flexible (can combine)</span>
           </label>
@@ -474,7 +474,7 @@ function TableForm({
               type="radio"
               checked={formData.is_fixed}
               onChange={() => setFormData({ ...formData, is_fixed: true })}
-              className="w-4 h-4 text-[#d97706] accent-[#d97706]"
+              className="w-4 h-4 text-amber-600 accent-amber-600"
             />
             <span className="text-sm text-warm-stone">Fixed (booth/round)</span>
           </label>

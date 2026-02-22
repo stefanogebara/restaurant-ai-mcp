@@ -50,24 +50,24 @@ export default function RiskExplanationModal({
         };
       case 'high':
         return {
-          color: 'text-[#d97706]',
-          bg: 'bg-[#d97706]/10',
+          color: 'text-amber-600',
+          bg: 'bg-amber-600/10',
           label: 'High Risk',
           description: 'Elevated no-show risk. Confirmation call recommended.',
           iconName: 'alert-triangle' as IconName
         };
       case 'medium':
         return {
-          color: 'text-[#d97706]',
-          bg: 'bg-[#d97706]/10',
+          color: 'text-amber-600',
+          bg: 'bg-amber-600/10',
           label: 'Medium Risk',
           description: 'Moderate no-show risk. Consider sending a reminder.',
           iconName: 'lightning' as IconName
         };
       default:
         return {
-          color: 'text-[#16a34a]',
-          bg: 'bg-[#16a34a]/10',
+          color: 'text-green-600',
+          bg: 'bg-green-600/10',
           label: 'Low Risk',
           description: 'Low no-show probability. Standard handling.',
           iconName: 'green-check' as IconName
@@ -164,8 +164,8 @@ export default function RiskExplanationModal({
                     key={idx}
                     className="flex items-start gap-3 p-3 bg-soft-gray rounded-xl border border-border-gray"
                   >
-                    <div className="w-12 h-12 rounded-full bg-[#d97706]/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-[#d97706] font-bold">
+                    <div className="w-12 h-12 rounded-full bg-amber-600/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-amber-600 font-bold">
                         +{factor.impact}
                       </span>
                     </div>
@@ -196,8 +196,8 @@ export default function RiskExplanationModal({
                     key={idx}
                     className="flex items-start gap-3 p-3 bg-soft-gray rounded-xl border border-border-gray"
                   >
-                    <div className="w-12 h-12 rounded-full bg-[#16a34a]/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-[#16a34a] font-bold">
+                    <div className="w-12 h-12 rounded-full bg-green-600/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-green-600 font-bold">
                         {factor.impact}
                       </span>
                     </div>

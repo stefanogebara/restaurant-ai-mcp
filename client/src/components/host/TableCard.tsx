@@ -26,9 +26,9 @@ export default function TableCard({ table, onClick }: TableCardProps) {
     switch (table.status) {
       case 'Available':
         return {
-          iconBg: 'bg-[#16a34a]',
+          iconBg: 'bg-green-600',
           iconName: 'check',
-          statusPill: 'text-[#16a34a] bg-[#16a34a]/10',
+          statusPill: 'text-green-600 bg-green-600/10',
         };
       case 'Occupied':
         return {
@@ -38,15 +38,15 @@ export default function TableCard({ table, onClick }: TableCardProps) {
         };
       case 'Being Cleaned':
         return {
-          iconBg: 'bg-[#d97706]',
+          iconBg: 'bg-amber-600',
           iconName: 'sparkles',
-          statusPill: 'text-[#d97706] bg-[#d97706]/10',
+          statusPill: 'text-amber-600 bg-amber-600/10',
         };
       case 'Reserved':
         return {
-          iconBg: 'bg-[#7c3aed]',
+          iconBg: 'bg-violet-600',
           iconName: 'clock',
-          statusPill: 'text-[#7c3aed] bg-[#7c3aed]/10',
+          statusPill: 'text-violet-600 bg-violet-600/10',
         };
       default:
         return {

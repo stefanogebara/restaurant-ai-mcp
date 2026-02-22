@@ -84,7 +84,7 @@ export default function AnalyticsDashboard() {
         <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
           <div className="bg-white rounded-2xl p-8 border border-border-gray max-w-md text-center">
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-[#dc2626]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
@@ -131,7 +131,7 @@ export default function AnalyticsDashboard() {
                   className={`px-4 py-2 rounded-[10px] text-[13px] font-medium transition-colors ${
                     dateRange === range
                       ? 'bg-deep-charcoal text-white border border-deep-charcoal'
-                      : 'bg-white border border-[#D6D3D1] text-stone-gray hover:border-muted-stone'
+                      : 'bg-white border border-stone-300 text-stone-gray hover:border-muted-stone'
                   }`}
                 >
                   {range === '30d' ? t('analytics.thirtyDays') : range === '7d' ? t('analytics.sevenDays') : t('analytics.today')}
@@ -139,7 +139,7 @@ export default function AnalyticsDashboard() {
               ))}
               <button
                 onClick={() => fetchAnalytics()}
-                className="px-4 py-2 bg-white border border-[#D6D3D1] text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors"
+                className="px-4 py-2 bg-white border border-stone-300 text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors"
               >
                 {t('common.export')}
               </button>

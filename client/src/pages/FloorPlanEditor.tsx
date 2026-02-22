@@ -279,11 +279,11 @@ function TablePopover({ table, position, onClose, onDelete, onUpdateProps }: Tab
 
   return (
     <div ref={popoverRef}
-      className="absolute z-30 rounded-xl border border-[#44403C] shadow-xl w-56"
+      className="absolute z-30 rounded-xl border border-stone-700 shadow-xl w-56"
       style={{ left: position.x, top: position.y, background: tc.charcoalDark }}>
-      <div className="p-3 border-b border-[#44403C] flex items-center justify-between">
+      <div className="p-3 border-b border-stone-700 flex items-center justify-between">
         <span className="font-bold text-sm text-white">Table {table.table_number}</span>
-        <button onClick={onClose} className="p-1 hover:bg-[#44403C] rounded-lg text-muted-stone">
+        <button onClick={onClose} className="p-1 hover:bg-stone-700 rounded-lg text-muted-stone">
           <ThiingsIcon name="close" pxSize={14} />
         </button>
       </div>
@@ -291,7 +291,7 @@ function TablePopover({ table, position, onClose, onDelete, onUpdateProps }: Tab
         <div>
           <label className="text-xs font-medium text-muted-stone mb-1 block">Shape</label>
           <select value={shape} onChange={e => setShape(e.target.value as TableShape)}
-            className="w-full px-2 py-1.5 bg-deep-charcoal border border-[#44403C] rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-burgundy/50">
+            className="w-full px-2 py-1.5 bg-deep-charcoal border border-stone-700 rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-burgundy/50">
             {SHAPES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
         </div>
@@ -303,7 +303,7 @@ function TablePopover({ table, position, onClose, onDelete, onUpdateProps }: Tab
                 className={`flex-1 py-1 rounded-lg text-xs font-semibold border transition-all ${
                   capacity === c
                     ? 'bg-burgundy text-white border-burgundy'
-                    : 'border-[#44403C] text-muted-stone hover:border-burgundy'
+                    : 'border-stone-700 text-muted-stone hover:border-burgundy'
                 }`}>
                 {c}
               </button>
@@ -634,15 +634,15 @@ export default function FloorPlanEditor() {
 
         {/* Link mode banner — dark themed */}
         {linkMode && (
-          <div className="mb-4 px-4 py-2.5 bg-charcoal-dark border border-[#44403C] rounded-xl flex items-center gap-3">
-            <span className="text-[#f472b6]"><ThiingsIcon name="link" pxSize={18} /></span>
-            <span className="text-sm text-[#f472b6] font-medium">
+          <div className="mb-4 px-4 py-2.5 bg-charcoal-dark border border-stone-700 rounded-xl flex items-center gap-3">
+            <span className="text-pink-400"><ThiingsIcon name="link" pxSize={18} /></span>
+            <span className="text-sm text-pink-400 font-medium">
               {linkSource
                 ? `Click another table to ${tables.find(t => t.id === linkSource)?.joinable_with?.length ? 'link or unlink' : 'link'}`
                 : 'Click the first table to start linking'}
             </span>
             <button onClick={() => { setLinkMode(false); setLinkSource(null); }}
-              className="ml-auto text-xs text-[#f472b6] hover:underline font-medium">Cancel</button>
+              className="ml-auto text-xs text-pink-400 hover:underline font-medium">Cancel</button>
           </div>
         )}
 
@@ -652,12 +652,12 @@ export default function FloorPlanEditor() {
             style={{ boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.3)' }}>
             {isLoading ? (
               <div className="flex items-center justify-center" style={{ height: 400 }}>
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#44403C] border-t-burgundy" />
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-700 border-t-burgundy" />
               </div>
             ) : filteredTables.length === 0 ? (
               <div className="flex flex-col items-center justify-center text-center py-16 px-6">
                 <span className="text-stone-gray"><ThiingsIcon name="map" pxSize={48} /></span>
-                <p className="mt-4 font-semibold text-[#D6D3D1]">No tables in {activeLocation}</p>
+                <p className="mt-4 font-semibold text-stone-300">No tables in {activeLocation}</p>
                 <p className="text-sm text-warm-stone mt-1">Click &quot;Add Table&quot; to get started</p>
               </div>
             ) : (

@@ -217,7 +217,7 @@ export default function WeeklyReport() {
             Reports <span className="font-light text-warm-stone">/ Weekly</span>
           </h1>
           <div className="flex items-center gap-2.5 print:hidden">
-            <div className="flex items-center gap-1.5 px-4 py-2 bg-white border border-[#D6D3D1] rounded-[10px] text-[13px] font-medium text-stone-gray">
+            <div className="flex items-center gap-1.5 px-4 py-2 bg-white border border-stone-300 rounded-[10px] text-[13px] font-medium text-stone-gray">
               <input
                 type="date"
                 value={startDate}
@@ -235,7 +235,7 @@ export default function WeeklyReport() {
             </div>
             <button
               onClick={handlePrint}
-              className="px-4 py-2 bg-white border border-[#D6D3D1] text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors"
+              className="px-4 py-2 bg-white border border-stone-300 text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors"
             >
               {t('analytics.downloadPdf')}
             </button>
@@ -254,7 +254,7 @@ export default function WeeklyReport() {
             <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">{t('analytics.totalReservations')}</div>
             <div className="text-2xl font-bold tracking-tight">{summary.total_reservations}</div>
             {summary.previous_covers >= 3 && (
-              <div className={`text-[11px] font-medium mt-1 ${summary.covers_change_percent >= 0 ? 'text-[#16a34a]' : 'text-[#dc2626]'}`}>
+              <div className={`text-[11px] font-medium mt-1 ${summary.covers_change_percent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {summary.covers_change_percent >= 0 ? '+' : ''}{summary.covers_change_percent}% vs prev week
               </div>
             )}
@@ -265,7 +265,7 @@ export default function WeeklyReport() {
           </div>
           <div className="bg-white rounded-2xl p-5 border border-border-gray text-center">
             <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">{t('analytics.cancellations')}</div>
-            <div className="text-2xl font-bold tracking-tight text-[#dc2626]">{summary.cancelled_count}</div>
+            <div className="text-2xl font-bold tracking-tight text-red-600">{summary.cancelled_count}</div>
             <div className="text-[11px] font-medium text-warm-stone mt-1">{summary.cancellation_rate}% rate</div>
           </div>
           <div className="bg-white rounded-2xl p-5 border border-border-gray text-center">
@@ -277,7 +277,7 @@ export default function WeeklyReport() {
             <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">{t('analytics.totalCovers')}</div>
             <div className="text-2xl font-bold tracking-tight text-burgundy">{summary.total_covers}</div>
             {summary.previous_covers >= 3 && (
-              <div className={`text-[11px] font-medium mt-1 ${summary.covers_change_percent >= 0 ? 'text-[#16a34a]' : 'text-[#dc2626]'}`}>
+              <div className={`text-[11px] font-medium mt-1 ${summary.covers_change_percent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {summary.covers_change_percent >= 0 ? '+' : ''}{summary.covers_change_percent}%
               </div>
             )}

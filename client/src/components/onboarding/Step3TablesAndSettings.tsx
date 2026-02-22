@@ -228,7 +228,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
               {data.areas.length > 1 && (
                 <button
                   onClick={() => removeArea(areaIndex)}
-                  className="p-2 hover:bg-[#dc2626]/10 text-[#dc2626] rounded-lg transition-colors"
+                  className="p-2 hover:bg-red-600/10 text-red-600 rounded-lg transition-colors"
                   title="Remove area"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -323,7 +323,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
       <div className="border border-border-gray rounded-xl overflow-hidden">
         <button
           onClick={() => setShowSettings(!showSettings)}
-          className="w-full flex items-center justify-between px-5 py-4 bg-soft-gray hover:bg-[#EEECEB] transition-colors"
+          className="w-full flex items-center justify-between px-5 py-4 bg-soft-gray hover:bg-stone-pale transition-colors"
         >
           <div className="flex items-center gap-3">
             <svg className="w-5 h-5 text-stone-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24">

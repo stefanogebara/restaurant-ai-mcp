@@ -97,7 +97,7 @@ export default function PricingSection() {
                     <li
                       key={i}
                       className={`text-sm py-3 border-b flex items-center gap-2.5 ${
-                        isFeatured ? 'text-[#D6D3D1] border-charcoal-dark' : 'text-deep-charcoal border-border-gray'
+                        isFeatured ? 'text-stone-300 border-charcoal-dark' : 'text-deep-charcoal border-border-gray'
                       }`}
                     >
                       <span className="w-[5px] h-[5px] rounded-full bg-burgundy flex-shrink-0" />
@@ -121,7 +121,7 @@ export default function PricingSection() {
                   className={`w-full py-3.5 rounded-full text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 ${
                     isFeatured
                       ? 'bg-burgundy text-white hover:bg-burgundy-dark'
-                      : 'border border-[#D6D3D1] text-deep-charcoal hover:border-muted-stone'
+                      : 'border border-stone-300 text-deep-charcoal hover:border-muted-stone'
                   }`}
                 >
                   {loadingPlan === tier.name ? (

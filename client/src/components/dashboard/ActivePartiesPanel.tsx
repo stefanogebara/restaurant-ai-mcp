@@ -115,7 +115,7 @@ function PartyRow({ party, onComplete, language }: PartyRowProps) {
     <div className={`p-3.5 ${isOverdue ? 'bg-red-50/50' : ''}`}>
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-burgundy/15 to-[#7c3aed]/15 flex items-center justify-center text-[10px] font-bold text-burgundy border border-burgundy/20 flex-shrink-0">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-burgundy/15 to-violet-600/15 flex items-center justify-center text-[10px] font-bold text-burgundy border border-burgundy/20 flex-shrink-0">
             {party.customer_name
               .split(' ')
               .map((n) => n[0])

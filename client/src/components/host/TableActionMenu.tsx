@@ -32,7 +32,7 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
     {
       label: 'Mark as Free',
       iconName: 'green-check',
-      color: 'text-[#16a34a]',
+      color: 'text-green-600',
       show: table.status !== 'Available',
       onClick: () => updateTableMutation.mutate({ status: 'Available' }),
     },
@@ -46,7 +46,7 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
     {
       label: 'Mark as Reserved',
       iconName: 'clock',
-      color: 'text-[#7c3aed]',
+      color: 'text-violet-600',
       show: table.status !== 'Reserved',
       onClick: () => updateTableMutation.mutate({ status: 'Reserved' }),
     },
@@ -87,11 +87,11 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
                 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold
                 ${
                   table.status === 'Available'
-                    ? 'bg-[#16a34a]/10 text-[#16a34a]'
+                    ? 'bg-green-600/10 text-green-600'
                     : table.status === 'Occupied'
                     ? 'bg-burgundy/10 text-burgundy'
                     : table.status === 'Being Cleaned'
-                    ? 'bg-[#d97706]/10 text-[#d97706]'
+                    ? 'bg-amber-600/10 text-amber-600'
                     : 'bg-stone-gray/10 text-stone-gray'
                 }
               `}

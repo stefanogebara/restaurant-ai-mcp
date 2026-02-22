@@ -173,10 +173,10 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
     .toUpperCase();
 
   const statusBadge = reservation.checked_in
-    ? { label: t.seated, classes: 'bg-[rgba(124,58,237,0.08)] text-[#7c3aed]' }
+    ? { label: t.seated, classes: 'bg-[rgba(124,58,237,0.08)] text-violet-600' }
     : isHighRisk
-    ? { label: 'At Risk', classes: 'bg-[rgba(217,119,6,0.08)] text-[#d97706]' }
-    : { label: 'Confirmed', classes: 'bg-[rgba(22,163,74,0.08)] text-[#16a34a]' };
+    ? { label: 'At Risk', classes: 'bg-[rgba(217,119,6,0.08)] text-amber-600' }
+    : { label: 'Confirmed', classes: 'bg-[rgba(22,163,74,0.08)] text-green-600' };
 
   return (
     <div className="flex items-center px-6 py-4 border-b border-warm-white last:border-b-0 gap-4 hover:bg-warm-white/50 transition-colors">
@@ -213,12 +213,12 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
         ) : isHighRisk && !(reservation as any).intervention_taken ? (
           <button
             onClick={onIntervention}
-            className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[rgba(217,119,6,0.08)] text-[#d97706]"
+            className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[rgba(217,119,6,0.08)] text-amber-600"
           >
             {t.takeAction}
           </button>
         ) : (reservation as any).intervention_taken ? (
-          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[rgba(22,163,74,0.08)] text-[#16a34a]">
+          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[rgba(22,163,74,0.08)] text-green-600">
             {t.actionTaken}
           </span>
         ) : (

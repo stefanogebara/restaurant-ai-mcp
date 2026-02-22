@@ -70,7 +70,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
         {/* Status Badge */}
         {reservation.checked_in && (
           <div className="mb-4">
-            <span className="px-3 py-1.5 bg-[#16a34a]/10 text-[#16a34a] text-sm rounded-lg inline-flex items-center gap-2">
+            <span className="px-3 py-1.5 bg-green-600/10 text-green-600 text-sm rounded-lg inline-flex items-center gap-2">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
@@ -123,7 +123,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
             <div className="bg-soft-gray rounded-xl p-4 border border-border-gray">
               <div className="text-xs text-muted-stone mb-1">Phone Number</div>
               <div className="text-deep-charcoal font-semibold flex items-center gap-2">
-                <svg className="w-5 h-5 text-[#16a34a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
                 {reservation.customer_phone}
@@ -145,7 +145,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
           <div className="mb-6">
             <div className="bg-soft-gray rounded-xl p-4 border border-border-gray">
               <div className="flex items-start gap-3">
-                <svg className="w-5 h-5 text-[#d97706] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                 </svg>
                 <div className="flex-1">
@@ -179,7 +179,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
                   <div className="text-xs text-muted-stone">Customer Type</div>
                   <div className="text-deep-charcoal font-medium">{reservation.customer_type}</div>
                   {reservation.first_time_visitor && (
-                    <div className="text-xs text-[#d97706] mt-1">⭐ First Time Visitor</div>
+                    <div className="text-xs text-amber-600 mt-1">⭐ First Time Visitor</div>
                   )}
                 </div>
               </div>
@@ -195,7 +195,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
                     {reservation.dietary_restrictions.map((restriction) => (
                       <span
                         key={restriction}
-                        className="px-2 py-0.5 bg-[#16a34a]/10 text-[#16a34a] text-xs rounded-full"
+                        className="px-2 py-0.5 bg-green-600/10 text-green-600 text-xs rounded-full"
                       >
                         {restriction}
                       </span>

@@ -400,7 +400,7 @@ export default function FloorPlanView({
             </h3>
 
             <div className={`rounded-xl overflow-hidden border ${
-              darkMode ? 'bg-deep-charcoal border-[#44403C]' : 'bg-white border-border-gray'
+              darkMode ? 'bg-deep-charcoal border-stone-700' : 'bg-white border-border-gray'
             }`} style={{ maxWidth: '100%', overflowX: 'auto' }}>
               <svg
                 width="100%"

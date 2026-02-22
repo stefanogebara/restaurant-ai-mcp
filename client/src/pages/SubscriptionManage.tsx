@@ -155,9 +155,9 @@ export default function SubscriptionManage() {
             <div className="flex items-center gap-5">
               <div>
                 <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
-                  subscription.status === 'active' ? 'bg-[rgba(22,163,74,0.08)] text-[#16a34a]' :
-                  subscription.status === 'trialing' ? 'bg-[rgba(14,165,233,0.08)] text-[#0ea5e9]' :
-                  subscription.status === 'past_due' ? 'bg-[rgba(220,38,38,0.08)] text-[#dc2626]' :
+                  subscription.status === 'active' ? 'bg-[rgba(22,163,74,0.08)] text-green-600' :
+                  subscription.status === 'trialing' ? 'bg-[rgba(14,165,233,0.08)] text-sky-500' :
+                  subscription.status === 'past_due' ? 'bg-[rgba(220,38,38,0.08)] text-red-600' :
                   'bg-soft-gray text-stone-gray'
                 }`}>
                   {subscription.status === 'trialing' ? 'Trial' : subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
@@ -185,7 +185,7 @@ export default function SubscriptionManage() {
 
           {subscription.cancelAtPeriodEnd && (
             <div className="bg-[rgba(220,38,38,0.04)] border border-[rgba(220,38,38,0.2)] rounded-2xl p-5 mb-12 -mt-8">
-              <p className="text-sm text-[#dc2626] font-medium">Your subscription is set to cancel at the end of the current billing period.</p>
+              <p className="text-sm text-red-600 font-medium">Your subscription is set to cancel at the end of the current billing period.</p>
             </div>
           )}
 
@@ -217,7 +217,7 @@ export default function SubscriptionManage() {
                   <p className={`text-sm font-light mb-7 ${isFeatured ? 'text-muted-stone' : 'text-warm-stone'}`}>{p.desc}</p>
                   <ul className="mb-8">
                     {p.features.map((f, i) => (
-                      <li key={i} className={`text-sm py-2.5 border-b flex items-center gap-2.5 ${isFeatured ? 'text-[#D6D3D1] border-charcoal-dark' : 'text-deep-charcoal border-border-gray'}`}>
+                      <li key={i} className={`text-sm py-2.5 border-b flex items-center gap-2.5 ${isFeatured ? 'text-stone-300 border-charcoal-dark' : 'text-deep-charcoal border-border-gray'}`}>
                         <span className="w-[5px] h-[5px] rounded-full bg-burgundy flex-shrink-0" />
                         {f}
                       </li>
@@ -228,8 +228,8 @@ export default function SubscriptionManage() {
                     disabled={isCurrent || managingSubscription}
                     className={`w-full py-3.5 rounded-full text-sm font-semibold transition-colors ${
                       isFeatured && !isCurrent ? 'bg-burgundy text-white hover:bg-burgundy-dark' :
-                      isCurrent ? 'border border-[#D6D3D1] text-muted-stone cursor-default' :
-                      'border border-[#D6D3D1] text-deep-charcoal hover:border-muted-stone'
+                      isCurrent ? 'border border-stone-300 text-muted-stone cursor-default' :
+                      'border border-stone-300 text-deep-charcoal hover:border-muted-stone'
                     }`}
                   >
                     {buttonLabel}

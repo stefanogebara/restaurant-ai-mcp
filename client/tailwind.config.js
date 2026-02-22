@@ -72,6 +72,12 @@ export default {
         'status-occupied': '#ef4444',
         'status-cleaning': '#f59e0b',
         'status-reserved': '#3b82f6',
+        // Platform brand colors
+        'whatsapp': '#25D366',
+        'spotify': '#20BD5A',
+        // Custom neutrals (not exact Tailwind matches)
+        'stone-mid': '#3a3533',
+        'stone-pale': '#EEECEB',
       },
       borderRadius: {
         lg: "var(--radius)",

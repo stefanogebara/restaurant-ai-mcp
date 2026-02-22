@@ -22,7 +22,7 @@ export default function UpcomingReservations({ reservations, onCheckIn }: Upcomi
             <div className="text-right">
               <div className="text-sm font-medium text-burgundy">{reservation.reservation_time}</div>
               {reservation.checked_in && (
-                <div className="text-xs text-[#16a34a]">✓ Checked In</div>
+                <div className="text-xs text-green-600">✓ Checked In</div>
               )}
             </div>
           </div>

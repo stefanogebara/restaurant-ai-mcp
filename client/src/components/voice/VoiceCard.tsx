@@ -74,7 +74,7 @@ const VoiceCard = forwardRef<HTMLDivElement, VoiceCardProps>(function VoiceCard(
             {voice.language?.toUpperCase() || 'EN'}
           </span>
           {voice.accent && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#3b82f6]/10 text-[#1d4ed8]">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-700">
               {voice.accent}
             </span>
           )}

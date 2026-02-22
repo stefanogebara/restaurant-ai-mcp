@@ -2,10 +2,10 @@ import ThiingsIcon, { type IconName } from '../common/ThiingsIcon';
 
 export default function TableStatusLegend() {
   const statuses: { iconName: IconName; label: string; iconBg: string; textColor: string }[] = [
-    { iconName: 'check', label: 'Available', iconBg: 'bg-[#16a34a]', textColor: 'text-[#16a34a]' },
+    { iconName: 'check', label: 'Available', iconBg: 'bg-green-600', textColor: 'text-green-600' },
     { iconName: 'user', label: 'Occupied', iconBg: 'bg-burgundy', textColor: 'text-burgundy' },
-    { iconName: 'sparkles', label: 'Being Cleaned', iconBg: 'bg-[#d97706]', textColor: 'text-[#d97706]' },
-    { iconName: 'clock', label: 'Reserved', iconBg: 'bg-[#7c3aed]', textColor: 'text-[#7c3aed]' },
+    { iconName: 'sparkles', label: 'Being Cleaned', iconBg: 'bg-amber-600', textColor: 'text-amber-600' },
+    { iconName: 'clock', label: 'Reserved', iconBg: 'bg-violet-600', textColor: 'text-violet-600' },
   ];
 
   return (

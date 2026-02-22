@@ -50,29 +50,29 @@ export default function RiskScoreBadge({
     switch (riskLevel) {
       case 'very-high':
         return {
-          bg: 'bg-[#ef4444]/10 border-[#ef4444]/30',
-          text: 'text-[#dc2626] dark:text-[#f87171]',
+          bg: 'bg-red-500/10 border-red-500/30',
+          text: 'text-red-600 dark:text-red-400',
           iconName: 'alert-circle',
           label: 'Very High Risk'
         };
       case 'high':
         return {
-          bg: 'bg-[#f97316]/10 border-[#f97316]/30',
-          text: 'text-[#ea580c] dark:text-[#fb923c]',
+          bg: 'bg-orange-500/10 border-orange-500/30',
+          text: 'text-orange-600 dark:text-orange-400',
           iconName: 'alert-triangle',
           label: 'High Risk'
         };
       case 'medium':
         return {
-          bg: 'bg-[#eab308]/10 border-[#eab308]/30',
-          text: 'text-[#ca8a04] dark:text-[#facc15]',
+          bg: 'bg-yellow-500/10 border-yellow-500/30',
+          text: 'text-yellow-600 dark:text-yellow-400',
           iconName: 'info',
           label: 'Medium Risk'
         };
       case 'low':
         return {
-          bg: 'bg-[#10b981]/10 border-[#10b981]/30',
-          text: 'text-[#059669] dark:text-[#34d399]',
+          bg: 'bg-emerald-500/10 border-emerald-500/30',
+          text: 'text-emerald-600 dark:text-emerald-400',
           iconName: 'shield-check',
           label: 'Low Risk'
         };

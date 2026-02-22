@@ -75,7 +75,7 @@ function LiveCountdown({ seatedMinutesAgo, estimatedDurationMinutes }: { seatedM
   const { text, showWarning } = formatTime(remainingMinutes, isOverdue);
 
   return (
-    <span className={`font-semibold flex items-center gap-1 ${isOverdue ? 'text-burgundy' : 'text-[#16a34a]'}`}>
+    <span className={`font-semibold flex items-center gap-1 ${isOverdue ? 'text-burgundy' : 'text-green-600'}`}>
       {showWarning && <ThiingsIcon name="alert-triangle" size="xs" />}
       {text}
     </span>
@@ -126,7 +126,7 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
                 <div className="font-semibold text-deep-charcoal text-lg">{party.customer_name}</div>
                 {/* Running Late indicator - shows when less than 10 minutes remaining */}
                 {!party.is_overdue && party.time_remaining_minutes > 0 && party.time_remaining_minutes <= 10 && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#d97706]/10 text-[#d97706] text-xs font-semibold rounded-full animate-pulse">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-600/10 text-amber-600 text-xs font-semibold rounded-full animate-pulse">
                     <ThiingsIcon name="clock" size="xs" pxSize={12} />
                     Running Late
                   </span>
@@ -164,7 +164,7 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
               </button>
               <button
                 onClick={() => handleCompleteService(party.service_id, party.customer_name)}
-                className="flex-1 px-3 py-2 text-sm bg-[#16a34a] hover:bg-[#15803d] text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-3 py-2 text-sm bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={completeServiceMutation.isPending}
               >
                 {completeServiceMutation.isPending && (

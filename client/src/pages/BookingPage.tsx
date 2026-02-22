@@ -180,8 +180,8 @@ export default function BookingPage() {
     return (
       <div className="min-h-screen bg-warm-white flex flex-col items-center justify-center p-6">
         <div className="bg-white border border-border-gray rounded-2xl p-8 max-w-md text-center">
-          <div className="w-16 h-16 bg-[#dc2626]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-[#dc2626]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 bg-red-600/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
@@ -214,12 +214,12 @@ export default function BookingPage() {
         {/* Left: Restaurant Info */}
         <div className="lg:flex-shrink-0 lg:w-[340px]">
           {/* Restaurant Image */}
-          <div className="w-full h-[220px] rounded-[20px] bg-gradient-to-br from-charcoal-dark to-[#44403C] mb-7 flex items-end p-6">
+          <div className="w-full h-[220px] rounded-[20px] bg-gradient-to-br from-charcoal-dark to-stone-700 mb-7 flex items-end p-6">
             <div>
               <h2 className="font-serif text-[28px] font-medium text-white tracking-tight mb-1">
                 {restaurant.name}
               </h2>
-              <p className="text-[13px] text-[#D6D3D1] font-light">
+              <p className="text-[13px] text-stone-300 font-light">
                 {restaurantType} &middot; {restaurant.city}, {restaurant.country}
               </p>
             </div>
@@ -237,7 +237,7 @@ export default function BookingPage() {
           <div className="flex items-center gap-3 p-4 bg-white border border-border-gray rounded-xl">
             <div className="text-2xl font-bold tracking-tight text-deep-charcoal">4.7</div>
             <div>
-              <div className="text-sm text-[#d97706] tracking-wider">★★★★☆</div>
+              <div className="text-sm text-amber-600 tracking-wider">★★★★☆</div>
               <div className="text-xs text-muted-stone">284 reviews on Google</div>
             </div>
           </div>
@@ -303,8 +303,8 @@ export default function BookingPage() {
                         selectedTime === slot.time
                           ? 'border-burgundy bg-[rgba(159,18,57,0.04)] text-burgundy font-semibold'
                           : slot.available
-                            ? 'border-border-gray bg-white text-stone-gray hover:border-[#D6D3D1] hover:bg-warm-white'
-                            : 'border-soft-gray bg-warm-white text-[#D6D3D1] cursor-not-allowed'
+                            ? 'border-border-gray bg-white text-stone-gray hover:border-stone-300 hover:bg-warm-white'
+                            : 'border-soft-gray bg-warm-white text-stone-300 cursor-not-allowed'
                       }`}
                     >
                       {formatTime(slot.time)}
@@ -328,7 +328,7 @@ export default function BookingPage() {
                   className={`w-12 h-12 rounded-xl border text-[15px] font-medium transition-colors ${
                     partySize === n
                       ? 'border-burgundy bg-[rgba(159,18,57,0.04)] text-burgundy font-bold'
-                      : 'border-border-gray bg-white text-stone-gray hover:border-[#D6D3D1]'
+                      : 'border-border-gray bg-white text-stone-gray hover:border-stone-300'
                   }`}
                 >
                   {n}
@@ -346,7 +346,7 @@ export default function BookingPage() {
                   className={`w-12 h-12 rounded-xl border text-[15px] font-medium transition-colors ${
                     partySize > 7
                       ? 'border-burgundy bg-[rgba(159,18,57,0.04)] text-burgundy font-bold'
-                      : 'border-border-gray bg-white text-stone-gray hover:border-[#D6D3D1]'
+                      : 'border-border-gray bg-white text-stone-gray hover:border-stone-300'
                   }`}
                 >
                   {partySize > 7 ? partySize : '8+'}
@@ -368,7 +368,7 @@ export default function BookingPage() {
                   value={customerName}
                   onChange={e => setCustomerName(e.target.value)}
                   placeholder="Your full name"
-                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-[#D6D3D1] focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
+                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
                 />
               </div>
               <div>
@@ -378,7 +378,7 @@ export default function BookingPage() {
                   value={customerPhone}
                   onChange={e => setCustomerPhone(e.target.value)}
                   placeholder="+34 612 345 678"
-                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-[#D6D3D1] focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
+                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
                 />
               </div>
             </div>
@@ -389,7 +389,7 @@ export default function BookingPage() {
                 value={customerEmail}
                 onChange={e => setCustomerEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-[#D6D3D1] focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
+                className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
               />
             </div>
             <div>
@@ -401,7 +401,7 @@ export default function BookingPage() {
                 onChange={e => setSpecialRequests(e.target.value)}
                 placeholder="Allergies, celebrations, seating preferences..."
                 rows={3}
-                className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-[#D6D3D1] focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)] resize-none"
+                className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)] resize-none"
               />
             </div>
           </div>
@@ -433,8 +433,8 @@ export default function BookingPage() {
 
           {/* Submit Error */}
           {submitError && (
-            <div className="bg-[#dc2626]/10 border border-[#dc2626]/20 rounded-xl p-3 mb-4">
-              <p className="text-sm text-[#dc2626]">{submitError}</p>
+            <div className="bg-red-600/10 border border-red-600/20 rounded-xl p-3 mb-4">
+              <p className="text-sm text-red-600">{submitError}</p>
             </div>
           )}
 

@@ -177,7 +177,7 @@ export default function AnalyticsGuide({ page = 'ml' }: AnalyticsGuideProps) {
                 </div>
                 <div className="flex-1">
                   <h4 className="font-bold text-deep-charcoal text-sm mb-1">{metric.term}</h4>
-                  <p className="text-xs text-[#16a34a] font-semibold mb-2">
+                  <p className="text-xs text-green-600 font-semibold mb-2">
                     → {metric.simple}
                   </p>
                 </div>
@@ -189,7 +189,7 @@ export default function AnalyticsGuide({ page = 'ml' }: AnalyticsGuideProps) {
                   <p className="text-stone-gray mt-1">{metric.example}</p>
                 </div>
                 <div className="text-xs">
-                  <span className="text-[#16a34a] font-semibold">✓ What's Good:</span>
+                  <span className="text-green-600 font-semibold">✓ What's Good:</span>
                   <p className="text-stone-gray mt-1">{metric.good}</p>
                 </div>
               </div>
@@ -198,11 +198,11 @@ export default function AnalyticsGuide({ page = 'ml' }: AnalyticsGuideProps) {
         })}
       </div>
 
-      <div className="mt-6 p-4 bg-[#d97706]/10 border border-[#d97706]/20 rounded-xl">
+      <div className="mt-6 p-4 bg-amber-600/10 border border-amber-600/20 rounded-xl">
         <div className="flex items-start gap-2">
           <ThiingsIcon name="info" pxSize={20} className="flex-shrink-0 mt-0.5" />
           <div className="text-sm">
-            <span className="font-semibold text-[#d97706]">Tip:</span>
+            <span className="font-semibold text-amber-600">Tip:</span>
             <span className="text-stone-gray ml-2">
               Hover over any metric with a <ThiingsIcon name="info" pxSize={12} /> icon for more details.
               Don't worry if some numbers are zero - your data will build up over time!

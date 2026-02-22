@@ -89,23 +89,23 @@ export default function UpgradePrompt({
         </div>
         <ul className="space-y-2 text-sm text-stone-gray">
           <li className="flex items-start gap-2">
-            <span className="text-[#16a34a] mt-0.5">✓</span>
+            <span className="text-green-600 mt-0.5">✓</span>
             <span>Unlimited reservations</span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-[#16a34a] mt-0.5">✓</span>
+            <span className="text-green-600 mt-0.5">✓</span>
             <span>Advanced analytics & insights</span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-[#16a34a] mt-0.5">✓</span>
+            <span className="text-green-600 mt-0.5">✓</span>
             <span>Waitlist management</span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-[#16a34a] mt-0.5">✓</span>
+            <span className="text-green-600 mt-0.5">✓</span>
             <span>Automated notifications</span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-[#16a34a] mt-0.5">✓</span>
+            <span className="text-green-600 mt-0.5">✓</span>
             <span>Priority support</span>
           </li>
         </ul>

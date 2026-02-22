@@ -51,18 +51,18 @@ export default function RevenueOpportunities() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-[#dc2626]';
-      case 'medium': return 'bg-[#d97706]';
-      case 'low': return 'bg-[#22c55e]';
+      case 'high': return 'bg-red-600';
+      case 'medium': return 'bg-amber-600';
+      case 'low': return 'bg-green-500';
       default: return 'bg-warm-stone';
     }
   };
 
   const getDifficultyBadge = (difficulty: string) => {
     switch (difficulty) {
-      case 'low': return 'bg-[#22c55e]/15 text-[#065f46]';
-      case 'medium': return 'bg-[#d97706]/15 text-[#92400e]';
-      case 'high': return 'bg-[#dc2626]/15 text-[#991b1b]';
+      case 'low': return 'bg-green-500/15 text-emerald-800';
+      case 'medium': return 'bg-amber-600/15 text-amber-800';
+      case 'high': return 'bg-red-600/15 text-red-800';
       default: return 'bg-soft-gray text-charcoal-dark';
     }
   };
@@ -101,7 +101,7 @@ export default function RevenueOpportunities() {
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-soft-gray/30 border-b border-border-gray">
           <div className="text-center">
-            <div className="text-3xl font-bold text-[#16a34a]">{formatCurrency(summary.total_potential_revenue)}</div>
+            <div className="text-3xl font-bold text-green-600">{formatCurrency(summary.total_potential_revenue)}</div>
             <div className="text-xs text-warm-stone mt-1">Total Potential</div>
           </div>
           <div className="text-center">
@@ -113,7 +113,7 @@ export default function RevenueOpportunities() {
             <div className="text-xs text-warm-stone mt-1">Quick Wins</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-[#dc2626]">{summary.high_priority}</div>
+            <div className="text-3xl font-bold text-red-600">{summary.high_priority}</div>
             <div className="text-xs text-warm-stone mt-1">High Priority</div>
           </div>
         </div>
@@ -144,10 +144,10 @@ export default function RevenueOpportunities() {
 
                 {/* Metrics */}
                 <div className="grid grid-cols-2 gap-4 mt-4">
-                  <div className="bg-[#22c55e]/10 border border-[#22c55e]/20 rounded-lg p-3">
-                    <div className="text-xs text-[#16a34a] font-medium mb-1">Potential Gain</div>
-                    <div className="text-2xl font-bold text-[#15803d]">{formatCurrency(opp.potential_gain)}</div>
-                    <div className="text-xs text-[#16a34a] mt-1">{opp.recovery_rate} recovery rate</div>
+                  <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                    <div className="text-xs text-green-600 font-medium mb-1">Potential Gain</div>
+                    <div className="text-2xl font-bold text-green-700">{formatCurrency(opp.potential_gain)}</div>
+                    <div className="text-xs text-green-600 mt-1">{opp.recovery_rate} recovery rate</div>
                   </div>
                   <div className="bg-soft-gray/50 border border-border-gray rounded-lg p-3">
                     <div className="text-xs text-warm-stone font-medium mb-1">Timeline</div>

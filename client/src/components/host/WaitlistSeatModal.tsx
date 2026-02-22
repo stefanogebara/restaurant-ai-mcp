@@ -96,7 +96,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
               </div>
               <div>
                 <div className="text-sm text-muted-stone mb-1">Status</div>
-                <div className="font-semibold text-[#d97706]">{entry.status}</div>
+                <div className="font-semibold text-amber-600">{entry.status}</div>
               </div>
             </div>
             {entry.special_requests && (
@@ -119,7 +119,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
               </button>
               <button
                 onClick={handleFindTables}
-                className="flex-1 px-4 py-3 bg-[#16a34a] hover:bg-[#15803d] text-white font-semibold rounded-xl transition-colors disabled:bg-muted-stone"
+                className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-colors disabled:bg-muted-stone"
                 disabled={findTablesMutation.isPending}
               >
                 {findTablesMutation.isPending ? 'Finding Tables...' : 'Find Available Tables'}
@@ -140,8 +140,8 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
                       border-2 rounded-xl p-4 cursor-pointer transition-all
                       ${
                         selectedTables.join(',') === option.tables.join(',')
-                          ? 'border-[#16a34a] bg-[#16a34a]/10'
-                          : 'border-border-gray hover:border-[#16a34a]/50 bg-white'
+                          ? 'border-green-600 bg-green-600/10'
+                          : 'border-border-gray hover:border-green-600/50 bg-white'
                       }
                     `}
                   >
@@ -155,7 +155,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-medium text-[#16a34a]">
+                        <div className="text-sm font-medium text-green-600">
                           Score: {option.score}
                         </div>
                         <div className="text-xs text-muted-stone capitalize">
@@ -177,7 +177,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
                 </button>
                 <button
                   onClick={handleProceedToSeat}
-                  className="flex-1 px-4 py-3 bg-[#16a34a] hover:bg-[#15803d] text-white font-semibold rounded-xl transition-colors disabled:bg-muted-stone"
+                  className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-colors disabled:bg-muted-stone"
                   disabled={selectedTables.length === 0}
                 >
                   Proceed to Seat
@@ -193,7 +193,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
           )}
 
           {findTablesMutation.data && !findTablesMutation.data.can_accommodate && (
-            <div className="text-sm text-[#d97706] bg-[#d97706]/10 border border-[#d97706]/20 p-4 rounded-xl mt-4">
+            <div className="text-sm text-amber-600 bg-amber-600/10 border border-amber-600/20 p-4 rounded-xl mt-4">
               No suitable tables currently available. Estimated wait: {findTablesMutation.data.estimated_wait_time}
             </div>
           )}

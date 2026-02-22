@@ -178,7 +178,7 @@ export default function CustomerPortal() {
                     value={phone}
                     onChange={(e) => { setPhone(e.target.value); setLookupMethod('phone'); }}
                     placeholder="+34 612 345 678"
-                    className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-[#D6D3D1] focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
+                    className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
                     onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
                   />
                 </div>
@@ -198,7 +198,7 @@ export default function CustomerPortal() {
                     value={reservationId}
                     onChange={(e) => { setReservationId(e.target.value); setLookupMethod('id'); }}
                     placeholder="e.g. CEL-2026-0218-A7K3"
-                    className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-[#D6D3D1] focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
+                    className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
                     onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
                   />
                 </div>
@@ -228,10 +228,10 @@ export default function CustomerPortal() {
                   <span className="text-[15px] font-semibold">Your Reservation</span>
                   <span className={`text-[11px] font-semibold px-3 py-1 rounded-full ${
                     reservation.status === 'Confirmed'
-                      ? 'bg-[rgba(22,163,74,0.08)] text-[#16a34a]'
+                      ? 'bg-[rgba(22,163,74,0.08)] text-green-600'
                       : reservation.status === 'Cancelled'
-                      ? 'bg-[rgba(220,38,38,0.08)] text-[#dc2626]'
-                      : 'bg-[rgba(217,119,6,0.08)] text-[#d97706]'
+                      ? 'bg-[rgba(220,38,38,0.08)] text-red-600'
+                      : 'bg-[rgba(217,119,6,0.08)] text-amber-600'
                   }`}>
                     {reservation.status}
                   </span>
@@ -296,7 +296,7 @@ export default function CustomerPortal() {
                       </div>
                       <div>
                         <label className="block text-[13px] font-medium text-stone-gray mb-1.5">Special Requests</label>
-                        <textarea value={modifiedData.special_requests || ''} onChange={(e) => setModifiedData({ ...modifiedData, special_requests: e.target.value })} rows={3} placeholder="Allergies, celebrations, seating preferences..." className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-[#D6D3D1] focus:outline-none focus:border-burgundy resize-none" />
+                        <textarea value={modifiedData.special_requests || ''} onChange={(e) => setModifiedData({ ...modifiedData, special_requests: e.target.value })} rows={3} placeholder="Allergies, celebrations, seating preferences..." className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy resize-none" />
                       </div>
                       <div className="flex gap-2.5 pt-2">
                         <button onClick={() => { setIsModifying(false); setModifiedData(reservation); }} className="flex-1 py-3 border border-border-gray bg-white text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">Cancel</button>
@@ -314,7 +314,7 @@ export default function CustomerPortal() {
                     <button onClick={() => setIsModifying(true)} className="flex-1 py-3 border border-border-gray bg-white text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">
                       Edit Reservation
                     </button>
-                    <button onClick={handleCancel} disabled={isLoading} className="flex-1 py-3 border border-[rgba(220,38,38,0.2)] bg-[rgba(220,38,38,0.04)] text-[#dc2626] font-medium rounded-[10px] text-[13px] hover:bg-[rgba(220,38,38,0.08)] transition-colors disabled:opacity-50">
+                    <button onClick={handleCancel} disabled={isLoading} className="flex-1 py-3 border border-[rgba(220,38,38,0.2)] bg-[rgba(220,38,38,0.04)] text-red-600 font-medium rounded-[10px] text-[13px] hover:bg-[rgba(220,38,38,0.08)] transition-colors disabled:opacity-50">
                       Cancel Reservation
                     </button>
                   </div>

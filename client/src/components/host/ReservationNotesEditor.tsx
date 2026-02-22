@@ -125,8 +125,8 @@ export default function ReservationNotesEditor({
               onClick={() => setCustomerType('Local')}
               className={`p-4 rounded-xl border-2 transition-all ${
                 customerType === 'Local'
-                  ? 'bg-[#16a34a]/10 border-[#16a34a] text-[#16a34a]'
-                  : 'bg-soft-gray border-border-gray text-stone-gray hover:border-[#16a34a]/50'
+                  ? 'bg-green-600/10 border-green-600 text-green-600'
+                  : 'bg-soft-gray border-border-gray text-stone-gray hover:border-green-600/50'
               }`}
             >
               <div className="text-center">
@@ -151,8 +151,8 @@ export default function ReservationNotesEditor({
                 onClick={() => toggleDietaryRestriction(restriction)}
                 className={`p-3 rounded-xl border-2 transition-all flex items-center justify-between ${
                   dietaryRestrictions.includes(restriction)
-                    ? 'bg-[#16a34a]/10 border-[#16a34a] text-[#16a34a]'
-                    : 'bg-soft-gray border-border-gray text-stone-gray hover:border-[#16a34a]/50'
+                    ? 'bg-green-600/10 border-green-600 text-green-600'
+                    : 'bg-soft-gray border-border-gray text-stone-gray hover:border-green-600/50'
                 }`}
               >
                 <span className="font-medium">{restriction}</span>
@@ -180,8 +180,8 @@ export default function ReservationNotesEditor({
                 onClick={() => setLanguagePreference(lang.code)}
                 className={`p-3 rounded-xl border-2 transition-all ${
                   languagePreference === lang.code
-                    ? 'bg-[#7c3aed]/10 border-[#7c3aed] text-[#7c3aed]'
-                    : 'bg-soft-gray border-border-gray text-stone-gray hover:border-[#7c3aed]/50'
+                    ? 'bg-violet-600/10 border-violet-600 text-violet-600'
+                    : 'bg-soft-gray border-border-gray text-stone-gray hover:border-violet-600/50'
                 }`}
               >
                 <div className="text-2xl mb-1">{lang.flag}</div>
@@ -209,8 +209,8 @@ export default function ReservationNotesEditor({
                 onClick={() => setSeatingPreference(seat.value)}
                 className={`p-3 rounded-xl border-2 transition-all ${
                   seatingPreference === seat.value
-                    ? 'bg-[#d97706]/10 border-[#d97706] text-[#d97706]'
-                    : 'bg-soft-gray border-border-gray text-stone-gray hover:border-[#d97706]/50'
+                    ? 'bg-amber-600/10 border-amber-600 text-amber-600'
+                    : 'bg-soft-gray border-border-gray text-stone-gray hover:border-amber-600/50'
                 }`}
               >
                 <div className="text-2xl mb-1">{seat.icon}</div>
@@ -257,8 +257,8 @@ export default function ReservationNotesEditor({
                 onClick={() => setAccessibilityNeeds(need)}
                 className={`p-3 rounded-xl border-2 transition-all ${
                   accessibilityNeeds === need
-                    ? 'bg-[#0891b2]/10 border-[#0891b2] text-[#0891b2]'
-                    : 'bg-soft-gray border-border-gray text-stone-gray hover:border-[#0891b2]/50'
+                    ? 'bg-cyan-600/10 border-cyan-600 text-cyan-600'
+                    : 'bg-soft-gray border-border-gray text-stone-gray hover:border-cyan-600/50'
                 }`}
               >
                 <div className="font-medium">{need}</div>

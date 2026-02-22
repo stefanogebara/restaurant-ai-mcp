@@ -409,9 +409,9 @@ export default function VoiceSettingsPage() {
               {engineConfig?.voice_engine_status && (
                 <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
                   engineConfig.voice_engine_status === 'active'
-                    ? 'bg-[rgba(22,163,74,0.08)] text-[#16a34a]'
+                    ? 'bg-[rgba(22,163,74,0.08)] text-green-600'
                     : engineConfig.voice_engine_status === 'testing'
-                    ? 'bg-[rgba(217,119,6,0.08)] text-[#d97706]'
+                    ? 'bg-[rgba(217,119,6,0.08)] text-amber-600'
                     : 'bg-soft-gray text-stone-gray'
                 }`}>
                   {engineConfig.voice_engine_status.charAt(0).toUpperCase() + engineConfig.voice_engine_status.slice(1)}
@@ -468,7 +468,7 @@ export default function VoiceSettingsPage() {
             </div>
 
             {pendingEngine && (
-              <p className="mt-3 text-xs text-[#d97706] bg-[#d97706]/10 rounded-lg px-3 py-2">
+              <p className="mt-3 text-xs text-amber-600 bg-amber-600/10 rounded-lg px-3 py-2">
                 Engine change pending. Click "Save Changes" to apply.
               </p>
             )}
@@ -491,7 +491,7 @@ export default function VoiceSettingsPage() {
                       {pendingVoiceId ? (
                         <span>
                           {selectedBrowserVoice?.name || pendingVoiceId}
-                          <span className="ml-2 text-xs font-normal text-[#d97706] bg-[#d97706]/10 px-2 py-0.5 rounded-full">
+                          <span className="ml-2 text-xs font-normal text-amber-600 bg-amber-600/10 px-2 py-0.5 rounded-full">
                             pending
                           </span>
                         </span>
@@ -666,7 +666,7 @@ export default function VoiceSettingsPage() {
                   </div>
 
                   {pendingLanguage && pendingLanguage !== config?.language && (
-                    <p className="mt-3 text-xs text-[#d97706] bg-[#d97706]/10 rounded-lg px-3 py-2">
+                    <p className="mt-3 text-xs text-amber-600 bg-amber-600/10 rounded-lg px-3 py-2">
                       Changing the language will update your agent's greeting message. The voice will speak in the selected language using its multilingual capabilities.
                     </p>
                   )}
@@ -756,7 +756,7 @@ export default function VoiceSettingsPage() {
                 </div>
 
                 {pendingOpenAIVoice && pendingOpenAIVoice !== engineConfig?.openai_voice_id && (
-                  <p className="mt-3 text-xs text-[#d97706] bg-[#d97706]/10 rounded-lg px-3 py-2">
+                  <p className="mt-3 text-xs text-amber-600 bg-amber-600/10 rounded-lg px-3 py-2">
                     Voice change pending. Click "Save Changes" to apply.
                   </p>
                 )}

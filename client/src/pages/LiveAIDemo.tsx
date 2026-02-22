@@ -78,8 +78,8 @@ export default function LiveAIDemo() {
           )}
 
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-[rgba(22,163,74,0.06)] rounded-full mt-6">
-            <div className="w-2 h-2 rounded-full bg-[#16a34a]" />
-            <span className="text-[13px] font-medium text-[#16a34a]">AI Agent Online</span>
+            <div className="w-2 h-2 rounded-full bg-green-600" />
+            <span className="text-[13px] font-medium text-green-600">AI Agent Online</span>
           </div>
         </div>
       </section>

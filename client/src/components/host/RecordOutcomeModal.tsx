@@ -119,8 +119,8 @@ export default function RecordOutcomeModal({
                 onClick={() => setOutcome('showed_up')}
                 className={`p-4 rounded-xl border-2 transition-all ${
                   outcome === 'showed_up'
-                    ? 'border-[#16a34a] bg-[#16a34a]/10'
-                    : 'border-border-gray hover:border-[#16a34a]/50'
+                    ? 'border-green-600 bg-green-600/10'
+                    : 'border-border-gray hover:border-green-600/50'
                 }`}
               >
                 <div className="flex justify-center mb-2"><ThiingsIcon name="check-circle" pxSize={32} /></div>
@@ -145,8 +145,8 @@ export default function RecordOutcomeModal({
                 onClick={() => setOutcome('cancelled')}
                 className={`p-4 rounded-xl border-2 transition-all ${
                   outcome === 'cancelled'
-                    ? 'border-[#d97706] bg-[#d97706]/10'
-                    : 'border-border-gray hover:border-[#d97706]/50'
+                    ? 'border-amber-600 bg-amber-600/10'
+                    : 'border-border-gray hover:border-amber-600/50'
                 }`}
               >
                 <div className="flex justify-center mb-2"><ThiingsIcon name="ban" pxSize={32} /></div>
@@ -194,8 +194,8 @@ export default function RecordOutcomeModal({
                       onClick={() => setInterventionType('deposit_required')}
                       className={`p-3 rounded-xl border-2 transition-all ${
                         interventionType === 'deposit_required'
-                          ? 'border-[#7c3aed] bg-[#7c3aed]/10'
-                          : 'border-border-gray hover:border-[#7c3aed]/50'
+                          ? 'border-violet-600 bg-violet-600/10'
+                          : 'border-border-gray hover:border-violet-600/50'
                       }`}
                     >
                       <div className="flex justify-center mb-1"><ThiingsIcon name="credit-card" pxSize={20} /></div>
@@ -207,8 +207,8 @@ export default function RecordOutcomeModal({
                       onClick={() => setInterventionType('premium_seating')}
                       className={`p-3 rounded-xl border-2 transition-all ${
                         interventionType === 'premium_seating'
-                          ? 'border-[#d97706] bg-[#d97706]/10'
-                          : 'border-border-gray hover:border-[#d97706]/50'
+                          ? 'border-amber-600 bg-amber-600/10'
+                          : 'border-border-gray hover:border-amber-600/50'
                       }`}
                     >
                       <div className="flex justify-center mb-1"><ThiingsIcon name="star" pxSize={20} /></div>

@@ -103,7 +103,7 @@ export default function WhatsAppSettingsPage() {
             <button
               onClick={() => setPendingEnabled(!currentEnabled)}
               className={`relative w-11 h-6 rounded-full transition-colors ${
-                currentEnabled ? 'bg-[#25D366]' : 'bg-[#D6D3D1]'
+                currentEnabled ? 'bg-whatsapp' : 'bg-stone-300'
               }`}
               aria-label={currentEnabled ? 'Disable WhatsApp' : 'Enable WhatsApp'}
               role="switch"
@@ -128,7 +128,7 @@ export default function WhatsAppSettingsPage() {
               placeholder="+5511999999999"
               value={currentPhone}
               onChange={(e) => setPendingPhone(e.target.value)}
-              className="w-full px-3 py-2 border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-[#25D366]/40 focus:border-[#25D366]"
+              className="w-full px-3 py-2 border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-whatsapp/40 focus:border-whatsapp"
             />
             <p className="text-xs text-warm-stone mt-1">Used for wa.me link on your booking page</p>
           </div>
@@ -159,7 +159,7 @@ export default function WhatsAppSettingsPage() {
                 href={status.wa_me_link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-[#25D366] hover:underline font-mono break-all"
+                className="text-sm text-whatsapp hover:underline font-mono break-all"
               >
                 {status.wa_me_link}
               </a>
@@ -212,7 +212,7 @@ export default function WhatsAppSettingsPage() {
               placeholder="+5511999999999"
               value={testPhone}
               onChange={(e) => setTestPhone(e.target.value)}
-              className="flex-1 px-3 py-2 border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-[#25D366]/40 focus:border-[#25D366]"
+              className="flex-1 px-3 py-2 border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-whatsapp/40 focus:border-whatsapp"
               aria-label="Test phone number"
             />
             <button
@@ -220,7 +220,7 @@ export default function WhatsAppSettingsPage() {
               disabled={!testPhone || testMutation.isPending || !status?.api_configured}
               className={`px-5 py-2 rounded-xl text-sm font-semibold transition-colors ${
                 testPhone && status?.api_configured
-                  ? 'bg-[#25D366] hover:bg-[#20BD5A] text-white'
+                  ? 'bg-whatsapp hover:bg-spotify text-white'
                   : 'bg-border-gray text-muted-stone cursor-not-allowed'
               }`}
             >

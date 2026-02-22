@@ -115,22 +115,22 @@ export default function LTVDashboard() {
 
   const getTierColor = (tier: string) => {
     switch (tier) {
-      case 'vip': return 'text-[#7c3aed]';
+      case 'vip': return 'text-violet-600';
       case 'regular': return 'text-burgundy';
-      case 'occasional': return 'text-[#16a34a]';
+      case 'occasional': return 'text-green-600';
       case 'new': return 'text-stone-gray';
-      case 'at_risk': return 'text-[#d97706]';
+      case 'at_risk': return 'text-amber-600';
       default: return 'text-stone-gray';
     }
   };
 
   const getTierBgColor = (tier: string) => {
     switch (tier) {
-      case 'vip': return 'bg-[#7c3aed]/10 border-[#7c3aed]/30';
+      case 'vip': return 'bg-violet-600/10 border-violet-600/30';
       case 'regular': return 'bg-burgundy/10 border-burgundy/30';
-      case 'occasional': return 'bg-[#16a34a]/10 border-[#16a34a]/30';
+      case 'occasional': return 'bg-green-600/10 border-green-600/30';
       case 'new': return 'bg-stone-gray/10 border-stone-gray/30';
-      case 'at_risk': return 'bg-[#d97706]/10 border-[#d97706]/30';
+      case 'at_risk': return 'bg-amber-600/10 border-amber-600/30';
       default: return 'bg-stone-gray/10 border-stone-gray/30';
     }
   };
@@ -221,7 +221,7 @@ export default function LTVDashboard() {
             </div>
 
             {/* Average LTV */}
-            <div className="p-4 bg-[#16a34a]/10 rounded-xl border border-[#16a34a]/20">
+            <div className="p-4 bg-green-600/10 rounded-xl border border-green-600/20">
               <div className="flex items-center justify-between mb-2">
                 <ThiingsIcon name="trending-up" size="sm" />
                 <span className="text-2xl font-bold text-deep-charcoal">{formatCurrency(stats.avg_ltv)}</span>
@@ -247,7 +247,7 @@ Focus retention efforts on high-LTV customers"
             </div>
 
             {/* Total LTV */}
-            <div className="p-4 bg-[#7c3aed]/10 rounded-xl border border-[#7c3aed]/20">
+            <div className="p-4 bg-violet-600/10 rounded-xl border border-violet-600/20">
               <div className="flex items-center justify-between mb-2">
                 <ThiingsIcon name="dollar" size="sm" />
                 <span className="text-2xl font-bold text-deep-charcoal">{formatCurrency(stats.total_ltv)}</span>
@@ -291,7 +291,7 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
                       </div>
                       <div className="w-full bg-white h-2 rounded-full overflow-hidden">
                         <div
-                          className={`h-full ${tier === 'vip' ? 'bg-[#7c3aed]' : tier === 'regular' ? 'bg-burgundy' : tier === 'occasional' ? 'bg-[#16a34a]' : tier === 'new' ? 'bg-stone-gray' : 'bg-[#d97706]'}`}
+                          className={`h-full ${tier === 'vip' ? 'bg-violet-600' : tier === 'regular' ? 'bg-burgundy' : tier === 'occasional' ? 'bg-green-600' : tier === 'new' ? 'bg-stone-gray' : 'bg-amber-600'}`}
                           style={{ width: `${percentage}%` }}
                         />
                       </div>
@@ -304,7 +304,7 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
 
           {/* Top VIP Customers */}
           {topVIPs.length > 0 && (
-            <div className="p-4 bg-[#7c3aed]/10 rounded-xl border border-[#7c3aed]/20">
+            <div className="p-4 bg-violet-600/10 rounded-xl border border-violet-600/20">
               <div className="flex items-center gap-2 mb-3">
                 <ThiingsIcon name="star" size="xs" />
                 <h3 className="text-sm font-semibold text-deep-charcoal">Top VIP Customers</h3>
@@ -313,8 +313,8 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
                 {topVIPs.map((customer, index) => (
                   <div key={customer.customer_id} className="flex items-center justify-between p-2 bg-white/50 rounded-xl">
                     <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-[#7c3aed]/20 flex items-center justify-center">
-                        <span className="text-xs font-bold text-[#7c3aed]">#{index + 1}</span>
+                      <div className="w-6 h-6 rounded-full bg-violet-600/20 flex items-center justify-center">
+                        <span className="text-xs font-bold text-violet-600">#{index + 1}</span>
                       </div>
                       <div>
                         <div className="text-sm font-medium text-deep-charcoal">{customer.customer_id}</div>
@@ -322,7 +322,7 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-[#7c3aed]">{formatCurrency(customer.lifetime_value)}</div>
+                      <div className="text-sm font-bold text-violet-600">{formatCurrency(customer.lifetime_value)}</div>
                       <div className="text-xs text-stone-gray">{formatCurrency(customer.total_revenue)} spent</div>
                     </div>
                   </div>
@@ -333,7 +333,7 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
 
           {/* At-Risk Customers */}
           {atRiskCustomers.length > 0 && (
-            <div className="p-4 bg-[#d97706]/10 rounded-xl border border-[#d97706]/20">
+            <div className="p-4 bg-amber-600/10 rounded-xl border border-amber-600/20">
               <div className="flex items-center gap-2 mb-3">
                 <ThiingsIcon name="alert-triangle" size="xs" />
                 <h3 className="text-sm font-semibold text-deep-charcoal">High Churn Risk ({stats.high_risk_customers})</h3>
@@ -344,7 +344,7 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
                     <div className="flex items-center gap-3">
                       <div className="flex flex-col items-center">
                         <ThiingsIcon name="trending-down" size="xs" />
-                        <span className="text-xs font-bold text-[#d97706]">{customer.churn_risk_score}%</span>
+                        <span className="text-xs font-bold text-amber-600">{customer.churn_risk_score}%</span>
                       </div>
                       <div>
                         <div className="text-sm font-medium text-deep-charcoal">{customer.customer_id}</div>
@@ -361,7 +361,7 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
                       </div>
                       <button
                         onClick={() => openCampaignModal(customer)}
-                        className="p-2 bg-[#d97706]/20 hover:bg-[#d97706]/30 rounded-lg transition-colors"
+                        className="p-2 bg-amber-600/20 hover:bg-amber-600/30 rounded-lg transition-colors"
                         title="Send retention campaign"
                       >
                         <ThiingsIcon name="mail" size="xs" />
@@ -371,7 +371,7 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
                 ))}
               </div>
               <button
-                className="w-full mt-3 px-4 py-2 bg-[#d97706] hover:bg-[#b45309] text-white text-sm font-medium rounded-xl transition-colors"
+                className="w-full mt-3 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-xl transition-colors"
                 onClick={() => atRiskCustomers[0] && openCampaignModal(atRiskCustomers[0])}
               >
                 Launch Retention Campaign

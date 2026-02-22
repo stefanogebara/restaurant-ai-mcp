@@ -68,7 +68,7 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
           {/* Completed Services */}
           <div className="flex items-center justify-between p-3 bg-soft-gray rounded-lg">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#16a34a] rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
                 <ThiingsIcon name="check" size="sm" />
               </div>
               <div>
@@ -82,7 +82,7 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
           {/* Avg Party Size */}
           <div className="flex items-center justify-between p-3 bg-soft-gray rounded-lg">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#7c3aed] rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center">
                 <ThiingsIcon name="users" size="sm" />
               </div>
               <div>
@@ -96,7 +96,7 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
           {/* Avg Service Time */}
           <div className="flex items-center justify-between p-3 bg-soft-gray rounded-lg">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#d97706] rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center">
                 <ThiingsIcon name="clock" size="sm" />
               </div>
               <div>

@@ -221,7 +221,7 @@ export default function Sidebar() {
                         ${isCollapsed ? 'justify-center px-4 py-2.5' : 'px-7 py-2.5'}
                         ${active
                           ? 'text-white bg-[rgba(159,18,57,0.1)] border-l-2 border-l-burgundy font-medium'
-                          : 'text-muted-stone hover:text-[#D6D3D1] hover:bg-white/[0.03] border-l-2 border-l-transparent'
+                          : 'text-muted-stone hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
                         }
                       `}
                       title={isCollapsed ? item.label : undefined}
@@ -259,12 +259,12 @@ export default function Sidebar() {
                   className="w-8 h-8 rounded-full flex-shrink-0"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-burgundy to-[#be123c] flex-shrink-0" />
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-burgundy to-rose-700 flex-shrink-0" />
               )}
               {!isCollapsed && (
                 <>
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-[13px] font-medium text-[#D6D3D1] truncate">
+                    <p className="text-[13px] font-medium text-stone-300 truncate">
                       {userName}
                     </p>
                     <p className="text-[11px] text-warm-stone truncate">
@@ -281,14 +281,14 @@ export default function Sidebar() {
             {/* Settings Dropdown */}
             {isSettingsOpen && (
               <div className={`
-                absolute bottom-20 bg-charcoal-dark border border-[#3a3533] rounded-xl shadow-2xl overflow-hidden
+                absolute bottom-20 bg-charcoal-dark border border-stone-mid rounded-xl shadow-2xl overflow-hidden
                 ${isCollapsed ? 'left-20 w-56' : 'left-4 right-4'}
               `}>
                 {/* Language Selector */}
                 <div className="relative">
                   <button
                     onClick={() => setIsLanguageOpen(!isLanguageOpen)}
-                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/[0.05] transition-colors text-left text-[#D6D3D1]"
+                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/[0.05] transition-colors text-left text-stone-300"
                   >
                     <ThiingsIcon name="globe" pxSize={16} />
                     <span className="flex-1 text-sm">{t('common.language')}</span>
@@ -296,14 +296,14 @@ export default function Sidebar() {
                   </button>
 
                   {isLanguageOpen && (
-                    <div className="border-t border-[#3a3533] bg-deep-charcoal">
+                    <div className="border-t border-stone-mid bg-deep-charcoal">
                       {languageOptions.map((lang) => (
                         <button
                           key={lang.code}
                           onClick={() => handleLanguageChange(lang.code)}
                           className={`
                             w-full px-4 py-2 flex items-center gap-3 hover:bg-white/[0.05] transition-colors text-left text-sm
-                            ${i18n.language === lang.code ? 'bg-[rgba(159,18,57,0.15)] text-[#e11d48] font-medium' : 'text-muted-stone'}
+                            ${i18n.language === lang.code ? 'bg-[rgba(159,18,57,0.15)] text-rose-600 font-medium' : 'text-muted-stone'}
                           `}
                         >
                           <span className="text-lg">{lang.flag}</span>
@@ -317,12 +317,12 @@ export default function Sidebar() {
                   )}
                 </div>
 
-                <div className="border-t border-[#3a3533]" />
+                <div className="border-t border-stone-mid" />
 
                 {/* Logout */}
                 <button
                   onClick={handleLogout}
-                  className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[#dc2626]/10 text-[#dc2626] transition-colors"
+                  className="w-full px-4 py-3 flex items-center gap-3 hover:bg-red-600/10 text-red-600 transition-colors"
                 >
                   <ThiingsIcon name="logout" pxSize={16} />
                   <span className="text-sm">{t('common.signOut')}</span>

@@ -22,24 +22,24 @@ export default function Toast({ message, type, onClose, duration = 3000 }: Toast
     switch (type) {
       case 'success':
         return {
-          bg: 'bg-[#10b981]/20 border-[#10b981]/50',
+          bg: 'bg-emerald-500/20 border-emerald-500/50',
           icon: '✅',
-          iconBg: 'bg-[#10b981]/30',
-          text: 'text-[#34d399]',
+          iconBg: 'bg-emerald-500/30',
+          text: 'text-emerald-400',
         };
       case 'error':
         return {
-          bg: 'bg-[#ef4444]/20 border-[#ef4444]/50',
+          bg: 'bg-red-500/20 border-red-500/50',
           icon: '❌',
-          iconBg: 'bg-[#ef4444]/30',
-          text: 'text-[#f87171]',
+          iconBg: 'bg-red-500/30',
+          text: 'text-red-400',
         };
       case 'info':
         return {
-          bg: 'bg-[#3b82f6]/20 border-[#3b82f6]/50',
+          bg: 'bg-blue-500/20 border-blue-500/50',
           icon: 'ℹ️',
-          iconBg: 'bg-[#3b82f6]/30',
-          text: 'text-[#60a5fa]',
+          iconBg: 'bg-blue-500/30',
+          text: 'text-blue-400',
         };
     }
   };

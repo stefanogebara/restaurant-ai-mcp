@@ -180,7 +180,7 @@ export default function CustomerProfileView() {
   const getTierBadge = () => {
     const confidence = profile?.profile_confidence || 0;
     if (confidence >= 80) return { label: 'VIP', color: 'bg-burgundy text-white' };
-    if (confidence >= 50) return { label: 'Regular', color: 'bg-[#7c3aed]/20 text-[#7c3aed]' };
+    if (confidence >= 50) return { label: 'Regular', color: 'bg-violet-600/20 text-violet-600' };
     return { label: 'New', color: 'bg-stone-gray/20 text-stone-gray' };
   };
 
@@ -190,17 +190,17 @@ export default function CustomerProfileView() {
     const colors: Record<string, string> = {
       solo: 'bg-stone-gray/10 text-stone-gray border-stone-gray/30',
       couple: 'bg-burgundy/10 text-burgundy border-burgundy/30',
-      family: 'bg-[#7c3aed]/10 text-[#7c3aed] border-[#7c3aed]/30',
-      business: 'bg-[#d97706]/10 text-[#d97706] border-[#d97706]/30',
-      group: 'bg-[#16a34a]/10 text-[#16a34a] border-[#16a34a]/30'
+      family: 'bg-violet-600/10 text-violet-600 border-violet-600/30',
+      business: 'bg-amber-600/10 text-amber-600 border-amber-600/30',
+      group: 'bg-green-600/10 text-green-600 border-green-600/30'
     };
     return colors[style] || colors.solo;
   };
 
   const getSentimentColor = (sentiment: string) => {
-    if (sentiment.includes('positive') || sentiment === 'happy' || sentiment === 'satisfied') return 'text-[#16a34a]';
-    if (sentiment.includes('negative') || sentiment === 'frustrated' || sentiment === 'angry') return 'text-[#dc2626]';
-    return 'text-[#d97706]';
+    if (sentiment.includes('positive') || sentiment === 'happy' || sentiment === 'satisfied') return 'text-green-600';
+    if (sentiment.includes('negative') || sentiment === 'frustrated' || sentiment === 'angry') return 'text-red-600';
+    return 'text-amber-600';
   };
 
   const formatCurrency = (val: number | null) => {
@@ -219,7 +219,7 @@ export default function CustomerProfileView() {
       <div className="bg-white rounded-xl border border-border-gray p-6 shadow-lg">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-[#7c3aed]/10 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-violet-600/10 flex items-center justify-center">
               <ThiingsIcon name="user" pxSize={32} />
             </div>
             <div>
@@ -227,7 +227,7 @@ export default function CustomerProfileView() {
                 <h1 className="text-2xl font-bold font-serif text-deep-charcoal">{displayName}</h1>
                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${tier.color}`}>{tier.label}</span>
                 {textSignals?.vip_signals && (
-                  <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#d97706]/20 text-[#d97706]">
+                  <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-600/20 text-amber-600">
                     <ThiingsIcon name="star" pxSize={12} className="inline mr-1" />VIP Signals
                   </span>
                 )}
@@ -267,7 +267,7 @@ export default function CustomerProfileView() {
               <span key={src} className="px-2 py-0.5 bg-soft-gray rounded-full text-xs text-stone-gray">{src.replace('_', ' ')}</span>
             ))}
             {profile.analysis_version && (
-              <span className="px-2 py-0.5 bg-[#7c3aed]/10 rounded-full text-xs text-[#7c3aed]">{profile.analysis_version}</span>
+              <span className="px-2 py-0.5 bg-violet-600/10 rounded-full text-xs text-violet-600">{profile.analysis_version}</span>
             )}
           </div>
         )}
@@ -362,7 +362,7 @@ export default function CustomerProfileView() {
                 <div className="text-xs text-stone-gray mb-1">Dietary Restrictions</div>
                 <div className="flex flex-wrap gap-1">
                   {profile.dietary_restrictions.map((d) => (
-                    <span key={d} className="px-2 py-0.5 bg-[#dc2626]/10 text-[#dc2626] text-xs rounded-full">{d}</span>
+                    <span key={d} className="px-2 py-0.5 bg-red-600/10 text-red-600 text-xs rounded-full">{d}</span>
                   ))}
                 </div>
               </div>
@@ -374,7 +374,7 @@ export default function CustomerProfileView() {
                 <div className="text-xs text-stone-gray mb-1">Cuisine Preferences</div>
                 <div className="flex flex-wrap gap-1">
                   {profile.cuisine_preferences.map((c) => (
-                    <span key={c} className="px-2 py-0.5 bg-[#16a34a]/10 text-[#16a34a] text-xs rounded-full">{c}</span>
+                    <span key={c} className="px-2 py-0.5 bg-green-600/10 text-green-600 text-xs rounded-full">{c}</span>
                   ))}
                 </div>
               </div>
@@ -400,8 +400,8 @@ export default function CustomerProfileView() {
               <div className="text-xs text-stone-gray mb-1">Feedback Sentiment</div>
               <div className={`text-sm font-medium capitalize ${getSentimentColor(profile?.feedback_sentiment || 'neutral')}`}>
                 {profile?.feedback_sentiment || 'Neutral'}
-                {(profile?.compliment_count || 0) > 0 && <span className="text-[#16a34a] ml-2">+{profile?.compliment_count} compliments</span>}
-                {(profile?.complaint_count || 0) > 0 && <span className="text-[#dc2626] ml-2">{profile?.complaint_count} complaints</span>}
+                {(profile?.compliment_count || 0) > 0 && <span className="text-green-600 ml-2">+{profile?.compliment_count} compliments</span>}
+                {(profile?.complaint_count || 0) > 0 && <span className="text-red-600 ml-2">{profile?.complaint_count} complaints</span>}
               </div>
             </div>
           </div>
@@ -416,7 +416,7 @@ export default function CustomerProfileView() {
 
           {textSignals ? (
             <div className="space-y-4">
-              <div className="p-3 bg-[#d97706]/5 rounded-lg border border-[#d97706]/20">
+              <div className="p-3 bg-amber-600/5 rounded-lg border border-amber-600/20">
                 <div className="text-xs text-stone-gray mb-1">
                   Based on {textSignals.text_sources_count} text sources (AI confidence: {textSignals.ai_confidence}%)
                 </div>
@@ -455,7 +455,7 @@ export default function CustomerProfileView() {
                   <div className="text-xs text-stone-gray mb-1">Seating Preferences (AI)</div>
                   <div className="flex flex-wrap gap-1">
                     {textSignals.seating_preferences.map((s) => (
-                      <span key={s} className="px-2 py-0.5 bg-[#7c3aed]/10 text-[#7c3aed] text-xs rounded-full">{s}</span>
+                      <span key={s} className="px-2 py-0.5 bg-violet-600/10 text-violet-600 text-xs rounded-full">{s}</span>
                     ))}
                   </div>
                 </div>
@@ -476,7 +476,7 @@ export default function CustomerProfileView() {
               <ThiingsIcon name="sparkles" pxSize={32} className="mx-auto mb-2 opacity-30" />
               <p className="text-sm">No AI insights available yet.</p>
               <p className="text-xs mt-1">Run analysis to extract signals from text data.</p>
-              <button onClick={handleAnalyze} className="mt-3 px-4 py-2 bg-[#d97706] text-white text-sm rounded-lg hover:bg-[#b45309] transition-colors">
+              <button onClick={handleAnalyze} className="mt-3 px-4 py-2 bg-amber-600 text-white text-sm rounded-lg hover:bg-amber-700 transition-colors">
                 Analyze with AI
               </button>
             </div>
@@ -537,12 +537,12 @@ export default function CustomerProfileView() {
           {data.predictions.length > 0 ? (
             <div className="space-y-3">
               {data.predictions.map((pred, i) => (
-                <div key={i} className="p-3 bg-[#16a34a]/5 rounded-lg border border-[#16a34a]/20">
+                <div key={i} className="p-3 bg-green-600/5 rounded-lg border border-green-600/20">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-medium text-deep-charcoal capitalize">{pred.prediction_type.replace(/_/g, ' ')}</div>
                     <div className="text-xs text-stone-gray">{Math.round(pred.confidence_score * 100)}% confidence</div>
                   </div>
-                  <div className="text-lg font-bold text-[#16a34a] mt-1">{pred.predicted_value}</div>
+                  <div className="text-lg font-bold text-green-600 mt-1">{pred.predicted_value}</div>
                 </div>
               ))}
             </div>
@@ -574,19 +574,19 @@ export default function CustomerProfileView() {
           </h2>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-[#d97706]/5 rounded-lg">
+              <div className="p-3 bg-amber-600/5 rounded-lg">
                 <div className="text-xs text-stone-gray">Total Revenue</div>
                 <div className="text-xl font-bold text-deep-charcoal">&euro;{data.revenue_summary.total_revenue.toFixed(2)}</div>
               </div>
-              <div className="p-3 bg-[#d97706]/5 rounded-lg">
+              <div className="p-3 bg-amber-600/5 rounded-lg">
                 <div className="text-xs text-stone-gray">Avg per Visit</div>
                 <div className="text-xl font-bold text-deep-charcoal">&euro;{data.revenue_summary.avg_revenue.toFixed(2)}</div>
               </div>
-              <div className="p-3 bg-[#d97706]/5 rounded-lg">
+              <div className="p-3 bg-amber-600/5 rounded-lg">
                 <div className="text-xs text-stone-gray">Total Tips</div>
                 <div className="text-xl font-bold text-deep-charcoal">&euro;{data.revenue_summary.total_tips.toFixed(2)}</div>
               </div>
-              <div className="p-3 bg-[#d97706]/5 rounded-lg">
+              <div className="p-3 bg-amber-600/5 rounded-lg">
                 <div className="text-xs text-stone-gray">Revenue Visits</div>
                 <div className="text-xl font-bold text-deep-charcoal">{data.revenue_summary.total_visits_with_revenue}</div>
               </div>
@@ -601,7 +601,7 @@ export default function CustomerProfileView() {
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-stone-gray w-24">Appetizers</span>
                       <div className="flex-1 bg-soft-gray h-2 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#d97706]" style={{ width: `${profile.orders_appetizers_pct}%` }} />
+                        <div className="h-full bg-amber-600" style={{ width: `${profile.orders_appetizers_pct}%` }} />
                       </div>
                       <span className="text-xs text-stone-gray w-10 text-right">{profile.orders_appetizers_pct}%</span>
                     </div>
@@ -619,7 +619,7 @@ export default function CustomerProfileView() {
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-stone-gray w-24">Wine</span>
                       <div className="flex-1 bg-soft-gray h-2 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#7c3aed]" style={{ width: `${profile.orders_wine_pct}%` }} />
+                        <div className="h-full bg-violet-600" style={{ width: `${profile.orders_wine_pct}%` }} />
                       </div>
                       <span className="text-xs text-stone-gray w-10 text-right">{profile.orders_wine_pct}%</span>
                     </div>

@@ -83,7 +83,7 @@ function StatCard({ label, value, iconName, color }: StatCardProps) {
     },
     emerald: {
       bg: 'bg-white border border-border-gray',
-      iconBg: 'bg-[#16a34a]',
+      iconBg: 'bg-green-600',
     },
     red: {
       bg: 'bg-white border border-border-gray',
@@ -95,11 +95,11 @@ function StatCard({ label, value, iconName, color }: StatCardProps) {
     },
     violet: {
       bg: 'bg-white border border-border-gray',
-      iconBg: 'bg-[#7c3aed]',
+      iconBg: 'bg-violet-600',
     },
     amber: {
       bg: 'bg-white border border-border-gray',
-      iconBg: 'bg-[#d97706]',
+      iconBg: 'bg-amber-600',
     },
   };
 

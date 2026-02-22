@@ -51,7 +51,7 @@ export default function StatsBar({
         label={t('dashboard.stats.reservations')}
         value={String(reservationsToday)}
         change={`${seatedReservations} ${t('dashboard.stats.seated')}`}
-        changeColor="text-[#16a34a]"
+        changeColor="text-green-600"
         barPercent={seatedPercent}
         barColor={colors.burgundy}
       />
@@ -63,7 +63,7 @@ export default function StatsBar({
         valueSuffix={` / ${totalTables}`}
         valueColor="text-burgundy"
         change={`${occupancyPercent}% ${t('dashboard.stats.capacity')}`}
-        changeColor="text-[#16a34a]"
+        changeColor="text-green-600"
         barPercent={100 - occupancyPercent}
         barColor="#16a34a"
       />
@@ -75,7 +75,7 @@ export default function StatsBar({
         change={waitlistCount > 0
           ? `${waitlistCount} ${t('dashboard.stats.waiting')}${estimatedWaitTime ? ` · ~${estimatedWaitTime} min avg` : ''}`
           : estimatedWaitTime ? `~${estimatedWaitTime} min avg` : ''}
-        changeColor="text-[#d97706]"
+        changeColor="text-amber-600"
         barPercent={totalGuests > 0 ? Math.min(Math.round((totalGuests / (reservationsToday * 3 || 1)) * 100), 100) : 0}
         barColor={colors.stoneGray}
       />

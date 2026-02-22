@@ -98,7 +98,7 @@ export default function SubscriptionSuccess() {
             </p>
 
             {customerEmail && (
-              <p className="text-[13px] text-[#16a34a] font-medium mb-6">
+              <p className="text-[13px] text-green-600 font-medium mb-6">
                 Redirecting to onboarding in 3 seconds...
               </p>
             )}

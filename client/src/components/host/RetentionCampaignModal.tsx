@@ -85,7 +85,7 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
 
         {sent ? (
           <div className="p-8 text-center">
-            <div className="w-16 h-16 bg-[#16a34a]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-green-600/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <ThiingsIcon name="mail" pxSize={32} />
             </div>
             <h3 className="text-lg font-medium text-deep-charcoal mb-2">Campaign Sent!</h3>
@@ -98,8 +98,8 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
             {/* Customer Info */}
             <div className="p-4 bg-soft-gray border-b border-border-gray">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#d97706]/10 rounded-full flex items-center justify-center">
-                  <span className="text-[#d97706] font-medium text-sm">
+                <div className="w-10 h-10 bg-amber-600/10 rounded-full flex items-center justify-center">
+                  <span className="text-amber-600 font-medium text-sm">
                     {customer.churn_risk_score}%
                   </span>
                 </div>

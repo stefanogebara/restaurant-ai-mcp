@@ -20,7 +20,7 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
     const value = getUtilizationValue(percentage);
 
     if (value >= 75) return 'bg-burgundy/80 border-burgundy'; // High utilization
-    if (value >= 50) return 'bg-[#d97706]/60 border-[#d97706]'; // Medium-high
+    if (value >= 50) return 'bg-amber-600/60 border-amber-600'; // Medium-high
     if (value >= 25) return 'bg-warm-stone/40 border-warm-stone'; // Medium-low
     return 'bg-soft-gray border-muted-stone'; // Low utilization
   };
@@ -83,7 +83,7 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
           <span className="text-warm-stone">High (75%+)</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-[#d97706]/60 border-2 border-[#d97706]"></div>
+          <div className="w-4 h-4 rounded bg-amber-600/60 border-2 border-amber-600"></div>
           <span className="text-warm-stone">Medium-High (50-74%)</span>
         </div>
         <div className="flex items-center gap-2">

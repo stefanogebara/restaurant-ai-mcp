@@ -40,11 +40,11 @@ export default function PlanBadge({
         };
       case 'scale':
         return {
-          bg: 'bg-[#7c3aed]',
+          bg: 'bg-violet-600',
           iconName: 'crown' as IconName,
-          textColor: 'text-[#7c3aed]',
-          bgLight: 'bg-[#7c3aed]/10',
-          borderColor: 'border-[#7c3aed]/30',
+          textColor: 'text-violet-600',
+          bgLight: 'bg-violet-600/10',
+          borderColor: 'border-violet-600/30',
         };
       default:
         return {
@@ -89,7 +89,7 @@ export default function PlanBadge({
       </div>
 
       {isTrial && (
-        <span className="px-2 py-0.5 text-xs rounded-full bg-[#16a34a]/10 border border-[#16a34a]/30 text-[#16a34a] font-semibold">
+        <span className="px-2 py-0.5 text-xs rounded-full bg-green-600/10 border border-green-600/30 text-green-600 font-semibold">
           Free Trial
         </span>
       )}
