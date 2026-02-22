@@ -74,7 +74,11 @@ async function createMemory(restaurantId, guestPhone, memoryData) {
       .single();
 
     if (error) {
-      logger.error('Error creating memory:', error);
+      if (error.code === 'PGRST205' || error.code === '42P01' || error.message?.includes('guest_memories')) {
+        logger.warn('guest_memories table not found. Run: database/migrations/20260218_guest_memories.sql');
+      } else {
+        logger.error('Error creating memory:', error);
+      }
       return null;
     }
 
@@ -525,7 +529,12 @@ async function listMemories(restaurantId, guestPhone, memoryType, limit = 50) {
     const { data, error } = await query;
 
     if (error) {
-      logger.error('Error listing memories:', error);
+      // PGRST205/42P01: table doesn't exist yet — needs migration applied
+      if (error.code === 'PGRST205' || error.code === '42P01' || error.message?.includes('guest_memories')) {
+        logger.warn('guest_memories table not found. Run: database/migrations/20260218_guest_memories.sql in Supabase SQL Editor');
+      } else {
+        logger.error('Error listing memories:', error);
+      }
       return [];
     }
 
