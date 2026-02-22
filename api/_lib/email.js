@@ -183,10 +183,166 @@ async function sendRetentionCampaignEmail({ customerEmail, customerName, message
   }
 }
 
+/**
+ * Send a reservation confirmation email to the customer
+ */
+async function sendReservationConfirmationEmail({
+  customerEmail, customerName, restaurantName, reservationId,
+  partySize, date, time, specialRequests, cancellationPolicy
+}) {
+  const resend = getResendClient();
+  if (!resend) { logger.warn('RESEND_API_KEY not set, skipping confirmation email'); return; }
+
+  const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: customerEmail,
+      subject: `Reservation Confirmed — ${restaurantName}`,
+      html: wrapEmailHtml(`
+        <div style="background: #FAFAF9; border: 1px solid #E7E5E4; border-radius: 16px; padding: 32px; margin-bottom: 24px;">
+          <h2 style="font-size: 22px; color: #1C1917; margin: 0 0 8px 0;">
+            Your reservation is confirmed!
+          </h2>
+          <p style="color: #57534E; margin: 0 0 24px 0;">
+            Hi ${customerName}, here are your booking details:
+          </p>
+
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Restaurant</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${restaurantName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Date</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${formattedDate}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Time</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${time}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Party Size</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${partySize} ${partySize === 1 ? 'guest' : 'guests'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; color: #78716C; font-size: 14px;">Confirmation ID</td>
+              <td style="padding: 12px 0; color: #9F1239; font-weight: 700; text-align: right; font-family: monospace;">${reservationId}</td>
+            </tr>
+          </table>
+
+          ${specialRequests ? `
+          <div style="margin-top: 16px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #E7E5E4;">
+            <p style="color: #78716C; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">Special Requests</p>
+            <p style="color: #1C1917; margin: 0; font-size: 14px;">${specialRequests}</p>
+          </div>
+          ` : ''}
+        </div>
+
+        ${cancellationPolicy ? `
+        <p style="color: #78716C; font-size: 13px; text-align: center; margin: 0 0 16px 0;">
+          ${cancellationPolicy}
+        </p>
+        ` : ''}
+        <p style="color: #78716C; font-size: 13px; text-align: center; margin: 0;">
+          Need to modify or cancel? Contact the restaurant directly.
+        </p>
+      `),
+    });
+    logger.info('Reservation confirmation email sent to:', customerEmail);
+  } catch (err) {
+    logger.error('Failed to send reservation confirmation email:', err.message);
+  }
+}
+
+/**
+ * Send a new booking alert to the restaurant owner
+ */
+async function sendNewBookingAlertEmail({
+  ownerEmail, restaurantName, customerName, customerPhone,
+  customerEmail, reservationId, partySize, date, time, specialRequests
+}) {
+  const resend = getResendClient();
+  if (!resend) { logger.warn('RESEND_API_KEY not set, skipping owner alert email'); return; }
+
+  const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: ownerEmail,
+      subject: `New Reservation — ${customerName}, ${partySize} guests on ${formattedDate}`,
+      html: wrapEmailHtml(`
+        <div style="background: #FAFAF9; border: 1px solid #E7E5E4; border-radius: 16px; padding: 32px; margin-bottom: 24px;">
+          <h2 style="font-size: 22px; color: #1C1917; margin: 0 0 8px 0;">
+            New Reservation
+          </h2>
+          <p style="color: #57534E; margin: 0 0 24px 0;">
+            A new booking has been made via your online portal.
+          </p>
+
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Guest Name</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${customerName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Date</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${formattedDate}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Time</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${time}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Party Size</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${partySize} ${partySize === 1 ? 'guest' : 'guests'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Phone</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${customerPhone}</td>
+            </tr>
+            ${customerEmail ? `
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Email</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${customerEmail}</td>
+            </tr>
+            ` : ''}
+            <tr>
+              <td style="padding: 12px 0; color: #78716C; font-size: 14px;">Confirmation ID</td>
+              <td style="padding: 12px 0; color: #9F1239; font-weight: 700; text-align: right; font-family: monospace;">${reservationId}</td>
+            </tr>
+          </table>
+
+          ${specialRequests ? `
+          <div style="margin-top: 16px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #E7E5E4;">
+            <p style="color: #78716C; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">Special Requests</p>
+            <p style="color: #1C1917; margin: 0; font-size: 14px;">${specialRequests}</p>
+          </div>
+          ` : ''}
+        </div>
+        <p style="color: #78716C; font-size: 13px; text-align: center; margin: 0;">
+          Manage all reservations in your <a href="https://restaurant-ai-mcp.vercel.app/host-dashboard/simple" style="color: #9F1239;">Seatable dashboard</a>.
+        </p>
+      `),
+    });
+    logger.info('New booking alert sent to restaurant owner:', ownerEmail);
+  } catch (err) {
+    logger.error('Failed to send new booking alert email:', err.message);
+  }
+}
+
 module.exports = {
   sendPaymentReceiptEmail,
   sendPaymentFailedEmail,
   sendTrialEndingEmail,
   sendRetentionCampaignEmail,
+  sendReservationConfirmationEmail,
+  sendNewBookingAlertEmail,
   wrapEmailHtml,
 };

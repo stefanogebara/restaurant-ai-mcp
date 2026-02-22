@@ -15,7 +15,7 @@ const { checkTimeSlotAvailability, getSuggestedTimes, getDiningDuration } = requ
 const { generateSecureReservationId } = require('./_lib/secure-id');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { trackUsage } = require('./_lib/usage-tracking');
-const { Resend } = require('resend');
+const { sendReservationConfirmationEmail, sendNewBookingAlertEmail } = require('./_lib/email');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('Portal');
 
@@ -43,10 +43,12 @@ module.exports = async (req, res) => {
         return await handleGetAvailability(req, res);
       case 'reserve':
         return await handleCreateReservation(req, res);
+      case 'reservation':
+        return await handleGetReservation(req, res);
       default:
         return res.status(400).json({
           success: false,
-          message: 'Invalid action. Use: restaurant, availability, reserve'
+          message: 'Invalid action. Use: restaurant, availability, reserve, reservation'
         });
     }
   } catch (error) {
@@ -108,7 +110,57 @@ async function handleGetRestaurant(req, res) {
       max_party_size: reservationSettings.max_party_size || 12,
       min_party_size: reservationSettings.min_party_size || 1,
       advance_booking_days: reservationSettings.advance_booking_days || 30,
-      average_dining_duration: data.average_dining_duration_minutes || 90
+      average_dining_duration: data.average_dining_duration_minutes || 90,
+      cancellation_policy: reservationSettings.cancellation_policy || null
+    }
+  });
+}
+
+// ============================================================
+// GET ?action=reservation&id=RES-XXXX
+// Look up a single reservation by confirmation ID (public, no auth)
+// Only returns non-sensitive fields for the confirmation page
+// ============================================================
+async function handleGetReservation(req, res) {
+  const { id } = req.query;
+
+  if (!id) {
+    return res.status(400).json({ success: false, message: 'Missing required parameter: id' });
+  }
+
+  // Basic sanity check on format to avoid full-table scans on junk input
+  if (typeof id !== 'string' || id.length > 60) {
+    return res.status(400).json({ success: false, message: 'Invalid reservation ID' });
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('reservations')
+    .select('id, reservation_id, restaurant_id, customer_name, party_size, date, time, status')
+    .eq('reservation_id', id)
+    .single();
+
+  if (error || !data) {
+    return res.status(404).json({ success: false, message: 'Reservation not found' });
+  }
+
+  // Fetch restaurant name for display
+  const { data: rest } = await supabaseAdmin
+    .schema('restaurant')
+    .from('restaurant_config')
+    .select('restaurant_name')
+    .eq('id', data.restaurant_id)
+    .single();
+
+  return res.status(200).json({
+    success: true,
+    reservation: {
+      id: data.reservation_id,
+      name: data.customer_name,
+      party_size: data.party_size,
+      date: data.date,
+      time: data.time,
+      status: data.status,
+      restaurant_name: rest ? rest.restaurant_name : 'Restaurant'
     }
   });
 }
@@ -339,7 +391,7 @@ async function handleCreateReservation(req, res) {
   const { data: restaurant, error: restError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, reservation_settings, business_hours, average_dining_duration_minutes, table_configuration')
+    .select('id, restaurant_name, email, reservation_settings, business_hours, average_dining_duration_minutes, table_configuration')
     .eq('id', restaurant_id)
     .eq('is_active', true)
     .eq('onboarding_completed', true)
@@ -434,9 +486,9 @@ async function handleCreateReservation(req, res) {
   // Track usage for metered billing
   trackUsage(restaurant_id, 'portal_booking');
 
-  // Send confirmation email (fire-and-forget)
+  // Send confirmation email to customer (fire-and-forget)
   if (customer_email) {
-    sendConfirmationEmail({
+    sendReservationConfirmationEmail({
       customerEmail: customer_email.trim(),
       customerName: customer_name.trim(),
       restaurantName: restaurant.restaurant_name,
@@ -445,7 +497,24 @@ async function handleCreateReservation(req, res) {
       date,
       time,
       specialRequests: special_requests,
-    }).catch(err => logger.error('[Portal] Email send failed:', err.message));
+      cancellationPolicy: (restaurant.reservation_settings || {}).cancellation_policy,
+    }).catch(err => logger.error('[Portal] Customer email failed:', err.message));
+  }
+
+  // Send new booking alert to restaurant owner (fire-and-forget)
+  if (restaurant.email) {
+    sendNewBookingAlertEmail({
+      ownerEmail: restaurant.email,
+      restaurantName: restaurant.restaurant_name,
+      customerName: customer_name.trim(),
+      customerPhone: customer_phone.trim(),
+      customerEmail: customer_email ? customer_email.trim() : null,
+      reservationId,
+      partySize,
+      date,
+      time,
+      specialRequests: special_requests,
+    }).catch(err => logger.error('[Portal] Owner alert email failed:', err.message));
   }
 
   return res.status(201).json({
@@ -463,78 +532,3 @@ async function handleCreateReservation(req, res) {
   });
 }
 
-/**
- * Send reservation confirmation email via Resend
- */
-async function sendConfirmationEmail({ customerEmail, customerName, restaurantName, reservationId, partySize, date, time, specialRequests }) {
-  if (!process.env.RESEND_API_KEY) return;
-
-  const resend = new Resend(process.env.RESEND_API_KEY);
-  const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-  });
-
-  await resend.emails.send({
-    from: 'Seatable <bookings@seatable.io>',
-    to: customerEmail,
-    subject: `Reservation Confirmed - ${restaurantName}`,
-    html: `
-      <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-        <div style="text-align: center; margin-bottom: 32px;">
-          <h1 style="font-size: 28px; color: #1C1917; margin: 0;">
-            Seatable<span style="color: #9F1239;">.</span>
-          </h1>
-        </div>
-
-        <div style="background: #FAFAF9; border: 1px solid #E7E5E4; border-radius: 16px; padding: 32px; margin-bottom: 24px;">
-          <h2 style="font-size: 22px; color: #1C1917; margin: 0 0 8px 0;">
-            Your reservation is confirmed!
-          </h2>
-          <p style="color: #57534E; margin: 0 0 24px 0;">
-            Hi ${customerName}, here are your booking details:
-          </p>
-
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Restaurant</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${restaurantName}</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Date</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${formattedDate}</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Time</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${time}</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Party Size</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${partySize} ${partySize === 1 ? 'guest' : 'guests'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 0; color: #78716C; font-size: 14px;">Confirmation ID</td>
-              <td style="padding: 12px 0; color: #9F1239; font-weight: 700; text-align: right; font-family: monospace;">${reservationId}</td>
-            </tr>
-          </table>
-
-          ${specialRequests ? `
-          <div style="margin-top: 16px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #E7E5E4;">
-            <p style="color: #78716C; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">Special Requests</p>
-            <p style="color: #1C1917; margin: 0; font-size: 14px;">${specialRequests}</p>
-          </div>
-          ` : ''}
-        </div>
-
-        <p style="color: #78716C; font-size: 13px; text-align: center; margin: 0;">
-          Need to modify or cancel? Contact the restaurant directly.
-        </p>
-
-        <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #E7E5E4;">
-          <p style="color: #A8A29E; font-size: 12px; margin: 0;">
-            Powered by Seatable - AI Restaurant Management
-          </p>
-        </div>
-      </div>
-    `,
-  });
-}

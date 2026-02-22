@@ -1,4 +1,5 @@
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 interface ReservationData {
   id: string;
@@ -14,9 +15,32 @@ export default function BookingConfirmation() {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const state = location.state as { reservation?: ReservationData; restaurant_name?: string } | null;
 
-  const reservation = state?.reservation;
+  const [reservation, setReservation] = useState<ReservationData | null>(state?.reservation ?? null);
+  const [loading, setLoading] = useState(!state?.reservation);
+  const [notFound, setNotFound] = useState(false);
+
+  // If no state (e.g. page refresh), fetch reservation from API using URL ?id=
+  useEffect(() => {
+    if (reservation) return;
+    const id = searchParams.get('id');
+    if (!id) { setLoading(false); setNotFound(true); return; }
+
+    const base = import.meta.env.VITE_API_BASE_URL || '';
+    fetch(`${base}/api/portal?action=reservation&id=${encodeURIComponent(id)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.reservation) {
+          setReservation(data.reservation);
+        } else {
+          setNotFound(true);
+        }
+      })
+      .catch(() => setNotFound(true))
+      .finally(() => setLoading(false));
+  }, []);
 
   // Format time for display (24h -> 12h)
   const formatTime = (time: string) => {
@@ -26,8 +50,18 @@ export default function BookingConfirmation() {
     return `${hour}:${String(m).padStart(2, '0')} ${period}`;
   };
 
-  // If no reservation data (direct navigation), show generic message
-  if (!reservation) {
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
+        <div className="flex items-center gap-3">
+          <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#E7E5E4] border-t-[#9F1239]" />
+          <span className="text-sm text-[#78716C]">Loading reservation...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (notFound || !reservation) {
     return (
       <div className="min-h-screen bg-[#FAFAF9] flex flex-col items-center justify-center p-6">
         <div className="bg-white border border-[#E7E5E4] rounded-2xl p-8 max-w-md text-center shadow-sm">

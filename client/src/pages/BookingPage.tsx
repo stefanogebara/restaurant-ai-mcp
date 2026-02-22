@@ -18,6 +18,7 @@ interface RestaurantInfo {
   min_party_size: number;
   advance_booking_days: number;
   average_dining_duration: number;
+  cancellation_policy?: string | null;
 }
 
 interface TimeSlot {
@@ -136,7 +137,7 @@ export default function BookingPage() {
 
       const data = await res.json();
       if (data.success) {
-        navigate(`/book/${slug}/confirmed`, {
+        navigate(`/book/${slug}/confirmed?id=${data.reservation.id}`, {
           state: { reservation: data.reservation, restaurant_name: restaurant.name }
         });
       } else {
@@ -159,7 +160,7 @@ export default function BookingPage() {
     if (!hours || hours.is_open === false || hours.closed) return 'Closed today';
     const open = hours.open_time || hours.open;
     const close = hours.close_time || hours.close;
-    return `${open} \u2013 ${close}`;
+    return `${open} – ${close}`;
   };
 
   if (loading) {
@@ -224,17 +225,17 @@ export default function BookingPage() {
 
           {/* Details */}
           <div className="mb-7">
-            <DetailRow icon="\u2739" label="Cuisine" value={restaurantType} />
-            <DetailRow icon="\u23F1" label="Hours today" value={getTodayHours()} />
-            <DetailRow icon="\u263E" label="Atmosphere" value="Intimate, candlelit" />
-            <DetailRow icon="\u20AC" label="Price range" value="\u20AC\u20AC\u20AC" />
+            <DetailRow icon="✹" label="Cuisine" value={restaurantType} />
+            <DetailRow icon="⏱" label="Hours today" value={getTodayHours()} />
+            <DetailRow icon="☾" label="Atmosphere" value="Intimate, candlelit" />
+            <DetailRow icon="€" label="Price range" value="€€€" />
           </div>
 
           {/* Rating */}
           <div className="flex items-center gap-3 p-4 bg-white border border-[#E7E5E4] rounded-xl">
             <div className="text-2xl font-bold tracking-tight text-[#1C1917]">4.7</div>
             <div>
-              <div className="text-sm text-[#d97706] tracking-wider">{'\u2605\u2605\u2605\u2605\u2606'}</div>
+              <div className="text-sm text-[#d97706] tracking-wider">★★★★☆</div>
               <div className="text-xs text-[#A8A29E]">284 reviews on Google</div>
             </div>
           </div>
@@ -451,7 +452,7 @@ export default function BookingPage() {
             )}
           </button>
           <p className="text-center text-xs text-[#A8A29E] mt-3">
-            Free cancellation up to 2 hours before your reservation.
+            {restaurant.cancellation_policy || 'Free cancellation up to 2 hours before your reservation.'}
           </p>
         </div>
       </div>
