@@ -273,42 +273,12 @@ module.exports = async (req, res) => {
     // STEP 3: Create/Update Restaurant Config (for AI Agent)
     logger.info(' Step 3: Creating restaurant_config for AI agent...');
 
-    // Get or create user for this email
-    let userId;
-    try {
-      // Check if user exists in auth.users
-      const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-
-      if (listError) {
-        logger.warn(' Could not list users:', listError.message);
-      }
-
-      const existingUser = users?.find(u => u.email === customer_email);
-
-      if (existingUser) {
-        userId = existingUser.id;
-        logger.info(' Found existing user:', userId);
-      } else {
-        // Create a new user for this restaurant
-        const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
-          email: customer_email,
-          email_confirm: true, // Auto-confirm email
-          user_metadata: {
-            restaurant_name,
-            onboarding_completed: true
-          }
-        });
-
-        if (createUserError) {
-          logger.warn(' Could not create user:', createUserError.message);
-          // Continue without user - we'll use service role to insert
-        } else {
-          userId = newUser.user.id;
-          logger.info(' Created new user:', userId);
-        }
-      }
-    } catch (authError) {
-      logger.warn(' Auth error, continuing with service role:', authError.message);
+    // Get user ID from the verified auth token (already available, no lookup needed)
+    let userId = auth.user?.sub || null;
+    if (userId) {
+      logger.info(' User ID from auth token:', userId);
+    } else {
+      logger.warn(' No user ID in auth token, restaurant_config will not be saved');
     }
 
     // Prepare table configuration for restaurant_config
