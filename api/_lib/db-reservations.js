@@ -161,13 +161,20 @@ const updateReservation = async (restaurantId, recordId, fields) => {
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(recordId);
   const filterColumn = isUUID ? 'id' : 'reservation_id';
 
-  const { data, error } = await supabase
-    .from('reservations')
-    .update(updates)
-    .eq('restaurant_id', restaurantId)
-    .eq(filterColumn, recordId)
-    .select()
-    .single();
+  let data, error;
+  try {
+    ({ data, error } = await withRetry(() =>
+      supabase
+        .from('reservations')
+        .update(updates)
+        .eq('restaurant_id', restaurantId)
+        .eq(filterColumn, recordId)
+        .select()
+        .single()
+    ));
+  } catch (err) {
+    return handleSupabaseResponse(null, err, 'UPDATE reservation');
+  }
 
   if (error) return handleSupabaseResponse(null, error, 'UPDATE reservation');
 

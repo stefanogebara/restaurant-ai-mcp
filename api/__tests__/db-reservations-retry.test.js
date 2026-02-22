@@ -20,7 +20,7 @@ jest.mock('../_lib/db-clients', () => {
   };
 });
 
-const { createReservation } = require('../_lib/db-reservations');
+const { createReservation, updateReservation } = require('../_lib/db-reservations');
 
 const SAMPLE_FIELDS = {
   'Reservation ID': 'RES-001',
@@ -70,6 +70,49 @@ describe('createReservation withRetry integration', () => {
     mockFrom.mockReturnValue(makeRejectChain(transientErr));
 
     const promise = createReservation('rest-1', SAMPLE_FIELDS, { maxAttempts: 3, baseDelayMs: 10 });
+    await jest.runAllTimersAsync();
+    const result = await promise;
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('updateReservation withRetry integration', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.clearAllMocks();
+  });
+  afterEach(() => jest.useRealTimers());
+
+  test('succeeds on first attempt with no retries', async () => {
+    const row = { id: 'uuid-1', reservation_id: 'RES-001', status: 'confirmed' };
+    mockFrom.mockReturnValue(makeChain({ data: row, error: null }));
+    const result = await updateReservation('rest-1', 'uuid-1', { 'Status': 'confirmed' });
+    expect(result.success).toBe(true);
+    expect(mockFrom).toHaveBeenCalledTimes(1);
+  });
+
+  test('retries on transient error and eventually succeeds', async () => {
+    const transientErr = new Error('fetch failed: network error');
+    const row = { id: 'uuid-1', reservation_id: 'RES-001', status: 'confirmed' };
+    let callCount = 0;
+    mockFrom.mockImplementation(() => {
+      callCount++;
+      if (callCount < 3) return makeRejectChain(transientErr);
+      return makeChain({ data: row, error: null });
+    });
+
+    const promise = updateReservation('rest-1', 'uuid-1', { 'Status': 'confirmed' });
+    await jest.runAllTimersAsync();
+    const result = await promise;
+    expect(result.success).toBe(true);
+    expect(callCount).toBe(3);
+  });
+
+  test('fails after maxAttempts exhausted', async () => {
+    const transientErr = new Error('econnreset');
+    mockFrom.mockReturnValue(makeRejectChain(transientErr));
+
+    const promise = updateReservation('rest-1', 'uuid-1', { 'Status': 'confirmed' });
     await jest.runAllTimersAsync();
     const result = await promise;
     expect(result.success).toBe(false);
