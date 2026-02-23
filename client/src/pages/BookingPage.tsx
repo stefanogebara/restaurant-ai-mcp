@@ -458,6 +458,24 @@ export default function BookingPage() {
           </p>
         </div>
       </div>
+
+      {/* Powered by Seatable badge */}
+      <div className="mt-8 pb-8 flex justify-center">
+        <a
+          href="/?ref=badge"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => {
+            import('../lib/analytics').then(({ trackCtaClicked }) =>
+              trackCtaClicked({ cta: 'primary', location: 'booking_page_badge' })
+            );
+          }}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border-gray bg-warm-white hover:bg-soft-gray transition-colors text-xs text-muted-stone hover:text-warm-stone"
+        >
+          <span className="text-burgundy font-semibold">⚡</span>
+          Powered by Seatable
+        </a>
+      </div>
     </div>
   );
 }
