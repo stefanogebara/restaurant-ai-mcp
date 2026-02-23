@@ -57,6 +57,60 @@ async function resolveRestaurantId(stripeObject, customerEmail = null) {
   return null;
 }
 
+/**
+ * Award referral: credit referrer 1 month free, mark row as rewarded.
+ * Only called for invoice.payment_succeeded with billing_reason=subscription_create.
+ */
+async function rewardReferralIfEligible(refereeRestaurantId, refereeStripeCustomerId, stripe, logger) {
+  const { data: referral } = await supabase
+    .from('referrals')
+    .select('id, referrer_id, referral_code')
+    .eq('referee_id', refereeRestaurantId)
+    .eq('status', 'pending')
+    .limit(1)
+    .single();
+
+  if (!referral) return;
+
+  const { data: referrerSub } = await supabase
+    .from('subscriptions')
+    .select('"Customer ID", "Plan Name"')
+    .eq('restaurant_id', referral.referrer_id)
+    .not('Status', 'eq', 'canceled')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (!referrerSub?.['Customer ID']) {
+    logger.warn('Referral: referrer has no active subscription, skipping credit:', referral.referrer_id);
+    await supabase
+      .from('referrals')
+      .update({ status: 'converted', converted_at: new Date().toISOString() })
+      .eq('id', referral.id);
+    return;
+  }
+
+  const planPrices = { Starter: 2900, Growth: 9900, Scale: 19900 }; // EUR cents
+  const creditCents = planPrices[referrerSub['Plan Name']] || planPrices.Starter;
+
+  await stripe.customers.createBalanceTransaction(referrerSub['Customer ID'], {
+    amount:      -creditCents,
+    currency:    'eur',
+    description: `Referral reward: 1 month free (referred ${refereeStripeCustomerId})`,
+  });
+
+  await supabase
+    .from('referrals')
+    .update({
+      status:       'rewarded',
+      converted_at: new Date().toISOString(),
+      rewarded_at:  new Date().toISOString(),
+    })
+    .eq('id', referral.id);
+
+  logger.info(`Referral rewarded: ${referral.referral_code} -> credited ${creditCents / 100} EUR to ${referrerSub['Customer ID']}`);
+}
+
 module.exports = async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -223,6 +277,18 @@ module.exports = async (req, res) => {
         logger.info('Invoice payment succeeded:', invoice.id);
         logger.info('Customer:', invoice.customer);
         logger.info('Amount paid:', invoice.amount_paid / 100, invoice.currency.toUpperCase());
+
+        // Award referral reward on first subscription invoice only
+        if (invoice.billing_reason === 'subscription_create') {
+          try {
+            const invoiceRestaurantId = await resolveRestaurantId(invoice);
+            if (invoiceRestaurantId) {
+              await rewardReferralIfEligible(invoiceRestaurantId, invoice.customer, stripe, logger);
+            }
+          } catch (referralErr) {
+            logger.error('Referral reward failed (non-fatal):', referralErr.message);
+          }
+        }
 
         // Payment status is automatically reflected in subscription.updated event
         // Send receipt email
