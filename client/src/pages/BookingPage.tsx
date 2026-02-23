@@ -65,6 +65,69 @@ export default function BookingPage() {
       .finally(() => setLoading(false));
   }, [slug]);
 
+  // SEO: inject dynamic title, meta tags, and JSON-LD when restaurant loads
+  useEffect(() => {
+    if (!restaurant) return;
+
+    const DEFAULT_TITLE = 'seatable - AI Restaurant Management';
+    const title = `${restaurant.name} — Reserve a Table | Seatable`;
+    const description = `Book a table at ${restaurant.name} in ${restaurant.city}, ${restaurant.country}. Check availability and reserve online — quick and easy.`;
+    const canonicalUrl = `https://restaurant-ai-mcp.vercel.app/book/${restaurant.slug}`;
+
+    document.title = title;
+
+    const setMeta = (attr: string, name: string, content: string) => {
+      let el = document.querySelector(`meta[${attr}="${name}"]`) as HTMLMetaElement | null;
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, name);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', content);
+    };
+
+    setMeta('name', 'description', description);
+    setMeta('property', 'og:title', title);
+    setMeta('property', 'og:description', description);
+    setMeta('property', 'og:type', 'website');
+    setMeta('property', 'og:url', canonicalUrl);
+    setMeta('name', 'twitter:title', title);
+    setMeta('name', 'twitter:description', description);
+
+    // JSON-LD structured data
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Restaurant',
+      name: restaurant.name,
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: restaurant.city,
+        addressCountry: restaurant.country,
+      },
+      servesCuisine: restaurant.type.replace(/_/g, ' '),
+      ...(restaurant.phone && { telephone: restaurant.phone }),
+      ...(restaurant.website && { url: restaurant.website }),
+      potentialAction: {
+        '@type': 'ReservationAction',
+        target: canonicalUrl,
+      },
+    };
+
+    let script = document.getElementById('booking-page-jsonld') as HTMLScriptElement | null;
+    if (!script) {
+      script = document.createElement('script');
+      script.id = 'booking-page-jsonld';
+      script.type = 'application/ld+json';
+      document.head.appendChild(script);
+    }
+    script.text = JSON.stringify(jsonLd);
+
+    return () => {
+      document.title = DEFAULT_TITLE;
+      document.getElementById('booking-page-jsonld')?.remove();
+    };
+  }, [restaurant]);
+
   const availableDates = useMemo(() => {
     if (!restaurant) return [];
     const days: { value: string; label: string; dayKey: string; dayNum: number; isToday: boolean }[] = [];
