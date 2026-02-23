@@ -71,6 +71,23 @@ function buildFakeReservations(restaurantId) {
     });
   }
 
+  // Seed one checked-in reservation for today so the "seated" stat is non-zero.
+  // Status stays 'confirmed' so getUpcomingReservations includes it; checked_in_at
+  // causes the checked_in flag to be true when mapped by the supabase layer.
+  const todayStr = now.toISOString().split('T')[0];
+  reservations.push({
+    restaurant_id: restaurantId,
+    customer_name: 'Sophie Laurent',
+    customer_phone: null,
+    customer_email: null,
+    party_size: 3,
+    reservation_date: todayStr,
+    reservation_time: '23:59',
+    status: 'confirmed',
+    checked_in_at: now.toISOString(),
+    special_requests: null,
+  });
+
   return reservations;
 }
 

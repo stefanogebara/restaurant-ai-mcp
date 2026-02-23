@@ -101,8 +101,7 @@ function App() {
               <Route path="/live-demo" element={<LiveAIDemo />} />
               <Route path="/demo/setup" element={<DemoSetupPage />} />
               <Route path="/demo/:token" element={<DemoDashboard />} />
-              <Route path="/demo/:token/book" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BookingPage /></ErrorBoundary>} />
-              {/* Dashboard - New unified dashboard (default) */}
+{/* Dashboard - New unified dashboard (default) */}
               <Route path="/host-dashboard" element={<Navigate to="/host-dashboard/simple" replace />} />
               <Route path="/host-dashboard/simple" element={<ErrorBoundary fallback={<RouteErrorFallback />}><Dashboard /></ErrorBoundary>} />
               <Route path="/host-dashboard/reports" element={<WeeklyReport />} />

@@ -33,6 +33,7 @@ export default function DemoDashboard() {
   const [session, setSession] = useState<DemoSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [widgetLoaded, setWidgetLoaded] = useState(false);
   const widgetContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,6 +59,7 @@ export default function DemoDashboard() {
     script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
     script.async = true;
     script.type = 'text/javascript';
+    script.onload = () => setWidgetLoaded(true);
     document.body.appendChild(script);
     return () => {
       if (document.body.contains(script)) {
@@ -222,10 +224,12 @@ export default function DemoDashboard() {
                 )}
               </div>
 
-              <div className="flex items-center gap-2 mt-4">
-                <div className="w-2 h-2 rounded-full bg-green-500" />
-                <span className="text-xs font-medium text-green-700">AI Agent Online</span>
-              </div>
+              {widgetLoaded && (
+                <div className="flex items-center gap-2 mt-4">
+                  <div className="w-2 h-2 rounded-full bg-green-500" />
+                  <span className="text-xs font-medium text-green-700">AI Agent Online</span>
+                </div>
+              )}
             </div>
 
             {/* Upgrade CTA */}
@@ -236,12 +240,12 @@ export default function DemoDashboard() {
               <p className="text-xs text-muted-stone font-light mb-4">
                 Keep your data and unlock all features.
               </p>
-              <a
-                href={`/login?from=demo&token=${token}`}
+              <Link
+                to={`/login?from=demo&token=${token}`}
                 className="inline-block px-5 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors"
               >
                 Upgrade now
-              </a>
+              </Link>
             </div>
           </div>
         </div>
