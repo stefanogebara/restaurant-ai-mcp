@@ -95,6 +95,14 @@
     {
       "path": "/api/cron/refresh-restaurant-profiles",
       "schedule": "0 3 * * 1"
+    },
+    {
+      "path": "/api/cron/demo-nurture",
+      "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-expired-demos",
+      "schedule": "0 3 * * *"
     }
   ]
 }
