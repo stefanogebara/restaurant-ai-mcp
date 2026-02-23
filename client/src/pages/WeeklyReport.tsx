@@ -106,6 +106,28 @@ export default function WeeklyReport() {
     fetchReport(start, end);
   };
 
+  const handlePrevious = () => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffMs = end.getTime() - start.getTime();
+    const newEnd = new Date(start.getTime() - 24 * 60 * 60 * 1000);
+    const newStart = new Date(newEnd.getTime() - diffMs);
+    setStartDate(newStart.toISOString().split('T')[0]);
+    setEndDate(newEnd.toISOString().split('T')[0]);
+    fetchReport(newStart, newEnd);
+  };
+
+  const handleNext = () => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffMs = end.getTime() - start.getTime();
+    const newStart = new Date(end.getTime() + 24 * 60 * 60 * 1000);
+    const newEnd = new Date(newStart.getTime() + diffMs);
+    setStartDate(newStart.toISOString().split('T')[0]);
+    setEndDate(newEnd.toISOString().split('T')[0]);
+    fetchReport(newStart, newEnd);
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -217,7 +239,14 @@ export default function WeeklyReport() {
             Reports <span className="font-light text-warm-stone">/ Weekly</span>
           </h1>
           <div className="flex items-center gap-2.5 print:hidden">
-            <div className="flex items-center gap-1.5 px-4 py-2 bg-white border border-stone-300 rounded-[10px] text-[13px] font-medium text-stone-gray">
+            <div className="flex items-center gap-1.5 px-2 py-2 bg-white border border-stone-300 rounded-[10px] text-[13px] font-medium text-stone-gray">
+              <button
+                onClick={handlePrevious}
+                className="px-2 py-0.5 text-stone-gray hover:text-deep-charcoal transition-colors"
+                title="Previous period"
+              >
+                ←
+              </button>
               <input
                 type="date"
                 value={startDate}
@@ -231,7 +260,14 @@ export default function WeeklyReport() {
                 onChange={(e) => setEndDate(e.target.value)}
                 className="bg-transparent border-0 text-[13px] text-stone-gray w-[110px] cursor-pointer"
               />
-              <button onClick={handleDateChange} className="ml-1 text-burgundy font-semibold text-xs">{t('common.next')}</button>
+              <button onClick={handleDateChange} className="ml-1 text-burgundy font-semibold text-xs">{t('common.apply')}</button>
+              <button
+                onClick={handleNext}
+                className="px-2 py-0.5 text-stone-gray hover:text-deep-charcoal transition-colors"
+                title="Next period"
+              >
+                →
+              </button>
             </div>
             <button
               onClick={handlePrint}
