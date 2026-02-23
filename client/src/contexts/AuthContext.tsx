@@ -7,10 +7,13 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { supabase } from '../lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
 
+type RestaurantRole = 'owner' | 'manager' | 'host' | 'staff';
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  role: RestaurantRole | null;
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string) => Promise<{ needsConfirmation: boolean }>;
@@ -23,6 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState<RestaurantRole | null>(null);
 
   useEffect(() => {
     // Use onAuthStateChange as the single source of truth.
@@ -42,9 +46,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.removeItem('customer_email');
         }
 
+        // Extract restaurant role from JWT payload
+        if (session?.access_token) {
+          try {
+            const payload = JSON.parse(atob(session.access_token.split('.')[1]));
+            setRole((payload.role as RestaurantRole) || 'owner');
+          } catch {
+            setRole('owner');
+          }
+        }
+
         // Clear stale state when sign-out or token refresh fails
         if (event === 'SIGNED_OUT') {
           localStorage.removeItem('customer_email');
+          setRole(null);
         }
 
         setLoading(false);
@@ -104,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, role, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut }}>
       {children}
     </AuthContext.Provider>
   );
