@@ -9,7 +9,8 @@
 
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
-const { captureMessage } = require('../_lib/sentry');
+const { initSentry, captureMessage } = require('../_lib/sentry');
+initSentry();
 
 const logger = createSecureLogger('CronLateReservations');
 const LATE_THRESHOLD_MINUTES = 20;

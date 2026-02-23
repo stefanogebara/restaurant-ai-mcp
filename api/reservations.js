@@ -41,7 +41,8 @@ const { getLocalDate } = require('./_lib/timezone');
 
 // Secure structured logging
 const { createSecureLogger } = require('./_lib/secure-logger');
-const { captureException } = require('./_lib/sentry');
+const { initSentry, captureException } = require('./_lib/sentry');
+initSentry();
 const logger = createSecureLogger('Reservations');
 
 // Guest memory (fire-and-forget memory creation from booking requests)

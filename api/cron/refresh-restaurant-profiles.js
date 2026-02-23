@@ -11,7 +11,8 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { regeneratePersona } = require('../services/personaGenerator');
-const { captureMessage } = require('../_lib/sentry');
+const { initSentry, captureMessage } = require('../_lib/sentry');
+initSentry();
 
 const logger = createSecureLogger('CronRefreshProfiles');
 

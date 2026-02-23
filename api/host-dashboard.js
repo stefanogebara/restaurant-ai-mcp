@@ -29,7 +29,8 @@ const { verifyAuth } = require('./_lib/auth');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { getDiningDuration, DEFAULT_DINING_DURATION_MINUTES } = require('./_lib/constants');
 const { createSecureLogger } = require('./_lib/secure-logger');
-const { captureException } = require('./_lib/sentry');
+const { initSentry, captureException } = require('./_lib/sentry');
+initSentry();
 
 const logger = createSecureLogger('HostDashboard');
 

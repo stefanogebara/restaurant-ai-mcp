@@ -2,6 +2,9 @@ import { lazy, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import "./i18n/config";
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import * as Sentry from '@sentry/react';
+
+const SentryBrowserRouter = Sentry.withSentryReactRouterV6Routing(BrowserRouter);
 import { ToastProvider } from './contexts/ToastContext';
 import { SidebarProvider } from './contexts/SidebarContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -78,7 +81,7 @@ function App() {
       <AuthProvider>
         <ToastProvider>
           <SidebarProvider>
-            <BrowserRouter>
+            <SentryBrowserRouter>
             <ErrorBoundary>
             <Suspense fallback={
               <div className="min-h-screen bg-warm-white flex flex-col items-center justify-center gap-4">
@@ -114,7 +117,7 @@ function App() {
             </Routes>
             </Suspense>
             </ErrorBoundary>
-          </BrowserRouter>
+          </SentryBrowserRouter>
           </SidebarProvider>
         </ToastProvider>
       </AuthProvider>

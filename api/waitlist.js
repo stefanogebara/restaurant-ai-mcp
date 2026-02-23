@@ -12,7 +12,8 @@ const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { validateWaitlistEntry, sanitizeInput } = require('./_lib/validation');
 const { trackUsage } = require('./_lib/usage-tracking');
-const { captureException } = require('./_lib/sentry');
+const { initSentry, captureException } = require('./_lib/sentry');
+initSentry();
 
 const logger = createSecureLogger('Waitlist');
 

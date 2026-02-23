@@ -16,7 +16,8 @@ const { supabaseAdmin } = require('./_lib/supabase');
 const { isWhatsAppConfigured, sendWhatsAppMessage } = require('./_lib/whatsapp-sender');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
-const { captureException } = require('./_lib/sentry');
+const { initSentry, captureException } = require('./_lib/sentry');
+initSentry();
 
 const logger = createSecureLogger('WhatsAppSettings');
 

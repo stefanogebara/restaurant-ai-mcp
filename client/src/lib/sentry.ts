@@ -4,7 +4,9 @@
  * Initializes Sentry for React error tracking and performance monitoring
  */
 
+import { useEffect } from 'react';
 import * as Sentry from '@sentry/react';
+import { createRoutesFromChildren, matchRoutes, useLocation, useNavigationType } from 'react-router-dom';
 
 export function initSentry() {
   // Only initialize in production with DSN configured
@@ -16,9 +18,15 @@ export function initSentry() {
       dsn,
       environment,
 
-      // Performance Monitoring
+      // Performance Monitoring with React Router v6 instrumentation
       integrations: [
-        Sentry.browserTracingIntegration(),
+        Sentry.reactRouterV6BrowserTracingIntegration({
+          useEffect,
+          useLocation,
+          useNavigationType,
+          createRoutesFromChildren,
+          matchRoutes,
+        }),
         Sentry.replayIntegration({
           maskAllText: false,
           blockAllMedia: false,
