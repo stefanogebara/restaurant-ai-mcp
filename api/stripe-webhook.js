@@ -62,31 +62,30 @@ async function resolveRestaurantId(stripeObject, customerEmail = null) {
  * Only called for invoice.payment_succeeded with billing_reason=subscription_create.
  */
 async function rewardReferralIfEligible(refereeRestaurantId, refereeStripeCustomerId, stripe, logger) {
-  const { data: referral } = await supabase
+  // Atomic claim: update status to 'converted' WHERE status='pending'
+  // This acts as a compare-and-swap — if another execution already claimed it, 0 rows update and we bail.
+  const { data: claimed, error: claimError } = await supabase
     .from('referrals')
-    .select('id, referrer_id, referral_code')
+    .update({ status: 'converted', converted_at: new Date().toISOString() })
     .eq('referee_id', refereeRestaurantId)
     .eq('status', 'pending')
-    .limit(1)
+    .select('id, referrer_id, referral_code')
     .single();
 
-  if (!referral) return;
+  if (claimError || !claimed) return; // No pending referral, or already claimed by another execution
 
   const { data: referrerSub } = await supabase
     .from('subscriptions')
     .select('"Customer ID", "Plan Name"')
-    .eq('restaurant_id', referral.referrer_id)
-    .not('Status', 'eq', 'canceled')
+    .eq('restaurant_id', claimed.referrer_id)
+    .not('status', 'eq', 'canceled')
     .order('created_at', { ascending: false })
     .limit(1)
     .single();
 
   if (!referrerSub?.['Customer ID']) {
-    logger.warn('Referral: referrer has no active subscription, skipping credit:', referral.referrer_id);
-    await supabase
-      .from('referrals')
-      .update({ status: 'converted', converted_at: new Date().toISOString() })
-      .eq('id', referral.id);
+    logger.warn('Referral: referrer has no active subscription, skipping credit:', claimed.referrer_id);
+    // Row is already marked 'converted' — leave it there (no double-credit possible)
     return;
   }
 
@@ -101,14 +100,10 @@ async function rewardReferralIfEligible(refereeRestaurantId, refereeStripeCustom
 
   await supabase
     .from('referrals')
-    .update({
-      status:       'rewarded',
-      converted_at: new Date().toISOString(),
-      rewarded_at:  new Date().toISOString(),
-    })
-    .eq('id', referral.id);
+    .update({ status: 'rewarded', rewarded_at: new Date().toISOString() })
+    .eq('id', claimed.id);
 
-  logger.info(`Referral rewarded: ${referral.referral_code} -> credited ${creditCents / 100} EUR to ${referrerSub['Customer ID']}`);
+  logger.info(`Referral rewarded: ${claimed.referral_code} -> credited ${creditCents / 100} EUR to ${referrerSub['Customer ID']}`);
 }
 
 module.exports = async (req, res) => {
@@ -279,9 +274,10 @@ module.exports = async (req, res) => {
         logger.info('Amount paid:', invoice.amount_paid / 100, invoice.currency.toUpperCase());
 
         // Award referral reward on first subscription invoice only
-        if (invoice.billing_reason === 'subscription_create') {
+        if (invoice.billing_reason === 'subscription_create' && invoice.amount_paid > 0) {
           try {
-            const invoiceRestaurantId = await resolveRestaurantId(invoice);
+            const invoiceCustomer = await stripe.customers.retrieve(invoice.customer);
+            const invoiceRestaurantId = await resolveRestaurantId(invoice, invoiceCustomer?.email || null);
             if (invoiceRestaurantId) {
               await rewardReferralIfEligible(invoiceRestaurantId, invoice.customer, stripe, logger);
             }

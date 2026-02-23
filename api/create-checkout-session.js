@@ -54,7 +54,9 @@ module.exports = async (req, res) => {
         discounts = [{ coupon: 'REFERRED_20_3M' }];
         logger.info('Applying referral discount for restaurant:', restaurantId);
       }
-    } catch (_) { /* non-fatal — proceed without discount */ }
+    } catch (err) {
+      logger.warn('Referral lookup failed, proceeding without discount:', err.message);
+    }
 
     // Get the origin for success/cancel URLs
     const origin = req.headers.origin || process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
