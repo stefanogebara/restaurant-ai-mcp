@@ -39,10 +39,6 @@ function initSentry() {
         return event;
       },
 
-      // Integrations
-      integrations: [
-        new Sentry.Integrations.Http({ tracing: true }),
-      ],
     });
 
     logger.info('Sentry initialized for error tracking');
