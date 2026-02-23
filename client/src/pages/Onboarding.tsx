@@ -191,7 +191,7 @@ export default function Onboarding() {
               const stepNumber = index + 1;
               const isActive = stepNumber === currentStep;
               const isCompleted = stepNumber < currentStep;
-              const isLast = index === STEP_NAMES.length - 1;
+              const isLast = index === STEP_NAME_KEYS.length - 1;
 
               return (
                 <div key={stepNumber} className="flex items-start gap-4 py-4 relative">

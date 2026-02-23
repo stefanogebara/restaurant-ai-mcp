@@ -64,7 +64,7 @@ async function handleGet(req, res) {
     const { data: restaurant, error: dbError } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_info')
-      .select('id, elevenlabs_agent_id, agent_voice_id, agent_language, voice_settings, tts_model_id, agent_updated_at, restaurant_name')
+      .select('id, elevenlabs_agent_id, agent_voice_id, agent_voice_name, agent_language, voice_settings, tts_model_id, agent_updated_at, restaurant_name')
       .limit(1)
       .single();
 
@@ -102,7 +102,7 @@ async function handleGet(req, res) {
         success: true,
         data: {
           voice_id: restaurant.agent_voice_id || null,
-          voice_name: null,
+          voice_name: restaurant.agent_voice_name || null,
           language: restaurant.agent_language || 'en',
           tts_model_id: restaurant.tts_model_id || 'eleven_turbo_v2_5',
           voice_settings: restaurant.voice_settings || {
@@ -127,7 +127,7 @@ async function handleGet(req, res) {
       success: true,
       data: {
         voice_id: ttsConfig.voice_id || restaurant.agent_voice_id || null,
-        voice_name: null, // shared-voices don't persist name on agent
+        voice_name: restaurant.agent_voice_name || null, // stored on save, not available from ElevenLabs agent API
         language: agent.conversation_config?.language || restaurant.agent_language || 'en',
         tts_model_id: ttsConfig.model_id || restaurant.tts_model_id || 'eleven_turbo_v2_5',
         voice_settings: {
@@ -160,6 +160,7 @@ async function handlePatch(req, res) {
   try {
     const {
       voice_id,
+      voice_name,
       language,
       voice_settings,
       tts_model_id
@@ -270,6 +271,7 @@ async function handlePatch(req, res) {
       agent_updated_at: new Date().toISOString()
     };
     if (voice_id) dbUpdates.agent_voice_id = voice_id;
+    if (voice_name) dbUpdates.agent_voice_name = voice_name;
     if (language) dbUpdates.agent_language = language;
     if (voice_settings) dbUpdates.voice_settings = voice_settings;
     if (tts_model_id) dbUpdates.tts_model_id = tts_model_id;

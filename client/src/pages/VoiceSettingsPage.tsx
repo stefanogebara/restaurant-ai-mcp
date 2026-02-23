@@ -290,6 +290,7 @@ export default function VoiceSettingsPage() {
     if (hasElevenLabsChanges) {
       const body: Record<string, unknown> = {};
       if (pendingVoiceId) body.voice_id = pendingVoiceId;
+      if (pendingVoiceId && selectedBrowserVoice?.name) body.voice_name = selectedBrowserVoice.name;
       if (pendingSettings) body.voice_settings = pendingSettings;
       if (pendingLanguage) body.language = pendingLanguage;
 
@@ -496,7 +497,7 @@ export default function VoiceSettingsPage() {
                           </span>
                         </span>
                       ) : (
-                        config.voice_id || 'No voice set'
+                        config.voice_name || config.voice_id || 'No voice set'
                       )}
                     </p>
                     <div className="flex items-center gap-3 mt-1 text-sm text-stone-gray">
