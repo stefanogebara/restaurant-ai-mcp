@@ -1,6 +1,6 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "cd client && rm -rf dist node_modules/.vite && npm install --include=dev && npm run build",
+  "buildCommand": "echo \"SENTRY_AUTH_TOKEN is: ${SENTRY_AUTH_TOKEN:0:10}...\" && cd client && rm -rf dist node_modules/.vite && npm install --include=dev && npm run build",
   "outputDirectory": "client/dist",
   "build": {
     "env": {
