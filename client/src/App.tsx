@@ -33,6 +33,8 @@ const VoiceSettingsPage = lazy(() => import('./pages/VoiceSettingsPage'));
 const BookingPage = lazy(() => import('./pages/BookingPage'));
 const BookingConfirmation = lazy(() => import('./pages/BookingConfirmation'));
 const FloorPlanEditor = lazy(() => import('./pages/FloorPlanEditor'));
+const JoinPage = lazy(() => import('./pages/JoinPage'));
+const TeamPage = lazy(() => import('./pages/TeamPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -113,6 +115,10 @@ function App() {
               {/* Public booking portal */}
               <Route path="/book/:slug" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BookingPage /></ErrorBoundary>} />
               <Route path="/book/:slug/confirmed" element={<BookingConfirmation />} />
+              {/* Team invite acceptance — public (token validates itself) */}
+              <Route path="/join" element={<JoinPage />} />
+              {/* Team management — protected */}
+              <Route path="/host-dashboard/team" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             </Suspense>

@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { vi } from 'vitest';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 // Single hoisted mock — value is controlled per-describe via beforeEach
 let mockRole: string | null = 'host';

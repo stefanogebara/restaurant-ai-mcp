@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useSidebar } from '../../contexts/SidebarContext';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePermission } from '../../hooks/usePermission';
 import { hasFeatureAccess, type PlanFeatures, type PlanType } from '../../config/planFeatures';
 import { languageOptions } from '../../i18n/config';
 
@@ -49,6 +50,7 @@ export default function Sidebar() {
   const { isCollapsed, setIsCollapsed } = useSidebar();
   const subscription = useSubscription();
   const { user, signOut } = useAuth();
+  const { can } = usePermission();
   const { i18n, t } = useTranslation();
   const isSubscriptionLoading = subscription.isLoading;
   const planType = subscription.data?.subscription?.plan?.toLowerCase() as PlanType | undefined;
@@ -177,6 +179,7 @@ export default function Sidebar() {
                   </div>
                 )}
 
+
                 {/* Nav Items */}
                 {section.items.map((item) => {
                   const active = isActive(item.path);
@@ -240,6 +243,38 @@ export default function Sidebar() {
                 })}
               </div>
             ))}
+
+            {/* Team section — owner only */}
+            {can('manageTeam') && (
+              <div className="mb-7">
+                {!isCollapsed && (
+                  <div className="px-7 mb-2 text-[10px] font-semibold tracking-[2px] uppercase text-stone-gray">
+                    {t('navigation.sectionManage', 'Manage')}
+                  </div>
+                )}
+                {isCollapsed && (
+                  <div className="w-full flex justify-center mb-2">
+                    <div className="w-6 h-px bg-charcoal-dark" />
+                  </div>
+                )}
+                <Link
+                  to="/host-dashboard/team"
+                  onClick={() => setIsMobileOpen(false)}
+                  className={`
+                    flex items-center gap-3 transition-all duration-150
+                    ${isCollapsed ? 'justify-center px-4 py-2.5' : 'px-7 py-2.5'}
+                    ${isActive('/host-dashboard/team')
+                      ? 'text-white bg-[rgba(159,18,57,0.1)] border-l-2 border-l-burgundy font-medium'
+                      : 'text-muted-stone hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
+                    }
+                  `}
+                  title={isCollapsed ? 'Team' : undefined}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors ${isActive('/host-dashboard/team') ? 'bg-burgundy' : 'bg-current opacity-40'}`} />
+                  {!isCollapsed && <span className="text-sm">{t('navigation.team', 'Team')}</span>}
+                </Link>
+              </div>
+            )}
           </nav>
 
           {/* User Footer */}
