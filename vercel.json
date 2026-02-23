@@ -1,6 +1,6 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "node -e \"console.log('SENTRY_AUTH_TOKEN length:', (process.env.SENTRY_AUTH_TOKEN||'').length)\" && cd client && rm -rf dist node_modules/.vite && npm install --include=dev && npm run build",
+  "buildCommand": "cd client && rm -rf dist node_modules/.vite && npm install && npm run build",
   "outputDirectory": "client/dist",
   "build": {
     "env": {

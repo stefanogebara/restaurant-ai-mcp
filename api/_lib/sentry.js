@@ -5,8 +5,6 @@
  */
 
 const Sentry = require('@sentry/node');
-const { createSecureLogger } = require('./secure-logger');
-const logger = createSecureLogger('Sentry');
 
 // Initialize Sentry (only in production)
 function initSentry() {
@@ -41,11 +39,11 @@ function initSentry() {
 
     });
 
-    logger.info('Sentry initialized for error tracking');
+    console.log('[sentry] initialized for error tracking');
     return true;
   }
 
-  logger.info('Sentry not initialized (missing SENTRY_DSN or not in production)');
+  console.log('[sentry] not initialized (missing SENTRY_DSN or not in production)');
   return false;
 }
 
@@ -57,7 +55,7 @@ function captureException(error, context = {}) {
     });
   } else {
     // Log to console in development
-    logger.error('Error captured:', error, context);
+    console.error('[sentry] Error captured:', error, context);
   }
 }
 
@@ -69,7 +67,7 @@ function captureMessage(message, level = 'info', context = {}) {
       extra: context
     });
   } else {
-    logger.info(`[${level.toUpperCase()}]`, message, context);
+    console.log(`[sentry][${level.toUpperCase()}]`, message, context);
   }
 }
 

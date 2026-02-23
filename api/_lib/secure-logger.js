@@ -5,6 +5,9 @@
  * to prevent accidental exposure in logs
  */
 
+// Auto-initialize Sentry for all routes that use logging
+require('./sentry');
+
 // Patterns that indicate sensitive data
 const SENSITIVE_PATTERNS = [
   /api[_-]?key/i,
