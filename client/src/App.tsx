@@ -36,6 +36,7 @@ const FloorPlanEditor = lazy(() => import('./pages/FloorPlanEditor'));
 const JoinPage = lazy(() => import('./pages/JoinPage'));
 const TeamPage = lazy(() => import('./pages/TeamPage'));
 const DemoSetupPage = lazy(() => import('./pages/DemoSetupPage'));
+const DemoDashboard = lazy(() => import('./pages/DemoDashboard'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -99,6 +100,8 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/live-demo" element={<LiveAIDemo />} />
               <Route path="/demo/setup" element={<DemoSetupPage />} />
+              <Route path="/demo/:token" element={<DemoDashboard />} />
+              <Route path="/demo/:token/book" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BookingPage /></ErrorBoundary>} />
               {/* Dashboard - New unified dashboard (default) */}
               <Route path="/host-dashboard" element={<Navigate to="/host-dashboard/simple" replace />} />
               <Route path="/host-dashboard/simple" element={<ErrorBoundary fallback={<RouteErrorFallback />}><Dashboard /></ErrorBoundary>} />
