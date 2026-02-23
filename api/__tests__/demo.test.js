@@ -61,6 +61,10 @@ jest.mock('../_lib/rate-limit', () => ({
   checkAndApplyRateLimit: jest.fn().mockResolvedValue(false),
 }));
 
+jest.mock('../_lib/validation', () => ({
+  validateEmail: jest.fn().mockReturnValue({ valid: true }),
+}));
+
 jest.mock('resend', () => ({
   Resend: jest.fn(() => ({
     emails: { send: jest.fn().mockResolvedValue({ id: 'email-123' }) },
@@ -263,6 +267,21 @@ describe('POST ?action=convert', () => {
     expect(res.status).toHaveBeenCalledWith(401);
   });
 
+  test('missing token returns 400', async () => {
+    verifyAuth.mockResolvedValue({ user: { id: 'user-1', restaurant_id: 'real-rest-1' } });
+    const req = {
+      method: 'POST',
+      query: { action: 'convert' },
+      body: {},
+      headers: {},
+    };
+    const res = makeRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    const body = res.json.mock.calls[0][0];
+    expect(body.error).toMatch(/token/i);
+  });
+
   test('valid auth and valid token returns 200', async () => {
     verifyAuth.mockResolvedValue({ user: { id: 'user-1', restaurant_id: 'real-rest-1' } });
 
@@ -286,7 +305,6 @@ describe('POST ?action=convert', () => {
     // 4. Update reservations restaurant_id => ok
     // 5. Mark demo as converted => ok
 
-    let callCount = 0;
     mockSingle
       .mockResolvedValueOnce({ data: demoConfig, error: null })  // find demo
       .mockResolvedValueOnce({ data: realConfig, error: null }); // get real config

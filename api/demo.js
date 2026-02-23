@@ -14,6 +14,8 @@ const { verifyAuth } = require('./_lib/auth');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { initSentry, captureException } = require('./_lib/sentry');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { validateEmail } = require('./_lib/validation');
 const { Resend } = require('resend');
 
 initSentry();
@@ -163,6 +165,23 @@ async function handleCreate(req, res) {
     }
   }
 
+  // Validate email format
+  const emailValidation = validateEmail(contact_email);
+  if (!emailValidation.valid) {
+    return res.status(400).json({ success: false, message: 'Invalid contact_email format' });
+  }
+
+  // Validate numeric bounds
+  const parsedMaxParty = parseInt(max_party_size) || 8;
+  if (parsedMaxParty < 1 || parsedMaxParty > 100) {
+    return res.status(400).json({ success: false, message: 'max_party_size must be between 1 and 100' });
+  }
+
+  const parsedAdvanceDays = parseInt(advance_booking_days) || 30;
+  if (parsedAdvanceDays < 1 || parsedAdvanceDays > 365) {
+    return res.status(400).json({ success: false, message: 'advance_booking_days must be between 1 and 365' });
+  }
+
   const demo_token = crypto.randomUUID();
   const demo_expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
   const slug = `demo-${demo_token.slice(0, 8)}`;
@@ -184,8 +203,8 @@ async function handleCreate(req, res) {
       country: country || null,
       slug,
       business_hours,
-      max_party_size: Number(max_party_size),
-      advance_booking_days: Number(advance_booking_days),
+      max_party_size: parsedMaxParty,
+      advance_booking_days: parsedAdvanceDays,
       cancellation_policy: cancellation_policy || null,
       custom_policy: custom_policy || null,
       is_active: true,
@@ -340,6 +359,7 @@ async function handleConvert(req, res) {
       max_party_size: demoConfig.max_party_size,
       advance_booking_days: demoConfig.advance_booking_days,
       cancellation_policy: demoConfig.cancellation_policy,
+      custom_policy: demoConfig.custom_policy,
     })
     .eq('id', real_restaurant_id);
 
@@ -386,6 +406,8 @@ module.exports = async (req, res) => {
 
   try {
     if (req.method === 'POST' && action === 'create') {
+      const limited = await checkAndApplyRateLimit(req, res, 'demo-create');
+      if (limited) return;
       return await handleCreate(req, res);
     }
 
