@@ -54,7 +54,7 @@ const { isWhatsAppConfigured, sendReservationConfirmation } = require('./_lib/wh
 // SMS CONFIRMATION HELPER
 // ============================================================================
 async function sendReservationConfirmationSMS(customerPhone, reservationDetails) {
-  const { reservationId, customerName, partySize, date, time } = reservationDetails;
+  const { reservationId, customerName, partySize, date, time, restaurantName } = reservationDetails;
 
   // Skip if Twilio not configured
   if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
@@ -88,7 +88,7 @@ async function sendReservationConfirmationSMS(customerPhone, reservationDetails)
     }
 
     const message = await twilioClient.messages.create({
-      body: `Chez Ambiance: ${customerName}, ${partySize}p on ${date} at ${time}. Conf# ${reservationId}`,
+      body: `${restaurantName || 'Seatable'}: ${customerName}, ${partySize}p on ${date} at ${time}. Conf# ${reservationId}`,
       from: process.env.TWILIO_PHONE_NUMBER,
       to: formattedPhone
     });
@@ -388,6 +388,22 @@ async function handleCreate(req, res, restaurantId, timezone) {
   }
 
   // ============================================================================
+  // FETCH RESTAURANT CONFIG (used by both SMS and WhatsApp below)
+  // ============================================================================
+  let restaurantConfig = null;
+  try {
+    const { data: config } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('whatsapp_enabled, restaurant_name, agent_language')
+      .eq('restaurant_id', restaurantId)
+      .single();
+    restaurantConfig = config;
+  } catch (error) {
+    logger.warn('Error fetching restaurant config for notifications (non-fatal)', error.message);
+  }
+
+  // ============================================================================
   // SMS CONFIRMATION (Send reservation details to customer)
   // ============================================================================
   try {
@@ -396,7 +412,8 @@ async function handleCreate(req, res, restaurantId, timezone) {
       customerName: customer_name,
       partySize: party_size,
       date,
-      time
+      time,
+      restaurantName: restaurantConfig?.restaurant_name
     });
 
     if (smsResult.success) {
@@ -412,27 +429,16 @@ async function handleCreate(req, res, restaurantId, timezone) {
   // ============================================================================
   // WHATSAPP CONFIRMATION (fire-and-forget, non-fatal)
   // ============================================================================
-  try {
-    const { data: config, error: configErr } = await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_config')
-      .select('whatsapp_enabled, restaurant_name, agent_language')
-      .eq('restaurant_id', restaurantId)
-      .single();
-
-    if (!configErr && config && config.whatsapp_enabled && isWhatsAppConfigured()) {
-      sendReservationConfirmation(customer_phone, {
-        customerName: customer_name,
-        restaurantName: config.restaurant_name,
-        language: config.agent_language || 'en',
-        reservationId,
-        date,
-        time,
-        partySize: party_size
-      }).catch(err => logger.warn('WhatsApp confirmation failed (non-fatal):', err.message));
-    }
-  } catch (error) {
-    logger.warn('Error fetching WhatsApp config (non-fatal)', error.message);
+  if (restaurantConfig?.whatsapp_enabled && isWhatsAppConfigured()) {
+    sendReservationConfirmation(customer_phone, {
+      customerName: customer_name,
+      restaurantName: restaurantConfig.restaurant_name,
+      language: restaurantConfig.agent_language || 'en',
+      reservationId,
+      date,
+      time,
+      partySize: party_size
+    }).catch(err => logger.warn('WhatsApp confirmation failed (non-fatal):', err.message));
   }
 
   // ============================================================================
