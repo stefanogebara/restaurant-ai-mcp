@@ -106,14 +106,19 @@ module.exports = async (req, res) => {
 
         // Get customer email from Stripe
         const customer = await stripe.customers.retrieve(subscriptionCreated.customer);
+        if (!customer || customer.deleted) {
+          logger.error('Customer not found or deleted for subscription:', subscriptionCreated.id, 'Customer ID:', subscriptionCreated.customer);
+          break;
+        }
         const priceId = subscriptionCreated.items.data[0].price.id;
         const planName = getPlanFromPriceId(priceId);
 
         // Resolve restaurant_id from Stripe metadata or customer email
         const createRestaurantId = await resolveRestaurantId(subscriptionCreated, customer.email);
         if (!createRestaurantId) {
-          logger.error('Cannot create subscription without restaurant_id. Customer email:', customer.email);
-          break;
+          logger.error('Cannot create subscription without restaurant_id. Subscription:', subscriptionCreated.id, 'Customer email:', customer.email, 'Customer ID:', subscriptionCreated.customer);
+          // Throw to return 500 so Stripe retries this event
+          throw new Error(`Cannot resolve restaurant for subscription ${subscriptionCreated.id}`);
         }
 
         // Create subscription record in database

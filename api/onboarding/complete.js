@@ -10,12 +10,29 @@
  * Supabase single-restaurant architecture (Nov 2025)
  */
 
+const crypto = require('crypto');
 const { supabaseAdmin } = require('../_lib/supabase');
 const fetch = require('node-fetch');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { verifyAuth } = require('../_lib/auth');
 const { suggestTimezone } = require('../_lib/timezone');
 const logger = createSecureLogger('Onboarding');
+
+// ============ Voice Defaults ============
+
+/**
+ * Returns a language-appropriate default ElevenLabs voice ID.
+ * Update these IDs when language-specific voices are configured.
+ */
+const DEFAULT_VOICE_IDS = {
+  'en': '21m00Tcm4TlvDq8ikWAM', // Rachel (English)
+  'es': '21m00Tcm4TlvDq8ikWAM', // TODO: Replace with Spanish-specific voice
+  'pt': '21m00Tcm4TlvDq8ikWAM', // TODO: Replace with Portuguese (Brazil) voice
+};
+
+function getDefaultVoiceId(language) {
+  return DEFAULT_VOICE_IDS[language] || DEFAULT_VOICE_IDS['en'];
+}
 
 // ============ Slug Generation ============
 
@@ -58,8 +75,8 @@ async function generateUniqueSlug(name, supabaseClient) {
     return baseSlug;
   }
 
-  // Collision detected: append random 4-digit suffix
-  const suffix = Math.floor(1000 + Math.random() * 9000); // 1000-9999
+  // Collision detected: append cryptographically random 4-digit suffix
+  const suffix = (crypto.randomBytes(2).readUInt16BE(0) % 9000) + 1000; // 1000-9999
   const slugWithSuffix = `${baseSlug.slice(0, 45)}-${suffix}`;
 
   // Verify the suffixed slug is also unique (extremely unlikely collision but safe)
@@ -542,7 +559,7 @@ module.exports = async (req, res) => {
         body: JSON.stringify({
           restaurant_id: generatedRestaurantId,
           restaurant_name,
-          voice_id: selected_voice_id || '21m00Tcm4TlvDq8ikWAM', // Rachel - ElevenLabs default
+          voice_id: selected_voice_id || getDefaultVoiceId(selected_voice_language),
           language: selected_voice_language || 'en',
           business_hours: agentBusinessHours,
           phone: phone_number,

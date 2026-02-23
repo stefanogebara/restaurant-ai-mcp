@@ -178,7 +178,7 @@ describe('StripeWebhook: customer.subscription.created', () => {
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
-  test('skips when restaurant_id cannot be resolved', async () => {
+  test('returns 500 when restaurant_id cannot be resolved (forces Stripe retry)', async () => {
     mockConstructEvent.mockReturnValueOnce({
       type: 'customer.subscription.created',
       data: {
@@ -215,7 +215,8 @@ describe('StripeWebhook: customer.subscription.created', () => {
     await handler(req, res);
 
     expect(createSubscription).not.toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(200);
+    // Returns 500 so Stripe retries the event instead of silently dropping the subscription
+    expect(res.status).toHaveBeenCalledWith(500);
   });
 });
 
@@ -443,8 +444,8 @@ describe('StripeWebhook: resolveRestaurantId via email lookup', () => {
 
     const { req, res } = createMockReqRes();
     await handler(req, res);
-    // resolveRestaurantId returns null → subscription.created breaks early → still 200
-    expect(res.status).toHaveBeenCalledWith(200);
+    // resolveRestaurantId returns null → throws error → 500 so Stripe retries
+    expect(res.status).toHaveBeenCalledWith(500);
   });
 });
 

@@ -28,6 +28,7 @@ const { getRestaurantByName, getAllActiveRestaurants } = require('./_lib/restaur
 const { getMultiTenantClient } = require('./_lib/multi-tenant-supabase');
 const { canAccommodateParty } = require('./_lib/supabase');
 const { trackUsage } = require('./_lib/usage-tracking');
+const { generateSecureReservationId } = require('./_lib/secure-id');
 const { extractMemoriesFromWhatsApp } = require('./services/memoryExtractor');
 const { buildGuestContext } = require('./services/guestMemory');
 
@@ -528,12 +529,13 @@ async function executeTool(toolName, toolInput, session) {
         const { date, time, party_size, customer_name, customer_phone, special_requests } = toolInput;
 
         // Generate reservation ID
-        const reservationId = `RES-${date.replace(/-/g, '')}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+        const reservationId = generateSecureReservationId();
 
         const { data, error } = await client
           .from('reservations')
           .insert({
             reservation_id: reservationId,
+            restaurant_id: session.restaurant.id,
             date,
             time,
             party_size,
@@ -772,9 +774,25 @@ async function executeTool(toolName, toolInput, session) {
         }
 
         const updates = {};
-        if (new_date) updates.date = new_date;
-        if (new_time) updates.time = new_time;
-        if (new_party_size) updates.party_size = new_party_size;
+        if (new_date) {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(new_date)) {
+            return { success: false, error: 'Invalid date format. Use YYYY-MM-DD.' };
+          }
+          updates.date = new_date;
+        }
+        if (new_time) {
+          if (!/^\d{2}:\d{2}$/.test(new_time)) {
+            return { success: false, error: 'Invalid time format. Use HH:MM.' };
+          }
+          updates.time = new_time;
+        }
+        if (new_party_size) {
+          const size = parseInt(new_party_size, 10);
+          if (isNaN(size) || size < 1 || size > 50) {
+            return { success: false, error: 'Party size must be between 1 and 50.' };
+          }
+          updates.party_size = size;
+        }
 
         const { data: updated, error: updateErr } = await client
           .from('reservations')
@@ -1203,7 +1221,7 @@ module.exports = async (req, res) => {
         }
 
         // Load conversation history from session
-        const conversationHistory = session.conversation_history || [];
+        const conversationHistory = Array.isArray(session.conversation_history) ? session.conversation_history : [];
         logger.info(` Loaded ${conversationHistory.length} history messages for session: ${session.id}`);
 
         // Process message with AI
