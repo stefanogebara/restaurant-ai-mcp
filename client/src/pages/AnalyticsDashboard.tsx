@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { usePermission } from '../hooks/usePermission';
 import { authFetch } from '../services/api';
 import { SkeletonAnalytics } from '../components/common/Skeleton';
 import DashboardLayout from '../components/layout/DashboardLayout';
@@ -44,6 +45,16 @@ type DateRange = '30d' | '7d' | 'today';
 
 export default function AnalyticsDashboard() {
   const { t } = useTranslation();
+  const { can } = usePermission();
+
+  if (!can('viewAnalytics')) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <p className="text-stone-gray text-sm">You don't have permission to view analytics.</p>
+      </div>
+    );
+  }
+
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

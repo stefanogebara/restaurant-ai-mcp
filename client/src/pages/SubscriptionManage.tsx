@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { colors } from '../utils/colors';
+import { usePermission } from '../hooks/usePermission';
 import { useNavigate } from 'react-router-dom';
 import { SkeletonSubscription } from '../components/common/Skeleton';
 import { authFetch } from '../services/api';
@@ -23,6 +24,7 @@ const plans = [
 const planTiers = ['starter', 'growth', 'scale'];
 
 export default function SubscriptionManage() {
+  const { can } = usePermission();
   const navigate = useNavigate();
   const { error } = useToast();
   const [loading, setLoading] = useState(true);
@@ -85,6 +87,14 @@ export default function SubscriptionManage() {
       setManagingSubscription(false);
     }
   };
+
+  if (!can('manageSubscription')) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <p className="text-stone-gray text-sm">Only the restaurant owner can manage the subscription.</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return <SkeletonSubscription />;

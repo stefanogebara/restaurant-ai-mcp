@@ -11,6 +11,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { usePermission } from '../hooks/usePermission';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import Spinner from '../components/common/Spinner';
 import { SkeletonWeeklyReport } from '../components/common/Skeleton';
@@ -59,6 +60,7 @@ interface WeeklyReportData {
 
 export default function WeeklyReport() {
   const { t } = useTranslation();
+  const { can } = usePermission();
   const subscription = useSubscription();
   const currentPlan = (subscription.data?.subscription?.plan?.toLowerCase() as PlanType) || undefined;
   const hasAccess = currentPlan ? hasFeatureAccess(currentPlan, 'weeklyReports') : false;
@@ -131,6 +133,14 @@ export default function WeeklyReport() {
   const handlePrint = () => {
     window.print();
   };
+
+  if (!can('viewAnalytics')) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <p className="text-stone-gray text-sm">You don't have permission to view reports.</p>
+      </div>
+    );
+  }
 
   if (subscription.isLoading) {
     return (
