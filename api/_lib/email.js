@@ -337,6 +337,46 @@ async function sendNewBookingAlertEmail({
   }
 }
 
+/**
+ * Send a team member invitation email
+ */
+async function sendInviteEmail({ to, inviteUrl, role }) {
+  const resend = getResendClient();
+  if (!resend) { logger.warn('RESEND_API_KEY not set, skipping invite email'); return; }
+
+  const roleLabel = role.charAt(0).toUpperCase() + role.slice(1);
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to,
+      subject: `You're invited to join a restaurant team as ${roleLabel}`,
+      html: wrapEmailHtml(`
+        <div style="background: #FAFAF9; border: 1px solid #E7E5E4; border-radius: 16px; padding: 32px; margin-bottom: 24px;">
+          <h2 style="font-size: 22px; color: #1C1917; margin: 0 0 8px 0;">You're invited!</h2>
+          <p style="color: #57534E; margin: 0 0 24px 0;">
+            You've been invited to join a restaurant team on Seatable as a
+            <strong style="color: #1C1917;">${roleLabel}</strong>.
+            Click the button below to accept your invitation.
+          </p>
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="${inviteUrl}"
+               style="display:inline-block;padding:14px 28px;background:#9F1239;color:white;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;">
+              Accept Invitation
+            </a>
+          </div>
+          <p style="color: #A8A29E; font-size: 12px; text-align: center; margin: 0;">
+            This invitation expires in 7 days. If you weren't expecting this email, you can safely ignore it.
+          </p>
+        </div>
+      `),
+    });
+    logger.info('Invite email sent to:', to);
+  } catch (err) {
+    logger.error('Failed to send invite email:', err.message);
+  }
+}
+
 module.exports = {
   sendPaymentReceiptEmail,
   sendPaymentFailedEmail,
@@ -344,5 +384,6 @@ module.exports = {
   sendRetentionCampaignEmail,
   sendReservationConfirmationEmail,
   sendNewBookingAlertEmail,
+  sendInviteEmail,
   wrapEmailHtml,
 };
