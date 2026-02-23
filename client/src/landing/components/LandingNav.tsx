@@ -38,6 +38,9 @@ export default function LandingNav() {
         <button onClick={() => scrollToSection('contact')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
           Contact
         </button>
+        <button onClick={() => navigate('/demo/setup')} className="text-sm font-medium text-burgundy hover:text-burgundy-dark transition-colors">
+          Try free demo
+        </button>
       </div>
 
       {/* Desktop CTA */}
@@ -81,6 +84,9 @@ export default function LandingNav() {
             </button>
             <button onClick={() => scrollToSection('contact')} className="block w-full text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors py-2">
               Contact
+            </button>
+            <button onClick={() => { navigate('/demo/setup'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-sm font-medium text-burgundy hover:text-burgundy-dark transition-colors py-2">
+              Try free demo
             </button>
             <div className="pt-4 border-t border-border-gray">
               <button
