@@ -22,6 +22,31 @@ export default function LandingPage() {
   }, []);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (!ref || ref.length > 20) return;
+
+    fetch('/api/referral?action=track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referral_code: ref }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.valid === true) {
+          localStorage.setItem('referral_code', ref);
+          params.delete('ref');
+          const newSearch = params.toString();
+          const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : '') + window.location.hash;
+          history.replaceState(null, '', newUrl);
+        }
+      })
+      .catch(() => {
+        // fire-and-forget — silently drop errors
+      });
+  }, []);
+
+  useEffect(() => {
     document.documentElement.style.scrollBehavior = 'smooth';
 
     const handleScroll = () => {
