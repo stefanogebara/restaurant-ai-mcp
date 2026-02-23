@@ -68,7 +68,8 @@ async function getRestaurantIdForUser(userId) {
   }
 
   try {
-    const { data, error } = await supabase
+    // 1. Check if this user is the restaurant owner
+    const { data: ownerData, error: ownerError } = await supabase
       .schema('restaurant')
       .from('restaurant_config')
       .select('id, timezone')
@@ -77,24 +78,48 @@ async function getRestaurantIdForUser(userId) {
       .limit(1)
       .single();
 
-    if (error || !data) {
-      logger.info(`[Auth] No restaurant found for user ${userId}`);
-      return null;
-    }
+    if (!ownerError && ownerData) {
+      const result = {
+        restaurantId: ownerData.id,
+        timezone: ownerData.timezone || 'UTC',
+        role: 'owner',
+        timestamp: Date.now(),
+      };
+      restaurantCache.set(userId, result);
 
-    // Cache the result (includes both restaurantId and timezone)
-    const result = { restaurantId: data.id, timezone: data.timezone || 'UTC', timestamp: Date.now() };
-    restaurantCache.set(userId, result);
-
-    // Evict old entries if cache grows too large
-    if (restaurantCache.size > 500) {
-      const now = Date.now();
-      for (const [key, val] of restaurantCache.entries()) {
-        if (now - val.timestamp > CACHE_TTL) restaurantCache.delete(key);
+      if (restaurantCache.size > 500) {
+        const now = Date.now();
+        for (const [key, val] of restaurantCache.entries()) {
+          if (now - val.timestamp > CACHE_TTL) restaurantCache.delete(key);
+        }
       }
+
+      return result;
     }
 
-    return result;
+    // 2. Check restaurant_members (team member path)
+    const { data: memberData, error: memberError } = await supabase
+      .schema('restaurant')
+      .from('restaurant_members')
+      .select('restaurant_id, role, restaurant_config!inner(timezone)')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .limit(1)
+      .single();
+
+    if (!memberError && memberData) {
+      const result = {
+        restaurantId: memberData.restaurant_id,
+        timezone: memberData.restaurant_config?.timezone || 'UTC',
+        role: memberData.role,
+        timestamp: Date.now(),
+      };
+      restaurantCache.set(userId, result);
+      return result;
+    }
+
+    logger.info(`[Auth] No restaurant found for user ${userId}`);
+    return null;
   } catch (err) {
     logger.error('[Auth] Error looking up restaurant for user:', err.message);
     return null;
@@ -156,12 +181,13 @@ async function verifyJWT(token) {
 
   if (!decoded) return null;
 
-  // Ensure restaurant_id and timezone are present on the user object
+  // Ensure restaurant_id, timezone, and role are present on the user object
   if (!decoded.restaurant_id && decoded.sub) {
     const restaurant = await getRestaurantIdForUser(decoded.sub);
     if (restaurant) {
       decoded.restaurant_id = restaurant.restaurantId;
       decoded.timezone = restaurant.timezone;
+      decoded.role = restaurant.role || 'owner';
     }
   }
 

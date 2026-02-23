@@ -259,7 +259,7 @@ describe('verifyJWT', () => {
     expect(result).not.toBeNull();
     expect(result.sub).toBe('supa-user-id');
     expect(result.email).toBe('supa@user.com');
-    expect(result.role).toBe('authenticated');
+    expect(result.role).toBe('owner'); // restaurant role overwrites Supabase 'authenticated'
     expect(result.restaurant_id).toBe('supa-rest-id');
     expect(mockGetUser).toHaveBeenCalledWith(supabaseToken);
   });
@@ -628,6 +628,41 @@ describe('getRestaurantIdForUser', () => {
     const result = await getRestaurantIdForUser('error-user');
 
     expect(result).toBeNull();
+  });
+});
+
+// ============================================================
+// getRestaurantIdForUser — team member fallback
+// ============================================================
+describe('getRestaurantIdForUser — team member fallback', () => {
+  it('falls back to restaurant_members when user is not in restaurant_config', async () => {
+    // 1st call (restaurant_config) → miss
+    mockSingle.mockResolvedValueOnce({ data: null, error: { code: 'PGRST116', message: 'not found' } });
+    // 2nd call (restaurant_members) → hit
+    mockSingle.mockResolvedValueOnce({
+      data: { restaurant_id: 'member-rest-uuid', role: 'host', restaurant_config: { timezone: 'Europe/Madrid' } },
+      error: null,
+    });
+
+    const result = await getRestaurantIdForUser('team-member-user-uuid');
+
+    expect(result).not.toBeNull();
+    expect(result.restaurantId).toBe('member-rest-uuid');
+    expect(result.role).toBe('host');
+    expect(result.timezone).toBe('Europe/Madrid');
+    expect(mockFrom).toHaveBeenCalledWith('restaurant_members');
+  });
+
+  it('returns role "owner" for restaurant_config match', async () => {
+    mockSingle.mockResolvedValueOnce({
+      data: { id: 'owner-rest-id', timezone: 'UTC' },
+      error: null,
+    });
+
+    const result = await getRestaurantIdForUser('owner-user-uuid');
+
+    expect(result.restaurantId).toBe('owner-rest-id');
+    expect(result.role).toBe('owner');
   });
 });
 
