@@ -60,6 +60,9 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
 
   if (!isOpen) return null;
 
+  // Derive unique locations from available tables
+  const locations = [...new Set(availableTables.map(t => t.location).filter(Boolean))].sort();
+
   // Filter tables by preferred location if specified
   const filteredTables = formData.preferred_location
     ? availableTables.filter(t => t.location === formData.preferred_location)
@@ -132,10 +135,9 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
               className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
             >
               <option value="">{t('dashboard.walkIn.noPreference')}</option>
-              <option value="Main Room">Main Room</option>
-              <option value="Patio">Patio</option>
-              <option value="Bar Area">Bar Area</option>
-              <option value="Private Room">Private Room</option>
+              {locations.map(loc => (
+                <option key={loc} value={loc}>{loc}</option>
+              ))}
             </select>
           </div>
 
