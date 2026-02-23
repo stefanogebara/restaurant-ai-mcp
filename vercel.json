@@ -1,6 +1,6 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "cd client && rm -rf dist node_modules/.vite && npm install && npm run build",
+  "buildCommand": "cd client && rm -rf dist node_modules/.vite && npm install --include=dev && npm run build",
   "outputDirectory": "client/dist",
   "build": {
     "env": {
