@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { authFetch } from '../services/api';
 
 export default function Welcome() {
   const navigate = useNavigate();
@@ -28,9 +29,29 @@ export default function Welcome() {
       return;
     }
 
+    // Check if this is a demo conversion (user clicked "Upgrade to keep your data")
+    const params = new URLSearchParams(window.location.search);
+    const fromDemo = params.get('from') === 'demo';
+    const demoToken = params.get('token');
+
+    // Clean up demo params from the URL immediately (before async work)
+    if (fromDemo && demoToken) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
     // Check if user has completed onboarding (has restaurant_config)
     const checkOnboardingStatus = async () => {
       try {
+        // Fire-and-forget demo conversion — don't block login on success/failure
+        if (fromDemo && demoToken) {
+          authFetch('/api/demo?action=convert', {
+            method: 'POST',
+            body: JSON.stringify({ token: demoToken }),
+          }).catch(() => {
+            // Conversion failure is non-fatal — user still gets logged in
+          });
+        }
+
         const { data, error } = await supabase
           .schema('restaurant')
           .from('restaurant_config')
@@ -42,7 +63,10 @@ export default function Welcome() {
 
         if (!error && data) {
           // User has completed onboarding → dashboard
-          navigate('/host-dashboard/simple', { replace: true });
+          const destination = fromDemo && demoToken
+            ? '/host-dashboard/simple?converted=demo'
+            : '/host-dashboard/simple';
+          navigate(destination, { replace: true });
         } else {
           // No restaurant config → needs onboarding
           navigate('/onboarding', { replace: true });

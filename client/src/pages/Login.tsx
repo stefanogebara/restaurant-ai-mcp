@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react';
-import { Navigate, Link } from 'react-router-dom';
+import { Navigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { motion } from 'framer-motion';
@@ -17,6 +17,7 @@ type AuthMode = 'signin' | 'signup';
 export default function Login() {
   const { t } = useTranslation();
   const { user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const [searchParams] = useSearchParams();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -48,8 +49,15 @@ export default function Login() {
     setError(null);
     if (mode === 'signup') trackSignupStarted({ method: 'google' });
 
+    // Preserve demo params through OAuth round-trip so Welcome.tsx can convert
+    const extraRedirectParams: Record<string, string> = {};
+    const fromParam = searchParams.get('from');
+    const tokenParam = searchParams.get('token');
+    if (fromParam) extraRedirectParams['from'] = fromParam;
+    if (tokenParam) extraRedirectParams['token'] = tokenParam;
+
     try {
-      await signInWithGoogle();
+      await signInWithGoogle(Object.keys(extraRedirectParams).length > 0 ? extraRedirectParams : undefined);
     } catch (err: any) {
       setError(err.message || 'Failed to sign in with Google');
       setIsSigningIn(false);

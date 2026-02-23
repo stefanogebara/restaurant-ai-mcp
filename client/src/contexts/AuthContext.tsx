@@ -14,7 +14,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   role: RestaurantRole | null;
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: (extraRedirectParams?: Record<string, string>) => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string) => Promise<{ needsConfirmation: boolean }>;
   signOut: () => Promise<void>;
@@ -71,11 +71,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (extraRedirectParams?: Record<string, string>) => {
+    // Build redirectTo URL, preserving any extra params (e.g. from=demo&token=...)
+    // so they survive the OAuth round-trip back to /welcome
+    let redirectTo = `${window.location.origin}/welcome`;
+    if (extraRedirectParams && Object.keys(extraRedirectParams).length > 0) {
+      const qs = new URLSearchParams(extraRedirectParams).toString();
+      redirectTo = `${redirectTo}?${qs}`;
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/welcome`,
+        redirectTo,
         queryParams: {
           access_type: 'offline',
           prompt: 'select_account',
