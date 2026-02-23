@@ -13,7 +13,7 @@ const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('Referral');
 
-const BASE_URL = 'https://restaurant-ai-mcp.vercel.app';
+const BASE_URL = process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
 
 function generateCode() {
   const words = ['BELLA', 'PRIMO', 'GUSTO', 'FORNO', 'CIBO', 'VINO', 'PASTO', 'TAVOLA'];
@@ -79,11 +79,16 @@ async function handleGetCode(req, res) {
 
     if (updateError) {
       code = generateCode();
-      await supabaseAdmin
+      const { error: retryError } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
         .update({ referral_code: code })
         .eq('id', restaurantId);
+
+      if (retryError) {
+        logger.error('Failed to generate and persist referral code after retry:', retryError.message);
+        return res.status(500).json({ success: false, message: 'Could not generate referral code. Please try again.' });
+      }
     }
   }
 
@@ -106,7 +111,9 @@ async function handleGetCode(req, res) {
 
 async function handleTrack(req, res) {
   const code = req.body?.code || req.query.code;
-  if (!code) return res.status(400).json({ success: false, message: 'Missing code' });
+  if (!code || code.length > 20) {
+    return res.status(400).json({ success: false, message: 'Missing or invalid code' });
+  }
 
   const { data } = await supabaseAdmin
     .schema('restaurant')
@@ -120,9 +127,17 @@ async function handleTrack(req, res) {
 }
 
 async function handleAttach(req, res) {
-  const { referral_code, restaurant_id } = req.body || {};
-  if (!referral_code || !restaurant_id) {
-    return res.status(400).json({ success: false, message: 'Missing referral_code or restaurant_id' });
+  const { referral_code } = req.body || {};
+  if (!referral_code) {
+    return res.status(400).json({ success: false, message: 'Missing referral_code' });
+  }
+
+  const auth = await verifyAuth(req);
+  if (auth.error) return res.status(auth.status).json({ error: auth.error });
+
+  const restaurant_id = auth.user?.restaurant_id;
+  if (!restaurant_id) {
+    return res.status(400).json({ success: false, message: 'No restaurant associated with this account' });
   }
 
   const code = referral_code.toUpperCase();
@@ -132,6 +147,7 @@ async function handleAttach(req, res) {
     .from('restaurant_config')
     .select('id')
     .eq('referral_code', code)
+    .eq('is_active', true)
     .single();
 
   if (!referrer) return res.status(200).json({ success: true, attached: false });
