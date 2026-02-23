@@ -4,6 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import DemoBanner from '../components/demo/DemoBanner';
 import StatsBar from '../components/dashboard/StatsBar';
 import ReservationsList from '../components/dashboard/ReservationsList';
+import type { Table, UpcomingReservation } from '../types/host.types';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
@@ -23,8 +24,8 @@ interface DemoRestaurant {
 interface DemoSession {
   success: boolean;
   restaurant: DemoRestaurant;
-  tables: any[];
-  reservations: any[];
+  tables: Table[];
+  reservations: UpcomingReservation[];
   daysLeft: number;
 }
 
@@ -128,13 +129,13 @@ export default function DemoDashboard() {
   const today = new Date().toISOString().split('T')[0];
   const tomorrow = new Date(Date.now() + 86_400_000).toISOString().split('T')[0];
 
-  const todayReservations = reservations.filter((r: any) => r.date === today);
-  const tomorrowReservations = reservations.filter((r: any) => r.date === tomorrow);
+  const todayReservations = reservations.filter((r) => r.date === today);
+  const tomorrowReservations = reservations.filter((r) => r.date === tomorrow);
 
-  const occupiedTables = tables.filter((t: any) => t.status === 'Occupied').length;
+  const occupiedTables = tables.filter((t) => t.status === 'Occupied').length;
   const totalTables = tables.length;
-  const totalGuests = todayReservations.reduce((sum: number, r: any) => sum + (r.party_size || 0), 0);
-  const seatedReservations = todayReservations.filter((r: any) => r.checked_in).length;
+  const totalGuests = todayReservations.reduce((sum, r) => sum + (r.party_size || 0), 0);
+  const seatedReservations = todayReservations.filter((r) => r.checked_in).length;
 
   const bookingHref = restaurant.slug ? `/book/${restaurant.slug}` : '#';
 

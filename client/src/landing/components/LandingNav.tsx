@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 export default function LandingNav() {
   const navigate = useNavigate();
@@ -38,9 +38,9 @@ export default function LandingNav() {
         <button onClick={() => scrollToSection('contact')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
           Contact
         </button>
-        <button onClick={() => navigate('/demo/setup')} className="text-sm font-medium text-burgundy hover:text-burgundy-dark transition-colors">
+        <Link to="/demo/setup" className="text-sm font-medium text-burgundy hover:text-burgundy-dark transition-colors">
           Try free demo
-        </button>
+        </Link>
       </div>
 
       {/* Desktop CTA */}
@@ -85,9 +85,9 @@ export default function LandingNav() {
             <button onClick={() => scrollToSection('contact')} className="block w-full text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors py-2">
               Contact
             </button>
-            <button onClick={() => { navigate('/demo/setup'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-sm font-medium text-burgundy hover:text-burgundy-dark transition-colors py-2">
+            <Link to="/demo/setup" onClick={() => setIsMobileMenuOpen(false)} className="block text-left text-sm font-medium text-burgundy hover:text-burgundy-dark transition-colors py-2">
               Try free demo
-            </button>
+            </Link>
             <div className="pt-4 border-t border-border-gray">
               <button
                 onClick={() => {
