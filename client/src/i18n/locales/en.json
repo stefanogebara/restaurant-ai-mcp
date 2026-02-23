@@ -39,7 +39,8 @@
     "callHistory": "Call History",
     "sectionMain": "Main",
     "sectionAI": "AI",
-    "sectionInsights": "Insights"
+    "sectionInsights": "Insights",
+    "sectionManage": "Manage"
   },
   "dashboard": {
     "welcome": "Welcome",

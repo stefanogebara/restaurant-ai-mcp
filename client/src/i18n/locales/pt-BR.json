@@ -39,7 +39,8 @@
     "callHistory": "Histórico de Chamadas",
     "sectionMain": "Principal",
     "sectionAI": "IA",
-    "sectionInsights": "Análises"
+    "sectionInsights": "Análises",
+    "sectionManage": "Gerenciar"
   },
   "dashboard": {
     "welcome": "Bem-vindo",
