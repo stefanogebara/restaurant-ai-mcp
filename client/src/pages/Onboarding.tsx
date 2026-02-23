@@ -36,7 +36,7 @@ export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [ownReferralCode, setOwnReferralCode] = useState<string | null>(null);
+  const [ownReferral, setOwnReferral] = useState<{ code: string; url: string } | null>(null);
 
   const customerEmail = user?.email || localStorage.getItem('customer_email') || '';
 
@@ -151,14 +151,22 @@ export default function Onboarding() {
       // Fetch own referral code for share nudge (non-blocking)
       authFetch('/api/referral?action=code')
         .then((r) => r.json())
-        .then((d) => { if (d.success && d.code) setOwnReferralCode(d.code); })
-        .catch(() => { /* best-effort */ });
+        .then((d) => {
+          if (d.success && d.code) {
+            setOwnReferral({ code: d.code, url: d.referral_url });
+          }
+          setTimeout(() => {
+            navigate('/host-dashboard/simple');
+          }, 10000);
+        })
+        .catch(() => {
+          /* best-effort */
+          setTimeout(() => {
+            navigate('/host-dashboard/simple');
+          }, 10000);
+        });
 
       setShowSuccessModal(true);
-
-      setTimeout(() => {
-        navigate('/host-dashboard');
-      }, 6000);
     } catch (err: any) {
       showError(err.message || 'Failed to complete onboarding. Please try again.');
       console.error('[Onboarding Error]', err);
@@ -314,8 +322,8 @@ export default function Onboarding() {
               </p>
 
               {/* Referral share nudge */}
-              {ownReferralCode && (() => {
-                const referralUrl = `https://restaurant-ai-mcp.vercel.app?ref=${ownReferralCode}`;
+              {ownReferral && (() => {
+                const referralUrl = ownReferral.url;
                 const whatsappText = encodeURIComponent(`I just joined Seatable – the AI that manages restaurant reservations. Try it free: ${referralUrl}`);
                 const emailSubject = encodeURIComponent('Try Seatable – AI reservations for restaurants');
                 const emailBody = encodeURIComponent(`Hey,\n\nI just started using Seatable – it handles restaurant reservations with AI. Thought you might find it useful.\n\nTry it free here: ${referralUrl}\n\nCheers`);
@@ -350,10 +358,17 @@ export default function Onboarding() {
                 );
               })()}
 
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-2 mb-4">
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-border-gray border-t-burgundy" />
                 <span className="text-sm text-stone-gray">{t('onboarding.redirectingToDashboard')}</span>
               </div>
+
+              <button
+                onClick={() => navigate('/host-dashboard/simple')}
+                className="text-[13px] font-medium text-burgundy hover:text-burgundy-dark transition-colors underline underline-offset-2"
+              >
+                Go to Dashboard &rarr;
+              </button>
             </div>
           </div>
         </div>
