@@ -6,6 +6,7 @@ process.env.CRON_SECRET = 'test-cron-secret';
 const mockCaptureMessage = jest.fn();
 
 jest.mock('../_lib/sentry', () => ({
+  initSentry: jest.fn(),
   captureMessage: (...args) => mockCaptureMessage(...args),
   captureException: jest.fn(),
 }));

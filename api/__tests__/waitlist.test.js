@@ -98,6 +98,7 @@ jest.mock('../_lib/secure-logger', () => ({
 }));
 
 jest.mock('../_lib/sentry', () => ({
+  initSentry: jest.fn(),
   captureException: jest.fn(),
 }));
 
