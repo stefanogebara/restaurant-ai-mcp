@@ -39,6 +39,23 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Restaurant setup required before subscribing. Please complete onboarding first.' });
     }
 
+    // Check if this restaurant was referred — apply referee discount if so
+    let discounts;
+    try {
+      const { supabaseAdmin } = require('./_lib/supabase');
+      const { data: referral } = await supabaseAdmin
+        .from('referrals')
+        .select('id')
+        .eq('referee_id', restaurantId)
+        .eq('status', 'pending')
+        .limit(1)
+        .single();
+      if (referral) {
+        discounts = [{ coupon: 'REFERRED_20_3M' }];
+        logger.info('Applying referral discount for restaurant:', restaurantId);
+      }
+    } catch (_) { /* non-fatal — proceed without discount */ }
+
     // Get the origin for success/cancel URLs
     const origin = req.headers.origin || process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
 
@@ -68,7 +85,7 @@ module.exports = async (req, res) => {
       line_items: lineItems,
       success_url: `${origin}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/#pricing`,
-      allow_promotion_codes: true,
+      ...(discounts ? { discounts } : { allow_promotion_codes: true }),
       billing_address_collection: 'required',
       customer_email: req.body.email || undefined,
       metadata: {
