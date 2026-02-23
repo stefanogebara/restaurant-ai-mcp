@@ -19,6 +19,7 @@ import { hostAPI, authFetch } from '../services/api';
 import { usePlanInfo } from '../hooks/useSubscription';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import StatsBar from '../components/dashboard/StatsBar';
+import ReferralWidget from '../components/dashboard/ReferralWidget';
 import TableLayoutPanel from '../components/dashboard/TableLayoutPanel';
 import ReservationsList from '../components/dashboard/ReservationsList';
 import ActivePartiesPanel from '../components/dashboard/ActivePartiesPanel';
@@ -232,6 +233,9 @@ export default function Dashboard() {
             totalGuests={totalGuests}
             isLoading={isLoading}
           />
+
+          {/* ---- Referral Widget ---- */}
+          <ReferralWidget />
 
           {/* ---- Main Content: 2-column layout ---- */}
           <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
