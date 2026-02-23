@@ -121,6 +121,10 @@ function withErrorTracking(handler) {
   };
 }
 
+// Auto-initialize on first require so all serverless routes get Sentry
+// without needing an explicit initSentry() call in each file.
+initSentry();
+
 module.exports = {
   initSentry,
   captureException,
