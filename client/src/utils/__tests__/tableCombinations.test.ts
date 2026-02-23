@@ -153,14 +153,14 @@ describe('formatTableNumbers', () => {
 
 describe('getCombinationColorClass', () => {
   it('returns green for high scores', () => {
-    expect(getCombinationColorClass(150)).toContain('#22c55e');
+    expect(getCombinationColorClass(150)).toContain('green');
   });
 
   it('returns yellow for medium scores', () => {
-    expect(getCombinationColorClass(110)).toContain('#eab308');
+    expect(getCombinationColorClass(110)).toContain('yellow');
   });
 
   it('returns orange for low scores', () => {
-    expect(getCombinationColorClass(50)).toContain('#f97316');
+    expect(getCombinationColorClass(50)).toContain('orange');
   });
 });

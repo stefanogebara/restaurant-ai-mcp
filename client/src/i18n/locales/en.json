@@ -19,7 +19,8 @@
     "language": "Language",
     "settings": "Settings",
     "signOut": "Sign Out",
-    "retry": "Retry"
+    "retry": "Retry",
+    "settingUp": "Setting things up..."
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -106,7 +107,29 @@
     "hoursToday": "Hours today",
     "atmosphere": "Atmosphere",
     "priceRange": "Price range",
-    "needHelp": "Need help? Contact the restaurant"
+    "needHelp": "Need help? Contact the restaurant",
+    "loadingReservation": "Loading reservation...",
+    "noReservationFound": "No reservation details found.",
+    "makeReservation": "Make a Reservation",
+    "reservationConfirmed": "Reservation Confirmed",
+    "confirmationSent": "We've sent a confirmation to your email and phone.",
+    "reservationDetails": "Reservation details",
+    "guest": "Guest",
+    "confirmationId": "Confirmation ID",
+    "manageReservation": "Manage Reservation",
+    "cancellationPolicy": "Free cancellation up to 2 hours before your reservation.",
+    "manageTitle": "Manage your reservation",
+    "lookupSubtitle": "Look up your reservation by phone number or confirmation ID.",
+    "findReservation": "Find your reservation",
+    "lookingUp": "Looking up...",
+    "lookUpReservation": "Look Up Reservation",
+    "yourReservation": "Your Reservation",
+    "confirmation": "Confirmation",
+    "editReservation": "Edit Reservation",
+    "cancelReservation": "Cancel Reservation",
+    "lookUpAnother": "Look up another reservation",
+    "saving": "Saving...",
+    "saveChanges": "Save Changes"
   },
   "waitlist": {
     "title": "Waitlist",
@@ -200,7 +223,17 @@
     "teamMembers": "Team Members",
     "addTeamMember": "Add Team Member",
     "finish": "Finish Setup",
-    "skipForNow": "Skip for Now"
+    "skipForNow": "Skip for Now",
+    "subscribeBanner": "Complete your restaurant setup first, then you can choose a plan.",
+    "stepOf": "Step {{current}} of {{total}}",
+    "saveAndExit": "Save & Exit",
+    "stepName1": "Restaurant Info",
+    "stepName2": "Contact & Hours",
+    "stepName3": "Tables & Settings",
+    "stepName4": "Review & Launch",
+    "welcomeAboard": "Welcome Aboard!",
+    "restaurantReady": "Your restaurant is ready. Let's start managing reservations!",
+    "redirectingToDashboard": "Redirecting to dashboard..."
   },
   "login": {
     "welcomeBack": "Welcome back",
@@ -309,6 +342,20 @@
     "october": "October",
     "november": "November",
     "december": "December"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you're looking for doesn't exist or has been moved. Let's get you back on track.",
+    "goHome": "Go Home",
+    "goBack": "Go Back",
+    "copyright": "© 2026 Seatable. All rights reserved."
+  },
+  "subscription": {
+    "verifying": "Verifying your subscription...",
+    "welcomeTo": "Welcome to {{plan}}!",
+    "upgradeActive": "Your upgrade is active. You now have access to the AI Voice Agent and advanced analytics.",
+    "redirecting": "Redirecting to onboarding in 3 seconds...",
+    "goToDashboard": "Go to Dashboard"
   },
   "landing": {
     "badge": "AI-Powered Restaurant Management",

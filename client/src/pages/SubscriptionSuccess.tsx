@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Spinner from '../components/common/Spinner';
 import { authFetch } from '../services/api';
 
 export default function SubscriptionSuccess() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [customerEmail, setCustomerEmail] = useState<string>('');
   const [plan, setPlan] = useState<string>('Growth');
@@ -65,7 +67,7 @@ export default function SubscriptionSuccess() {
       <div className="min-h-screen bg-warm-white flex items-center justify-center">
         <div className="text-center">
           <Spinner size="lg" className="mx-auto mb-4" />
-          <p className="text-[15px] text-warm-stone font-light">Verifying your subscription...</p>
+          <p className="text-[15px] text-warm-stone font-light">{t('subscription.verifying')}</p>
         </div>
       </div>
     );
@@ -92,14 +94,14 @@ export default function SubscriptionSuccess() {
               </svg>
             </div>
 
-            <h1 className="font-serif text-2xl font-medium text-deep-charcoal mb-2">Welcome to {plan}!</h1>
+            <h1 className="font-serif text-2xl font-medium text-deep-charcoal mb-2">{t('subscription.welcomeTo', { plan })}</h1>
             <p className="text-sm text-warm-stone font-light mb-6">
-              Your upgrade is active. You now have access to the AI Voice Agent and advanced analytics.
+              {t('subscription.upgradeActive')}
             </p>
 
             {customerEmail && (
               <p className="text-[13px] text-green-600 font-medium mb-6">
-                Redirecting to onboarding in 3 seconds...
+                {t('subscription.redirecting')}
               </p>
             )}
 
@@ -107,7 +109,7 @@ export default function SubscriptionSuccess() {
               onClick={() => navigate('/host-dashboard/simple')}
               className="px-7 py-3 bg-deep-charcoal hover:bg-charcoal-dark text-white text-sm font-semibold rounded-full transition-colors"
             >
-              Go to Dashboard
+              {t('subscription.goToDashboard')}
             </button>
           </div>
         </div>

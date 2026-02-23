@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { authFetch } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 
@@ -27,6 +28,7 @@ function parseReservationDateTime(reservation: Reservation) {
 }
 
 export default function CustomerPortal() {
+  const { t } = useTranslation();
   const [lookupMethod, setLookupMethod] = useState<'id' | 'phone'>('id');
   const [reservationId, setReservationId] = useState('');
   const [phone, setPhone] = useState('');
@@ -149,7 +151,7 @@ export default function CustomerPortal() {
         <div className="font-serif text-lg font-semibold text-deep-charcoal">
           seatable<span className="text-burgundy">.</span>
         </div>
-        <span className="text-[13px] text-warm-stone">Need help? Contact the restaurant</span>
+        <span className="text-[13px] text-warm-stone">{t('reservations.needHelp')}</span>
       </header>
 
       <div className="flex-1 flex justify-center px-6 py-16">
@@ -157,10 +159,10 @@ export default function CustomerPortal() {
           {/* Header */}
           <div className="text-center mb-10">
             <h1 className="font-serif text-[32px] font-medium text-deep-charcoal tracking-tight mb-2">
-              Manage your reservation
+              {t('reservations.manageTitle')}
             </h1>
             <p className="text-[15px] text-warm-stone font-light">
-              Look up your reservation by phone number or confirmation ID.
+              {t('reservations.lookupSubtitle')}
             </p>
           </div>
 
@@ -168,11 +170,11 @@ export default function CustomerPortal() {
             <>
               {/* Lookup Card */}
               <div className="bg-white border border-border-gray rounded-2xl p-8 mb-6">
-                <h3 className="text-[15px] font-semibold text-deep-charcoal mb-5">Find your reservation</h3>
+                <h3 className="text-[15px] font-semibold text-deep-charcoal mb-5">{t('reservations.findReservation')}</h3>
 
                 {/* Phone Input */}
                 <div className="mb-4">
-                  <label className="block text-[13px] font-medium text-stone-gray mb-1.5">Phone number</label>
+                  <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.phoneNumber')}</label>
                   <input
                     type="tel"
                     value={phone}
@@ -192,7 +194,7 @@ export default function CustomerPortal() {
 
                 {/* Confirmation ID Input */}
                 <div className="mb-2">
-                  <label className="block text-[13px] font-medium text-stone-gray mb-1.5">Confirmation ID</label>
+                  <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.confirmationId')}</label>
                   <input
                     type="text"
                     value={reservationId}
@@ -211,10 +213,10 @@ export default function CustomerPortal() {
                   {isLoading ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Looking up...
+                      {t('reservations.lookingUp')}
                     </>
                   ) : (
-                    'Look Up Reservation'
+                    t('reservations.lookUpReservation')
                   )}
                 </button>
               </div>
@@ -225,7 +227,7 @@ export default function CustomerPortal() {
               <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
-                  <span className="text-[15px] font-semibold">Your Reservation</span>
+                  <span className="text-[15px] font-semibold">{t('reservations.yourReservation')}</span>
                   <span className={`text-[11px] font-semibold px-3 py-1 rounded-full ${
                     reservation.status === 'Confirmed'
                       ? 'bg-[rgba(22,163,74,0.08)] text-green-600'
@@ -246,7 +248,7 @@ export default function CustomerPortal() {
                         return (
                           <div className="space-y-0">
                             <div className="flex justify-between py-2.5 border-b border-soft-gray">
-                              <span className="text-[13px] text-warm-stone">Date</span>
+                              <span className="text-[13px] text-warm-stone">{t('reservations.date')}</span>
                               <span className="text-sm font-medium text-deep-charcoal">
                                 {date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
                                   weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
@@ -254,19 +256,19 @@ export default function CustomerPortal() {
                               </span>
                             </div>
                             <div className="flex justify-between py-2.5 border-b border-soft-gray">
-                              <span className="text-[13px] text-warm-stone">Time</span>
+                              <span className="text-[13px] text-warm-stone">{t('reservations.time')}</span>
                               <span className="text-sm font-medium text-deep-charcoal">{time || 'Not set'}</span>
                             </div>
                             <div className="flex justify-between py-2.5 border-b border-soft-gray">
-                              <span className="text-[13px] text-warm-stone">Party size</span>
+                              <span className="text-[13px] text-warm-stone">{t('reservations.partySize')}</span>
                               <span className="text-sm font-medium text-deep-charcoal">{reservation.party_size} guests</span>
                             </div>
                             <div className="flex justify-between py-2.5 border-b border-soft-gray">
-                              <span className="text-[13px] text-warm-stone">Guest</span>
+                              <span className="text-[13px] text-warm-stone">{t('reservations.guest')}</span>
                               <span className="text-sm font-medium text-deep-charcoal">{reservation.customer_name}</span>
                             </div>
                             <div className="flex justify-between py-2.5">
-                              <span className="text-[13px] text-warm-stone">Confirmation</span>
+                              <span className="text-[13px] text-warm-stone">{t('reservations.confirmation')}</span>
                               <span className="text-[13px] font-mono font-medium text-burgundy">{reservation.reservation_id}</span>
                             </div>
                           </div>
@@ -275,7 +277,7 @@ export default function CustomerPortal() {
 
                       {reservation.special_requests && (
                         <div className="mt-4 pt-4 border-t border-border-gray">
-                          <div className="text-xs text-warm-stone mb-1.5">Special Requests</div>
+                          <div className="text-xs text-warm-stone mb-1.5">{t('reservations.specialRequests')}</div>
                           <div className="text-sm text-deep-charcoal bg-soft-gray p-3 rounded-lg">{reservation.special_requests}</div>
                         </div>
                       )}
@@ -283,25 +285,25 @@ export default function CustomerPortal() {
                   ) : (
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-[13px] font-medium text-stone-gray mb-1.5">Date</label>
+                        <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.date')}</label>
                         <input type="date" value={modifiedData.date} onChange={(e) => setModifiedData({ ...modifiedData, date: e.target.value })} className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal focus:outline-none focus:border-burgundy" />
                       </div>
                       <div>
-                        <label className="block text-[13px] font-medium text-stone-gray mb-1.5">Time</label>
+                        <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.time')}</label>
                         <input type="time" value={modifiedData.time} onChange={(e) => setModifiedData({ ...modifiedData, time: e.target.value })} className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal focus:outline-none focus:border-burgundy" />
                       </div>
                       <div>
-                        <label className="block text-[13px] font-medium text-stone-gray mb-1.5">Party Size</label>
+                        <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.partySize')}</label>
                         <input type="number" min="1" max="20" value={modifiedData.party_size} onChange={(e) => setModifiedData({ ...modifiedData, party_size: parseInt(e.target.value) })} className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal focus:outline-none focus:border-burgundy" />
                       </div>
                       <div>
-                        <label className="block text-[13px] font-medium text-stone-gray mb-1.5">Special Requests</label>
+                        <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.specialRequests')}</label>
                         <textarea value={modifiedData.special_requests || ''} onChange={(e) => setModifiedData({ ...modifiedData, special_requests: e.target.value })} rows={3} placeholder="Allergies, celebrations, seating preferences..." className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy resize-none" />
                       </div>
                       <div className="flex gap-2.5 pt-2">
-                        <button onClick={() => { setIsModifying(false); setModifiedData(reservation); }} className="flex-1 py-3 border border-border-gray bg-white text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">Cancel</button>
+                        <button onClick={() => { setIsModifying(false); setModifiedData(reservation); }} className="flex-1 py-3 border border-border-gray bg-white text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">{t('common.cancel')}</button>
                         <button onClick={handleModify} disabled={isLoading} className="flex-1 py-3 bg-burgundy text-white font-semibold rounded-[10px] text-[13px] hover:bg-burgundy-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-                          {isLoading ? (<><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Saving...</>) : 'Save Changes'}
+                          {isLoading ? (<><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{t('reservations.saving')}</>) : t('reservations.saveChanges')}
                         </button>
                       </div>
                     </div>
@@ -312,10 +314,10 @@ export default function CustomerPortal() {
                 {!isModifying && reservation.status !== 'Cancelled' && (
                   <div className="flex gap-2.5 px-6 py-5 border-t border-soft-gray">
                     <button onClick={() => setIsModifying(true)} className="flex-1 py-3 border border-border-gray bg-white text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">
-                      Edit Reservation
+                      {t('reservations.editReservation')}
                     </button>
                     <button onClick={handleCancel} disabled={isLoading} className="flex-1 py-3 border border-[rgba(220,38,38,0.2)] bg-[rgba(220,38,38,0.04)] text-red-600 font-medium rounded-[10px] text-[13px] hover:bg-[rgba(220,38,38,0.08)] transition-colors disabled:opacity-50">
-                      Cancel Reservation
+                      {t('reservations.cancelReservation')}
                     </button>
                   </div>
                 )}
@@ -326,7 +328,7 @@ export default function CustomerPortal() {
                 onClick={() => { setReservation(null); setReservationId(''); setPhone(''); setIsModifying(false); }}
                 className="w-full text-sm text-warm-stone hover:text-stone-gray transition-colors py-2"
               >
-                &larr; Look up another reservation
+                &larr; {t('reservations.lookUpAnother')}
               </button>
             </div>
           )}

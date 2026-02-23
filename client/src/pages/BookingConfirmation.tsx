@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { colors } from '../utils/colors';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
@@ -16,6 +17,7 @@ export default function BookingConfirmation() {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const state = location.state as { reservation?: ReservationData; restaurant_name?: string } | null;
 
@@ -56,7 +58,7 @@ export default function BookingConfirmation() {
       <div className="min-h-screen bg-warm-white flex items-center justify-center">
         <div className="flex items-center gap-3">
           <div className="animate-spin rounded-full h-5 w-5 border-2 border-border-gray border-t-burgundy" />
-          <span className="text-sm text-warm-stone">Loading reservation...</span>
+          <span className="text-sm text-warm-stone">{t('reservations.loadingReservation')}</span>
         </div>
       </div>
     );
@@ -66,14 +68,14 @@ export default function BookingConfirmation() {
     return (
       <div className="min-h-screen bg-warm-white flex flex-col items-center justify-center p-6">
         <div className="bg-white border border-border-gray rounded-2xl p-8 max-w-md text-center shadow-sm">
-          <h1 className="text-xl font-bold text-deep-charcoal mb-2">Reservation</h1>
-          <p className="text-sm text-stone-gray mb-6">No reservation details found.</p>
+          <h1 className="text-xl font-bold text-deep-charcoal mb-2">{t('reservations.title')}</h1>
+          <p className="text-sm text-stone-gray mb-6">{t('reservations.noReservationFound')}</p>
           {slug && (
             <button
               onClick={() => navigate(`/book/${slug}`)}
               className="px-6 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-full transition-colors"
             >
-              Make a Reservation
+              {t('reservations.makeReservation')}
             </button>
           )}
         </div>
@@ -88,7 +90,7 @@ export default function BookingConfirmation() {
         <div className="font-serif text-lg font-semibold text-deep-charcoal">
           seatable<span className="text-burgundy">.</span>
         </div>
-        <span className="text-[13px] text-warm-stone">Need help? Contact the restaurant</span>
+        <span className="text-[13px] text-warm-stone">{t('reservations.needHelp')}</span>
       </header>
 
       {/* Confirmation */}
@@ -104,12 +106,12 @@ export default function BookingConfirmation() {
           {/* Status Badge */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[rgba(22,163,74,0.06)] rounded-full mb-5">
             <div className="w-2 h-2 rounded-full bg-green-600" />
-            <span className="text-[13px] font-semibold text-green-600">Confirmed</span>
+            <span className="text-[13px] font-semibold text-green-600">{t('reservations.confirmed')}</span>
           </div>
 
-          <h1 className="font-serif text-4xl font-medium text-deep-charcoal tracking-tight mb-2">Reservation Confirmed</h1>
+          <h1 className="font-serif text-4xl font-medium text-deep-charcoal tracking-tight mb-2">{t('reservations.reservationConfirmed')}</h1>
           <p className="text-[15px] text-warm-stone font-light mb-10">
-            We've sent a confirmation to your email and phone.
+            {t('reservations.confirmationSent')}
           </p>
 
           {/* Details Card */}
@@ -119,14 +121,14 @@ export default function BookingConfirmation() {
               <div className="w-14 h-14 rounded-[14px] bg-gradient-to-br from-charcoal-dark to-stone-700 flex-shrink-0" />
               <div>
                 <h3 className="text-lg font-semibold text-deep-charcoal tracking-tight">{reservation.restaurant_name}</h3>
-                <p className="text-[13px] text-warm-stone font-light">Reservation details</p>
+                <p className="text-[13px] text-warm-stone font-light">{t('reservations.reservationDetails')}</p>
               </div>
             </div>
 
             {/* Detail Rows */}
             <div className="space-y-0">
               <div className="flex justify-between items-center py-2.5 border-b border-soft-gray">
-                <span className="text-[13px] text-warm-stone">Date</span>
+                <span className="text-[13px] text-warm-stone">{t('reservations.date')}</span>
                 <span className="text-sm font-medium text-deep-charcoal">
                   {new Date(reservation.date + 'T12:00:00').toLocaleDateString('en-US', {
                     weekday: 'long',
@@ -137,15 +139,15 @@ export default function BookingConfirmation() {
                 </span>
               </div>
               <div className="flex justify-between items-center py-2.5 border-b border-soft-gray">
-                <span className="text-[13px] text-warm-stone">Time</span>
+                <span className="text-[13px] text-warm-stone">{t('reservations.time')}</span>
                 <span className="text-sm font-medium text-deep-charcoal">{formatTime(reservation.time)}</span>
               </div>
               <div className="flex justify-between items-center py-2.5 border-b border-soft-gray">
-                <span className="text-[13px] text-warm-stone">Party size</span>
+                <span className="text-[13px] text-warm-stone">{t('reservations.partySize')}</span>
                 <span className="text-sm font-medium text-deep-charcoal">{reservation.party_size} guest{reservation.party_size !== 1 ? 's' : ''}</span>
               </div>
               <div className="flex justify-between items-center py-2.5">
-                <span className="text-[13px] text-warm-stone">Guest</span>
+                <span className="text-[13px] text-warm-stone">{t('reservations.guest')}</span>
                 <span className="text-sm font-medium text-deep-charcoal">{reservation.name}</span>
               </div>
             </div>
@@ -153,7 +155,7 @@ export default function BookingConfirmation() {
             <hr className="border-0 border-t border-dashed border-border-gray my-3" />
 
             <div className="flex justify-between items-center py-2.5">
-              <span className="text-[13px] text-warm-stone">Confirmation ID</span>
+              <span className="text-[13px] text-warm-stone">{t('reservations.confirmationId')}</span>
               <span className="text-[13px] font-mono font-medium text-burgundy bg-[rgba(159,18,57,0.06)] px-2.5 py-0.5 rounded-md">{reservation.id}</span>
             </div>
           </div>
@@ -164,20 +166,20 @@ export default function BookingConfirmation() {
               onClick={() => navigate('/customer')}
               className="flex-1 py-3.5 border border-stone-300 bg-white text-stone-gray font-medium rounded-full text-sm hover:border-muted-stone transition-colors"
             >
-              Manage Reservation
+              {t('reservations.manageReservation')}
             </button>
             {slug && (
               <button
                 onClick={() => navigate(`/book/${slug}`)}
                 className="flex-1 py-3.5 bg-burgundy text-white font-semibold rounded-full text-sm hover:bg-burgundy-dark transition-colors"
               >
-                New Reservation
+                {t('reservations.newReservation')}
               </button>
             )}
           </div>
 
           <p className="text-xs text-muted-stone mt-5">
-            Free cancellation up to 2 hours before your reservation.
+            {t('reservations.cancellationPolicy')}
           </p>
         </div>
       </main>

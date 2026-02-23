@@ -19,7 +19,8 @@
     "language": "Idioma",
     "settings": "Configuración",
     "signOut": "Cerrar Sesión",
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "settingUp": "Preparando todo..."
   },
   "navigation": {
     "dashboard": "Panel",
@@ -106,7 +107,29 @@
     "hoursToday": "Horario de hoy",
     "atmosphere": "Ambiente",
     "priceRange": "Rango de precios",
-    "needHelp": "¿Necesitas ayuda? Contacta al restaurante"
+    "needHelp": "¿Necesitas ayuda? Contacta al restaurante",
+    "loadingReservation": "Cargando reserva...",
+    "noReservationFound": "No se encontraron detalles de reserva.",
+    "makeReservation": "Hacer una Reserva",
+    "reservationConfirmed": "Reserva Confirmada",
+    "confirmationSent": "Hemos enviado una confirmación a tu correo y teléfono.",
+    "reservationDetails": "Detalles de la reserva",
+    "guest": "Huésped",
+    "confirmationId": "ID de Confirmación",
+    "manageReservation": "Gestionar Reserva",
+    "cancellationPolicy": "Cancelación gratuita hasta 2 horas antes de tu reserva.",
+    "manageTitle": "Gestionar tu reserva",
+    "lookupSubtitle": "Busca tu reserva por número de teléfono o ID de confirmación.",
+    "findReservation": "Encuentra tu reserva",
+    "lookingUp": "Buscando...",
+    "lookUpReservation": "Buscar Reserva",
+    "yourReservation": "Tu Reserva",
+    "confirmation": "Confirmación",
+    "editReservation": "Editar Reserva",
+    "cancelReservation": "Cancelar Reserva",
+    "lookUpAnother": "Buscar otra reserva",
+    "saving": "Guardando...",
+    "saveChanges": "Guardar Cambios"
   },
   "waitlist": {
     "title": "Lista de Espera",
@@ -200,7 +223,17 @@
     "teamMembers": "Miembros del Equipo",
     "addTeamMember": "Agregar Miembro del Equipo",
     "finish": "Finalizar Configuración",
-    "skipForNow": "Omitir por Ahora"
+    "skipForNow": "Omitir por Ahora",
+    "subscribeBanner": "Completa primero la configuración de tu restaurante y luego podrás elegir un plan.",
+    "stepOf": "Paso {{current}} de {{total}}",
+    "saveAndExit": "Guardar y Salir",
+    "stepName1": "Información del Restaurante",
+    "stepName2": "Contacto y Horarios",
+    "stepName3": "Mesas y Configuración",
+    "stepName4": "Revisar y Lanzar",
+    "welcomeAboard": "¡Bienvenido a bordo!",
+    "restaurantReady": "Tu restaurante está listo. ¡Empecemos a gestionar reservas!",
+    "redirectingToDashboard": "Redirigiendo al panel..."
   },
   "login": {
     "welcomeBack": "Bienvenido de nuevo",
@@ -309,6 +342,20 @@
     "october": "Octubre",
     "november": "Noviembre",
     "december": "Diciembre"
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "description": "La página que buscas no existe o ha sido movida. Regresemos al camino correcto.",
+    "goHome": "Ir al inicio",
+    "goBack": "Volver",
+    "copyright": "© 2026 Seatable. Todos los derechos reservados."
+  },
+  "subscription": {
+    "verifying": "Verificando tu suscripción...",
+    "welcomeTo": "¡Bienvenido a {{plan}}!",
+    "upgradeActive": "Tu actualización está activa. Ahora tienes acceso al Agente de Voz con IA y análisis avanzados.",
+    "redirecting": "Redirigiendo al proceso de configuración en 3 segundos...",
+    "goToDashboard": "Ir al Panel"
   },
   "landing": {
     "badge": "Gestión de Restaurantes con IA",

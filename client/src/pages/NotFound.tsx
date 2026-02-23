@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function NotFound() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-warm-white flex flex-col">
       {/* Nav */}
@@ -20,11 +22,11 @@ export default function NotFound() {
         </div>
 
         <h1 className="font-serif text-2xl sm:text-4xl font-medium tracking-tight mb-3">
-          Page not found
+          {t('notFound.title')}
         </h1>
 
         <p className="text-base text-warm-stone font-light max-w-[400px] leading-relaxed mb-10">
-          The page you're looking for doesn't exist or has been moved. Let's get you back on track.
+          {t('notFound.description')}
         </p>
 
         <div className="flex gap-3">
@@ -32,20 +34,20 @@ export default function NotFound() {
             to="/"
             className="text-[15px] font-semibold text-white bg-burgundy hover:bg-burgundy-dark px-8 py-3.5 rounded-full transition-colors"
           >
-            Go Home
+            {t('notFound.goHome')}
           </Link>
           <button
             onClick={() => window.history.back()}
             className="text-[15px] font-medium text-stone-gray border border-stone-300 hover:border-muted-stone px-8 py-3.5 rounded-full transition-colors"
           >
-            Go Back
+            {t('notFound.goBack')}
           </button>
         </div>
       </div>
 
       {/* Footer */}
       <footer className="px-8 sm:px-16 py-6 border-t border-border-gray text-center">
-        <p className="text-[13px] text-muted-stone">&copy; 2026 Seatable. All rights reserved.</p>
+        <p className="text-[13px] text-muted-stone">{t('notFound.copyright')}</p>
       </footer>
     </div>
   );

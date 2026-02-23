@@ -10,11 +10,13 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
 export default function Welcome() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const [checking, setChecking] = useState(true);
 
@@ -64,7 +66,7 @@ export default function Welcome() {
           seatable<span className="text-burgundy">.</span>
         </div>
         <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy"></div>
-        <p className="text-sm text-stone-gray font-light">Setting things up...</p>
+        <p className="text-sm text-stone-gray font-light">{t('common.settingUp')}</p>
       </div>
     );
   }

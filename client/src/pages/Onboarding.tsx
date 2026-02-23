@@ -12,6 +12,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../contexts/ToastContext';
 import Step1Welcome from '../components/onboarding/Step1Welcome';
 import Step2Contact from '../components/onboarding/Step2Contact';
@@ -22,7 +23,7 @@ import { authFetch } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { trackOnboardingStepCompleted, trackOnboardingCompleted } from '../lib/analytics';
 
-const STEP_NAMES = ['Restaurant Info', 'Contact & Hours', 'Tables & Settings', 'Review & Launch'];
+const STEP_NAME_KEYS = ['onboarding.stepName1', 'onboarding.stepName2', 'onboarding.stepName3', 'onboarding.stepName4'];
 const TOTAL_STEPS = 4;
 
 export default function Onboarding() {
@@ -30,6 +31,7 @@ export default function Onboarding() {
   const [searchParams] = useSearchParams();
   const { error: showError } = useToast();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const showSubscribeBanner = searchParams.get('reason') === 'subscribe';
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -93,7 +95,7 @@ export default function Onboarding() {
 
   const nextStep = () => {
     if (currentStep < TOTAL_STEPS) {
-      trackOnboardingStepCompleted({ step: currentStep, step_name: STEP_NAMES[currentStep - 1] });
+      trackOnboardingStepCompleted({ step: currentStep, step_name: t(STEP_NAME_KEYS[currentStep - 1]) });
       setCurrentStep(currentStep + 1);
     }
   };
@@ -152,7 +154,7 @@ export default function Onboarding() {
       {/* Subscribe redirect banner */}
       {showSubscribeBanner && (
         <div className="bg-burgundy text-white text-[13px] text-center py-2.5 px-4">
-          Complete your restaurant setup first, then you can choose a plan.
+          {t('onboarding.subscribeBanner')}
         </div>
       )}
       {/* Top Bar */}
@@ -161,12 +163,12 @@ export default function Onboarding() {
           seatable<span className="text-burgundy">.</span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-[13px] text-warm-stone">Step {currentStep} of {TOTAL_STEPS}</span>
+          <span className="text-[13px] text-warm-stone">{t('onboarding.stepOf', { current: currentStep, total: TOTAL_STEPS })}</span>
           <button
             onClick={() => navigate('/')}
             className="text-[13px] text-burgundy font-medium hover:text-burgundy-dark transition-colors"
           >
-            Save &amp; Exit
+            {t('onboarding.saveAndExit')}
           </button>
         </div>
       </header>
@@ -184,7 +186,8 @@ export default function Onboarding() {
         {/* Step Sidebar */}
         <div className="hidden md:block flex-shrink-0 w-[220px] pt-2">
           <div className="flex flex-col">
-            {STEP_NAMES.map((name, index) => {
+            {STEP_NAME_KEYS.map((key, index) => {
+              const name = t(key);
               const stepNumber = index + 1;
               const isActive = stepNumber === currentStep;
               const isCompleted = stepNumber < currentStep;
@@ -285,13 +288,13 @@ export default function Onboarding() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h2 className="font-serif text-3xl font-medium text-deep-charcoal mb-3">Welcome Aboard!</h2>
+              <h2 className="font-serif text-3xl font-medium text-deep-charcoal mb-3">{t('onboarding.welcomeAboard')}</h2>
               <p className="text-[15px] text-stone-gray font-light mb-6">
-                Your restaurant is ready. Let&apos;s start managing reservations!
+                {t('onboarding.restaurantReady')}
               </p>
               <div className="flex items-center justify-center gap-2">
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-border-gray border-t-burgundy" />
-                <span className="text-sm text-stone-gray">Redirecting to dashboard...</span>
+                <span className="text-sm text-stone-gray">{t('onboarding.redirectingToDashboard')}</span>
               </div>
             </div>
           </div>
