@@ -7,11 +7,10 @@ export default defineConfig({
   plugins: [
     react(),
     sentryVitePlugin({
-      org: process.env.SENTRY_ORG,
-      project: process.env.SENTRY_PROJECT,
+      org: process.env.SENTRY_ORG || 'seatable',
+      project: process.env.SENTRY_PROJECT || 'node-express',
       authToken: process.env.SENTRY_AUTH_TOKEN,
-      // Only upload source maps during CI/Vercel builds
-      disable: !process.env.SENTRY_AUTH_TOKEN,
+      telemetry: false,
     }),
   ],
   build: {
