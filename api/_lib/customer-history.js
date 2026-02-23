@@ -52,12 +52,15 @@ async function airtableRequest(method, endpoint, data = null) {
 // ============================================================================
 
 /**
- * Find customer by email
+ * Find customer by email, scoped to a restaurant
  */
-async function findCustomerByEmail(email) {
+async function findCustomerByEmail(email, restaurantId) {
   if (!email) return null;
 
-  const filter = `{Email} = '${email.toLowerCase().trim()}'`;
+  const baseFilter = `{Email} = '${email.toLowerCase().trim()}'`;
+  const filter = restaurantId
+    ? `AND(${baseFilter}, {Restaurant ID} = '${restaurantId}')`
+    : baseFilter;
   const result = await airtableRequest('GET', `${CUSTOMER_HISTORY_TABLE_ID}?filterByFormula=${encodeURIComponent(filter)}`);
 
   if (result.success && result.data.records && result.data.records.length > 0) {
@@ -68,15 +71,18 @@ async function findCustomerByEmail(email) {
 }
 
 /**
- * Find customer by phone
+ * Find customer by phone, scoped to a restaurant
  */
-async function findCustomerByPhone(phone) {
+async function findCustomerByPhone(phone, restaurantId) {
   if (!phone) return null;
 
   // Normalize phone number (remove spaces, dashes, etc.)
   const normalizedPhone = phone.replace(/[\s\-\(\)]/g, '');
 
-  const filter = `{Phone} = '${normalizedPhone}'`;
+  const baseFilter = `{Phone} = '${normalizedPhone}'`;
+  const filter = restaurantId
+    ? `AND(${baseFilter}, {Restaurant ID} = '${restaurantId}')`
+    : baseFilter;
   const result = await airtableRequest('GET', `${CUSTOMER_HISTORY_TABLE_ID}?filterByFormula=${encodeURIComponent(filter)}`);
 
   if (result.success && result.data.records && result.data.records.length > 0) {
@@ -137,15 +143,15 @@ function mapCustomerRecord(record) {
  *
  * Tries to find by email first, then phone, then creates new
  */
-async function findOrCreateCustomer(email, phone, name) {
+async function findOrCreateCustomer(email, phone, name, restaurantId) {
   logger.info(`[CustomerHistory] Finding or creating customer: ${email || phone}`);
 
   // Try to find by email
-  let customer = await findCustomerByEmail(email);
+  let customer = await findCustomerByEmail(email, restaurantId);
 
   // If not found, try phone
   if (!customer && phone) {
-    customer = await findCustomerByPhone(phone);
+    customer = await findCustomerByPhone(phone, restaurantId);
   }
 
   // If still not found, create new
@@ -167,7 +173,8 @@ async function findOrCreateCustomer(email, phone, name) {
         'Average Party Size': 0,
         'No Show Risk Score': 0.15,  // Default for new customers
         'Total Spend': 0,
-        'Average Spend Per Visit': 0
+        'Average Spend Per Visit': 0,
+        ...(restaurantId ? { 'Restaurant ID': restaurantId } : {})
       }
     };
 
@@ -287,8 +294,8 @@ async function updateCustomerSpend(customerId, amount) {
 /**
  * Get customer statistics for ML features
  */
-async function getCustomerStats(email, phone) {
-  const customer = await findCustomerByEmail(email) || await findCustomerByPhone(phone);
+async function getCustomerStats(email, phone, restaurantId) {
+  const customer = await findCustomerByEmail(email, restaurantId) || await findCustomerByPhone(phone, restaurantId);
 
   if (!customer) {
     // Return default stats for new customer

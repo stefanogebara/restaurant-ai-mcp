@@ -59,7 +59,8 @@ async function predictForRestaurant(restaurantId, timezone = 'UTC') {
     try {
       const customerHistory = await getCustomerStats(
         reservation.customer_email,
-        reservation.customer_phone
+        reservation.customer_phone,
+        restaurantId
       );
 
       const reservationForPrediction = {

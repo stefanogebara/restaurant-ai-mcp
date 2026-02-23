@@ -278,7 +278,7 @@ async function handleCreate(req, res, restaurantId, timezone) {
     logger.info('Starting no-show prediction with heuristic model');
 
     // Get customer history for feature extraction
-    const customerHistory = await getCustomerStats(customer_email, customer_phone);
+    const customerHistory = await getCustomerStats(customer_email, customer_phone, restaurantId);
 
     // Create reservation object for prediction
     const reservationForPrediction = {
