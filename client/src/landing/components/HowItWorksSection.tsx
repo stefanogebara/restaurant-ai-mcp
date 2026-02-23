@@ -21,7 +21,7 @@ export default function HowItWorksSection() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
         {steps.map((step, i) => (
           <div key={step}>
-            <div className="font-serif text-[56px] font-normal text-[rgba(159,18,57,0.12)] leading-none mb-5">
+            <div className="font-serif text-[56px] font-normal text-burgundy/[12%] leading-none mb-5">
               0{i + 1}
             </div>
             <h3 className="text-lg font-semibold text-deep-charcoal tracking-tight mb-3">

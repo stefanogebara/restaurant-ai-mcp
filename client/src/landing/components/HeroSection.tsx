@@ -9,7 +9,7 @@ export default function HeroSection() {
   return (
     <section className="pt-24 pb-20 px-6 sm:px-16 max-w-[1200px] mx-auto text-center">
       {/* Badge */}
-      <div className="inline-block text-xs font-semibold tracking-[1.5px] uppercase text-burgundy bg-[rgba(159,18,57,0.06)] border border-[rgba(159,18,57,0.15)] px-4 py-1.5 rounded-full mb-8">
+      <div className="inline-block text-xs font-semibold tracking-[1.5px] uppercase text-burgundy bg-burgundy/[6%] border border-burgundy/15 px-4 py-1.5 rounded-full mb-8">
         {t('landing.badge')}
       </div>
 

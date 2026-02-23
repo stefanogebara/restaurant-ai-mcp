@@ -61,7 +61,7 @@ export default function ActivePartiesPanel({
       <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
         <div className="flex items-center gap-2.5">
           <span className="text-[15px] font-semibold text-deep-charcoal tracking-tight">{t.activeParties}</span>
-          <span className="text-[11px] font-semibold bg-[rgba(159,18,57,0.08)] text-burgundy px-2.5 py-0.5 rounded-full">
+          <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">
             {parties.length}
           </span>
         </div>

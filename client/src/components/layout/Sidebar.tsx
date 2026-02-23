@@ -223,7 +223,7 @@ export default function Sidebar() {
                         flex items-center gap-3 transition-all duration-150
                         ${isCollapsed ? 'justify-center px-4 py-2.5' : 'px-7 py-2.5'}
                         ${active
-                          ? 'text-white bg-[rgba(159,18,57,0.1)] border-l-2 border-l-burgundy font-medium'
+                          ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
                           : 'text-muted-stone hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
                         }
                       `}
@@ -264,7 +264,7 @@ export default function Sidebar() {
                     flex items-center gap-3 transition-all duration-150
                     ${isCollapsed ? 'justify-center px-4 py-2.5' : 'px-7 py-2.5'}
                     ${isActive('/host-dashboard/team')
-                      ? 'text-white bg-[rgba(159,18,57,0.1)] border-l-2 border-l-burgundy font-medium'
+                      ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
                       : 'text-muted-stone hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
                     }
                   `}
@@ -338,7 +338,7 @@ export default function Sidebar() {
                           onClick={() => handleLanguageChange(lang.code)}
                           className={`
                             w-full px-4 py-2 flex items-center gap-3 hover:bg-white/[0.05] transition-colors text-left text-sm
-                            ${i18n.language === lang.code ? 'bg-[rgba(159,18,57,0.15)] text-rose-600 font-medium' : 'text-muted-stone'}
+                            ${i18n.language === lang.code ? 'bg-burgundy/15 text-rose-600 font-medium' : 'text-muted-stone'}
                           `}
                         >
                           <span className="text-lg">{lang.flag}</span>

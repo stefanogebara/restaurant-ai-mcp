@@ -158,7 +158,7 @@ export default function SubscriptionManage() {
             <div>
               <div className="flex items-center gap-2.5 mb-1">
                 <span className="text-xl font-bold text-deep-charcoal">{subscription.planName} Plan</span>
-                <span className="text-xs font-semibold tracking-wide uppercase text-burgundy bg-[rgba(159,18,57,0.08)] px-3.5 py-1.5 rounded-full">Current</span>
+                <span className="text-xs font-semibold tracking-wide uppercase text-burgundy bg-burgundy/[8%] px-3.5 py-1.5 rounded-full">Current</span>
               </div>
               <div className="text-sm text-warm-stone">{subscription.planPrice} &middot; Billed monthly</div>
             </div>
@@ -216,7 +216,7 @@ export default function SubscriptionManage() {
               return (
                 <div key={p.name} className={`relative px-8 py-10 ${isFeatured ? 'bg-deep-charcoal' : 'bg-warm-white'}`}>
                   {isCurrent && (
-                    <span className={`absolute top-4 right-4 text-xs font-semibold px-3 py-1 rounded-full ${isFeatured ? 'bg-[rgba(159,18,57,0.3)] text-white' : 'bg-[rgba(159,18,57,0.08)] text-burgundy'}`}>
+                    <span className={`absolute top-4 right-4 text-xs font-semibold px-3 py-1 rounded-full ${isFeatured ? 'bg-burgundy/30 text-white' : 'bg-burgundy/[8%] text-burgundy'}`}>
                       Current Plan
                     </span>
                   )}

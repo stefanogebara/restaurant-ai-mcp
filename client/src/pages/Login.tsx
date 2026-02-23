@@ -289,7 +289,7 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@restaurant.com"
                   required
-                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)] focus:border-burgundy transition-all"
+                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-burgundy/[6%] focus:border-burgundy transition-all"
                 />
               </div>
               <div>
@@ -304,7 +304,7 @@ export default function Login() {
                   placeholder={mode === 'signup' ? t('login.passwordMinChars') : t('login.yourPassword')}
                   required
                   minLength={6}
-                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)] focus:border-burgundy transition-all"
+                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-burgundy/[6%] focus:border-burgundy transition-all"
                 />
               </div>
 

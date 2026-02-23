@@ -31,7 +31,7 @@ export default function FeaturesGrid() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-[2px] bg-border-gray rounded-2xl overflow-hidden">
         {features.map((f, i) => (
           <div key={i} className="bg-white p-10 sm:p-12 hover:bg-warm-white transition-colors">
-            <div className="w-12 h-12 rounded-xl bg-[rgba(159,18,57,0.06)] flex items-center justify-center mb-6 text-xl text-burgundy">
+            <div className="w-12 h-12 rounded-xl bg-burgundy/[6%] flex items-center justify-center mb-6 text-xl text-burgundy">
               {f.icon}
             </div>
             <h3 className="text-lg font-semibold text-deep-charcoal tracking-tight mb-3">

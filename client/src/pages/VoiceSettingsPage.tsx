@@ -657,7 +657,7 @@ export default function VoiceSettingsPage() {
                         onClick={() => handleLanguageChange(lang.code)}
                         className={`px-4 py-2 rounded-full text-[13px] font-medium border transition-colors ${
                           currentLanguage === lang.code
-                            ? 'border-burgundy bg-[rgba(159,18,57,0.06)] text-burgundy font-semibold'
+                            ? 'border-burgundy bg-burgundy/[6%] text-burgundy font-semibold'
                             : 'border-border-gray text-stone-gray bg-white hover:border-muted-stone'
                         }`}
                       >

@@ -301,7 +301,7 @@ export default function BookingPage() {
                       disabled={!slot.available}
                       className={`py-3 rounded-[10px] text-sm font-medium border transition-colors ${
                         selectedTime === slot.time
-                          ? 'border-burgundy bg-[rgba(159,18,57,0.04)] text-burgundy font-semibold'
+                          ? 'border-burgundy bg-burgundy/[4%] text-burgundy font-semibold'
                           : slot.available
                             ? 'border-border-gray bg-white text-stone-gray hover:border-stone-300 hover:bg-warm-white'
                             : 'border-soft-gray bg-warm-white text-stone-300 cursor-not-allowed'
@@ -327,7 +327,7 @@ export default function BookingPage() {
                   onClick={() => setPartySize(n)}
                   className={`w-12 h-12 rounded-xl border text-[15px] font-medium transition-colors ${
                     partySize === n
-                      ? 'border-burgundy bg-[rgba(159,18,57,0.04)] text-burgundy font-bold'
+                      ? 'border-burgundy bg-burgundy/[4%] text-burgundy font-bold'
                       : 'border-border-gray bg-white text-stone-gray hover:border-stone-300'
                   }`}
                 >
@@ -345,7 +345,7 @@ export default function BookingPage() {
                   }}
                   className={`w-12 h-12 rounded-xl border text-[15px] font-medium transition-colors ${
                     partySize > 7
-                      ? 'border-burgundy bg-[rgba(159,18,57,0.04)] text-burgundy font-bold'
+                      ? 'border-burgundy bg-burgundy/[4%] text-burgundy font-bold'
                       : 'border-border-gray bg-white text-stone-gray hover:border-stone-300'
                   }`}
                 >
@@ -368,7 +368,7 @@ export default function BookingPage() {
                   value={customerName}
                   onChange={e => setCustomerName(e.target.value)}
                   placeholder="Your full name"
-                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
+                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
                 />
               </div>
               <div>
@@ -378,7 +378,7 @@ export default function BookingPage() {
                   value={customerPhone}
                   onChange={e => setCustomerPhone(e.target.value)}
                   placeholder="+34 612 345 678"
-                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
+                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
                 />
               </div>
             </div>
@@ -389,7 +389,7 @@ export default function BookingPage() {
                 value={customerEmail}
                 onChange={e => setCustomerEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
+                className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
               />
             </div>
             <div>
@@ -401,7 +401,7 @@ export default function BookingPage() {
                 onChange={e => setSpecialRequests(e.target.value)}
                 placeholder="Allergies, celebrations, seating preferences..."
                 rows={3}
-                className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)] resize-none"
+                className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%] resize-none"
               />
             </div>
           </div>

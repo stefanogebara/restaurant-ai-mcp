@@ -97,7 +97,7 @@ export default function BookingConfirmation() {
       <main className="flex-1 flex items-center justify-center p-6 sm:p-12">
         <div className="max-w-[480px] w-full text-center">
           {/* Burgundy Checkmark */}
-          <div className="w-20 h-20 rounded-full bg-[rgba(159,18,57,0.08)] flex items-center justify-center mx-auto mb-7">
+          <div className="w-20 h-20 rounded-full bg-burgundy/[8%] flex items-center justify-center mx-auto mb-7">
             <svg className="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke={colors.burgundy} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
@@ -156,7 +156,7 @@ export default function BookingConfirmation() {
 
             <div className="flex justify-between items-center py-2.5">
               <span className="text-[13px] text-warm-stone">{t('reservations.confirmationId')}</span>
-              <span className="text-[13px] font-mono font-medium text-burgundy bg-[rgba(159,18,57,0.06)] px-2.5 py-0.5 rounded-md">{reservation.id}</span>
+              <span className="text-[13px] font-mono font-medium text-burgundy bg-burgundy/[6%] px-2.5 py-0.5 rounded-md">{reservation.id}</span>
             </div>
           </div>
 

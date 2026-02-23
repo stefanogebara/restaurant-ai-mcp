@@ -45,7 +45,7 @@ export default function LiveAIDemo() {
 
       {/* Hero */}
       <section className="pt-24 pb-20 text-center max-w-[1200px] mx-auto px-6 sm:px-16">
-        <div className="inline-block text-xs font-semibold tracking-[1.5px] uppercase text-burgundy bg-[rgba(159,18,57,0.06)] border border-[rgba(159,18,57,0.15)] px-4 py-1.5 rounded-full mb-7">
+        <div className="inline-block text-xs font-semibold tracking-[1.5px] uppercase text-burgundy bg-burgundy/[6%] border border-burgundy/15 px-4 py-1.5 rounded-full mb-7">
           Live Demo
         </div>
         <h1 className="font-serif text-4xl sm:text-[56px] font-medium leading-[1.1] tracking-tight mb-4">
@@ -93,7 +93,7 @@ export default function LiveAIDemo() {
             { icon: '\u23F1', title: 'Always Available', desc: 'Never miss a reservation. The AI handles calls 24/7 in multiple languages with instant availability checks.' },
           ].map((item, i) => (
             <div key={i} className="bg-white border border-border-gray rounded-2xl p-8">
-              <div className="w-10 h-10 rounded-[10px] bg-[rgba(159,18,57,0.06)] flex items-center justify-center mb-4 text-lg text-burgundy">
+              <div className="w-10 h-10 rounded-[10px] bg-burgundy/[6%] flex items-center justify-center mb-4 text-lg text-burgundy">
                 {item.icon}
               </div>
               <h3 className="text-base font-semibold text-deep-charcoal mb-2 tracking-tight">{item.title}</h3>

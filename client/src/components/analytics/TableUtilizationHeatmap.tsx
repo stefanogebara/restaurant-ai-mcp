@@ -47,7 +47,7 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
     <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
       <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
         <span className="text-[15px] font-semibold tracking-tight">Booking Heatmap</span>
-        <span className="text-[11px] font-semibold bg-[rgba(159,18,57,0.08)] text-burgundy px-2.5 py-0.5 rounded-full">Peak Hours</span>
+        <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">Peak Hours</span>
       </div>
       <div className="p-6">
 

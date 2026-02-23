@@ -393,7 +393,7 @@ export default function WeeklyReport() {
                     key={pill.label}
                     className={`px-4 py-2 rounded-full text-[13px] font-medium border ${
                       pill.count >= topPillThreshold
-                        ? 'bg-[rgba(159,18,57,0.06)] border-[rgba(159,18,57,0.15)] text-burgundy font-semibold'
+                        ? 'bg-burgundy/[6%] border-burgundy/15 text-burgundy font-semibold'
                         : 'bg-warm-white border-border-gray text-stone-gray'
                     }`}
                   >

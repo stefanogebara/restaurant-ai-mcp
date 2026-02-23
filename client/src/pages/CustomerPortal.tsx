@@ -180,7 +180,7 @@ export default function CustomerPortal() {
                     value={phone}
                     onChange={(e) => { setPhone(e.target.value); setLookupMethod('phone'); }}
                     placeholder="+34 612 345 678"
-                    className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
+                    className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
                     onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
                   />
                 </div>
@@ -200,7 +200,7 @@ export default function CustomerPortal() {
                     value={reservationId}
                     onChange={(e) => { setReservationId(e.target.value); setLookupMethod('id'); }}
                     placeholder="e.g. CEL-2026-0218-A7K3"
-                    className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-[rgba(159,18,57,0.06)]"
+                    className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
                     onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
                   />
                 </div>

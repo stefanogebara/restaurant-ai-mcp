@@ -139,7 +139,7 @@ export default function TableLayoutPanel({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-5 border-b border-soft-gray">
           <div className="flex items-center gap-2.5">
             <span className="text-[15px] font-semibold text-deep-charcoal tracking-tight">{t.tableLayout}</span>
-            <span className="text-[11px] font-semibold bg-[rgba(159,18,57,0.08)] text-burgundy px-2.5 py-0.5 rounded-full">Live</span>
+            <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">Live</span>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
