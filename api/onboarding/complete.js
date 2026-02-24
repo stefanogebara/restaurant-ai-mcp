@@ -523,6 +523,23 @@ module.exports = async (req, res) => {
     }
 
 
+    // Invalidate SEO city+cuisine cache so the page rebuilds with this restaurant included
+    try {
+      const { slugify } = require('../_lib/seo-html');
+      const cityKey = slugify(city || '');
+      const cuisineKey = slugify(validatedRestaurantType || restaurant_type || '');
+      if (cityKey && cuisineKey) {
+        await supabaseAdmin
+          .from('seo_page_cache')
+          .delete()
+          .eq('cache_key', `city:${cityKey}:${cuisineKey}`);
+        logger.info('SEO cache invalidated', { cityKey, cuisineKey });
+      }
+    } catch (seoErr) {
+      // Non-critical — log and continue. Onboarding is not affected.
+      logger.warn('SEO cache invalidation failed (non-critical)', { err: seoErr.message });
+    }
+
     // STEP 4: Create ElevenLabs Agent
     logger.info(' Step 4: Creating ElevenLabs agent...');
     logger.info(' Voice config:', {
