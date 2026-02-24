@@ -474,7 +474,7 @@ export default function CustomerDNADashboard() {
                   placeholder="Search by name or phone..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-600/30 focus:border-violet-600"
+                  className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-600/30 focus:border-violet-600"
                 />
               </div>
               <div className="relative">
@@ -482,7 +482,7 @@ export default function CustomerDNADashboard() {
                 <select
                   value={styleFilter}
                   onChange={(e) => setStyleFilter(e.target.value)}
-                  className="pl-9 pr-8 py-2 text-sm bg-white border border-border-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-600/30 focus:border-violet-600 appearance-none cursor-pointer"
+                  className="pl-9 pr-8 py-2 text-sm bg-white border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-600/30 focus:border-violet-600 appearance-none cursor-pointer"
                 >
                   <option value="">All Styles</option>
                   <option value="solo">Solo</option>

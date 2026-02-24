@@ -157,14 +157,14 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
             <div className="flex gap-2">
               <button
                 onClick={() => setConfirmingServiceId(null)}
-                className="flex-1 px-3 py-2 text-sm bg-soft-gray text-stone-gray border border-border-gray rounded-lg hover:bg-border-gray transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-3 py-2 text-sm bg-soft-gray text-stone-gray border border-border-gray rounded-xl hover:bg-border-gray transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={completeServiceMutation.isPending}
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleCompleteService(party.service_id, party.customer_name)}
-                className="flex-1 px-3 py-2 text-sm bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-3 py-2 text-sm bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={completeServiceMutation.isPending}
               >
                 {completeServiceMutation.isPending && (
@@ -176,7 +176,7 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
           ) : (
             <button
               onClick={() => setConfirmingServiceId(party.service_id)}
-              className="w-full px-3 py-2 text-sm bg-deep-charcoal hover:bg-burgundy text-white font-medium rounded-lg transition-all"
+              className="w-full px-3 py-2 text-sm bg-deep-charcoal hover:bg-burgundy text-white font-medium rounded-xl transition-all"
             >
               Complete Service
             </button>

@@ -128,7 +128,7 @@ export default function LanguageSelector({
           disabled={isLoading}
           className={`
             ${sizeClasses[size]}
-            block w-full rounded-lg border-border-gray shadow-sm
+            block w-full rounded-xl border-border-gray shadow-sm
             focus:border-burgundy focus:ring-burgundy
             disabled:opacity-50 disabled:cursor-not-allowed
             bg-white

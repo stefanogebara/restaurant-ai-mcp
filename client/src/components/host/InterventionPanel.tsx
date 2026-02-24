@@ -211,7 +211,7 @@ export default function InterventionPanel({
                     <a
                       href={`tel:${reservation.customer_phone}`}
                       onClick={() => handleAction(reservation, 'confirmation_call')}
-                      className="px-3 py-2 bg-burgundy/10 hover:bg-burgundy/20 text-burgundy rounded-lg text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+                      className="px-3 py-2 bg-burgundy/10 hover:bg-burgundy/20 text-burgundy rounded-xl text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
                       title="Call customer to confirm"
                     >
                       <ThiingsIcon name="phone" pxSize={16} />
@@ -222,7 +222,7 @@ export default function InterventionPanel({
                     <a
                       href={`sms:${reservation.customer_phone}?body=Hi ${reservation.customer_name}, this is [Restaurant Name]. We're looking forward to seeing you at ${reservation.time} today!`}
                       onClick={() => handleAction(reservation, 'sms_reminder')}
-                      className="px-3 py-2 bg-green-600/10 hover:bg-green-600/20 text-green-600 rounded-lg text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+                      className="px-3 py-2 bg-green-600/10 hover:bg-green-600/20 text-green-600 rounded-xl text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
                       title="Send SMS reminder"
                     >
                       <ThiingsIcon name="mail" pxSize={16} />
@@ -232,7 +232,7 @@ export default function InterventionPanel({
                     {/* Deposit Button */}
                     <button
                       onClick={() => handleAction(reservation, 'deposit_required')}
-                      className="px-3 py-2 bg-violet-600/10 hover:bg-violet-600/20 text-violet-600 rounded-lg text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+                      className="px-3 py-2 bg-violet-600/10 hover:bg-violet-600/20 text-violet-600 rounded-xl text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
                       title="Require deposit"
                     >
                       <ThiingsIcon name="credit-card" pxSize={16} />
@@ -242,7 +242,7 @@ export default function InterventionPanel({
                     {/* Premium Seating Button */}
                     <button
                       onClick={() => handleAction(reservation, 'premium_seating')}
-                      className="px-3 py-2 bg-amber-600/10 hover:bg-amber-600/20 text-amber-600 rounded-lg text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+                      className="px-3 py-2 bg-amber-600/10 hover:bg-amber-600/20 text-amber-600 rounded-xl text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
                       title="Offer premium seating"
                     >
                       <ThiingsIcon name="star" pxSize={16} />

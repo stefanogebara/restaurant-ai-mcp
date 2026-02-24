@@ -75,7 +75,7 @@ export default function ReferralWidget() {
               Your referral link
             </p>
             <div className="flex items-center gap-2">
-              <div className="flex-1 min-w-0 bg-soft-gray border border-border-gray rounded-lg px-3 py-2">
+              <div className="flex-1 min-w-0 bg-soft-gray border border-border-gray rounded-xl px-3 py-2">
                 <p className="text-xs text-stone-gray truncate font-mono">{referral_url}</p>
               </div>
               <button
