@@ -136,7 +136,7 @@ export default function TableLayoutPanel({
     <>
       <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-5 border-b border-soft-gray">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
           <div className="flex items-center gap-2.5">
             <span className="text-[15px] font-semibold text-deep-charcoal tracking-tight">{t.tableLayout}</span>
             <span className="relative flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
@@ -148,42 +148,42 @@ export default function TableLayoutPanel({
             </span>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* View Mode Toggle */}
-            <div className="flex items-center bg-soft-gray rounded-lg p-0.5">
-              <button
-                onClick={() => setViewMode('floorplan')}
-                className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-md transition-colors ${
-                  viewMode === 'floorplan'
-                    ? 'bg-deep-charcoal text-white'
-                    : 'text-warm-stone hover:text-deep-charcoal'
-                }`}
-                title="Floor Plan View"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                </svg>
-              </button>
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-md transition-colors ${
-                  viewMode === 'grid'
-                    ? 'bg-deep-charcoal text-white'
-                    : 'text-warm-stone hover:text-deep-charcoal'
-                }`}
-                title="Grid View"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-              </button>
-            </div>
-            <TableStatusLegend />
+          {/* View Mode Toggle */}
+          <div className="flex items-center bg-soft-gray rounded-lg p-0.5">
+            <button
+              onClick={() => setViewMode('floorplan')}
+              className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-md transition-colors ${
+                viewMode === 'floorplan'
+                  ? 'bg-deep-charcoal text-white'
+                  : 'text-warm-stone hover:text-deep-charcoal'
+              }`}
+              title="Floor Plan View"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-md transition-colors ${
+                viewMode === 'grid'
+                  ? 'bg-deep-charcoal text-white'
+                  : 'text-warm-stone hover:text-deep-charcoal'
+              }`}
+              title="Grid View"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              </svg>
+            </button>
           </div>
         </div>
 
         {/* Table View */}
         <div className={`p-5 sm:p-6 min-h-[420px] ${viewMode === 'grid' ? 'bg-soft-gray' : ''}`}>
+          <div className="mb-4">
+            <TableStatusLegend />
+          </div>
           {viewMode === 'floorplan' ? (
             <FloorPlanView
               tables={tables}

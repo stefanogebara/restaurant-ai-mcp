@@ -162,7 +162,7 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       <div className="dashboard min-h-screen bg-soft-gray p-6 sm:p-8 md:p-10 pb-16 sm:pb-10">
-        <div className="max-w-7xl mx-auto space-y-10">
+        <div className="max-w-7xl mx-auto space-y-6">
           {/* ---- Header ---- */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
@@ -227,7 +227,7 @@ export default function Dashboard() {
           />
 
           {/* ---- Main Content: 2-column layout ---- */}
-          <div className="grid grid-cols-1 lg:grid-cols-[3fr_1.2fr] gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
             {/* Left Column: Tables + Reservations */}
             <div className="space-y-6">
               <TableLayoutPanel
@@ -247,7 +247,7 @@ export default function Dashboard() {
             </div>
 
             {/* Right Column: Waitlist + Active Parties */}
-            <div className="space-y-6 lg:sticky lg:top-8 lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto">
+            <div className="space-y-6 lg:sticky lg:top-8 lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
               <div className="bg-white border border-border-gray rounded-2xl flex flex-col overflow-hidden">
                 <WaitlistPanel onSeatNow={handleSeatFromWaitlist} />
               </div>
