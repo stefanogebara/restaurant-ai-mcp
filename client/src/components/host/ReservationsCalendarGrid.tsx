@@ -245,7 +245,7 @@ export default function ReservationsCalendarGrid({
       {/* Reservation Detail Modal */}
       {selectedReservation && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
             <div className="px-6 py-4 border-b border-border-gray flex items-center justify-between">
               <h3 className="text-lg font-bold text-deep-charcoal">Reservation Details</h3>
               <button
