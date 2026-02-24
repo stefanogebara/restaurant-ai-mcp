@@ -19,7 +19,7 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white border border-border-gray/50 rounded-xl p-3 shadow-lg">
+        <div className="bg-white border border-border-gray/50 rounded-2xl p-3 shadow-lg">
           <p className="text-sm font-semibold text-deep-charcoal mb-1">{payload[0].payload.time}</p>
           <p className="text-sm text-burgundy">
             Reservations: <span className="font-bold">{payload[0].value}</span>

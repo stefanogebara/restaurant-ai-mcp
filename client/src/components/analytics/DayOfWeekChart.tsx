@@ -19,7 +19,7 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
     if (active && payload && payload.length) {
       const fullDay = daysOrder[chartData.findIndex(d => d.day === payload[0].payload.day)];
       return (
-        <div className="bg-white border border-border-gray rounded-xl p-3 shadow-lg">
+        <div className="bg-white border border-border-gray rounded-2xl p-3 shadow-lg">
           <p className="text-sm font-semibold text-deep-charcoal mb-1">{fullDay}</p>
           <p className="text-sm text-burgundy">
             Reservations: <span className="font-bold">{payload[0].value}</span>

@@ -158,7 +158,7 @@ export default function PhoneInput({
 
           {/* Dropdown */}
           {isOpen && (
-            <div className="absolute z-50 mt-1 w-64 max-h-64 overflow-y-auto bg-white border border-border-gray rounded-xl shadow-xl">
+            <div className="absolute z-50 mt-1 w-64 max-h-64 overflow-y-auto bg-white border border-border-gray rounded-2xl shadow-xl">
               {COUNTRIES.map((country) => (
                 <button
                   key={country.code}

@@ -15,7 +15,7 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white border border-border-gray/50 rounded-xl p-3 shadow-lg">
+        <div className="bg-white border border-border-gray/50 rounded-2xl p-3 shadow-lg">
           <p className="text-sm font-semibold text-deep-charcoal mb-2">{label}</p>
           {payload.map((entry: any, index: number) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
