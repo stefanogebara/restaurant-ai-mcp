@@ -65,31 +65,37 @@ const getTableSize = (table: Table) => {
   const cap = table.capacity || 2;
   const shape = table.shape?.toLowerCase() || 'round';
   if (shape === 'round' || shape === 'circle') {
-    const s = cap <= 2 ? 76 : cap <= 4 ? 92 : 108;
+    const s = cap <= 2 ? 84 : cap <= 4 ? 100 : 116;
     return { w: s, h: s };
   }
   if (shape === 'booth') {
-    return { w: cap <= 4 ? 108 : 128, h: cap <= 4 ? 68 : 76 };
+    return { w: cap <= 4 ? 120 : 144, h: cap <= 4 ? 72 : 84 };
   }
   if (shape === 'rectangle' || shape === 'long' || shape === 'oval') {
-    return { w: cap <= 4 ? 116 : 148, h: 68 };
+    return { w: cap <= 4 ? 128 : 160, h: 74 };
   }
-  const s = cap <= 2 ? 76 : cap <= 4 ? 92 : 108;
+  const s = cap <= 2 ? 84 : cap <= 4 ? 100 : 116;
   return { w: s, h: s };
 };
 
 // ── Layout ────────────────────────────────────────────────────────────────────
 
+// Only use saved positions when ALL tables have been explicitly placed (non-zero x or y).
+// If any table is still at default (0,0), fall back to auto-layout so nothing stacks in the corner.
 const hasPositionData = (tables: Table[]) =>
-  tables.some(t =>
-    (t.position_x !== undefined && t.position_x !== null && t.position_x !== 0) ||
-    (t.position_y !== undefined && t.position_y !== null && t.position_y !== 0),
+  tables.length > 0 &&
+  tables.every(t =>
+    (t.position_x !== undefined && t.position_x !== null) &&
+    (t.position_y !== undefined && t.position_y !== null) &&
+    (t.position_x !== 0 || t.position_y !== 0),
   );
 
 const autoLayoutTables = (tables: Table[]) => {
-  const GAP = 34;
-  const PAD = 22;
-  const W = 900;
+  // Use a narrower canvas (520px) so tables render at a comfortable size
+  // in the dashboard panel (~400-600px wide container).
+  const GAP = 28;
+  const PAD = 20;
+  const W = 520;
   const sorted = [...tables].sort(
     (a, b) => (Number(a.table_number) || 0) - (Number(b.table_number) || 0),
   );
@@ -106,7 +112,9 @@ const autoLayoutTables = (tables: Table[]) => {
     rowH = Math.max(rowH, size.h);
   });
 
-  return { positions: out, totalWidth: W, totalHeight: curY + rowH + PAD + 30 };
+  const totalHeight = curY + rowH + PAD + 20;
+  // Ensure a minimum useful height
+  return { positions: out, totalWidth: W, totalHeight: Math.max(totalHeight, 180) };
 };
 
 // ── Chairs ────────────────────────────────────────────────────────────────────
@@ -117,8 +125,8 @@ const renderChairs = (
 ) => {
   const chairs: React.ReactElement[] = [];
   const isRound = shape === 'round' || shape === 'circle';
-  const r = 4.5;
-  const gap = 7;
+  const r = 5.5;
+  const gap = 8;
 
   if (isRound) {
     const orbit = w / 2 + gap + r;
@@ -399,8 +407,8 @@ export default function FloorPlanView({
                 viewBox={`0 0 ${svgW} ${svgH}`}
                 className="block"
                 style={{
-                  minHeight: compact ? 180 : 240,
-                  minWidth: 320,
+                  minHeight: compact ? 160 : 220,
+                  minWidth: 280,
                   maxWidth: '100%',
                 }}
               >
@@ -505,9 +513,9 @@ export default function FloorPlanView({
                       {/* Table number */}
                       <text
                         x={cx}
-                        y={isOccupied && party ? cy - 5 : cy}
+                        y={isOccupied && party ? cy - 7 : cy - 2}
                         textAnchor="middle" dominantBaseline="middle"
-                        fill={st.text} fontSize={17} fontWeight={700}
+                        fill={st.text} fontSize={19} fontWeight={700}
                         fontFamily="Inter,-apple-system,sans-serif"
                       >
                         {table.table_number}
@@ -516,9 +524,9 @@ export default function FloorPlanView({
                       {/* Sub-label */}
                       <text
                         x={cx}
-                        y={isOccupied && party ? cy + 11 : cy + 16}
+                        y={isOccupied && party ? cy + 11 : cy + 14}
                         textAnchor="middle" dominantBaseline="middle"
-                        fill={st.text} fontSize={10} opacity={0.5}
+                        fill={st.text} fontSize={11} opacity={0.55}
                         fontFamily="Inter,-apple-system,sans-serif"
                       >
                         {isOccupied && party
