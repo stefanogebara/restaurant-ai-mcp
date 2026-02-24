@@ -197,7 +197,11 @@ export default function WeeklyReport() {
       <DashboardLayout>
         <div className="min-h-screen bg-warm-white flex items-center justify-center">
           <div className="text-center">
-            <p className="text-deep-charcoal">No data available</p>
+            <div className="w-16 h-16 mx-auto mb-4 bg-soft-gray rounded-2xl flex items-center justify-center">
+              <ThiingsIcon name="bar-chart" pxSize={28} />
+            </div>
+            <p className="font-semibold text-deep-charcoal">No report data available</p>
+            <p className="text-sm text-stone-gray mt-1">Select a date range to generate a report</p>
           </div>
         </div>
       </DashboardLayout>

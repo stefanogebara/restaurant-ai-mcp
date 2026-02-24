@@ -3,6 +3,7 @@ import type { UpcomingReservation } from '../../types/host.types';
 import ReservationDetailsModal from './ReservationDetailsModal';
 import RiskBadge from './RiskBadge';
 import { hostAPI } from '../../services/api';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface ReservationsCalendarProps {
   reservations: UpcomingReservation[];
@@ -140,10 +141,12 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
 
   if (sortedDates.length === 0) {
     return (
-      <div className="text-center py-12">
-        <div className="text-6xl mb-4">📅</div>
-        <div className="text-stone-gray text-lg">No upcoming reservations</div>
-        <div className="text-muted-stone text-sm mt-2">Reservations will appear here when customers book</div>
+      <div className="text-center py-16">
+        <div className="w-16 h-16 mx-auto mb-4 bg-soft-gray rounded-2xl flex items-center justify-center">
+          <ThiingsIcon name="calendar" pxSize={28} />
+        </div>
+        <p className="font-semibold text-deep-charcoal">No upcoming reservations</p>
+        <p className="text-sm text-stone-gray mt-1">Reservations will appear here when customers book</p>
       </div>
     );
   }

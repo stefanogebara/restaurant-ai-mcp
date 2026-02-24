@@ -114,7 +114,7 @@ export default function MLROIWidget() {
       {isExpanded && (
         <div className="px-6 pb-6 space-y-3">
           {/* ROI Metric - Hero */}
-          <div className={`p-4 rounded-xl border-2 ${
+          <div className={`p-4 rounded-2xl border-2 ${
             meetsTarget
               ? 'bg-green-600/10 border-green-600/30'
               : 'bg-amber-600/10 border-amber-600/30'
