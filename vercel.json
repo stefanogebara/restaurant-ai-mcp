@@ -11,6 +11,9 @@
     "api/**/*.js": {
       "excludeFiles": "lambda/**",
       "maxDuration": 60
+    },
+    "api/seo/**/*.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
@@ -21,6 +24,14 @@
     {
       "source": "/sitemap.xml",
       "destination": "/api/sitemap"
+    },
+    {
+      "source": "/restaurants/:city/:cuisine",
+      "destination": "/api/seo/city-cuisine?city=:city&cuisine=:cuisine"
+    },
+    {
+      "source": "/vs/:competitor",
+      "destination": "/api/seo/vs?competitor=:competitor"
     },
     {
       "source": "/(.*)",
@@ -103,6 +114,10 @@
     {
       "path": "/api/cron/cleanup-expired-demos",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/warm-seo-cache",
+      "schedule": "0 2 * * *"
     }
   ]
 }

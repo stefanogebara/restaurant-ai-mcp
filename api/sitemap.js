@@ -47,10 +47,50 @@ module.exports = async (req, res) => {
   </url>`;
   }).join('\n');
 
+  // SEO city+cuisine pages
+  const { slugify: seoSlugify } = require('./_lib/seo-html');
+  const { data: seoPairs } = await supabaseAdmin
+    .schema('restaurant')
+    .from('restaurant_config')
+    .select('city, restaurant_type')
+    .eq('is_active', true)
+    .eq('onboarding_completed', true)
+    .not('city', 'is', null)
+    .not('restaurant_type', 'is', null);
+
+  const seenPairs = new Set();
+  const seoEntries = (seoPairs || [])
+    .map((r) => {
+      const key = `${seoSlugify(r.city)}/${seoSlugify(r.restaurant_type)}`;
+      if (seenPairs.has(key)) return null;
+      seenPairs.add(key);
+      return `  <url>
+    <loc>${BASE_URL}/restaurants/${key}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>`;
+    })
+    .filter(Boolean)
+    .join('\n');
+
+  const vsEntries = ['opentable', 'resy', 'sevenrooms']
+    .map(
+      (c) => `  <url>
+    <loc>${BASE_URL}/vs/${c}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>`,
+    )
+    .join('\n');
+
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${staticEntries}
 ${restaurantEntries}
+${seoEntries}
+${vsEntries}
 </urlset>`;
 
   return res.status(200).send(xml);
