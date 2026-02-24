@@ -942,7 +942,7 @@ export default function CallTrackingDashboard() {
                       {selectedConversation.transcript.map((message: any, idx: number) => (
                         <div
                           key={idx}
-                          className={`p-3 rounded-lg ${
+                          className={`p-3 rounded-xl ${
                             message.role === 'user'
                               ? 'bg-blue-500/10 ml-8'
                               : 'bg-green-500/10 mr-8'

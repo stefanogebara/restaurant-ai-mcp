@@ -165,7 +165,7 @@ export default function WhatsAppSettingsPage() {
               </a>
               <button
                 onClick={() => navigator.clipboard.writeText(status.wa_me_link || '')}
-                className="flex-shrink-0 px-3 py-1.5 text-xs font-medium bg-soft-gray hover:bg-border-gray rounded-lg transition-colors text-stone-gray"
+                className="flex-shrink-0 px-3 py-1.5 text-xs font-medium bg-soft-gray hover:bg-border-gray rounded-xl transition-colors text-stone-gray"
               >
                 Copy
               </button>

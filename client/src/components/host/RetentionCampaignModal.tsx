@@ -71,14 +71,14 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full mx-4 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border-gray">
           <h2 className="text-lg font-semibold text-deep-charcoal">
             Retention Campaign
           </h2>
-          <button onClick={onClose} className="p-1 hover:bg-soft-gray rounded">
+          <button onClick={onClose} className="p-2 hover:bg-soft-gray rounded-xl transition-colors">
             <ThiingsIcon name="close" pxSize={20} />
           </button>
         </div>
