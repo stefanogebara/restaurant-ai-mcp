@@ -213,7 +213,7 @@ export default function TableConfigPage() {
                 .map((table) => (
                   <div
                     key={table.id}
-                    className="bg-white rounded-2xl p-6 border border-border-gray cursor-pointer hover:border-stone-300 transition-colors relative"
+                    className="bg-white rounded-2xl p-6 border border-border-gray cursor-pointer hover:border-muted-stone transition-colors relative"
                     onClick={() => openEditModal(table)}
                   >
                     <div className="flex items-start justify-between mb-3">

@@ -69,7 +69,7 @@ export default function LiveAIDemo() {
           </div>
 
           {!import.meta.env.VITE_ELEVENLABS_AGENT_ID && (
-            <div className="mt-4 p-4 bg-[rgba(217,119,6,0.08)] rounded-xl border border-[rgba(217,119,6,0.2)] text-left">
+            <div className="mt-4 p-4 bg-amber-600/[8%] rounded-xl border border-amber-600/20 text-left">
               <h4 className="text-sm font-medium text-deep-charcoal mb-1">Configuration Required</h4>
               <p className="text-[13px] text-stone-gray font-light">
                 Set <code className="text-xs text-burgundy bg-warm-white px-1.5 py-0.5 rounded border border-border-gray">VITE_ELEVENLABS_AGENT_ID</code> to activate.
@@ -77,7 +77,7 @@ export default function LiveAIDemo() {
             </div>
           )}
 
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-[rgba(22,163,74,0.06)] rounded-full mt-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-600/[6%] rounded-full mt-6">
             <div className="w-2 h-2 rounded-full bg-green-600" />
             <span className="text-[13px] font-medium text-green-600">AI Agent Online</span>
           </div>

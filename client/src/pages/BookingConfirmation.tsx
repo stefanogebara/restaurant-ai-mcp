@@ -103,7 +103,7 @@ export default function BookingConfirmation() {
           </div>
 
           {/* Status Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[rgba(22,163,74,0.06)] rounded-full mb-5">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-green-600/[6%] rounded-full mb-5">
             <div className="w-2 h-2 rounded-full bg-green-600" />
             <span className="text-[13px] font-semibold text-green-600">{t('reservations.confirmed')}</span>
           </div>

@@ -410,9 +410,9 @@ export default function VoiceSettingsPage() {
               {engineConfig?.voice_engine_status && (
                 <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
                   engineConfig.voice_engine_status === 'active'
-                    ? 'bg-[rgba(22,163,74,0.08)] text-green-600'
+                    ? 'bg-green-600/[8%] text-green-600'
                     : engineConfig.voice_engine_status === 'testing'
-                    ? 'bg-[rgba(217,119,6,0.08)] text-amber-600'
+                    ? 'bg-amber-600/[8%] text-amber-600'
                     : 'bg-soft-gray text-stone-gray'
                 }`}>
                   {engineConfig.voice_engine_status.charAt(0).toUpperCase() + engineConfig.voice_engine_status.slice(1)}

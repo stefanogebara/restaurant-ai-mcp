@@ -89,7 +89,7 @@ export default function SubscriptionSuccess() {
           {/* Success Card */}
           <div className="bg-white border border-border-gray rounded-2xl p-12 text-center">
             {/* Green Checkmark */}
-            <div className="w-16 h-16 rounded-full bg-[rgba(22,163,74,0.08)] flex items-center justify-center mx-auto mb-5">
+            <div className="w-16 h-16 rounded-full bg-green-600/[8%] flex items-center justify-center mx-auto mb-5">
               <ThiingsIcon name="check" pxSize={28} className="text-green-600" />
             </div>
 

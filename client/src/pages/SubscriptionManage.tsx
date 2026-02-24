@@ -166,9 +166,9 @@ export default function SubscriptionManage() {
             <div className="flex items-center gap-5">
               <div>
                 <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
-                  subscription.status === 'active' ? 'bg-[rgba(22,163,74,0.08)] text-green-600' :
-                  subscription.status === 'trialing' ? 'bg-[rgba(14,165,233,0.08)] text-sky-500' :
-                  subscription.status === 'past_due' ? 'bg-[rgba(220,38,38,0.08)] text-red-600' :
+                  subscription.status === 'active' ? 'bg-green-600/[8%] text-green-600' :
+                  subscription.status === 'trialing' ? 'bg-sky-500/[8%] text-sky-500' :
+                  subscription.status === 'past_due' ? 'bg-red-600/[8%] text-red-600' :
                   'bg-soft-gray text-stone-gray'
                 }`}>
                   {subscription.status === 'trialing' ? 'Trial' : subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
@@ -195,7 +195,7 @@ export default function SubscriptionManage() {
           </div>
 
           {subscription.cancelAtPeriodEnd && (
-            <div className="bg-[rgba(220,38,38,0.04)] border border-[rgba(220,38,38,0.2)] rounded-2xl p-5 mb-12 -mt-8">
+            <div className="bg-red-600/[4%] border border-red-600/20 rounded-2xl p-5 mb-12 -mt-8">
               <p className="text-sm text-red-600 font-medium">Your subscription is set to cancel at the end of the current billing period.</p>
             </div>
           )}
