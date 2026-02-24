@@ -177,7 +177,7 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
       </div>
 
       {error && (
-        <div className="mb-3 p-2 rounded-lg bg-red-50 text-red-700 text-xs">
+        <div className="mb-3 p-2 rounded-xl bg-red-50 text-red-700 text-xs rounded-xl">
           {error}
         </div>
       )}

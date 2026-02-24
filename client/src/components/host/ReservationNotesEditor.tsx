@@ -81,7 +81,7 @@ export default function ReservationNotesEditor({
           </div>
           <button
             onClick={onCancel}
-            className="p-2 hover:bg-soft-gray rounded-lg transition"
+            className="p-2 hover:bg-soft-gray rounded-xl transition"
           >
             <ThiingsIcon name="close" pxSize={24} />
           </button>

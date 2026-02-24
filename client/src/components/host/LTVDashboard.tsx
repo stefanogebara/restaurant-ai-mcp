@@ -361,7 +361,7 @@ At Risk: Haven't visited in 90+ days - Win-back campaigns"
                       </div>
                       <button
                         onClick={() => openCampaignModal(customer)}
-                        className="p-2 bg-amber-600/20 hover:bg-amber-600/30 rounded-lg transition-colors"
+                        className="p-2 bg-amber-600/20 hover:bg-amber-600/30 rounded-xl transition-colors"
                         title="Send retention campaign"
                       >
                         <ThiingsIcon name="mail" size="xs" />

@@ -147,7 +147,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                 placeholder="Search countries..."
                 value={countrySearchQuery}
                 onChange={(e) => setCountrySearchQuery(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-soft-gray border border-border-gray text-deep-charcoal placeholder-muted-stone focus:outline-none focus:border-burgundy focus:ring-2 focus:ring-burgundy transition-colors"
+                className="w-full px-3 py-2 rounded-xl bg-soft-gray border border-border-gray text-deep-charcoal placeholder-muted-stone focus:outline-none focus:border-burgundy focus:ring-2 focus:ring-burgundy transition-colors"
                 autoFocus
               />
             </div>
@@ -245,7 +245,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                 placeholder="Search cities..."
                 value={citySearchQuery}
                 onChange={(e) => setCitySearchQuery(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-soft-gray border border-border-gray text-deep-charcoal placeholder-muted-stone focus:outline-none focus:border-burgundy focus:ring-2 focus:ring-burgundy transition-colors"
+                className="w-full px-3 py-2 rounded-xl bg-soft-gray border border-border-gray text-deep-charcoal placeholder-muted-stone focus:outline-none focus:border-burgundy focus:ring-2 focus:ring-burgundy transition-colors"
                 autoFocus
               />
             </div>

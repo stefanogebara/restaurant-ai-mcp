@@ -172,7 +172,7 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
               </div>
               <button
                 onClick={() => removeMember(index)}
-                className="p-2 hover:bg-red-600/10 text-red-600 rounded-lg transition-colors"
+                className="p-2 hover:bg-red-600/10 text-red-600 rounded-xl transition-colors"
                 title="Remove member"
               >
                 <ThiingsIcon name="close" pxSize={20} />

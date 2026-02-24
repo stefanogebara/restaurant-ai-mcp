@@ -98,7 +98,7 @@ export default function VoiceGrid({
   return (
     <div>
       {source === 'own_voices_fallback' && (
-        <p className="text-xs text-stone-gray bg-soft-gray rounded-lg px-3 py-2 mb-3">
+        <p className="text-xs text-stone-gray bg-soft-gray rounded-xl px-3 py-2 mb-3">
           Showing curated voices. Contact support to unlock the full voice library.
         </p>
       )}

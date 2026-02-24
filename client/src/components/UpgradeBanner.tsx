@@ -31,7 +31,7 @@ export default function UpgradeBanner({
         </div>
         <button
           onClick={handleUpgrade}
-          className="px-3 py-1 bg-burgundy hover:bg-burgundy-dark rounded-lg text-xs text-white font-semibold flex-shrink-0 transition-colors"
+          className="px-3 py-1 bg-burgundy hover:bg-burgundy-dark rounded-xl text-xs text-white font-semibold flex-shrink-0 transition-colors"
         >
           Upgrade
         </button>

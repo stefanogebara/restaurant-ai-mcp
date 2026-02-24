@@ -256,7 +256,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
           <button
             type="button"
             onClick={copyHoursToAll}
-            className="px-3 py-1 text-xs bg-soft-gray hover:bg-border-gray text-stone-gray rounded-lg transition-colors"
+            className="px-3 py-1 text-xs bg-soft-gray hover:bg-border-gray text-stone-gray rounded-xl transition-colors"
           >
             Copy Monday to all days
           </button>

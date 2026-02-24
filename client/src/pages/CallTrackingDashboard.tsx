@@ -704,7 +704,7 @@ export default function CallTrackingDashboard() {
               <select
                 value={filter.outcome}
                 onChange={(e) => setFilter({ ...filter, outcome: e.target.value })}
-                className="text-xs font-medium px-3 py-1.5 bg-soft-gray border-0 rounded-lg text-deep-charcoal cursor-pointer"
+                className="text-xs font-medium px-3 py-1.5 bg-soft-gray border-0 rounded-xl text-deep-charcoal cursor-pointer"
               >
                 <option value="all">All</option>
                 <option value="reservation_created">Booked</option>
@@ -718,7 +718,7 @@ export default function CallTrackingDashboard() {
               <select
                 value={filter.language}
                 onChange={(e) => setFilter({ ...filter, language: e.target.value })}
-                className="text-xs font-medium px-3 py-1.5 bg-soft-gray border-0 rounded-lg text-deep-charcoal cursor-pointer"
+                className="text-xs font-medium px-3 py-1.5 bg-soft-gray border-0 rounded-xl text-deep-charcoal cursor-pointer"
               >
                 <option value="all">All</option>
                 <option value="en">EN</option>
