@@ -125,7 +125,7 @@ export default function RevenueOpportunities() {
           {opportunities.map((opp) => (
             <div
               key={opp.rank}
-              className="border border-border-gray/50 rounded-xl overflow-hidden hover:shadow-lg transition-all cursor-pointer bg-gradient-to-br from-white to-soft-gray/20"
+              className="border border-border-gray/50 rounded-2xl overflow-hidden hover:shadow-lg transition-all cursor-pointer bg-gradient-to-br from-white to-soft-gray/20"
               onClick={() => setExpandedCard(expandedCard === opp.rank ? null : opp.rank)}
             >
               {/* Card Header */}
