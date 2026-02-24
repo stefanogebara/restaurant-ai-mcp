@@ -14,7 +14,7 @@ export default function UsageStatsCard() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl border border-border-gray p-5">
+      <div className="bg-white rounded-2xl border border-border-gray p-5">
         <h3 className="text-sm font-semibold text-warm-stone uppercase tracking-wider mb-3">
           Usage This Month
         </h3>
@@ -34,7 +34,7 @@ export default function UsageStatsCard() {
   const totalEvents = metrics.reduce((sum, m) => sum + m.total_count, 0);
 
   return (
-    <div className="bg-white rounded-xl border border-border-gray p-5">
+    <div className="bg-white rounded-2xl border border-border-gray p-5">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-warm-stone uppercase tracking-wider">
           Usage This Month
