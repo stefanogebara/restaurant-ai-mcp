@@ -52,7 +52,7 @@ export default function StatsBar({
       <StatCard
         label={t('dashboard.stats.reservations')}
         value={String(reservationsToday)}
-        change={`${seatedReservations} ${t('dashboard.stats.seated')}`}
+        change={reservationsToday > 0 ? `${seatedReservations} ${t('dashboard.stats.seated')}` : ''}
         changeColor="text-green-600"
         barPercent={seatedPercent}
         barColor={colors.burgundy}
