@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { authFetch } from '../../services/api';
 import type { TableRecommendation } from '../../types/host.types';
 import { useState } from 'react';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface WaitlistEntry {
   id: string;
@@ -88,9 +89,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
               aria-label="Close"
               className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-soft-gray text-muted-stone hover:text-deep-charcoal transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <ThiingsIcon name="close" pxSize={16} />
             </button>
           </div>
 

@@ -4,6 +4,7 @@ import ReservationDetailsModal from './ReservationDetailsModal';
 import RiskBadge from './RiskBadge';
 import { hostAPI } from '../../services/api';
 import ThiingsIcon from '../common/ThiingsIcon';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface ReservationsCalendarProps {
   reservations: UpcomingReservation[];
@@ -197,9 +198,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
                   </div>
                 </div>
                 <div className={`transform transition-transform ${isSelected ? 'rotate-180' : ''}`}>
-                  <svg className={`w-5 h-5 ${isSelected ? 'text-burgundy' : 'text-stone-gray'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
+                  <ThiingsIcon name="chevron-down" pxSize={20} className={isSelected ? 'text-burgundy' : 'text-stone-gray'} />
                 </div>
               </div>
 
@@ -296,9 +295,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
         onClick={exportToCSV}
         className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
       >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
+        <ThiingsIcon name="download" pxSize={20} />
         Export to CSV ({reservations.length} reservations)
       </button>
 

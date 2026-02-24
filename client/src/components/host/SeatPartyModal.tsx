@@ -57,19 +57,15 @@ export default function SeatPartyModal({ isOpen, data, onClose, onRetryTableSele
               aria-label="Close"
               className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-soft-gray text-muted-stone hover:text-deep-charcoal transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <ThiingsIcon name="close" pxSize={16} />
             </button>
           )}
         </div>
 
         {seatPartyMutation.isSuccess ? (
           <div className="text-center py-6">
-            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4 text-green-600">
+              <ThiingsIcon name="check" pxSize={32} />
             </div>
             <div className="text-lg font-semibold text-green-600 mb-2">
               Party Seated Successfully!

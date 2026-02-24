@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatTimeAgo } from '../../utils/timeFormatting';
 import WaitlistTimeDisplay from './WaitlistTimeDisplay';
 import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface WaitlistEntry {
   id: string;
@@ -33,14 +34,6 @@ interface WaitlistPanelProps {
   restaurantId?: string;
 }
 
-// Search icon SVG component
-function SearchIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-    </svg>
-  );
-}
 
 // Parse special requests into tags
 function getTags(specialRequests?: string): string[] {
@@ -232,7 +225,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
 
           {/* Search Input */}
           <div className="relative flex-1 min-w-[120px] max-w-[200px]">
-            <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-stone" />
+            <ThiingsIcon name="search" pxSize={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-stone" />
             <input
               type="text"
               placeholder="Search..."
@@ -559,9 +552,7 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
               aria-label="Close"
               className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-soft-gray text-muted-stone hover:text-deep-charcoal transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <ThiingsIcon name="close" pxSize={16} />
             </button>
           </div>
 

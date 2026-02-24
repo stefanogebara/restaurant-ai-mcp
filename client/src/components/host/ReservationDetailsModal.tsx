@@ -61,9 +61,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
             onClick={onClose}
             className="p-2 hover:bg-soft-gray rounded-lg transition"
           >
-            <svg className="w-6 h-6 text-stone-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <ThiingsIcon name="close" pxSize={24} className="text-stone-gray" />
           </button>
         </div>
 
@@ -71,9 +69,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
         {reservation.checked_in && (
           <div className="mb-4">
             <span className="px-3 py-1.5 bg-green-600/10 text-green-600 text-sm rounded-lg inline-flex items-center gap-2">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
+              <ThiingsIcon name="check-circle" pxSize={16} />
               Checked In
               {reservation.checked_in_at && (
                 <span className="text-xs">· {new Date(reservation.checked_in_at).toLocaleTimeString()}</span>
@@ -94,9 +90,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
           <div className="bg-soft-gray rounded-xl p-4 border border-border-gray">
             <div className="text-xs text-muted-stone mb-1">Party Size</div>
             <div className="text-deep-charcoal font-semibold text-lg flex items-center gap-2">
-              <svg className="w-5 h-5 text-burgundy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
+              <ThiingsIcon name="users" pxSize={20} className="text-burgundy" />
               {reservation.party_size} guests
             </div>
           </div>
@@ -111,9 +105,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
           <div className="bg-soft-gray rounded-xl p-4 border border-border-gray">
             <div className="text-xs text-muted-stone mb-1">Time</div>
             <div className="text-deep-charcoal font-semibold text-lg flex items-center gap-2">
-              <svg className="w-5 h-5 text-burgundy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <ThiingsIcon name="clock" pxSize={20} className="text-burgundy" />
               {formatTime(reservation.time || '')}
             </div>
           </div>
@@ -123,9 +115,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
             <div className="bg-soft-gray rounded-xl p-4 border border-border-gray">
               <div className="text-xs text-muted-stone mb-1">Phone Number</div>
               <div className="text-deep-charcoal font-semibold flex items-center gap-2">
-                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
+                <ThiingsIcon name="phone" pxSize={20} className="text-green-600" />
                 {reservation.customer_phone}
               </div>
             </div>
@@ -145,9 +135,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
           <div className="mb-6">
             <div className="bg-soft-gray rounded-xl p-4 border border-border-gray">
               <div className="flex items-start gap-3">
-                <svg className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                </svg>
+                <ThiingsIcon name="chat" pxSize={20} className="text-amber-600 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <div className="text-xs text-muted-stone mb-1">Special Requests</div>
                   <div className="text-deep-charcoal">{reservation.special_requests}</div>
