@@ -196,7 +196,7 @@ export default function Dashboard() {
 
           {/* ---- Trial Banner ---- */}
           {isTrial && isActive && trialDaysLeft !== null && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3.5 flex items-center justify-between gap-3">
               <p className="text-sm text-amber-800">
                 <span className="font-semibold">{t('dashboard.freeTrial')}</span>
                 {' — '}
