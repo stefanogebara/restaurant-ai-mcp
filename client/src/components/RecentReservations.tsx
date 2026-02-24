@@ -133,7 +133,7 @@ export default function RecentReservations() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-white p-4 rounded-xl border-2 border-emerald-500/50 shadow-md"
+            className="bg-white p-4 rounded-2xl border-2 border-emerald-500/50 shadow-md"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
@@ -269,7 +269,7 @@ export default function RecentReservations() {
 
       {/* Show additional recent reservations if available */}
       {reservations.length > 1 && (
-        <div className="bg-white p-4 rounded-xl border border-border-gray shadow-sm">
+        <div className="bg-white p-4 rounded-2xl border border-border-gray shadow-sm">
           <h4 className="text-deep-charcoal font-semibold mb-3">Recent Activity</h4>
           <div className="space-y-2">
             {reservations.slice(1, 4).map((res) => (

@@ -297,7 +297,7 @@ export default function BookingPage() {
           </div>
 
           {/* Rating */}
-          <div className="flex items-center gap-3 p-4 bg-white border border-border-gray rounded-xl">
+          <div className="flex items-center gap-3 p-4 bg-white border border-border-gray rounded-2xl">
             <div className="text-2xl font-bold tracking-tight text-deep-charcoal">4.7</div>
             <div>
               <div className="text-sm text-amber-600 tracking-wider">★★★★☆</div>

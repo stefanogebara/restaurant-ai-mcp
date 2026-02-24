@@ -21,7 +21,7 @@ export default function UpgradeBanner({
 
   if (compact) {
     return (
-      <div className="bg-soft-gray p-3 rounded-xl flex items-center justify-between gap-3 border border-border-gray">
+      <div className="bg-soft-gray p-3 rounded-2xl flex items-center justify-between gap-3 border border-border-gray">
         <div className="flex items-center gap-2">
           <ThiingsIcon name="sparkles" pxSize={16} className="flex-shrink-0" />
           <span className="text-sm text-stone-gray">
@@ -40,7 +40,7 @@ export default function UpgradeBanner({
   }
 
   return (
-    <div className="bg-white rounded-xl p-4 border-2 border-burgundy/30 shadow-lg">
+    <div className="bg-white rounded-2xl p-4 border-2 border-burgundy/30 shadow-lg">
       <div className="flex items-start gap-4">
         {/* Icon */}
         <div className="w-10 h-10 rounded-xl bg-burgundy flex items-center justify-center flex-shrink-0">
