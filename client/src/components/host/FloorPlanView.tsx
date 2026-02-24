@@ -125,8 +125,8 @@ const renderChairs = (
 ) => {
   const chairs: React.ReactElement[] = [];
   const isRound = shape === 'round' || shape === 'circle';
-  const r = 5.5;
-  const gap = 8;
+  const r = 6;
+  const gap = 9;
 
   if (isRound) {
     const orbit = w / 2 + gap + r;
@@ -135,7 +135,7 @@ const renderChairs = (
       chairs.push(
         <circle key={`c${i}`}
           cx={cx + orbit * Math.cos(a)} cy={cy + orbit * Math.sin(a)}
-          r={r} fill={color} opacity={0.2} />,
+          r={r} fill={color} opacity={0.55} />,
       );
     }
   } else {
@@ -146,14 +146,14 @@ const renderChairs = (
       const xp = cx - w / 2 + (w / (top + 1)) * (i + 1);
       chairs.push(
         <circle key={`ct${i}`} cx={xp} cy={cy - halfH}
-          r={r} fill={color} opacity={0.2} />,
+          r={r} fill={color} opacity={0.55} />,
       );
     }
     for (let i = 0; i < bot; i++) {
       const xp = cx - w / 2 + (w / (bot + 1)) * (i + 1);
       chairs.push(
         <circle key={`cb${i}`} cx={xp} cy={cy + halfH}
-          r={r} fill={color} opacity={0.2} />,
+          r={r} fill={color} opacity={0.55} />,
       );
     }
   }
@@ -418,6 +418,11 @@ export default function FloorPlanView({
                     <circle cx="10" cy="10" r="0.75" fill="#B5ADA4" opacity="0.28" />
                   </pattern>
 
+                  {/* Architectural grid lines */}
+                  <pattern id={`fpGrid-${location}`} patternUnits="userSpaceOnUse" width="40" height="40">
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#C8C0B6" strokeWidth="0.4" opacity="0.5" />
+                  </pattern>
+
                   {/* Table shadow */}
                   <filter id={`fpShad-${location}`} x="-8%" y="-8%" width="116%" height="124%">
                     <feDropShadow dx="0" dy="1.5" stdDeviation="3" floodColor="#7A6E65" floodOpacity="0.09" />
@@ -427,10 +432,19 @@ export default function FloorPlanView({
                   <filter id={`fpShadHov-${location}`} x="-12%" y="-12%" width="124%" height="136%">
                     <feDropShadow dx="0" dy="3" stdDeviation="6" floodColor="#7A6E65" floodOpacity="0.15" />
                   </filter>
+
+                  {/* Per-table radial gradients */}
+                  {positions.map(({ table }) => (
+                    <radialGradient key={`rg-${table.id}`} id={`rg-${table.id}`} cx="40%" cy="35%" r="65%">
+                      <stop offset="0%" stopColor="white" stopOpacity="0.35" />
+                      <stop offset="100%" stopColor="white" stopOpacity="0" />
+                    </radialGradient>
+                  ))}
                 </defs>
 
                 {/* Background */}
                 <rect width="100%" height="100%" fill="#F8F5F0" />
+                <rect width="100%" height="100%" fill={`url(#fpGrid-${location})`} />
                 <rect width="100%" height="100%" fill={`url(#fpDots-${location})`} />
 
                 {/* ── Joinable connector lines ── */}
@@ -495,19 +509,35 @@ export default function FloorPlanView({
 
                       {/* Table shape */}
                       {isRound ? (
-                        <circle cx={cx} cy={cy} r={w / 2}
-                          fill={st.fill} stroke={st.stroke} strokeWidth={2} />
+                        <>
+                          <circle cx={cx} cy={cy} r={w / 2}
+                            fill={st.fill} stroke={st.stroke} strokeWidth={2} />
+                          <circle cx={cx} cy={cy} r={w / 2}
+                            fill={`url(#rg-${table.id})`} />
+                          {/* Status dot badge */}
+                          <circle cx={cx + w / 2 * 0.68} cy={cy + w / 2 * 0.68} r={5}
+                            fill={st.stroke} />
+                        </>
                       ) : shape === 'booth' ? (
                         <>
                           <rect x={x} y={y} width={w} height={h} rx={13}
                             fill={st.fill} stroke={st.stroke} strokeWidth={2} />
+                          <rect x={x + 3} y={y + 3} width={w - 6} height={h / 3}
+                            rx={7} fill="white" opacity={0.25} />
                           <rect x={x + 4} y={y + h - 8} width={w - 8} height={7}
                             rx={4} fill={st.stroke} opacity={0.08} />
+                          {/* Status dot badge */}
+                          <circle cx={x + w - 6} cy={y + h - 6} r={5} fill={st.stroke} />
                         </>
                       ) : (
-                        <rect x={x} y={y} width={w} height={h}
-                          rx={shape === 'rectangle' || shape === 'long' ? 9 : 13}
-                          fill={st.fill} stroke={st.stroke} strokeWidth={2} />
+                        <>
+                          <rect x={x} y={y} width={w} height={h} rx={10}
+                            fill={st.fill} stroke={st.stroke} strokeWidth={2} />
+                          <rect x={x + 3} y={y + 3} width={w - 6} height={h / 3}
+                            rx={7} fill="white" opacity={0.25} />
+                          {/* Status dot badge */}
+                          <circle cx={x + w - 6} cy={y + h - 6} r={5} fill={st.stroke} />
+                        </>
                       )}
 
                       {/* Table number */}

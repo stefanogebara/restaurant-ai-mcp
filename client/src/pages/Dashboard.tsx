@@ -19,7 +19,6 @@ import { hostAPI, authFetch } from '../services/api';
 import { usePlanInfo } from '../hooks/useSubscription';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import StatsBar from '../components/dashboard/StatsBar';
-import ReferralWidget from '../components/dashboard/ReferralWidget';
 import TableLayoutPanel from '../components/dashboard/TableLayoutPanel';
 import ReservationsList from '../components/dashboard/ReservationsList';
 import ActivePartiesPanel from '../components/dashboard/ActivePartiesPanel';
@@ -161,8 +160,8 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="dashboard min-h-screen bg-soft-gray p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8 pb-28 sm:pb-20">
-        <div className="max-w-7xl mx-auto space-y-8">
+      <div className="dashboard min-h-screen bg-soft-gray p-6 sm:p-8 md:p-10 pb-28 sm:pb-20">
+        <div className="max-w-7xl mx-auto space-y-10">
           {/* ---- Header ---- */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
             <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
@@ -234,13 +233,10 @@ export default function Dashboard() {
             isLoading={isLoading}
           />
 
-          {/* ---- Referral Widget ---- */}
-          <ReferralWidget />
-
           {/* ---- Main Content: 2-column layout ---- */}
-          <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-[3fr_1.2fr] gap-6">
             {/* Left Column: Tables + Reservations */}
-            <div className="space-y-4">
+            <div className="space-y-6">
               <TableLayoutPanel
                 tables={tables}
                 activeParties={activeParties}
@@ -258,7 +254,7 @@ export default function Dashboard() {
             </div>
 
             {/* Right Column: Waitlist + Active Parties */}
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="bg-white border border-border-gray rounded-2xl flex flex-col overflow-hidden">
                 <WaitlistPanel onSeatNow={handleSeatFromWaitlist} />
               </div>
