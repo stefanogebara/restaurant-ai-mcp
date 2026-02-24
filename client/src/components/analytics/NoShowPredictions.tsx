@@ -140,9 +140,7 @@ export default function NoShowPredictions() {
                     </div>
                     <div className="flex items-center gap-4 mt-2 text-sm">
                       <span className="flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
+                        <ThiingsIcon name="calendar" pxSize={16} />
                         {new Date(prediction.date).toLocaleDateString()} at {prediction.time}
                       </span>
                       <span className="text-warm-stone">
@@ -151,14 +149,7 @@ export default function NoShowPredictions() {
                     </div>
                   </div>
                   <div className="ml-4">
-                    <svg
-                      className={`w-5 h-5 transition-transform ${selectedPrediction === prediction ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
+                    <ThiingsIcon name="chevron-down" pxSize={20} className={`transition-transform ${selectedPrediction === prediction ? 'rotate-180' : ''}`} />
                   </div>
                 </div>
 
@@ -166,9 +157,7 @@ export default function NoShowPredictions() {
                 {selectedPrediction === prediction && prediction.recommendations.length > 0 && (
                   <div className="mt-4 pt-4 border-t">
                     <div className="font-semibold mb-2 flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                      <ThiingsIcon name="check-circle" pxSize={16} />
                       Recommended Actions:
                     </div>
                     <ul className="space-y-2">
@@ -190,9 +179,7 @@ export default function NoShowPredictions() {
       {/* Footer Info */}
       <div className="bg-soft-gray/30 px-6 py-4 border-t border-border-gray">
         <div className="flex items-center gap-2 text-xs text-warm-stone">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <ThiingsIcon name="info" pxSize={16} />
           <span>
             Predictions based on historical no-show patterns, party size, booking timing, and reservation time slots.
             Risk scores update in real-time as new data becomes available.

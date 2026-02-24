@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { authFetch } from '../../services/api';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface RevenueOpportunity {
   rank: number;
@@ -163,9 +164,7 @@ export default function RevenueOpportunities() {
               {expandedCard === opp.rank && (
                 <div className="p-5 bg-soft-gray/30">
                   <div className="flex items-center gap-2 mb-3">
-                    <svg className="w-5 h-5 text-burgundy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                    </svg>
+                    <ThiingsIcon name="check-circle" pxSize={20} className="text-burgundy" />
                     <h4 className="font-semibold text-deep-charcoal">Action Steps:</h4>
                   </div>
                   <div className="space-y-2">
@@ -196,9 +195,7 @@ export default function RevenueOpportunities() {
       {/* Footer Info */}
       <div className="bg-soft-gray/30 px-6 py-4 border-t border-border-gray">
         <div className="flex items-center gap-2 text-xs text-warm-stone">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-          </svg>
+          <ThiingsIcon name="lightbulb" pxSize={16} />
           <span>
             Opportunities are ranked by potential revenue impact and implementation feasibility.
             Click on any opportunity card to see detailed action steps.

@@ -1,6 +1,7 @@
 /// <reference path="../types/elevenlabs.d.ts" />
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import ThiingsIcon from '../components/common/ThiingsIcon';
 import DemoBanner from '../components/demo/DemoBanner';
 import StatsBar from '../components/dashboard/StatsBar';
 import ReservationsList from '../components/dashboard/ReservationsList';
@@ -107,9 +108,7 @@ export default function DemoDashboard() {
       <div className="min-h-screen bg-warm-white flex flex-col items-center justify-center p-6">
         <div className="bg-red-50 border border-red-200 rounded-2xl p-8 max-w-md text-center">
           <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <ThiingsIcon name="alert-circle" pxSize={24} className="text-red-600" />
           </div>
           <h3 className="text-lg font-bold text-red-900 mb-2">Demo unavailable</h3>
           <p className="text-sm text-red-700 mb-6">{error || 'This demo session could not be loaded.'}</p>
@@ -195,9 +194,7 @@ export default function DemoDashboard() {
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors"
               >
                 Try the booking widget
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                <ThiingsIcon name="chevron-right" pxSize={16} />
               </Link>
             </div>
 

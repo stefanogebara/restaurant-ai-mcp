@@ -18,6 +18,7 @@
  */
 
 import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
+import ThiingsIcon from '../../common/ThiingsIcon';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -110,9 +111,7 @@ export default function ChatInput({ onSend, isLoading, placeholder = 'Type your 
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
             </svg>
           ) : (
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
+            <ThiingsIcon name="send" pxSize={16} aria-hidden={true} />
           )}
         </button>
       </div>

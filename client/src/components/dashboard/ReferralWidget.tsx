@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { authFetch } from '../../services/api';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface ReferralData {
   success: boolean;
@@ -54,19 +55,7 @@ export default function ReferralWidget() {
         className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-soft-gray transition-colors"
       >
         <div className="flex items-center gap-2.5">
-          <svg
-            className="w-4 h-4 text-burgundy flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-            />
-          </svg>
+          <ThiingsIcon name="users" pxSize={16} className="text-burgundy flex-shrink-0" />
           <span className="text-sm font-medium text-deep-charcoal">Refer &amp; Earn</span>
           {stats.total > 0 && (
             <span className="text-xs text-stone-gray">
@@ -74,14 +63,7 @@ export default function ReferralWidget() {
             </span>
           )}
         </div>
-        <svg
-          className={`w-4 h-4 text-muted-stone transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <ThiingsIcon name="chevron-down" pxSize={16} className={`text-muted-stone transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Expanded content */}
@@ -137,14 +119,7 @@ export default function ReferralWidget() {
               href={`mailto:?subject=${emailSubject}&body=${emailBody}`}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-deep-charcoal text-white text-[13px] font-medium hover:bg-charcoal-dark transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
+              <ThiingsIcon name="mail" pxSize={16} />
               Email
             </a>
           </div>

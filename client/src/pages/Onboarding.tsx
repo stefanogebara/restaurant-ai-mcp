@@ -12,6 +12,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import ThiingsIcon from '../components/common/ThiingsIcon';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../contexts/ToastContext';
 import Step1Welcome from '../components/onboarding/Step1Welcome';
@@ -244,9 +245,7 @@ export default function Onboarding() {
                     }`}
                   >
                     {isCompleted ? (
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
+                      <ThiingsIcon name="check" pxSize={14} />
                     ) : (
                       stepNumber
                     )}
@@ -312,9 +311,7 @@ export default function Onboarding() {
           <div className="bg-white border border-border-gray rounded-2xl p-10 max-w-md w-full">
             <div className="text-center">
               <div className="w-20 h-20 bg-burgundy rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                </svg>
+                <ThiingsIcon name="check" pxSize={40} className="text-white" />
               </div>
               <h2 className="font-serif text-3xl font-medium text-deep-charcoal mb-3">{t('onboarding.welcomeAboard')}</h2>
               <p className="text-[15px] text-stone-gray font-light mb-6">
@@ -348,9 +345,7 @@ export default function Onboarding() {
                         href={`mailto:?subject=${emailSubject}&body=${emailBody}`}
                         className="flex items-center gap-2 px-4 py-2 rounded-lg bg-deep-charcoal text-white text-[13px] font-medium hover:bg-charcoal-dark transition-colors"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
+                        <ThiingsIcon name="mail" pxSize={16} />
                         Email
                       </a>
                     </div>

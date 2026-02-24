@@ -23,6 +23,7 @@
 
 import { motion } from 'framer-motion';
 import type { PersonaPreview as PersonaPreviewType } from '../../../types/restaurant-learning.types';
+import ThiingsIcon from '../../common/ThiingsIcon';
 
 interface PersonaPreviewProps {
   persona: PersonaPreviewType;
@@ -96,9 +97,7 @@ export default function PersonaPreview({
           className="inline-flex items-center justify-center w-14 h-14 bg-burgundy/10 rounded-full mb-3"
           aria-hidden="true"
         >
-          <svg className="w-7 h-7 text-burgundy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
-          </svg>
+          <ThiingsIcon name="sparkles" pxSize={28} className="text-burgundy" />
         </div>
         <h3 id="persona-heading" className="font-serif text-xl font-bold text-deep-charcoal">
           Your AI Persona
@@ -157,14 +156,7 @@ export default function PersonaPreview({
             <ul className="space-y-1.5" aria-label="Unique differentiators">
               {uniqueDifferentiators.map((item, i) => (
                 <li key={i} className="text-sm text-deep-charcoal flex items-start gap-2">
-                  <svg
-                    className="w-3.5 h-3.5 text-burgundy mt-0.5 flex-shrink-0"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    aria-hidden="true"
-                  >
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
+                  <ThiingsIcon name="check" pxSize={14} className="text-burgundy mt-0.5 flex-shrink-0" aria-hidden={true} />
                   {item}
                 </li>
               ))}
@@ -178,14 +170,7 @@ export default function PersonaPreview({
             <ul className="space-y-1.5" aria-label="Key knowledge points">
               {thingsToKnow.map((item, i) => (
                 <li key={i} className="text-sm text-deep-charcoal flex items-start gap-2">
-                  <svg
-                    className="w-3.5 h-3.5 text-burgundy mt-0.5 flex-shrink-0"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    aria-hidden="true"
-                  >
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
+                  <ThiingsIcon name="check" pxSize={14} className="text-burgundy mt-0.5 flex-shrink-0" aria-hidden={true} />
                   {item}
                 </li>
               ))}
@@ -238,9 +223,7 @@ export default function PersonaPreview({
             disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
           "
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-          </svg>
+          <ThiingsIcon name="check" pxSize={16} aria-hidden={true} />
           Looks Great
         </button>
 

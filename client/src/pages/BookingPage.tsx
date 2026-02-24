@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import ThiingsIcon from '../components/common/ThiingsIcon';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
@@ -244,9 +245,7 @@ export default function BookingPage() {
       <div className="min-h-screen bg-warm-white flex flex-col items-center justify-center p-6">
         <div className="bg-white border border-border-gray rounded-2xl p-8 max-w-md text-center">
           <div className="w-16 h-16 bg-red-600/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <ThiingsIcon name="close" pxSize={32} className="text-red-600" />
           </div>
           <h1 className="text-xl font-bold text-deep-charcoal mb-2">{t('reservations.restaurantNotFound')}</h1>
           <p className="text-sm text-stone-gray">

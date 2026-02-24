@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ThiingsIcon from '../components/common/ThiingsIcon';
 import { useTranslation } from 'react-i18next';
 import Spinner from '../components/common/Spinner';
 import { authFetch } from '../services/api';
@@ -89,9 +90,7 @@ export default function SubscriptionSuccess() {
           <div className="bg-white border border-border-gray rounded-2xl p-12 text-center">
             {/* Green Checkmark */}
             <div className="w-16 h-16 rounded-full bg-[rgba(22,163,74,0.08)] flex items-center justify-center mx-auto mb-5">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
+              <ThiingsIcon name="check" pxSize={28} className="text-green-600" />
             </div>
 
             <h1 className="font-serif text-2xl font-medium text-deep-charcoal mb-2">{t('subscription.welcomeTo', { plan })}</h1>
