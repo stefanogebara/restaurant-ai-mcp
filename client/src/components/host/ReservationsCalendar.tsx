@@ -300,7 +300,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
       </button>
 
       {/* Summary Stats */}
-      <div className="bg-white rounded-xl p-4 border border-border-gray shadow-md">
+      <div className="bg-white rounded-2xl p-4 border border-border-gray shadow-md">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <div className="text-2xl font-bold text-deep-charcoal">{reservations.length}</div>

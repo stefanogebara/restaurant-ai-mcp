@@ -161,7 +161,7 @@ export default function CustomerProfileView() {
         <button onClick={() => navigate('/host-dashboard/dna')} className="flex items-center gap-2 text-stone-gray hover:text-deep-charcoal transition-colors">
           <ThiingsIcon name="arrow-left" size="xs" /> Back to DNA Dashboard
         </button>
-        <div className="bg-white rounded-xl border border-border-gray p-8 text-center">
+        <div className="bg-white rounded-2xl border border-border-gray p-8 text-center">
           <ThiingsIcon name="alert-circle" pxSize={48} className="mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-deep-charcoal mb-2">{error || 'Profile not found'}</h3>
           <p className="text-sm text-stone-gray mb-4">This customer may not have been analyzed yet.</p>
@@ -216,7 +216,7 @@ export default function CustomerProfileView() {
       </button>
 
       {/* Header */}
-      <div className="bg-white rounded-xl border border-border-gray p-6 shadow-lg">
+      <div className="bg-white rounded-2xl border border-border-gray p-6 shadow-lg">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-violet-600/10 flex items-center justify-center">
@@ -275,14 +275,14 @@ export default function CustomerProfileView() {
 
       {/* Key Metrics Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-border-gray p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-border-gray p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <ThiingsIcon name="dollar" pxSize={16} />
             <span className="text-xs text-stone-gray">Avg Check/Person</span>
           </div>
           <div className="text-2xl font-bold text-deep-charcoal">{formatCurrency(profile?.avg_check_per_person ?? null)}</div>
         </div>
-        <div className="bg-white rounded-xl border border-border-gray p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-border-gray p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <ThiingsIcon name="trending-up" size="xs" />
             <span className="text-xs text-stone-gray">Avg Tip</span>
@@ -291,7 +291,7 @@ export default function CustomerProfileView() {
             {profile?.tip_percentage_avg != null ? `${profile.tip_percentage_avg}%` : '--'}
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-border-gray p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-border-gray p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <ThiingsIcon name="clock" size="xs" />
             <span className="text-xs text-stone-gray">Avg Duration</span>
@@ -300,7 +300,7 @@ export default function CustomerProfileView() {
             {profile?.avg_dining_duration_minutes ? `${profile.avg_dining_duration_minutes}m` : '--'}
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-border-gray p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-border-gray p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <ThiingsIcon name="users" size="xs" />
             <span className="text-xs text-stone-gray">Typical Party</span>
@@ -313,7 +313,7 @@ export default function CustomerProfileView() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Behavioral Profile */}
-        <div className="bg-white rounded-xl border border-border-gray p-6 shadow-lg">
+        <div className="bg-white rounded-2xl border border-border-gray p-6 shadow-lg">
           <h2 className="text-lg font-semibold font-serif text-deep-charcoal mb-4 flex items-center gap-2">
             <ThiingsIcon name="brain" size="sm" />
             Behavioral Profile
@@ -408,7 +408,7 @@ export default function CustomerProfileView() {
         </div>
 
         {/* AI Insights */}
-        <div className="bg-white rounded-xl border border-border-gray p-6 shadow-lg">
+        <div className="bg-white rounded-2xl border border-border-gray p-6 shadow-lg">
           <h2 className="text-lg font-semibold font-serif text-deep-charcoal mb-4 flex items-center gap-2">
             <ThiingsIcon name="sparkles" size="sm" />
             AI Insights
@@ -485,7 +485,7 @@ export default function CustomerProfileView() {
       </div>
 
       {/* Visit Timeline */}
-      <div className="bg-white rounded-xl border border-border-gray p-6 shadow-lg">
+      <div className="bg-white rounded-2xl border border-border-gray p-6 shadow-lg">
         <button
           onClick={() => setShowAllReservations(!showAllReservations)}
           className="w-full flex items-center justify-between"
@@ -529,7 +529,7 @@ export default function CustomerProfileView() {
       {/* Predictions & Revenue */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Predictions */}
-        <div className="bg-white rounded-xl border border-border-gray p-6 shadow-lg">
+        <div className="bg-white rounded-2xl border border-border-gray p-6 shadow-lg">
           <h2 className="text-lg font-semibold font-serif text-deep-charcoal mb-4 flex items-center gap-2">
             <ThiingsIcon name="trending-up" size="sm" />
             Predictions
@@ -567,7 +567,7 @@ export default function CustomerProfileView() {
         </div>
 
         {/* Revenue Summary */}
-        <div className="bg-white rounded-xl border border-border-gray p-6 shadow-lg">
+        <div className="bg-white rounded-2xl border border-border-gray p-6 shadow-lg">
           <h2 className="text-lg font-semibold font-serif text-deep-charcoal mb-4 flex items-center gap-2">
             <ThiingsIcon name="dollar" size="sm" />
             Revenue Summary

@@ -57,7 +57,7 @@ export default function QuickStatsWidget() {
 
   if (error) {
     return (
-      <div className="bg-white rounded-xl border border-border-gray p-4 shadow-sm">
+      <div className="bg-white rounded-2xl border border-border-gray p-4 shadow-sm">
         <div className="flex items-center gap-2 text-warm-stone">
           <ThiingsIcon name="alert-circle" size="xs" />
           <span className="text-sm">ML stats temporarily unavailable</span>
@@ -68,7 +68,7 @@ export default function QuickStatsWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl border border-border-gray p-4 shadow-sm">
+      <div className="bg-white rounded-2xl border border-border-gray p-4 shadow-sm">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-5 h-5 bg-soft-gray rounded animate-pulse"></div>
           <div className="h-4 w-32 bg-soft-gray rounded animate-pulse"></div>
@@ -132,7 +132,7 @@ export default function QuickStatsWidget() {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-border-gray shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-border-gray shadow-sm overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border-gray bg-soft-gray/30">
         <div className="flex items-center gap-2">

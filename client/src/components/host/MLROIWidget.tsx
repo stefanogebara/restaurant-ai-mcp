@@ -60,7 +60,7 @@ export default function MLROIWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-6 border border-border-gray">
+      <div className="bg-white rounded-2xl shadow-lg p-6 border border-border-gray">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-deep-charcoal flex items-center gap-2">
             <ThiingsIcon name="trending-up" size="sm" />
@@ -74,7 +74,7 @@ export default function MLROIWidget() {
 
   if (!data) {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-6 border border-border-gray">
+      <div className="bg-white rounded-2xl shadow-lg p-6 border border-border-gray">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-soft-gray flex items-center justify-center">
             <ThiingsIcon name="alert-triangle" pxSize={24} />
@@ -92,7 +92,7 @@ export default function MLROIWidget() {
   const meetsTarget = data.summary.meets_target;
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-border-gray">
+    <div className="bg-white rounded-2xl shadow-lg border border-border-gray">
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
