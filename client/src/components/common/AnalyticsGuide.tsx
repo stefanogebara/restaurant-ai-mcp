@@ -154,7 +154,7 @@ export default function AnalyticsGuide({ page = 'ml' }: AnalyticsGuideProps) {
   const guide = guides[page];
 
   return (
-    <div className="bg-burgundy/5 rounded-xl border-2 border-burgundy/20 p-6">
+    <div className="bg-burgundy/5 rounded-2xl border-2 border-burgundy/20 p-6">
       <div className="flex items-start gap-4 mb-6">
         <div className="w-12 h-12 bg-burgundy/20 rounded-full flex items-center justify-center flex-shrink-0">
           <ThiingsIcon name={guide.iconName} pxSize={24} />

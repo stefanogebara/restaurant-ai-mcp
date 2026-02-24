@@ -369,7 +369,7 @@ export default function VoiceSettingsPage() {
       <DashboardLayout>
         <div className="p-6 lg:p-8">
           <div className="mt-8 text-center py-16">
-            <div className="bg-burgundy/5 border border-burgundy/20 rounded-xl p-8 max-w-md mx-auto">
+            <div className="bg-burgundy/5 border border-burgundy/20 rounded-2xl p-8 max-w-md mx-auto">
               <ThiingsIcon name="volume" pxSize={48} className="mx-auto mb-4" />
               <h2 className="text-lg font-bold text-deep-charcoal mb-2">No AI Agent Configured</h2>
               <p className="text-sm text-stone-gray">

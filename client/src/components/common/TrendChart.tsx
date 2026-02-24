@@ -83,7 +83,7 @@ export default function TrendChart({
 
   const chartConfig = {
     margin: { top: 5, right: 30, left: 20, bottom: 5 },
-    className: 'bg-white border border-border-gray rounded-xl p-6'
+    className: 'bg-white border border-border-gray rounded-2xl p-6'
   };
 
   return (

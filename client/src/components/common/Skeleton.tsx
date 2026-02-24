@@ -22,7 +22,7 @@ export function Skeleton({ className = '' }: SkeletonProps) {
 // Skeleton for stat cards — matches premium accent bar pattern
 export function SkeletonStatCard() {
   return (
-    <div className="bg-white rounded-xl p-4 border border-border-gray/50 shadow-sm" aria-hidden="true">
+    <div className="bg-white rounded-2xl p-4 border border-border-gray/50 shadow-sm" aria-hidden="true">
       <Skeleton className="h-1 w-12 rounded-full mb-3" />
       <Skeleton className="h-8 w-16 mb-1" />
       <Skeleton className="h-3 w-20 mt-1" />
@@ -49,7 +49,7 @@ export function SkeletonReservationRow() {
 // Skeleton for table cards in grid
 export function SkeletonTableCard() {
   return (
-    <div className="bg-white rounded-xl p-4 border border-border-gray/50 shadow-sm" aria-hidden="true">
+    <div className="bg-white rounded-2xl p-4 border border-border-gray/50 shadow-sm" aria-hidden="true">
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <Skeleton className="w-10 h-10 rounded-lg" />
@@ -90,7 +90,7 @@ export function DashboardSkeleton() {
       </div>
 
       {/* Table Grid */}
-      <div className="bg-white rounded-xl p-6 border border-border-gray/50 shadow-sm">
+      <div className="bg-white rounded-2xl p-6 border border-border-gray/50 shadow-sm">
         <Skeleton className="h-6 w-32 mb-4" />
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {Array.from({ length: 10 }).map((_, i) => (
@@ -130,15 +130,15 @@ export function SkeletonAnalytics() {
       {/* Chart grid */}
       <div className="max-w-[1600px] mx-auto px-6 pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="lg:col-span-2 bg-white rounded-xl border border-border-gray/50 shadow-sm p-6">
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-border-gray/50 shadow-sm p-6">
             <Skeleton className="h-5 w-40 mb-4" />
             <Skeleton className="h-48 w-full rounded" />
           </div>
-          <div className="bg-white rounded-xl border border-border-gray/50 shadow-sm p-6">
+          <div className="bg-white rounded-2xl border border-border-gray/50 shadow-sm p-6">
             <Skeleton className="h-5 w-32 mb-4" />
             <Skeleton className="h-40 w-full rounded" />
           </div>
-          <div className="bg-white rounded-xl border border-border-gray/50 shadow-sm p-6">
+          <div className="bg-white rounded-2xl border border-border-gray/50 shadow-sm p-6">
             <Skeleton className="h-5 w-32 mb-4" />
             <Skeleton className="h-40 w-full rounded" />
           </div>
@@ -176,7 +176,7 @@ export function SkeletonTableConfig() {
         {/* Table cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-xl border border-border-gray/50 shadow-sm p-5 space-y-3">
+            <div key={i} className="bg-white rounded-2xl border border-border-gray/50 shadow-sm p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <Skeleton className="h-6 w-20" />
                 <Skeleton className="h-6 w-16 rounded-full" />
@@ -208,7 +208,7 @@ export function SkeletonCallTracking() {
         <Skeleton className="h-10 w-24 rounded-xl" />
       </div>
       {/* Phone status card */}
-      <div className="bg-white rounded-xl border border-border-gray/50 shadow-sm p-6">
+      <div className="bg-white rounded-2xl border border-border-gray/50 shadow-sm p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
             <Skeleton className="w-6 h-6 rounded" />
@@ -227,7 +227,7 @@ export function SkeletonCallTracking() {
         ))}
       </div>
       {/* Conversation list */}
-      <div className="bg-white rounded-xl border border-border-gray/50 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-border-gray/50 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-border-gray/50 flex items-center justify-between">
           <Skeleton className="h-6 w-36" />
           <div className="flex gap-2">
@@ -315,11 +315,11 @@ export function SkeletonWeeklyReport() {
       </div>
       {/* Chart sections */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl border border-border-gray/50 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-border-gray/50 shadow-sm p-6">
           <Skeleton className="h-5 w-32 mb-4" />
           <Skeleton className="h-40 w-full rounded" />
         </div>
-        <div className="bg-white rounded-xl border border-border-gray/50 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-border-gray/50 shadow-sm p-6">
           <Skeleton className="h-5 w-32 mb-4" />
           <Skeleton className="h-40 w-full rounded" />
         </div>

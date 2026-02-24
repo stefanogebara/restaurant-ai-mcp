@@ -39,7 +39,7 @@ describe('SkeletonStatCard', () => {
     const card = container.firstChild as HTMLElement;
     expect(card).toHaveAttribute('aria-hidden', 'true');
     expect(card.className).toContain('bg-white');
-    expect(card.className).toContain('rounded-xl');
+    expect(card.className).toContain('rounded-2xl');
   });
 
   it('contains skeleton elements inside', () => {
@@ -71,7 +71,7 @@ describe('SkeletonTableCard', () => {
     const card = container.firstChild as HTMLElement;
     expect(card).toHaveAttribute('aria-hidden', 'true');
     expect(card.className).toContain('bg-white');
-    expect(card.className).toContain('rounded-xl');
+    expect(card.className).toContain('rounded-2xl');
   });
 
   it('contains multiple skeleton placeholders', () => {
