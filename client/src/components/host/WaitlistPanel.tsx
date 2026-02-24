@@ -533,10 +533,25 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
   const currentTags = getTags(formData.special_requests);
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
       <div className="bg-white rounded-2xl shadow-2xl border border-border-gray max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
-          <h3 className="text-2xl font-bold text-deep-charcoal mb-6">{t('waitlist.addToWaitlist')}</h3>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-2xl font-bold text-deep-charcoal">{t('waitlist.addToWaitlist')}</h3>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-soft-gray text-muted-stone hover:text-deep-charcoal transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
