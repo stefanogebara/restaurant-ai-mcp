@@ -264,7 +264,7 @@ export default function QuickInterventionModal({
                       <button
                         key={action.id}
                         onClick={() => setSelectedAction(action.id)}
-                        className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
+                        className={`flex items-center gap-2 p-3 rounded-2xl border-2 transition-all ${
                           isSelected
                             ? 'border-burgundy bg-burgundy/5'
                             : 'border-border-gray hover:border-burgundy/50 hover:bg-soft-gray'

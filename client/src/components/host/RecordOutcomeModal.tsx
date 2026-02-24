@@ -117,7 +117,7 @@ export default function RecordOutcomeModal({
               <button
                 type="button"
                 onClick={() => setOutcome('showed_up')}
-                className={`p-4 rounded-xl border-2 transition-all ${
+                className={`p-4 rounded-2xl border-2 transition-all ${
                   outcome === 'showed_up'
                     ? 'border-green-600 bg-green-600/10'
                     : 'border-border-gray hover:border-green-600/50'
@@ -130,7 +130,7 @@ export default function RecordOutcomeModal({
               <button
                 type="button"
                 onClick={() => setOutcome('no_show')}
-                className={`p-4 rounded-xl border-2 transition-all ${
+                className={`p-4 rounded-2xl border-2 transition-all ${
                   outcome === 'no_show'
                     ? 'border-burgundy bg-burgundy/10'
                     : 'border-border-gray hover:border-burgundy/50'
@@ -143,7 +143,7 @@ export default function RecordOutcomeModal({
               <button
                 type="button"
                 onClick={() => setOutcome('cancelled')}
-                className={`p-4 rounded-xl border-2 transition-all ${
+                className={`p-4 rounded-2xl border-2 transition-all ${
                   outcome === 'cancelled'
                     ? 'border-amber-600 bg-amber-600/10'
                     : 'border-border-gray hover:border-amber-600/50'
