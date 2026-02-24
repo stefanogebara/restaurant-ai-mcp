@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import type { Table, ActiveParty } from '../../types/host.types';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface FloorPlanViewProps {
   tables: Table[];
@@ -364,9 +365,12 @@ export default function FloorPlanView({
 
   if (tables.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-stone">
-        <p className="font-semibold text-base text-deep-charcoal">No tables set up yet</p>
-        <p className="text-sm mt-2">
+      <div className="text-center py-12">
+        <div className="w-16 h-16 mx-auto mb-4 bg-soft-gray rounded-2xl flex items-center justify-center">
+          <ThiingsIcon name="layout" pxSize={28} />
+        </div>
+        <p className="font-semibold text-deep-charcoal">No tables set up yet</p>
+        <p className="text-sm text-stone-gray mt-1">
           Complete your onboarding or add tables in Settings to see your floor plan
         </p>
       </div>

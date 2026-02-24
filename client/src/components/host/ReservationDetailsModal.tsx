@@ -270,9 +270,12 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
            !reservation.seating_preference &&
            !reservation.special_occasion &&
            !reservation.internal_notes && (
-            <div className="text-center py-4 text-muted-stone">
-              <p className="text-sm">No additional notes yet.</p>
-              <p className="text-xs mt-1">Click "Edit Notes" to add customer information.</p>
+            <div className="text-center py-4">
+              <div className="w-10 h-10 mx-auto mb-2 bg-soft-gray rounded-xl flex items-center justify-center">
+                <ThiingsIcon name="file-text" pxSize={18} />
+              </div>
+              <p className="text-sm text-muted-stone">No additional notes yet.</p>
+              <p className="text-xs text-muted-stone mt-1">Click "Edit Notes" to add customer information.</p>
             </div>
           )}
         </div>

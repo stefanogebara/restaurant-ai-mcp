@@ -6,6 +6,7 @@ import { useState, useRef, useCallback } from 'react';
 import VoiceCard from './VoiceCard';
 import VoiceCardSkeleton from './VoiceCardSkeleton';
 import type { EnhancedVoice } from './voiceTypes';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface VoiceGridProps {
   voices: EnhancedVoice[];
@@ -84,9 +85,12 @@ export default function VoiceGrid({
 
   if (voices.length === 0) {
     return (
-      <div className="text-center py-10 text-stone-gray">
-        <p className="text-sm">No voices found matching your filters.</p>
-        <p className="text-xs mt-1">Try adjusting your search or filters.</p>
+      <div className="text-center py-10">
+        <div className="w-14 h-14 mx-auto mb-3 bg-soft-gray rounded-2xl flex items-center justify-center">
+          <ThiingsIcon name="search" pxSize={24} />
+        </div>
+        <p className="text-sm font-semibold text-deep-charcoal">No voices found</p>
+        <p className="text-xs text-stone-gray mt-1">Try adjusting your search or filters.</p>
       </div>
     );
   }

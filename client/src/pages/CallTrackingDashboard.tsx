@@ -788,7 +788,10 @@ export default function CallTrackingDashboard() {
 
           {conversations.length === 0 ? (
             <div className="p-12 text-center">
-              <p className="text-sm font-medium text-deep-charcoal mb-1">No calls recorded yet</p>
+              <div className="w-14 h-14 mx-auto mb-4 bg-soft-gray rounded-2xl flex items-center justify-center">
+                <ThiingsIcon name="phone" pxSize={24} />
+              </div>
+              <p className="text-sm font-semibold text-deep-charcoal mb-1">No calls recorded yet</p>
               <p className="text-xs text-muted-stone">Once your AI agent starts taking calls, conversations will appear here.</p>
             </div>
           ) : (

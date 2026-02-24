@@ -288,7 +288,7 @@ export default function Step2_5VoiceSelection({ data, onUpdate, onNext, onPrev }
       {/* No Voices Message */}
       {!isLoading && voices.length === 0 && !filters.search && (
         <div className="text-center py-12">
-          <div className="bg-burgundy/5 border border-burgundy/20 rounded-xl p-6 max-w-lg mx-auto">
+          <div className="bg-burgundy/5 border border-burgundy/20 rounded-2xl p-6 max-w-lg mx-auto">
             <ThiingsIcon name="volume" pxSize={40} className="mx-auto mb-3" />
             <p className="text-base font-semibold text-deep-charcoal mb-1">
               A default voice has been selected
