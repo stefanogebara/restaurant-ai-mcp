@@ -69,7 +69,7 @@ export default function NoShowPredictions() {
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-border-gray/50 rounded-xl p-8 shadow-sm">
+      <div className="bg-white border border-border-gray/50 rounded-2xl p-8 shadow-sm">
         <div className="flex items-center justify-center">
           <div className="w-8 h-8 border-4 border-burgundy border-t-transparent rounded-full animate-spin"></div>
           <span className="ml-3 text-warm-stone">Loading predictions...</span>
@@ -79,7 +79,7 @@ export default function NoShowPredictions() {
   }
 
   return (
-    <div className="bg-white border border-border-gray/50 rounded-xl overflow-hidden shadow-sm">
+    <div className="bg-white border border-border-gray/50 rounded-2xl overflow-hidden shadow-sm">
       {/* Header */}
       <div className="p-6 border-b border-border-gray">
         <h2 className="text-lg font-semibold text-deep-charcoal tracking-tight mb-1">No-Show Risk Predictions</h2>

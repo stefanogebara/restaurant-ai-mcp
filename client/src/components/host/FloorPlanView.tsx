@@ -425,7 +425,7 @@ export default function FloorPlanView({
             })()}
 
             <div
-              className="rounded-xl overflow-hidden border border-border-gray bg-white"
+              className="rounded-2xl overflow-hidden border border-border-gray bg-white"
               style={{ maxWidth: '100%', overflowX: 'auto' }}
             >
               <svg
