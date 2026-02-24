@@ -182,7 +182,7 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
       )}
 
       {showForm && (
-        <div className="mb-4 p-4 rounded-lg bg-warm-white border border-border-gray space-y-3">
+        <div className="mb-4 p-4 rounded-xl bg-warm-white border border-border-gray space-y-3">
           <div>
             <label className="block text-xs font-medium text-stone-gray mb-1">
               {t.typeLabel}
@@ -256,7 +256,7 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
           {notes.map((note) => (
             <div
               key={note.id}
-              className="flex items-start gap-2 p-4 rounded-lg bg-warm-white border border-border-gray group"
+              className="flex items-start gap-2 p-4 rounded-xl bg-warm-white border border-border-gray group"
             >
               <span
                 className={`shrink-0 mt-0.5 text-xs px-2 py-0.5 rounded font-medium ${

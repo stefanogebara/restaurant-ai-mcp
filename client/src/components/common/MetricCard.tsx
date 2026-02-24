@@ -81,7 +81,7 @@ export default function MetricCard({
 
         {/* Icon */}
         {icon && (
-          <div className={`p-3 rounded-lg border ${colorClasses[color]}`}>
+          <div className={`p-3 rounded-xl border ${colorClasses[color]}`}>
             {icon}
           </div>
         )}

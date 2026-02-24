@@ -123,7 +123,7 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
                         setSelectedCampaign(key as keyof typeof CAMPAIGN_TEMPLATES);
                         setCustomMessage('');
                       }}
-                      className={`p-3 rounded-lg border text-center transition-colors ${
+                      className={`p-3 rounded-2xl border text-center transition-colors ${
                         selectedCampaign === key
                           ? 'border-burgundy bg-burgundy/10'
                           : 'border-border-gray hover:bg-soft-gray'
