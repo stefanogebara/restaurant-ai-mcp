@@ -107,7 +107,7 @@ module.exports = async (req, res) => {
       <thead><tr><th>Feature</th><th>Seatable</th><th>${escapeHtml(data.name)}</th></tr></thead>
       <tbody>${tableRows}</tbody>
     </table>
-    ${data.body2}
+    ${data.body2}<!-- body2 is hardcoded HTML — not derived from user input, no escaping needed -->
     <div class="cta-block">
       <h2>See it for yourself</h2>
       <p>Try a personalised demo in 5 minutes — no credit card, no commitment.</p>
