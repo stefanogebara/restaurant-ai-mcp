@@ -688,7 +688,7 @@ export default function CallTrackingDashboard() {
                   <button
                     key={opt.value}
                     onClick={() => setFilter({ ...filter, period: opt.value })}
-                    className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
+                    className={`text-xs font-medium px-3 py-1.5 rounded-xl transition-colors ${
                       filter.period === opt.value
                         ? 'text-deep-charcoal bg-soft-gray'
                         : 'text-muted-stone hover:text-stone-gray'
@@ -774,7 +774,7 @@ export default function CallTrackingDashboard() {
                 <button
                   key={tab.value}
                   onClick={() => setFilter({ ...filter, outcome: tab.value })}
-                  className={`text-xs font-medium px-3.5 py-1.5 rounded-lg transition-colors ${
+                  className={`text-xs font-medium px-3.5 py-1.5 rounded-xl transition-colors ${
                     filter.outcome === tab.value
                       ? 'text-deep-charcoal bg-soft-gray'
                       : 'text-muted-stone hover:text-stone-gray'

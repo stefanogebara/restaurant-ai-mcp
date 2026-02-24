@@ -81,7 +81,7 @@ export default function ReferralWidget() {
               <button
                 type="button"
                 onClick={handleCopy}
-                className={`flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                className={`flex-shrink-0 px-3 py-2 rounded-xl text-xs font-medium transition-colors ${
                   copied
                     ? 'bg-green-100 text-green-700 border border-green-200'
                     : 'bg-white border border-border-gray text-deep-charcoal hover:border-muted-stone'

@@ -68,7 +68,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
         {/* Status Badge */}
         {reservation.checked_in && (
           <div className="mb-4">
-            <span className="px-3 py-1.5 bg-green-600/10 text-green-600 text-sm rounded-lg inline-flex items-center gap-2">
+            <span className="px-3 py-1.5 bg-green-600/10 text-green-600 text-sm rounded-xl inline-flex items-center gap-2">
               <ThiingsIcon name="check-circle" pxSize={16} />
               Checked In
               {reservation.checked_in_at && (

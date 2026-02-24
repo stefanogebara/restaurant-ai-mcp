@@ -89,7 +89,7 @@ export default function ReservationsList({
         <div className="flex gap-0">
           <button
             onClick={() => setShowTomorrow(false)}
-            className={`text-xs font-medium px-3.5 py-1.5 rounded-lg transition-colors ${
+            className={`text-xs font-medium px-3.5 py-1.5 rounded-xl transition-colors ${
               !showTomorrow ? 'text-deep-charcoal bg-soft-gray' : 'text-muted-stone hover:text-stone-gray'
             }`}
           >
@@ -97,7 +97,7 @@ export default function ReservationsList({
           </button>
           <button
             onClick={() => setShowTomorrow(true)}
-            className={`text-xs font-medium px-3.5 py-1.5 rounded-lg transition-colors ${
+            className={`text-xs font-medium px-3.5 py-1.5 rounded-xl transition-colors ${
               showTomorrow ? 'text-deep-charcoal bg-soft-gray' : 'text-muted-stone hover:text-stone-gray'
             }`}
           >

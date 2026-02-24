@@ -339,7 +339,7 @@ function ActionButton({ label, sublabel, color, icon, onClick }: ActionButtonPro
       onClick={onClick}
       className={`w-full flex items-center gap-3 p-3.5 min-h-[52px] ${c.bg} rounded-xl border ${c.border} transition-colors`}
     >
-      <div className={`p-2 ${c.iconBg} rounded-lg`}>
+      <div className={`p-2 ${c.iconBg} rounded-xl`}>
         <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           {icon}
         </svg>
