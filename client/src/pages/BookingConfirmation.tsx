@@ -163,7 +163,7 @@ export default function BookingConfirmation() {
           <div className="flex gap-3">
             <button
               onClick={() => navigate('/customer')}
-              className="flex-1 py-3.5 border border-stone-300 bg-white text-stone-gray font-medium rounded-full text-sm hover:border-muted-stone transition-colors"
+              className="flex-1 py-3.5 border border-border-gray bg-white text-stone-gray font-medium rounded-full text-sm hover:border-muted-stone transition-colors"
             >
               {t('reservations.manageReservation')}
             </button>

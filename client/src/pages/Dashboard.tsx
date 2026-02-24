@@ -15,7 +15,6 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Download } from 'lucide-react';
 import { hostAPI, authFetch } from '../services/api';
 import { usePlanInfo } from '../hooks/useSubscription';
 import DashboardLayout from '../components/layout/DashboardLayout';
@@ -173,20 +172,20 @@ export default function Dashboard() {
 
             <div className="flex items-center gap-2.5">
               <div className="flex items-center bg-soft-gray rounded-lg p-0.5 gap-0.5">
-                <span className="text-[13px] text-warm-stone bg-white border border-border-gray px-4 py-2 rounded-[8px] hidden sm:inline-block">
+                <span className="text-[13px] text-warm-stone bg-white border border-border-gray px-4 py-2 rounded-lg hidden sm:inline-block">
                   {t('dashboard.weekView')}
                 </span>
               </div>
               <button
                 onClick={() => window.location.href = '/host-dashboard/calls'}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-stone-300 text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-border-gray text-stone-gray hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors"
               >
-                <Download className="w-3.5 h-3.5" />
+                <ThiingsIcon name="download" pxSize={14} />
                 {t('common.export')}
               </button>
               <button
                 onClick={() => setShowWalkInModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white rounded-[10px] text-[13px] font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white rounded-xl text-[13px] font-medium transition-colors"
               >
                 {t('dashboard.addWalkIn')}
               </button>

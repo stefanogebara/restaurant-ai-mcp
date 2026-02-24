@@ -93,7 +93,7 @@ export default function LiveAIDemo() {
             { icon: '\u23F1', title: 'Always Available', desc: 'Never miss a reservation. The AI handles calls 24/7 in multiple languages with instant availability checks.' },
           ].map((item, i) => (
             <div key={i} className="bg-white border border-border-gray rounded-2xl p-8">
-              <div className="w-10 h-10 rounded-[10px] bg-burgundy/[6%] flex items-center justify-center mb-4 text-lg text-burgundy">
+              <div className="w-10 h-10 rounded-xl bg-burgundy/[6%] flex items-center justify-center mb-4 text-lg text-burgundy">
                 {item.icon}
               </div>
               <h3 className="text-base font-semibold text-deep-charcoal mb-2 tracking-tight">{item.title}</h3>

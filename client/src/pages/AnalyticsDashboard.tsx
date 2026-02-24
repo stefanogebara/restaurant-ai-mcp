@@ -138,10 +138,10 @@ export default function AnalyticsDashboard() {
                 <button
                   key={range}
                   onClick={() => setDateRange(range)}
-                  className={`px-4 py-2 rounded-[10px] text-[13px] font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-xl text-[13px] font-medium transition-colors ${
                     dateRange === range
                       ? 'bg-deep-charcoal text-white border border-deep-charcoal'
-                      : 'bg-white border border-stone-300 text-stone-gray hover:border-muted-stone'
+                      : 'bg-white border border-border-gray text-stone-gray hover:border-muted-stone'
                   }`}
                 >
                   {range === '30d' ? t('analytics.thirtyDays') : range === '7d' ? t('analytics.sevenDays') : t('analytics.today')}
@@ -149,7 +149,7 @@ export default function AnalyticsDashboard() {
               ))}
               <button
                 onClick={() => fetchAnalytics()}
-                className="px-4 py-2 bg-white border border-stone-300 text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors"
+                className="px-4 py-2 bg-white border border-border-gray text-stone-gray hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors"
               >
                 {t('common.export')}
               </button>

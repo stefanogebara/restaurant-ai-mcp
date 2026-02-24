@@ -63,7 +63,7 @@ export default function ReservationsList({
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center gap-4 p-3 bg-warm-white rounded-xl">
-              <div className="w-9 h-9 bg-border-gray rounded-[10px] animate-pulse" />
+              <div className="w-9 h-9 bg-border-gray rounded-xl animate-pulse" />
               <div className="flex-1">
                 <div className="h-4 w-32 bg-border-gray rounded animate-pulse mb-2" />
                 <div className="h-3 w-20 bg-soft-gray rounded animate-pulse" />
@@ -172,10 +172,10 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
     .toUpperCase();
 
   const statusBadge = reservation.checked_in
-    ? { label: t.seated, classes: 'bg-[rgba(124,58,237,0.08)] text-violet-600' }
+    ? { label: t.seated, classes: 'bg-violet-600/[8%] text-violet-600' }
     : isHighRisk
-    ? { label: 'At Risk', classes: 'bg-[rgba(217,119,6,0.08)] text-amber-600' }
-    : { label: 'Confirmed', classes: 'bg-[rgba(22,163,74,0.08)] text-green-600' };
+    ? { label: 'At Risk', classes: 'bg-amber-600/[8%] text-amber-600' }
+    : { label: 'Confirmed', classes: 'bg-green-600/[8%] text-green-600' };
 
   const hue = (reservation.customer_name?.charCodeAt(0) ?? 65) * 137 % 360;
   const avatarStyle = { background: `linear-gradient(135deg, hsl(${hue},50%,75%), hsl(${(hue + 40) % 360},50%,65%))` };
@@ -183,7 +183,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
   return (
     <div className="flex items-center px-6 py-[18px] border-b border-warm-white last:border-b-0 gap-4 hover:bg-warm-white/50 transition-colors">
       {/* Avatar */}
-      <div className="w-9 h-9 rounded-[10px] flex items-center justify-center text-[13px] font-semibold text-warm-stone flex-shrink-0" style={avatarStyle}>
+      <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[13px] font-semibold text-warm-stone flex-shrink-0" style={avatarStyle}>
         {initials}
       </div>
 
@@ -218,7 +218,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
         ) : isHighRisk && !(reservation as any).intervention_taken ? (
           <button
             onClick={onIntervention}
-            className="text-xs font-semibold px-3 py-1 rounded-full bg-[rgba(217,119,6,0.08)] text-amber-600"
+            className="text-xs font-semibold px-3 py-1 rounded-full bg-amber-600/[8%] text-amber-600"
           >
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0" />
@@ -226,7 +226,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
             </span>
           </button>
         ) : (reservation as any).intervention_taken ? (
-          <span className="text-xs font-semibold px-3 py-1 rounded-full bg-[rgba(22,163,74,0.08)] text-green-600">
+          <span className="text-xs font-semibold px-3 py-1 rounded-full bg-green-600/[8%] text-green-600">
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0" />
               {t.actionTaken}

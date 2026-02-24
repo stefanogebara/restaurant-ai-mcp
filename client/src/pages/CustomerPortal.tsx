@@ -230,10 +230,10 @@ export default function CustomerPortal() {
                   <span className="text-[15px] font-semibold">{t('reservations.yourReservation')}</span>
                   <span className={`text-[11px] font-semibold px-3 py-1 rounded-full ${
                     reservation.status === 'Confirmed'
-                      ? 'bg-[rgba(22,163,74,0.08)] text-green-600'
+                      ? 'bg-green-600/[8%] text-green-600'
                       : reservation.status === 'Cancelled'
-                      ? 'bg-[rgba(220,38,38,0.08)] text-red-600'
-                      : 'bg-[rgba(217,119,6,0.08)] text-amber-600'
+                      ? 'bg-red-600/[8%] text-red-600'
+                      : 'bg-amber-600/[8%] text-amber-600'
                   }`}>
                     {reservation.status}
                   </span>
@@ -316,7 +316,7 @@ export default function CustomerPortal() {
                     <button onClick={() => setIsModifying(true)} className="flex-1 py-3 border border-border-gray bg-white text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">
                       {t('reservations.editReservation')}
                     </button>
-                    <button onClick={handleCancel} disabled={isLoading} className="flex-1 py-3 border border-[rgba(220,38,38,0.2)] bg-[rgba(220,38,38,0.04)] text-red-600 font-medium rounded-[10px] text-[13px] hover:bg-[rgba(220,38,38,0.08)] transition-colors disabled:opacity-50">
+                    <button onClick={handleCancel} disabled={isLoading} className="flex-1 py-3 border border-[rgba(220,38,38,0.2)] bg-[rgba(220,38,38,0.04)] text-red-600 font-medium rounded-[10px] text-[13px] hover:bg-red-600/[8%] transition-colors disabled:opacity-50">
                       {t('reservations.cancelReservation')}
                     </button>
                   </div>

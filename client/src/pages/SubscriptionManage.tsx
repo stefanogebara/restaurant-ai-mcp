@@ -185,7 +185,7 @@ export default function SubscriptionManage() {
               <button
                 onClick={handleManageSubscription}
                 disabled={managingSubscription}
-                className="px-5 py-2.5 border border-border-gray rounded-[10px] text-[13px] font-medium text-stone-gray bg-white hover:border-muted-stone transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="px-5 py-2.5 border border-border-gray rounded-xl text-[13px] font-medium text-stone-gray bg-white hover:border-muted-stone transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {managingSubscription ? (
                   <><div className="w-3.5 h-3.5 border-2 border-stone-gray border-t-transparent rounded-full animate-spin" />Opening...</>
@@ -239,8 +239,8 @@ export default function SubscriptionManage() {
                     disabled={isCurrent || managingSubscription}
                     className={`w-full py-3.5 rounded-full text-sm font-semibold transition-colors ${
                       isFeatured && !isCurrent ? 'bg-burgundy text-white hover:bg-burgundy-dark' :
-                      isCurrent ? 'border border-stone-300 text-muted-stone cursor-default' :
-                      'border border-stone-300 text-deep-charcoal hover:border-muted-stone'
+                      isCurrent ? 'border border-border-gray text-muted-stone cursor-default' :
+                      'border border-border-gray text-deep-charcoal hover:border-muted-stone'
                     }`}
                   >
                     {buttonLabel}

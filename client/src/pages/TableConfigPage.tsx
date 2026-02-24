@@ -171,7 +171,7 @@ export default function TableConfigPage() {
             setFormData(defaultFormData);
             setShowAddModal(true);
           }}
-          className="px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-[13px] font-semibold rounded-[10px] transition-colors"
+          className="px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-[13px] font-semibold rounded-xl transition-colors"
         >
           + {t('settings.addNewTable')}
         </button>

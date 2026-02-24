@@ -191,7 +191,7 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
             <select
               value={noteType}
               onChange={(e) => setNoteType(e.target.value as typeof noteType)}
-              className="w-full text-sm border border-stone-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
+              className="w-full text-sm border border-border-gray rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
             >
               <option value="vip_instruction">{t.typeVip}</option>
               <option value="general_policy">{t.typePolicy}</option>
@@ -209,7 +209,7 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
                 value={guestPhone}
                 onChange={(e) => setGuestPhone(e.target.value)}
                 placeholder={t.guestPhonePlaceholder}
-                className="w-full text-sm border border-stone-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
+                className="w-full text-sm border border-border-gray rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
               />
             </div>
           )}
@@ -223,7 +223,7 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
               onChange={(e) => setNoteContent(e.target.value)}
               placeholder={t.noteContentPlaceholder}
               rows={3}
-              className="w-full text-sm border border-stone-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy resize-none"
+              className="w-full text-sm border border-border-gray rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy resize-none"
             />
           </div>
 

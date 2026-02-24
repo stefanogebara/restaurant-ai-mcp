@@ -38,7 +38,7 @@ export default function NotFound() {
           </Link>
           <button
             onClick={() => window.history.back()}
-            className="text-[15px] font-medium text-stone-gray border border-stone-300 hover:border-muted-stone px-8 py-3.5 rounded-full transition-colors"
+            className="text-[15px] font-medium text-stone-gray border border-border-gray hover:border-muted-stone px-8 py-3.5 rounded-full transition-colors"
           >
             {t('notFound.goBack')}
           </button>

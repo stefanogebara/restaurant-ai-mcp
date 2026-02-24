@@ -253,7 +253,7 @@ export default function WeeklyReport() {
             Reports <span className="font-light text-warm-stone">/ Weekly</span>
           </h1>
           <div className="flex items-center gap-2.5 print:hidden">
-            <div className="flex items-center gap-1.5 px-2 py-2 bg-white border border-stone-300 rounded-[10px] text-[13px] font-medium text-stone-gray">
+            <div className="flex items-center gap-1.5 px-2 py-2 bg-white border border-border-gray rounded-xl text-[13px] font-medium text-stone-gray">
               <button
                 onClick={handlePrevious}
                 className="px-2 py-0.5 text-stone-gray hover:text-deep-charcoal transition-colors"
@@ -285,13 +285,13 @@ export default function WeeklyReport() {
             </div>
             <button
               onClick={handlePrint}
-              className="px-4 py-2 bg-white border border-stone-300 text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors"
+              className="px-4 py-2 bg-white border border-border-gray text-stone-gray hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors"
             >
               {t('analytics.downloadPdf')}
             </button>
             <button
               onClick={() => fetchReport()}
-              className="px-4 py-2 bg-burgundy text-white hover:bg-burgundy-dark rounded-[10px] text-[13px] font-medium transition-colors"
+              className="px-4 py-2 bg-burgundy text-white hover:bg-burgundy-dark rounded-xl text-[13px] font-medium transition-colors"
             >
               {t('analytics.shareReport')}
             </button>
@@ -369,7 +369,7 @@ export default function WeeklyReport() {
             {demoRows.map((row) => (
               <div key={row.rank} className="flex items-center px-6 py-3.5 border-b border-soft-gray last:border-b-0 gap-3.5">
                 <div
-                  className="w-10 h-10 rounded-[10px] flex items-center justify-center text-[13px] font-bold flex-shrink-0"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-bold flex-shrink-0"
                   style={{ background: `${row.color}12`, color: row.color }}
                 >
                   {row.rank}

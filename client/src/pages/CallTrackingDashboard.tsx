@@ -368,11 +368,11 @@ export default function CallTrackingDashboard() {
           <div className="flex items-center gap-2.5">
             <button
               onClick={fetchData}
-              className="px-4 py-2 bg-white border border-stone-300 text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors"
+              className="px-4 py-2 bg-white border border-border-gray text-stone-gray hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors"
             >
               Refresh
             </button>
-            <button className="px-4 py-2 bg-white border border-stone-300 text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors">
+            <button className="px-4 py-2 bg-white border border-border-gray text-stone-gray hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors">
               Export
             </button>
           </div>
@@ -799,19 +799,19 @@ export default function CallTrackingDashboard() {
               {conversations.map((conv) => {
                 const getCallIconStyle = (outcome?: string) => {
                   switch (outcome) {
-                    case 'reservation_created': return 'bg-[rgba(22,163,74,0.08)] text-green-600';
-                    case 'information_only': return 'bg-[rgba(59,130,246,0.08)] text-blue-500';
-                    case 'error': return 'bg-[rgba(220,38,38,0.08)] text-red-600';
-                    case 'abandoned': return 'bg-[rgba(217,119,6,0.08)] text-amber-600';
+                    case 'reservation_created': return 'bg-green-600/[8%] text-green-600';
+                    case 'information_only': return 'bg-blue-500/[8%] text-blue-500';
+                    case 'error': return 'bg-red-600/[8%] text-red-600';
+                    case 'abandoned': return 'bg-amber-600/[8%] text-amber-600';
                     default: return 'bg-soft-gray text-stone-gray';
                   }
                 };
                 const getOutcomePill = (outcome?: string) => {
                   switch (outcome) {
-                    case 'reservation_created': return 'bg-[rgba(22,163,74,0.08)] text-green-600';
-                    case 'information_only': return 'bg-[rgba(59,130,246,0.08)] text-blue-500';
-                    case 'error': return 'bg-[rgba(220,38,38,0.08)] text-red-600';
-                    case 'abandoned': return 'bg-[rgba(217,119,6,0.08)] text-amber-600';
+                    case 'reservation_created': return 'bg-green-600/[8%] text-green-600';
+                    case 'information_only': return 'bg-blue-500/[8%] text-blue-500';
+                    case 'error': return 'bg-red-600/[8%] text-red-600';
+                    case 'abandoned': return 'bg-amber-600/[8%] text-amber-600';
                     default: return 'bg-soft-gray text-stone-gray';
                   }
                 };
@@ -821,7 +821,7 @@ export default function CallTrackingDashboard() {
                     className="flex items-center px-6 py-4 border-b border-warm-white gap-4 cursor-pointer hover:bg-warm-white transition-colors"
                     onClick={() => viewConversation(conv.id)}
                   >
-                    <div className={`w-10 h-10 rounded-[10px] flex items-center justify-center flex-shrink-0 ${getCallIconStyle(conv.outcome)}`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${getCallIconStyle(conv.outcome)}`}>
                       <ThiingsIcon name="phone-call" size="sm" />
                     </div>
                     <div className="flex-1 min-w-0">
