@@ -11,6 +11,7 @@ import {
   Legend
 } from 'recharts';
 import { colors } from '../../utils/colors';
+import ThiingsIcon from './ThiingsIcon';
 
 interface TrendChartProps {
   data: any[];
@@ -52,8 +53,11 @@ export default function TrendChart({
         style={{ height }}
       >
         <div className="text-center">
-          <p className="text-warm-stone">No data available</p>
-          <p className="text-sm text-warm-stone mt-1">
+          <div className="w-12 h-12 mx-auto mb-3 bg-soft-gray rounded-2xl flex items-center justify-center">
+            <ThiingsIcon name="bar-chart" pxSize={22} />
+          </div>
+          <p className="text-sm font-semibold text-deep-charcoal">No data available</p>
+          <p className="text-xs text-stone-gray mt-1">
             Data will appear here once interventions are tracked
           </p>
         </div>
