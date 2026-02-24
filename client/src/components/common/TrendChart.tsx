@@ -36,10 +36,11 @@ export default function TrendChart({
   if (loading) {
     return (
       <div
-        className="bg-white border border-border-gray rounded-xl p-6 flex items-center justify-center animate-pulse"
+        className="bg-white border border-border-gray rounded-2xl p-6 flex items-center justify-center gap-3"
         style={{ height }}
       >
-        <div className="text-warm-stone">Loading chart...</div>
+        <div className="w-5 h-5 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
+        <div className="text-warm-stone text-sm">Loading chart...</div>
       </div>
     );
   }
@@ -47,7 +48,7 @@ export default function TrendChart({
   if (!data || data.length === 0) {
     return (
       <div
-        className="bg-white border border-border-gray rounded-xl p-6 flex items-center justify-center"
+        className="bg-white border border-border-gray rounded-2xl p-6 flex items-center justify-center"
         style={{ height }}
       >
         <div className="text-center">
