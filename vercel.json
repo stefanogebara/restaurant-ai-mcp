@@ -11,9 +11,6 @@
     "api/**/*.js": {
       "excludeFiles": "lambda/**",
       "maxDuration": 60
-    },
-    "api/seo/**/*.js": {
-      "maxDuration": 30
     }
   },
   "rewrites": [
