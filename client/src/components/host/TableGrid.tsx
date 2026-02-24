@@ -1,5 +1,6 @@
 import type { Table } from '../../types/host.types';
 import TableCard from './TableCard';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface TableGridProps {
   tables: Table[];
@@ -9,9 +10,12 @@ interface TableGridProps {
 export default function TableGrid({ tables, onTableClick }: TableGridProps) {
   if (!tables || tables.length === 0) {
     return (
-      <div className="text-center py-12 text-stone-gray">
-        <p className="font-semibold text-lg text-deep-charcoal">No tables configured yet</p>
-        <p className="text-sm mt-2">Tables will appear here after onboarding</p>
+      <div className="text-center py-16">
+        <div className="w-16 h-16 mx-auto mb-4 bg-soft-gray rounded-2xl flex items-center justify-center">
+          <ThiingsIcon name="grid" pxSize={28} />
+        </div>
+        <p className="font-semibold text-deep-charcoal">No tables configured yet</p>
+        <p className="text-sm text-stone-gray mt-1">Tables will appear here after onboarding</p>
       </div>
     );
   }
