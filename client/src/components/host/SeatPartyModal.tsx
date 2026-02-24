@@ -42,19 +42,46 @@ export default function SeatPartyModal({ isOpen, data, onClose, onRetryTableSele
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={(e) => { if (e.target === e.currentTarget && !seatPartyMutation.isPending) onClose(); }}
+    >
       <div className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-md w-full mx-4">
-        <h2 className="text-xl font-bold text-deep-charcoal mb-4">Confirm Seating</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-deep-charcoal">Confirm Seating</h2>
+          {!seatPartyMutation.isPending && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-soft-gray text-muted-stone hover:text-deep-charcoal transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
 
         {seatPartyMutation.isSuccess ? (
-          <div className="text-center py-8">
-            <div className="text-6xl mb-4">✅</div>
+          <div className="text-center py-6">
+            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
             <div className="text-lg font-semibold text-green-600 mb-2">
               Party Seated Successfully!
             </div>
-            <div className="text-sm text-stone-gray">
+            <div className="text-sm text-stone-gray mb-6">
               {data.customer_name} has been seated at Table {(data.table_numbers || data.table_ids).join(', ')}
             </div>
+            <button
+              onClick={onClose}
+              className="px-6 py-2.5 bg-deep-charcoal text-white font-medium rounded-xl hover:bg-charcoal-dark transition-colors"
+            >
+              Done
+            </button>
           </div>
         ) : (
           <>
