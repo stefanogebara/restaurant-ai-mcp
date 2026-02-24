@@ -26,11 +26,28 @@ export default function TableGrid({ tables, onTableClick }: TableGridProps) {
     return acc;
   }, {} as Record<string, Table[]>);
 
+  const locationColors: Record<string, string> = {
+    Indoor: '#6366f1',
+    Patio: '#10b981',
+    Bar: '#f59e0b',
+    Main: '#8b5cf6',
+  };
+
   return (
     <div className="space-y-6">
       {Object.entries(tablesByLocation).map(([location, locationTables]) => (
         <div key={location}>
-          <h3 className="text-sm font-semibold text-deep-charcoal mb-3">{location}</h3>
+          <div className="flex items-center gap-3 mb-4 mt-2">
+            <div
+              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+              style={{ backgroundColor: locationColors[location] || '#6b7280' }}
+            />
+            <span className="text-sm font-semibold text-deep-charcoal">{location}</span>
+            <span className="text-xs bg-soft-gray text-muted-stone px-2 py-0.5 rounded-full font-medium flex-shrink-0">
+              {locationTables.length} {locationTables.length === 1 ? 'table' : 'tables'}
+            </span>
+            <div className="flex-1 h-px bg-border-gray" />
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {locationTables.map((table) => (
               <TableCard

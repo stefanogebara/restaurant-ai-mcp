@@ -82,11 +82,11 @@ describe('TableGrid', () => {
   it('groups tables by location and renders location headers', () => {
     render(<TableGrid tables={sampleTables} />);
 
-    // Location headers are rendered as h3 elements
-    const headings = screen.getAllByRole('heading', { level: 3 });
-    const headingTexts = headings.map((h) => h.textContent);
-    expect(headingTexts).toContain('Main Room');
-    expect(headingTexts).toContain('Patio');
+    // Location header spans exist in the document
+    const mainRoomEls = screen.getAllByText('Main Room');
+    const patioEls = screen.getAllByText('Patio');
+    expect(mainRoomEls.length).toBeGreaterThan(0);
+    expect(patioEls.length).toBeGreaterThan(0);
   });
 
   it('displays correct status for each table via TableCard', () => {
