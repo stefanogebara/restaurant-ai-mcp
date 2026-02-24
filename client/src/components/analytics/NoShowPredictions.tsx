@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { authFetch } from '../../services/api';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface NoShowPrediction {
   reservation_id: string;
@@ -114,8 +115,11 @@ export default function NoShowPredictions() {
       <div className="p-6">
         {predictions.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-lg font-medium text-deep-charcoal mb-1">No high-risk reservations</div>
-            <p className="text-sm text-warm-stone">All upcoming reservations look good.</p>
+            <div className="w-16 h-16 mx-auto mb-4 bg-green-600/10 rounded-2xl flex items-center justify-center">
+              <ThiingsIcon name="check-circle" pxSize={28} />
+            </div>
+            <p className="font-semibold text-deep-charcoal">No high-risk reservations</p>
+            <p className="text-sm text-stone-gray mt-1">All upcoming reservations look good.</p>
           </div>
         ) : (
           <div className="space-y-3">
