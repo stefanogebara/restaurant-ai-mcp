@@ -186,7 +186,10 @@ export default function CustomerDNADashboard() {
             Customer DNA Profiling
           </h2>
         </div>
-        <div className="text-center py-8 text-stone-gray">Loading...</div>
+        <div className="flex items-center justify-center py-8 gap-3">
+          <div className="w-6 h-6 border-3 border-burgundy border-t-transparent rounded-full animate-spin" />
+          <span className="text-stone-gray text-sm">Loading profiles...</span>
+        </div>
       </div>
     );
   }

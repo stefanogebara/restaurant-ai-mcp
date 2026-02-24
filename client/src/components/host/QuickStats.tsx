@@ -23,7 +23,10 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
             Quick Stats
           </h2>
         </div>
-        <div className="text-center py-4 text-stone-gray">Loading...</div>
+        <div className="flex items-center justify-center py-4 gap-3">
+          <div className="w-6 h-6 border-3 border-burgundy border-t-transparent rounded-full animate-spin" />
+          <span className="text-stone-gray text-sm">Loading stats...</span>
+        </div>
       </div>
     );
   }
