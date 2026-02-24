@@ -41,7 +41,7 @@ const VoiceCard = forwardRef<HTMLDivElement, VoiceCardProps>(function VoiceCard(
       aria-checked={isSelected}
       aria-label={`${voice.name} - ${voice.gender || 'neutral'} - ${voice.language?.toUpperCase() || 'EN'}`}
       className={`
-        relative bg-white border-2 rounded-xl p-5 cursor-pointer
+        relative bg-white border-2 rounded-2xl p-5 cursor-pointer
         transition-all duration-200 hover:shadow-lg
         focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-offset-2
         ${isSelected

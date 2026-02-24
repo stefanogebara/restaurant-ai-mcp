@@ -7,7 +7,7 @@ import { Skeleton } from '../common/Skeleton';
 export default function VoiceCardSkeleton() {
   return (
     <div
-      className="relative bg-white border-2 border-border-gray rounded-xl p-5"
+      className="relative bg-white border-2 border-border-gray rounded-2xl p-5"
       aria-hidden="true"
     >
       {/* Name row */}
