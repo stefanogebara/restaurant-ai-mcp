@@ -469,7 +469,7 @@ export default function VoiceSettingsPage() {
             </div>
 
             {pendingEngine && (
-              <p className="mt-3 text-xs text-amber-600 bg-amber-600/10 rounded-lg px-3 py-2">
+              <p className="mt-3 text-xs text-amber-600 bg-amber-600/10 rounded-xl px-3 py-2">
                 Engine change pending. Click "Save Changes" to apply.
               </p>
             )}
@@ -667,7 +667,7 @@ export default function VoiceSettingsPage() {
                   </div>
 
                   {pendingLanguage && pendingLanguage !== config?.language && (
-                    <p className="mt-3 text-xs text-amber-600 bg-amber-600/10 rounded-lg px-3 py-2">
+                    <p className="mt-3 text-xs text-amber-600 bg-amber-600/10 rounded-xl px-3 py-2">
                       Changing the language will update your agent's greeting message. The voice will speak in the selected language using its multilingual capabilities.
                     </p>
                   )}
@@ -757,7 +757,7 @@ export default function VoiceSettingsPage() {
                 </div>
 
                 {pendingOpenAIVoice && pendingOpenAIVoice !== engineConfig?.openai_voice_id && (
-                  <p className="mt-3 text-xs text-amber-600 bg-amber-600/10 rounded-lg px-3 py-2">
+                  <p className="mt-3 text-xs text-amber-600 bg-amber-600/10 rounded-xl px-3 py-2">
                     Voice change pending. Click "Save Changes" to apply.
                   </p>
                 )}

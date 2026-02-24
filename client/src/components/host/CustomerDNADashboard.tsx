@@ -517,7 +517,7 @@ export default function CustomerDNADashboard() {
                   <button
                     key={customer.customer_id}
                     onClick={() => navigate(`/host-dashboard/dna/${encodeURIComponent(customer.customer_id)}`)}
-                    className="w-full px-3 py-3 bg-white rounded-lg border border-transparent hover:border-violet-600/30 hover:shadow-sm transition-all text-left"
+                    className="w-full px-3 py-3 bg-white rounded-xl border border-transparent hover:border-violet-600/30 hover:shadow-sm transition-all text-left"
                   >
                     {/* Mobile layout */}
                     <div className="flex md:hidden items-center justify-between">

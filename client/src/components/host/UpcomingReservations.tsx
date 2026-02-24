@@ -45,7 +45,7 @@ export default function UpcomingReservations({ reservations, onCheckIn }: Upcomi
           {!reservation.checked_in && (
             <button
               onClick={() => onCheckIn(reservation)}
-              className="w-full px-3 py-2 text-sm bg-burgundy text-white rounded-lg hover:bg-burgundy-dark transition-colors font-medium"
+              className="w-full px-3 py-2 text-sm bg-burgundy text-white rounded-xl hover:bg-burgundy-dark transition-colors font-medium"
             >
               Check In
             </button>

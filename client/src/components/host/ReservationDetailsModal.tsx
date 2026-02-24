@@ -151,7 +151,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
             <h3 className="text-lg font-semibold text-deep-charcoal">Customer Notes</h3>
             <button
               onClick={() => setIsEditingNotes(true)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm rounded-lg transition"
+              className="flex items-center gap-2 px-3 py-1.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm rounded-xl transition"
             >
               <ThiingsIcon name="edit" pxSize={16} />
               Edit Notes

@@ -76,15 +76,15 @@ export default function InteractiveDemoSection() {
                 <div className="flex-1 p-3 md:p-4">
                   {/* Stats */}
                   <div className="grid grid-cols-3 gap-2 mb-3">
-                    <div className="bg-white rounded-lg p-2 text-center border border-border-gray">
+                    <div className="bg-white rounded-xl p-2 text-center border border-border-gray">
                       <div className="text-sm font-bold text-deep-charcoal">8/12</div>
                       <div className="text-[9px] text-muted-stone uppercase">Tables</div>
                     </div>
-                    <div className="bg-white rounded-lg p-2 text-center border border-border-gray">
+                    <div className="bg-white rounded-xl p-2 text-center border border-border-gray">
                       <div className="text-sm font-bold text-burgundy">67%</div>
                       <div className="text-[9px] text-muted-stone uppercase">Occupancy</div>
                     </div>
-                    <div className="bg-white rounded-lg p-2 text-center border border-border-gray">
+                    <div className="bg-white rounded-xl p-2 text-center border border-border-gray">
                       <div className="text-sm font-bold text-deep-charcoal">24</div>
                       <div className="text-[9px] text-muted-stone uppercase">Today</div>
                     </div>

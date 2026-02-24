@@ -188,7 +188,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-3 py-1.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-lg shadow-sm shadow-burgundy/20 transition-all"
+            className="px-3 py-1.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl shadow-sm shadow-burgundy/20 transition-all"
           >
             + {t('waitlist.addGuest')}
           </button>
