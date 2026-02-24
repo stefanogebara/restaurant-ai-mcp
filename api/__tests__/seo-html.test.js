@@ -57,5 +57,18 @@ describe('seo-html', () => {
       const html = renderPage({ title: 'T', meta: 'M', body: '' });
       expect(html).not.toContain('rel="canonical"');
     });
+    it('escapes special characters in the canonical href', () => {
+      const html = renderPage({
+        title: 'T', meta: 'M', body: '',
+        canonical: '/foo" onerror="alert(1)',
+      });
+      // The double-quote that would break out of the href attribute must be
+      // encoded as &quot; so the attribute boundary cannot be escaped.
+      expect(html).toContain('&quot;');
+      // No unescaped double-quote should appear inside the canonical href value,
+      // which would allow attribute injection.
+      const hrefMatch = html.match(/rel="canonical" href="([^"]*)"/);
+      expect(hrefMatch).not.toBeNull();
+    });
   });
 });

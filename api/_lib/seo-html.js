@@ -18,7 +18,8 @@ function slugify(str) {
     .replace(/[^a-z0-9\s-]/g, '')
     .trim()
     .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
 /**
@@ -53,7 +54,7 @@ function escapeHtml(str) {
  */
 function renderPage({ title, meta, body, canonical }) {
   const canonicalTag = canonical
-    ? `<link rel="canonical" href="${BASE_URL}${canonical}" />`
+    ? `<link rel="canonical" href="${escapeHtml(BASE_URL + canonical)}" />`
     : '';
 
   return `<!DOCTYPE html>
