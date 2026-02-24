@@ -175,14 +175,9 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
       {/* Header */}
       <div className="p-4 border-b border-border-gray/50">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-          <div className="flex items-center gap-3">
-            <div className="p-1.5 bg-burgundy/10 rounded-lg">
-              <svg className="w-5 h-5 text-burgundy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h2 className="text-lg font-bold text-deep-charcoal">{t('waitlist.title')}</h2>
-            <span className="px-2 py-0.5 bg-burgundy/10 text-burgundy rounded-lg text-xs font-bold">
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-[15px] font-semibold text-deep-charcoal tracking-tight">{t('waitlist.title')}</h2>
+            <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">
               {activeCount}
             </span>
           </div>

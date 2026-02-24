@@ -66,9 +66,9 @@ export default function StatsBar({
         valueSuffix={` / ${totalTables}`}
         valueColor="text-burgundy"
         change={`${occupancyPercent}% ${t('dashboard.stats.capacity')}`}
-        changeColor="text-green-600"
-        barPercent={100 - occupancyPercent}
-        barColor="#16a34a"
+        changeColor={occupancyPercent >= 80 ? 'text-red-600' : occupancyPercent >= 50 ? 'text-amber-600' : 'text-green-600'}
+        barPercent={occupancyPercent}
+        barColor={occupancyPercent >= 80 ? '#ef4444' : occupancyPercent >= 50 ? '#d97706' : '#16a34a'}
         icon={<LayoutGrid className="w-4 h-4 text-muted-stone" />}
       />
 
@@ -111,7 +111,7 @@ interface StatCardProps {
   icon?: ReactElement;
 }
 
-function StatCard({ label, value, valueSuffix, valueColor, change, changeColor, barPercent, barColor: _barColor, icon }: StatCardProps) {
+function StatCard({ label, value, valueSuffix, valueColor, change, changeColor, barPercent, barColor, icon }: StatCardProps) {
   return (
     <div className="bg-white rounded-2xl p-5 border border-border-gray hover:shadow-sm transition-shadow duration-200">
       {icon && (
@@ -137,8 +137,8 @@ function StatCard({ label, value, valueSuffix, valueColor, change, changeColor, 
       )}
       <div className="h-2 bg-soft-gray rounded-full mt-3 overflow-hidden">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-burgundy/60 to-burgundy transition-all duration-700"
-          style={{ width: `${barPercent}%` }}
+          className="h-full rounded-full transition-all duration-700"
+          style={{ width: `${barPercent}%`, backgroundColor: barColor }}
         />
       </div>
     </div>
