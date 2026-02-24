@@ -866,6 +866,7 @@ export default function CallTrackingDashboard() {
                 </div>
                 <button
                   onClick={() => setSelectedConversation(null)}
+                  aria-label="Close"
                   className="p-2 hover:bg-soft-gray rounded-xl transition-colors"
                 >
                   <ThiingsIcon name="close" size="sm" />

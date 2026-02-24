@@ -95,6 +95,7 @@ export default function RiskExplanationModal({
           </div>
           <button
             onClick={onClose}
+            aria-label="Close"
             className="p-2 hover:bg-soft-gray rounded-xl transition-colors"
           >
             <ThiingsIcon name="close" size="sm" />
