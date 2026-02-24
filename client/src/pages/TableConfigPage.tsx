@@ -581,8 +581,8 @@ function AdjacencyModal({
         ))}
 
         {allTables.length === 0 && (
-          <div className="text-center py-8 text-muted-stone">
-            No other flexible tables in this location
+          <div className="text-center py-8">
+            <p className="text-sm text-muted-stone">No other flexible tables in this location</p>
           </div>
         )}
 

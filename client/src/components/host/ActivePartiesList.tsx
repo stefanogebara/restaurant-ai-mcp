@@ -90,7 +90,7 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
   if (parties.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="w-16 h-16 mx-auto mb-3 bg-soft-gray rounded-xl flex items-center justify-center">
+        <div className="w-16 h-16 mx-auto mb-3 bg-soft-gray rounded-2xl flex items-center justify-center">
           <ThiingsIcon name="dining" size="md" />
         </div>
         <div className="text-sm text-stone-gray">No active parties</div>
