@@ -108,7 +108,7 @@ export default function ReservationsList({
 
       {/* List */}
       {displayed.length === 0 ? (
-        <div className="text-center py-10 px-4">
+        <div className="text-center py-10 px-6">
           <div className="w-12 h-12 rounded-2xl bg-soft-gray flex items-center justify-center mb-3 mx-auto">
             <CalendarX className="w-5 h-5 text-muted-stone" />
           </div>

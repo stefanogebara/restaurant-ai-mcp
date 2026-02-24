@@ -236,7 +236,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
       {/* Waitlist Entries */}
       <div className="overflow-y-auto flex-1">
         {filteredWaitlist.length === 0 ? (
-          <div className="py-10 px-4 text-center text-stone-gray">
+          <div className="py-10 px-6 text-center text-stone-gray">
           <div className="w-12 h-12 rounded-2xl bg-soft-gray flex items-center justify-center mb-3 mx-auto">
             <ClipboardList className="w-5 h-5 text-muted-stone" />
           </div>
