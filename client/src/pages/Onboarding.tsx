@@ -328,7 +328,7 @@ export default function Onboarding() {
                 const emailSubject = encodeURIComponent('Try Seatable – AI reservations for restaurants');
                 const emailBody = encodeURIComponent(`Hey,\n\nI just started using Seatable – it handles restaurant reservations with AI. Thought you might find it useful.\n\nTry it free here: ${referralUrl}\n\nCheers`);
                 return (
-                  <div className="mb-6 border border-border-gray rounded-xl p-4">
+                  <div className="mb-6 border border-border-gray rounded-2xl p-4">
                     <p className="text-[13px] font-medium text-deep-charcoal mb-3">
                       Know another restaurateur? Share Seatable and earn rewards.
                     </p>
