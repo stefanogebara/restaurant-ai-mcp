@@ -1,4 +1,5 @@
 import type { UpcomingReservation } from '../../types/host.types';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface UpcomingReservationsProps {
   reservations: UpcomingReservation[];
@@ -7,7 +8,15 @@ interface UpcomingReservationsProps {
 
 export default function UpcomingReservations({ reservations, onCheckIn }: UpcomingReservationsProps) {
   if (reservations.length === 0) {
-    return <div className="text-sm text-stone-gray text-center py-4">No upcoming reservations</div>;
+    return (
+      <div className="text-center py-8">
+        <div className="w-12 h-12 mx-auto mb-3 bg-soft-gray rounded-2xl flex items-center justify-center">
+          <ThiingsIcon name="calendar" pxSize={22} />
+        </div>
+        <p className="text-sm font-semibold text-deep-charcoal">No upcoming reservations</p>
+        <p className="text-xs text-stone-gray mt-1">Reservations will appear here once booked</p>
+      </div>
+    );
   }
 
   return (

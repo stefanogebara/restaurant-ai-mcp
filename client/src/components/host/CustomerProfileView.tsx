@@ -521,7 +521,12 @@ export default function CustomerProfileView() {
             </div>
           ))}
           {data.reservations.length === 0 && (
-            <div className="text-center py-4 text-sm text-stone-gray">No reservation history</div>
+            <div className="text-center py-6">
+              <div className="w-10 h-10 mx-auto mb-2 bg-soft-gray rounded-xl flex items-center justify-center">
+                <ThiingsIcon name="calendar" pxSize={18} />
+              </div>
+              <p className="text-sm text-stone-gray">No reservation history</p>
+            </div>
           )}
         </div>
       </div>
@@ -547,7 +552,13 @@ export default function CustomerProfileView() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-4 text-sm text-stone-gray">No predictions available. Need more visit data.</div>
+            <div className="text-center py-6">
+              <div className="w-10 h-10 mx-auto mb-2 bg-soft-gray rounded-xl flex items-center justify-center">
+                <ThiingsIcon name="trending-up" pxSize={18} />
+              </div>
+              <p className="text-sm text-stone-gray">No predictions available</p>
+              <p className="text-xs text-muted-stone mt-1">Need more visit data to generate predictions.</p>
+            </div>
           )}
 
           {/* Occasions */}
