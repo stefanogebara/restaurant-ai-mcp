@@ -119,4 +119,81 @@ describe('GET /api/seo/city-cuisine', () => {
     await handler({ method: 'GET', query: { city: 'madrid', cuisine: 'mediterranean' } }, res);
     expect(supabaseAdmin.from).toHaveBeenCalledWith('seo_page_cache');
   });
+
+  it('sanitizes Claude output — strips script tags injected into p content', async () => {
+    const Anthropic = require('@anthropic-ai/sdk');
+    Anthropic.mockImplementationOnce(() => ({
+      messages: {
+        create: jest.fn().mockResolvedValue({
+          content: [{ text: '<p>Good text.<script>alert(1)</script></p><p>More text.</p><p>Final.</p>' }],
+        }),
+      },
+    }));
+    mockSupabase({
+      cacheError: { code: 'PGRST116' },
+      restaurants: [
+        { restaurant_name: 'Celeri', slug: 'celeri-madrid', city: 'Madrid', restaurant_type: 'Mediterranean' },
+      ],
+    });
+    const res = makeRes();
+    await handler({ method: 'GET', query: { city: 'madrid', cuisine: 'mediterranean' } }, res);
+    const html = res.send.mock.calls[0][0];
+    expect(html).not.toContain('<script>');
+    expect(html).toContain('Good text.');
+  });
+
+  it('falls back to static copy when Claude returns empty content', async () => {
+    const Anthropic = require('@anthropic-ai/sdk');
+    Anthropic.mockImplementationOnce(() => ({
+      messages: {
+        create: jest.fn().mockResolvedValue({ content: [] }),
+      },
+    }));
+    mockSupabase({
+      cacheError: { code: 'PGRST116' },
+      restaurants: [
+        { restaurant_name: 'Celeri', slug: 'celeri-madrid', city: 'Madrid', restaurant_type: 'Mediterranean' },
+      ],
+    });
+    const res = makeRes();
+    await handler({ method: 'GET', query: { city: 'madrid', cuisine: 'mediterranean' } }, res);
+    const html = res.send.mock.calls[0][0];
+    expect(html).toMatch(/<!DOCTYPE html>/);
+    expect(html).toContain('5 minutes');
+  });
+
+  it('still sends HTML when cache upsert fails', async () => {
+    supabaseAdmin.from.mockImplementation((table) => {
+      if (table === 'seo_page_cache') {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } }),
+            }),
+          }),
+          upsert: jest.fn().mockResolvedValue({ error: { message: 'DB error' } }),
+        };
+      }
+      return {};
+    });
+    supabaseAdmin.schema = jest.fn().mockReturnValue({
+      from: jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              not: jest.fn().mockResolvedValue({
+                data: [{ restaurant_name: 'Celeri', slug: 'celeri-madrid', city: 'Madrid', restaurant_type: 'Mediterranean' }],
+                error: null,
+              }),
+            }),
+          }),
+        }),
+      }),
+    });
+    const res = makeRes();
+    await handler({ method: 'GET', query: { city: 'madrid', cuisine: 'mediterranean' } }, res);
+    expect(res.send).toHaveBeenCalled();
+    const html = res.send.mock.calls[0][0];
+    expect(html).toMatch(/<!DOCTYPE html>/);
+  });
 });

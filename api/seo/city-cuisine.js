@@ -12,6 +12,18 @@ const { renderPage, titleCase, slugify, escapeHtml } = require('../_lib/seo-html
 const { createSecureLogger } = require('../_lib/secure-logger');
 
 const logger = createSecureLogger('seo-city-cuisine');
+
+/**
+ * Extract only <p>…</p> blocks from Claude's output and escape inner text.
+ * Prevents XSS if the model produces unexpected markup.
+ */
+function sanitizeCopy(rawCopy) {
+  const matches = [...rawCopy.matchAll(/<p>([\s\S]*?)<\/p>/gi)];
+  if (matches.length === 0) {
+    return `<p>${escapeHtml(rawCopy.trim())}</p>`;
+  }
+  return matches.map(([, inner]) => `<p>${escapeHtml(inner)}</p>`).join('\n');
+}
 const BASE_URL = process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
 
 module.exports = async (req, res) => {
@@ -93,7 +105,9 @@ Paragraph 3: Why restaurants in ${cityDisplay} are choosing it (mention 5-minute
         },
       ],
     });
-    generatedCopy = response.content[0].text;
+    const rawText = response.content?.[0]?.text;
+    if (!rawText) throw new Error('Empty response from Claude');
+    generatedCopy = sanitizeCopy(rawText);
   } catch (err) {
     logger.error('Claude generation failed — using fallback copy', { err: err.message });
     generatedCopy = `<p>Seatable helps restaurants handle reservations automatically, 24/7, via AI voice, WhatsApp, and online chat — so your team never misses a booking.</p>
@@ -133,9 +147,12 @@ Paragraph 3: Why restaurants in ${cityDisplay} are choosing it (mention 5-minute
   });
 
   // 5. Upsert into cache
-  await supabaseAdmin
+  const { error: upsertError } = await supabaseAdmin
     .from('seo_page_cache')
     .upsert({ cache_key: cacheKey, html }, { onConflict: 'cache_key' });
+  if (upsertError) {
+    logger.warn('Cache upsert failed (non-critical)', { cacheKey, error: upsertError.message });
+  }
 
   logger.info('Page generated and cached', { cacheKey, restaurants: matching.length });
   return res.send(html);
