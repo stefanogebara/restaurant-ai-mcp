@@ -154,9 +154,19 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <div className="flex items-center justify-center h-32">
-          <div className="text-stone-gray">{t('waitlist.loading')}</div>
+      <div className="p-5" role="status">
+        <span className="sr-only">{t('waitlist.loading')}</span>
+        <div className="flex items-center justify-between mb-4">
+          <div className="h-5 w-28 bg-border-gray rounded animate-pulse" />
+          <div className="h-8 w-24 bg-border-gray rounded-lg animate-pulse" />
+        </div>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="p-3 bg-soft-gray rounded-xl">
+              <div className="h-4 w-32 bg-border-gray rounded animate-pulse mb-2" />
+              <div className="h-3 w-20 bg-soft-gray rounded animate-pulse" />
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -165,7 +175,9 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
   if (error) {
     return (
       <div className="p-6">
-        <div className="text-red-500">Error loading waitlist: {(error as Error).message}</div>
+        <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl p-3">
+          Error loading waitlist: {(error as Error).message}
+        </div>
       </div>
     );
   }
