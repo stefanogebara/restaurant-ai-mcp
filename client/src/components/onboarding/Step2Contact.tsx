@@ -14,6 +14,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
 import PhoneInput from '../common/PhoneInput';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 // Service type presets with recommended hours
 const SERVICE_PRESETS = {
@@ -341,9 +342,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
           onClick={onBack}
           className="px-6 py-3 bg-white hover:bg-soft-gray border border-border-gray text-deep-charcoal font-semibold rounded-xl transition-all flex items-center gap-2"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ThiingsIcon name="chevron-left" pxSize={20} />
           Back
         </button>
         <button
@@ -351,9 +350,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
           className="px-8 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300"
         >
           Continue
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
+          <ThiingsIcon name="chevron-right" pxSize={20} />
         </button>
       </div>
     </motion.div>

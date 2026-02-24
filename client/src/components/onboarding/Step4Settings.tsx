@@ -11,6 +11,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 const CANCELLATION_POLICIES = [
   'Free cancellation up to 2 hours before reservation',
@@ -163,9 +164,7 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
       {/* Preview Card */}
       <div className="bg-burgundy/5 border border-burgundy/20 rounded-xl p-5">
         <div className="flex items-start gap-3 mb-3">
-          <svg className="w-6 h-6 text-burgundy flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <ThiingsIcon name="info" pxSize={24} className="text-burgundy flex-shrink-0" />
           <div>
             <p className="text-deep-charcoal font-semibold text-sm mb-2">Preview: What customers will see</p>
             <div className="space-y-1 text-stone-gray text-sm">
@@ -184,9 +183,7 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
           onClick={onBack}
           className="px-6 py-3 bg-white hover:bg-soft-gray border border-border-gray text-deep-charcoal font-semibold rounded-xl transition-all flex items-center gap-2"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ThiingsIcon name="chevron-left" pxSize={20} />
           Back
         </button>
         <button
@@ -194,9 +191,7 @@ export default function Step4Settings({ data, updateData, onNext, onBack }: Onbo
           className="px-8 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300"
         >
           Continue
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
+          <ThiingsIcon name="chevron-right" pxSize={20} />
         </button>
       </div>
     </motion.div>

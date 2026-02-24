@@ -7,6 +7,7 @@
 
 import { motion } from 'framer-motion';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface Step4ReviewProps extends OnboardingStepProps {
   onComplete?: () => void;
@@ -96,9 +97,7 @@ export default function Step4Review({ data, onBack, onComplete, isSubmitting, go
       {/* AI & Voice Note */}
       <div className="bg-burgundy/5 border border-burgundy/20 rounded-xl p-4">
         <div className="flex items-start gap-3">
-          <svg className="w-5 h-5 text-burgundy flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <ThiingsIcon name="info" pxSize={20} className="text-burgundy flex-shrink-0 mt-0.5" />
           <div className="text-sm text-stone-gray">
             <p className="font-medium text-deep-charcoal mb-1">After launch, you can customize:</p>
             <ul className="space-y-1">
@@ -116,9 +115,7 @@ export default function Step4Review({ data, onBack, onComplete, isSubmitting, go
           onClick={onBack}
           className="px-6 py-3 bg-white hover:bg-soft-gray border border-border-gray text-deep-charcoal font-semibold rounded-xl transition-all flex items-center gap-2"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ThiingsIcon name="chevron-left" pxSize={20} />
           Back
         </button>
         <button
@@ -134,9 +131,7 @@ export default function Step4Review({ data, onBack, onComplete, isSubmitting, go
           ) : (
             <>
               Launch My Restaurant
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+              <ThiingsIcon name="lightning" pxSize={20} />
             </>
           )}
         </button>

@@ -13,6 +13,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { OnboardingStepProps, RestaurantArea, TableShape, TableConfiguration } from '../../types/onboarding.types';
 import type { RestaurantSize } from '../../types/profile.types';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 const AREA_TEMPLATES = ['Indoor', 'Patio', 'Bar', 'Private Room', 'Custom'];
 const TABLE_CAPACITIES = [2, 4, 6, 8];
@@ -308,9 +309,7 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
       {data.profile_data?.size && data.profile_data?.seat_count && totalTables > 0 && (
         <div className="bg-burgundy/5 border border-burgundy/20 rounded-xl p-3">
           <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-burgundy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <ThiingsIcon name="info" pxSize={20} className="text-burgundy" />
             <p className="text-sm text-stone-gray">
               Tables pre-configured based on your {data.profile_data.size} restaurant profile ({data.profile_data.seat_count} seats). Adjust as needed.
             </p>
@@ -322,9 +321,7 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
       {totalTables > getPlanLimit() && (
         <div className="bg-burgundy/5 border border-burgundy/20 rounded-xl p-4">
           <div className="flex items-start gap-3">
-            <svg className="w-6 h-6 text-burgundy flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+            <ThiingsIcon name="alert-triangle" pxSize={24} className="text-burgundy flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-deep-charcoal font-semibold">Basic Plan Limit</p>
               <p className="text-stone-gray text-sm mt-1">
@@ -361,9 +358,7 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
                   className="p-2 hover:bg-red-600/10 text-red-600 rounded-lg transition-colors"
                   title="Remove area"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
+                  <ThiingsIcon name="trash" pxSize={20} />
                 </button>
               )}
             </div>
@@ -466,9 +461,7 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
           onClick={onBack}
           className="px-6 py-3 bg-white hover:bg-soft-gray border border-border-gray text-deep-charcoal font-semibold rounded-xl transition-all flex items-center gap-2"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ThiingsIcon name="chevron-left" pxSize={20} />
           Back
         </button>
         <button
@@ -476,9 +469,7 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
           className="px-8 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300"
         >
           Continue
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
+          <ThiingsIcon name="chevron-right" pxSize={20} />
         </button>
       </div>
     </motion.div>

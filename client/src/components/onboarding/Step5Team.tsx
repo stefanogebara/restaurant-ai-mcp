@@ -12,6 +12,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { OnboardingStepProps, TeamMember } from '../../types/onboarding.types';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 const ROLES = [
   { value: 'Owner', description: 'Full access to everything' },
@@ -174,9 +175,7 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
                 className="p-2 hover:bg-red-600/10 text-red-600 rounded-lg transition-colors"
                 title="Remove member"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <ThiingsIcon name="close" pxSize={20} />
               </button>
             </div>
           ))}
@@ -202,9 +201,7 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
           disabled={isSubmitting}
           className="px-6 py-3 bg-white hover:bg-soft-gray disabled:opacity-50 disabled:cursor-not-allowed border border-border-gray text-deep-charcoal font-semibold rounded-xl transition-all flex items-center gap-2"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ThiingsIcon name="chevron-left" pxSize={20} />
           Back
         </button>
         <button
@@ -223,9 +220,7 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
           ) : (
             <>
               Complete Setup
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+              <ThiingsIcon name="check" pxSize={20} />
             </>
           )}
         </button>
