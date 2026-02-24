@@ -109,7 +109,7 @@ export default function InterventionPanel({
     <div className="bg-white rounded-2xl border border-border-gray shadow-md">
       {/* Header */}
       <div
-        className="p-4 border-b border-border-gray cursor-pointer hover:bg-soft-gray transition-colors rounded-t-xl"
+        className="p-4 border-b border-border-gray cursor-pointer hover:bg-soft-gray transition-colors rounded-t-2xl"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center justify-between">

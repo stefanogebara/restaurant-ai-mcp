@@ -226,7 +226,7 @@ export default function CustomerDNADashboard() {
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-6 flex items-center justify-between hover:bg-soft-gray/50 transition-colors rounded-t-xl"
+        className="w-full p-6 flex items-center justify-between hover:bg-soft-gray/50 transition-colors rounded-t-2xl"
       >
         <h2 className="text-xl font-bold font-serif text-deep-charcoal flex items-center gap-2">
           <ThiingsIcon name="brain" pxSize={20} />

@@ -40,7 +40,7 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-6 flex items-center justify-between hover:bg-soft-gray transition-colors rounded-t-xl"
+        className="w-full p-6 flex items-center justify-between hover:bg-soft-gray transition-colors rounded-t-2xl"
       >
         <h2 className="text-xl font-bold text-deep-charcoal flex items-center gap-2">
           <ThiingsIcon name="bar-chart" size="sm" />
