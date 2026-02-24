@@ -71,7 +71,7 @@ export default function TableCard({ table, onClick }: TableCardProps) {
             }
           }}
           className={`
-            w-full p-4 rounded-xl transition-all duration-200
+            w-full p-4 rounded-2xl transition-all duration-200
             bg-white border border-border-gray shadow-md
             hover:shadow-lg hover:bg-soft-gray
             cursor-pointer group
@@ -115,7 +115,7 @@ export default function TableCard({ table, onClick }: TableCardProps) {
 
         {/* Drop Zone Indicator */}
         {isOver && table.status === 'Available' && (
-          <div className="absolute inset-0 bg-burgundy/20 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center gap-2 pointer-events-none ring-2 ring-burgundy ring-dashed">
+          <div className="absolute inset-0 bg-burgundy/20 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center gap-2 pointer-events-none ring-2 ring-burgundy ring-dashed">
             <ThiingsIcon name="arrow-down" size="md" />
             <div className="text-deep-charcoal font-semibold">Drop to Assign</div>
             <div className="text-burgundy text-sm">Table {table.table_number}</div>
