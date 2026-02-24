@@ -289,13 +289,13 @@ export default function ReservationNotesEditor({
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 px-4 py-3 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition font-medium"
+            className="flex-1 px-4 py-3 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors font-medium"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="flex-1 px-4 py-3 bg-burgundy text-white rounded-xl hover:bg-burgundy-dark transition font-semibold"
+            className="flex-1 px-4 py-3 bg-burgundy text-white rounded-xl hover:bg-burgundy-dark transition-colors font-semibold"
           >
             Save Notes
           </button>

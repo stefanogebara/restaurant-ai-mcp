@@ -22,7 +22,7 @@ export default function UpcomingReservations({ reservations, onCheckIn }: Upcomi
   return (
     <div className="space-y-3">
       {reservations.map((reservation) => (
-        <div key={reservation.reservation_id} className="border border-border-gray rounded-2xl p-3 hover:shadow-md transition bg-white">
+        <div key={reservation.reservation_id} className="border border-border-gray rounded-2xl p-3 hover:shadow-md transition-shadow bg-white">
           <div className="flex justify-between items-start mb-2">
             <div>
               <div className="font-semibold text-deep-charcoal">{reservation.customer_name}</div>
@@ -45,7 +45,7 @@ export default function UpcomingReservations({ reservations, onCheckIn }: Upcomi
           {!reservation.checked_in && (
             <button
               onClick={() => onCheckIn(reservation)}
-              className="w-full px-3 py-2 text-sm bg-burgundy text-white rounded-lg hover:bg-burgundy-dark transition font-medium"
+              className="w-full px-3 py-2 text-sm bg-burgundy text-white rounded-lg hover:bg-burgundy-dark transition-colors font-medium"
             >
               Check In
             </button>

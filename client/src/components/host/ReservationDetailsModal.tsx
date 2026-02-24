@@ -287,7 +287,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition font-medium"
+            className="flex-1 px-4 py-3 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors font-medium"
           >
             Close
           </button>

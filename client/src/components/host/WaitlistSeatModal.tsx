@@ -127,7 +127,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-3 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition font-medium"
+                className="flex-1 px-4 py-3 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors font-medium"
                 disabled={findTablesMutation.isPending}
               >
                 Cancel
@@ -186,7 +186,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
               <div className="flex gap-3">
                 <button
                   onClick={onClose}
-                  className="flex-1 px-4 py-3 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition font-medium"
+                  className="flex-1 px-4 py-3 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors font-medium"
                 >
                   Cancel
                 </button>
