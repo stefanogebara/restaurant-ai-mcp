@@ -278,7 +278,7 @@ export default function CustomerPortal() {
                       {reservation.special_requests && (
                         <div className="mt-4 pt-4 border-t border-border-gray">
                           <div className="text-xs text-warm-stone mb-1.5">{t('reservations.specialRequests')}</div>
-                          <div className="text-sm text-deep-charcoal bg-soft-gray p-3 rounded-lg">{reservation.special_requests}</div>
+                          <div className="text-sm text-deep-charcoal bg-soft-gray p-3 rounded-xl">{reservation.special_requests}</div>
                         </div>
                       )}
                     </>

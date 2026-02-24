@@ -964,7 +964,7 @@ export default function CallTrackingDashboard() {
                     <h3 className="font-semibold text-red-600 mb-3">Errors Encountered</h3>
                     <div className="space-y-2">
                       {selectedConversation.errors_encountered.map((error: any, idx: number) => (
-                        <div key={idx} className="bg-red-600/10 border border-red-600/20 rounded-lg p-3">
+                        <div key={idx} className="bg-red-600/10 border border-red-600/20 rounded-xl p-3">
                           <p className="text-sm font-medium text-deep-charcoal">{error.error_type}</p>
                           <p className="text-xs text-stone-gray mt-1">{error.message}</p>
                         </div>

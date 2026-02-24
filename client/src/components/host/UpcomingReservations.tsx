@@ -37,7 +37,7 @@ export default function UpcomingReservations({ reservations, onCheckIn }: Upcomi
           </div>
 
           {reservation.special_requests && (
-            <div className="text-xs text-stone-gray mb-2 italic bg-soft-gray p-2 rounded-lg">
+            <div className="text-xs text-stone-gray mb-2 italic bg-soft-gray p-2 rounded-xl">
               Note: {reservation.special_requests}
             </div>
           )}

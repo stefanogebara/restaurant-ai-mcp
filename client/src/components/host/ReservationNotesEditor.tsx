@@ -117,8 +117,9 @@ export default function ReservationNotesEditor({
               }`}
             >
               <div className="text-center">
-                <div className="text-lg font-semibold">🗺️ Tourist</div>
-                <div className="text-xs mt-1 text-muted-stone">International visitor</div>
+                <ThiingsIcon name="map" pxSize={22} className="mx-auto mb-1" />
+                <div className="text-sm font-semibold">Tourist</div>
+                <div className="text-xs mt-0.5 text-muted-stone">International visitor</div>
               </div>
             </button>
             <button
@@ -130,8 +131,9 @@ export default function ReservationNotesEditor({
               }`}
             >
               <div className="text-center">
-                <div className="text-lg font-semibold">🏠 Local</div>
-                <div className="text-xs mt-1 text-muted-stone">Segovia resident</div>
+                <ThiingsIcon name="home" pxSize={22} className="mx-auto mb-1" />
+                <div className="text-sm font-semibold">Local</div>
+                <div className="text-xs mt-0.5 text-muted-stone">Segovia resident</div>
               </div>
             </button>
           </div>
