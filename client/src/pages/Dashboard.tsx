@@ -15,6 +15,7 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
+import { Download } from 'lucide-react';
 import { hostAPI, authFetch } from '../services/api';
 import { usePlanInfo } from '../hooks/useSubscription';
 import DashboardLayout from '../components/layout/DashboardLayout';
@@ -160,22 +161,28 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="dashboard min-h-screen bg-soft-gray p-6 sm:p-8 md:p-10 pb-28 sm:pb-20">
+      <div className="dashboard min-h-screen bg-soft-gray p-6 sm:p-8 md:p-10 pb-16 sm:pb-10">
         <div className="max-w-7xl mx-auto space-y-10">
           {/* ---- Header ---- */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
-            <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
-              {t('navigation.dashboard')} <span className="font-light text-warm-stone">/ {dayName}, {dateStr}</span>
-            </h1>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
+                {t('navigation.dashboard')}
+              </h1>
+              <p className="text-sm text-muted-stone mt-0.5">{dayName}, {dateStr}</p>
+            </div>
 
             <div className="flex items-center gap-2.5">
-              <span className="text-[13px] text-warm-stone bg-white border border-border-gray px-4 py-2 rounded-[10px] hidden sm:inline-block">
-                {t('dashboard.weekView')}
-              </span>
+              <div className="flex items-center bg-soft-gray rounded-lg p-0.5 gap-0.5">
+                <span className="text-[13px] text-warm-stone bg-white border border-border-gray px-4 py-2 rounded-[8px] hidden sm:inline-block">
+                  {t('dashboard.weekView')}
+                </span>
+              </div>
               <button
                 onClick={() => window.location.href = '/host-dashboard/calls'}
                 className="flex items-center gap-2 px-4 py-2 bg-white border border-stone-300 text-stone-gray hover:border-muted-stone rounded-[10px] text-[13px] font-medium transition-colors"
               >
+                <Download className="w-3.5 h-3.5" />
                 {t('common.export')}
               </button>
               <button
@@ -189,34 +196,20 @@ export default function Dashboard() {
 
           {/* ---- Trial Banner ---- */}
           {isTrial && isActive && trialDaysLeft !== null && (
-            <div className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 rounded-xl border ${
-              trialDaysLeft <= 3
-                ? 'bg-red-50 border-red-200'
-                : 'bg-orange-50 border-orange-300'
-            }`}>
-              <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                  trialDaysLeft <= 3 ? 'bg-red-100' : 'bg-orange-300/30'
-                }`}>
-                  <svg className={`w-4 h-4 ${trialDaysLeft <= 3 ? 'text-red-600' : 'text-orange-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className={`text-sm font-semibold ${trialDaysLeft <= 3 ? 'text-red-900' : 'text-orange-800'}`}>
-                    {t('dashboard.freeTrial')} {trialDaysLeft === 0 ? t('dashboard.trialExpiresToday') : `\u2014 ${trialDaysLeft} day${trialDaysLeft !== 1 ? 's' : ''} remaining`}
-                  </p>
-                  <p className={`text-xs ${trialDaysLeft <= 3 ? 'text-red-700' : 'text-orange-700'}`}>
-                    {t('dashboard.trialUpgradeHint')}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => window.location.href = '/#pricing'}
-                className="px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors whitespace-nowrap"
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+              <p className="text-sm text-amber-800">
+                <span className="font-semibold">{t('dashboard.freeTrial')}</span>
+                {' — '}
+                {trialDaysLeft === 0 ? t('dashboard.trialExpiresToday') : `${trialDaysLeft} day${trialDaysLeft !== 1 ? 's' : ''} remaining`}
+                {'. '}
+                {t('dashboard.trialUpgradeHint')}
+              </p>
+              <a
+                href="/#pricing"
+                className="text-sm font-semibold text-amber-700 hover:text-amber-900 underline underline-offset-2 whitespace-nowrap transition-colors"
               >
                 {t('dashboard.viewPlans')}
-              </button>
+              </a>
             </div>
           )}
 
@@ -254,7 +247,7 @@ export default function Dashboard() {
             </div>
 
             {/* Right Column: Waitlist + Active Parties */}
-            <div className="space-y-6">
+            <div className="space-y-6 lg:sticky lg:top-8 lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto">
               <div className="bg-white border border-border-gray rounded-2xl flex flex-col overflow-hidden">
                 <WaitlistPanel onSeatNow={handleSeatFromWaitlist} />
               </div>

@@ -59,11 +59,18 @@ export default function ActivePartiesPanel({
     <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
-        <div className="flex items-center gap-2.5">
-          <span className="text-[15px] font-semibold text-deep-charcoal tracking-tight">{t.activeParties}</span>
-          <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">
-            {parties.length}
-          </span>
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h3 className="text-[15px] font-semibold text-deep-charcoal tracking-tight">{t.activeParties}</h3>
+            <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">
+              {parties.length}
+            </span>
+          </div>
+          {parties.reduce((sum, p) => sum + (p.party_size ?? 0), 0) > 0 && (
+            <p className="text-xs text-muted-stone mt-0.5">
+              {parties.reduce((sum, p) => sum + (p.party_size ?? 0), 0)} guests seated
+            </p>
+          )}
         </div>
       </div>
 
@@ -79,14 +86,15 @@ export default function ActivePartiesPanel({
           <p className="text-xs text-stone-gray">{t.addHint}</p>
         </div>
       ) : (
-        <div className="divide-y divide-border-gray/50 max-h-[400px] overflow-y-auto">
+        <div className="max-h-[400px] overflow-y-auto py-1">
           {parties.map((party) => (
-            <PartyRow
-              key={party.service_id}
-              party={party}
-              onComplete={() => onCompleteService(party)}
-              language={language}
-            />
+            <div key={party.service_id} className="mx-2 my-1.5 rounded-xl border border-border-gray bg-white p-4 hover:shadow-sm transition-shadow duration-200">
+              <PartyRow
+                party={party}
+                onComplete={() => onCompleteService(party)}
+                language={language}
+              />
+            </div>
           ))}
         </div>
       )}
@@ -112,7 +120,7 @@ function PartyRow({ party, onComplete, language }: PartyRowProps) {
   const isOverdue = party.is_overdue;
 
   return (
-    <div className={`p-3.5 ${isOverdue ? 'bg-red-50/50' : ''}`}>
+    <div>
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-burgundy/15 to-violet-600/15 flex items-center justify-center text-[10px] font-bold text-burgundy border border-burgundy/20 flex-shrink-0">
@@ -142,20 +150,21 @@ function PartyRow({ party, onComplete, language }: PartyRowProps) {
 
       {/* Time progress */}
       {party.time_elapsed_minutes !== undefined && (
-        <div className="mb-2">
-          <div className="h-1.5 bg-border-gray rounded-full overflow-hidden">
+        <div>
+          <div className="h-2 bg-soft-gray rounded-full overflow-hidden mt-2 mb-3">
             <div
-              className={`h-full rounded-full transition-all ${isOverdue ? 'bg-gradient-to-r from-red-500 to-red-400' : 'bg-gradient-to-r from-deep-charcoal to-stone-gray'}`}
+              className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${Math.min(
                   ((party.time_elapsed_minutes) /
                     (party.time_elapsed_minutes + Math.max(party.time_remaining_minutes, 0))) * 100,
                   100
                 )}%`,
+                background: isOverdue ? '#ef4444' : 'linear-gradient(to right, #10b981, #34d399)',
               }}
             />
           </div>
-          <div className="flex justify-between text-[10px] text-muted-stone mt-0.5">
+          <div className="flex justify-between text-[10px] text-muted-stone mb-1">
             <span>{party.time_elapsed_minutes}m {t.elapsed}</span>
             <span>{party.time_remaining_minutes > 0 ? `${party.time_remaining_minutes}m ${t.left}` : t.overdue}</span>
           </div>
@@ -164,7 +173,7 @@ function PartyRow({ party, onComplete, language }: PartyRowProps) {
 
       <button
         onClick={onComplete}
-        className="w-full mt-2 px-3 py-2.5 min-h-[44px] bg-soft-gray hover:bg-border-gray text-deep-charcoal text-xs font-medium rounded-lg transition-colors"
+        className="w-full mt-3 px-3 py-2.5 min-h-[44px] bg-soft-gray hover:bg-border-gray text-deep-charcoal text-xs font-medium rounded-lg transition-colors"
       >
         {t.completeService}
       </button>

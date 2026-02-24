@@ -1,4 +1,6 @@
+import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
+import { CalendarDays, LayoutGrid, Users, UtensilsCrossed } from 'lucide-react';
 import { colors } from '../../utils/colors';
 
 interface StatsBarProps {
@@ -31,9 +33,9 @@ export default function StatsBar({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="bg-white rounded-2xl p-6 border border-border-gray">
+          <div key={i} className="bg-white rounded-2xl p-5 border border-border-gray">
             <div className="h-3 w-20 bg-border-gray rounded-full animate-pulse mb-3" />
             <div className="h-9 w-16 bg-border-gray rounded-lg animate-pulse mb-2" />
             <div className="h-3 w-24 bg-soft-gray rounded animate-pulse mb-3" />
@@ -45,7 +47,7 @@ export default function StatsBar({
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
       {/* Today's Reservations */}
       <StatCard
         label={t('dashboard.stats.reservations')}
@@ -54,6 +56,7 @@ export default function StatsBar({
         changeColor="text-green-600"
         barPercent={seatedPercent}
         barColor={colors.burgundy}
+        icon={<CalendarDays className="w-4 h-4 text-muted-stone" />}
       />
 
       {/* Tables Available */}
@@ -66,6 +69,7 @@ export default function StatsBar({
         changeColor="text-green-600"
         barPercent={100 - occupancyPercent}
         barColor="#16a34a"
+        icon={<LayoutGrid className="w-4 h-4 text-muted-stone" />}
       />
 
       {/* Guests Expected */}
@@ -78,6 +82,7 @@ export default function StatsBar({
         changeColor="text-amber-600"
         barPercent={totalGuests > 0 ? Math.min(Math.round((totalGuests / (reservationsToday * 3 || 1)) * 100), 100) : 0}
         barColor={colors.stoneGray}
+        icon={<Users className="w-4 h-4 text-muted-stone" />}
       />
 
       {/* Active Parties */}
@@ -88,6 +93,7 @@ export default function StatsBar({
         changeColor="text-stone-gray"
         barPercent={totalTables > 0 ? Math.round((activeParties / totalTables) * 100) : 0}
         barColor="#d97706"
+        icon={<UtensilsCrossed className="w-4 h-4 text-muted-stone" />}
       />
     </div>
   );
@@ -102,11 +108,19 @@ interface StatCardProps {
   changeColor: string;
   barPercent: number;
   barColor: string;
+  icon?: ReactElement;
 }
 
-function StatCard({ label, value, valueSuffix, valueColor, change, changeColor, barPercent, barColor }: StatCardProps) {
+function StatCard({ label, value, valueSuffix, valueColor, change, changeColor, barPercent, barColor: _barColor, icon }: StatCardProps) {
   return (
-    <div className="bg-white rounded-2xl p-6 border border-border-gray">
+    <div className="bg-white rounded-2xl p-5 border border-border-gray hover:shadow-sm transition-shadow duration-200">
+      {icon && (
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-soft-gray flex items-center justify-center flex-shrink-0">
+            {icon}
+          </div>
+        </div>
+      )}
       <div className="text-xs font-medium text-muted-stone tracking-wide mb-2">
         {label}
       </div>
@@ -121,10 +135,10 @@ function StatCard({ label, value, valueSuffix, valueColor, change, changeColor, 
           {change}
         </div>
       )}
-      <div className="w-full h-1 bg-soft-gray rounded-full mt-3 overflow-hidden">
+      <div className="h-2 bg-soft-gray rounded-full mt-3 overflow-hidden">
         <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${barPercent}%`, background: barColor }}
+          className="h-full rounded-full bg-gradient-to-r from-burgundy/60 to-burgundy transition-all duration-700"
+          style={{ width: `${barPercent}%` }}
         />
       </div>
     </div>

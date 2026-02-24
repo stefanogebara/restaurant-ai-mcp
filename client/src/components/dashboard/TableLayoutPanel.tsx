@@ -139,7 +139,13 @@ export default function TableLayoutPanel({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-5 border-b border-soft-gray">
           <div className="flex items-center gap-2.5">
             <span className="text-[15px] font-semibold text-deep-charcoal tracking-tight">{t.tableLayout}</span>
-            <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">Live</span>
+            <span className="relative flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
+              <span className="relative flex h-2 w-2 flex-shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+              </span>
+              Live
+            </span>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -177,7 +183,7 @@ export default function TableLayoutPanel({
         </div>
 
         {/* Table View */}
-        <div className={`p-4 ${viewMode === 'grid' ? 'bg-soft-gray' : ''}`}>
+        <div className={`p-5 sm:p-6 min-h-[420px] ${viewMode === 'grid' ? 'bg-soft-gray' : ''}`}>
           {viewMode === 'floorplan' ? (
             <FloorPlanView
               tables={tables}

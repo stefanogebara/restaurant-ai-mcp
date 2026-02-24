@@ -242,16 +242,24 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
           <div className="h-4 bg-border-gray rounded w-1/2" />
         </div>
       ) : notes.length === 0 ? (
-        <p className="text-sm text-muted-stone">{t.noNotes}</p>
+        <div className="text-center py-8 px-4">
+          <div className="w-12 h-12 rounded-2xl bg-soft-gray flex items-center justify-center mb-3 mx-auto">
+            <svg className="w-5 h-5 text-muted-stone" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+          </div>
+          <p className="text-sm font-semibold text-deep-charcoal mb-1">No notes yet</p>
+          <p className="text-xs text-muted-stone">{t.noNotes}</p>
+        </div>
       ) : (
         <div className="space-y-2 max-h-80 overflow-y-auto">
           {notes.map((note) => (
             <div
               key={note.id}
-              className="flex items-start gap-2 p-3 rounded-lg bg-warm-white border border-border-gray group"
+              className="flex items-start gap-2 p-4 rounded-lg bg-warm-white border border-border-gray group"
             >
               <span
-                className={`shrink-0 mt-0.5 text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                className={`shrink-0 mt-0.5 text-xs px-2 py-0.5 rounded font-medium ${
                   note.is_policy
                     ? 'bg-blue-100 text-blue-700'
                     : 'bg-amber-100 text-amber-700'

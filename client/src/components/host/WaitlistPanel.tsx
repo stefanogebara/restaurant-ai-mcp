@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { ClipboardList } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -240,19 +241,19 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
       {/* Waitlist Entries */}
       <div className="overflow-y-auto flex-1">
         {filteredWaitlist.length === 0 ? (
-          <div className="p-8 text-center text-stone-gray">
-            <div className="text-4xl mb-2">
-              {activeTab === 'active' ? '📋' : activeTab === 'seated' ? '🍽️' : '📭'}
-            </div>
-            <div className="font-medium">
-              {activeTab === 'active' && t('waitlist.noActive')}
-              {activeTab === 'seated' && t('waitlist.noSeated')}
-              {activeTab === 'removed' && t('waitlist.noRemoved')}
-            </div>
-            {activeTab === 'active' && (
-              <div className="text-sm text-muted-stone">{t('waitlist.addGuestHint')}</div>
-            )}
+          <div className="py-10 px-4 text-center text-stone-gray">
+          <div className="w-12 h-12 rounded-2xl bg-soft-gray flex items-center justify-center mb-3 mx-auto">
+            <ClipboardList className="w-5 h-5 text-muted-stone" />
           </div>
+          <div className="font-medium">
+            {activeTab === 'active' && t('waitlist.noActive')}
+            {activeTab === 'seated' && t('waitlist.noSeated')}
+            {activeTab === 'removed' && t('waitlist.noRemoved')}
+          </div>
+          {activeTab === 'active' && (
+            <div className="text-sm text-muted-stone">{t('waitlist.addGuestHint')}</div>
+          )}
+        </div>
         ) : activeTab === 'active' ? (
           // Grouped view for active tab
           <>
@@ -390,7 +391,7 @@ function WaitlistEntryCard({
   const tags = getTags(entry.special_requests);
 
   return (
-    <div className={`px-3 py-2.5 border-b border-border-gray/50 hover:bg-warm-white transition-colors ${
+    <div className={`px-3 py-4 border-b border-border-gray/50 hover:bg-warm-white transition-colors ${
       isTableReady ? 'bg-green-600/5' : ''
     }`}>
       {/* Row 1: Avatar, Name, Party Size, Status */}

@@ -141,7 +141,7 @@ export default function Sidebar() {
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className={`py-8 ${isCollapsed ? 'px-4' : 'px-7'} flex items-center justify-between`}>
+          <div className={`py-6 ${isCollapsed ? 'px-6' : 'px-6'} flex items-center justify-between`}>
             {!isCollapsed ? (
               <h1 className="font-serif text-[22px] font-semibold text-white tracking-tight">
                 seatable<span className="text-burgundy">.</span>
@@ -166,10 +166,10 @@ export default function Sidebar() {
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto">
             {navSections.map((section) => (
-              <div key={section.label} className="mb-7">
+              <div key={section.label} className="mb-5">
                 {/* Section Label */}
                 {!isCollapsed && (
-                  <div className="px-7 mb-2 text-[10px] font-semibold tracking-[2px] uppercase text-stone-gray">
+                  <div className="px-6 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-gray/70">
                     {t(NAV_KEYS[section.label] ?? section.label, section.label)}
                   </div>
                 )}
@@ -181,6 +181,7 @@ export default function Sidebar() {
 
 
                 {/* Nav Items */}
+                <div className="space-y-1">
                 {section.items.map((item) => {
                   const active = isActive(item.path);
                   const hasAccess = hasFeatureAccess(planType, item.requiredFeature);
@@ -193,7 +194,7 @@ export default function Sidebar() {
                         className={`
                           w-full flex items-center gap-3 text-left transition-all duration-150
                           opacity-30 cursor-not-allowed text-muted-stone
-                          ${isCollapsed ? 'justify-center px-4 py-2.5' : 'px-7 py-2.5'}
+                          ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
                         `}
                         title={isCollapsed
                           ? `${item.label} - Upgrade to unlock`
@@ -221,7 +222,7 @@ export default function Sidebar() {
                       onClick={() => setIsMobileOpen(false)}
                       className={`
                         flex items-center gap-3 transition-all duration-150
-                        ${isCollapsed ? 'justify-center px-4 py-2.5' : 'px-7 py-2.5'}
+                        ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
                         ${active
                           ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
                           : 'text-muted-stone hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
@@ -241,14 +242,15 @@ export default function Sidebar() {
                     </Link>
                   );
                 })}
+                </div>
               </div>
             ))}
 
             {/* Team section — owner only */}
             {can('manageTeam') && (
-              <div className="mb-7">
+              <div className="mb-5">
                 {!isCollapsed && (
-                  <div className="px-7 mb-2 text-[10px] font-semibold tracking-[2px] uppercase text-stone-gray">
+                  <div className="px-6 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-gray/70">
                     {t('navigation.sectionManage', 'Manage')}
                   </div>
                 )}
@@ -262,7 +264,7 @@ export default function Sidebar() {
                   onClick={() => setIsMobileOpen(false)}
                   className={`
                     flex items-center gap-3 transition-all duration-150
-                    ${isCollapsed ? 'justify-center px-4 py-2.5' : 'px-7 py-2.5'}
+                    ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
                     ${isActive('/host-dashboard/team')
                       ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
                       : 'text-muted-stone hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
@@ -302,7 +304,7 @@ export default function Sidebar() {
                     <p className="text-[13px] font-medium text-stone-300 truncate">
                       {userName}
                     </p>
-                    <p className="text-[11px] text-warm-stone truncate">
+                    <p className="text-xs text-warm-stone truncate">
                       {userEmail}
                     </p>
                   </div>

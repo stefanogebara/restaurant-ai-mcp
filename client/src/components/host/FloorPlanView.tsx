@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import type { Table, ActiveParty } from '../../types/host.types';
 
 interface FloorPlanViewProps {
@@ -90,12 +90,10 @@ const hasPositionData = (tables: Table[]) =>
     (t.position_x !== 0 || t.position_y !== 0),
   );
 
-const autoLayoutTables = (tables: Table[]) => {
-  // Use a narrower canvas (520px) so tables render at a comfortable size
-  // in the dashboard panel (~400-600px wide container).
-  const GAP = 28;
+const autoLayoutTables = (tables: Table[], canvasWidth: number) => {
+  const GAP = 32;
   const PAD = 20;
-  const W = 520;
+  const W = canvasWidth;
   const sorted = [...tables].sort(
     (a, b) => (Number(a.table_number) || 0) - (Number(b.table_number) || 0),
   );
@@ -321,6 +319,21 @@ export default function FloorPlanView({
   compact = false,
 }: FloorPlanViewProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(680);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const w = Math.floor(entry.contentRect.width);
+        if (w > 0) setContainerWidth(w);
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const tablePartyMap = useMemo(() => {
     const map = new Map<string, PartyInfo>();
@@ -361,10 +374,11 @@ export default function FloorPlanView({
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" ref={containerRef}>
       {Object.entries(tablesByLocation).map(([location, locTables]) => {
         const useAuto = !hasPositionData(locTables);
-        const layout = useAuto ? autoLayoutTables(locTables) : null;
+        const canvasWidth = Math.max(380, containerWidth - 32);
+        const layout = useAuto ? autoLayoutTables(locTables, canvasWidth) : null;
 
         let manualPos: { table: Table; x: number; y: number; w: number; h: number }[] = [];
         let manualBounds = { width: 0, height: 0 };
@@ -390,13 +404,25 @@ export default function FloorPlanView({
         return (
           <div key={location}>
             {/* Section header */}
-            <div className="flex items-center gap-2 mb-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-burgundy flex-shrink-0" />
-              <span className="text-sm font-semibold text-deep-charcoal">{location}</span>
-              <span className="text-xs text-muted-stone font-normal ml-0.5">
-                {locTables.length} table{locTables.length !== 1 ? 's' : ''}
-              </span>
-            </div>
+            {(() => {
+              const locationColors: Record<string, string> = {
+                'Indoor': '#6366f1',
+                'Patio': '#10b981',
+                'Bar': '#f59e0b',
+                'Main': '#8b5cf6',
+              };
+              const dotColor = locationColors[location] || '#6b7280';
+              return (
+                <div className="flex items-center gap-3 mb-4 mt-2">
+                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: dotColor }} />
+                  <span className="text-sm font-semibold text-deep-charcoal">{location}</span>
+                  <span className="text-xs bg-soft-gray text-muted-stone px-2 py-0.5 rounded-full font-medium flex-shrink-0">
+                    {locTables.length} {locTables.length === 1 ? 'table' : 'tables'}
+                  </span>
+                  <div className="flex-1 h-px bg-border-gray" />
+                </div>
+              );
+            })()}
 
             <div
               className="rounded-xl overflow-hidden border border-border-gray bg-white"

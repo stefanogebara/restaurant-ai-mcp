@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { CalendarX } from 'lucide-react';
 import type { UpcomingReservation } from '../../types/host.types';
 
 interface ReservationsListProps {
@@ -107,11 +108,9 @@ export default function ReservationsList({
 
       {/* List */}
       {displayed.length === 0 ? (
-        <div className="text-center py-12 px-4">
-          <div className="w-14 h-14 bg-soft-gray rounded-2xl flex items-center justify-center mx-auto mb-3">
-            <svg className="w-7 h-7 text-muted-stone" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+        <div className="text-center py-10 px-4">
+          <div className="w-12 h-12 rounded-2xl bg-soft-gray flex items-center justify-center mb-3 mx-auto">
+            <CalendarX className="w-5 h-5 text-muted-stone" />
           </div>
           <p className="text-sm font-semibold text-deep-charcoal mb-1">{t.allClear}</p>
           <p className="text-xs text-stone-gray">
@@ -178,10 +177,13 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
     ? { label: 'At Risk', classes: 'bg-[rgba(217,119,6,0.08)] text-amber-600' }
     : { label: 'Confirmed', classes: 'bg-[rgba(22,163,74,0.08)] text-green-600' };
 
+  const hue = (reservation.customer_name?.charCodeAt(0) ?? 65) * 137 % 360;
+  const avatarStyle = { background: `linear-gradient(135deg, hsl(${hue},50%,75%), hsl(${(hue + 40) % 360},50%,65%))` };
+
   return (
-    <div className="flex items-center px-6 py-4 border-b border-warm-white last:border-b-0 gap-4 hover:bg-warm-white/50 transition-colors">
+    <div className="flex items-center px-6 py-[18px] border-b border-warm-white last:border-b-0 gap-4 hover:bg-warm-white/50 transition-colors">
       {/* Avatar */}
-      <div className="w-9 h-9 rounded-[10px] bg-soft-gray flex items-center justify-center text-[13px] font-semibold text-warm-stone flex-shrink-0">
+      <div className="w-9 h-9 rounded-[10px] flex items-center justify-center text-[13px] font-semibold text-warm-stone flex-shrink-0" style={avatarStyle}>
         {initials}
       </div>
 
@@ -206,24 +208,36 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
           <button
             onClick={onCheckIn}
             aria-label={t.checkIn}
-            className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${statusBadge.classes}`}
+            className={`text-xs font-semibold px-3 py-1 rounded-full ${statusBadge.classes}`}
           >
-            {statusBadge.label}
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0" />
+              {statusBadge.label}
+            </span>
           </button>
         ) : isHighRisk && !(reservation as any).intervention_taken ? (
           <button
             onClick={onIntervention}
-            className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[rgba(217,119,6,0.08)] text-amber-600"
+            className="text-xs font-semibold px-3 py-1 rounded-full bg-[rgba(217,119,6,0.08)] text-amber-600"
           >
-            {t.takeAction}
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0" />
+              {t.takeAction}
+            </span>
           </button>
         ) : (reservation as any).intervention_taken ? (
-          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[rgba(22,163,74,0.08)] text-green-600">
-            {t.actionTaken}
+          <span className="text-xs font-semibold px-3 py-1 rounded-full bg-[rgba(22,163,74,0.08)] text-green-600">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0" />
+              {t.actionTaken}
+            </span>
           </span>
         ) : (
-          <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${statusBadge.classes}`}>
-            {statusBadge.label}
+          <span className={`text-xs font-semibold px-3 py-1 rounded-full ${statusBadge.classes}`}>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0" />
+              {statusBadge.label}
+            </span>
           </span>
         )}
       </div>
