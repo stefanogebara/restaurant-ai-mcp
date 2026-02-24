@@ -407,7 +407,7 @@ export default function CallTrackingDashboard() {
           {phoneStatus && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
               {/* Connection Status */}
-              <div className="bg-soft-gray/30 rounded-lg p-3 border border-border-gray/50">
+              <div className="bg-soft-gray/30 rounded-xl p-3 border border-border-gray/50">
                 <p className="text-xs text-stone-gray mb-1">Connection</p>
                 <div className="flex items-center gap-2">
                   {phoneStatus.status === 'active' ? (
@@ -422,7 +422,7 @@ export default function CallTrackingDashboard() {
               </div>
 
               {/* Phone Number */}
-              <div className="bg-soft-gray/30 rounded-lg p-3 border border-border-gray/50">
+              <div className="bg-soft-gray/30 rounded-xl p-3 border border-border-gray/50">
                 <p className="text-xs text-stone-gray mb-1">Phone Number</p>
                 <p className="text-sm font-medium text-deep-charcoal">
                   {phoneStatus.phone_number || 'None assigned'}
@@ -430,7 +430,7 @@ export default function CallTrackingDashboard() {
               </div>
 
               {/* Agent ID */}
-              <div className="bg-soft-gray/30 rounded-lg p-3 border border-border-gray/50">
+              <div className="bg-soft-gray/30 rounded-xl p-3 border border-border-gray/50">
                 <p className="text-xs text-stone-gray mb-1">Agent ID</p>
                 <p className="text-sm font-medium text-deep-charcoal font-mono truncate" title={phoneStatus.agent_id || undefined}>
                   {phoneStatus.agent_id
@@ -441,7 +441,7 @@ export default function CallTrackingDashboard() {
               </div>
 
               {/* Configured Date */}
-              <div className="bg-soft-gray/30 rounded-lg p-3 border border-border-gray/50">
+              <div className="bg-soft-gray/30 rounded-xl p-3 border border-border-gray/50">
                 <p className="text-xs text-stone-gray mb-1">Configured</p>
                 <p className="text-sm font-medium text-deep-charcoal">
                   {formatConfiguredDate(phoneStatus.configured_at)}
@@ -563,15 +563,15 @@ export default function CallTrackingDashboard() {
               <div className="space-y-4">
                 {/* Agent Info Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="bg-soft-gray/30 rounded-lg p-3">
+                  <div className="bg-soft-gray/30 rounded-xl p-3">
                     <p className="text-xs text-stone-gray mb-1">Agent Name</p>
                     <p className="text-sm font-medium text-deep-charcoal">{diagnoseData.agent_name || 'Unnamed'}</p>
                   </div>
-                  <div className="bg-soft-gray/30 rounded-lg p-3">
+                  <div className="bg-soft-gray/30 rounded-xl p-3">
                     <p className="text-xs text-stone-gray mb-1">Language</p>
                     <p className="text-sm font-medium text-deep-charcoal uppercase">{diagnoseData.language || 'Not set'}</p>
                   </div>
-                  <div className="bg-soft-gray/30 rounded-lg p-3">
+                  <div className="bg-soft-gray/30 rounded-xl p-3">
                     <p className="text-xs text-stone-gray mb-1">Tools (via tool_ids)</p>
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium text-deep-charcoal">{diagnoseData.tool_ids_count} configured</p>
@@ -623,7 +623,7 @@ export default function CallTrackingDashboard() {
                 {diagnoseData.first_message && (
                   <div>
                     <p className="text-xs text-stone-gray mb-1">First Message Preview</p>
-                    <div className="bg-soft-gray/30 rounded-lg p-3">
+                    <div className="bg-soft-gray/30 rounded-xl p-3">
                       <p className="text-sm text-deep-charcoal italic">
                         "{diagnoseData.first_message.length > 200
                           ? diagnoseData.first_message.substring(0, 200) + '...'

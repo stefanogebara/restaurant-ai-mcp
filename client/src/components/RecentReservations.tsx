@@ -248,7 +248,7 @@ export default function RecentReservations() {
           )}
 
           {/* Status Badge */}
-          <div className="flex items-center justify-center gap-2 bg-emerald-500/10 p-3 rounded-lg border border-emerald-500/20">
+          <div className="flex items-center justify-center gap-2 bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20">
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
             <span className="text-emerald-800 font-semibold">
               {latestReservation.status || 'Confirmed'}
