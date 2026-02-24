@@ -115,7 +115,7 @@ export default function RestaurantProfileQuestionnaire({
               type="button"
               onClick={() => setValue('restaurant_type', type)}
               className={`
-                bg-white border rounded-xl shadow-sm p-6 text-left transition-all duration-200 cursor-pointer
+                bg-white border rounded-2xl shadow-sm p-6 text-left transition-all duration-200 cursor-pointer
                 ${isSelected ? 'ring-2 ring-burgundy bg-burgundy/5 border-burgundy/30' : 'border-border-gray hover:bg-soft-gray'}
               `}
             >
@@ -204,7 +204,7 @@ export default function RestaurantProfileQuestionnaire({
                 type="button"
                 onClick={() => setValue('size', size)}
                 className={`
-                  bg-white border rounded-xl shadow-sm p-4 text-center transition-all duration-200 cursor-pointer
+                  bg-white border rounded-2xl shadow-sm p-4 text-center transition-all duration-200 cursor-pointer
                   ${isSelected ? 'ring-2 ring-burgundy bg-burgundy/5 border-burgundy/30' : 'border-border-gray hover:bg-soft-gray'}
                 `}
               >
@@ -254,7 +254,7 @@ export default function RestaurantProfileQuestionnaire({
                 type="button"
                 onClick={() => setValue('location_type', locationType)}
                 className={`
-                  bg-white border rounded-xl shadow-sm p-4 text-left transition-all duration-200 cursor-pointer
+                  bg-white border rounded-2xl shadow-sm p-4 text-left transition-all duration-200 cursor-pointer
                   ${isSelected ? 'ring-2 ring-burgundy bg-burgundy/5 border-burgundy/30' : 'border-border-gray hover:bg-soft-gray'}
                 `}
               >
@@ -355,7 +355,7 @@ export default function RestaurantProfileQuestionnaire({
                 onClick={() => toggleConcern(concern)}
                 disabled={isDisabled}
                 className={`
-                  bg-white border rounded-xl shadow-sm p-5 text-left transition-all duration-200 cursor-pointer
+                  bg-white border rounded-2xl shadow-sm p-5 text-left transition-all duration-200 cursor-pointer
                   ${isSelected ? 'ring-2 ring-burgundy bg-burgundy/5 border-burgundy/30' : 'border-border-gray hover:bg-soft-gray'}
                   ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
@@ -456,7 +456,7 @@ export default function RestaurantProfileQuestionnaire({
               type="button"
               onClick={() => setValue('template', template)}
               className={`
-                bg-white border rounded-xl shadow-sm p-6 text-left transition-all duration-200 cursor-pointer w-full
+                bg-white border rounded-2xl shadow-sm p-6 text-left transition-all duration-200 cursor-pointer w-full
                 ${isSelected ? 'ring-2 ring-burgundy bg-burgundy/5 border-burgundy/30' : 'border-border-gray hover:bg-soft-gray'}
               `}
             >

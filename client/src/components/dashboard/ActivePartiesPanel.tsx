@@ -88,7 +88,7 @@ export default function ActivePartiesPanel({
       ) : (
         <div className="max-h-[400px] overflow-y-auto py-1">
           {parties.map((party) => (
-            <div key={party.service_id} className="mx-2 my-1.5 rounded-xl border border-border-gray bg-white p-4 hover:shadow-sm transition-shadow duration-200">
+            <div key={party.service_id} className="mx-2 my-1.5 rounded-2xl border border-border-gray bg-white p-4 hover:shadow-sm transition-shadow duration-200">
               <PartyRow
                 party={party}
                 onComplete={() => onCompleteService(party)}

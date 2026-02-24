@@ -425,7 +425,7 @@ export default function VoiceSettingsPage() {
               <button
                 type="button"
                 onClick={() => handleEngineSwitch('elevenlabs')}
-                className={`text-left p-4 rounded-xl border-2 transition-all ${
+                className={`text-left p-4 rounded-2xl border-2 transition-all ${
                   currentEngine === 'elevenlabs'
                     ? 'border-burgundy bg-burgundy/5'
                     : 'border-border-gray hover:border-muted-stone'
@@ -448,7 +448,7 @@ export default function VoiceSettingsPage() {
               <button
                 type="button"
                 onClick={() => handleEngineSwitch('openai_realtime')}
-                className={`text-left p-4 rounded-xl border-2 transition-all ${
+                className={`text-left p-4 rounded-2xl border-2 transition-all ${
                   currentEngine === 'openai_realtime'
                     ? 'border-burgundy bg-burgundy/5'
                     : 'border-border-gray hover:border-muted-stone'
@@ -739,7 +739,7 @@ export default function VoiceSettingsPage() {
                       key={voice.id}
                       type="button"
                       onClick={() => setPendingOpenAIVoice(voice.id)}
-                      className={`text-left p-4 rounded-xl border-2 transition-all ${
+                      className={`text-left p-4 rounded-2xl border-2 transition-all ${
                         currentOpenAIVoice === voice.id
                           ? 'border-burgundy bg-burgundy/5'
                           : 'border-border-gray hover:border-muted-stone'
