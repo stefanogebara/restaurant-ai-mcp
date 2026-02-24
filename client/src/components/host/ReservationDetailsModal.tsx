@@ -179,7 +179,10 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
                   <div className="text-xs text-muted-stone">Customer Type</div>
                   <div className="text-deep-charcoal font-medium">{reservation.customer_type}</div>
                   {reservation.first_time_visitor && (
-                    <div className="text-xs text-amber-600 mt-1">⭐ First Time Visitor</div>
+                    <div className="flex items-center gap-1 text-xs text-amber-600 mt-1">
+                      <ThiingsIcon name="star" pxSize={12} />
+                      First Time Visitor
+                    </div>
                   )}
                 </div>
               </div>
