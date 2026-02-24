@@ -31,6 +31,7 @@ import CheckInModal from '../components/host/CheckInModal';
 import QuickInterventionModal from '../components/host/QuickInterventionModal';
 import type { UpcomingReservation, ActiveParty } from '../types/host.types';
 import { trackFirstReservationCreated } from '../lib/analytics';
+import ThiingsIcon from '../components/common/ThiingsIcon';
 
 function maybeTrackFirstReservation() {
   if (!localStorage.getItem('seatable_first_reservation_tracked')) {
@@ -141,9 +142,7 @@ export default function Dashboard() {
         <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
           <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8 max-w-md text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <ThiingsIcon name="alert-circle" pxSize={32} className="text-red-600" />
             </div>
             <h3 className="text-lg font-bold text-red-900 mb-2">{t('dashboard.errorTitle')}</h3>
             <p className="text-sm text-red-700 mb-4">{t('errors.serverError')}</p>
@@ -268,9 +267,7 @@ export default function Dashboard() {
           onClick={() => setShowWalkInModal(true)}
           className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-deep-charcoal hover:bg-charcoal-dark hover:scale-105 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <ThiingsIcon name="plus" pxSize={24} />
         </button>
       </div>
 

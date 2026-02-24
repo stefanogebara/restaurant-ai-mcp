@@ -16,6 +16,7 @@ import type { OnboardingData } from '../../types/onboarding.types';
 import { useRestaurantLearning } from '../../hooks/useRestaurantLearning';
 import ResearchLoadingState from './restaurant-learning/ResearchLoadingState';
 import LearningChat from './restaurant-learning/LearningChat';
+import ThiingsIcon from '../common/ThiingsIcon';
 import PersonaPreviewComponent from './restaurant-learning/PersonaPreview';
 
 interface Step1_5Props {
@@ -138,9 +139,7 @@ export default function Step1_5RestaurantLearning({ data, updateData, onNext, on
             className="inline-flex items-center justify-center w-10 h-10 bg-burgundy/10 rounded-full flex-shrink-0"
             aria-hidden="true"
           >
-            <svg className="w-5 h-5 text-burgundy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
-            </svg>
+            <ThiingsIcon name="sparkles" pxSize={20} className="text-burgundy" />
           </div>
           <h2 className="font-serif text-2xl font-bold text-deep-charcoal">
             Let&apos;s teach your AI about {data.restaurant_name}
@@ -168,9 +167,7 @@ export default function Step1_5RestaurantLearning({ data, updateData, onNext, on
                   `}
                 >
                   {isComplete ? (
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
+                    <ThiingsIcon name="check" pxSize={12} aria-hidden={true} />
                   ) : (
                     i + 1
                   )}
@@ -204,9 +201,7 @@ export default function Step1_5RestaurantLearning({ data, updateData, onNext, on
             aria-live="assertive"
             className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 overflow-hidden"
           >
-            <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+            <ThiingsIcon name="alert-triangle" pxSize={20} className="text-red-500 flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-red-700">Something went wrong</p>
               <p className="text-sm text-red-600 mt-0.5">
@@ -290,9 +285,7 @@ export default function Step1_5RestaurantLearning({ data, updateData, onNext, on
                 transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
               />
               <div className="absolute inset-0 flex items-center justify-center">
-                <svg className="w-5 h-5 text-burgundy/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-                </svg>
+                <ThiingsIcon name="sparkles" pxSize={20} className="text-burgundy/50" />
               </div>
             </div>
             <div className="text-center space-y-1">
@@ -312,9 +305,7 @@ export default function Step1_5RestaurantLearning({ data, updateData, onNext, on
           aria-label={isLoading && phase === 'research' ? 'Back unavailable while researching' : 'Go back to previous step'}
           className="px-5 py-2.5 bg-white hover:bg-soft-gray border border-border-gray text-deep-charcoal font-semibold rounded-xl transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-burgundy focus:ring-offset-2"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ThiingsIcon name="chevron-left" pxSize={16} />
           Back
         </button>
         <button

@@ -12,6 +12,7 @@ import TableUtilizationHeatmap from '../components/analytics/TableUtilizationHea
 import StatusBreakdownPie from '../components/analytics/StatusBreakdownPie';
 import NoShowPredictions from '../components/analytics/NoShowPredictions';
 import RevenueOpportunities from '../components/analytics/RevenueOpportunities';
+import ThiingsIcon from '../components/common/ThiingsIcon';
 
 interface AnalyticsData {
   overview: {
@@ -95,9 +96,7 @@ export default function AnalyticsDashboard() {
         <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
           <div className="bg-white rounded-2xl p-8 border border-border-gray max-w-md text-center">
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <ThiingsIcon name="alert-circle" pxSize={32} className="text-red-600" />
             </div>
             <h3 className="text-lg font-bold text-deep-charcoal mb-2">{t('analytics.errorTitle')}</h3>
             <p className="text-sm text-warm-stone mb-6">{error}</p>

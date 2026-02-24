@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
 import type { ProfileQuestionnaireData } from '../../types/profile.types';
 import RestaurantProfileQuestionnaire from './RestaurantProfileQuestionnaire';
+import ThiingsIcon from '../common/ThiingsIcon';
 export default function Step1_5Profile({ data, updateData, onNext, onBack }: OnboardingStepProps) {
   const handleProfileComplete = (profileData: ProfileQuestionnaireData) => {
     updateData({ profile_data: profileData });
@@ -59,9 +60,7 @@ export default function Step1_5Profile({ data, updateData, onNext, onBack }: Onb
           onClick={onBack}
           className="px-6 py-3 bg-white hover:bg-soft-gray border border-border-gray text-deep-charcoal font-semibold rounded-xl flex items-center gap-2 transition-colors"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ThiingsIcon name="chevron-left" pxSize={20} />
           Back to Restaurant Info
         </button>
       </div>
