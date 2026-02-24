@@ -59,7 +59,7 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
             className={`
               ${getUtilizationColor(table.utilization_rate)}
               ${getTextColor(table.utilization_rate)}
-              border rounded-lg p-4 transition-colors duration-200
+              border rounded-xl p-4 transition-colors duration-200
               flex flex-col items-center justify-center text-center
             `}
           >
@@ -98,13 +98,13 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
 
       {/* Insights */}
       <div className="space-y-2">
-        <div className="p-3 bg-burgundy/10 border border-burgundy/20 rounded-lg">
+        <div className="p-3 bg-burgundy/10 border border-burgundy/20 rounded-xl">
           <p className="text-xs text-warm-stone">
             <span className="font-semibold text-deep-charcoal">Most Used:</span>{' '}
             Table {mostUsed.table_number} ({mostUsed.utilization_rate}%) - {mostUsed.times_used} services
           </p>
         </div>
-        <div className="p-3 bg-soft-gray/50 border border-border-gray/50 rounded-lg">
+        <div className="p-3 bg-soft-gray/50 border border-border-gray/50 rounded-xl">
           <p className="text-xs text-warm-stone">
             <span className="font-semibold text-deep-charcoal">Least Used:</span>{' '}
             Table {leastUsed.table_number} ({leastUsed.utilization_rate}%) - {leastUsed.times_used} services

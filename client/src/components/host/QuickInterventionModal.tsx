@@ -324,7 +324,7 @@ export default function QuickInterventionModal({
 
           {/* Error Message */}
           {error && (
-            <div className="p-3 bg-red-600/10 border border-red-600/20 rounded-lg text-red-600 text-sm">
+            <div className="p-3 bg-red-600/10 border border-red-600/20 rounded-xl text-red-600 text-sm">
               {error}
             </div>
           )}

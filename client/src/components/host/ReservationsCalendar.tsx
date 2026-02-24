@@ -209,7 +209,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
                   {reservationsByDate[date].map((reservation) => (
                     <div
                       key={reservation.reservation_id}
-                      className="bg-soft-gray rounded-lg p-3 border border-border-gray"
+                      className="bg-soft-gray rounded-xl p-3 border border-border-gray"
                     >
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex-1">

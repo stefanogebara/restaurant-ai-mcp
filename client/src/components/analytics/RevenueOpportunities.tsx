@@ -144,12 +144,12 @@ export default function RevenueOpportunities() {
 
                 {/* Metrics */}
                 <div className="grid grid-cols-2 gap-4 mt-4">
-                  <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                  <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3">
                     <div className="text-xs text-green-600 font-medium mb-1">Potential Gain</div>
                     <div className="text-2xl font-bold text-green-700">{formatCurrency(opp.potential_gain)}</div>
                     <div className="text-xs text-green-600 mt-1">{opp.recovery_rate} recovery rate</div>
                   </div>
-                  <div className="bg-soft-gray/50 border border-border-gray rounded-lg p-3">
+                  <div className="bg-soft-gray/50 border border-border-gray rounded-xl p-3">
                     <div className="text-xs text-warm-stone font-medium mb-1">Timeline</div>
                     <div className="text-lg font-bold text-deep-charcoal">{opp.estimated_timeline}</div>
                     <div className={`text-xs px-2 py-1 rounded-full inline-block mt-1 ${getDifficultyBadge(opp.implementation_difficulty)}`}>
@@ -170,7 +170,7 @@ export default function RevenueOpportunities() {
                   </div>
                   <div className="space-y-2">
                     {opp.actions.map((action, idx) => (
-                      <div key={idx} className="flex items-start gap-3 bg-white border border-border-gray rounded-lg p-3">
+                      <div key={idx} className="flex items-start gap-3 bg-white border border-border-gray rounded-xl p-3">
                         <div className="w-6 h-6 rounded-full bg-burgundy text-white flex items-center justify-center text-xs font-bold mt-0.5">
                           {idx + 1}
                         </div>

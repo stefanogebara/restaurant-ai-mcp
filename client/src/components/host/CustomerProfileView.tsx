@@ -416,7 +416,7 @@ export default function CustomerProfileView() {
 
           {textSignals ? (
             <div className="space-y-4">
-              <div className="p-3 bg-amber-600/5 rounded-lg border border-amber-600/20">
+              <div className="p-3 bg-amber-600/5 rounded-xl border border-amber-600/20">
                 <div className="text-xs text-stone-gray mb-1">
                   Based on {textSignals.text_sources_count} text sources (AI confidence: {textSignals.ai_confidence}%)
                 </div>
@@ -476,7 +476,7 @@ export default function CustomerProfileView() {
               <ThiingsIcon name="sparkles" pxSize={32} className="mx-auto mb-2 opacity-30" />
               <p className="text-sm">No AI insights available yet.</p>
               <p className="text-xs mt-1">Run analysis to extract signals from text data.</p>
-              <button onClick={handleAnalyze} className="mt-3 px-4 py-2 bg-amber-600 text-white text-sm rounded-lg hover:bg-amber-700 transition-colors">
+              <button onClick={handleAnalyze} className="mt-3 px-4 py-2 bg-amber-600 text-white text-sm rounded-xl hover:bg-amber-700 transition-colors">
                 Analyze with AI
               </button>
             </div>
@@ -500,7 +500,7 @@ export default function CustomerProfileView() {
 
         <div className="mt-4 space-y-2">
           {(showAllReservations ? data.reservations : data.reservations.slice(0, 5)).map((res) => (
-            <div key={res.id} className="flex items-center justify-between p-3 bg-soft-gray rounded-lg">
+            <div key={res.id} className="flex items-center justify-between p-3 bg-soft-gray rounded-xl">
               <div className="flex items-center gap-4">
                 <div>
                   <div className="text-sm font-medium text-deep-charcoal">
@@ -542,7 +542,7 @@ export default function CustomerProfileView() {
           {data.predictions.length > 0 ? (
             <div className="space-y-3">
               {data.predictions.map((pred, i) => (
-                <div key={i} className="p-3 bg-green-600/5 rounded-lg border border-green-600/20">
+                <div key={i} className="p-3 bg-green-600/5 rounded-xl border border-green-600/20">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-medium text-deep-charcoal capitalize">{pred.prediction_type.replace(/_/g, ' ')}</div>
                     <div className="text-xs text-stone-gray">{Math.round(pred.confidence_score * 100)}% confidence</div>
@@ -566,7 +566,7 @@ export default function CustomerProfileView() {
             <div className="mt-4 pt-4 border-t border-border-gray">
               <div className="text-sm font-semibold text-deep-charcoal mb-2">Upcoming Occasions</div>
               {data.occasions.map((occ, i) => (
-                <div key={i} className="flex items-center justify-between p-2 bg-burgundy/5 rounded-lg mb-1">
+                <div key={i} className="flex items-center justify-between p-2 bg-burgundy/5 rounded-xl mb-1">
                   <span className="text-sm text-deep-charcoal capitalize">{occ.occasion_type}</span>
                   <span className="text-sm font-medium text-burgundy">
                     {new Date(occ.next_predicted_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -585,19 +585,19 @@ export default function CustomerProfileView() {
           </h2>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-amber-600/5 rounded-lg">
+              <div className="p-3 bg-amber-600/5 rounded-xl">
                 <div className="text-xs text-stone-gray">Total Revenue</div>
                 <div className="text-xl font-bold text-deep-charcoal">&euro;{data.revenue_summary.total_revenue.toFixed(2)}</div>
               </div>
-              <div className="p-3 bg-amber-600/5 rounded-lg">
+              <div className="p-3 bg-amber-600/5 rounded-xl">
                 <div className="text-xs text-stone-gray">Avg per Visit</div>
                 <div className="text-xl font-bold text-deep-charcoal">&euro;{data.revenue_summary.avg_revenue.toFixed(2)}</div>
               </div>
-              <div className="p-3 bg-amber-600/5 rounded-lg">
+              <div className="p-3 bg-amber-600/5 rounded-xl">
                 <div className="text-xs text-stone-gray">Total Tips</div>
                 <div className="text-xl font-bold text-deep-charcoal">&euro;{data.revenue_summary.total_tips.toFixed(2)}</div>
               </div>
-              <div className="p-3 bg-amber-600/5 rounded-lg">
+              <div className="p-3 bg-amber-600/5 rounded-xl">
                 <div className="text-xs text-stone-gray">Revenue Visits</div>
                 <div className="text-xl font-bold text-deep-charcoal">{data.revenue_summary.total_visits_with_revenue}</div>
               </div>

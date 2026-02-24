@@ -55,7 +55,7 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
       {isExpanded && (
         <div className="px-6 pb-6 space-y-3">
           {/* Total Reservations */}
-          <div className="flex items-center justify-between p-3 bg-soft-gray rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-soft-gray rounded-xl">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-burgundy rounded-lg flex items-center justify-center">
                 <ThiingsIcon name="calendar" size="sm" />
@@ -69,7 +69,7 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
           </div>
 
           {/* Completed Services */}
-          <div className="flex items-center justify-between p-3 bg-soft-gray rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-soft-gray rounded-xl">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
                 <ThiingsIcon name="check" size="sm" />
@@ -83,7 +83,7 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
           </div>
 
           {/* Avg Party Size */}
-          <div className="flex items-center justify-between p-3 bg-soft-gray rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-soft-gray rounded-xl">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center">
                 <ThiingsIcon name="users" size="sm" />
@@ -97,7 +97,7 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
           </div>
 
           {/* Avg Service Time */}
-          <div className="flex items-center justify-between p-3 bg-soft-gray rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-soft-gray rounded-xl">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center">
                 <ThiingsIcon name="clock" size="sm" />
