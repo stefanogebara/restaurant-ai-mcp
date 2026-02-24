@@ -162,7 +162,7 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
     <div className="bg-white rounded-2xl border border-border-gray p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-semibold text-warm-stone uppercase tracking-wider">
+          <h3 className="text-[15px] font-semibold text-deep-charcoal tracking-tight">
             {t.title}
           </h3>
           <p className="text-xs text-muted-stone mt-0.5">{t.subtitle}</p>
