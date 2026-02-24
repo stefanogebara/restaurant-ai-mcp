@@ -111,7 +111,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
               type="button"
               onClick={() => updateData({ restaurant_type: type })}
               className={`
-                p-4 rounded-xl border-2 transition-all duration-200 text-center font-semibold text-sm
+                p-4 rounded-2xl border-2 transition-all duration-200 text-center font-semibold text-sm
                 ${data.restaurant_type === type
                   ? 'border-burgundy bg-burgundy/10 text-burgundy'
                   : 'border-border-gray bg-white text-stone-gray hover:border-burgundy/50 hover:bg-warm-white'

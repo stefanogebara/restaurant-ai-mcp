@@ -152,7 +152,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
                     key={index}
                     onClick={() => handleSelectOption(option)}
                     className={`
-                      border-2 rounded-xl p-4 cursor-pointer transition-all
+                      border-2 rounded-2xl p-4 cursor-pointer transition-all
                       ${
                         selectedTables.join(',') === option.tables.join(',')
                           ? 'border-green-600 bg-green-600/10'

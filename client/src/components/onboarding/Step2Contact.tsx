@@ -214,7 +214,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
                 type="button"
                 onClick={() => applyServicePreset(type)}
                 className={`
-                  p-3 rounded-xl border-2 text-left transition-all
+                  p-3 rounded-2xl border-2 text-left transition-all
                   ${isSelected
                     ? 'border-burgundy bg-burgundy/5'
                     : 'border-border-gray bg-white hover:border-burgundy/50'

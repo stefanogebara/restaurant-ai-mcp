@@ -77,7 +77,7 @@ export default function TableCombinationSelector({
             key={index}
             onClick={() => handleSelectCombination(combination)}
             className={`
-              w-full text-left p-4 rounded-xl border-2 transition-all
+              w-full text-left p-4 rounded-2xl border-2 transition-all
               ${isSelected
                 ? 'border-burgundy bg-burgundy/10 shadow-lg'
                 : 'border-border-gray hover:border-burgundy/50 bg-white'

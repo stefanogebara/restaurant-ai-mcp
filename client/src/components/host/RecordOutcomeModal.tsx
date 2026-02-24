@@ -179,7 +179,7 @@ export default function RecordOutcomeModal({
                     <button
                       type="button"
                       onClick={() => setInterventionType('confirmation_call')}
-                      className={`p-3 rounded-xl border-2 transition-all ${
+                      className={`p-3 rounded-2xl border-2 transition-all ${
                         interventionType === 'confirmation_call'
                           ? 'border-burgundy bg-burgundy/10'
                           : 'border-border-gray hover:border-burgundy/50'
@@ -192,7 +192,7 @@ export default function RecordOutcomeModal({
                     <button
                       type="button"
                       onClick={() => setInterventionType('deposit_required')}
-                      className={`p-3 rounded-xl border-2 transition-all ${
+                      className={`p-3 rounded-2xl border-2 transition-all ${
                         interventionType === 'deposit_required'
                           ? 'border-violet-600 bg-violet-600/10'
                           : 'border-border-gray hover:border-violet-600/50'
@@ -205,7 +205,7 @@ export default function RecordOutcomeModal({
                     <button
                       type="button"
                       onClick={() => setInterventionType('premium_seating')}
-                      className={`p-3 rounded-xl border-2 transition-all ${
+                      className={`p-3 rounded-2xl border-2 transition-all ${
                         interventionType === 'premium_seating'
                           ? 'border-amber-600 bg-amber-600/10'
                           : 'border-border-gray hover:border-amber-600/50'

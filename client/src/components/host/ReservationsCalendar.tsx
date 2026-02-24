@@ -165,7 +165,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
               key={date}
               onClick={() => setSelectedDate(isSelected ? null : date)}
               className={`
-                w-full p-4 rounded-xl border-2 transition-all text-left
+                w-full p-4 rounded-2xl border-2 transition-all text-left
                 ${isSelected
                   ? 'border-burgundy bg-burgundy/5'
                   : isToday

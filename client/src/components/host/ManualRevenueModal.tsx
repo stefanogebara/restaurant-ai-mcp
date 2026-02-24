@@ -245,7 +245,7 @@ export default function ManualRevenueModal({
 
             {/* Search Results */}
             {searchResults.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-border-gray rounded-lg shadow-lg max-h-40 overflow-y-auto">
+              <div className="absolute z-10 w-full mt-1 bg-white border border-border-gray rounded-2xl shadow-lg max-h-40 overflow-y-auto">
                 {searchResults.map((customer) => (
                   <button
                     key={customer.customer_id}

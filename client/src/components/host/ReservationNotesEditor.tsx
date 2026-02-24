@@ -110,7 +110,7 @@ export default function ReservationNotesEditor({
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => setCustomerType('Tourist')}
-              className={`p-4 rounded-xl border-2 transition-all ${
+              className={`p-4 rounded-2xl border-2 transition-all ${
                 customerType === 'Tourist'
                   ? 'bg-burgundy/10 border-burgundy text-burgundy'
                   : 'bg-soft-gray border-border-gray text-stone-gray hover:border-burgundy/50'
@@ -123,7 +123,7 @@ export default function ReservationNotesEditor({
             </button>
             <button
               onClick={() => setCustomerType('Local')}
-              className={`p-4 rounded-xl border-2 transition-all ${
+              className={`p-4 rounded-2xl border-2 transition-all ${
                 customerType === 'Local'
                   ? 'bg-green-600/10 border-green-600 text-green-600'
                   : 'bg-soft-gray border-border-gray text-stone-gray hover:border-green-600/50'
@@ -149,7 +149,7 @@ export default function ReservationNotesEditor({
               <button
                 key={restriction}
                 onClick={() => toggleDietaryRestriction(restriction)}
-                className={`p-3 rounded-xl border-2 transition-all flex items-center justify-between ${
+                className={`p-3 rounded-2xl border-2 transition-all flex items-center justify-between ${
                   dietaryRestrictions.includes(restriction)
                     ? 'bg-green-600/10 border-green-600 text-green-600'
                     : 'bg-soft-gray border-border-gray text-stone-gray hover:border-green-600/50'
@@ -178,7 +178,7 @@ export default function ReservationNotesEditor({
               <button
                 key={lang.code}
                 onClick={() => setLanguagePreference(lang.code)}
-                className={`p-3 rounded-xl border-2 transition-all ${
+                className={`p-3 rounded-2xl border-2 transition-all ${
                   languagePreference === lang.code
                     ? 'bg-violet-600/10 border-violet-600 text-violet-600'
                     : 'bg-soft-gray border-border-gray text-stone-gray hover:border-violet-600/50'
@@ -207,7 +207,7 @@ export default function ReservationNotesEditor({
               <button
                 key={seat.value}
                 onClick={() => setSeatingPreference(seat.value)}
-                className={`p-3 rounded-xl border-2 transition-all ${
+                className={`p-3 rounded-2xl border-2 transition-all ${
                   seatingPreference === seat.value
                     ? 'bg-amber-600/10 border-amber-600 text-amber-600'
                     : 'bg-soft-gray border-border-gray text-stone-gray hover:border-amber-600/50'
@@ -232,7 +232,7 @@ export default function ReservationNotesEditor({
               <button
                 key={occasion}
                 onClick={() => setSpecialOccasion(occasion)}
-                className={`p-3 rounded-xl border-2 transition-all ${
+                className={`p-3 rounded-2xl border-2 transition-all ${
                   specialOccasion === occasion
                     ? 'bg-burgundy/10 border-burgundy text-burgundy'
                     : 'bg-soft-gray border-border-gray text-stone-gray hover:border-burgundy/50'
@@ -255,7 +255,7 @@ export default function ReservationNotesEditor({
               <button
                 key={need}
                 onClick={() => setAccessibilityNeeds(need)}
-                className={`p-3 rounded-xl border-2 transition-all ${
+                className={`p-3 rounded-2xl border-2 transition-all ${
                   accessibilityNeeds === need
                     ? 'bg-cyan-600/10 border-cyan-600 text-cyan-600'
                     : 'bg-soft-gray border-border-gray text-stone-gray hover:border-cyan-600/50'
