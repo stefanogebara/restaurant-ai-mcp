@@ -62,7 +62,7 @@ export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en'
       <select
         value={filters.language || defaultLanguage}
         onChange={(e) => onChange({ ...filters, language: e.target.value })}
-        className="px-3 py-2 text-sm border border-border-gray rounded-lg bg-white text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/50"
+        className="px-3 py-2 text-sm border border-border-gray rounded-xl bg-white text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/50"
       >
         {SUPPORTED_LANGUAGES.map((lang) => (
           <option key={lang.code} value={lang.code}>
@@ -82,7 +82,7 @@ export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en'
             placeholder="Search voices..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm border border-border-gray rounded-lg bg-white text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/50"
+            className="w-full pl-9 pr-3 py-2 text-sm border border-border-gray rounded-xl bg-white text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/50"
           />
         </div>
       )}

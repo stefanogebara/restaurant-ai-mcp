@@ -232,7 +232,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
               aria-label="Search waitlist"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 bg-soft-gray border border-border-gray rounded-lg text-xs focus:ring-2 focus:ring-burgundy focus:border-transparent outline-none"
+              className="w-full pl-8 pr-3 py-1.5 bg-soft-gray border border-border-gray rounded-xl text-xs focus:ring-2 focus:ring-burgundy focus:border-transparent outline-none"
             />
           </div>
         </div>

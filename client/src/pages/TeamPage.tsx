@@ -146,7 +146,7 @@ export default function TeamPage() {
                   <select
                     value={member.role}
                     onChange={e => handleRoleChange(member.id, e.target.value as Role)}
-                    className="text-xs border border-border-gray rounded-lg px-2 py-1"
+                    className="text-xs border border-border-gray rounded-xl px-2 py-1"
                   >
                     {ROLE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>

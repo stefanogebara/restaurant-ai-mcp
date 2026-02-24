@@ -283,14 +283,14 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
                     type="time"
                     value={day.open_time}
                     onChange={(e) => updateDayHours(index, 'open_time', e.target.value)}
-                    className="px-3 py-1.5 bg-white border border-border-gray rounded-lg text-deep-charcoal text-sm focus:outline-none focus:ring-2 focus:ring-burgundy"
+                    className="px-3 py-1.5 bg-white border border-border-gray rounded-xl text-deep-charcoal text-sm focus:outline-none focus:ring-2 focus:ring-burgundy"
                   />
                   <span className="text-stone-gray text-sm">to</span>
                   <input
                     type="time"
                     value={day.close_time}
                     onChange={(e) => updateDayHours(index, 'close_time', e.target.value)}
-                    className="px-3 py-1.5 bg-white border border-border-gray rounded-lg text-deep-charcoal text-sm focus:outline-none focus:ring-2 focus:ring-burgundy"
+                    className="px-3 py-1.5 bg-white border border-border-gray rounded-xl text-deep-charcoal text-sm focus:outline-none focus:ring-2 focus:ring-burgundy"
                   />
                 </>
               )}
@@ -306,7 +306,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
               <span className="px-2 py-1 text-xs bg-burgundy/10 text-burgundy border border-burgundy/20 rounded-lg font-medium">
                 Lunch: 12:00 - 15:30
               </span>
-              <span className="px-2 py-1 text-xs bg-soft-gray text-muted-stone border border-border-gray rounded-lg">
+              <span className="px-2 py-1 text-xs bg-soft-gray text-muted-stone border border-border-gray rounded-xl">
                 Break: 15:30 - 19:00
               </span>
               <span className="px-2 py-1 text-xs bg-burgundy/10 text-burgundy border border-burgundy/20 rounded-lg font-medium">

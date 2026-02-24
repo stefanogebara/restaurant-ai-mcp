@@ -254,7 +254,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
                         value={getTableCount(areaIndex, capacity, 'round') || ''}
                         placeholder="0"
                         onChange={(e) => updateTableConfig(areaIndex, capacity, 'round', 'count', parseInt(e.target.value) || 0)}
-                        className="w-full px-3 py-2 bg-white border border-border-gray rounded-lg text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy text-sm"
+                        className="w-full px-3 py-2 bg-white border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy text-sm"
                       />
                       <div className="flex items-center gap-2 mt-2">
                         <input
@@ -278,7 +278,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
                         value={getTableCount(areaIndex, capacity, 'square') || ''}
                         placeholder="0"
                         onChange={(e) => updateTableConfig(areaIndex, capacity, 'square', 'count', parseInt(e.target.value) || 0)}
-                        className="w-full px-3 py-2 bg-white border border-border-gray rounded-lg text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy text-sm"
+                        className="w-full px-3 py-2 bg-white border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy text-sm"
                       />
                       <div className="flex items-center gap-2 mt-2">
                         <input

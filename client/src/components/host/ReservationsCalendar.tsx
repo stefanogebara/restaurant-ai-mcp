@@ -276,7 +276,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
                             e.stopPropagation();
                             setDetailsReservation(reservation);
                           }}
-                          className="px-3 py-2 text-sm bg-white text-stone-gray border border-border-gray rounded-lg hover:bg-border-gray transition"
+                          className="px-3 py-2 text-sm bg-white text-stone-gray border border-border-gray rounded-xl hover:bg-border-gray transition"
                         >
                           Details
                         </button>

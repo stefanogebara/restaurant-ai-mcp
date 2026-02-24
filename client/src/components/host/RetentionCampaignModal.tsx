@@ -143,7 +143,7 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
                 value={customMessage || template.message}
                 onChange={(e) => setCustomMessage(e.target.value)}
                 rows={4}
-                className="w-full px-3 py-2 border border-border-gray rounded-lg text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
+                className="w-full px-3 py-2 border border-border-gray rounded-xl text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
                 placeholder="Customize your message..."
               />
               <p className="text-xs text-stone-gray">Use {'{name}'} to personalize with customer name</p>

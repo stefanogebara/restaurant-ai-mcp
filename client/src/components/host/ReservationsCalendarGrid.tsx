@@ -132,7 +132,7 @@ export default function ReservationsCalendarGrid({
           >
             Today
           </button>
-          <div className="flex items-center border border-border-gray rounded-lg">
+          <div className="flex items-center border border-border-gray rounded-xl">
             <button
               onClick={() => setWeekOffset(prev => prev - 1)}
               className="p-2 hover:bg-soft-gray transition-colors rounded-l-lg"
