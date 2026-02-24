@@ -1,4 +1,5 @@
 import { useSeatParty } from '../../hooks/useSeatParty';
+import ThiingsIcon from '../common/ThiingsIcon';
 
 interface SeatPartyModalProps {
   isOpen: boolean;
@@ -118,7 +119,7 @@ export default function SeatPartyModal({ isOpen, data, onClose, onRetryTableSele
             {seatPartyMutation.isError && (
               <div className="bg-burgundy/5 border border-burgundy/20 rounded-xl p-4 mb-4">
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl">⚠️</span>
+                  <ThiingsIcon name="alert-triangle" pxSize={24} />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-burgundy mb-1">
                       Unable to seat party

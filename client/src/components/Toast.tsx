@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import ThiingsIcon from './common/ThiingsIcon';
 
 export type ToastType = 'success' | 'error' | 'info';
 
@@ -23,21 +24,21 @@ export default function Toast({ message, type, onClose, duration = 3000 }: Toast
       case 'success':
         return {
           bg: 'bg-emerald-500/20 border-emerald-500/50',
-          icon: '✅',
+          iconName: 'check-circle' as const,
           iconBg: 'bg-emerald-500/30',
           text: 'text-emerald-400',
         };
       case 'error':
         return {
           bg: 'bg-red-500/20 border-red-500/50',
-          icon: '❌',
+          iconName: 'x-circle' as const,
           iconBg: 'bg-red-500/30',
           text: 'text-red-400',
         };
       case 'info':
         return {
           bg: 'bg-blue-500/20 border-blue-500/50',
-          icon: 'ℹ️',
+          iconName: 'info' as const,
           iconBg: 'bg-blue-500/30',
           text: 'text-blue-400',
         };
@@ -51,8 +52,8 @@ export default function Toast({ message, type, onClose, duration = 3000 }: Toast
       <div
         className={`${styles.bg} border-2 rounded-2xl px-5 py-4 shadow-2xl backdrop-blur-sm flex items-center gap-3 min-w-[300px] max-w-md`}
       >
-        <div className={`${styles.iconBg} w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0`}>
-          {styles.icon}
+        <div className={`${styles.iconBg} w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0`}>
+          <ThiingsIcon name={styles.iconName} pxSize={20} />
         </div>
         <div className="flex-1">
           <p className={`${styles.text} font-medium text-sm`}>{message}</p>

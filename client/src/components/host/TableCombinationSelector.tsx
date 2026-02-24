@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Table } from '../../types/host.types';
+import ThiingsIcon from '../common/ThiingsIcon';
 import {
   suggestTableCombinations,
   formatTableNumbers,
@@ -48,7 +49,9 @@ export default function TableCombinationSelector({
   if (combinations.length === 0) {
     return (
       <div className="bg-burgundy/5 border border-burgundy/20 rounded-xl p-4 text-center">
-        <div className="text-4xl mb-2">⚠️</div>
+        <div className="w-12 h-12 mx-auto mb-3 bg-burgundy/10 rounded-2xl flex items-center justify-center">
+          <ThiingsIcon name="alert-triangle" pxSize={24} />
+        </div>
         <div className="text-burgundy font-semibold">No available tables</div>
         <div className="text-burgundy/70 text-sm mt-1">
           All tables are currently occupied or reserved.

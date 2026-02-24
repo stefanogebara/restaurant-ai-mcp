@@ -24,27 +24,27 @@ describe('Toast', () => {
   });
 
   it('renders success toast with check icon', () => {
-    render(<Toast message="Saved!" type="success" onClose={vi.fn()} />);
+    const { container } = render(<Toast message="Saved!" type="success" onClose={vi.fn()} />);
 
     expect(screen.getByText('Saved!')).toBeInTheDocument();
-    // The success icon is a check-mark emoji
-    expect(screen.getByText(/\u2705/)).toBeInTheDocument();
+    // Icon container has emerald background
+    expect(container.querySelector('.bg-emerald-500\\/30')).toBeTruthy();
   });
 
   it('renders error toast with X icon', () => {
-    render(<Toast message="Something went wrong" type="error" onClose={vi.fn()} />);
+    const { container } = render(<Toast message="Something went wrong" type="error" onClose={vi.fn()} />);
 
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
-    // The error icon is a cross-mark emoji
-    expect(screen.getByText(/\u274C/)).toBeInTheDocument();
+    // Icon container has red background
+    expect(container.querySelector('.bg-red-500\\/30')).toBeTruthy();
   });
 
   it('renders info toast with info icon', () => {
-    render(<Toast message="Please wait" type="info" onClose={vi.fn()} />);
+    const { container } = render(<Toast message="Please wait" type="info" onClose={vi.fn()} />);
 
     expect(screen.getByText('Please wait')).toBeInTheDocument();
-    // The info icon is the i-in-circle emoji
-    expect(screen.getByText(/\u2139/)).toBeInTheDocument();
+    // Icon container has blue background
+    expect(container.querySelector('.bg-blue-500\\/30')).toBeTruthy();
   });
 
   it('auto-dismisses after default duration (3000ms)', () => {
