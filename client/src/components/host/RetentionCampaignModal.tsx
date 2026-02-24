@@ -153,14 +153,14 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
             <div className="p-4 border-t border-border-gray flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-2 border border-border-gray rounded-lg hover:bg-soft-gray text-deep-charcoal font-medium transition-colors"
+                className="flex-1 px-4 py-2 border border-border-gray rounded-xl hover:bg-soft-gray text-deep-charcoal font-medium transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSend}
                 disabled={sending}
-                className="flex-1 px-4 py-2 bg-burgundy text-white rounded-lg hover:bg-burgundy-dark disabled:opacity-50 flex items-center justify-center gap-2 font-medium transition-colors"
+                className="flex-1 px-4 py-2 bg-burgundy text-white rounded-xl hover:bg-burgundy-dark disabled:opacity-50 flex items-center justify-center gap-2 font-medium transition-colors"
               >
                 {sending ? (
                   <>Sending...</>

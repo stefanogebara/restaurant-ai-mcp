@@ -124,7 +124,7 @@ export default function ReservationsCalendarGrid({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setWeekOffset(0)}
-            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+            className={`px-3 py-1.5 text-sm font-medium rounded-xl transition-colors ${
               weekOffset === 0
                 ? 'bg-burgundy text-white'
                 : 'text-warm-stone hover:bg-soft-gray'
@@ -250,7 +250,7 @@ export default function ReservationsCalendarGrid({
               <h3 className="text-lg font-bold text-deep-charcoal">Reservation Details</h3>
               <button
                 onClick={() => setSelectedReservation(null)}
-                className="p-1 hover:bg-soft-gray rounded-lg transition-colors"
+                className="p-1 hover:bg-soft-gray rounded-xl transition-colors"
               >
                 <ThiingsIcon name="close" pxSize={20} />
               </button>
@@ -295,7 +295,7 @@ export default function ReservationsCalendarGrid({
                       onCheckIn(selectedReservation);
                       setSelectedReservation(null);
                     }}
-                    className="flex-1 px-4 py-2.5 bg-burgundy text-white font-medium rounded-lg hover:bg-burgundy-dark transition-colors"
+                    className="flex-1 px-4 py-2.5 bg-burgundy text-white font-medium rounded-xl hover:bg-burgundy-dark transition-colors"
                   >
                     Check In
                   </button>
@@ -306,14 +306,14 @@ export default function ReservationsCalendarGrid({
                       onRecordOutcome(selectedReservation);
                       setSelectedReservation(null);
                     }}
-                    className="flex-1 px-4 py-2.5 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition-colors"
+                    className="flex-1 px-4 py-2.5 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 transition-colors"
                   >
                     Record Outcome
                   </button>
                 )}
                 <button
                   onClick={() => setSelectedReservation(null)}
-                  className="px-4 py-2.5 border border-border-gray text-deep-charcoal font-medium rounded-lg hover:bg-soft-gray transition-colors"
+                  className="px-4 py-2.5 border border-border-gray text-deep-charcoal font-medium rounded-xl hover:bg-soft-gray transition-colors"
                 >
                   Close
                 </button>

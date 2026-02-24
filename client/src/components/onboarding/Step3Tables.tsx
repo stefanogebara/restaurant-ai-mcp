@@ -330,7 +330,7 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
               <div className="mt-3 space-x-3">
                 <button
                   onClick={() => window.location.href = '/#pricing'}
-                  className="px-4 py-2 bg-burgundy text-white font-semibold rounded-lg text-sm hover:bg-burgundy-dark"
+                  className="px-4 py-2 bg-burgundy text-white font-semibold rounded-xl text-sm hover:bg-burgundy-dark"
                 >
                   Upgrade to Professional
                 </button>
@@ -355,7 +355,7 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
               {data.areas.length > 1 && (
                 <button
                   onClick={() => removeArea(areaIndex)}
-                  className="p-2 hover:bg-red-600/10 text-red-600 rounded-lg transition-colors"
+                  className="p-2 hover:bg-red-600/10 text-red-600 rounded-xl transition-colors"
                   title="Remove area"
                 >
                   <ThiingsIcon name="trash" pxSize={20} />
@@ -436,7 +436,7 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
               key={template}
               onClick={() => addArea(template)}
               disabled={template !== 'Custom' && data.areas.some((a) => a.name === template)}
-              className="px-4 py-2 bg-white hover:bg-soft-gray disabled:bg-soft-gray disabled:text-muted-stone disabled:cursor-not-allowed text-deep-charcoal border border-border-gray rounded-lg transition-colors text-sm"
+              className="px-4 py-2 bg-white hover:bg-soft-gray disabled:bg-soft-gray disabled:text-muted-stone disabled:cursor-not-allowed text-deep-charcoal border border-border-gray rounded-xl transition-colors text-sm"
             >
               + {template}
             </button>

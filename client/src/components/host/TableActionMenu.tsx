@@ -110,7 +110,7 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
                 key={index}
                 onClick={action.onClick}
                 disabled={updateTableMutation.isPending}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-soft-gray hover:bg-border-gray transition-colors text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-soft-gray hover:bg-border-gray transition-colors text-left group disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {updateTableMutation.isPending ? (
                   <div className="w-5 h-5 border-2 border-burgundy border-t-transparent rounded-full animate-spin"></div>
@@ -129,7 +129,7 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
         <div className="px-6 py-4 border-t border-border-gray">
           <button
             onClick={onClose}
-            className="w-full px-4 py-2.5 bg-deep-charcoal hover:bg-burgundy text-white font-medium rounded-lg transition-colors"
+            className="w-full px-4 py-2.5 bg-deep-charcoal hover:bg-burgundy text-white font-medium rounded-xl transition-colors"
           >
             Close
           </button>

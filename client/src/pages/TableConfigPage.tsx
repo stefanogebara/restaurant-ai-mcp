@@ -347,7 +347,7 @@ export default function TableConfigPage() {
               <button
                 onClick={handleDeleteTable}
                 disabled={deleteMutation.isPending}
-                className="w-full px-4 py-2 text-red-600 border border-red-600/20 rounded-lg hover:bg-red-600/10 transition-colors"
+                className="w-full px-4 py-2 text-red-600 border border-red-600/20 rounded-xl hover:bg-red-600/10 transition-colors"
               >
                 {deleteMutation.isPending ? 'Deactivating...' : 'Deactivate Table'}
               </button>
@@ -375,7 +375,7 @@ export default function TableConfigPage() {
       {/* Toast Notification */}
       {toast && (
         <div
-          className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg z-50 ${
+          className={`fixed bottom-4 right-4 px-6 py-3 rounded-xl z-50 ${
             toast.type === 'success' ? 'bg-deep-charcoal text-white' : 'bg-red-600 text-white'
           }`}
         >
@@ -502,14 +502,14 @@ function TableForm({
       <div className="flex gap-3 pt-4">
         <button
           onClick={onCancel}
-          className="flex-1 px-4 py-2 border border-border-gray text-stone-gray rounded-lg hover:bg-soft-gray transition-colors"
+          className="flex-1 px-4 py-2 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors"
         >
           Cancel
         </button>
         <button
           onClick={onSubmit}
           disabled={isLoading}
-          className="flex-1 px-4 py-2 bg-deep-charcoal text-white rounded-lg hover:bg-charcoal-dark transition-colors disabled:opacity-50"
+          className="flex-1 px-4 py-2 bg-deep-charcoal text-white rounded-xl hover:bg-charcoal-dark transition-colors disabled:opacity-50"
         >
           {isLoading ? 'Saving...' : submitLabel}
         </button>
@@ -589,14 +589,14 @@ function AdjacencyModal({
         <div className="flex gap-3 mt-6 pt-4 border-t border-border-gray">
           <button
             onClick={onCancel}
-            className="flex-1 px-4 py-2 border border-border-gray text-stone-gray rounded-lg hover:bg-soft-gray transition-colors"
+            className="flex-1 px-4 py-2 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={() => onSave(selectedIds)}
             disabled={isLoading}
-            className="flex-1 px-4 py-2 bg-deep-charcoal text-white rounded-lg hover:bg-charcoal-dark transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2 bg-deep-charcoal text-white rounded-xl hover:bg-charcoal-dark transition-colors disabled:opacity-50"
           >
             {isLoading ? 'Saving...' : `Save (${selectedIds.length} selected)`}
           </button>

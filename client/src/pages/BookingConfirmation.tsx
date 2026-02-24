@@ -155,7 +155,7 @@ export default function BookingConfirmation() {
 
             <div className="flex justify-between items-center py-2.5">
               <span className="text-[13px] text-warm-stone">{t('reservations.confirmationId')}</span>
-              <span className="text-[13px] font-mono font-medium text-burgundy bg-burgundy/[6%] px-2.5 py-0.5 rounded-md">{reservation.id}</span>
+              <span className="text-[13px] font-mono font-medium text-burgundy bg-burgundy/[6%] px-2.5 py-0.5 rounded-lg">{reservation.id}</span>
             </div>
           </div>
 

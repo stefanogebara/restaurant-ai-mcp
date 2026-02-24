@@ -307,7 +307,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
               key={template}
               onClick={() => addArea(template)}
               disabled={template !== 'Custom' && data.areas.some((a) => a.name === template)}
-              className="px-4 py-2 bg-white hover:bg-soft-gray disabled:bg-soft-gray disabled:text-muted-stone disabled:cursor-not-allowed text-deep-charcoal border border-border-gray rounded-lg transition-colors text-sm"
+              className="px-4 py-2 bg-white hover:bg-soft-gray disabled:bg-soft-gray disabled:text-muted-stone disabled:cursor-not-allowed text-deep-charcoal border border-border-gray rounded-xl transition-colors text-sm"
             >
               + {template}
             </button>

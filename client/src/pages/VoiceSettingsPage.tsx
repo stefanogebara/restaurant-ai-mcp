@@ -521,7 +521,7 @@ export default function VoiceSettingsPage() {
                           handlePlayVoice(currentVoiceId, text);
                         }}
                         disabled={loadingAudio === currentVoiceId}
-                        className="px-4 py-2 text-sm font-medium bg-soft-gray hover:bg-border-gray rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                        className="px-4 py-2 text-sm font-medium bg-soft-gray hover:bg-border-gray rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
                       >
                         {loadingAudio === currentVoiceId ? (
                           <Spinner size="sm" />
@@ -535,7 +535,7 @@ export default function VoiceSettingsPage() {
                     )}
                     <button
                       onClick={() => setIsBrowserOpen(!isBrowserOpen)}
-                      className="px-4 py-2 text-sm font-medium text-burgundy bg-burgundy/5 hover:bg-burgundy/10 rounded-lg transition-colors"
+                      className="px-4 py-2 text-sm font-medium text-burgundy bg-burgundy/5 hover:bg-burgundy/10 rounded-xl transition-colors"
                     >
                       {isBrowserOpen ? 'Hide Voice Browser' : 'Change Voice'}
                     </button>
@@ -604,7 +604,7 @@ export default function VoiceSettingsPage() {
                   <button
                     onClick={handlePreviewWithSettings}
                     disabled={!currentVoiceId || loadingAudio !== null}
-                    className="px-5 py-2.5 text-sm font-medium bg-soft-gray hover:bg-border-gray rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                    className="px-5 py-2.5 text-sm font-medium bg-soft-gray hover:bg-border-gray rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
                   >
                     {loadingAudio ? <Spinner size="sm" /> : <ThiingsIcon name="play" pxSize={16} />}
                     Preview with settings

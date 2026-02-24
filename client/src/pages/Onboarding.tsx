@@ -343,7 +343,7 @@ export default function Onboarding() {
                       </a>
                       <a
                         href={`mailto:?subject=${emailSubject}&body=${emailBody}`}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-deep-charcoal text-white text-[13px] font-medium hover:bg-charcoal-dark transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-deep-charcoal text-white text-[13px] font-medium hover:bg-charcoal-dark transition-colors"
                       >
                         <ThiingsIcon name="mail" pxSize={16} />
                         Email

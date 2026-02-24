@@ -230,7 +230,7 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
           <button
             onClick={handleSave}
             disabled={isSaving || !noteContent.trim()}
-            className="w-full text-sm px-4 py-2 rounded-lg bg-burgundy text-white font-medium hover:bg-burgundy-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full text-sm px-4 py-2 rounded-xl bg-burgundy text-white font-medium hover:bg-burgundy-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving ? t.saving : t.save}
           </button>

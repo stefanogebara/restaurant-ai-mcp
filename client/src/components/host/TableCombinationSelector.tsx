@@ -119,7 +119,7 @@ export default function TableCombinationSelector({
             <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border-gray/50">
               {combination.tables.map((table, tIndex) => (
                 <div key={tIndex} className="flex items-center gap-1.5 text-xs">
-                  <div className="w-6 h-6 rounded-md bg-burgundy/20 flex items-center justify-center font-bold text-burgundy">
+                  <div className="w-6 h-6 rounded-lg bg-burgundy/20 flex items-center justify-center font-bold text-burgundy">
                     {table.table_number}
                   </div>
                   <span className="text-stone-gray">

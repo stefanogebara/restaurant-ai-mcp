@@ -181,7 +181,7 @@ export default function RevenueOpportunities() {
                     <div className="text-xs text-warm-stone">
                       <span className="font-semibold">ROI Potential:</span> High
                     </div>
-                    <button className="px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-medium rounded-lg transition-all">
+                    <button className="px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-medium rounded-xl transition-all">
                       Start Implementation
                     </button>
                   </div>

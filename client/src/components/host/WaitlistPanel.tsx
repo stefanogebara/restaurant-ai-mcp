@@ -207,7 +207,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
                 role="tab"
                 aria-selected={activeTab === tab.key}
                 onClick={() => setActiveTab(tab.key as typeof activeTab)}
-                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+                className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
                   activeTab === tab.key
                     ? 'bg-white text-deep-charcoal shadow-sm'
                     : 'text-stone-gray hover:text-deep-charcoal'

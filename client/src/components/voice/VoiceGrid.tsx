@@ -132,7 +132,7 @@ export default function VoiceGrid({
             type="button"
             onClick={onLoadMore}
             disabled={isLoadingMore}
-            className="px-6 py-2.5 text-sm font-medium text-burgundy bg-burgundy/5 hover:bg-burgundy/10 rounded-lg transition-colors disabled:opacity-50"
+            className="px-6 py-2.5 text-sm font-medium text-burgundy bg-burgundy/5 hover:bg-burgundy/10 rounded-xl transition-colors disabled:opacity-50"
           >
             {isLoadingMore ? 'Loading more voices...' : 'Show more voices'}
           </button>

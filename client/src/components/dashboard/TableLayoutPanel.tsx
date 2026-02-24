@@ -153,7 +153,7 @@ export default function TableLayoutPanel({
           <div className="flex items-center bg-soft-gray rounded-lg p-0.5">
             <button
               onClick={() => setViewMode('floorplan')}
-              className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-md transition-colors ${
+              className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
                 viewMode === 'floorplan'
                   ? 'bg-deep-charcoal text-white'
                   : 'text-warm-stone hover:text-deep-charcoal'
@@ -164,7 +164,7 @@ export default function TableLayoutPanel({
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-md transition-colors ${
+              className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
                 viewMode === 'grid'
                   ? 'bg-deep-charcoal text-white'
                   : 'text-warm-stone hover:text-deep-charcoal'
@@ -234,7 +234,7 @@ export default function TableLayoutPanel({
                   {selectedTable.joinable_with.map((linkedId: string) => {
                     const linked = tables.find((t) => t.id === linkedId);
                     return linked ? (
-                      <span key={linkedId} className="px-2 py-0.5 bg-white border border-border-gray rounded-md text-xs font-medium">
+                      <span key={linkedId} className="px-2 py-0.5 bg-white border border-border-gray rounded-lg text-xs font-medium">
                         {t.table} {linked.table_number}
                       </span>
                     ) : null;

@@ -92,7 +92,7 @@ export default function RiskScoreBadge({
   return (
     <div className="flex flex-col gap-1">
       <div
-        className={`inline-flex items-center ${classes.container} ${style.bg} ${style.text} border rounded-md font-medium`}
+        className={`inline-flex items-center ${classes.container} ${style.bg} ${style.text} border rounded-lg font-medium`}
         title={`Risk Score: ${riskScore}% | Level: ${style.label}${confidence ? ` | Confidence: ${confidence}%` : ''}`}
       >
         <ThiingsIcon name={style.iconName} size="xs" />

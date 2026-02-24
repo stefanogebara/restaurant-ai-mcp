@@ -113,7 +113,7 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
           {/* Link to full analytics */}
           <a
             href="/analytics"
-            className="block w-full mt-4 px-4 py-2 text-center text-sm bg-deep-charcoal hover:bg-burgundy text-white font-medium rounded-lg transition-colors"
+            className="block w-full mt-4 px-4 py-2 text-center text-sm bg-deep-charcoal hover:bg-burgundy text-white font-medium rounded-xl transition-colors"
           >
             View Full Analytics
           </a>

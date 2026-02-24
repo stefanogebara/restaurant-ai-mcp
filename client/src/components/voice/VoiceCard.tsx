@@ -101,7 +101,7 @@ const VoiceCard = forwardRef<HTMLDivElement, VoiceCardProps>(function VoiceCard(
         }}
         disabled={isLoading}
         className={`
-          w-full py-2.5 px-4 rounded-lg font-semibold text-sm transition-all
+          w-full py-2.5 px-4 rounded-xl font-semibold text-sm transition-all
           flex items-center justify-center gap-2
           ${isPlaying
             ? 'bg-burgundy text-white hover:bg-burgundy-dark'
