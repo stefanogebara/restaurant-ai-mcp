@@ -227,7 +227,7 @@ export default function Dashboard() {
           />
 
           {/* ---- Main Content: 2-column layout ---- */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
             {/* Left Column: Tables + Reservations */}
             <div className="space-y-6">
               <TableLayoutPanel

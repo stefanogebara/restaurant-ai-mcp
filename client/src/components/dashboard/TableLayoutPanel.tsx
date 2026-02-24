@@ -138,7 +138,7 @@ export default function TableLayoutPanel({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
           <div className="flex items-center gap-2.5">
-            <span className="text-[15px] font-semibold text-deep-charcoal tracking-tight">{t.tableLayout}</span>
+            <span className="text-[15px] font-semibold text-deep-charcoal tracking-tight whitespace-nowrap">{t.tableLayout}</span>
             <span className="relative flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
               <span className="relative flex h-2 w-2 flex-shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
