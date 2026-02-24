@@ -301,7 +301,7 @@ export default function TableConfigPage() {
                 .map((table: TableConfig) => (
                   <div
                     key={table.id}
-                    className="bg-soft-gray rounded-xl p-4 border border-border-gray opacity-60"
+                    className="bg-soft-gray rounded-2xl p-4 border border-border-gray opacity-60"
                   >
                     <div className="text-lg font-bold text-muted-stone">Table {table.table_number}</div>
                     <div className="text-sm text-muted-stone">{table.capacity} seats - {table.location}</div>

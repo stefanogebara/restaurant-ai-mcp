@@ -13,7 +13,7 @@ export default function UpcomingReservations({ reservations, onCheckIn }: Upcomi
   return (
     <div className="space-y-3">
       {reservations.map((reservation) => (
-        <div key={reservation.reservation_id} className="border border-border-gray rounded-xl p-3 hover:shadow-md transition bg-white">
+        <div key={reservation.reservation_id} className="border border-border-gray rounded-2xl p-3 hover:shadow-md transition bg-white">
           <div className="flex justify-between items-start mb-2">
             <div>
               <div className="font-semibold text-deep-charcoal">{reservation.customer_name}</div>
