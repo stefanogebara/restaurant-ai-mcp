@@ -126,7 +126,7 @@ export default function NoShowPredictions() {
             {predictions.map((prediction, index) => (
               <div
                 key={index}
-                className={`border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all ${getRiskColor(prediction.risk_level)}`}
+                className={`border rounded-xl p-4 cursor-pointer hover:shadow-md transition-all ${getRiskColor(prediction.risk_level)}`}
                 onClick={() => setSelectedPrediction(selectedPrediction === prediction ? null : prediction)}
               >
                 <div className="flex items-center justify-between">

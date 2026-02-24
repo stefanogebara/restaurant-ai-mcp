@@ -90,7 +90,7 @@ export default function LanguageSelector({
               disabled={isLoading}
               className={`
                 ${sizeClasses[size]}
-                flex items-center gap-2 rounded-lg border-2 transition-all
+                flex items-center gap-2 rounded-2xl border-2 transition-all
                 ${
                   currentLanguage === lang.code
                     ? 'border-burgundy bg-burgundy/5 text-burgundy font-semibold'

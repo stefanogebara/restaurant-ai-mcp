@@ -566,7 +566,7 @@ function AdjacencyModal({
                 <button
                   key={t.id}
                   onClick={() => toggleTable(t.id)}
-                  className={`p-3 rounded-lg border-2 transition-all text-left ${
+                  className={`p-3 rounded-2xl border-2 transition-all text-left ${
                     selectedIds.includes(t.id)
                       ? 'border-deep-charcoal bg-soft-gray'
                       : 'border-border-gray hover:border-muted-stone'

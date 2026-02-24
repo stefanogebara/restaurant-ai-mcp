@@ -152,7 +152,7 @@ export default function QuickStatsWidget() {
       <div className="p-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {/* Today's Interventions */}
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+          <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                 <ThiingsIcon name="target" size="xs" />
@@ -168,7 +168,7 @@ export default function QuickStatsWidget() {
           </div>
 
           {/* Weekly ROI */}
-          <div className={`${getRoiBg(stats.roi_status)} rounded-lg p-4 border ${!hasData ? 'border-border-gray' : 'border-green-100'}`}>
+          <div className={`${getRoiBg(stats.roi_status)} rounded-xl p-4 border ${!hasData ? 'border-border-gray' : 'border-green-100'}`}>
             <div className="flex items-center gap-2 mb-2">
               <div className={`w-8 h-8 ${!hasData ? 'bg-soft-gray' : stats.roi_status === 'below' ? 'bg-amber-100' : 'bg-green-100'} rounded-lg flex items-center justify-center`}>
                 <ThiingsIcon name="trending-up" size="xs" />
@@ -190,7 +190,7 @@ export default function QuickStatsWidget() {
           </div>
 
           {/* Value Saved */}
-          <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-100">
+          <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
                 <ThiingsIcon name="dollar" size="xs" />
@@ -206,7 +206,7 @@ export default function QuickStatsWidget() {
           </div>
 
           {/* Success Rate */}
-          <div className={`${getSuccessBg(stats.success_status)} rounded-lg p-4 border ${!hasData ? 'border-border-gray' : stats.success_status === 'good' ? 'border-green-100' : stats.success_status === 'fair' ? 'border-amber-100' : 'border-red-100'}`}>
+          <div className={`${getSuccessBg(stats.success_status)} rounded-xl p-4 border ${!hasData ? 'border-border-gray' : stats.success_status === 'good' ? 'border-green-100' : stats.success_status === 'fair' ? 'border-amber-100' : 'border-red-100'}`}>
             <div className="flex items-center gap-2 mb-2">
               <div className={`w-8 h-8 ${!hasData ? 'bg-soft-gray' : stats.success_status === 'good' ? 'bg-green-100' : stats.success_status === 'fair' ? 'bg-amber-100' : 'bg-red-100'} rounded-lg flex items-center justify-center`}>
                 <ThiingsIcon name="check-circle" size="xs" />
