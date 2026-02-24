@@ -209,7 +209,7 @@ export default function RecentReservations() {
 
           {/* Reservation Details */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-soft-gray p-3 rounded-lg">
+            <div className="bg-soft-gray p-3 rounded-xl">
               <div className="flex items-center gap-2 mb-2">
                 <ThiingsIcon name="calendar" pxSize={16} />
                 <span className="text-xs text-muted-stone">Date</span>
@@ -217,7 +217,7 @@ export default function RecentReservations() {
               <div className="font-semibold text-deep-charcoal">{latestReservation.date}</div>
             </div>
 
-            <div className="bg-soft-gray p-3 rounded-lg">
+            <div className="bg-soft-gray p-3 rounded-xl">
               <div className="flex items-center gap-2 mb-2">
                 <ThiingsIcon name="clock" pxSize={16} />
                 <span className="text-xs text-muted-stone">Time</span>
@@ -226,7 +226,7 @@ export default function RecentReservations() {
             </div>
           </div>
 
-          <div className="bg-soft-gray p-3 rounded-lg">
+          <div className="bg-soft-gray p-3 rounded-xl">
             <div className="flex items-center gap-2 mb-2">
               <ThiingsIcon name="users" pxSize={16} />
               <span className="text-xs text-muted-stone">Party Size</span>
@@ -275,7 +275,7 @@ export default function RecentReservations() {
             {reservations.slice(1, 4).map((res) => (
               <div
                 key={res.reservation_id}
-                className="flex items-center justify-between p-3 bg-soft-gray rounded-lg"
+                className="flex items-center justify-between p-3 bg-soft-gray rounded-xl"
               >
                 <div>
                   <div className="text-deep-charcoal font-medium">{res.customer_name}</div>

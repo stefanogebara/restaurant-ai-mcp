@@ -376,7 +376,7 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
                   </h4>
                   <div className="grid grid-cols-2 gap-3">
                     {/* Round Tables */}
-                    <div className="p-3 bg-soft-gray rounded-lg">
+                    <div className="p-3 bg-soft-gray rounded-xl">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-6 h-6 rounded-full border-2 border-burgundy" />
                         <span className="text-sm font-medium text-deep-charcoal">Round</span>
@@ -401,7 +401,7 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
                     </div>
 
                     {/* Square Tables */}
-                    <div className="p-3 bg-soft-gray rounded-lg">
+                    <div className="p-3 bg-soft-gray rounded-xl">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-6 h-6 rounded border-2 border-burgundy" />
                         <span className="text-sm font-medium text-deep-charcoal">Square</span>

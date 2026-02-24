@@ -452,7 +452,7 @@ export default function CallTrackingDashboard() {
 
           {/* Error message display */}
           {phoneStatus?.status === 'error' && phoneStatus.error && (
-            <div className="mt-4 bg-red-600/10 border border-red-600/20 rounded-lg p-3 flex items-start gap-2">
+            <div className="mt-4 bg-red-600/10 border border-red-600/20 rounded-xl p-3 flex items-start gap-2">
               <ThiingsIcon name="alert-circle" size="sm" className="shrink-0 mt-0.5" />
               <p className="text-sm text-red-600">{phoneStatus.error}</p>
             </div>
@@ -635,7 +635,7 @@ export default function CallTrackingDashboard() {
 
                 {/* Fix Tools Button - shown when tool_ids_count is 0 */}
                 {diagnoseData.tool_ids_count === 0 && (
-                  <div className="bg-amber-600/10 border border-amber-600/20 rounded-lg p-4">
+                  <div className="bg-amber-600/10 border border-amber-600/20 rounded-xl p-4">
                     <div className="flex items-start gap-3">
                       <ThiingsIcon name="alert-circle" size="sm" className="shrink-0 mt-0.5" />
                       <div className="flex-1">
@@ -876,7 +876,7 @@ export default function CallTrackingDashboard() {
               <div className="p-6 space-y-6">
                 {/* Summary */}
                 {selectedConversation.summary && (
-                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
                     <div className="flex items-start gap-3">
                       <ThiingsIcon name="chat" size="sm" className="mt-0.5" />
                       <div>
@@ -919,7 +919,7 @@ export default function CallTrackingDashboard() {
                     <h3 className="font-semibold text-deep-charcoal mb-3">Tools Used</h3>
                     <div className="space-y-2">
                       {selectedConversation.tools_used.map((tool, idx) => (
-                        <div key={idx} className="bg-soft-gray/50 rounded-lg p-3">
+                        <div key={idx} className="bg-soft-gray/50 rounded-xl p-3">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-deep-charcoal">{tool.tool_name}</span>
                             {tool.success ? (

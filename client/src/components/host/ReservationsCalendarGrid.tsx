@@ -284,7 +284,7 @@ export default function ReservationsCalendarGrid({
               </div>
 
               {selectedReservation.special_requests && (
-                <div className="p-3 bg-soft-gray rounded-lg">
+                <div className="p-3 bg-soft-gray rounded-xl">
                   <div className="text-xs font-medium text-warm-stone mb-1">Special Requests</div>
                   <div className="text-sm text-deep-charcoal">{selectedReservation.special_requests}</div>
                 </div>

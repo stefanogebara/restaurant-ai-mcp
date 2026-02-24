@@ -244,7 +244,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
                   <h4 className="text-sm font-semibold text-deep-charcoal mb-3">{capacity}-Person Tables</h4>
                   <div className="grid grid-cols-2 gap-3">
                     {/* Round */}
-                    <div className="p-3 bg-soft-gray rounded-lg">
+                    <div className="p-3 bg-soft-gray rounded-xl">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-6 h-6 rounded-full border-2 border-burgundy" />
                         <span className="text-sm font-medium text-deep-charcoal">Round</span>
@@ -268,7 +268,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
                       </div>
                     </div>
                     {/* Square */}
-                    <div className="p-3 bg-soft-gray rounded-lg">
+                    <div className="p-3 bg-soft-gray rounded-xl">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-6 h-6 rounded border-2 border-burgundy" />
                         <span className="text-sm font-medium text-deep-charcoal">Square</span>
