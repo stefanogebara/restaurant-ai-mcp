@@ -130,7 +130,7 @@ function PartyRow({ party, onComplete, language }: PartyRowProps) {
               .join('')
               .toUpperCase()}
           </div>
-          <div className="font-semibold text-deep-charcoal text-sm truncate">
+          <div className="font-semibold text-deep-charcoal text-sm truncate min-w-0">
             {party.customer_name}
           </div>
         </div>
