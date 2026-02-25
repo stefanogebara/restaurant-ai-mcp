@@ -79,7 +79,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl border border-border-gray max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div role="dialog" aria-modal="true" aria-label="Seat Waitlist Customer" className="bg-white rounded-2xl shadow-2xl border border-border-gray max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-deep-charcoal">Seat Waitlist Customer</h2>

@@ -72,7 +72,7 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full mx-4 overflow-hidden">
+      <div role="dialog" aria-modal="true" aria-label="Retention Campaign" className="bg-white rounded-2xl shadow-xl max-w-lg w-full mx-4 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border-gray">
           <h2 className="text-lg font-semibold text-deep-charcoal">

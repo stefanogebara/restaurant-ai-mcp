@@ -47,7 +47,7 @@ export default function SeatPartyModal({ isOpen, data, onClose, onRetryTableSele
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={(e) => { if (e.target === e.currentTarget && !seatPartyMutation.isPending) onClose(); }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-md w-full mx-4">
+      <div role="dialog" aria-modal="true" aria-label="Confirm Seating" className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-md w-full mx-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-deep-charcoal">Confirm Seating</h2>
           {!seatPartyMutation.isPending && (
