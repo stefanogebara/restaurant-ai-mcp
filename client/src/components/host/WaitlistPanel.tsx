@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { ClipboardList } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -243,7 +242,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
         {filteredWaitlist.length === 0 ? (
           <div className="py-10 px-6 text-center text-stone-gray">
           <div className="w-12 h-12 rounded-2xl bg-soft-gray flex items-center justify-center mb-3 mx-auto">
-            <ClipboardList className="w-5 h-5 text-muted-stone" />
+            <ThiingsIcon name="clipboard-list" pxSize={20} className="text-muted-stone" />
           </div>
           <div className="font-medium">
             {activeTab === 'active' && t('waitlist.noActive')}

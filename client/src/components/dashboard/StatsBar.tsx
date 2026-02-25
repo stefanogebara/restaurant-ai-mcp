@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CalendarDays, LayoutGrid, Users, UtensilsCrossed } from 'lucide-react';
+import ThiingsIcon from '../common/ThiingsIcon';
 import { colors } from '../../utils/colors';
 
 interface StatsBarProps {
@@ -56,7 +56,7 @@ export default function StatsBar({
         changeColor="text-green-600"
         barPercent={seatedPercent}
         barColor={colors.burgundy}
-        icon={<CalendarDays className="w-4 h-4 text-muted-stone" />}
+        icon={<ThiingsIcon name="calendar-days" pxSize={16} className="text-muted-stone" />}
       />
 
       {/* Tables Available */}
@@ -69,7 +69,7 @@ export default function StatsBar({
         changeColor={occupancyPercent >= 80 ? 'text-red-600' : occupancyPercent >= 50 ? 'text-amber-600' : 'text-green-600'}
         barPercent={occupancyPercent}
         barColor={occupancyPercent >= 80 ? '#ef4444' : occupancyPercent >= 50 ? '#d97706' : '#16a34a'}
-        icon={<LayoutGrid className="w-4 h-4 text-muted-stone" />}
+        icon={<ThiingsIcon name="layout-grid" pxSize={16} className="text-muted-stone" />}
       />
 
       {/* Guests Expected */}
@@ -82,7 +82,7 @@ export default function StatsBar({
         changeColor="text-amber-600"
         barPercent={totalGuests > 0 ? Math.min(Math.round((totalGuests / (reservationsToday * 3 || 1)) * 100), 100) : 0}
         barColor={colors.stoneGray}
-        icon={<Users className="w-4 h-4 text-muted-stone" />}
+        icon={<ThiingsIcon name="users" pxSize={16} className="text-muted-stone" />}
       />
 
       {/* Active Parties */}
@@ -93,7 +93,7 @@ export default function StatsBar({
         changeColor="text-stone-gray"
         barPercent={totalTables > 0 ? Math.round((activeParties / totalTables) * 100) : 0}
         barColor="#d97706"
-        icon={<UtensilsCrossed className="w-4 h-4 text-muted-stone" />}
+        icon={<ThiingsIcon name="utensils-crossed" pxSize={16} className="text-muted-stone" />}
       />
     </div>
   );
