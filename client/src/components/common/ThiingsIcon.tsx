@@ -3,7 +3,7 @@ import { icons, type LucideIcon } from 'lucide-react';
 export const ICON_NAMES = [
   'accessibility', 'activity', 'airplane', 'alert-circle', 'alert-triangle',
   'arrow-down', 'arrow-left', 'arrow-right', 'ban', 'bar-chart',
-  'bell', 'bot', 'brain', 'calendar', 'calendar-check',
+  'bell', 'bot', 'brain', 'calendar', 'calendar-check', 'calendar-x',
   'chat', 'check', 'check-circle', 'chef-hat', 'chevron-down',
   'chevron-left', 'chevron-right', 'chevron-up', 'city', 'classical-building',
   'clipboard', 'clock', 'close', 'coffee', 'credit-card',
@@ -49,6 +49,7 @@ const SIZE_PX: Record<IconSize, number> = {
 const REMAP: Record<string, string> = {
   airplane: 'Plane',
   'alert-circle': 'CircleAlert',
+  'calendar-x': 'CalendarX',
   'alert-triangle': 'TriangleAlert',
   'bar-chart': 'ChartBar',
   chat: 'MessageCircle',
