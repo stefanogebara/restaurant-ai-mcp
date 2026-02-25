@@ -50,6 +50,8 @@ export default function Toast({ message, type, onClose, duration = 3000 }: Toast
   return (
     <div className="fixed top-20 right-6 z-50 animate-slide-in">
       <div
+        role="alert"
+        aria-live={type === 'error' ? 'assertive' : 'polite'}
         className={`${styles.bg} border-2 rounded-2xl px-5 py-4 shadow-2xl backdrop-blur-sm flex items-center gap-3 min-w-[300px] max-w-md`}
       >
         <div className={`${styles.iconBg} w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0`}>
