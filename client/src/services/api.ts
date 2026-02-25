@@ -187,6 +187,6 @@ export const tableConfigAPI = {
   // Bulk update multiple tables
   bulkUpdate: (updates: Array<{
     table_id: string;
-    [key: string]: any;
+    [key: string]: unknown;
   }>) => api.post('/table-config?action=bulk-update', { updates }),
 };

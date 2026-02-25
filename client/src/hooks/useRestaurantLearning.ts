@@ -100,9 +100,9 @@ export function useRestaurantLearning(): UseRestaurantLearningReturn {
         setTopicsCovered(data.topics_covered);
       }
       setPhase('interview');
-    } catch (err: any) {
-      if (err.name === 'AbortError') return;
-      setError(err.message || 'Research failed');
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return;
+      setError(err instanceof Error ? err.message : 'Research failed');
     } finally {
       setIsLoading(false);
     }
@@ -160,9 +160,9 @@ export function useRestaurantLearning(): UseRestaurantLearningReturn {
       if (data.is_complete) {
         setShouldGeneratePersona(true);
       }
-    } catch (err: any) {
-      if (err.name === 'AbortError') return;
-      setError(err.message || 'Failed to send message');
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return;
+      setError(err instanceof Error ? err.message : 'Failed to send message');
     } finally {
       setIsLoading(false);
     }
@@ -197,9 +197,9 @@ export function useRestaurantLearning(): UseRestaurantLearningReturn {
         greeting_preview: data.greeting_preview || '',
       });
       setPhase('persona');
-    } catch (err: any) {
-      if (err.name === 'AbortError') return;
-      setError(err.message || 'Failed to generate persona');
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return;
+      setError(err instanceof Error ? err.message : 'Failed to generate persona');
     } finally {
       setIsLoading(false);
     }

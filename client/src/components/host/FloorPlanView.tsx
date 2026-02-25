@@ -343,8 +343,8 @@ export default function FloorPlanView({
         map.set(tid, {
           guestName: party.customer_name,
           partySize: party.party_size,
-          isVIP: (party as any).is_vip,
-          specialOccasion: (party as any).special_occasion,
+          isVIP: party.is_vip,
+          specialOccasion: party.special_occasion,
           timeElapsed: party.time_elapsed_minutes || 0,
           timeRemaining: party.time_remaining_minutes || 0,
           isOverdue: party.is_overdue || false,

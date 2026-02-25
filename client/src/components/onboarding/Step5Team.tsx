@@ -127,7 +127,7 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
           <div className="flex gap-3">
             <select
               value={newMemberRole}
-              onChange={(e) => setNewMemberRole(e.target.value as any)}
+              onChange={(e) => setNewMemberRole(e.target.value as 'Owner' | 'Manager' | 'Host')}
               aria-label="Member role"
               className="flex-1 px-4 py-3 bg-white border border-border-gray rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
             >

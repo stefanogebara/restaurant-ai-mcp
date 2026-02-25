@@ -218,7 +218,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
               {statusBadge.label}
             </span>
           </button>
-        ) : isHighRisk && !(reservation as any).intervention_taken ? (
+        ) : isHighRisk && !reservation.intervention_taken ? (
           <button
             type="button"
             onClick={onIntervention}
@@ -229,7 +229,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
               {t.takeAction}
             </span>
           </button>
-        ) : (reservation as any).intervention_taken ? (
+        ) : reservation.intervention_taken ? (
           <span className="text-xs font-semibold px-3 py-1 rounded-full bg-green-600/[8%] text-green-600">
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0" />

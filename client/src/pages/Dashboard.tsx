@@ -28,7 +28,7 @@ import WalkInModal from '../components/host/WalkInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
 import QuickInterventionModal from '../components/host/QuickInterventionModal';
-import type { UpcomingReservation, ActiveParty } from '../types/host.types';
+import type { UpcomingReservation, ActiveParty, SeatModalData } from '../types/host.types';
 import { trackFirstReservationCreated } from '../lib/analytics';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 
@@ -45,9 +45,9 @@ export default function Dashboard() {
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [showSeatModal, setShowSeatModal] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
-  const [selectedParty, setSelectedParty] = useState<any>(null);
+  const [selectedParty, setSelectedParty] = useState<SeatModalData | null>(null);
   const [selectedReservation, setSelectedReservation] = useState<UpcomingReservation | null>(null);
-  const [interventionReservation, setInterventionReservation] = useState<any>(null);
+  const [interventionReservation, setInterventionReservation] = useState<UpcomingReservation | null>(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [serviceToComplete, setServiceToComplete] = useState<ActiveParty | null>(null);
 
@@ -69,13 +69,13 @@ export default function Dashboard() {
   const todayReservations = reservations.filter((r) => r.date === today);
   const tomorrowReservations = reservations.filter((r) => r.date === tomorrow);
 
-  const occupiedTables = tables.filter((t: any) => t.status === 'Occupied').length;
+  const occupiedTables = tables.filter((t: { status: string }) => t.status === 'Occupied').length;
   const totalTables = tables.length;
   const totalGuests = activeParties.reduce((sum, p) => sum + (p.party_size || 0), 0);
-  const availableTables = tables.filter((t: any) => t.status === 'Available');
+  const availableTables = tables.filter((t: { status: string }) => t.status === 'Available');
 
   // ---- Handlers ----
-  const handleWalkInSuccess = (partyData: any) => {
+  const handleWalkInSuccess = (partyData: SeatModalData) => {
     maybeTrackFirstReservation();
     setSelectedParty(partyData);
     setShowWalkInModal(false);
@@ -87,7 +87,7 @@ export default function Dashboard() {
     setShowCheckInModal(true);
   };
 
-  const handleCheckInSuccess = (reservationData: any) => {
+  const handleCheckInSuccess = (reservationData: SeatModalData) => {
     setSelectedReservation(reservationData);
     setShowCheckInModal(false);
     setShowSeatModal(true);
@@ -108,11 +108,13 @@ export default function Dashboard() {
     }
   };
 
-  const handleSeatFromWaitlist = (entry: any) => {
+  const handleSeatFromWaitlist = (entry: { customer_name: string; customer_phone: string; party_size: number; special_requests?: string; id: string }) => {
     setSelectedParty({
+      type: 'waitlist',
       customer_name: entry.customer_name,
       customer_phone: entry.customer_phone,
       party_size: entry.party_size,
+      table_ids: [],
       special_requests: entry.special_requests,
       waitlist_entry_id: entry.id,
     });

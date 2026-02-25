@@ -58,8 +58,8 @@ export default function Login() {
 
     try {
       await signInWithGoogle(Object.keys(extraRedirectParams).length > 0 ? extraRedirectParams : undefined);
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign in with Google');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to sign in with Google');
       setIsSigningIn(false);
     }
   };
@@ -82,8 +82,8 @@ export default function Login() {
           return;
         }
       }
-    } catch (err: any) {
-      setError(err.message || `Failed to ${mode === 'signin' ? 'sign in' : 'create account'}`);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : `Failed to ${mode === 'signin' ? 'sign in' : 'create account'}`);
       setIsSigningIn(false);
     }
   };

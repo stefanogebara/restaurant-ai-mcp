@@ -139,7 +139,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
     updateData({ business_hours: updatedHours });
   };
 
-  const updateDayHours = (index: number, field: string, value: any) => {
+  const updateDayHours = (index: number, field: string, value: string | boolean) => {
     const updatedHours = [...data.business_hours];
     updatedHours[index] = { ...updatedHours[index], [field]: value };
     updateData({ business_hours: updatedHours });

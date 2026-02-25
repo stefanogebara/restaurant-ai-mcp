@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { UpcomingReservation, Table } from '../../types/host.types';
+import type { UpcomingReservation, Table, SeatModalData } from '../../types/host.types';
 import TableCombinationSelector from './TableCombinationSelector';
 import ThiingsIcon from '../common/ThiingsIcon';
 
@@ -7,7 +7,7 @@ interface CheckInModalProps {
   isOpen: boolean;
   reservation: UpcomingReservation | null;
   onClose: () => void;
-  onSuccess: (data: any) => void;
+  onSuccess: (data: SeatModalData) => void;
   availableTables: Table[];
 }
 

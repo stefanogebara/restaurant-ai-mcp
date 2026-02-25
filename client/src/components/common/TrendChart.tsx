@@ -14,7 +14,7 @@ import { colors } from '../../utils/colors';
 import ThiingsIcon from './ThiingsIcon';
 
 interface TrendChartProps {
-  data: any[];
+  data: Record<string, unknown>[];
   type?: 'line' | 'bar';
   dataKeys: {
     key: string;
@@ -65,12 +65,12 @@ export default function TrendChart({
     );
   }
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: { active?: boolean; label?: string; payload?: Array<{ name: string; value: number; color: string }> }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white border border-border-gray rounded-2xl p-3 shadow-lg">
           <p className="text-sm font-semibold text-deep-charcoal mb-2">{label}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry, index: number) => (
             <div key={index} className="flex items-center gap-2 text-sm">
               <div
                 className="w-3 h-3 rounded-full"

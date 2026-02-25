@@ -141,7 +141,7 @@ export function ProfileProvider({ children, restaurantId }: ProfileProviderProps
   // Check if a metric is visible
   const isMetricVisible = (metricId: string): boolean => {
     if (!profile) return false;
-    return profile.visible_metrics.includes(metricId as any);
+    return profile.visible_metrics.includes(metricId);
   };
 
   // Get a specific customization value

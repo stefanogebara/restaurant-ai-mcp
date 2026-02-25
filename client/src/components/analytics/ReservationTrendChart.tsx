@@ -12,12 +12,12 @@ interface ReservationTrendChartProps {
 
 export default function ReservationTrendChart({ dailyTrend }: ReservationTrendChartProps) {
   // Custom tooltip with shadcn/ui styling
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: { active?: boolean; label?: string; payload?: Array<{ name: string; value: number; color: string }> }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white border border-border-gray/50 rounded-2xl p-3 shadow-lg">
           <p className="text-sm font-semibold text-deep-charcoal mb-2">{label}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry, index: number) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
               {entry.name}: <span className="font-bold">{entry.value}</span>
             </p>

@@ -262,7 +262,7 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
     }
 
     // Update the field
-    (area.tables[configIndex] as any)[field] = value;
+    (area.tables[configIndex] as Record<string, unknown>)[field] = value;
 
     updateData({ areas: updatedAreas });
   };

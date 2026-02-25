@@ -16,8 +16,7 @@ export const languageOptions = Object.entries(languages).map(([code, info]) => (
   flag: info.flag,
 }));
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const localeLoaders: Record<string, () => Promise<{ default: any }>> = {
+const localeLoaders: Record<string, () => Promise<{ default: Record<string, unknown> }>> = {
   es: () => import('./locales/es.json'),
 };
 

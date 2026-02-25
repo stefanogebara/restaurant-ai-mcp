@@ -1,9 +1,10 @@
 import { useSeatParty } from '../../hooks/useSeatParty';
 import ThiingsIcon from '../common/ThiingsIcon';
+import type { SeatModalData } from '../../types/host.types';
 
 interface SeatPartyModalProps {
   isOpen: boolean;
-  data: any;
+  data: SeatModalData | null;
   onClose: () => void;
   onRetryTableSelection?: () => void;
 }

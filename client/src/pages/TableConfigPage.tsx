@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tableConfigAPI } from '../services/api';
 import type { TableConfig } from '../services/api';
 
+type ApiError = Error & { response?: { data?: { error?: string } } };
+
 import { SkeletonTableConfig } from '../components/common/Skeleton';
 import DashboardLayout from '../components/layout/DashboardLayout';
 
@@ -52,7 +54,7 @@ export default function TableConfigPage() {
       setFormData(defaultFormData);
       showToast('Table created successfully', 'success');
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       showToast(error.response?.data?.error || 'Failed to create table', 'error');
     },
   });
@@ -66,7 +68,7 @@ export default function TableConfigPage() {
       setSelectedTable(null);
       showToast('Table updated successfully', 'success');
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       showToast(error.response?.data?.error || 'Failed to update table', 'error');
     },
   });
@@ -80,7 +82,7 @@ export default function TableConfigPage() {
       setSelectedTable(null);
       showToast('Table deactivated successfully', 'success');
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       showToast(error.response?.data?.error || 'Failed to delete table', 'error');
     },
   });
@@ -95,7 +97,7 @@ export default function TableConfigPage() {
       setSelectedTable(null);
       showToast('Adjacency relationships updated', 'success');
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       showToast(error.response?.data?.error || 'Failed to update adjacency', 'error');
     },
   });

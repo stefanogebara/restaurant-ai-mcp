@@ -22,13 +22,13 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
   };
 
   // Custom label to show percentage
-  const renderLabel = (entry: any) => {
+  const renderLabel = (entry: { value: number }) => {
     const percent = ((entry.value / chartData.reduce((sum, e) => sum + e.value, 0)) * 100).toFixed(0);
     return `${percent}%`;
   };
 
   // Custom tooltip
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ name: string; value: number; payload: { fill: string } }> }) => {
     if (active && payload && payload.length) {
       const total = chartData.reduce((sum, e) => sum + e.value, 0);
       const percent = ((payload[0].value / total) * 100).toFixed(1);
@@ -76,7 +76,7 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
             <Legend
               verticalAlign="bottom"
               height={36}
-              formatter={(value, entry: any) => (
+              formatter={(value, entry: { payload: { value: number } }) => (
                 <span className="text-sm text-deep-charcoal">
                   {value} ({entry.payload.value})
                 </span>

@@ -56,7 +56,7 @@ export interface OnboardingData {
   // Step 1.5b: Restaurant Learning (AI)
   restaurant_learning?: {
     session_id?: string;
-    restaurant_profile?: any;
+    restaurant_profile?: Record<string, unknown>;
     skipped?: boolean;
   };
   // Step 2: Contact & Business Hours

@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { authFetch } from '../../services/api';
-import type { TableRecommendation } from '../../types/host.types';
+import type { TableRecommendation, SeatModalData } from '../../types/host.types';
 import { useState } from 'react';
 import ThiingsIcon from '../common/ThiingsIcon';
 
@@ -19,7 +19,7 @@ interface WaitlistSeatModalProps {
   isOpen: boolean;
   entry: WaitlistEntry | null;
   onClose: () => void;
-  onSuccess: (data: any) => void;
+  onSuccess: (data: SeatModalData) => void;
 }
 
 export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }: WaitlistSeatModalProps) {

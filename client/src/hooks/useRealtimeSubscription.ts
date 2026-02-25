@@ -8,6 +8,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
 
 /**
@@ -46,8 +47,7 @@ export function useRealtimeSubscription(
 
     const channelName = `realtime:${table}:${restaurantId}`;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const channel = (supabase.channel(channelName) as any)
+    const channel: RealtimeChannel = supabase.channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -99,8 +99,7 @@ export function useRealtimeDashboard(restaurantId: string | undefined): void {
 
     const channelName = `realtime:dashboard:${restaurantId}`;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let channel: any = supabase.channel(channelName);
+    let channel: RealtimeChannel = supabase.channel(channelName);
 
     for (const table of DASHBOARD_TABLES) {
       channel = channel.on(

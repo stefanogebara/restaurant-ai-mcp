@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Table } from '../../types/host.types';
+import type { Table, SeatModalData } from '../../types/host.types';
 import TableCombinationSelector from './TableCombinationSelector';
 import ThiingsIcon from '../common/ThiingsIcon';
 
 interface WalkInModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (data: any) => void;
+  onSuccess: (data: SeatModalData) => void;
   availableTables: Table[];
 }
 

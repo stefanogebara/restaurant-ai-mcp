@@ -15,7 +15,7 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
 
   const maxCount = Math.max(...chartData.map(c => c.count));
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ value: number; payload: { day: string } }> }) => {
     if (active && payload && payload.length) {
       const fullDay = daysOrder[chartData.findIndex(d => d.day === payload[0].payload.day)];
       return (

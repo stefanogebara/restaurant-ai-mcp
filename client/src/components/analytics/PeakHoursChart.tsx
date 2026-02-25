@@ -16,7 +16,7 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
   const maxCount = Math.max(...chartData.map(d => d.count));
 
   // Custom tooltip with shadcn/ui styling
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ value: number; payload: { time: string } }> }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white border border-border-gray/50 rounded-2xl p-3 shadow-lg">

@@ -87,6 +87,8 @@ export interface ActiveParty {
   time_elapsed_minutes: number;
   time_remaining_minutes: number;
   is_overdue: boolean;
+  is_vip?: boolean;
+  special_occasion?: string;
 }
 
 export interface UpcomingReservation {
@@ -113,6 +115,8 @@ export interface UpcomingReservation {
     impact: number;          // +/- points
     description: string;     // Human-readable description
   }>;
+  // Intervention tracking
+  intervention_taken?: boolean;
   // Legacy field names (deprecated, use ml_* fields above)
   no_show_risk_score?: number;  // 0-100 percentage
   no_show_risk_level?: 'low' | 'medium' | 'high' | 'very-high';
@@ -181,4 +185,22 @@ export interface SeatPartyResponse {
   tables_assigned: string[];
   estimated_departure: string;
   message: string;
+}
+
+/** Data passed to SeatPartyModal from WalkInModal, CheckInModal, or WaitlistSeatModal */
+export interface SeatModalData {
+  type: 'walk-in' | 'reservation' | 'waitlist';
+  customer_name: string;
+  customer_phone: string;
+  party_size: number;
+  table_ids: string[];
+  table_numbers?: string[];
+  special_requests?: string;
+  // reservation-specific
+  reservation_id?: string;
+  // waitlist-specific
+  waitlist_id?: string;
+  waitlist_entry_id?: string;
+  // seating result
+  recommendations?: { recommendation?: { total_capacity?: number } };
 }

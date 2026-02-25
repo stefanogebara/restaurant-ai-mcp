@@ -184,8 +184,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
       configIndex = area.tables.length - 1;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (area.tables[configIndex] as any)[field] = value;
+    (area.tables[configIndex] as Record<string, unknown>)[field] = value;
     updateData({ areas: updatedAreas });
   };
 

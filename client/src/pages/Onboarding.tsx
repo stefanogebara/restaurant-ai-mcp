@@ -168,8 +168,8 @@ export default function Onboarding() {
         });
 
       setShowSuccessModal(true);
-    } catch (err: any) {
-      showError(err.message || 'Failed to complete onboarding. Please try again.');
+    } catch (err: unknown) {
+      showError(err instanceof Error ? err.message : 'Failed to complete onboarding. Please try again.');
       console.error('[Onboarding Error]', err);
     } finally {
       setIsSubmitting(false);
