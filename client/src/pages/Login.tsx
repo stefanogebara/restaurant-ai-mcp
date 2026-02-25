@@ -35,11 +35,11 @@ export default function Login() {
   // While auth is resolving (e.g. returning from OAuth callback), show spinner
   if (loading) {
     return (
-      <div className="min-h-screen bg-warm-white flex flex-col items-center justify-center gap-4">
-        <div className="font-serif text-2xl text-deep-charcoal opacity-50">
+      <div role="status" aria-label="Loading" className="min-h-screen bg-warm-white flex flex-col items-center justify-center gap-4">
+        <div aria-hidden="true" className="font-serif text-2xl text-deep-charcoal opacity-50">
           seatable<span className="text-burgundy">.</span>
         </div>
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy" />
+        <div aria-hidden="true" className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy" />
       </div>
     );
   }
@@ -253,7 +253,7 @@ export default function Login() {
               `}
             >
               {isSigningIn && !email ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-deep-charcoal border-t-transparent"></div>
+                <div aria-hidden="true" className="animate-spin rounded-full h-5 w-5 border-2 border-deep-charcoal border-t-transparent"></div>
               ) : (
                 <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
                   <path
@@ -328,7 +328,7 @@ export default function Login() {
                 `}
               >
                 {isSigningIn && email ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                  <div aria-hidden="true" className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                 ) : null}
                 <span>{mode === 'signin' ? t('login.signIn') : t('login.createAccountBtn')}</span>
               </button>

@@ -353,8 +353,8 @@ export default function Onboarding() {
                 );
               })()}
 
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-border-gray border-t-burgundy" />
+              <div role="status" className="flex items-center justify-center gap-2 mb-4">
+                <div aria-hidden="true" className="animate-spin rounded-full h-5 w-5 border-2 border-border-gray border-t-burgundy" />
                 <span className="text-sm text-stone-gray">{t('onboarding.redirectingToDashboard')}</span>
               </div>
 

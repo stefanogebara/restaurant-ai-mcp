@@ -89,8 +89,8 @@ export default function Welcome() {
         <div className="font-serif text-2xl text-deep-charcoal opacity-50">
           seatable<span className="text-burgundy">.</span>
         </div>
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy"></div>
-        <p className="text-sm text-stone-gray font-light">{t('common.settingUp')}</p>
+        <div aria-hidden="true" className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy"></div>
+        <p role="status" className="text-sm text-stone-gray font-light">{t('common.settingUp')}</p>
       </div>
     );
   }

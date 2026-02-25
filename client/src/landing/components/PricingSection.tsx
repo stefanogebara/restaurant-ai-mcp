@@ -126,7 +126,7 @@ export default function PricingSection() {
                 >
                   {loadingPlan === tier.name ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 aria-hidden="true" className="w-4 h-4 animate-spin" />
                       Loading...
                     </>
                   ) : (

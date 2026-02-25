@@ -231,11 +231,11 @@ export default function BookingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-warm-white flex flex-col items-center justify-center gap-4">
-        <div className="font-serif text-2xl text-deep-charcoal opacity-50">
+      <div role="status" aria-label="Loading" className="min-h-screen bg-warm-white flex flex-col items-center justify-center gap-4">
+        <div aria-hidden="true" className="font-serif text-2xl text-deep-charcoal opacity-50">
           seatable<span className="text-burgundy">.</span>
         </div>
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy" />
+        <div aria-hidden="true" className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy" />
       </div>
     );
   }
@@ -348,8 +348,8 @@ export default function BookingPage() {
                 Select Time
               </div>
               {loadingSlots ? (
-                <div className="flex items-center justify-center py-8 gap-3">
-                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-border-gray border-t-burgundy" />
+                <div role="status" className="flex items-center justify-center py-8 gap-3">
+                  <div aria-hidden="true" className="animate-spin rounded-full h-6 w-6 border-2 border-border-gray border-t-burgundy" />
                   <span className="text-sm text-stone-gray">Checking availability...</span>
                 </div>
               ) : timeSlots.length === 0 ? (
@@ -508,7 +508,7 @@ export default function BookingPage() {
           >
             {submitting ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
+                <div aria-hidden="true" className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
                 Confirming...
               </>
             ) : (

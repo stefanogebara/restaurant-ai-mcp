@@ -70,8 +70,8 @@ export default function JoinPage() {
     return (
       <div className="min-h-screen bg-warm-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy mx-auto mb-3" />
-          <p className="text-sm text-stone-gray">{state === 'accepting' ? 'Activating your account…' : 'Loading…'}</p>
+          <div aria-hidden="true" className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy mx-auto mb-3" />
+          <p className="text-sm text-stone-gray" role="status">{state === 'accepting' ? 'Activating your account…' : 'Loading…'}</p>
         </div>
       </div>
     );

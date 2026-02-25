@@ -757,8 +757,8 @@ export default function FloorPlanEditor() {
             style={{ background: '#F5F2EC' }}
           >
             {isLoading ? (
-              <div className="flex items-center justify-center" style={{ height: 420 }}>
-                <div className="animate-spin rounded-full h-7 w-7 border-2 border-border-gray border-t-burgundy" />
+              <div role="status" aria-label="Loading floor plan" className="flex items-center justify-center" style={{ height: 420 }}>
+                <div aria-hidden="true" className="animate-spin rounded-full h-7 w-7 border-2 border-border-gray border-t-burgundy" />
               </div>
             ) : filteredTables.length === 0 ? (
               <div className="flex flex-col items-center justify-center text-center py-20 px-6">

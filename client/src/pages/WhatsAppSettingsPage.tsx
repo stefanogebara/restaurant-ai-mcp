@@ -50,7 +50,7 @@ export default function WhatsAppSettingsPage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy" />
+          <div role="status" aria-label="Loading" className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy" />
         </div>
       </DashboardLayout>
     );
