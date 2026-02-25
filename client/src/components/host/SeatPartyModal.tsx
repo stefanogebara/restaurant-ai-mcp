@@ -125,7 +125,7 @@ export default function SeatPartyModal({ isOpen, data, onClose, onRetryTableSele
                     </p>
                     <button
                       onClick={handleRetry}
-                      className="text-sm font-medium text-burgundy hover:text-burgundy-dark underline focus:outline-none focus:ring-2 focus:ring-burgundy rounded"
+                      className="text-sm font-medium text-burgundy hover:text-burgundy-dark underline focus:outline-none focus:ring-2 focus:ring-burgundy rounded transition-colors"
                     >
                       ← Select Different Tables
                     </button>
