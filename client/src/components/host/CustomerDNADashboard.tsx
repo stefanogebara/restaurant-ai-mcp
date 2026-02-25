@@ -484,6 +484,7 @@ export default function CustomerDNADashboard() {
                 <select
                   value={styleFilter}
                   onChange={(e) => setStyleFilter(e.target.value)}
+                  aria-label="Filter by dining style"
                   className="pl-9 pr-8 py-2 text-sm bg-white border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-600/30 focus:border-violet-600 appearance-none cursor-pointer"
                 >
                   <option value="">All Styles</option>

@@ -128,6 +128,7 @@ export default function Step5Team({ data, updateData, onComplete, onBack, isSubm
             <select
               value={newMemberRole}
               onChange={(e) => setNewMemberRole(e.target.value as any)}
+              aria-label="Member role"
               className="flex-1 px-4 py-3 bg-white border border-border-gray rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
             >
               {ROLES.map((role) => (

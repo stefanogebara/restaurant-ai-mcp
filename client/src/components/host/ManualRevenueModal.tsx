@@ -380,11 +380,12 @@ export default function ManualRevenueModal({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-deep-charcoal mb-1">
+              <label htmlFor="manual-revenue-party-size" className="block text-sm font-medium text-deep-charcoal mb-1">
                 <ThiingsIcon name="users" size="xs" className="inline mr-1" />
                 {t.partySize}
               </label>
               <select
+                id="manual-revenue-party-size"
                 value={partySize}
                 onChange={(e) => setPartySize(e.target.value)}
                 className="w-full px-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"

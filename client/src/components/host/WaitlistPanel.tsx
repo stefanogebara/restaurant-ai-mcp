@@ -598,10 +598,11 @@ function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlistModalProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-deep-charcoal mb-2">
+              <label htmlFor="waitlist-party-size" className="block text-sm font-medium text-deep-charcoal mb-2">
                 {t('waitlist.partySize')} *
               </label>
               <select
+                id="waitlist-party-size"
                 required
                 value={formData.party_size}
                 onChange={(e) => setFormData({ ...formData, party_size: e.target.value })}
