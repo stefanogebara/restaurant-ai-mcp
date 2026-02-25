@@ -66,10 +66,10 @@ function FieldLabel({
 }
 
 const inputBase =
-  'w-full px-4 py-3 border border-border-gray rounded-xl text-sm text-deep-charcoal placeholder-stone-300 bg-white focus:outline-none focus:ring-[3px] focus:ring-burgundy/20 focus:border-burgundy transition-all';
+  'w-full px-4 py-3 border border-border-gray rounded-xl text-sm text-deep-charcoal placeholder-muted-stone bg-white focus:outline-none focus:ring-[3px] focus:ring-burgundy/20 focus:border-burgundy transition-all';
 
 const textareaBase =
-  'w-full px-4 py-3 border border-border-gray rounded-xl text-sm text-deep-charcoal placeholder-stone-300 bg-white focus:outline-none focus:ring-[3px] focus:ring-burgundy/20 focus:border-burgundy transition-all resize-none';
+  'w-full px-4 py-3 border border-border-gray rounded-xl text-sm text-deep-charcoal placeholder-muted-stone bg-white focus:outline-none focus:ring-[3px] focus:ring-burgundy/20 focus:border-burgundy transition-all resize-none';
 
 export default function DemoSetupPage() {
   const [form, setForm] = useState<DemoFormData>(INITIAL_FORM);

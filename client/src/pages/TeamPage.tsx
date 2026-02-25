@@ -107,7 +107,7 @@ export default function TeamPage() {
             <select
               value={inviteRole}
               onChange={e => setInviteRole(e.target.value as Role)}
-              className="border border-border-gray rounded-xl px-3 py-2 text-sm"
+              className="border border-border-gray rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
             >
               {ROLE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
@@ -146,7 +146,7 @@ export default function TeamPage() {
                   <select
                     value={member.role}
                     onChange={e => handleRoleChange(member.id, e.target.value as Role)}
-                    className="text-xs border border-border-gray rounded-xl px-2 py-1"
+                    className="text-xs border border-border-gray rounded-xl px-2 py-1 focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
                   >
                     {ROLE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
