@@ -70,6 +70,7 @@ export default function TableCard({ table, onClick }: TableCardProps) {
               setShowMenu(true);
             }
           }}
+          aria-label={`Manage table ${table.table_number} — ${table.status}`}
           className={`
             w-full p-4 rounded-2xl transition-all duration-200
             bg-white border border-border-gray shadow-md

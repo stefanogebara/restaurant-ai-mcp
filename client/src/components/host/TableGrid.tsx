@@ -12,7 +12,7 @@ export default function TableGrid({ tables, onTableClick }: TableGridProps) {
     return (
       <div className="text-center py-16">
         <div className="w-16 h-16 mx-auto mb-4 bg-soft-gray rounded-2xl flex items-center justify-center">
-          <ThiingsIcon name="grid" pxSize={28} />
+          <ThiingsIcon name="layout-grid" pxSize={28} />
         </div>
         <p className="font-semibold text-deep-charcoal">No tables configured yet</p>
         <p className="text-sm text-stone-gray mt-1">Tables will appear here after onboarding</p>
