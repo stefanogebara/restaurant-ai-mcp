@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import ThiingsIcon from '../common/ThiingsIcon';
 
 interface QuickStatsProps {
@@ -40,6 +41,8 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
+        aria-expanded={isExpanded}
+        aria-controls="quick-stats-content"
         className="w-full p-6 flex items-center justify-between hover:bg-soft-gray transition-colors rounded-t-2xl"
       >
         <h2 className="text-xl font-bold text-deep-charcoal flex items-center gap-2">
@@ -53,7 +56,7 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
 
       {/* Collapsible Content */}
       {isExpanded && (
-        <div className="px-6 pb-6 space-y-3">
+        <div id="quick-stats-content" className="px-6 pb-6 space-y-3">
           {/* Total Reservations */}
           <div className="flex items-center justify-between p-3 bg-soft-gray rounded-xl">
             <div className="flex items-center gap-3">
@@ -111,12 +114,12 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
           </div>
 
           {/* Link to full analytics */}
-          <a
-            href="/analytics"
+          <Link
+            to="/analytics"
             className="block w-full mt-4 px-4 py-2 text-center text-sm bg-deep-charcoal hover:bg-burgundy text-white font-medium rounded-xl transition-colors"
           >
             View Full Analytics
-          </a>
+          </Link>
         </div>
       )}
     </div>
