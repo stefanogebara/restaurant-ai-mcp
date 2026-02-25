@@ -110,7 +110,7 @@ export default function DemoSetupPage() {
   return (
     <div className="min-h-screen bg-warm-white text-deep-charcoal">
       {/* Minimal nav */}
-      <nav className="sticky top-0 z-50 flex items-center justify-between px-6 sm:px-16 py-5 bg-[rgba(250,250,249,0.9)] backdrop-blur-xl border-b border-border-gray">
+      <nav className="sticky top-0 z-50 flex items-center justify-between px-6 sm:px-16 py-5 bg-warm-white/90 backdrop-blur-xl border-b border-border-gray">
         <Link
           to="/"
           className="font-serif text-2xl font-semibold text-deep-charcoal tracking-tight"

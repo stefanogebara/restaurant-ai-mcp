@@ -25,7 +25,7 @@ export default function LiveAIDemo() {
   return (
     <div className="min-h-screen bg-warm-white">
       {/* Nav */}
-      <nav className="flex items-center justify-between px-6 sm:px-16 py-6 bg-[rgba(250,250,249,0.8)] backdrop-blur-xl border-b border-border-gray">
+      <nav className="flex items-center justify-between px-6 sm:px-16 py-6 bg-warm-white/80 backdrop-blur-xl border-b border-border-gray">
         <Link to="/" className="font-serif text-2xl font-semibold text-deep-charcoal tracking-tight">
           seatable<span className="text-burgundy">.</span>
         </Link>

@@ -286,19 +286,19 @@ export default function CustomerPortal() {
                     <div className="space-y-4">
                       <div>
                         <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.date')}</label>
-                        <input type="date" value={modifiedData.date} onChange={(e) => setModifiedData({ ...modifiedData, date: e.target.value })} className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal focus:outline-none focus:border-burgundy" />
+                        <input type="date" value={modifiedData.date} onChange={(e) => setModifiedData({ ...modifiedData, date: e.target.value })} className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]" />
                       </div>
                       <div>
                         <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.time')}</label>
-                        <input type="time" value={modifiedData.time} onChange={(e) => setModifiedData({ ...modifiedData, time: e.target.value })} className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal focus:outline-none focus:border-burgundy" />
+                        <input type="time" value={modifiedData.time} onChange={(e) => setModifiedData({ ...modifiedData, time: e.target.value })} className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]" />
                       </div>
                       <div>
                         <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.partySize')}</label>
-                        <input type="number" min="1" max="20" value={modifiedData.party_size} onChange={(e) => setModifiedData({ ...modifiedData, party_size: parseInt(e.target.value) })} className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal focus:outline-none focus:border-burgundy" />
+                        <input type="number" min="1" max="20" value={modifiedData.party_size} onChange={(e) => setModifiedData({ ...modifiedData, party_size: parseInt(e.target.value) })} className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]" />
                       </div>
                       <div>
                         <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.specialRequests')}</label>
-                        <textarea value={modifiedData.special_requests || ''} onChange={(e) => setModifiedData({ ...modifiedData, special_requests: e.target.value })} rows={3} placeholder="Allergies, celebrations, seating preferences..." className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy resize-none" />
+                        <textarea value={modifiedData.special_requests || ''} onChange={(e) => setModifiedData({ ...modifiedData, special_requests: e.target.value })} rows={3} placeholder="Allergies, celebrations, seating preferences..." className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%] resize-none" />
                       </div>
                       <div className="flex gap-2.5 pt-2">
                         <button onClick={() => { setIsModifying(false); setModifiedData(reservation); }} className="flex-1 py-3 border border-border-gray bg-white text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">{t('common.cancel')}</button>
@@ -316,7 +316,7 @@ export default function CustomerPortal() {
                     <button onClick={() => setIsModifying(true)} className="flex-1 py-3 border border-border-gray bg-white text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">
                       {t('reservations.editReservation')}
                     </button>
-                    <button onClick={handleCancel} disabled={isLoading} className="flex-1 py-3 border border-[rgba(220,38,38,0.2)] bg-[rgba(220,38,38,0.04)] text-red-600 font-medium rounded-[10px] text-[13px] hover:bg-red-600/[8%] transition-colors disabled:opacity-50">
+                    <button onClick={handleCancel} disabled={isLoading} className="flex-1 py-3 border border-red-600/20 bg-red-600/[4%] text-red-600 font-medium rounded-[10px] text-[13px] hover:bg-red-600/[8%] transition-colors disabled:opacity-50">
                       {t('reservations.cancelReservation')}
                     </button>
                   </div>
