@@ -256,8 +256,8 @@ export default function WeeklyReport() {
             <div className="flex items-center gap-1.5 px-2 py-2 bg-white border border-border-gray rounded-xl text-[13px] font-medium text-stone-gray">
               <button
                 onClick={handlePrevious}
+                aria-label="Previous period"
                 className="px-2 py-0.5 text-stone-gray hover:text-deep-charcoal transition-colors"
-                title="Previous period"
               >
                 ←
               </button>
@@ -277,8 +277,8 @@ export default function WeeklyReport() {
               <button onClick={handleDateChange} className="ml-1 text-burgundy font-semibold text-xs hover:text-burgundy-dark transition-colors">{t('common.apply')}</button>
               <button
                 onClick={handleNext}
+                aria-label="Next period"
                 className="px-2 py-0.5 text-stone-gray hover:text-deep-charcoal transition-colors"
-                title="Next period"
               >
                 →
               </button>

@@ -695,8 +695,8 @@ export default function VoiceSettingsPage() {
                           navigator.clipboard.writeText(config.agent_id);
                           toast.info('Agent ID copied');
                         }}
+                        aria-label="Copy Agent ID"
                         className="text-burgundy hover:text-burgundy-dark flex-shrink-0"
-                        title="Copy Agent ID"
                       >
                         <ThiingsIcon name="clipboard" pxSize={14} />
                       </button>
