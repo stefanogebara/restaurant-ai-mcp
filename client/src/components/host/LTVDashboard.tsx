@@ -195,6 +195,7 @@ export default function LTVDashboard() {
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
+        aria-expanded={isExpanded}
         className="w-full p-6 flex items-center justify-between hover:bg-soft-gray/50 transition-colors rounded-t-2xl"
       >
         <h2 className="text-xl font-bold text-deep-charcoal flex items-center gap-2">

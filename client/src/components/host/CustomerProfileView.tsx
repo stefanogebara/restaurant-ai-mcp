@@ -488,6 +488,7 @@ export default function CustomerProfileView() {
       <div className="bg-white rounded-2xl border border-border-gray p-6 shadow-lg">
         <button
           onClick={() => setShowAllReservations(!showAllReservations)}
+          aria-expanded={showAllReservations}
           className="w-full flex items-center justify-between"
         >
           <h2 className="text-lg font-semibold font-serif text-deep-charcoal flex items-center gap-2">

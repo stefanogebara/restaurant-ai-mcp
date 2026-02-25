@@ -170,6 +170,7 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
+          aria-expanded={showForm}
           className="text-xs px-3 py-1.5 rounded-xl bg-burgundy text-white font-medium hover:bg-burgundy-dark transition-colors"
         >
           {t.addNote}

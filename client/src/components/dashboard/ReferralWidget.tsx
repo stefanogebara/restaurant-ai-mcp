@@ -51,6 +51,7 @@ export default function ReferralWidget() {
       {/* Header row — always visible, toggles expansion */}
       <button
         type="button"
+        aria-expanded={isExpanded}
         onClick={() => setIsExpanded((prev) => !prev)}
         className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-soft-gray transition-colors"
       >

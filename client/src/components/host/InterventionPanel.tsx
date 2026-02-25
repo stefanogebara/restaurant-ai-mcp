@@ -108,8 +108,10 @@ export default function InterventionPanel({
   return (
     <div className="bg-white rounded-2xl border border-border-gray shadow-md">
       {/* Header */}
-      <div
-        className="p-4 border-b border-border-gray cursor-pointer hover:bg-soft-gray transition-colors rounded-t-2xl"
+      <button
+        type="button"
+        aria-expanded={isExpanded}
+        className="w-full p-4 border-b border-border-gray hover:bg-soft-gray transition-colors rounded-t-2xl text-left"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center justify-between">
@@ -133,7 +135,7 @@ export default function InterventionPanel({
             <ThiingsIcon name="chevron-down" pxSize={20} />
           )}
         </div>
-      </div>
+      </button>
 
       {/* Reservation List */}
       {isExpanded && (
