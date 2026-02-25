@@ -251,7 +251,7 @@ export default function ReservationsCalendarGrid({
               <button
                 onClick={() => setSelectedReservation(null)}
                 aria-label="Close"
-                className="p-1 hover:bg-soft-gray rounded-xl transition-colors"
+                className="p-1.5 hover:bg-soft-gray rounded-xl transition-colors"
               >
                 <ThiingsIcon name="close" pxSize={20} />
               </button>

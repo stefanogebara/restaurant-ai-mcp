@@ -549,7 +549,8 @@ export default function CallTrackingDashboard() {
                   setShowDiagnosePanel(false);
                   setDiagnoseData(null);
                 }}
-                className="p-1 hover:bg-soft-gray rounded-lg transition-colors"
+                aria-label="Close"
+                className="p-1.5 hover:bg-soft-gray rounded-lg transition-colors"
               >
                 <ThiingsIcon name="close" size="sm" />
               </button>

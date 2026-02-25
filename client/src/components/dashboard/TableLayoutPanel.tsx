@@ -221,7 +221,7 @@ export default function TableLayoutPanel({
               <button
                 onClick={() => setSelectedTable(null)}
                 aria-label="Close"
-                className="text-muted-stone hover:text-stone-gray transition-colors p-1"
+                className="text-muted-stone hover:text-stone-gray transition-colors p-1.5 rounded-lg"
               >
                 <ThiingsIcon name="close" pxSize={20} />
               </button>
