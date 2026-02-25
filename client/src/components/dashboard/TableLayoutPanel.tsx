@@ -220,6 +220,7 @@ export default function TableLayoutPanel({
               </div>
               <button
                 onClick={() => setSelectedTable(null)}
+                aria-label="Close"
                 className="text-muted-stone hover:text-stone-gray transition-colors p-1"
               >
                 <ThiingsIcon name="close" pxSize={20} />

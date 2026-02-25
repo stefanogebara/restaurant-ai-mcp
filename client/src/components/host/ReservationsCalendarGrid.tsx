@@ -250,6 +250,7 @@ export default function ReservationsCalendarGrid({
               <h3 className="text-lg font-bold text-deep-charcoal">Reservation Details</h3>
               <button
                 onClick={() => setSelectedReservation(null)}
+                aria-label="Close"
                 className="p-1 hover:bg-soft-gray rounded-xl transition-colors"
               >
                 <ThiingsIcon name="close" pxSize={20} />

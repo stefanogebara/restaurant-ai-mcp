@@ -74,6 +74,7 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
             </div>
             <button
               onClick={onClose}
+              aria-label="Close"
               className="text-stone-gray hover:text-deep-charcoal transition-colors"
             >
               <ThiingsIcon name="close" size="sm" />

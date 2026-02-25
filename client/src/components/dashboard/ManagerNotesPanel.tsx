@@ -274,8 +274,8 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
               </div>
               <button
                 onClick={() => handleDelete(note.id)}
+                aria-label="Delete note"
                 className="shrink-0 opacity-0 group-hover:opacity-100 text-muted-stone hover:text-red-500 transition-all p-1"
-                title="Delete"
               >
                 <ThiingsIcon name="close" pxSize={14} />
               </button>

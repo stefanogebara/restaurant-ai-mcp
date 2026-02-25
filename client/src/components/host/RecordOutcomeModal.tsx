@@ -82,6 +82,7 @@ export default function RecordOutcomeModal({
           </div>
           <button
             onClick={onClose}
+            aria-label="Close"
             className="w-10 h-10 rounded-full hover:bg-soft-gray flex items-center justify-center transition-colors"
             disabled={isSubmitting}
           >

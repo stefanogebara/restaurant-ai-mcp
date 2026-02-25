@@ -166,6 +166,7 @@ function AddTableModal({
           </div>
           <button
             onClick={onClose}
+            aria-label="Close"
             className="p-1.5 hover:bg-soft-gray rounded-xl transition-colors text-muted-stone hover:text-stone-gray"
           >
             <ThiingsIcon name="close" pxSize={18} />
@@ -345,6 +346,7 @@ function TablePopover({
         </div>
         <button
           onClick={onClose}
+          aria-label="Close"
           className="p-1.5 hover:bg-soft-gray rounded-xl transition-colors text-muted-stone mt-0.5"
         >
           <ThiingsIcon name="close" pxSize={14} />
