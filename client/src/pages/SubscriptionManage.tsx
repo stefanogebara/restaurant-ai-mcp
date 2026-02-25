@@ -112,7 +112,7 @@ export default function SubscriptionManage() {
 
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="bg-white border border-border-gray rounded-2xl p-12 max-w-md text-center">
-            <div className="w-16 h-16 rounded-full bg-soft-gray flex items-center justify-center mx-auto mb-5">
+            <div className="w-16 h-16 rounded-full bg-soft-gray flex items-center justify-center mx-auto mb-5" aria-hidden="true">
               <ThiingsIcon name="close" pxSize={28} className="text-muted-stone" />
             </div>
             <h1 className="font-serif text-2xl font-medium text-deep-charcoal mb-2">No Active Subscription</h1>

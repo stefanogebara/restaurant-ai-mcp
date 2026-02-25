@@ -60,6 +60,7 @@ export default function Toast({ message, type, onClose, duration = 3000 }: Toast
         </div>
         <button
           onClick={onClose}
+          aria-label="Dismiss"
           className="text-muted-stone hover:text-white transition-colors ml-2"
         >
           <ThiingsIcon name="close" pxSize={20} />
