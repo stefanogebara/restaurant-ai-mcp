@@ -264,7 +264,8 @@ export default function Dashboard() {
         {/* ---- FAB: Add Walk-in ---- */}
         <button
           onClick={() => setShowWalkInModal(true)}
-          className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-deep-charcoal hover:bg-charcoal-dark hover:scale-105 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
+          aria-label="Add walk-in"
+          className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-deep-charcoal hover:bg-charcoal-dark hover:scale-105 active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
         >
           <ThiingsIcon name="plus" pxSize={24} />
         </button>

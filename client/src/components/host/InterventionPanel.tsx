@@ -158,8 +158,8 @@ export default function InterventionPanel({
                           setSelectedReservation(reservation);
                           setShowExplanation(true);
                         }}
-                        className="hover:scale-105 transition-transform"
-                        title="Click to see why this reservation is flagged"
+                        aria-label="View risk explanation"
+                        className="hover:scale-105 active:scale-95 transition-transform"
                       >
                         <RiskScoreBadge
                           riskScore={reservation.no_show_risk_score}
