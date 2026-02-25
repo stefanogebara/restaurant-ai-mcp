@@ -4,7 +4,6 @@ import ReservationDetailsModal from './ReservationDetailsModal';
 import RiskBadge from './RiskBadge';
 import { hostAPI } from '../../services/api';
 import ThiingsIcon from '../common/ThiingsIcon';
-import ThiingsIcon from '../common/ThiingsIcon';
 
 interface ReservationsCalendarProps {
   reservations: UpcomingReservation[];
@@ -165,6 +164,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
             <button
               key={date}
               onClick={() => setSelectedDate(isSelected ? null : date)}
+              aria-expanded={isSelected}
               className={`
                 w-full p-4 rounded-2xl border-2 transition-all text-left
                 ${isSelected

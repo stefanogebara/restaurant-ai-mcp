@@ -126,8 +126,12 @@ export default function RevenueOpportunities() {
           {opportunities.map((opp) => (
             <div
               key={opp.rank}
-              className="border border-border-gray/50 rounded-2xl overflow-hidden hover:shadow-lg transition-all cursor-pointer bg-gradient-to-br from-white to-soft-gray/20"
+              role="button"
+              tabIndex={0}
+              aria-expanded={expandedCard === opp.rank}
+              className="border border-border-gray/50 rounded-2xl overflow-hidden hover:shadow-lg transition-all cursor-pointer bg-gradient-to-br from-white to-soft-gray/20 focus:outline-none focus:ring-2 focus:ring-burgundy/20"
               onClick={() => setExpandedCard(expandedCard === opp.rank ? null : opp.rank)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedCard(expandedCard === opp.rank ? null : opp.rank); } }}
             >
               {/* Card Header */}
               <div className="p-5 border-b border-border-gray">
@@ -181,7 +185,11 @@ export default function RevenueOpportunities() {
                     <div className="text-xs text-warm-stone">
                       <span className="font-semibold">ROI Potential:</span> High
                     </div>
-                    <button className="px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-medium rounded-xl transition-all">
+                    <button
+                      type="button"
+                      onClick={(e) => e.stopPropagation()}
+                      className="px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-medium rounded-xl transition-all"
+                    >
                       Start Implementation
                     </button>
                   </div>

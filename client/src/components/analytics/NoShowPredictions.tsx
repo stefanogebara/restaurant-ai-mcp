@@ -124,9 +124,11 @@ export default function NoShowPredictions() {
         ) : (
           <div className="space-y-3">
             {predictions.map((prediction, index) => (
-              <div
+              <button
                 key={index}
-                className={`border rounded-xl p-4 cursor-pointer hover:shadow-md transition-all ${getRiskColor(prediction.risk_level)}`}
+                type="button"
+                aria-expanded={selectedPrediction === prediction}
+                className={`w-full text-left border rounded-xl p-4 hover:shadow-md transition-all ${getRiskColor(prediction.risk_level)}`}
                 onClick={() => setSelectedPrediction(selectedPrediction === prediction ? null : prediction)}
               >
                 <div className="flex items-center justify-between">
@@ -170,7 +172,7 @@ export default function NoShowPredictions() {
                     </ul>
                   </div>
                 )}
-              </div>
+              </button>
             ))}
           </div>
         )}
