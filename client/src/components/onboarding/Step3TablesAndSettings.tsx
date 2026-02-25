@@ -230,7 +230,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
                 <button
                   onClick={() => removeArea(areaIndex)}
                   className="p-2 hover:bg-red-600/10 text-red-600 rounded-xl transition-colors"
-                  title="Remove area"
+                  aria-label="Remove area"
                 >
                   <ThiingsIcon name="trash" pxSize={20} />
                 </button>
