@@ -424,12 +424,12 @@ function WaitlistEntryCard({
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-1.5 ml-10">
           {tags.slice(0, 3).map((tag, i) => (
-            <span key={i} className="px-1.5 py-0.5 text-[10px] bg-violet-600/10 text-violet-600 rounded">
+            <span key={i} className="px-1.5 py-0.5 text-[10px] bg-violet-600/10 text-violet-600 rounded-lg">
               {tag}
             </span>
           ))}
           {tags.length > 3 && (
-            <span className="px-1.5 py-0.5 text-[10px] bg-border-gray text-stone-gray rounded">
+            <span className="px-1.5 py-0.5 text-[10px] bg-border-gray text-stone-gray rounded-lg">
               +{tags.length - 3}
             </span>
           )}

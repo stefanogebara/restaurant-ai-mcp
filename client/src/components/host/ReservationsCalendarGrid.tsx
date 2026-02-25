@@ -206,7 +206,7 @@ export default function ReservationsCalendarGrid({
                           <button
                             key={resIdx}
                             onClick={() => setSelectedReservation(res)}
-                            className={`w-full mb-1 p-1.5 rounded text-left text-xs border-l-2 ${colors.bg} ${colors.border} ${colors.text} hover:opacity-80 transition-opacity`}
+                            className={`w-full mb-1 p-1.5 rounded-lg text-left text-xs border-l-2 ${colors.bg} ${colors.border} ${colors.text} hover:opacity-80 transition-opacity`}
                           >
                             <div className="font-medium truncate">{res.customer_name}</div>
                             <div className="flex items-center gap-1 text-[10px] opacity-75">

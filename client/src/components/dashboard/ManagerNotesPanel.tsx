@@ -258,7 +258,7 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
               className="flex items-start gap-2 p-4 rounded-xl bg-warm-white border border-border-gray group"
             >
               <span
-                className={`shrink-0 mt-0.5 text-xs px-2 py-0.5 rounded font-medium ${
+                className={`shrink-0 mt-0.5 text-xs px-2 py-0.5 rounded-lg font-medium ${
                   note.is_policy
                     ? 'bg-blue-100 text-blue-700'
                     : 'bg-amber-100 text-amber-700'
