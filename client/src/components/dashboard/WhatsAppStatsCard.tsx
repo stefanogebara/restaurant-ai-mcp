@@ -25,7 +25,7 @@ export default function WhatsAppStatsCard() {
       </div>
 
       {statsLoading ? (
-        <div className="animate-pulse flex gap-4">
+        <div role="status" aria-label="Loading WhatsApp stats" className="animate-pulse flex gap-4">
           <div className="h-12 flex-1 bg-soft-gray rounded-lg" />
           <div className="h-12 flex-1 bg-soft-gray rounded-lg" />
         </div>

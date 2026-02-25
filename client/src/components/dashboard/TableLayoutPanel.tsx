@@ -122,7 +122,7 @@ export default function TableLayoutPanel({
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-border-gray rounded-2xl p-6">
+      <div role="status" aria-label="Loading table layout" className="bg-white border border-border-gray rounded-2xl p-6">
         <div className="h-6 w-40 bg-border-gray rounded-lg animate-pulse mb-4" />
         <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
           {Array.from({ length: 10 }).map((_, i) => (

@@ -69,7 +69,7 @@ export default function QuickStatsWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl border border-border-gray p-4 shadow-sm">
+      <div role="status" aria-label="Loading stats" className="bg-white rounded-2xl border border-border-gray p-4 shadow-sm">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-5 h-5 bg-soft-gray rounded animate-pulse"></div>
           <div className="h-4 w-32 bg-soft-gray rounded animate-pulse"></div>

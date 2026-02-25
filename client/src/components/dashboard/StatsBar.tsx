@@ -33,7 +33,7 @@ export default function StatsBar({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+      <div role="status" aria-label="Loading stats" className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="bg-white rounded-2xl p-5 border border-border-gray">
             <div className="h-3 w-20 bg-border-gray rounded-full animate-pulse mb-3" />

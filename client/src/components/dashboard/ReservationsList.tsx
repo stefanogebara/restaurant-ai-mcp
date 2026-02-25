@@ -58,7 +58,7 @@ export default function ReservationsList({
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-border-gray rounded-2xl p-5">
+      <div role="status" aria-label="Loading reservations" className="bg-white border border-border-gray rounded-2xl p-5">
         <div className="h-6 w-52 bg-border-gray rounded-lg animate-pulse mb-4" />
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (

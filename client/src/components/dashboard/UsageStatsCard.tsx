@@ -18,7 +18,7 @@ export default function UsageStatsCard() {
         <h3 className="text-sm font-semibold text-warm-stone uppercase tracking-wider mb-3">
           Usage This Month
         </h3>
-        <div className="animate-pulse space-y-2">
+        <div role="status" aria-label="Loading usage stats" className="animate-pulse space-y-2">
           <div className="h-4 bg-border-gray rounded w-3/4" />
           <div className="h-4 bg-border-gray rounded w-1/2" />
         </div>

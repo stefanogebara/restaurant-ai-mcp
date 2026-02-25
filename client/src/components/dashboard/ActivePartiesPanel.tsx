@@ -42,7 +42,7 @@ export default function ActivePartiesPanel({
   const t = translations[language];
   if (isLoading) {
     return (
-      <div className="bg-white border border-border-gray rounded-2xl p-5">
+      <div role="status" aria-label="Loading active parties" className="bg-white border border-border-gray rounded-2xl p-5">
         <div className="h-5 w-32 bg-border-gray rounded animate-pulse mb-4" />
         <div className="space-y-3">
           {[1, 2].map((i) => (
