@@ -226,6 +226,7 @@ export default function CustomerDNADashboard() {
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
+        aria-expanded={isExpanded}
         className="w-full p-6 flex items-center justify-between hover:bg-soft-gray/50 transition-colors rounded-t-2xl"
       >
         <h2 className="text-xl font-bold font-serif text-deep-charcoal flex items-center gap-2">
@@ -395,6 +396,7 @@ export default function CustomerDNADashboard() {
             <div className="p-4 bg-burgundy/10 rounded-xl border border-burgundy/20">
               <button
                 onClick={() => setShowOccasions(!showOccasions)}
+                aria-expanded={showOccasions}
                 className="w-full flex items-center justify-between mb-3"
               >
                 <div className="flex items-center gap-2">

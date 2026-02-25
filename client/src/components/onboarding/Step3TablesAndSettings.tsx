@@ -322,6 +322,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
       <div className="border border-border-gray rounded-xl overflow-hidden">
         <button
           onClick={() => setShowSettings(!showSettings)}
+          aria-expanded={showSettings}
           className="w-full flex items-center justify-between px-5 py-4 bg-soft-gray hover:bg-stone-pale transition-colors"
         >
           <div className="flex items-center gap-3">
