@@ -153,9 +153,9 @@ export default function Sidebar() {
             )}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hidden lg:block p-1.5 hover:bg-white/5 rounded-lg transition-colors text-stone-gray hover:text-muted-stone focus:outline-none"
+              aria-expanded={!isCollapsed}
               aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              className="hidden lg:block p-1.5 hover:bg-white/5 rounded-lg transition-colors text-stone-gray hover:text-muted-stone focus:outline-none focus:ring-2 focus:ring-white/30"
             >
               <span className={`inline-flex transition-transform ${isCollapsed ? 'rotate-180' : ''}`}>
                 <ThiingsIcon name="chevron-left" pxSize={18} />

@@ -535,6 +535,7 @@ export default function VoiceSettingsPage() {
                     )}
                     <button
                       onClick={() => setIsBrowserOpen(!isBrowserOpen)}
+                      aria-expanded={isBrowserOpen}
                       className="px-4 py-2 text-sm font-medium text-burgundy bg-burgundy/5 hover:bg-burgundy/10 rounded-xl transition-colors"
                     >
                       {isBrowserOpen ? 'Hide Voice Browser' : 'Change Voice'}
