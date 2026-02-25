@@ -703,6 +703,7 @@ export default function CallTrackingDashboard() {
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-stone">Outcome</span>
               <select
+                aria-label="Filter by outcome"
                 value={filter.outcome}
                 onChange={(e) => setFilter({ ...filter, outcome: e.target.value })}
                 className="text-xs font-medium px-3 py-1.5 bg-soft-gray border-0 rounded-xl text-deep-charcoal cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy/20"
@@ -717,6 +718,7 @@ export default function CallTrackingDashboard() {
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-stone">Language</span>
               <select
+                aria-label="Filter by language"
                 value={filter.language}
                 onChange={(e) => setFilter({ ...filter, language: e.target.value })}
                 className="text-xs font-medium px-3 py-1.5 bg-soft-gray border-0 rounded-xl text-deep-charcoal cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy/20"

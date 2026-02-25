@@ -185,10 +185,11 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
       {showForm && (
         <div className="mb-4 p-4 rounded-xl bg-warm-white border border-border-gray space-y-3">
           <div>
-            <label className="block text-xs font-medium text-stone-gray mb-1">
+            <label htmlFor="note-type" className="block text-xs font-medium text-stone-gray mb-1">
               {t.typeLabel}
             </label>
             <select
+              id="note-type"
               value={noteType}
               onChange={(e) => setNoteType(e.target.value as typeof noteType)}
               className="w-full text-sm border border-border-gray rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
