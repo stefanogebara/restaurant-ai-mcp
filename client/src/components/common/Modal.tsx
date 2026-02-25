@@ -56,6 +56,9 @@ export default function Modal({
       }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
         className={`
           bg-white shadow-2xl border border-border-gray w-full max-h-[90vh] overflow-y-auto
           ${mobileSheet ? 'rounded-t-2xl sm:rounded-2xl' : 'rounded-2xl'}
@@ -75,8 +78,8 @@ export default function Modal({
             </div>
             <button
               onClick={onClose}
-              className="text-muted-stone hover:text-stone-gray transition-colors p-1"
               aria-label="Close"
+              className="text-muted-stone hover:text-stone-gray transition-colors p-1.5 rounded-xl hover:bg-soft-gray"
             >
               <ThiingsIcon name="close" pxSize={20} />
             </button>
