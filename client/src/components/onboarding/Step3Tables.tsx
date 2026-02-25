@@ -12,78 +12,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { OnboardingStepProps, RestaurantArea, TableShape, TableConfiguration } from '../../types/onboarding.types';
-import type { RestaurantSize } from '../../types/profile.types';
 import ThiingsIcon from '../common/ThiingsIcon';
+import { calculateTableDistribution } from '../../utils/tableDistribution';
 
 const AREA_TEMPLATES = ['Indoor', 'Patio', 'Bar', 'Private Room', 'Custom'];
 const TABLE_CAPACITIES = [2, 4, 6, 8];
-
-/**
- * Calculate recommended table distribution based on restaurant size and total seats
- */
-function calculateTableDistribution(size: RestaurantSize, totalSeats: number): { capacity: number; count: number }[] {
-  // Distribution ratios based on restaurant size
-  const distributions: Record<RestaurantSize, { capacity: number; ratio: number }[]> = {
-    small: [
-      { capacity: 2, ratio: 0.50 },  // 50% of tables are 2-tops
-      { capacity: 4, ratio: 0.35 },  // 35% are 4-tops
-      { capacity: 6, ratio: 0.15 },  // 15% are 6-tops
-    ],
-    medium: [
-      { capacity: 2, ratio: 0.35 },
-      { capacity: 4, ratio: 0.35 },
-      { capacity: 6, ratio: 0.20 },
-      { capacity: 8, ratio: 0.10 },
-    ],
-    large: [
-      { capacity: 2, ratio: 0.25 },
-      { capacity: 4, ratio: 0.35 },
-      { capacity: 6, ratio: 0.25 },
-      { capacity: 8, ratio: 0.15 },
-    ],
-  };
-
-  const dist = distributions[size] || distributions.medium;
-
-  // Calculate average seats per table based on distribution
-  const avgSeatsPerTable = dist.reduce((sum, d) => sum + d.capacity * d.ratio, 0);
-
-  // Estimate total tables needed
-  const estimatedTables = Math.ceil(totalSeats / avgSeatsPerTable);
-
-  // Calculate table counts for each capacity
-  let remainingSeats = totalSeats;
-  const result: { capacity: number; count: number }[] = [];
-
-  for (let i = 0; i < dist.length; i++) {
-    const d = dist[i];
-    const isLast = i === dist.length - 1;
-
-    if (isLast) {
-      // Last capacity type gets remaining tables
-      const count = Math.max(0, Math.ceil(remainingSeats / d.capacity));
-      result.push({ capacity: d.capacity, count });
-    } else {
-      // Calculate count based on ratio
-      const count = Math.round(estimatedTables * d.ratio);
-      const seatsUsed = count * d.capacity;
-      remainingSeats -= seatsUsed;
-      result.push({ capacity: d.capacity, count: Math.max(0, count) });
-    }
-  }
-
-  // Ensure all capacities are represented
-  TABLE_CAPACITIES.forEach(cap => {
-    if (!result.find(r => r.capacity === cap)) {
-      result.push({ capacity: cap, count: 0 });
-    }
-  });
-
-  // Sort by capacity
-  result.sort((a, b) => a.capacity - b.capacity);
-
-  return result;
-}
 
 export default function Step3Tables({ data, updateData, onNext, onBack }: OnboardingStepProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});

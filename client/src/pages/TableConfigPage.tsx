@@ -8,14 +8,9 @@ type ApiError = Error & { response?: { data?: { error?: string } } };
 
 import { SkeletonTableConfig } from '../components/common/Skeleton';
 import DashboardLayout from '../components/layout/DashboardLayout';
-
-interface TableFormData {
-  table_number: number;
-  capacity: number;
-  location: string;
-  is_fixed: boolean;
-  combination_group: string;
-}
+import TableConfigForm from '../components/host/TableConfigForm';
+import type { TableFormData } from '../components/host/TableConfigForm';
+import TableAdjacencyModal from '../components/host/TableAdjacencyModal';
 
 const defaultFormData: TableFormData = {
   table_number: 1,
@@ -35,7 +30,6 @@ export default function TableConfigPage() {
   const [formData, setFormData] = useState<TableFormData>(defaultFormData);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  // Fetch tables
   const { data: tablesResponse, isLoading } = useQuery({
     queryKey: ['tableConfig'],
     queryFn: tableConfigAPI.listTables,
@@ -45,7 +39,6 @@ export default function TableConfigPage() {
   const stats = tablesResponse?.data?.stats || {};
   const tablesByLocation = tablesResponse?.data?.tables_by_location || {};
 
-  // Create table mutation
   const createMutation = useMutation({
     mutationFn: tableConfigAPI.createTable,
     onSuccess: () => {
@@ -59,7 +52,6 @@ export default function TableConfigPage() {
     },
   });
 
-  // Update table mutation
   const updateMutation = useMutation({
     mutationFn: tableConfigAPI.updateTable,
     onSuccess: () => {
@@ -73,7 +65,6 @@ export default function TableConfigPage() {
     },
   });
 
-  // Delete table mutation
   const deleteMutation = useMutation({
     mutationFn: tableConfigAPI.deleteTable,
     onSuccess: () => {
@@ -87,7 +78,6 @@ export default function TableConfigPage() {
     },
   });
 
-  // Set adjacency mutation
   const adjacencyMutation = useMutation({
     mutationFn: ({ tableId, adjacentIds }: { tableId: string; adjacentIds: string[] }) =>
       tableConfigAPI.setAdjacency(tableId, adjacentIds),
@@ -153,7 +143,6 @@ export default function TableConfigPage() {
     setShowAdjacencyModal(true);
   };
 
-  // Get unique locations for dropdown
   const locations = [...new Set(tables.map((t: TableConfig) => t.location))] as string[];
 
   if (isLoading) {
@@ -238,7 +227,6 @@ export default function TableConfigPage() {
                       </span>
                     </div>
 
-                    {/* Status indicator */}
                     <div className="flex items-center gap-2 mb-3">
                       <span
                         className={`w-2 h-2 rounded-full ${
@@ -252,37 +240,28 @@ export default function TableConfigPage() {
                       <span className="text-sm text-warm-stone capitalize">{table.status}</span>
                     </div>
 
-                    {/* Adjacency info */}
                     {table.adjacent_tables && table.adjacent_tables.length > 0 && (
                       <div className="text-xs text-muted-stone mb-2">
                         Adjacent to {table.adjacent_tables.length} table(s)
                       </div>
                     )}
 
-                    {/* Combination group */}
                     {table.combination_group && (
                       <div className="text-xs text-burgundy bg-burgundy/10 px-2 py-1 rounded-lg">
                         Group: {table.combination_group}
                       </div>
                     )}
 
-                    {/* Actions */}
                     <div className="flex gap-2 mt-3 pt-3 border-t border-soft-gray">
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEditModal(table);
-                        }}
+                        onClick={(e) => { e.stopPropagation(); openEditModal(table); }}
                         className="flex-1 px-3 py-1.5 text-xs bg-soft-gray text-stone-gray rounded-xl hover:bg-border-gray transition-colors"
                       >
                         {t('common.edit')}
                       </button>
                       {!table.is_fixed && (
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openAdjacencyModal(table);
-                          }}
+                          onClick={(e) => { e.stopPropagation(); openAdjacencyModal(table); }}
                           className="flex-1 px-3 py-1.5 text-xs bg-burgundy/10 text-burgundy rounded-xl hover:bg-burgundy/20 transition-colors"
                         >
                           {t('settings.setAdjacent')}
@@ -295,7 +274,7 @@ export default function TableConfigPage() {
           </div>
         ))}
 
-        {/* Inactive Tables Section */}
+        {/* Inactive Tables */}
         {tables.filter((t: TableConfig) => !t.is_active).length > 0 && (
           <div className="mt-8">
             <h2 className="text-lg font-semibold text-muted-stone mb-4">
@@ -305,10 +284,7 @@ export default function TableConfigPage() {
               {tables
                 .filter((t: TableConfig) => !t.is_active)
                 .map((table: TableConfig) => (
-                  <div
-                    key={table.id}
-                    className="bg-soft-gray rounded-2xl p-4 border border-border-gray opacity-60"
-                  >
+                  <div key={table.id} className="bg-soft-gray rounded-2xl p-4 border border-border-gray opacity-60">
                     <div className="text-lg font-bold text-muted-stone">Table {table.table_number}</div>
                     <div className="text-sm text-muted-stone">{table.capacity} seats - {table.location}</div>
                   </div>
@@ -322,7 +298,7 @@ export default function TableConfigPage() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
             <h3 className="text-xl font-bold text-deep-charcoal mb-4">{t('settings.addNewTable')}</h3>
-            <TableForm
+            <TableConfigForm
               formData={formData}
               setFormData={setFormData}
               locations={locations}
@@ -340,7 +316,7 @@ export default function TableConfigPage() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
             <h3 className="text-xl font-bold text-deep-charcoal mb-4">{t('settings.editTable')} {selectedTable.table_number}</h3>
-            <TableForm
+            <TableConfigForm
               formData={formData}
               setFormData={setFormData}
               locations={locations}
@@ -364,7 +340,7 @@ export default function TableConfigPage() {
 
       {/* Adjacency Modal */}
       {showAdjacencyModal && selectedTable && (
-        <AdjacencyModal
+        <TableAdjacencyModal
           table={selectedTable}
           allTables={tables.filter((t: TableConfig) => t.is_active && !t.is_fixed && t.id !== selectedTable.id)}
           onSave={(adjacentIds) => {
@@ -378,7 +354,7 @@ export default function TableConfigPage() {
         />
       )}
 
-      {/* Toast Notification */}
+      {/* Toast */}
       {toast && (
         <div
           className={`fixed bottom-4 right-4 px-6 py-3 rounded-xl z-50 ${
@@ -390,225 +366,5 @@ export default function TableConfigPage() {
       )}
     </div>
     </DashboardLayout>
-  );
-}
-
-// Table Form Component
-function TableForm({
-  formData,
-  setFormData,
-  locations,
-  onSubmit,
-  onCancel,
-  isLoading,
-  submitLabel,
-}: {
-  formData: TableFormData;
-  setFormData: (data: TableFormData) => void;
-  locations: string[];
-  onSubmit: () => void;
-  onCancel: () => void;
-  isLoading: boolean;
-  submitLabel: string;
-}) {
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-stone-gray mb-1">Table Number</label>
-          <input
-            type="number"
-            min="1"
-            value={formData.table_number}
-            onChange={(e) => setFormData({ ...formData, table_number: parseInt(e.target.value) || 1 })}
-            className="w-full px-3 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-stone-gray mb-1">Capacity</label>
-          <input
-            type="number"
-            min="1"
-            max="20"
-            value={formData.capacity}
-            onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || 1 })}
-            className="w-full px-3 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-stone-gray mb-1">Location</label>
-        <div className="flex gap-2">
-          <select
-            value={formData.location}
-            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-            className="flex-1 px-3 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
-          >
-            {locations.map((loc) => (
-              <option key={loc} value={loc}>
-                {loc}
-              </option>
-            ))}
-            <option value="__new__">+ New Location</option>
-          </select>
-        </div>
-        {formData.location === '__new__' && (
-          <input
-            type="text"
-            aria-label="New location name"
-            placeholder="Enter new location name"
-            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-            className="mt-2 w-full px-3 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
-          />
-        )}
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-stone-gray mb-1">Table Type</label>
-        <div className="flex gap-3">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              checked={!formData.is_fixed}
-              onChange={() => setFormData({ ...formData, is_fixed: false })}
-              className="w-4 h-4 text-green-500 accent-green-500"
-            />
-            <span className="text-sm text-warm-stone">Flexible (can combine)</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              checked={formData.is_fixed}
-              onChange={() => setFormData({ ...formData, is_fixed: true })}
-              className="w-4 h-4 text-amber-600 accent-amber-600"
-            />
-            <span className="text-sm text-warm-stone">Fixed (booth/round)</span>
-          </label>
-        </div>
-      </div>
-
-      {!formData.is_fixed && (
-        <div>
-          <label className="block text-sm font-medium text-stone-gray mb-1">
-            Combination Group (optional)
-          </label>
-          <input
-            type="text"
-            value={formData.combination_group}
-            onChange={(e) => setFormData({ ...formData, combination_group: e.target.value })}
-            placeholder="e.g., window-row, center-section"
-            className="w-full px-3 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
-          />
-          <p className="text-xs text-muted-stone mt-1">
-            Tables in the same group can be combined together
-          </p>
-        </div>
-      )}
-
-      <div className="flex gap-3 pt-4">
-        <button
-          onClick={onCancel}
-          className="flex-1 px-4 py-2 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={onSubmit}
-          disabled={isLoading}
-          className="flex-1 px-4 py-2 bg-deep-charcoal text-white rounded-xl hover:bg-charcoal-dark transition-colors disabled:opacity-50"
-        >
-          {isLoading ? 'Saving...' : submitLabel}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// Adjacency Modal Component
-function AdjacencyModal({
-  table,
-  allTables,
-  onSave,
-  onCancel,
-  isLoading,
-}: {
-  table: TableConfig;
-  allTables: TableConfig[];
-  onSave: (adjacentIds: string[]) => void;
-  onCancel: () => void;
-  isLoading: boolean;
-}) {
-  const [selectedIds, setSelectedIds] = useState<string[]>(table.adjacent_tables || []);
-
-  const toggleTable = (tableId: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(tableId) ? prev.filter((id) => id !== tableId) : [...prev, tableId]
-    );
-  };
-
-  // Group tables by location for easier selection
-  const tablesByLocation: Record<string, TableConfig[]> = {};
-  allTables.forEach((t) => {
-    const loc = t.location || 'Main';
-    if (!tablesByLocation[loc]) tablesByLocation[loc] = [];
-    tablesByLocation[loc].push(t);
-  });
-
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 max-h-[80vh] overflow-y-auto">
-        <h3 className="text-xl font-bold text-deep-charcoal mb-2">
-          Set Adjacent Tables for Table {table.table_number}
-        </h3>
-        <p className="text-sm text-muted-stone mb-4">
-          Select which tables can be combined with this table. Only flexible tables in the same location are shown.
-        </p>
-
-        {Object.entries(tablesByLocation).map(([location, locationTables]) => (
-          <div key={location} className="mb-4">
-            <h4 className="text-sm font-medium text-warm-stone mb-2">{location}</h4>
-            <div className="grid grid-cols-3 gap-2">
-              {locationTables.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => toggleTable(t.id)}
-                  className={`p-3 rounded-2xl border-2 transition-all text-left ${
-                    selectedIds.includes(t.id)
-                      ? 'border-deep-charcoal bg-soft-gray'
-                      : 'border-border-gray hover:border-muted-stone'
-                  }`}
-                >
-                  <div className="font-medium text-deep-charcoal">Table {t.table_number}</div>
-                  <div className="text-xs text-muted-stone">{t.capacity} seats</div>
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-
-        {allTables.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-sm text-muted-stone">No other flexible tables in this location</p>
-          </div>
-        )}
-
-        <div className="flex gap-3 mt-6 pt-4 border-t border-border-gray">
-          <button
-            onClick={onCancel}
-            className="flex-1 px-4 py-2 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => onSave(selectedIds)}
-            disabled={isLoading}
-            className="flex-1 px-4 py-2 bg-deep-charcoal text-white rounded-xl hover:bg-charcoal-dark transition-colors disabled:opacity-50"
-          >
-            {isLoading ? 'Saving...' : `Save (${selectedIds.length} selected)`}
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }

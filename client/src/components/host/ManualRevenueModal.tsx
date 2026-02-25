@@ -5,17 +5,13 @@
  * when POS integration is not available.
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { authFetch } from '../../services/api';
 import ThiingsIcon from '../common/ThiingsIcon';
 import Spinner from '../common/Spinner';
-
-interface Customer {
-  customer_id: string;
-  customer_name: string | null;
-  customer_phone: string | null;
-  customer_email: string | null;
-}
+import { getManualRevenueTranslations } from './manualRevenueTranslations';
+import { useCustomerSearch } from '../../hooks/useCustomerSearch';
+import type { Customer } from '../../hooks/useCustomerSearch';
 
 interface ManualRevenueModalProps {
   isOpen: boolean;
@@ -44,90 +40,14 @@ export default function ManualRevenueModal({
   const [serviceTime, setServiceTime] = useState('');
   const [notes, setNotes] = useState('');
 
-  // Customer search
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<Customer[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const t = getManualRevenueTranslations(language);
+  const { searchQuery, setSearchQuery, searchResults, isSearching, clearSearch } = useCustomerSearch();
 
-  const translations = {
-    en: {
-      title: 'Add Revenue Entry',
-      customerSearch: 'Search Customer',
-      searchPlaceholder: 'Search by phone or name...',
-      customerPhone: 'Customer Phone',
-      customerName: 'Customer Name',
-      customerEmail: 'Email (optional)',
-      totalRevenue: 'Total Revenue',
-      tipAmount: 'Tip Amount (optional)',
-      partySize: 'Party Size',
-      serviceDate: 'Service Date',
-      serviceTime: 'Service Time (optional)',
-      notes: 'Notes (optional)',
-      cancel: 'Cancel',
-      save: 'Save Revenue',
-      saving: 'Saving...',
-      success: 'Revenue entry saved successfully',
-      errorRequired: 'Please enter a phone number or email and total revenue',
-      errorSave: 'Failed to save revenue entry'
-    },
-    es: {
-      title: 'Agregar Entrada de Ingresos',
-      customerSearch: 'Buscar Cliente',
-      searchPlaceholder: 'Buscar por teléfono o nombre...',
-      customerPhone: 'Teléfono del Cliente',
-      customerName: 'Nombre del Cliente',
-      customerEmail: 'Email (opcional)',
-      totalRevenue: 'Ingresos Totales',
-      tipAmount: 'Propina (opcional)',
-      partySize: 'Tamaño del Grupo',
-      serviceDate: 'Fecha del Servicio',
-      serviceTime: 'Hora del Servicio (opcional)',
-      notes: 'Notas (opcional)',
-      cancel: 'Cancelar',
-      save: 'Guardar Ingresos',
-      saving: 'Guardando...',
-      success: 'Entrada de ingresos guardada exitosamente',
-      errorRequired: 'Por favor ingrese un teléfono o email y los ingresos totales',
-      errorSave: 'Error al guardar la entrada de ingresos'
-    }
-  };
-
-  const t = translations[language];
-
-  // Search customers when query changes
-  useEffect(() => {
-    if (searchQuery.length < 2) {
-      setSearchResults([]);
-      return;
-    }
-
-    const searchTimeout = setTimeout(async () => {
-      setIsSearching(true);
-      try {
-        const response = await authFetch(
-          `/api/revenue?action=customer-search&q=${encodeURIComponent(searchQuery)}`
-        );
-        const data = await response.json();
-        if (data.success) {
-          setSearchResults(data.data.customers || []);
-        }
-      } catch (err) {
-        console.error('Customer search error:', err);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 300);
-
-    return () => clearTimeout(searchTimeout);
-  }, [searchQuery]);
-
-  // Select a customer from search results
   const selectCustomer = (customer: Customer) => {
     setCustomerPhone(customer.customer_phone || '');
     setCustomerName(customer.customer_name || '');
     setCustomerEmail(customer.customer_email || '');
-    setSearchQuery('');
-    setSearchResults([]);
+    clearSearch();
   };
 
   // Handle form submission
@@ -189,8 +109,7 @@ export default function ManualRevenueModal({
     setServiceDate(new Date().toISOString().split('T')[0]);
     setServiceTime('');
     setNotes('');
-    setSearchQuery('');
-    setSearchResults([]);
+    clearSearch();
     setError(null);
   };
 
