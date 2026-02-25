@@ -169,6 +169,7 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
           <p className="text-xs text-muted-stone mt-0.5">{t.subtitle}</p>
         </div>
         <button
+          type="button"
           onClick={() => setShowForm(!showForm)}
           aria-expanded={showForm}
           className="text-xs px-3 py-1.5 rounded-xl bg-burgundy text-white font-medium hover:bg-burgundy-dark transition-colors"
@@ -230,6 +231,7 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
           </div>
 
           <button
+            type="button"
             onClick={handleSave}
             disabled={isSaving || !noteContent.trim()}
             className="w-full text-sm px-4 py-2 rounded-xl bg-burgundy text-white font-medium hover:bg-burgundy-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -275,6 +277,7 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
                 )}
               </div>
               <button
+                type="button"
                 onClick={() => handleDelete(note.id)}
                 aria-label="Delete note"
                 className="shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100 text-muted-stone hover:text-red-500 transition-all p-1.5 rounded-lg"

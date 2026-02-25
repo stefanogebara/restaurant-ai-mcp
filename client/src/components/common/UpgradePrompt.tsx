@@ -70,6 +70,7 @@ export default function UpgradePrompt({ requiredPlan, feature, description }: Up
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
             <button
+              type="button"
               onClick={handleUpgrade}
               className="flex-1 bg-burgundy hover:bg-burgundy-dark text-white font-semibold py-3 px-6 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center justify-center gap-2"
             >
@@ -77,6 +78,7 @@ export default function UpgradePrompt({ requiredPlan, feature, description }: Up
               <ThiingsIcon name="arrow-right" pxSize={20} />
             </button>
             <button
+              type="button"
               onClick={() => window.history.back()}
               className="flex-1 bg-soft-gray hover:bg-border-gray text-deep-charcoal font-semibold py-3 px-6 rounded-xl transition-colors"
             >

@@ -67,6 +67,7 @@ function RouteErrorFallback() {
             Go to Dashboard
           </a>
           <button
+            type="button"
             onClick={() => window.location.reload()}
             className="px-5 py-2.5 bg-soft-gray hover:bg-border-gray text-deep-charcoal font-semibold rounded-xl transition-colors text-sm"
           >

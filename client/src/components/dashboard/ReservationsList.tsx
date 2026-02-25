@@ -88,6 +88,7 @@ export default function ReservationsList({
         </div>
         <div className="flex gap-0">
           <button
+            type="button"
             onClick={() => setShowTomorrow(false)}
             className={`text-xs font-medium px-3.5 py-1.5 rounded-xl transition-colors ${
               !showTomorrow ? 'text-deep-charcoal bg-soft-gray' : 'text-muted-stone hover:text-stone-gray'
@@ -96,6 +97,7 @@ export default function ReservationsList({
             {t.today}
           </button>
           <button
+            type="button"
             onClick={() => setShowTomorrow(true)}
             className={`text-xs font-medium px-3.5 py-1.5 rounded-xl transition-colors ${
               showTomorrow ? 'text-deep-charcoal bg-soft-gray' : 'text-muted-stone hover:text-stone-gray'
@@ -206,6 +208,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
       <div className="flex-shrink-0">
         {!reservation.checked_in && !isHighRisk ? (
           <button
+            type="button"
             onClick={onCheckIn}
             aria-label={t.checkIn}
             className={`text-xs font-semibold px-3 py-1 rounded-full ${statusBadge.classes}`}
@@ -217,6 +220,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
           </button>
         ) : isHighRisk && !(reservation as any).intervention_taken ? (
           <button
+            type="button"
             onClick={onIntervention}
             className="text-xs font-semibold px-3 py-1 rounded-full bg-amber-600/[8%] text-amber-600"
           >

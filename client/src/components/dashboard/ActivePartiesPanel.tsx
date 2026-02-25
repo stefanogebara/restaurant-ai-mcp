@@ -171,6 +171,7 @@ function PartyRow({ party, onComplete, language }: PartyRowProps) {
       )}
 
       <button
+        type="button"
         onClick={onComplete}
         className="w-full mt-3 px-3 py-2.5 min-h-[44px] bg-soft-gray hover:bg-border-gray text-deep-charcoal text-xs font-medium rounded-xl transition-colors"
       >
