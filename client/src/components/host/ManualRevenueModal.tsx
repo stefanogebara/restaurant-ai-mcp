@@ -237,7 +237,7 @@ export default function ManualRevenueModal({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t.searchPlaceholder}
-                className="w-full pl-10 pr-4 py-2 border border-border-gray rounded-xl focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                className="w-full pl-10 pr-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
               />
               {isSearching && (
                 <Spinner size="sm" className="absolute right-3 top-1/2 -translate-y-1/2" />
@@ -281,7 +281,7 @@ export default function ManualRevenueModal({
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
                 placeholder="+34 612 345 678"
-                className="w-full px-4 py-2 border border-border-gray rounded-xl focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                className="w-full px-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
               />
             </div>
             <div>
@@ -294,7 +294,7 @@ export default function ManualRevenueModal({
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="Maria Garcia"
-                className="w-full px-4 py-2 border border-border-gray rounded-xl focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                className="w-full px-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
               />
             </div>
           </div>
@@ -309,7 +309,7 @@ export default function ManualRevenueModal({
               value={customerEmail}
               onChange={(e) => setCustomerEmail(e.target.value)}
               placeholder="maria@example.com"
-              className="w-full px-4 py-2 border border-border-gray rounded-xl focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+              className="w-full px-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
             />
           </div>
 
@@ -330,7 +330,7 @@ export default function ManualRevenueModal({
                   onChange={(e) => setTotalRevenue(e.target.value)}
                   placeholder="85.50"
                   required
-                  className="w-full pl-8 pr-4 py-2 border border-border-gray rounded-xl focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                  className="w-full pl-8 pr-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
                 />
               </div>
             </div>
@@ -347,7 +347,7 @@ export default function ManualRevenueModal({
                   value={tipAmount}
                   onChange={(e) => setTipAmount(e.target.value)}
                   placeholder="10.00"
-                  className="w-full pl-8 pr-4 py-2 border border-border-gray rounded-xl focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                  className="w-full pl-8 pr-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
                 />
               </div>
             </div>
@@ -365,7 +365,7 @@ export default function ManualRevenueModal({
                 value={serviceDate}
                 onChange={(e) => setServiceDate(e.target.value)}
                 required
-                className="w-full px-4 py-2 border border-border-gray rounded-xl focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                className="w-full px-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
               />
             </div>
             <div>
@@ -376,7 +376,7 @@ export default function ManualRevenueModal({
                 type="time"
                 value={serviceTime}
                 onChange={(e) => setServiceTime(e.target.value)}
-                className="w-full px-4 py-2 border border-border-gray rounded-xl focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                className="w-full px-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
               />
             </div>
             <div>
@@ -387,7 +387,7 @@ export default function ManualRevenueModal({
               <select
                 value={partySize}
                 onChange={(e) => setPartySize(e.target.value)}
-                className="w-full px-4 py-2 border border-border-gray rounded-xl focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
+                className="w-full px-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
               >
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20].map((size) => (
                   <option key={size} value={size}>
@@ -408,7 +408,7 @@ export default function ManualRevenueModal({
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Anniversary dinner, special menu..."
               rows={2}
-              className="w-full px-4 py-2 border border-border-gray rounded-xl focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors resize-none"
+              className="w-full px-4 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors resize-none"
             />
           </div>
 

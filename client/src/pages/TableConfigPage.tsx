@@ -415,7 +415,7 @@ function TableForm({
             min="1"
             value={formData.table_number}
             onChange={(e) => setFormData({ ...formData, table_number: parseInt(e.target.value) || 1 })}
-            className="w-full px-3 py-2 border border-border-gray rounded-xl focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+            className="w-full px-3 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           />
         </div>
         <div>
@@ -426,7 +426,7 @@ function TableForm({
             max="20"
             value={formData.capacity}
             onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || 1 })}
-            className="w-full px-3 py-2 border border-border-gray rounded-xl focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+            className="w-full px-3 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           />
         </div>
       </div>
@@ -437,7 +437,7 @@ function TableForm({
           <select
             value={formData.location}
             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-            className="flex-1 px-3 py-2 border border-border-gray rounded-xl focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+            className="flex-1 px-3 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           >
             {locations.map((loc) => (
               <option key={loc} value={loc}>
@@ -452,7 +452,7 @@ function TableForm({
             type="text"
             placeholder="Enter new location name"
             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-            className="mt-2 w-full px-3 py-2 border border-border-gray rounded-xl focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+            className="mt-2 w-full px-3 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           />
         )}
       </div>
@@ -491,7 +491,7 @@ function TableForm({
             value={formData.combination_group}
             onChange={(e) => setFormData({ ...formData, combination_group: e.target.value })}
             placeholder="e.g., window-row, center-section"
-            className="w-full px-3 py-2 border border-border-gray rounded-xl focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+            className="w-full px-3 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           />
           <p className="text-xs text-muted-stone mt-1">
             Tables in the same group can be combined together
