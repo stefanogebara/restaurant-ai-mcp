@@ -213,8 +213,12 @@ export default function TableConfigPage() {
                 .map((table) => (
                   <div
                     key={table.id}
-                    className="bg-white rounded-2xl p-6 border border-border-gray cursor-pointer hover:border-muted-stone transition-colors relative"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Edit Table ${table.table_number}`}
+                    className="bg-white rounded-2xl p-6 border border-border-gray cursor-pointer hover:border-muted-stone transition-colors relative focus:outline-none focus:ring-2 focus:ring-burgundy/20"
                     onClick={() => openEditModal(table)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEditModal(table); } }}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
