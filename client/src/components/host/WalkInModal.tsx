@@ -201,12 +201,14 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
             {/* Action Buttons */}
             <div className="flex gap-3 pt-4">
               <button
+                type="button"
                 onClick={handleBack}
                 className="flex-1 px-4 py-3 border border-border-gray text-stone-gray font-medium rounded-xl hover:bg-soft-gray transition-colors"
               >
                 {t('common.back')}
               </button>
               <button
+                type="button"
                 onClick={handleProceedToSeat}
                 className="flex-1 px-4 py-3 bg-green-600 text-white font-medium rounded-xl hover:bg-green-700 disabled:bg-muted-stone disabled:cursor-not-allowed transition-colors"
                 disabled={selectedTableIds.length === 0}

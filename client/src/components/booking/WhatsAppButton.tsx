@@ -13,7 +13,7 @@ export default function WhatsAppButton({ waMeLink, restaurantName }: WhatsAppBut
       href={`${waMeLink}?text=${prefilled}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-whatsapp hover:bg-spotify text-white rounded-full shadow-lg transition-all hover:shadow-xl hover:scale-105"
+      className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-whatsapp hover:bg-spotify text-white rounded-full shadow-lg transition-all hover:shadow-xl hover:scale-105 active:scale-95"
       aria-label="Chat on WhatsApp"
     >
       <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current" aria-hidden="true">
