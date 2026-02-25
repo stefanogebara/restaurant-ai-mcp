@@ -164,7 +164,7 @@ export default function Sidebar() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto">
+          <nav aria-label="Main navigation" className="flex-1 overflow-y-auto">
             {navSections.map((section) => (
               <div key={section.label} className="mb-5">
                 {/* Section Label */}
@@ -220,6 +220,8 @@ export default function Sidebar() {
                       key={item.path}
                       to={item.path}
                       onClick={() => setIsMobileOpen(false)}
+                      aria-current={active ? 'page' : undefined}
+                      aria-label={isCollapsed ? item.label : undefined}
                       className={`
                         flex items-center gap-3 transition-all duration-150
                         ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
