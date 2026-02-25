@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { authFetch } from '../../services/api';
 import ThiingsIcon from '../common/ThiingsIcon';
 
@@ -139,13 +140,13 @@ export default function QuickStatsWidget() {
           <ThiingsIcon name="target" size="sm" />
           <span className="font-semibold text-deep-charcoal">ML Performance Snapshot</span>
         </div>
-        <a
-          href="/host-dashboard/ml"
+        <Link
+          to="/host-dashboard/ml"
           className="text-sm text-burgundy hover:text-burgundy-dark font-medium flex items-center gap-1 transition-colors"
         >
           View Details
           <ThiingsIcon name="external-link" size="xs" />
-        </a>
+        </Link>
       </div>
 
       {/* Stats Grid - Horizontal */}
