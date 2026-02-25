@@ -84,3 +84,12 @@ const COUNTRY_TO_LANGUAGE: Record<string, string> = {
 export function getLanguageFromCountry(country: string): string {
   return COUNTRY_TO_LANGUAGE[country] || 'en';
 }
+
+export const OPENAI_VOICES = [
+  { id: 'alloy',   name: 'Alloy',   description: 'Neutral and balanced' },
+  { id: 'echo',    name: 'Echo',    description: 'Warm and engaging' },
+  { id: 'fable',   name: 'Fable',   description: 'Expressive and dynamic' },
+  { id: 'onyx',    name: 'Onyx',    description: 'Deep and authoritative' },
+  { id: 'nova',    name: 'Nova',    description: 'Friendly and upbeat' },
+  { id: 'shimmer', name: 'Shimmer', description: 'Clear and bright' },
+] as const;
