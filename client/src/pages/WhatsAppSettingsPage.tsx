@@ -180,7 +180,7 @@ export default function WhatsAppSettingsPage() {
         <div className="bg-white border border-border-gray rounded-2xl p-6 shadow-sm">
           <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider mb-4">Statistics</h2>
           {statsLoading ? (
-            <div className="animate-pulse flex gap-6">
+            <div role="status" aria-label="Loading statistics" className="animate-pulse flex gap-6">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="h-16 w-28 bg-soft-gray rounded-xl" />
               ))}
