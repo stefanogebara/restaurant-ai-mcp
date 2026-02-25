@@ -152,7 +152,7 @@ export default function TeamPage() {
                   </select>
                   <button
                     onClick={() => handleRemove(member.id)}
-                    className="text-xs text-red-500 hover:text-red-700 font-medium"
+                    className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
                   >
                     Remove
                   </button>

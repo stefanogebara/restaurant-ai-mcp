@@ -330,7 +330,7 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
               <div className="mt-3 space-x-3">
                 <button
                   onClick={() => window.location.href = '/#pricing'}
-                  className="px-4 py-2 bg-burgundy text-white font-semibold rounded-xl text-sm hover:bg-burgundy-dark"
+                  className="px-4 py-2 bg-burgundy text-white font-semibold rounded-xl text-sm hover:bg-burgundy-dark transition-colors"
                 >
                   Upgrade to Professional
                 </button>
