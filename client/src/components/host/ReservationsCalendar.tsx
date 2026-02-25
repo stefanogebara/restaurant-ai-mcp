@@ -242,7 +242,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
                       </div>
 
                       {reservation.special_requests && (
-                        <div className="text-xs text-stone-gray bg-white rounded p-2 mb-2 border border-border-gray">
+                        <div className="text-xs text-stone-gray bg-white rounded-lg p-2 mb-2 border border-border-gray">
                           <span className="text-muted-stone">Note:</span> {reservation.special_requests}
                         </div>
                       )}

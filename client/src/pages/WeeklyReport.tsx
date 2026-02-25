@@ -274,7 +274,7 @@ export default function WeeklyReport() {
                 onChange={(e) => setEndDate(e.target.value)}
                 className="bg-transparent border-0 text-[13px] text-stone-gray w-[110px] cursor-pointer"
               />
-              <button onClick={handleDateChange} className="ml-1 text-burgundy font-semibold text-xs">{t('common.apply')}</button>
+              <button onClick={handleDateChange} className="ml-1 text-burgundy font-semibold text-xs hover:text-burgundy-dark transition-colors">{t('common.apply')}</button>
               <button
                 onClick={handleNext}
                 className="px-2 py-0.5 text-stone-gray hover:text-deep-charcoal transition-colors"
@@ -345,9 +345,9 @@ export default function WeeklyReport() {
               return (
                 <div key={time.time} className="flex items-center gap-3">
                   <div className="w-[50px] text-[13px] text-warm-stone text-right flex-shrink-0">{time.time}</div>
-                  <div className="flex-1 h-6 bg-soft-gray rounded-md overflow-hidden">
+                  <div className="flex-1 h-6 bg-soft-gray rounded-lg overflow-hidden">
                     <div
-                      className="h-full rounded-md flex items-center pl-2.5"
+                      className="h-full rounded-lg flex items-center pl-2.5"
                       style={{ width: `${widthPct}%`, background: getBarColor(time.covers) }}
                     >
                       <span className="text-[11px] font-semibold" style={{ color: getBarTextColor(time.covers) }}>{time.covers}</span>

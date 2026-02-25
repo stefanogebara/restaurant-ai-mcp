@@ -188,7 +188,7 @@ export default function InterventionPanel({
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="text-xs bg-soft-gray px-2 py-0.5 rounded border border-border-gray">
+                        <span className="text-xs bg-soft-gray px-2 py-0.5 rounded-lg border border-border-gray">
                           {reservation.customer_phone}
                         </span>
                       </div>
@@ -198,7 +198,7 @@ export default function InterventionPanel({
                       </div>
 
                       {reservation.special_requests && (
-                        <div className="text-xs italic text-stone-gray bg-soft-gray p-2 rounded mt-2 border border-border-gray">
+                        <div className="text-xs italic text-stone-gray bg-soft-gray p-2 rounded-lg mt-2 border border-border-gray">
                           "{reservation.special_requests}"
                         </div>
                       )}

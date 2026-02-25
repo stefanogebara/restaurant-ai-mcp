@@ -166,7 +166,7 @@ function AddTableModal({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-soft-gray rounded-lg transition-colors text-muted-stone hover:text-stone-gray"
+            className="p-1.5 hover:bg-soft-gray rounded-xl transition-colors text-muted-stone hover:text-stone-gray"
           >
             <ThiingsIcon name="close" pxSize={18} />
           </button>
@@ -345,7 +345,7 @@ function TablePopover({
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 hover:bg-soft-gray rounded-lg transition-colors text-muted-stone mt-0.5"
+          className="p-1.5 hover:bg-soft-gray rounded-xl transition-colors text-muted-stone mt-0.5"
         >
           <ThiingsIcon name="close" pxSize={14} />
         </button>
@@ -376,7 +376,7 @@ function TablePopover({
                 key={c}
                 type="button"
                 onClick={() => setCapacity(c)}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                className={`flex-1 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
                   capacity === c
                     ? 'bg-burgundy text-white border-burgundy'
                     : 'bg-white text-stone-gray border-border-gray hover:border-burgundy/40'
@@ -1024,7 +1024,7 @@ export default function FloorPlanEditor() {
           ].map(({ label, stroke, fill }) => (
             <div key={label} className="flex items-center gap-2">
               <span
-                className="w-4 h-4 rounded-md border flex items-center justify-center"
+                className="w-4 h-4 rounded-lg border flex items-center justify-center"
                 style={{ borderColor: stroke, background: fill }}
               >
                 <span className="w-1.5 h-1.5 rounded-full" style={{ background: stroke }} />

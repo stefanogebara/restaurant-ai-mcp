@@ -549,7 +549,7 @@ export default function CallTrackingDashboard() {
                   setShowDiagnosePanel(false);
                   setDiagnoseData(null);
                 }}
-                className="p-1 hover:bg-soft-gray rounded transition-colors"
+                className="p-1 hover:bg-soft-gray rounded-lg transition-colors"
               >
                 <ThiingsIcon name="close" size="sm" />
               </button>
@@ -576,7 +576,7 @@ export default function CallTrackingDashboard() {
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium text-deep-charcoal">{diagnoseData.tool_ids_count} configured</p>
                       {diagnoseData.tool_ids_count === 0 && (
-                        <span className="px-1.5 py-0.5 bg-red-600/10 text-red-600 text-xs rounded font-medium">
+                        <span className="px-1.5 py-0.5 bg-red-600/10 text-red-600 text-xs rounded-lg font-medium">
                           Missing
                         </span>
                       )}

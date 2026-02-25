@@ -451,13 +451,13 @@ function WaitlistEntryCard({
               <button
                 onClick={() => onNotify(entry.id)}
                 disabled={isNotifying}
-                className="px-2 py-1 text-[11px] bg-green-600 hover:bg-green-700 text-white font-medium rounded transition-colors disabled:opacity-50"
+                className="px-2 py-1 text-[11px] bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
               >
                 {t('waitlist.ready')}
               </button>
               <button
                 onClick={() => onSeatNow(entry)}
-                className="px-2 py-1 text-[11px] bg-burgundy hover:bg-burgundy-dark text-white font-medium rounded transition-colors"
+                className="px-2 py-1 text-[11px] bg-burgundy hover:bg-burgundy-dark text-white font-medium rounded-lg transition-colors"
               >
                 {t('waitlist.seat')}
               </button>
@@ -466,7 +466,7 @@ function WaitlistEntryCard({
           {entry.status === 'Notified' && (
             <button
               onClick={() => onSeatNow(entry)}
-              className="px-2 py-1 text-[11px] bg-burgundy hover:bg-burgundy-dark text-white font-medium rounded transition-colors"
+              className="px-2 py-1 text-[11px] bg-burgundy hover:bg-burgundy-dark text-white font-medium rounded-lg transition-colors"
             >
               {t('waitlist.seatNow')}
             </button>
@@ -474,7 +474,7 @@ function WaitlistEntryCard({
           <button
             onClick={() => onRemove(entry.id)}
             disabled={isRemoving}
-            className="px-2 py-1 text-[11px] bg-soft-gray hover:bg-border-gray text-stone-gray rounded transition-colors disabled:opacity-50 ml-auto"
+            className="px-2 py-1 text-[11px] bg-soft-gray hover:bg-border-gray text-stone-gray rounded-lg transition-colors disabled:opacity-50 ml-auto"
           >
             {t('waitlist.remove')}
           </button>

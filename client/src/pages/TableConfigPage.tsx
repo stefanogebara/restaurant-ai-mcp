@@ -255,7 +255,7 @@ export default function TableConfigPage() {
 
                     {/* Combination group */}
                     {table.combination_group && (
-                      <div className="text-xs text-burgundy bg-burgundy/10 px-2 py-1 rounded">
+                      <div className="text-xs text-burgundy bg-burgundy/10 px-2 py-1 rounded-lg">
                         Group: {table.combination_group}
                       </div>
                     )}
