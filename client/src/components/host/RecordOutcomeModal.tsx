@@ -83,7 +83,7 @@ export default function RecordOutcomeModal({
           <button
             onClick={onClose}
             aria-label="Close"
-            className="w-10 h-10 rounded-full hover:bg-soft-gray flex items-center justify-center transition-colors"
+            className="w-10 h-10 rounded-full hover:bg-soft-gray flex items-center justify-center transition-colors disabled:opacity-50"
             disabled={isSubmitting}
           >
             <ThiingsIcon name="close" pxSize={20} />

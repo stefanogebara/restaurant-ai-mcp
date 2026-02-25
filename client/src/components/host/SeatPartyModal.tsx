@@ -137,7 +137,7 @@ export default function SeatPartyModal({ isOpen, data, onClose, onRetryTableSele
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-3 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-burgundy"
+                className="flex-1 px-4 py-3 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-burgundy disabled:opacity-50"
                 disabled={seatPartyMutation.isPending}
               >
                 Cancel
