@@ -33,12 +33,14 @@ export default function FAQSection() {
           {FAQS.map((faq, index) => (
             <div key={index} className="bg-white rounded-2xl border border-border-gray overflow-hidden">
               <button
+                type="button"
                 onClick={() => toggleFAQ(index)}
                 aria-expanded={openIndex === index}
                 className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-warm-white transition-colors"
               >
                 <span className="text-[15px] font-medium text-deep-charcoal pr-8">{faq.question}</span>
                 <ChevronDown
+                  aria-hidden="true"
                   className={`w-5 h-5 text-burgundy flex-shrink-0 transition-transform duration-200 ${
                     openIndex === index ? 'rotate-180' : ''
                   }`}
@@ -60,6 +62,7 @@ export default function FAQSection() {
             We&apos;re here to help. Reach out to our team anytime.
           </p>
           <button
+            type="button"
             onClick={scrollToContact}
             className="px-8 py-3.5 bg-burgundy hover:bg-burgundy-dark text-white text-[15px] font-semibold rounded-full transition-colors"
           >
