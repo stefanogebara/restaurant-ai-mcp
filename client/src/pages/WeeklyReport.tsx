@@ -274,7 +274,7 @@ export default function WeeklyReport() {
                 onChange={(e) => setEndDate(e.target.value)}
                 className="bg-transparent border-0 text-[13px] text-stone-gray w-[110px] cursor-pointer"
               />
-              <button onClick={handleDateChange} className="ml-1 text-burgundy font-semibold text-xs hover:text-burgundy-dark transition-colors">{t('common.apply')}</button>
+              <button type="button" onClick={handleDateChange} className="ml-1 text-burgundy font-semibold text-xs hover:text-burgundy-dark transition-colors">{t('common.apply')}</button>
               <button
                 onClick={handleNext}
                 aria-label="Next period"

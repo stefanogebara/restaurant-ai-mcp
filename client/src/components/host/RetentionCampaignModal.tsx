@@ -78,7 +78,7 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
           <h2 className="text-lg font-semibold text-deep-charcoal">
             Retention Campaign
           </h2>
-          <button onClick={onClose} aria-label="Close" className="p-2 hover:bg-soft-gray rounded-xl transition-colors">
+          <button type="button" onClick={onClose} aria-label="Close" className="p-2 hover:bg-soft-gray rounded-xl transition-colors">
             <ThiingsIcon name="close" pxSize={20} />
           </button>
         </div>

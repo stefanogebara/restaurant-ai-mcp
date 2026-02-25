@@ -158,14 +158,14 @@ export default function CustomerProfileView() {
   if (error || !data) {
     return (
       <div className="space-y-4">
-        <button onClick={() => navigate('/host-dashboard/dna')} className="flex items-center gap-2 text-stone-gray hover:text-deep-charcoal transition-colors">
+        <button type="button" onClick={() => navigate('/host-dashboard/dna')} className="flex items-center gap-2 text-stone-gray hover:text-deep-charcoal transition-colors">
           <ThiingsIcon name="arrow-left" size="xs" /> Back to DNA Dashboard
         </button>
         <div className="bg-white rounded-2xl border border-border-gray p-8 text-center">
           <ThiingsIcon name="alert-circle" pxSize={48} className="mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-deep-charcoal mb-2">{error || 'Profile not found'}</h3>
           <p className="text-sm text-stone-gray mb-4">This customer may not have been analyzed yet.</p>
-          <button onClick={handleAnalyze} className="px-4 py-2 bg-burgundy text-white rounded-xl hover:bg-burgundy-dark transition-colors">
+          <button type="button" onClick={handleAnalyze} className="px-4 py-2 bg-burgundy text-white rounded-xl hover:bg-burgundy-dark transition-colors">
             Analyze Now
           </button>
         </div>
@@ -211,7 +211,7 @@ export default function CustomerProfileView() {
   return (
     <div className="space-y-6">
       {/* Back Navigation */}
-      <button onClick={() => navigate('/host-dashboard/dna')} className="flex items-center gap-2 text-stone-gray hover:text-deep-charcoal transition-colors">
+      <button type="button" onClick={() => navigate('/host-dashboard/dna')} className="flex items-center gap-2 text-stone-gray hover:text-deep-charcoal transition-colors">
         <ThiingsIcon name="arrow-left" size="xs" /> Back to DNA Dashboard
       </button>
 
@@ -476,7 +476,7 @@ export default function CustomerProfileView() {
               <ThiingsIcon name="sparkles" pxSize={32} className="mx-auto mb-2 opacity-30" />
               <p className="text-sm">No AI insights available yet.</p>
               <p className="text-xs mt-1">Run analysis to extract signals from text data.</p>
-              <button onClick={handleAnalyze} className="mt-3 px-4 py-2 bg-amber-600 text-white text-sm rounded-xl hover:bg-amber-700 transition-colors">
+              <button type="button" onClick={handleAnalyze} className="mt-3 px-4 py-2 bg-amber-600 text-white text-sm rounded-xl hover:bg-amber-700 transition-colors">
                 Analyze with AI
               </button>
             </div>
