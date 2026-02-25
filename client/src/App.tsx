@@ -91,7 +91,7 @@ function App() {
                 <div className="font-serif text-2xl text-deep-charcoal opacity-50">
                   seatable<span className="text-burgundy">.</span>
                 </div>
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy"></div>
+                <div role="status" aria-label="Loading application" className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy"></div>
               </div>
             }>
             <Routes>

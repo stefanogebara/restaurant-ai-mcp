@@ -67,8 +67,8 @@ export default function MLROIWidget() {
             ML Performance
           </h2>
         </div>
-        <div className="flex items-center justify-center py-4 gap-3">
-          <div className="w-6 h-6 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
+        <div role="status" className="flex items-center justify-center py-4 gap-3">
+          <div aria-hidden="true" className="w-6 h-6 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
           <span className="text-stone-gray text-sm">Loading data...</span>
         </div>
       </div>

@@ -40,8 +40,8 @@ export default function TrendChart({
         className="bg-white border border-border-gray rounded-2xl p-6 flex items-center justify-center gap-3"
         style={{ height }}
       >
-        <div className="w-5 h-5 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
-        <div className="text-warm-stone text-sm">Loading chart...</div>
+        <div aria-hidden="true" className="w-5 h-5 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
+        <div role="status" className="text-warm-stone text-sm">Loading chart...</div>
       </div>
     );
   }

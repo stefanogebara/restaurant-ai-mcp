@@ -71,8 +71,8 @@ export default function NoShowPredictions() {
   if (isLoading) {
     return (
       <div className="bg-white border border-border-gray/50 rounded-2xl p-8 shadow-sm">
-        <div className="flex items-center justify-center">
-          <div className="w-8 h-8 border-4 border-burgundy border-t-transparent rounded-full animate-spin"></div>
+        <div role="status" className="flex items-center justify-center">
+          <div aria-hidden="true" className="w-8 h-8 border-4 border-burgundy border-t-transparent rounded-full animate-spin"></div>
           <span className="ml-3 text-warm-stone">Loading predictions...</span>
         </div>
       </div>

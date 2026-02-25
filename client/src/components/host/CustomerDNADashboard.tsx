@@ -186,8 +186,8 @@ export default function CustomerDNADashboard() {
             Customer DNA Profiling
           </h2>
         </div>
-        <div className="flex items-center justify-center py-8 gap-3">
-          <div className="w-6 h-6 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
+        <div role="status" className="flex items-center justify-center py-8 gap-3">
+          <div aria-hidden="true" className="w-6 h-6 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
           <span className="text-stone-gray text-sm">Loading profiles...</span>
         </div>
       </div>
@@ -499,8 +499,8 @@ export default function CustomerDNADashboard() {
 
             {/* Customer Table */}
             {isLoadingList ? (
-              <div className="flex items-center justify-center py-4 gap-2">
-                <div className="w-4 h-4 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
+              <div role="status" className="flex items-center justify-center py-4 gap-2">
+                <div aria-hidden="true" className="w-4 h-4 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
                 <span className="text-sm text-stone-gray">Loading customers...</span>
               </div>
             ) : customers.length > 0 ? (
