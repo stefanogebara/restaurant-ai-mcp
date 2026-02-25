@@ -786,7 +786,7 @@ export default function VoiceSettingsPage() {
                         ? 'text-emerald-700 bg-emerald-50'
                         : engineConfig?.voice_engine_status === 'testing'
                         ? 'text-amber-700 bg-amber-50'
-                        : 'text-stone-500 bg-stone-100'
+                        : 'text-warm-stone bg-soft-gray'
                     }`}>
                       {(engineConfig?.voice_engine_status || 'active').charAt(0).toUpperCase() + (engineConfig?.voice_engine_status || 'active').slice(1)}
                     </span>
