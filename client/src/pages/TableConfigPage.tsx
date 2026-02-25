@@ -454,6 +454,7 @@ function TableForm({
         {formData.location === '__new__' && (
           <input
             type="text"
+            aria-label="New location name"
             placeholder="Enter new location name"
             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
             className="mt-2 w-full px-3 py-2 border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"

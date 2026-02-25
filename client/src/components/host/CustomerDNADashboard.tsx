@@ -473,6 +473,7 @@ export default function CustomerDNADashboard() {
                 <ThiingsIcon name="search" pxSize={16} className="absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
+                  aria-label="Search by name or phone"
                   placeholder="Search by name or phone..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}

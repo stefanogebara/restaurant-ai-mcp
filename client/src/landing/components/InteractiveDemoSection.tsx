@@ -127,7 +127,7 @@ export default function InteractiveDemoSection() {
             >
               <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-deep-charcoal text-sm font-semibold rounded-xl shadow-lg">
                 Try Live Demo
-                <ExternalLink className="w-3.5 h-3.5" />
+                <ExternalLink aria-hidden="true" className="w-3.5 h-3.5" />
               </span>
             </a>
 
@@ -162,7 +162,7 @@ export default function InteractiveDemoSection() {
                     className="px-5 py-3 bg-burgundy text-white text-sm font-semibold hover:bg-burgundy-dark transition-all duration-300 rounded-xl inline-flex items-center gap-2 shadow-md shadow-burgundy/20"
                   >
                     Start Chat
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight aria-hidden="true" className="w-4 h-4" />
                   </a>
                 </div>
               </div>
@@ -184,7 +184,7 @@ export default function InteractiveDemoSection() {
                     className="px-5 py-3 border border-deep-charcoal text-deep-charcoal text-sm font-semibold hover:bg-deep-charcoal hover:text-white transition-all duration-300 rounded-xl inline-flex items-center gap-2"
                   >
                     Try Live Demo
-                    <ExternalLink className="w-4 h-4" />
+                    <ExternalLink aria-hidden="true" className="w-4 h-4" />
                   </a>
                 </div>
               </div>
@@ -219,11 +219,12 @@ export default function InteractiveDemoSection() {
                 Ready to implement this for your restaurant?
               </p>
               <button
+                type="button"
                 onClick={scrollToContact}
                 className="bg-burgundy text-white px-8 py-4 text-[15px] font-semibold hover:bg-burgundy-dark transition-all duration-300 rounded-2xl  inline-flex items-center gap-2"
               >
                 Get Started Today
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight aria-hidden="true" className="w-4 h-4" />
               </button>
             </div>
           </motion.div>
