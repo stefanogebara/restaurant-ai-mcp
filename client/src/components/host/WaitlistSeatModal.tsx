@@ -147,11 +147,15 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
               <h3 className="font-semibold text-deep-charcoal mb-4">Available Table Options</h3>
               <div className="space-y-3 mb-6">
                 {recommendations.map((option, index) => (
-                  <div
+                  <button
                     key={index}
+                    type="button"
                     onClick={() => handleSelectOption(option)}
+                    aria-pressed={selectedTables.join(',') === option.tables.join(',')}
+                    aria-label={`Select tables ${option.tables.join(', ')} (${option.total_capacity} seats)`}
                     className={`
-                      border-2 rounded-2xl p-4 cursor-pointer transition-all
+                      w-full text-left border-2 rounded-2xl p-4 cursor-pointer transition-all
+                      focus:outline-none focus:ring-2 focus:ring-green-600/40
                       ${
                         selectedTables.join(',') === option.tables.join(',')
                           ? 'border-green-600 bg-green-600/10'
@@ -178,18 +182,20 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
                       </div>
                     </div>
                     <div className="text-sm text-stone-gray">{option.reason}</div>
-                  </div>
+                  </button>
                 ))}
               </div>
 
               <div className="flex gap-3">
                 <button
+                  type="button"
                   onClick={onClose}
                   className="flex-1 px-4 py-3 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors font-medium"
                 >
                   Cancel
                 </button>
                 <button
+                  type="button"
                   onClick={handleProceedToSeat}
                   className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-colors disabled:bg-muted-stone"
                   disabled={selectedTables.length === 0}
