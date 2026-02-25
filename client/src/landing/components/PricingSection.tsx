@@ -108,6 +108,7 @@ export default function PricingSection() {
 
                 {/* CTA Button */}
                 <button
+                  type="button"
                   onClick={() => {
                     const id = tier.priceId;
                     if (id) {
@@ -141,7 +142,7 @@ export default function PricingSection() {
         {/* Bottom Note */}
         <p className="text-center text-sm text-muted-stone mt-10">
           Need a custom solution?{' '}
-          <button onClick={scrollToContact} className="text-burgundy hover:text-burgundy-dark font-medium transition-colors">
+          <button type="button" onClick={scrollToContact} className="text-burgundy hover:text-burgundy-dark font-medium transition-colors">
             Contact us for enterprise pricing
           </button>
         </p>

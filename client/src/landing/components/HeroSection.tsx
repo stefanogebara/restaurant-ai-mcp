@@ -26,6 +26,7 @@ export default function HeroSection() {
       {/* CTA Buttons */}
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <button
+          type="button"
           onClick={() => {
             trackCtaClicked({ cta: 'primary', location: 'hero' });
             const el = document.getElementById('pricing');
@@ -37,6 +38,7 @@ export default function HeroSection() {
           {t('landing.hero.cta')}
         </button>
         <button
+          type="button"
           onClick={() => { trackCtaClicked({ cta: 'demo', location: 'hero' }); navigate('/live-demo'); }}
           className="px-8 py-3.5 border border-border-gray text-stone-gray text-[15px] font-medium rounded-full hover:border-muted-stone transition-colors"
         >

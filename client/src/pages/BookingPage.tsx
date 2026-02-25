@@ -325,6 +325,7 @@ export default function BookingPage() {
             <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
               {availableDates.slice(0, 21).map((d) => (
                 <button
+                  type="button"
                   key={d.value}
                   onClick={() => setSelectedDate(d.value)}
                   className={`aspect-square flex flex-col items-center justify-center rounded-[10px] text-[13px] transition-colors ${
@@ -358,6 +359,7 @@ export default function BookingPage() {
                 <div className="grid grid-cols-4 gap-2">
                   {timeSlots.map(slot => (
                     <button
+                      type="button"
                       key={slot.time}
                       onClick={() => slot.available && setSelectedTime(slot.time)}
                       disabled={!slot.available}
@@ -385,6 +387,7 @@ export default function BookingPage() {
             <div className="flex gap-2 flex-wrap">
               {Array.from({ length: Math.min(restaurant.max_party_size, 7) }, (_, i) => i + 1).map(n => (
                 <button
+                  type="button"
                   key={n}
                   onClick={() => setPartySize(n)}
                   className={`w-12 h-12 rounded-xl border text-[15px] font-medium transition-colors ${
@@ -398,6 +401,7 @@ export default function BookingPage() {
               ))}
               {restaurant.max_party_size > 7 && (
                 <button
+                  type="button"
                   onClick={() => {
                     const size = prompt(`Party size (max ${restaurant.max_party_size}):`, '8');
                     if (size) {
@@ -502,6 +506,7 @@ export default function BookingPage() {
 
           {/* Submit Button */}
           <button
+            type="button"
             onClick={handleSubmit}
             disabled={!canSubmit || submitting}
             className="w-full py-4 rounded-xl text-[15px] font-semibold bg-burgundy hover:bg-burgundy-dark disabled:bg-border-gray disabled:text-muted-stone text-white transition-colors flex items-center justify-center gap-2"

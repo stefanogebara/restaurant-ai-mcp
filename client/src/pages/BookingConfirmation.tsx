@@ -73,6 +73,7 @@ export default function BookingConfirmation() {
           <p className="text-sm text-stone-gray mb-6">{t('reservations.noReservationFound')}</p>
           {slug && (
             <button
+              type="button"
               onClick={() => navigate(`/book/${slug}`)}
               className="px-6 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-full transition-colors"
             >
@@ -162,6 +163,7 @@ export default function BookingConfirmation() {
           {/* Action Buttons */}
           <div className="flex gap-3">
             <button
+              type="button"
               onClick={() => navigate('/customer')}
               className="flex-1 py-3.5 border border-border-gray bg-white text-stone-gray font-medium rounded-full text-sm hover:border-muted-stone transition-colors"
             >
@@ -169,6 +171,7 @@ export default function BookingConfirmation() {
             </button>
             {slug && (
               <button
+                type="button"
                 onClick={() => navigate(`/book/${slug}`)}
                 className="flex-1 py-3.5 bg-burgundy text-white font-semibold rounded-full text-sm hover:bg-burgundy-dark transition-colors"
               >

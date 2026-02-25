@@ -101,6 +101,7 @@ export default function AnalyticsDashboard() {
             <h3 className="text-lg font-bold text-deep-charcoal mb-2">{t('analytics.errorTitle')}</h3>
             <p className="text-sm text-warm-stone mb-6">{error}</p>
             <button
+              type="button"
               onClick={() => fetchAnalytics()}
               className="px-6 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors"
             >
@@ -136,6 +137,7 @@ export default function AnalyticsDashboard() {
             <div className="flex items-center gap-2.5">
               {(['30d', '7d', 'today'] as const).map((range) => (
                 <button
+                  type="button"
                   key={range}
                   onClick={() => setDateRange(range)}
                   className={`px-4 py-2 rounded-xl text-[13px] font-medium transition-colors ${
@@ -148,6 +150,7 @@ export default function AnalyticsDashboard() {
                 </button>
               ))}
               <button
+                type="button"
                 onClick={() => fetchAnalytics()}
                 className="px-4 py-2 bg-white border border-border-gray text-stone-gray hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors"
               >

@@ -367,12 +367,13 @@ export default function CallTrackingDashboard() {
           </h1>
           <div className="flex items-center gap-2.5">
             <button
+              type="button"
               onClick={fetchData}
               className="px-4 py-2 bg-white border border-border-gray text-stone-gray hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors"
             >
               Refresh
             </button>
-            <button className="px-4 py-2 bg-white border border-border-gray text-stone-gray hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors">
+            <button type="button" className="px-4 py-2 bg-white border border-border-gray text-stone-gray hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors">
               Export
             </button>
           </div>
@@ -463,6 +464,7 @@ export default function CallTrackingDashboard() {
             {/* Setup Phone - shown when not configured */}
             {(!phoneStatus || phoneStatus.status === 'not_configured' || phoneStatus.status === 'error') && (
               <button
+                type="button"
                 onClick={handleSetupPhone}
                 disabled={setupLoading}
                 className="px-4 py-2 bg-burgundy text-white rounded-xl font-medium hover:bg-burgundy-dark transition-colors disabled:opacity-50 flex items-center gap-2"
@@ -484,6 +486,7 @@ export default function CallTrackingDashboard() {
             {/* Diagnose Agent */}
             {phoneStatus?.has_agent && (
               <button
+                type="button"
                 onClick={handleDiagnose}
                 disabled={diagnoseLoading}
                 className="px-4 py-2 bg-soft-gray hover:bg-border-gray text-deep-charcoal rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
@@ -505,6 +508,7 @@ export default function CallTrackingDashboard() {
             {/* Disconnect - shown when active */}
             {phoneStatus?.status === 'active' && (
               <button
+                type="button"
                 onClick={handleDisconnect}
                 disabled={disconnectLoading}
                 className="px-4 py-2 bg-red-600/10 hover:bg-red-600/20 text-red-600 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
@@ -525,6 +529,7 @@ export default function CallTrackingDashboard() {
 
             {/* Refresh Status */}
             <button
+              type="button"
               onClick={() => {
                 fetchPhoneStatus();
                 toastInfo('Refreshing phone status...');
@@ -545,6 +550,7 @@ export default function CallTrackingDashboard() {
                 <h2 className="text-lg font-semibold text-deep-charcoal">Agent Diagnostics</h2>
               </div>
               <button
+                type="button"
                 onClick={() => {
                   setShowDiagnosePanel(false);
                   setDiagnoseData(null);
@@ -645,6 +651,7 @@ export default function CallTrackingDashboard() {
                           Your agent has no webhook tools attached. Without tools, the agent cannot check availability or create reservations. Click "Fix Tools" to auto-create and attach the required tools.
                         </p>
                         <button
+                          type="button"
                           onClick={handleFixTools}
                           disabled={fixToolsLoading}
                           className="mt-3 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
@@ -687,6 +694,7 @@ export default function CallTrackingDashboard() {
                   { value: '90d', label: '90 days' },
                 ].map((opt) => (
                   <button
+                    type="button"
                     key={opt.value}
                     onClick={() => setFilter({ ...filter, period: opt.value })}
                     className={`text-xs font-medium px-3 py-1.5 rounded-xl transition-colors ${
@@ -775,6 +783,7 @@ export default function CallTrackingDashboard() {
                 { value: 'error', label: 'Missed' },
               ].map((tab) => (
                 <button
+                  type="button"
                   key={tab.value}
                   onClick={() => setFilter({ ...filter, outcome: tab.value })}
                   className={`text-xs font-medium px-3.5 py-1.5 rounded-xl transition-colors ${
@@ -868,6 +877,7 @@ export default function CallTrackingDashboard() {
                   </p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setSelectedConversation(null)}
                   aria-label="Close"
                   className="p-2 hover:bg-soft-gray rounded-xl transition-colors"
@@ -981,6 +991,7 @@ export default function CallTrackingDashboard() {
               {/* Modal Footer */}
               <div className="sticky bottom-0 bg-white border-t border-border-gray p-4">
                 <button
+                  type="button"
                   onClick={() => setSelectedConversation(null)}
                   className="w-full px-4 py-2 bg-burgundy text-white rounded-xl font-medium hover:bg-burgundy-dark transition-colors"
                 >
