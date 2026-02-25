@@ -40,7 +40,7 @@ export default function MetricCard({
 
   if (loading) {
     return (
-      <div className="bg-white border border-border-gray rounded-2xl p-6 animate-pulse">
+      <div role="status" aria-label={`Loading ${title}`} className="bg-white border border-border-gray rounded-2xl p-6 animate-pulse">
         <div className="h-4 bg-soft-gray rounded w-1/2 mb-4"></div>
         <div className="h-8 bg-soft-gray rounded w-3/4 mb-2"></div>
         <div className="h-3 bg-soft-gray rounded w-1/3"></div>

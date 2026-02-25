@@ -168,7 +168,7 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
                 disabled={completeServiceMutation.isPending}
               >
                 {completeServiceMutation.isPending && (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <div aria-hidden="true" className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 )}
                 {completeServiceMutation.isPending ? 'Completing...' : 'Confirm'}
               </button>

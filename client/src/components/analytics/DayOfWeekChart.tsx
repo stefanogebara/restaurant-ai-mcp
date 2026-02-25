@@ -35,7 +35,7 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
       <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
         <span className="text-[15px] font-semibold tracking-tight">Reservations by Day</span>
       </div>
-      <div className="p-6">
+      <div role="img" aria-label="Bar chart showing number of reservations by day of the week" className="p-6">
         <ResponsiveContainer width="100%" height={220}>
           <BarChart
             data={chartData}

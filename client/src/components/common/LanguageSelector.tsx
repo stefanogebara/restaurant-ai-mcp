@@ -141,7 +141,7 @@ export default function LanguageSelector({
           ))}
         </select>
         {isLoading && (
-          <div className="absolute right-10 top-1/2 transform -translate-y-1/2">
+          <div aria-hidden="true" className="absolute right-10 top-1/2 transform -translate-y-1/2">
             <div className="animate-spin h-4 w-4 border-2 border-burgundy border-t-transparent rounded-full"></div>
           </div>
         )}

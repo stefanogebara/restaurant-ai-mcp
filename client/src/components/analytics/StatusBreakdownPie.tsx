@@ -52,7 +52,7 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
       <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
         <span className="text-[15px] font-semibold tracking-tight">Status Breakdown</span>
       </div>
-      <div className="p-6">
+      <div role="img" aria-label="Pie chart showing reservation status breakdown" className="p-6">
 
       <div className="flex items-center justify-center">
         <ResponsiveContainer width="100%" height={300}>

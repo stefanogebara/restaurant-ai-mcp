@@ -114,7 +114,7 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-soft-gray hover:bg-border-gray transition-colors text-left group disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {updateTableMutation.isPending ? (
-                  <div className="w-5 h-5 border-2 border-burgundy border-t-transparent rounded-full animate-spin"></div>
+                  <div aria-hidden="true" className="w-5 h-5 border-2 border-burgundy border-t-transparent rounded-full animate-spin"></div>
                 ) : (
                   <ThiingsIcon name={action.iconName} size="sm" />
                 )}

@@ -43,7 +43,7 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
       <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
         <span className="text-[15px] font-semibold tracking-tight">Peak Hours</span>
       </div>
-      <div className="p-6">
+      <div role="img" aria-label="Bar chart showing peak reservation hours" className="p-6">
       <ResponsiveContainer width="100%" height={220}>
         <BarChart
           data={chartData}

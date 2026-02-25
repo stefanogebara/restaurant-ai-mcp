@@ -125,7 +125,7 @@ export default function Step4Review({ data, onBack, onComplete, isSubmitting, go
         >
           {isSubmitting ? (
             <>
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <div aria-hidden="true" className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               Setting up...
             </>
           ) : (
