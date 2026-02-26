@@ -156,7 +156,7 @@ export default function Dashboard() {
       <div className="dashboard min-h-screen bg-soft-gray p-6 sm:p-8 md:p-10 pb-16 sm:pb-10">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* ---- Header ---- */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-14 sm:mt-0">
             <div>
               <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
                 {t('navigation.dashboard')}

@@ -86,12 +86,14 @@ export default function ReservationsList({
             {displayed.length}
           </span>
         </div>
-        <div className="flex gap-0">
+        <div className="flex gap-0.5 bg-soft-gray rounded-lg p-0.5">
           <button
             type="button"
             onClick={() => setShowTomorrow(false)}
-            className={`text-xs font-medium px-3.5 py-1.5 rounded-xl transition-colors ${
-              !showTomorrow ? 'text-deep-charcoal bg-soft-gray' : 'text-muted-stone hover:text-stone-gray'
+            className={`text-xs font-medium px-3 py-1 rounded-md transition-all ${
+              !showTomorrow
+                ? 'bg-white text-deep-charcoal shadow-sm'
+                : 'text-muted-stone hover:text-stone-gray'
             }`}
           >
             {t.today}
@@ -99,8 +101,10 @@ export default function ReservationsList({
           <button
             type="button"
             onClick={() => setShowTomorrow(true)}
-            className={`text-xs font-medium px-3.5 py-1.5 rounded-xl transition-colors ${
-              showTomorrow ? 'text-deep-charcoal bg-soft-gray' : 'text-muted-stone hover:text-stone-gray'
+            className={`text-xs font-medium px-3 py-1 rounded-md transition-all ${
+              showTomorrow
+                ? 'bg-white text-deep-charcoal shadow-sm'
+                : 'text-muted-stone hover:text-stone-gray'
             }`}
           >
             {t.tomorrow}
@@ -183,7 +187,11 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
   const avatarStyle = { background: `linear-gradient(135deg, hsl(${hue},50%,75%), hsl(${(hue + 40) % 360},50%,65%))` };
 
   return (
-    <div className="flex items-center px-6 py-[18px] border-b border-warm-white last:border-b-0 gap-4 hover:bg-warm-white/50 transition-colors">
+    <div className={`flex items-center py-[18px] border-b border-warm-white last:border-b-0 gap-4 hover:bg-warm-white/50 transition-colors ${
+  reservation.party_size >= 6
+    ? 'pl-5 pr-6 border-l-2 border-l-burgundy/30'
+    : 'px-6'
+}`}>
       {/* Avatar */}
       <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[13px] font-semibold text-warm-stone flex-shrink-0" style={avatarStyle}>
         {initials}
