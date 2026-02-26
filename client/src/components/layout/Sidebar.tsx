@@ -149,7 +149,7 @@ export default function Sidebar() {
               </h1>
             ) : (
               <h1 className="font-serif text-[22px] font-semibold text-white tracking-tight mx-auto">
-                s<span className="text-burgundy">.</span>
+                S<span className="text-burgundy">.</span>
               </h1>
             )}
             <button

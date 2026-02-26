@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Dark background -->
+  <rect width="32" height="32" rx="6" fill="#1C1917"/>
+  <!-- S in serif white -->
+  <text
+    x="4"
+    y="25"
+    font-family="Georgia, 'Palatino Linotype', serif"
+    font-size="23"
+    font-weight="700"
+    fill="#FAFAF9"
+  >S</text>
+  <!-- Burgundy dot -->
+  <circle cx="28" cy="25" r="3" fill="#8B1A4A"/>
+</svg>
