@@ -43,6 +43,14 @@ module.exports = async (req, res) => {
       plan = planMapping[priceId] || 'Starter';
     }
 
+    // Reject sessions that weren't paid (expired, cancelled, etc.)
+    if (session.payment_status !== 'paid' && session.payment_status !== 'no_payment_required') {
+      return res.status(402).json({
+        error: 'Payment not completed',
+        status: session.payment_status,
+      });
+    }
+
     // Return relevant session information
     return res.status(200).json({
       status: session.payment_status,

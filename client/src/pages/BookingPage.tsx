@@ -144,16 +144,6 @@ export default function BookingPage() {
           <div className="mb-7">
             <DetailRow icon="✹" label={t('reservations.cuisine')} value={restaurantType} />
             <DetailRow icon="⏱" label={t('reservations.hoursToday')} value={getTodayHours()} />
-            <DetailRow icon="☾" label={t('reservations.atmosphere')} value="Intimate, candlelit" />
-            <DetailRow icon="€" label={t('reservations.priceRange')} value="€€€" />
-          </div>
-
-          <div className="flex items-center gap-3 p-4 bg-white border border-border-gray rounded-2xl">
-            <div className="text-2xl font-bold tracking-tight text-deep-charcoal">4.7</div>
-            <div>
-              <div className="text-sm text-amber-600 tracking-wider">★★★★☆</div>
-              <div className="text-xs text-muted-stone">284 reviews on Google</div>
-            </div>
           </div>
         </div>
 

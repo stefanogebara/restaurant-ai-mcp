@@ -13,6 +13,17 @@ function getResendClient() {
 
 const FROM_ADDRESS = 'Seatable <bookings@seatable.io>';
 
+// Escape user-provided strings before embedding in HTML to prevent injection
+function he(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 // Shared Seatable email wrapper (consistent branding)
 function wrapEmailHtml(bodyHtml) {
   return `
@@ -167,10 +178,10 @@ async function sendRetentionCampaignEmail({ customerEmail, customerName, message
       html: wrapEmailHtml(`
         <div style="background: #FAFAF9; border: 1px solid #E7E5E4; border-radius: 16px; padding: 32px; margin-bottom: 24px;">
           <h2 style="font-size: 22px; color: #1C1917; margin: 0 0 16px 0;">
-            ${customerName ? `Hi ${customerName},` : 'Hello,'}
+            ${customerName ? `Hi ${he(customerName)},` : 'Hello,'}
           </h2>
           <p style="color: #57534E; margin: 0; font-size: 15px; line-height: 1.6;">
-            ${message}
+            ${he(message)}
           </p>
         </div>
       `),
@@ -208,21 +219,21 @@ async function sendReservationConfirmationEmail({
             Your reservation is confirmed!
           </h2>
           <p style="color: #57534E; margin: 0 0 24px 0;">
-            Hi ${customerName}, here are your booking details:
+            Hi ${he(customerName)}, here are your booking details:
           </p>
 
           <table style="width: 100%; border-collapse: collapse;">
             <tr>
               <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Restaurant</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${restaurantName}</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${he(restaurantName)}</td>
             </tr>
             <tr>
               <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Date</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${formattedDate}</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${he(formattedDate)}</td>
             </tr>
             <tr>
               <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Time</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${time}</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${he(time)}</td>
             </tr>
             <tr>
               <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Party Size</td>
@@ -230,14 +241,14 @@ async function sendReservationConfirmationEmail({
             </tr>
             <tr>
               <td style="padding: 12px 0; color: #78716C; font-size: 14px;">Confirmation ID</td>
-              <td style="padding: 12px 0; color: #9F1239; font-weight: 700; text-align: right; font-family: monospace;">${reservationId}</td>
+              <td style="padding: 12px 0; color: #9F1239; font-weight: 700; text-align: right; font-family: monospace;">${he(reservationId)}</td>
             </tr>
           </table>
 
           ${specialRequests ? `
           <div style="margin-top: 16px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #E7E5E4;">
             <p style="color: #78716C; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">Special Requests</p>
-            <p style="color: #1C1917; margin: 0; font-size: 14px;">${specialRequests}</p>
+            <p style="color: #1C1917; margin: 0; font-size: 14px;">${he(specialRequests)}</p>
           </div>
           ` : ''}
         </div>
@@ -289,15 +300,15 @@ async function sendNewBookingAlertEmail({
           <table style="width: 100%; border-collapse: collapse;">
             <tr>
               <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Guest Name</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${customerName}</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${he(customerName)}</td>
             </tr>
             <tr>
               <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Date</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${formattedDate}</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${he(formattedDate)}</td>
             </tr>
             <tr>
               <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Time</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${time}</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${he(time)}</td>
             </tr>
             <tr>
               <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Party Size</td>
@@ -305,24 +316,24 @@ async function sendNewBookingAlertEmail({
             </tr>
             <tr>
               <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Phone</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${customerPhone}</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${he(customerPhone)}</td>
             </tr>
             ${customerEmail ? `
             <tr>
               <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Email</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${customerEmail}</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${he(customerEmail)}</td>
             </tr>
             ` : ''}
             <tr>
               <td style="padding: 12px 0; color: #78716C; font-size: 14px;">Confirmation ID</td>
-              <td style="padding: 12px 0; color: #9F1239; font-weight: 700; text-align: right; font-family: monospace;">${reservationId}</td>
+              <td style="padding: 12px 0; color: #9F1239; font-weight: 700; text-align: right; font-family: monospace;">${he(reservationId)}</td>
             </tr>
           </table>
 
           ${specialRequests ? `
           <div style="margin-top: 16px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #E7E5E4;">
             <p style="color: #78716C; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">Special Requests</p>
-            <p style="color: #1C1917; margin: 0; font-size: 14px;">${specialRequests}</p>
+            <p style="color: #1C1917; margin: 0; font-size: 14px;">${he(specialRequests)}</p>
           </div>
           ` : ''}
         </div>
