@@ -105,7 +105,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
     return (
       <div className="p-6">
         <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl p-3">
-          Error loading waitlist: {(error as Error).message}
+          {t('common.errorLoadingData', 'Could not load waitlist. Please refresh to try again.')}
         </div>
       </div>
     );

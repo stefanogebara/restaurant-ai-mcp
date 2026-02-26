@@ -193,7 +193,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
       <div className="flex-1 min-w-0">
         <div className="text-sm font-semibold text-deep-charcoal tracking-tight">{reservation.customer_name}</div>
         <div className="text-xs text-muted-stone mt-0.5">
-          {reservation.party_size} guests
+          {reservation.party_size} {t.people}
           {reservation.special_requests && ` \u00b7 ${reservation.special_requests}`}
         </div>
       </div>

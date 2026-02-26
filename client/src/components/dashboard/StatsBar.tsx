@@ -89,7 +89,7 @@ export default function StatsBar({
       <StatCard
         label={t('dashboard.stats.aiCalls')}
         value={String(activeParties)}
-        change={totalGuests > 0 ? `${totalGuests} guests seated` : ''}
+        change={totalGuests > 0 ? `${totalGuests} ${t('dashboard.stats.seated')}` : ''}
         changeColor="text-stone-gray"
         barPercent={totalTables > 0 ? Math.round((activeParties / totalTables) * 100) : 0}
         barColor="#d97706"
