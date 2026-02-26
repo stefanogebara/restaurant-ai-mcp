@@ -10,16 +10,10 @@ import { motion } from 'framer-motion';
 import type { OnboardingStepProps, RestaurantArea, TableShape, TableConfiguration } from '../../types/onboarding.types';
 import type { RestaurantSize } from '../../types/profile.types';
 import ThiingsIcon from '../common/ThiingsIcon';
+import TableAreaCard, { TABLE_CAPACITIES } from './TableAreaCard';
+import ReservationSettingsPanel from './ReservationSettingsPanel';
 
 const AREA_TEMPLATES = ['Indoor', 'Patio', 'Bar', 'Private Room', 'Custom'];
-const TABLE_CAPACITIES = [2, 4, 6, 8];
-
-const CANCELLATION_POLICIES = [
-  'Free cancellation up to 2 hours before reservation',
-  'Free cancellation up to 24 hours before reservation',
-  'Free cancellation up to 48 hours before reservation',
-  'No cancellations allowed',
-];
 
 function calculateTableDistribution(size: RestaurantSize, totalSeats: number): { capacity: number; count: number }[] {
   const distributions: Record<RestaurantSize, { capacity: number; ratio: number }[]> = {
@@ -62,40 +56,28 @@ function calculateTableDistribution(size: RestaurantSize, totalSeats: number): {
   }
 
   TABLE_CAPACITIES.forEach(cap => {
-    if (!result.find(r => r.capacity === cap)) {
-      result.push({ capacity: cap, count: 0 });
-    }
+    if (!result.find(r => r.capacity === cap)) result.push({ capacity: cap, count: 0 });
   });
-
   result.sort((a, b) => a.capacity - b.capacity);
   return result;
 }
 
 export default function Step3TablesAndSettings({ data, updateData, onNext, onBack }: OnboardingStepProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [showSettings, setShowSettings] = useState(false);
   const hasInitialized = useRef(false);
 
   useEffect(() => {
     if (errors.tables) {
-      setErrors((prev) => {
-        const { tables, ...rest } = prev;
-        return rest;
-      });
+      setErrors((prev) => { const { tables, ...rest } = prev; return rest; });
     }
   }, [data.areas]);
 
-  // Pre-populate tables from profile data
   useEffect(() => {
     if (hasInitialized.current) return;
     const profileData = data.profile_data;
     if (!profileData?.size || !profileData?.seat_count) return;
-
     const hasExistingTables = data.areas.some(area => area.tables.some(t => t.count > 0));
-    if (hasExistingTables) {
-      hasInitialized.current = true;
-      return;
-    }
+    if (hasExistingTables) { hasInitialized.current = true; return; }
 
     const distribution = calculateTableDistribution(profileData.size as RestaurantSize, profileData.seat_count);
     const updatedAreas = data.areas.map(area => {
@@ -113,7 +95,6 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
       }
       return area;
     });
-
     updateData({ areas: updatedAreas });
     hasInitialized.current = true;
   }, [data.profile_data, data.areas, updateData]);
@@ -140,10 +121,6 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleContinue = () => {
-    if (validate() && onNext) onNext();
-  };
-
   const addArea = (template: string) => {
     const areaName = template === 'Custom' ? `Area ${data.areas.length + 1}` : template;
     const newArea: RestaurantArea = { name: areaName, is_active: true, tables: [] };
@@ -168,39 +145,25 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
     return data.areas[areaIndex]?.tables.find(t => t.capacity === capacity && t.shape === shape);
   };
 
-  const updateTableConfig = (
-    areaIndex: number,
-    capacity: number,
-    shape: TableShape,
-    field: 'count' | 'is_fixed_seating' | 'is_joinable',
-    value: number | boolean,
-  ) => {
+  const updateTableConfig = (areaIndex: number, capacity: number, shape: TableShape, field: 'count' | 'is_fixed_seating' | 'is_joinable', value: number | boolean) => {
     const updatedAreas = [...data.areas];
     const area = updatedAreas[areaIndex];
     let configIndex = area.tables.findIndex(t => t.capacity === capacity && t.shape === shape);
-
     if (configIndex === -1) {
       area.tables.push({ capacity, count: 0, shape, is_fixed_seating: false, is_joinable: true });
       configIndex = area.tables.length - 1;
     }
-
-    (area.tables[configIndex] as Record<string, unknown>)[field] = value;
+    (area.tables[configIndex] as unknown as Record<string, unknown>)[field] = value;
     updateData({ areas: updatedAreas });
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      className="space-y-6"
-    >
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
       <div>
         <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">Tables & Settings</h2>
         <p className="text-stone-gray text-sm">Set up your dining areas and reservation preferences</p>
       </div>
 
-      {/* Total Capacity Summary */}
       <div className="bg-soft-gray border border-border-gray rounded-xl p-4">
         <div className="flex items-center justify-between">
           <div>
@@ -214,90 +177,22 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
         </div>
       </div>
 
-      {/* Areas Configuration */}
       <div className="space-y-4">
         {data.areas.map((area, areaIndex) => (
-          <div key={areaIndex} className="bg-soft-gray border border-border-gray rounded-xl p-5">
-            <div className="flex items-center justify-between mb-4">
-              <input
-                type="text"
-                value={area.name}
-                onChange={(e) => updateAreaName(areaIndex, e.target.value)}
-                className="text-lg font-semibold bg-transparent border-none text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy rounded px-2 py-1"
-              />
-              {data.areas.length > 1 && (
-                <button
-                  onClick={() => removeArea(areaIndex)}
-                  className="p-2 hover:bg-red-600/10 text-red-600 rounded-xl transition-colors"
-                  aria-label="Remove area"
-                >
-                  <ThiingsIcon name="trash" pxSize={20} />
-                </button>
-              )}
-            </div>
-
-            <div className="space-y-4">
-              {TABLE_CAPACITIES.map((capacity) => (
-                <div key={capacity} className="bg-white rounded-xl p-4 border border-border-gray">
-                  <h4 className="text-sm font-semibold text-deep-charcoal mb-3">{capacity}-Person Tables</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Round */}
-                    <div className="p-3 bg-soft-gray rounded-xl">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-6 h-6 rounded-full border-2 border-burgundy" />
-                        <span className="text-sm font-medium text-deep-charcoal">Round</span>
-                      </div>
-                      <input
-                        type="number"
-                        min="0"
-                        value={getTableCount(areaIndex, capacity, 'round') || ''}
-                        placeholder="0"
-                        onChange={(e) => updateTableConfig(areaIndex, capacity, 'round', 'count', parseInt(e.target.value) || 0)}
-                        className="w-full px-3 py-2 bg-white border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy text-sm"
-                      />
-                      <div className="flex items-center gap-2 mt-2">
-                        <input
-                          type="checkbox"
-                          checked={getTableConfig(areaIndex, capacity, 'round')?.is_fixed_seating || false}
-                          onChange={(e) => updateTableConfig(areaIndex, capacity, 'round', 'is_fixed_seating', e.target.checked)}
-                          className="w-4 h-4 rounded border-border-gray text-burgundy focus:ring-burgundy"
-                        />
-                        <span className="text-xs text-stone-gray">Fixed seating</span>
-                      </div>
-                    </div>
-                    {/* Square */}
-                    <div className="p-3 bg-soft-gray rounded-xl">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-6 h-6 rounded border-2 border-burgundy" />
-                        <span className="text-sm font-medium text-deep-charcoal">Square</span>
-                      </div>
-                      <input
-                        type="number"
-                        min="0"
-                        value={getTableCount(areaIndex, capacity, 'square') || ''}
-                        placeholder="0"
-                        onChange={(e) => updateTableConfig(areaIndex, capacity, 'square', 'count', parseInt(e.target.value) || 0)}
-                        className="w-full px-3 py-2 bg-white border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy text-sm"
-                      />
-                      <div className="flex items-center gap-2 mt-2">
-                        <input
-                          type="checkbox"
-                          checked={getTableConfig(areaIndex, capacity, 'square')?.is_fixed_seating || false}
-                          onChange={(e) => updateTableConfig(areaIndex, capacity, 'square', 'is_fixed_seating', e.target.checked)}
-                          className="w-4 h-4 rounded border-border-gray text-burgundy focus:ring-burgundy"
-                        />
-                        <span className="text-xs text-stone-gray">Fixed seating</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <TableAreaCard
+            key={areaIndex}
+            area={area}
+            areaIndex={areaIndex}
+            canRemove={data.areas.length > 1}
+            getTableCount={getTableCount}
+            getTableConfig={getTableConfig}
+            updateTableConfig={updateTableConfig}
+            updateAreaName={updateAreaName}
+            onRemove={removeArea}
+          />
         ))}
       </div>
 
-      {/* Add Area Buttons */}
       <div>
         <p className="text-sm font-semibold text-deep-charcoal mb-2">Add another area:</p>
         <div className="flex flex-wrap gap-2">
@@ -317,102 +212,21 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
       {errors.areas && <p className="text-sm text-burgundy">{errors.areas}</p>}
       {errors.tables && <p className="text-sm text-burgundy">{errors.tables}</p>}
 
-      {/* Collapsible Reservation Settings */}
-      <div className="border border-border-gray rounded-xl overflow-hidden">
-        <button
-          onClick={() => setShowSettings(!showSettings)}
-          aria-expanded={showSettings}
-          className="w-full flex items-center justify-between px-5 py-4 bg-soft-gray hover:bg-stone-pale transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <ThiingsIcon name="gear" pxSize={20} className="text-stone-gray" />
-            <div className="text-left">
-              <span className="text-sm font-semibold text-deep-charcoal">Reservation Settings</span>
-              <p className="text-xs text-warm-stone">
-                Booking window: {data.advance_booking_days} days | Buffer: {data.buffer_time} min
-              </p>
-            </div>
-          </div>
-          <ThiingsIcon name="chevron-down" pxSize={20} className={`text-stone-gray transition-transform ${showSettings ? 'rotate-180' : ''}`} />
-        </button>
+      <ReservationSettingsPanel
+        advanceBookingDays={data.advance_booking_days}
+        bufferTime={data.buffer_time}
+        cancellationPolicy={data.cancellation_policy}
+        onUpdate={(key, value) => updateData({ [key]: value })}
+      />
 
-        {showSettings && (
-          <div className="px-5 py-4 space-y-4 bg-white">
-            {/* Advance Booking Days */}
-            <div>
-              <label htmlFor="advance_booking_days" className="block text-sm font-semibold text-deep-charcoal mb-2">
-                How far in advance can customers book?
-              </label>
-              <select
-                id="advance_booking_days"
-                value={data.advance_booking_days}
-                onChange={(e) => updateData({ advance_booking_days: parseInt(e.target.value) })}
-                className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
-              >
-                <option value={7}>7 days</option>
-                <option value={14}>14 days</option>
-                <option value={30}>30 days (Recommended)</option>
-                <option value={60}>60 days</option>
-                <option value={90}>90 days</option>
-              </select>
-            </div>
+      <p className="text-xs text-muted-stone">You can always adjust tables and settings later in your dashboard.</p>
 
-            {/* Buffer Time */}
-            <div>
-              <label htmlFor="buffer_time" className="block text-sm font-semibold text-deep-charcoal mb-2">
-                Buffer time between reservations
-              </label>
-              <select
-                id="buffer_time"
-                value={data.buffer_time}
-                onChange={(e) => updateData({ buffer_time: parseInt(e.target.value) })}
-                className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
-              >
-                <option value={0}>0 minutes (No buffer)</option>
-                <option value={15}>15 minutes (Recommended)</option>
-                <option value={30}>30 minutes</option>
-                <option value={45}>45 minutes</option>
-                <option value={60}>60 minutes</option>
-              </select>
-            </div>
-
-            {/* Cancellation Policy */}
-            <div>
-              <label htmlFor="cancellation_policy" className="block text-sm font-semibold text-deep-charcoal mb-2">
-                Cancellation Policy
-              </label>
-              <select
-                id="cancellation_policy"
-                value={data.cancellation_policy}
-                onChange={(e) => updateData({ cancellation_policy: e.target.value })}
-                className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
-              >
-                {CANCELLATION_POLICIES.map((policy) => (
-                  <option key={policy} value={policy}>{policy}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <p className="text-xs text-muted-stone">
-        You can always adjust tables and settings later in your dashboard.
-      </p>
-
-      {/* Actions */}
       <div className="flex justify-between pt-4">
-        <button
-          onClick={onBack}
-          className="px-6 py-3 bg-white hover:bg-soft-gray border border-border-gray text-deep-charcoal font-semibold rounded-xl transition-all flex items-center gap-2"
-        >
+        <button onClick={onBack} className="px-6 py-3 bg-white hover:bg-soft-gray border border-border-gray text-deep-charcoal font-semibold rounded-xl transition-all flex items-center gap-2">
           <ThiingsIcon name="chevron-left" pxSize={20} />
           Back
         </button>
-        <button
-          onClick={handleContinue}
-          className="px-8 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300"
-        >
+        <button onClick={() => validate() && onNext?.()} className="px-8 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300">
           Continue
           <ThiingsIcon name="chevron-right" pxSize={20} />
         </button>

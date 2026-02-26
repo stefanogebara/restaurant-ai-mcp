@@ -73,7 +73,7 @@ export default function FloorPlanView({
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 mx-auto mb-4 bg-soft-gray rounded-2xl flex items-center justify-center">
-          <ThiingsIcon name="layout" pxSize={28} />
+          <ThiingsIcon name="layout-grid" pxSize={28} />
         </div>
         <p className="font-semibold text-deep-charcoal">No tables set up yet</p>
         <p className="text-sm text-stone-gray mt-1">

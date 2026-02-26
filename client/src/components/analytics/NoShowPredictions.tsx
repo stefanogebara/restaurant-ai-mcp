@@ -1,54 +1,12 @@
-import { useState, useEffect } from 'react';
-import { authFetch } from '../../services/api';
+import { useState } from 'react';
 import ThiingsIcon from '../common/ThiingsIcon';
-
-interface NoShowPrediction {
-  reservation_id: string;
-  customer_name: string;
-  party_size: number;
-  date: string;
-  time: string;
-  risk_score: number;
-  risk_level: 'low' | 'medium' | 'high';
-  days_until: number;
-  recommendations: string[];
-}
-
-interface NoShowSummary {
-  total_upcoming: number;
-  high_risk: number;
-  medium_risk: number;
-  low_risk: number;
-  historical_no_show_rate: number;
-  estimated_potential_no_shows: number;
-}
+import { useNoShowPredictions, type NoShowPrediction } from '../../hooks/usePredictiveAnalytics';
 
 export default function NoShowPredictions() {
-  const [predictions, setPredictions] = useState<NoShowPrediction[]>([]);
-  const [summary, setSummary] = useState<NoShowSummary | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data, isLoading } = useNoShowPredictions();
+  const predictions = data?.predictions ?? [];
+  const summary = data?.summary ?? null;
   const [selectedPrediction, setSelectedPrediction] = useState<NoShowPrediction | null>(null);
-
-  useEffect(() => {
-    fetchPredictions();
-  }, []);
-
-  const fetchPredictions = async () => {
-    try {
-      setIsLoading(true);
-      const response = await authFetch('/api/predictive-analytics?type=no-show');
-      const result = await response.json();
-
-      if (result.success) {
-        setPredictions(result.predictions || []);
-        setSummary(result.summary);
-      }
-    } catch (error) {
-      console.error('Error fetching no-show predictions:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const getRiskColor = (level: string) => {
     switch (level) {

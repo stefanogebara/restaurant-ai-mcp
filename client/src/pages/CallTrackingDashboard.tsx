@@ -5,11 +5,11 @@
  * UI is delegated to focused subcomponents in components/call-tracking/.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { SkeletonCallTracking } from '../components/common/Skeleton';
 import { useToast } from '../contexts/ToastContext';
-import { authFetch } from '../services/api';
+import { LS_RESTAURANT_ID } from '../config/localStorageKeys';
 
 import CallPhoneStatusCard from '../components/call-tracking/CallPhoneStatusCard';
 import CallDiagnosticsPanel from '../components/call-tracking/CallDiagnosticsPanel';
@@ -18,196 +18,91 @@ import CallStatsOverview from '../components/call-tracking/CallStatsOverview';
 import CallConversationList from '../components/call-tracking/CallConversationList';
 import CallConversationModal from '../components/call-tracking/CallConversationModal';
 
-import type {
-  Conversation,
-  Stats,
-  PhoneStatusData,
-  DiagnoseData,
-  CallFilter,
-} from '../components/call-tracking/callTrackingTypes';
+import {
+  useCallConversations,
+  useCallStats,
+  usePhoneStatus,
+  useConversationDetail,
+  useSetupPhone,
+  useDisconnectPhone,
+  useDiagnoseAgent,
+  useFixTools,
+} from '../hooks/useCallTracking';
+
+import type { CallFilter } from '../components/call-tracking/callTrackingTypes';
 
 export default function CallTrackingDashboard() {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [filter, setFilter] = useState<CallFilter>({ period: '7d', outcome: 'all', language: 'all' });
-
-  // Phone integration state
-  const [phoneStatus, setPhoneStatus] = useState<PhoneStatusData | null>(null);
-  const [phoneStatusLoading, setPhoneStatusLoading] = useState(false);
-
-  // Diagnose state
-  const [diagnoseData, setDiagnoseData] = useState<DiagnoseData | null>(null);
-  const [diagnoseLoading, setDiagnoseLoading] = useState(false);
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showDiagnosePanel, setShowDiagnosePanel] = useState(false);
 
-  // Action loading states
-  const [setupLoading, setSetupLoading] = useState(false);
-  const [fixToolsLoading, setFixToolsLoading] = useState(false);
-  const [disconnectLoading, setDisconnectLoading] = useState(false);
-
   const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
-  const restaurant_id = localStorage.getItem('restaurant_id') || '';
+  const restaurant_id = localStorage.getItem(LS_RESTAURANT_ID) || '';
 
-  // ─── Data fetching ───────────────────────────────────────────────────────────
+  // ─── Queries ─────────────────────────────────────────────────────────────────
 
-  const fetchPhoneStatus = useCallback(async () => {
+  const { data: convsResult, isLoading, refetch: refetchConversations } = useCallConversations(filter, restaurant_id);
+  const { data: stats } = useCallStats(filter, restaurant_id);
+  const phoneStatusQuery = usePhoneStatus(restaurant_id);
+  const { data: selectedConversation } = useConversationDetail(selectedConversationId);
+
+  const conversations = convsResult?.conversations ?? [];
+
+  // ─── Mutations ───────────────────────────────────────────────────────────────
+
+  const setupPhone = useSetupPhone();
+  const disconnectPhone = useDisconnectPhone();
+  const diagnose = useDiagnoseAgent();
+  const fixTools = useFixTools();
+
+  // ─── Handlers ────────────────────────────────────────────────────────────────
+
+  const handleSetupPhone = () => {
     if (!restaurant_id) return;
-    setPhoneStatusLoading(true);
-    try {
-      const res = await authFetch(`/api/phone-integration-simple?action=status&restaurant_id=${restaurant_id}`);
-      const data = await res.json();
-      if (data.success && data.restaurant) {
-        setPhoneStatus(data.restaurant);
-      }
-    } catch (err) {
-      console.error('Error fetching phone status:', err);
-    } finally {
-      setPhoneStatusLoading(false);
-    }
-  }, [restaurant_id]);
+    setupPhone.mutate(restaurant_id, {
+      onSuccess: (data) => toastSuccess(data.message || 'Phone number connected successfully'),
+      onError: (err) => toastError(err.message || 'Failed to set up phone'),
+    });
+  };
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const restaurantParam = restaurant_id ? `&restaurant_id=${restaurant_id}` : '';
-      const outcomeParam = filter.outcome !== 'all' ? `&outcome=${filter.outcome}` : '';
-      const languageParam = filter.language !== 'all' ? `&language=${filter.language}` : '';
-
-      const [conversationsRes, statsRes] = await Promise.all([
-        authFetch(`/api/agent-conversations?action=list&limit=50&offset=0${restaurantParam}${outcomeParam}${languageParam}`),
-        authFetch(`/api/agent-conversations?action=stats&period=${filter.period}${restaurantParam}`),
-      ]);
-
-      const [conversationsData, statsData] = await Promise.all([
-        conversationsRes.json(),
-        statsRes.json(),
-      ]);
-
-      if (conversationsData.success) setConversations(conversationsData.conversations || []);
-      if (statsData.success) setStats(statsData.stats);
-    } catch (err) {
-      console.error('Error fetching call data:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [filter, restaurant_id]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
-  useEffect(() => { fetchPhoneStatus(); }, [fetchPhoneStatus]);
-
-  // ─── Phone integration actions ───────────────────────────────────────────────
-
-  const handleDiagnose = useCallback(async () => {
-    if (!restaurant_id) return;
-    setDiagnoseLoading(true);
-    setShowDiagnosePanel(true);
-    try {
-      const res = await authFetch(`/api/phone-integration-simple?action=diagnose&restaurant_id=${restaurant_id}`);
-      const data = await res.json();
-      if (data.success) {
-        setDiagnoseData(data);
-        toastSuccess('Agent diagnostics loaded');
-      } else {
-        toastError(data.error || 'Failed to diagnose agent');
-        setDiagnoseData(null);
-      }
-    } catch {
-      toastError('Network error while diagnosing agent');
-      setDiagnoseData(null);
-    } finally {
-      setDiagnoseLoading(false);
-    }
-  }, [restaurant_id, toastSuccess, toastError]);
-
-  const handleSetupPhone = useCallback(async () => {
-    if (!restaurant_id) return;
-    setSetupLoading(true);
-    try {
-      const res = await authFetch('/api/phone-integration-simple?action=register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ restaurant_id }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toastSuccess(data.message || 'Phone number connected successfully');
-        fetchPhoneStatus();
-      } else {
-        toastError(data.error || 'Failed to set up phone');
-      }
-    } catch {
-      toastError('Network error. Please try again.');
-    } finally {
-      setSetupLoading(false);
-    }
-  }, [restaurant_id, toastSuccess, toastError, fetchPhoneStatus]);
-
-  const handleFixTools = useCallback(async () => {
-    if (!restaurant_id) return;
-    setFixToolsLoading(true);
-    try {
-      const res = await authFetch('/api/phone-integration-simple?action=fix-tools', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ restaurant_id }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toastSuccess(data.message || 'Tools configured successfully');
-        handleDiagnose();
-      } else {
-        toastError(data.error || 'Failed to fix tools');
-      }
-    } catch {
-      toastError('Network error while fixing tools');
-    } finally {
-      setFixToolsLoading(false);
-    }
-  }, [restaurant_id, toastSuccess, toastError, handleDiagnose]);
-
-  const handleDisconnect = useCallback(async () => {
+  const handleDisconnect = () => {
     if (!restaurant_id) return;
     if (!confirm('Are you sure you want to disconnect this phone number?')) return;
-    setDisconnectLoading(true);
-    try {
-      const res = await authFetch('/api/phone-integration-simple?action=unregister', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ restaurant_id }),
-      });
-      const data = await res.json();
-      if (data.success) {
+    disconnectPhone.mutate(restaurant_id, {
+      onSuccess: () => {
         toastSuccess('Phone number disconnected');
-        fetchPhoneStatus();
-        setDiagnoseData(null);
         setShowDiagnosePanel(false);
-      } else {
-        toastError(data.error || 'Failed to disconnect phone');
-      }
-    } catch {
-      toastError('Network error. Please try again.');
-    } finally {
-      setDisconnectLoading(false);
-    }
-  }, [restaurant_id, toastSuccess, toastError, fetchPhoneStatus]);
+      },
+      onError: (err) => toastError(err.message || 'Failed to disconnect phone'),
+    });
+  };
 
-  // ─── Conversation detail ─────────────────────────────────────────────────────
+  const handleDiagnose = () => {
+    if (!restaurant_id) return;
+    setShowDiagnosePanel(true);
+    diagnose.mutate(restaurant_id, {
+      onSuccess: () => toastSuccess('Agent diagnostics loaded'),
+      onError: (err) => {
+        toastError(err.message || 'Failed to diagnose agent');
+        setShowDiagnosePanel(false);
+      },
+    });
+  };
 
-  async function viewConversation(id: string) {
-    try {
-      const res = await authFetch(`/api/agent-conversations?action=get&id=${id}`);
-      const data = await res.json();
-      if (data.success) setSelectedConversation(data.conversation);
-    } catch (err) {
-      console.error('Error fetching conversation details:', err);
-    }
-  }
+  const handleFixTools = () => {
+    if (!restaurant_id) return;
+    fixTools.mutate(restaurant_id, {
+      onSuccess: (data) => {
+        toastSuccess(data.message || 'Tools configured successfully');
+        handleDiagnose();
+      },
+      onError: (err) => toastError(err.message || 'Failed to fix tools'),
+    });
+  };
 
   // ─── Render ──────────────────────────────────────────────────────────────────
 
-  if (loading && !stats) {
+  if (isLoading && !stats) {
     return (
       <DashboardLayout>
         <SkeletonCallTracking />
@@ -228,7 +123,7 @@ export default function CallTrackingDashboard() {
             <div className="flex items-center gap-2.5">
               <button
                 type="button"
-                onClick={fetchData}
+                onClick={() => refetchConversations()}
                 className="px-4 py-2 bg-white border border-border-gray text-stone-gray hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors"
               >
                 Refresh
@@ -243,24 +138,24 @@ export default function CallTrackingDashboard() {
           </div>
 
           <CallPhoneStatusCard
-            phoneStatus={phoneStatus}
-            phoneStatusLoading={phoneStatusLoading}
-            setupLoading={setupLoading}
-            diagnoseLoading={diagnoseLoading}
-            disconnectLoading={disconnectLoading}
+            phoneStatus={phoneStatusQuery.data ?? null}
+            phoneStatusLoading={phoneStatusQuery.isLoading}
+            setupLoading={setupPhone.isPending}
+            diagnoseLoading={diagnose.isPending}
+            disconnectLoading={disconnectPhone.isPending}
             onSetupPhone={handleSetupPhone}
             onDiagnose={handleDiagnose}
             onDisconnect={handleDisconnect}
-            onRefreshStatus={() => { fetchPhoneStatus(); toastInfo('Refreshing phone status...'); }}
+            onRefreshStatus={() => { phoneStatusQuery.refetch(); toastInfo('Refreshing phone status...'); }}
           />
 
           {showDiagnosePanel && (
             <CallDiagnosticsPanel
-              diagnoseData={diagnoseData}
-              diagnoseLoading={diagnoseLoading}
-              fixToolsLoading={fixToolsLoading}
+              diagnoseData={diagnose.data ?? null}
+              diagnoseLoading={diagnose.isPending}
+              fixToolsLoading={fixTools.isPending}
               onFixTools={handleFixTools}
-              onClose={() => { setShowDiagnosePanel(false); setDiagnoseData(null); }}
+              onClose={() => setShowDiagnosePanel(false)}
             />
           )}
 
@@ -272,13 +167,13 @@ export default function CallTrackingDashboard() {
             conversations={conversations}
             filter={filter}
             onOutcomeChange={(outcome) => setFilter({ ...filter, outcome })}
-            onConversationClick={viewConversation}
+            onConversationClick={(id) => setSelectedConversationId(id)}
           />
 
           {selectedConversation && (
             <CallConversationModal
               conversation={selectedConversation}
-              onClose={() => setSelectedConversation(null)}
+              onClose={() => setSelectedConversationId(null)}
             />
           )}
 

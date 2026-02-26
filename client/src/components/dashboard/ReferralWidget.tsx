@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { authFetch } from '../../services/api';
+import { SETTINGS_STALE_TIME } from '../../config/constants';
 import ThiingsIcon from '../common/ThiingsIcon';
 
 interface ReferralData {
@@ -21,7 +22,7 @@ export default function ReferralWidget() {
   const { data } = useQuery<ReferralData>({
     queryKey: ['referral', 'code'],
     queryFn: () => authFetch('/api/referral?action=code').then((r) => r.json()),
-    staleTime: 5 * 60 * 1000,
+    staleTime: SETTINGS_STALE_TIME,
   });
 
   if (!data || !data.code) return null;

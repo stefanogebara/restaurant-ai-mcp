@@ -1,35 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import BookingForm from '../components/booking/BookingForm';
-import type { RestaurantInfo } from '../components/booking/BookingForm';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+import { useRestaurantBySlug } from '../hooks/useBooking';
 
 export default function BookingPage() {
   const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
 
-  const [restaurant, setRestaurant] = useState<RestaurantInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!slug) return;
-    setLoading(true);
-    fetch(`${API_BASE}/portal?action=restaurant&slug=${encodeURIComponent(slug)}`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.success && data.data) {
-          setRestaurant(data.data);
-        } else {
-          setError('Restaurant not found');
-        }
-      })
-      .catch(() => setError('Could not load restaurant information'))
-      .finally(() => setLoading(false));
-  }, [slug]);
+  const { data: restaurant, isLoading, isError, error } = useRestaurantBySlug(slug);
 
   // SEO: inject dynamic title, meta tags, and JSON-LD when restaurant loads
   useEffect(() => {
@@ -104,7 +84,7 @@ export default function BookingPage() {
     return `${open} – ${close}`;
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div role="status" aria-label="Loading" className="min-h-screen bg-warm-white flex flex-col items-center justify-center gap-4">
         <div aria-hidden="true" className="font-serif text-2xl text-deep-charcoal opacity-50">
@@ -115,7 +95,7 @@ export default function BookingPage() {
     );
   }
 
-  if (error || !restaurant) {
+  if (isError || !restaurant) {
     return (
       <div className="min-h-screen bg-warm-white flex flex-col items-center justify-center p-6">
         <div className="bg-white border border-border-gray rounded-2xl p-8 max-w-md text-center">
@@ -124,7 +104,7 @@ export default function BookingPage() {
           </div>
           <h1 className="text-xl font-bold text-deep-charcoal mb-2">{t('reservations.restaurantNotFound')}</h1>
           <p className="text-sm text-stone-gray">
-            {error || 'The restaurant you are looking for does not exist or is not accepting online reservations.'}
+            {error instanceof Error ? error.message : 'The restaurant you are looking for does not exist or is not accepting online reservations.'}
           </p>
         </div>
         <p className="mt-6 text-xs text-muted-stone">

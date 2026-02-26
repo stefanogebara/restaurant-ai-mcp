@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { authFetch } from '../../services/api';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { IconName } from '../common/ThiingsIcon';
@@ -20,7 +21,7 @@ interface Reservation {
   time: string;
   ml_risk_score?: number;
   ml_risk_level?: string;
-  ml_risk_factors?: Array<{ factor: string; description: string; weight: number }>;
+  ml_risk_factors?: Array<{ factor: string; description: string; impact: number }>;
   special_requests?: string;
   intervention_taken?: boolean;
   intervention_type?: string;
@@ -41,10 +42,23 @@ export default function QuickInterventionModal({
   onSuccess,
   language = 'en'
 }: QuickInterventionModalProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
+
+  const logIntervention = useMutation({
+    mutationFn: async (body: { reservation_id: string; intervention_type: string; staff_name: string; notes: string }) => {
+      const response = await authFetch('/api/ml-outcomes?action=mark-action-taken', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || t.errorSave);
+      return data;
+    },
+    onSuccess: () => { setTimeout(() => { onSuccess?.(); onClose(); }, 1000); },
+    onError: (err) => setError(err instanceof Error ? err.message : t.errorSave),
+  });
   const [staffName, setStaffName] = useState('');
   const [notes, setNotes] = useState('');
 
@@ -116,47 +130,18 @@ export default function QuickInterventionModal({
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!selectedAction) {
       setError(t.errorSelect);
       return;
     }
-
     setError(null);
-    setIsLoading(true);
-
-    try {
-      const response = await authFetch('/api/ml-outcomes?action=mark-action-taken', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          reservation_id: reservation.reservation_id,
-          intervention_type: selectedAction,
-          staff_name: staffName,
-          notes: notes
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || t.errorSave);
-      }
-
-      setSuccess(true);
-
-      // Close after a brief delay to show success state
-      setTimeout(() => {
-        onSuccess?.();
-        onClose();
-      }, 1000);
-
-    } catch (err) {
-      console.error('Error logging intervention:', err);
-      setError(err instanceof Error ? err.message : t.errorSave);
-    } finally {
-      setIsLoading(false);
-    }
+    logIntervention.mutate({
+      reservation_id: reservation.reservation_id,
+      intervention_type: selectedAction,
+      staff_name: staffName,
+      notes,
+    });
   };
 
   if (!isOpen) return null;
@@ -254,7 +239,7 @@ export default function QuickInterventionModal({
           )}
 
           {/* Quick Actions */}
-          {!success && (
+          {!logIntervention.isSuccess && (
             <>
               <div>
                 <h3 className="text-sm font-semibold text-deep-charcoal mb-3">{t.quickActions}</h3>
@@ -314,7 +299,7 @@ export default function QuickInterventionModal({
           )}
 
           {/* Success State */}
-          {success && (
+          {logIntervention.isSuccess && (
             <div className="text-center py-6">
               <div className="w-16 h-16 bg-green-500/15 rounded-full flex items-center justify-center mx-auto mb-4">
                 <ThiingsIcon name="check-circle" pxSize={32} />
@@ -331,21 +316,21 @@ export default function QuickInterventionModal({
           )}
 
           {/* Actions */}
-          {!success && (
+          {!logIntervention.isSuccess && (
             <div className="flex gap-3 pt-2">
               <button
                 onClick={onClose}
-                disabled={isLoading}
+                disabled={logIntervention.isPending}
                 className="flex-1 px-4 py-3 border border-border-gray rounded-xl text-stone-gray font-medium hover:bg-soft-gray transition-colors disabled:opacity-50"
               >
                 {t.cancel}
               </button>
               <button
                 onClick={handleSubmit}
-                disabled={isLoading || !selectedAction}
+                disabled={logIntervention.isPending || !selectedAction}
                 className="flex-1 px-4 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-medium rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {isLoading ? (
+                {logIntervention.isPending ? (
                   <>
                     <Spinner size="sm" />
                     {t.saving}

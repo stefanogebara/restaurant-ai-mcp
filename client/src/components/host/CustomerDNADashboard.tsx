@@ -6,90 +6,43 @@
  */
 
 import { useState, useEffect } from 'react';
-import { authFetch } from '../../services/api';
 import { useToast } from '../../contexts/ToastContext';
 import ThiingsIcon from '../common/ThiingsIcon';
 import DNAStatsBreakdown from './DNAStatsBreakdown';
 import DNACustomerList from './DNACustomerList';
-import type { DNAStats, DNAOccasion, CustomerListItem } from './dnaHelpers';
+import { useCustomerDNAStats, useCustomerDNAList, useAnalyzeAllCustomers } from '../../hooks/useCustomerDNA';
 
 export default function CustomerDNADashboard() {
   const { success, error } = useToast();
-  const [stats, setStats] = useState<DNAStats | null>(null);
-  const [occasions, setOccasions] = useState<DNAOccasion[]>([]);
-  const [customers, setCustomers] = useState<CustomerListItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(true);
   const [showOccasions, setShowOccasions] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [styleFilter, setStyleFilter] = useState('');
-  const [isLoadingList, setIsLoadingList] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   useEffect(() => {
-    fetchDNAData();
-    fetchCustomerList();
-    const interval = setInterval(fetchDNAData, 300000);
-    return () => clearInterval(interval);
-  }, []);
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  useEffect(() => {
-    const debounce = setTimeout(() => fetchCustomerList(), 300);
-    return () => clearTimeout(debounce);
-  }, [searchQuery, styleFilter]);
+  const statsQuery = useCustomerDNAStats();
+  const listQuery = useCustomerDNAList({ search: debouncedSearch, styleFilter });
+  const analyze = useAnalyzeAllCustomers();
 
-  const fetchDNAData = async () => {
-    try {
-      const [statsRes, occRes] = await Promise.all([
-        authFetch('/api/customer-dna?action=stats'),
-        authFetch('/api/customer-dna?action=occasions&limit=10'),
-      ]);
-      const statsResult = await statsRes.json();
-      const occResult = await occRes.json();
-      if (statsResult.success) setStats(statsResult.data);
-      if (occResult.success) setOccasions(occResult.data.occasions || []);
-    } catch (err) {
-      console.error('Error fetching DNA data:', err);
-    } finally {
-      setIsLoading(false);
-    }
+  const stats = statsQuery.data?.stats ?? null;
+  const occasions = statsQuery.data?.occasions ?? [];
+  const customers = listQuery.data ?? [];
+  const isLoading = statsQuery.isLoading;
+  const isLoadingList = listQuery.isFetching;
+
+  const analyzeAllCustomers = () => {
+    analyze.mutate(undefined, {
+      onSuccess: (result) => success(`Analyzed DNA for ${result.total_analyzed} customers`),
+      onError: () => error('Failed to analyze customer DNA'),
+    });
   };
 
-  const fetchCustomerList = async () => {
-    try {
-      setIsLoadingList(true);
-      const params = new URLSearchParams({ action: 'list', limit: '50', offset: '0' });
-      if (searchQuery) params.set('search', searchQuery);
-      if (styleFilter) params.set('dining_style', styleFilter);
-      const response = await authFetch(`/api/customer-dna?${params.toString()}`);
-      const result = await response.json();
-      if (result.success) setCustomers(result.data.profiles || []);
-    } catch (err) {
-      console.error('Error fetching customer list:', err);
-    } finally {
-      setIsLoadingList(false);
-    }
-  };
-
-  const analyzeAllCustomers = async () => {
-    try {
-      setIsLoading(true);
-      const response = await authFetch('/api/customer-dna?action=analyze-all');
-      const result = await response.json();
-      if (result.success) {
-        success(`Analyzed DNA for ${result.data.total_analyzed} customers`);
-        fetchDNAData();
-      } else {
-        error('Failed to analyze customer DNA');
-      }
-    } catch (err) {
-      console.error('Error analyzing customers:', err);
-      error('Failed to analyze customer DNA');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (isLoading) {
+  if (isLoading || analyze.isPending) {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-6 border border-border-gray">
         <div className="flex items-center justify-between mb-4">

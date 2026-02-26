@@ -1,5 +1,5 @@
 import ThiingsIcon from '../common/ThiingsIcon';
-import { Conversation, CallFilter, getOutcomeLabel, getOutcomePillColor } from './callTrackingTypes';
+import { type Conversation, type CallFilter, getOutcomeLabel, getOutcomePillColor } from './callTrackingTypes';
 
 const OUTCOME_TABS = [
   { value: 'all',                  label: 'All' },

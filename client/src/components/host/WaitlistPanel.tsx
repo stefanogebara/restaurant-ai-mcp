@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { WAITLIST_POLL_INTERVAL } from '../../config/constants';
 import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription';
 import ThiingsIcon from '../common/ThiingsIcon';
 import WaitlistEntryCard from './WaitlistEntryCard';
@@ -30,7 +31,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
       if (!response.ok) throw new Error('Failed to fetch waitlist');
       return response.json();
     },
-    refetchInterval: 120000,
+    refetchInterval: WAITLIST_POLL_INTERVAL,
   });
 
   const notifyMutation = useMutation({

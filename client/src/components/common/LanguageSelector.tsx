@@ -1,7 +1,8 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useMutation } from '@tanstack/react-query';
 import { languageOptions } from '../../i18n/config';
-import axios from 'axios';
+import { authFetch } from '../../services/api';
+import { LS_LANGUAGE, LS_RESTAURANT_ID } from '../../config/localStorageKeys';
 
 interface LanguageSelectorProps {
   onLanguageChange?: (language: string) => void;
@@ -17,54 +18,37 @@ export default function LanguageSelector({
   size = 'md',
 }: LanguageSelectorProps) {
   const { t, i18n } = useTranslation();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const currentLanguage = i18n.language;
 
-  const handleLanguageChange = async (languageCode: string) => {
-    if (languageCode === currentLanguage) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Change language in i18n
+  const updateLanguage = useMutation({
+    mutationFn: async (languageCode: string) => {
       await i18n.changeLanguage(languageCode);
+      localStorage.setItem(LS_LANGUAGE, languageCode);
 
-      // Save to localStorage
-      localStorage.setItem('i18nextLng', languageCode);
-
-      // Try to save to database if restaurant is logged in
-      const restaurantId = localStorage.getItem('restaurant_id');
+      const restaurantId = localStorage.getItem(LS_RESTAURANT_ID);
       if (restaurantId) {
         try {
-          await axios.put(
-            `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/restaurant-settings`,
-            { language: languageCode },
-            {
-              headers: {
-                'Content-Type': 'application/json',
-                'x-restaurant-id': restaurantId,
-              },
-            }
-          );
+          await authFetch('/api/restaurant-settings', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ language: languageCode }),
+          });
         } catch (dbError) {
           console.warn('Failed to save language to database:', dbError);
-          // Continue anyway - local storage will persist the change
+          // Best-effort — local storage already persists the change
         }
       }
+      return languageCode;
+    },
+    onSuccess: (languageCode) => {
+      onLanguageChange?.(languageCode);
+    },
+  });
 
-      // Call custom callback if provided
-      if (onLanguageChange) {
-        onLanguageChange(languageCode);
-      }
-    } catch (err) {
-      console.error('Failed to change language:', err);
-      setError(t('settings.updateFailed'));
-    } finally {
-      setIsLoading(false);
-    }
+  const handleLanguageChange = (languageCode: string) => {
+    if (languageCode === currentLanguage) return;
+    updateLanguage.mutate(languageCode);
   };
 
   // Size classes
@@ -87,7 +71,7 @@ export default function LanguageSelector({
             <button
               key={lang.code}
               onClick={() => handleLanguageChange(lang.code)}
-              disabled={isLoading}
+              disabled={updateLanguage.isPending}
               className={`
                 ${sizeClasses[size]}
                 flex items-center gap-2 rounded-2xl border-2 transition-all
@@ -96,7 +80,7 @@ export default function LanguageSelector({
                     ? 'border-burgundy bg-burgundy/5 text-burgundy font-semibold'
                     : 'border-border-gray bg-white text-stone-gray hover:border-muted-stone'
                 }
-                ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                ${updateLanguage.isPending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                 disabled:opacity-50 disabled:cursor-not-allowed
               `}
             >
@@ -105,8 +89,8 @@ export default function LanguageSelector({
             </button>
           ))}
         </div>
-        {error && (
-          <p className="text-sm text-red-600 mt-2">{error}</p>
+        {updateLanguage.isError && (
+          <p className="text-sm text-red-600 mt-2">{t('settings.updateFailed')}</p>
         )}
       </div>
     );
@@ -125,7 +109,7 @@ export default function LanguageSelector({
           id="language-selector"
           value={currentLanguage}
           onChange={(e) => handleLanguageChange(e.target.value)}
-          disabled={isLoading}
+          disabled={updateLanguage.isPending}
           className={`
             ${sizeClasses[size]}
             block w-full rounded-xl border-border-gray shadow-sm
@@ -140,14 +124,14 @@ export default function LanguageSelector({
             </option>
           ))}
         </select>
-        {isLoading && (
+        {updateLanguage.isPending && (
           <div aria-hidden="true" className="absolute right-10 top-1/2 transform -translate-y-1/2">
             <div className="animate-spin h-4 w-4 border-2 border-burgundy border-t-transparent rounded-full"></div>
           </div>
         )}
       </div>
-      {error && (
-        <p className="text-sm text-red-600 mt-2">{error}</p>
+      {updateLanguage.isError && (
+        <p className="text-sm text-red-600 mt-2">{t('settings.updateFailed')}</p>
       )}
     </div>
   );

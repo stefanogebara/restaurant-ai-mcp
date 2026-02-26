@@ -19,7 +19,7 @@ import FloorPlanCanvas from '../components/floor-plan/FloorPlanCanvas';
 import FloorPlanLegend from '../components/floor-plan/FloorPlanLegend';
 import TablePopover from '../components/floor-plan/TablePopover';
 import AddTableModal from '../components/floor-plan/AddTableModal';
-import { CELL, GRID_COLS, GRID_ROWS, SVG_W, SVG_H, snapToGrid, getTablePxSize } from '../components/floor-plan/floorPlanConstants';
+import { CELL, GRID_COLS, SVG_W, SVG_H, snapToGrid, getTablePxSize } from '../components/floor-plan/floorPlanConstants';
 
 export default function FloorPlanEditor() {
   const queryClient = useQueryClient();

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useMutation } from '@tanstack/react-query';
 import { authFetch } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 
@@ -18,12 +19,10 @@ interface Reservation {
 
 // Helper to parse reservation_time into date and time
 function parseReservationDateTime(reservation: Reservation) {
-  // If we have reservation_time (API format), parse it
   if (reservation.reservation_time) {
     const [datePart, timePart] = reservation.reservation_time.split(' ');
-    return { date: datePart, time: timePart?.slice(0, 5) || '' }; // Remove seconds from time
+    return { date: datePart, time: timePart?.slice(0, 5) || '' };
   }
-  // Otherwise use separate fields
   return { date: reservation.date || '', time: reservation.time || '' };
 }
 
@@ -33,116 +32,80 @@ export default function CustomerPortal() {
   const [reservationId, setReservationId] = useState('');
   const [phone, setPhone] = useState('');
   const [reservation, setReservation] = useState<Reservation | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [isModifying, setIsModifying] = useState(false);
   const [modifiedData, setModifiedData] = useState<Partial<Reservation>>({});
   const { success, error: showError } = useToast();
 
-  const handleLookup = async () => {
-    if (lookupMethod === 'id' && !reservationId.trim()) {
-      showError('Please enter your reservation ID');
-      return;
-    }
-    if (lookupMethod === 'phone' && !phone.trim()) {
-      showError('Please enter your phone number');
-      return;
-    }
+  const lookupMutation = useMutation<Reservation, Error>({
+    mutationFn: async () => {
+      if (lookupMethod === 'id' && !reservationId.trim()) throw new Error('Please enter your reservation ID');
+      if (lookupMethod === 'phone' && !phone.trim()) throw new Error('Please enter your phone number');
 
-    setIsLoading(true);
-    try {
       const params = new URLSearchParams({
         action: 'lookup',
         ...(lookupMethod === 'id'
           ? { reservation_id: reservationId }
-          : { customer_phone: phone }
-        )
+          : { customer_phone: phone }),
       });
-
       const response = await authFetch(`/api/reservations?${params}`);
       const data = await response.json();
+      if (!data.success || !data.reservation) throw new Error(data.message || 'Reservation not found');
+      return data.reservation;
+    },
+    onSuccess: (res) => {
+      setReservation(res);
+      const { date, time } = parseReservationDateTime(res);
+      setModifiedData({ ...res, date, time });
+      success('Reservation found!');
+    },
+    onError: (err) => showError(err.message),
+  });
 
-      if (data.success && data.reservation) {
-        setReservation(data.reservation);
-        // Parse reservation_time into separate date/time for the modify form
-        const { date, time } = parseReservationDateTime(data.reservation);
-        setModifiedData({ ...data.reservation, date, time });
-        success('Reservation found!');
-      } else {
-        showError(data.message || 'Reservation not found');
-        setReservation(null);
-      }
-    } catch (err) {
-      showError('Failed to lookup reservation');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleModify = async () => {
-    if (!reservation) return;
-
-    setIsLoading(true);
-    try {
+  const modifyMutation = useMutation({
+    mutationFn: async () => {
       const response = await authFetch('/api/reservations?action=modify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          reservation_id: reservation.reservation_id,
+          reservation_id: reservation!.reservation_id,
           date: modifiedData.date,
           time: modifiedData.time,
           party_size: modifiedData.party_size,
-          special_requests: modifiedData.special_requests
-        })
+          special_requests: modifiedData.special_requests,
+        }),
       });
-
       const data = await response.json();
+      if (!data.success) throw new Error(data.message || 'Failed to update reservation');
+      return data;
+    },
+    onSuccess: () => {
+      setReservation({ ...reservation!, ...modifiedData } as Reservation);
+      setIsModifying(false);
+      success('Reservation updated successfully!');
+    },
+    onError: (err) => showError(err instanceof Error ? err.message : 'Failed to update reservation'),
+  });
 
-      if (data.success) {
-        setReservation({ ...reservation, ...modifiedData });
-        setIsModifying(false);
-        success('Reservation updated successfully!');
-      } else {
-        showError(data.message || 'Failed to update reservation');
-      }
-    } catch (err) {
-      showError('Failed to update reservation');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCancel = async () => {
-    if (!reservation) return;
-
-    if (!window.confirm('Are you sure you want to cancel this reservation?')) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const response = await authFetch(`/api/reservations?action=cancel&reservation_id=${reservation.reservation_id}`, {
-        method: 'POST'
-      });
-
+  const cancelMutation = useMutation({
+    mutationFn: async () => {
+      if (!window.confirm('Are you sure you want to cancel this reservation?')) return null;
+      const response = await authFetch(
+        `/api/reservations?action=cancel&reservation_id=${reservation!.reservation_id}`,
+        { method: 'POST' }
+      );
       const data = await response.json();
-
-      if (data.success) {
-        success('Reservation cancelled successfully');
-        setReservation(null);
-        setReservationId('');
-        setPhone('');
-      } else {
-        showError(data.message || 'Failed to cancel reservation');
-      }
-    } catch (err) {
-      showError('Failed to cancel reservation');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      if (!data.success) throw new Error(data.message || 'Failed to cancel reservation');
+      return data;
+    },
+    onSuccess: (data) => {
+      if (!data) return; // user cancelled the confirm dialog
+      success('Reservation cancelled successfully');
+      setReservation(null);
+      setReservationId('');
+      setPhone('');
+    },
+    onError: (err) => showError(err instanceof Error ? err.message : 'Failed to cancel reservation'),
+  });
 
   return (
     <div className="min-h-screen bg-warm-white flex flex-col">
@@ -181,7 +144,7 @@ export default function CustomerPortal() {
                     onChange={(e) => { setPhone(e.target.value); setLookupMethod('phone'); }}
                     placeholder="+34 612 345 678"
                     className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
-                    onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
+                    onKeyDown={(e) => e.key === 'Enter' && lookupMutation.mutate()}
                   />
                 </div>
 
@@ -201,16 +164,16 @@ export default function CustomerPortal() {
                     onChange={(e) => { setReservationId(e.target.value); setLookupMethod('id'); }}
                     placeholder="e.g. CEL-2026-0218-A7K3"
                     className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
-                    onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
+                    onKeyDown={(e) => e.key === 'Enter' && lookupMutation.mutate()}
                   />
                 </div>
 
                 <button
-                  onClick={handleLookup}
-                  disabled={isLoading}
+                  onClick={() => lookupMutation.mutate()}
+                  disabled={lookupMutation.isPending}
                   className="w-full mt-4 py-3.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {isLoading ? (
+                  {lookupMutation.isPending ? (
                     <>
                       <div aria-hidden="true" className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       {t('reservations.lookingUp')}
@@ -302,8 +265,8 @@ export default function CustomerPortal() {
                       </div>
                       <div className="flex gap-2.5 pt-2">
                         <button type="button" onClick={() => { setIsModifying(false); setModifiedData(reservation); }} className="flex-1 py-3 border border-border-gray bg-white text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">{t('common.cancel')}</button>
-                        <button type="button" onClick={handleModify} disabled={isLoading} className="flex-1 py-3 bg-burgundy text-white font-semibold rounded-[10px] text-[13px] hover:bg-burgundy-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-                          {isLoading ? (<><div aria-hidden="true" className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{t('reservations.saving')}</>) : t('reservations.saveChanges')}
+                        <button type="button" onClick={() => modifyMutation.mutate()} disabled={modifyMutation.isPending} className="flex-1 py-3 bg-burgundy text-white font-semibold rounded-[10px] text-[13px] hover:bg-burgundy-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                          {modifyMutation.isPending ? (<><div aria-hidden="true" className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{t('reservations.saving')}</>) : t('reservations.saveChanges')}
                         </button>
                       </div>
                     </div>
@@ -316,7 +279,7 @@ export default function CustomerPortal() {
                     <button type="button" onClick={() => setIsModifying(true)} className="flex-1 py-3 border border-border-gray bg-white text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">
                       {t('reservations.editReservation')}
                     </button>
-                    <button type="button" onClick={handleCancel} disabled={isLoading} className="flex-1 py-3 border border-red-600/20 bg-red-600/[4%] text-red-600 font-medium rounded-[10px] text-[13px] hover:bg-red-600/[8%] transition-colors disabled:opacity-50">
+                    <button type="button" onClick={() => cancelMutation.mutate()} disabled={cancelMutation.isPending} className="flex-1 py-3 border border-red-600/20 bg-red-600/[4%] text-red-600 font-medium rounded-[10px] text-[13px] hover:bg-red-600/[8%] transition-colors disabled:opacity-50">
                       {t('reservations.cancelReservation')}
                     </button>
                   </div>

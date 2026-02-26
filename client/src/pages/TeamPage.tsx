@@ -3,18 +3,17 @@
  * Route: /host-dashboard/team  (owner only to manage; all roles can view)
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { usePermission } from '../hooks/usePermission';
-import { supabase } from '../lib/supabase';
+import {
+  useTeamMembers,
+  useInviteTeamMember,
+  useUpdateTeamMemberRole,
+  useRemoveTeamMember,
+  type TeamMember,
+} from '../hooks/useTeamMembers';
 
 type Role = 'manager' | 'host' | 'staff';
-
-interface TeamMember {
-  id: string;
-  email: string;
-  role: 'owner' | Role;
-  status: 'active' | 'pending' | 'inactive';
-}
 
 const ROLE_OPTIONS: { value: Role; label: string }[] = [
   { value: 'manager', label: 'Manager' },
@@ -22,61 +21,39 @@ const ROLE_OPTIONS: { value: Role; label: string }[] = [
   { value: 'staff', label: 'Staff' },
 ];
 
-async function apiCall(path: string, method: string, body?: object) {
-  const { data: { session } } = await supabase.auth.getSession();
-  const res = await fetch(path, {
-    method,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  return res.json();
-}
-
 export default function TeamPage() {
   const { can } = usePermission();
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [loading, setLoading] = useState(true);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<Role>('host');
-  const [inviting, setInviting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
-  const load = async () => {
-    setLoading(true);
-    const data = await apiCall('/api/team-members', 'GET');
-    if (data.success) setMembers(data.members);
-    setLoading(false);
-  };
+  const { data: members = [], isLoading } = useTeamMembers();
+  const invite = useInviteTeamMember();
+  const updateRole = useUpdateTeamMemberRole();
+  const remove = useRemoveTeamMember();
 
-  useEffect(() => { load(); }, []);
-
-  const handleInvite = async (e: React.FormEvent) => {
+  const handleInvite = (e: React.FormEvent) => {
     e.preventDefault();
     setFeedback(null);
-    setInviting(true);
-    const data = await apiCall('/api/team-members', 'POST', { email: inviteEmail, role: inviteRole });
-    setInviting(false);
-    if (data.success) {
-      setFeedback({ type: 'success', msg: `Invitation sent to ${inviteEmail}` });
-      setInviteEmail('');
-      load();
-    } else {
-      setFeedback({ type: 'error', msg: data.error || 'Failed to send invitation' });
-    }
+    invite.mutate({ email: inviteEmail, role: inviteRole }, {
+      onSuccess: () => {
+        setFeedback({ type: 'success', msg: `Invitation sent to ${inviteEmail}` });
+        setInviteEmail('');
+      },
+      onError: (err) => setFeedback({ type: 'error', msg: err.message }),
+    });
   };
 
-  const handleRoleChange = async (memberId: string, newRole: Role) => {
-    await apiCall('/api/team-members', 'PATCH', { memberId, role: newRole });
-    load();
+  const handleRoleChange = (memberId: string, newRole: Role) => {
+    updateRole.mutate({ memberId, role: newRole });
   };
 
-  const handleRemove = async (memberId: string) => {
+  const handleRemove = (memberId: string) => {
     if (!window.confirm('Remove this team member?')) return;
-    await apiCall('/api/team-members', 'DELETE', { memberId });
-    load();
+    remove.mutate(memberId);
   };
 
-  const roleBadge = (role: string) => {
+  const roleBadge = (role: TeamMember['role']) => {
     const map: Record<string, string> = {
       owner: 'bg-burgundy/10 text-burgundy',
       manager: 'bg-blue-50 text-blue-700',
@@ -112,10 +89,10 @@ export default function TeamPage() {
               {ROLE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
             <button
-              type="submit" disabled={inviting}
+              type="submit" disabled={invite.isPending}
               className="px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl disabled:opacity-50 transition-colors"
             >
-              {inviting ? 'Sending…' : 'Invite'}
+              {invite.isPending ? 'Sending…' : 'Invite'}
             </button>
           </div>
           {feedback && (
@@ -127,7 +104,7 @@ export default function TeamPage() {
       )}
 
       <div className="bg-white border border-border-gray rounded-2xl divide-y divide-border-gray">
-        {loading ? (
+        {isLoading ? (
           <div className="p-6 text-center text-sm text-stone-gray">Loading…</div>
         ) : members.length === 0 ? (
           <div className="p-6 text-center text-sm text-stone-gray">No team members yet.</div>

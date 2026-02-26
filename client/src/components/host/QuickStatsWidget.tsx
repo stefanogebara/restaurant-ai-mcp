@@ -5,58 +5,14 @@
  * Horizontal full-width layout showing today's interventions, weekly ROI, value saved, and success rate
  */
 
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { authFetch } from '../../services/api';
 import ThiingsIcon from '../common/ThiingsIcon';
-
-interface QuickStats {
-  today_interventions: number;
-  today_change: string;
-  weekly_roi: number;
-  roi_status: 'exceeds' | 'meets' | 'below';
-  value_saved_30d: number;
-  value_saved_trend: string;
-  success_rate: number;
-  success_status: 'good' | 'fair' | 'needs_improvement';
-}
+import { useQuickStats } from '../../hooks/useMLPerformance';
 
 export default function QuickStatsWidget() {
-  const [stats, setStats] = useState<QuickStats | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: stats, isLoading, isError } = useQuickStats();
 
-  useEffect(() => {
-    fetchQuickStats();
-    // Refresh every 5 minutes
-    const interval = setInterval(fetchQuickStats, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchQuickStats = async () => {
-    try {
-      // Get restaurant_id from localStorage for multi-tenant filtering
-      const restaurant_id = localStorage.getItem('restaurant_id') || '';
-      const restaurantParam = restaurant_id ? `&restaurant_id=${restaurant_id}` : '';
-
-      const response = await authFetch(`/api/ml-performance?action=quick-stats${restaurantParam}`);
-      const result = await response.json();
-
-      if (result.success) {
-        setStats(result.data);
-        setError(null);
-      } else {
-        throw new Error(result.error || 'Failed to fetch stats');
-      }
-    } catch (err) {
-      console.error('Error fetching quick stats:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load stats');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (error) {
+  if (isError) {
     return (
       <div className="bg-white rounded-2xl border border-border-gray p-4 shadow-sm">
         <div className="flex items-center gap-2 text-warm-stone">

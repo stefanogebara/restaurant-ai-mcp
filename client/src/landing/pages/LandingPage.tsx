@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { trackLandingPageViewed } from '../../lib/analytics';
+import { LS_REFERRAL_CODE } from '../../config/localStorageKeys';
 import { ArrowUp } from 'lucide-react';
 import LandingNav from '../components/LandingNav';
 import HeroSection from '../components/HeroSection';
@@ -34,7 +35,7 @@ export default function LandingPage() {
       .then((res) => res.json())
       .then((data) => {
         if (data?.valid === true) {
-          localStorage.setItem('referral_code', ref);
+          localStorage.setItem(LS_REFERRAL_CODE, ref);
           params.delete('ref');
           const newSearch = params.toString();
           const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : '') + window.location.hash;

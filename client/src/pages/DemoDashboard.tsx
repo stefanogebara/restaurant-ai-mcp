@@ -5,54 +5,14 @@ import ThiingsIcon from '../components/common/ThiingsIcon';
 import DemoBanner from '../components/demo/DemoBanner';
 import StatsBar from '../components/dashboard/StatsBar';
 import ReservationsList from '../components/dashboard/ReservationsList';
-import type { Table, UpcomingReservation } from '../types/host.types';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
-
-interface DemoRestaurant {
-  id: string;
-  restaurant_name: string;
-  restaurant_type: string;
-  city: string;
-  country: string;
-  demo_expires_at: string;
-  demo_token: string;
-  business_hours: Record<string, unknown>;
-  max_party_size: number;
-  slug?: string;
-}
-
-interface DemoSession {
-  success: boolean;
-  restaurant: DemoRestaurant;
-  tables: Table[];
-  reservations: UpcomingReservation[];
-  daysLeft: number;
-}
+import { useDemoSession } from '../hooks/useDemoSession';
 
 export default function DemoDashboard() {
   const { token } = useParams<{ token: string }>();
-  const [session, setSession] = useState<DemoSession | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [widgetLoaded, setWidgetLoaded] = useState(false);
   const widgetContainerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!token) return;
-    setLoading(true);
-    fetch(`${API_BASE}/demo?action=session&token=${encodeURIComponent(token)}`)
-      .then((r) => r.json())
-      .then((data: DemoSession) => {
-        if (data.success) {
-          setSession(data);
-        } else {
-          setError('This demo link is invalid or has expired.');
-        }
-      })
-      .catch(() => setError('Could not load demo session. Please try again.'))
-      .finally(() => setLoading(false));
-  }, [token]);
+  const { data: session, isLoading, isError, error } = useDemoSession(token);
 
   // Load ElevenLabs widget script once when session is available
   useEffect(() => {
@@ -92,7 +52,7 @@ export default function DemoDashboard() {
     widgetContainerRef.current.replaceChildren(widget);
   }, [session]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div role="status" aria-label="Loading dashboard" className="min-h-screen bg-warm-white flex flex-col items-center justify-center gap-4">
         <div aria-hidden="true" className="font-serif text-2xl text-deep-charcoal opacity-50">
@@ -103,7 +63,7 @@ export default function DemoDashboard() {
     );
   }
 
-  if (error || !session) {
+  if (isError || !session) {
     return (
       <div className="min-h-screen bg-warm-white flex flex-col items-center justify-center p-6">
         <div className="bg-red-50 border border-red-200 rounded-2xl p-8 max-w-md text-center">
@@ -111,7 +71,9 @@ export default function DemoDashboard() {
             <ThiingsIcon name="alert-circle" pxSize={24} className="text-red-600" />
           </div>
           <h3 className="text-lg font-bold text-red-900 mb-2">Demo unavailable</h3>
-          <p className="text-sm text-red-700 mb-6">{error || 'This demo session could not be loaded.'}</p>
+          <p className="text-sm text-red-700 mb-6">
+            {error instanceof Error ? error.message : 'This demo session could not be loaded.'}
+          </p>
           <Link
             to="/demo/setup"
             className="inline-block px-6 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors"

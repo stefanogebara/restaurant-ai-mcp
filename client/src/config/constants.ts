@@ -18,6 +18,24 @@ export const DASHBOARD_POLL_INTERVAL = 30000; // 30 seconds
  */
 export const DASHBOARD_STALE_TIME = 25000; // 25 seconds
 
+// ============ POLLING INTERVALS ============
+
+/** Analytics queries — refetch every 5 min, stale after 4 min */
+export const ANALYTICS_POLL_INTERVAL = 5 * 60 * 1000;
+export const ANALYTICS_STALE_TIME = 4 * 60 * 1000;
+
+/** Subscription & usage stats — refetch every 10 min */
+export const SUBSCRIPTION_POLL_INTERVAL = 10 * 60 * 1000;
+
+/** General settings stale time (voice, whatsapp, referral, etc.) */
+export const SETTINGS_STALE_TIME = 5 * 60 * 1000;
+
+/** Waitlist — refetch every 2 min */
+export const WAITLIST_POLL_INTERVAL = 2 * 60 * 1000;
+
+/** LTV / DNA dashboard — refresh every 5 min */
+export const LTV_POLL_INTERVAL = 5 * 60 * 1000;
+
 // ============ BUSINESS LIMITS ============
 
 /**

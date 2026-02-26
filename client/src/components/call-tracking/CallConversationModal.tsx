@@ -1,5 +1,5 @@
 import ThiingsIcon from '../common/ThiingsIcon';
-import { Conversation, formatDate, getOutcomeColor, getOutcomeLabel } from './callTrackingTypes';
+import { type Conversation, formatDate, getOutcomeColor, getOutcomeLabel } from './callTrackingTypes';
 
 interface Props {
   conversation: Conversation;

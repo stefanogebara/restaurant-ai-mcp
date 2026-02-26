@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authFetch } from '../services/api';
+import { SETTINGS_STALE_TIME } from '../config/constants';
 
 export function useVoiceSettings() {
   return useQuery({
@@ -10,7 +11,7 @@ export function useVoiceSettings() {
       const result = await response.json();
       return result.data;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: SETTINGS_STALE_TIME,
   });
 }
 

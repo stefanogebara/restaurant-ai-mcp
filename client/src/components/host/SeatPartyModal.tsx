@@ -16,7 +16,7 @@ export default function SeatPartyModal({ isOpen, data, onClose, onRetryTableSele
 
   const handleConfirm = () => {
     const request = {
-      type: data.type,
+      type: data.type as 'reservation' | 'walk-in',
       reservation_id: data.reservation_id,
       customer_name: data.customer_name,
       customer_phone: data.customer_phone,

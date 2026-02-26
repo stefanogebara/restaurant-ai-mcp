@@ -55,7 +55,7 @@ interface Props {
   linkMode: boolean;
   linkSource: string | null;
   selectedTableId: string | null;
-  svgRef: RefObject<SVGSVGElement>;
+  svgRef: RefObject<SVGSVGElement | null>;
   onPointerMove: (e: React.PointerEvent) => void;
   onPointerUp: () => void;
   onPointerDown: (e: React.PointerEvent, table: Table) => void;

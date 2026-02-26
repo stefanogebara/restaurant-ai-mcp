@@ -6,18 +6,9 @@
  * general restaurant policies that the AI should follow.
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { authFetch } from '../../services/api';
+import { useState } from 'react';
 import ThiingsIcon from '../common/ThiingsIcon';
-
-interface ManagerNote {
-  id: string;
-  content: string;
-  guest_phone: string | null;
-  importance: number;
-  is_policy: boolean;
-  created_at: string;
-}
+import { useManagerNotes, useAddManagerNote, useDeleteManagerNote } from '../../hooks/useManagerNotes';
 
 const translations = {
   en: {
@@ -75,88 +66,30 @@ interface ManagerNotesPanelProps {
 export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanelProps) {
   const t = translations[language] || translations.en;
 
-  const [notes, setNotes] = useState<ManagerNote[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  const { data: notes = [], isLoading } = useManagerNotes();
+  const addNote = useAddManagerNote();
+  const deleteNote = useDeleteManagerNote();
 
-  // Form state
+  const [showForm, setShowForm] = useState(false);
   const [guestPhone, setGuestPhone] = useState('');
   const [noteContent, setNoteContent] = useState('');
   const [noteType, setNoteType] = useState<'vip_instruction' | 'general_policy' | 'guest_preference'>('vip_instruction');
 
-  const apiUrl = import.meta.env.VITE_API_URL || '';
-
-  const loadNotes = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const response = await authFetch(`${apiUrl}/api/manager-notes`);
-      const data = await response.json();
-
-      if (data.success) {
-        setNotes(data.notes);
-      }
-      setError(null);
-    } catch {
-      setError(t.errorLoad);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [apiUrl, t.errorLoad]);
-
-  useEffect(() => {
-    loadNotes();
-  }, [loadNotes]);
-
   const handleSave = async () => {
     if (!noteContent.trim()) return;
-
-    setIsSaving(true);
-    try {
-      const response = await authFetch(`${apiUrl}/api/manager-notes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          guest_phone: guestPhone.trim() || undefined,
-          content: noteContent.trim(),
-          note_type: noteType
-        })
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setNotes(prev => [data.note, ...prev]);
-        setNoteContent('');
-        setGuestPhone('');
-        setShowForm(false);
-      } else {
-        setError(t.errorSave);
-      }
-    } catch {
-      setError(t.errorSave);
-    } finally {
-      setIsSaving(false);
-    }
+    await addNote.mutateAsync({
+      content: noteContent.trim(),
+      guest_phone: guestPhone.trim() || undefined,
+      note_type: noteType,
+    });
+    setNoteContent('');
+    setGuestPhone('');
+    setShowForm(false);
   };
 
-  const handleDelete = async (noteId: string) => {
+  const handleDelete = (noteId: string) => {
     if (!confirm(t.deleteConfirm)) return;
-
-    try {
-      const response = await authFetch(`${apiUrl}/api/manager-notes`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: noteId })
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setNotes(prev => prev.filter(n => n.id !== noteId));
-      }
-    } catch {
-      setError(t.errorDelete);
-    }
+    deleteNote.mutate(noteId);
   };
 
   return (
@@ -178,9 +111,9 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
         </button>
       </div>
 
-      {error && (
-        <div className="mb-3 p-2 rounded-xl bg-red-50 text-red-700 text-xs rounded-xl">
-          {error}
+      {(addNote.isError || deleteNote.isError) && (
+        <div className="mb-3 p-2 rounded-xl bg-red-50 text-red-700 text-xs">
+          {addNote.isError ? t.errorSave : t.errorDelete}
         </div>
       )}
 
@@ -233,10 +166,10 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
           <button
             type="button"
             onClick={handleSave}
-            disabled={isSaving || !noteContent.trim()}
+            disabled={addNote.isPending || !noteContent.trim()}
             className="w-full text-sm px-4 py-2 rounded-xl bg-burgundy text-white font-medium hover:bg-burgundy-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSaving ? t.saving : t.save}
+            {addNote.isPending ? t.saving : t.save}
           </button>
         </div>
       )}

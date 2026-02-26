@@ -62,7 +62,8 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={renderLabel}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              label={renderLabel as any}
               outerRadius={100}
               innerRadius={60} // Makes it a donut chart
               fill="#8884d8"
@@ -76,7 +77,8 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
             <Legend
               verticalAlign="bottom"
               height={36}
-              formatter={(value, entry: { payload: { value: number } }) => (
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            formatter={(value: any, entry: any) => (
                 <span className="text-sm text-deep-charcoal">
                   {value} ({entry.payload.value})
                 </span>

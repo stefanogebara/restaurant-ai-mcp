@@ -6,6 +6,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
+import { LS_CUSTOMER_EMAIL } from '../config/localStorageKeys';
 
 type RestaurantRole = 'owner' | 'manager' | 'host' | 'staff';
 
@@ -43,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.user?.email) {
           localStorage.setItem('customer_email', session.user.email);
         } else {
-          localStorage.removeItem('customer_email');
+          localStorage.removeItem(LS_CUSTOMER_EMAIL);
         }
 
         // Extract restaurant role from JWT payload
@@ -58,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Clear stale state when sign-out or token refresh fails
         if (event === 'SIGNED_OUT') {
-          localStorage.removeItem('customer_email');
+          localStorage.removeItem(LS_CUSTOMER_EMAIL);
           setRole(null);
         }
 
@@ -116,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    localStorage.removeItem('customer_email');
+    localStorage.removeItem(LS_CUSTOMER_EMAIL);
     try {
       await supabase.auth.signOut();
     } catch {

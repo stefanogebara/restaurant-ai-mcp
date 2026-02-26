@@ -23,6 +23,7 @@ import type { OnboardingData } from '../types/onboarding.types';
 import { authFetch } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { trackOnboardingStepCompleted, trackOnboardingCompleted } from '../lib/analytics';
+import { LS_CUSTOMER_EMAIL, LS_REFERRAL_CODE, LS_ONBOARDING_DATA, LS_ONBOARDING_STEP } from '../config/localStorageKeys';
 
 const STEP_NAME_KEYS = ['onboarding.stepName1', 'onboarding.stepName2', 'onboarding.stepName3', 'onboarding.stepName4'];
 const TOTAL_STEPS = 4;
@@ -39,7 +40,7 @@ export default function Onboarding() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [ownReferral, setOwnReferral] = useState<{ code: string; url: string } | null>(null);
 
-  const customerEmail = user?.email || localStorage.getItem('customer_email') || '';
+  const customerEmail = user?.email || localStorage.getItem(LS_CUSTOMER_EMAIL) || '';
 
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
     customer_email: customerEmail,
@@ -128,7 +129,7 @@ export default function Onboarding() {
       }
 
       // Attach any referral code that was captured at sign-up (fire-and-forget)
-      const pendingReferralCode = localStorage.getItem('referral_code');
+      const pendingReferralCode = localStorage.getItem(LS_REFERRAL_CODE);
       if (pendingReferralCode) {
         authFetch('/api/referral?action=attach', {
           method: 'POST',
@@ -139,9 +140,9 @@ export default function Onboarding() {
         });
       }
 
-      localStorage.removeItem('onboarding_data');
-      localStorage.removeItem('onboarding_step');
-      localStorage.removeItem('referral_code');
+      localStorage.removeItem(LS_ONBOARDING_DATA);
+      localStorage.removeItem(LS_ONBOARDING_STEP);
+      localStorage.removeItem(LS_REFERRAL_CODE);
 
       trackOnboardingCompleted({
         plan: onboardingData.plan ?? 'unknown',

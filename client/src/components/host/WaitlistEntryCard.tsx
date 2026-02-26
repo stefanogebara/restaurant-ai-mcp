@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { formatTimeAgo } from '../../utils/timeFormatting';
 import WaitlistTimeDisplay from './WaitlistTimeDisplay';
-import ThiingsIcon from '../common/ThiingsIcon';
 import { getTags, getStatusColor } from './waitlistHelpers';
 import type { WaitlistEntry } from './waitlistHelpers';
 

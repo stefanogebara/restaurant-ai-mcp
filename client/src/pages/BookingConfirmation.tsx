@@ -1,18 +1,7 @@
-import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { colors } from '../utils/colors';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import ThiingsIcon from '../components/common/ThiingsIcon';
-
-interface ReservationData {
-  id: string;
-  name: string;
-  party_size: number;
-  date: string;
-  time: string;
-  status: string;
-  restaurant_name: string;
-}
+import { useReservationById, type ReservationData } from '../hooks/useBooking';
 
 export default function BookingConfirmation() {
   const { slug } = useParams<{ slug: string }>();
@@ -20,33 +9,12 @@ export default function BookingConfirmation() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
+
   const state = location.state as { reservation?: ReservationData; restaurant_name?: string } | null;
+  const id = searchParams.get('id');
 
-  const [reservation, setReservation] = useState<ReservationData | null>(state?.reservation ?? null);
-  const [loading, setLoading] = useState(!state?.reservation);
-  const [notFound, setNotFound] = useState(false);
+  const { data: reservation, isLoading } = useReservationById(id, state?.reservation);
 
-  // If no state (e.g. page refresh), fetch reservation from API using URL ?id=
-  useEffect(() => {
-    if (reservation) return;
-    const id = searchParams.get('id');
-    if (!id) { setLoading(false); setNotFound(true); return; }
-
-    const base = import.meta.env.VITE_API_BASE_URL || '';
-    fetch(`${base}/api/portal?action=reservation&id=${encodeURIComponent(id)}`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.success && data.reservation) {
-          setReservation(data.reservation);
-        } else {
-          setNotFound(true);
-        }
-      })
-      .catch(() => setNotFound(true))
-      .finally(() => setLoading(false));
-  }, []);
-
-  // Format time for display (24h -> 12h)
   const formatTime = (time: string) => {
     const [h, m] = time.split(':').map(Number);
     const period = h >= 12 ? 'PM' : 'AM';
@@ -54,7 +22,7 @@ export default function BookingConfirmation() {
     return `${hour}:${String(m).padStart(2, '0')} ${period}`;
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-warm-white flex items-center justify-center">
         <div role="status" className="flex items-center gap-3">
@@ -65,7 +33,7 @@ export default function BookingConfirmation() {
     );
   }
 
-  if (notFound || !reservation) {
+  if (!reservation) {
     return (
       <div className="min-h-screen bg-warm-white flex flex-col items-center justify-center p-6">
         <div className="bg-white border border-border-gray rounded-2xl p-8 max-w-md text-center shadow-sm">

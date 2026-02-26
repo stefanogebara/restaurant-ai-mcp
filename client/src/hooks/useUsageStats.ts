@@ -6,6 +6,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { authFetch } from '../services/api';
+import { SUBSCRIPTION_POLL_INTERVAL, SETTINGS_STALE_TIME } from '../config/constants';
 
 export interface UsageMetric {
   metric_type: string;
@@ -55,7 +56,7 @@ export function useUsageStats(options: UseUsageStatsOptions = {}) {
       return response.json();
     },
     enabled,
-    staleTime: 5 * 60 * 1000,
-    refetchInterval: 10 * 60 * 1000,
+    staleTime: SETTINGS_STALE_TIME,
+    refetchInterval: SUBSCRIPTION_POLL_INTERVAL,
   });
 }

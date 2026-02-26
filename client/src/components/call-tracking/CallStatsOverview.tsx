@@ -1,4 +1,4 @@
-import { Stats } from './callTrackingTypes';
+import type { Stats } from './callTrackingTypes';
 
 interface Props {
   stats: Stats;

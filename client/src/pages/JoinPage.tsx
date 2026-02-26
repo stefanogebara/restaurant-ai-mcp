@@ -8,12 +8,11 @@
  *  3. If logged in → POST /api/invitations to accept → redirect to dashboard
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-
-type State = 'loading' | 'valid' | 'invalid' | 'expired' | 'accepting' | 'done' | 'error';
 
 export default function JoinPage() {
   const [searchParams] = useSearchParams();
@@ -21,63 +20,84 @@ export default function JoinPage() {
   const { user } = useAuth();
   const token = searchParams.get('token');
 
-  const [state, setState] = useState<State>('loading');
-  const [inviteInfo, setInviteInfo] = useState<{ email: string; role: string } | null>(null);
-  const [errorMsg, setErrorMsg] = useState('');
+  const validateQuery = useQuery<{ email: string; role: string }>({
+    queryKey: ['invitation', token],
+    queryFn: async () => {
+      const res = await fetch(`/api/invitations?token=${token!}`);
+      const data = await res.json();
+      if (!data.success) {
+        const err = new Error(data.error || 'invalid') as Error & { expired?: boolean };
+        err.expired = Boolean(data.error?.includes('expired'));
+        throw err;
+      }
+      return { email: data.email, role: data.role };
+    },
+    enabled: !!token,
+    retry: false,
+    staleTime: Infinity,
+  });
 
-  useEffect(() => {
-    if (!token) { setState('invalid'); return; }
-    fetch(`/api/invitations?token=${token}`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.success) { setInviteInfo({ email: data.email, role: data.role }); setState('valid'); }
-        else if (data.error?.includes('expired')) setState('expired');
-        else setState('invalid');
-      })
-      .catch(() => setState('error'));
-  }, [token]);
-
-  useEffect(() => {
-    if (state !== 'valid' || !user || !token) return;
-    setState('accepting');
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      fetch('/api/invitations', {
+  const acceptMutation = useMutation({
+    mutationFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/invitations', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify({ token }),
-      })
-        .then(r => r.json())
-        .then(data => {
-          if (data.success) { setState('done'); setTimeout(() => navigate('/host-dashboard/simple'), 1500); }
-          else { setErrorMsg(data.error || 'Failed to accept'); setState('error'); }
-        })
-        .catch(() => setState('error'));
-    });
-  }, [state, user, token, navigate]);
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Failed to accept');
+      return data;
+    },
+    onSuccess: () => setTimeout(() => navigate('/host-dashboard/simple'), 1500),
+  });
 
-  const handleSignIn = () => {
-    supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.href, queryParams: { access_type: 'offline', prompt: 'select_account' } },
-    });
-  };
+  // Auto-accept once token is validated and user is logged in
+  useEffect(() => {
+    if (
+      validateQuery.data &&
+      user &&
+      !acceptMutation.isPending &&
+      !acceptMutation.isSuccess &&
+      !acceptMutation.isError
+    ) {
+      acceptMutation.mutate();
+    }
+  }, [validateQuery.data, user]);
 
+  const inviteInfo = validateQuery.data ?? null;
   const roleLabel = inviteInfo?.role
     ? inviteInfo.role.charAt(0).toUpperCase() + inviteInfo.role.slice(1)
     : 'Team Member';
 
-  if (state === 'loading' || state === 'accepting') {
+  const handleSignIn = () => {
+    supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.href,
+        queryParams: { access_type: 'offline', prompt: 'select_account' },
+      },
+    });
+  };
+
+  // ─── Loading / accepting ────────────────────────────────────────────────────
+  if (!token || validateQuery.isLoading || acceptMutation.isPending) {
+    const msg = acceptMutation.isPending ? 'Activating your account…' : 'Loading…';
     return (
       <div className="min-h-screen bg-warm-white flex items-center justify-center">
         <div className="text-center">
           <div aria-hidden="true" className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy mx-auto mb-3" />
-          <p className="text-sm text-stone-gray" role="status">{state === 'accepting' ? 'Activating your account…' : 'Loading…'}</p>
+          <p className="text-sm text-stone-gray" role="status">{msg}</p>
         </div>
       </div>
     );
   }
 
-  if (state === 'done') {
+  // ─── Done ───────────────────────────────────────────────────────────────────
+  if (acceptMutation.isSuccess) {
     return (
       <div className="min-h-screen bg-warm-white flex items-center justify-center p-6">
         <div className="bg-white border border-border-gray rounded-2xl p-8 max-w-sm text-center shadow-sm">
@@ -88,15 +108,21 @@ export default function JoinPage() {
     );
   }
 
-  if (state === 'invalid' || state === 'expired' || state === 'error') {
+  // ─── Error / invalid / expired ──────────────────────────────────────────────
+  if (validateQuery.isError || acceptMutation.isError) {
+    const validateErr = validateQuery.error as (Error & { expired?: boolean }) | null;
+    const isExpired = validateErr?.expired;
+    const errorMsg = acceptMutation.isError
+      ? (acceptMutation.error instanceof Error ? acceptMutation.error.message : 'Failed to accept')
+      : '';
     return (
       <div className="min-h-screen bg-warm-white flex items-center justify-center p-6">
         <div className="bg-white border border-border-gray rounded-2xl p-8 max-w-sm text-center shadow-sm">
           <h2 className="text-lg font-bold text-deep-charcoal mb-2">
-            {state === 'expired' ? 'Invitation expired' : 'Invalid invitation'}
+            {isExpired ? 'Invitation expired' : 'Invalid invitation'}
           </h2>
           <p className="text-sm text-stone-gray">
-            {state === 'expired'
+            {isExpired
               ? 'This invite link has expired. Ask the restaurant owner to send a new one.'
               : errorMsg || 'This invite link is not valid.'}
           </p>
@@ -105,7 +131,7 @@ export default function JoinPage() {
     );
   }
 
-  // state === 'valid', user not logged in
+  // ─── Valid, user not logged in ──────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-warm-white flex items-center justify-center p-6">
       <div className="bg-white border border-border-gray rounded-2xl p-8 max-w-sm text-center shadow-sm">

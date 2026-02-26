@@ -15,7 +15,8 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { hostAPI, authFetch } from '../services/api';
+import { hostAPI } from '../services/api';
+import { useCompleteService } from '../hooks/useCompleteService';
 import { usePlanInfo } from '../hooks/useSubscription';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import StatsBar from '../components/dashboard/StatsBar';
@@ -31,11 +32,12 @@ import QuickInterventionModal from '../components/host/QuickInterventionModal';
 import type { UpcomingReservation, ActiveParty, SeatModalData } from '../types/host.types';
 import { trackFirstReservationCreated } from '../lib/analytics';
 import ThiingsIcon from '../components/common/ThiingsIcon';
+import { LS_FIRST_RESERVATION_TRACKED } from '../config/localStorageKeys';
 
 function maybeTrackFirstReservation() {
-  if (!localStorage.getItem('seatable_first_reservation_tracked')) {
+  if (!localStorage.getItem(LS_FIRST_RESERVATION_TRACKED)) {
     trackFirstReservationCreated();
-    localStorage.setItem('seatable_first_reservation_tracked', '1');
+    localStorage.setItem(LS_FIRST_RESERVATION_TRACKED, '1');
   }
 }
 
@@ -74,6 +76,9 @@ export default function Dashboard() {
   const totalGuests = activeParties.reduce((sum, p) => sum + (p.party_size || 0), 0);
   const availableTables = tables.filter((t: { status: string }) => t.status === 'Available');
 
+  // ---- Mutations ----
+  const completeService = useCompleteService();
+
   // ---- Handlers ----
   const handleWalkInSuccess = (partyData: SeatModalData) => {
     maybeTrackFirstReservation();
@@ -88,25 +93,12 @@ export default function Dashboard() {
   };
 
   const handleCheckInSuccess = (reservationData: SeatModalData) => {
-    setSelectedReservation(reservationData);
+    setSelectedReservation(reservationData as unknown as UpcomingReservation);
     setShowCheckInModal(false);
     setShowSeatModal(true);
   };
 
-  const handleCompleteService = async (party: ActiveParty) => {
-    try {
-      const response = await authFetch('/api/host-dashboard?action=complete-service', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ service_record_id: party.service_id }),
-      });
-      if (response.ok) {
-        refetch();
-      }
-    } catch (error) {
-      console.error('Error completing service:', error);
-    }
-  };
+  const handleCompleteService = (party: ActiveParty) => completeService.mutate(party.service_id);
 
   const handleSeatFromWaitlist = (entry: { customer_name: string; customer_phone: string; party_size: number; special_requests?: string; id: string }) => {
     setSelectedParty({
@@ -299,7 +291,7 @@ export default function Dashboard() {
       {showSeatModal && (selectedParty || selectedReservation) && (
         <SeatPartyModal
           isOpen={showSeatModal}
-          data={selectedParty || selectedReservation}
+          data={(selectedParty || selectedReservation) as SeatModalData | null}
           onClose={() => {
             setShowSeatModal(false);
             setSelectedParty(null);

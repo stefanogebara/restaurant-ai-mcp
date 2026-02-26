@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+import { useTimeSlots, useCreateReservation } from '../../hooks/useBooking';
 
 export interface RestaurantInfo {
   id: string;
@@ -44,18 +43,25 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
 
+  // ─── UI state ───────────────────────────────────────────────────────────────
   const [partySize, setPartySize] = useState(2);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
-  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
-  const [loadingSlots, setLoadingSlots] = useState(false);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState('');
 
+  // Reset time when date or party size changes
+  useEffect(() => { setSelectedTime(''); }, [selectedDate, partySize]);
+
+  // ─── Server state ────────────────────────────────────────────────────────────
+  const { data: timeSlots = [], isLoading: loadingSlots } = useTimeSlots(
+    restaurant.id, selectedDate, partySize
+  );
+  const reserve = useCreateReservation();
+
+  // ─── Derived ─────────────────────────────────────────────────────────────────
   const availableDates = useMemo(() => {
     const days: { value: string; label: string; dayKey: string; dayNum: number; isToday: boolean }[] = [];
     const limit = restaurant.advance_booking_days || 30;
@@ -75,25 +81,6 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     return days;
   }, [restaurant]);
 
-  useEffect(() => {
-    if (!selectedDate || !partySize) return;
-    setLoadingSlots(true);
-    setSelectedTime('');
-    const params = new URLSearchParams({
-      action: 'availability',
-      restaurant_id: restaurant.id,
-      date: selectedDate,
-      party_size: String(partySize),
-    });
-    fetch(`${API_BASE}/portal?${params}`)
-      .then(r => r.json())
-      .then(data => {
-        setTimeSlots(data.success && data.slots ? data.slots : []);
-      })
-      .catch(() => setTimeSlots([]))
-      .finally(() => setLoadingSlots(false));
-  }, [restaurant.id, selectedDate, partySize]);
-
   const formatTime = (time: string) => {
     const [h, m] = time.split(':').map(Number);
     const period = h >= 12 ? 'PM' : 'AM';
@@ -101,37 +88,23 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     return `${hour}:${String(m).padStart(2, '0')} ${period}`;
   };
 
-  const handleSubmit = async () => {
-    setSubmitting(true);
-    setSubmitError('');
-    try {
-      const res = await fetch(`${API_BASE}/portal?action=reserve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          restaurant_id: restaurant.id,
-          customer_name: customerName.trim(),
-          customer_phone: customerPhone.trim(),
-          customer_email: customerEmail.trim() || undefined,
-          party_size: partySize,
-          date: selectedDate,
-          time: selectedTime,
-          special_requests: specialRequests.trim() || undefined,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        navigate(`/book/${slug}/confirmed?id=${data.reservation.id}`, {
-          state: { reservation: data.reservation, restaurant_name: restaurant.name },
+  const handleSubmit = () => {
+    reserve.mutate({
+      restaurant_id: restaurant.id,
+      customer_name: customerName.trim(),
+      customer_phone: customerPhone.trim(),
+      customer_email: customerEmail.trim() || undefined,
+      party_size: partySize,
+      date: selectedDate,
+      time: selectedTime,
+      special_requests: specialRequests.trim() || undefined,
+    }, {
+      onSuccess: ({ reservation }) => {
+        navigate(`/book/${slug}/confirmed?id=${reservation.id}`, {
+          state: { reservation, restaurant_name: restaurant.name },
         });
-      } else {
-        setSubmitError(data.message || 'Could not complete reservation');
-      }
-    } catch {
-      setSubmitError('Something went wrong. Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
+      },
+    });
   };
 
   const canSubmit = customerName.trim() !== '' && customerPhone.trim() !== '' && selectedDate && selectedTime;
@@ -331,9 +304,9 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       )}
 
       {/* Submit Error */}
-      {submitError && (
+      {reserve.isError && (
         <div className="bg-red-600/10 border border-red-600/20 rounded-xl p-3 mb-4">
-          <p className="text-sm text-red-600">{submitError}</p>
+          <p className="text-sm text-red-600">{reserve.error.message}</p>
         </div>
       )}
 
@@ -341,10 +314,10 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       <button
         type="button"
         onClick={handleSubmit}
-        disabled={!canSubmit || submitting}
+        disabled={!canSubmit || reserve.isPending}
         className="w-full py-4 rounded-xl text-[15px] font-semibold bg-burgundy hover:bg-burgundy-dark disabled:bg-border-gray disabled:text-muted-stone text-white transition-colors flex items-center justify-center gap-2"
       >
-        {submitting ? (
+        {reserve.isPending ? (
           <>
             <div aria-hidden="true" className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
             Confirming...

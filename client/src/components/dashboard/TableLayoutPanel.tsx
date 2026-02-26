@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import type { Table, ActiveParty } from '../../types/host.types';
 import TableGrid from '../host/TableGrid';
 import FloorPlanView from '../host/FloorPlanView';
@@ -76,49 +77,35 @@ export default function TableLayoutPanel({
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const t = translations[language];
 
-  const handleTableClick = (table: Table) => {
-    setSelectedTable(table);
-  };
-
-  const handleFreeTable = async (tableId: string) => {
-    try {
+  const freeTable = useMutation({
+    mutationFn: async (tableId: string) => {
       const response = await authFetch('/api/host-dashboard?action=free-table', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ table_id: tableId }),
       });
-      if (response.ok) {
-        onToast?.(t.tableFreed, 'success');
-        onRefresh();
-        setSelectedTable(null);
-      } else {
-        throw new Error('Failed');
-      }
-    } catch (error) {
-      console.error('Error freeing table:', error);
-      onToast?.(t.errorFree, 'error');
-    }
-  };
+      if (!response.ok) throw new Error('Failed');
+    },
+    onSuccess: () => { onToast?.(t.tableFreed, 'success'); onRefresh(); setSelectedTable(null); },
+    onError: () => onToast?.(t.errorFree, 'error'),
+  });
 
-  const handleUpdateStatus = async (tableId: string, status: string) => {
-    try {
+  const updateStatus = useMutation({
+    mutationFn: async ({ tableId, status }: { tableId: string; status: string }) => {
       const response = await authFetch('/api/host-dashboard?action=update-table-status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ table_id: tableId, status }),
       });
-      if (response.ok) {
-        onToast?.(t.tableUpdated, 'success');
-        onRefresh();
-        setSelectedTable(null);
-      } else {
-        throw new Error('Failed');
-      }
-    } catch (error) {
-      console.error('Error updating table status:', error);
-      onToast?.(t.errorUpdate, 'error');
-    }
-  };
+      if (!response.ok) throw new Error('Failed');
+    },
+    onSuccess: () => { onToast?.(t.tableUpdated, 'success'); onRefresh(); setSelectedTable(null); },
+    onError: () => onToast?.(t.errorUpdate, 'error'),
+  });
+
+  const handleTableClick = (table: Table) => setSelectedTable(table);
+  const handleFreeTable = (tableId: string) => freeTable.mutate(tableId);
+  const handleUpdateStatus = (tableId: string, status: string) => updateStatus.mutate({ tableId, status });
 
   if (isLoading) {
     return (

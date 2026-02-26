@@ -1,6 +1,6 @@
 import ThiingsIcon from '../common/ThiingsIcon';
 import Spinner from '../common/Spinner';
-import { formatConfiguredDate, PhoneStatusData } from './callTrackingTypes';
+import { formatConfiguredDate, type PhoneStatusData } from './callTrackingTypes';
 
 interface Props {
   phoneStatus: PhoneStatusData | null;

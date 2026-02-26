@@ -1,6 +1,6 @@
 import ThiingsIcon from '../common/ThiingsIcon';
 import Spinner from '../common/Spinner';
-import { DiagnoseData } from './callTrackingTypes';
+import type { DiagnoseData } from './callTrackingTypes';
 
 interface Props {
   diagnoseData: DiagnoseData | null;

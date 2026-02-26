@@ -7,6 +7,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { authFetch } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { SUBSCRIPTION_POLL_INTERVAL, SETTINGS_STALE_TIME } from '../config/constants';
+import { LS_CUSTOMER_EMAIL } from '../config/localStorageKeys';
 
 interface SubscriptionDetails {
   plan: string;
@@ -50,7 +52,7 @@ export function useSubscription(options: UseSubscriptionOptions = {}) {
   const { user } = useAuth();
   const sessionEmail = user?.email;
 
-  const queryEmail = email || sessionEmail || localStorage.getItem('customer_email') || '';
+  const queryEmail = email || sessionEmail || localStorage.getItem(LS_CUSTOMER_EMAIL) || '';
 
   return useQuery<SubscriptionResponse>({
     queryKey: ['subscription', queryEmail || 'current-user'],
@@ -75,8 +77,8 @@ export function useSubscription(options: UseSubscriptionOptions = {}) {
       return response.json();
     },
     enabled: enabled && !!queryEmail,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 10 * 60 * 1000, // Refetch every 10 minutes
+    staleTime: SETTINGS_STALE_TIME,
+    refetchInterval: SUBSCRIPTION_POLL_INTERVAL,
   });
 }
 

@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePermission } from '../hooks/usePermission';
-import { authFetch } from '../services/api';
+import { useAnalytics } from '../hooks/useAnalytics';
 import { SkeletonAnalytics } from '../components/common/Skeleton';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import AnalyticsStats from '../components/analytics/AnalyticsStats';
@@ -14,39 +14,13 @@ import NoShowPredictions from '../components/analytics/NoShowPredictions';
 import RevenueOpportunities from '../components/analytics/RevenueOpportunities';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 
-interface AnalyticsData {
-  overview: {
-    total_reservations: number;
-    total_completed_services: number;
-    avg_party_size: number;
-    avg_service_time_minutes: number;
-    total_capacity: number;
-    current_occupancy: number;
-    current_occupancy_percentage: string;
-  };
-  reservations_by_status: Record<string, number>;
-  reservations_by_day: Record<string, number>;
-  reservations_by_time_slot: Record<string, number>;
-  table_utilization: Array<{
-    table_number: number;
-    capacity: number;
-    location: string;
-    times_used: number;
-    utilization_rate: string;
-  }>;
-  daily_trend: Array<{
-    date: string;
-    dayName: string;
-    reservations: number;
-    completed_services: number;
-  }>;
-}
-
 type DateRange = '30d' | '7d' | 'today';
 
 export default function AnalyticsDashboard() {
   const { t } = useTranslation();
   const { can } = usePermission();
+  const [dateRange, setDateRange] = useState<DateRange>('30d');
+  const { data, isLoading, isError, error, refetch } = useAnalytics();
 
   if (!can('viewAnalytics')) {
     return (
@@ -56,41 +30,11 @@ export default function AnalyticsDashboard() {
     );
   }
 
-  const [data, setData] = useState<AnalyticsData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState<DateRange>('30d');
-
-  useEffect(() => {
-    fetchAnalytics();
-  }, []);
-
-  const fetchAnalytics = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await authFetch('/api/analytics');
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch analytics');
-      }
-
-      setData(result.analytics);
-    } catch (err) {
-      console.error('Error fetching analytics:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load analytics');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   if (isLoading) {
     return <DashboardLayout><SkeletonAnalytics /></DashboardLayout>;
   }
 
-  if (error) {
+  if (isError) {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
@@ -99,10 +43,10 @@ export default function AnalyticsDashboard() {
               <ThiingsIcon name="alert-circle" pxSize={32} className="text-red-600" />
             </div>
             <h3 className="text-lg font-bold text-deep-charcoal mb-2">{t('analytics.errorTitle')}</h3>
-            <p className="text-sm text-warm-stone mb-6">{error}</p>
+            <p className="text-sm text-warm-stone mb-6">{error instanceof Error ? error.message : 'Failed to load analytics'}</p>
             <button
               type="button"
-              onClick={() => fetchAnalytics()}
+              onClick={() => refetch()}
               className="px-6 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors"
             >
               {t('common.retry')}
@@ -151,7 +95,7 @@ export default function AnalyticsDashboard() {
               ))}
               <button
                 type="button"
-                onClick={() => fetchAnalytics()}
+                onClick={() => refetch()}
                 className="px-4 py-2 bg-white border border-border-gray text-stone-gray hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors"
               >
                 {t('common.export')}

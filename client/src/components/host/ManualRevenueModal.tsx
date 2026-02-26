@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { authFetch } from '../../services/api';
 import ThiingsIcon from '../common/ThiingsIcon';
 import Spinner from '../common/Spinner';
@@ -26,8 +27,32 @@ export default function ManualRevenueModal({
   onSuccess,
   language = 'en'
 }: ManualRevenueModalProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const createRevenue = useMutation({
+    mutationFn: async (body: {
+      customer_phone?: string;
+      customer_name?: string;
+      customer_email?: string;
+      total_revenue: number;
+      tip_amount: number;
+      party_size: number;
+      service_date: string;
+      service_time?: string;
+      notes?: string;
+    }) => {
+      const response = await authFetch('/api/revenue?action=create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || t.errorSave);
+      return data;
+    },
+    onSuccess: () => { resetForm(); onSuccess?.(); onClose(); },
+    onError: (err) => setError(err instanceof Error ? err.message : t.errorSave),
+  });
 
   // Form fields
   const [customerPhone, setCustomerPhone] = useState('');
@@ -51,52 +76,26 @@ export default function ManualRevenueModal({
   };
 
   // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    // Validation
     if ((!customerPhone && !customerEmail) || !totalRevenue) {
       setError(t.errorRequired);
       return;
     }
 
-    setIsLoading(true);
-
-    try {
-      const response = await authFetch('/api/revenue?action=create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer_phone: customerPhone || undefined,
-          customer_name: customerName || undefined,
-          customer_email: customerEmail || undefined,
-          total_revenue: parseFloat(totalRevenue),
-          tip_amount: tipAmount ? parseFloat(tipAmount) : 0,
-          party_size: parseInt(partySize),
-          service_date: serviceDate,
-          service_time: serviceTime || undefined,
-          notes: notes || undefined
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || t.errorSave);
-      }
-
-      // Success - reset form and close
-      resetForm();
-      onSuccess?.();
-      onClose();
-
-    } catch (err) {
-      console.error('Error saving revenue:', err);
-      setError(err instanceof Error ? err.message : t.errorSave);
-    } finally {
-      setIsLoading(false);
-    }
+    createRevenue.mutate({
+      customer_phone: customerPhone || undefined,
+      customer_name: customerName || undefined,
+      customer_email: customerEmail || undefined,
+      total_revenue: parseFloat(totalRevenue),
+      tip_amount: tipAmount ? parseFloat(tipAmount) : 0,
+      party_size: parseInt(partySize),
+      service_date: serviceDate,
+      service_time: serviceTime || undefined,
+      notes: notes || undefined,
+    });
   };
 
   const resetForm = () => {
@@ -344,17 +343,17 @@ export default function ManualRevenueModal({
             <button
               type="button"
               onClick={onClose}
-              disabled={isLoading}
+              disabled={createRevenue.isPending}
               className="flex-1 px-4 py-3 border border-border-gray rounded-xl text-stone-gray font-medium hover:bg-soft-gray transition-colors disabled:opacity-50"
             >
               {t.cancel}
             </button>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={createRevenue.isPending}
               className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {isLoading ? (
+              {createRevenue.isPending ? (
                 <>
                   <Spinner size="sm" />
                   {t.saving}

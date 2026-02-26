@@ -1,4 +1,4 @@
-import { CallFilter } from './callTrackingTypes';
+import type { CallFilter } from './callTrackingTypes';
 
 const PERIOD_OPTIONS = [
   { value: '1d',  label: '24h' },

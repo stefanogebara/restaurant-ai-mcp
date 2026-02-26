@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mock child components to keep tests focused on DemoDashboard logic
 vi.mock('../../components/demo/DemoBanner', () => ({
@@ -45,12 +46,17 @@ const mockSuccessResponse = {
 };
 
 function renderDemoDashboard(token = 'tok-abc') {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   return render(
-    <MemoryRouter initialEntries={[`/demo/${token}`]}>
-      <Routes>
-        <Route path="/demo/:token" element={<DemoDashboard />} />
-      </Routes>
-    </MemoryRouter>,
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={[`/demo/${token}`]}>
+        <Routes>
+          <Route path="/demo/:token" element={<DemoDashboard />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
@@ -106,7 +112,7 @@ describe('DemoDashboard', () => {
 
     expect(await screen.findByText('Demo unavailable')).toBeInTheDocument();
     expect(
-      screen.getByText('Could not load demo session. Please try again.'),
+      screen.getByText('Network error'),
     ).toBeInTheDocument();
   });
 

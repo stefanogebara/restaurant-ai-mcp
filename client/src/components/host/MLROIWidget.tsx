@@ -5,58 +5,14 @@
  * Displays real-time ROI, intervention effectiveness, and ML performance
  */
 
-import { useState, useEffect } from 'react';
-import { authFetch } from '../../services/api';
+import { useState } from 'react';
 import ThiingsIcon from '../common/ThiingsIcon';
 import HelpTooltip from '../common/HelpTooltip';
-
-interface MLROIData {
-  summary: {
-    total_interventions: number;
-    total_cost: string;
-    total_value_saved: string;
-    total_roi: string;
-    target_roi: string;
-    meets_target: boolean;
-  };
-  outcomes: {
-    showed_up: number;
-    no_show: number;
-    cancelled: number;
-  };
-  intervention_effectiveness: {
-    interventions_with_action: number;
-    successful_interventions: number;
-    success_rate: string;
-  };
-}
+import { useMLROI } from '../../hooks/useMLPerformance';
 
 export default function MLROIWidget() {
-  const [data, setData] = useState<MLROIData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data, isLoading } = useMLROI();
   const [isExpanded, setIsExpanded] = useState(true);
-
-  useEffect(() => {
-    fetchMLROI();
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchMLROI, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchMLROI = async () => {
-    try {
-      const response = await authFetch('/api/ml-outcomes?action=roi-summary');
-      const result = await response.json();
-
-      if (result.success) {
-        setData(result.data);
-      }
-    } catch (error) {
-      console.error('Error fetching ML ROI:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   if (isLoading) {
     return (

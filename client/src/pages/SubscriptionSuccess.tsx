@@ -1,69 +1,36 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { useTranslation } from 'react-i18next';
 import Spinner from '../components/common/Spinner';
-import { authFetch } from '../services/api';
+import { useVerifySession } from '../hooks/useVerifySession';
+import { LS_STRIPE_CUSTOMER_ID, LS_SUBSCRIPTION_PLAN, LS_CUSTOMER_EMAIL } from '../config/localStorageKeys';
 
 export default function SubscriptionSuccess() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [loading, setLoading] = useState(true);
-  const [customerEmail, setCustomerEmail] = useState<string>('');
-  const [plan, setPlan] = useState<string>('Growth');
 
+  const sessionId = new URLSearchParams(window.location.search).get('session_id');
+  const { data, isLoading } = useVerifySession(sessionId);
+
+  const plan = data?.plan || 'Growth';
+  const customerEmail = data?.customer_email || '';
+
+  // Side effects: persist to localStorage + redirect after success
   useEffect(() => {
-    const verifySession = async () => {
-      // Get session ID from URL parameters
-      const params = new URLSearchParams(window.location.search);
-      const id = params.get('session_id');
+    if (!data) return;
+    if (data.customer_id) localStorage.setItem(LS_STRIPE_CUSTOMER_ID, data.customer_id);
+    if (data.plan) localStorage.setItem(LS_SUBSCRIPTION_PLAN, data.plan);
+    if (data.customer_email) {
+      localStorage.setItem(LS_CUSTOMER_EMAIL, data.customer_email);
+      const timer = setTimeout(() => {
+        navigate(`/onboarding?email=${encodeURIComponent(data.customer_email!)}&plan=${encodeURIComponent(data.plan || 'Growth')}`);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [data, navigate]);
 
-      if (!id) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // Verify session with backend
-        const apiUrl = import.meta.env.VITE_API_URL
-          ? `${import.meta.env.VITE_API_URL}/api/verify-session`
-          : '/api/verify-session';
-
-        const response = await authFetch(`${apiUrl}?session_id=${id}`);
-
-        if (response.ok) {
-          const data = await response.json();
-
-          // Store customer data in localStorage
-          if (data.customer_id) {
-            localStorage.setItem('stripe_customer_id', data.customer_id);
-          }
-          if (data.plan) {
-            setPlan(data.plan);
-            localStorage.setItem('subscription_plan', data.plan);
-          }
-          if (data.customer_email) {
-            setCustomerEmail(data.customer_email);
-            localStorage.setItem('customer_email', data.customer_email);
-
-            // Check if onboarding is complete
-            // For new customers, redirect to onboarding
-            setTimeout(() => {
-              navigate(`/onboarding?email=${encodeURIComponent(data.customer_email)}&plan=${encodeURIComponent(data.plan || 'Growth')}`);
-            }, 3000); // Give user 3 seconds to see success message
-          }
-        }
-      } catch (error) {
-        console.error('Error verifying session:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    verifySession();
-  }, [navigate]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-warm-white flex items-center justify-center">
         <div className="text-center">

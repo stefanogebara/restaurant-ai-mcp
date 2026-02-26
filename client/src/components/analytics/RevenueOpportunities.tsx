@@ -1,54 +1,12 @@
-import { useState, useEffect } from 'react';
-import { authFetch } from '../../services/api';
+import { useState } from 'react';
 import ThiingsIcon from '../common/ThiingsIcon';
-
-interface RevenueOpportunity {
-  rank: number;
-  category: string;
-  description: string;
-  current_loss: number;
-  potential_gain: number;
-  recovery_rate: string;
-  actions: string[];
-  priority: 'low' | 'medium' | 'high';
-  implementation_difficulty: 'low' | 'medium' | 'high';
-  estimated_timeline: string;
-}
-
-interface OpportunitySummary {
-  total_opportunities: number;
-  total_potential_revenue: number;
-  estimated_monthly_impact: number;
-  quick_wins: number;
-  high_priority: number;
-}
+import { useRevenueOpportunities } from '../../hooks/usePredictiveAnalytics';
 
 export default function RevenueOpportunities() {
-  const [opportunities, setOpportunities] = useState<RevenueOpportunity[]>([]);
-  const [summary, setSummary] = useState<OpportunitySummary | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data, isLoading } = useRevenueOpportunities();
+  const opportunities = data?.opportunities ?? [];
+  const summary = data?.summary ?? null;
   const [expandedCard, setExpandedCard] = useState<number | null>(null);
-
-  useEffect(() => {
-    fetchOpportunities();
-  }, []);
-
-  const fetchOpportunities = async () => {
-    try {
-      setIsLoading(true);
-      const response = await authFetch('/api/predictive-analytics?type=revenue');
-      const result = await response.json();
-
-      if (result.success) {
-        setOpportunities(result.opportunities || []);
-        setSummary(result.summary);
-      }
-    } catch (error) {
-      console.error('Error fetching revenue opportunities:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {

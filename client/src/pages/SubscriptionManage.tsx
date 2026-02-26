@@ -1,20 +1,9 @@
-import { useState, useEffect } from 'react';
-import { colors } from '../utils/colors';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { usePermission } from '../hooks/usePermission';
 import { useNavigate } from 'react-router-dom';
 import { SkeletonSubscription } from '../components/common/Skeleton';
-import { authFetch } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
-
-interface SubscriptionData {
-  status: 'active' | 'trialing' | 'canceled' | 'past_due' | 'none';
-  planName: string;
-  planPrice: string;
-  currentPeriodEnd?: string;
-  cancelAtPeriodEnd?: boolean;
-  trialEnd?: string;
-}
+import { useSubscriptionData, useCustomerPortal } from '../hooks/useSubscriptionManage';
 
 const plans = [
   { name: 'Starter', price: '€29', desc: 'For small restaurants getting started.', features: ['AI Chat & WhatsApp', 'Host dashboard', 'Basic analytics', '50 reservations/mo', 'Email support'] },
@@ -28,65 +17,15 @@ export default function SubscriptionManage() {
   const { can } = usePermission();
   const navigate = useNavigate();
   const { error } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
-  const [managingSubscription, setManagingSubscription] = useState(false);
 
-  useEffect(() => {
-    const fetchSubscription = async () => {
-      try {
-        const apiUrl = import.meta.env.VITE_API_URL
-          ? `${import.meta.env.VITE_API_URL}/api/get-subscription`
-          : '/api/get-subscription';
+  const { data: subscription, isLoading } = useSubscriptionData();
+  const portal = useCustomerPortal();
 
-        const response = await authFetch(apiUrl);
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch subscription');
-        }
-
-        const data = await response.json();
-        setSubscription(data);
-      } catch (error) {
-        console.error('Error fetching subscription:', error);
-        setSubscription({ status: 'none', planName: 'No Plan', planPrice: 'N/A' });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSubscription();
-  }, []);
-
-  const handleManageSubscription = async () => {
-    try {
-      setManagingSubscription(true);
-
-      const apiUrl = import.meta.env.VITE_API_URL
-        ? `${import.meta.env.VITE_API_URL}/api/customer-portal`
-        : '/api/customer-portal';
-
-      const response = await authFetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({}),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create portal session');
-      }
-
-      const { url } = await response.json();
-
-      // Redirect to Stripe Customer Portal
-      window.location.href = url;
-    } catch (err) {
-      console.error('Error accessing customer portal:', err);
-      error('Failed to open subscription management. Please try again.');
-      setManagingSubscription(false);
-    }
+  const handleManageSubscription = () => {
+    portal.mutate(undefined, {
+      onSuccess: ({ url }) => { window.location.href = url; },
+      onError: (err) => error(err.message || 'Failed to open subscription management. Please try again.'),
+    });
   };
 
   if (!can('manageSubscription')) {
@@ -97,7 +36,7 @@ export default function SubscriptionManage() {
     );
   }
 
-  if (loading) {
+  if (isLoading) {
     return <SkeletonSubscription />;
   }
 
@@ -184,10 +123,10 @@ export default function SubscriptionManage() {
               </div>
               <button
                 onClick={handleManageSubscription}
-                disabled={managingSubscription}
+                disabled={portal.isPending}
                 className="px-5 py-2.5 border border-border-gray rounded-xl text-[13px] font-medium text-stone-gray bg-white hover:border-muted-stone transition-colors disabled:opacity-50 flex items-center gap-2"
               >
-                {managingSubscription ? (
+                {portal.isPending ? (
                   <><div aria-hidden="true" className="w-3.5 h-3.5 border-2 border-stone-gray border-t-transparent rounded-full animate-spin" />Opening...</>
                 ) : 'Manage Billing'}
               </button>
@@ -236,7 +175,7 @@ export default function SubscriptionManage() {
                   </ul>
                   <button
                     onClick={isCurrent ? undefined : handleManageSubscription}
-                    disabled={isCurrent || managingSubscription}
+                    disabled={isCurrent || portal.isPending}
                     className={`w-full py-3.5 rounded-full text-sm font-semibold transition-colors ${
                       isFeatured && !isCurrent ? 'bg-burgundy text-white hover:bg-burgundy-dark' :
                       isCurrent ? 'border border-border-gray text-muted-stone cursor-default' :
