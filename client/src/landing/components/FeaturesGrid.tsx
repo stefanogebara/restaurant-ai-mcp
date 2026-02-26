@@ -1,15 +1,25 @@
 import { useTranslation } from 'react-i18next';
+import ThiingsIcon from '../../components/common/ThiingsIcon';
+
+const FEATURE_ICONS = {
+  voice: 'phone-call',
+  whatsapp: 'message-square',
+  dashboard: 'layout-grid',
+  memory: 'star',
+  tables: 'circle-dot',
+  analytics: 'bar-chart',
+} as const;
 
 export default function FeaturesGrid() {
   const { t } = useTranslation();
 
   const features = [
-    { icon: '☎', key: 'voice' },
-    { icon: '✉', key: 'whatsapp' },
-    { icon: '⚙', key: 'dashboard' },
-    { icon: '★', key: 'memory' },
-    { icon: '◉', key: 'tables' },
-    { icon: '◆', key: 'analytics' },
+    { key: 'voice' },
+    { key: 'whatsapp' },
+    { key: 'dashboard' },
+    { key: 'memory' },
+    { key: 'tables' },
+    { key: 'analytics' },
   ] as const;
 
   return (
@@ -31,8 +41,8 @@ export default function FeaturesGrid() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-[2px] bg-border-gray rounded-2xl overflow-hidden">
         {features.map((f, i) => (
           <div key={i} className="bg-white p-10 sm:p-12 hover:bg-warm-white transition-colors">
-            <div className="w-12 h-12 rounded-xl bg-burgundy/[6%] flex items-center justify-center mb-6 text-xl text-burgundy">
-              {f.icon}
+            <div className="w-12 h-12 rounded-xl bg-burgundy/[6%] flex items-center justify-center mb-6 text-burgundy">
+              <ThiingsIcon name={FEATURE_ICONS[f.key]} pxSize={22} />
             </div>
             <h3 className="text-lg font-semibold text-deep-charcoal tracking-tight mb-3">
               {t(`landing.features.${f.key}.title`)}
