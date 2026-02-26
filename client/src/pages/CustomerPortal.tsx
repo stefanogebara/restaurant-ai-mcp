@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import { authFetch } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
+import { useVoiceSettings } from '../hooks/useVoiceSettings';
 
 interface Reservation {
   reservation_id: string;
@@ -28,6 +29,8 @@ function parseReservationDateTime(reservation: Reservation) {
 
 export default function CustomerPortal() {
   const { t } = useTranslation();
+  const { data: voiceConfig } = useVoiceSettings();
+  const restaurantName = voiceConfig?.restaurant_name;
   const [lookupMethod, setLookupMethod] = useState<'id' | 'phone'>('id');
   const [reservationId, setReservationId] = useState('');
   const [phone, setPhone] = useState('');
@@ -111,8 +114,17 @@ export default function CustomerPortal() {
     <div className="min-h-screen bg-warm-white flex flex-col">
       {/* Top Bar */}
       <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
-        <div className="font-serif text-lg font-semibold text-deep-charcoal">
-          seatable<span className="text-burgundy">.</span>
+        <div>
+          {restaurantName ? (
+            <>
+              <div className="font-serif text-lg font-semibold text-deep-charcoal">{restaurantName}</div>
+              <div className="text-[11px] text-muted-stone">Powered by seatable<span className="text-burgundy">.</span></div>
+            </>
+          ) : (
+            <div className="font-serif text-lg font-semibold text-deep-charcoal">
+              seatable<span className="text-burgundy">.</span>
+            </div>
+          )}
         </div>
         <span className="text-[13px] text-warm-stone">{t('reservations.needHelp')}</span>
       </header>

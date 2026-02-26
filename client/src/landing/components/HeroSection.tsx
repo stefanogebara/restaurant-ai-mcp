@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { trackCtaClicked } from '../../lib/analytics';
+import DashboardMockup from './DashboardMockup';
 
 export default function HeroSection() {
   const navigate = useNavigate();
@@ -50,6 +51,11 @@ export default function HeroSection() {
       <p className="mt-10 text-sm text-warm-stone">
         {t('landing.hero.earlyAccess')}
       </p>
+
+      {/* Product Preview */}
+      <div className="mt-16 px-0 sm:px-4">
+        <DashboardMockup />
+      </div>
     </section>
   );
 }
