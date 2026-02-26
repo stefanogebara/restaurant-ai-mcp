@@ -8,9 +8,9 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const authResult = verifyAuth(req);
-  if (!authResult.success) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  const authResult = await verifyAuth(req);
+  if (authResult.error) {
+    return res.status(authResult.status || 401).json({ error: authResult.error });
   }
 
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
