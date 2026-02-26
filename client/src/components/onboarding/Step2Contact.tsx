@@ -69,6 +69,7 @@ type ServiceType = keyof typeof SERVICE_PRESETS;
 
 export default function Step2Contact({ data, updateData, onNext, onBack }: OnboardingStepProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [hoursErrors, setHoursErrors] = useState<Record<string, string>>({});
   const [selectedServiceType, setSelectedServiceType] = useState<ServiceType>('lunch_dinner');
   const [useMultiplePeriods, setUseMultiplePeriods] = useState(false);
   const phoneValidityRef = useRef(false);
@@ -123,7 +124,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
   };
 
   const handleContinue = () => {
-    if (validate() && onNext) {
+    if (validate() && Object.keys(hoursErrors).length === 0 && onNext) {
       onNext();
     }
   };
@@ -141,8 +142,24 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
 
   const updateDayHours = (index: number, field: string, value: string | boolean) => {
     const updatedHours = [...data.business_hours];
-    updatedHours[index] = { ...updatedHours[index], [field]: value };
+    const updatedDay = { ...updatedHours[index], [field]: value };
+    updatedHours[index] = updatedDay;
     updateData({ business_hours: updatedHours });
+
+    if (field === 'close_time' && typeof value === 'string') {
+      if (value <= updatedDay.open_time) {
+        setHoursErrors(prev => ({ ...prev, [updatedDay.day]: 'Closing time must be after opening time' }));
+      } else {
+        setHoursErrors(prev => { const next = { ...prev }; delete next[updatedDay.day]; return next; });
+      }
+    }
+    if (field === 'open_time' && typeof value === 'string') {
+      if (updatedDay.close_time <= value) {
+        setHoursErrors(prev => ({ ...prev, [updatedDay.day]: 'Closing time must be after opening time' }));
+      } else {
+        setHoursErrors(prev => { const next = { ...prev }; delete next[updatedDay.day]; return next; });
+      }
+    }
   };
 
   return (
@@ -264,35 +281,40 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
 
         <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
           {data.business_hours.map((day, index) => (
-            <div key={day.day} className="flex items-center gap-3 p-3 bg-soft-gray rounded-xl border border-border-gray">
-              <div className="w-24">
-                <span className="text-deep-charcoal font-medium text-sm">{day.day}</span>
+            <div key={day.day}>
+              <div className="flex items-center gap-3 p-3 bg-soft-gray rounded-xl border border-border-gray">
+                <div className="w-24">
+                  <span className="text-deep-charcoal font-medium text-sm">{day.day}</span>
+                </div>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={day.is_open}
+                    onChange={(e) => updateDayHours(index, 'is_open', e.target.checked)}
+                    className="w-4 h-4 text-burgundy bg-white border-border-gray rounded focus:ring-2 focus:ring-burgundy"
+                  />
+                  <span className="ml-2 text-deep-charcoal text-sm">Open</span>
+                </label>
+                {day.is_open && (
+                  <>
+                    <input
+                      type="time"
+                      value={day.open_time}
+                      onChange={(e) => updateDayHours(index, 'open_time', e.target.value)}
+                      className="px-3 py-1.5 bg-white border border-border-gray rounded-xl text-deep-charcoal text-sm focus:outline-none focus:ring-2 focus:ring-burgundy"
+                    />
+                    <span className="text-stone-gray text-sm">to</span>
+                    <input
+                      type="time"
+                      value={day.close_time}
+                      onChange={(e) => updateDayHours(index, 'close_time', e.target.value)}
+                      className="px-3 py-1.5 bg-white border border-border-gray rounded-xl text-deep-charcoal text-sm focus:outline-none focus:ring-2 focus:ring-burgundy"
+                    />
+                  </>
+                )}
               </div>
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={day.is_open}
-                  onChange={(e) => updateDayHours(index, 'is_open', e.target.checked)}
-                  className="w-4 h-4 text-burgundy bg-white border-border-gray rounded focus:ring-2 focus:ring-burgundy"
-                />
-                <span className="ml-2 text-deep-charcoal text-sm">Open</span>
-              </label>
-              {day.is_open && (
-                <>
-                  <input
-                    type="time"
-                    value={day.open_time}
-                    onChange={(e) => updateDayHours(index, 'open_time', e.target.value)}
-                    className="px-3 py-1.5 bg-white border border-border-gray rounded-xl text-deep-charcoal text-sm focus:outline-none focus:ring-2 focus:ring-burgundy"
-                  />
-                  <span className="text-stone-gray text-sm">to</span>
-                  <input
-                    type="time"
-                    value={day.close_time}
-                    onChange={(e) => updateDayHours(index, 'close_time', e.target.value)}
-                    className="px-3 py-1.5 bg-white border border-border-gray rounded-xl text-deep-charcoal text-sm focus:outline-none focus:ring-2 focus:ring-burgundy"
-                  />
-                </>
+              {hoursErrors[day.day] && (
+                <p className="text-xs text-red-600 mt-1">{hoursErrors[day.day]}</p>
               )}
             </div>
           ))}

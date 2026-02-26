@@ -10,6 +10,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
 import { LocationSelector } from './LocationSelector';
 import { getCountryByCode } from '../../data/countries';
@@ -29,6 +30,7 @@ const RESTAURANT_TYPES = [
 ];
 
 export default function Step1Welcome({ data, updateData, onNext }: OnboardingStepProps) {
+  const { t } = useTranslation();
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validate = () => {
@@ -119,7 +121,7 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
                 }
               `}
             >
-              {type}
+              {t(`onboarding.restaurantTypes.${type}`, type)}
             </button>
           ))}
         </div>

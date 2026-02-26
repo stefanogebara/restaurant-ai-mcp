@@ -1,3 +1,6 @@
+// Twilio WhatsApp webhook (fallback integration)
+// Webhook URL: https://restaurant-ai-mcp.vercel.app/api/twilio-whatsapp-webhook
+
 /**
  * Twilio WhatsApp Webhook Handler
  *

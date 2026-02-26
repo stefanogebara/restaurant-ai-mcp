@@ -602,7 +602,8 @@ async function handleModify(req, res, restaurantId) {
 
   const changesList = changes.length > 0 ? ` I've updated your ${changes.join(', ')}.` : '';
   return res.status(200).json({
-    message: `Your reservation has been successfully modified!${changesList} Your confirmation number is still ${reservation_id}.`
+    success: true,
+    message: 'Reservation modified successfully'
   });
 }
 
@@ -627,6 +628,7 @@ async function handleCancel(req, res, restaurantId) {
   await logCustomerCancelled(reservation_id);
 
   return res.status(200).json({
-    message: `Your reservation has been cancelled. We're sorry we won't see you this time, but we hope you'll visit us in the future!`
+    success: true,
+    message: 'Reservation cancelled successfully'
   });
 }

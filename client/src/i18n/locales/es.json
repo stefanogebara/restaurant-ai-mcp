@@ -235,7 +235,19 @@
     "stepName4": "Revisar y Lanzar",
     "welcomeAboard": "¡Bienvenido a bordo!",
     "restaurantReady": "Tu restaurante está listo. ¡Empecemos a gestionar reservas!",
-    "redirectingToDashboard": "Redirigiendo al panel..."
+    "redirectingToDashboard": "Redirigiendo al panel...",
+    "restaurantTypes": {
+      "Fine Dining": "Alta Cocina",
+      "Casual Dining": "Restaurante Casual",
+      "Fast Casual": "Comida Rápida",
+      "Cafe": "Cafetería",
+      "Bar": "Bar",
+      "Bistro": "Bistró",
+      "Pizzeria": "Pizzería",
+      "Steakhouse": "Asador",
+      "Seafood": "Marisquería",
+      "Other": "Otro"
+    }
   },
   "login": {
     "welcomeBack": "Bienvenido de nuevo",

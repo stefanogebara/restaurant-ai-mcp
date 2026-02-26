@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import { authFetch } from '../services/api';
@@ -28,7 +28,7 @@ function parseReservationDateTime(reservation: Reservation) {
 }
 
 export default function CustomerPortal() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: voiceConfig } = useVoiceSettings();
   const restaurantName = voiceConfig?.restaurant_name;
   const [lookupMethod, setLookupMethod] = useState<'id' | 'phone'>('id');
@@ -37,18 +37,25 @@ export default function CustomerPortal() {
   const [reservation, setReservation] = useState<Reservation | null>(null);
   const [isModifying, setIsModifying] = useState(false);
   const [modifiedData, setModifiedData] = useState<Partial<Reservation>>({});
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const lastLookupRef = useRef<{ method: string; value: string } | null>(null);
   const { success, error: showError } = useToast();
 
-  const lookupMutation = useMutation<Reservation, Error>({
-    mutationFn: async () => {
-      if (lookupMethod === 'id' && !reservationId.trim()) throw new Error('Please enter your reservation ID');
-      if (lookupMethod === 'phone' && !phone.trim()) throw new Error('Please enter your phone number');
+  const lookupMutation = useMutation<Reservation, Error, { method: string; value: string } | undefined>({
+    mutationFn: async (override) => {
+      const currentMethod = override?.method ?? lookupMethod;
+      const currentValue = override?.value ?? (lookupMethod === 'id' ? reservationId : phone);
+
+      if (currentMethod === 'id' && !currentValue.trim()) throw new Error('Please enter your reservation ID');
+      if (currentMethod === 'phone' && !currentValue.trim()) throw new Error('Please enter your phone number');
+
+      lastLookupRef.current = { method: currentMethod, value: currentValue };
 
       const params = new URLSearchParams({
         action: 'lookup',
-        ...(lookupMethod === 'id'
-          ? { reservation_id: reservationId }
-          : { customer_phone: phone }),
+        ...(currentMethod === 'id'
+          ? { reservation_id: currentValue }
+          : { customer_phone: currentValue }),
       });
       const response = await authFetch(`/api/reservations?${params}`);
       const data = await response.json();
@@ -82,7 +89,9 @@ export default function CustomerPortal() {
       return data;
     },
     onSuccess: () => {
-      setReservation({ ...reservation!, ...modifiedData } as Reservation);
+      if (lastLookupRef.current) {
+        lookupMutation.mutate(lastLookupRef.current);
+      }
       setIsModifying(false);
       success('Reservation updated successfully!');
     },
@@ -91,7 +100,6 @@ export default function CustomerPortal() {
 
   const cancelMutation = useMutation({
     mutationFn: async () => {
-      if (!window.confirm('Are you sure you want to cancel this reservation?')) return null;
       const response = await authFetch(
         `/api/reservations?action=cancel&reservation_id=${reservation!.reservation_id}`,
         { method: 'POST' }
@@ -100,15 +108,29 @@ export default function CustomerPortal() {
       if (!data.success) throw new Error(data.message || 'Failed to cancel reservation');
       return data;
     },
-    onSuccess: (data) => {
-      if (!data) return; // user cancelled the confirm dialog
+    onSuccess: () => {
       success('Reservation cancelled successfully');
-      setReservation(null);
-      setReservationId('');
-      setPhone('');
+      setReservation(prev => prev ? { ...prev, status: 'Cancelled' } : null);
+      setShowCancelConfirm(false);
     },
     onError: (err) => showError(err instanceof Error ? err.message : 'Failed to cancel reservation'),
   });
+
+  function handleCancel() {
+    if (!showCancelConfirm) {
+      setShowCancelConfirm(true);
+      return;
+    }
+    setShowCancelConfirm(false);
+    cancelMutation.mutate();
+  }
+
+  const hasChanges = !!(reservation && modifiedData && (
+    modifiedData.date !== parseReservationDateTime(reservation).date ||
+    modifiedData.time !== parseReservationDateTime(reservation).time ||
+    modifiedData.party_size !== reservation.party_size ||
+    (modifiedData.special_requests ?? '') !== (reservation.special_requests ?? '')
+  ));
 
   return (
     <div className="min-h-screen bg-warm-white flex flex-col">
@@ -154,9 +176,9 @@ export default function CustomerPortal() {
                     type="tel"
                     value={phone}
                     onChange={(e) => { setPhone(e.target.value); setLookupMethod('phone'); }}
-                    placeholder="+34 612 345 678"
+                    placeholder="+XX XXXXXXXXX"
                     className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
-                    onKeyDown={(e) => e.key === 'Enter' && lookupMutation.mutate()}
+                    onKeyDown={(e) => e.key === 'Enter' && lookupMutation.mutate(undefined)}
                   />
                 </div>
 
@@ -176,12 +198,12 @@ export default function CustomerPortal() {
                     onChange={(e) => { setReservationId(e.target.value); setLookupMethod('id'); }}
                     placeholder="e.g. CEL-2026-0218-A7K3"
                     className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
-                    onKeyDown={(e) => e.key === 'Enter' && lookupMutation.mutate()}
+                    onKeyDown={(e) => e.key === 'Enter' && lookupMutation.mutate(undefined)}
                   />
                 </div>
 
                 <button
-                  onClick={() => lookupMutation.mutate()}
+                  onClick={() => lookupMutation.mutate(undefined)}
                   disabled={lookupMutation.isPending}
                   className="w-full mt-4 py-3.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
@@ -216,6 +238,11 @@ export default function CustomerPortal() {
 
                 {/* Body */}
                 <div className="px-6 py-5">
+                  {reservation.status === 'Cancelled' && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4 text-red-700 text-sm font-medium">
+                      This reservation has been cancelled
+                    </div>
+                  )}
                   {!isModifying ? (
                     <>
                       {(() => {
@@ -225,7 +252,7 @@ export default function CustomerPortal() {
                             <div className="flex justify-between py-2.5 border-b border-soft-gray">
                               <span className="text-[13px] text-warm-stone">{t('reservations.date')}</span>
                               <span className="text-sm font-medium text-deep-charcoal">
-                                {date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
+                                {date ? new Date(date + 'T00:00:00').toLocaleDateString(i18n.language === 'es' ? 'es-ES' : 'en-US', {
                                   weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
                                 }) : 'Not set'}
                               </span>
@@ -277,7 +304,7 @@ export default function CustomerPortal() {
                       </div>
                       <div className="flex gap-2.5 pt-2">
                         <button type="button" onClick={() => { setIsModifying(false); setModifiedData(reservation); }} className="flex-1 py-3 border border-border-gray bg-white text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">{t('common.cancel')}</button>
-                        <button type="button" onClick={() => modifyMutation.mutate()} disabled={modifyMutation.isPending} className="flex-1 py-3 bg-burgundy text-white font-semibold rounded-[10px] text-[13px] hover:bg-burgundy-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                        <button type="button" onClick={() => modifyMutation.mutate()} disabled={!hasChanges || modifyMutation.isPending} className="flex-1 py-3 bg-burgundy text-white font-semibold rounded-[10px] text-[13px] hover:bg-burgundy-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                           {modifyMutation.isPending ? (<><div aria-hidden="true" className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{t('reservations.saving')}</>) : t('reservations.saveChanges')}
                         </button>
                       </div>
@@ -291,9 +318,20 @@ export default function CustomerPortal() {
                     <button type="button" onClick={() => setIsModifying(true)} className="flex-1 py-3 border border-border-gray bg-white text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">
                       {t('reservations.editReservation')}
                     </button>
-                    <button type="button" onClick={() => cancelMutation.mutate()} disabled={cancelMutation.isPending} className="flex-1 py-3 border border-red-600/20 bg-red-600/[4%] text-red-600 font-medium rounded-[10px] text-[13px] hover:bg-red-600/[8%] transition-colors disabled:opacity-50">
-                      {t('reservations.cancelReservation')}
-                    </button>
+                    {showCancelConfirm ? (
+                      <div className="flex gap-2 flex-1">
+                        <button type="button" onClick={handleCancel} disabled={cancelMutation.isPending} className="flex-1 py-3 border border-red-600/20 bg-red-600 text-white font-medium rounded-[10px] text-[13px] hover:bg-red-700 transition-colors disabled:opacity-50">
+                          {cancelMutation.isPending ? t('common.cancelling', 'Cancelling...') : 'Yes, cancel reservation'}
+                        </button>
+                        <button type="button" onClick={() => setShowCancelConfirm(false)} className="flex-1 py-3 border border-border-gray bg-white text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">
+                          Keep reservation
+                        </button>
+                      </div>
+                    ) : (
+                      <button type="button" onClick={handleCancel} disabled={cancelMutation.isPending} className="flex-1 py-3 border border-red-600/20 bg-red-600/[4%] text-red-600 font-medium rounded-[10px] text-[13px] hover:bg-red-600/[8%] transition-colors disabled:opacity-50">
+                        {cancelMutation.isPending ? t('common.cancelling', 'Cancelling...') : t('reservations.cancelReservation')}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

@@ -235,7 +235,19 @@
     "stepName4": "Review & Launch",
     "welcomeAboard": "Welcome Aboard!",
     "restaurantReady": "Your restaurant is ready. Let's start managing reservations!",
-    "redirectingToDashboard": "Redirecting to dashboard..."
+    "redirectingToDashboard": "Redirecting to dashboard...",
+    "restaurantTypes": {
+      "Fine Dining": "Fine Dining",
+      "Casual Dining": "Casual Dining",
+      "Fast Casual": "Fast Casual",
+      "Cafe": "Cafe",
+      "Bar": "Bar",
+      "Bistro": "Bistro",
+      "Pizzeria": "Pizzeria",
+      "Steakhouse": "Steakhouse",
+      "Seafood": "Seafood",
+      "Other": "Other"
+    }
   },
   "login": {
     "welcomeBack": "Welcome back",

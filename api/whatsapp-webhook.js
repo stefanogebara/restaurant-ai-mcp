@@ -1,3 +1,7 @@
+// Meta Cloud API WhatsApp webhook
+// Webhook URL: https://restaurant-ai-mcp.vercel.app/api/whatsapp-webhook
+// Verify token: process.env.WHATSAPP_VERIFY_TOKEN
+
 /**
  * Meta WhatsApp Cloud API Webhook
  *

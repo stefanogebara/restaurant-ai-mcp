@@ -32,6 +32,7 @@ import Spinner from '../components/common/Spinner';
 
 import { DEFAULT_VOICE_SETTINGS } from '../components/voice/voiceTypes';
 import type { VoiceSettings } from '../components/voice/voiceTypes';
+import { useWhatsAppIntegrationStatus } from '../hooks/useWhatsAppSettings';
 
 export default function VoiceSettingsPage() {
   const toast = useToast();
@@ -41,6 +42,7 @@ export default function VoiceSettingsPage() {
   const saveMutation = useSaveVoiceSettings();
   const { data: engineConfig } = useVoiceEngineSettings();
   const saveEngineMutation = useSaveVoiceEngine();
+  const { data: waStatus } = useWhatsAppIntegrationStatus();
 
   // ─── Pending changes ──────────────────────────────────────────────────────────
 
@@ -291,6 +293,28 @@ export default function VoiceSettingsPage() {
               <OpenAIVoicePicker currentOpenAIVoice={currentOpenAIVoice} savedOpenAIVoice={engineConfig?.openai_voice_id} onSelect={setPendingOpenAIVoice} />
               <OpenAIEngineInfo engineStatus={engineConfig?.voice_engine_status} currentOpenAIVoice={currentOpenAIVoice} />
             </>
+          )}
+          {waStatus && (
+            <div className="bg-white border border-border-gray rounded-2xl p-6">
+              <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider mb-3">WhatsApp Status</h2>
+              {!waStatus.meta.configured ? (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Not configured</span>
+              ) : waStatus.meta.approved ? (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  Connected{waStatus.meta.phone_number && ` — ${waStatus.meta.phone_number}`}
+                </span>
+              ) : (
+                <>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    {waStatus.meta.error ? 'Error' : 'Pending Approval'}
+                  </span>
+                  {waStatus.meta.error && <p className="text-xs text-red-600 mt-1">{waStatus.meta.error}</p>}
+                  <a href="https://business.facebook.com" target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline block mt-2">
+                    Check Meta Business Manager →
+                  </a>
+                </>
+              )}
+            </div>
           )}
         </div>
 

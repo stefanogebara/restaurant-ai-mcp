@@ -2,6 +2,32 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authFetch } from '../services/api';
 import { SETTINGS_STALE_TIME } from '../config/constants';
 
+export interface WhatsAppIntegrationStatus {
+  meta: {
+    configured: boolean;
+    approved: boolean;
+    phone_number: string | null;
+    display_name: string | null;
+    quality_rating: string | null;
+    error: string | null;
+  };
+  twilio: {
+    configured: boolean;
+  };
+}
+
+export function useWhatsAppIntegrationStatus() {
+  return useQuery({
+    queryKey: ['whatsappIntegrationStatus'],
+    queryFn: async (): Promise<WhatsAppIntegrationStatus> => {
+      const response = await authFetch('/api/whatsapp-status');
+      if (!response.ok) throw new Error('Failed to load WhatsApp integration status');
+      return response.json();
+    },
+    staleTime: SETTINGS_STALE_TIME,
+  });
+}
+
 interface WhatsAppStatus {
   enabled: boolean;
   phone_number: string | null;
