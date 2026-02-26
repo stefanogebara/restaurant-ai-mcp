@@ -3,10 +3,10 @@ import ThiingsIcon from '../../components/common/ThiingsIcon';
 
 const FEATURE_ICONS = {
   voice: 'phone-call',
-  whatsapp: 'message-square',
+  whatsapp: 'chat',
   dashboard: 'layout-grid',
   memory: 'star',
-  tables: 'circle-dot',
+  tables: 'utensils',
   analytics: 'bar-chart',
 } as const;
 
