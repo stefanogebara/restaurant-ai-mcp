@@ -3,5 +3,5 @@
   <text x="2" y="26"
     font-family="Georgia, 'Palatino Linotype', serif"
     font-size="24" font-weight="700" fill="#1C1917">S</text>
-  <circle cx="23" cy="23" r="3.5" fill="#8B1A4A"/>
+  <circle cx="18" cy="23" r="3.5" fill="#8B1A4A"/>
 </svg>
