@@ -1,0 +1,27 @@
+{
+  "audit_date": "2026-02-26",
+  "fixes": [
+    {"id":"P0-1","priority":"P0","title":"Analytics/Reports dead-end blank page — no layout, no upgrade CTA","files":["client/src/pages/AnalyticsDashboard.tsx","client/src/pages/WeeklyReport.tsx"],"status":"done"},
+    {"id":"P0-2","priority":"P0","title":"All /book/:slug return Restaurant Not Found (API 500)","files":["api/portal.js"],"status":"done","note":"Updated celeri-madrid restaurant in Supabase DB"},
+    {"id":"P0-3","priority":"P0","title":"Live Demo widget renders as floating bubble not embedded in card","files":["client/src/components/ElevenLabsWidget.tsx","client/src/pages/LiveAIDemo.tsx"],"status":"done"},
+    {"id":"P0-4","priority":"P0","title":"Stripe checkout shows HostGenius brand, USD not EUR, Portuguese copy","files":["STRIPE_DASHBOARD"],"status":"pending","note":"Requires Stripe dashboard access — cannot fix in code"},
+    {"id":"P1-1","priority":"P1","title":"Two Supabase createClient() instances — Multiple GoTrueClient warning","files":["client/src/lib/supabase.ts","client/src/services/supabase.ts"],"status":"done"},
+    {"id":"P1-2","priority":"P1","title":"No Sign In link on marketing nav for returning users","files":["client/src/landing/components/LandingNav.tsx"],"status":"done"},
+    {"id":"P1-3","priority":"P1","title":"Voice Settings empty state has no actionable CTA link","files":["client/src/pages/VoiceSettingsPage.tsx"],"status":"done"},
+    {"id":"P1-4","priority":"P1","title":"Week view button is a fake non-interactive span","files":["client/src/pages/Dashboard.tsx"],"status":"done"},
+    {"id":"P1-5","priority":"P1","title":"Contact form shows red border only — no inline text error messages","files":["client/src/landing/components/ContactForm.tsx"],"status":"done"},
+    {"id":"P1-6","priority":"P1","title":"Metered billing fees not disclosed on pricing page","files":["client/src/landing/components/PricingSection.tsx"],"status":"done"},
+    {"id":"P2-1","priority":"P2","title":"No Privacy Policy / Terms of Service pages (GDPR risk)","files":["client/src/pages/PrivacyPolicy.tsx","client/src/pages/TermsOfService.tsx","client/src/App.tsx","client/src/landing/components/Footer.tsx"],"status":"done"},
+    {"id":"P2-2","priority":"P2","title":"Trial View Plans sends user back to marketing site","files":["client/src/pages/Dashboard.tsx"],"status":"done"},
+    {"id":"P2-3","priority":"P2","title":"Now launching in Brazil shown to all users","files":["client/src/i18n/locales/en.json","client/src/i18n/locales/es.json","client/src/i18n/locales/pt-BR.json"],"status":"done"},
+    {"id":"P2-4","priority":"P2","title":"Contact form Number of Tables pre-filled to 12","files":["client/src/landing/components/ContactForm.tsx"],"status":"done","note":"Audit was wrong — field uses placeholder not defaultValue, no fix needed"},
+    {"id":"P2-5","priority":"P2","title":"Mobile hamburger overlaps Dashboard heading at 375px","files":["client/src/pages/Dashboard.tsx"],"status":"done"},
+    {"id":"P3-1","priority":"P3","title":"Feature icons use raw Unicode emoji","files":["client/src/pages/LiveAIDemo.tsx"],"status":"done"},
+    {"id":"P3-2","priority":"P3","title":"FAQ first item pre-expanded on load","files":["client/src/landing/components/FAQSection.tsx"],"status":"done"},
+    {"id":"P3-3","priority":"P3","title":"Waitlist tabs concat count: Active0 not Active · 0","files":["client/src/components/host/WaitlistPanel.tsx"],"status":"done"},
+    {"id":"P3-4","priority":"P3","title":"Footer copyright year should be dynamic","files":["client/src/landing/components/Footer.tsx"],"status":"done","note":"Already was dynamic"},
+    {"id":"P3-5","priority":"P3","title":"No social proof on landing page","files":["client/src/landing/components/SocialProofSection.tsx"],"status":"done","note":"Section exists, updated Brazil copy to be generic"},
+    {"id":"P3-6","priority":"P3","title":"No hero product screenshot above fold","files":["client/src/landing/components/HeroSection.tsx"],"status":"pending","note":"Requires a product screenshot asset — skip until screenshot available"},
+    {"id":"P3-7","priority":"P3","title":"Customer portal /customer shows no restaurant branding","files":["client/src/pages/CustomerPortal.tsx"],"status":"pending"}
+  ]
+}

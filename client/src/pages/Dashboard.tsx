@@ -156,7 +156,7 @@ export default function Dashboard() {
       <div className="dashboard min-h-screen bg-soft-gray p-6 sm:p-8 md:p-10 pb-16 sm:pb-10">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* ---- Header ---- */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
             <div>
               <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
                 {t('navigation.dashboard')}
@@ -165,11 +165,6 @@ export default function Dashboard() {
             </div>
 
             <div className="flex items-center gap-2.5">
-              <div className="flex items-center bg-soft-gray rounded-lg p-0.5 gap-0.5">
-                <span className="text-[13px] text-warm-stone bg-white border border-border-gray px-4 py-2 rounded-lg hidden sm:inline-block">
-                  {t('dashboard.weekView')}
-                </span>
-              </div>
               <button
                 onClick={() => window.location.href = '/host-dashboard/calls'}
                 className="flex items-center gap-2 px-4 py-2 bg-white border border-border-gray text-stone-gray hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors"
@@ -197,7 +192,7 @@ export default function Dashboard() {
                 {t('dashboard.trialUpgradeHint')}
               </p>
               <a
-                href="/#pricing"
+                href="/subscription/manage"
                 className="text-sm font-semibold text-amber-700 hover:text-amber-900 underline underline-offset-2 whitespace-nowrap transition-colors"
               >
                 {t('dashboard.viewPlans')}

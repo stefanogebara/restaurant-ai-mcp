@@ -59,9 +59,26 @@ export default function WeeklyReport() {
 
   if (!can('viewAnalytics')) {
     return (
-      <div className="min-h-[50vh] flex items-center justify-center">
-        <p className="text-stone-gray text-sm">You don't have permission to view reports.</p>
-      </div>
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
+          <div className="bg-white border border-border-gray rounded-2xl p-10 max-w-md text-center shadow-sm">
+            <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-5">
+              <ThiingsIcon name="file-text" pxSize={32} className="text-amber-600" />
+            </div>
+            <h3 className="text-xl font-bold text-deep-charcoal mb-2">Weekly Reports on Growth & Scale</h3>
+            <p className="text-sm text-stone-gray mb-6 leading-relaxed">
+              Upgrade to unlock weekly performance reports with guest demographics, busiest times, and preference breakdowns.
+            </p>
+            <a
+              href="/subscription/manage"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors text-sm"
+            >
+              <ThiingsIcon name="lightning" size="xs" />
+              Upgrade Plan
+            </a>
+          </div>
+        </div>
+      </DashboardLayout>
     );
   }
 

@@ -9,7 +9,7 @@
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { supabase } from '../services/supabase';
+import { supabase } from '../lib/supabase';
 
 /**
  * Mapping from Supabase table names to their corresponding React Query cache keys.

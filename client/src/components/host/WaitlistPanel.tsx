@@ -149,7 +149,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
                 }`}
               >
                 {tab.label}
-                <span className={`ml-1 px-1.5 py-0.5 text-[10px] rounded-full ${
+                <span className={`ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full ${
                   activeTab === tab.key ? 'bg-burgundy/10 text-burgundy' : 'bg-border-gray text-stone-gray'
                 }`}>
                   {tab.count}

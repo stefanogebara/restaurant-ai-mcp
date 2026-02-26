@@ -38,6 +38,8 @@ const JoinPage = lazy(() => import('./pages/JoinPage'));
 const TeamPage = lazy(() => import('./pages/TeamPage'));
 const DemoSetupPage = lazy(() => import('./pages/DemoSetupPage'));
 const DemoDashboard = lazy(() => import('./pages/DemoDashboard'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -123,6 +125,8 @@ function App() {
               <Route path="/join" element={<JoinPage />} />
               {/* Team management — protected */}
               <Route path="/host-dashboard/team" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsOfService />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             </Suspense>

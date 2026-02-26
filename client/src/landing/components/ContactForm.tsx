@@ -17,16 +17,33 @@ export default function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    if (fieldErrors[name]) {
+      setFieldErrors({ ...fieldErrors, [name]: '' });
+    }
+  };
+
+  const validate = () => {
+    const errors: Record<string, string> = {};
+    if (!formData.name.trim()) errors.name = 'Full name is required';
+    if (!formData.email.trim()) errors.email = 'Email address is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errors.email = 'Please enter a valid email address';
+    if (!formData.restaurant.trim()) errors.restaurant = 'Restaurant name is required';
+    if (!formData.message.trim()) errors.message = 'Please tell us about your needs';
+    return errors;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const errors = validate();
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -180,12 +197,12 @@ export default function ContactForm() {
                   type="text"
                   id="name"
                   name="name"
-                  required
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-white border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-all"
+                  className={`w-full px-4 py-3 bg-white border rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-all ${fieldErrors.name ? 'border-red-400' : 'border-border-gray'}`}
                   placeholder="John Smith"
                 />
+                {fieldErrors.name && <p className="mt-1 text-xs text-red-600">{fieldErrors.name}</p>}
               </div>
 
               {/* Email */}
@@ -197,12 +214,12 @@ export default function ContactForm() {
                   type="email"
                   id="email"
                   name="email"
-                  required
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-white border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-all"
+                  className={`w-full px-4 py-3 bg-white border rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-all ${fieldErrors.email ? 'border-red-400' : 'border-border-gray'}`}
                   placeholder="john@restaurant.com"
                 />
+                {fieldErrors.email && <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>}
               </div>
 
               {/* Phone */}
@@ -230,12 +247,12 @@ export default function ContactForm() {
                   type="text"
                   id="restaurant"
                   name="restaurant"
-                  required
                   value={formData.restaurant}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-white border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-all"
+                  className={`w-full px-4 py-3 bg-white border rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-all ${fieldErrors.restaurant ? 'border-red-400' : 'border-border-gray'}`}
                   placeholder="La Bella Vista"
                 />
+                {fieldErrors.restaurant && <p className="mt-1 text-xs text-red-600">{fieldErrors.restaurant}</p>}
               </div>
 
               {/* Number of Tables */}
@@ -263,13 +280,13 @@ export default function ContactForm() {
                 <textarea
                   id="message"
                   name="message"
-                  required
                   value={formData.message}
                   onChange={handleChange}
                   rows={4}
-                  className="w-full px-4 py-3 bg-white border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-all resize-none"
+                  className={`w-full px-4 py-3 bg-white border rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-all resize-none ${fieldErrors.message ? 'border-red-400' : 'border-border-gray'}`}
                   placeholder="I'm interested in implementing seatable for my restaurant..."
                 />
+                {fieldErrors.message && <p className="mt-1 text-xs text-red-600">{fieldErrors.message}</p>}
               </div>
 
               {/* Submit Button */}

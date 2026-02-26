@@ -139,8 +139,17 @@ export default function PricingSection() {
           })}
         </div>
 
+        {/* Metered Billing Disclosure */}
+        <div className="mt-10 p-5 bg-soft-gray rounded-2xl border border-border-gray text-center">
+          <p className="text-xs text-stone-gray leading-relaxed">
+            <span className="font-semibold text-deep-charcoal">Usage-based fees apply</span> beyond plan limits:{' '}
+            additional reservations, AI phone calls, SMS notifications, and WhatsApp messages are billed per use.
+            All prices in EUR. Cancel or upgrade anytime.
+          </p>
+        </div>
+
         {/* Bottom Note */}
-        <p className="text-center text-sm text-muted-stone mt-10">
+        <p className="text-center text-sm text-muted-stone mt-6">
           Need a custom solution?{' '}
           <button type="button" onClick={scrollToContact} className="text-burgundy hover:text-burgundy-dark font-medium transition-colors">
             Contact us for enterprise pricing

@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import ElevenLabsWidget from '../components/ElevenLabsWidget';
 import { useNavigate, Link } from 'react-router-dom';
+import ThiingsIcon from '../components/common/ThiingsIcon';
 
 export default function LiveAIDemo() {
   const navigate = useNavigate();
@@ -63,23 +64,48 @@ export default function LiveAIDemo() {
           <h2 className="font-serif text-[28px] font-medium mb-2">Celeri Madrid</h2>
           <p className="text-sm text-warm-stone font-light mb-9">Mediterranean &middot; Farm-to-table &middot; Malasa&ntilde;a</p>
 
-          {/* ElevenLabs Widget */}
-          <div className="flex items-center justify-center min-h-[200px] mb-6">
-            <ElevenLabsWidget agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID || 'YOUR_AGENT_ID_HERE'} />
-          </div>
-
-          {!import.meta.env.VITE_ELEVENLABS_AGENT_ID && (
-            <div className="mt-4 p-4 bg-amber-600/[8%] rounded-xl border border-amber-600/20 text-left">
-              <h4 className="text-sm font-medium text-deep-charcoal mb-1">Configuration Required</h4>
-              <p className="text-[13px] text-stone-gray font-light">
-                Set <code className="text-xs text-burgundy bg-warm-white px-1.5 py-0.5 rounded border border-border-gray">VITE_ELEVENLABS_AGENT_ID</code> to activate.
+          {/* Voice Demo */}
+          {import.meta.env.VITE_ELEVENLABS_AGENT_ID ? (
+            <div className="mb-6">
+              <div className="bg-soft-gray rounded-2xl p-6 mb-5 text-left">
+                <p className="text-[13px] text-warm-stone font-light leading-relaxed mb-3">
+                  The AI voice agent is live. Click the button in the <span className="font-medium text-deep-charcoal">bottom-right corner</span> of the screen to start a conversation — try making a reservation for 2 people this Friday evening.
+                </p>
+                <div className="flex items-center gap-2 text-[12px] text-muted-stone">
+                  <span>↘</span>
+                  <span>Look for the chat button in the corner</span>
+                </div>
+              </div>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-600/[6%] rounded-full">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-600" />
+                </span>
+                <span className="text-[13px] font-medium text-green-600">AI Agent Online</span>
+              </div>
+              <ElevenLabsWidget agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID} />
+            </div>
+          ) : (
+            <div className="mb-6 p-6 bg-soft-gray rounded-2xl text-left">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 bg-burgundy/10 rounded-lg flex items-center justify-center text-burgundy text-base">☎</div>
+                <span className="text-sm font-semibold text-deep-charcoal">Voice Demo Coming Soon</span>
+              </div>
+              <p className="text-[13px] text-stone-gray font-light leading-relaxed">
+                The live voice agent demo requires ElevenLabs configuration. In the meantime, try the customer booking experience below.
               </p>
             </div>
           )}
 
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-600/[6%] rounded-full mt-6">
-            <div className="w-2 h-2 rounded-full bg-green-600" />
-            <span className="text-[13px] font-medium text-green-600">AI Agent Online</span>
+          {/* Booking Demo Link */}
+          <div className="border-t border-border-gray pt-6 mt-2">
+            <p className="text-[12px] text-muted-stone mb-3">Or experience the customer booking flow:</p>
+            <Link
+              to="/book/celeri-madrid"
+              className="inline-flex items-center gap-2 px-5 py-2.5 border border-border-gray hover:border-burgundy/40 text-sm font-medium text-deep-charcoal hover:text-burgundy rounded-xl transition-colors"
+            >
+              Try booking a table →
+            </Link>
           </div>
         </div>
       </section>
@@ -88,13 +114,13 @@ export default function LiveAIDemo() {
       <section className="max-w-[900px] mx-auto px-6 sm:px-16 pb-24">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { icon: '\u260E', title: 'Natural Conversation', desc: 'The AI speaks naturally, handling complex requests like dietary needs, special occasions, and group bookings.' },
-            { icon: '\u2605', title: 'Restaurant Personality', desc: "Each AI agent is trained on your restaurant's style, menu, and values to sound authentically yours." },
-            { icon: '\u23F1', title: 'Always Available', desc: 'Never miss a reservation. The AI handles calls 24/7 in multiple languages with instant availability checks.' },
+            { icon: 'phone-call' as const, title: 'Natural Conversation', desc: 'The AI speaks naturally, handling complex requests like dietary needs, special occasions, and group bookings.' },
+            { icon: 'star' as const, title: 'Restaurant Personality', desc: "Each AI agent is trained on your restaurant's style, menu, and values to sound authentically yours." },
+            { icon: 'clock' as const, title: 'Always Available', desc: 'Never miss a reservation. The AI handles calls 24/7 in multiple languages with instant availability checks.' },
           ].map((item, i) => (
             <div key={i} className="bg-white border border-border-gray rounded-2xl p-8">
-              <div className="w-10 h-10 rounded-xl bg-burgundy/[6%] flex items-center justify-center mb-4 text-lg text-burgundy">
-                {item.icon}
+              <div className="w-10 h-10 rounded-xl bg-burgundy/[6%] flex items-center justify-center mb-4 text-burgundy">
+                <ThiingsIcon name={item.icon} pxSize={20} />
               </div>
               <h3 className="text-base font-semibold text-deep-charcoal mb-2 tracking-tight">{item.title}</h3>
               <p className="text-[13px] text-warm-stone font-light leading-relaxed">{item.desc}</p>

@@ -41,6 +41,9 @@ export default function LandingNav() {
         <Link to="/demo/setup" className="text-sm font-medium text-burgundy hover:text-burgundy-dark transition-colors">
           Try free demo
         </Link>
+        <Link to="/login" className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
+          Sign in
+        </Link>
       </div>
 
       {/* Desktop CTA */}
@@ -89,6 +92,9 @@ export default function LandingNav() {
             </button>
             <Link to="/demo/setup" onClick={() => setIsMobileMenuOpen(false)} className="block text-left text-sm font-medium text-burgundy hover:text-burgundy-dark transition-colors py-2">
               Try free demo
+            </Link>
+            <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="block text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors py-2">
+              Sign in
             </Link>
             <div className="pt-4 border-t border-border-gray">
               <button
