@@ -34,12 +34,12 @@ module.exports = async (req, res) => {
   if (rateLimited) return;
 
   // Auth required for all actions
-  const user = await verifyAuth(req);
-  if (!user) {
-    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  const auth = await verifyAuth(req);
+  if (auth.error) {
+    return res.status(auth.status).json({ success: false, error: auth.error });
   }
 
-  const restaurantId = user.restaurant_id;
+  const restaurantId = auth.user?.restaurant_id;
   if (!restaurantId) {
     return res.status(400).json({ success: false, error: 'No restaurant configured' });
   }

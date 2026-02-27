@@ -125,7 +125,7 @@ async function findAtRiskCustomers() {
     const { data: atRisk, error } = await supabaseAdmin
       .from('customer_ltv')
       .select('customer_id, customer_phone, churn_risk_score, customer_tier, last_visit_date, total_visits')
-      .gte('churn_risk_score', 0.7)
+      .gte('churn_risk_score', 70)
       .gte('total_visits', 3)
       .order('churn_risk_score', { ascending: false })
       .limit(50);

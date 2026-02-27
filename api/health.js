@@ -44,7 +44,9 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const detailed = req.query.detailed === 'true';
+  const cronSecret = process.env.CRON_SECRET;
+  const requestSecret = req.headers.authorization?.replace('Bearer ', '');
+  const detailed = req.query.detailed === 'true' && cronSecret && requestSecret === cronSecret;
   const startTime = Date.now();
 
   try {

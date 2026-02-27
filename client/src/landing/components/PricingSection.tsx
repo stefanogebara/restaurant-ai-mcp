@@ -5,10 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../../services/api';
 import { supabase } from '../../lib/supabase';
 import { trackCtaClicked, trackPricingPlanClicked } from '../../lib/analytics';
+import { useToast } from '../../contexts/ToastContext';
 
 export default function PricingSection() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const scrollToContact = () => {
     const element = document.getElementById('contact');
@@ -53,7 +55,7 @@ export default function PricingSection() {
       window.location.href = url;
     } catch (error) {
       console.error('Error creating checkout session:', error);
-      alert('Failed to start checkout. Please try again.');
+      showToast('Failed to start checkout. Please try again.', 'error');
       setLoadingPlan(null);
     }
   };

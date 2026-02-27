@@ -31,6 +31,7 @@ const Onboarding = lazy(() => import('./pages/Onboarding'));
 const LanguageSettings = lazy(() => import('./pages/LanguageSettings'));
 const TableConfigPage = lazy(() => import('./pages/TableConfigPage'));
 const VoiceSettingsPage = lazy(() => import('./pages/VoiceSettingsPage'));
+const WhatsAppSettingsPage = lazy(() => import('./pages/WhatsAppSettingsPage'));
 const BookingPage = lazy(() => import('./pages/BookingPage'));
 const BookingConfirmation = lazy(() => import('./pages/BookingConfirmation'));
 const FloorPlanEditor = lazy(() => import('./pages/FloorPlanEditor'));
@@ -111,6 +112,7 @@ function App() {
               <Route path="/host-dashboard/tables" element={<TableConfigPage />} />
               <Route path="/host-dashboard/floor-plan" element={<FloorPlanEditor />} />
               <Route path="/host-dashboard/voice-settings" element={<VoiceSettingsPage />} />
+              <Route path="/host-dashboard/whatsapp" element={<WhatsAppSettingsPage />} />
               <Route path="/analytics" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AnalyticsDashboard /></ErrorBoundary>} />
               <Route path="/customer" element={<CustomerPortal />} />
               <Route path="/subscription/success" element={<SubscriptionSuccess />} />
