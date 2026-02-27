@@ -1,9 +1,8 @@
 /**
  * Cron Job: Update Churn Scores
  *
- * Recalculates churn risk scores for all customers based on:
- * - Days since last visit vs expected visit frequency
- * - Loyalty bonus for frequent visitors
+ * Recalculates LTV and churn risk scores for ALL customers across ALL restaurants.
+ * Processes new completed reservations and updates existing records.
  *
  * Runs daily at 6 AM UTC via Vercel Cron Jobs
  */
@@ -15,8 +14,106 @@ initSentry();
 
 const logger = createSecureLogger('CronChurnScores');
 
+const AVG_REVENUE_PER_COVER = 45;
+
+/**
+ * Calculate and upsert LTV + churn scores for all customers of a single restaurant.
+ * Mirrors the logic in api/ltv.js handleCalculateAll.
+ */
+async function refreshLTVForRestaurant(restaurantId) {
+  const now = new Date();
+
+  const { data: reservations, error } = await supabaseAdmin
+    .from('reservations')
+    .select('customer_phone, customer_name, customer_email, date, party_size')
+    .eq('restaurant_id', restaurantId)
+    .eq('status', 'completed');
+
+  if (error) {
+    logger.error(`Failed to fetch reservations for ${restaurantId}:`, error.message);
+    return 0;
+  }
+  if (!reservations || reservations.length === 0) return 0;
+
+  const byPhone = {};
+  for (const r of reservations) {
+    const phone = r.customer_phone;
+    if (!phone) continue;
+    if (!byPhone[phone]) {
+      byPhone[phone] = {
+        customer_name: r.customer_name || null,
+        customer_email: r.customer_email || null,
+        visits: [],
+        party_sizes: [],
+      };
+    }
+    byPhone[phone].visits.push(new Date(r.date));
+    byPhone[phone].party_sizes.push(r.party_size || 2);
+  }
+
+  let upserted = 0;
+  for (const [phone, cust] of Object.entries(byPhone)) {
+    const visits = cust.visits.sort((a, b) => a - b);
+    const total_visits = visits.length;
+    const avg_party = cust.party_sizes.reduce((s, p) => s + p, 0) / cust.party_sizes.length;
+    const avg_revenue = avg_party * AVG_REVENUE_PER_COVER;
+    const total_revenue = total_visits * avg_revenue;
+
+    let avg_days = null;
+    if (total_visits > 1) {
+      const diffs = visits.slice(1).map((v, i) => (v - visits[i]) / 86400000);
+      avg_days = diffs.reduce((s, d) => s + d, 0) / diffs.length;
+    }
+
+    const visits_per_year = avg_days ? Math.min(52, 365 / avg_days) : (total_visits > 1 ? 6 : 2);
+    const lifetime_value = visits_per_year * 2 * avg_revenue;
+
+    const daysSinceLast = (now - visits[visits.length - 1]) / 86400000;
+    let churn = 50;
+    if (avg_days && total_visits > 1) {
+      churn = Math.min(100, Math.round((daysSinceLast / (avg_days * 1.5)) * 50));
+      if (total_visits >= 10) churn = Math.round(churn * 0.7);
+    }
+    if (!Number.isFinite(churn)) churn = 50;
+    churn = Math.max(0, Math.min(100, churn));
+
+    let tier = 'new';
+    if (churn > 70) tier = 'at_risk';
+    else if (total_visits >= 10) tier = 'vip';
+    else if (total_visits >= 4) tier = 'regular';
+    else if (total_visits >= 2) tier = 'occasional';
+
+    const { error: upsertErr } = await supabaseAdmin
+      .schema('restaurant')
+      .from('customer_ltv')
+      .upsert({
+        customer_id: phone,
+        customer_phone: phone,
+        customer_name: cust.customer_name,
+        customer_email: cust.customer_email,
+        restaurant_id: restaurantId,
+        total_visits,
+        first_visit_date: visits[0].toISOString().split('T')[0],
+        last_visit_date: visits[visits.length - 1].toISOString().split('T')[0],
+        avg_days_between_visits: avg_days ? Math.round(avg_days) : null,
+        avg_party_size: Math.round(avg_party * 10) / 10,
+        avg_revenue_per_visit: Math.round(avg_revenue),
+        total_revenue: Math.round(total_revenue),
+        highest_single_visit_revenue: Math.round(Math.max(...cust.party_sizes) * AVG_REVENUE_PER_COVER),
+        lifetime_value: Math.round(lifetime_value),
+        churn_risk_score: churn,
+        customer_tier: tier,
+        updated_at: now.toISOString(),
+      }, { onConflict: 'customer_id,restaurant_id' });
+
+    if (!upsertErr) upserted++;
+    else logger.error(`LTV upsert failed for ${phone} (${restaurantId}):`, upsertErr.message);
+  }
+
+  return upserted;
+}
+
 module.exports = async (req, res) => {
-  // Verify this is a cron request (Vercel adds this header)
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret) {
     logger.error('CRON_SECRET not configured - denying request');
@@ -33,107 +130,52 @@ module.exports = async (req, res) => {
   }
 
   try {
-    logger.info('Starting daily churn score update...');
+    logger.info('Starting daily LTV + churn score update...');
 
-    // Get all customers with LTV records
-    const { data: customers, error: fetchError } = await supabaseAdmin
-      .from('customer_ltv')
-      .select('customer_id, avg_days_between_visits, last_visit_date, total_visits, customer_tier');
+    const { data: restaurants, error: restError } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('id');
 
-    if (fetchError) throw fetchError;
+    if (restError) throw restError;
 
-    if (!customers || customers.length === 0) {
-      logger.info('No customers found to update');
-      return res.status(200).json({
-        success: true,
-        message: 'No customers to update',
-        updated: 0
-      });
+    if (!restaurants || restaurants.length === 0) {
+      logger.info('No restaurants found');
+      return res.status(200).json({ success: true, message: 'No restaurants to process', updated: 0 });
     }
 
-    const today = new Date();
-    let updated = 0;
-    let atRiskCount = 0;
+    let totalUpserted = 0;
     const errors = [];
 
-    for (const customer of customers) {
-      if (!customer.last_visit_date) continue;
-
-      const lastVisit = new Date(customer.last_visit_date);
-      const daysSinceLastVisit = Math.floor((today - lastVisit) / (1000 * 60 * 60 * 24));
-
-      // Calculate churn risk
-      let churnRiskScore;
-
-      // New customers (1 visit) have neutral risk
-      if (!customer.total_visits || customer.total_visits === 1) {
-        churnRiskScore = 50;
-      } else if (!customer.avg_days_between_visits || customer.avg_days_between_visits === 0) {
-        churnRiskScore = 50;
-      } else {
-        // Calculate how overdue they are
-        const expectedNextVisit = customer.avg_days_between_visits * 1.5; // Grace period of 50%
-        const overdueRatio = daysSinceLastVisit / expectedNextVisit;
-
-        // Convert to 0-100 score (higher = more at risk)
-        churnRiskScore = Math.min(100, Math.round(overdueRatio * 50));
-
-        // Loyalty bonus: 10+ visits reduces risk by 30%
-        if (customer.total_visits >= 10) {
-          churnRiskScore = Math.round(churnRiskScore * 0.7);
-        }
-      }
-
-      // Guard against NaN from invalid dates or zero-division edge cases
-      if (!Number.isFinite(churnRiskScore)) churnRiskScore = 50;
-      churnRiskScore = Math.max(0, Math.min(100, churnRiskScore));
-
-      // Determine tier changes (both upgrade and downgrade)
-      let newTier = customer.customer_tier;
-      if (churnRiskScore > 70 && customer.customer_tier !== 'at_risk') {
-        newTier = 'at_risk';
-        atRiskCount++;
-      } else if (churnRiskScore <= 40 && customer.customer_tier === 'at_risk') {
-        newTier = 'regular';
-      }
-
-      // Update the record
-      const { error: updateError } = await supabaseAdmin
-        .from('customer_ltv')
-        .update({
-          churn_risk_score: churnRiskScore,
-          customer_tier: newTier,
-          updated_at: today.toISOString()
-        })
-        .eq('customer_id', customer.customer_id);
-
-      if (!updateError) {
-        updated++;
-      } else {
-        logger.error(`Failed to update ${customer.customer_id}:`, updateError.message);
-        errors.push({ customer_id: customer.customer_id, error: updateError.message });
+    for (const restaurant of restaurants) {
+      try {
+        const count = await refreshLTVForRestaurant(restaurant.id);
+        totalUpserted += count;
+      } catch (err) {
+        logger.error(`Failed to refresh LTV for restaurant ${restaurant.id}:`, err.message);
+        errors.push({ restaurant_id: restaurant.id, error: err.message });
       }
     }
 
     if (errors.length > 0) {
       captureMessage(
-        `CronChurnScores: ${errors.length} customer(s) failed to update`,
+        `CronChurnScores: ${errors.length} restaurant(s) failed`,
         'warning',
-        { errors, updated_at: today.toISOString() }
+        { errors, timestamp: new Date().toISOString() }
       );
     }
 
-    logger.info(`Updated churn scores for ${updated} customers, ${atRiskCount} newly at risk`);
+    logger.info(`Updated LTV + churn for ${totalUpserted} customers across ${restaurants.length} restaurants`);
 
     return res.status(200).json({
       success: true,
-      message: `Updated ${updated} customer churn scores`,
+      message: `Updated ${totalUpserted} customer records across ${restaurants.length} restaurants`,
       data: {
-        total_processed: customers.length,
-        updated: updated,
-        newly_at_risk: atRiskCount
+        restaurants_processed: restaurants.length,
+        customers_updated: totalUpserted,
+        errors: errors.length,
       },
-      timestamp: today.toISOString()
+      timestamp: new Date().toISOString(),
     });
 
   } catch (error) {
