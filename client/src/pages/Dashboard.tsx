@@ -12,7 +12,7 @@
  * All panels are extracted into standalone components.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { hostAPI } from '../services/api';
@@ -33,6 +33,7 @@ import type { UpcomingReservation, ActiveParty, SeatModalData } from '../types/h
 import { trackFirstReservationCreated } from '../lib/analytics';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { LS_FIRST_RESERVATION_TRACKED } from '../config/localStorageKeys';
+import { useToast } from '../contexts/ToastContext';
 
 function maybeTrackFirstReservation() {
   if (!localStorage.getItem(LS_FIRST_RESERVATION_TRACKED)) {
@@ -43,6 +44,17 @@ function maybeTrackFirstReservation() {
 
 export default function Dashboard() {
   const { t } = useTranslation();
+  const { success } = useToast();
+
+  // Show a one-time welcome toast when arriving from demo conversion
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('converted') === 'demo') {
+      success('Your demo data has been carried over — welcome to Seatable!');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ---- Modal state ----
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [showSeatModal, setShowSeatModal] = useState(false);
