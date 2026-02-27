@@ -9,6 +9,7 @@
  */
 
 const crypto = require('crypto');
+const { generateSecureReservationId } = require('./_lib/secure-id');
 const { supabaseAdmin, getAllTables, getUpcomingReservations } = require('./_lib/supabase');
 const { verifyAuth } = require('./_lib/auth');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
@@ -62,6 +63,7 @@ function buildFakeReservations(restaurantId) {
     const timeStr = FAKE_TIMES[i % FAKE_TIMES.length];
 
     reservations.push({
+      reservation_id: generateSecureReservationId(),
       restaurant_id: restaurantId,
       customer_name: name,
       customer_phone: null,
@@ -79,6 +81,7 @@ function buildFakeReservations(restaurantId) {
   // causes the checked_in flag to be true when mapped by the supabase layer.
   const todayStr = now.toISOString().split('T')[0];
   reservations.push({
+    reservation_id: generateSecureReservationId(),
     restaurant_id: restaurantId,
     customer_name: 'Sophie Laurent',
     customer_phone: null,
