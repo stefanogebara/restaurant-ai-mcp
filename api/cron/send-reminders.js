@@ -93,20 +93,6 @@ module.exports = async (req, res) => {
     const today = new Date().toISOString().split('T')[0];
     logger.info(` Looking for reservations on ${today}`);
 
-    // Get restaurant info for the restaurant name
-    const { data: restaurantInfo, error: restaurantError } = await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_info')
-      .select('restaurant_name')
-      .limit(1)
-      .single();
-
-    if (restaurantError) {
-      logger.error(' Error fetching restaurant info:', restaurantError);
-    }
-
-    const restaurantName = restaurantInfo?.restaurant_name || 'the restaurant';
-
     // Find all confirmed reservations for today that have a phone number
     const { data: reservations, error } = await supabaseAdmin
       .from('reservations')
@@ -126,6 +112,25 @@ module.exports = async (req, res) => {
 
     logger.info(` Found ${reservations?.length || 0} confirmed reservations for today`);
 
+    // Batch-fetch restaurant names for all tenant restaurant_ids present in today's reservations
+    const uniqueRestaurantIds = [...new Set(
+      (reservations || []).map(r => r.restaurant_id).filter(Boolean)
+    )];
+    const restaurantNameMap = {};
+    if (uniqueRestaurantIds.length > 0) {
+      const { data: restaurantInfoRows, error: restaurantError } = await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_info')
+        .select('id, restaurant_name')
+        .in('id', uniqueRestaurantIds);
+      if (restaurantError) {
+        logger.error(' Error fetching restaurant info:', restaurantError);
+      }
+      for (const row of (restaurantInfoRows || [])) {
+        restaurantNameMap[row.id] = row.restaurant_name;
+      }
+    }
+
     const results = {
       sent: 0,
       failed: 0,
@@ -140,8 +145,11 @@ module.exports = async (req, res) => {
         customer_phone,
         time,
         party_size,
-        reservation_id
+        reservation_id,
+        restaurant_id
       } = reservation;
+
+      const restaurantName = restaurantNameMap[restaurant_id] || 'the restaurant';
 
       // Skip if no phone number
       if (!customer_phone) {
