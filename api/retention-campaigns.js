@@ -57,13 +57,17 @@ async function handleCreate(req, res) {
     // Send the campaign email if channel is email
     if (data.channel === 'email') {
       // Look up customer email from customer_ltv (has email from reservation data)
-      const { data: customer } = await supabaseAdmin
+      const { data: customer, error: customerLookupErr } = await supabaseAdmin
         .schema('restaurant')
         .from('customer_ltv')
         .select('customer_email, customer_name')
         .eq('customer_id', customer_id)
         .eq('restaurant_id', req.user.restaurant_id)
         .single();
+
+      if (customerLookupErr) {
+        logger.error(`customer_ltv lookup error for ${customer_id} (restaurant ${req.user.restaurant_id}):`, customerLookupErr);
+      }
 
       if (customer?.customer_email) {
         const result = await sendRetentionCampaignEmail({
