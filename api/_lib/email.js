@@ -171,7 +171,7 @@ async function sendRetentionCampaignEmail({ customerEmail, customerName, message
   };
 
   try {
-    await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: FROM_ADDRESS,
       to: customerEmail,
       subject: subjectMap[campaignType] || 'A Message From Your Restaurant',
@@ -186,6 +186,10 @@ async function sendRetentionCampaignEmail({ customerEmail, customerName, message
         </div>
       `),
     });
+    if (error) {
+      logger.error('Failed to send retention email:', error.message || JSON.stringify(error));
+      return { sent: false, reason: error.message || 'resend_error' };
+    }
     logger.info('Retention campaign email sent to:', customerEmail);
     return { sent: true };
   } catch (err) {
