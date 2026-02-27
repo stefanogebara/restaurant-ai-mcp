@@ -23,6 +23,7 @@ jest.mock('../_lib/supabase', () => {
         if (table === 'reservations') {
           return {
             select: jest.fn(() => ({
+              in: jest.fn().mockReturnThis(),
               eq: jest.fn().mockReturnThis(),
               lte: jest.fn().mockReturnThis(),
               is: jest.fn(() => Promise.resolve({

@@ -204,7 +204,6 @@
     "step2Title": "Contact & Hours",
     "step3Title": "Table Configuration",
     "step4Title": "Reservation Settings",
-    "step5Title": "Team Setup",
     "restaurantName": "Restaurant Name",
     "restaurantType": "Restaurant Type",
     "city": "City",
@@ -439,6 +438,41 @@
       "headingLine2": "your restaurant?",
       "subtitle": "Join the first restaurants using Seatable. Free plan available, no credit card required.",
       "button": "Start Free Trial"
+    },
+    "pricing": {
+      "label": "Pricing",
+      "heading": "Simple, transparent pricing.",
+      "subheading": "No hidden fees. Cancel anytime.",
+      "usageBased": "Usage-based fees apply",
+      "usageDetail": "beyond plan limits: additional reservations, AI phone calls, SMS notifications, and WhatsApp messages are billed per use. All prices in EUR. Cancel or upgrade anytime.",
+      "customSolution": "Need a custom solution?",
+      "enterpriseLink": "Contact us for enterprise pricing"
+    },
+    "faq": {
+      "label": "FAQ",
+      "heading": "Frequently asked questions",
+      "subheading": "Everything you need to know about Seatable",
+      "cta": "Still have questions?",
+      "ctaSubtext": "We're here to help. Reach out to our team anytime.",
+      "ctaButton": "Contact Support",
+      "q1": "How does the AI reservation assistant work?",
+      "a1": "Our AI uses natural language processing to understand customer requests via phone calls or text messages. It checks real-time table availability, handles booking details, and confirms reservations - all without human intervention.",
+      "q2": "Can I customize the AI's responses?",
+      "a2": "Yes! Each restaurant can customize the AI's personality, greetings, menu knowledge, and special policies. We train the AI on your specific restaurant details during onboarding.",
+      "q3": "What happens if the AI can't handle a request?",
+      "a3": "If the AI encounters a complex situation it can't resolve, it seamlessly transfers the call to your staff with full context of the conversation. This ensures no customer is left frustrated.",
+      "q4": "How long does setup take?",
+      "a4": "Most restaurants are up and running within 24 hours. We'll import your table layout, configure the AI with your menu and policies, and train your staff on the host dashboard.",
+      "q5": "Do I need special hardware?",
+      "a5": "No special hardware required! Our system works entirely in the cloud. You just need internet access and a device (computer, tablet, or phone) to access the host dashboard.",
+      "q6": "Can customers still call directly?",
+      "a6": "Absolutely. The AI handles reservation requests, but customers can still speak to staff for special occasions, large parties, or specific questions. The AI and humans work together seamlessly.",
+      "q7": "What languages does the AI support?",
+      "a7": "Our AI currently supports 6+ languages including English, Spanish, Portuguese, French, Italian, and German. It auto-detects the caller's language and responds naturally. More languages are being added regularly.",
+      "q8": "Is my restaurant data secure?",
+      "a8": "Absolutely. All data is encrypted in transit and at rest. We use enterprise-grade database security with row-level access controls, and we never share your customer data with third parties. You own your data completely.",
+      "q9": "Can I try it before committing?",
+      "a9": "Yes! All plans come with a 14-day free trial, no credit card required. You can also try our live AI demo on the website to hear the voice assistant in action before signing up."
     }
   }
 }

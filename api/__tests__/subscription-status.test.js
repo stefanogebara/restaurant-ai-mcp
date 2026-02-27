@@ -88,16 +88,16 @@ describe('SubscriptionStatus: Authentication', () => {
 // Input validation
 // ============================================================
 describe('SubscriptionStatus: Input validation', () => {
-  test('returns 400 when email param is missing', async () => {
+  test('returns 400 when user email is missing from JWT', async () => {
     verifyAuth.mockResolvedValueOnce({
-      user: { restaurant_id: 'rest-1', email: 'admin@test.com' },
+      user: { restaurant_id: 'rest-1', email: null },
     });
 
     const { req, res } = createMockReqRes({ query: {} });
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      error: 'Missing email parameter',
+      error: 'Missing email',
     }));
   });
 });

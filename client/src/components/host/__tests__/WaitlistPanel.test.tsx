@@ -87,7 +87,7 @@ describe('WaitlistPanel', () => {
     renderWithProviders(<WaitlistPanel onSeatNow={onSeatNow} />);
 
     expect(
-      await screen.findByText(/Error loading waitlist/i),
+      await screen.findByText(/Could not load waitlist/i),
     ).toBeInTheDocument();
   });
 

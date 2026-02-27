@@ -84,6 +84,8 @@ module.exports = async (req, res) => {
         }
       }
 
+      // Guard against NaN from invalid dates or zero-division edge cases
+      if (!Number.isFinite(churnRiskScore)) churnRiskScore = 50;
       churnRiskScore = Math.max(0, Math.min(100, churnRiskScore));
 
       // Determine tier changes (both upgrade and downgrade)

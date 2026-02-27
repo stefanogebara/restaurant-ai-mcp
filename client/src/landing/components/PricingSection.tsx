@@ -2,12 +2,14 @@ import { Loader2 } from 'lucide-react';
 import { PRICING_TIERS } from '../data/demoData';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
 import { supabase } from '../../lib/supabase';
 import { trackCtaClicked, trackPricingPlanClicked } from '../../lib/analytics';
 import { useToast } from '../../contexts/ToastContext';
 
 export default function PricingSection() {
+  const { t } = useTranslation();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -65,11 +67,11 @@ export default function PricingSection() {
       <div className="max-w-[1100px] mx-auto">
         {/* Header */}
         <div className="text-center mb-16">
-          <div className="text-xs font-semibold tracking-[2px] uppercase text-burgundy mb-4">Pricing</div>
+          <div className="text-xs font-semibold tracking-[2px] uppercase text-burgundy mb-4">{t('landing.pricing.label')}</div>
           <h2 className="font-serif text-4xl sm:text-[48px] font-medium tracking-tight text-deep-charcoal mb-3">
-            Simple, transparent pricing.
+            {t('landing.pricing.heading')}
           </h2>
-          <p className="text-[17px] text-warm-stone font-light">No hidden fees. Cancel anytime.</p>
+          <p className="text-[17px] text-warm-stone font-light">{t('landing.pricing.subheading')}</p>
         </div>
 
         {/* Pricing Grid */}
@@ -144,17 +146,16 @@ export default function PricingSection() {
         {/* Metered Billing Disclosure */}
         <div className="mt-10 p-5 bg-soft-gray rounded-2xl border border-border-gray text-center">
           <p className="text-xs text-stone-gray leading-relaxed">
-            <span className="font-semibold text-deep-charcoal">Usage-based fees apply</span> beyond plan limits:{' '}
-            additional reservations, AI phone calls, SMS notifications, and WhatsApp messages are billed per use.
-            All prices in EUR. Cancel or upgrade anytime.
+            <span className="font-semibold text-deep-charcoal">{t('landing.pricing.usageBased')}</span>{' '}
+            {t('landing.pricing.usageDetail')}
           </p>
         </div>
 
         {/* Bottom Note */}
         <p className="text-center text-sm text-muted-stone mt-6">
-          Need a custom solution?{' '}
+          {t('landing.pricing.customSolution')}{' '}
           <button type="button" onClick={scrollToContact} className="text-burgundy hover:text-burgundy-dark font-medium transition-colors">
-            Contact us for enterprise pricing
+            {t('landing.pricing.enterpriseLink')}
           </button>
         </p>
       </div>

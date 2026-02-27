@@ -95,8 +95,8 @@ describe('ReservationsList', () => {
 
   it('displays party size for each reservation', () => {
     render(<ReservationsList {...defaultProps} />);
-    expect(screen.getByText(/4 guests/)).toBeInTheDocument();
-    expect(screen.getByText(/2 guests/)).toBeInTheDocument();
+    expect(screen.getByText(/4 people/)).toBeInTheDocument();
+    expect(screen.getByText(/2 people/)).toBeInTheDocument();
   });
 
   it('toggles to tomorrow reservations when button is clicked', async () => {
@@ -108,7 +108,7 @@ describe('ReservationsList', () => {
 
     // Should now show tomorrow's reservations
     expect(screen.getByText('Charlie Brown')).toBeInTheDocument();
-    expect(screen.getByText(/6 guests/)).toBeInTheDocument();
+    expect(screen.getByText(/6 people/)).toBeInTheDocument();
 
     // Toggle back to "Today"
     await user.click(screen.getByRole('button', { name: /today/i }));
@@ -143,7 +143,7 @@ describe('ReservationsList', () => {
   it('renders in Spanish when language is "es"', () => {
     render(<ReservationsList {...defaultProps} language="es" />);
     expect(screen.getByText('Próximas Reservas')).toBeInTheDocument();
-    expect(screen.getByText(/4 guests/)).toBeInTheDocument();
+    expect(screen.getByText(/4 personas/)).toBeInTheDocument();
   });
 
   it('shows action button for high-risk reservations', () => {

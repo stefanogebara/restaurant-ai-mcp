@@ -59,7 +59,7 @@ describe('StatsBar', () => {
   it('displays active parties and guests seated', () => {
     render(<StatsBar {...defaultProps} />);
     expect(screen.getByText('Active Parties')).toBeInTheDocument();
-    expect(screen.getByText('18 guests seated')).toBeInTheDocument();
+    expect(screen.getByText('18 seated')).toBeInTheDocument();
   });
 
   it('handles zero occupancy without division errors', () => {

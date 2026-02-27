@@ -36,20 +36,23 @@ module.exports = async (req, res) => {
     logger.info('Starting late reservation check...');
 
     const now = new Date();
-    const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const today = now.toISOString().split('T')[0]; // YYYY-MM-DD (UTC)
+    // Include yesterday UTC to handle restaurants in UTC- timezones (e.g. Americas)
+    // where the local date may be one day behind UTC after midnight
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     // Calculate time 20 minutes ago
     const twentyMinutesAgo = new Date(now.getTime() - LATE_THRESHOLD_MINUTES * 60 * 1000);
     const lateTimeThreshold = twentyMinutesAgo.toTimeString().slice(0, 5); // HH:MM
 
-    logger.info(`Looking for reservations on ${today} with time <= ${lateTimeThreshold}`);
+    logger.info(`Looking for reservations on [${yesterday}, ${today}] with time <= ${lateTimeThreshold}`);
 
-    // Find all "confirmed" reservations for today that haven't been checked in
-    // and whose reservation time was more than 20 minutes ago
+    // Find all "confirmed" reservations for today (and yesterday UTC for non-UTC timezones)
+    // that haven't been checked in and whose reservation time was more than 20 minutes ago
     const { data: lateReservations, error } = await supabaseAdmin
       .from('reservations')
       .select('*')
-      .eq('date', today)
+      .in('date', [today, yesterday])
       .eq('status', 'confirmed')
       .lte('time', lateTimeThreshold)
       .is('checked_in_at', null);

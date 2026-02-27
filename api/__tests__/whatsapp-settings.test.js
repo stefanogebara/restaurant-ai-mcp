@@ -74,7 +74,7 @@ function mkReqRes(overrides = {}) {
   return { req, res };
 }
 
-const AUTH_USER = { restaurant_id: 'rest-uuid-1', email: 'owner@test.com' };
+const AUTH_USER = { user: { restaurant_id: 'rest-uuid-1', email: 'owner@test.com' } };
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -93,7 +93,7 @@ describe('WhatsApp Settings: Auth', () => {
   });
 
   test('returns 401 when not authenticated', async () => {
-    verifyAuth.mockResolvedValue(null);
+    verifyAuth.mockResolvedValue({ error: 'Unauthorized', status: 401 });
     const { req, res } = mkReqRes({ query: { action: 'status' } });
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(401);
@@ -101,7 +101,7 @@ describe('WhatsApp Settings: Auth', () => {
   });
 
   test('returns 400 when user has no restaurant_id', async () => {
-    verifyAuth.mockResolvedValue({ email: 'orphan@test.com' });
+    verifyAuth.mockResolvedValue({ user: { email: 'orphan@test.com' } });
     const { req, res } = mkReqRes({ query: { action: 'status' } });
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(400);

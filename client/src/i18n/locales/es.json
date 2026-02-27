@@ -204,7 +204,6 @@
     "step2Title": "Contacto y Horarios",
     "step3Title": "Configuración de Mesas",
     "step4Title": "Configuración de Reservas",
-    "step5Title": "Configuración del Equipo",
     "restaurantName": "Nombre del Restaurante",
     "restaurantType": "Tipo de Restaurante",
     "city": "Ciudad",
@@ -439,6 +438,41 @@
       "headingLine2": "tu restaurante?",
       "subtitle": "Únete a los primeros restaurantes que usan Seatable. Plan gratuito disponible, sin tarjeta de crédito.",
       "button": "Empezar Gratis"
+    },
+    "pricing": {
+      "label": "Precios",
+      "heading": "Precios simples y transparentes.",
+      "subheading": "Sin costos ocultos. Cancela cuando quieras.",
+      "usageBased": "Se aplican tarifas por uso",
+      "usageDetail": "más allá de los límites del plan: reservas adicionales, llamadas de IA, notificaciones SMS y mensajes de WhatsApp se facturan por uso. Todos los precios en EUR. Cancela o actualiza cuando quieras.",
+      "customSolution": "¿Necesitas una solución personalizada?",
+      "enterpriseLink": "Contáctanos para precios empresariales"
+    },
+    "faq": {
+      "label": "Preguntas Frecuentes",
+      "heading": "Preguntas frecuentes",
+      "subheading": "Todo lo que necesitas saber sobre Seatable",
+      "cta": "¿Aún tienes preguntas?",
+      "ctaSubtext": "Estamos aquí para ayudar. Contáctanos en cualquier momento.",
+      "ctaButton": "Contactar Soporte",
+      "q1": "¿Cómo funciona el asistente de reservas de IA?",
+      "a1": "Nuestra IA utiliza procesamiento de lenguaje natural para entender las solicitudes de los clientes a través de llamadas telefónicas o mensajes de texto. Verifica la disponibilidad de mesas en tiempo real, gestiona los detalles de la reserva y confirma las reservas, todo sin intervención humana.",
+      "q2": "¿Puedo personalizar las respuestas de la IA?",
+      "a2": "¡Sí! Cada restaurante puede personalizar la personalidad de la IA, los saludos, el conocimiento del menú y las políticas especiales. Entrenamos la IA con los detalles específicos de tu restaurante durante el proceso de incorporación.",
+      "q3": "¿Qué pasa si la IA no puede manejar una solicitud?",
+      "a3": "Si la IA encuentra una situación compleja que no puede resolver, transfiere la llamada a tu personal con el contexto completo de la conversación. Esto garantiza que ningún cliente quede frustrado.",
+      "q4": "¿Cuánto tiempo tarda la configuración?",
+      "a4": "La mayoría de los restaurantes están en funcionamiento en 24 horas. Importaremos tu distribución de mesas, configuraremos la IA con tu menú y políticas, y capacitaremos a tu personal en el panel de control.",
+      "q5": "¿Necesito hardware especial?",
+      "a5": "¡No se requiere hardware especial! Nuestro sistema funciona completamente en la nube. Solo necesitas acceso a internet y un dispositivo (computadora, tableta o teléfono) para acceder al panel de control.",
+      "q6": "¿Los clientes aún pueden llamar directamente?",
+      "a6": "Absolutamente. La IA maneja las solicitudes de reservas, pero los clientes aún pueden hablar con el personal para ocasiones especiales, grupos grandes o preguntas específicas. La IA y los humanos trabajan juntos sin problemas.",
+      "q7": "¿Qué idiomas soporta la IA?",
+      "a7": "Nuestra IA actualmente soporta más de 6 idiomas, incluyendo inglés, español, portugués, francés, italiano y alemán. Detecta automáticamente el idioma del llamante y responde de forma natural. Se están añadiendo más idiomas regularmente.",
+      "q8": "¿Son seguros los datos de mi restaurante?",
+      "a8": "Absolutamente. Todos los datos están encriptados en tránsito y en reposo. Usamos seguridad de base de datos de nivel empresarial con controles de acceso por filas, y nunca compartimos los datos de tus clientes con terceros. Eres dueño de tus datos completamente.",
+      "q9": "¿Puedo probarlo antes de comprometerse?",
+      "a9": "¡Sí! Todos los planes incluyen una prueba gratuita de 14 días, sin tarjeta de crédito requerida. También puedes probar nuestra demostración de IA en vivo en el sitio web para escuchar el asistente de voz en acción antes de registrarte."
     }
   }
 }
