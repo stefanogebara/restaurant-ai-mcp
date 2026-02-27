@@ -133,13 +133,18 @@ function validateReservationDate(date) {
   }
 
   try {
-    const parsedDate = new Date(date);
+    // Parse YYYY-MM-DD as local date (not UTC) to avoid timezone issues
+    const parts = date.split('-');
+    if (parts.length !== 3) {
+      return { valid: false, error: 'Invalid date format' };
+    }
+    const parsedDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
 
     if (isNaN(parsedDate.getTime())) {
       return { valid: false, error: 'Invalid date format' };
     }
 
-    // Check if date is in the past
+    // Check if date is in the past (compare local dates)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
