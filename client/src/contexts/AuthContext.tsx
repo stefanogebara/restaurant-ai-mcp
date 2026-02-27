@@ -47,11 +47,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.removeItem(LS_CUSTOMER_EMAIL);
         }
 
-        // Extract restaurant role from JWT payload
+        // Extract restaurant role from JWT payload.
+        // payload.role is a standard Supabase claim ('authenticated' | 'anon') — not
+        // a restaurant role. Custom restaurant roles are stored in app_metadata.restaurant_role.
+        // If no custom role is found, default to 'owner' (restaurant owners sign in via OAuth).
         if (session?.access_token) {
           try {
             const payload = JSON.parse(atob(session.access_token.split('.')[1]));
-            setRole((payload.role as RestaurantRole) || 'owner');
+            const SUPABASE_STANDARD_ROLES = ['authenticated', 'anon', 'service_role'];
+            const customRole = payload.app_metadata?.restaurant_role as RestaurantRole | undefined;
+            const isStandardRole = SUPABASE_STANDARD_ROLES.includes(payload.role);
+            setRole(customRole || (isStandardRole ? 'owner' : (payload.role as RestaurantRole)) || 'owner');
           } catch {
             setRole('owner');
           }
