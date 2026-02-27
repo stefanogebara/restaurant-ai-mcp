@@ -140,7 +140,7 @@ async function findAtRiskCustomers() {
       tier: c.customer_tier,
       last_visit: c.last_visit_date,
       total_visits: c.total_visits,
-      suggested_action: `Re-engage ${c.customer_tier} customer (${c.total_visits} visits, churn risk: ${Math.round(c.churn_risk_score * 100)}%)`
+      suggested_action: `Re-engage ${c.customer_tier} customer (${c.total_visits} visits, churn risk: ${c.churn_risk_score}%)`
     }));
   } catch (error) {
     logger.error('Error finding at-risk customers:', error.message);
