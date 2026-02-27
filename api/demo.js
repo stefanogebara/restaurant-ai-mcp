@@ -250,7 +250,7 @@ async function handleCreate(req, res) {
     .insert({
       user_id: DEMO_SYSTEM_USER_ID,
       restaurant_name: restaurant_name.trim(),
-      restaurant_type: 'other',
+      restaurant_type: (cuisine_type || '').trim() || 'other',
       city: city.trim(),
       country: (country || '').trim() || 'Unknown',
       email: contact_email.trim(),
