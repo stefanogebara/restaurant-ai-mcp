@@ -23,6 +23,9 @@ const logger = createSecureLogger('Demo');
 
 const BASE_URL = process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
 
+// Dedicated system user for demo restaurants (created once in Supabase Auth)
+const DEMO_SYSTEM_USER_ID = 'bfe5f299-1361-4a13-a898-fa76b2e8add0';
+
 // Lazy-init Resend client
 let resendClient = null;
 function getResendClient() {
@@ -226,6 +229,7 @@ async function handleCreate(req, res) {
     .schema('restaurant')
     .from('restaurant_config')
     .insert({
+      user_id: DEMO_SYSTEM_USER_ID,
       restaurant_name: restaurant_name.trim(),
       restaurant_type: 'other',
       city: city.trim(),
