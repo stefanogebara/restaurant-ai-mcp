@@ -1,0 +1,82 @@
+import ThiingsIcon from '../common/ThiingsIcon';
+import { useLTVStats } from '../../hooks/useLTVData';
+
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(amount);
+
+interface StatRowProps {
+  label: string;
+  value: string | number;
+  accent?: boolean;
+}
+
+function StatRow({ label, value, accent }: StatRowProps) {
+  return (
+    <div className="flex items-center justify-between py-2 border-b border-border-gray last:border-0">
+      <span className="text-xs text-warm-stone">{label}</span>
+      <span className={`text-sm font-semibold ${accent ? 'text-red-600' : 'text-deep-charcoal'}`}>{value}</span>
+    </div>
+  );
+}
+
+export default function WeeklyForecastCard() {
+  const { data: stats, isLoading } = useLTVStats();
+
+  if (isLoading) {
+    return (
+      <div className="bg-white border border-border-gray/50 rounded-2xl p-6 shadow-sm">
+        <div className="h-4 w-40 bg-soft-gray rounded animate-pulse mb-3" />
+        <div className="h-3 w-32 bg-soft-gray rounded animate-pulse" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white border border-border-gray/50 rounded-2xl overflow-hidden shadow-sm">
+      <div className="p-5 border-b border-border-gray flex items-center gap-3">
+        <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
+          <ThiingsIcon name="calendar" pxSize={16} className="text-purple-600" />
+        </div>
+        <div>
+          <h2 className="text-sm font-semibold text-deep-charcoal">Customer Health</h2>
+          <p className="text-xs text-warm-stone">Loyalty & retention overview</p>
+        </div>
+      </div>
+
+      <div className="p-5">
+        {!stats ? (
+          <p className="text-sm text-warm-stone text-center py-4">No customer data yet.</p>
+        ) : (
+          <>
+            {/* Tier summary */}
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              <div className="text-center p-3 bg-amber-50 rounded-xl border border-amber-100">
+                <div className="text-xl font-bold text-amber-700">{stats.tiers?.vip ?? 0}</div>
+                <div className="text-xs text-amber-600 font-medium">VIPs</div>
+              </div>
+              <div className="text-center p-3 bg-blue-50 rounded-xl border border-blue-100">
+                <div className="text-xl font-bold text-blue-700">{stats.tiers?.regular ?? 0}</div>
+                <div className="text-xs text-blue-600 font-medium">Regulars</div>
+              </div>
+              <div className="text-center p-3 bg-red-50 rounded-xl border border-red-100">
+                <div className="text-xl font-bold text-red-600">{stats.high_risk_customers ?? 0}</div>
+                <div className="text-xs text-red-500 font-medium">At Risk</div>
+              </div>
+            </div>
+
+            <div className="space-y-0">
+              <StatRow label="Total customers" value={stats.total_customers} />
+              <StatRow label="Avg lifetime value" value={formatCurrency(stats.avg_ltv)} />
+              <StatRow label="Total LTV" value={formatCurrency(stats.total_ltv)} />
+              <StatRow
+                label="High churn risk"
+                value={stats.high_risk_customers > 0 ? `${stats.high_risk_customers} customers` : 'None'}
+                accent={stats.high_risk_customers > 0}
+              />
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

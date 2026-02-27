@@ -40,6 +40,7 @@ const navSections: NavSection[] = [
   {
     label: 'Insights',
     items: [
+      { path: '/host-dashboard/insights', label: 'AI Insights', requiredFeature: 'advancedAnalytics' },
       { path: '/analytics', label: 'Analytics', requiredFeature: 'advancedAnalytics' },
       { path: '/host-dashboard/reports', label: 'Reports', requiredFeature: 'weeklyReports' },
     ]
@@ -94,6 +95,7 @@ export default function Sidebar() {
     Tables: 'navigation.tables',
     'Voice Agent': 'navigation.voiceAgent',
     'Call History': 'navigation.callHistory',
+    'AI Insights': 'navigation.aiInsights',
     Analytics: 'navigation.analytics',
     Reports: 'navigation.reports',
     Main: 'navigation.sectionMain',

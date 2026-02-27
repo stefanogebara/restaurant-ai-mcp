@@ -22,6 +22,7 @@ const LiveAIDemo = lazy(() => import('./pages/LiveAIDemo'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const WeeklyReport = lazy(() => import('./pages/WeeklyReport'));
 const AnalyticsDashboard = lazy(() => import('./pages/AnalyticsDashboard'));
+const AIInsights = lazy(() => import('./pages/AIInsights'));
 const CallTrackingDashboard = lazy(() => import('./pages/CallTrackingDashboard'));
 const CustomerPortal = lazy(() => import('./pages/CustomerPortal'));
 const SubscriptionSuccess = lazy(() => import('./pages/SubscriptionSuccess'));
@@ -113,6 +114,7 @@ function App() {
               <Route path="/host-dashboard/floor-plan" element={<FloorPlanEditor />} />
               <Route path="/host-dashboard/voice-settings" element={<VoiceSettingsPage />} />
               <Route path="/host-dashboard/whatsapp" element={<WhatsAppSettingsPage />} />
+              <Route path="/host-dashboard/insights" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AIInsights /></ErrorBoundary>} />
               <Route path="/analytics" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AnalyticsDashboard /></ErrorBoundary>} />
               <Route path="/customer" element={<CustomerPortal />} />
               <Route path="/subscription/success" element={<SubscriptionSuccess />} />
