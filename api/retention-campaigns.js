@@ -46,6 +46,7 @@ async function handleCreate(req, res) {
         message,
         channel: channel || 'email',
         status: 'pending',
+        restaurant_id: req.user.restaurant_id,
         created_at: new Date().toISOString()
       })
       .select()
@@ -111,13 +112,15 @@ async function handleCreate(req, res) {
 async function handleList(req, res) {
   try {
     const { customer_id, limit = 50, offset = 0 } = req.query;
+    const restaurantId = req.user.restaurant_id;
 
     let query = supabaseAdmin
       .schema('restaurant')
       .from('retention_campaigns')
       .select('*')
+      .eq('restaurant_id', restaurantId)
       .order('created_at', { ascending: false })
-      .range(offset, offset + parseInt(limit) - 1);
+      .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
 
     if (customer_id) {
       query = query.eq('customer_id', customer_id);
@@ -148,10 +151,13 @@ async function handleList(req, res) {
  */
 async function handleStats(req, res) {
   try {
+    const restaurantId = req.user.restaurant_id;
+
     const { data, error } = await supabaseAdmin
       .schema('restaurant')
       .from('retention_campaigns')
-      .select('campaign_type, status, created_at');
+      .select('campaign_type, status, created_at')
+      .eq('restaurant_id', restaurantId);
 
     if (error) throw error;
 
