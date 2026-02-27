@@ -18,6 +18,9 @@ initSentry();
 const logger = createSecureLogger('CronDemoNurture');
 
 const BASE_URL = process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
+
+// Resend free tier: 10 req/s burst limit. Add 100ms delay between sends to stay safe.
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const FROM_ADDRESS = 'Seatable <bookings@seatable.io>';
 
 // Lazy-init Resend client (same pattern as api/demo.js)
@@ -370,6 +373,7 @@ module.exports = async (req, res) => {
       } else {
         results.day3.failed++;
       }
+      await sleep(100);
     }
 
     // Process day-5 emails
@@ -397,6 +401,7 @@ module.exports = async (req, res) => {
       } else {
         results.day5.failed++;
       }
+      await sleep(100);
     }
 
     // Process day-7 emails
@@ -424,6 +429,7 @@ module.exports = async (req, res) => {
       } else {
         results.day7.failed++;
       }
+      await sleep(100);
     }
 
     const totalFailed = results.day3.failed + results.day5.failed + results.day7.failed;
