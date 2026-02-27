@@ -4,9 +4,10 @@
  * Split-screen design with branded left panel
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { LS_PENDING_DEMO_TOKEN } from '../config/localStorageKeys';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { motion } from 'framer-motion';
 import { trackSignupStarted } from '../lib/analytics';
@@ -26,6 +27,16 @@ export default function Login() {
   // Email/password form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  // Persist demo token to localStorage so it survives OAuth redirects and
+  // email/password sign-in (which doesn't go through signInWithGoogle's redirectTo)
+  useEffect(() => {
+    const from = searchParams.get('from');
+    const token = searchParams.get('token');
+    if (from === 'demo' && token) {
+      localStorage.setItem(LS_PENDING_DEMO_TOKEN, token);
+    }
+  }, [searchParams]);
 
   // Redirect if already logged in
   if (!loading && user) {

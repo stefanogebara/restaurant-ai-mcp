@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { authFetch } from '../services/api';
+import { LS_PENDING_DEMO_TOKEN } from '../config/localStorageKeys';
 
 export default function Welcome() {
   const navigate = useNavigate();
@@ -29,29 +30,23 @@ export default function Welcome() {
       return;
     }
 
-    // Check if this is a demo conversion (user clicked "Upgrade to keep your data")
+    // Check if this is a demo conversion (user clicked "Upgrade to keep your data").
+    // Read from URL params first (Google OAuth carry-through), then localStorage
+    // fallback (email/password login, or returning post-onboarding).
     const params = new URLSearchParams(window.location.search);
     const fromDemo = params.get('from') === 'demo';
-    const demoToken = params.get('token');
+    const urlToken = params.get('token');
+    const localToken = localStorage.getItem(LS_PENDING_DEMO_TOKEN);
+    const demoToken = urlToken || localToken || null;
 
     // Clean up demo params from the URL immediately (before async work)
-    if (fromDemo && demoToken) {
+    if (fromDemo && urlToken) {
       window.history.replaceState({}, '', window.location.pathname);
     }
 
     // Check if user has completed onboarding (has restaurant_config)
     const checkOnboardingStatus = async () => {
       try {
-        // Fire-and-forget demo conversion — don't block login on success/failure
-        if (fromDemo && demoToken) {
-          authFetch('/api/demo?action=convert', {
-            method: 'POST',
-            body: JSON.stringify({ token: demoToken }),
-          }).catch(() => {
-            // Conversion failure is non-fatal — user still gets logged in
-          });
-        }
-
         const { data, error } = await supabase
           .schema('restaurant')
           .from('restaurant_config')
@@ -62,13 +57,24 @@ export default function Welcome() {
           .single();
 
         if (!error && data) {
-          // User has completed onboarding → dashboard
-          const destination = fromDemo && demoToken
+          // User has completed onboarding → attempt demo conversion if pending
+          if (demoToken) {
+            // Fire-and-forget — clear localStorage regardless of outcome
+            authFetch('/api/demo?action=convert', {
+              method: 'POST',
+              body: JSON.stringify({ token: demoToken }),
+            })
+              .catch(() => {})
+              .finally(() => localStorage.removeItem(LS_PENDING_DEMO_TOKEN));
+          }
+          const destination = demoToken
             ? '/host-dashboard/simple?converted=demo'
             : '/host-dashboard/simple';
           navigate(destination, { replace: true });
         } else {
-          // No restaurant config → needs onboarding
+          // No restaurant config → needs onboarding.
+          // Keep pending_demo_token in localStorage so we retry convert after
+          // onboarding completes and the user returns here.
           navigate('/onboarding', { replace: true });
         }
       } catch {

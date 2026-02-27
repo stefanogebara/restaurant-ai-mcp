@@ -31,3 +31,6 @@ export const LS_STRIPE_CUSTOMER_ID = 'stripe_customer_id';
 
 /** Subscription plan name set after successful subscription */
 export const LS_SUBSCRIPTION_PLAN = 'subscription_plan';
+
+/** Demo token saved so it survives auth redirects and email/password login */
+export const LS_PENDING_DEMO_TOKEN = 'pending_demo_token';
