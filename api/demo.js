@@ -209,21 +209,30 @@ async function handleCreate(req, res) {
     business_hours[d] = { open_time, close_time, is_open: true };
   });
 
+  // Build reservation_settings JSONB (where max_party_size etc. live)
+  const reservation_settings = {
+    max_party_size: parsedMaxParty,
+    min_party_size: 1,
+    advance_booking_days: parsedAdvanceDays,
+    allow_waitlist: true,
+    buffer_time_minutes: 15,
+    require_credit_card: false,
+    cancellation_policy: cancellation_policy || 'Free cancellation up to 2 hours before reservation',
+    special_notes: custom_policy || '',
+  };
+
   // Insert demo restaurant config
   const { data: demoConfig, error: insertError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
     .insert({
       restaurant_name: restaurant_name.trim(),
-      restaurant_type: cuisine_type.trim(),
+      restaurant_type: 'other',
       city: city.trim(),
       country: country || null,
       slug,
       business_hours,
-      max_party_size: parsedMaxParty,
-      advance_booking_days: parsedAdvanceDays,
-      cancellation_policy: cancellation_policy || null,
-      custom_policy: custom_policy || null,
+      reservation_settings,
       is_active: true,
       onboarding_completed: true,
       is_demo: true,
@@ -369,14 +378,10 @@ async function handleConvert(req, res) {
     .from('restaurant_config')
     .update({
       restaurant_name: demoConfig.restaurant_name,
-      restaurant_type: demoConfig.restaurant_type,
       city: demoConfig.city,
       country: demoConfig.country,
       business_hours: demoConfig.business_hours,
-      max_party_size: demoConfig.max_party_size,
-      advance_booking_days: demoConfig.advance_booking_days,
-      cancellation_policy: demoConfig.cancellation_policy,
-      custom_policy: demoConfig.custom_policy,
+      reservation_settings: demoConfig.reservation_settings,
     })
     .eq('id', real_restaurant_id);
 
