@@ -110,7 +110,7 @@ async function handleGetCode(req, res) {
 }
 
 async function handleTrack(req, res) {
-  const code = req.body?.code || req.query.code;
+  const code = req.body?.code || req.body?.referral_code || req.query.code;
   if (!code || code.length > 20) {
     return res.status(400).json({ success: false, message: 'Missing or invalid code' });
   }

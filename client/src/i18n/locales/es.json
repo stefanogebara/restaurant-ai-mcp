@@ -77,7 +77,7 @@
       "reservations": "Reservas de Hoy",
       "tables": "Mesas Disponibles",
       "guests": "Comensales Esperados",
-      "aiCalls": "Mesas Activas",
+      "aiCalls": "Grupos Activos",
       "seated": "sentados",
       "capacity": "capacidad",
       "waiting": "en espera"
@@ -129,6 +129,7 @@
     "confirmation": "Confirmación",
     "editReservation": "Editar Reserva",
     "cancelReservation": "Cancelar Reserva",
+    "reservationCancelled": "Esta reserva ha sido cancelada",
     "lookUpAnother": "Buscar otra reserva",
     "saving": "Guardando...",
     "saveChanges": "Guardar Cambios"

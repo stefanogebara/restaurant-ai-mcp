@@ -135,12 +135,12 @@ Restaurant config lives in `restaurant.restaurant_config` schema.
 | Route | Page | Description |
 |-------|------|-------------|
 | `/host-dashboard/simple` | Dashboard | Main unified dashboard (stats, tables, reservations, waitlist) |
-| `/host-dashboard/legacy` | SimpleDashboard | Legacy simple view |
 | `/host-dashboard/reports` | Weekly Reports | Date-range reports with metrics |
-| `/host-dashboard/segovia` | Segovia Insights | AI-powered insights |
 | `/host-dashboard/calls` | Call Tracking | AI agent call dashboard |
 | `/host-dashboard/tables` | Table Config | Table setup and management |
+| `/host-dashboard/floor-plan` | Floor Plan Editor | Visual table layout editor |
 | `/host-dashboard/voice-settings` | Voice Settings | AI voice configuration |
+| `/host-dashboard/whatsapp` | WhatsApp Settings | WhatsApp integration setup |
 | `/analytics` | Analytics Dashboard | Full analytics view |
 
 ### Auth/Setup Pages

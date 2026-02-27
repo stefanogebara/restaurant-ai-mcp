@@ -1,4 +1,4 @@
-const { getReservations, getRestaurantInfo } = require('./_lib/supabase');
+const { getReservations, getRestaurantInfo, supabaseAdmin } = require('./_lib/supabase');
 const { verifyAuth } = require('./_lib/auth');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('WaitTime');
@@ -45,7 +45,18 @@ module.exports = async (req, res) => {
       });
     }
 
-    const capacity = restaurant.fields.Capacity || 60;
+    // Derive total capacity from active tables (restaurant_config has no capacity column)
+    let capacity = 60;
+    if (supabaseAdmin) {
+      const { data: tables } = await supabaseAdmin
+        .from('tables')
+        .select('capacity')
+        .eq('restaurant_id', restaurantId)
+        .eq('is_active', true);
+      if (tables && tables.length > 0) {
+        capacity = tables.reduce((sum, t) => sum + (t.capacity || 0), 0) || 60;
+      }
+    }
 
     // Get today's reservations
     const today = new Date().toISOString().split('T')[0];

@@ -242,7 +242,7 @@ module.exports = async (req, res) => {
 
         logger.info(`Saved agent_id to restaurant_config for restaurant: ${restaurant_id}`);
       } catch (dbError) {
-        logger.warn('Could not save agent_id to restaurant_config:', dbError.message);
+        logger.error('Failed to save agent_id to restaurant_config — agent exists in ElevenLabs but is unlinked:', dbError.message);
       }
     }
 

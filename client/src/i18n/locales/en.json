@@ -129,6 +129,7 @@
     "confirmation": "Confirmation",
     "editReservation": "Edit Reservation",
     "cancelReservation": "Cancel Reservation",
+    "reservationCancelled": "This reservation has been cancelled",
     "lookUpAnother": "Look up another reservation",
     "saving": "Saving...",
     "saveChanges": "Save Changes"

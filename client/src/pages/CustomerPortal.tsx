@@ -240,7 +240,7 @@ export default function CustomerPortal() {
                 <div className="px-6 py-5">
                   {reservation.status === 'Cancelled' && (
                     <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4 text-red-700 text-sm font-medium">
-                      This reservation has been cancelled
+                      {t('reservations.reservationCancelled', 'This reservation has been cancelled')}
                     </div>
                   )}
                   {!isModifying ? (

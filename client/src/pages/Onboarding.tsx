@@ -45,7 +45,7 @@ export default function Onboarding() {
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
     customer_email: customerEmail,
     restaurant_id: '',
-    plan: 'Professional',
+    plan: 'Starter',
     // Step 1
     restaurant_name: '',
     restaurant_type: '',
@@ -136,7 +136,7 @@ export default function Onboarding() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ referral_code: pendingReferralCode }),
         }).catch((err) => {
-          console.warn('[Onboarding] Failed to attach referral code:', err);
+          /* best-effort — referral attach is non-critical */
         });
       }
 
@@ -159,19 +159,19 @@ export default function Onboarding() {
           }
           setTimeout(() => {
             navigate('/host-dashboard/simple');
-          }, 10000);
+          }, 3000);
         })
         .catch(() => {
           /* best-effort */
           setTimeout(() => {
             navigate('/host-dashboard/simple');
-          }, 10000);
+          }, 3000);
         });
 
       setShowSuccessModal(true);
     } catch (err: unknown) {
       showError(err instanceof Error ? err.message : 'Failed to complete onboarding. Please try again.');
-      console.error('[Onboarding Error]', err);
+      /* error surfaced via showError toast above */
     } finally {
       setIsSubmitting(false);
     }

@@ -86,11 +86,13 @@ module.exports = async (req, res) => {
 
       churnRiskScore = Math.max(0, Math.min(100, churnRiskScore));
 
-      // Determine if tier should change to at_risk
+      // Determine tier changes (both upgrade and downgrade)
       let newTier = customer.customer_tier;
       if (churnRiskScore > 70 && customer.customer_tier !== 'at_risk') {
         newTier = 'at_risk';
         atRiskCount++;
+      } else if (churnRiskScore <= 40 && customer.customer_tier === 'at_risk') {
+        newTier = 'regular';
       }
 
       // Update the record
