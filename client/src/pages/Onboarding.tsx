@@ -135,7 +135,7 @@ export default function Onboarding() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ referral_code: pendingReferralCode }),
-        }).catch((err) => {
+        }).catch(() => {
           /* best-effort — referral attach is non-critical */
         });
       }

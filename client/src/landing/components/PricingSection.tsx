@@ -12,7 +12,7 @@ export default function PricingSection() {
   const { t } = useTranslation();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { showToast } = useToast();
+  const toast = useToast();
 
   const scrollToContact = () => {
     const element = document.getElementById('contact');
@@ -57,7 +57,7 @@ export default function PricingSection() {
       window.location.href = url;
     } catch (error) {
       console.error('Error creating checkout session:', error);
-      showToast('Failed to start checkout. Please try again.', 'error');
+      toast.error('Failed to start checkout. Please try again.');
       setLoadingPlan(null);
     }
   };
