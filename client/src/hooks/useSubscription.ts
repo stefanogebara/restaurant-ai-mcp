@@ -63,9 +63,7 @@ export function useSubscription(options: UseSubscriptionOptions = {}) {
         return { has_subscription: false };
       }
 
-      const response = await authFetch(
-        `${apiUrl}/api/subscription-status?email=${encodeURIComponent(queryEmail)}`
-      );
+      const response = await authFetch(`${apiUrl}/api/subscription-status`);
 
       if (!response.ok) {
         if (response.status === 404) {

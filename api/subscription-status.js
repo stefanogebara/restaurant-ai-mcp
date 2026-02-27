@@ -33,13 +33,13 @@ module.exports = async (req, res) => {
   try {
     const restaurantId = req.user.restaurant_id;
 
-    // Get customer email from query params
-    const customerEmail = req.query.email;
+    // Get customer email from JWT (never from URL — avoids PII in logs)
+    const customerEmail = req.user.email;
 
     if (!customerEmail) {
       return res.status(400).json({
-        error: 'Missing email parameter',
-        message: 'Please provide customer email in query string'
+        error: 'Missing email',
+        message: 'User email not found in auth token'
       });
     }
 
