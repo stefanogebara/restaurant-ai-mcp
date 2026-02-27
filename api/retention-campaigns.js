@@ -56,12 +56,13 @@ async function handleCreate(req, res) {
 
     // Send the campaign email if channel is email
     if (data.channel === 'email') {
-      // Look up customer email from customer_history
+      // Look up customer email from customer_ltv (has email from reservation data)
       const { data: customer } = await supabaseAdmin
         .schema('restaurant')
-        .from('customer_history')
+        .from('customer_ltv')
         .select('customer_email, customer_name')
         .eq('customer_id', customer_id)
+        .eq('restaurant_id', req.user.restaurant_id)
         .single();
 
       if (customer?.customer_email) {
