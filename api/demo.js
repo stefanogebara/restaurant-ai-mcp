@@ -39,6 +39,22 @@ function getResendClient() {
 const FROM_ADDRESS = 'Seatable <bookings@seatable.one>';
 
 // ---------------------------------------------------------------------------
+// Fake table seed data
+// ---------------------------------------------------------------------------
+function buildFakeTables(restaurantId) {
+  return [
+    { restaurant_id: restaurantId, table_number: 1,  capacity: 2, location: 'window',  status: 'available', is_active: true },
+    { restaurant_id: restaurantId, table_number: 2,  capacity: 2, location: 'window',  status: 'available', is_active: true },
+    { restaurant_id: restaurantId, table_number: 3,  capacity: 4, location: 'indoor',  status: 'available', is_active: true },
+    { restaurant_id: restaurantId, table_number: 4,  capacity: 4, location: 'indoor',  status: 'available', is_active: true },
+    { restaurant_id: restaurantId, table_number: 5,  capacity: 4, location: 'indoor',  status: 'available', is_active: true },
+    { restaurant_id: restaurantId, table_number: 6,  capacity: 6, location: 'indoor',  status: 'available', is_active: true },
+    { restaurant_id: restaurantId, table_number: 7,  capacity: 6, location: 'terrace', status: 'available', is_active: true },
+    { restaurant_id: restaurantId, table_number: 8,  capacity: 8, location: 'terrace', status: 'available', is_active: true },
+  ];
+}
+
+// ---------------------------------------------------------------------------
 // Fake reservation seed data
 // ---------------------------------------------------------------------------
 const FAKE_NAMES = [
@@ -260,6 +276,22 @@ async function handleCreate(req, res) {
   }
 
   const restaurantId = demoConfig.id;
+
+  // Seed fake tables (fire best-effort — don't fail if it errors)
+  try {
+    const fakeTables = buildFakeTables(restaurantId);
+    const { error: tableError } = await supabaseAdmin
+      .from('tables')
+      .insert(fakeTables);
+
+    if (tableError) {
+      logger.warn('Failed to seed fake tables (non-fatal):', tableError.message);
+    } else {
+      logger.info(`Seeded ${fakeTables.length} fake tables for demo ${restaurantId}`);
+    }
+  } catch (err) {
+    logger.warn('Exception seeding fake tables (non-fatal):', err.message);
+  }
 
   // Seed fake reservations (fire best-effort — don't fail if it errors)
   try {
