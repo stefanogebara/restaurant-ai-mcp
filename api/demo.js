@@ -32,7 +32,7 @@ function getResendClient() {
   return resendClient;
 }
 
-const FROM_ADDRESS = 'Seatable <bookings@seatable.io>';
+const FROM_ADDRESS = 'Seatable <bookings@seatable.one>';
 
 // ---------------------------------------------------------------------------
 // Fake reservation seed data
