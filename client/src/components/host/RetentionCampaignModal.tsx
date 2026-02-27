@@ -4,7 +4,7 @@ import type { IconName } from '../common/ThiingsIcon';
 
 interface Customer {
   customer_id: string;
-  customer_name?: string;
+  customer_name?: string | null;
   customer_phone?: string;
   customer_email?: string;
   churn_risk_score: number;
