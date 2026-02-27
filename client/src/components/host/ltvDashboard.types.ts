@@ -1,5 +1,6 @@
 export interface Customer {
   customer_id: string;
+  customer_name: string | null;
   total_visits: number;
   total_revenue: number;
   avg_revenue_per_visit: number;

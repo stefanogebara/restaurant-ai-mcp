@@ -50,7 +50,7 @@ function SendModal({ customer, onClose }: SendModalProps) {
           <div className="flex items-center gap-3 p-3 bg-soft-gray rounded-xl">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-burgundy to-rose-700 flex-shrink-0" />
             <div>
-              <div className="text-sm font-semibold text-deep-charcoal">{customer.customer_id}</div>
+              <div className="text-sm font-semibold text-deep-charcoal">{customer.customer_name || customer.customer_id}</div>
               <div className="text-xs text-warm-stone">Churn risk: {customer.churn_risk_score}% · {customer.total_visits} visits</div>
             </div>
           </div>
@@ -113,7 +113,7 @@ function CustomerRow({ customer, showChurn, onSend }: CustomerRowProps) {
     <div className="flex items-center gap-3 py-2.5 border-b border-border-gray last:border-0">
       <div className="w-7 h-7 rounded-full bg-gradient-to-br from-stone-200 to-stone-300 flex-shrink-0" />
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-deep-charcoal truncate">{customer.customer_id}</div>
+        <div className="text-sm font-medium text-deep-charcoal truncate">{customer.customer_name || customer.customer_id}</div>
         <div className="text-xs text-warm-stone">{customer.total_visits} visits · Last: {lastVisit}</div>
       </div>
       {showChurn && (

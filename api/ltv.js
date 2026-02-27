@@ -169,7 +169,7 @@ async function handleList(req, res) {
 
     let query = ltvDb()
       .from('customer_ltv')
-      .select('customer_id, total_visits, total_revenue, avg_revenue_per_visit, customer_tier, lifetime_value, churn_risk_score, last_visit_date, predicted_next_visit_date, favorite_time_slot, favorite_day')
+      .select('customer_id, customer_name, total_visits, total_revenue, avg_revenue_per_visit, customer_tier, lifetime_value, churn_risk_score, last_visit_date, predicted_next_visit_date, favorite_time_slot, favorite_day')
       .eq('restaurant_id', restaurantId)
       .order('lifetime_value', { ascending: false })
       .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
