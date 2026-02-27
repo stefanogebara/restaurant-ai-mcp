@@ -297,22 +297,44 @@ export default function VoiceSettingsPage() {
           {waStatus && (
             <div className="bg-white border border-border-gray rounded-2xl p-6">
               <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider mb-3">WhatsApp Status</h2>
-              {!waStatus.meta.configured ? (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Not configured</span>
-              ) : waStatus.meta.approved ? (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  Connected{waStatus.meta.phone_number && ` — ${waStatus.meta.phone_number}`}
-                </span>
-              ) : (
-                <>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                    {waStatus.meta.error ? 'Error' : 'Pending Approval'}
+              {waStatus.meta.approved ? (
+                <div className="space-y-1">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                    Connected
                   </span>
-                  {waStatus.meta.error && <p className="text-xs text-red-600 mt-1">{waStatus.meta.error}</p>}
-                  <a href="https://business.facebook.com" target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline block mt-2">
+                  {waStatus.meta.phone_number && (
+                    <p className="text-sm text-deep-charcoal mt-2">
+                      <span className="text-warm-stone">Phone:</span> {waStatus.meta.phone_number}
+                    </p>
+                  )}
+                  {waStatus.meta.quality_rating && (
+                    <p className="text-sm text-deep-charcoal">
+                      <span className="text-warm-stone">Quality rating:</span> {waStatus.meta.quality_rating}
+                    </p>
+                  )}
+                </div>
+              ) : waStatus.meta.configured && !waStatus.meta.error ? (
+                <div className="space-y-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
+                    Pending Approval
+                  </span>
+                  <a href="https://business.facebook.com/" target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline block">
                     Check Meta Business Manager →
                   </a>
-                </>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                    Not Configured
+                  </span>
+                  {waStatus.meta.error && <p className="text-xs text-red-600">{waStatus.meta.error}</p>}
+                  <a href="https://business.facebook.com/" target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline block">
+                    Check Meta Business Manager →
+                  </a>
+                </div>
               )}
             </div>
           )}

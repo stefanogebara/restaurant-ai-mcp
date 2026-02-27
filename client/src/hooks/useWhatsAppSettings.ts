@@ -18,7 +18,7 @@ export interface WhatsAppIntegrationStatus {
 
 export function useWhatsAppIntegrationStatus() {
   return useQuery({
-    queryKey: ['whatsappIntegrationStatus'],
+    queryKey: ['whatsapp-status'],
     queryFn: async (): Promise<WhatsAppIntegrationStatus> => {
       const response = await authFetch('/api/whatsapp-status');
       if (!response.ok) throw new Error('Failed to load WhatsApp integration status');
