@@ -194,7 +194,7 @@ module.exports = async (req, res) => {
       );
 
       if (sendResult.success) {
-        logger.info(` ✓ Reminder sent to ${customer_name} (${customer_phone})`);
+        logger.info(`Reminder sent to ${customer_name} (${customer_phone})`);
         results.sent++;
         results.details.push({
           reservation_id,
@@ -203,7 +203,7 @@ module.exports = async (req, res) => {
           messageId: sendResult.messageId
         });
       } else {
-        logger.error(` ✗ Failed to send reminder to ${customer_name}:`, sendResult.error);
+        logger.error(`Failed to send reminder to ${customer_name}:`, sendResult.error);
         results.failed++;
         results.details.push({
           reservation_id,
