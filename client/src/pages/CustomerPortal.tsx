@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
-import { authFetch } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import { useVoiceSettings } from '../hooks/useVoiceSettings';
 
@@ -57,7 +56,7 @@ export default function CustomerPortal() {
           ? { reservation_id: currentValue }
           : { customer_phone: currentValue }),
       });
-      const response = await authFetch(`/api/reservations?${params}`);
+      const response = await fetch(`/api/customer-reservation?${params}`);
       const data = await response.json();
       if (!data.success || !data.reservation) throw new Error(data.message || 'Reservation not found');
       return data.reservation;
@@ -73,11 +72,12 @@ export default function CustomerPortal() {
 
   const modifyMutation = useMutation({
     mutationFn: async () => {
-      const response = await authFetch('/api/reservations?action=modify', {
+      const response = await fetch('/api/customer-reservation?action=modify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           reservation_id: reservation!.reservation_id,
+          customer_phone: reservation!.customer_phone,
           date: modifiedData.date,
           time: modifiedData.time,
           party_size: modifiedData.party_size,
@@ -100,10 +100,14 @@ export default function CustomerPortal() {
 
   const cancelMutation = useMutation({
     mutationFn: async () => {
-      const response = await authFetch(
-        `/api/reservations?action=cancel&reservation_id=${reservation!.reservation_id}`,
-        { method: 'POST' }
-      );
+      const response = await fetch('/api/customer-reservation?action=cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reservation_id: reservation!.reservation_id,
+          customer_phone: reservation!.customer_phone,
+        }),
+      });
       const data = await response.json();
       if (!data.success) throw new Error(data.message || 'Failed to cancel reservation');
       return data;
