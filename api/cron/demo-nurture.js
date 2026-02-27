@@ -21,7 +21,7 @@ const BASE_URL = process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app
 
 // Resend free tier: 10 req/s burst limit. Add 100ms delay between sends to stay safe.
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const FROM_ADDRESS = 'Seatable <bookings@seatable.io>';
+const FROM_ADDRESS = 'Seatable <bookings@seatable.one>';
 
 // Lazy-init Resend client (same pattern as api/demo.js)
 let resendClient = null;
