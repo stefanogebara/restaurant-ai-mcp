@@ -63,14 +63,41 @@ async function getAllServiceRecordsData(restaurantId) {
   }
 }
 
-async function calculateAnalytics(restaurantId, period = '30d') {
+function parseDateRange(period, startDate, endDate) {
+  const now = new Date();
+  const today = new Date(now.toISOString().split('T')[0]);
+  if (startDate && endDate) {
+    return { from: new Date(startDate), to: new Date(endDate + 'T23:59:59Z') };
+  }
+  if (period === 'today') {
+    return { from: today, to: new Date(today.getTime() + 86399999) };
+  }
+  if (period === '7d') {
+    return { from: new Date(now.getTime() - 7 * 86400000), to: now };
+  }
+  if (period === '90d') {
+    return { from: new Date(now.getTime() - 90 * 86400000), to: now };
+  }
+  if (period === 'this_month') {
+    return { from: new Date(now.getFullYear(), now.getMonth(), 1), to: now };
+  }
+  if (period === 'last_month') {
+    const first = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const last  = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+    return { from: first, to: last };
+  }
+  // default 30d
+  return { from: new Date(now.getTime() - 30 * 86400000), to: now };
+}
+
+async function calculateAnalytics(restaurantId, period = '30d', startDate = null, endDate = null, includeExport = false) {
   const results = await Promise.all([
     getAllReservations(restaurantId),
     getAllServiceRecordsData(restaurantId),
     getAllTables(restaurantId),
     getActiveServiceRecords(restaurantId)
   ]);
-  
+
   const reservationsResult = results[0];
   const serviceRecordsResult = results[1];
   const tablesResult = results[2];
@@ -86,20 +113,11 @@ async function calculateAnalytics(restaurantId, period = '30d') {
   const activeParties = activePartiesResult.service_records || [];
 
   const now = new Date();
-  let cutoffDate;
-  if (period === 'today') {
-    // Start of today (midnight UTC)
-    cutoffDate = new Date(now.toISOString().split('T')[0]);
-  } else if (period === '7d') {
-    cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  } else {
-    // Default: 30d
-    cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  }
+  const { from, to } = parseDateRange(period, startDate, endDate);
 
   const recentReservations = reservations.filter(r => {
     const resDate = new Date(r.fields.Date || r.createdTime);
-    return resDate >= cutoffDate;
+    return resDate >= from && resDate <= to;
   });
 
   const completedServiceRecords = serviceRecords.filter(r =>
@@ -173,14 +191,15 @@ async function calculateAnalytics(restaurantId, period = '30d') {
     };
   });
 
-  const last7Days = [];
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - (6 - i));
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    last7Days.push({
+  const msPerDay = 86400000;
+  const totalDays = Math.min(Math.ceil((to - from) / msPerDay) + 1, 90);
+  const dowNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dailyTrend = [];
+  for (let i = 0; i < totalDays; i++) {
+    const date = new Date(from.getTime() + i * msPerDay);
+    dailyTrend.push({
       date: date.toISOString().split('T')[0],
-      dayName: days[date.getDay()],
+      dayName: dowNames[date.getDay()],
       reservations: 0,
       completed_services: 0
     });
@@ -188,18 +207,18 @@ async function calculateAnalytics(restaurantId, period = '30d') {
 
   recentReservations.forEach(r => {
     const resDate = new Date(r.fields.Date).toISOString().split('T')[0];
-    const dayObj = last7Days.find(d => d.date === resDate);
-    if (dayObj) dayObj.reservations++;
+    const bucket = dailyTrend.find(d => d.date === resDate);
+    if (bucket) bucket.reservations++;
   });
 
   completedServiceRecords.forEach(r => {
     if (!r.fields['Departed At']) return;
     const depDate = new Date(r.fields['Departed At']).toISOString().split('T')[0];
-    const dayObj = last7Days.find(d => d.date === depDate);
-    if (dayObj) dayObj.completed_services++;
+    const bucket = dailyTrend.find(d => d.date === depDate);
+    if (bucket) bucket.completed_services++;
   });
 
-  return {
+  const result = {
     success: true,
     analytics: {
       overview: {
@@ -215,9 +234,22 @@ async function calculateAnalytics(restaurantId, period = '30d') {
       reservations_by_day: dayOfWeekCounts,
       reservations_by_time_slot: timeSlotCounts,
       table_utilization: tableUtilization.sort((a, b) => b.times_used - a.times_used),
-      daily_trend: last7Days
+      daily_trend: dailyTrend
     }
   };
+
+  if (includeExport) {
+    result.analytics.raw_reservations = recentReservations.map(r => ({
+      date: r.fields.Date,
+      time: r.fields.Time,
+      customer_name: r.fields['Customer Name'],
+      party_size: r.fields['Party Size'],
+      status: r.fields.Status,
+      reservation_id: r.fields['Reservation ID'],
+    }));
+  }
+
+  return result;
 }
 
 module.exports = async (req, res) => {
@@ -259,8 +291,11 @@ module.exports = async (req, res) => {
 
   try {
     const restaurantId = req.user.restaurant_id;
-    const period = req.query.period || '30d';
-    const result = await calculateAnalytics(restaurantId, period);
+    const period     = req.query.period || '30d';
+    const startDate  = req.query.start_date || null;
+    const endDate    = req.query.end_date   || null;
+    const incExport  = req.query.include_export === 'true';
+    const result = await calculateAnalytics(restaurantId, period, startDate, endDate, incExport);
     return res.status(200).json(result);
   } catch (error) {
     logger.error('Analytics error:', error);

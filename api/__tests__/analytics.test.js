@@ -166,7 +166,7 @@ describe('Analytics: Data response', () => {
     expect(responseData.analytics.daily_trend).toBeDefined();
   });
 
-  test('daily_trend has 7 entries', async () => {
+  test('daily_trend has entries matching the period (default 30d = ~31 days)', async () => {
     verifyAuth.mockResolvedValueOnce({
       user: { restaurant_id: 'rest-1', email: 'test@test.com' },
     });
@@ -175,7 +175,9 @@ describe('Analytics: Data response', () => {
     await handler(req, res);
 
     const responseData = res.json.mock.calls[0][0];
-    expect(responseData.analytics.daily_trend.length).toBe(7);
+    // 30d period produces 31 buckets (30 days ago through today)
+    expect(responseData.analytics.daily_trend.length).toBeGreaterThanOrEqual(30);
+    expect(responseData.analytics.daily_trend.length).toBeLessThanOrEqual(31);
   });
 
   test('uses period query param', async () => {
