@@ -41,7 +41,8 @@ export default function ReservationSettingsPanel({ advanceBookingDays, bufferTim
         <div className="px-5 py-4 space-y-4 bg-white">
           <div>
             <label htmlFor="advance_booking_days" className="block text-sm font-semibold text-deep-charcoal mb-2">
-              How far in advance can customers book?
+              How far in advance can customers book?{' '}
+              <span title="How far ahead guests can book online. E.g. 30 = up to 30 days from today." className="text-muted-stone cursor-help font-normal">ⓘ</span>
             </label>
             <select
               id="advance_booking_days"
@@ -59,7 +60,8 @@ export default function ReservationSettingsPanel({ advanceBookingDays, bufferTim
 
           <div>
             <label htmlFor="buffer_time" className="block text-sm font-semibold text-deep-charcoal mb-2">
-              Buffer time between reservations
+              Buffer time between reservations{' '}
+              <span title="Time blocked after each reservation for staff to reset the table before the next guests are seated." className="text-muted-stone cursor-help font-normal">ⓘ</span>
             </label>
             <select
               id="buffer_time"

@@ -29,7 +29,7 @@ const RESTAURANT_TYPES = [
   'Other',
 ];
 
-export default function Step1Welcome({ data, updateData, onNext }: OnboardingStepProps) {
+export default function Step1Welcome({ data, updateData, onNext, isDemoLoading }: OnboardingStepProps & { isDemoLoading?: boolean }) {
   const { t } = useTranslation();
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -66,10 +66,12 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
       country: country?.name || '',
       language: languageCode,
     });
+    if (errors.country) setErrors((prev) => ({ ...prev, country: '' }));
   };
 
   const handleCityChange = (city: string) => {
     updateData({ city });
+    if (errors.city) setErrors((prev) => ({ ...prev, city: '' }));
   };
 
   return (
@@ -82,6 +84,12 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
       <div>
         <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">What's your restaurant called?</h2>
         <p className="text-stone-gray text-sm">Tell us a bit about your restaurant to get started</p>
+        {isDemoLoading && (
+          <div className="flex items-center gap-2 mt-2 text-sm text-muted-stone">
+            <div className="w-3 h-3 border border-muted-stone border-t-transparent rounded-full animate-spin" />
+            Loading your demo data…
+          </div>
+        )}
       </div>
 
       {/* Restaurant Name */}
@@ -94,6 +102,8 @@ export default function Step1Welcome({ data, updateData, onNext }: OnboardingSte
           type="text"
           value={data.restaurant_name}
           onChange={(e) => updateData({ restaurant_name: e.target.value })}
+          onFocus={() => setErrors((prev) => ({ ...prev, restaurant_name: '' }))}
+          onBlur={(e) => { if (!e.target.value.trim()) setErrors((prev) => ({ ...prev, restaurant_name: 'Restaurant name is required' })); }}
           placeholder="e.g. La Bella Vista"
           className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
         />

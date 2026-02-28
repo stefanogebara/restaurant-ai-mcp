@@ -10,7 +10,7 @@
  * - Average dining duration
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
 import PhoneInput from '../common/PhoneInput';
@@ -72,11 +72,14 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
   const [hoursErrors, setHoursErrors] = useState<Record<string, string>>({});
   const [selectedServiceType, setSelectedServiceType] = useState<ServiceType>('lunch_dinner');
   const [useMultiplePeriods, setUseMultiplePeriods] = useState(false);
-  const phoneValidityRef = useRef(false);
 
   const handlePhoneChange = useCallback((fullNumber: string, isValid: boolean) => {
     updateData({ phone_number: fullNumber });
-    phoneValidityRef.current = isValid;
+    if (!isValid && fullNumber.length > 4) {
+      setErrors((prev) => ({ ...prev, phone_number: 'Please enter a valid phone number' }));
+    } else {
+      setErrors((prev) => ({ ...prev, phone_number: '' }));
+    }
   }, [updateData]);
 
   // Apply service preset when selected
@@ -110,8 +113,8 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
 
     if (!data.phone_number.trim()) {
       newErrors.phone_number = 'Phone number is required';
-    } else if (!phoneValidityRef.current) {
-      newErrors.phone_number = 'Please enter a valid phone number';
+    } else if (errors.phone_number) {
+      newErrors.phone_number = errors.phone_number;
     }
     if (!data.email.trim()) {
       newErrors.email = 'Email is required';
@@ -178,7 +181,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
       <PhoneInput
         value={data.phone_number}
         onChange={handlePhoneChange}
-        defaultCountry="ES"
+        defaultCountry={data.country_code?.toUpperCase() || 'ES'}
         label="Restaurant Phone Number"
         required
         error={errors.phone_number}
@@ -194,6 +197,15 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
           type="email"
           value={data.email}
           onChange={(e) => updateData({ email: e.target.value })}
+          onFocus={() => setErrors((prev) => ({ ...prev, email: '' }))}
+          onBlur={(e) => {
+            const val = e.target.value.trim();
+            if (!val) {
+              setErrors((prev) => ({ ...prev, email: 'Email is required' }));
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+              setErrors((prev) => ({ ...prev, email: 'Invalid email format' }));
+            }
+          }}
           placeholder="contact@restaurant.com"
           className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
         />
@@ -273,9 +285,9 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
           <button
             type="button"
             onClick={copyHoursToAll}
-            className="px-3 py-1 text-xs bg-soft-gray hover:bg-border-gray text-stone-gray rounded-xl transition-colors"
+            className="text-xs text-burgundy hover:underline font-medium"
           >
-            Copy Monday to all days
+            Copy Monday to all open days
           </button>
         </div>
 

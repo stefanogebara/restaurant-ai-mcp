@@ -339,4 +339,45 @@ Push to `main` branch triggers automatic Vercel deployment.
 
 ---
 
-**Last Updated**: February 22, 2026
+**Last Updated**: February 28, 2026
+
+---
+
+## Current Roadmap
+
+### Phase 1 — Foundation & Quality ✅ COMPLETE
+- [x] React Query v5 migration
+- [x] TypeScript strict — eliminate all `any` types
+- [x] A11y sweep — role=dialog, aria-modal, type=button across all components
+- [x] Component splitting — all files under 400-line limit
+- [x] UX/GDPR/product audit — 18 issues resolved (P0–P3)
+- [x] Favicon, PWA manifest, og-image
+- [x] i18n — EN + ES translations complete
+- [x] Multi-tenant isolation — restaurant_id scoping on all queries
+
+### Phase 2 — Core Product Stability ✅ COMPLETE
+- [x] Security audit remediation (H-01 cross-tenant, H-02 churn % bug, M-01 PII)
+- [x] Cron jobs hardened — timezone, cross-tenant isolation, rate limiting
+- [x] Customer portal — public endpoint (no JWT), branding
+- [x] WhatsApp status card in Voice Settings (connected/pending/not configured)
+- [x] AI Insights dashboard — unified command centre
+- [x] Customer Intelligence — LTV, churn risk, retention campaigns
+- [x] Churn cron — full LTV recalculation daily
+- [x] Email sending domain → seatable.one
+
+### Phase 3 — Demo & Conversion Flow ✅ COMPLETE
+- [x] Demo setup form (`/demo/setup`) — creates personalised demo restaurant
+- [x] Demo dashboard — seeded tables, reservations, AI voice agent
+- [x] Demo banner — "7 days left · Upgrade to keep your data"
+- [x] Demo → signup conversion — token persists through OAuth redirects
+- [x] Post-conversion — pre-fills onboarding from demo session
+- [x] Post-conversion — welcome toast on first dashboard load
+- [x] Bug fix — normalize cuisine_type to valid restaurant_type enum
+
+### Phase 4 — Growth & Retention 🔲 NEXT
+- [ ] Onboarding polish — smoother 6-step wizard, progress indicator
+- [ ] WhatsApp integration end-to-end test (Meta Cloud + Twilio paths)
+- [ ] Voice agent — test full reservation booking flow via ElevenLabs
+- [ ] Analytics dashboard — date-range reports, export CSV
+- [ ] Demo nurture email sequence — drip after demo creation
+- [ ] Referral / invite flow for restaurant owners

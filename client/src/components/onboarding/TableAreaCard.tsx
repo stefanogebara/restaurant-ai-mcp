@@ -65,7 +65,10 @@ export default function TableAreaCard({
                       onChange={(e) => updateTableConfig(areaIndex, capacity, shape, 'is_fixed_seating', e.target.checked)}
                       className="w-4 h-4 rounded border-border-gray text-burgundy focus:ring-burgundy"
                     />
-                    <span className="text-xs text-stone-gray">Fixed seating</span>
+                    <span className="text-xs text-stone-gray">
+                      Fixed seating{' '}
+                      <span title="Tick if this table cannot be moved or combined with adjacent tables." className="cursor-help">ⓘ</span>
+                    </span>
                   </div>
                 </div>
               ))}

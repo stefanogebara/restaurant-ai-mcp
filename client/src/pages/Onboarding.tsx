@@ -37,7 +37,10 @@ export default function Onboarding() {
   const showSubscribeBanner = searchParams.get('reason') === 'subscribe';
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
+  const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [countdown, setCountdown] = useState(5);
   const [ownReferral, setOwnReferral] = useState<{ code: string; url: string } | null>(null);
 
   const customerEmail = user?.email || localStorage.getItem(LS_CUSTOMER_EMAIL) || '';
@@ -93,6 +96,7 @@ export default function Onboarding() {
     if (!demoToken) return;
 
     const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
+    setIsDemoLoading(true);
     fetch(`${apiBase}/demo?action=session&token=${encodeURIComponent(demoToken)}`)
       .then((r) => r.json())
       .then((data) => {
@@ -107,7 +111,8 @@ export default function Onboarding() {
         }));
         setIsPreFilledFromDemo(true);
       })
-      .catch(() => { /* non-fatal — user fills in manually */ });
+      .catch(() => { /* non-fatal — user fills in manually */ })
+      .finally(() => { setIsDemoLoading(false); });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Persist progress
@@ -115,6 +120,18 @@ export default function Onboarding() {
     localStorage.setItem('onboarding_data', JSON.stringify(onboardingData));
     localStorage.setItem('onboarding_step', currentStep.toString());
   }, [onboardingData, currentStep]);
+
+  // Countdown redirect after onboarding success
+  useEffect(() => {
+    if (!showSuccessModal) return;
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) { clearInterval(interval); navigate('/host-dashboard/simple'); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [showSuccessModal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateData = (updates: Partial<OnboardingData>) => {
     setOnboardingData((prev) => ({ ...prev, ...updates }));
@@ -181,21 +198,13 @@ export default function Onboarding() {
           if (d.success && d.code) {
             setOwnReferral({ code: d.code, url: d.referral_url });
           }
-          setTimeout(() => {
-            navigate('/host-dashboard/simple');
-          }, 3000);
         })
-        .catch(() => {
-          /* best-effort */
-          setTimeout(() => {
-            navigate('/host-dashboard/simple');
-          }, 3000);
-        });
+        .catch(() => { /* best-effort */ });
 
       setShowSuccessModal(true);
     } catch (err: unknown) {
       showError(err instanceof Error ? err.message : 'Failed to complete onboarding. Please try again.');
-      /* error surfaced via showError toast above */
+      setSubmitError(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -235,6 +244,17 @@ export default function Onboarding() {
         />
       </div>
 
+      {/* Mobile Step Dots */}
+      <div className="flex md:hidden items-center justify-center gap-2 py-3 border-b border-border-gray">
+        {[1, 2, 3, 4].map((s) => (
+          <div key={s} className={`rounded-full transition-all duration-300 ${
+            s < currentStep    ? 'w-2 h-2 bg-burgundy'
+            : s === currentStep ? 'w-6 h-2 bg-burgundy'
+            : 'w-2 h-2 bg-border-gray'
+          }`} />
+        ))}
+      </div>
+
       {/* Layout */}
       <div className="flex-1 flex max-w-[1000px] mx-auto w-full px-6 sm:px-12 py-12 gap-16">
         {/* Step Sidebar */}
@@ -248,7 +268,7 @@ export default function Onboarding() {
               const isLast = index === STEP_NAME_KEYS.length - 1;
 
               return (
-                <div key={stepNumber} className="flex items-start gap-4 py-4 relative">
+                <div key={stepNumber} className="flex items-start py-4 relative">
                   {!isLast && (
                     <div
                       className={`absolute left-[15px] top-[48px] bottom-0 w-px ${
@@ -260,32 +280,40 @@ export default function Onboarding() {
                       }`}
                     />
                   )}
-                  <div
-                    className={`relative z-10 w-8 h-8 rounded-full border-2 flex items-center justify-center text-[13px] font-semibold flex-shrink-0 ${
-                      isCompleted
-                        ? 'border-burgundy bg-burgundy text-white'
-                        : isActive
-                          ? 'border-burgundy bg-burgundy/[0.06] text-burgundy'
-                          : 'border-border-gray bg-white text-muted-stone'
-                    }`}
+                  <button
+                    type="button"
+                    onClick={() => { if (isCompleted) goToStep(stepNumber); }}
+                    disabled={!isCompleted}
+                    aria-label={isCompleted ? `Go back to step ${stepNumber}` : undefined}
+                    className={`flex items-center gap-4 w-full text-left ${isCompleted ? 'cursor-pointer hover:opacity-75 transition-opacity' : 'cursor-default'}`}
                   >
-                    {isCompleted ? (
-                      <ThiingsIcon name="check" pxSize={14} />
-                    ) : (
-                      stepNumber
-                    )}
-                  </div>
-                  <span
-                    className={`text-sm pt-[5px] ${
-                      isActive
-                        ? 'font-semibold text-deep-charcoal'
-                        : isCompleted
-                          ? 'font-medium text-stone-gray'
-                          : 'font-medium text-muted-stone'
-                    }`}
-                  >
-                    {name}
-                  </span>
+                    <div
+                      className={`relative z-10 w-8 h-8 rounded-full border-2 flex items-center justify-center text-[13px] font-semibold flex-shrink-0 ${
+                        isCompleted
+                          ? 'border-burgundy bg-burgundy text-white'
+                          : isActive
+                            ? 'border-burgundy bg-burgundy/[0.06] text-burgundy'
+                            : 'border-border-gray bg-white text-muted-stone'
+                      }`}
+                    >
+                      {isCompleted ? (
+                        <ThiingsIcon name="check" pxSize={14} />
+                      ) : (
+                        stepNumber
+                      )}
+                    </div>
+                    <span
+                      className={`text-sm pt-[5px] ${
+                        isActive
+                          ? 'font-semibold text-deep-charcoal'
+                          : isCompleted
+                            ? 'font-medium text-stone-gray'
+                            : 'font-medium text-muted-stone'
+                      }`}
+                    >
+                      {name}
+                    </span>
+                  </button>
                 </div>
               );
             })}
@@ -305,6 +333,7 @@ export default function Onboarding() {
               data={onboardingData}
               updateData={updateData}
               onNext={nextStep}
+              isDemoLoading={isDemoLoading}
             />
           )}
           {currentStep === 2 && (
@@ -322,6 +351,18 @@ export default function Onboarding() {
               onNext={nextStep}
               onBack={prevStep}
             />
+          )}
+          {currentStep === 4 && submitError && (
+            <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between gap-4">
+              <p className="text-sm text-red-700">Setup failed. Your data is saved — please try again.</p>
+              <button
+                type="button"
+                onClick={() => { setSubmitError(false); completeOnboarding(); }}
+                className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 flex-shrink-0"
+              >
+                Try again
+              </button>
+            </div>
           )}
           {currentStep === 4 && (
             <Step4Review
@@ -384,17 +425,15 @@ export default function Onboarding() {
                 );
               })()}
 
-              <div role="status" className="flex items-center justify-center gap-2 mb-4">
-                <div aria-hidden="true" className="animate-spin rounded-full h-5 w-5 border-2 border-border-gray border-t-burgundy" />
-                <span className="text-sm text-stone-gray">{t('onboarding.redirectingToDashboard')}</span>
-              </div>
-
               <button
                 onClick={() => navigate('/host-dashboard/simple')}
-                className="text-[13px] font-medium text-burgundy hover:text-burgundy-dark transition-colors underline underline-offset-2"
+                className="w-full px-8 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all duration-300 mb-2"
               >
-                Go to Dashboard &rarr;
+                Go to Dashboard →
               </button>
+              <p className="text-sm text-stone-gray text-center">
+                Redirecting automatically in {countdown}s
+              </p>
             </div>
           </div>
         </div>
