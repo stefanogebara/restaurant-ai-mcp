@@ -28,13 +28,38 @@ export interface AnalyticsData {
     reservations: number;
     completed_services: number;
   }>;
+  raw_reservations?: Array<{
+    date: string;
+    time: string;
+    customer_name: string;
+    party_size: number;
+    status: string;
+    reservation_id: string;
+  }>;
 }
 
-export function useAnalytics() {
+export interface AnalyticsParams {
+  startDate?: string;
+  endDate?: string;
+  period?: string;
+  includeExport?: boolean;
+}
+
+export function useAnalytics(params: AnalyticsParams = {}) {
+  const { startDate, endDate, period = '30d', includeExport = false } = params;
+
   return useQuery<AnalyticsData>({
-    queryKey: ['analytics'],
+    queryKey: ['analytics', period, startDate, endDate, includeExport],
     queryFn: async () => {
-      const response = await authFetch('/api/analytics');
+      const qs = new URLSearchParams();
+      if (startDate && endDate) {
+        qs.set('start_date', startDate);
+        qs.set('end_date', endDate);
+      } else {
+        qs.set('period', period);
+      }
+      if (includeExport) qs.set('include_export', 'true');
+      const response = await authFetch(`/api/analytics?${qs.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch analytics');
       const result = await response.json();
       if (!result.success) throw new Error(result.error || 'Failed to fetch analytics');

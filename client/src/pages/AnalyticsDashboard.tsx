@@ -12,15 +12,23 @@ import TableUtilizationHeatmap from '../components/analytics/TableUtilizationHea
 import StatusBreakdownPie from '../components/analytics/StatusBreakdownPie';
 import NoShowPredictions from '../components/analytics/NoShowPredictions';
 import RevenueOpportunities from '../components/analytics/RevenueOpportunities';
+import DateRangePicker, { presetToRange, type DateRangeValue } from '../components/analytics/DateRangePicker';
+import ExportDropdown from '../components/analytics/ExportDropdown';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 
-type DateRange = '30d' | '7d' | 'today';
+const init30d = presetToRange('30d');
 
 export default function AnalyticsDashboard() {
   const { t } = useTranslation();
   const { can } = usePermission();
-  const [dateRange, setDateRange] = useState<DateRange>('30d');
-  const { data, isLoading, isError, error, refetch } = useAnalytics();
+  const [dateRange, setDateRange] = useState<DateRangeValue>({ preset: '30d', ...init30d });
+  const [includeExport, setIncludeExport] = useState(false);
+
+  const { data, isLoading, isError, error, refetch } = useAnalytics({
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+    includeExport,
+  });
 
   if (!can('viewAnalytics')) {
     return (
@@ -84,39 +92,25 @@ export default function AnalyticsDashboard() {
     );
   }
 
-  const dateRangeLabel = dateRange === '30d' ? t('analytics.lastThirtyDays') : dateRange === '7d' ? t('analytics.lastSevenDays') : t('analytics.today');
-
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-soft-gray p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pl-12 sm:pl-0">
             <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
-              {t('analytics.title')} <span className="font-light text-warm-stone">/ {dateRangeLabel}</span>
+              {t('analytics.title')}
             </h1>
-            <div className="flex items-center gap-2.5">
-              {(['30d', '7d', 'today'] as const).map((range) => (
-                <button
-                  type="button"
-                  key={range}
-                  onClick={() => setDateRange(range)}
-                  className={`px-4 py-2 rounded-xl text-[13px] font-medium transition-colors ${
-                    dateRange === range
-                      ? 'bg-deep-charcoal text-white border border-deep-charcoal'
-                      : 'bg-white border border-border-gray text-stone-gray hover:border-muted-stone'
-                  }`}
-                >
-                  {range === '30d' ? t('analytics.thirtyDays') : range === '7d' ? t('analytics.sevenDays') : t('analytics.today')}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => refetch()}
-                className="px-4 py-2 bg-white border border-border-gray text-stone-gray hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors"
-              >
-                {t('common.export')}
-              </button>
+            <div className="flex flex-col sm:items-end gap-2">
+              <DateRangePicker value={dateRange} onChange={setDateRange} />
+              <div className="self-end">
+                <ExportDropdown
+                  data={data}
+                  dateLabel={`${dateRange.startDate}_${dateRange.endDate}`}
+                  onExportAll={() => setIncludeExport(true)}
+                  isExporting={isLoading && includeExport}
+                />
+              </div>
             </div>
           </div>
 
