@@ -374,10 +374,10 @@ Push to `main` branch triggers automatic Vercel deployment.
 - [x] Post-conversion — welcome toast on first dashboard load
 - [x] Bug fix — normalize cuisine_type to valid restaurant_type enum
 
-### Phase 4 — Growth & Retention 🔲 NEXT
-- [ ] Onboarding polish — smoother 6-step wizard, progress indicator
+### Phase 4 — Growth & Retention 🔲 IN PROGRESS
+- [x] Onboarding polish — blur validation, clickable sidebar, phone sync, 5s countdown modal
 - [ ] WhatsApp integration end-to-end test (Meta Cloud + Twilio paths)
 - [ ] Voice agent — test full reservation booking flow via ElevenLabs
-- [ ] Analytics dashboard — date-range reports, export CSV
+- [x] Analytics dashboard — date-range reports, export CSV
 - [ ] Demo nurture email sequence — drip after demo creation
 - [ ] Referral / invite flow for restaurant owners
