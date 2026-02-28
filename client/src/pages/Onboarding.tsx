@@ -23,7 +23,7 @@ import type { OnboardingData } from '../types/onboarding.types';
 import { authFetch } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { trackOnboardingStepCompleted, trackOnboardingCompleted } from '../lib/analytics';
-import { LS_CUSTOMER_EMAIL, LS_REFERRAL_CODE, LS_ONBOARDING_DATA, LS_ONBOARDING_STEP } from '../config/localStorageKeys';
+import { LS_CUSTOMER_EMAIL, LS_REFERRAL_CODE, LS_ONBOARDING_DATA, LS_ONBOARDING_STEP, LS_PENDING_DEMO_TOKEN } from '../config/localStorageKeys';
 
 const STEP_NAME_KEYS = ['onboarding.stepName1', 'onboarding.stepName2', 'onboarding.stepName3', 'onboarding.stepName4'];
 const TOTAL_STEPS = 4;
@@ -41,6 +41,7 @@ export default function Onboarding() {
   const [ownReferral, setOwnReferral] = useState<{ code: string; url: string } | null>(null);
 
   const customerEmail = user?.email || localStorage.getItem(LS_CUSTOMER_EMAIL) || '';
+  const [isPreFilledFromDemo, setIsPreFilledFromDemo] = useState(false);
 
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
     customer_email: customerEmail,
@@ -85,6 +86,29 @@ export default function Onboarding() {
     // Team setup moved to Settings post-onboarding
     team_members: [],
   });
+
+  // Pre-fill from demo session if user arrived via demo conversion
+  useEffect(() => {
+    const demoToken = localStorage.getItem(LS_PENDING_DEMO_TOKEN);
+    if (!demoToken) return;
+
+    const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
+    fetch(`${apiBase}/demo?action=session&token=${encodeURIComponent(demoToken)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.success || !data.restaurant) return;
+        const { restaurant_name, restaurant_type, city, country } = data.restaurant;
+        setOnboardingData((prev) => ({
+          ...prev,
+          ...(restaurant_name ? { restaurant_name } : {}),
+          ...(restaurant_type ? { restaurant_type } : {}),
+          ...(city ? { city } : {}),
+          ...(country ? { country } : {}),
+        }));
+        setIsPreFilledFromDemo(true);
+      })
+      .catch(() => { /* non-fatal — user fills in manually */ });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Persist progress
   useEffect(() => {
@@ -270,6 +294,12 @@ export default function Onboarding() {
 
         {/* Form Content */}
         <div className="flex-1 max-w-[480px]">
+          {currentStep === 1 && isPreFilledFromDemo && (
+            <div className="mb-5 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-burgundy/[0.06] border border-burgundy/20 text-[13px] text-burgundy font-medium">
+              <ThiingsIcon name="sparkles" pxSize={15} />
+              We've pre-filled your info from your demo — feel free to adjust anything.
+            </div>
+          )}
           {currentStep === 1 && (
             <Step1Welcome
               data={onboardingData}
