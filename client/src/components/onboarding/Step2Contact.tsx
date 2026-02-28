@@ -13,7 +13,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
-import PhoneInput from '../common/PhoneInput';
+import PhoneInput, { type CountryCode } from '../common/PhoneInput';
 import ThiingsIcon from '../common/ThiingsIcon';
 
 // Service type presets with recommended hours
@@ -181,7 +181,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
       <PhoneInput
         value={data.phone_number}
         onChange={handlePhoneChange}
-        defaultCountry={data.country_code?.toUpperCase() || 'ES'}
+        defaultCountry={(data.country_code?.toUpperCase() || 'ES') as CountryCode}
         label="Restaurant Phone Number"
         required
         error={errors.phone_number}

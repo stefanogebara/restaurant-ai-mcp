@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { presetToRange } from '../DateRangePicker';
 
 describe('presetToRange', () => {
