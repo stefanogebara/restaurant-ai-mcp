@@ -39,6 +39,29 @@ function getResendClient() {
 const FROM_ADDRESS = 'Seatable <bookings@seatable.one>';
 
 // ---------------------------------------------------------------------------
+// Cuisine type → restaurant_type enum normalizer
+// ---------------------------------------------------------------------------
+const VALID_RESTAURANT_TYPES = new Set([
+  'fine_dining', 'casual_dining', 'fast_casual', 'cafe', 'bar',
+  'steakhouse', 'italian', 'japanese', 'mexican', 'other',
+]);
+
+function normalizeRestaurantType(cuisineType) {
+  if (!cuisineType) return 'other';
+  const lower = cuisineType.toLowerCase();
+  if (VALID_RESTAURANT_TYPES.has(lower)) return lower;
+  if (lower.includes('italian')) return 'italian';
+  if (lower.includes('japan') || lower.includes('sushi') || lower.includes('ramen')) return 'japanese';
+  if (lower.includes('mexic') || lower.includes('taco') || lower.includes('burrito')) return 'mexican';
+  if (lower.includes('steak') || lower.includes('grill') || lower.includes('bbq')) return 'steakhouse';
+  if (lower.includes('cafe') || lower.includes('café') || lower.includes('coffee') || lower.includes('bakery')) return 'cafe';
+  if (lower.includes('bar') || lower.includes('pub') || lower.includes('tavern')) return 'bar';
+  if (lower.includes('fine') || lower.includes('gourmet') || lower.includes('upscale')) return 'fine_dining';
+  if (lower.includes('fast') || lower.includes('quick')) return 'fast_casual';
+  return 'casual_dining';
+}
+
+// ---------------------------------------------------------------------------
 // Fake table seed data
 // ---------------------------------------------------------------------------
 function buildFakeTables(restaurantId) {
@@ -250,7 +273,7 @@ async function handleCreate(req, res) {
     .insert({
       user_id: DEMO_SYSTEM_USER_ID,
       restaurant_name: restaurant_name.trim(),
-      restaurant_type: (cuisine_type || '').trim() || 'other',
+      restaurant_type: normalizeRestaurantType((cuisine_type || '').trim()),
       city: city.trim(),
       country: (country || '').trim() || 'Unknown',
       email: contact_email.trim(),
