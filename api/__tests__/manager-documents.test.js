@@ -5,6 +5,8 @@ var mockVerifyJWT = jest.fn();
 var mockWriteMemory = jest.fn();
 var mockAnthropicCreate = jest.fn();
 var mockBusboyInstance;
+var mockSetInternalCors = jest.fn();
+var mockHandlePreflight = jest.fn().mockReturnValue(false);
 
 jest.mock('../_lib/auth', () => ({ verifyJWT: mockVerifyJWT }));
 jest.mock('../services/managerMemory', () => ({ writeMemory: mockWriteMemory }));
@@ -18,6 +20,10 @@ jest.mock('@anthropic-ai/sdk', () => ({
 jest.mock('pdf-parse', () => jest.fn().mockResolvedValue({ text: 'Parsed PDF text content here' }));
 jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ error: jest.fn(), info: jest.fn(), warn: jest.fn() }),
+}));
+jest.mock('../_lib/cors', () => ({
+  setInternalCors: mockSetInternalCors,
+  handlePreflight: mockHandlePreflight,
 }));
 
 // Mock busboy to control multipart parsing behaviour in tests
@@ -47,10 +53,12 @@ function mockRes() {
 }
 
 // Helper: build a mock POST request that triggers busboy events after pipe()
+// simulateTruncation: if true, the 'limit' event fires on the file stream
 function makeMockReq(
   fileBuffer = Buffer.from('Staff lunch 12-2pm. VIP capacity 20.'),
   filename = 'policy.txt',
-  mimeType = 'text/plain'
+  mimeType = 'text/plain',
+  { simulateTruncation = false } = {}
 ) {
   return {
     method: 'POST',
@@ -62,6 +70,7 @@ function makeMockReq(
           const fileStream = {
             on: jest.fn().mockImplementation(function (event, cb) {
               if (event === 'data') cb(fileBuffer);
+              if (event === 'limit' && simulateTruncation) cb();
               if (event === 'end') cb();
               return this;
             }),
@@ -80,6 +89,7 @@ function makeMockReq(
 beforeEach(() => {
   jest.clearAllMocks();
   mockBusboyInstance = null;
+  mockHandlePreflight.mockReturnValue(false);
   mockVerifyJWT.mockReturnValue({ restaurantId: 'rest-1' });
   mockWriteMemory.mockResolvedValue({});
   mockAnthropicCreate.mockResolvedValue({
@@ -103,6 +113,32 @@ describe('method guard', () => {
     const res = mockRes();
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(405);
+  });
+});
+
+// ─── CORS ────────────────────────────────────────────────────────────────────
+
+describe('CORS', () => {
+  it('handles OPTIONS preflight', async () => {
+    mockHandlePreflight.mockReturnValueOnce(true);
+    const req = { method: 'OPTIONS', headers: {} };
+    const res = mockRes();
+    await handler(req, res);
+    expect(mockSetInternalCors).toHaveBeenCalled();
+    expect(mockHandlePreflight).toHaveBeenCalled();
+    // Handler exits early — no 405 or other status set by the handler itself
+    expect(res.status).not.toHaveBeenCalledWith(405);
+  });
+
+  it('sets CORS headers on POST requests', async () => {
+    const req = makeMockReq(
+      Buffer.from('Staff lunch 12-2pm. VIP capacity 20.'),
+      'policy.txt',
+      'text/plain'
+    );
+    const res = mockRes();
+    await handler(req, res);
+    expect(mockSetInternalCors).toHaveBeenCalledWith(req, res);
   });
 });
 
@@ -146,7 +182,7 @@ describe('text document upload', () => {
       'ops',
       expect.any(String),
       'policy.txt',
-      0.8
+      8
     );
   });
 
@@ -164,6 +200,18 @@ describe('text document upload', () => {
         ]),
       })
     );
+  });
+
+  it('strips numbering prefix from stored facts', async () => {
+    const req = makeMockReq(Buffer.from('policy text that is long enough here'), 'policy.txt', 'text/plain');
+    const res = mockRes();
+    await handler(req, res);
+
+    const calls = mockWriteMemory.mock.calls;
+    calls.forEach((call) => {
+      // content arg is at index 3 — should have no leading "1." numbering
+      expect(call[3]).not.toMatch(/^\d+\./);
+    });
   });
 });
 
@@ -186,7 +234,7 @@ describe('PDF upload', () => {
       'ops',
       expect.any(String),
       'menu.pdf',
-      0.8
+      8
     );
   });
 
@@ -197,6 +245,52 @@ describe('PDF upload', () => {
     await handler(req, res);
 
     expect(pdfParse).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+});
+
+// ─── File type allowlist ──────────────────────────────────────────────────────
+
+describe('file type allowlist', () => {
+  it('rejects unsupported file type with 415', async () => {
+    const req = makeMockReq(Buffer.from('binary data'), 'file.exe', 'application/octet-stream');
+    const res = mockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(415);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Unsupported file type. Upload PDF or plain text.' });
+    expect(mockAnthropicCreate).not.toHaveBeenCalled();
+  });
+
+  it('rejects image files with 415', async () => {
+    const req = makeMockReq(Buffer.from('image data'), 'photo.png', 'image/png');
+    const res = mockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(415);
+  });
+
+  it('accepts .csv files by extension', async () => {
+    const req = makeMockReq(
+      Buffer.from('item,price\nBurger,12.00\nFries,5.00'),
+      'menu.csv',
+      'text/csv'
+    );
+    const res = mockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it('accepts .md files by extension even with octet-stream mime', async () => {
+    const req = makeMockReq(
+      Buffer.from('# Restaurant Policy\n\nLunch hours 11am to 3pm daily.'),
+      'policy.md',
+      'application/octet-stream'
+    );
+    const res = mockRes();
+    await handler(req, res);
+
     expect(res.status).toHaveBeenCalledWith(200);
   });
 });
@@ -218,6 +312,20 @@ describe('edge cases', () => {
   it('returns 413 when file exceeds 5MB', async () => {
     const bigBuffer = Buffer.alloc(6 * 1024 * 1024, 'x'); // 6MB
     const req = makeMockReq(bigBuffer, 'big.txt', 'text/plain');
+    const res = mockRes();
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(413);
+    expect(res.json).toHaveBeenCalledWith({ error: 'File too large (max 5MB)' });
+  });
+
+  it('returns 413 when busboy truncates due to fileSize limit', async () => {
+    const req = makeMockReq(
+      Buffer.from('some content'),
+      'large.txt',
+      'text/plain',
+      { simulateTruncation: true }
+    );
     const res = mockRes();
     await handler(req, res);
 

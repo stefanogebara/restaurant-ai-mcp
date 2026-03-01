@@ -1,11 +1,13 @@
 'use strict';
 
+const path = require('path');
 const Busboy = require('busboy');
 const Anthropic = require('@anthropic-ai/sdk').default;
 const pdfParse = require('pdf-parse');
 const { verifyJWT } = require('./_lib/auth');
 const { writeMemory } = require('./services/managerMemory');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 
 const logger = createSecureLogger('manager-documents');
 
@@ -14,24 +16,30 @@ const MIN_TEXT_LENGTH = 10;
 const MAX_FACTS = 20;
 const MAX_TEXT_FOR_CLAUDE = 8000;
 
+const ALLOWED_MIME_TYPES = new Set(['application/pdf', 'text/plain', 'text/csv', 'text/markdown']);
+const ALLOWED_EXTENSIONS = ['.pdf', '.txt', '.csv', '.md'];
+
 /**
  * Parse a multipart/form-data request and return the first uploaded file.
+ * Uses busboy's built-in fileSize limit to prevent buffering oversized files.
  * @param {import('http').IncomingMessage} req
  * @returns {Promise<{ buffer: Buffer, filename: string, mimetype: string }>}
  */
 function parseMultipart(req) {
   return new Promise((resolve, reject) => {
-    const busboy = Busboy({ headers: req.headers });
+    const busboy = Busboy({ headers: req.headers, limits: { fileSize: MAX_SIZE } });
     const chunks = [];
     let filename = '';
     let mimetype = '';
     let fileReceived = false;
+    let truncated = false;
 
     busboy.on('file', (_field, file, info) => {
       fileReceived = true;
       filename = info.filename || '';
       mimetype = info.mimeType || '';
 
+      file.on('limit', () => { truncated = true; });
       file.on('data', (chunk) => chunks.push(chunk));
       file.on('end', () => {});
       file.on('error', (err) => reject(err));
@@ -40,6 +48,9 @@ function parseMultipart(req) {
     busboy.on('finish', () => {
       if (!fileReceived || chunks.length === 0) {
         return reject(new Error('No file received'));
+      }
+      if (truncated) {
+        return reject(new Error('File too large (max 5MB)'));
       }
       resolve({ buffer: Buffer.concat(chunks), filename, mimetype });
     });
@@ -73,7 +84,7 @@ async function extractText(buffer, mimetype, filename) {
 /**
  * Call Claude Haiku to extract numbered operational facts from restaurant document text.
  * @param {string} text
- * @returns {Promise<string[]>} Array of fact strings
+ * @returns {Promise<string[]>} Array of fact strings (numbering prefix stripped)
  */
 async function extractFacts(text) {
   const client = new Anthropic();
@@ -113,6 +124,9 @@ ${text.slice(0, MAX_TEXT_FOR_CLAUDE)}`,
  * Response: { success: true, facts_stored: N }
  */
 module.exports = async function handler(req, res) {
+  setInternalCors(req, res);
+  if (handlePreflight(req, res)) return;
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -129,8 +143,15 @@ module.exports = async function handler(req, res) {
   try {
     const { buffer, filename, mimetype } = await parseMultipart(req);
 
+    // Secondary size guard (in case busboy limit was not triggered, e.g. in tests)
     if (buffer.length > MAX_SIZE) {
       return res.status(413).json({ error: 'File too large (max 5MB)' });
+    }
+
+    // File type allowlist — reject non-PDF/text files
+    const ext = path.extname(filename || '').toLowerCase();
+    if (!ALLOWED_MIME_TYPES.has(mimetype) && !ALLOWED_EXTENSIONS.includes(ext)) {
+      return res.status(415).json({ error: 'Unsupported file type. Upload PDF or plain text.' });
     }
 
     const text = await extractText(buffer, mimetype, filename);
@@ -143,13 +164,16 @@ module.exports = async function handler(req, res) {
 
     await Promise.all(
       facts.map((fact) =>
-        writeMemory(restaurantId, 'fact', 'ops', fact, filename || 'upload', 0.8)
+        writeMemory(restaurantId, 'fact', 'ops', fact, filename || 'upload', 8)
       )
     );
 
     logger.info('Document processed', { restaurantId, factsStored: facts.length, filename });
     return res.status(200).json({ success: true, facts_stored: facts.length });
   } catch (err) {
+    if (err.message === 'File too large (max 5MB)') {
+      return res.status(413).json({ error: 'File too large (max 5MB)' });
+    }
     logger.error('manager-documents error', { error: err.message });
     return res.status(500).json({ error: 'Processing failed' });
   }
