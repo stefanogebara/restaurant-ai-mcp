@@ -6,11 +6,13 @@
  * is pre-loaded with knowledge about their restaurant.
  *
  * The interview answers are combined into a single text payload and
- * POSTed to /api/manager-documents.  The step is entirely optional —
- * "Skip for now" proceeds to the next step without any API call.
+ * POSTed to /api/manager-documents as multipart/form-data.  The step is
+ * entirely optional — "Skip for now" proceeds to the next step without
+ * any API call.
  */
 
 import { useState } from 'react';
+import axios from 'axios';
 import { motion } from 'framer-motion';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { api } from '../../services/api';
@@ -54,49 +56,44 @@ export default function Step5TeachAI({ restaurantId: _restaurantId, onNext }: St
     try {
       let totalFacts = 0;
 
-      // Build text from answered questions
+      // Build text from answered questions — reduce preserves original indices
       const interviewText = INTERVIEW_QUESTIONS
-        .filter((_, i) => answers[i]?.trim())
-        .map((q, i) => `Q: ${q}\nA: ${answers[i].trim()}`)
+        .reduce<string[]>((acc, q, i) => {
+          const answer = answers[i]?.trim();
+          if (answer) acc.push(`Q: ${q}\nA: ${answer}`);
+          return acc;
+        }, [])
         .join('\n\n');
 
       if (interviewText) {
-        const res = await api.post<DocumentUploadResponse>('/manager-documents', {
-          text: interviewText,
-          filename: 'onboarding-interview.txt',
+        const formData = new FormData();
+        const blob = new Blob([interviewText], { type: 'text/plain' });
+        formData.append('file', blob, 'onboarding-interview.txt');
+        const res = await api.post<DocumentUploadResponse>('/manager-documents', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
         });
         totalFacts += res.data.facts_stored ?? 0;
       }
 
       // Upload optional document
       if (file) {
-        const base64 = await fileToBase64(file);
-        const res = await api.post<DocumentUploadResponse>('/manager-documents', {
-          file_base64: base64,
-          filename: file.name,
+        const formData = new FormData();
+        formData.append('file', file, file.name);
+        const res = await api.post<DocumentUploadResponse>('/manager-documents', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
         });
         totalFacts += res.data.facts_stored ?? 0;
       }
 
       setFactsStored(totalFacts);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to save facts. You can try again later.';
+      const message = axios.isAxiosError(err)
+        ? (err.response?.data?.error as string) || 'Failed to save facts. You can try again later.'
+        : err instanceof Error ? err.message : 'Failed to save facts. You can try again later.';
       setError(message);
     } finally {
       setIsLoading(false);
     }
-  }
-
-  async function fileToBase64(f: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        resolve(result.split(',')[1]);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(f);
-    });
   }
 
   // Success state
@@ -174,7 +171,7 @@ export default function Step5TeachAI({ restaurantId: _restaurantId, onNext }: St
         <input
           id="step5-doc-upload"
           type="file"
-          accept=".pdf,.txt,.md"
+          accept=".pdf,.txt,.md,.csv"
           className="text-sm text-stone-gray file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-soft-gray file:text-deep-charcoal hover:file:bg-border-gray cursor-pointer"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
         />

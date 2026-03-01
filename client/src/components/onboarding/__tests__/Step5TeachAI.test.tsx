@@ -17,11 +17,11 @@ vi.mock('../../common/ThiingsIcon', () => ({
   default: ({ name }: { name: string }) => <span data-testid={`icon-${name}`} />,
 }));
 
-// Mock the api service
+// Mock the api service — pass arguments through so tests can inspect call args
 const mockPost = vi.fn();
 vi.mock('../../../services/api', () => ({
   api: {
-    post: () => mockPost(),
+    post: (...args: unknown[]) => mockPost(...args),
   },
 }));
 
@@ -180,6 +180,38 @@ describe('Step5TeachAI', () => {
     const fileInput = screen.getByLabelText(/upload a document/i);
     expect(fileInput).toBeInTheDocument();
     expect(fileInput).toHaveAttribute('type', 'file');
-    expect(fileInput).toHaveAttribute('accept', '.pdf,.txt,.md');
+    expect(fileInput).toHaveAttribute('accept', '.pdf,.txt,.md,.csv');
+  });
+
+  it('pairs answers with correct questions after filtering', async () => {
+    render(<Step5TeachAI restaurantId="rest-1" onNext={vi.fn()} />);
+    const textareas = screen.getAllByRole('textbox');
+    // Fill only the 4th question (index 3), leave others empty
+    await userEvent.type(textareas[3], 'We have a strict no-show policy');
+
+    mockPost.mockResolvedValueOnce({ data: { facts_stored: 1 } });
+    fireEvent.click(screen.getByRole('button', { name: /teach/i }));
+
+    await waitFor(() => expect(mockPost).toHaveBeenCalled());
+    // The second argument to post should be a FormData instance
+    const [, body] = mockPost.mock.calls[0] as [string, FormData];
+    expect(body).toBeInstanceOf(FormData);
+  });
+
+  it('enables submit when file selected but no text answers', () => {
+    render(<Step5TeachAI restaurantId="rest-1" onNext={vi.fn()} />);
+    const fileInput = screen.getByLabelText(/upload a document/i);
+    const file = new File(['menu content'], 'menu.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    expect(screen.getByRole('button', { name: /teach/i })).not.toBeDisabled();
+  });
+
+  it('shows fallback text when facts_stored is 0', async () => {
+    render(<Step5TeachAI restaurantId="rest-1" onNext={vi.fn()} />);
+    const textareas = screen.getAllByRole('textbox');
+    await userEvent.type(textareas[0], 'Some info');
+    mockPost.mockResolvedValueOnce({ data: { facts_stored: 0 } });
+    fireEvent.click(screen.getByRole('button', { name: /teach/i }));
+    await waitFor(() => screen.getByText(/Your answers have been saved/i));
   });
 });

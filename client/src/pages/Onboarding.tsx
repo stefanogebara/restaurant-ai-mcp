@@ -1,10 +1,11 @@
 /**
- * Restaurant Onboarding Wizard - Simplified 4-Step Flow
+ * Restaurant Onboarding Wizard - 5-Step Flow
  *
  * 1. Restaurant Info    — name, type, location, language
  * 2. Contact & Hours   — phone, email, WhatsApp, business hours
  * 3. Tables & Settings — dining areas + booking settings (collapsed)
  * 4. Review & Launch   — summary with edit links, then submit
+ * 5. Teach Your AI     — optional interview + document upload
  *
  * AI Learning, Voice Selection, and Team Setup have been moved
  * to post-onboarding settings to reduce friction.
