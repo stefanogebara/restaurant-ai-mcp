@@ -413,3 +413,15 @@ Push to `main` branch triggers automatic Vercel deployment.
 - [x] manager-preferences.js — GET/PATCH /api/manager-preferences with allowlist validation and JSONB merge
 - [x] useManagerPreferences hook — React Query GET/PATCH with 5-min stale time
 - [x] ManagerNotificationsPanel — briefing channel radio + 3 alert toggles, wired into WhatsApp Settings page
+
+### Phase 8 — Staffing Intelligence ✅ COMPLETE
+- [x] DB migration — `staffing_config` JSONB column on `restaurant.restaurant_config` (default FOH/BOH/Bar ratios)
+- [x] staffingService.js — `calculateStaffing(covers, roles)` + `buildForecast(reservationsByDate, roles)` pure functions
+- [x] staffing-forecast.js — GET /api/staffing-forecast → 7-day forecast with role headcounts
+- [x] staffing-config.js — GET/PATCH /api/staffing-config with role array validation
+- [x] restaurantSnapshot.js — 3-day staffing_forecast injected into snapshot (used by manager AI system prompt)
+- [x] manager-agent.js — `[STAFFING FORECAST - NEXT 3 DAYS]` block in system prompt
+- [x] useStaffingForecast hook — React Query GET with 10-min stale time
+- [x] useStaffingConfig hook — React Query GET/PATCH, invalidates forecast on save
+- [x] StaffingForecastWidget — 3-day forecast widget in Dashboard left column
+- [x] StaffingSettingsPanel — per-role covers/staff config panel in WhatsApp Settings page
