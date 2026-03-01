@@ -46,6 +46,16 @@ describe('POST /api/manager-chat', () => {
     await managerChat(req, res);
     expect(res.status).toHaveBeenCalledWith(405);
   });
+
+  it('returns 401 when JWT is invalid', async () => {
+    const { verifyJWT } = require('../_lib/auth');
+    verifyJWT.mockImplementationOnce(() => { throw new Error('UNAUTHORIZED'); });
+    const req = { method: 'POST', headers: { authorization: 'Bearer bad' }, body: { message: 'Hi' } };
+    const res = mockRes();
+    await managerChat(req, res);
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
+  });
 });
 
 describe('GET /api/manager-chat', () => {
@@ -61,5 +71,19 @@ describe('GET /api/manager-chat', () => {
     const res = mockRes();
     await managerChat(req, res);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ history: expect.any(Array) }));
+  });
+
+  it('returns 500 when Supabase query fails', async () => {
+    const chain = { select: jest.fn(), eq: jest.fn(), order: jest.fn(), limit: jest.fn() };
+    chain.select.mockReturnValue(chain);
+    chain.eq.mockReturnValue(chain);
+    chain.order.mockReturnValue(chain);
+    chain.limit.mockResolvedValue({ data: null, error: { message: 'DB timeout' } });
+    mockSupabaseAdmin.from.mockReturnValue(chain);
+
+    const req = { method: 'GET', headers: { authorization: 'Bearer tok' }, body: {} };
+    const res = mockRes();
+    await managerChat(req, res);
+    expect(res.status).toHaveBeenCalledWith(500);
   });
 });
