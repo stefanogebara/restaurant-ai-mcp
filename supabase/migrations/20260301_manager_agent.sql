@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS public.manager_memory (
 
 CREATE INDEX IF NOT EXISTS manager_memory_restaurant_id_idx ON public.manager_memory (restaurant_id);
 CREATE INDEX IF NOT EXISTS manager_memory_embedding_idx ON public.manager_memory
-  USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+  USING ivfflat (embedding vector_cosine_ops) WITH (lists = 10);
 
 ALTER TABLE public.manager_memory ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "manager_memory_restaurant_isolation" ON public.manager_memory
@@ -46,6 +46,7 @@ ALTER TABLE restaurant.restaurant_config
   ADD COLUMN IF NOT EXISTS manager_phone                TEXT,
   ADD COLUMN IF NOT EXISTS manager_whatsapp_verified    BOOLEAN     NOT NULL DEFAULT false,
   ADD COLUMN IF NOT EXISTS manager_whatsapp_code        TEXT,
+  ADD COLUMN IF NOT EXISTS manager_whatsapp_code_expires_at TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS notification_preferences     JSONB       NOT NULL DEFAULT '{"end_of_day_briefing":false,"end_of_day_time":"23:00","morning_briefing":false,"morning_briefing_time":"08:00","threshold_alerts":false,"no_show_threshold":20,"occupancy_alert_threshold":90}'::jsonb;
 
 -- Hybrid-ranked memory retrieval RPC
@@ -76,3 +77,7 @@ LANGUAGE sql STABLE AS $$
   DESC
   LIMIT p_limit;
 $$;
+
+REVOKE EXECUTE ON FUNCTION match_manager_memories(UUID, vector, INT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION match_manager_memories(UUID, vector, INT) TO authenticated;
+GRANT EXECUTE ON FUNCTION match_manager_memories(UUID, vector, INT) TO service_role;
