@@ -28,9 +28,16 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
     mutationFn: (message: string) =>
       api.post('/manager-chat', { message }).then((r) => r.data),
     onMutate: (message) => {
+      const previous = qc.getQueryData<{ history: Message[] }>(['manager-chat-history']);
       qc.setQueryData<{ history: Message[] }>(['manager-chat-history'], (old) => ({
         history: [...(old?.history || []), { role: 'manager', content: message }],
       }));
+      return { previous };
+    },
+    onError: (_err, _message, context) => {
+      if (context?.previous) {
+        qc.setQueryData(['manager-chat-history'], context.previous);
+      }
     },
     onSuccess: ({ reply }) => {
       qc.setQueryData<{ history: Message[] }>(['manager-chat-history'], (old) => ({
@@ -57,7 +64,7 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
           <div className="w-2 h-2 rounded-full bg-green-500" />
           <span className="font-semibold text-gray-800 text-sm">AI Manager Assistant</span>
         </div>
-        <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg leading-none">x</button>
+        <button type="button" aria-label="Close" onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg leading-none">x</button>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
@@ -79,6 +86,12 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
         )}
         <div ref={bottomRef} />
       </div>
+
+      {sendMutation.isError && (
+        <div className="px-4 py-2 text-xs text-red-500 bg-red-50 border-t border-red-100">
+          Failed to send. Please try again.
+        </div>
+      )}
 
       <div className="flex gap-2 px-4 py-3 border-t border-gray-100">
         <input
