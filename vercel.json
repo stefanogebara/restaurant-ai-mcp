@@ -15,6 +15,10 @@
   },
   "rewrites": [
     {
+      "source": "/api/revenue-stats",
+      "destination": "/api/revenue-stats"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },
