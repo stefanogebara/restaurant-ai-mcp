@@ -237,4 +237,15 @@ describe('quota enforcement', () => {
 
     expect(mockTrackUsage).not.toHaveBeenCalled();
   });
+
+  it('Scale plan (-1) bypasses usage query and resolves normally', async () => {
+    mockGetPlanLimits.mockReturnValue({ managerAICallsMonthly: -1 });
+    setupFromMock({ planName: 'scale', usageRows: [] });
+
+    const result = await runManagerAgent('rest-1', 'How many covers tonight?', 'app');
+    expect(typeof result).toBe('string');
+    // usage_tracking should NOT be queried (only subscriptions + manager_conversations)
+    const usageTrackingCalls = mockFrom.mock.calls.filter(([t]) => t === 'usage_tracking');
+    expect(usageTrackingCalls).toHaveLength(0);
+  });
 });

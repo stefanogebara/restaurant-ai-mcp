@@ -45,24 +45,32 @@ function getAnthropic() {
 }
 
 async function getRestaurantPlan(restaurantId) {
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('subscriptions')
     .select('plan_name, status')
     .eq('restaurant_id', restaurantId)
     .in('status', ['active', 'trialing'])
     .maybeSingle();
+  if (error) {
+    logger.error('getRestaurantPlan failed', { restaurantId, error: error.message });
+    throw error;
+  }
   return (data?.plan_name || 'free').toLowerCase();
 }
 
 async function getManagerAIUsageThisMonth(restaurantId) {
   const now = new Date();
   const firstDay = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-01`;
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('usage_tracking')
     .select('count')
     .eq('restaurant_id', restaurantId)
     .eq('metric_type', 'manager_ai_call')
     .gte('period', firstDay);
+  if (error) {
+    logger.error('getManagerAIUsageThisMonth failed', { restaurantId, error: error.message });
+    throw error;
+  }
   return (data || []).reduce((sum, row) => sum + (row.count || 0), 0);
 }
 
