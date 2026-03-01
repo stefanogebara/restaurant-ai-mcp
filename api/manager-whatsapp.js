@@ -16,7 +16,7 @@ module.exports = async (req, res) => {
 
     const { data: config } = await supabaseAdmin
       .from('restaurant_config')
-      .select('id, manager_phone, manager_whatsapp_verified, notification_preferences')
+      .select('id, manager_phone, manager_whatsapp_verified')
       .eq('manager_phone', phone)
       .single();
 
@@ -30,7 +30,7 @@ module.exports = async (req, res) => {
 
     return res.status(200).send('OK');
   } catch (err) {
-    logger.error('manager-whatsapp error', { error: err.message });
+    logger.error('manager-whatsapp error', { MessageSid, error: err.message });
     return res.status(200).send('OK');
   }
 };

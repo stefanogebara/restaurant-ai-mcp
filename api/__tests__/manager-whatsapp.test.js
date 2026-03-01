@@ -46,6 +46,8 @@ it('routes verified manager message to runManagerAgent and replies', async () =>
 
   const { runManagerAgent } = require('../_lib/manager-agent');
   expect(runManagerAgent).toHaveBeenCalledWith('rest-1', 'How many covers tonight?', 'whatsapp');
+  const { sendWhatsAppMessage } = require('../_lib/whatsapp-sender');
+  expect(sendWhatsAppMessage).toHaveBeenCalledWith('+15551234567', 'Tonight you have 3 reservations.');
   expect(res.status).toHaveBeenCalledWith(200);
 });
 
@@ -59,5 +61,39 @@ it('returns 200 silently for unknown phone numbers', async () => {
   const req = { method: 'POST', body: { From: 'whatsapp:+19999999999', Body: 'hello', MessageSid: 'SM999' } };
   const res = mockRes();
   await managerWhatsapp(req, res);
+  expect(res.status).toHaveBeenCalledWith(200);
+});
+
+it('returns 405 for non-POST methods', async () => {
+  const req = { method: 'GET', body: {} };
+  const res = mockRes();
+  await managerWhatsapp(req, res);
+  expect(res.status).toHaveBeenCalledWith(405);
+});
+
+it('returns 200 silently when Body is missing', async () => {
+  const req = { method: 'POST', body: { From: 'whatsapp:+15551234567' } };
+  const res = mockRes();
+  await managerWhatsapp(req, res);
+  const { runManagerAgent } = require('../_lib/manager-agent');
+  expect(runManagerAgent).not.toHaveBeenCalled();
+  expect(res.status).toHaveBeenCalledWith(200);
+});
+
+it('returns 200 silently when manager not verified', async () => {
+  const chain = { select: jest.fn(), eq: jest.fn(), single: jest.fn() };
+  chain.select.mockReturnValue(chain);
+  chain.eq.mockReturnValue(chain);
+  chain.single.mockResolvedValue({
+    data: { id: 'rest-1', manager_phone: '+15551234567', manager_whatsapp_verified: false },
+    error: null,
+  });
+  mockSupabaseAdmin.from.mockReturnValue(chain);
+
+  const req = { method: 'POST', body: { From: 'whatsapp:+15551234567', Body: 'hello', MessageSid: 'SM000' } };
+  const res = mockRes();
+  await managerWhatsapp(req, res);
+  const { runManagerAgent } = require('../_lib/manager-agent');
+  expect(runManagerAgent).not.toHaveBeenCalled();
   expect(res.status).toHaveBeenCalledWith(200);
 });
