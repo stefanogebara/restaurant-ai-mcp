@@ -71,7 +71,14 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
   let prompt = '';
 
   // 1. Role definition
-  prompt += `You are the ${lang.role} for ${restaurantName}.\n\n`;
+  const agentName = restaurantConfig.agent_name;
+  const agentGreeting = restaurantConfig.agent_greeting;
+  prompt += agentName
+    ? `You are ${agentName}, the ${lang.role} for ${restaurantName}.\n\n`
+    : `You are the ${lang.role} for ${restaurantName}.\n\n`;
+  if (agentGreeting) {
+    prompt += `Your opening greeting is: "${agentGreeting}"\n\n`;
+  }
   prompt += `Your role is to help customers make reservations in a friendly, professional manner.\n`;
   prompt += `${lang.capabilities}\n\n`;
 

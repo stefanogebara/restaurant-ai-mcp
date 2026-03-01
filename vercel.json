@@ -19,6 +19,10 @@
       "destination": "/api/revenue-stats"
     },
     {
+      "source": "/api/voice-persona",
+      "destination": "/api/voice-persona"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },
