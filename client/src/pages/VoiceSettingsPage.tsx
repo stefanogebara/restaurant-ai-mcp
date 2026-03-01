@@ -29,6 +29,7 @@ import VoiceEngineSwitchModal from '../components/voice/VoiceEngineSwitchModal';
 import VoiceFilters from '../components/voice/VoiceFilters';
 import VoiceGrid from '../components/voice/VoiceGrid';
 import Spinner from '../components/common/Spinner';
+import ReferralWidget from '../components/dashboard/ReferralWidget';
 
 import { DEFAULT_VOICE_SETTINGS } from '../components/voice/voiceTypes';
 import type { VoiceSettings } from '../components/voice/voiceTypes';
@@ -338,6 +339,7 @@ export default function VoiceSettingsPage() {
               )}
             </div>
           )}
+          <ReferralWidget />
         </div>
 
         <VoiceEngineSwitchModal isOpen={showEngineSwitchConfirm} engineSwitchTarget={engineSwitchTarget} onConfirm={confirmEngineSwitch} onClose={() => setShowEngineSwitchConfirm(false)} />
