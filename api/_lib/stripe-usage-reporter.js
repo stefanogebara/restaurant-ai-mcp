@@ -16,6 +16,7 @@
  *   seatable_ai_call      → STRIPE_METERED_PRICE_AI_CALL
  *   seatable_sms          → STRIPE_METERED_PRICE_SMS
  *   seatable_whatsapp     → STRIPE_METERED_PRICE_WHATSAPP
+ *   seatable_manager_ai   → STRIPE_METERED_PRICE_MANAGER_AI
  */
 
 const Stripe = require('stripe');
@@ -48,6 +49,10 @@ function getMeteredPriceMap() {
 
   if (process.env.STRIPE_METERED_PRICE_SMS) {
     map.sms_sent = { priceId: process.env.STRIPE_METERED_PRICE_SMS, eventName: 'seatable_sms' };
+  }
+
+  if (process.env.STRIPE_METERED_PRICE_MANAGER_AI) {
+    map.manager_ai_call = { priceId: process.env.STRIPE_METERED_PRICE_MANAGER_AI, eventName: 'seatable_manager_ai' };
   }
 
   if (process.env.STRIPE_METERED_PRICE_WHATSAPP) {

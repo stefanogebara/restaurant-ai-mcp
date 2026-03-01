@@ -11,6 +11,7 @@ const PLAN_LIMITS = {
   free: {
     name: 'Free',
     maxReservationsPerMonth: FREE_PLAN_MONTHLY_RESERVATIONS,
+    managerAICallsMonthly: 0,
     features: [
       'ai_reservations',
       'host_dashboard',
@@ -28,6 +29,7 @@ const PLAN_LIMITS = {
   starter: {
     name: 'Starter',
     maxReservationsPerMonth: STARTER_PLAN_MONTHLY_RESERVATIONS,
+    managerAICallsMonthly: 100,
     features: [
       'ai_reservations',
       'host_dashboard',
@@ -46,6 +48,7 @@ const PLAN_LIMITS = {
   growth: {
     name: 'Growth',
     maxReservationsPerMonth: GROWTH_PLAN_MONTHLY_RESERVATIONS,
+    managerAICallsMonthly: 500,
     features: [
       'ai_reservations',
       'host_dashboard',
@@ -68,6 +71,7 @@ const PLAN_LIMITS = {
   professional: {
     name: 'Professional',
     maxReservationsPerMonth: GROWTH_PLAN_MONTHLY_RESERVATIONS,
+    managerAICallsMonthly: 500,
     features: [
       'ai_reservations',
       'host_dashboard',
@@ -90,6 +94,7 @@ const PLAN_LIMITS = {
   scale: {
     name: 'Scale',
     maxReservationsPerMonth: -1, // unlimited
+    managerAICallsMonthly: -1, // unlimited
     features: [
       'ai_reservations',
       'host_dashboard',
@@ -145,6 +150,7 @@ const METERED_PRICING = {
   whatsapp_reservation: { envVar: 'STRIPE_METERED_PRICE_WHATSAPP', label: 'WhatsApp Reservation', fallback: 'STRIPE_METERED_PRICE_RESERVATION' },
   ai_call_completed: { envVar: 'STRIPE_METERED_PRICE_AI_CALL', label: 'AI Call' },
   sms_sent: { envVar: 'STRIPE_METERED_PRICE_SMS', label: 'SMS Sent' },
+  manager_ai_call: { envVar: 'STRIPE_METERED_PRICE_MANAGER_AI', label: 'Manager AI Message' },
 };
 
 /**
