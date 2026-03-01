@@ -132,6 +132,18 @@
     {
       "path": "/api/cron/manager-briefings?type=morning",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/manager-alerts?type=low_covers",
+      "schedule": "0 18 * * *"
+    },
+    {
+      "path": "/api/cron/manager-alerts?type=high_noshows",
+      "schedule": "0 15 * * *"
+    },
+    {
+      "path": "/api/cron/manager-alerts?type=late_cancellations",
+      "schedule": "0 12,14,16,18,20 * * *"
     }
   ]
 }
