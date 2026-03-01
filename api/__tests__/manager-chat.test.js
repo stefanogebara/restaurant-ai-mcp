@@ -7,9 +7,22 @@ const managerChat = require('../manager-chat');
 jest.mock('../_lib/auth', () => ({
   verifyJWT: jest.fn().mockReturnValue({ restaurantId: 'rest-1' }),
 }));
-jest.mock('../_lib/manager-agent', () => ({
-  runManagerAgent: jest.fn().mockResolvedValue('You have 2 reservations tonight.'),
-}));
+jest.mock('../_lib/manager-agent', () => {
+  class ManagerQuotaError extends Error {
+    constructor(type, data = {}) {
+      super(type);
+      this.name = 'ManagerQuotaError';
+      this.type = type;
+      this.used = data.used;
+      this.limit = data.limit;
+      this.plan = data.plan;
+    }
+  }
+  return {
+    runManagerAgent: jest.fn().mockResolvedValue('You have 2 reservations tonight.'),
+    ManagerQuotaError,
+  };
+});
 jest.mock('../_lib/supabase', () => ({ supabaseAdmin: mockSupabaseAdmin }));
 
 jest.mock('../_lib/secure-logger', () => ({
@@ -55,6 +68,28 @@ describe('POST /api/manager-chat', () => {
     await managerChat(req, res);
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
+  });
+
+  it('returns 403 when plan is free (upgrade_required)', async () => {
+    const { runManagerAgent, ManagerQuotaError } = require('../_lib/manager-agent');
+    const quotaErr = new ManagerQuotaError('upgrade_required', { plan: 'free' });
+    runManagerAgent.mockRejectedValueOnce(quotaErr);
+    const req = { method: 'POST', headers: { authorization: 'Bearer tok' }, body: { message: 'Hi' } };
+    const res = mockRes();
+    await managerChat(req, res);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Manager AI requires a paid plan', upgrade_required: true });
+  });
+
+  it('returns 429 when quota exceeded', async () => {
+    const { runManagerAgent, ManagerQuotaError } = require('../_lib/manager-agent');
+    const quotaErr = new ManagerQuotaError('quota_exceeded', { used: 100, limit: 100 });
+    runManagerAgent.mockRejectedValueOnce(quotaErr);
+    const req = { method: 'POST', headers: { authorization: 'Bearer tok' }, body: { message: 'Hi' } };
+    const res = mockRes();
+    await managerChat(req, res);
+    expect(res.status).toHaveBeenCalledWith(429);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Monthly Manager AI limit reached', used: 100, limit: 100 });
   });
 });
 

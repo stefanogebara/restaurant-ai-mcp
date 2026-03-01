@@ -4,9 +4,22 @@ var mockSupabaseAdmin = { from: jest.fn() };
 
 const managerWhatsapp = require('../manager-whatsapp');
 
-jest.mock('../_lib/manager-agent', () => ({
-  runManagerAgent: jest.fn().mockResolvedValue('Tonight you have 3 reservations.'),
-}));
+jest.mock('../_lib/manager-agent', () => {
+  class ManagerQuotaError extends Error {
+    constructor(type, data = {}) {
+      super(type);
+      this.name = 'ManagerQuotaError';
+      this.type = type;
+      this.used = data.used;
+      this.limit = data.limit;
+      this.plan = data.plan;
+    }
+  }
+  return {
+    runManagerAgent: jest.fn().mockResolvedValue('Tonight you have 3 reservations.'),
+    ManagerQuotaError,
+  };
+});
 jest.mock('../_lib/supabase', () => ({ supabaseAdmin: mockSupabaseAdmin }));
 // whatsapp-sender.js lives in api/_lib/ (not api/services/)
 jest.mock('../_lib/whatsapp-sender', () => ({
@@ -77,6 +90,28 @@ it('returns 200 silently when Body is missing', async () => {
   await managerWhatsapp(req, res);
   const { runManagerAgent } = require('../_lib/manager-agent');
   expect(runManagerAgent).not.toHaveBeenCalled();
+  expect(res.status).toHaveBeenCalledWith(200);
+});
+
+it('sends upgrade message via WhatsApp when quota exceeded', async () => {
+  const { runManagerAgent, ManagerQuotaError } = require('../_lib/manager-agent');
+  const quotaErr = new ManagerQuotaError('quota_exceeded', { limit: 100 });
+  runManagerAgent.mockRejectedValueOnce(quotaErr);
+  const req = {
+    method: 'POST',
+    body: { From: 'whatsapp:+15551234567', Body: 'How many covers tonight?', MessageSid: 'SM123' },
+  };
+  const res = mockRes();
+  await managerWhatsapp(req, res);
+  const { sendWhatsAppMessage } = require('../_lib/whatsapp-sender');
+  expect(sendWhatsAppMessage).toHaveBeenCalledWith(
+    '+15551234567',
+    expect.stringContaining('100'),
+  );
+  expect(sendWhatsAppMessage).toHaveBeenCalledWith(
+    '+15551234567',
+    expect.stringMatching(/limit/i),
+  );
   expect(res.status).toHaveBeenCalledWith(200);
 });
 
