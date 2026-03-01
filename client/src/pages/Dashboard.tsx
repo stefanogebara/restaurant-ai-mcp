@@ -25,6 +25,7 @@ import ReservationsList from '../components/dashboard/ReservationsList';
 import ActivePartiesPanel from '../components/dashboard/ActivePartiesPanel';
 import WaitlistPanel from '../components/host/WaitlistPanel';
 import ManagerNotesPanel from '../components/dashboard/ManagerNotesPanel';
+import { ManagerChatPanel } from '../components/dashboard/ManagerChatPanel';
 import WalkInModal from '../components/host/WalkInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
@@ -56,6 +57,7 @@ export default function Dashboard() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---- Modal state ----
+  const [chatOpen, setChatOpen] = useState(false);
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [showSeatModal, setShowSeatModal] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
@@ -270,6 +272,15 @@ export default function Dashboard() {
         >
           <ThiingsIcon name="plus" pxSize={24} />
         </button>
+
+        {/* ---- FAB: Manager AI Chat ---- */}
+        <button
+          onClick={() => setChatOpen((prev) => !prev)}
+          aria-label="Open AI Manager Assistant"
+          className="fixed bottom-20 sm:bottom-6 right-20 sm:right-24 z-40 w-14 h-14 bg-blue-600 hover:bg-blue-700 hover:scale-105 active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center text-xl"
+        >
+          💬
+        </button>
       </div>
 
       {/* ---- Modals ---- */}
@@ -350,6 +361,7 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      {chatOpen && <ManagerChatPanel onClose={() => setChatOpen(false)} />}
     </DashboardLayout>
   );
 }
