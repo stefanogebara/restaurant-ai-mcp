@@ -425,3 +425,17 @@ Push to `main` branch triggers automatic Vercel deployment.
 - [x] useStaffingConfig hook — React Query GET/PATCH, invalidates forecast on save
 - [x] StaffingForecastWidget — 3-day forecast widget in Dashboard left column
 - [x] StaffingSettingsPanel — per-role covers/staff config panel in WhatsApp Settings page
+
+### Phase 9 — Revenue Forecasting + Booking Widget + Voice Persona ✅ COMPLETE
+- [x] DB migration — total_bill NUMERIC(10,2) on public.service_records *(apply in Supabase SQL editor)*
+- [x] DB migration — agent_name TEXT + agent_greeting TEXT on restaurant.restaurant_config *(apply in Supabase SQL editor)*
+- [x] revenue-stats.js — GET /api/revenue-stats → avg_spend_per_cover (5+ data point threshold, €40 default)
+- [x] voice-persona.js — GET/PATCH /api/voice-persona → agent_name + agent_greeting with length validation
+- [x] host-dashboard.js — complete-service action accepts optional total_bill
+- [x] persona-prompt-builder.js — injects agent_name + agent_greeting into voice agent prompt
+- [x] useRevenueStats hook + RevenueStatsWidget — 7-day revenue projection bar chart in Dashboard left column
+- [x] useVoicePersona + VoicePersonaPanel — agent name + greeting config panel in Voice Settings
+- [x] widget.js — iframe booking button served from /widget.js?slug= (client/public/widget.js)
+- [x] EmbedSnippetPanel — copy-paste snippet panel in Voice Settings
+- [x] BookingPage — ?embed=true hides nav for iframe embed mode
+- [x] ActivePartiesPanel — optional total_bill number input on Complete Service
