@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import ManagerNotificationsPanel from '../components/dashboard/ManagerNotificationsPanel';
+import StaffingSettingsPanel from '../components/dashboard/StaffingSettingsPanel';
 import {
   useWhatsAppStatus,
   useWhatsAppStats,
@@ -237,6 +238,9 @@ export default function WhatsAppSettingsPage() {
 
         {/* Manager Notifications */}
         <ManagerNotificationsPanel />
+
+        {/* Staffing Ratios */}
+        <StaffingSettingsPanel />
       </div>
     </DashboardLayout>
   );

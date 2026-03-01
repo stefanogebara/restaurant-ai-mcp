@@ -27,6 +27,7 @@ import WaitlistPanel from '../components/host/WaitlistPanel';
 import ManagerNotesPanel from '../components/dashboard/ManagerNotesPanel';
 import { ManagerChatPanel } from '../components/dashboard/ManagerChatPanel';
 import ManagerAIUsageBar from '../components/dashboard/ManagerAIUsageBar';
+import StaffingForecastWidget from '../components/dashboard/StaffingForecastWidget';
 import WalkInModal from '../components/host/WalkInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
@@ -246,6 +247,8 @@ export default function Dashboard() {
                 onIntervention={(r) => setInterventionReservation(r)}
                 isLoading={isLoading}
               />
+
+              <StaffingForecastWidget />
             </div>
 
             {/* Right Column: Waitlist + Active Parties */}
