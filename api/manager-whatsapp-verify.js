@@ -16,24 +16,32 @@ module.exports = async (req, res) => {
     if (action === 'send') {
       if (!phone) return res.status(400).json({ error: 'phone is required' });
 
-      const verificationCode = String(Math.floor(100000 + Math.random() * 900000));
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+      const phoneRegex = /^\+[1-9]\d{7,14}$/;
+      if (!phoneRegex.test(phone)) {
+        return res.status(400).json({ error: 'Phone must be in E.164 format (e.g., +15551234567)' });
+      }
 
-      await supabaseAdmin
+      const verificationCode = String(Math.floor(100000 + Math.random() * 900000));
+
+      const { error: updateError } = await supabaseAdmin
         .from('restaurant_config')
         .update({
           manager_phone: phone,
           manager_whatsapp_code: verificationCode,
-          manager_whatsapp_code_expires_at: expiresAt,
           manager_whatsapp_verified: false,
+          manager_whatsapp_code_expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
         })
         .eq('id', restaurantId);
+      if (updateError) throw new Error(updateError.message);
 
-      await sendWhatsAppMessage(
+      const sendResult = await sendWhatsAppMessage(
         phone,
-        'Your Seatable verification code is: ' + verificationCode + '. It expires in 10 minutes.',
-        restaurantId
+        'Your Seatable verification code is: ' + verificationCode + '. It expires in 10 minutes.'
       );
+      if (!sendResult.success) {
+        logger.error('Failed to send verification code via WhatsApp', { phone, error: sendResult.error });
+        return res.status(502).json({ error: 'Failed to send WhatsApp message. Please check the phone number.' });
+      }
 
       return res.json({ sent: true });
     }

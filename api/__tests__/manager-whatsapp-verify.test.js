@@ -33,8 +33,31 @@ describe('action=send', () => {
     await verify(req, res);
 
     const { sendWhatsAppMessage } = require('../_lib/whatsapp-sender');
-    expect(sendWhatsAppMessage).toHaveBeenCalledWith('+15551234567', expect.stringContaining('verification code'), 'rest-1');
+    expect(sendWhatsAppMessage).toHaveBeenCalledWith('+15551234567', expect.stringContaining('verification code'));
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ sent: true }));
+  });
+
+  it('returns 502 when WhatsApp send fails', async () => {
+    const { sendWhatsAppMessage } = require('../_lib/whatsapp-sender');
+    sendWhatsAppMessage.mockResolvedValueOnce({ success: false, error: 'Invalid phone number' });
+
+    const updateEq = jest.fn().mockResolvedValue({ error: null });
+    const updateChain = { update: jest.fn().mockReturnValue({ eq: updateEq }) };
+    mockSupabaseAdmin.from.mockReturnValueOnce(updateChain);
+
+    const req = { method: 'POST', headers: { authorization: 'Bearer tok' }, body: { action: 'send', phone: '+15551234567' } };
+    const res = mockRes();
+    await verify(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(502);
+  });
+
+  it('returns 400 for invalid phone format', async () => {
+    const req = { method: 'POST', headers: { authorization: 'Bearer tok' }, body: { action: 'send', phone: '555-1234' } };
+    const res = mockRes();
+    await verify(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: expect.stringContaining('E.164') }));
   });
 
   it('returns 400 when phone is missing', async () => {
