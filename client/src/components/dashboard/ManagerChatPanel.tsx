@@ -8,6 +8,11 @@ interface Message {
   created_at?: string;
 }
 
+interface UsageData {
+  used: number;
+  limit: number | null;
+}
+
 interface ManagerChatPanelProps {
   onClose: () => void;
 }
@@ -21,6 +26,17 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
     queryKey: ['manager-chat-history'],
     queryFn: () => api.get('/manager-chat').then((r) => r.data),
   });
+
+  const { data: usageData } = useQuery<UsageData>({
+    queryKey: ['manager-usage'],
+    queryFn: () => api.get('/manager-usage').then((r) => r.data),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const isQuotaExhausted =
+    usageData?.limit !== null &&
+    usageData?.limit !== undefined &&
+    (usageData?.used ?? 0) >= (usageData?.limit ?? Infinity);
 
   const messages: Message[] = data?.history || [];
 
@@ -52,7 +68,7 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
 
   const handleSend = () => {
     const trimmed = input.trim();
-    if (!trimmed || sendMutation.isPending) return;
+    if (!trimmed || sendMutation.isPending || isQuotaExhausted) return;
     setInput('');
     sendMutation.mutate(trimmed);
   };
@@ -93,19 +109,26 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
         </div>
       )}
 
+      {isQuotaExhausted && (
+        <div className="px-4 py-2 text-xs text-amber-700 bg-amber-50 border-t border-amber-100 flex items-center justify-between">
+          <span>Monthly limit reached</span>
+          <a href="/subscription/manage" className="underline font-medium">Upgrade →</a>
+        </div>
+      )}
+
       <div className="flex gap-2 px-4 py-3 border-t border-gray-100">
         <input
           className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Ask your AI assistant..."
+          placeholder={isQuotaExhausted ? 'Monthly limit reached — upgrade to continue' : 'Ask your AI assistant...'}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-          disabled={sendMutation.isPending}
+          disabled={sendMutation.isPending || isQuotaExhausted}
         />
         <button
           type="button"
           onClick={handleSend}
-          disabled={!input.trim() || sendMutation.isPending}
+          disabled={!input.trim() || sendMutation.isPending || isQuotaExhausted}
           className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white rounded-lg px-3 py-2 text-sm font-medium"
         >
           Send
