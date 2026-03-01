@@ -21,6 +21,8 @@ const { writeMemory, retrieveRelevantMemories } = require('../services/managerMe
 const mockSupabaseAdmin = require('../_lib/supabase').supabaseAdmin;
 const mockOpenAI = { embeddings: { create: mockEmbeddingsCreate } };
 
+beforeAll(() => { process.env.OPENAI_API_KEY = 'test-key'; });
+afterAll(() => { delete process.env.OPENAI_API_KEY; });
 beforeEach(() => jest.clearAllMocks());
 
 describe('writeMemory', () => {

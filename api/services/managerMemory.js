@@ -1,13 +1,21 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { OpenAI } = require('openai');
+const { createSecureLogger } = require('../_lib/secure-logger');
+const logger = createSecureLogger('manager-memory');
 
 let openaiClient = null;
 function getOpenAI() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY not configured');
+  }
   if (!openaiClient) openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   return openaiClient;
 }
 
 async function embedText(text) {
+  if (!text || typeof text !== 'string') {
+    throw new Error('Text is required for embedding generation');
+  }
   const res = await getOpenAI().embeddings.create({
     model: 'text-embedding-ada-002',
     input: text.slice(0, 8000),
@@ -26,7 +34,10 @@ async function writeMemory(restaurantId, type, category, content, source, import
     importance,
     embedding,
   });
-  if (error) throw new Error(error.message);
+  if (error) {
+    logger.error('writeMemory failed', { restaurantId, error: error.message });
+    throw new Error(error.message);
+  }
 }
 
 async function retrieveRelevantMemories(restaurantId, query, limit = 10) {
@@ -36,7 +47,10 @@ async function retrieveRelevantMemories(restaurantId, query, limit = 10) {
     p_embedding: embedding,
     p_limit: limit,
   });
-  if (error) throw new Error(error.message);
+  if (error) {
+    logger.error('retrieveRelevantMemories failed', { restaurantId, error: error.message });
+    throw new Error(error.message);
+  }
   return data || [];
 }
 
