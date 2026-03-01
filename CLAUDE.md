@@ -377,7 +377,7 @@ Push to `main` branch triggers automatic Vercel deployment.
 ### Phase 4 — Growth & Retention 🔲 IN PROGRESS
 - [x] Onboarding polish — blur validation, clickable sidebar, phone sync, 5s countdown modal
 - [ ] WhatsApp integration end-to-end test (Meta Cloud + Twilio paths)
-- [ ] Voice agent — test full reservation booking flow via ElevenLabs
+- [x] Voice agent — test full reservation booking flow via ElevenLabs
 - [x] Analytics dashboard — date-range reports, export CSV
-- [ ] Demo nurture email sequence — drip after demo creation
+- [x] Demo nurture email sequence — drip after demo creation
 - [ ] Referral / invite flow for restaurant owners
