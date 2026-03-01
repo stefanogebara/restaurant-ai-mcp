@@ -547,7 +547,7 @@ async function handleSeatParty(req, res) {
 
 async function handleCompleteService(req, res) {
   const restaurantId = req.user.restaurant_id;
-  const { service_record_id } = req.body;
+  const { service_record_id, total_bill } = req.body;
 
   if (!service_record_id) {
     return res.status(400).json({
@@ -558,10 +558,17 @@ async function handleCompleteService(req, res) {
 
   const departedAt = new Date().toISOString();
 
-  const updateResult = await updateServiceRecord(restaurantId, service_record_id, {
+  const recordUpdates = {
     'Actual Departure': departedAt,
-    'Status': 'completed'
-  });
+    'Status': 'completed',
+  };
+  if (total_bill !== undefined && total_bill !== null) {
+    const parsed = parseFloat(total_bill);
+    if (!isNaN(parsed) && parsed >= 0) {
+      recordUpdates.total_bill = parsed;
+    }
+  }
+  const updateResult = await updateServiceRecord(restaurantId, service_record_id, recordUpdates);
 
   if (!updateResult.success) {
     return res.status(500).json({
