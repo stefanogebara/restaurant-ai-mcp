@@ -12,7 +12,8 @@ const BRIEFING_PROMPTS = {
 
 module.exports = async (req, res) => {
   const authHeader = req.headers.authorization || '';
-  if (authHeader.replace('Bearer ', '') !== process.env.CRON_SECRET) {
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+  if (token !== process.env.CRON_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

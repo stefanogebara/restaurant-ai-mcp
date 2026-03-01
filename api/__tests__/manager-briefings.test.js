@@ -30,6 +30,8 @@ function mockRes() {
   return r;
 }
 
+beforeAll(() => { process.env.CRON_SECRET = 'test-cron-secret'; });
+afterAll(() => { delete process.env.CRON_SECRET; });
 beforeEach(() => jest.clearAllMocks());
 
 it('sends end-of-day briefing to opted-in restaurants', async () => {
@@ -40,7 +42,6 @@ it('sends end-of-day briefing to opted-in restaurants', async () => {
   const req = { method: 'POST', headers: { authorization: 'Bearer test-cron-secret' }, query: { type: 'end_of_day' } };
   const res = mockRes();
 
-  process.env.CRON_SECRET = 'test-cron-secret';
   await briefings(req, res);
 
   const { sendWhatsAppMessage } = require('../_lib/whatsapp-sender');
@@ -55,7 +56,6 @@ it('skips restaurants without end_of_day_briefing preference', async () => {
 
   const req = { method: 'POST', headers: { authorization: 'Bearer test-cron-secret' }, query: { type: 'end_of_day' } };
   const res = mockRes();
-  process.env.CRON_SECRET = 'test-cron-secret';
   await briefings(req, res);
 
   const { sendWhatsAppMessage } = require('../_lib/whatsapp-sender');
@@ -68,4 +68,22 @@ it('returns 401 for wrong CRON_SECRET', async () => {
   const res = mockRes();
   await briefings(req, res);
   expect(res.status).toHaveBeenCalledWith(401);
+  process.env.CRON_SECRET = 'test-cron-secret';
+});
+
+it('sends morning briefing to opted-in restaurants', async () => {
+  mockSupabaseAdmin.from.mockReturnValue(mockChain([
+    { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { morning_briefing: true } },
+  ]));
+
+  const req = { method: 'POST', headers: { authorization: 'Bearer test-cron-secret' }, query: { type: 'morning' } };
+  const res = mockRes();
+
+  await briefings(req, res);
+
+  const { runManagerAgent } = require('../_lib/manager-agent');
+  const { sendWhatsAppMessage } = require('../_lib/whatsapp-sender');
+  expect(runManagerAgent).toHaveBeenCalledWith('rest-1', expect.stringContaining('morning'), 'whatsapp');
+  expect(sendWhatsAppMessage).toHaveBeenCalledWith('+15551234567', expect.any(String), 'rest-1');
+  expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ sent: 1 }));
 });
