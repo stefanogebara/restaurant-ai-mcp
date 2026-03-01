@@ -123,11 +123,17 @@ function buildSystemPrompt(memories, snapshot) {
     )
     .join('\n');
 
+  const staffingLines = (snapshot.staffing_forecast || [])
+    .map(f => f.day + ' ' + f.date + ': ' + f.expected_covers + ' covers → ' +
+      f.roles.map(r => r.name + ': ' + r.recommended).join(', '))
+    .join('\n');
+
   const snapBlock = [
     'Upcoming reservations: ' + snapshot.upcoming_reservations.length,
     upcomingLines,
     'Active parties: ' + snapshot.active_parties.length,
     'Waitlist: ' + snapshot.waitlist_count,
+    staffingLines ? '\n[STAFFING FORECAST - NEXT 3 DAYS]\n' + staffingLines : '',
   ]
     .filter(Boolean)
     .join('\n');
