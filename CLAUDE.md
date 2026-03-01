@@ -339,7 +339,7 @@ Push to `main` branch triggers automatic Vercel deployment.
 
 ---
 
-**Last Updated**: February 28, 2026
+**Last Updated**: March 1, 2026
 
 ---
 
@@ -374,10 +374,23 @@ Push to `main` branch triggers automatic Vercel deployment.
 - [x] Post-conversion — welcome toast on first dashboard load
 - [x] Bug fix — normalize cuisine_type to valid restaurant_type enum
 
-### Phase 4 — Growth & Retention 🔲 IN PROGRESS
+### Phase 4 — Growth & Retention ✅ COMPLETE
 - [x] Onboarding polish — blur validation, clickable sidebar, phone sync, 5s countdown modal
 - [x] WhatsApp integration end-to-end test (Meta Cloud + Twilio paths)
 - [x] Voice agent — test full reservation booking flow via ElevenLabs
 - [x] Analytics dashboard — date-range reports, export CSV
 - [x] Demo nurture email sequence — drip after demo creation
 - [x] Referral / invite flow for restaurant owners
+
+### Phase 5 — Manager AI Agent ✅ COMPLETE
+- [x] DB migrations — manager_memory, manager_conversations tables + pgvector RPC
+- [x] managerMemory service — OpenAI embeddings, hybrid memory retrieval
+- [x] restaurantSnapshot service — live context (reservations, waitlist, active parties)
+- [x] manager-agent.js — Claude claude-sonnet-4-6 core handler with memory + snapshot
+- [x] manager-chat API — in-app chat endpoint (GET history + POST message)
+- [x] ManagerChatPanel — floating FAB + chat UI on dashboard with optimistic updates
+- [x] manager-whatsapp webhook — WhatsApp channel for manager AI
+- [x] manager-whatsapp-verify — OTP phone verification (E.164 + 10-min expiry)
+- [x] manager-briefings cron — proactive end-of-day (11pm) + morning (8am) briefings
+- [x] manager-documents endpoint — PDF/text upload with claude-haiku fact extraction
+- [x] Step5TeachAI — onboarding step to prime manager memory during setup
