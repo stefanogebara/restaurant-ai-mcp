@@ -1,0 +1,72 @@
+import { useRevenueStats } from '../../hooks/useRevenueStats';
+import { useStaffingForecast } from '../../hooks/useStaffingForecast';
+
+function fmt(amount: number): string {
+  return '€' + Math.round(amount).toLocaleString('en-US');
+}
+
+export default function RevenueStatsWidget() {
+  const { data: stats, isLoading: statsLoading } = useRevenueStats();
+  const { data: forecast, isLoading: forecastLoading } = useStaffingForecast();
+
+  if (statsLoading || forecastLoading) {
+    return (
+      <div className="bg-white border border-border-gray rounded-2xl p-6 animate-pulse space-y-3">
+        <div className="h-4 bg-gray-100 rounded w-40" />
+        {[0, 1, 2].map((i) => <div key={i} className="h-8 bg-gray-100 rounded" />)}
+      </div>
+    );
+  }
+
+  if (!stats || !forecast || forecast.length === 0) return null;
+
+  const days = forecast.slice(0, 7);
+  const totalProjected = days.reduce((s, d) => s + d.expected_covers * stats.avg_spend_per_cover, 0);
+  const maxProjected = Math.max(...days.map(d => d.expected_covers * stats.avg_spend_per_cover), 1);
+
+  return (
+    <div className="bg-white border border-border-gray rounded-2xl p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">
+          Revenue Forecast
+        </h2>
+        <div className="flex items-center gap-2">
+          {stats.using_default && (
+            <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5">
+              estimated
+            </span>
+          )}
+          <span className="text-sm font-semibold text-deep-charcoal">{fmt(totalProjected)}</span>
+          <span className="text-xs text-warm-stone">/ 7 days</span>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        {days.map((day) => {
+          const projected = day.expected_covers * stats.avg_spend_per_cover;
+          const pct = Math.round((projected / maxProjected) * 100);
+          return (
+            <div key={day.date} className="flex items-center gap-3">
+              <span className="text-xs font-medium text-warm-stone w-8">{day.day}</span>
+              <div className="flex-1 h-2 bg-soft-gray rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-emerald-400 rounded-full transition-all"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <span className="text-xs font-medium text-deep-charcoal w-16 text-right">
+                {fmt(projected)}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {stats.using_default && (
+        <p className="text-xs text-warm-stone">
+          Based on €{stats.avg_spend_per_cover}/cover (default). Add bills when completing service to improve accuracy.
+        </p>
+      )}
+    </div>
+  );
+}

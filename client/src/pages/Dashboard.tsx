@@ -28,6 +28,7 @@ import ManagerNotesPanel from '../components/dashboard/ManagerNotesPanel';
 import { ManagerChatPanel } from '../components/dashboard/ManagerChatPanel';
 import ManagerAIUsageBar from '../components/dashboard/ManagerAIUsageBar';
 import StaffingForecastWidget from '../components/dashboard/StaffingForecastWidget';
+import RevenueStatsWidget from '../components/dashboard/RevenueStatsWidget';
 import WalkInModal from '../components/host/WalkInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
@@ -249,6 +250,7 @@ export default function Dashboard() {
               />
 
               <StaffingForecastWidget />
+              <RevenueStatsWidget />
             </div>
 
             {/* Right Column: Waitlist + Active Parties */}
