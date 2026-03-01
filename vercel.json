@@ -124,6 +124,14 @@
     {
       "path": "/api/cron/warm-seo-cache",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/manager-briefings?type=end_of_day",
+      "schedule": "0 23 * * *"
+    },
+    {
+      "path": "/api/cron/manager-briefings?type=morning",
+      "schedule": "0 8 * * *"
     }
   ]
 }
