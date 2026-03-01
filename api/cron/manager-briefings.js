@@ -1,6 +1,6 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { runManagerAgent } = require('../_lib/manager-agent');
-const { sendWhatsAppMessage } = require('../_lib/whatsapp-sender');
+const { sendBriefing } = require('../_lib/briefing-sender');
 const { createSecureLogger } = require('../_lib/secure-logger');
 
 const logger = createSecureLogger('manager-briefings');
@@ -34,7 +34,12 @@ module.exports = async (req, res) => {
     for (const config of eligible) {
       try {
         const briefing = await runManagerAgent(config.id, prompt, 'whatsapp');
-        await sendWhatsAppMessage(config.manager_phone, briefing, config.id);
+        await sendBriefing(
+          config.manager_phone,
+          briefing,
+          config.notification_preferences?.briefing_channel || 'text',
+          config.id
+        );
         sent++;
       } catch (err) {
         logger.error('briefing failed', { restaurantId: config.id, error: err.message });

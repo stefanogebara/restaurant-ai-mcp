@@ -1,11 +1,12 @@
 // mockSupabaseAdmin must be declared with var so it is hoisted above jest.mock() calls
 // (jest.mock factories run before const/let declarations are initialized)
 var mockSupabaseAdmin = { from: jest.fn() };
+var mockSendBriefing = jest.fn().mockResolvedValue(undefined);
 
 const briefings = require('../cron/manager-briefings');
 
-jest.mock('../_lib/whatsapp-sender', () => ({
-  sendWhatsAppMessage: jest.fn().mockResolvedValue({ success: true }),
+jest.mock('../_lib/briefing-sender', () => ({
+  sendBriefing: (...a) => mockSendBriefing(...a),
 }));
 jest.mock('../_lib/manager-agent', () => ({
   runManagerAgent: jest.fn().mockResolvedValue('End of day: 24 covers served.'),
@@ -34,9 +35,9 @@ beforeAll(() => { process.env.CRON_SECRET = 'test-cron-secret'; });
 afterAll(() => { delete process.env.CRON_SECRET; });
 beforeEach(() => jest.clearAllMocks());
 
-it('sends end-of-day briefing to opted-in restaurants', async () => {
+it('sends end-of-day briefing to opted-in restaurants via sendBriefing', async () => {
   mockSupabaseAdmin.from.mockReturnValue(mockChain([
-    { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { end_of_day_briefing: true } },
+    { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { end_of_day_briefing: true, briefing_channel: 'text' } },
   ]));
 
   const req = { method: 'POST', headers: { authorization: 'Bearer test-cron-secret' }, query: { type: 'end_of_day' } };
@@ -44,9 +45,32 @@ it('sends end-of-day briefing to opted-in restaurants', async () => {
 
   await briefings(req, res);
 
-  const { sendWhatsAppMessage } = require('../_lib/whatsapp-sender');
-  expect(sendWhatsAppMessage).toHaveBeenCalledWith('+15551234567', expect.any(String), 'rest-1');
+  expect(mockSendBriefing).toHaveBeenCalledWith('+15551234567', expect.any(String), 'text', 'rest-1');
   expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ sent: 1 }));
+});
+
+it('uses voice_note channel when briefing_channel is voice_note', async () => {
+  mockSupabaseAdmin.from.mockReturnValue(mockChain([
+    { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { end_of_day_briefing: true, briefing_channel: 'voice_note' } },
+  ]));
+
+  const req = { method: 'POST', headers: { authorization: 'Bearer test-cron-secret' }, query: { type: 'end_of_day' } };
+  const res = mockRes();
+  await briefings(req, res);
+
+  expect(mockSendBriefing).toHaveBeenCalledWith('+15551234567', expect.any(String), 'voice_note', 'rest-1');
+});
+
+it('defaults to text channel when briefing_channel is not set', async () => {
+  mockSupabaseAdmin.from.mockReturnValue(mockChain([
+    { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { end_of_day_briefing: true } },
+  ]));
+
+  const req = { method: 'POST', headers: { authorization: 'Bearer test-cron-secret' }, query: { type: 'end_of_day' } };
+  const res = mockRes();
+  await briefings(req, res);
+
+  expect(mockSendBriefing).toHaveBeenCalledWith('+15551234567', expect.any(String), 'text', 'rest-1');
 });
 
 it('skips restaurants without end_of_day_briefing preference', async () => {
@@ -58,8 +82,7 @@ it('skips restaurants without end_of_day_briefing preference', async () => {
   const res = mockRes();
   await briefings(req, res);
 
-  const { sendWhatsAppMessage } = require('../_lib/whatsapp-sender');
-  expect(sendWhatsAppMessage).not.toHaveBeenCalled();
+  expect(mockSendBriefing).not.toHaveBeenCalled();
 });
 
 it('returns 401 for wrong CRON_SECRET', async () => {
@@ -73,7 +96,7 @@ it('returns 401 for wrong CRON_SECRET', async () => {
 
 it('sends morning briefing to opted-in restaurants', async () => {
   mockSupabaseAdmin.from.mockReturnValue(mockChain([
-    { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { morning_briefing: true } },
+    { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { morning_briefing: true, briefing_channel: 'phone_call' } },
   ]));
 
   const req = { method: 'POST', headers: { authorization: 'Bearer test-cron-secret' }, query: { type: 'morning' } };
@@ -82,8 +105,7 @@ it('sends morning briefing to opted-in restaurants', async () => {
   await briefings(req, res);
 
   const { runManagerAgent } = require('../_lib/manager-agent');
-  const { sendWhatsAppMessage } = require('../_lib/whatsapp-sender');
   expect(runManagerAgent).toHaveBeenCalledWith('rest-1', expect.stringContaining('morning'), 'whatsapp');
-  expect(sendWhatsAppMessage).toHaveBeenCalledWith('+15551234567', expect.any(String), 'rest-1');
+  expect(mockSendBriefing).toHaveBeenCalledWith('+15551234567', expect.any(String), 'phone_call', 'rest-1');
   expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ sent: 1 }));
 });
