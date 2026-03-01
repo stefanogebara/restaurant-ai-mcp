@@ -9,8 +9,9 @@ const {
   getSubscriptionByCustomerId,
   updateRestaurantPlan,
   query: supabase,
+  supabaseAdmin,
 } = require('./_lib/supabase');
-const { sendPaymentReceiptEmail, sendPaymentFailedEmail, sendTrialEndingEmail } = require('./_lib/email');
+const { sendPaymentReceiptEmail, sendPaymentFailedEmail, sendTrialEndingEmail, sendReferralRewardEmail } = require('./_lib/email');
 
 // This is your Stripe webhook secret for verifying webhook signatures
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -104,6 +105,37 @@ async function rewardReferralIfEligible(refereeRestaurantId, refereeStripeCustom
     .eq('id', claimed.id);
 
   logger.info(`Referral rewarded: ${claimed.referral_code} -> credited ${creditCents / 100} EUR to ${referrerSub['Customer ID']}`);
+
+  // Send reward notification email to the referrer
+  try {
+    const client = supabaseAdmin || supabase;
+    const [{ data: referrerConfig }, { data: refereeConfig }] = await Promise.all([
+      client
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('email, name')
+        .eq('id', claimed.referrer_id)
+        .single(),
+      client
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('name')
+        .eq('id', refereeRestaurantId)
+        .single(),
+    ]);
+
+    if (referrerConfig?.email) {
+      await sendReferralRewardEmail(referrerConfig.email, {
+        referrerName: referrerConfig.name || null,
+        refereeRestaurantName: refereeConfig?.name || null,
+        creditAmount: creditCents,
+      });
+    } else {
+      logger.warn('Referral reward email skipped: referrer email not found for restaurant:', claimed.referrer_id);
+    }
+  } catch (emailErr) {
+    logger.error('Failed to send referral reward email (non-fatal):', emailErr.message);
+  }
 }
 
 module.exports = async (req, res) => {

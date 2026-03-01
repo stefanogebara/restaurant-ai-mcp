@@ -353,6 +353,70 @@ async function sendNewBookingAlertEmail({
 }
 
 /**
+ * Send a referral reward notification to the referrer
+ */
+async function sendReferralRewardEmail(to, { referrerName, refereeRestaurantName, creditAmount }) {
+  const resend = getResendClient();
+  if (!resend) { logger.warn('RESEND_API_KEY not set, skipping referral reward email'); return; }
+
+  const displayCredit = typeof creditAmount === 'number'
+    ? `EUR ${(creditAmount / 100).toFixed(2)}`
+    : String(creditAmount);
+
+  const plainText = [
+    `Hi ${referrerName || 'there'},`,
+    '',
+    `Great news — ${refereeRestaurantName || 'the restaurant you referred'} just made their first payment on Seatable.`,
+    '',
+    `As a thank you, we've applied 1 month free (${displayCredit} credit) to your account.`,
+    'The credit will automatically reduce your next invoice.',
+    '',
+    'Keep spreading the word — every restaurant you refer earns you another free month.',
+    '',
+    'Thanks for being part of Seatable.',
+    '',
+    'The Seatable Team',
+    'hello@seatable.one',
+  ].join('\n');
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to,
+      subject: 'You earned a referral reward!',
+      html: wrapEmailHtml(`
+        <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 16px; padding: 32px; margin-bottom: 24px;">
+          <h2 style="font-size: 22px; color: #14532D; margin: 0 0 8px 0;">You earned a referral reward!</h2>
+          <p style="color: #57534E; margin: 0 0 16px 0;">
+            Hi ${he(referrerName || 'there')},
+          </p>
+          <p style="color: #57534E; margin: 0 0 16px 0;">
+            <strong style="color: #1C1917;">${he(refereeRestaurantName || 'The restaurant you referred')}</strong>
+            just made their first payment on Seatable — which means your referral reward has been unlocked.
+          </p>
+          <div style="background: white; border: 1px solid #BBF7D0; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center;">
+            <p style="color: #78716C; font-size: 13px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">Credit applied to your account</p>
+            <p style="color: #14532D; font-size: 28px; font-weight: 700; margin: 0;">${he(displayCredit)}</p>
+            <p style="color: #78716C; font-size: 13px; margin: 4px 0 0 0;">1 month free</p>
+          </div>
+          <p style="color: #57534E; margin: 0;">
+            The credit will automatically be applied to your next invoice — no action needed on your part.
+            Keep spreading the word; every restaurant you refer earns you another free month.
+          </p>
+        </div>
+        <p style="color: #78716C; font-size: 13px; text-align: center; margin: 0;">
+          Questions? Contact us at <a href="mailto:hello@seatable.one" style="color: #9F1239;">hello@seatable.one</a>
+        </p>
+      `),
+      text: plainText,
+    });
+    logger.info('Referral reward email sent to:', to);
+  } catch (err) {
+    logger.error('Failed to send referral reward email:', err.message);
+  }
+}
+
+/**
  * Send a team member invitation email
  */
 async function sendInviteEmail({ to, inviteUrl, role }) {
@@ -400,5 +464,6 @@ module.exports = {
   sendReservationConfirmationEmail,
   sendNewBookingAlertEmail,
   sendInviteEmail,
+  sendReferralRewardEmail,
   wrapEmailHtml,
 };
