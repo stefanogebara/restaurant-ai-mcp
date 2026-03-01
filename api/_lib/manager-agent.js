@@ -32,22 +32,28 @@ function getAnthropic() {
 }
 
 async function getConversationHistory(restaurantId) {
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('manager_conversations')
     .select('role, content')
     .eq('restaurant_id', restaurantId)
     .order('created_at', { ascending: false })
     .limit(HISTORY_LIMIT);
+  if (error) {
+    logger.error('getConversationHistory failed', { restaurantId, error: error.message });
+  }
   return (data || []).reverse();
 }
 
 async function saveTurn(restaurantId, role, content, channel) {
-  await supabaseAdmin.from('manager_conversations').insert({
+  const { error } = await supabaseAdmin.from('manager_conversations').insert({
     restaurant_id: restaurantId,
     role,
     content,
     channel,
   });
+  if (error) {
+    logger.error('saveTurn failed', { restaurantId, role, error: error.message });
+  }
 }
 
 function buildSystemPrompt(memories, snapshot) {
@@ -130,7 +136,11 @@ async function runManagerAgent(restaurantId, userMessage, channel) {
     messages,
   });
 
-  const assistantText = response.content[0].text;
+  const firstBlock = response.content?.[0];
+  if (!firstBlock || firstBlock.type !== 'text') {
+    throw new Error('Unexpected Claude response structure');
+  }
+  const assistantText = firstBlock.text;
 
   await Promise.all([
     saveTurn(restaurantId, 'manager', userMessage, channel),

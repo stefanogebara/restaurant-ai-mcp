@@ -71,7 +71,7 @@ beforeEach(() => {
 
 it('returns assistant text and saves both turns', async () => {
   mockMessagesCreate.mockResolvedValue({
-    content: [{ text: 'You have 1 upcoming reservation tonight - Ana, party of 2 at 7pm.' }],
+    content: [{ type: 'text', text: 'You have 1 upcoming reservation tonight - Ana, party of 2 at 7pm.' }],
   });
 
   const reply = await runManagerAgent('rest-1', 'Who is coming tonight?', 'app');
@@ -80,7 +80,7 @@ it('returns assistant text and saves both turns', async () => {
 });
 
 it('includes memory context in system prompt', async () => {
-  mockMessagesCreate.mockResolvedValue({ content: [{ text: 'Yes, you close at 10pm.' }] });
+  mockMessagesCreate.mockResolvedValue({ content: [{ type: 'text', text: 'Yes, you close at 10pm.' }] });
 
   await runManagerAgent('rest-1', 'What time do we close?', 'whatsapp');
 
