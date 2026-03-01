@@ -26,6 +26,7 @@ import ActivePartiesPanel from '../components/dashboard/ActivePartiesPanel';
 import WaitlistPanel from '../components/host/WaitlistPanel';
 import ManagerNotesPanel from '../components/dashboard/ManagerNotesPanel';
 import { ManagerChatPanel } from '../components/dashboard/ManagerChatPanel';
+import ManagerAIUsageBar from '../components/dashboard/ManagerAIUsageBar';
 import WalkInModal from '../components/host/WalkInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
@@ -272,6 +273,13 @@ export default function Dashboard() {
         >
           <ThiingsIcon name="plus" pxSize={24} />
         </button>
+
+        {/* Manager AI Usage — shown above chat FAB when panel is closed */}
+        {!chatOpen && (
+          <div className="fixed bottom-32 sm:bottom-20 right-4 sm:right-6 z-40 bg-white rounded-xl shadow border border-gray-100 w-56">
+            <ManagerAIUsageBar />
+          </div>
+        )}
 
         {/* ---- FAB: Manager AI Chat ---- */}
         <button

@@ -394,3 +394,11 @@ Push to `main` branch triggers automatic Vercel deployment.
 - [x] manager-briefings cron — proactive end-of-day (11pm) + morning (8am) briefings
 - [x] manager-documents endpoint — PDF/text upload with claude-haiku fact extraction
 - [x] Step5TeachAI — onboarding step to prime manager memory during setup
+
+### Phase 6 — Revenue & Monetization Hardening ✅ COMPLETE
+- [x] Manager AI plan gates — Starter 100/mo, Growth 500/mo, Scale unlimited
+- [x] Manager AI usage tracking — manager_ai_call metric → usage_tracking table
+- [x] Stripe metered billing — manager_ai_call → seatable_manager_ai meter event
+- [x] manager-usage endpoint — GET /api/manager-usage → used/limit/plan/resets_at
+- [x] ManagerAIUsageBar — dashboard progress bar with upgrade CTA at 80%
+- [x] ManagerChatPanel quota awareness — disabled input + banner at limit
