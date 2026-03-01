@@ -402,3 +402,14 @@ Push to `main` branch triggers automatic Vercel deployment.
 - [x] manager-usage endpoint — GET /api/manager-usage → used/limit/plan/resets_at
 - [x] ManagerAIUsageBar — dashboard progress bar with upgrade CTA at 80%
 - [x] ManagerChatPanel quota awareness — disabled input + banner at limit
+
+### Phase 7 — Manager AI Voice Briefings + Proactive Alerts ✅ COMPLETE
+- [x] DB migration — manager_alerts_log table with UNIQUE(restaurant_id, alert_type, date) dedup
+- [x] briefing-sender.js — routes delivery: text→WhatsApp, voice_note→ElevenLabs TTS→Supabase Storage→WhatsApp audio, phone_call→Twilio TwiML
+- [x] sendWhatsAppAudioMessage — Meta Cloud API `type: audio` with signed Supabase Storage URL
+- [x] manager-briefings.js — updated to use briefing-sender (channel-aware delivery)
+- [x] manager-alerts.js — 3 alert types (low_covers @18h, high_noshows @15h, late_cancellations @12/14/16/18/20h) with per-day dedup
+- [x] vercel.json — 3 new cron entries for manager-alerts
+- [x] manager-preferences.js — GET/PATCH /api/manager-preferences with allowlist validation and JSONB merge
+- [x] useManagerPreferences hook — React Query GET/PATCH with 5-min stale time
+- [x] ManagerNotificationsPanel — briefing channel radio + 3 alert toggles, wired into WhatsApp Settings page
