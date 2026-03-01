@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import BookingForm from '../components/booking/BookingForm';
@@ -8,6 +8,8 @@ import { useRestaurantBySlug } from '../hooks/useBooking';
 export default function BookingPage() {
   const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
+  const isEmbed = searchParams.get('embed') === 'true';
 
   const { data: restaurant, isLoading, isError, error } = useRestaurantBySlug(slug);
 
@@ -119,12 +121,14 @@ export default function BookingPage() {
   return (
     <div className="min-h-screen bg-warm-white">
       {/* Top Bar */}
-      <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
-        <div className="font-serif text-lg font-semibold text-deep-charcoal">
-          seatable<span className="text-burgundy">.</span>
-        </div>
-        <span className="text-[13px] text-warm-stone">{t('reservations.needHelp')}</span>
-      </header>
+      {!isEmbed && (
+        <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
+          <div className="font-serif text-lg font-semibold text-deep-charcoal">
+            seatable<span className="text-burgundy">.</span>
+          </div>
+          <span className="text-[13px] text-warm-stone">{t('reservations.needHelp')}</span>
+        </header>
+      )}
 
       {/* Two-column layout */}
       <div className="flex flex-col lg:flex-row max-w-[1200px] mx-auto w-full px-6 sm:px-10 py-8 lg:py-12 gap-10 lg:gap-16">

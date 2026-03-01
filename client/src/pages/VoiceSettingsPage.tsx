@@ -30,6 +30,10 @@ import VoiceFilters from '../components/voice/VoiceFilters';
 import VoiceGrid from '../components/voice/VoiceGrid';
 import Spinner from '../components/common/Spinner';
 import ReferralWidget from '../components/dashboard/ReferralWidget';
+import VoicePersonaPanel from '../components/dashboard/VoicePersonaPanel';
+import EmbedSnippetPanel from '../components/dashboard/EmbedSnippetPanel';
+import { useQuery } from '@tanstack/react-query';
+import { authFetch } from '../services/api';
 
 import { DEFAULT_VOICE_SETTINGS } from '../components/voice/voiceTypes';
 import type { VoiceSettings } from '../components/voice/voiceTypes';
@@ -44,6 +48,15 @@ export default function VoiceSettingsPage() {
   const { data: engineConfig } = useVoiceEngineSettings();
   const saveEngineMutation = useSaveVoiceEngine();
   const { data: waStatus } = useWhatsAppIntegrationStatus();
+  const { data: dashData } = useQuery({
+    queryKey: ['hostDashboard'],
+    queryFn: async () => {
+      const res = await authFetch('/host-dashboard?action=dashboard');
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const slug: string = (dashData as { restaurant_slug?: string } | undefined)?.restaurant_slug || '';
 
   // ─── Pending changes ──────────────────────────────────────────────────────────
 
@@ -339,6 +352,8 @@ export default function VoiceSettingsPage() {
               )}
             </div>
           )}
+          <VoicePersonaPanel />
+          {slug && <EmbedSnippetPanel slug={slug} />}
           <ReferralWidget />
         </div>
 
