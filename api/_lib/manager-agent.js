@@ -10,8 +10,21 @@ const { retrieveRelevantMemories, writeMemory } = require('../services/managerMe
 const { getRestaurantSnapshot } = require('../services/restaurantSnapshot');
 const { supabaseAdmin } = require('./supabase');
 const { createSecureLogger } = require('./secure-logger');
+const { getPlanLimits } = require('../services/subscription-limits');
+const { trackUsage } = require('./usage-tracking');
 
 const logger = createSecureLogger('manager-agent');
+
+class ManagerQuotaError extends Error {
+  constructor(type, data = {}) {
+    super(type);
+    this.name = 'ManagerQuotaError';
+    this.type = type;           // 'upgrade_required' | 'quota_exceeded'
+    this.used = data.used;
+    this.limit = data.limit;
+    this.plan = data.plan;
+  }
+}
 
 const CLAUDE_MODEL = 'claude-sonnet-4-6';
 const HISTORY_LIMIT = 20;
@@ -29,6 +42,28 @@ function getAnthropic() {
     anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   }
   return anthropicClient;
+}
+
+async function getRestaurantPlan(restaurantId) {
+  const { data } = await supabaseAdmin
+    .from('subscriptions')
+    .select('plan_name, status')
+    .eq('restaurant_id', restaurantId)
+    .in('status', ['active', 'trialing'])
+    .maybeSingle();
+  return (data?.plan_name || 'free').toLowerCase();
+}
+
+async function getManagerAIUsageThisMonth(restaurantId) {
+  const now = new Date();
+  const firstDay = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-01`;
+  const { data } = await supabaseAdmin
+    .from('usage_tracking')
+    .select('count')
+    .eq('restaurant_id', restaurantId)
+    .eq('metric_type', 'manager_ai_call')
+    .gte('period', firstDay);
+  return (data || []).reduce((sum, row) => sum + (row.count || 0), 0);
 }
 
 async function getConversationHistory(restaurantId) {
@@ -114,6 +149,23 @@ async function extractFactsFromConversation(restaurantId, userMessage) {
 }
 
 async function runManagerAgent(restaurantId, userMessage, channel) {
+  // ── Quota gate ──────────────────────────────────────────────
+  const plan = await getRestaurantPlan(restaurantId);
+  const planLimits = getPlanLimits(plan);
+  const monthlyLimit = planLimits?.managerAICallsMonthly ?? 0;
+
+  if (monthlyLimit === 0) {
+    throw new ManagerQuotaError('upgrade_required', { plan });
+  }
+
+  if (monthlyLimit !== -1) {
+    const used = await getManagerAIUsageThisMonth(restaurantId);
+    if (used >= monthlyLimit) {
+      throw new ManagerQuotaError('quota_exceeded', { used, limit: monthlyLimit });
+    }
+  }
+  // ─────────────────────────────────────────────────────────────
+
   const [memories, snapshot, history] = await Promise.all([
     retrieveRelevantMemories(restaurantId, userMessage),
     getRestaurantSnapshot(restaurantId),
@@ -152,7 +204,10 @@ async function runManagerAgent(restaurantId, userMessage, channel) {
     logger.error('extractFactsFromConversation failed', { error: err.message });
   });
 
+  // Fire-and-forget usage tracking
+  trackUsage(restaurantId, 'manager_ai_call');
+
   return assistantText;
 }
 
-module.exports = { runManagerAgent };
+module.exports = { runManagerAgent, ManagerQuotaError };

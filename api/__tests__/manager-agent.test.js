@@ -12,6 +12,10 @@ const mockGetRestaurantSnapshot = jest.fn().mockResolvedValue({
 });
 const mockMessagesCreate = jest.fn();
 
+// Quota-related mocks (module-scope so they can be referenced in jest.mock factories)
+const mockGetPlanLimits = jest.fn();
+const mockTrackUsage = jest.fn();
+
 jest.mock('../services/managerMemory', () => ({
   retrieveRelevantMemories: mockRetrieveRelevantMemories,
   writeMemory: mockWriteMemory,
@@ -36,7 +40,43 @@ jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ error: jest.fn(), info: jest.fn(), warn: jest.fn() }),
 }));
 
-const { runManagerAgent } = require('../_lib/manager-agent');
+jest.mock('../services/subscription-limits', () => ({
+  getPlanLimits: (...args) => mockGetPlanLimits(...args),
+}));
+
+jest.mock('../_lib/usage-tracking', () => ({
+  trackUsage: (...args) => mockTrackUsage(...args),
+}));
+
+const { runManagerAgent, ManagerQuotaError } = require('../_lib/manager-agent');
+
+// ─── Shared chain builder ────────────────────────────────────────────────────
+// Builds the full chain needed for:
+//   - subscriptions.select().eq().in().maybeSingle()  → { data: subData }
+//   - usage_tracking.select().eq().eq().gte()          → { data: usageRows }
+//   - manager_conversations.select().eq().order().limit() → { data: [] }
+//   - manager_conversations.insert()                    → { error: null }
+function makeChain(overrides = {}) {
+  const chain = {
+    select: jest.fn(),
+    eq: jest.fn(),
+    order: jest.fn(),
+    limit: jest.fn(),
+    in: jest.fn(),
+    gte: jest.fn(),
+    maybeSingle: jest.fn().mockResolvedValue({ data: null }),
+    insert: jest.fn().mockResolvedValue({ error: null }),
+    ...overrides,
+  };
+  chain.select.mockReturnValue(chain);
+  chain.eq.mockReturnValue(chain);
+  chain.order.mockReturnValue(chain);
+  chain.in.mockReturnValue(chain);
+  chain.gte.mockReturnValue(chain);
+  // limit is the terminal call for history queries — resolves to data
+  chain.limit.mockResolvedValue({ data: [], error: null });
+  return chain;
+}
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -53,23 +93,30 @@ beforeEach(() => {
     waitlist_count: 0,
   });
 
-  // supabaseAdmin.from returns an object with BOTH select chain AND insert method
-  const historyChain = {
-    select: jest.fn(),
-    eq: jest.fn(),
-    order: jest.fn(),
-    limit: jest.fn(),
-    insert: jest.fn().mockResolvedValue({ error: null }),
-  };
-  historyChain.select.mockReturnValue(historyChain);
-  historyChain.eq.mockReturnValue(historyChain);
-  historyChain.order.mockReturnValue(historyChain);
-  historyChain.limit.mockResolvedValue({ data: [], error: null });
+  // Default: starter plan limits, zero usage — so quota passes by default
+  mockGetPlanLimits.mockReturnValue({ managerAICallsMonthly: 100 });
+  mockTrackUsage.mockReturnValue(undefined);
 
-  mockFrom.mockReturnValue(historyChain);
+  // Default from chain: no active subscription (plan = 'free' fallback via data=null),
+  // no usage rows, empty history
+  const chain = makeChain();
+  // subscriptions maybeSingle → null (will make plan = 'free')
+  chain.maybeSingle.mockResolvedValue({ data: null });
+  mockFrom.mockReturnValue(chain);
 });
 
+// ─── Existing tests ──────────────────────────────────────────────────────────
+
 it('returns assistant text and saves both turns', async () => {
+  // Override to starter plan so quota passes
+  mockGetPlanLimits.mockReturnValue({ managerAICallsMonthly: 100 });
+
+  // subscriptions → starter, usage_tracking → 0, history → []
+  const chain = makeChain();
+  chain.maybeSingle.mockResolvedValue({ data: { plan_name: 'starter', status: 'active' } });
+  chain.gte.mockResolvedValue({ data: [], error: null });
+  mockFrom.mockReturnValue(chain);
+
   mockMessagesCreate.mockResolvedValue({
     content: [{ type: 'text', text: 'You have 1 upcoming reservation tonight - Ana, party of 2 at 7pm.' }],
   });
@@ -80,10 +127,114 @@ it('returns assistant text and saves both turns', async () => {
 });
 
 it('includes memory context in system prompt', async () => {
+  mockGetPlanLimits.mockReturnValue({ managerAICallsMonthly: 100 });
+
+  const chain = makeChain();
+  chain.maybeSingle.mockResolvedValue({ data: { plan_name: 'starter', status: 'active' } });
+  chain.gte.mockResolvedValue({ data: [], error: null });
+  mockFrom.mockReturnValue(chain);
+
   mockMessagesCreate.mockResolvedValue({ content: [{ type: 'text', text: 'Yes, you close at 10pm.' }] });
 
   await runManagerAgent('rest-1', 'What time do we close?', 'whatsapp');
 
   const callArgs = mockMessagesCreate.mock.calls[0][0];
   expect(callArgs.system).toContain('We close at 10pm');
+});
+
+// ─── Quota enforcement ───────────────────────────────────────────────────────
+
+describe('quota enforcement', () => {
+  // For these tests, mockFrom needs to handle different table queries:
+  //   'subscriptions'      → .select().eq().in().maybeSingle() → plan data
+  //   'usage_tracking'     → .select().eq().eq().gte()         → usage rows
+  //   'manager_conversations' → history chain
+  //
+  // Since mockFrom is called with the table name, we can differentiate per table.
+
+  function setupFromMock({ planName = 'free', usageRows = [] } = {}) {
+    mockFrom.mockImplementation((table) => {
+      const chain = makeChain();
+      if (table === 'subscriptions') {
+        const subData = planName ? { plan_name: planName, status: 'active' } : null;
+        chain.maybeSingle.mockResolvedValue({ data: subData });
+      } else if (table === 'usage_tracking') {
+        chain.gte.mockResolvedValue({ data: usageRows, error: null });
+      }
+      // manager_conversations: limit resolves to empty history (default)
+      return chain;
+    });
+  }
+
+  it('throws ManagerQuotaError upgrade_required when plan is free (limit=0)', async () => {
+    mockGetPlanLimits.mockReturnValue({ managerAICallsMonthly: 0 });
+    setupFromMock({ planName: 'free' });
+
+    await expect(
+      runManagerAgent('rest-1', 'Hello?', 'app')
+    ).rejects.toMatchObject({
+      name: 'ManagerQuotaError',
+      type: 'upgrade_required',
+    });
+  });
+
+  it('throws ManagerQuotaError quota_exceeded when starter plan usage=100 limit=100', async () => {
+    mockGetPlanLimits.mockReturnValue({ managerAICallsMonthly: 100 });
+    setupFromMock({
+      planName: 'starter',
+      usageRows: [{ count: 60 }, { count: 40 }], // total = 100
+    });
+
+    await expect(
+      runManagerAgent('rest-1', 'Hello?', 'app')
+    ).rejects.toMatchObject({
+      name: 'ManagerQuotaError',
+      type: 'quota_exceeded',
+      used: 100,
+      limit: 100,
+    });
+  });
+
+  it('does NOT throw when starter plan usage=50 (below limit=100)', async () => {
+    mockGetPlanLimits.mockReturnValue({ managerAICallsMonthly: 100 });
+    setupFromMock({
+      planName: 'starter',
+      usageRows: [{ count: 50 }],
+    });
+
+    mockMessagesCreate.mockResolvedValue({
+      content: [{ type: 'text', text: 'OK!' }],
+    });
+
+    await expect(
+      runManagerAgent('rest-1', 'Hello?', 'app')
+    ).resolves.toBe('OK!');
+  });
+
+  it('calls trackUsage(restaurantId, manager_ai_call) after successful response', async () => {
+    mockGetPlanLimits.mockReturnValue({ managerAICallsMonthly: 100 });
+    setupFromMock({ planName: 'starter', usageRows: [] });
+
+    mockMessagesCreate.mockResolvedValue({
+      content: [{ type: 'text', text: 'Done!' }],
+    });
+
+    await runManagerAgent('rest-42', 'Hello?', 'app');
+
+    expect(mockTrackUsage).toHaveBeenCalledWith('rest-42', 'manager_ai_call');
+  });
+
+  it('does NOT call trackUsage when quota_exceeded throws', async () => {
+    mockGetPlanLimits.mockReturnValue({ managerAICallsMonthly: 100 });
+    setupFromMock({
+      planName: 'starter',
+      usageRows: [{ count: 100 }],
+    });
+
+    await expect(
+      runManagerAgent('rest-1', 'Hello?', 'app')
+    ).rejects.toMatchObject({ type: 'quota_exceeded' });
+
+    expect(mockTrackUsage).not.toHaveBeenCalled();
+  });
 });
