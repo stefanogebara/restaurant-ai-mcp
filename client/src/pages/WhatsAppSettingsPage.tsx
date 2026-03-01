@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/layout/DashboardLayout';
+import ManagerNotificationsPanel from '../components/dashboard/ManagerNotificationsPanel';
 import {
   useWhatsAppStatus,
   useWhatsAppStats,
@@ -233,6 +234,9 @@ export default function WhatsAppSettingsPage() {
             </p>
           )}
         </div>
+
+        {/* Manager Notifications */}
+        <ManagerNotificationsPanel />
       </div>
     </DashboardLayout>
   );
