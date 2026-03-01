@@ -1,0 +1,148 @@
+/**
+ * Manager Agent Handler
+ *
+ * Shared handler for both in-app chat and WhatsApp channels.
+ * Routes all messages through the same memory + snapshot + conversation logic.
+ */
+
+const Anthropic = require('@anthropic-ai/sdk').default;
+const { retrieveRelevantMemories, writeMemory } = require('../services/managerMemory');
+const { getRestaurantSnapshot } = require('../services/restaurantSnapshot');
+const { supabaseAdmin } = require('./supabase');
+const { createSecureLogger } = require('./secure-logger');
+
+const logger = createSecureLogger('manager-agent');
+
+const CLAUDE_MODEL = 'claude-sonnet-4-6';
+const HISTORY_LIMIT = 20;
+
+// Fact patterns that trigger background memory extraction
+const FACT_PATTERNS = [
+  /we (open|close|serve|offer|have|use)/i,
+  /our (menu|policy|staff|hours|special)/i,
+];
+
+let anthropicClient = null;
+
+function getAnthropic() {
+  if (!anthropicClient) {
+    anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  }
+  return anthropicClient;
+}
+
+async function getConversationHistory(restaurantId) {
+  const { data } = await supabaseAdmin
+    .from('manager_conversations')
+    .select('role, content')
+    .eq('restaurant_id', restaurantId)
+    .order('created_at', { ascending: false })
+    .limit(HISTORY_LIMIT);
+  return (data || []).reverse();
+}
+
+async function saveTurn(restaurantId, role, content, channel) {
+  await supabaseAdmin.from('manager_conversations').insert({
+    restaurant_id: restaurantId,
+    role,
+    content,
+    channel,
+  });
+}
+
+function buildSystemPrompt(memories, snapshot) {
+  const memoryBlock =
+    memories.length > 0
+      ? memories
+          .map((m) => '[' + m.type.toUpperCase() + '/' + m.category + '] ' + m.content)
+          .join('\n')
+      : 'No memories stored yet.';
+
+  const upcomingLines = snapshot.upcoming_reservations
+    .slice(0, 5)
+    .map(
+      (r) =>
+        '  - ' +
+        r.guest_name +
+        ', party of ' +
+        r.party_size +
+        ' at ' +
+        new Date(r.reservation_time).toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+    )
+    .join('\n');
+
+  const snapBlock = [
+    'Upcoming reservations: ' + snapshot.upcoming_reservations.length,
+    upcomingLines,
+    'Active parties: ' + snapshot.active_parties.length,
+    'Waitlist: ' + snapshot.waitlist_count,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  return (
+    'You are the AI manager assistant for this restaurant. ' +
+    'You know the restaurant deeply and help the manager run their business.\n\n' +
+    '## What You Know About This Restaurant\n' +
+    memoryBlock +
+    '\n\n## Current Live Status\n' +
+    snapBlock +
+    '\n\nRespond concisely. For operational questions, be direct. ' +
+    'Keep responses under 200 words unless detail is specifically requested.'
+  );
+}
+
+async function extractFactsFromConversation(restaurantId, userMessage) {
+  if (!FACT_PATTERNS.some((p) => p.test(userMessage))) return;
+  await writeMemory(
+    restaurantId,
+    'fact',
+    'general',
+    userMessage.slice(0, 500),
+    'conversation',
+    4
+  );
+}
+
+async function runManagerAgent(restaurantId, userMessage, channel) {
+  const [memories, snapshot, history] = await Promise.all([
+    retrieveRelevantMemories(restaurantId, userMessage),
+    getRestaurantSnapshot(restaurantId),
+    getConversationHistory(restaurantId),
+  ]);
+
+  const systemPrompt = buildSystemPrompt(memories, snapshot);
+  const messages = [
+    ...history.map((h) => ({
+      role: h.role === 'manager' ? 'user' : 'assistant',
+      content: h.content,
+    })),
+    { role: 'user', content: userMessage },
+  ];
+
+  const response = await getAnthropic().messages.create({
+    model: CLAUDE_MODEL,
+    max_tokens: 512,
+    system: systemPrompt,
+    messages,
+  });
+
+  const assistantText = response.content[0].text;
+
+  await Promise.all([
+    saveTurn(restaurantId, 'manager', userMessage, channel),
+    saveTurn(restaurantId, 'assistant', assistantText, channel),
+  ]);
+
+  // Fire-and-forget: extract facts without blocking the response
+  extractFactsFromConversation(restaurantId, userMessage).catch((err) => {
+    logger.error('extractFactsFromConversation failed', { error: err.message });
+  });
+
+  return assistantText;
+}
+
+module.exports = { runManagerAgent };
