@@ -41,6 +41,11 @@ async function getRestaurantSnapshot(restaurantId) {
     upcoming_reservations: reservationsRes.data || [],
     waitlist_count: waitlistRes.count || 0,
     active_parties: activeRes.data || [],
+    errors: [
+      reservationsRes.error && 'reservations',
+      waitlistRes.error && 'waitlist',
+      activeRes.error && 'service_records',
+    ].filter(Boolean),
   };
 }
 

@@ -25,7 +25,14 @@ function mockChain(data) {
 it('returns snapshot with upcoming reservations and active parties', async () => {
   mockFrom.mockImplementation((table) => {
     if (table === 'reservations') return mockChain([{ id: 'r1', guest_name: 'Ana', party_size: 2, reservation_time: '2026-03-01T19:00:00Z', status: 'confirmed' }]);
-    if (table === 'waitlist') return mockChain([]);
+    if (table === 'waitlist') {
+      // waitlist uses count:exact, head:true - returns count not data
+      const countChain = { select: jest.fn(), eq: jest.fn(), limit: jest.fn() };
+      countChain.select.mockReturnValue(countChain);
+      countChain.eq.mockReturnValue(countChain);
+      countChain.limit.mockResolvedValue({ data: null, count: 3, error: null });
+      return countChain;
+    }
     if (table === 'service_records') return mockChain([{ id: 's1', guest_name: 'Bob', party_size: 3, table_id: 't1' }]);
     return mockChain([]);
   });
@@ -35,4 +42,5 @@ it('returns snapshot with upcoming reservations and active parties', async () =>
   expect(snap).toHaveProperty('active_parties');
   expect(snap).toHaveProperty('waitlist_count');
   expect(snap.active_parties).toHaveLength(1);
+  expect(snap.waitlist_count).toBe(3);
 });
