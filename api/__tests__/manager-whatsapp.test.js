@@ -115,6 +115,21 @@ it('sends upgrade message via WhatsApp when quota exceeded', async () => {
   expect(res.status).toHaveBeenCalledWith(200);
 });
 
+it('returns 200 silently and sends NO message when upgrade_required on WhatsApp', async () => {
+  const { runManagerAgent, ManagerQuotaError } = require('../_lib/manager-agent');
+  const quotaErr = new ManagerQuotaError('upgrade_required', { plan: 'free' });
+  runManagerAgent.mockRejectedValueOnce(quotaErr);
+  const req = {
+    method: 'POST',
+    body: { From: 'whatsapp:+15551234567', Body: 'Hello', MessageSid: 'SM777' },
+  };
+  const res = mockRes();
+  await managerWhatsapp(req, res);
+  const { sendWhatsAppMessage } = require('../_lib/whatsapp-sender');
+  expect(sendWhatsAppMessage).not.toHaveBeenCalled();
+  expect(res.status).toHaveBeenCalledWith(200);
+});
+
 it('returns 200 silently when manager not verified', async () => {
   const chain = { select: jest.fn(), eq: jest.fn(), single: jest.fn() };
   chain.select.mockReturnValue(chain);

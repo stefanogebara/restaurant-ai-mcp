@@ -22,12 +22,15 @@ async function handleChat(req, res) {
     return res.json({ reply });
   } catch (err) {
     if (err instanceof ManagerQuotaError) {
+      logger.info('manager-chat quota gate', { type: err.type, plan: err.plan, used: err.used, limit: err.limit });
       if (err.type === 'upgrade_required') {
         return res.status(403).json({ error: 'Manager AI requires a paid plan', upgrade_required: true });
       }
       if (err.type === 'quota_exceeded') {
         return res.status(429).json({ error: 'Monthly Manager AI limit reached', used: err.used, limit: err.limit });
       }
+      // Unknown quota type — treat as 402
+      return res.status(402).json({ error: 'Manager AI access restricted', type: err.type });
     }
     logger.error('manager-chat error', { error: err.message });
     if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Unauthorized' });
