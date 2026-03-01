@@ -68,6 +68,7 @@ const PLAN_LIMITS = {
     whiteLabel: false,
     phoneSupport: false,
   },
+  // Legacy plan — mirrors Growth limits. New signups should be on Growth or Scale.
   professional: {
     name: 'Professional',
     maxReservationsPerMonth: GROWTH_PLAN_MONTHLY_RESERVATIONS,
