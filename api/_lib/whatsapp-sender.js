@@ -214,9 +214,57 @@ async function sendNewBookingAlertWhatsApp(ownerPhone, details) {
   return sendWhatsAppMessage(ownerPhone, message);
 }
 
+/**
+ * Send a WhatsApp audio message (voice note) via Meta Cloud API.
+ *
+ * @param {string} to - Recipient phone number (e.g. +5511999999999)
+ * @param {string} audioUrl - Publicly accessible audio URL (e.g. Supabase signed URL)
+ * @returns {{ success: boolean, messageId?: string, error?: string }}
+ */
+async function sendWhatsAppAudioMessage(to, audioUrl) {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+
+  if (!phoneNumberId || !accessToken) {
+    logger.error('Missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN');
+    return { success: false, error: 'WhatsApp not configured' };
+  }
+
+  try {
+    const response = await fetch(`${WHATSAPP_API_URL}/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to,
+        type: 'audio',
+        audio: { link: audioUrl }
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      logger.error('WhatsApp audio send error:', { status: response.status, data: JSON.stringify(data) });
+      return { success: false, error: data.error?.message || 'Failed to send audio' };
+    }
+
+    logger.info(`WhatsApp audio sent to ${to}, msgId=${data.messages?.[0]?.id}`);
+    return { success: true, messageId: data.messages?.[0]?.id };
+  } catch (error) {
+    logger.error('WhatsApp audio send exception:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 module.exports = {
   isWhatsAppConfigured,
   sendWhatsAppMessage,
+  sendWhatsAppAudioMessage,
   sendTemplateMessage,
   sendReservationConfirmation,
   sendNewBookingAlertWhatsApp,
