@@ -115,7 +115,9 @@ export default function Dashboard() {
     setShowSeatModal(true);
   };
 
-  const handleCompleteService = (party: ActiveParty) => completeService.mutate(party.service_id);
+  const handleCompleteService = (party: ActiveParty, totalBill?: number) => {
+    completeService.mutate({ serviceRecordId: party.service_id, totalBill });
+  };
 
   const handleSeatFromWaitlist = (entry: { customer_name: string; customer_phone: string; party_size: number; special_requests?: string; id: string }) => {
     setSelectedParty({

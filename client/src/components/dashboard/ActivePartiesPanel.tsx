@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import type { ActiveParty } from '../../types/host.types';
 import ThiingsIcon from '../common/ThiingsIcon';
 
 interface ActivePartiesPanelProps {
   parties: ActiveParty[];
-  onCompleteService: (party: ActiveParty) => void;
+  onCompleteService: (party: ActiveParty, totalBill?: number) => void;
   language?: 'en' | 'es';
   isLoading?: boolean;
 }
@@ -40,6 +41,7 @@ export default function ActivePartiesPanel({
   isLoading,
 }: ActivePartiesPanelProps) {
   const t = translations[language];
+  const [billInputs, setBillInputs] = useState<Record<string, string>>({});
   if (isLoading) {
     return (
       <div role="status" aria-label="Loading active parties" className="bg-white border border-border-gray rounded-2xl p-5">
@@ -90,7 +92,9 @@ export default function ActivePartiesPanel({
             <div key={party.service_id} className="mx-2 my-1.5 rounded-2xl border border-border-gray bg-white p-4 hover:shadow-sm transition-shadow duration-200">
               <PartyRow
                 party={party}
-                onComplete={() => onCompleteService(party)}
+                billValue={billInputs[party.service_id] || ''}
+                onBillChange={(val) => setBillInputs(prev => ({ ...prev, [party.service_id]: val }))}
+                onComplete={(totalBill) => onCompleteService(party, totalBill)}
                 language={language}
               />
             </div>
@@ -110,11 +114,13 @@ function formatTimestamp(ts: string): string {
 
 interface PartyRowProps {
   party: ActiveParty;
-  onComplete: () => void;
+  billValue: string;
+  onBillChange: (val: string) => void;
+  onComplete: (totalBill?: number) => void;
   language: 'en' | 'es';
 }
 
-function PartyRow({ party, onComplete, language }: PartyRowProps) {
+function PartyRow({ party, billValue, onBillChange, onComplete, language }: PartyRowProps) {
   const t = translations[language];
   const isOverdue = party.is_overdue;
 
@@ -172,13 +178,27 @@ function PartyRow({ party, onComplete, language }: PartyRowProps) {
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={onComplete}
-        className="w-full mt-3 px-3 py-2.5 min-h-[44px] bg-soft-gray hover:bg-border-gray text-deep-charcoal text-xs font-medium rounded-xl transition-colors"
-      >
-        {t.completeService}
-      </button>
+      <div className="flex items-center gap-2 mt-2">
+        <input
+          type="number"
+          min={0}
+          placeholder="€ bill (optional)"
+          value={billValue}
+          onChange={e => onBillChange(e.target.value)}
+          className="w-28 border border-border-gray rounded-lg px-2 py-1 text-xs text-deep-charcoal focus:outline-none focus:ring-1 focus:ring-burgundy/30"
+          aria-label="Total bill amount"
+        />
+        <button
+          type="button"
+          onClick={() => {
+            const parsed = billValue ? parseFloat(billValue) : undefined;
+            onComplete(parsed !== undefined && !isNaN(parsed) ? parsed : undefined);
+          }}
+          className="flex-1 px-3 py-2.5 min-h-[44px] bg-soft-gray hover:bg-border-gray text-deep-charcoal text-xs font-medium rounded-xl transition-colors"
+        >
+          {t.completeService}
+        </button>
+      </div>
     </div>
   );
 }

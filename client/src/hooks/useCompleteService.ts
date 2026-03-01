@@ -6,16 +6,22 @@ interface CompleteServiceResponse {
   message?: string;
 }
 
+interface CompleteServiceInput {
+  serviceRecordId: string;
+  totalBill?: number;
+}
+
 export function useCompleteService() {
   const queryClient = useQueryClient();
 
-  return useMutation<CompleteServiceResponse, Error, string>({
-    mutationFn: async (serviceRecordId: string) => {
-      const response = await hostAPI.completeService(serviceRecordId);
+  return useMutation<CompleteServiceResponse, Error, CompleteServiceInput>({
+    mutationFn: async ({ serviceRecordId, totalBill }: CompleteServiceInput) => {
+      const response = await hostAPI.completeService(serviceRecordId, totalBill);
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hostDashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['revenue-stats'] });
     },
   });
 }

@@ -96,7 +96,7 @@ describe('ActivePartiesPanel', () => {
     await user.click(buttons[0]);
 
     expect(onCompleteService).toHaveBeenCalledTimes(1);
-    expect(onCompleteService).toHaveBeenCalledWith(parties[0]);
+    expect(onCompleteService).toHaveBeenCalledWith(parties[0], undefined);
   });
 
   it('shows empty state when no parties', () => {
