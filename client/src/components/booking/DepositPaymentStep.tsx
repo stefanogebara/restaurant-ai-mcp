@@ -42,7 +42,7 @@ function DepositForm({ depositAmount, onSuccess, onCancel }: Omit<DepositPayment
     }
   };
 
-  const formatted = new Intl.NumberFormat('en-EU', {
+  const formatted = new Intl.NumberFormat('en-IE', {
     style: 'currency',
     currency: 'EUR',
   }).format(depositAmount);

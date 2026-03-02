@@ -53,6 +53,14 @@ module.exports = async (req, res) => {
       reservation.deposit_payment_intent_id
     );
 
+    // Null out the payment intent ID so DepositActions stops showing buttons.
+    // Keep deposit_amount for reporting purposes.
+    await supabaseAdmin
+      .from('reservations')
+      .update({ deposit_payment_intent_id: null })
+      .eq('id', reservation.id)
+      .eq('restaurant_id', req.user.restaurant_id);
+
     logger.info('Deposit captured', {
       reservation_id,
       payment_intent_id: paymentIntent.id,

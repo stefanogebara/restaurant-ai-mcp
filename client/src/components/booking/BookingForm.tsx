@@ -61,6 +61,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   const [clientSecret, setClientSecret] = useState('');
   const [depositAmount, setDepositAmount] = useState(0);
   const [paymentIntentId, setPaymentIntentId] = useState('');
+  const [depositError, setDepositError] = useState<string | null>(null);
 
   // Reset time when date or party size changes
   useEffect(() => { setSelectedTime(''); }, [selectedDate, partySize]);
@@ -101,6 +102,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   const handleSubmit = async () => {
     // If deposit required and not yet paid, create intent first
     if (depositRequired && !paymentIntentId) {
+      setDepositError(null);
       try {
         const res = await fetch('/api/create-deposit-intent', {
           method: 'POST',
@@ -120,6 +122,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
         return; // Show payment step
       } catch (err) {
         console.error('Deposit intent error:', err);
+        setDepositError('Payment setup failed. Please try again.');
         return;
       }
     }
@@ -151,26 +154,24 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     setPaymentIntentId(piId);
     setDepositStep(false);
     // Auto-submit the reservation now that deposit is confirmed
-    setTimeout(() => {
-      reserve.mutate({
-        restaurant_id: restaurant.id,
-        customer_name: customerName.trim(),
-        customer_phone: customerPhone.trim(),
-        customer_email: customerEmail.trim() || undefined,
-        party_size: partySize,
-        date: selectedDate,
-        time: selectedTime,
-        special_requests: specialRequests.trim() || undefined,
-        deposit_payment_intent_id: piId,
-        deposit_amount: depositAmount,
-      }, {
-        onSuccess: ({ reservation }) => {
-          navigate(`/book/${slug}/confirmed?id=${reservation.id}`, {
-            state: { reservation, restaurant_name: restaurant.name, restaurant_id: restaurant.id },
-          });
-        },
-      });
-    }, 0);
+    reserve.mutate({
+      restaurant_id: restaurant.id,
+      customer_name: customerName.trim(),
+      customer_phone: customerPhone.trim(),
+      customer_email: customerEmail.trim() || undefined,
+      party_size: partySize,
+      date: selectedDate,
+      time: selectedTime,
+      special_requests: specialRequests.trim() || undefined,
+      deposit_payment_intent_id: piId,
+      deposit_amount: depositAmount,
+    }, {
+      onSuccess: ({ reservation }) => {
+        navigate(`/book/${slug}/confirmed?id=${reservation.id}`, {
+          state: { reservation, restaurant_name: restaurant.name, restaurant_id: restaurant.id },
+        });
+      },
+    });
   };
 
   const depositRequired = restaurant.deposit_config?.enabled === true;
@@ -379,6 +380,13 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
             onSuccess={handleDepositSuccess}
             onCancel={() => setDepositStep(false)}
           />
+        </div>
+      )}
+
+      {/* Deposit Setup Error */}
+      {depositError && (
+        <div className="bg-red-600/10 border border-red-600/20 rounded-xl p-3 mb-4">
+          <p className="text-sm text-red-600">{depositError}</p>
         </div>
       )}
 

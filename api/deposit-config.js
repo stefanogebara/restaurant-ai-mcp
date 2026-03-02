@@ -77,9 +77,19 @@ async function handlePatch(restaurantId, req, res) {
     }
   }
 
+  // Read existing config so that disabling doesn't wipe type/amount
+  const { data: existing } = await supabaseAdmin
+    .schema('restaurant')
+    .from('restaurant_config')
+    .select('deposit_config')
+    .eq('id', restaurantId)
+    .single();
+
+  const currentConfig = existing?.deposit_config || { enabled: false, type: 'flat', amount: 0 };
+
   const config = enabled
-    ? { enabled: true, type, amount: parseFloat(amount) }
-    : { enabled: false };
+    ? { ...currentConfig, enabled: true, type, amount: parseFloat(amount) }
+    : { ...currentConfig, enabled: false };
 
   const { error } = await supabaseAdmin
     .schema('restaurant')

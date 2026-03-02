@@ -75,6 +75,7 @@ module.exports = async (req, res) => {
       amount: amountInCents,
       currency: 'eur',
       capture_method: 'manual',
+      automatic_payment_methods: { enabled: true },
       description: `Reservation deposit at ${config.restaurant_name}`,
       metadata: {
         restaurant_id,

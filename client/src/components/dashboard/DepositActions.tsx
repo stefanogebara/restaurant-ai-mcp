@@ -12,7 +12,7 @@ export default function DepositActions({ reservationId, depositAmount, onActionC
   const [isReleasing, setIsReleasing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const formatted = new Intl.NumberFormat('en-EU', {
+  const formatted = new Intl.NumberFormat('en-IE', {
     style: 'currency',
     currency: 'EUR',
     minimumFractionDigits: 0,
