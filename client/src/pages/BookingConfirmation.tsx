@@ -32,6 +32,10 @@ export default function BookingConfirmation() {
         const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
         if (!vapidPublicKey) return;
 
+        // I-3: Avoid duplicate subscriptions on re-render or page reload
+        const existing = await registration.pushManager.getSubscription();
+        if (existing) return;
+
         const subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: vapidPublicKey,

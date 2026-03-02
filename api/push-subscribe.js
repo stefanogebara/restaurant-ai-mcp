@@ -33,7 +33,7 @@ module.exports = async (req, res) => {
 
   const { subscription, reservation_id, restaurant_id } = req.body || {};
 
-  if (!subscription || !subscription.endpoint || !restaurant_id) {
+  if (!subscription || !subscription.endpoint || !subscription.keys?.p256dh || !subscription.keys?.auth || !restaurant_id) {
     return res.status(400).json({
       success: false,
       error: 'Missing required fields: subscription, restaurant_id',

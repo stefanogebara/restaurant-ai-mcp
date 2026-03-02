@@ -14,11 +14,7 @@ const { createSecureLogger } = require('./_lib/secure-logger');
 
 const logger = createSecureLogger('PushSend');
 
-webpush.setVapidDetails(
-  'mailto:hello@seatable.io',
-  process.env.VAPID_PUBLIC_KEY || '',
-  process.env.VAPID_PRIVATE_KEY || ''
-);
+// VAPID details are set inside the handler (C-1: avoid cold-start crash when keys absent)
 
 module.exports = async (req, res) => {
   // Internal endpoint — secured with CRON_SECRET
@@ -31,10 +27,18 @@ module.exports = async (req, res) => {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
+  // C-1: Guard — return gracefully when VAPID keys are not configured
   if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
     logger.warn('VAPID keys not configured — push notifications disabled');
     return res.status(200).json({ success: true, sent: 0, message: 'VAPID keys not configured' });
   }
+
+  // C-1: Set VAPID details inside the handler so it only runs when keys are present
+  webpush.setVapidDetails(
+    'mailto:hello@seatable.io',
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
 
   const { reservation_id, title, body, url } = req.body || {};
 
@@ -55,15 +59,37 @@ module.exports = async (req, res) => {
       return res.status(200).json({ success: true, sent: 0, message: 'No subscriptions found' });
     }
 
-    const payload = JSON.stringify({ title, body, url: url || '/book' });
-    const results = await Promise.allSettled(
-      subscriptions.map(sub =>
-        webpush.sendNotification(sub.subscription, payload)
-      )
-    );
+    // C-2: Nest url inside data so sw.js can read event.notification.data?.url
+    const payload = JSON.stringify({ title, body, data: { url: url || '/book' } });
 
-    const sent = results.filter(r => r.status === 'fulfilled').length;
-    const failed = results.filter(r => r.status === 'rejected').length;
+    // I-4: Sequential loop to detect and clean up expired subscriptions
+    let sent = 0;
+    let failed = 0;
+    const expiredIds = [];
+
+    for (const sub of subscriptions) {
+      try {
+        await webpush.sendNotification(sub.subscription, payload);
+        sent++;
+      } catch (err) {
+        failed++;
+        // 410 Gone or 404 Not Found means the subscription has expired
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          expiredIds.push(sub.id);
+        } else {
+          logger.warn(`Push failed for sub ${sub.id}: ${err.message}`);
+        }
+      }
+    }
+
+    // I-4: Delete expired subscriptions in a single batch query
+    if (expiredIds.length > 0) {
+      await supabaseAdmin
+        .from('customer_push_subscriptions')
+        .delete()
+        .in('id', expiredIds);
+      logger.info(`Deleted ${expiredIds.length} expired push subscriptions`);
+    }
 
     if (failed > 0) {
       logger.warn(`Push send: ${sent} sent, ${failed} failed for reservation ${reservation_id}`);
