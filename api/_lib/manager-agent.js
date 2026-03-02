@@ -128,26 +128,32 @@ function buildSystemPrompt(memories, snapshot) {
       f.roles.map(r => r.name + ': ' + r.recommended).join(', '))
     .join('\n');
 
-  const snapBlock = [
-    'Upcoming reservations: ' + snapshot.upcoming_reservations.length,
-    upcomingLines,
-    'Active parties: ' + snapshot.active_parties.length,
-    'Waitlist: ' + snapshot.waitlist_count,
-    staffingLines ? '\n[STAFFING FORECAST - NEXT 3 DAYS]\n' + staffingLines : '',
-  ]
-    .filter(Boolean)
-    .join('\n');
-
-  return (
+  let systemPrompt =
     'You are the AI manager assistant for this restaurant. ' +
     'You know the restaurant deeply and help the manager run their business.\n\n' +
     '## What You Know About This Restaurant\n' +
     memoryBlock +
     '\n\n## Current Live Status\n' +
-    snapBlock +
+    'Upcoming reservations: ' + snapshot.upcoming_reservations.length + '\n' +
+    upcomingLines + '\n' +
+    'Active parties: ' + snapshot.active_parties.length + '\n' +
+    'Waitlist: ' + snapshot.waitlist_count;
+
+  if (staffingLines) {
+    systemPrompt += '\n\n[STAFFING FORECAST - NEXT 3 DAYS]\n' + staffingLines;
+  }
+
+  if (snapshot.deposit_summary && snapshot.deposit_summary.count > 0) {
+    const { count, total_amount } = snapshot.deposit_summary;
+    const formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(total_amount);
+    systemPrompt += `\n\n[DEPOSITS HELD TONIGHT]\n${count} reservation${count !== 1 ? 's' : ''} with deposits held — total ${formatted} at risk of no-show capture.`;
+  }
+
+  systemPrompt +=
     '\n\nRespond concisely. For operational questions, be direct. ' +
-    'Keep responses under 200 words unless detail is specifically requested.'
-  );
+    'Keep responses under 200 words unless detail is specifically requested.';
+
+  return systemPrompt;
 }
 
 async function extractFactsFromConversation(restaurantId, userMessage) {

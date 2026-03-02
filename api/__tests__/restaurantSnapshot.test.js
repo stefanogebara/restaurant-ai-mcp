@@ -13,12 +13,24 @@ const { getRestaurantSnapshot } = require('../services/restaurantSnapshot');
 beforeEach(() => jest.clearAllMocks());
 
 function mockChain(data) {
-  const chain = { select: jest.fn(), eq: jest.fn(), gte: jest.fn(), order: jest.fn(), limit: jest.fn() };
+  const chain = { select: jest.fn(), eq: jest.fn(), gte: jest.fn(), not: jest.fn(), in: jest.fn(), order: jest.fn(), limit: jest.fn() };
   chain.select.mockReturnValue(chain);
   chain.eq.mockReturnValue(chain);
   chain.gte.mockReturnValue(chain);
+  chain.not.mockReturnValue(chain);
+  chain.in.mockReturnValue(chain);
   chain.order.mockReturnValue(chain);
   chain.limit.mockResolvedValue({ data, error: null });
+  return chain;
+}
+
+function mockDepositChain(data) {
+  const chain = { select: jest.fn(), eq: jest.fn(), not: jest.fn(), in: jest.fn(), gte: jest.fn() };
+  chain.select.mockReturnValue(chain);
+  chain.eq.mockReturnValue(chain);
+  chain.not.mockReturnValue(chain);
+  chain.in.mockReturnValue(chain);
+  chain.gte.mockResolvedValue({ data, error: null });
   return chain;
 }
 
@@ -31,8 +43,13 @@ function mockSingleChain(data) {
 }
 
 it('returns snapshot with upcoming reservations and active parties', async () => {
+  let reservationCallCount = 0;
   mockFrom.mockImplementation((table) => {
-    if (table === 'reservations') return mockChain([{ id: 'r1', guest_name: 'Ana', party_size: 2, reservation_time: '2026-03-01T19:00:00Z', date: '2026-03-01', status: 'confirmed' }]);
+    if (table === 'reservations') {
+      reservationCallCount += 1;
+      if (reservationCallCount === 1) return mockChain([{ id: 'r1', guest_name: 'Ana', party_size: 2, reservation_time: '2026-03-01T19:00:00Z', date: '2026-03-01', status: 'confirmed' }]);
+      return mockDepositChain([]);
+    }
     if (table === 'waitlist') {
       const countChain = { select: jest.fn(), eq: jest.fn(), limit: jest.fn() };
       countChain.select.mockReturnValue(countChain);
@@ -54,8 +71,13 @@ it('returns snapshot with upcoming reservations and active parties', async () =>
 });
 
 it('includes staffing_forecast with role headcounts', async () => {
+  let reservationCallCount = 0;
   mockFrom.mockImplementation((table) => {
-    if (table === 'reservations') return mockChain([]);
+    if (table === 'reservations') {
+      reservationCallCount += 1;
+      if (reservationCallCount === 1) return mockChain([]);
+      return mockDepositChain([]);
+    }
     if (table === 'waitlist') {
       const countChain = { select: jest.fn(), eq: jest.fn(), limit: jest.fn() };
       countChain.select.mockReturnValue(countChain);

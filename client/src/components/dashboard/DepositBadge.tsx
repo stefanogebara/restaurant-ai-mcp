@@ -6,7 +6,7 @@ interface DepositBadgeProps {
 export default function DepositBadge({ amount, currency = 'EUR' }: DepositBadgeProps) {
   if (!amount) return null;
 
-  const formatted = new Intl.NumberFormat('en-EU', {
+  const formatted = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency,
     minimumFractionDigits: 0,

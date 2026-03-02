@@ -15,6 +15,7 @@ const logger = createSecureLogger('TableAssignment');
  * @returns {{ score: number, reasoning: string } | null} null if table cannot fit
  */
 function scoreTable(table, partySize, occupiedTables) {
+  if (partySize <= 0) return null;
   // Filter: must fit the party
   if (table.capacity < partySize) return null;
 
