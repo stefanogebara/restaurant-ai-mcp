@@ -19,6 +19,20 @@ const RATE_LIMITS = {
     message: 'Too many authentication attempts. Please try again in 15 minutes.',
   },
 
+  // OTP verification attempts
+  otp: {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    maxRequests: 5,           // 5 OTP attempts per window (brute force protection)
+    message: 'Too many verification attempts. Please request a new code and try again in 15 minutes.',
+  },
+
+  // Demo restaurant creation
+  'demo-create': {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    maxRequests: 3,           // 3 demo creations per 15 min per IP
+    message: 'Too many demo creation attempts. Please try again in 15 minutes.',
+  },
+
   // Standard API limits
   api: {
     windowMs: 60 * 1000,      // 1 minute

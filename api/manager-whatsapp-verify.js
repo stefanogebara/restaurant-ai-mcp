@@ -2,6 +2,7 @@ const { verifyJWT } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { sendWhatsAppMessage } = require('./_lib/whatsapp-sender');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('manager-whatsapp-verify');
 
@@ -47,6 +48,7 @@ module.exports = async (req, res) => {
     }
 
     if (action === 'confirm') {
+      if (await checkAndApplyRateLimit(req, res, 'otp')) return;
       if (!code) return res.status(400).json({ error: 'code is required' });
 
       const { data, error } = await supabaseAdmin

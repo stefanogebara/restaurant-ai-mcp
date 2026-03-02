@@ -52,14 +52,15 @@ module.exports = async (req, res) => {
       reservation.deposit_payment_intent_id
     );
 
-    // Clear deposit fields on the reservation
+    // Clear deposit fields on the reservation — scoped by both id and restaurant_id
     await supabaseAdmin
       .from('reservations')
       .update({
         deposit_payment_intent_id: null,
         deposit_amount: null,
       })
-      .eq('id', reservation.id);
+      .eq('id', reservation.id)
+      .eq('restaurant_id', reservation.restaurant_id);
 
     logger.info('Deposit released', {
       reservation_id,

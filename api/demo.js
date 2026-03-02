@@ -362,11 +362,12 @@ async function handleSession(req, res) {
   }
 
   // Fetch demo config where token matches and not expired
+  // Explicit column list avoids returning sensitive fields (OTP codes, internal config)
   const now = new Date().toISOString();
   const { data: config, error } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('*')
+    .select('id, restaurant_name, restaurant_type, city, country, email, slug, business_hours, reservation_settings, is_active, is_demo, demo_token, demo_expires_at, demo_contact_email, demo_contact_name, onboarding_completed')
     .eq('demo_token', token)
     .gt('demo_expires_at', now)
     .single();
@@ -412,11 +413,11 @@ async function handleConvert(req, res) {
     return res.status(400).json({ error: 'Missing required field: token' });
   }
 
-  // Find demo restaurant
+  // Find demo restaurant — select only fields needed for conversion
   const { data: demoConfig, error: demoError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('*')
+    .select('id, restaurant_name, city, country, business_hours, reservation_settings, is_demo, demo_token')
     .eq('demo_token', token)
     .single();
 
@@ -424,11 +425,11 @@ async function handleConvert(req, res) {
     return res.status(404).json({ error: 'Demo not found' });
   }
 
-  // Get real restaurant config
+  // Get real restaurant config — just need to confirm it exists
   const { data: realConfig, error: realError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('*')
+    .select('id')
     .eq('id', real_restaurant_id)
     .single();
 

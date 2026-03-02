@@ -100,7 +100,14 @@ module.exports = async (req, res) => {
   }
 
   // GET request - retrieve logged messages (JSON or HTML)
+  // Requires CRON_SECRET to prevent PII (phone numbers, SMS bodies) from leaking publicly
   if (req.method === 'GET') {
+    const cronSecret = process.env.CRON_SECRET;
+    const authHeader = req.headers.authorization || '';
+    const queryKey = req.query.key || '';
+    if (cronSecret && authHeader !== `Bearer ${cronSecret}` && queryKey !== cronSecret) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
     try {
       const { data, error } = await supabaseAdmin
         .from('sms_logs')

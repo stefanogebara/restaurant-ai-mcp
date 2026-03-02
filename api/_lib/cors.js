@@ -60,7 +60,7 @@ function setWebhookCors(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
   }
 
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  // Webhooks are server-to-server — credentials are not applicable
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Called-Number, X-Caller-Number, Stripe-Signature, X-Twilio-Signature, x-request-id');
 }

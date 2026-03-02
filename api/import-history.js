@@ -54,7 +54,16 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { buffer } = await parseMultipart(req);
+    const { buffer, filename, mimetype } = await parseMultipart(req);
+
+    // Validate file type — only accept CSV/text files
+    const allowedMimeTypes = ['text/csv', 'text/plain', 'application/csv', 'application/vnd.ms-excel'];
+    const allowedExtensions = ['.csv', '.txt'];
+    const ext = (filename.toLowerCase().match(/\.[^.]+$/) || [''])[0];
+    if (!allowedMimeTypes.includes(mimetype) && !allowedExtensions.includes(ext)) {
+      return res.status(400).json({ error: 'Invalid file type. Please upload a CSV file.' });
+    }
+
     const rawRows = parseCSVBuffer(buffer);
 
     const rows = rawRows.slice(0, MAX_ROWS);

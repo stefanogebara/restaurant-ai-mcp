@@ -1,3 +1,4 @@
+const twilio = require('twilio');
 const { runManagerAgent, ManagerQuotaError } = require('./_lib/manager-agent');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { sendWhatsAppMessage } = require('./_lib/whatsapp-sender');
@@ -7,6 +8,19 @@ const logger = createSecureLogger('manager-whatsapp');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Verify Twilio webhook signature to prevent spoofed requests
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  if (authToken) {
+    const signature = req.headers['x-twilio-signature'];
+    const url = `https://${req.headers.host}${req.url}`;
+    if (!signature || !twilio.validateRequest(authToken, signature, url, req.body || {})) {
+      logger.error('manager-whatsapp: Invalid Twilio webhook signature');
+      return res.status(403).send('Forbidden');
+    }
+  } else {
+    logger.warn('manager-whatsapp: TWILIO_AUTH_TOKEN not set — skipping signature verification');
+  }
 
   const { From, Body, MessageSid } = req.body || {};
 

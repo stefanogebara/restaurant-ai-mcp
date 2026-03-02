@@ -65,7 +65,8 @@ async function resolveRestaurantId(stripeObject, customerEmail = null) {
 async function rewardReferralIfEligible(refereeRestaurantId, refereeStripeCustomerId, stripe, logger) {
   // Atomic claim: update status to 'converted' WHERE status='pending'
   // This acts as a compare-and-swap — if another execution already claimed it, 0 rows update and we bail.
-  const { data: claimed, error: claimError } = await supabase
+  // Uses supabaseAdmin (service role) to bypass RLS on the referrals table.
+  const { data: claimed, error: claimError } = await supabaseAdmin
     .from('referrals')
     .update({ status: 'converted', converted_at: new Date().toISOString() })
     .eq('referee_id', refereeRestaurantId)
@@ -75,7 +76,7 @@ async function rewardReferralIfEligible(refereeRestaurantId, refereeStripeCustom
 
   if (claimError || !claimed) return; // No pending referral, or already claimed by another execution
 
-  const { data: referrerSub } = await supabase
+  const { data: referrerSub } = await supabaseAdmin
     .from('subscriptions')
     .select('"Customer ID", "Plan Name"')
     .eq('restaurant_id', claimed.referrer_id)
@@ -99,7 +100,7 @@ async function rewardReferralIfEligible(refereeRestaurantId, refereeStripeCustom
     description: `Referral reward: 1 month free (referred ${refereeStripeCustomerId})`,
   });
 
-  await supabase
+  await supabaseAdmin
     .from('referrals')
     .update({ status: 'rewarded', rewarded_at: new Date().toISOString() })
     .eq('id', claimed.id);
@@ -108,7 +109,7 @@ async function rewardReferralIfEligible(refereeRestaurantId, refereeStripeCustom
 
   // Send reward notification email to the referrer
   try {
-    const client = supabaseAdmin || supabase;
+    const client = supabaseAdmin;
     const [{ data: referrerConfig }, { data: refereeConfig }] = await Promise.all([
       client
         .schema('restaurant')

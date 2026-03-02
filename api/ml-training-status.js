@@ -7,13 +7,15 @@
 
 const { getTrainingDataStats } = require('./ml/data-logger');
 const { getSegoviaInsights } = require('./ml/data-logger-supabase');
+const { verifyJWT } = require('./_lib/auth');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('MLTrainingStatus');
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const CLIENT_URL = process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
+  res.setHeader('Access-Control-Allow-Origin', CLIENT_URL);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).json({ success: true });
@@ -21,6 +23,14 @@ module.exports = async (req, res) => {
 
   if (req.method !== 'GET') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
+  }
+
+  // Require JWT auth — ML stats contain restaurant-specific training data
+  try {
+    const token = (req.headers.authorization || '').replace('Bearer ', '');
+    await verifyJWT(token);
+  } catch {
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 
   const { action } = req.query;

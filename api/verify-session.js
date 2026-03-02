@@ -1,6 +1,7 @@
 const Stripe = require('stripe');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('VerifySession');
 
 module.exports = async (req, res) => {
@@ -16,6 +17,8 @@ module.exports = async (req, res) => {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  if (await checkAndApplyRateLimit(req, res, 'api')) return;
 
   try {
     const { session_id } = req.query;
