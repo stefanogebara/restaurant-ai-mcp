@@ -461,3 +461,14 @@ Push to `main` branch triggers automatic Vercel deployment.
 - [x] DepositActions.tsx — capture/release buttons in dashboard reservation rows
 - [x] DepositSettingsPanel.tsx — deposit config UI in WhatsApp Settings page
 - [x] vercel.json — rewrites for all 7 new endpoints
+
+### Phase 11 — First Real Customers 🚧 IN PROGRESS
+- [ ] 11A: import-history.js — POST /api/import-history (CSV upload, multipart)
+- [ ] 11A: importPipeline.js — seeds reservations, customer_history, LTV, avg_spend, manager_memory
+- [ ] 11A: Step4ImportHistory.tsx — drag-and-drop CSV + column mapping + progress summary
+- [ ] 11A: Onboarding.tsx — insert Step 4, renumber existing steps 4→5, 5→6
+- [ ] 11A: vercel.json — rewrite for /api/import-history
+- [ ] 11B: restaurantSnapshot.js — enrich upcoming reservations with is_regular, visit_count, preferences
+- [ ] 11B: manager-briefings.js — add [VIP GUESTS TODAY] block to morning briefing prompt
+- [ ] 11C: analytics/compare.js — GET /api/analytics/compare (period aggregation)
+- [ ] 11C: manager-agent.js — add compare_periods tool
