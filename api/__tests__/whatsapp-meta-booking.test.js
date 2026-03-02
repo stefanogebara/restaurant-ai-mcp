@@ -112,9 +112,8 @@ process.env.WHATSAPP_PHONE_NUMBER_ID = 'PHONE_ID';
 process.env.WHATSAPP_ACCESS_TOKEN = 'test-access-token';
 process.env.AI_BASE_URL = 'https://openrouter.ai/api/v1';
 process.env.OPENROUTER_API_KEY = 'sk-test';
-// No META_APP_SECRET / WHATSAPP_APP_SECRET → signature check is skipped
-delete process.env.META_APP_SECRET;
-delete process.env.WHATSAPP_APP_SECRET;
+// Set a test secret so signature verification runs in tests
+process.env.META_APP_SECRET = 'test-meta-app-secret';
 
 // ─── Load handler and mocked refs ────────────────────────────────────────────
 
@@ -184,12 +183,21 @@ function makeSession(opts = {}) {
   };
 }
 
+const crypto = require('crypto');
+
 function mockReq(method, opts = {}) {
+  const body = opts.body || {};
+  const headers = opts.headers || {};
+  if (method === 'POST') {
+    const rawBody = JSON.stringify(body);
+    const sig = 'sha256=' + crypto.createHmac('sha256', process.env.META_APP_SECRET).update(rawBody).digest('hex');
+    headers['x-hub-signature-256'] = sig;
+  }
   return {
     method,
-    headers: opts.headers || {},
+    headers,
     query: opts.query || {},
-    body: opts.body || {},
+    body,
     url: '/api/whatsapp-webhook',
   };
 }

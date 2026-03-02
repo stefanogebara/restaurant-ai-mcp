@@ -1033,18 +1033,20 @@ module.exports = async (req, res) => {
   if (req.method === 'POST') {
     // Verify Meta webhook signature (X-Hub-Signature-256)
     const appSecret = process.env.META_APP_SECRET || process.env.WHATSAPP_APP_SECRET;
-    if (appSecret) {
-      const signature = req.headers['x-hub-signature-256'];
-      if (!signature) {
-        logger.error('Missing X-Hub-Signature-256 header');
-        return res.status(403).json({ error: 'Missing signature' });
-      }
-      const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
-      const expectedSig = 'sha256=' + crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex');
-      if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig))) {
-        logger.error('Invalid Meta webhook signature');
-        return res.status(403).json({ error: 'Invalid signature' });
-      }
+    if (!appSecret) {
+      logger.error('META_APP_SECRET not configured — rejecting unsigned webhook');
+      return res.status(500).json({ error: 'Webhook not configured' });
+    }
+    const signature = req.headers['x-hub-signature-256'];
+    if (!signature) {
+      logger.error('Missing X-Hub-Signature-256 header');
+      return res.status(403).json({ error: 'Missing signature' });
+    }
+    const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+    const expectedSig = 'sha256=' + crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex');
+    if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig))) {
+      logger.error('Invalid Meta webhook signature');
+      return res.status(403).json({ error: 'Invalid signature' });
     }
 
     try {

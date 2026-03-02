@@ -133,8 +133,8 @@ jest.mock('twilio', () => {
 // ─── Env setup ────────────────────────────────────────────────────────────────
 
 process.env.ANTHROPIC_API_KEY = 'sk-ant-test';
-// No TWILIO_AUTH_TOKEN → verifyTwilioSignature returns true (skips verification)
-delete process.env.TWILIO_AUTH_TOKEN;
+// Set a test auth token — validateRequest is mocked to return true
+process.env.TWILIO_AUTH_TOKEN = 'test-twilio-auth-token';
 // No template → skip template send
 delete process.env.TWILIO_TEMPLATE_RESERVATION_CONFIRMED;
 process.env.TWILIO_WHATSAPP_NUMBER = 'whatsapp:+14155238886';
@@ -194,9 +194,13 @@ function makeSession(opts = {}) {
 }
 
 function mockReq(method, opts = {}) {
+  const headers = opts.headers || { host: 'localhost:3000' };
+  if (method === 'POST') {
+    headers['x-twilio-signature'] = 'test-sig'; // validateRequest is mocked to return true
+  }
   return {
     method,
-    headers: opts.headers || { host: 'localhost:3000' },
+    headers,
     query: opts.query || {},
     body: opts.body || {},
     url: '/api/twilio-whatsapp-webhook',

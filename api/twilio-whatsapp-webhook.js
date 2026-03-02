@@ -1420,8 +1420,8 @@ function parseUrlEncodedBody(body) {
 function verifyTwilioSignature(req) {
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   if (!authToken) {
-    logger.warn('TWILIO_AUTH_TOKEN not set - skipping signature verification');
-    return true; // Allow in dev, but log warning
+    logger.error('TWILIO_AUTH_TOKEN not set — rejecting unsigned webhook');
+    return false;
   }
 
   const signature = req.headers['x-twilio-signature'];

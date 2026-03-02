@@ -65,7 +65,8 @@ module.exports = async (req, res) => {
       return res.status(403).json({ error: 'Signature verification failed' });
     }
   } else {
-    logger.warn('ELEVENLABS_WEBHOOK_SECRET not set - skipping signature verification. Set this env var to secure the webhook.');
+    logger.error('ELEVENLABS_WEBHOOK_SECRET not configured — rejecting unsigned webhook');
+    return res.status(500).json({ error: 'Webhook not configured' });
   }
 
   // Log incoming request for debugging
