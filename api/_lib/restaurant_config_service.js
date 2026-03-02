@@ -6,6 +6,9 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { createSecureLogger } from './secure-logger.js';
+
+const logger = createSecureLogger('restaurant-config-service');
 
 class RestaurantConfigService {
   constructor() {
@@ -397,23 +400,23 @@ const configService = new RestaurantConfigService();
 
 // AI agent gets full context for call
 const context = await configService.getAIAgentContext(userId);
-console.log(`Welcome to ${context.restaurant_name}!`);
-console.log(`We are ${context.today.is_currently_open ? 'open' : 'closed'} today.`);
+logger.info(`Welcome to ${context.restaurant_name}!`);
+logger.info(`We are ${context.today.is_currently_open ? 'open' : 'closed'} today.`);
 
 // Check if open now
 const isOpen = await configService.isOpenNow(userId);
 
 // Find tables for party of 4
 const tables = await configService.getTablesForPartySize(userId, 4);
-console.log(`Available tables for 4:`, tables);
+logger.info(`Available tables for 4:`, tables);
 
 // Get week schedule
 const schedule = await configService.getWeekSchedule(userId);
-console.log('Our hours:', schedule);
+logger.info('Our hours:', schedule);
 
 // Get voice config for AI
 const voice = await configService.getVoiceConfig(userId);
-console.log('AI greeting:', voice.greeting);
+logger.info('AI greeting:', voice.greeting);
 
 // Update business hours
 await configService.updateDayHours(userId, 'monday', {

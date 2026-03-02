@@ -99,7 +99,7 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
   }
 
   const handleCompleteService = (serviceId: string, partyName: string) => {
-    completeServiceMutation.mutate(serviceId, {
+    completeServiceMutation.mutate({ serviceRecordId: serviceId }, {
       onSuccess: () => {
         setConfirmingServiceId(null);
         success(`Service completed for ${partyName}`);

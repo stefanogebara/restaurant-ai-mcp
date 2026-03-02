@@ -9,7 +9,7 @@ let mockFetchResponse: { ok: boolean; json: () => Promise<unknown> } = {
 };
 
 vi.mock('../../services/api', () => ({
-  authFetch: vi.fn((url: string, opts?: { method?: string }) => {
+  authFetch: vi.fn((_url: string, opts?: { method?: string }) => {
     if (opts?.method === 'PATCH') {
       return Promise.resolve({ ok: true, json: async () => ({ staffing_config: { roles: [] } }) });
     }
