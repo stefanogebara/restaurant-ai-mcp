@@ -14,7 +14,7 @@ async function getRestaurantSnapshot(restaurantId) {
   const [reservationsRes, waitlistRes, activeRes, configRes, depositRes] = await Promise.all([
     supabaseAdmin
       .from('reservations')
-      .select('id, guest_name, party_size, reservation_time, status, date')
+      .select('id, guest_name, party_size, reservation_time, status, date, customer_phone')
       .eq('restaurant_id', restaurantId)
       .gte('reservation_time', new Date().toISOString())
       .order('reservation_time')
@@ -55,9 +55,38 @@ async function getRestaurantSnapshot(restaurantId) {
     logger.error('getRestaurantSnapshot service_records query failed', { restaurantId, error: activeRes.error.message });
   }
 
+  // Enrich upcoming reservations with regulars data from customer_ltv
+  const rawReservations = reservationsRes.data || [];
+  const phones = [...new Set(rawReservations.map(r => r.customer_phone).filter(Boolean))];
+
+  let phoneToLTV = {};
+  if (phones.length > 0) {
+    const { data: ltvRows } = await supabaseAdmin
+      .schema('restaurant')
+      .from('customer_ltv')
+      .select('customer_phone, customer_tier, total_visits, avg_revenue_per_visit')
+      .eq('restaurant_id', restaurantId)
+      .in('customer_phone', phones);
+
+    for (const row of ltvRows || []) {
+      phoneToLTV[row.customer_phone] = row;
+    }
+  }
+
+  const enrichedReservations = rawReservations.map(r => {
+    const ltv = r.customer_phone ? phoneToLTV[r.customer_phone] : null;
+    return {
+      ...r,
+      is_regular: !!ltv,
+      customer_tier: ltv?.customer_tier || null,
+      visit_count: ltv?.total_visits || null,
+      avg_spend: ltv?.avg_revenue_per_visit || null,
+    };
+  });
+
   // Build 3-day staffing forecast
   const roles = configRes.data?.staffing_config?.roles || DEFAULT_STAFFING_ROLES;
-  const reservations = reservationsRes.data || [];
+  const reservations = rawReservations;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const coversByDate = {};
@@ -86,7 +115,7 @@ async function getRestaurantSnapshot(restaurantId) {
 
   return {
     snapshot_time: new Date().toISOString(),
-    upcoming_reservations: reservations,
+    upcoming_reservations: enrichedReservations,
     waitlist_count: waitlistRes.count || 0,
     active_parties: activeRes.data || [],
     staffing_forecast,
@@ -99,4 +128,39 @@ async function getRestaurantSnapshot(restaurantId) {
   };
 }
 
-module.exports = { getRestaurantSnapshot };
+/**
+ * Fetch VIP and regular guests booked for today.
+ * Used by morning briefings to build the [VIP GUESTS TODAY] block.
+ * @param {string} restaurantId
+ * @returns {Promise<Array<{ customer_phone, customer_name, customer_tier, total_visits }>>}
+ */
+async function getVIPsForToday(restaurantId) {
+  const today = new Date().toISOString().split('T')[0];
+
+  const { data: reservations } = await supabaseAdmin
+    .from('reservations')
+    .select('customer_phone, guest_name')
+    .eq('restaurant_id', restaurantId)
+    .eq('date', today)
+    .not('customer_phone', 'is', null)
+    .in('status', ['confirmed', 'pending']);
+
+  const phones = [...new Set(
+    (reservations || []).map(r => r.customer_phone).filter(Boolean)
+  )];
+
+  if (phones.length === 0) return [];
+
+  const { data: ltvRecords } = await supabaseAdmin
+    .schema('restaurant')
+    .from('customer_ltv')
+    .select('customer_phone, customer_name, customer_tier, total_visits')
+    .eq('restaurant_id', restaurantId)
+    .in('customer_phone', phones);
+
+  return (ltvRecords || []).filter(
+    r => r.customer_tier === 'vip' || r.customer_tier === 'regular'
+  );
+}
+
+module.exports = { getRestaurantSnapshot, getVIPsForToday };
