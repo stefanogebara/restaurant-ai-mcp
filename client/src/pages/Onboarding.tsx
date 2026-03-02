@@ -1,11 +1,12 @@
 /**
- * Restaurant Onboarding Wizard - 5-Step Flow
+ * Restaurant Onboarding Wizard - 6-Step Flow
  *
  * 1. Restaurant Info    — name, type, location, language
  * 2. Contact & Hours   — phone, email, WhatsApp, business hours
  * 3. Tables & Settings — dining areas + booking settings (collapsed)
- * 4. Review & Launch   — summary with edit links, then submit
- * 5. Teach Your AI     — optional interview + document upload
+ * 4. Review & Launch   — summary with edit links, then submit (creates restaurant)
+ * 5. Import History    — optional CSV upload of past customers (requires restaurant_id)
+ * 6. Teach Your AI     — optional interview + document upload
  *
  * AI Learning, Voice Selection, and Team Setup have been moved
  * to post-onboarding settings to reduce friction.
@@ -20,7 +21,8 @@ import Step1Welcome from '../components/onboarding/Step1Welcome';
 import Step2Contact from '../components/onboarding/Step2Contact';
 import Step3TablesAndSettings from '../components/onboarding/Step3TablesAndSettings';
 import Step4Review from '../components/onboarding/Step4Review';
-import Step5TeachAI from '../components/onboarding/Step5TeachAI';
+import Step5ImportHistory from '../components/onboarding/Step5ImportHistory';
+import Step6TeachAI from '../components/onboarding/Step5TeachAI';
 import OnboardingSuccessModal from '../components/onboarding/OnboardingSuccessModal';
 import OnboardingStepSidebar from '../components/onboarding/OnboardingStepSidebar';
 import type { OnboardingData } from '../types/onboarding.types';
@@ -29,8 +31,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { trackOnboardingStepCompleted, trackOnboardingCompleted } from '../lib/analytics';
 import { LS_CUSTOMER_EMAIL, LS_REFERRAL_CODE, LS_ONBOARDING_DATA, LS_ONBOARDING_STEP, LS_PENDING_DEMO_TOKEN } from '../config/localStorageKeys';
 
-const STEP_NAME_KEYS = ['onboarding.stepName1', 'onboarding.stepName2', 'onboarding.stepName3', 'onboarding.stepName4', 'onboarding.stepName5'];
-const TOTAL_STEPS = 5;
+const STEP_NAME_KEYS = ['onboarding.stepName1', 'onboarding.stepName2', 'onboarding.stepName3', 'onboarding.stepName4', 'onboarding.stepName5', 'onboarding.stepName6'];
+const TOTAL_STEPS = 6;
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -256,7 +258,7 @@ export default function Onboarding() {
 
       {/* Mobile Step Dots */}
       <div className="flex md:hidden items-center justify-center gap-2 py-3 border-b border-border-gray">
-        {[1, 2, 3, 4, 5].map((s) => (
+        {[1, 2, 3, 4, 5, 6].map((s) => (
           <div key={s} className={`rounded-full transition-all duration-300 ${
             s < currentStep    ? 'w-2 h-2 bg-burgundy'
             : s === currentStep ? 'w-6 h-2 bg-burgundy'
@@ -325,7 +327,13 @@ export default function Onboarding() {
             />
           )}
           {currentStep === 5 && (
-            <Step5TeachAI
+            <Step5ImportHistory
+              restaurantId={onboardingData.restaurant_id}
+              onNext={nextStep}
+            />
+          )}
+          {currentStep === 6 && (
+            <Step6TeachAI
               restaurantId={onboardingData.restaurant_id}
               onNext={() => setShowSuccessModal(true)}
             />
