@@ -102,11 +102,6 @@ function resolve(name: string): LucideIcon | undefined {
   return (icons as Record<string, LucideIcon>)[mapped];
 }
 
-/** @deprecated No longer serves PNG paths. Kept for API compatibility. */
-export function getIconPath(name: IconName, _size: IconSize = 'sm'): string {
-  return `/icons/3d/sm/${name}.png`;
-}
-
 export default function ThiingsIcon({
   name,
   size = 'sm',

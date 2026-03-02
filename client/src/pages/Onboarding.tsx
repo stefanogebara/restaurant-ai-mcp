@@ -21,6 +21,8 @@ import Step2Contact from '../components/onboarding/Step2Contact';
 import Step3TablesAndSettings from '../components/onboarding/Step3TablesAndSettings';
 import Step4Review from '../components/onboarding/Step4Review';
 import Step5TeachAI from '../components/onboarding/Step5TeachAI';
+import OnboardingSuccessModal from '../components/onboarding/OnboardingSuccessModal';
+import OnboardingStepSidebar from '../components/onboarding/OnboardingStepSidebar';
 import type { OnboardingData } from '../types/onboarding.types';
 import { authFetch } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -266,67 +268,7 @@ export default function Onboarding() {
       {/* Layout */}
       <div className="flex-1 flex max-w-[1000px] mx-auto w-full px-6 sm:px-12 py-12 gap-16">
         {/* Step Sidebar */}
-        <div className="hidden md:block flex-shrink-0 w-[220px] pt-2">
-          <div className="flex flex-col">
-            {STEP_NAME_KEYS.map((key, index) => {
-              const name = t(key);
-              const stepNumber = index + 1;
-              const isActive = stepNumber === currentStep;
-              const isCompleted = stepNumber < currentStep;
-              const isLast = index === STEP_NAME_KEYS.length - 1;
-
-              return (
-                <div key={stepNumber} className="flex items-start py-4 relative">
-                  {!isLast && (
-                    <div
-                      className={`absolute left-[15px] top-[48px] bottom-0 w-px ${
-                        isCompleted
-                          ? 'bg-burgundy'
-                          : isActive
-                            ? 'bg-gradient-to-b from-burgundy to-border-gray'
-                            : 'bg-border-gray'
-                      }`}
-                    />
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => { if (isCompleted) goToStep(stepNumber); }}
-                    disabled={!isCompleted}
-                    aria-label={isCompleted ? `Go back to step ${stepNumber}` : undefined}
-                    className={`flex items-center gap-4 w-full text-left ${isCompleted ? 'cursor-pointer hover:opacity-75 transition-opacity' : 'cursor-default'}`}
-                  >
-                    <div
-                      className={`relative z-10 w-8 h-8 rounded-full border-2 flex items-center justify-center text-[13px] font-semibold flex-shrink-0 ${
-                        isCompleted
-                          ? 'border-burgundy bg-burgundy text-white'
-                          : isActive
-                            ? 'border-burgundy bg-burgundy/[0.06] text-burgundy'
-                            : 'border-border-gray bg-white text-muted-stone'
-                      }`}
-                    >
-                      {isCompleted ? (
-                        <ThiingsIcon name="check" pxSize={14} />
-                      ) : (
-                        stepNumber
-                      )}
-                    </div>
-                    <span
-                      className={`text-sm pt-[5px] ${
-                        isActive
-                          ? 'font-semibold text-deep-charcoal'
-                          : isCompleted
-                            ? 'font-medium text-stone-gray'
-                            : 'font-medium text-muted-stone'
-                      }`}
-                    >
-                      {name}
-                    </span>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <OnboardingStepSidebar currentStep={currentStep} goToStep={goToStep} />
 
         {/* Form Content */}
         <div className="flex-1 max-w-[480px]">
@@ -393,64 +335,7 @@ export default function Onboarding() {
 
       {/* Success Modal */}
       {showSuccessModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-          <div className="bg-white border border-border-gray rounded-2xl p-10 max-w-md w-full">
-            <div className="text-center">
-              <div className="w-20 h-20 bg-burgundy rounded-full flex items-center justify-center mx-auto mb-6">
-                <ThiingsIcon name="check" pxSize={40} className="text-white" />
-              </div>
-              <h2 className="font-serif text-3xl font-medium text-deep-charcoal mb-3">{t('onboarding.welcomeAboard')}</h2>
-              <p className="text-[15px] text-stone-gray font-light mb-6">
-                {t('onboarding.restaurantReady')}
-              </p>
-
-              {/* Referral share nudge */}
-              {ownReferral && (() => {
-                const referralUrl = ownReferral.url;
-                const whatsappText = encodeURIComponent(`I just joined Seatable – the AI that manages restaurant reservations. Try it free: ${referralUrl}`);
-                const emailSubject = encodeURIComponent('Try Seatable – AI reservations for restaurants');
-                const emailBody = encodeURIComponent(`Hey,\n\nI just started using Seatable – it handles restaurant reservations with AI. Thought you might find it useful.\n\nTry it free here: ${referralUrl}\n\nCheers`);
-                return (
-                  <div className="mb-6 border border-border-gray rounded-2xl p-4">
-                    <p className="text-[13px] font-medium text-deep-charcoal mb-3">
-                      Know another restaurateur? Share Seatable and earn rewards.
-                    </p>
-                    <div className="flex gap-3 justify-center">
-                      <a
-                        href={`https://wa.me/?text=${whatsappText}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#25D366] text-white text-[13px] font-medium hover:bg-[#1ebe5d] transition-colors"
-                      >
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                        </svg>
-                        WhatsApp
-                      </a>
-                      <a
-                        href={`mailto:?subject=${emailSubject}&body=${emailBody}`}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-deep-charcoal text-white text-[13px] font-medium hover:bg-charcoal-dark transition-colors"
-                      >
-                        <ThiingsIcon name="mail" pxSize={16} />
-                        Email
-                      </a>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              <button
-                onClick={() => navigate('/host-dashboard/simple')}
-                className="w-full px-8 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all duration-300 mb-2"
-              >
-                Go to Dashboard →
-              </button>
-              <p className="text-sm text-stone-gray text-center">
-                Redirecting automatically in {countdown}s
-              </p>
-            </div>
-          </div>
-        </div>
+        <OnboardingSuccessModal countdown={countdown} ownReferral={ownReferral} />
       )}
     </div>
   );
