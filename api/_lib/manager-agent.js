@@ -12,6 +12,7 @@ const { supabaseAdmin } = require('./supabase');
 const { createSecureLogger } = require('./secure-logger');
 const { getPlanLimits } = require('../services/subscription-limits');
 const { trackUsage } = require('./usage-tracking');
+const { comparePeriods } = require('./periodCompare');
 
 const logger = createSecureLogger('manager-agent');
 
@@ -28,6 +29,37 @@ class ManagerQuotaError extends Error {
 
 const CLAUDE_MODEL = 'claude-sonnet-4-6';
 const HISTORY_LIMIT = 20;
+
+const VALID_PERIODS = [
+  'last_7_days', 'last_30_days',
+  'this_week', 'last_week',
+  'this_month', 'last_month',
+];
+
+const MANAGER_TOOLS = [
+  {
+    name: 'compare_periods',
+    description:
+      'Compare reservation and cover metrics between two time periods for this restaurant. ' +
+      'Use this when the manager asks how this week/month compares to last week/month, or asks about trends.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        period_a: {
+          type: 'string',
+          enum: VALID_PERIODS,
+          description: 'The baseline period (e.g. last_week)',
+        },
+        period_b: {
+          type: 'string',
+          enum: VALID_PERIODS,
+          description: 'The comparison period (e.g. this_week)',
+        },
+      },
+      required: ['period_a', 'period_b'],
+    },
+  },
+];
 
 // Fact patterns that trigger background memory extraction
 const FACT_PATTERNS = [
@@ -215,13 +247,52 @@ async function runManagerAgent(restaurantId, userMessage, channel) {
     max_tokens: 512,
     system: systemPrompt,
     messages,
+    tools: MANAGER_TOOLS,
   });
 
-  const firstBlock = response.content?.[0];
-  if (!firstBlock || firstBlock.type !== 'text') {
-    throw new Error('Unexpected Claude response structure');
+  let assistantText;
+
+  if (response.stop_reason === 'tool_use') {
+    const toolBlock = response.content.find((b) => b.type === 'tool_use');
+    if (toolBlock?.name === 'compare_periods') {
+      const { period_a, period_b } = toolBlock.input;
+      const compResult = await comparePeriods(restaurantId, period_a, period_b);
+
+      const followUpMessages = [
+        ...messages,
+        { role: 'assistant', content: response.content },
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: toolBlock.id,
+              content: JSON.stringify(compResult),
+            },
+          ],
+        },
+      ];
+
+      const finalResponse = await getAnthropic().messages.create({
+        model: CLAUDE_MODEL,
+        max_tokens: 512,
+        system: systemPrompt,
+        messages: followUpMessages,
+        tools: MANAGER_TOOLS,
+      });
+
+      const textBlock = finalResponse.content?.find((b) => b.type === 'text');
+      assistantText = textBlock?.text;
+    }
   }
-  const assistantText = firstBlock.text;
+
+  if (!assistantText) {
+    const textBlock = response.content?.find((b) => b.type === 'text');
+    if (!textBlock) {
+      throw new Error('Unexpected Claude response structure');
+    }
+    assistantText = textBlock.text;
+  }
 
   await Promise.all([
     saveTurn(restaurantId, 'manager', userMessage, channel),

@@ -11,6 +11,7 @@ const mockGetRestaurantSnapshot = jest.fn().mockResolvedValue({
   waitlist_count: 0,
 });
 const mockMessagesCreate = jest.fn();
+const mockComparePeriods = jest.fn();
 
 // Quota-related mocks (module-scope so they can be referenced in jest.mock factories)
 const mockGetPlanLimits = jest.fn();
@@ -46,6 +47,10 @@ jest.mock('../services/subscription-limits', () => ({
 
 jest.mock('../_lib/usage-tracking', () => ({
   trackUsage: (...args) => mockTrackUsage(...args),
+}));
+
+jest.mock('../_lib/periodCompare', () => ({
+  comparePeriods: (...args) => mockComparePeriods(...args),
 }));
 
 const { runManagerAgent, ManagerQuotaError } = require('../_lib/manager-agent');
@@ -247,5 +252,73 @@ describe('quota enforcement', () => {
     // usage_tracking should NOT be queried (only subscriptions + manager_conversations)
     const usageTrackingCalls = mockFrom.mock.calls.filter(([t]) => t === 'usage_tracking');
     expect(usageTrackingCalls).toHaveLength(0);
+  });
+});
+
+// ─── compare_periods tool use ─────────────────────────────────────────────────
+
+describe('compare_periods tool use', () => {
+  function setupFromMock({ planName = 'starter', usageRows = [] } = {}) {
+    mockFrom.mockImplementation((table) => {
+      const chain = makeChain();
+      if (table === 'subscriptions') {
+        chain.maybeSingle.mockResolvedValue({ data: { plan_name: planName, status: 'active' } });
+      } else if (table === 'usage_tracking') {
+        chain.gte.mockResolvedValue({ data: usageRows, error: null });
+      }
+      return chain;
+    });
+  }
+
+  it('calls comparePeriods and returns follow-up text when Claude requests tool use', async () => {
+    mockGetPlanLimits.mockReturnValue({ managerAICallsMonthly: 100 });
+    setupFromMock({ planName: 'starter', usageRows: [] });
+
+    const compareResult = {
+      period_a: { label: 'last_week', covers: 60, reservations: 20 },
+      period_b: { label: 'this_week', covers: 72, reservations: 24 },
+      delta: { covers: 12, reservations: 4, covers_pct: 20 },
+    };
+    mockComparePeriods.mockResolvedValue(compareResult);
+
+    // First call → tool_use stop
+    mockMessagesCreate.mockResolvedValueOnce({
+      stop_reason: 'tool_use',
+      content: [
+        {
+          type: 'tool_use',
+          id: 'tool-id-1',
+          name: 'compare_periods',
+          input: { period_a: 'last_week', period_b: 'this_week' },
+        },
+      ],
+    });
+    // Second call → text
+    mockMessagesCreate.mockResolvedValueOnce({
+      stop_reason: 'end_turn',
+      content: [{ type: 'text', text: 'This week you had 72 covers, up 20% from 60 last week.' }],
+    });
+
+    const reply = await runManagerAgent('rest-1', 'How does this week compare to last?', 'app');
+
+    expect(mockComparePeriods).toHaveBeenCalledWith('rest-1', 'last_week', 'this_week');
+    expect(reply).toBe('This week you had 72 covers, up 20% from 60 last week.');
+    expect(mockMessagesCreate).toHaveBeenCalledTimes(2);
+  });
+
+  it('falls through to text response when stop_reason is end_turn (no tool use)', async () => {
+    mockGetPlanLimits.mockReturnValue({ managerAICallsMonthly: 100 });
+    setupFromMock({ planName: 'starter', usageRows: [] });
+
+    mockMessagesCreate.mockResolvedValue({
+      stop_reason: 'end_turn',
+      content: [{ type: 'text', text: 'Tonight looks good.' }],
+    });
+
+    const reply = await runManagerAgent('rest-1', 'How does tonight look?', 'app');
+
+    expect(mockComparePeriods).not.toHaveBeenCalled();
+    expect(reply).toBe('Tonight looks good.');
+    expect(mockMessagesCreate).toHaveBeenCalledTimes(1);
   });
 });
