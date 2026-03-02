@@ -109,10 +109,18 @@ function buildSystemPrompt(memories, snapshot) {
 
   const upcomingLines = snapshot.upcoming_reservations
     .slice(0, 5)
-    .map(
-      (r) =>
+    .map((r) => {
+      const vipTag = r.customer_tier === 'vip'
+        ? ' ★VIP'
+        : r.customer_tier === 'regular'
+          ? ' ★regular'
+          : '';
+      const visitInfo = r.visit_count ? ` (${r.visit_count} visits)` : '';
+      return (
         '  - ' +
         r.guest_name +
+        vipTag +
+        visitInfo +
         ', party of ' +
         r.party_size +
         ' at ' +
@@ -120,7 +128,8 @@ function buildSystemPrompt(memories, snapshot) {
           hour: '2-digit',
           minute: '2-digit',
         })
-    )
+      );
+    })
     .join('\n');
 
   const staffingLines = (snapshot.staffing_forecast || [])
