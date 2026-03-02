@@ -80,6 +80,8 @@ interface ReservationInput {
   date: string;
   time: string;
   special_requests?: string;
+  deposit_payment_intent_id?: string;
+  deposit_amount?: number;
 }
 
 export function useCreateReservation() {

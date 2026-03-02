@@ -78,7 +78,7 @@ async function handleGetRestaurant(req, res) {
   const { data, error } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, restaurant_type, city, country, phone, email, website, business_hours, reservation_settings, average_dining_duration_minutes, slug')
+    .select('id, restaurant_name, restaurant_type, city, country, phone, email, website, business_hours, reservation_settings, average_dining_duration_minutes, slug, deposit_config')
     .eq('slug', slug)
     .eq('is_active', true)
     .eq('onboarding_completed', true)
@@ -112,7 +112,8 @@ async function handleGetRestaurant(req, res) {
       min_party_size: reservationSettings.min_party_size || 1,
       advance_booking_days: reservationSettings.advance_booking_days || 30,
       average_dining_duration: data.average_dining_duration_minutes || 90,
-      cancellation_policy: reservationSettings.cancellation_policy || null
+      cancellation_policy: reservationSettings.cancellation_policy || null,
+      deposit_config: data.deposit_config || { enabled: false }
     }
   });
 }
@@ -344,7 +345,9 @@ async function handleCreateReservation(req, res) {
     party_size,
     date,
     time,
-    special_requests
+    special_requests,
+    deposit_payment_intent_id,
+    deposit_amount
   } = req.body || {};
 
   // Validate required fields
@@ -471,7 +474,9 @@ async function handleCreateReservation(req, res) {
       time,
       special_requests: special_requests || null,
       status: 'confirmed',
-      source: 'online_portal'
+      source: 'online_portal',
+      deposit_payment_intent_id: deposit_payment_intent_id || null,
+      deposit_amount: deposit_amount ? parseFloat(deposit_amount) : null
     })
     .select('id, reservation_id, customer_name, party_size, date, time, status')
     .single();

@@ -3,12 +3,14 @@ import ThiingsIcon from '../common/ThiingsIcon';
 import type { UpcomingReservation } from '../../types/host.types';
 import NoShowRiskBadge from './NoShowRiskBadge';
 import DepositBadge from './DepositBadge';
+import DepositActions from './DepositActions';
 
 interface ReservationsListProps {
   todayReservations: UpcomingReservation[];
   tomorrowReservations: UpcomingReservation[];
   onCheckIn: (reservation: UpcomingReservation) => void;
   onIntervention: (reservation: UpcomingReservation) => void;
+  onDepositAction?: () => void;
   language?: 'en' | 'es';
   isLoading?: boolean;
 }
@@ -51,6 +53,7 @@ export default function ReservationsList({
   tomorrowReservations,
   onCheckIn,
   onIntervention,
+  onDepositAction,
   language = 'en',
   isLoading,
 }: ReservationsListProps) {
@@ -134,6 +137,7 @@ export default function ReservationsList({
               reservation={reservation}
               onCheckIn={() => onCheckIn(reservation)}
               onIntervention={() => onIntervention(reservation)}
+              onDepositAction={onDepositAction}
               language={language}
             />
           ))}
@@ -149,10 +153,11 @@ interface ReservationRowProps {
   reservation: UpcomingReservation;
   onCheckIn: () => void;
   onIntervention: () => void;
+  onDepositAction?: () => void;
   language: 'en' | 'es';
 }
 
-function ReservationRow({ reservation, onCheckIn, onIntervention, language }: ReservationRowProps) {
+function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositAction, language }: ReservationRowProps) {
   const t = translations[language];
 
   const formatTime = (time: string) => {
@@ -265,6 +270,17 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
           </span>
         )}
       </div>
+
+      {/* Deposit Actions */}
+      {reservation.deposit_amount && reservation.deposit_payment_intent_id && (
+        <div className="flex-shrink-0">
+          <DepositActions
+            reservationId={reservation.reservation_id}
+            depositAmount={reservation.deposit_amount}
+            onActionComplete={onDepositAction || (() => {})}
+          />
+        </div>
+      )}
     </div>
   );
 }

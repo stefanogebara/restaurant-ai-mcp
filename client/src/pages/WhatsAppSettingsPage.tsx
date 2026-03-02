@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import ManagerNotificationsPanel from '../components/dashboard/ManagerNotificationsPanel';
 import StaffingSettingsPanel from '../components/dashboard/StaffingSettingsPanel';
+import DepositSettingsPanel from '../components/settings/DepositSettingsPanel';
 import {
   useWhatsAppStatus,
   useWhatsAppStats,
@@ -241,6 +242,9 @@ export default function WhatsAppSettingsPage() {
 
         {/* Staffing Ratios */}
         <StaffingSettingsPanel />
+
+        {/* Reservation Deposits */}
+        <DepositSettingsPanel />
       </div>
     </DashboardLayout>
   );

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTimeSlots, useCreateReservation } from '../../hooks/useBooking';
+import DepositPaymentStep from './DepositPaymentStep';
 
 export interface RestaurantInfo {
   id: string;
@@ -18,6 +19,11 @@ export interface RestaurantInfo {
   advance_booking_days: number;
   average_dining_duration: number;
   cancellation_policy?: string | null;
+  deposit_config?: {
+    enabled: boolean;
+    type?: 'flat' | 'per_person';
+    amount?: number;
+  };
 }
 
 export interface TimeSlot {
@@ -51,6 +57,10 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
+  const [depositStep, setDepositStep] = useState(false);
+  const [clientSecret, setClientSecret] = useState('');
+  const [depositAmount, setDepositAmount] = useState(0);
+  const [paymentIntentId, setPaymentIntentId] = useState('');
 
   // Reset time when date or party size changes
   useEffect(() => { setSelectedTime(''); }, [selectedDate, partySize]);
@@ -88,7 +98,33 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     return `${hour}:${String(m).padStart(2, '0')} ${period}`;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    // If deposit required and not yet paid, create intent first
+    if (depositRequired && !paymentIntentId) {
+      try {
+        const res = await fetch('/api/create-deposit-intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            restaurant_id: restaurant.id,
+            party_size: partySize,
+            customer_email: customerEmail.trim() || undefined,
+          }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Failed to create deposit');
+
+        setClientSecret(data.client_secret);
+        setDepositAmount(data.deposit_amount);
+        setDepositStep(true);
+        return; // Show payment step
+      } catch (err) {
+        console.error('Deposit intent error:', err);
+        return;
+      }
+    }
+
+    // Create the reservation (with or without deposit)
     reserve.mutate({
       restaurant_id: restaurant.id,
       customer_name: customerName.trim(),
@@ -98,6 +134,10 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       date: selectedDate,
       time: selectedTime,
       special_requests: specialRequests.trim() || undefined,
+      ...(paymentIntentId ? {
+        deposit_payment_intent_id: paymentIntentId,
+        deposit_amount: depositAmount,
+      } : {}),
     }, {
       onSuccess: ({ reservation }) => {
         navigate(`/book/${slug}/confirmed?id=${reservation.id}`, {
@@ -107,6 +147,33 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     });
   };
 
+  const handleDepositSuccess = (piId: string) => {
+    setPaymentIntentId(piId);
+    setDepositStep(false);
+    // Auto-submit the reservation now that deposit is confirmed
+    setTimeout(() => {
+      reserve.mutate({
+        restaurant_id: restaurant.id,
+        customer_name: customerName.trim(),
+        customer_phone: customerPhone.trim(),
+        customer_email: customerEmail.trim() || undefined,
+        party_size: partySize,
+        date: selectedDate,
+        time: selectedTime,
+        special_requests: specialRequests.trim() || undefined,
+        deposit_payment_intent_id: piId,
+        deposit_amount: depositAmount,
+      }, {
+        onSuccess: ({ reservation }) => {
+          navigate(`/book/${slug}/confirmed?id=${reservation.id}`, {
+            state: { reservation, restaurant_name: restaurant.name, restaurant_id: restaurant.id },
+          });
+        },
+      });
+    }, 0);
+  };
+
+  const depositRequired = restaurant.deposit_config?.enabled === true;
   const canSubmit = customerName.trim() !== '' && customerPhone.trim() !== '' && selectedDate && selectedTime;
 
   return (
@@ -303,6 +370,18 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
         </div>
       )}
 
+      {/* Deposit Payment Step */}
+      {depositStep && clientSecret && (
+        <div className="mb-6">
+          <DepositPaymentStep
+            clientSecret={clientSecret}
+            depositAmount={depositAmount}
+            onSuccess={handleDepositSuccess}
+            onCancel={() => setDepositStep(false)}
+          />
+        </div>
+      )}
+
       {/* Submit Error */}
       {reserve.isError && (
         <div className="bg-red-600/10 border border-red-600/20 rounded-xl p-3 mb-4">
@@ -311,21 +390,25 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       )}
 
       {/* Submit Button */}
-      <button
-        type="button"
-        onClick={handleSubmit}
-        disabled={!canSubmit || reserve.isPending}
-        className="w-full py-4 rounded-xl text-[15px] font-semibold bg-burgundy hover:bg-burgundy-dark disabled:bg-border-gray disabled:text-muted-stone text-white transition-colors flex items-center justify-center gap-2"
-      >
-        {reserve.isPending ? (
-          <>
-            <div aria-hidden="true" className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
-            Confirming...
-          </>
-        ) : (
-          'Confirm Reservation'
-        )}
-      </button>
+      {!depositStep && (
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={!canSubmit || reserve.isPending}
+          className="w-full py-4 rounded-xl text-[15px] font-semibold bg-burgundy hover:bg-burgundy-dark disabled:bg-border-gray disabled:text-muted-stone text-white transition-colors flex items-center justify-center gap-2"
+        >
+          {reserve.isPending ? (
+            <>
+              <div aria-hidden="true" className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
+              Confirming...
+            </>
+          ) : depositRequired && !paymentIntentId ? (
+            'Continue to Payment'
+          ) : (
+            'Confirm Reservation'
+          )}
+        </button>
+      )}
       <p className="text-center text-xs text-muted-stone mt-3">
         {restaurant.cancellation_policy || 'Free cancellation up to 2 hours before your reservation.'}
       </p>

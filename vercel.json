@@ -23,6 +23,34 @@
       "destination": "/api/voice-persona"
     },
     {
+      "source": "/api/table-suggestion",
+      "destination": "/api/table-suggestion"
+    },
+    {
+      "source": "/api/push-subscribe",
+      "destination": "/api/push-subscribe"
+    },
+    {
+      "source": "/api/push-send",
+      "destination": "/api/push-send"
+    },
+    {
+      "source": "/api/deposit-config",
+      "destination": "/api/deposit-config"
+    },
+    {
+      "source": "/api/create-deposit-intent",
+      "destination": "/api/create-deposit-intent"
+    },
+    {
+      "source": "/api/capture-deposit",
+      "destination": "/api/capture-deposit"
+    },
+    {
+      "source": "/api/release-deposit",
+      "destination": "/api/release-deposit"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },
