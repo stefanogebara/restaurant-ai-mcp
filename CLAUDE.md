@@ -439,3 +439,25 @@ Push to `main` branch triggers automatic Vercel deployment.
 - [x] EmbedSnippetPanel — copy-paste snippet panel in Voice Settings
 - [x] BookingPage — ?embed=true hides nav for iframe embed mode
 - [x] ActivePartiesPanel — optional total_bill number input on Complete Service
+
+### Phase 10 — Premium Booking Experience ✅ COMPLETE
+- [x] DB migration — `customer_push_subscriptions` table (PWA push subscriptions)
+- [x] DB migration — `deposit_payment_intent_id` + `deposit_amount` on `reservations`; `deposit_config` on `restaurant.restaurant_config`
+- [x] tableAssignmentService.js — pure scoring (size fit 50pts + floor spread 30pts)
+- [x] table-suggestion.js — GET /api/table-suggestion?party_size=N
+- [x] NoShowRiskBadge + DepositBadge — wired into ReservationsList reservation cards
+- [x] restaurantSnapshot.js — deposit_summary injected into Manager AI system prompt
+- [x] PWA manifest — standalone display, start_url /book, 192+512 icons
+- [x] service worker (sw.js) — cache-first, push event handler, notificationclick
+- [x] push-subscribe.js — POST /api/push-subscribe (public, customer-facing)
+- [x] push-send.js — POST /api/push-send (internal, CRON_SECRET, web-push, expired sub cleanup)
+- [x] BookingConfirmation.tsx — requests push permission + subscribes after booking
+- [x] deposit-config.js — GET/PATCH /api/deposit-config (flat or per_person)
+- [x] create-deposit-intent.js — POST /api/create-deposit-intent (Stripe capture_method: manual)
+- [x] capture-deposit.js — POST /api/capture-deposit (captures hold on no-show)
+- [x] release-deposit.js — POST /api/release-deposit (cancels hold on arrival)
+- [x] DepositPaymentStep.tsx — Stripe Elements + PaymentElement in booking flow
+- [x] BookingForm.tsx — deposit step before reservation confirm
+- [x] DepositActions.tsx — capture/release buttons in dashboard reservation rows
+- [x] DepositSettingsPanel.tsx — deposit config UI in WhatsApp Settings page
+- [x] vercel.json — rewrites for all 7 new endpoints
