@@ -11,7 +11,7 @@ const DEFAULT_STAFFING_ROLES = [
 ];
 
 async function getRestaurantSnapshot(restaurantId) {
-  const [reservationsRes, waitlistRes, activeRes, configRes] = await Promise.all([
+  const [reservationsRes, waitlistRes, activeRes, configRes, depositRes] = await Promise.all([
     supabaseAdmin
       .from('reservations')
       .select('id, guest_name, party_size, reservation_time, status, date')
@@ -36,6 +36,13 @@ async function getRestaurantSnapshot(restaurantId) {
       .select('staffing_config')
       .eq('id', restaurantId)
       .single(),
+    supabaseAdmin
+      .from('reservations')
+      .select('deposit_amount')
+      .eq('restaurant_id', restaurantId)
+      .not('deposit_amount', 'is', null)
+      .in('status', ['confirmed', 'pending'])
+      .gte('date', new Date().toISOString().split('T')[0]),
   ]);
 
   if (reservationsRes.error) {
@@ -70,12 +77,20 @@ async function getRestaurantSnapshot(restaurantId) {
     roles
   );
 
+  // Deposit summary for manager AI
+  const depositsTonight = depositRes.data || [];
+  const deposit_summary = {
+    count: depositsTonight.length,
+    total_amount: depositsTonight.reduce((sum, r) => sum + (parseFloat(r.deposit_amount) || 0), 0),
+  };
+
   return {
     snapshot_time: new Date().toISOString(),
     upcoming_reservations: reservations,
     waitlist_count: waitlistRes.count || 0,
     active_parties: activeRes.data || [],
     staffing_forecast,
+    deposit_summary,
     errors: [
       reservationsRes.error && 'reservations',
       waitlistRes.error && 'waitlist',

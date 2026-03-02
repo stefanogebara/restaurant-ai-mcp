@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { UpcomingReservation } from '../../types/host.types';
+import NoShowRiskBadge from './NoShowRiskBadge';
+import DepositBadge from './DepositBadge';
 
 interface ReservationsListProps {
   todayReservations: UpcomingReservation[];
@@ -204,6 +206,16 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, language }: Re
           {reservation.party_size} {t.people}
           {reservation.special_requests && ` \u00b7 ${reservation.special_requests}`}
         </div>
+        {/* Risk + Deposit badges */}
+        {(reservation.ml_risk_score !== undefined || reservation.deposit_amount) && (
+          <div className="flex items-center gap-1.5 mt-1">
+            <NoShowRiskBadge
+              riskScore={reservation.ml_risk_score}
+              riskLevel={reservation.ml_risk_level}
+            />
+            <DepositBadge amount={reservation.deposit_amount} />
+          </div>
+        )}
       </div>
 
       {/* Time */}

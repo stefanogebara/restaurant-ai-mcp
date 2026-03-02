@@ -128,6 +128,9 @@ export const hostAPI = {
     position_y: number;
     location?: string;
   }) => api.post('/host-dashboard?action=create-table', data),
+
+  getTableSuggestion: (partySize: number) =>
+    api.get(`/table-suggestion?party_size=${partySize}`),
 };
 
 // Table Configuration API

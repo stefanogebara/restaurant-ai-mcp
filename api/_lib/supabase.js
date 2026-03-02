@@ -1407,7 +1407,10 @@ const getUpcomingReservations = async (restaurantId, timezone) => {
     // Legacy field names (deprecated, kept for backwards compatibility)
     no_show_risk_score: r.ml_risk_score,
     no_show_risk_level: r.ml_risk_level,
-    prediction_confidence: r.ml_confidence
+    prediction_confidence: r.ml_confidence,
+    // Deposit fields
+    deposit_amount: r.deposit_amount || null,
+    deposit_payment_intent_id: r.deposit_payment_intent_id || null,
   }));
 
   return {

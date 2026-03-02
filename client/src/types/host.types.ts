@@ -130,6 +130,9 @@ export interface UpcomingReservation {
   accessibility_needs?: string;     // 'Wheelchair', 'High Chair', 'None'
   internal_notes?: string;          // Staff-only notes
   first_time_visitor?: boolean;     // Flag for first-time customers
+  // Deposit fields (Phase 10)
+  deposit_amount?: number;
+  deposit_payment_intent_id?: string;
 }
 
 export interface DashboardSummary {
