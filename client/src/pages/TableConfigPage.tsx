@@ -223,7 +223,7 @@ export default function TableConfigPage() {
                             : 'bg-soft-gray text-deep-charcoal'
                         }`}
                       >
-                        {table.is_fixed ? 'Fixed' : 'Flexible'}
+                        {table.is_fixed ? t('settings.tableFixed') : t('settings.tableFlexible')}
                       </span>
                     </div>
 
@@ -237,18 +237,18 @@ export default function TableConfigPage() {
                             : 'bg-amber-600'
                         }`}
                       ></span>
-                      <span className="text-sm text-warm-stone capitalize">{table.status}</span>
+                      <span className="text-sm text-warm-stone">{t(`settings.tableStatus.${table.status}`, table.status)}</span>
                     </div>
 
                     {table.adjacent_tables && table.adjacent_tables.length > 0 && (
                       <div className="text-xs text-muted-stone mb-2">
-                        Adjacent to {table.adjacent_tables.length} table(s)
+                        {t('settings.adjacentTables', { count: table.adjacent_tables.length })}
                       </div>
                     )}
 
                     {table.combination_group && (
                       <div className="text-xs text-burgundy bg-burgundy/10 px-2 py-1 rounded-lg">
-                        Group: {table.combination_group}
+                        {t('settings.combinationGroup')}: {table.combination_group}
                       </div>
                     )}
 

@@ -64,6 +64,19 @@
       "customer": "Customer",
       "proceedToSeat": "Proceed to Seat"
     },
+    "managerAssistant": "AI Manager Assistant",
+    "managerAssistantHint": "Ask anything about your restaurant - reservations, staff, trends.",
+    "thinking": "Thinking...",
+    "limitReached": "Monthly limit reached",
+    "limitReachedUpgrade": "Monthly limit reached — upgrade to continue",
+    "managerInputPlaceholder": "Ask your AI assistant...",
+    "staffingForecast": "Staffing Forecast",
+    "covers": "covers",
+    "revenueForecast": "Revenue Forecast",
+    "live": "Live",
+    "welcomeFromDemo": "Your demo data has been carried over — welcome to Seatable!",
+    "trialDaysRemaining_one": "{{count}} day remaining",
+    "trialDaysRemaining_other": "{{count}} days remaining",
     "errorTitle": "Error loading data",
     "weekView": "Week view",
     "addWalkIn": "+ Walk-in",
@@ -296,7 +309,19 @@
     "editTable": "Edit Table",
     "setAdjacent": "Set Adjacent",
     "voiceEngine": "Voice Engine",
-    "loadingVoice": "Loading voice settings"
+    "loadingVoice": "Loading voice settings",
+    "noAgentConfigured": "No AI Agent Configured",
+    "tableFixed": "Fixed",
+    "tableFlexible": "Flexible",
+    "adjacentTables_one": "Adjacent to {{count}} table",
+    "adjacentTables_other": "Adjacent to {{count}} tables",
+    "combinationGroup": "Group",
+    "tableStatus": {
+      "available": "Available",
+      "occupied": "Occupied",
+      "reserved": "Reserved",
+      "cleaning": "Cleaning"
+    }
   },
   "customers": {
     "title": "Customers",

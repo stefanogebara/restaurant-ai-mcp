@@ -64,6 +64,19 @@
       "customer": "Cliente",
       "proceedToSeat": "Proceder a Sentar"
     },
+    "managerAssistant": "Asistente IA de Gestión",
+    "managerAssistantHint": "Pregunta cualquier cosa sobre tu restaurante — reservas, personal, tendencias.",
+    "thinking": "Pensando...",
+    "limitReached": "Límite mensual alcanzado",
+    "limitReachedUpgrade": "Límite mensual alcanzado — mejora para continuar",
+    "managerInputPlaceholder": "Pregunta a tu asistente IA...",
+    "staffingForecast": "Previsión de Personal",
+    "covers": "comensales",
+    "revenueForecast": "Previsión de Ingresos",
+    "live": "En vivo",
+    "welcomeFromDemo": "Tus datos de demo han sido transferidos — ¡bienvenido a Seatable!",
+    "trialDaysRemaining_one": "{{count}} día restante",
+    "trialDaysRemaining_other": "{{count}} días restantes",
     "errorTitle": "Error al cargar datos",
     "weekView": "Vista semanal",
     "addWalkIn": "+ Sin Reserva",
@@ -296,7 +309,19 @@
     "editTable": "Editar Mesa",
     "setAdjacent": "Establecer Adyacente",
     "voiceEngine": "Motor de Voz",
-    "loadingVoice": "Cargando configuración de voz"
+    "loadingVoice": "Cargando configuración de voz",
+    "noAgentConfigured": "Sin Agente IA Configurado",
+    "tableFixed": "Fija",
+    "tableFlexible": "Flexible",
+    "adjacentTables_one": "Adyacente a {{count}} mesa",
+    "adjacentTables_other": "Adyacente a {{count}} mesas",
+    "combinationGroup": "Grupo",
+    "tableStatus": {
+      "available": "Disponible",
+      "occupied": "Ocupada",
+      "reserved": "Reservada",
+      "cleaning": "Limpiando"
+    }
   },
   "customers": {
     "title": "Clientes",

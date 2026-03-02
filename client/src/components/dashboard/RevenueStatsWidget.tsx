@@ -1,11 +1,10 @@
+import { useTranslation } from 'react-i18next';
 import { useRevenueStats } from '../../hooks/useRevenueStats';
 import { useStaffingForecast } from '../../hooks/useStaffingForecast';
-
-function fmt(amount: number): string {
-  return '€' + Math.round(amount).toLocaleString('en-US');
-}
+import { formatCurrency } from '../../utils/currency';
 
 export default function RevenueStatsWidget() {
+  const { t } = useTranslation();
   const { data: stats, isLoading: statsLoading } = useRevenueStats();
   const { data: forecast, isLoading: forecastLoading } = useStaffingForecast();
 
@@ -28,7 +27,7 @@ export default function RevenueStatsWidget() {
     <div className="bg-white border border-border-gray rounded-2xl p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">
-          Revenue Forecast
+          {t('dashboard.revenueForecast')}
         </h2>
         <div className="flex items-center gap-2">
           {stats.using_default && (
@@ -36,7 +35,7 @@ export default function RevenueStatsWidget() {
               estimated
             </span>
           )}
-          <span className="text-sm font-semibold text-deep-charcoal">{fmt(totalProjected)}</span>
+          <span className="text-sm font-semibold text-deep-charcoal">{formatCurrency(totalProjected)}</span>
           <span className="text-xs text-warm-stone">/ 7 days</span>
         </div>
       </div>
@@ -54,8 +53,8 @@ export default function RevenueStatsWidget() {
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              <span className="text-xs font-medium text-deep-charcoal w-16 text-right">
-                {fmt(projected)}
+              <span className="text-xs font-medium text-deep-charcoal min-w-[64px] truncate text-right">
+                {formatCurrency(projected)}
               </span>
             </div>
           );
@@ -64,7 +63,7 @@ export default function RevenueStatsWidget() {
 
       {stats.using_default && (
         <p className="text-xs text-warm-stone">
-          Based on €{stats.avg_spend_per_cover}/cover (default). Add bills when completing service to improve accuracy.
+          Based on {formatCurrency(stats.avg_spend_per_cover)}/cover (default). Add bills when completing service to improve accuracy.
         </p>
       )}
     </div>

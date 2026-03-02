@@ -5,6 +5,20 @@
  * Falls back to EUR for all other locales.
  */
 
+export const DEFAULT_CURRENCY = 'EUR';
+
+/**
+ * Format an amount as a currency string using the default (EUR) or specified currency.
+ */
+export function formatCurrency(amount: number, currency = DEFAULT_CURRENCY): string {
+  return new Intl.NumberFormat('en-IE', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
 export type SupportedCurrency = 'EUR' | 'BRL';
 
 /**

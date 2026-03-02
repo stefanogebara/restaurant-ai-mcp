@@ -54,7 +54,7 @@ export default function Dashboard() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('converted') === 'demo') {
-      success('Your demo data has been carried over — welcome to Seatable!');
+      success(t('dashboard.welcomeFromDemo'));
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -206,7 +206,7 @@ export default function Dashboard() {
               <p className="text-sm text-amber-800">
                 <span className="font-semibold">{t('dashboard.freeTrial')}</span>
                 {' — '}
-                {trialDaysLeft === 0 ? t('dashboard.trialExpiresToday') : `${trialDaysLeft} day${trialDaysLeft !== 1 ? 's' : ''} remaining`}
+                {trialDaysLeft === 0 ? t('dashboard.trialExpiresToday') : t('dashboard.trialDaysRemaining', { count: trialDaysLeft })}
                 {'. '}
                 {t('dashboard.trialUpgradeHint')}
               </p>
@@ -283,7 +283,7 @@ export default function Dashboard() {
 
         {/* Manager AI Usage — shown above chat FAB when panel is closed */}
         {!chatOpen && (
-          <div className="fixed bottom-32 sm:bottom-20 right-4 sm:right-6 z-40 bg-white rounded-xl shadow border border-gray-100 w-56">
+          <div className="fixed bottom-32 sm:bottom-20 right-4 sm:right-6 z-40 bg-white rounded-xl shadow border border-gray-100 w-48 sm:w-56">
             <ManagerAIUsageBar />
           </div>
         )}

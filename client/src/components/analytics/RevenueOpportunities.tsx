@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useRevenueOpportunities } from '../../hooks/usePredictiveAnalytics';
+import { DEFAULT_CURRENCY } from '../../utils/currency';
 
 export default function RevenueOpportunities() {
   const { data, isLoading } = useRevenueOpportunities();
@@ -27,9 +28,9 @@ export default function RevenueOpportunities() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IE', {
       style: 'currency',
-      currency: 'USD',
+      currency: DEFAULT_CURRENCY,
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(amount);

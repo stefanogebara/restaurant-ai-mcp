@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import type { Table, ActiveParty } from '../../types/host.types';
 import TableGrid from '../host/TableGrid';
 import FloorPlanView from '../host/FloorPlanView';
@@ -73,6 +74,7 @@ export default function TableLayoutPanel({
   language = 'en',
   isLoading,
 }: TableLayoutPanelProps) {
+  const { t: tI18n } = useTranslation();
   const [viewMode, setViewMode] = useState<'grid' | 'floorplan'>('floorplan');
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const t = translations[language];
@@ -132,7 +134,7 @@ export default function TableLayoutPanel({
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
               </span>
-              Live
+              {tI18n('dashboard.live')}
             </span>
           </div>
 

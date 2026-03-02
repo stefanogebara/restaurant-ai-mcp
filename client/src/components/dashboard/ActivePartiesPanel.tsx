@@ -182,7 +182,7 @@ function PartyRow({ party, billValue, onBillChange, onComplete, language }: Part
         <input
           type="number"
           min={0}
-          placeholder="€ bill (optional)"
+          placeholder="Bill amount (optional)"
           value={billValue}
           onChange={e => onBillChange(e.target.value)}
           className="w-28 border border-border-gray rounded-lg px-2 py-1 text-xs text-deep-charcoal focus:outline-none focus:ring-1 focus:ring-burgundy/30"

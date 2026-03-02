@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { Skeleton } from '../components/common/Skeleton';
 import { useToast } from '../contexts/ToastContext';
@@ -40,6 +41,7 @@ import type { VoiceSettings } from '../components/voice/voiceTypes';
 import { useWhatsAppIntegrationStatus } from '../hooks/useWhatsAppSettings';
 
 export default function VoiceSettingsPage() {
+  const { t } = useTranslation();
   const toast = useToast();
   const { hasAccess, isLoading: isLoadingAccess } = useFeatureAccess('voice_ai');
 
@@ -210,7 +212,7 @@ export default function VoiceSettingsPage() {
           <div className="mt-8 text-center py-16">
             <div className="bg-burgundy/5 border border-burgundy/20 rounded-2xl p-8 max-w-md mx-auto">
               <ThiingsIcon name="volume" pxSize={48} className="mx-auto mb-4" />
-              <h2 className="text-lg font-bold text-deep-charcoal mb-2">No AI Agent Configured</h2>
+              <h2 className="text-lg font-bold text-deep-charcoal mb-2">{t('settings.noAgentConfigured')}</h2>
               <p className="text-sm text-stone-gray mb-6">
                 Complete the onboarding process to set up your AI voice agent, then return here to customize voice settings.
               </p>

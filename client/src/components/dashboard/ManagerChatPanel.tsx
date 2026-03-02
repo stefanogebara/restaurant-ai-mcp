@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 
 interface Message {
@@ -18,6 +19,7 @@ interface ManagerChatPanelProps {
 }
 
 export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
+  const { t } = useTranslation();
   const [input, setInput] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
@@ -78,7 +80,7 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-green-500" />
-          <span className="font-semibold text-gray-800 text-sm">AI Manager Assistant</span>
+          <span className="font-semibold text-gray-800 text-sm">{t('dashboard.managerAssistant')}</span>
         </div>
         <button type="button" aria-label="Close" onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg leading-none">x</button>
       </div>
@@ -86,18 +88,18 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         {isLoading && <p className="text-xs text-gray-400 text-center">Loading history...</p>}
         {messages.length === 0 && !isLoading && (
-          <p className="text-xs text-gray-400 text-center mt-8">Ask anything about your restaurant - reservations, staff, trends.</p>
+          <p className="text-xs text-gray-400 text-center mt-8">{t('dashboard.managerAssistantHint')}</p>
         )}
         {messages.map((m, i) => (
           <div key={i} className={'flex ' + (m.role === 'manager' ? 'justify-end' : 'justify-start')}>
-            <div className={'max-w-[80%] rounded-xl px-3 py-2 text-sm ' + (m.role === 'manager' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800')}>
+            <div className={'max-w-[80%] rounded-xl px-3 py-2 text-sm break-words ' + (m.role === 'manager' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800')}>
               {m.content}
             </div>
           </div>
         ))}
         {sendMutation.isPending && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-xl px-3 py-2 text-sm text-gray-400 animate-pulse">Thinking...</div>
+            <div className="bg-gray-100 rounded-xl px-3 py-2 text-sm text-gray-400 animate-pulse">{t('dashboard.thinking')}</div>
           </div>
         )}
         <div ref={bottomRef} />
@@ -111,7 +113,7 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
 
       {isQuotaExhausted && (
         <div className="px-4 py-2 text-xs text-amber-700 bg-amber-50 border-t border-amber-100 flex items-center justify-between">
-          <span>Monthly limit reached</span>
+          <span>{t('dashboard.limitReached')}</span>
           <a href="/subscription/manage" className="underline font-medium">Upgrade →</a>
         </div>
       )}
@@ -119,7 +121,7 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
       <div className="flex gap-2 px-4 py-3 border-t border-gray-100">
         <input
           className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder={isQuotaExhausted ? 'Monthly limit reached — upgrade to continue' : 'Ask your AI assistant...'}
+          placeholder={isQuotaExhausted ? t('dashboard.limitReachedUpgrade') : t('dashboard.managerInputPlaceholder')}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}

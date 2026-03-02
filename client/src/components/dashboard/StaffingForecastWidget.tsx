@@ -1,6 +1,8 @@
+import { useTranslation } from 'react-i18next';
 import { useStaffingForecast } from '../../hooks/useStaffingForecast';
 
 export default function StaffingForecastWidget() {
+  const { t } = useTranslation();
   const { data: forecast, isLoading, isError } = useStaffingForecast();
 
   if (isLoading) {
@@ -17,7 +19,7 @@ export default function StaffingForecastWidget() {
   return (
     <div className="bg-white border border-border-gray rounded-2xl p-6 space-y-4">
       <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">
-        Staffing Forecast
+        {t('dashboard.staffingForecast')}
       </h2>
 
       {isError && (
@@ -44,14 +46,14 @@ export default function StaffingForecastWidget() {
               </div>
 
               <div className="flex-1">
-                <p className="text-xs text-warm-stone mb-1">{day.expected_covers} covers</p>
+                <p className="text-xs text-warm-stone mb-1">{day.expected_covers} {t('dashboard.covers')}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {day.roles.map((role) => (
                     <span
                       key={role.name}
                       className="inline-flex items-center gap-1 bg-soft-gray rounded-full px-2 py-0.5 text-xs text-deep-charcoal"
                     >
-                      <span className="font-medium">{role.name}</span>
+                      <span className="font-medium truncate">{role.name}</span>
                       <span className="text-warm-stone">×{role.recommended}</span>
                     </span>
                   ))}

@@ -1,5 +1,6 @@
 import ThiingsIcon from './ThiingsIcon';
 import { PLAN_NAMES, PLAN_PRICES, type PlanType } from '../../config/planFeatures';
+import { formatCurrency } from '../../utils/currency';
 
 interface UpgradePromptProps {
   requiredPlan: PlanType;
@@ -37,7 +38,7 @@ export default function UpgradePrompt({ requiredPlan, feature, description }: Up
             <p className="text-deep-charcoal">
               This feature is available on the <span className="font-bold text-burgundy">{planName}</span> plan
               {price && (
-                <span className="text-stone-gray"> (€{price}/month)</span>
+                <span className="text-stone-gray"> ({formatCurrency(price)}/month)</span>
               )}
             </p>
           </div>

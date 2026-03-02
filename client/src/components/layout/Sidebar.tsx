@@ -325,7 +325,7 @@ export default function Sidebar() {
             {isSettingsOpen && (
               <div className={`
                 absolute bottom-20 bg-charcoal-dark border border-stone-mid rounded-2xl shadow-2xl overflow-hidden
-                ${isCollapsed ? 'left-20 w-56' : 'left-4 right-4'}
+                ${isCollapsed ? 'left-full ml-1 w-56' : 'left-4 right-4'}
               `}>
                 {/* Language Selector */}
                 <div className="relative">

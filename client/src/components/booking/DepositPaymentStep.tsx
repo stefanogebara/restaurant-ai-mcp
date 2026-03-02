@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { DEFAULT_CURRENCY } from '../../utils/currency';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
@@ -44,7 +45,7 @@ function DepositForm({ depositAmount, onSuccess, onCancel }: Omit<DepositPayment
 
   const formatted = new Intl.NumberFormat('en-IE', {
     style: 'currency',
-    currency: 'EUR',
+    currency: DEFAULT_CURRENCY,
   }).format(depositAmount);
 
   return (
