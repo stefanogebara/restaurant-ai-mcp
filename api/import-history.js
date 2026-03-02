@@ -47,7 +47,7 @@ module.exports = async (req, res) => {
 
   let restaurantId;
   try {
-    const decoded = verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
+    const decoded = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
     restaurantId = decoded.restaurantId;
   } catch {
     return res.status(401).json({ error: 'Unauthorized' });

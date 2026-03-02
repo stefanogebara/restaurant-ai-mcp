@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
 
   try {
     const token = (req.headers.authorization || '').replace('Bearer ', '');
-    const { restaurantId } = verifyJWT(token);
+    const { restaurantId } = await verifyJWT(token);
     const { action, phone, code } = req.body || {};
 
     if (action === 'send') {
