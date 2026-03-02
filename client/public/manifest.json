@@ -2,7 +2,7 @@
   "name": "Seatable - AI Restaurant Management",
   "short_name": "Seatable",
   "description": "AI-powered reservations, table management, and customer conversations for restaurants.",
-  "start_url": "/",
+  "start_url": "/book",
   "display": "standalone",
   "background_color": "#FAFAF9",
   "theme_color": "#8B1A4A",
@@ -12,6 +12,12 @@
       "src": "/favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {

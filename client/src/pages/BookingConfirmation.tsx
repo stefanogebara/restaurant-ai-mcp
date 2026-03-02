@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import ThiingsIcon from '../components/common/ThiingsIcon';
@@ -10,10 +11,48 @@ export default function BookingConfirmation() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
 
-  const state = location.state as { reservation?: ReservationData; restaurant_name?: string } | null;
+  const state = location.state as { reservation?: ReservationData; restaurant_name?: string; restaurant_id?: string } | null;
   const id = searchParams.get('id');
 
   const { data: reservation, isLoading } = useReservationById(id, state?.reservation);
+
+  // Request push notification permission after booking is confirmed
+  useEffect(() => {
+    const restaurantId = state?.restaurant_id;
+    const reservationId = id;
+
+    if (!restaurantId || !reservationId) return;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+    Notification.requestPermission().then(async (permission) => {
+      if (permission !== 'granted') return;
+
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
+        if (!vapidPublicKey) return;
+
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: vapidPublicKey,
+        });
+
+        await fetch('/api/push-subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            subscription,
+            reservation_id: reservationId,
+            restaurant_id: restaurantId,
+          }),
+        });
+      } catch {
+        // Push subscription is non-critical — silently ignore errors
+      }
+    }).catch(() => {
+      // Permission request failed — non-critical
+    });
+  }, [id, state?.restaurant_id]);
 
   const formatTime = (time: string) => {
     const [h, m] = time.split(':').map(Number);

@@ -101,7 +101,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
     }, {
       onSuccess: ({ reservation }) => {
         navigate(`/book/${slug}/confirmed?id=${reservation.id}`, {
-          state: { reservation, restaurant_name: restaurant.name },
+          state: { reservation, restaurant_name: restaurant.name, restaurant_id: restaurant.id },
         });
       },
     });
