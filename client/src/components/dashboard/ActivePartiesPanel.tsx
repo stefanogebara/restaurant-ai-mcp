@@ -148,7 +148,7 @@ function PartyRow({ party, billValue, onBillChange, onComplete, language }: Part
       <div className="flex items-center gap-3 text-xs text-stone-gray mb-2">
         <span className="font-medium">{party.party_size} {t.guests}</span>
         {party.tables && party.tables.length > 0 && (
-          <span className="bg-soft-gray px-2 py-0.5 rounded-lg text-xs font-semibold">{t.table} {party.tables.join(', ')}</span>
+          <span className="bg-soft-gray px-2 py-0.5 rounded-lg text-xs font-semibold max-w-[120px] truncate">{t.table} {party.tables.join(', ')}</span>
         )}
         {isOverdue && (
           <span className="text-red-600 font-semibold">{t.overdue}</span>
