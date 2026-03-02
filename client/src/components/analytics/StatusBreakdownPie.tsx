@@ -1,4 +1,6 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import type { Formatter as LegendFormatter, LegendPayload } from 'recharts/types/component/DefaultLegendContent';
+import type { PieLabelRenderProps } from 'recharts';
 import { colors } from '../../utils/colors';
 
 interface StatusBreakdownPieProps {
@@ -22,8 +24,9 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
   };
 
   // Custom label to show percentage
-  const renderLabel = (entry: { value: number }) => {
-    const percent = ((entry.value / chartData.reduce((sum, e) => sum + e.value, 0)) * 100).toFixed(0);
+  const renderLabel = (entry: PieLabelRenderProps) => {
+    const entryValue = typeof entry.value === 'number' ? entry.value : 0;
+    const percent = ((entryValue / chartData.reduce((sum, e) => sum + e.value, 0)) * 100).toFixed(0);
     return `${percent}%`;
   };
 
@@ -62,8 +65,7 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
               cx="50%"
               cy="50%"
               labelLine={false}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              label={renderLabel as any}
+              label={renderLabel}
               outerRadius={100}
               innerRadius={60} // Makes it a donut chart
               fill="#8884d8"
@@ -77,12 +79,11 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
             <Legend
               verticalAlign="bottom"
               height={36}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            formatter={(value: any, entry: any) => (
+              formatter={((value: string, entry: LegendPayload) => (
                 <span className="text-sm text-deep-charcoal">
-                  {value} ({entry.payload.value})
+                  {value} ({entry.payload?.value})
                 </span>
-              )}
+              )) as LegendFormatter}
             />
           </PieChart>
         </ResponsiveContainer>

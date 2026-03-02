@@ -21,13 +21,22 @@ const logger = createSecureLogger('Onboarding');
 // ============ Voice Defaults ============
 
 /**
+ * Fallback ElevenLabs voice ID used when no voice is selected during onboarding.
+ * Rachel (English) — ElevenLabs built-in voice available on all plans.
+ * Override via ELEVENLABS_DEFAULT_VOICE_ID environment variable.
+ */
+const ELEVENLABS_DEFAULT_VOICE_ID =
+  process.env.ELEVENLABS_DEFAULT_VOICE_ID || '21m00Tcm4TlvDq8ikWAM';
+
+/**
  * Returns a language-appropriate default ElevenLabs voice ID.
- * Update these IDs when language-specific voices are configured.
+ * Language-specific overrides can be set via ELEVENLABS_VOICE_ID_ES / _PT env vars.
+ * Falls back to ELEVENLABS_DEFAULT_VOICE_ID when no language-specific override exists.
  */
 const DEFAULT_VOICE_IDS = {
-  'en': '21m00Tcm4TlvDq8ikWAM', // Rachel (English)
-  'es': '21m00Tcm4TlvDq8ikWAM', // TODO: Replace with Spanish-specific voice
-  'pt': '21m00Tcm4TlvDq8ikWAM', // TODO: Replace with Portuguese (Brazil) voice
+  'en': ELEVENLABS_DEFAULT_VOICE_ID,
+  'es': process.env.ELEVENLABS_VOICE_ID_ES || ELEVENLABS_DEFAULT_VOICE_ID,
+  'pt': process.env.ELEVENLABS_VOICE_ID_PT || ELEVENLABS_DEFAULT_VOICE_ID,
 };
 
 function getDefaultVoiceId(language) {
@@ -591,7 +600,7 @@ module.exports = async (req, res) => {
         agentId = agentData.agent_id;
 
         // Update restaurant_info with agent details
-        const voiceIdToSave = selected_voice_id || '21m00Tcm4TlvDq8ikWAM';
+        const voiceIdToSave = selected_voice_id || getDefaultVoiceId(selected_voice_language);
         await supabaseAdmin
           .schema('restaurant')
           .from('restaurant_info')

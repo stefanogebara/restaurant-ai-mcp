@@ -152,6 +152,7 @@ const {
 const {
   __mockInsertSingle: insertSingle,
   getMultiTenantClient,
+  __mockFrom: mockFrom,
 } = require('../_lib/multi-tenant-supabase');
 
 // Access mockCreate via constructor ref (avoids hoisting issue)
@@ -374,6 +375,110 @@ describe('twilio-whatsapp-webhook (Twilio path)', () => {
     // Handler sent a response
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalled();
+  });
+
+  // ── 6. cancel_reservation tool → success ──────────────────────────────────
+  it('cancels a reservation via cancel_reservation tool', async () => {
+    const existingRes = {
+      id: 1, reservation_id: 'RES-TEST-001',
+      customer_name: 'Test User', date: '2026-03-01',
+      time: '19:00', party_size: 4, status: 'confirmed',
+      customer_phone: '+15551234567', restaurant_id: 'rest-123',
+    };
+
+    function localBuilder(row) {
+      const b = {};
+      b.select = jest.fn().mockReturnValue(b);
+      b.eq = jest.fn().mockReturnValue(b);
+      b.update = jest.fn().mockReturnValue(b);
+      b.single = jest.fn().mockResolvedValue({ data: row, error: null });
+      b.then = (resolve, reject) =>
+        Promise.resolve({ data: row ? [row] : [], error: null }).then(resolve, reject);
+      return b;
+    }
+
+    // First from('reservations') → lookup, second → update (no error)
+    mockFrom
+      .mockImplementationOnce(() => localBuilder(existingRes))
+      .mockImplementationOnce(() => localBuilder(null));
+
+    let callCount = 0;
+    mockMessagesCreate.mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) {
+        return anthropicToolUse('cancel_reservation', {
+          reservation_id: 'RES-TEST-001',
+        }, 'tu_cancel');
+      }
+      return anthropicEndTurn('Your reservation RES-TEST-001 has been cancelled.');
+    });
+
+    const req = mockReq('POST', {
+      body: twilioBody('+15551234567', 'Please cancel reservation RES-TEST-001'),
+    });
+    const res = mockRes();
+
+    await handler(req, res);
+
+    // Anthropic called twice: cancel_reservation + end_turn
+    expect(callCount).toBe(2);
+    expect(mockFrom).toHaveBeenCalledWith('reservations');
+    expect(res.status).toHaveBeenCalledWith(200);
+    const sentBody = res.send.mock.calls[0]?.[0] || '';
+    expect(sentBody).toContain('<Response>');
+  });
+
+  // ── 7. modify_reservation tool → success ──────────────────────────────────
+  it('modifies a reservation via modify_reservation tool', async () => {
+    const existingRes = {
+      id: 1, reservation_id: 'RES-TEST-001',
+      customer_name: 'Test User', date: '2026-03-01',
+      time: '19:00', party_size: 4, status: 'confirmed',
+      customer_phone: '+15551234567', restaurant_id: 'rest-123',
+    };
+    const updatedRes = { ...existingRes, date: '2026-03-08', time: '20:00' };
+
+    function localBuilder(row) {
+      const b = {};
+      b.select = jest.fn().mockReturnValue(b);
+      b.eq = jest.fn().mockReturnValue(b);
+      b.update = jest.fn().mockReturnValue(b);
+      b.single = jest.fn().mockResolvedValue({ data: row, error: null });
+      b.then = (resolve, reject) =>
+        Promise.resolve({ data: row ? [row] : [], error: null }).then(resolve, reject);
+      return b;
+    }
+
+    // First from() → lookup, second → update+select+single returning updatedRes
+    mockFrom
+      .mockImplementationOnce(() => localBuilder(existingRes))
+      .mockImplementationOnce(() => localBuilder(updatedRes));
+
+    let callCount = 0;
+    mockMessagesCreate.mockImplementation(async () => {
+      callCount++;
+      if (callCount === 1) {
+        return anthropicToolUse('modify_reservation', {
+          reservation_id: 'RES-TEST-001',
+          new_date: '2026-03-08',
+          new_time: '20:00',
+        }, 'tu_modify');
+      }
+      return anthropicEndTurn('Your reservation has been updated to March 8th at 8pm.');
+    });
+
+    const req = mockReq('POST', {
+      body: twilioBody('+15551234567', 'Change reservation RES-TEST-001 to March 8 at 8pm'),
+    });
+    const res = mockRes();
+
+    await handler(req, res);
+
+    expect(callCount).toBe(2);
+    expect(mockFrom).toHaveBeenCalledWith('reservations');
+    expect(res.status).toHaveBeenCalledWith(200);
+    const sentBody = res.send.mock.calls[0]?.[0] || '';
+    expect(sentBody).toContain('<Response>');
   });
 
   // ── 5. Unsupported method → 405 ───────────────────────────────────────────
