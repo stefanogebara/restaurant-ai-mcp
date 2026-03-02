@@ -2,6 +2,7 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { runManagerAgent } = require('../_lib/manager-agent');
 const { sendBriefing } = require('../_lib/briefing-sender');
 const { createSecureLogger } = require('../_lib/secure-logger');
+const { getVIPsForToday } = require('../services/restaurantSnapshot');
 
 const logger = createSecureLogger('manager-briefings');
 
@@ -33,7 +34,19 @@ module.exports = async (req, res) => {
     let sent = 0;
     for (const config of eligible) {
       try {
-        const briefing = await runManagerAgent(config.id, prompt, 'whatsapp');
+        let promptToSend = prompt;
+
+        if (type === 'morning') {
+          const vips = await getVIPsForToday(config.id).catch(() => []);
+          if (vips.length > 0) {
+            const vipLines = vips
+              .map(v => `- ${v.customer_name || v.customer_phone} (${v.customer_tier}, ${v.total_visits} visits)`)
+              .join('\n');
+            promptToSend += `\n\n[VIP GUESTS TODAY]\n${vipLines}`;
+          }
+        }
+
+        const briefing = await runManagerAgent(config.id, promptToSend, 'whatsapp');
         await sendBriefing(
           config.manager_phone,
           briefing,

@@ -2,6 +2,7 @@
 // (jest.mock factories run before const/let declarations are initialized)
 var mockSupabaseAdmin = { from: jest.fn() };
 var mockSendBriefing = jest.fn().mockResolvedValue(undefined);
+var mockGetVIPsForToday = jest.fn().mockResolvedValue([]);
 
 const briefings = require('../cron/manager-briefings');
 
@@ -14,6 +15,9 @@ jest.mock('../_lib/manager-agent', () => ({
 jest.mock('../_lib/supabase', () => ({ supabaseAdmin: mockSupabaseAdmin }));
 jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ error: jest.fn(), info: jest.fn(), warn: jest.fn() }),
+}));
+jest.mock('../services/restaurantSnapshot', () => ({
+  getVIPsForToday: (...a) => mockGetVIPsForToday(...a),
 }));
 
 function mockChain(data) {
@@ -33,7 +37,10 @@ function mockRes() {
 
 beforeAll(() => { process.env.CRON_SECRET = 'test-cron-secret'; });
 afterAll(() => { delete process.env.CRON_SECRET; });
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockGetVIPsForToday.mockResolvedValue([]);
+});
 
 it('sends end-of-day briefing to opted-in restaurants via sendBriefing', async () => {
   mockSupabaseAdmin.from.mockReturnValue(mockChain([
@@ -108,4 +115,38 @@ it('sends morning briefing to opted-in restaurants', async () => {
   expect(runManagerAgent).toHaveBeenCalledWith('rest-1', expect.stringContaining('morning'), 'whatsapp');
   expect(mockSendBriefing).toHaveBeenCalledWith('+15551234567', expect.any(String), 'phone_call', 'rest-1');
   expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ sent: 1 }));
+});
+
+it('injects [VIP GUESTS TODAY] block in morning prompt when VIPs exist', async () => {
+  mockGetVIPsForToday.mockResolvedValue([
+    { customer_name: 'Maria Sanchez', customer_tier: 'vip', total_visits: 22 },
+    { customer_name: "John O'Brien", customer_tier: 'regular', total_visits: 8 },
+  ]);
+  mockSupabaseAdmin.from.mockReturnValue(mockChain([
+    { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { morning_briefing: true, briefing_channel: 'text' } },
+  ]));
+
+  const req = { method: 'POST', headers: { authorization: 'Bearer test-cron-secret' }, query: { type: 'morning' } };
+  const res = mockRes();
+  await briefings(req, res);
+
+  const { runManagerAgent } = require('../_lib/manager-agent');
+  const [[, promptArg]] = runManagerAgent.mock.calls;
+  expect(promptArg).toContain('[VIP GUESTS TODAY]');
+  expect(promptArg).toContain('Maria Sanchez');
+});
+
+it('uses base morning prompt when no VIPs today', async () => {
+  mockGetVIPsForToday.mockResolvedValue([]);
+  mockSupabaseAdmin.from.mockReturnValue(mockChain([
+    { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { morning_briefing: true, briefing_channel: 'text' } },
+  ]));
+
+  const req = { method: 'POST', headers: { authorization: 'Bearer test-cron-secret' }, query: { type: 'morning' } };
+  const res = mockRes();
+  await briefings(req, res);
+
+  const { runManagerAgent } = require('../_lib/manager-agent');
+  const [[, promptArg]] = runManagerAgent.mock.calls;
+  expect(promptArg).not.toContain('[VIP GUESTS TODAY]');
 });
