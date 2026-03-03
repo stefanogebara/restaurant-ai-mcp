@@ -419,11 +419,11 @@
       "subtext": "Buscamos primeros adoptantes. Prueba gratuita disponible, sin tarjeta de crédito."
     },
     "hero": {
-      "heading": "Tu restaurante,",
-      "headingEm": "reimaginado.",
-      "subtitle": "Gestiona reservas sin esfuerzo, deleita a tus clientes y haz crecer tu negocio con una IA que realmente entiende tu restaurante.",
-      "cta": "Empezar Gratis",
-      "demo": "Ver Demo",
+      "heading": "No pierdas ninguna reserva.",
+      "headingEm": "",
+      "subtitle": "La IA de Seatable gestiona llamadas, WhatsApp y reservas online 24/7 — para que puedas centrarte en la hospitalidad.",
+      "cta": "Crea Tu Demo Gratuita",
+      "demo": "Probar Demo en Vivo",
       "earlyAccess": "Plan gratuito disponible · Sin tarjeta de crédito"
     },
     "features": {

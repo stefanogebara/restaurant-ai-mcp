@@ -7,12 +7,14 @@ import { authFetch } from '../../services/api';
 import { supabase } from '../../lib/supabase';
 import { trackCtaClicked, trackPricingPlanClicked } from '../../lib/analytics';
 import { useToast } from '../../contexts/ToastContext';
+import { detectCurrency } from '../../utils/currency';
 
 export default function PricingSection() {
   const { t } = useTranslation();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const navigate = useNavigate();
   const toast = useToast();
+  const isBRL = detectCurrency() === 'BRL';
 
   const scrollToContact = () => {
     const element = document.getElementById('contact');
@@ -87,7 +89,10 @@ export default function PricingSection() {
 
                 {/* Price */}
                 <div className={`font-serif text-[48px] font-medium tracking-tight leading-none mb-1 ${isFeatured ? 'text-white' : 'text-deep-charcoal'}`}>
-                  {tier.price}<span className="text-lg font-normal text-muted-stone">{tier.period}</span>
+                  {isBRL ? (tier.brlPrice ?? tier.price) : tier.price}
+                  <span className="text-lg font-normal text-muted-stone">
+                    {isBRL ? (tier.brlPeriod ?? tier.period) : tier.period}
+                  </span>
                 </div>
 
                 {/* Description */}

@@ -164,7 +164,9 @@ export const PRICING_TIERS = [
   {
     name: "Starter",
     price: "€29",
+    brlPrice: "R$149",
     period: "/month",
+    brlPeriod: "/mês",
     description: "Perfect for small restaurants",
     priceId: import.meta.env.VITE_STRIPE_STARTER_PRICE_ID || "",
     annualPriceId: import.meta.env.VITE_STRIPE_STARTER_ANNUAL_PRICE_ID || "",
@@ -181,7 +183,9 @@ export const PRICING_TIERS = [
   {
     name: "Growth",
     price: "€99",
+    brlPrice: "R$499",
     period: "/month",
+    brlPeriod: "/mês",
     description: "For growing restaurants",
     priceId: import.meta.env.VITE_STRIPE_GROWTH_PRICE_ID || "",
     annualPriceId: import.meta.env.VITE_STRIPE_GROWTH_ANNUAL_PRICE_ID || "",
@@ -199,7 +203,9 @@ export const PRICING_TIERS = [
   {
     name: "Scale",
     price: "€199",
+    brlPrice: "R$999",
     period: "/month",
+    brlPeriod: "/mês",
     description: "For high-volume restaurants",
     priceId: import.meta.env.VITE_STRIPE_SCALE_PRICE_ID || "",
     annualPriceId: import.meta.env.VITE_STRIPE_SCALE_ANNUAL_PRICE_ID || "",

@@ -59,3 +59,4 @@ parallel-agents/
 
 # Windows artifact
 nul
+.env.outreach

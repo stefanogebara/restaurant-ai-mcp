@@ -135,10 +135,10 @@ export default function LiveAIDemo() {
           <h2 className="font-serif text-3xl sm:text-4xl font-medium text-white mb-3 tracking-tight">Ready for your own AI host?</h2>
           <p className="text-[15px] text-muted-stone font-light mb-8">Set up in 5 minutes. No technical knowledge required.</p>
           <button
-            onClick={() => navigate('/#pricing')}
+            onClick={() => navigate('/demo/setup')}
             className="px-8 py-3.5 bg-burgundy hover:bg-burgundy-dark text-white text-[15px] font-semibold rounded-full transition-colors"
           >
-            Start Free Trial
+            Try It With Your Restaurant
           </button>
         </div>
       </section>

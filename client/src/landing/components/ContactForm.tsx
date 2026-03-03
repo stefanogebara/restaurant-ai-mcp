@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Send, Mail, CheckCircle, Clock } from 'lucide-react';
 import { CONTACT_INFO } from '../data/demoData';
-import { supabase } from '../../lib/supabase';
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -47,25 +46,29 @@ export default function ContactForm() {
     setIsSubmitting(true);
     setSubmitError(null);
 
-    const { error } = await supabase.from('contact_submissions').insert({
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone || null,
-      restaurant_name: formData.restaurant,
-      num_tables: formData.tables ? parseInt(formData.tables, 10) : null,
-      message: formData.message,
-    });
-
-    setIsSubmitting(false);
-
-    if (error) {
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone || undefined,
+          restaurant: formData.restaurant || undefined,
+          tables: formData.tables || undefined,
+          message: formData.message,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to send message');
+    } catch {
+      setIsSubmitting(false);
       setSubmitError('Something went wrong. Please try again or email us directly.');
       return;
     }
 
+    setIsSubmitting(false);
     setIsSubmitted(true);
 
-    // Reset form after 3 seconds
     setTimeout(() => {
       setFormData({
         name: '',

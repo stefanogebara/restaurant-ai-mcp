@@ -51,6 +51,10 @@
       "destination": "/api/release-deposit"
     },
     {
+      "source": "/api/contact",
+      "destination": "/api/contact"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },

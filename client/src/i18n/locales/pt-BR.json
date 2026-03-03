@@ -430,6 +430,9 @@
     },
     "pricing": {
       "title": "Planos e Preços",
+      "label": "Preços",
+      "heading": "Preços simples e transparentes.",
+      "subheading": "Sem taxas ocultas. Cancele quando quiser.",
       "subtitle": "Escolha o plano ideal para seu restaurante",
       "free": "Grátis",
       "starter": "Inicial",
@@ -439,7 +442,11 @@
       "getStarted": "Começar Agora",
       "startTrial": "Iniciar Teste Grátis",
       "contactSales": "Falar com Vendas",
-      "tryFree": "Experimentar Grátis"
+      "tryFree": "Experimentar Grátis",
+      "usageBased": "Cobranças por uso se aplicam",
+      "usageDetail": "além dos limites do plano: reservas adicionais, ligações de IA, SMS e mensagens de WhatsApp são cobrados por uso. Preços em BRL. Cancele ou atualize quando quiser.",
+      "customSolution": "Precisa de uma solução personalizada?",
+      "enterpriseLink": "Fale conosco para planos enterprise"
     }
   }
 }

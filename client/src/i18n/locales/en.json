@@ -419,11 +419,11 @@
       "subtext": "We're looking for early adopters. Free trial available, no credit card required."
     },
     "hero": {
-      "heading": "Your restaurant,",
-      "headingEm": "reimagined.",
-      "subtitle": "Effortlessly manage reservations, delight guests, and grow your business with an AI that truly understands your restaurant.",
-      "cta": "Start Free Trial",
-      "demo": "Watch Demo",
+      "heading": "Never miss a reservation again.",
+      "headingEm": "",
+      "subtitle": "Seatable's AI handles calls, WhatsApp, and online bookings 24/7 — so you can focus on hospitality.",
+      "cta": "Create Your Free Demo",
+      "demo": "Try Live Demo",
       "earlyAccess": "Free plan available · No credit card required"
     },
     "features": {

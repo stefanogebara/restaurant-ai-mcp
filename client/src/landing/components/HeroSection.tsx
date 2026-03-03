@@ -16,7 +16,7 @@ export default function HeroSection() {
 
       {/* Heading */}
       <h1 className="font-serif text-5xl sm:text-[72px] font-medium leading-[1.05] tracking-tight text-deep-charcoal mb-7">
-        {t('landing.hero.heading')}<br /><em className="text-burgundy">{t('landing.hero.headingEm')}</em>
+        {t('landing.hero.heading')}
       </h1>
 
       {/* Subtitle */}
@@ -30,9 +30,7 @@ export default function HeroSection() {
           type="button"
           onClick={() => {
             trackCtaClicked({ cta: 'primary', location: 'hero' });
-            const el = document.getElementById('pricing');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-            else navigate('/#pricing');
+            navigate('/demo/setup');
           }}
           className="px-8 py-3.5 bg-burgundy hover:bg-burgundy-dark text-white text-[15px] font-semibold rounded-full transition-colors"
         >

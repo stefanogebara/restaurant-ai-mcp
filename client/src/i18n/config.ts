@@ -8,6 +8,7 @@ import en from './locales/en.json';
 export const languages = {
   en: { name: 'English', flag: '\u{1F1FA}\u{1F1F8}' },
   es: { name: 'Espa\u00f1ol', flag: '\u{1F1EA}\u{1F1F8}' },
+  'pt-BR': { name: 'Portugu\u00eas', flag: '\u{1F1E7}\u{1F1F7}' },
 };
 
 export const languageOptions = Object.entries(languages).map(([code, info]) => ({
@@ -18,13 +19,16 @@ export const languageOptions = Object.entries(languages).map(([code, info]) => (
 
 const localeLoaders: Record<string, () => Promise<{ default: Record<string, unknown> }>> = {
   es: () => import('./locales/es.json'),
+  'pt-BR': () => import('./locales/pt-BR.json'),
 };
 
 async function loadLocale(lng: string) {
-  if (lng === 'en' || !localeLoaders[lng]) return;
-  if (i18n.hasResourceBundle(lng, 'translation')) return;
-  const mod = await localeLoaders[lng]();
-  i18n.addResourceBundle(lng, 'translation', mod.default, true, true);
+  // Try exact match first (e.g. 'pt-BR'), then prefix fallback (e.g. 'es')
+  const key = localeLoaders[lng] ? lng : lng.split('-')[0];
+  if (key === 'en' || !localeLoaders[key]) return;
+  if (i18n.hasResourceBundle(key, 'translation')) return;
+  const mod = await localeLoaders[key]();
+  i18n.addResourceBundle(key, 'translation', mod.default, true, true);
 }
 
 i18n
@@ -47,14 +51,14 @@ i18n
   });
 
 // Load the detected language on startup (if not English)
-const detectedLng = i18n.language?.split('-')[0];
-if (detectedLng && detectedLng !== 'en') {
+const detectedLng = i18n.language;
+if (detectedLng && !detectedLng.startsWith('en')) {
   loadLocale(detectedLng);
 }
 
 // Load locale dynamically whenever language changes
 i18n.on('languageChanged', (lng) => {
-  loadLocale(lng.split('-')[0]);
+  loadLocale(lng);
 });
 
 export default i18n;

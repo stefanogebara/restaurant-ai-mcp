@@ -27,6 +27,9 @@ module.exports = async (req, res) => {
 
   const staticPages = [
     { loc: `${BASE_URL}/`, priority: '1.0', changefreq: 'weekly' },
+    { loc: `${BASE_URL}/pricing`, priority: '0.8', changefreq: 'weekly' },
+    { loc: `${BASE_URL}/features`, priority: '0.8', changefreq: 'weekly' },
+    { loc: `${BASE_URL}/contact`, priority: '0.7', changefreq: 'monthly' },
     { loc: `${BASE_URL}/live-demo`, priority: '0.7', changefreq: 'monthly' },
   ];
 
