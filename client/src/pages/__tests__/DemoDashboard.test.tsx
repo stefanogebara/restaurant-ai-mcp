@@ -42,19 +42,32 @@ function renderDemoDashboard() {
 // Import the page after mocks are in place
 import DemoDashboard from '../DemoDashboard';
 
+// Mock i18n to avoid async locale loading in tests
+vi.mock('../../i18n/config', () => ({
+  default: {
+    language: 'pt-BR',
+    changeLanguage: vi.fn(),
+    hasResourceBundle: vi.fn(() => true),
+    addResourceBundle: vi.fn(),
+    on: vi.fn(),
+    use: vi.fn(() => ({ use: vi.fn(() => ({ init: vi.fn() })) })),
+  },
+}));
+
 describe('DemoDashboard', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    localStorage.removeItem('seatable-demo-lang');
   });
 
   it('renders the demo banner, restaurant name, and all panels', () => {
     renderDemoDashboard();
 
-    // Demo banner
-    expect(screen.getByText(/interactive demo/i)).toBeInTheDocument();
+    // Demo banner (PT-BR default)
+    expect(screen.getByText(/demo interativa/i)).toBeInTheDocument();
 
-    // Restaurant name
-    expect(screen.getByText('La Bella Vista')).toBeInTheDocument();
+    // Restaurant name (PT-BR default)
+    expect(screen.getByText('Cantina da Praca')).toBeInTheDocument();
 
     // All panels present
     expect(screen.getByTestId('stats-bar')).toBeInTheDocument();
@@ -82,16 +95,18 @@ describe('DemoDashboard', () => {
   it('opens walk-in modal on button click', () => {
     renderDemoDashboard();
 
-    const addButton = screen.getByText('Add Walk-In');
+    // PT-BR default label
+    const addButton = screen.getByText('Adicionar Walk-In');
     fireEvent.click(addButton);
 
-    expect(screen.getByRole('dialog', { name: /add walk-in guest/i })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: /adicionar walk-in/i })).toBeInTheDocument();
   });
 
   it('opens manager chat on FAB click', () => {
     renderDemoDashboard();
 
-    const chatFab = screen.getByLabelText('Open AI Manager Assistant');
+    // PT-BR default aria-label
+    const chatFab = screen.getByLabelText('Abrir Assistente IA');
     fireEvent.click(chatFab);
 
     expect(screen.getByTestId('manager-chat')).toBeInTheDocument();

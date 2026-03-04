@@ -61,8 +61,8 @@ export default function LiveAIDemo() {
       <section className="max-w-[720px] mx-auto px-6 sm:px-16 pb-20">
         <div className="bg-white border border-border-gray rounded-[20px] p-8 sm:p-12 text-center">
           <div className="text-xs font-semibold tracking-[1.5px] uppercase text-muted-stone mb-5">Demo Restaurant</div>
-          <h2 className="font-serif text-[28px] font-medium mb-2">Celeri Madrid</h2>
-          <p className="text-sm text-warm-stone font-light mb-9">Mediterranean &middot; Farm-to-table &middot; Malasa&ntilde;a</p>
+          <h2 className="font-serif text-[28px] font-medium mb-2">Cantina da Praca</h2>
+          <p className="text-sm text-warm-stone font-light mb-9">Brasileira &middot; Contemporanea &middot; Jardins, SP</p>
 
           {/* Voice Demo */}
           {import.meta.env.VITE_ELEVENLABS_AGENT_ID ? (

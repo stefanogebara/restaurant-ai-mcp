@@ -83,7 +83,7 @@ export default function DemoDashboard() {
             <div className="flex flex-col gap-2.5">
               <button
                 type="button"
-                onClick={() => setLang('pt-BR')}
+                onClick={() => setLang('en')}
                 className="w-full px-4 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors text-sm"
               >
                 {t.langSwitchYes}
@@ -135,7 +135,7 @@ export default function DemoDashboard() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
-              La Bella Vista
+              {t.restaurantName}
               <span className="ml-2 text-base font-light text-warm-stone">
                 &mdash; {t.cuisine} &middot; {t.neighborhood}
               </span>
@@ -167,10 +167,10 @@ export default function DemoDashboard() {
           isLoading={false}
         />
 
-        {/* Main Content: 2-column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
-          {/* Left Column: Reservations */}
-          <div className="space-y-6">
+        {/* Main Content: Unified container with 2px dividers */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-[2px] bg-border-gray rounded-2xl overflow-hidden">
+          {/* Left Column: Reservations — spans all right-column rows */}
+          <div className="lg:row-span-3 bg-white [&>div]:border-0 [&>div]:rounded-none">
             <ReservationsList
               todayReservations={demo.todayReservations}
               tomorrowReservations={demo.tomorrowReservations}
@@ -180,35 +180,38 @@ export default function DemoDashboard() {
             />
           </div>
 
-          {/* Right Column: Waitlist + Active Parties */}
-          <div className="space-y-6 lg:sticky lg:top-8 lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+          {/* Right Column: Waitlist */}
+          <div className="bg-white [&>div]:border-0 [&>div]:rounded-none">
             <DemoWaitlistPanel
               entries={demo.waitlist}
               onSeat={handleSeatFromWaitlist}
               lang={lang}
             />
+          </div>
 
+          {/* Right Column: Active Parties */}
+          <div className="bg-white [&>div]:border-0 [&>div]:rounded-none">
             <ActivePartiesPanel
               parties={demo.activeParties}
               onCompleteService={handleCompleteService}
               isLoading={false}
             />
+          </div>
 
-            {/* Upgrade CTA */}
-            <div className="bg-deep-charcoal rounded-2xl p-6 text-center">
-              <h3 className="text-base font-semibold text-white mb-1 tracking-tight">
-                {t.readyToGoLive}
-              </h3>
-              <p className="text-xs text-muted-stone font-light mb-4">
-                {t.setupYourOwn}
-              </p>
-              <Link
-                to="/login"
-                className="inline-block px-5 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors"
-              >
-                {t.getStartedFree}
-              </Link>
-            </div>
+          {/* Right Column: Upgrade CTA */}
+          <div className="bg-deep-charcoal p-6 text-center">
+            <h3 className="text-base font-semibold text-white mb-1 tracking-tight">
+              {t.readyToGoLive}
+            </h3>
+            <p className="text-xs text-muted-stone font-light mb-4">
+              {t.setupYourOwn}
+            </p>
+            <Link
+              to="/login"
+              className="inline-block px-5 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors"
+            >
+              {t.getStartedFree}
+            </Link>
           </div>
         </div>
       </div>

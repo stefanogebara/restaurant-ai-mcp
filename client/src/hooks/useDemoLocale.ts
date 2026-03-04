@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import i18n from '../i18n/config';
 
 export type DemoLang = 'en' | 'pt-BR';
 
@@ -8,6 +9,7 @@ const strings = {
   'en': {
     banner: 'Interactive Demo — all actions are local, no real data is affected',
     backToHome: 'Back to home',
+    restaurantName: 'La Bella Vista',
     cuisine: 'Italian',
     neighborhood: 'Downtown',
     addWalkIn: 'Add Walk-In',
@@ -37,16 +39,17 @@ const strings = {
     askPlaceholder: 'Ask about your restaurant...',
     sendMessage: 'Send message',
     // Language popup
-    langPopupTitle: 'Prefer Portuguese?',
-    langPopupDesc: 'This demo is also available in Portuguese (PT-BR).',
-    langSwitchYes: 'Mudar para Portugues',
-    langKeepEn: 'Keep English',
+    langPopupTitle: 'Prefer English?',
+    langPopupDesc: 'This demo is also available in English.',
+    langSwitchYes: 'Switch to English',
+    langKeepEn: 'Manter Portugues',
   },
   'pt-BR': {
     banner: 'Demo Interativa — todas as acoes sao locais, nenhum dado real e afetado',
     backToHome: 'Voltar ao inicio',
-    cuisine: 'Italiano',
-    neighborhood: 'Centro',
+    restaurantName: 'Cantina da Praca',
+    cuisine: 'Brasileira',
+    neighborhood: 'Jardins',
     addWalkIn: 'Adicionar Walk-In',
     readyToGoLive: 'Pronto para comecar?',
     setupYourOwn: 'Configure seu restaurante em menos de 5 minutos.',
@@ -93,14 +96,24 @@ export function useDemoLocale() {
   const stored = localStorage.getItem(STORAGE_KEY) as DemoLang | null;
   const browserLang = detectBrowserLang();
 
-  // Show popup if user hasn't made a choice yet AND browser lang differs from default (en)
-  const [showLangPopup, setShowLangPopup] = useState(!stored && browserLang !== 'en');
-  const [lang, setLangState] = useState<DemoLang>(stored || 'en');
+  // Default is PT-BR. Show popup only if browser is NOT Portuguese (offer English).
+  const [showLangPopup, setShowLangPopup] = useState(!stored && !browserLang.startsWith('pt'));
+  const [lang, setLangState] = useState<DemoLang>(stored || 'pt-BR');
+
+  // Sync i18next with demo locale on mount
+  useEffect(() => {
+    const target = stored || 'pt-BR';
+    if (i18n.language !== target) {
+      i18n.changeLanguage(target);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setLang = useCallback((newLang: DemoLang) => {
     localStorage.setItem(STORAGE_KEY, newLang);
     setLangState(newLang);
     setShowLangPopup(false);
+    // Sync i18next so shared components (StatsBar etc.) update too
+    i18n.changeLanguage(newLang === 'pt-BR' ? 'pt-BR' : 'en');
   }, []);
 
   const dismissPopup = useCallback(() => {

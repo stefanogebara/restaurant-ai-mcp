@@ -1,14 +1,14 @@
 /**
  * Demo Restaurant Data
- * La Bella Vista - Fine Italian Dining Experience
+ * Cantina da Praca - Cozinha Brasileira Contemporanea
  */
 
 export const DEMO_RESTAURANT = {
-  name: "La Bella Vista",
-  tagline: "Fine Italian Dining Experience",
-  phone: "+1 (555) 123-DEMO",
+  name: "Cantina da Praca",
+  tagline: "Cozinha Brasileira Contemporanea",
+  phone: "+55 (11) 99999-DEMO",
   email: "demo@seatable.io",
-  address: "123 Vista Avenue, Downtown District",
+  address: "Rua Augusta, 1234 — Jardins, Sao Paulo",
   tables: 12,
   capacity: 48,
   active_parties: 3,
@@ -35,7 +35,7 @@ export const DEMO_TABLES = [
 export const DEMO_ACTIVE_PARTIES = [
   {
     service_id: "SRV-001",
-    customer_name: "Marco Rossi",
+    customer_name: "Marcos Souza",
     party_size: 2,
     tables: [2],
     time_elapsed_minutes: 45,
@@ -43,7 +43,7 @@ export const DEMO_ACTIVE_PARTIES = [
   },
   {
     service_id: "SRV-002",
-    customer_name: "Sofia Martinez",
+    customer_name: "Juliana Costa",
     party_size: 6,
     tables: [5],
     time_elapsed_minutes: 20,
@@ -51,7 +51,7 @@ export const DEMO_ACTIVE_PARTIES = [
   },
   {
     service_id: "SRV-003",
-    customer_name: "Chen Wei",
+    customer_name: "Fernanda Lima",
     party_size: 4,
     tables: [9],
     time_elapsed_minutes: 55,
@@ -62,19 +62,19 @@ export const DEMO_ACTIVE_PARTIES = [
 export const DEMO_RESERVATIONS = [
   {
     reservation_id: "RES-001",
-    customer_name: "Isabella Romano",
-    customer_phone: "+1 (555) 234-5678",
+    customer_name: "Ana Clara Santos",
+    customer_phone: "+55 (11) 98234-5678",
     party_size: 4,
     date: "2026-02-12",
     time: "19:00",
     reservation_time: "2026-02-12T19:00:00",
-    special_requests: "Window table preferred",
+    special_requests: "Mesa perto da janela",
     status: "confirmed",
   },
   {
     reservation_id: "RES-002",
-    customer_name: "Alessandro Bianchi",
-    customer_phone: "+1 (555) 345-6789",
+    customer_name: "Pedro Henrique Oliveira",
+    customer_phone: "+55 (11) 97345-6789",
     party_size: 2,
     date: "2026-02-12",
     time: "20:00",
@@ -83,13 +83,13 @@ export const DEMO_RESERVATIONS = [
   },
   {
     reservation_id: "RES-003",
-    customer_name: "Lucia Ferrari",
-    customer_phone: "+1 (555) 456-7890",
+    customer_name: "Camila Rodrigues",
+    customer_phone: "+55 (11) 96456-7890",
     party_size: 6,
     date: "2026-02-13",
     time: "18:30",
     reservation_time: "2026-02-13T18:30:00",
-    special_requests: "Birthday celebration - cake request",
+    special_requests: "Aniversario — pedir bolo",
     status: "confirmed",
   },
 ];
@@ -97,8 +97,8 @@ export const DEMO_RESERVATIONS = [
 export const DEMO_WAITLIST = [
   {
     waitlist_id: "WAIT-001",
-    customer_name: "Giovanni Lombardi",
-    customer_phone: "+1 (555) 567-8901",
+    customer_name: "Joao Pedro Nascimento",
+    customer_phone: "+55 (11) 99567-8901",
     party_size: 2,
     estimated_wait: 15,
     added_at: "2026-02-12T18:15:00",
@@ -106,8 +106,8 @@ export const DEMO_WAITLIST = [
   },
   {
     waitlist_id: "WAIT-002",
-    customer_name: "Francesca Conti",
-    customer_phone: "+1 (555) 678-9012",
+    customer_name: "Beatriz Mendes",
+    customer_phone: "+55 (11) 99678-9012",
     party_size: 4,
     estimated_wait: 25,
     added_at: "2026-02-12T18:20:00",
