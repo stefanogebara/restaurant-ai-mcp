@@ -186,7 +186,7 @@ export default function DemoDashboard() {
         aria-label="Open AI Manager Assistant"
         className="fixed bottom-20 sm:bottom-6 right-20 sm:right-24 z-40 w-14 h-14 bg-blue-600 hover:bg-blue-700 hover:scale-105 active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
       >
-        <ThiingsIcon name="message-circle" pxSize={22} />
+        <ThiingsIcon name="chat" pxSize={22} />
       </button>
 
       {/* Manager Chat Panel */}

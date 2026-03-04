@@ -19,7 +19,7 @@ export const ICON_NAMES = [
   'refresh', 'rotate', 'save', 'scales', 'search',
   'send', 'settings', 'shield-check', 'siren', 'sparkles',
   'star', 'stethoscope', 'sun', 'target', 'timer',
-  'trash', 'trending-down', 'trending-up', 'unlink', 'user',
+  'trash', 'trending-down', 'trending-up', 'unlink', 'upload', 'user',
   'users', 'utensils', 'utensils-crossed', 'voice', 'volume', 'wifi',
   'wifi-off', 'wine', 'wrench', 'x-circle', 'zap',
 ] as const;
