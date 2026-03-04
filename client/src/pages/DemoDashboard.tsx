@@ -7,10 +7,12 @@ import ActivePartiesPanel from '../components/dashboard/ActivePartiesPanel';
 import DemoWaitlistPanel from '../components/demo/DemoWaitlistPanel';
 import DemoManagerChat from '../components/demo/DemoManagerChat';
 import { useDemoState } from '../hooks/useDemoState';
+import { useDemoLocale } from '../hooks/useDemoLocale';
 import type { UpcomingReservation, ActiveParty } from '../types/host.types';
 
 export default function DemoDashboard() {
   const demo = useDemoState();
+  const { t, dateLocale, lang, setLang, showLangPopup, dismissPopup } = useDemoLocale();
 
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
@@ -22,14 +24,13 @@ export default function DemoDashboard() {
     party_size: '',
   });
 
-  const dayName = new Date().toLocaleDateString('pt-BR', { weekday: 'long' });
-  const dateStr = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
+  const dayName = new Date().toLocaleDateString(dateLocale, { weekday: 'long' });
+  const dateStr = new Date().toLocaleDateString(dateLocale, { day: 'numeric', month: 'short' });
 
   // ---- Handlers ----
   const handleCheckIn = (reservation: UpcomingReservation) => {
-    // Find an available table that fits
     const available = demo.tables.find(
-      (t) => t.status === 'Available' && t.capacity >= reservation.party_size,
+      (tbl) => tbl.status === 'Available' && tbl.capacity >= reservation.party_size,
     );
     if (available) {
       demo.seatParty({
@@ -66,6 +67,39 @@ export default function DemoDashboard() {
 
   return (
     <div className="min-h-screen bg-soft-gray">
+      {/* Language Popup */}
+      {showLangPopup && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-sm w-full text-center animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-2xl bg-burgundy/10 flex items-center justify-center mx-auto mb-4">
+              <ThiingsIcon name="globe" pxSize={24} className="text-burgundy" />
+            </div>
+            <h3 className="text-lg font-bold text-deep-charcoal mb-1">
+              {t.langPopupTitle}
+            </h3>
+            <p className="text-sm text-stone-gray mb-5">
+              {t.langPopupDesc}
+            </p>
+            <div className="flex flex-col gap-2.5">
+              <button
+                type="button"
+                onClick={() => setLang('pt-BR')}
+                className="w-full px-4 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors text-sm"
+              >
+                {t.langSwitchYes}
+              </button>
+              <button
+                type="button"
+                onClick={dismissPopup}
+                className="w-full px-4 py-3 border border-border-gray text-stone-gray font-medium rounded-xl hover:bg-soft-gray transition-colors text-sm"
+              >
+                {t.langKeepEn}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Demo Banner */}
       <div className="bg-gradient-to-r from-burgundy to-burgundy-dark text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-3 flex items-center justify-between">
@@ -73,16 +107,25 @@ export default function DemoDashboard() {
             <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
               <ThiingsIcon name="sparkles" pxSize={12} className="text-white" />
             </div>
-            <p className="text-sm font-medium">
-              Demo Interativa &mdash; todas as acoes sao locais, nenhum dado real e afetado
-            </p>
+            <p className="text-sm font-medium">{t.banner}</p>
           </div>
-          <Link
-            to="/"
-            className="text-xs font-semibold text-white/80 hover:text-white underline underline-offset-2 transition-colors"
-          >
-            Voltar ao inicio
-          </Link>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setLang(lang === 'en' ? 'pt-BR' : 'en')}
+              className="text-xs font-medium text-white/70 hover:text-white transition-colors flex items-center gap-1.5"
+              aria-label="Toggle language"
+            >
+              <ThiingsIcon name="globe" pxSize={12} className="text-white/70" />
+              {lang === 'en' ? 'PT' : 'EN'}
+            </button>
+            <Link
+              to="/"
+              className="text-xs font-semibold text-white/80 hover:text-white underline underline-offset-2 transition-colors"
+            >
+              {t.backToHome}
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -94,7 +137,7 @@ export default function DemoDashboard() {
             <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
               La Bella Vista
               <span className="ml-2 text-base font-light text-warm-stone">
-                &mdash; Italiano &middot; Centro
+                &mdash; {t.cuisine} &middot; {t.neighborhood}
               </span>
             </h1>
             <p className="text-sm text-muted-stone mt-0.5">{dayName}, {dateStr}</p>
@@ -107,7 +150,7 @@ export default function DemoDashboard() {
               className="flex items-center gap-2 px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white rounded-xl text-[13px] font-medium transition-colors"
             >
               <ThiingsIcon name="plus" pxSize={14} />
-              Adicionar Walk-In
+              {t.addWalkIn}
             </button>
           </div>
         </div>
@@ -142,6 +185,7 @@ export default function DemoDashboard() {
             <DemoWaitlistPanel
               entries={demo.waitlist}
               onSeat={handleSeatFromWaitlist}
+              lang={lang}
             />
 
             <ActivePartiesPanel
@@ -153,16 +197,16 @@ export default function DemoDashboard() {
             {/* Upgrade CTA */}
             <div className="bg-deep-charcoal rounded-2xl p-6 text-center">
               <h3 className="text-base font-semibold text-white mb-1 tracking-tight">
-                Pronto para comecar?
+                {t.readyToGoLive}
               </h3>
               <p className="text-xs text-muted-stone font-light mb-4">
-                Configure seu restaurante em menos de 5 minutos.
+                {t.setupYourOwn}
               </p>
               <Link
                 to="/login"
                 className="inline-block px-5 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors"
               >
-                Comecar Gratis
+                {t.getStartedFree}
               </Link>
             </div>
           </div>
@@ -173,7 +217,7 @@ export default function DemoDashboard() {
       <button
         type="button"
         onClick={() => setShowWalkInModal(true)}
-        aria-label="Adicionar walk-in"
+        aria-label={t.addWalkIn}
         className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-deep-charcoal hover:bg-charcoal-dark hover:scale-105 active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
       >
         <ThiingsIcon name="plus" pxSize={24} />
@@ -183,7 +227,7 @@ export default function DemoDashboard() {
       <button
         type="button"
         onClick={() => setChatOpen((prev) => !prev)}
-        aria-label="Abrir Assistente IA"
+        aria-label={lang === 'pt-BR' ? 'Abrir Assistente IA' : 'Open AI Manager Assistant'}
         className="fixed bottom-20 sm:bottom-6 right-20 sm:right-24 z-40 w-14 h-14 bg-blue-600 hover:bg-blue-700 hover:scale-105 active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
       >
         <ThiingsIcon name="chat" pxSize={22} />
@@ -199,6 +243,7 @@ export default function DemoDashboard() {
           reservationsToday={demo.stats.reservationsToday}
           totalGuests={demo.stats.totalGuests}
           onClose={() => setChatOpen(false)}
+          lang={lang}
         />
       )}
 
@@ -211,11 +256,11 @@ export default function DemoDashboard() {
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Adicionar cliente walk-in"
+            aria-label={t.walkInTitle}
             className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-md w-full"
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-deep-charcoal">Adicionar Walk-In</h2>
+              <h2 className="text-lg font-bold text-deep-charcoal">{t.walkInTitle}</h2>
               <button
                 type="button"
                 onClick={() => setShowWalkInModal(false)}
@@ -229,34 +274,34 @@ export default function DemoDashboard() {
             <form onSubmit={handleWalkInSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-deep-charcoal mb-1">
-                  Nome do Cliente *
+                  {t.guestName} *
                 </label>
                 <input
                   type="text"
                   required
                   value={walkInForm.customer_name}
                   onChange={(e) => setWalkInForm({ ...walkInForm, customer_name: e.target.value })}
-                  placeholder="ex. Maria Silva"
+                  placeholder={t.namePlaceholder}
                   className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-deep-charcoal mb-1">
-                  Telefone
+                  {t.phone}
                 </label>
                 <input
                   type="tel"
                   value={walkInForm.customer_phone}
                   onChange={(e) => setWalkInForm({ ...walkInForm, customer_phone: e.target.value })}
-                  placeholder="+55 11 99999-0000"
+                  placeholder={t.phonePlaceholder}
                   className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-deep-charcoal mb-1">
-                  Tamanho do Grupo *
+                  {t.partySize} *
                 </label>
                 <input
                   type="number"
@@ -276,19 +321,19 @@ export default function DemoDashboard() {
                   onClick={() => setShowWalkInModal(false)}
                   className="flex-1 px-4 py-3 border border-border-gray text-stone-gray font-medium rounded-xl hover:bg-soft-gray transition-colors"
                 >
-                  Cancelar
+                  {t.cancel}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 px-4 py-3 bg-burgundy text-white font-medium rounded-xl hover:bg-burgundy-dark transition-colors"
                 >
-                  Sentar Cliente
+                  {t.seatGuest}
                 </button>
               </div>
 
-              {demo.tables.filter((t) => t.status === 'Available').length === 0 && (
+              {demo.tables.filter((tbl) => tbl.status === 'Available').length === 0 && (
                 <p className="text-xs text-amber-600 text-center">
-                  Nenhuma mesa disponivel. Considere adicionar a lista de espera.
+                  {t.noTablesAvailable}
                 </p>
               )}
             </form>
