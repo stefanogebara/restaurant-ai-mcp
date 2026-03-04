@@ -104,6 +104,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/live-demo" element={<LiveAIDemo />} />
               <Route path="/demo/setup" element={<DemoSetupPage />} />
+              <Route path="/demo" element={<DemoDashboard />} />
               <Route path="/demo/:token" element={<DemoDashboard />} />
 {/* Dashboard - New unified dashboard (default) */}
               <Route path="/host-dashboard" element={<Navigate to="/host-dashboard/simple" replace />} />

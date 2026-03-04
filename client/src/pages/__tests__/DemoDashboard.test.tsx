@@ -1,153 +1,99 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mock child components to keep tests focused on DemoDashboard logic
-vi.mock('../../components/demo/DemoBanner', () => ({
-  default: ({ daysLeft, token }: { daysLeft: number; token: string }) => (
-    <div data-testid="demo-banner">
-      Banner: {daysLeft} days, token: {token}
-    </div>
-  ),
-}));
-
 vi.mock('../../components/dashboard/StatsBar', () => ({
-  default: () => <div data-testid="stats-bar" />,
+  default: (props: Record<string, unknown>) => (
+    <div data-testid="stats-bar" data-occupied={props.occupiedTables} data-total={props.totalTables} />
+  ),
 }));
 
 vi.mock('../../components/dashboard/ReservationsList', () => ({
   default: () => <div data-testid="reservations-list" />,
 }));
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+vi.mock('../../components/dashboard/ActivePartiesPanel', () => ({
+  default: (props: { parties: unknown[] }) => (
+    <div data-testid="active-parties">{props.parties.length} parties</div>
+  ),
+}));
 
-const mockRestaurant = {
-  id: 'resto-123',
-  restaurant_name: 'Le Petit Bistro',
-  restaurant_type: 'French',
-  city: 'Paris',
-  country: 'France',
-  demo_expires_at: new Date(Date.now() + 7 * 86_400_000).toISOString(),
-  demo_token: 'tok-abc',
-  business_hours: {},
-  max_party_size: 8,
-  slug: 'le-petit-bistro',
-};
+vi.mock('../../components/demo/DemoWaitlistPanel', () => ({
+  default: (props: { entries: unknown[] }) => (
+    <div data-testid="waitlist-panel">{props.entries.length} waiting</div>
+  ),
+}));
 
-const mockSuccessResponse = {
-  success: true,
-  restaurant: mockRestaurant,
-  tables: [],
-  reservations: [],
-  daysLeft: 7,
-};
+vi.mock('../../components/demo/DemoManagerChat', () => ({
+  default: () => <div data-testid="manager-chat" />,
+}));
 
-function renderDemoDashboard(token = 'tok-abc') {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
+function renderDemoDashboard() {
   return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[`/demo/${token}`]}>
-        <Routes>
-          <Route path="/demo/:token" element={<DemoDashboard />} />
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
+    <MemoryRouter initialEntries={['/demo']}>
+      <Routes>
+        <Route path="/demo" element={<DemoDashboard />} />
+      </Routes>
+    </MemoryRouter>,
   );
 }
 
 // Import the page after mocks are in place
 import DemoDashboard from '../DemoDashboard';
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 describe('DemoDashboard', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('shows loading spinner while fetching session', () => {
-    // Never-resolving fetch keeps loading state
-    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
-
-    const { container } = renderDemoDashboard();
-
-    // The loading state renders the spinner div with animate-spin
-    const spinner = container.querySelector('.animate-spin');
-    expect(spinner).toBeInTheDocument();
-    expect(screen.getByText(/seatable/i)).toBeInTheDocument();
-  });
-
-  it('shows error state when fetch returns success: false (expired token)', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(() =>
-        Promise.resolve({
-          json: () => Promise.resolve({ success: false }),
-        }),
-      ),
-    );
-
-    renderDemoDashboard('expired-token');
-
-    expect(await screen.findByText('Demo unavailable')).toBeInTheDocument();
-    expect(
-      screen.getByText('This demo link is invalid or has expired.'),
-    ).toBeInTheDocument();
-  });
-
-  it('shows error state when fetch rejects (network error)', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(() => Promise.reject(new Error('Network error'))),
-    );
-
+  it('renders the demo banner, restaurant name, and all panels', () => {
     renderDemoDashboard();
 
-    expect(await screen.findByText('Demo unavailable')).toBeInTheDocument();
-    expect(
-      screen.getByText('Network error'),
-    ).toBeInTheDocument();
-  });
+    // Demo banner
+    expect(screen.getByText(/interactive demo/i)).toBeInTheDocument();
 
-  it('renders DemoBanner and restaurant name on successful fetch', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(() =>
-        Promise.resolve({
-          json: () => Promise.resolve(mockSuccessResponse),
-        }),
-      ),
-    );
+    // Restaurant name
+    expect(screen.getByText('La Bella Vista')).toBeInTheDocument();
 
-    renderDemoDashboard('tok-abc');
-
-    // Wait for banner to appear (signals successful load)
-    expect(await screen.findByTestId('demo-banner')).toBeInTheDocument();
-
-    // Restaurant name appears in the page header
-    expect(screen.getByText('Le Petit Bistro')).toBeInTheDocument();
-  });
-
-  it('renders StatsBar and ReservationsList on successful fetch', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(() =>
-        Promise.resolve({
-          json: () => Promise.resolve(mockSuccessResponse),
-        }),
-      ),
-    );
-
-    renderDemoDashboard();
-
-    expect(await screen.findByTestId('stats-bar')).toBeInTheDocument();
+    // All panels present
+    expect(screen.getByTestId('stats-bar')).toBeInTheDocument();
     expect(screen.getByTestId('reservations-list')).toBeInTheDocument();
+    expect(screen.getByTestId('active-parties')).toBeInTheDocument();
+    expect(screen.getByTestId('waitlist-panel')).toBeInTheDocument();
+  });
+
+  it('has 2 active parties and 2 waitlist entries from seed data', () => {
+    renderDemoDashboard();
+
+    expect(screen.getByText('2 parties')).toBeInTheDocument();
+    expect(screen.getByText('2 waiting')).toBeInTheDocument();
+  });
+
+  it('shows stats bar with correct seed table counts', () => {
+    renderDemoDashboard();
+
+    const statsBar = screen.getByTestId('stats-bar');
+    // 2 occupied (t2, t5), 9 total tables
+    expect(statsBar.getAttribute('data-occupied')).toBe('2');
+    expect(statsBar.getAttribute('data-total')).toBe('9');
+  });
+
+  it('opens walk-in modal on button click', () => {
+    renderDemoDashboard();
+
+    const addButton = screen.getByText('Add Walk-In');
+    fireEvent.click(addButton);
+
+    expect(screen.getByRole('dialog', { name: /add walk-in guest/i })).toBeInTheDocument();
+  });
+
+  it('opens manager chat on FAB click', () => {
+    renderDemoDashboard();
+
+    const chatFab = screen.getByLabelText('Open AI Manager Assistant');
+    fireEvent.click(chatFab);
+
+    expect(screen.getByTestId('manager-chat')).toBeInTheDocument();
   });
 });

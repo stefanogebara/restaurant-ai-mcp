@@ -1,0 +1,379 @@
+import { useState, useCallback, useMemo } from 'react';
+import type { UpcomingReservation, ActiveParty } from '../types/host.types';
+
+// ---------- Seed data helpers ----------
+
+const today = new Date().toISOString().split('T')[0];
+const tomorrow = new Date(Date.now() + 86_400_000).toISOString().split('T')[0];
+
+function seededAt(minutesAgo: number): string {
+  return new Date(Date.now() - minutesAgo * 60_000).toISOString();
+}
+
+function departureAt(minutesFromNow: number): string {
+  return new Date(Date.now() + minutesFromNow * 60_000).toISOString();
+}
+
+// ---------- Seed tables ----------
+
+interface DemoTable {
+  id: string;
+  table_number: string;
+  capacity: number;
+  status: 'Available' | 'Occupied' | 'Reserved';
+  location: string;
+}
+
+const INITIAL_TABLES: DemoTable[] = [
+  { id: 't1', table_number: '1', capacity: 2, status: 'Available', location: 'Indoor' },
+  { id: 't2', table_number: '2', capacity: 2, status: 'Occupied', location: 'Indoor' },
+  { id: 't3', table_number: '3', capacity: 4, status: 'Reserved', location: 'Indoor' },
+  { id: 't4', table_number: '4', capacity: 4, status: 'Available', location: 'Indoor' },
+  { id: 't5', table_number: '5', capacity: 6, status: 'Occupied', location: 'Patio' },
+  { id: 't6', table_number: '6', capacity: 2, status: 'Available', location: 'Patio' },
+  { id: 't7', table_number: '7', capacity: 4, status: 'Available', location: 'Patio' },
+  { id: 't8', table_number: '8', capacity: 2, status: 'Available', location: 'Bar' },
+  { id: 't9', table_number: '9', capacity: 4, status: 'Available', location: 'Bar' },
+];
+
+// ---------- Seed reservations ----------
+
+const INITIAL_RESERVATIONS: UpcomingReservation[] = [
+  {
+    reservation_id: 'r1',
+    customer_name: 'Isabella Romano',
+    customer_phone: '+1 555-234-5678',
+    party_size: 4,
+    date: today,
+    time: '12:30',
+    reservation_time: `${today}T12:30:00`,
+    special_requests: 'Window table preferred',
+    checked_in: false,
+    status: 'confirmed',
+  },
+  {
+    reservation_id: 'r2',
+    customer_name: 'Alessandro Bianchi',
+    customer_phone: '+1 555-345-6789',
+    party_size: 2,
+    date: today,
+    time: '13:00',
+    reservation_time: `${today}T13:00:00`,
+    checked_in: false,
+    status: 'confirmed',
+  },
+  {
+    reservation_id: 'r3',
+    customer_name: 'Sofia Martinez',
+    customer_phone: '+1 555-456-7890',
+    party_size: 6,
+    date: today,
+    time: '19:00',
+    reservation_time: `${today}T19:00:00`,
+    special_requests: 'Birthday celebration',
+    checked_in: false,
+    status: 'confirmed',
+  },
+  {
+    reservation_id: 'r4',
+    customer_name: 'Luca Ferrari',
+    customer_phone: '+1 555-567-8901',
+    party_size: 2,
+    date: today,
+    time: '20:00',
+    reservation_time: `${today}T20:00:00`,
+    checked_in: false,
+    status: 'confirmed',
+  },
+  {
+    reservation_id: 'r5',
+    customer_name: 'Giulia Moretti',
+    customer_phone: '+1 555-678-9012',
+    party_size: 4,
+    date: tomorrow,
+    time: '12:00',
+    reservation_time: `${tomorrow}T12:00:00`,
+    checked_in: false,
+    status: 'confirmed',
+  },
+  {
+    reservation_id: 'r6',
+    customer_name: 'Marco Colombo',
+    customer_phone: '+1 555-789-0123',
+    party_size: 2,
+    date: tomorrow,
+    time: '19:30',
+    reservation_time: `${tomorrow}T19:30:00`,
+    special_requests: 'Anniversary dinner',
+    checked_in: false,
+    status: 'confirmed',
+  },
+];
+
+// ---------- Seed active parties ----------
+
+const INITIAL_ACTIVE_PARTIES: ActiveParty[] = [
+  {
+    service_id: 'srv1',
+    customer_name: 'Chen Wei',
+    customer_phone: '+1 555-111-2222',
+    party_size: 2,
+    tables: ['2'],
+    seated_at: seededAt(45),
+    estimated_departure: departureAt(30),
+    time_elapsed_minutes: 45,
+    time_remaining_minutes: 30,
+    is_overdue: false,
+  },
+  {
+    service_id: 'srv2',
+    customer_name: 'Francesca Conti',
+    customer_phone: '+1 555-333-4444',
+    party_size: 5,
+    tables: ['5'],
+    seated_at: seededAt(20),
+    estimated_departure: departureAt(70),
+    time_elapsed_minutes: 20,
+    time_remaining_minutes: 70,
+    is_overdue: false,
+  },
+];
+
+// ---------- Waitlist entry ----------
+
+export interface DemoWaitlistEntry {
+  id: string;
+  customer_name: string;
+  customer_phone: string;
+  party_size: number;
+  estimated_wait: number;
+  added_at: string;
+  status: 'Waiting';
+  special_requests?: string;
+}
+
+const INITIAL_WAITLIST: DemoWaitlistEntry[] = [
+  {
+    id: 'w1',
+    customer_name: 'Giovanni Lombardi',
+    customer_phone: '+1 555-567-8901',
+    party_size: 2,
+    estimated_wait: 15,
+    added_at: seededAt(10),
+    status: 'Waiting',
+  },
+  {
+    id: 'w2',
+    customer_name: 'Elena Ricci',
+    customer_phone: '+1 555-678-9012',
+    party_size: 4,
+    estimated_wait: 25,
+    added_at: seededAt(5),
+    status: 'Waiting',
+    special_requests: 'High chair needed',
+  },
+];
+
+// ---------- Walk-in form data ----------
+
+export interface WalkInFormData {
+  customer_name: string;
+  customer_phone: string;
+  party_size: number;
+}
+
+// ---------- Counter ----------
+
+let nextId = 100;
+function genId(prefix: string): string {
+  nextId += 1;
+  return `${prefix}${nextId}`;
+}
+
+// ---------- Hook ----------
+
+export function useDemoState() {
+  const [tables, setTables] = useState<DemoTable[]>(INITIAL_TABLES);
+  const [reservations, setReservations] = useState<UpcomingReservation[]>(INITIAL_RESERVATIONS);
+  const [activeParties, setActiveParties] = useState<ActiveParty[]>(INITIAL_ACTIVE_PARTIES);
+  const [waitlist, setWaitlist] = useState<DemoWaitlistEntry[]>(INITIAL_WAITLIST);
+  const [completedCount, setCompletedCount] = useState(3);
+
+  // ---- Derived ----
+  const todayReservations = useMemo(
+    () => reservations.filter((r) => r.date === today),
+    [reservations],
+  );
+  const tomorrowReservations = useMemo(
+    () => reservations.filter((r) => r.date === tomorrow),
+    [reservations],
+  );
+
+  const occupiedTables = useMemo(
+    () => tables.filter((t) => t.status === 'Occupied').length,
+    [tables],
+  );
+  const totalTables = tables.length;
+  const totalGuests = useMemo(
+    () => activeParties.reduce((sum, p) => sum + p.party_size, 0),
+    [activeParties],
+  );
+  const seatedReservations = useMemo(
+    () => todayReservations.filter((r) => r.checked_in).length,
+    [todayReservations],
+  );
+
+  // ---- Actions ----
+
+  /** Check-in a reservation (marks checked_in = true) */
+  const checkIn = useCallback((reservationId: string) => {
+    setReservations((prev) =>
+      prev.map((r) =>
+        r.reservation_id === reservationId ? { ...r, checked_in: true } : r,
+      ),
+    );
+  }, []);
+
+  /** Seat a party at a table — creates an active party and marks the table occupied */
+  const seatParty = useCallback(
+    (data: { customer_name: string; party_size: number; tableId: string; reservationId?: string }) => {
+      const table = tables.find((t) => t.id === data.tableId);
+      if (!table) return;
+
+      // Mark table occupied
+      setTables((prev) =>
+        prev.map((t) => (t.id === data.tableId ? { ...t, status: 'Occupied' as const } : t)),
+      );
+
+      // Create active party
+      const newParty: ActiveParty = {
+        service_id: genId('srv'),
+        customer_name: data.customer_name,
+        customer_phone: '',
+        party_size: data.party_size,
+        tables: [table.table_number],
+        seated_at: new Date().toISOString(),
+        estimated_departure: departureAt(75),
+        time_elapsed_minutes: 0,
+        time_remaining_minutes: 75,
+        is_overdue: false,
+      };
+      setActiveParties((prev) => [...prev, newParty]);
+
+      // If from a reservation, mark it checked in
+      if (data.reservationId) {
+        checkIn(data.reservationId);
+      }
+    },
+    [tables, checkIn],
+  );
+
+  /** Complete service for an active party */
+  const completeService = useCallback((serviceId: string) => {
+    setActiveParties((prev) => {
+      const party = prev.find((p) => p.service_id === serviceId);
+      if (party) {
+        // Free the tables
+        setTables((t) =>
+          t.map((table) =>
+            party.tables.includes(table.table_number)
+              ? { ...table, status: 'Available' as const }
+              : table,
+          ),
+        );
+        setCompletedCount((c) => c + 1);
+      }
+      return prev.filter((p) => p.service_id !== serviceId);
+    });
+  }, []);
+
+  /** Add a walk-in guest directly to active parties */
+  const addWalkIn = useCallback(
+    (data: WalkInFormData) => {
+      // Find first available table that fits
+      const available = tables.find(
+        (t) => t.status === 'Available' && t.capacity >= data.party_size,
+      );
+      if (!available) return false;
+
+      seatParty({
+        customer_name: data.customer_name,
+        party_size: data.party_size,
+        tableId: available.id,
+      });
+      return true;
+    },
+    [tables, seatParty],
+  );
+
+  /** Add a guest to the waitlist */
+  const addToWaitlist = useCallback((data: WalkInFormData & { special_requests?: string }) => {
+    const entry: DemoWaitlistEntry = {
+      id: genId('w'),
+      customer_name: data.customer_name,
+      customer_phone: data.customer_phone,
+      party_size: data.party_size,
+      estimated_wait: 15 + Math.floor(Math.random() * 20),
+      added_at: new Date().toISOString(),
+      status: 'Waiting',
+      special_requests: data.special_requests,
+    };
+    setWaitlist((prev) => [...prev, entry]);
+  }, []);
+
+  /** Seat a guest from the waitlist */
+  const seatFromWaitlist = useCallback(
+    (waitlistId: string) => {
+      const entry = waitlist.find((w) => w.id === waitlistId);
+      if (!entry) return false;
+
+      const available = tables.find(
+        (t) => t.status === 'Available' && t.capacity >= entry.party_size,
+      );
+      if (!available) return false;
+
+      // Remove from waitlist
+      setWaitlist((prev) => prev.filter((w) => w.id !== waitlistId));
+
+      // Seat them
+      seatParty({
+        customer_name: entry.customer_name,
+        party_size: entry.party_size,
+        tableId: available.id,
+      });
+      return true;
+    },
+    [waitlist, tables, seatParty],
+  );
+
+  // ---- Stats ----
+  const stats = useMemo(
+    () => ({
+      occupiedTables,
+      totalTables,
+      reservationsToday: todayReservations.length,
+      seatedReservations,
+      waitlistCount: waitlist.length,
+      activeParties: activeParties.length,
+      totalGuests,
+      completedCount,
+    }),
+    [occupiedTables, totalTables, todayReservations, seatedReservations, waitlist, activeParties, totalGuests, completedCount],
+  );
+
+  return {
+    tables,
+    reservations,
+    todayReservations,
+    tomorrowReservations,
+    activeParties,
+    waitlist,
+    stats,
+    checkIn,
+    seatParty,
+    completeService,
+    addWalkIn,
+    addToWaitlist,
+    seatFromWaitlist,
+  };
+}

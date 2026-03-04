@@ -1,196 +1,154 @@
-/// <reference path="../types/elevenlabs.d.ts" />
-import { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import ThiingsIcon from '../components/common/ThiingsIcon';
-import DemoBanner from '../components/demo/DemoBanner';
 import StatsBar from '../components/dashboard/StatsBar';
 import ReservationsList from '../components/dashboard/ReservationsList';
-import { useDemoSession } from '../hooks/useDemoSession';
+import ActivePartiesPanel from '../components/dashboard/ActivePartiesPanel';
+import DemoWaitlistPanel from '../components/demo/DemoWaitlistPanel';
+import DemoManagerChat from '../components/demo/DemoManagerChat';
+import { useDemoState } from '../hooks/useDemoState';
+import type { UpcomingReservation, ActiveParty } from '../types/host.types';
 
 export default function DemoDashboard() {
-  const { token } = useParams<{ token: string }>();
-  const [widgetLoaded, setWidgetLoaded] = useState(false);
-  const widgetContainerRef = useRef<HTMLDivElement>(null);
+  const demo = useDemoState();
 
-  const { data: session, isLoading, isError, error } = useDemoSession(token);
+  const [showWalkInModal, setShowWalkInModal] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
-  // Load ElevenLabs widget script once when session is available
-  useEffect(() => {
-    if (!session) return;
-    const script = document.createElement('script');
-    script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
-    script.async = true;
-    script.type = 'text/javascript';
-    script.onload = () => setWidgetLoaded(true);
-    document.body.appendChild(script);
-    return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-    };
-  }, [session]);
+  // Walk-in form state
+  const [walkInForm, setWalkInForm] = useState({
+    customer_name: '',
+    customer_phone: '',
+    party_size: '',
+  });
 
-  // Mount ElevenLabs widget with dynamic-variables after container is ready
-  useEffect(() => {
-    if (!session || !widgetContainerRef.current) return;
-    const agentId = import.meta.env.VITE_ELEVENLABS_AGENT_ID || '';
-    if (!agentId) return;
+  const dayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  const dateStr = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
 
-    const { restaurant } = session;
-    const widget = document.createElement('elevenlabs-convai') as HTMLElement;
-    widget.setAttribute('agent-id', agentId);
-    widget.setAttribute(
-      'dynamic-variables',
-      JSON.stringify({
-        restaurant_name: restaurant.restaurant_name,
-        cuisine_type: restaurant.restaurant_type,
-        city: restaurant.city,
-      }),
+  // ---- Handlers ----
+  const handleCheckIn = (reservation: UpcomingReservation) => {
+    // Find an available table that fits
+    const available = demo.tables.find(
+      (t) => t.status === 'Available' && t.capacity >= reservation.party_size,
     );
+    if (available) {
+      demo.seatParty({
+        customer_name: reservation.customer_name,
+        party_size: reservation.party_size,
+        tableId: available.id,
+        reservationId: reservation.reservation_id,
+      });
+    } else {
+      demo.checkIn(reservation.reservation_id);
+    }
+  };
 
-    // Replace children (safe DOM method — no user-controlled HTML)
-    widgetContainerRef.current.replaceChildren(widget);
-  }, [session]);
+  const handleCompleteService = (party: ActiveParty) => {
+    demo.completeService(party.service_id);
+  };
 
-  if (isLoading) {
-    return (
-      <div role="status" aria-label="Loading dashboard" className="min-h-screen bg-warm-white flex flex-col items-center justify-center gap-4">
-        <div aria-hidden="true" className="font-serif text-2xl text-deep-charcoal opacity-50">
-          seatable<span className="text-burgundy">.</span>
-        </div>
-        <div aria-hidden="true" className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy" />
-      </div>
-    );
-  }
+  const handleSeatFromWaitlist = (waitlistId: string) => {
+    demo.seatFromWaitlist(waitlistId);
+  };
 
-  if (isError || !session) {
-    return (
-      <div className="min-h-screen bg-warm-white flex flex-col items-center justify-center p-6">
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-8 max-w-md text-center">
-          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ThiingsIcon name="alert-circle" pxSize={24} className="text-red-600" />
-          </div>
-          <h3 className="text-lg font-bold text-red-900 mb-2">Demo unavailable</h3>
-          <p className="text-sm text-red-700 mb-6">
-            {error instanceof Error ? error.message : 'This demo session could not be loaded.'}
-          </p>
-          <Link
-            to="/demo/setup"
-            className="inline-block px-6 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors"
-          >
-            Create a new demo
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const { restaurant, tables, reservations, daysLeft } = session;
-
-  const today = new Date().toISOString().split('T')[0];
-  const tomorrow = new Date(Date.now() + 86_400_000).toISOString().split('T')[0];
-
-  const todayReservations = reservations.filter((r) => r.date === today);
-  const tomorrowReservations = reservations.filter((r) => r.date === tomorrow);
-
-  const occupiedTables = tables.filter((t) => t.status === 'Occupied').length;
-  const totalTables = tables.length;
-  const totalGuests = todayReservations.reduce((sum, r) => sum + (r.party_size || 0), 0);
-  const seatedReservations = todayReservations.filter((r) => r.checked_in).length;
-
-  const bookingHref = restaurant.slug ? `/book/${restaurant.slug}` : '#';
+  const handleWalkInSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const success = demo.addWalkIn({
+      customer_name: walkInForm.customer_name,
+      customer_phone: walkInForm.customer_phone,
+      party_size: parseInt(walkInForm.party_size) || 2,
+    });
+    if (success) {
+      setWalkInForm({ customer_name: '', customer_phone: '', party_size: '' });
+      setShowWalkInModal(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-soft-gray">
-      <DemoBanner daysLeft={daysLeft} token={token!} />
-
-      {/* Page header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 pt-8 pb-4">
-        <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
-          {restaurant.restaurant_name}
-          <span className="ml-2 text-base font-light text-warm-stone">
-            &mdash; {restaurant.restaurant_type} &middot; {restaurant.city}
-          </span>
-        </h1>
-        <p className="text-sm text-muted-stone mt-1">
-          This is your personalised demo dashboard. Data is sample-only.
-        </p>
+      {/* Demo Banner */}
+      <div className="bg-gradient-to-r from-burgundy to-burgundy-dark text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+              <ThiingsIcon name="sparkles" pxSize={12} className="text-white" />
+            </div>
+            <p className="text-sm font-medium">
+              Interactive Demo &mdash; all actions are local, no real data is affected
+            </p>
+          </div>
+          <Link
+            to="/"
+            className="text-xs font-semibold text-white/80 hover:text-white underline underline-offset-2 transition-colors"
+          >
+            Back to home
+          </Link>
+        </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 pb-20 space-y-6">
-        {/* Stats */}
+      {/* Page content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
+              La Bella Vista
+              <span className="ml-2 text-base font-light text-warm-stone">
+                &mdash; Italian &middot; Downtown
+              </span>
+            </h1>
+            <p className="text-sm text-muted-stone mt-0.5">{dayName}, {dateStr}</p>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => setShowWalkInModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white rounded-xl text-[13px] font-medium transition-colors"
+            >
+              <ThiingsIcon name="plus" pxSize={14} />
+              Add Walk-In
+            </button>
+          </div>
+        </div>
+
+        {/* Stats Row */}
         <StatsBar
-          occupiedTables={occupiedTables}
-          totalTables={totalTables}
-          reservationsToday={todayReservations.length}
-          seatedReservations={seatedReservations}
-          waitlistCount={0}
-          activeParties={occupiedTables}
-          totalGuests={totalGuests}
+          occupiedTables={demo.stats.occupiedTables}
+          totalTables={demo.stats.totalTables}
+          reservationsToday={demo.stats.reservationsToday}
+          seatedReservations={demo.stats.seatedReservations}
+          waitlistCount={demo.stats.waitlistCount}
+          activeParties={demo.stats.activeParties}
+          totalGuests={demo.stats.totalGuests}
           isLoading={false}
         />
 
-        {/* Main content: 2-column */}
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
-          {/* Left: Reservations list */}
-          <ReservationsList
-            todayReservations={todayReservations}
-            tomorrowReservations={tomorrowReservations}
-            onCheckIn={() => {}}
-            onIntervention={() => {}}
-            isLoading={false}
-          />
+        {/* Main Content: 2-column layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
+          {/* Left Column: Reservations */}
+          <div className="space-y-6">
+            <ReservationsList
+              todayReservations={demo.todayReservations}
+              tomorrowReservations={demo.tomorrowReservations}
+              onCheckIn={handleCheckIn}
+              onIntervention={() => {}}
+              isLoading={false}
+            />
+          </div>
 
-          {/* Right: action cards */}
-          <div className="space-y-4">
-            {/* Try booking widget card */}
-            <div className="bg-white border border-border-gray rounded-2xl p-6">
-              <h3 className="text-base font-semibold text-deep-charcoal mb-1 tracking-tight">
-                Customer booking portal
-              </h3>
-              <p className="text-sm text-warm-stone font-light mb-4">
-                See what your guests experience when booking online.
-              </p>
-              <Link
-                to={bookingHref}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors"
-              >
-                Try the booking widget
-                <ThiingsIcon name="chevron-right" pxSize={16} />
-              </Link>
-            </div>
+          {/* Right Column: Waitlist + Active Parties */}
+          <div className="space-y-6 lg:sticky lg:top-8 lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+            <DemoWaitlistPanel
+              entries={demo.waitlist}
+              onSeat={handleSeatFromWaitlist}
+            />
 
-            {/* ElevenLabs voice widget card */}
-            <div className="bg-white border border-border-gray rounded-2xl p-6">
-              <div className="text-xs font-semibold tracking-[1.5px] uppercase text-muted-stone mb-3">
-                AI Voice Agent
-              </div>
-              <h3 className="text-base font-semibold text-deep-charcoal mb-1 tracking-tight">
-                {restaurant.restaurant_name} AI Host
-              </h3>
-              <p className="text-sm text-warm-stone font-light mb-5">
-                Powered by ElevenLabs &mdash; personalised for your restaurant.
-              </p>
-
-              <div className="flex items-center justify-center min-h-[160px]">
-                {import.meta.env.VITE_ELEVENLABS_AGENT_ID ? (
-                  <div ref={widgetContainerRef} className="elevenlabs-widget-container" />
-                ) : (
-                  <div className="w-full p-4 bg-amber-50 rounded-xl border border-amber-200 text-center">
-                    <p className="text-xs text-amber-700 font-medium">
-                      Set <code className="bg-amber-100 px-1 rounded">VITE_ELEVENLABS_AGENT_ID</code> to activate the voice agent.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {widgetLoaded && (
-                <div className="flex items-center gap-2 mt-4">
-                  <div className="w-2 h-2 rounded-full bg-green-500" />
-                  <span className="text-xs font-medium text-green-700">AI Agent Online</span>
-                </div>
-              )}
-            </div>
+            <ActivePartiesPanel
+              parties={demo.activeParties}
+              onCompleteService={handleCompleteService}
+              isLoading={false}
+            />
 
             {/* Upgrade CTA */}
             <div className="bg-deep-charcoal rounded-2xl p-6 text-center">
@@ -198,18 +156,145 @@ export default function DemoDashboard() {
                 Ready to go live?
               </h3>
               <p className="text-xs text-muted-stone font-light mb-4">
-                Keep your data and unlock all features.
+                Set up your own restaurant in under 5 minutes.
               </p>
               <Link
-                to={`/login?from=demo&token=${token}`}
+                to="/login"
                 className="inline-block px-5 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors"
               >
-                Upgrade now
+                Get Started Free
               </Link>
             </div>
           </div>
         </div>
       </div>
+
+      {/* FAB: Add Walk-in */}
+      <button
+        type="button"
+        onClick={() => setShowWalkInModal(true)}
+        aria-label="Add walk-in"
+        className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-deep-charcoal hover:bg-charcoal-dark hover:scale-105 active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
+      >
+        <ThiingsIcon name="plus" pxSize={24} />
+      </button>
+
+      {/* FAB: Manager AI Chat */}
+      <button
+        type="button"
+        onClick={() => setChatOpen((prev) => !prev)}
+        aria-label="Open AI Manager Assistant"
+        className="fixed bottom-20 sm:bottom-6 right-20 sm:right-24 z-40 w-14 h-14 bg-blue-600 hover:bg-blue-700 hover:scale-105 active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
+      >
+        <ThiingsIcon name="message-circle" pxSize={22} />
+      </button>
+
+      {/* Manager Chat Panel */}
+      {chatOpen && (
+        <DemoManagerChat
+          occupiedTables={demo.stats.occupiedTables}
+          totalTables={demo.stats.totalTables}
+          activeParties={demo.stats.activeParties}
+          waitlistCount={demo.stats.waitlistCount}
+          reservationsToday={demo.stats.reservationsToday}
+          totalGuests={demo.stats.totalGuests}
+          onClose={() => setChatOpen(false)}
+        />
+      )}
+
+      {/* Walk-In Modal */}
+      {showWalkInModal && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowWalkInModal(false); }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Add walk-in guest"
+            className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-md w-full"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-deep-charcoal">Add Walk-In</h2>
+              <button
+                type="button"
+                onClick={() => setShowWalkInModal(false)}
+                aria-label="Close"
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-soft-gray text-muted-stone hover:text-deep-charcoal transition-colors"
+              >
+                <ThiingsIcon name="close" pxSize={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleWalkInSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-deep-charcoal mb-1">
+                  Guest Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={walkInForm.customer_name}
+                  onChange={(e) => setWalkInForm({ ...walkInForm, customer_name: e.target.value })}
+                  placeholder="e.g. Maria Lopez"
+                  className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-deep-charcoal mb-1">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  value={walkInForm.customer_phone}
+                  onChange={(e) => setWalkInForm({ ...walkInForm, customer_phone: e.target.value })}
+                  placeholder="+1 555-000-0000"
+                  className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-deep-charcoal mb-1">
+                  Party Size *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  max="20"
+                  value={walkInForm.party_size}
+                  onChange={(e) => setWalkInForm({ ...walkInForm, party_size: e.target.value })}
+                  placeholder="2"
+                  className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowWalkInModal(false)}
+                  className="flex-1 px-4 py-3 border border-border-gray text-stone-gray font-medium rounded-xl hover:bg-soft-gray transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-3 bg-burgundy text-white font-medium rounded-xl hover:bg-burgundy-dark transition-colors"
+                >
+                  Seat Guest
+                </button>
+              </div>
+
+              {demo.tables.filter((t) => t.status === 'Available').length === 0 && (
+                <p className="text-xs text-amber-600 text-center">
+                  No tables available. Consider adding to waitlist instead.
+                </p>
+              )}
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
