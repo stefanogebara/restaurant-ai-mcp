@@ -22,8 +22,8 @@ export default function DemoDashboard() {
     party_size: '',
   });
 
-  const dayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-  const dateStr = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+  const dayName = new Date().toLocaleDateString('pt-BR', { weekday: 'long' });
+  const dateStr = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
 
   // ---- Handlers ----
   const handleCheckIn = (reservation: UpcomingReservation) => {
@@ -74,14 +74,14 @@ export default function DemoDashboard() {
               <ThiingsIcon name="sparkles" pxSize={12} className="text-white" />
             </div>
             <p className="text-sm font-medium">
-              Interactive Demo &mdash; all actions are local, no real data is affected
+              Demo Interativa &mdash; todas as acoes sao locais, nenhum dado real e afetado
             </p>
           </div>
           <Link
             to="/"
             className="text-xs font-semibold text-white/80 hover:text-white underline underline-offset-2 transition-colors"
           >
-            Back to home
+            Voltar ao inicio
           </Link>
         </div>
       </div>
@@ -94,7 +94,7 @@ export default function DemoDashboard() {
             <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
               La Bella Vista
               <span className="ml-2 text-base font-light text-warm-stone">
-                &mdash; Italian &middot; Downtown
+                &mdash; Italiano &middot; Centro
               </span>
             </h1>
             <p className="text-sm text-muted-stone mt-0.5">{dayName}, {dateStr}</p>
@@ -107,7 +107,7 @@ export default function DemoDashboard() {
               className="flex items-center gap-2 px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white rounded-xl text-[13px] font-medium transition-colors"
             >
               <ThiingsIcon name="plus" pxSize={14} />
-              Add Walk-In
+              Adicionar Walk-In
             </button>
           </div>
         </div>
@@ -153,16 +153,16 @@ export default function DemoDashboard() {
             {/* Upgrade CTA */}
             <div className="bg-deep-charcoal rounded-2xl p-6 text-center">
               <h3 className="text-base font-semibold text-white mb-1 tracking-tight">
-                Ready to go live?
+                Pronto para comecar?
               </h3>
               <p className="text-xs text-muted-stone font-light mb-4">
-                Set up your own restaurant in under 5 minutes.
+                Configure seu restaurante em menos de 5 minutos.
               </p>
               <Link
                 to="/login"
                 className="inline-block px-5 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors"
               >
-                Get Started Free
+                Comecar Gratis
               </Link>
             </div>
           </div>
@@ -173,7 +173,7 @@ export default function DemoDashboard() {
       <button
         type="button"
         onClick={() => setShowWalkInModal(true)}
-        aria-label="Add walk-in"
+        aria-label="Adicionar walk-in"
         className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-deep-charcoal hover:bg-charcoal-dark hover:scale-105 active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
       >
         <ThiingsIcon name="plus" pxSize={24} />
@@ -183,7 +183,7 @@ export default function DemoDashboard() {
       <button
         type="button"
         onClick={() => setChatOpen((prev) => !prev)}
-        aria-label="Open AI Manager Assistant"
+        aria-label="Abrir Assistente IA"
         className="fixed bottom-20 sm:bottom-6 right-20 sm:right-24 z-40 w-14 h-14 bg-blue-600 hover:bg-blue-700 hover:scale-105 active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
       >
         <ThiingsIcon name="chat" pxSize={22} />
@@ -211,11 +211,11 @@ export default function DemoDashboard() {
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Add walk-in guest"
+            aria-label="Adicionar cliente walk-in"
             className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-md w-full"
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-deep-charcoal">Add Walk-In</h2>
+              <h2 className="text-lg font-bold text-deep-charcoal">Adicionar Walk-In</h2>
               <button
                 type="button"
                 onClick={() => setShowWalkInModal(false)}
@@ -229,34 +229,34 @@ export default function DemoDashboard() {
             <form onSubmit={handleWalkInSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-deep-charcoal mb-1">
-                  Guest Name *
+                  Nome do Cliente *
                 </label>
                 <input
                   type="text"
                   required
                   value={walkInForm.customer_name}
                   onChange={(e) => setWalkInForm({ ...walkInForm, customer_name: e.target.value })}
-                  placeholder="e.g. Maria Lopez"
+                  placeholder="ex. Maria Silva"
                   className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-deep-charcoal mb-1">
-                  Phone
+                  Telefone
                 </label>
                 <input
                   type="tel"
                   value={walkInForm.customer_phone}
                   onChange={(e) => setWalkInForm({ ...walkInForm, customer_phone: e.target.value })}
-                  placeholder="+1 555-000-0000"
+                  placeholder="+55 11 99999-0000"
                   className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-deep-charcoal mb-1">
-                  Party Size *
+                  Tamanho do Grupo *
                 </label>
                 <input
                   type="number"
@@ -276,19 +276,19 @@ export default function DemoDashboard() {
                   onClick={() => setShowWalkInModal(false)}
                   className="flex-1 px-4 py-3 border border-border-gray text-stone-gray font-medium rounded-xl hover:bg-soft-gray transition-colors"
                 >
-                  Cancel
+                  Cancelar
                 </button>
                 <button
                   type="submit"
                   className="flex-1 px-4 py-3 bg-burgundy text-white font-medium rounded-xl hover:bg-burgundy-dark transition-colors"
                 >
-                  Seat Guest
+                  Sentar Cliente
                 </button>
               </div>
 
               {demo.tables.filter((t) => t.status === 'Available').length === 0 && (
                 <p className="text-xs text-amber-600 text-center">
-                  No tables available. Consider adding to waitlist instead.
+                  Nenhuma mesa disponivel. Considere adicionar a lista de espera.
                 </p>
               )}
             </form>

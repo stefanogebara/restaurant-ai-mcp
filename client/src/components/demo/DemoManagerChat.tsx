@@ -24,49 +24,49 @@ function buildResponse(input: string, ctx: Omit<DemoManagerChatProps, 'onClose'>
     ? Math.round((ctx.occupiedTables / ctx.totalTables) * 100)
     : 0;
 
-  if (lower.includes('table') || lower.includes('availability') || lower.includes('available')) {
-    return `You currently have ${avail} of ${ctx.totalTables} tables available (${occupancy}% occupancy). ${
+  if (lower.includes('mesa') || lower.includes('table') || lower.includes('disponiv') || lower.includes('available')) {
+    return `Voce tem ${avail} de ${ctx.totalTables} mesas disponiveis (${occupancy}% de ocupacao). ${
       avail <= 2
-        ? 'Getting tight -- consider the waitlist for new walk-ins.'
-        : 'Plenty of room for walk-ins.'
+        ? 'Ficando apertado -- considere a lista de espera para novos walk-ins.'
+        : 'Bastante espaco para walk-ins.'
     }`;
   }
 
-  if (lower.includes('waitlist') || lower.includes('wait list') || lower.includes('waiting')) {
+  if (lower.includes('espera') || lower.includes('waitlist') || lower.includes('fila')) {
     return ctx.waitlistCount > 0
-      ? `There ${ctx.waitlistCount === 1 ? 'is 1 party' : `are ${ctx.waitlistCount} parties`} on the waitlist. You have ${avail} tables free, so you could seat someone now.`
-      : 'The waitlist is clear -- no one waiting right now.';
+      ? `${ctx.waitlistCount === 1 ? 'Ha 1 grupo' : `Ha ${ctx.waitlistCount} grupos`} na lista de espera. Voce tem ${avail} mesas livres, entao pode sentar alguem agora.`
+      : 'A lista de espera esta vazia -- ninguem esperando no momento.';
   }
 
-  if (lower.includes('reservation') || lower.includes('booking')) {
-    return `You have ${ctx.reservationsToday} reservations for today. ${
+  if (lower.includes('reserva') || lower.includes('reservation') || lower.includes('booking')) {
+    return `Voce tem ${ctx.reservationsToday} reservas para hoje. ${
       ctx.reservationsToday > 4
-        ? 'Busy day ahead -- make sure staff is ready.'
-        : 'A manageable load for today.'
+        ? 'Dia cheio pela frente -- garanta que a equipe esta preparada.'
+        : 'Uma carga tranquila para hoje.'
     }`;
   }
 
-  if (lower.includes('guest') || lower.includes('cover') || lower.includes('people')) {
-    return `${ctx.totalGuests} guests are currently seated across ${ctx.activeParties} active ${ctx.activeParties === 1 ? 'party' : 'parties'}.`;
+  if (lower.includes('cliente') || lower.includes('guest') || lower.includes('pessoa') || lower.includes('cover')) {
+    return `${ctx.totalGuests} clientes estao sentados em ${ctx.activeParties} ${ctx.activeParties === 1 ? 'grupo ativo' : 'grupos ativos'}.`;
   }
 
-  if (lower.includes('status') || lower.includes('overview') || lower.includes('summary') || lower.includes('how')) {
-    return `Here's your snapshot: ${ctx.occupiedTables}/${ctx.totalTables} tables occupied (${occupancy}%), ${ctx.activeParties} active parties with ${ctx.totalGuests} guests seated, ${ctx.reservationsToday} reservations today, and ${ctx.waitlistCount} on the waitlist.`;
+  if (lower.includes('status') || lower.includes('resumo') || lower.includes('overview') || lower.includes('como')) {
+    return `Aqui esta seu resumo: ${ctx.occupiedTables}/${ctx.totalTables} mesas ocupadas (${occupancy}%), ${ctx.activeParties} grupos ativos com ${ctx.totalGuests} clientes sentados, ${ctx.reservationsToday} reservas hoje e ${ctx.waitlistCount} na lista de espera.`;
   }
 
-  if (lower.includes('staff') || lower.includes('team')) {
-    return `With ${ctx.activeParties} active parties and ${ctx.reservationsToday} upcoming reservations, I'd recommend at least ${Math.max(2, Math.ceil(ctx.activeParties / 2))} servers and 1 host on the floor right now.`;
+  if (lower.includes('equipe') || lower.includes('staff') || lower.includes('func')) {
+    return `Com ${ctx.activeParties} grupos ativos e ${ctx.reservationsToday} reservas, eu recomendaria pelo menos ${Math.max(2, Math.ceil(ctx.activeParties / 2))} garcons e 1 hostess no salao agora.`;
   }
 
-  if (lower.includes('help') || lower.includes('what can')) {
-    return 'I can help with: table availability, waitlist status, reservation overview, guest counts, staffing suggestions, and a general status summary. Just ask!';
+  if (lower.includes('ajuda') || lower.includes('help') || lower.includes('o que')) {
+    return 'Posso ajudar com: disponibilidade de mesas, lista de espera, resumo de reservas, contagem de clientes, sugestoes de equipe e um resumo geral. E so perguntar!';
   }
 
-  if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
-    return `Hi there! You've got ${ctx.activeParties} parties seated and ${ctx.reservationsToday} reservations today. How can I help?`;
+  if (lower.includes('oi') || lower.includes('ola') || lower.includes('hello') || lower.includes('hi')) {
+    return `Oi! Voce tem ${ctx.activeParties} grupos sentados e ${ctx.reservationsToday} reservas hoje. Como posso ajudar?`;
   }
 
-  return `Right now you have ${avail} tables free, ${ctx.activeParties} active parties, and ${ctx.reservationsToday} reservations today. Ask me about tables, waitlist, reservations, guests, or staffing for more detail.`;
+  return `Agora voce tem ${avail} mesas livres, ${ctx.activeParties} grupos ativos e ${ctx.reservationsToday} reservas hoje. Pergunte sobre mesas, espera, reservas, clientes ou equipe para mais detalhes.`;
 }
 
 let msgCounter = 0;
@@ -84,7 +84,7 @@ export default function DemoManagerChat({
     {
       id: 'intro',
       role: 'assistant',
-      content: `Hi! I'm your AI manager assistant. You have ${activeParties} active parties and ${reservationsToday} reservations today. Ask me anything about your restaurant's status.`,
+      content: `Oi! Sou seu assistente de gerencia com IA. Voce tem ${activeParties} grupos ativos e ${reservationsToday} reservas hoje. Pergunte qualquer coisa sobre o status do seu restaurante.`,
     },
   ]);
   const [input, setInput] = useState('');
@@ -126,14 +126,14 @@ export default function DemoManagerChat({
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-soft-gray bg-deep-charcoal rounded-t-2xl">
         <div>
-          <h3 className="text-sm font-semibold text-white">Manager AI</h3>
-          <p className="text-[11px] text-muted-stone">Demo mode -- no real data</p>
+          <h3 className="text-sm font-semibold text-white">Gerente IA</h3>
+          <p className="text-[11px] text-muted-stone">Modo demo -- sem dados reais</p>
         </div>
         <button
           type="button"
           onClick={onClose}
           className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/10 text-muted-stone hover:text-white transition-colors"
-          aria-label="Close chat"
+          aria-label="Fechar chat"
         >
           <ThiingsIcon name="close" pxSize={14} />
         </button>
@@ -183,14 +183,14 @@ export default function DemoManagerChat({
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about your restaurant..."
+            placeholder="Pergunte sobre seu restaurante..."
             className="flex-1 px-3.5 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-sm text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30"
           />
           <button
             type="submit"
             disabled={!input.trim()}
             className="w-9 h-9 bg-burgundy hover:bg-burgundy-dark disabled:bg-muted-stone text-white rounded-xl flex items-center justify-center transition-colors flex-shrink-0"
-            aria-label="Send message"
+            aria-label="Enviar mensagem"
           >
             <ThiingsIcon name="send" pxSize={14} />
           </button>
