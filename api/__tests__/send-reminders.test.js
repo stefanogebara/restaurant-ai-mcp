@@ -44,10 +44,12 @@ jest.mock('../_lib/supabase', () => {
           return {
             select: jest.fn().mockReturnThis(),
             eq: jest.fn().mockReturnThis(),
-            not: jest.fn(() => Promise.resolve({
-              data: mockReservations,
-              error: mockReservationsError,
-            })),
+            not: jest.fn().mockReturnValue({
+              limit: jest.fn(() => Promise.resolve({
+                data: mockReservations,
+                error: mockReservationsError,
+              })),
+            }),
             update: jest.fn(() => ({
               eq: jest.fn(() => Promise.resolve({ data: null, error: null })),
             })),

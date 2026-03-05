@@ -76,6 +76,32 @@ const uiLabels = {
 
 let msgCounter = 0;
 
+async function fetchAIResponse(message: string, ctx: Ctx, lang: DemoLang): Promise<string | null> {
+  try {
+    const res = await fetch('/api/demo-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message,
+        context: {
+          occupiedTables: ctx.occupiedTables,
+          totalTables: ctx.totalTables,
+          activeParties: ctx.activeParties,
+          waitlistCount: ctx.waitlistCount,
+          reservationsToday: ctx.reservationsToday,
+          totalGuests: ctx.totalGuests,
+        },
+        lang,
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.reply || null;
+  } catch {
+    return null;
+  }
+}
+
 export default function DemoManagerChat({
   occupiedTables, totalTables, activeParties, waitlistCount, reservationsToday, totalGuests, onClose, lang,
 }: DemoManagerChatProps) {
@@ -95,7 +121,7 @@ export default function DemoManagerChat({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const text = input.trim();
     if (!text) return;
 
@@ -105,13 +131,15 @@ export default function DemoManagerChat({
     setInput('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      msgCounter += 1;
-      const ctx: Ctx = { occupiedTables, totalTables, activeParties, waitlistCount, reservationsToday, totalGuests };
-      const reply = lang === 'pt-BR' ? buildResponsePT(text, ctx) : buildResponseEN(text, ctx);
-      setMessages((prev) => [...prev, { id: `a${msgCounter}`, role: 'assistant', content: reply }]);
-      setIsTyping(false);
-    }, 600 + Math.random() * 400);
+    const ctx: Ctx = { occupiedTables, totalTables, activeParties, waitlistCount, reservationsToday, totalGuests };
+
+    // Try real AI, fall back to keyword-matched response
+    const aiReply = await fetchAIResponse(text, ctx, lang);
+    const reply = aiReply || (lang === 'pt-BR' ? buildResponsePT(text, ctx) : buildResponseEN(text, ctx));
+
+    msgCounter += 1;
+    setMessages((prev) => [...prev, { id: `a${msgCounter}`, role: 'assistant', content: reply }]);
+    setIsTyping(false);
   };
 
   return (
@@ -168,7 +196,7 @@ export default function DemoManagerChat({
           />
           <button
             type="submit"
-            disabled={!input.trim()}
+            disabled={!input.trim() || isTyping}
             className="w-9 h-9 bg-burgundy hover:bg-burgundy-dark disabled:bg-muted-stone text-white rounded-xl flex items-center justify-center transition-colors flex-shrink-0"
             aria-label={ui.send}
           >

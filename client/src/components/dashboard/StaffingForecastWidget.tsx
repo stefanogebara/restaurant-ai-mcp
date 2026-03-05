@@ -23,11 +23,11 @@ export default function StaffingForecastWidget() {
       </h2>
 
       {isError && (
-        <p className="text-sm text-red-500">Could not load staffing forecast.</p>
+        <p className="text-sm text-warm-stone">{t('dashboard.staffingForecastEmpty')}</p>
       )}
 
       {!isError && forecast && forecast.length === 0 && (
-        <p className="text-sm text-warm-stone">No forecast available yet.</p>
+        <p className="text-sm text-warm-stone">{t('dashboard.staffingForecastEmpty')}</p>
       )}
 
       {forecast && forecast.length > 0 && (

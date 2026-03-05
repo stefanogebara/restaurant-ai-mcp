@@ -56,9 +56,9 @@ describe('StaffingForecastWidget', () => {
     expect(screen.getByText(/no forecast/i)).toBeInTheDocument();
   });
 
-  it('shows error state', () => {
+  it('shows error state as neutral empty message', () => {
     mockUse.mockReturnValue({ data: undefined, isLoading: false, isError: true });
     render(<StaffingForecastWidget />);
-    expect(screen.getByText(/could not load/i)).toBeInTheDocument();
+    expect(screen.getByText(/no forecast available/i)).toBeInTheDocument();
   });
 });

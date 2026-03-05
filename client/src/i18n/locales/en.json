@@ -84,8 +84,46 @@
     "trialExpiresToday": "expires today",
     "trialUpgradeHint": "Upgrade to keep all features after your trial ends.",
     "viewPlans": "View Plans",
+    "paymentFailed": "Payment failed",
+    "paymentFailedHint": "Please update your payment method to keep your subscription active.",
+    "updatePayment": "Update Payment",
+    "staffingForecastEmpty": "No forecast available yet.",
     "completeService": "Complete Service",
+    "completeServiceFor": "Complete service for {{name}}?",
     "complete": "Complete",
+    "activePartiesPanel": {
+      "noActive": "No active parties yet",
+      "addHint": "Add a walk-in or check in a reservation to get started",
+      "guests": "guests",
+      "table": "Table",
+      "overdue": "Overdue",
+      "elapsed": "elapsed",
+      "left": "left",
+      "guestsSeated": "guests seated",
+      "billAmount": "Bill amount (optional)"
+    },
+    "managerNotes": {
+      "title": "AI Memory & Manager Notes",
+      "subtitle": "Teach the AI about your guests and policies",
+      "addNote": "Add Note",
+      "guestPhone": "Guest Phone (optional)",
+      "guestPhonePlaceholder": "+34 612 345 678",
+      "noteContent": "Note",
+      "noteContentPlaceholder": "e.g., \"Always comp dessert for Mr. Rodriguez\" or \"No large parties near the kitchen\"",
+      "typeLabel": "Note Type",
+      "typeVip": "VIP Guest Instruction",
+      "typePolicy": "General Policy",
+      "typePreference": "Guest Preference",
+      "saving": "Saving...",
+      "save": "Save Note",
+      "noNotesTitle": "No notes yet",
+      "noNotes": "Add notes to teach the AI about your guests and policies.",
+      "deleteConfirm": "Delete this note?",
+      "policy": "Policy",
+      "guest": "Guest",
+      "errorSave": "Failed to save note",
+      "errorDelete": "Failed to delete note"
+    },
     "stats": {
       "reservations": "Today's Reservations",
       "tables": "Tables Available",
@@ -117,6 +155,7 @@
     "cancel": "Cancel",
     "details": "Details",
     "restaurantNotFound": "Restaurant Not Found",
+    "restaurantNotFoundDesc": "The restaurant you are looking for does not exist or is not accepting online reservations.",
     "closedToday": "Closed today",
     "cuisine": "Cuisine",
     "hoursToday": "Hours today",
@@ -146,6 +185,23 @@
     "lookUpAnother": "Look up another reservation",
     "saving": "Saving...",
     "saveChanges": "Save Changes"
+  },
+  "booking": {
+    "reserveTable": "Reserve a table",
+    "chooseDetails": "Choose your date, time, and party size below.",
+    "selectDate": "Select Date",
+    "selectTime": "Select Time",
+    "checkingAvailability": "Checking availability...",
+    "noAvailableTimes": "No available times for this date.",
+    "partySize": "Party Size",
+    "guests_one": "guest",
+    "guests_other": "guests",
+    "reservationSummary": "Reservation Summary",
+    "restaurant": "Restaurant",
+    "estimatedDuration": "Estimated duration",
+    "confirming": "Confirming...",
+    "continueToPayment": "Continue to Payment",
+    "confirmReservation": "Confirm Reservation"
   },
   "waitlist": {
     "title": "Waitlist",
@@ -292,7 +348,23 @@
     "createAccountBtn": "Create Account",
     "newToSeatable": "New to seatable?",
     "createAnAccount": "Create an account",
-    "alreadyHaveAccount": "Already have an account?"
+    "alreadyHaveAccount": "Already have an account?",
+    "brandTagline": "An AI that truly understands your restaurant.",
+    "brandFeature1Title": "AI Voice Agent",
+    "brandFeature1Desc": "Handles calls and reservations in your restaurant's unique voice and personality.",
+    "brandFeature2Title": "Smart Dashboard",
+    "brandFeature2Desc": "Real-time reservations, walk-ins, and table management on one screen.",
+    "brandFeature3Title": "Guest Memory",
+    "brandFeature3Desc": "Every returning guest feels recognized with personalized experiences.",
+    "statResponse": "Avg Response",
+    "statLanguages": "Languages",
+    "statBooking": "AI Booking",
+    "orDivider": "or",
+    "legalPrefix": "By continuing, you agree to our",
+    "termsOfService": "Terms of Service",
+    "legalAnd": "and",
+    "privacyPolicy": "Privacy Policy",
+    "confirmationSent": "Check your email for a confirmation link to complete your registration."
   },
   "settings": {
     "title": "Settings",
@@ -311,6 +383,8 @@
     "connectionStatus": "Connection Status",
     "apiConnected": "API Connected",
     "apiNotConfigured": "API Not Configured",
+    "whatsappSetupHint": "Contact Seatable support to configure your WhatsApp connection.",
+    "settings": "Settings",
     "enableWhatsApp": "Enable WhatsApp",
     "enableWhatsAppDesc": "Send reservation confirmations via WhatsApp instead of SMS",
     "tableConfig": "Table Configuration",
@@ -335,7 +409,23 @@
       "occupied": "Occupied",
       "reserved": "Reserved",
       "cleaning": "Cleaning"
-    }
+    },
+    "tableCreated": "Table created successfully",
+    "tableCreateFailed": "Failed to create table",
+    "tableUpdated": "Table updated successfully",
+    "tableUpdateFailed": "Failed to update table",
+    "tableDeactivated": "Table deactivated successfully",
+    "tableDeactivateFailed": "Failed to deactivate table",
+    "adjacencyUpdated": "Adjacency relationships updated",
+    "adjacencyUpdateFailed": "Failed to update adjacency",
+    "confirmDeactivate": "Are you sure you want to deactivate Table {{number}}?",
+    "tablesCount": "tables",
+    "tableLabel": "Table",
+    "seats": "seats",
+    "createTable": "Create Table",
+    "saveChanges": "Save Changes",
+    "deactivating": "Deactivating...",
+    "deactivateTable": "Deactivate Table"
   },
   "customers": {
     "title": "Customers",
@@ -404,12 +494,43 @@
     "goBack": "Go Back",
     "copyright": "© 2026 Seatable. All rights reserved."
   },
-  "subscription": {
+    "subscription": {
     "verifying": "Verifying your subscription...",
     "welcomeTo": "Welcome to {{plan}}!",
     "upgradeActive": "Your upgrade is active. You now have access to the AI Voice Agent and advanced analytics.",
     "redirecting": "Redirecting to onboarding in 3 seconds...",
     "goToDashboard": "Go to Dashboard"
+  },
+  "floorPlan": {
+    "title": "Floor Plan",
+    "subtitle": "Drag tables to rearrange · Click a table to edit its properties",
+    "saving": "Saving...",
+    "saved": "Saved",
+    "linking": "Linking...",
+    "linkTables": "Link Tables",
+    "addTable": "Add Table"
+  },
+  "insights": {
+    "title": "AI Insights",
+    "subtitle": "What should you do today? Your personalized command center.",
+    "upgradeTitle": "AI Insights on Growth & Scale",
+    "upgradeDescription": "Upgrade to access tonight's briefing, customer intelligence, revenue quick wins, and retention forecasts.",
+    "upgradePlan": "Upgrade Plan"
+  },
+  "callTracking": {
+    "title": "Call History",
+    "today": "Today",
+    "refresh": "Refresh",
+    "phoneConnected": "Phone number connected successfully",
+    "phoneSetupFailed": "Failed to set up phone",
+    "confirmDisconnect": "Are you sure you want to disconnect this phone number?",
+    "phoneDisconnected": "Phone number disconnected",
+    "disconnectFailed": "Failed to disconnect phone",
+    "diagnosticsLoaded": "Agent diagnostics loaded",
+    "diagnosticsFailed": "Failed to diagnose agent",
+    "toolsConfigured": "Tools configured successfully",
+    "toolsFixFailed": "Failed to fix tools",
+    "refreshingStatus": "Refreshing phone status..."
   },
   "landing": {
     "badge": "AI-Powered Restaurant Management",
@@ -479,14 +600,209 @@
       "subtitle": "Join the first restaurants using Seatable. Free plan available, no credit card required.",
       "button": "Start Free Trial"
     },
+    "nav": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "demo": "Demo",
+      "contact": "Contact",
+      "tryFree": "Try free demo",
+      "signIn": "Sign in",
+      "getStarted": "Get Started"
+    },
+    "demo": {
+      "label": "Live Demo",
+      "heading": "Experience the platform live",
+      "subtitle": "Interact with our demo restaurant and see how the AI handles reservations in real-time",
+      "chatTitle": "Chat with Our AI",
+      "chatDesc": "Try making a reservation via our AI-powered chat. Speak naturally or type your request.",
+      "chatCta": "Start Chat",
+      "voiceTitle": "Voice Reservations",
+      "voiceDesc": "Our AI handles phone calls in 6+ languages, takes reservations, and confirms bookings automatically.",
+      "voiceCta": "Try Live Demo",
+      "infoTitle": "Demo Restaurant",
+      "infoName": "Name",
+      "infoTables": "Tables",
+      "infoCapacity": "Capacity",
+      "infoSeats": "seats",
+      "infoOccupancy": "Occupancy",
+      "ctaText": "Ready to implement this for your restaurant?",
+      "ctaButton": "Get Started Today",
+      "sidebarOverview": "Overview",
+      "sidebarCustomers": "Customers",
+      "sidebarAnalytics": "Analytics",
+      "tryLiveDemo": "Try Live Demo",
+      "liveBadge": "LIVE"
+    },
+    "contact": {
+      "label": "Contact",
+      "heading": "Get started today",
+      "subtitle": "Schedule a personalized demo and discover how seatable can transform your operations",
+      "infoTitle": "Contact Information",
+      "emailLabel": "Email",
+      "responseTimeLabel": "Response Time",
+      "responseTimeValue": "Within 24 hours",
+      "expectTitle": "What to Expect",
+      "expect1": "Personalized 30-minute demo call",
+      "expect2": "Custom pricing based on your needs",
+      "expect3": "Technical consultation with our team",
+      "expect4": "Free trial to test the platform",
+      "formName": "Full Name",
+      "formEmail": "Email Address",
+      "formPhone": "Phone Number",
+      "formRestaurant": "Restaurant Name",
+      "formTables": "Number of Tables",
+      "formMessage": "Tell us about your needs",
+      "placeholderName": "John Smith",
+      "placeholderEmail": "john@restaurant.com",
+      "placeholderPhone": "+1 (555) 123-4567",
+      "placeholderRestaurant": "La Bella Vista",
+      "placeholderTables": "12",
+      "placeholderMessage": "I'm interested in implementing seatable for my restaurant...",
+      "required": "*",
+      "errorName": "Full name is required",
+      "errorEmail": "Email address is required",
+      "errorEmailInvalid": "Please enter a valid email address",
+      "errorRestaurant": "Restaurant name is required",
+      "errorMessage": "Please tell us about your needs",
+      "submitSend": "Send Message",
+      "submitSending": "Sending...",
+      "submitSent": "Message Sent!",
+      "submitError": "Something went wrong. Please try again or email us directly.",
+      "privacyNote": "By submitting this form, you agree to be contacted regarding your inquiry.",
+      "statUptime": "AI Uptime",
+      "statResponse": "Response",
+      "statLanguages": "Languages"
+    },
+    "footer": {
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service"
+    },
     "pricing": {
       "label": "Pricing",
       "heading": "Simple, transparent pricing.",
       "subheading": "No hidden fees. Cancel anytime.",
       "usageBased": "Usage-based fees apply",
-      "usageDetail": "beyond plan limits: additional reservations, AI phone calls, SMS notifications, and WhatsApp messages are billed per use. All prices in EUR. Cancel or upgrade anytime.",
+      "usageDetail": "beyond plan limits: additional reservations, AI phone calls, SMS notifications, and WhatsApp messages are billed per use. All prices in {{currency}}. Cancel or upgrade anytime.",
       "customSolution": "Need a custom solution?",
-      "enterpriseLink": "Contact us for enterprise pricing"
+      "enterpriseLink": "Contact us for enterprise pricing",
+      "starter": {
+        "desc": "Perfect for small restaurants",
+        "cta": "Get Started",
+        "f1": "AI reservations (Chat + WhatsApp)",
+        "f2": "Host dashboard",
+        "f3": "Basic analytics",
+        "f4": "Email support",
+        "f5": "Up to 50 reservations/month"
+      },
+      "growth": {
+        "desc": "For growing restaurants",
+        "cta": "Start Free Trial",
+        "f1": "Everything in Starter",
+        "f2": "Voice AI agent",
+        "f3": "Advanced analytics",
+        "f4": "Waitlist management",
+        "f5": "Up to 150 reservations/month",
+        "f6": "SMS notifications"
+      },
+      "scale": {
+        "desc": "For high-volume restaurants",
+        "cta": "Start Free Trial",
+        "f1": "Everything in Growth",
+        "f2": "Unlimited reservations",
+        "f3": "Unlimited SMS",
+        "f4": "Priority support",
+        "f5": "Custom integrations"
+      }
+    },
+    "liveDemo": {
+      "nav": {
+        "features": "Features",
+        "pricing": "Pricing",
+        "demo": "Demo",
+        "contact": "Contact",
+        "getStarted": "Get Started"
+      },
+      "hero": {
+        "badge": "Live Demo",
+        "title": "Hear the AI in",
+        "titleEm": "action.",
+        "subtitle": "Call our demo restaurant and experience the AI voice agent that handles reservations naturally, just like your best host would."
+      },
+      "widget": {
+        "label": "Demo Restaurant",
+        "name": "Cantina da Praca",
+        "details": "Brasileira \u00b7 Contemporanea \u00b7 Jardins, SP",
+        "instructions": "The AI voice agent is live. Click the button in the bottom-right corner of the screen to start a conversation \u2014 try making a reservation for 2 people this Friday evening.",
+        "instructionsHint": "Look for the chat button in the corner",
+        "agentOnline": "AI Agent Online",
+        "voiceComingSoon": "Voice Demo Coming Soon",
+        "voiceComingSoonDesc": "The live voice agent demo requires ElevenLabs configuration. In the meantime, try the customer booking experience below.",
+        "bookingFlowLabel": "Or experience the customer booking flow:",
+        "tryBooking": "Try booking a table \u2192"
+      },
+      "features": {
+        "natural": {
+          "title": "Natural Conversation",
+          "desc": "The AI speaks naturally, handling complex requests like dietary needs, special occasions, and group bookings."
+        },
+        "personality": {
+          "title": "Restaurant Personality",
+          "desc": "Each AI agent is trained on your restaurant's style, menu, and values to sound authentically yours."
+        },
+        "available": {
+          "title": "Always Available",
+          "desc": "Never miss a reservation. The AI handles calls 24/7 in multiple languages with instant availability checks."
+        }
+      },
+      "cta": {
+        "title": "Ready for your own AI host?",
+        "subtitle": "Set up in 5 minutes. No technical knowledge required.",
+        "button": "Try It With Your Restaurant"
+      }
+    },
+    "demoSetup": {
+      "nav": {
+        "signIn": "Already have an account? Sign in"
+      },
+      "badge": "Free Demo",
+      "title": "See Seatable running",
+      "titleEm": "in your restaurant",
+      "titleSuffix": "in 2 minutes.",
+      "subtitle": "Set up your personalised demo \u2014 your branding, your hours, your menu.",
+      "trust": {
+        "avgResponse": "Avg Response",
+        "languages": "Languages",
+        "aiBooking": "AI Booking"
+      },
+      "form": {
+        "sectionRestaurant": "Your Restaurant",
+        "restaurantName": "Restaurant name",
+        "restaurantNamePlaceholder": "Bella Roma",
+        "cuisineType": "Cuisine type",
+        "cuisineTypePlaceholder": "Italian \u00b7 Mediterranean \u00b7 Farm-to-table",
+        "city": "City",
+        "cityPlaceholder": "Madrid",
+        "country": "Country",
+        "countryPlaceholder": "Spain",
+        "sectionHours": "Hours & Capacity",
+        "opensAt": "Opens at",
+        "closesAt": "Closes at",
+        "maxPartySize": "Max party size",
+        "sectionPolicies": "Policies",
+        "optional": "optional",
+        "cancellationPolicy": "Cancellation policy",
+        "cancellationPolicyPlaceholder": "Free cancellation up to 24h before",
+        "houseRules": "House rules",
+        "houseRulesPlaceholder": "No outside cake, no pets on terrace...",
+        "sectionAboutYou": "About You",
+        "yourName": "Your name",
+        "yourNamePlaceholder": "Sofia",
+        "workEmail": "Work email",
+        "workEmailPlaceholder": "sofia@bellaroma.com",
+        "createButton": "Create my demo \u2192",
+        "creating": "Creating your demo\u2026",
+        "noCreditCard": "No credit card required. Your demo is ready in seconds."
+      }
     },
     "faq": {
       "label": "FAQ",

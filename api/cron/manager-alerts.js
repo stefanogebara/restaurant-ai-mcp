@@ -91,7 +91,7 @@ async function checkTrigger(alertType, restaurant) {
         .from('reservations')
         .select('party_size')
         .eq('restaurant_id', restaurantId)
-        .eq('reservation_date', today)
+        .eq('date', today)
         .not('status', 'in', '("cancelled","no_show")'),
       supabaseAdmin
         .from('tables')
@@ -108,7 +108,7 @@ async function checkTrigger(alertType, restaurant) {
       .from('reservations')
       .select('id')
       .eq('restaurant_id', restaurantId)
-      .eq('reservation_date', today)
+      .eq('date', today)
       .not('status', 'in', '("cancelled","no_show")')
       .gte('no_show_probability', 0.7);
     const n = (highRisk || []).length;
@@ -122,14 +122,14 @@ async function checkTrigger(alertType, restaurant) {
         .from('reservations')
         .select('id')
         .eq('restaurant_id', restaurantId)
-        .eq('reservation_date', today)
+        .eq('date', today)
         .eq('status', 'cancelled')
         .gte('updated_at', twoHoursAgo),
       supabaseAdmin
         .from('reservations')
         .select('party_size')
         .eq('restaurant_id', restaurantId)
-        .eq('reservation_date', today)
+        .eq('date', today)
         .not('status', 'in', '("cancelled","no_show")'),
     ]);
     const n = (cancelled || []).length;

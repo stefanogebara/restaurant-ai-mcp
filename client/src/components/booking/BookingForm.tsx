@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useTimeSlots, useCreateReservation } from '../../hooks/useBooking';
 import DepositPaymentStep from './DepositPaymentStep';
 import GuestDetailsForm from './GuestDetailsForm';
@@ -47,6 +48,7 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 }
 
 export default function BookingForm({ restaurant }: BookingFormProps) {
+  const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
 
@@ -63,6 +65,8 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   const [depositAmount, setDepositAmount] = useState(0);
   const [paymentIntentId, setPaymentIntentId] = useState('');
   const [depositError, setDepositError] = useState<string | null>(null);
+  const [showPartySizeInput, setShowPartySizeInput] = useState(false);
+  const [customPartySizeValue, setCustomPartySizeValue] = useState('8');
 
   // Reset time when date or party size changes
   useEffect(() => { setSelectedTime(''); }, [selectedDate, partySize]);
@@ -144,7 +148,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       } : {}),
     }, {
       onSuccess: ({ reservation }) => {
-        navigate(`/book/${slug}/confirmed?id=${reservation.id}`, {
+        navigate(`/book/${slug}/confirmed?id=${reservation.id}&rid=${restaurant.id}`, {
           state: { reservation, restaurant_name: restaurant.name, restaurant_id: restaurant.id },
         });
       },
@@ -168,7 +172,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       deposit_amount: depositAmount,
     }, {
       onSuccess: ({ reservation }) => {
-        navigate(`/book/${slug}/confirmed?id=${reservation.id}`, {
+        navigate(`/book/${slug}/confirmed?id=${reservation.id}&rid=${restaurant.id}`, {
           state: { reservation, restaurant_name: restaurant.name, restaurant_id: restaurant.id },
         });
       },
@@ -183,17 +187,17 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       {/* Header */}
       <div className="mb-9">
         <h1 className="font-serif text-4xl font-medium text-deep-charcoal tracking-tight mb-2">
-          Reserve a table
+          {t('booking.reserveTable')}
         </h1>
         <p className="text-[15px] text-warm-stone font-light">
-          Choose your date, time, and party size below.
+          {t('booking.chooseDetails')}
         </p>
       </div>
 
       {/* Date Selection */}
       <div className="mb-8">
         <div className="text-xs font-semibold tracking-wider uppercase text-warm-stone mb-3">
-          Select Date
+          {t('booking.selectDate')}
         </div>
         <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
           {availableDates.slice(0, 21).map((d) => (
@@ -219,15 +223,15 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       {selectedDate && (
         <div className="mb-8">
           <div className="text-xs font-semibold tracking-wider uppercase text-warm-stone mb-3">
-            Select Time
+            {t('booking.selectTime')}
           </div>
           {loadingSlots ? (
             <div role="status" className="flex items-center justify-center py-8 gap-3">
               <div aria-hidden="true" className="animate-spin rounded-full h-6 w-6 border-2 border-border-gray border-t-burgundy" />
-              <span className="text-sm text-stone-gray">Checking availability...</span>
+              <span className="text-sm text-stone-gray">{t('booking.checkingAvailability')}</span>
             </div>
           ) : timeSlots.length === 0 ? (
-            <p className="text-sm text-warm-stone py-4">No available times for this date.</p>
+            <p className="text-sm text-warm-stone py-4">{t('booking.noAvailableTimes')}</p>
           ) : (
             <div className="grid grid-cols-4 gap-2">
               {timeSlots.map(slot => (
@@ -255,7 +259,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       {/* Party Size */}
       <div className="mb-8">
         <div className="text-xs font-semibold tracking-wider uppercase text-warm-stone mb-3">
-          Party Size
+          {t('booking.partySize')}
         </div>
         <div className="flex gap-2 flex-wrap">
           {Array.from({ length: Math.min(restaurant.max_party_size, 7) }, (_, i) => i + 1).map(n => (
@@ -272,16 +276,10 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
               {n}
             </button>
           ))}
-          {restaurant.max_party_size > 7 && (
+          {restaurant.max_party_size > 7 && !showPartySizeInput && (
             <button
               type="button"
-              onClick={() => {
-                const size = prompt(`Party size (max ${restaurant.max_party_size}):`, '8');
-                if (size) {
-                  const n = parseInt(size, 10);
-                  if (n > 0 && n <= restaurant.max_party_size) setPartySize(n);
-                }
-              }}
+              onClick={() => setShowPartySizeInput(true)}
               className={`w-12 h-12 rounded-xl border text-[15px] font-medium transition-colors ${
                 partySize > 7
                   ? 'border-burgundy bg-burgundy/[4%] text-burgundy font-bold'
@@ -290,6 +288,50 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
             >
               {partySize > 7 ? partySize : '8+'}
             </button>
+          )}
+          {showPartySizeInput && (
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={8}
+                max={restaurant.max_party_size}
+                value={customPartySizeValue}
+                onChange={e => setCustomPartySizeValue(e.target.value)}
+                className="w-20 h-12 rounded-xl border border-burgundy bg-burgundy/[4%] text-burgundy text-center text-[15px] font-bold focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+                autoFocus
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    const n = parseInt(customPartySizeValue, 10);
+                    if (n > 0 && n <= restaurant.max_party_size) {
+                      setPartySize(n);
+                      setShowPartySizeInput(false);
+                    }
+                  } else if (e.key === 'Escape') {
+                    setShowPartySizeInput(false);
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const n = parseInt(customPartySizeValue, 10);
+                  if (n > 0 && n <= restaurant.max_party_size) {
+                    setPartySize(n);
+                    setShowPartySizeInput(false);
+                  }
+                }}
+                className="h-12 px-3 rounded-xl bg-burgundy text-white text-sm font-semibold hover:bg-burgundy-dark transition-colors"
+              >
+                OK
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowPartySizeInput(false)}
+                className="h-12 px-3 rounded-xl border border-border-gray text-stone-gray text-sm font-medium hover:bg-soft-gray transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -309,21 +351,21 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       {/* Summary Card */}
       {selectedDate && selectedTime && (
         <div className="bg-white border border-border-gray rounded-2xl p-6 mb-6">
-          <h3 className="text-sm font-semibold text-deep-charcoal mb-4">Reservation Summary</h3>
-          <SummaryRow label="Restaurant" value={restaurant.name} />
+          <h3 className="text-sm font-semibold text-deep-charcoal mb-4">{t('booking.reservationSummary')}</h3>
+          <SummaryRow label={t('booking.restaurant')} value={restaurant.name} />
           <SummaryRow
-            label="Date"
+            label={t('reservations.date')}
             value={new Date(selectedDate + 'T12:00:00').toLocaleDateString('en-US', {
               weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
             })}
           />
-          <SummaryRow label="Time" value={formatTime(selectedTime)} />
-          <SummaryRow label="Party size" value={`${partySize} guest${partySize !== 1 ? 's' : ''}`} />
+          <SummaryRow label={t('reservations.time')} value={formatTime(selectedTime)} />
+          <SummaryRow label={t('booking.partySize')} value={`${partySize} ${t('booking.guests', { count: partySize })}`} />
           {restaurant.average_dining_duration && (
             <>
               <hr className="border-0 border-t border-dashed border-border-gray my-3" />
               <SummaryRow
-                label="Estimated duration"
+                label={t('booking.estimatedDuration')}
                 value={`~${Math.floor(restaurant.average_dining_duration / 60)}h ${restaurant.average_dining_duration % 60}min`}
               />
             </>
@@ -368,12 +410,12 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
           {reserve.isPending ? (
             <>
               <div aria-hidden="true" className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
-              Confirming...
+              {t('booking.confirming')}
             </>
           ) : depositRequired && !paymentIntentId ? (
-            'Continue to Payment'
+            t('booking.continueToPayment')
           ) : (
-            'Confirm Reservation'
+            t('booking.confirmReservation')
           )}
         </button>
       )}

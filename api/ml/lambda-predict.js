@@ -11,7 +11,7 @@ const { createSecureLogger } = require('../_lib/secure-logger');
 const logger = createSecureLogger('MLLambdaPredict');
 
 // Lambda endpoint from Vercel environment variable
-const ML_ENDPOINT_URL = process.env.ML_ENDPOINT_URL || 'https://ht5iob5wezlylbl5qc72ehfk6i0srrwl.lambda-url.us-east-1.on.aws/';
+const ML_ENDPOINT_URL = process.env.ML_ENDPOINT_URL;
 
 /**
  * Extract features for Lambda ML model
@@ -99,6 +99,9 @@ function extractLambdaFeatures(reservation, customerHistory = null) {
  * @returns {Promise<Object>} - Lambda response with prediction
  */
 async function callLambdaEndpoint(reservation) {
+  if (!ML_ENDPOINT_URL) {
+    throw new Error('ML_ENDPOINT_URL environment variable is not configured');
+  }
   return new Promise((resolve, reject) => {
     const url = new URL(ML_ENDPOINT_URL);
     const isHttps = url.protocol === 'https:';

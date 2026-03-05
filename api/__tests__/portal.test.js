@@ -69,12 +69,14 @@ jest.mock('../_lib/email', () => ({
   wrapEmailHtml: jest.fn(html => html),
 }));
 
-// portal.js uses whatsapp-sender for restaurant owner WhatsApp alerts
+// portal.js uses whatsapp-sender for restaurant owner WhatsApp alerts + customer confirmation
 const mockSendNewBookingAlertWhatsApp = jest.fn().mockResolvedValue({ success: true });
+const mockSendReservationConfirmation = jest.fn().mockResolvedValue({ success: true });
 let mockIsWhatsAppConfigured = true;
 
 jest.mock('../_lib/whatsapp-sender', () => ({
   sendNewBookingAlertWhatsApp: (...args) => mockSendNewBookingAlertWhatsApp(...args),
+  sendReservationConfirmation: (...args) => mockSendReservationConfirmation(...args),
   isWhatsAppConfigured: () => mockIsWhatsAppConfigured,
 }));
 

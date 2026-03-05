@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
 const { supabaseAdmin: supabase } = require('./supabase');
 const { createSecureLogger } = require('./secure-logger');
+require('./validate-env'); // Auto-warns about missing critical env vars on cold start
 const logger = createSecureLogger('Auth');
 
 // JWT_SECRET for internally generated tokens (HS256)
@@ -50,7 +51,7 @@ const CACHE_TTL = 5 * 60 * 1000;
 
 // Cache token→decoded user (TTL 1 minute) to avoid repeated Supabase getUser() calls
 const tokenCache = new Map();
-const TOKEN_CACHE_TTL = 60 * 1000;
+const TOKEN_CACHE_TTL = 10 * 1000;
 
 /**
  * Look up the restaurant_id for a given user ID

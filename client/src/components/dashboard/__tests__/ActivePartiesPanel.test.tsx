@@ -107,10 +107,13 @@ describe('ActivePartiesPanel', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders in Spanish when language is "es"', () => {
+  it('renders with i18n translations when language prop is set', () => {
+    // After migration to react-i18next, translations come from locale files
+    // The language prop is no longer used internally
     render(<ActivePartiesPanel {...defaultProps} language="es" />);
-    expect(screen.getByText('Mesas Activas')).toBeInTheDocument();
-    expect(screen.getByText('4 pax')).toBeInTheDocument();
-    expect(screen.getAllByText('Completar Servicio').length).toBe(2);
+    // Should still render with English fallback (i18n default in tests)
+    expect(screen.getByText('Active Parties')).toBeInTheDocument();
+    expect(screen.getByText('4 guests')).toBeInTheDocument();
+    expect(screen.getAllByText('Complete Service').length).toBe(2);
   });
 });

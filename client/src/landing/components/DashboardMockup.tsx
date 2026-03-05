@@ -14,16 +14,16 @@ export default function DashboardMockup() {
   ];
 
   const reservations = [
-    { name: 'Sarah M.', time: '7:30 PM', size: 4, status: 'confirmed' },
-    { name: 'James K.', time: '8:00 PM', size: 2, status: 'confirmed' },
-    { name: 'Chen F.', time: '8:30 PM', size: 6, status: 'pending' },
+    { name: 'Maria S.', time: '19:30', size: 4, status: 'confirmed' },
+    { name: 'João P.', time: '20:00', size: 2, status: 'confirmed' },
+    { name: 'Ana C.', time: '20:30', size: 6, status: 'pending' },
   ];
 
   const stats = [
-    { label: 'Occupied', value: '3/6' },
-    { label: 'Tonight', value: '12' },
-    { label: 'Waiting', value: '2' },
-    { label: 'Guests', value: '19' },
+    { label: 'Ocupadas', value: '3/6' },
+    { label: 'Hoje', value: '12' },
+    { label: 'Espera', value: '2' },
+    { label: 'Clientes', value: '19' },
   ];
 
   const tableColor = (s: string) =>
@@ -62,7 +62,7 @@ export default function DashboardMockup() {
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-[13px] font-bold text-deep-charcoal">Dashboard</div>
+                <div className="text-[13px] font-bold text-deep-charcoal">Painel</div>
                 <div className="text-[10px] text-muted-stone">Thursday, 26 Feb</div>
               </div>
               <div className="flex items-center gap-2">
@@ -84,7 +84,7 @@ export default function DashboardMockup() {
             <div className="flex gap-3 flex-1 min-h-0">
               {/* Table layout */}
               <div className="flex-1 bg-white border border-border-gray rounded-xl p-3">
-                <div className="text-[10px] font-semibold text-deep-charcoal mb-2">Table Layout</div>
+                <div className="text-[10px] font-semibold text-deep-charcoal mb-2">Mapa de Mesas</div>
                 <div className="grid grid-cols-3 gap-1.5">
                   {tables.map((t) => (
                     <div key={t.id} className={`rounded-lg p-1.5 text-center ${tableColor(t.status)}`}>
@@ -94,7 +94,7 @@ export default function DashboardMockup() {
                   ))}
                 </div>
                 <div className="flex gap-3 mt-2 pt-2 border-t border-border-gray">
-                  {[['bg-burgundy/90','Occupied'],['bg-amber-400/80','Reserved'],['bg-white border border-border-gray','Free']].map(([cls, lbl], i) => (
+                  {[['bg-burgundy/90','Ocupada'],['bg-amber-400/80','Reservada'],['bg-white border border-border-gray','Livre']].map(([cls, lbl], i) => (
                     <div key={i} className="flex items-center gap-1">
                       <div className={`w-2 h-2 rounded-sm ${cls}`} />
                       <span className="text-[8px] text-muted-stone">{lbl}</span>
@@ -105,18 +105,18 @@ export default function DashboardMockup() {
 
               {/* Reservations */}
               <div className="flex-1 bg-white border border-border-gray rounded-xl p-3">
-                <div className="text-[10px] font-semibold text-deep-charcoal mb-2">Tonight's Reservations</div>
+                <div className="text-[10px] font-semibold text-deep-charcoal mb-2">Reservas de Hoje</div>
                 <div className="space-y-1.5">
                   {reservations.map((r, i) => (
                     <div key={i} className="flex items-center justify-between py-1.5 border-b border-border-gray last:border-0">
                       <div>
                         <div className="text-[10px] font-medium text-deep-charcoal">{r.name}</div>
-                        <div className="text-[9px] text-muted-stone">{r.time} · {r.size} guests</div>
+                        <div className="text-[9px] text-muted-stone">{r.time} · {r.size} pessoas</div>
                       </div>
                       <div className={`px-1.5 py-0.5 rounded-full text-[8px] font-medium ${
                         r.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
                       }`}>
-                        {r.status}
+                        {r.status === 'confirmed' ? 'confirmada' : 'pendente'}
                       </div>
                     </div>
                   ))}
@@ -128,7 +128,7 @@ export default function DashboardMockup() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75" />
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-600" />
                   </span>
-                  <span className="text-[9px] text-muted-stone">AI agent handling calls</span>
+                  <span className="text-[9px] text-muted-stone">Agente IA atendendo ligações</span>
                 </div>
               </div>
             </div>

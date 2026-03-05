@@ -26,6 +26,7 @@ export default function TeamPage() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<Role>('host');
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
 
   const { data: members = [], isLoading } = useTeamMembers();
   const invite = useInviteTeamMember();
@@ -49,8 +50,14 @@ export default function TeamPage() {
   };
 
   const handleRemove = (memberId: string) => {
-    if (!window.confirm('Remove this team member?')) return;
-    remove.mutate(memberId);
+    setConfirmRemoveId(memberId);
+  };
+
+  const confirmRemove = () => {
+    if (confirmRemoveId) {
+      remove.mutate(confirmRemoveId);
+      setConfirmRemoveId(null);
+    }
   };
 
   const roleBadge = (role: TeamMember['role']) => {
@@ -139,6 +146,34 @@ export default function TeamPage() {
           </div>
         ))}
       </div>
+
+      {/* Remove confirmation dialog */}
+      {confirmRemoveId && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-sm w-full">
+            <h3 className="text-lg font-bold text-deep-charcoal mb-2">Remove Team Member</h3>
+            <p className="text-sm text-stone-gray mb-6">
+              Are you sure you want to remove this team member? They will lose access to the dashboard.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmRemoveId(null)}
+                className="flex-1 px-4 py-2.5 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmRemove}
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition-colors"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

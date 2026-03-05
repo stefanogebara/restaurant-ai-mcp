@@ -13,12 +13,13 @@ export default function BookingConfirmation() {
 
   const state = location.state as { reservation?: ReservationData; restaurant_name?: string; restaurant_id?: string } | null;
   const id = searchParams.get('id');
+  const restaurantIdParam = searchParams.get('rid') || state?.restaurant_id;
 
   const { data: reservation, isLoading } = useReservationById(id, state?.reservation);
 
   // Request push notification permission after booking is confirmed
   useEffect(() => {
-    const restaurantId = state?.restaurant_id;
+    const restaurantId = restaurantIdParam;
     const reservationId = id;
 
     if (!restaurantId || !reservationId) return;
@@ -56,7 +57,7 @@ export default function BookingConfirmation() {
     }).catch(() => {
       // Permission request failed — non-critical
     });
-  }, [id, state?.restaurant_id]);
+  }, [id, restaurantIdParam]);
 
   const formatTime = (time: string) => {
     const [h, m] = time.split(':').map(Number);

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 interface DemoFormData {
   restaurant_name: string;
@@ -43,28 +44,30 @@ const inputBase = 'w-full px-4 py-3 border border-border-gray rounded-xl text-sm
 const textareaBase = 'w-full px-4 py-3 border border-border-gray rounded-xl text-sm text-deep-charcoal placeholder-muted-stone bg-white focus:outline-none focus:ring-[3px] focus:ring-burgundy/20 focus:border-burgundy transition-all resize-none';
 
 export default function DemoSetupForm({ form, isSubmitting, submitError, onUpdate, onSubmit }: DemoSetupFormProps) {
+  const { t } = useTranslation();
+
   return (
     <form onSubmit={onSubmit} className="bg-white border border-border-gray rounded-[2rem] p-8 sm:p-10 shadow-xl space-y-8">
       {/* Group 1 — Your Restaurant */}
       <div>
-        <SectionLabel>Your Restaurant</SectionLabel>
+        <SectionLabel>{t('landing.demoSetup.form.sectionRestaurant')}</SectionLabel>
         <div className="space-y-4">
           <div>
-            <FieldLabel htmlFor="restaurant_name" required>Restaurant name</FieldLabel>
-            <input id="restaurant_name" type="text" required value={form.restaurant_name} onChange={(e) => onUpdate('restaurant_name', e.target.value)} placeholder="Bella Roma" className={inputBase} />
+            <FieldLabel htmlFor="restaurant_name" required>{t('landing.demoSetup.form.restaurantName')}</FieldLabel>
+            <input id="restaurant_name" type="text" required value={form.restaurant_name} onChange={(e) => onUpdate('restaurant_name', e.target.value)} placeholder={t('landing.demoSetup.form.restaurantNamePlaceholder')} className={inputBase} />
           </div>
           <div>
-            <FieldLabel htmlFor="cuisine_type" required>Cuisine type</FieldLabel>
-            <input id="cuisine_type" type="text" required value={form.cuisine_type} onChange={(e) => onUpdate('cuisine_type', e.target.value)} placeholder="Italian · Mediterranean · Farm-to-table" className={inputBase} />
+            <FieldLabel htmlFor="cuisine_type" required>{t('landing.demoSetup.form.cuisineType')}</FieldLabel>
+            <input id="cuisine_type" type="text" required value={form.cuisine_type} onChange={(e) => onUpdate('cuisine_type', e.target.value)} placeholder={t('landing.demoSetup.form.cuisineTypePlaceholder')} className={inputBase} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <FieldLabel htmlFor="city" required>City</FieldLabel>
-              <input id="city" type="text" required value={form.city} onChange={(e) => onUpdate('city', e.target.value)} placeholder="Madrid" className={inputBase} />
+              <FieldLabel htmlFor="city" required>{t('landing.demoSetup.form.city')}</FieldLabel>
+              <input id="city" type="text" required value={form.city} onChange={(e) => onUpdate('city', e.target.value)} placeholder={t('landing.demoSetup.form.cityPlaceholder')} className={inputBase} />
             </div>
             <div>
-              <FieldLabel htmlFor="country">Country</FieldLabel>
-              <input id="country" type="text" value={form.country} onChange={(e) => onUpdate('country', e.target.value)} placeholder="Spain" className={inputBase} />
+              <FieldLabel htmlFor="country">{t('landing.demoSetup.form.country')}</FieldLabel>
+              <input id="country" type="text" value={form.country} onChange={(e) => onUpdate('country', e.target.value)} placeholder={t('landing.demoSetup.form.countryPlaceholder')} className={inputBase} />
             </div>
           </div>
         </div>
@@ -74,20 +77,20 @@ export default function DemoSetupForm({ form, isSubmitting, submitError, onUpdat
 
       {/* Group 2 — Hours & Capacity */}
       <div>
-        <SectionLabel>Hours &amp; Capacity</SectionLabel>
+        <SectionLabel>{t('landing.demoSetup.form.sectionHours')}</SectionLabel>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <FieldLabel htmlFor="open_time">Opens at</FieldLabel>
+              <FieldLabel htmlFor="open_time">{t('landing.demoSetup.form.opensAt')}</FieldLabel>
               <input id="open_time" type="time" value={form.open_time} onChange={(e) => onUpdate('open_time', e.target.value)} className={inputBase} />
             </div>
             <div>
-              <FieldLabel htmlFor="close_time">Closes at</FieldLabel>
+              <FieldLabel htmlFor="close_time">{t('landing.demoSetup.form.closesAt')}</FieldLabel>
               <input id="close_time" type="time" value={form.close_time} onChange={(e) => onUpdate('close_time', e.target.value)} className={inputBase} />
             </div>
           </div>
           <div className="max-w-[180px]">
-            <FieldLabel htmlFor="max_party_size">Max party size</FieldLabel>
+            <FieldLabel htmlFor="max_party_size">{t('landing.demoSetup.form.maxPartySize')}</FieldLabel>
             <input id="max_party_size" type="number" min={1} max={100} value={form.max_party_size} onChange={(e) => onUpdate('max_party_size', Number(e.target.value))} className={inputBase} />
           </div>
         </div>
@@ -97,15 +100,15 @@ export default function DemoSetupForm({ form, isSubmitting, submitError, onUpdat
 
       {/* Group 3 — Policies */}
       <div>
-        <SectionLabel>Policies <span className="normal-case tracking-normal font-normal text-muted-stone/70">(optional)</span></SectionLabel>
+        <SectionLabel>{t('landing.demoSetup.form.sectionPolicies')} <span className="normal-case tracking-normal font-normal text-muted-stone/70">({t('landing.demoSetup.form.optional')})</span></SectionLabel>
         <div className="space-y-4">
           <div>
-            <FieldLabel htmlFor="cancellation_policy">Cancellation policy</FieldLabel>
-            <textarea id="cancellation_policy" rows={3} value={form.cancellation_policy} onChange={(e) => onUpdate('cancellation_policy', e.target.value)} placeholder="Free cancellation up to 24h before" className={textareaBase} />
+            <FieldLabel htmlFor="cancellation_policy">{t('landing.demoSetup.form.cancellationPolicy')}</FieldLabel>
+            <textarea id="cancellation_policy" rows={3} value={form.cancellation_policy} onChange={(e) => onUpdate('cancellation_policy', e.target.value)} placeholder={t('landing.demoSetup.form.cancellationPolicyPlaceholder')} className={textareaBase} />
           </div>
           <div>
-            <FieldLabel htmlFor="custom_policy">House rules</FieldLabel>
-            <textarea id="custom_policy" rows={3} value={form.custom_policy} onChange={(e) => onUpdate('custom_policy', e.target.value)} placeholder="No outside cake, no pets on terrace..." className={textareaBase} />
+            <FieldLabel htmlFor="custom_policy">{t('landing.demoSetup.form.houseRules')}</FieldLabel>
+            <textarea id="custom_policy" rows={3} value={form.custom_policy} onChange={(e) => onUpdate('custom_policy', e.target.value)} placeholder={t('landing.demoSetup.form.houseRulesPlaceholder')} className={textareaBase} />
           </div>
         </div>
       </div>
@@ -114,15 +117,15 @@ export default function DemoSetupForm({ form, isSubmitting, submitError, onUpdat
 
       {/* Group 4 — About You */}
       <div>
-        <SectionLabel>About You</SectionLabel>
+        <SectionLabel>{t('landing.demoSetup.form.sectionAboutYou')}</SectionLabel>
         <div className="space-y-4">
           <div>
-            <FieldLabel htmlFor="contact_name" required>Your name</FieldLabel>
-            <input id="contact_name" type="text" required value={form.contact_name} onChange={(e) => onUpdate('contact_name', e.target.value)} placeholder="Sofia" className={inputBase} />
+            <FieldLabel htmlFor="contact_name" required>{t('landing.demoSetup.form.yourName')}</FieldLabel>
+            <input id="contact_name" type="text" required value={form.contact_name} onChange={(e) => onUpdate('contact_name', e.target.value)} placeholder={t('landing.demoSetup.form.yourNamePlaceholder')} className={inputBase} />
           </div>
           <div>
-            <FieldLabel htmlFor="contact_email" required>Work email</FieldLabel>
-            <input id="contact_email" type="email" required value={form.contact_email} onChange={(e) => onUpdate('contact_email', e.target.value)} placeholder="sofia@bellaroma.com" className={inputBase} />
+            <FieldLabel htmlFor="contact_email" required>{t('landing.demoSetup.form.workEmail')}</FieldLabel>
+            <input id="contact_email" type="email" required value={form.contact_email} onChange={(e) => onUpdate('contact_email', e.target.value)} placeholder={t('landing.demoSetup.form.workEmailPlaceholder')} className={inputBase} />
           </div>
         </div>
       </div>
@@ -141,14 +144,14 @@ export default function DemoSetupForm({ form, isSubmitting, submitError, onUpdat
         {isSubmitting ? (
           <>
             <div aria-hidden="true" className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
-            <span>Creating your demo…</span>
+            <span>{t('landing.demoSetup.form.creating')}</span>
           </>
         ) : (
-          <span>Create my demo →</span>
+          <span>{t('landing.demoSetup.form.createButton')}</span>
         )}
       </button>
 
-      <p className="text-center text-xs text-muted-stone font-light">No credit card required. Your demo is ready in seconds.</p>
+      <p className="text-center text-xs text-muted-stone font-light">{t('landing.demoSetup.form.noCreditCard')}</p>
     </form>
   );
 }

@@ -100,7 +100,7 @@ function App() {
               </div>
             }>
             <Routes>
-              <Route path="/" element={<LandingPage />} />
+              <Route path="/" element={<ErrorBoundary fallback={<RouteErrorFallback />}><LandingPage /></ErrorBoundary>} />
               <Route path="/login" element={<Login />} />
               <Route path="/live-demo" element={<LiveAIDemo />} />
               <Route path="/demo/setup" element={<DemoSetupPage />} />
@@ -108,21 +108,21 @@ function App() {
               <Route path="/demo/:token" element={<DemoDashboard />} />
 {/* Dashboard - New unified dashboard (default) */}
               <Route path="/host-dashboard" element={<Navigate to="/host-dashboard/simple" replace />} />
-              <Route path="/host-dashboard/simple" element={<ErrorBoundary fallback={<RouteErrorFallback />}><Dashboard /></ErrorBoundary>} />
-              <Route path="/host-dashboard/reports" element={<WeeklyReport />} />
-              <Route path="/host-dashboard/calls" element={<CallTrackingDashboard />} />
-              <Route path="/host-dashboard/tables" element={<TableConfigPage />} />
-              <Route path="/host-dashboard/floor-plan" element={<FloorPlanEditor />} />
-              <Route path="/host-dashboard/voice-settings" element={<VoiceSettingsPage />} />
-              <Route path="/host-dashboard/whatsapp" element={<WhatsAppSettingsPage />} />
-              <Route path="/host-dashboard/insights" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AIInsights /></ErrorBoundary>} />
-              <Route path="/analytics" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AnalyticsDashboard /></ErrorBoundary>} />
+              <Route path="/host-dashboard/simple" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><Dashboard /></ErrorBoundary></ProtectedRoute>} />
+              <Route path="/host-dashboard/reports" element={<ProtectedRoute><WeeklyReport /></ProtectedRoute>} />
+              <Route path="/host-dashboard/calls" element={<ProtectedRoute><CallTrackingDashboard /></ProtectedRoute>} />
+              <Route path="/host-dashboard/tables" element={<ProtectedRoute><TableConfigPage /></ProtectedRoute>} />
+              <Route path="/host-dashboard/floor-plan" element={<ProtectedRoute><FloorPlanEditor /></ProtectedRoute>} />
+              <Route path="/host-dashboard/voice-settings" element={<ProtectedRoute><VoiceSettingsPage /></ProtectedRoute>} />
+              <Route path="/host-dashboard/whatsapp" element={<ProtectedRoute><WhatsAppSettingsPage /></ProtectedRoute>} />
+              <Route path="/host-dashboard/insights" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><AIInsights /></ErrorBoundary></ProtectedRoute>} />
+              <Route path="/analytics" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><AnalyticsDashboard /></ErrorBoundary></ProtectedRoute>} />
               <Route path="/customer" element={<CustomerPortal />} />
               <Route path="/subscription/success" element={<SubscriptionSuccess />} />
-              <Route path="/subscription/manage" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SubscriptionManage /></ErrorBoundary>} />
+              <Route path="/subscription/manage" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><SubscriptionManage /></ErrorBoundary></ProtectedRoute>} />
               <Route path="/welcome" element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
               <Route path="/onboarding" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><Onboarding /></ErrorBoundary></ProtectedRoute>} />
-              <Route path="/settings/language" element={<LanguageSettings />} />
+              <Route path="/settings/language" element={<ProtectedRoute><LanguageSettings /></ProtectedRoute>} />
               {/* Public booking portal */}
               <Route path="/book/:slug" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BookingPage /></ErrorBoundary>} />
               <Route path="/book/:slug/confirmed" element={<BookingConfirmation />} />

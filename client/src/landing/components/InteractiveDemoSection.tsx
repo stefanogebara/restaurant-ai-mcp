@@ -1,8 +1,11 @@
 import { motion } from 'framer-motion';
 import { ExternalLink, Phone, MessageSquare, ArrowRight, LayoutDashboard, Clock, Users } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { DEMO_RESTAURANT } from '../data/demoData';
 
 export default function InteractiveDemoSection() {
+  const { t } = useTranslation();
+
   const scrollToContact = () => {
     const element = document.getElementById('contact');
     if (element) {
@@ -21,12 +24,12 @@ export default function InteractiveDemoSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <div className="text-xs font-semibold tracking-[2px] uppercase text-burgundy mb-4">Live Demo</div>
+          <div className="text-xs font-semibold tracking-[2px] uppercase text-burgundy mb-4">{t('landing.demo.label')}</div>
           <h2 className="font-serif text-4xl sm:text-[48px] font-medium tracking-tight text-deep-charcoal mb-3">
-            Experience the platform live
+            {t('landing.demo.heading')}
           </h2>
           <p className="text-lg text-stone-gray max-w-2xl mx-auto font-light">
-            Interact with our demo restaurant and see how the AI handles reservations in real-time
+            {t('landing.demo.subtitle')}
           </p>
         </motion.div>
 
@@ -60,15 +63,15 @@ export default function InteractiveDemoSection() {
                 <div className="hidden sm:flex flex-col w-36 bg-white border-r border-border-gray p-3 gap-1.5">
                   <div className="flex items-center gap-1.5 px-2 py-1.5 bg-burgundy text-white rounded text-[10px] font-medium">
                     <LayoutDashboard className="w-3 h-3" />
-                    Overview
+                    {t('landing.demo.sidebarOverview')}
                   </div>
                   <div className="flex items-center gap-1.5 px-2 py-1.5 text-muted-stone text-[10px]">
                     <Users className="w-3 h-3" />
-                    Customers
+                    {t('landing.demo.sidebarCustomers')}
                   </div>
                   <div className="flex items-center gap-1.5 px-2 py-1.5 text-muted-stone text-[10px]">
                     <Clock className="w-3 h-3" />
-                    Analytics
+                    {t('landing.demo.sidebarAnalytics')}
                   </div>
                 </div>
 
@@ -78,15 +81,15 @@ export default function InteractiveDemoSection() {
                   <div className="grid grid-cols-3 gap-2 mb-3">
                     <div className="bg-white rounded-xl p-2 text-center border border-border-gray">
                       <div className="text-sm font-bold text-deep-charcoal">8/12</div>
-                      <div className="text-[9px] text-muted-stone uppercase">Tables</div>
+                      <div className="text-[9px] text-muted-stone uppercase">{t('landing.demo.infoTables')}</div>
                     </div>
                     <div className="bg-white rounded-xl p-2 text-center border border-border-gray">
                       <div className="text-sm font-bold text-burgundy">67%</div>
-                      <div className="text-[9px] text-muted-stone uppercase">Occupancy</div>
+                      <div className="text-[9px] text-muted-stone uppercase">{t('landing.demo.infoOccupancy')}</div>
                     </div>
                     <div className="bg-white rounded-xl p-2 text-center border border-border-gray">
                       <div className="text-sm font-bold text-deep-charcoal">24</div>
-                      <div className="text-[9px] text-muted-stone uppercase">Today</div>
+                      <div className="text-[9px] text-muted-stone uppercase">{t('analytics.today')}</div>
                     </div>
                   </div>
 
@@ -126,7 +129,7 @@ export default function InteractiveDemoSection() {
               className="absolute inset-0 rounded-2xl flex items-end justify-center pb-6 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"
             >
               <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-deep-charcoal text-sm font-semibold rounded-xl shadow-lg">
-                Try Live Demo
+                {t('landing.demo.tryLiveDemo')}
                 <ExternalLink aria-hidden="true" className="w-3.5 h-3.5" />
               </span>
             </a>
@@ -134,7 +137,7 @@ export default function InteractiveDemoSection() {
             {/* Live Indicator */}
             <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-2 bg-white/90 rounded-full shadow-md">
               <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-              <span className="text-xs text-deep-charcoal font-bold tracking-wider">LIVE</span>
+              <span className="text-xs text-deep-charcoal font-bold tracking-wider">{t('landing.demo.liveBadge')}</span>
             </div>
           </motion.div>
 
@@ -153,15 +156,15 @@ export default function InteractiveDemoSection() {
                   <MessageSquare className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-serif text-xl text-deep-charcoal mb-2">Chat with Our AI</h3>
+                  <h3 className="font-serif text-xl text-deep-charcoal mb-2">{t('landing.demo.chatTitle')}</h3>
                   <p className="text-stone-gray mb-4 font-light text-sm">
-                    Try making a reservation via our AI-powered chat. Speak naturally or type your request.
+                    {t('landing.demo.chatDesc')}
                   </p>
                   <a
                     href="/live-demo"
                     className="px-5 py-3 bg-burgundy text-white text-sm font-semibold hover:bg-burgundy-dark transition-all duration-300 rounded-xl inline-flex items-center gap-2 shadow-md shadow-burgundy/20"
                   >
-                    Start Chat
+                    {t('landing.demo.chatCta')}
                     <ArrowRight aria-hidden="true" className="w-4 h-4" />
                   </a>
                 </div>
@@ -175,15 +178,15 @@ export default function InteractiveDemoSection() {
                   <Phone className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-serif text-xl text-deep-charcoal mb-2">Voice Reservations</h3>
+                  <h3 className="font-serif text-xl text-deep-charcoal mb-2">{t('landing.demo.voiceTitle')}</h3>
                   <p className="text-stone-gray mb-4 font-light text-sm">
-                    Our AI handles phone calls in 6+ languages, takes reservations, and confirms bookings automatically.
+                    {t('landing.demo.voiceDesc')}
                   </p>
                   <a
                     href="/live-demo"
                     className="px-5 py-3 border border-deep-charcoal text-deep-charcoal text-sm font-semibold hover:bg-deep-charcoal hover:text-white transition-all duration-300 rounded-xl inline-flex items-center gap-2"
                   >
-                    Try Live Demo
+                    {t('landing.demo.voiceCta')}
                     <ExternalLink aria-hidden="true" className="w-4 h-4" />
                   </a>
                 </div>
@@ -192,22 +195,22 @@ export default function InteractiveDemoSection() {
 
             {/* Demo Restaurant Info */}
             <div className="bg-warm-white p-6 rounded-2xl border border-border-gray">
-              <h4 className="font-serif text-lg text-deep-charcoal mb-4">Demo Restaurant</h4>
+              <h4 className="font-serif text-lg text-deep-charcoal mb-4">{t('landing.demo.infoTitle')}</h4>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-stone-gray text-sm font-light">Name</span>
+                  <span className="text-stone-gray text-sm font-light">{t('landing.demo.infoName')}</span>
                   <span className="text-deep-charcoal font-medium">{DEMO_RESTAURANT.name}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-stone-gray text-sm font-light">Tables</span>
+                  <span className="text-stone-gray text-sm font-light">{t('landing.demo.infoTables')}</span>
                   <span className="text-deep-charcoal font-medium">{DEMO_RESTAURANT.tables}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-stone-gray text-sm font-light">Capacity</span>
-                  <span className="text-deep-charcoal font-medium">{DEMO_RESTAURANT.capacity} seats</span>
+                  <span className="text-stone-gray text-sm font-light">{t('landing.demo.infoCapacity')}</span>
+                  <span className="text-deep-charcoal font-medium">{DEMO_RESTAURANT.capacity} {t('landing.demo.infoSeats')}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-stone-gray text-sm font-light">Occupancy</span>
+                  <span className="text-stone-gray text-sm font-light">{t('landing.demo.infoOccupancy')}</span>
                   <span className="text-burgundy font-bold">{DEMO_RESTAURANT.occupancy}%</span>
                 </div>
               </div>
@@ -216,14 +219,14 @@ export default function InteractiveDemoSection() {
             {/* CTA */}
             <div className="text-center pt-2">
               <p className="text-stone-gray mb-4 font-light text-sm">
-                Ready to implement this for your restaurant?
+                {t('landing.demo.ctaText')}
               </p>
               <button
                 type="button"
                 onClick={scrollToContact}
                 className="bg-burgundy text-white px-8 py-4 text-[15px] font-semibold hover:bg-burgundy-dark transition-all duration-300 rounded-2xl  inline-flex items-center gap-2"
               >
-                Get Started Today
+                {t('landing.demo.ctaButton')}
                 <ArrowRight aria-hidden="true" className="w-4 h-4" />
               </button>
             </div>

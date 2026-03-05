@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { SkeletonCallTracking } from '../components/common/Skeleton';
 import { useToast } from '../contexts/ToastContext';
@@ -32,6 +33,7 @@ import {
 import type { CallFilter } from '../components/call-tracking/callTrackingTypes';
 
 export default function CallTrackingDashboard() {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<CallFilter>({ period: '7d', outcome: 'all', language: 'all' });
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showDiagnosePanel, setShowDiagnosePanel] = useState(false);
@@ -60,20 +62,20 @@ export default function CallTrackingDashboard() {
   const handleSetupPhone = () => {
     if (!restaurant_id) return;
     setupPhone.mutate(restaurant_id, {
-      onSuccess: (data) => toastSuccess(data.message || 'Phone number connected successfully'),
-      onError: (err) => toastError(err.message || 'Failed to set up phone'),
+      onSuccess: (data) => toastSuccess(data.message || t('callTracking.phoneConnected')),
+      onError: (err) => toastError(err.message || t('callTracking.phoneSetupFailed')),
     });
   };
 
   const handleDisconnect = () => {
     if (!restaurant_id) return;
-    if (!confirm('Are you sure you want to disconnect this phone number?')) return;
+    if (!confirm(t('callTracking.confirmDisconnect'))) return;
     disconnectPhone.mutate(restaurant_id, {
       onSuccess: () => {
-        toastSuccess('Phone number disconnected');
+        toastSuccess(t('callTracking.phoneDisconnected'));
         setShowDiagnosePanel(false);
       },
-      onError: (err) => toastError(err.message || 'Failed to disconnect phone'),
+      onError: (err) => toastError(err.message || t('callTracking.disconnectFailed')),
     });
   };
 
@@ -81,9 +83,9 @@ export default function CallTrackingDashboard() {
     if (!restaurant_id) return;
     setShowDiagnosePanel(true);
     diagnose.mutate(restaurant_id, {
-      onSuccess: () => toastSuccess('Agent diagnostics loaded'),
+      onSuccess: () => toastSuccess(t('callTracking.diagnosticsLoaded')),
       onError: (err) => {
-        toastError(err.message || 'Failed to diagnose agent');
+        toastError(err.message || t('callTracking.diagnosticsFailed'));
         setShowDiagnosePanel(false);
       },
     });
@@ -93,10 +95,10 @@ export default function CallTrackingDashboard() {
     if (!restaurant_id) return;
     fixTools.mutate(restaurant_id, {
       onSuccess: (data) => {
-        toastSuccess(data.message || 'Tools configured successfully');
+        toastSuccess(data.message || t('callTracking.toolsConfigured'));
         handleDiagnose();
       },
-      onError: (err) => toastError(err.message || 'Failed to fix tools'),
+      onError: (err) => toastError(err.message || t('callTracking.toolsFixFailed')),
     });
   };
 
@@ -118,7 +120,7 @@ export default function CallTrackingDashboard() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pl-12 sm:pl-0">
             <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
-              Call History <span className="font-light text-warm-stone">/ Today</span>
+              {t('callTracking.title')} <span className="font-light text-warm-stone">/ {t('callTracking.today')}</span>
             </h1>
             <div className="flex items-center gap-2.5">
               <button
@@ -126,13 +128,13 @@ export default function CallTrackingDashboard() {
                 onClick={() => refetchConversations()}
                 className="px-4 py-2 bg-white border border-border-gray text-stone-gray hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors"
               >
-                Refresh
+                {t('callTracking.refresh')}
               </button>
               <button
                 type="button"
                 className="px-4 py-2 bg-white border border-border-gray text-stone-gray hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors"
               >
-                Export
+                {t('common.export')}
               </button>
             </div>
           </div>
@@ -146,7 +148,7 @@ export default function CallTrackingDashboard() {
             onSetupPhone={handleSetupPhone}
             onDiagnose={handleDiagnose}
             onDisconnect={handleDisconnect}
-            onRefreshStatus={() => { phoneStatusQuery.refetch(); toastInfo('Refreshing phone status...'); }}
+            onRefreshStatus={() => { phoneStatusQuery.refetch(); toastInfo(t('callTracking.refreshingStatus')); }}
           />
 
           {showDiagnosePanel && (

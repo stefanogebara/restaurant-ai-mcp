@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import DemoSetupForm from '../components/landing/DemoSetupForm';
@@ -38,6 +39,7 @@ const INITIAL_FORM: DemoFormData = {
 };
 
 export default function DemoSetupPage() {
+  const { t } = useTranslation();
   const [form, setForm] = useState<DemoFormData>(INITIAL_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -76,7 +78,7 @@ export default function DemoSetupPage() {
           seatable<span className="text-burgundy">.</span>
         </Link>
         <Link to="/login" className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
-          Already have an account? Sign in
+          {t('landing.demoSetup.nav.signIn')}
         </Link>
       </nav>
 
@@ -84,14 +86,14 @@ export default function DemoSetupPage() {
         <div className="max-w-[640px] mx-auto">
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }} className="text-center mb-12">
             <div className="inline-block text-xs font-semibold tracking-[1.5px] uppercase text-burgundy bg-burgundy/[6%] border border-burgundy/15 px-4 py-1.5 rounded-full mb-6">
-              Free Demo
+              {t('landing.demoSetup.badge')}
             </div>
             <h1 className="font-serif text-4xl sm:text-[44px] font-medium leading-[1.1] tracking-tight text-deep-charcoal mb-4">
-              See Seatable running<br />
-              <em className="text-burgundy">in your restaurant</em> in 2 minutes.
+              {t('landing.demoSetup.title')}<br />
+              <em className="text-burgundy">{t('landing.demoSetup.titleEm')}</em> {t('landing.demoSetup.titleSuffix')}
             </h1>
             <p className="text-[17px] text-warm-stone font-light leading-[1.7] max-w-[480px] mx-auto">
-              Set up your personalised demo — your branding, your hours, your menu.
+              {t('landing.demoSetup.subtitle')}
             </p>
           </motion.div>
 
@@ -102,17 +104,17 @@ export default function DemoSetupPage() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35, duration: 0.4 }} className="mt-10 flex justify-center gap-10 text-center">
             <div>
               <div className="text-xl font-serif font-bold text-deep-charcoal">2.3s</div>
-              <div className="text-xs text-muted-stone uppercase tracking-wider">Avg Response</div>
+              <div className="text-xs text-muted-stone uppercase tracking-wider">{t('landing.demoSetup.trust.avgResponse')}</div>
             </div>
             <div className="w-px bg-border-gray" />
             <div>
               <div className="text-xl font-serif font-bold text-burgundy">6+</div>
-              <div className="text-xs text-muted-stone uppercase tracking-wider">Languages</div>
+              <div className="text-xs text-muted-stone uppercase tracking-wider">{t('landing.demoSetup.trust.languages')}</div>
             </div>
             <div className="w-px bg-border-gray" />
             <div>
               <div className="text-xl font-serif font-bold text-deep-charcoal">24/7</div>
-              <div className="text-xs text-muted-stone uppercase tracking-wider">AI Booking</div>
+              <div className="text-xs text-muted-stone uppercase tracking-wider">{t('landing.demoSetup.trust.aiBooking')}</div>
             </div>
           </motion.div>
         </div>

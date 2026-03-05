@@ -40,14 +40,14 @@ export default function TonightBriefingCard() {
           </div>
           <div className="w-px h-8 bg-border-gray" />
           <div className="text-center">
-            <div className="text-2xl font-bold text-red-600">{highRiskTonight.length}</div>
+            <div className={`text-2xl font-bold ${highRiskTonight.length > 0 ? 'text-red-600' : 'text-stone-400'}`}>{highRiskTonight.length}</div>
             <div className="text-xs text-warm-stone">High Risk</div>
           </div>
           {summary && (
             <>
               <div className="w-px h-8 bg-border-gray" />
               <div className="text-center">
-                <div className="text-2xl font-bold text-amber-600">{summary.medium_risk}</div>
+                <div className={`text-2xl font-bold ${summary.medium_risk > 0 ? 'text-amber-600' : 'text-stone-400'}`}>{summary.medium_risk}</div>
                 <div className="text-xs text-warm-stone">Medium Risk</div>
               </div>
             </>

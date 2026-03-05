@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 
 interface Props {
@@ -8,12 +9,14 @@ interface Props {
 }
 
 export default function FloorPlanHeader({ saveStatus, linkMode, onToggleLinkMode, onAddTable }: Props) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
       <div>
-        <h1 className="text-xl font-bold text-deep-charcoal tracking-tight">Floor Plan</h1>
+        <h1 className="text-xl font-bold text-deep-charcoal tracking-tight">{t('floorPlan.title')}</h1>
         <p className="text-sm text-warm-stone mt-0.5">
-          Drag tables to rearrange · Click a table to edit its properties
+          {t('floorPlan.subtitle')}
         </p>
       </div>
 
@@ -28,7 +31,7 @@ export default function FloorPlanHeader({ saveStatus, linkMode, onToggleLinkMode
             ? 'bg-soft-gray text-muted-stone'
             : 'bg-green-50 text-green-700 border border-green-200'
         }`}>
-          {saveStatus === 'saving' ? 'Saving…' : '✓ Saved'}
+          {saveStatus === 'saving' ? t('floorPlan.saving') : t('floorPlan.saved')}
         </span>
 
         {/* Link mode toggle */}
@@ -42,7 +45,7 @@ export default function FloorPlanHeader({ saveStatus, linkMode, onToggleLinkMode
           }`}
         >
           <ThiingsIcon name="link" pxSize={15} />
-          {linkMode ? 'Linking…' : 'Link Tables'}
+          {linkMode ? t('floorPlan.linking') : t('floorPlan.linkTables')}
         </button>
 
         {/* Add table */}
@@ -52,7 +55,7 @@ export default function FloorPlanHeader({ saveStatus, linkMode, onToggleLinkMode
           className="min-h-[38px] px-4 py-2 rounded-xl text-sm font-medium bg-deep-charcoal text-white hover:bg-stone-mid transition-colors flex items-center gap-1.5"
         >
           <ThiingsIcon name="plus" pxSize={15} />
-          Add Table
+          {t('floorPlan.addTable')}
         </button>
       </div>
     </div>

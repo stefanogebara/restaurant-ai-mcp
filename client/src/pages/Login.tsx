@@ -89,7 +89,7 @@ export default function Login() {
         trackSignupStarted({ method: 'email' });
         const { needsConfirmation } = await signUpWithEmail(email, password);
         if (needsConfirmation) {
-          setSuccessMessage('Check your email for a confirmation link to complete your registration.');
+          setSuccessMessage(t('login.confirmationSent'));
           setIsSigningIn(false);
           return;
         }
@@ -207,7 +207,7 @@ export default function Login() {
             {/* Divider */}
             <div className="flex items-center gap-4 my-6">
               <div className="flex-1 h-px bg-border-gray"></div>
-              <span className="text-xs text-muted-stone uppercase tracking-wider">or</span>
+              <span className="text-xs text-muted-stone uppercase tracking-wider">{t('login.orDivider')}</span>
               <div className="flex-1 h-px bg-border-gray"></div>
             </div>
 
@@ -288,13 +288,13 @@ export default function Login() {
 
             {/* Terms */}
             <p className="mt-6 text-center text-xs text-muted-stone font-light">
-              By continuing, you agree to our{' '}
+              {t('login.legalPrefix')}{' '}
               <a href="/terms" className="text-burgundy hover:underline">
-                Terms of Service
+                {t('login.termsOfService')}
               </a>{' '}
-              and{' '}
+              {t('login.legalAnd')}{' '}
               <a href="/privacy" className="text-burgundy hover:underline">
-                Privacy Policy
+                {t('login.privacyPolicy')}
               </a>
             </p>
           </div>
@@ -303,17 +303,17 @@ export default function Login() {
           <div className="mt-8 flex justify-center gap-8 text-center lg:hidden">
             <div>
               <div className="text-xl font-serif font-bold text-deep-charcoal">2.3s</div>
-              <div className="text-xs text-stone-gray uppercase tracking-wider">Avg Response</div>
+              <div className="text-xs text-stone-gray uppercase tracking-wider">{t('login.statResponse')}</div>
             </div>
             <div className="w-px bg-border-gray"></div>
             <div>
               <div className="text-xl font-serif font-bold text-burgundy">6+</div>
-              <div className="text-xs text-stone-gray uppercase tracking-wider">Languages</div>
+              <div className="text-xs text-stone-gray uppercase tracking-wider">{t('login.statLanguages')}</div>
             </div>
             <div className="w-px bg-border-gray"></div>
             <div>
               <div className="text-xl font-serif font-bold text-deep-charcoal">24/7</div>
-              <div className="text-xs text-stone-gray uppercase tracking-wider">AI Booking</div>
+              <div className="text-xs text-stone-gray uppercase tracking-wider">{t('login.statBooking')}</div>
             </div>
           </div>
         </motion.div>

@@ -90,7 +90,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockBusboyInstance = null;
   mockHandlePreflight.mockReturnValue(false);
-  mockVerifyJWT.mockReturnValue({ restaurantId: 'rest-1' });
+  mockVerifyJWT.mockReturnValue({ restaurant_id: 'rest-1' });
   mockWriteMemory.mockResolvedValue({});
   mockAnthropicCreate.mockResolvedValue({
     content: [{ type: 'text', text: '1. Lunch hours 11-3pm\n2. VIP capacity 20 guests' }],

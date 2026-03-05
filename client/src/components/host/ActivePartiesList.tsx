@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../../contexts/ToastContext';
 import type { ActiveParty } from '../../types/host.types';
 import { useCompleteService } from '../../hooks/useCompleteService';
@@ -83,6 +84,7 @@ function LiveCountdown({ seatedMinutesAgo, estimatedDurationMinutes }: { seatedM
 }
 
 export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
+  const { t } = useTranslation();
   const [confirmingServiceId, setConfirmingServiceId] = useState<string | null>(null);
   const completeServiceMutation = useCompleteService();
   const { success, error: showError } = useToast();
@@ -170,7 +172,7 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
                 {completeServiceMutation.isPending && (
                   <div aria-hidden="true" className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 )}
-                {completeServiceMutation.isPending ? 'Completing...' : 'Confirm'}
+                {completeServiceMutation.isPending ? t('common.loading') : t('common.confirm')}
               </button>
             </div>
           ) : (
@@ -178,7 +180,7 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
               onClick={() => setConfirmingServiceId(party.service_id)}
               className="w-full px-3 py-2 text-sm bg-deep-charcoal hover:bg-burgundy text-white font-medium rounded-xl transition-all"
             >
-              Complete Service
+              {t('dashboard.completeService')}
             </button>
           )}
           </div>

@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 export default function LoginBrandPanel() {
+  const { t } = useTranslation();
   return (
     <div className="hidden lg:flex lg:flex-[0_0_480px] bg-deep-charcoal relative overflow-hidden">
       {/* Subtle pattern overlay */}
@@ -38,15 +40,15 @@ export default function LoginBrandPanel() {
           className="space-y-8"
         >
           <p className="font-serif text-4xl xl:text-[36px] font-normal italic leading-[1.35] tracking-tight text-soft-gray mb-10">
-            &ldquo;An AI that truly <em className="text-burgundy">understands</em> your restaurant.&rdquo;
+            &ldquo;{t('login.brandTagline')}&rdquo;
           </p>
 
           {/* Feature highlights */}
           <div className="space-y-5">
             {[
-              { title: 'AI Voice Agent', desc: "Handles calls and reservations in your restaurant's unique voice and personality." },
-              { title: 'Smart Dashboard', desc: 'Real-time reservations, walk-ins, and table management on one screen.' },
-              { title: 'Guest Memory', desc: 'Every returning guest feels recognized with personalized experiences.' },
+              { title: t('login.brandFeature1Title'), desc: t('login.brandFeature1Desc') },
+              { title: t('login.brandFeature2Title'), desc: t('login.brandFeature2Desc') },
+              { title: t('login.brandFeature3Title'), desc: t('login.brandFeature3Desc') },
             ].map((feature, i) => (
               <motion.div
                 key={i}
@@ -74,17 +76,17 @@ export default function LoginBrandPanel() {
         >
           <div>
             <div className="text-2xl font-serif font-bold text-white">2.3s</div>
-            <div className="text-xs text-muted-stone uppercase tracking-wider">Avg Response</div>
+            <div className="text-xs text-muted-stone uppercase tracking-wider">{t('login.statResponse')}</div>
           </div>
           <div className="w-px bg-white/10" />
           <div>
             <div className="text-2xl font-serif font-bold text-burgundy">6+</div>
-            <div className="text-xs text-muted-stone uppercase tracking-wider">Languages</div>
+            <div className="text-xs text-muted-stone uppercase tracking-wider">{t('login.statLanguages')}</div>
           </div>
           <div className="w-px bg-white/10" />
           <div>
             <div className="text-2xl font-serif font-bold text-white">24/7</div>
-            <div className="text-xs text-muted-stone uppercase tracking-wider">AI Booking</div>
+            <div className="text-xs text-muted-stone uppercase tracking-wider">{t('login.statBooking')}</div>
           </div>
         </motion.div>
       </div>

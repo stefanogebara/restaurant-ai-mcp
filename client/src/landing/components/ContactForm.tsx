@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Send, Mail, CheckCircle, Clock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { CONTACT_INFO } from '../data/demoData';
 
 export default function ContactForm() {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -28,11 +30,11 @@ export default function ContactForm() {
 
   const validate = () => {
     const errors: Record<string, string> = {};
-    if (!formData.name.trim()) errors.name = 'Full name is required';
-    if (!formData.email.trim()) errors.email = 'Email address is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errors.email = 'Please enter a valid email address';
-    if (!formData.restaurant.trim()) errors.restaurant = 'Restaurant name is required';
-    if (!formData.message.trim()) errors.message = 'Please tell us about your needs';
+    if (!formData.name.trim()) errors.name = t('landing.contact.errorName');
+    if (!formData.email.trim()) errors.email = t('landing.contact.errorEmail');
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errors.email = t('landing.contact.errorEmailInvalid');
+    if (!formData.restaurant.trim()) errors.restaurant = t('landing.contact.errorRestaurant');
+    if (!formData.message.trim()) errors.message = t('landing.contact.errorMessage');
     return errors;
   };
 
@@ -62,7 +64,7 @@ export default function ContactForm() {
       if (!res.ok) throw new Error('Failed to send message');
     } catch {
       setIsSubmitting(false);
-      setSubmitError('Something went wrong. Please try again or email us directly.');
+      setSubmitError(t('landing.contact.submitError'));
       return;
     }
 
@@ -93,12 +95,12 @@ export default function ContactForm() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <div className="text-xs font-semibold tracking-[2px] uppercase text-burgundy mb-4">Contact</div>
+          <div className="text-xs font-semibold tracking-[2px] uppercase text-burgundy mb-4">{t('landing.contact.label')}</div>
           <h2 className="font-serif text-4xl sm:text-[48px] font-medium tracking-tight text-deep-charcoal mb-3">
-            Get started today
+            {t('landing.contact.heading')}
           </h2>
           <p className="text-lg text-stone-gray max-w-2xl mx-auto font-light">
-            Schedule a personalized demo and discover how seatable can transform your operations
+            {t('landing.contact.subtitle')}
           </p>
         </motion.div>
 
@@ -112,7 +114,7 @@ export default function ContactForm() {
             className="space-y-6"
           >
             <div className="bg-deep-charcoal p-8 rounded-2xl">
-              <h3 className="font-serif text-2xl text-white mb-6">Contact Information</h3>
+              <h3 className="font-serif text-2xl text-white mb-6">{t('landing.contact.infoTitle')}</h3>
 
               <div className="space-y-6">
                 {/* Email */}
@@ -121,7 +123,7 @@ export default function ContactForm() {
                     <Mail className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <div className="text-sm text-muted-stone mb-1 font-light">Email</div>
+                    <div className="text-sm text-muted-stone mb-1 font-light">{t('landing.contact.emailLabel')}</div>
                     <a
                       href={`mailto:${CONTACT_INFO.email}`}
                       className="text-white font-medium hover:text-burgundy transition-colors"
@@ -137,8 +139,8 @@ export default function ContactForm() {
                     <Clock className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <div className="text-sm text-muted-stone mb-1 font-light">Response Time</div>
-                    <div className="text-white font-medium">Within 24 hours</div>
+                    <div className="text-sm text-muted-stone mb-1 font-light">{t('landing.contact.responseTimeLabel')}</div>
+                    <div className="text-white font-medium">{t('landing.contact.responseTimeValue')}</div>
                   </div>
                 </div>
               </div>
@@ -146,19 +148,14 @@ export default function ContactForm() {
 
             {/* What to Expect */}
             <div className="bg-warm-white p-6 rounded-2xl border border-border-gray">
-              <h4 className="font-serif text-lg text-deep-charcoal mb-4">What to Expect</h4>
+              <h4 className="font-serif text-lg text-deep-charcoal mb-4">{t('landing.contact.expectTitle')}</h4>
               <div className="space-y-3">
-                {[
-                  'Personalized 30-minute demo call',
-                  'Custom pricing based on your needs',
-                  'Technical consultation with our team',
-                  'Free trial to test the platform',
-                ].map((item, index) => (
+                {(['expect1', 'expect2', 'expect3', 'expect4'] as const).map((key, index) => (
                   <div key={index} className="flex items-start gap-3">
                     <div className="w-5 h-5 rounded-full bg-burgundy/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <CheckCircle className="w-3 h-3 text-burgundy" />
                     </div>
-                    <span className="text-stone-gray text-sm font-light">{item}</span>
+                    <span className="text-stone-gray text-sm font-light">{t(`landing.contact.${key}`)}</span>
                   </div>
                 ))}
               </div>
@@ -169,15 +166,15 @@ export default function ContactForm() {
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <div className="text-2xl font-serif font-bold text-burgundy">24/7</div>
-                  <div className="text-xs text-stone-gray mt-1 uppercase tracking-wider">AI Uptime</div>
+                  <div className="text-xs text-stone-gray mt-1 uppercase tracking-wider">{t('landing.contact.statUptime')}</div>
                 </div>
                 <div>
                   <div className="text-2xl font-serif font-bold text-deep-charcoal">2.3s</div>
-                  <div className="text-xs text-stone-gray mt-1 uppercase tracking-wider">Response</div>
+                  <div className="text-xs text-stone-gray mt-1 uppercase tracking-wider">{t('landing.contact.statResponse')}</div>
                 </div>
                 <div>
                   <div className="text-2xl font-serif font-bold text-deep-charcoal">6+</div>
-                  <div className="text-xs text-stone-gray mt-1 uppercase tracking-wider">Languages</div>
+                  <div className="text-xs text-stone-gray mt-1 uppercase tracking-wider">{t('landing.contact.statLanguages')}</div>
                 </div>
               </div>
             </div>
@@ -194,7 +191,7 @@ export default function ContactForm() {
               {/* Name */}
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-deep-charcoal mb-2">
-                  Full Name <span className="text-burgundy">*</span>
+                  {t('landing.contact.formName')} <span className="text-burgundy">{t('landing.contact.required')}</span>
                 </label>
                 <input
                   type="text"
@@ -203,7 +200,7 @@ export default function ContactForm() {
                   value={formData.name}
                   onChange={handleChange}
                   className={`w-full px-4 py-3 bg-white border rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-all ${fieldErrors.name ? 'border-red-400' : 'border-border-gray'}`}
-                  placeholder="John Smith"
+                  placeholder={t('landing.contact.placeholderName')}
                 />
                 {fieldErrors.name && <p className="mt-1 text-xs text-red-600">{fieldErrors.name}</p>}
               </div>
@@ -211,7 +208,7 @@ export default function ContactForm() {
               {/* Email */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-deep-charcoal mb-2">
-                  Email Address <span className="text-burgundy">*</span>
+                  {t('landing.contact.formEmail')} <span className="text-burgundy">{t('landing.contact.required')}</span>
                 </label>
                 <input
                   type="email"
@@ -220,7 +217,7 @@ export default function ContactForm() {
                   value={formData.email}
                   onChange={handleChange}
                   className={`w-full px-4 py-3 bg-white border rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-all ${fieldErrors.email ? 'border-red-400' : 'border-border-gray'}`}
-                  placeholder="john@restaurant.com"
+                  placeholder={t('landing.contact.placeholderEmail')}
                 />
                 {fieldErrors.email && <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>}
               </div>
@@ -228,7 +225,7 @@ export default function ContactForm() {
               {/* Phone */}
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-deep-charcoal mb-2">
-                  Phone Number
+                  {t('landing.contact.formPhone')}
                 </label>
                 <input
                   type="tel"
@@ -237,14 +234,14 @@ export default function ContactForm() {
                   value={formData.phone}
                   onChange={handleChange}
                   className="w-full px-4 py-3 bg-white border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-all"
-                  placeholder="+1 (555) 123-4567"
+                  placeholder={t('landing.contact.placeholderPhone')}
                 />
               </div>
 
               {/* Restaurant Name */}
               <div>
                 <label htmlFor="restaurant" className="block text-sm font-medium text-deep-charcoal mb-2">
-                  Restaurant Name <span className="text-burgundy">*</span>
+                  {t('landing.contact.formRestaurant')} <span className="text-burgundy">{t('landing.contact.required')}</span>
                 </label>
                 <input
                   type="text"
@@ -253,7 +250,7 @@ export default function ContactForm() {
                   value={formData.restaurant}
                   onChange={handleChange}
                   className={`w-full px-4 py-3 bg-white border rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-all ${fieldErrors.restaurant ? 'border-red-400' : 'border-border-gray'}`}
-                  placeholder="La Bella Vista"
+                  placeholder={t('landing.contact.placeholderRestaurant')}
                 />
                 {fieldErrors.restaurant && <p className="mt-1 text-xs text-red-600">{fieldErrors.restaurant}</p>}
               </div>
@@ -261,7 +258,7 @@ export default function ContactForm() {
               {/* Number of Tables */}
               <div>
                 <label htmlFor="tables" className="block text-sm font-medium text-deep-charcoal mb-2">
-                  Number of Tables
+                  {t('landing.contact.formTables')}
                 </label>
                 <input
                   type="number"
@@ -270,7 +267,7 @@ export default function ContactForm() {
                   value={formData.tables}
                   onChange={handleChange}
                   className="w-full px-4 py-3 bg-white border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-all"
-                  placeholder="12"
+                  placeholder={t('landing.contact.placeholderTables')}
                   min="1"
                 />
               </div>
@@ -278,7 +275,7 @@ export default function ContactForm() {
               {/* Message */}
               <div>
                 <label htmlFor="message" className="block text-sm font-medium text-deep-charcoal mb-2">
-                  Tell us about your needs <span className="text-burgundy">*</span>
+                  {t('landing.contact.formMessage')} <span className="text-burgundy">{t('landing.contact.required')}</span>
                 </label>
                 <textarea
                   id="message"
@@ -287,7 +284,7 @@ export default function ContactForm() {
                   onChange={handleChange}
                   rows={4}
                   className={`w-full px-4 py-3 bg-white border rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-all resize-none ${fieldErrors.message ? 'border-red-400' : 'border-border-gray'}`}
-                  placeholder="I'm interested in implementing seatable for my restaurant..."
+                  placeholder={t('landing.contact.placeholderMessage')}
                 />
                 {fieldErrors.message && <p className="mt-1 text-xs text-red-600">{fieldErrors.message}</p>}
               </div>
@@ -301,17 +298,17 @@ export default function ContactForm() {
                 {isSubmitted ? (
                   <>
                     <CheckCircle className="w-5 h-5" />
-                    Message Sent!
+                    {t('landing.contact.submitSent')}
                   </>
                 ) : isSubmitting ? (
                   <>
                     <div aria-hidden="true" className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Sending...
+                    {t('landing.contact.submitSending')}
                   </>
                 ) : (
                   <>
                     <Send className="w-5 h-5" />
-                    Send Message
+                    {t('landing.contact.submitSend')}
                   </>
                 )}
               </button>
@@ -323,7 +320,7 @@ export default function ContactForm() {
 
               {/* Privacy Note */}
               <p className="text-xs text-muted-stone text-center font-light">
-                By submitting this form, you agree to be contacted regarding your inquiry.
+                {t('landing.contact.privacyNote')}
               </p>
             </form>
           </motion.div>

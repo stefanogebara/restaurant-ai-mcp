@@ -96,10 +96,11 @@ module.exports = async (req, res) => {
     // Find all confirmed reservations for today that have a phone number
     const { data: reservations, error } = await supabaseAdmin
       .from('reservations')
-      .select('*')
+      .select('id, restaurant_id, customer_name, customer_phone, date, time, party_size, reminder_sent')
       .eq('date', today)
       .eq('status', 'confirmed')
-      .not('customer_phone', 'is', null);
+      .not('customer_phone', 'is', null)
+      .limit(500);
 
     if (error) {
       logger.error(' Error fetching reservations:', error);

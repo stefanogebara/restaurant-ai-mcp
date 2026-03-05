@@ -40,7 +40,9 @@ module.exports = async (req, res) => {
     <priority>${p.priority}</priority>
   </url>`).join('\n');
 
-  const restaurantEntries = (restaurants || []).map(r => {
+  const restaurantEntries = (restaurants || [])
+    .filter(r => r.slug && !r.slug.startsWith('demo-') && !r.slug.startsWith('test-') && !r.slug.startsWith('logverify-'))
+    .map(r => {
     const lastmod = r.updated_at ? r.updated_at.split('T')[0] : today;
     return `  <url>
     <loc>${BASE_URL}/book/${r.slug}</loc>

@@ -5,7 +5,7 @@ var mockSupabaseAdmin = { from: jest.fn() };
 const managerChat = require('../manager-chat');
 
 jest.mock('../_lib/auth', () => ({
-  verifyJWT: jest.fn().mockReturnValue({ restaurantId: 'rest-1' }),
+  verifyJWT: jest.fn().mockResolvedValue({ restaurant_id: 'rest-1' }),
 }));
 jest.mock('../_lib/manager-agent', () => {
   class ManagerQuotaError extends Error {
@@ -27,6 +27,10 @@ jest.mock('../_lib/supabase', () => ({ supabaseAdmin: mockSupabaseAdmin }));
 
 jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ error: jest.fn(), info: jest.fn(), warn: jest.fn() }),
+}));
+
+jest.mock('../_lib/rate-limit', () => ({
+  checkAndApplyRateLimit: jest.fn().mockResolvedValue(false),
 }));
 
 function mockRes() {
@@ -62,7 +66,7 @@ describe('POST /api/manager-chat', () => {
 
   it('returns 401 when JWT is invalid', async () => {
     const { verifyJWT } = require('../_lib/auth');
-    verifyJWT.mockImplementationOnce(() => { throw new Error('UNAUTHORIZED'); });
+    verifyJWT.mockResolvedValueOnce(null);
     const req = { method: 'POST', headers: { authorization: 'Bearer bad' }, body: { message: 'Hi' } };
     const res = mockRes();
     await managerChat(req, res);

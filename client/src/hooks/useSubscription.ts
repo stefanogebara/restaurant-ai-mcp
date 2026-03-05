@@ -148,6 +148,7 @@ export function usePlanInfo(email?: string) {
   return {
     planName: getPlanDisplayName(),
     planColor: getPlanColor(),
+    status: data?.subscription?.status || null,
     isTrial: data?.subscription?.is_trial || false,
     isActive: data?.subscription?.is_active || false,
     trialEnd: data?.subscription?.trial_end,

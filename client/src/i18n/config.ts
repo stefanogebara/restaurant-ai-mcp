@@ -54,11 +54,28 @@ i18n
 const detectedLng = i18n.language;
 if (detectedLng && !detectedLng.startsWith('en')) {
   loadLocale(detectedLng);
+  document.documentElement.lang = detectedLng;
 }
 
 // Load locale dynamically whenever language changes
 i18n.on('languageChanged', (lng) => {
   loadLocale(lng);
+  // Update <html lang> for screen readers (P2-11)
+  document.documentElement.lang = lng;
+  // Update <title> and <meta description> for SEO (P2-12)
+  const titles: Record<string, string> = {
+    'pt-BR': 'seatable - Gestão de Restaurantes com IA',
+    es: 'seatable - Gestión de Restaurantes con IA',
+  };
+  const descs: Record<string, string> = {
+    'pt-BR': 'Gerencie reservas, mesas e atendimento do seu restaurante com inteligência artificial. Agente de voz, WhatsApp e painel em tempo real.',
+    es: 'Gestiona reservas, mesas y atención de tu restaurante con inteligencia artificial.',
+  };
+  document.title = titles[lng] || 'seatable - AI Restaurant Management';
+  const metaDesc = document.querySelector('meta[name="description"]');
+  if (metaDesc) {
+    metaDesc.setAttribute('content', descs[lng] || 'AI-powered restaurant management platform. Voice agent, WhatsApp bookings, and real-time dashboard.');
+  }
 });
 
 export default i18n;

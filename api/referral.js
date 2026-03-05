@@ -11,6 +11,7 @@ const { supabaseAdmin } = require('./_lib/supabase');
 const { verifyAuth } = require('./_lib/auth');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const logger = createSecureLogger('Referral');
 
 const BASE_URL = process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
@@ -24,10 +25,8 @@ function generateCode() {
 }
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  setInternalCors(req, res);
+  if (handlePreflight(req, res)) return;
 
   const action = req.query.action || (req.body && req.body.action);
   const rateLimited = await checkAndApplyRateLimit(req, res, 'api');

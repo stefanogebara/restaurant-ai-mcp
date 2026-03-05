@@ -1,10 +1,19 @@
 import { useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Globe } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function LandingNav() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const currentLang = i18n.language?.startsWith('pt') ? 'PT' : 'EN';
+
+  const toggleLanguage = () => {
+    const next = currentLang === 'PT' ? 'en' : 'pt-BR';
+    i18n.changeLanguage(next);
+  };
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -27,23 +36,32 @@ export default function LandingNav() {
       {/* Desktop Navigation */}
       <div className="hidden md:flex items-center gap-9">
         <button type="button" onClick={() => scrollToSection('features')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
-          Features
+          {t('landing.nav.features')}
         </button>
         <button type="button" onClick={() => scrollToSection('pricing')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
-          Pricing
+          {t('landing.nav.pricing')}
         </button>
         <button type="button" onClick={() => navigate('/live-demo')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
-          Demo
+          {t('landing.nav.demo')}
         </button>
         <button type="button" onClick={() => scrollToSection('contact')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
-          Contact
+          {t('landing.nav.contact')}
         </button>
         <Link to="/demo/setup" className="text-sm font-medium text-burgundy hover:text-burgundy-dark transition-colors">
-          Try free demo
+          {t('landing.nav.tryFree')}
         </Link>
         <Link to="/login" className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
-          Sign in
+          {t('landing.nav.signIn')}
         </Link>
+        <button
+          type="button"
+          onClick={toggleLanguage}
+          className="flex items-center gap-1.5 text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors"
+          aria-label="Toggle language"
+        >
+          <Globe className="w-4 h-4" />
+          {currentLang}
+        </button>
       </div>
 
       {/* Desktop CTA */}
@@ -56,7 +74,7 @@ export default function LandingNav() {
         }}
         className="hidden md:block px-6 py-2.5 bg-deep-charcoal text-white text-sm font-semibold rounded-full hover:bg-charcoal-dark transition-colors"
       >
-        Get Started
+        {t('landing.nav.getStarted')}
       </button>
 
       {/* Mobile Menu Button */}
@@ -79,23 +97,31 @@ export default function LandingNav() {
           />
           <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-border-gray px-6 py-6 space-y-4">
             <button type="button" onClick={() => scrollToSection('features')} className="block w-full text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors py-2">
-              Features
+              {t('landing.nav.features')}
             </button>
             <button type="button" onClick={() => scrollToSection('pricing')} className="block w-full text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors py-2">
-              Pricing
+              {t('landing.nav.pricing')}
             </button>
             <button type="button" onClick={() => { navigate('/live-demo'); setIsMobileMenuOpen(false); }} className="block w-full text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors py-2">
-              Demo
+              {t('landing.nav.demo')}
             </button>
             <button type="button" onClick={() => scrollToSection('contact')} className="block w-full text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors py-2">
-              Contact
+              {t('landing.nav.contact')}
             </button>
             <Link to="/demo/setup" onClick={() => setIsMobileMenuOpen(false)} className="block text-left text-sm font-medium text-burgundy hover:text-burgundy-dark transition-colors py-2">
-              Try free demo
+              {t('landing.nav.tryFree')}
             </Link>
             <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="block text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors py-2">
-              Sign in
+              {t('landing.nav.signIn')}
             </Link>
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="flex items-center gap-1.5 text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors py-2"
+            >
+              <Globe className="w-4 h-4" />
+              {currentLang}
+            </button>
             <div className="pt-4 border-t border-border-gray">
               <button
                 type="button"
@@ -107,7 +133,7 @@ export default function LandingNav() {
                 }}
                 className="block w-full bg-deep-charcoal text-white text-center px-6 py-3 text-sm font-semibold rounded-full"
               >
-                Get Started
+                {t('landing.nav.getStarted')}
               </button>
             </div>
           </div>

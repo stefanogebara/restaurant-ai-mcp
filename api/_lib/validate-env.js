@@ -22,4 +22,19 @@ function validateCritical() {
   validateEnv(CRITICAL_VARS);
 }
 
+/**
+ * Warn about missing critical env vars at module load time.
+ * Does NOT throw — allows partial functionality in dev/test.
+ * Called automatically on first import.
+ */
+function warnMissing() {
+  const missing = CRITICAL_VARS.filter(k => !process.env[k]?.trim());
+  if (missing.length > 0 && process.env.NODE_ENV === 'production') {
+    console.error(`[validate-env] WARNING: Missing critical env vars in production: ${missing.join(', ')}`);
+  }
+}
+
+// Auto-warn on import
+warnMissing();
+
 module.exports = { validateEnv, validateCritical, CRITICAL_VARS };

@@ -133,7 +133,7 @@ export default function Dashboard() {
   };
 
   // ---- Subscription / trial ----
-  const { isTrial, trialEnd, isActive } = usePlanInfo();
+  const { isTrial, trialEnd, isActive, status: subStatus } = usePlanInfo();
 
   const trialDaysLeft = useMemo(() => {
     if (!isTrial || !trialEnd) return null;
@@ -185,7 +185,7 @@ export default function Dashboard() {
 
             <div className="flex items-center gap-2.5">
               <button
-                onClick={() => window.location.href = '/host-dashboard/calls'}
+                onClick={() => window.location.href = '/host-dashboard/reports'}
                 className="flex items-center gap-2 px-4 py-2 bg-white border border-border-gray text-stone-gray hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors"
               >
                 <ThiingsIcon name="download" pxSize={14} />
@@ -199,6 +199,23 @@ export default function Dashboard() {
               </button>
             </div>
           </div>
+
+          {/* ---- Payment Failure Banner ---- */}
+          {subStatus === 'past_due' && (
+            <div className="bg-red-50 border border-red-300 rounded-2xl px-5 py-3.5 flex items-center justify-between gap-3">
+              <p className="text-sm text-red-800">
+                <span className="font-semibold">{t('dashboard.paymentFailed', 'Payment failed')}</span>
+                {' — '}
+                {t('dashboard.paymentFailedHint', 'Please update your payment method to keep your subscription active.')}
+              </p>
+              <a
+                href="/subscription/manage"
+                className="text-sm font-semibold text-red-700 hover:text-red-900 bg-red-100 hover:bg-red-200 px-4 py-1.5 rounded-xl whitespace-nowrap transition-colors"
+              >
+                {t('dashboard.updatePayment', 'Update Payment')}
+              </a>
+            </div>
+          )}
 
           {/* ---- Trial Banner ---- */}
           {isTrial && isActive && trialDaysLeft !== null && (
@@ -353,7 +370,7 @@ export default function Dashboard() {
           <div className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-sm w-full">
             <h3 className="text-lg font-bold text-deep-charcoal mb-2">{t('dashboard.completeService')}</h3>
             <p className="text-sm text-stone-gray mb-6">
-              Complete service for <span className="font-semibold">{serviceToComplete.customer_name}</span>?
+              {t('dashboard.completeServiceFor', { name: serviceToComplete.customer_name })}
             </p>
             <div className="flex gap-3">
               <button

@@ -9,6 +9,18 @@ import { trackCtaClicked, trackPricingPlanClicked } from '../../lib/analytics';
 import { useToast } from '../../contexts/ToastContext';
 import { detectCurrency } from '../../utils/currency';
 
+const TIER_KEYS: Record<string, string> = {
+  Starter: 'starter',
+  Growth: 'growth',
+  Scale: 'scale',
+};
+
+const FEATURE_COUNTS: Record<string, number> = {
+  starter: 5,
+  growth: 6,
+  scale: 5,
+};
+
 export default function PricingSection() {
   const { t } = useTranslation();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
@@ -80,6 +92,8 @@ export default function PricingSection() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-[2px] bg-border-gray rounded-[20px] overflow-hidden">
           {PRICING_TIERS.map((tier, index) => {
             const isFeatured = !!tier.highlighted;
+            const tierKey = TIER_KEYS[tier.name] || tier.name.toLowerCase();
+            const featureCount = FEATURE_COUNTS[tierKey] || tier.features.length;
             return (
               <div key={index} className={`relative px-8 sm:px-9 py-12 ${isFeatured ? 'bg-deep-charcoal' : 'bg-warm-white'}`}>
                 {/* Plan label */}
@@ -97,12 +111,12 @@ export default function PricingSection() {
 
                 {/* Description */}
                 <p className={`text-sm font-light mb-8 ${isFeatured ? 'text-muted-stone' : 'text-warm-stone'}`}>
-                  {tier.description}
+                  {t(`landing.pricing.${tierKey}.desc`, tier.description)}
                 </p>
 
                 {/* Features */}
                 <ul className="mb-9">
-                  {tier.features.map((f, i) => (
+                  {Array.from({ length: featureCount }, (_, i) => (
                     <li
                       key={i}
                       className={`text-sm py-3 border-b flex items-center gap-2.5 ${
@@ -110,7 +124,7 @@ export default function PricingSection() {
                       }`}
                     >
                       <span className="w-[5px] h-[5px] rounded-full bg-burgundy flex-shrink-0" />
-                      {f}
+                      {t(`landing.pricing.${tierKey}.f${i + 1}`, tier.features[i] || '')}
                     </li>
                   ))}
                 </ul>
@@ -140,7 +154,7 @@ export default function PricingSection() {
                       Loading...
                     </>
                   ) : (
-                    tier.cta
+                    t(`landing.pricing.${tierKey}.cta`, tier.cta)
                   )}
                 </button>
               </div>
@@ -152,7 +166,7 @@ export default function PricingSection() {
         <div className="mt-10 p-5 bg-soft-gray rounded-2xl border border-border-gray text-center">
           <p className="text-xs text-stone-gray leading-relaxed">
             <span className="font-semibold text-deep-charcoal">{t('landing.pricing.usageBased')}</span>{' '}
-            {t('landing.pricing.usageDetail')}
+            {t('landing.pricing.usageDetail', { currency: isBRL ? 'BRL' : 'EUR' })}
           </p>
         </div>
 

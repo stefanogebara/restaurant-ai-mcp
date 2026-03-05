@@ -11,7 +11,7 @@ export default function BookingPage() {
   const [searchParams] = useSearchParams();
   const isEmbed = searchParams.get('embed') === 'true';
 
-  const { data: restaurant, isLoading, isError, error } = useRestaurantBySlug(slug);
+  const { data: restaurant, isLoading, isError, error: _error } = useRestaurantBySlug(slug);
 
   // SEO: inject dynamic title, meta tags, and JSON-LD when restaurant loads
   useEffect(() => {
@@ -106,7 +106,7 @@ export default function BookingPage() {
           </div>
           <h1 className="text-xl font-bold text-deep-charcoal mb-2">{t('reservations.restaurantNotFound')}</h1>
           <p className="text-sm text-stone-gray">
-            {error instanceof Error ? error.message : 'The restaurant you are looking for does not exist or is not accepting online reservations.'}
+            {t('reservations.restaurantNotFoundDesc')}
           </p>
         </div>
         <p className="mt-6 text-xs text-muted-stone">

@@ -87,15 +87,14 @@ export default function WhatsAppSettingsPage() {
           </div>
           {!status?.api_configured && (
             <p className="text-sm text-warm-stone">
-              Set <code className="text-xs bg-soft-gray px-1.5 py-0.5 rounded">WHATSAPP_PHONE_NUMBER_ID</code> and{' '}
-              <code className="text-xs bg-soft-gray px-1.5 py-0.5 rounded">WHATSAPP_ACCESS_TOKEN</code> in your environment variables.
+              {t('settings.whatsappSetupHint', 'Contact Seatable support to configure your WhatsApp connection.')}
             </p>
           )}
         </div>
 
         {/* Enable Toggle + Phone Card */}
         <div className="bg-white border border-border-gray rounded-2xl p-6 shadow-sm space-y-5">
-          <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">Settings</h2>
+          <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">{t('settings.settings', 'Settings')}</h2>
 
           {/* Toggle */}
           <div className="flex items-center justify-between">

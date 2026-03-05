@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ActiveParty } from '../../types/host.types';
 import ThiingsIcon from '../common/ThiingsIcon';
 
@@ -9,38 +10,13 @@ interface ActivePartiesPanelProps {
   isLoading?: boolean;
 }
 
-const translations = {
-  en: {
-    activeParties: 'Active Parties',
-    noActive: 'No active parties yet',
-    addHint: 'Add a walk-in or check in a reservation to get started',
-    guests: 'guests',
-    table: 'Table',
-    overdue: 'Overdue',
-    elapsed: 'elapsed',
-    left: 'left',
-    completeService: 'Complete Service',
-  },
-  es: {
-    activeParties: 'Mesas Activas',
-    noActive: 'Sin mesas activas',
-    addHint: 'Añade un walk-in o haz check-in de una reserva para comenzar',
-    guests: 'pax',
-    table: 'Mesa',
-    overdue: 'Excedido',
-    elapsed: 'transcurridos',
-    left: 'restantes',
-    completeService: 'Completar Servicio',
-  },
-};
-
 export default function ActivePartiesPanel({
   parties,
   onCompleteService,
-  language = 'en',
+  language: _language,
   isLoading,
 }: ActivePartiesPanelProps) {
-  const t = translations[language];
+  const { t } = useTranslation();
   const [billInputs, setBillInputs] = useState<Record<string, string>>({});
   if (isLoading) {
     return (
@@ -64,14 +40,14 @@ export default function ActivePartiesPanel({
       <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
         <div>
           <div className="flex items-center gap-2.5">
-            <h3 className="text-[15px] font-semibold text-deep-charcoal tracking-tight">{t.activeParties}</h3>
+            <h3 className="text-[15px] font-semibold text-deep-charcoal tracking-tight">{t('dashboard.activeParties')}</h3>
             <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">
               {parties.length}
             </span>
           </div>
           {parties.reduce((sum, p) => sum + (p.party_size ?? 0), 0) > 0 && (
             <p className="text-xs text-muted-stone mt-0.5">
-              {parties.reduce((sum, p) => sum + (p.party_size ?? 0), 0)} guests seated
+              {parties.reduce((sum, p) => sum + (p.party_size ?? 0), 0)} {t('dashboard.activePartiesPanel.guestsSeated')}
             </p>
           )}
         </div>
@@ -83,8 +59,8 @@ export default function ActivePartiesPanel({
           <div className="w-14 h-14 bg-soft-gray rounded-2xl flex items-center justify-center mx-auto mb-3">
             <ThiingsIcon name="layout-grid" pxSize={28} />
           </div>
-          <p className="text-sm font-semibold text-deep-charcoal mb-1">{t.noActive}</p>
-          <p className="text-xs text-stone-gray">{t.addHint}</p>
+          <p className="text-sm font-semibold text-deep-charcoal mb-1">{t('dashboard.activePartiesPanel.noActive')}</p>
+          <p className="text-xs text-stone-gray">{t('dashboard.activePartiesPanel.addHint')}</p>
         </div>
       ) : (
         <div className="max-h-[400px] overflow-y-auto py-1">
@@ -95,7 +71,7 @@ export default function ActivePartiesPanel({
                 billValue={billInputs[party.service_id] || ''}
                 onBillChange={(val) => setBillInputs(prev => ({ ...prev, [party.service_id]: val }))}
                 onComplete={(totalBill) => onCompleteService(party, totalBill)}
-                language={language}
+                language={_language}
               />
             </div>
           ))}
@@ -117,11 +93,11 @@ interface PartyRowProps {
   billValue: string;
   onBillChange: (val: string) => void;
   onComplete: (totalBill?: number) => void;
-  language: 'en' | 'es';
+  language?: 'en' | 'es';
 }
 
-function PartyRow({ party, billValue, onBillChange, onComplete, language }: PartyRowProps) {
-  const t = translations[language];
+function PartyRow({ party, billValue, onBillChange, onComplete }: PartyRowProps) {
+  const { t } = useTranslation();
   const isOverdue = party.is_overdue;
 
   return (
@@ -146,12 +122,12 @@ function PartyRow({ party, billValue, onBillChange, onComplete, language }: Part
       </div>
 
       <div className="flex items-center gap-3 text-xs text-stone-gray mb-2">
-        <span className="font-medium">{party.party_size} {t.guests}</span>
+        <span className="font-medium">{party.party_size} {t('dashboard.activePartiesPanel.guests')}</span>
         {party.tables && party.tables.length > 0 && (
-          <span className="bg-soft-gray px-2 py-0.5 rounded-lg text-xs font-semibold max-w-[120px] truncate">{t.table} {party.tables.join(', ')}</span>
+          <span className="bg-soft-gray px-2 py-0.5 rounded-lg text-xs font-semibold max-w-[120px] truncate">{t('dashboard.activePartiesPanel.table')} {party.tables.join(', ')}</span>
         )}
         {isOverdue && (
-          <span className="text-red-600 font-semibold">{t.overdue}</span>
+          <span className="text-red-600 font-semibold">{t('dashboard.activePartiesPanel.overdue')}</span>
         )}
       </div>
 
@@ -172,8 +148,8 @@ function PartyRow({ party, billValue, onBillChange, onComplete, language }: Part
             />
           </div>
           <div className="flex justify-between text-[10px] text-muted-stone mb-1">
-            <span>{party.time_elapsed_minutes}m {t.elapsed}</span>
-            <span>{party.time_remaining_minutes > 0 ? `${party.time_remaining_minutes}m ${t.left}` : t.overdue}</span>
+            <span>{party.time_elapsed_minutes}m {t('dashboard.activePartiesPanel.elapsed')}</span>
+            <span>{party.time_remaining_minutes > 0 ? `${party.time_remaining_minutes}m ${t('dashboard.activePartiesPanel.left')}` : t('dashboard.activePartiesPanel.overdue')}</span>
           </div>
         </div>
       )}
@@ -182,7 +158,7 @@ function PartyRow({ party, billValue, onBillChange, onComplete, language }: Part
         <input
           type="number"
           min={0}
-          placeholder="Bill amount (optional)"
+          placeholder={t('dashboard.activePartiesPanel.billAmount')}
           value={billValue}
           onChange={e => onBillChange(e.target.value)}
           className="w-28 border border-border-gray rounded-lg px-2 py-1 text-xs text-deep-charcoal focus:outline-none focus:ring-1 focus:ring-burgundy/30"
@@ -196,7 +172,7 @@ function PartyRow({ party, billValue, onBillChange, onComplete, language }: Part
           }}
           className="flex-1 px-3 py-2.5 min-h-[44px] bg-soft-gray hover:bg-border-gray text-deep-charcoal text-xs font-medium rounded-xl transition-colors"
         >
-          {t.completeService}
+          {t('dashboard.completeService')}
         </button>
       </div>
     </div>

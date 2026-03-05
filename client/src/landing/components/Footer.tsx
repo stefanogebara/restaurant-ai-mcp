@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function Footer() {
+  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
 
   return (
@@ -10,10 +12,10 @@ export default function Footer() {
       </div>
       <div className="flex items-center gap-6">
         <Link to="/privacy" className="text-[13px] text-muted-stone hover:text-deep-charcoal transition-colors">
-          Privacy Policy
+          {t('landing.footer.privacy')}
         </Link>
         <Link to="/terms" className="text-[13px] text-muted-stone hover:text-deep-charcoal transition-colors">
-          Terms of Service
+          {t('landing.footer.terms')}
         </Link>
         <p className="text-[13px] text-muted-stone">
           &copy; {currentYear} Seatable.

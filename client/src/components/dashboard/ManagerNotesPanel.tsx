@@ -7,64 +7,16 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useManagerNotes, useAddManagerNote, useDeleteManagerNote } from '../../hooks/useManagerNotes';
-
-const translations = {
-  en: {
-    title: 'AI Memory & Manager Notes',
-    subtitle: 'Teach the AI about your guests and policies',
-    addNote: 'Add Note',
-    guestPhone: 'Guest Phone (optional)',
-    guestPhonePlaceholder: '+34 612 345 678',
-    noteContent: 'Note',
-    noteContentPlaceholder: 'e.g., "Always comp dessert for Mr. Rodriguez" or "No large parties near the kitchen"',
-    typeLabel: 'Note Type',
-    typeVip: 'VIP Guest Instruction',
-    typePolicy: 'General Policy',
-    typePreference: 'Guest Preference',
-    saving: 'Saving...',
-    save: 'Save Note',
-    loading: 'Loading notes...',
-    noNotes: 'No manager notes yet. Add notes to teach the AI about your guests and policies.',
-    deleteConfirm: 'Delete this note?',
-    policy: 'Policy',
-    guest: 'Guest',
-    errorLoad: 'Failed to load notes',
-    errorSave: 'Failed to save note',
-    errorDelete: 'Failed to delete note'
-  },
-  es: {
-    title: 'Memoria IA & Notas del Gerente',
-    subtitle: 'Enseña a la IA sobre tus clientes y politicas',
-    addNote: 'Agregar Nota',
-    guestPhone: 'Telefono del Cliente (opcional)',
-    guestPhonePlaceholder: '+34 612 345 678',
-    noteContent: 'Nota',
-    noteContentPlaceholder: 'ej., "Siempre ofrecer postre cortesia al Sr. Rodriguez" o "No sentar grupos grandes cerca de la cocina"',
-    typeLabel: 'Tipo de Nota',
-    typeVip: 'Instruccion VIP',
-    typePolicy: 'Politica General',
-    typePreference: 'Preferencia del Cliente',
-    saving: 'Guardando...',
-    save: 'Guardar Nota',
-    loading: 'Cargando notas...',
-    noNotes: 'No hay notas aun. Agrega notas para ensenar a la IA sobre tus clientes y politicas.',
-    deleteConfirm: 'Eliminar esta nota?',
-    policy: 'Politica',
-    guest: 'Cliente',
-    errorLoad: 'Error al cargar notas',
-    errorSave: 'Error al guardar nota',
-    errorDelete: 'Error al eliminar nota'
-  }
-};
 
 interface ManagerNotesPanelProps {
   language?: 'en' | 'es';
 }
 
-export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanelProps) {
-  const t = translations[language] || translations.en;
+export default function ManagerNotesPanel({ language: _language }: ManagerNotesPanelProps) {
+  const { t } = useTranslation();
 
   const { data: notes = [], isLoading } = useManagerNotes();
   const addNote = useAddManagerNote();
@@ -88,7 +40,7 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
   };
 
   const handleDelete = (noteId: string) => {
-    if (!confirm(t.deleteConfirm)) return;
+    if (!confirm(t('dashboard.managerNotes.deleteConfirm'))) return;
     deleteNote.mutate(noteId);
   };
 
@@ -97,9 +49,9 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-[15px] font-semibold text-deep-charcoal tracking-tight">
-            {t.title}
+            {t('dashboard.managerNotes.title')}
           </h3>
-          <p className="text-xs text-muted-stone mt-0.5">{t.subtitle}</p>
+          <p className="text-xs text-muted-stone mt-0.5">{t('dashboard.managerNotes.subtitle')}</p>
         </div>
         <button
           type="button"
@@ -107,13 +59,13 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
           aria-expanded={showForm}
           className="text-xs px-3 py-1.5 rounded-xl bg-burgundy text-white font-medium hover:bg-burgundy-dark transition-colors"
         >
-          {t.addNote}
+          {t('dashboard.managerNotes.addNote')}
         </button>
       </div>
 
       {(addNote.isError || deleteNote.isError) && (
         <div className="mb-3 p-2 rounded-xl bg-red-50 text-red-700 text-xs">
-          {addNote.isError ? t.errorSave : t.errorDelete}
+          {addNote.isError ? t('dashboard.managerNotes.errorSave') : t('dashboard.managerNotes.errorDelete')}
         </div>
       )}
 
@@ -121,7 +73,7 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
         <div className="mb-4 p-4 rounded-xl bg-warm-white border border-border-gray space-y-3">
           <div>
             <label htmlFor="note-type" className="block text-xs font-medium text-stone-gray mb-1">
-              {t.typeLabel}
+              {t('dashboard.managerNotes.typeLabel')}
             </label>
             <select
               id="note-type"
@@ -129,22 +81,22 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
               onChange={(e) => setNoteType(e.target.value as typeof noteType)}
               className="w-full text-sm border border-border-gray rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
             >
-              <option value="vip_instruction">{t.typeVip}</option>
-              <option value="general_policy">{t.typePolicy}</option>
-              <option value="guest_preference">{t.typePreference}</option>
+              <option value="vip_instruction">{t('dashboard.managerNotes.typeVip')}</option>
+              <option value="general_policy">{t('dashboard.managerNotes.typePolicy')}</option>
+              <option value="guest_preference">{t('dashboard.managerNotes.typePreference')}</option>
             </select>
           </div>
 
           {noteType !== 'general_policy' && (
             <div>
               <label className="block text-xs font-medium text-stone-gray mb-1">
-                {t.guestPhone}
+                {t('dashboard.managerNotes.guestPhone')}
               </label>
               <input
                 type="tel"
                 value={guestPhone}
                 onChange={(e) => setGuestPhone(e.target.value)}
-                placeholder={t.guestPhonePlaceholder}
+                placeholder={t('dashboard.managerNotes.guestPhonePlaceholder')}
                 className="w-full text-sm border border-border-gray rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
               />
             </div>
@@ -152,12 +104,12 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
 
           <div>
             <label className="block text-xs font-medium text-stone-gray mb-1">
-              {t.noteContent}
+              {t('dashboard.managerNotes.noteContent')}
             </label>
             <textarea
               value={noteContent}
               onChange={(e) => setNoteContent(e.target.value)}
-              placeholder={t.noteContentPlaceholder}
+              placeholder={t('dashboard.managerNotes.noteContentPlaceholder')}
               rows={3}
               className="w-full text-sm border border-border-gray rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy resize-none"
             />
@@ -169,7 +121,7 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
             disabled={addNote.isPending || !noteContent.trim()}
             className="w-full text-sm px-4 py-2 rounded-xl bg-burgundy text-white font-medium hover:bg-burgundy-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {addNote.isPending ? t.saving : t.save}
+            {addNote.isPending ? t('dashboard.managerNotes.saving') : t('dashboard.managerNotes.save')}
           </button>
         </div>
       )}
@@ -184,8 +136,8 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
           <div className="w-12 h-12 rounded-2xl bg-soft-gray flex items-center justify-center mb-3 mx-auto">
             <ThiingsIcon name="lightbulb" pxSize={20} />
           </div>
-          <p className="text-sm font-semibold text-deep-charcoal mb-1">No notes yet</p>
-          <p className="text-xs text-muted-stone">{t.noNotes}</p>
+          <p className="text-sm font-semibold text-deep-charcoal mb-1">{t('dashboard.managerNotes.noNotesTitle')}</p>
+          <p className="text-xs text-muted-stone">{t('dashboard.managerNotes.noNotes')}</p>
         </div>
       ) : (
         <div className="space-y-2 max-h-80 overflow-y-auto">
@@ -201,7 +153,7 @@ export default function ManagerNotesPanel({ language = 'en' }: ManagerNotesPanel
                     : 'bg-amber-100 text-amber-700'
                 }`}
               >
-                {note.is_policy ? t.policy : t.guest}
+                {note.is_policy ? t('dashboard.managerNotes.policy') : t('dashboard.managerNotes.guest')}
               </span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-deep-charcoal">{note.content}</p>

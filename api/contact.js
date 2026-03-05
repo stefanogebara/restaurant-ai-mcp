@@ -14,6 +14,16 @@ const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('Contact');
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 module.exports = async (req, res) => {
   setInternalCors(req, res);
   if (handlePreflight(req, res)) return;
@@ -50,17 +60,17 @@ module.exports = async (req, res) => {
     await resend.emails.send({
       from: 'noreply@seatable.one',
       to: 'hello@seatable.io',
-      subject: `New contact: ${name} — ${restaurant || 'no restaurant'}`,
+      subject: `New contact: ${escapeHtml(name)} — ${escapeHtml(restaurant) || 'no restaurant'}`,
       html: `
         <h2>New Contact Form Submission</h2>
-        <p><b>Name:</b> ${name}</p>
-        <p><b>Email:</b> <a href="mailto:${email}">${email}</a></p>
-        <p><b>Phone:</b> ${phone || '—'}</p>
-        <p><b>Restaurant:</b> ${restaurant || '—'}</p>
-        <p><b>Tables:</b> ${tables || '—'}</p>
+        <p><b>Name:</b> ${escapeHtml(name)}</p>
+        <p><b>Email:</b> <a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></p>
+        <p><b>Phone:</b> ${escapeHtml(phone) || '—'}</p>
+        <p><b>Restaurant:</b> ${escapeHtml(restaurant) || '—'}</p>
+        <p><b>Tables:</b> ${escapeHtml(tables) || '—'}</p>
         <hr />
         <p><b>Message:</b></p>
-        <p>${message.replace(/\n/g, '<br />')}</p>
+        <p>${escapeHtml(message).replace(/\n/g, '<br />')}</p>
       `,
     });
   } catch (err) {

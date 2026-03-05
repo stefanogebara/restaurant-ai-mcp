@@ -1,6 +1,7 @@
 const { getReservations, getRestaurantInfo, supabaseAdmin } = require('./_lib/supabase');
 const { verifyAuth } = require('./_lib/auth');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('WaitTime');
 
 module.exports = async (req, res) => {
@@ -14,6 +15,9 @@ module.exports = async (req, res) => {
   }
 
   try {
+    const rateLimited = await checkAndApplyRateLimit(req, res, 'api');
+    if (rateLimited) return;
+
     // Get restaurantId - try auth first, fall back to query param for public access
     let restaurantId = req.query.restaurant_id;
 
@@ -107,13 +111,19 @@ module.exports = async (req, res) => {
       waitMinutes += 10;
     }
 
-    return res.status(200).json({
+    const response = {
       success: true,
       estimated_wait_minutes: waitMinutes,
       message: `Current estimated wait time is ${waitMinutes} minutes`,
       is_peak_hour: isPeakHour,
-      occupancy_percentage: Math.round(occupancy * 100)
-    });
+    };
+
+    // Only expose occupancy percentage to authenticated restaurant owners
+    if (req.user) {
+      response.occupancy_percentage = Math.round(occupancy * 100);
+    }
+
+    return res.status(200).json(response);
 
   } catch (error) {
     logger.error('Get wait time error:', error);

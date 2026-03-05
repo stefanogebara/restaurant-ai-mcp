@@ -16,7 +16,7 @@ const { generateSecureReservationId } = require('./_lib/secure-id');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { trackUsage } = require('./_lib/usage-tracking');
 const { sendReservationConfirmationEmail, sendNewBookingAlertEmail } = require('./_lib/email');
-const { sendNewBookingAlertWhatsApp, isWhatsAppConfigured } = require('./_lib/whatsapp-sender');
+const { sendNewBookingAlertWhatsApp, sendReservationConfirmation, isWhatsAppConfigured } = require('./_lib/whatsapp-sender');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('Portal');
 
@@ -395,7 +395,7 @@ async function handleCreateReservation(req, res) {
   const { data: restaurant, error: restError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, email, whatsapp_enabled, whatsapp_phone_number, reservation_settings, business_hours, average_dining_duration_minutes, table_configuration')
+    .select('id, restaurant_name, email, whatsapp_enabled, whatsapp_phone_number, agent_language, reservation_settings, business_hours, average_dining_duration_minutes, table_configuration')
     .eq('id', restaurant_id)
     .eq('is_active', true)
     .eq('onboarding_completed', true)
@@ -533,6 +533,19 @@ async function handleCreateReservation(req, res) {
       date,
       time,
     }).catch(err => logger.error('[Portal] Owner WhatsApp alert failed:', err.message));
+  }
+
+  // Send WhatsApp confirmation to customer (fire-and-forget)
+  if (restaurant.whatsapp_enabled && isWhatsAppConfigured() && customer_phone) {
+    sendReservationConfirmation(customer_phone.trim(), {
+      customerName: customer_name.trim(),
+      restaurantName: restaurant.restaurant_name,
+      language: restaurant.agent_language || 'en',
+      reservationId,
+      date,
+      time,
+      partySize,
+    }).catch(err => logger.warn('[Portal] Customer WhatsApp confirmation failed (non-fatal):', err.message));
   }
 
   return res.status(201).json({

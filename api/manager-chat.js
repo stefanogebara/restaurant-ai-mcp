@@ -2,6 +2,7 @@ const { verifyJWT } = require('./_lib/auth');
 const { runManagerAgent, ManagerQuotaError } = require('./_lib/manager-agent');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('manager-chat');
 
@@ -13,7 +14,15 @@ module.exports = async (req, res) => {
 
 async function handleChat(req, res) {
   try {
-    const { restaurantId } = verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
+    const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
+    if (!user || !user.restaurant_id) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const restaurantId = user.restaurant_id;
+
+    const rateLimited = await checkAndApplyRateLimit(req, res, 'chat');
+    if (rateLimited) return;
+
     const { message } = req.body || {};
     if (!message || typeof message !== 'string' || !message.trim()) {
       return res.status(400).json({ error: 'message is required' });
@@ -29,7 +38,6 @@ async function handleChat(req, res) {
       if (err.type === 'quota_exceeded') {
         return res.status(429).json({ error: 'Monthly Manager AI limit reached', used: err.used, limit: err.limit });
       }
-      // Unknown quota type — treat as 402
       return res.status(402).json({ error: 'Manager AI access restricted', type: err.type });
     }
     logger.error('manager-chat error', { error: err.message });
@@ -40,7 +48,15 @@ async function handleChat(req, res) {
 
 async function handleHistory(req, res) {
   try {
-    const { restaurantId } = verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
+    const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
+    if (!user || !user.restaurant_id) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const restaurantId = user.restaurant_id;
+
+    const rateLimited = await checkAndApplyRateLimit(req, res, 'api');
+    if (rateLimited) return;
+
     const { data, error } = await supabaseAdmin
       .from('manager_conversations')
       .select('role, content, channel, created_at')

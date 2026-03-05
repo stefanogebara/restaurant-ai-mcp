@@ -85,6 +85,7 @@
     "trialUpgradeHint": "Actualiza para mantener todas las funciones después de tu prueba.",
     "viewPlans": "Ver Planes",
     "completeService": "Completar Servicio",
+    "completeServiceFor": "Completar servicio de {{name}}?",
     "complete": "Completar",
     "stats": {
       "reservations": "Reservas de Hoy",
@@ -146,6 +147,23 @@
     "lookUpAnother": "Buscar otra reserva",
     "saving": "Guardando...",
     "saveChanges": "Guardar Cambios"
+  },
+  "booking": {
+    "reserveTable": "Reservar una mesa",
+    "chooseDetails": "Elige tu fecha, hora y numero de personas a continuacion.",
+    "selectDate": "Seleccionar Fecha",
+    "selectTime": "Seleccionar Hora",
+    "checkingAvailability": "Verificando disponibilidad...",
+    "noAvailableTimes": "No hay horarios disponibles para esta fecha.",
+    "partySize": "Tamano del Grupo",
+    "guests_one": "invitado",
+    "guests_other": "invitados",
+    "reservationSummary": "Resumen de la Reserva",
+    "restaurant": "Restaurante",
+    "estimatedDuration": "Duracion estimada",
+    "confirming": "Confirmando...",
+    "continueToPayment": "Continuar al Pago",
+    "confirmReservation": "Confirmar Reserva"
   },
   "waitlist": {
     "title": "Lista de Espera",

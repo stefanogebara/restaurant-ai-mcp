@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { usePermission } from '../hooks/usePermission';
@@ -8,6 +9,7 @@ import RevenueQuickWinsCard from '../components/insights/RevenueQuickWinsCard';
 import WeeklyForecastCard from '../components/insights/WeeklyForecastCard';
 
 export default function AIInsights() {
+  const { t } = useTranslation();
   const { can } = usePermission();
 
   if (!can('viewAnalytics')) {
@@ -18,16 +20,16 @@ export default function AIInsights() {
             <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-5">
               <ThiingsIcon name="star" pxSize={32} className="text-amber-600" />
             </div>
-            <h3 className="text-xl font-bold text-deep-charcoal mb-2">AI Insights on Growth & Scale</h3>
+            <h3 className="text-xl font-bold text-deep-charcoal mb-2">{t('insights.upgradeTitle')}</h3>
             <p className="text-sm text-stone-gray mb-6 leading-relaxed">
-              Upgrade to access tonight's briefing, customer intelligence, revenue quick wins, and retention forecasts.
+              {t('insights.upgradeDescription')}
             </p>
             <Link
               to="/subscription/manage"
               className="inline-flex items-center gap-2 px-6 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors text-sm"
             >
               <ThiingsIcon name="lightning" size="xs" />
-              Upgrade Plan
+              {t('insights.upgradePlan')}
             </Link>
           </div>
         </div>
@@ -45,11 +47,11 @@ export default function AIInsights() {
               <ThiingsIcon name="star" pxSize={16} className="text-burgundy" />
             </div>
             <h1 className="text-2xl font-serif font-medium text-deep-charcoal tracking-tight">
-              AI Insights
+              {t('insights.title')}
             </h1>
           </div>
           <p className="text-sm text-warm-stone ml-11">
-            What should you do today? Your personalized command center.
+            {t('insights.subtitle')}
           </p>
         </div>
 
