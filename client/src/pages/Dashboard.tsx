@@ -47,7 +47,7 @@ function maybeTrackFirstReservation() {
 }
 
 export default function Dashboard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { success } = useToast();
 
   // Show a one-time welcome toast when arriving from demo conversion
@@ -266,6 +266,7 @@ export default function Dashboard() {
                 onCheckIn={handleCheckIn}
                 onIntervention={(r) => setInterventionReservation(r)}
                 isLoading={isLoading}
+                language={i18n.language as 'en' | 'es' | 'pt-BR'}
               />
 
               <StaffingForecastWidget />

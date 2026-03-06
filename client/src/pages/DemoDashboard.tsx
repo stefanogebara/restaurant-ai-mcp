@@ -177,6 +177,7 @@ export default function DemoDashboard() {
               onCheckIn={handleCheckIn}
               onIntervention={() => {}}
               isLoading={false}
+              language={lang as 'en' | 'es' | 'pt-BR'}
             />
           </div>
 
