@@ -15,16 +15,10 @@ import ContactForm from '../components/ContactForm';
 import Footer from '../components/Footer';
 
 export default function LandingPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [showScrollTop, setShowScrollTop] = useState(false);
 
-  // Auto-detect Portuguese browser → set PT-BR
-  useEffect(() => {
-    const browserLang = navigator.language || '';
-    if (browserLang.startsWith('pt') && !i18n.language?.startsWith('pt')) {
-      i18n.changeLanguage('pt-BR');
-    }
-  }, [i18n]);
+  // PT-BR auto-detection moved to i18n/config.ts (global, applies to all routes)
 
   useEffect(() => {
     trackLandingPageViewed();

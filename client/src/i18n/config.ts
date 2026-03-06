@@ -51,7 +51,12 @@ i18n
   });
 
 // Load the detected language on startup (if not English)
-const detectedLng = i18n.language;
+// Also handle prefix fallback: navigator may report 'pt' but we need 'pt-BR'
+let detectedLng = i18n.language;
+if (detectedLng === 'pt' || detectedLng?.startsWith('pt-')) {
+  detectedLng = 'pt-BR';
+  if (i18n.language !== 'pt-BR') i18n.changeLanguage('pt-BR');
+}
 if (detectedLng && !detectedLng.startsWith('en')) {
   loadLocale(detectedLng);
   document.documentElement.lang = detectedLng;
