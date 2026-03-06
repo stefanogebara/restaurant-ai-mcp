@@ -169,7 +169,7 @@ interface ReservationRowProps {
   onCheckIn: () => void;
   onIntervention: () => void;
   onDepositAction?: () => void;
-  language: 'en' | 'es';
+  language: 'en' | 'es' | 'pt-BR';
 }
 
 function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositAction, language }: ReservationRowProps) {
