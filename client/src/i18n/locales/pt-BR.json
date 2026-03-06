@@ -189,7 +189,17 @@
     "estimatedDuration": "Duracao estimada",
     "confirming": "Confirmando...",
     "continueToPayment": "Continuar para Pagamento",
-    "confirmReservation": "Confirmar Reserva"
+    "confirmReservation": "Confirmar Reserva",
+    "yourDetails": "Seus Dados",
+    "name": "Nome",
+    "namePlaceholder": "Seu nome completo",
+    "phone": "Telefone",
+    "phonePlaceholder": "+55 11 91234 5678",
+    "email": "Email",
+    "emailPlaceholder": "seu@email.com",
+    "optional": "opcional",
+    "specialRequests": "Pedidos especiais",
+    "specialRequestsPlaceholder": "Alergias, comemorações, preferência de mesa..."
   },
   "waitlist": {
     "title": "Lista de Espera",
@@ -388,6 +398,27 @@
       "reserved": "Reservada",
       "cleaning": "Limpeza"
     }
+  },
+  "tableLayout": {
+    "title": "Mapa de Mesas",
+    "table": "Mesa",
+    "seats": "lugares",
+    "joinableTables": "Mesas Combináveis",
+    "combinedCapacity": "Capacidade combinada",
+    "freeTable": "Liberar Mesa",
+    "freeTableSub": "Marcar como disponível",
+    "markClean": "Marcar Limpa",
+    "markCleanSub": "Mesa pronta",
+    "markReserved": "Marcar Reservada",
+    "markReservedSub": "Reservar para próximo cliente",
+    "needsCleaning": "Precisa de Limpeza",
+    "needsCleaningSub": "Sinalizar para a equipe",
+    "markAvailable": "Marcar Disponível",
+    "markAvailableSub": "Mesa pronta para novos clientes",
+    "tableUpdated": "Mesa atualizada com sucesso",
+    "tableFreed": "Mesa liberada com sucesso",
+    "errorUpdate": "Erro ao atualizar mesa",
+    "errorFree": "Erro ao liberar mesa"
   },
   "customers": {
     "title": "Clientes",

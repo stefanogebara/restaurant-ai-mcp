@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 interface GuestDetailsFormProps {
   customerName: string;
   customerPhone: string;
@@ -19,53 +21,54 @@ export default function GuestDetailsForm({
   onEmailChange,
   onSpecialRequestsChange,
 }: GuestDetailsFormProps) {
+  const { t } = useTranslation();
   return (
     <div className="mb-8">
       <div className="text-xs font-semibold tracking-wider uppercase text-warm-stone mb-3">
-        Your Details
+        {t('booking.yourDetails')}
       </div>
       <div className="grid grid-cols-2 gap-3.5 mb-3.5">
         <div>
-          <label className="block text-[13px] font-medium text-stone-gray mb-1.5">Name</label>
+          <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('booking.name')}</label>
           <input
             type="text"
             value={customerName}
             onChange={e => onNameChange(e.target.value)}
-            placeholder="Your full name"
+            placeholder={t('booking.namePlaceholder')}
             className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
           />
         </div>
         <div>
-          <label className="block text-[13px] font-medium text-stone-gray mb-1.5">Phone</label>
+          <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('booking.phone')}</label>
           <input
             type="tel"
             value={customerPhone}
             onChange={e => onPhoneChange(e.target.value)}
-            placeholder="+34 612 345 678"
+            placeholder={t('booking.phonePlaceholder')}
             className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
           />
         </div>
       </div>
       <div className="mb-3.5">
         <label className="block text-[13px] font-medium text-stone-gray mb-1.5">
-          Email <span className="text-muted-stone font-normal">(optional)</span>
+          {t('booking.email')} <span className="text-muted-stone font-normal">({t('booking.optional')})</span>
         </label>
         <input
           type="email"
           value={customerEmail}
           onChange={e => onEmailChange(e.target.value)}
-          placeholder="your@email.com"
+          placeholder={t('booking.emailPlaceholder')}
           className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
         />
       </div>
       <div>
         <label className="block text-[13px] font-medium text-stone-gray mb-1.5">
-          Special requests <span className="text-muted-stone font-normal">(optional)</span>
+          {t('booking.specialRequests')} <span className="text-muted-stone font-normal">({t('booking.optional')})</span>
         </label>
         <textarea
           value={specialRequests}
           onChange={e => onSpecialRequestsChange(e.target.value)}
-          placeholder="Allergies, celebrations, seating preferences..."
+          placeholder={t('booking.specialRequestsPlaceholder')}
           rows={3}
           className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%] resize-none"
         />

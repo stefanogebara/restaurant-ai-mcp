@@ -13,71 +13,19 @@ interface TableLayoutPanelProps {
   activeParties: ActiveParty[];
   onRefresh: () => void;
   onToast?: (message: string, type: 'success' | 'error') => void;
-  language?: 'en' | 'es';
   isLoading?: boolean;
 }
-
-const translations = {
-  en: {
-    tableLayout: 'Table Layout',
-    tapToManage: 'Tap any table to manage its status',
-    table: 'Table',
-    seats: 'seats',
-    joinableTables: 'Joinable Tables',
-    combinedCapacity: 'Combined capacity',
-    freeTable: 'Free Table',
-    freeTableSub: 'Mark as available',
-    markClean: 'Mark Clean',
-    markCleanSub: 'Table is ready',
-    markReserved: 'Mark Reserved',
-    markReservedSub: 'Reserve for upcoming guest',
-    needsCleaning: 'Needs Cleaning',
-    needsCleaningSub: 'Mark for staff attention',
-    markAvailable: 'Mark as Available',
-    markAvailableSub: 'Table ready for new guests',
-    cancel: 'Cancel',
-    tableUpdated: 'Table updated successfully',
-    tableFreed: 'Table freed successfully',
-    errorUpdate: 'Error updating table',
-    errorFree: 'Error freeing table',
-  },
-  es: {
-    tableLayout: 'Disposición de Mesas',
-    tapToManage: 'Toca cualquier mesa para gestionar su estado',
-    table: 'Mesa',
-    seats: 'personas',
-    joinableTables: 'Mesas Combinables',
-    combinedCapacity: 'Capacidad combinada',
-    freeTable: 'Liberar Mesa',
-    freeTableSub: 'Marcar como disponible',
-    markClean: 'Marcar Limpia',
-    markCleanSub: 'Mesa lista',
-    markReserved: 'Marcar Reservada',
-    markReservedSub: 'Reservar para próximo cliente',
-    needsCleaning: 'Marcar Limpieza',
-    needsCleaningSub: 'Mesa en proceso de limpieza',
-    markAvailable: 'Marcar Disponible',
-    markAvailableSub: 'Mesa lista para nuevos clientes',
-    cancel: 'Cancelar',
-    tableUpdated: 'Mesa actualizada exitosamente',
-    tableFreed: 'Mesa liberada exitosamente',
-    errorUpdate: 'Error al actualizar mesa',
-    errorFree: 'Error al liberar mesa',
-  },
-};
 
 export default function TableLayoutPanel({
   tables,
   activeParties,
   onRefresh,
   onToast,
-  language = 'en',
   isLoading,
 }: TableLayoutPanelProps) {
-  const { t: tI18n } = useTranslation();
+  const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<'grid' | 'floorplan'>('floorplan');
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
-  const t = translations[language];
 
   const freeTable = useMutation({
     mutationFn: async (tableId: string) => {
@@ -88,8 +36,8 @@ export default function TableLayoutPanel({
       });
       if (!response.ok) throw new Error('Failed');
     },
-    onSuccess: () => { onToast?.(t.tableFreed, 'success'); onRefresh(); setSelectedTable(null); },
-    onError: () => onToast?.(t.errorFree, 'error'),
+    onSuccess: () => { onToast?.(t('tableLayout.tableFreed'), 'success'); onRefresh(); setSelectedTable(null); },
+    onError: () => onToast?.(t('tableLayout.errorFree'), 'error'),
   });
 
   const updateStatus = useMutation({
@@ -101,8 +49,8 @@ export default function TableLayoutPanel({
       });
       if (!response.ok) throw new Error('Failed');
     },
-    onSuccess: () => { onToast?.(t.tableUpdated, 'success'); onRefresh(); setSelectedTable(null); },
-    onError: () => onToast?.(t.errorUpdate, 'error'),
+    onSuccess: () => { onToast?.(t('tableLayout.tableUpdated'), 'success'); onRefresh(); setSelectedTable(null); },
+    onError: () => onToast?.(t('tableLayout.errorUpdate'), 'error'),
   });
 
   const handleTableClick = (table: Table) => setSelectedTable(table);
@@ -128,13 +76,13 @@ export default function TableLayoutPanel({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
           <div className="flex items-center gap-2.5">
-            <span className="text-[15px] font-semibold text-deep-charcoal tracking-tight whitespace-nowrap">{t.tableLayout}</span>
+            <span className="text-[15px] font-semibold text-deep-charcoal tracking-tight whitespace-nowrap">{t('tableLayout.title')}</span>
             <span className="relative flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
               <span className="relative flex h-2 w-2 flex-shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
               </span>
-              {tI18n('dashboard.live')}
+              {t('dashboard.live')}
             </span>
           </div>
 
@@ -200,10 +148,10 @@ export default function TableLayoutPanel({
               <div className="flex items-center gap-3">
                 <div>
                   <h3 className="text-lg font-semibold text-deep-charcoal">
-                    {t.table} {selectedTable.table_number}
+                    {t('tableLayout.table')} {selectedTable.table_number}
                   </h3>
                   <p className="text-sm text-stone-gray">
-                    {selectedTable.capacity} {t.seats} &middot; {selectedTable.location}
+                    {selectedTable.capacity} {t('tableLayout.seats')} &middot; {selectedTable.location}
                   </p>
                 </div>
               </div>
@@ -219,25 +167,25 @@ export default function TableLayoutPanel({
             {/* Joinable info */}
             {selectedTable.is_joinable && selectedTable.joinable_with?.length > 0 && (
               <div className="mb-4 p-3 bg-burgundy/5 border border-burgundy/15 rounded-xl">
-                <div className="text-sm font-semibold text-burgundy mb-1.5">{t.joinableTables}</div>
+                <div className="text-sm font-semibold text-burgundy mb-1.5">{t('tableLayout.joinableTables')}</div>
                 <div className="flex flex-wrap gap-1.5">
                   {selectedTable.joinable_with.map((linkedId: string) => {
-                    const linked = tables.find((t) => t.id === linkedId);
+                    const linked = tables.find((tbl) => tbl.id === linkedId);
                     return linked ? (
                       <span key={linkedId} className="px-2 py-0.5 bg-white border border-border-gray rounded-lg text-xs font-medium">
-                        {t.table} {linked.table_number}
+                        {t('tableLayout.table')} {linked.table_number}
                       </span>
                     ) : null;
                   })}
                 </div>
                 <p className="text-xs text-stone-gray mt-1.5">
-                  {t.combinedCapacity}:{' '}
+                  {t('tableLayout.combinedCapacity')}:{' '}
                   {selectedTable.capacity +
                     selectedTable.joinable_with.reduce((sum: number, id: string) => {
-                      const t = tables.find((tb) => tb.id === id);
-                      return sum + (t?.capacity || 0);
+                      const tbl = tables.find((tb) => tb.id === id);
+                      return sum + (tbl?.capacity || 0);
                     }, 0)}{' '}
-                  {t.seats}
+                  {t('tableLayout.seats')}
                 </p>
               </div>
             )}
@@ -246,8 +194,8 @@ export default function TableLayoutPanel({
             <div className="space-y-2.5">
               {selectedTable.status === 'Occupied' && (
                 <ActionButton
-                  label={t.freeTable}
-                  sublabel={t.freeTableSub}
+                  label={t('tableLayout.freeTable')}
+                  sublabel={t('tableLayout.freeTableSub')}
                   color="green"
                   icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />}
                   onClick={() => handleFreeTable(selectedTable.id)}
@@ -255,8 +203,8 @@ export default function TableLayoutPanel({
               )}
               {selectedTable.status === 'Being Cleaned' && (
                 <ActionButton
-                  label={t.markClean}
-                  sublabel={t.markCleanSub}
+                  label={t('tableLayout.markClean')}
+                  sublabel={t('tableLayout.markCleanSub')}
                   color="green"
                   icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />}
                   onClick={() => handleUpdateStatus(selectedTable.id, 'Available')}
@@ -264,8 +212,8 @@ export default function TableLayoutPanel({
               )}
               {selectedTable.status === 'Available' && (
                 <ActionButton
-                  label={t.markReserved}
-                  sublabel={t.markReservedSub}
+                  label={t('tableLayout.markReserved')}
+                  sublabel={t('tableLayout.markReservedSub')}
                   color="blue"
                   icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />}
                   onClick={() => handleUpdateStatus(selectedTable.id, 'Reserved')}
@@ -273,8 +221,8 @@ export default function TableLayoutPanel({
               )}
               {selectedTable.status !== 'Being Cleaned' && selectedTable.status !== 'Available' && (
                 <ActionButton
-                  label={t.needsCleaning}
-                  sublabel={t.needsCleaningSub}
+                  label={t('tableLayout.needsCleaning')}
+                  sublabel={t('tableLayout.needsCleaningSub')}
                   color="amber"
                   icon={<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />}
                   onClick={() => handleUpdateStatus(selectedTable.id, 'Being Cleaned')}

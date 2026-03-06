@@ -201,7 +201,17 @@
     "estimatedDuration": "Estimated duration",
     "confirming": "Confirming...",
     "continueToPayment": "Continue to Payment",
-    "confirmReservation": "Confirm Reservation"
+    "confirmReservation": "Confirm Reservation",
+    "yourDetails": "Your Details",
+    "name": "Name",
+    "namePlaceholder": "Your full name",
+    "phone": "Phone",
+    "phonePlaceholder": "+34 612 345 678",
+    "email": "Email",
+    "emailPlaceholder": "your@email.com",
+    "optional": "optional",
+    "specialRequests": "Special requests",
+    "specialRequestsPlaceholder": "Allergies, celebrations, seating preferences..."
   },
   "waitlist": {
     "title": "Waitlist",
@@ -426,6 +436,27 @@
     "saveChanges": "Save Changes",
     "deactivating": "Deactivating...",
     "deactivateTable": "Deactivate Table"
+  },
+  "tableLayout": {
+    "title": "Table Layout",
+    "table": "Table",
+    "seats": "seats",
+    "joinableTables": "Joinable Tables",
+    "combinedCapacity": "Combined capacity",
+    "freeTable": "Free Table",
+    "freeTableSub": "Mark as available",
+    "markClean": "Mark Clean",
+    "markCleanSub": "Table is ready",
+    "markReserved": "Mark Reserved",
+    "markReservedSub": "Reserve for upcoming guest",
+    "needsCleaning": "Needs Cleaning",
+    "needsCleaningSub": "Mark for staff attention",
+    "markAvailable": "Mark as Available",
+    "markAvailableSub": "Table ready for new guests",
+    "tableUpdated": "Table updated successfully",
+    "tableFreed": "Table freed successfully",
+    "errorUpdate": "Error updating table",
+    "errorFree": "Error freeing table"
   },
   "customers": {
     "title": "Customers",
