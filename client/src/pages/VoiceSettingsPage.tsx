@@ -168,8 +168,8 @@ export default function VoiceSettingsPage() {
     return (
       <UpgradePrompt
         requiredPlan="growth"
-        feature="Voice AI Agent"
-        description="Configure your AI voice agent to handle phone reservations automatically. Available on Growth and Scale plans."
+        feature={t('voiceSettings.upgradeFeature')}
+        description={t('voiceSettings.upgradeDescription')}
       />
     );
   }

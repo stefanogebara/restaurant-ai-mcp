@@ -9,7 +9,7 @@ interface LTVKeyMetricsProps {
 
 export default function LTVKeyMetrics({ stats }: LTVKeyMetricsProps) {
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
       <div className="p-4 bg-burgundy/10 rounded-xl border border-burgundy/20">
         <div className="flex items-center justify-between mb-2">
           <ThiingsIcon name="users" size="sm" />

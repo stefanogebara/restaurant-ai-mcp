@@ -6,6 +6,7 @@
  */
 
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { UpcomingReservation } from '../../types/host.types';
 
@@ -38,6 +39,8 @@ export default function ReservationsCalendarGrid({
   onCheckIn,
   onRecordOutcome
 }: ReservationsCalendarGridProps) {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US';
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedReservation, setSelectedReservation] = useState<UpcomingReservation | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -89,7 +92,7 @@ export default function ReservationsCalendarGrid({
   const formatDayHeader = (date: Date) => {
     const today = new Date();
     const isToday = formatDate(date) === formatDate(today);
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+    const dayName = date.toLocaleDateString(dateLocale, { weekday: 'short' });
     const dayNum = date.getDate();
 
     return { dayName, dayNum, isToday };
@@ -102,8 +105,8 @@ export default function ReservationsCalendarGrid({
   const getWeekLabel = () => {
     const start = weekDates[0];
     const end = weekDates[6];
-    const startMonth = start.toLocaleDateString('en-US', { month: 'short' });
-    const endMonth = end.toLocaleDateString('en-US', { month: 'short' });
+    const startMonth = start.toLocaleDateString(dateLocale, { month: 'short' });
+    const endMonth = end.toLocaleDateString(dateLocale, { month: 'short' });
 
     if (startMonth === endMonth) {
       return `${startMonth} ${start.getDate()} - ${end.getDate()}, ${start.getFullYear()}`;
@@ -116,9 +119,9 @@ export default function ReservationsCalendarGrid({
       {/* Calendar Header */}
       <div className="px-6 py-4 border-b border-border-gray flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h2 className="text-xl font-bold text-deep-charcoal">Reservations Calendar</h2>
+          <h2 className="text-xl font-bold text-deep-charcoal">{t('reservationsCalendarGrid.title')}</h2>
           <span className="px-3 py-1 bg-burgundy/10 text-burgundy rounded-full text-sm font-medium">
-            {reservations.length} upcoming
+            {t('reservationsCalendarGrid.upcoming', { count: reservations.length })}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -130,7 +133,7 @@ export default function ReservationsCalendarGrid({
                 : 'text-warm-stone hover:bg-soft-gray'
             }`}
           >
-            Today
+            {t('reservationsCalendarGrid.today')}
           </button>
           <div className="flex items-center border border-border-gray rounded-xl">
             <button
@@ -158,7 +161,7 @@ export default function ReservationsCalendarGrid({
           {/* Day Headers */}
           <div className="grid grid-cols-8 border-b border-border-gray bg-soft-gray/30">
             <div className="p-3 text-xs font-medium text-warm-stone uppercase tracking-wider">
-              Time
+              {t('reservationsCalendarGrid.time')}
             </div>
             {weekDates.map((date, idx) => {
               const { dayName, dayNum, isToday } = formatDayHeader(date);
@@ -233,7 +236,7 @@ export default function ReservationsCalendarGrid({
 
       {/* Status Legend */}
       <div className="px-6 py-3 border-t border-border-gray bg-soft-gray/30 flex items-center gap-4 flex-wrap">
-        <span className="text-xs font-medium text-warm-stone">Status:</span>
+        <span className="text-xs font-medium text-warm-stone">{t('reservationsCalendarGrid.status')}:</span>
         {Object.entries(STATUS_COLORS).map(([status, colors]) => (
           <div key={status} className="flex items-center gap-1.5">
             <div className={`w-3 h-3 rounded ${colors.bg} border ${colors.border}`}></div>
@@ -247,7 +250,7 @@ export default function ReservationsCalendarGrid({
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
             <div className="px-6 py-4 border-b border-border-gray flex items-center justify-between">
-              <h3 className="text-lg font-bold text-deep-charcoal">Reservation Details</h3>
+              <h3 className="text-lg font-bold text-deep-charcoal">{t('reservationsCalendarGrid.reservationDetails')}</h3>
               <button
                 onClick={() => setSelectedReservation(null)}
                 aria-label="Close"
@@ -272,19 +275,19 @@ export default function ReservationsCalendarGrid({
                 </div>
                 <div className="flex items-center gap-2 text-warm-stone">
                   <ThiingsIcon name="users" pxSize={16} />
-                  <span>{selectedReservation.party_size} guests</span>
+                  <span>{t('reservationsCalendarGrid.guests', { count: selectedReservation.party_size })}</span>
                 </div>
                 {selectedReservation.table_ids && selectedReservation.table_ids.length > 0 && (
                   <div className="flex items-center gap-2 text-warm-stone">
                     <ThiingsIcon name="map-pin" pxSize={16} />
-                    <span>Table {selectedReservation.table_ids.join(', ')}</span>
+                    <span>{t('reservationsCalendarGrid.table')} {selectedReservation.table_ids.join(', ')}</span>
                   </div>
                 )}
               </div>
 
               {selectedReservation.special_requests && (
                 <div className="p-3 bg-soft-gray rounded-xl">
-                  <div className="text-xs font-medium text-warm-stone mb-1">Special Requests</div>
+                  <div className="text-xs font-medium text-warm-stone mb-1">{t('reservationsCalendarGrid.specialRequests')}</div>
                   <div className="text-sm text-deep-charcoal">{selectedReservation.special_requests}</div>
                 </div>
               )}
@@ -298,7 +301,7 @@ export default function ReservationsCalendarGrid({
                     }}
                     className="flex-1 px-4 py-2.5 bg-burgundy text-white font-medium rounded-xl hover:bg-burgundy-dark transition-colors"
                   >
-                    Check In
+                    {t('reservationsCalendarGrid.checkIn')}
                   </button>
                 )}
                 {selectedReservation.status === 'seated' && (
@@ -309,14 +312,14 @@ export default function ReservationsCalendarGrid({
                     }}
                     className="flex-1 px-4 py-2.5 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 transition-colors"
                   >
-                    Record Outcome
+                    {t('reservationsCalendarGrid.recordOutcome')}
                   </button>
                 )}
                 <button
                   onClick={() => setSelectedReservation(null)}
                   className="px-4 py-2.5 border border-border-gray text-deep-charcoal font-medium rounded-xl hover:bg-soft-gray transition-colors"
                 >
-                  Close
+                  {t('reservationsCalendarGrid.close')}
                 </button>
               </div>
             </div>

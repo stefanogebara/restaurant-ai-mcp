@@ -102,7 +102,7 @@ export default function PricingSection() {
                 </div>
 
                 {/* Price */}
-                <div className={`font-serif text-[48px] font-medium tracking-tight leading-none mb-1 ${isFeatured ? 'text-white' : 'text-deep-charcoal'}`}>
+                <div className={`font-serif text-4xl sm:text-[48px] font-medium tracking-tight leading-none mb-1 ${isFeatured ? 'text-white' : 'text-deep-charcoal'}`}>
                   {isBRL ? (tier.brlPrice ?? tier.price) : tier.price}
                   <span className="text-lg font-normal text-muted-stone">
                     {isBRL ? (tier.brlPeriod ?? tier.period) : tier.period}

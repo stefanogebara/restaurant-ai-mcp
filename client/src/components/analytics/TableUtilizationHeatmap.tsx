@@ -55,7 +55,7 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
       <div className="p-6">
 
       {/* Heatmap Grid */}
-      <div className="grid grid-cols-5 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-6">
         {sortedTables.map((table) => (
           <div
             key={table.table_number}

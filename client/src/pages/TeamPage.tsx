@@ -82,13 +82,13 @@ export default function TeamPage() {
       {can('manageTeam') && (
         <form onSubmit={handleInvite} className="bg-white border border-border-gray rounded-2xl p-6 space-y-4">
           <h2 className="text-sm font-semibold text-deep-charcoal">{t('team.inviteTitle')}</h2>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap sm:flex-nowrap gap-3">
             <input
               type="email" required
               placeholder={t('team.emailPlaceholder')}
               value={inviteEmail}
               onChange={e => setInviteEmail(e.target.value)}
-              className="flex-1 border border-border-gray rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+              className="flex-1 min-w-0 border border-border-gray rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30"
             />
             <select
               value={inviteRole}
@@ -119,8 +119,8 @@ export default function TeamPage() {
           <div className="p-6 text-center text-sm text-stone-gray">{t('team.noMembers')}</div>
         ) : members.map(member => (
           <div key={member.id} className="flex items-center justify-between px-6 py-4">
-            <div>
-              <p className="text-sm font-medium text-deep-charcoal">{member.email}</p>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-deep-charcoal truncate">{member.email}</p>
               {member.status === 'pending' && <p className="text-xs text-muted-stone">{t('team.invitationPending')}</p>}
             </div>
             <div className="flex items-center gap-3">

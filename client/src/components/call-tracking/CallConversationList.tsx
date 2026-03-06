@@ -88,7 +88,7 @@ export default function CallConversationList({
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-deep-charcoal tracking-[-0.2px]">
+                  <div className="text-sm font-semibold text-deep-charcoal tracking-[-0.2px] truncate">
                     {conv.customer_name || t('callTracking.unknownCaller')}
                   </div>
                   <div className="text-xs text-muted-stone mt-0.5 truncate">

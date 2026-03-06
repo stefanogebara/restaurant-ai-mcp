@@ -1,0 +1,12 @@
+{
+  "audit_date": "2026-03-06",
+  "remaining_issues": [
+    { "id": 1, "priority": "HIGH", "status": "fixed", "title": "Voice Settings paywall in English", "description": "UpgradePrompt.tsx fully i18n'd with useTranslation(). VoiceSettingsPage passes translated feature/description." },
+    { "id": 2, "priority": "HIGH", "status": "requires_env", "title": "Manager Chat POST 500", "description": "Root cause: OPENAI_API_KEY not set on Vercel. Needed for manager memory embeddings (text-embedding-ada-002). Fix: add OPENAI_API_KEY to Vercel env vars." },
+    { "id": 3, "priority": "HIGH", "status": "fixed", "title": "Analytics error detail in English", "description": "AnalyticsDashboard.tsx now uses t('analytics.errorDescription') instead of raw error.message." },
+    { "id": 4, "priority": "MEDIUM", "status": "fixed", "title": "Restaurant type not translated on booking page", "description": "BookingPage.tsx now uses t('onboarding.restaurantTypes.${type}') with fallback. PT-BR already had 'Other': 'Outro'." },
+    { "id": 5, "priority": "MEDIUM", "status": "in_progress", "title": "Remaining en-US locale strings in internal components", "description": "Background agent fixing: ReservationsCalendar, ReservationsCalendarGrid, CustomerVisitHistory, CustomerPredictions, RetentionCampaignModal, ReservationDetailsModal, timeFormatting.ts" },
+    { "id": 6, "priority": "MEDIUM", "status": "fixed", "title": "Voice Settings paywall shows EUR not R$", "description": "UpgradePrompt now uses detectCurrency() + formatPrice() instead of formatCurrency(). Shows R$ for PT-BR users." },
+    { "id": 7, "priority": "LOW", "status": "fixed", "title": "Sidebar title clipped on dashboard", "description": "Added pl-12 lg:pl-0 to Dashboard header div, pushes title past hamburger button on mobile." }
+  ]
+}

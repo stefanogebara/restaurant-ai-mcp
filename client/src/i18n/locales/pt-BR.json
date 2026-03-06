@@ -268,6 +268,7 @@
     "averagePartySize": "Média de Pessoas por Mesa",
     "averageDiningTime": "Tempo Médio de Refeição",
     "errorTitle": "Erro ao carregar análises",
+    "errorDescription": "Não foi possível carregar os dados de análise. Por favor, tente novamente.",
     "noData": "Nenhum dado de análise disponível",
     "thirtyDays": "30 dias",
     "sevenDays": "7 dias",
@@ -1201,5 +1202,23 @@
     "upgradeFor": "Atualize para",
     "month": "mês",
     "resets": "Renova em"
+  },
+  "upgrade": {
+    "featureAvailable": "Este recurso está disponível no plano {{planName}}",
+    "pricePerMonth": "{{price}}/mês",
+    "unlockWith": "Desbloqueie com o {{planName}}",
+    "upgradeTo": "Assinar {{planName}}",
+    "goBack": "Voltar",
+    "trialNote": "14 dias grátis \u2022 Cancele quando quiser",
+    "benefits": {
+      "mlInsights": "Insights de desempenho com IA e rastreamento de ROI",
+      "customerLtv": "Análise de valor vitalício do cliente",
+      "voiceAi": "Agente de voz com IA e análises avançadas",
+      "customerDna": "Perfil comportamental do cliente (DNA)"
+    }
+  },
+  "voiceSettings": {
+    "upgradeFeature": "Agente de Voz com IA",
+    "upgradeDescription": "Configure seu agente de voz com IA para atender reservas por telefone automaticamente. Disponível nos planos Growth e Scale."
   }
 }

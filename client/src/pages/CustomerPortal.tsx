@@ -140,10 +140,10 @@ export default function CustomerPortal() {
     <div className="min-h-screen bg-warm-white flex flex-col">
       {/* Top Bar */}
       <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
-        <div>
+        <div className="min-w-0 flex-1">
           {restaurantName ? (
             <>
-              <div className="font-serif text-lg font-semibold text-deep-charcoal">{restaurantName}</div>
+              <div className="font-serif text-lg font-semibold text-deep-charcoal truncate">{restaurantName}</div>
               <div className="text-[11px] text-muted-stone">Powered by seatable<span className="text-burgundy">.</span></div>
             </>
           ) : (

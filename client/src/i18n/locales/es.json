@@ -207,6 +207,7 @@
     "averagePartySize": "Tamaño Promedio del Grupo",
     "averageDiningTime": "Tiempo Promedio de Comida",
     "errorTitle": "Error al cargar análisis",
+    "errorDescription": "No se pudieron cargar los datos de análisis. Por favor, inténtalo de nuevo.",
     "noData": "No hay datos de análisis disponibles",
     "thirtyDays": "30 días",
     "sevenDays": "7 días",
@@ -540,5 +541,23 @@
       "q9": "¿Puedo probarlo antes de comprometerse?",
       "a9": "¡Sí! Todos los planes incluyen una prueba gratuita de 14 días, sin tarjeta de crédito requerida. También puedes probar nuestra demostración de IA en vivo en el sitio web para escuchar el asistente de voz en acción antes de registrarte."
     }
+  },
+  "upgrade": {
+    "featureAvailable": "Esta función está disponible en el plan {{planName}}",
+    "pricePerMonth": "{{price}}/mes",
+    "unlockWith": "Desbloquea con {{planName}}",
+    "upgradeTo": "Suscribirse a {{planName}}",
+    "goBack": "Volver",
+    "trialNote": "14 días gratis \u2022 Cancela cuando quieras",
+    "benefits": {
+      "mlInsights": "Insights de rendimiento con IA y seguimiento de ROI",
+      "customerLtv": "Análisis de valor de vida del cliente",
+      "voiceAi": "Agente de voz con IA y análisis avanzados",
+      "customerDna": "Perfil de comportamiento del cliente (DNA)"
+    }
+  },
+  "voiceSettings": {
+    "upgradeFeature": "Agente de Voz con IA",
+    "upgradeDescription": "Configura tu agente de voz con IA para gestionar reservas por teléfono automáticamente. Disponible en los planes Growth y Scale."
   }
 }

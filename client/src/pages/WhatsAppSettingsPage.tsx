@@ -188,7 +188,7 @@ export default function WhatsAppSettingsPage() {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-soft-gray rounded-xl p-4 text-center">
                 <p className="text-2xl font-bold text-deep-charcoal">{stats?.active_sessions ?? 0}</p>
                 <p className="text-xs text-warm-stone mt-1">{t('settings.activeSessions')}</p>

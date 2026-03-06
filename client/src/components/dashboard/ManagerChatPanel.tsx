@@ -76,30 +76,30 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
   };
 
   return (
-    <div className="fixed bottom-20 right-6 w-96 h-[520px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col z-50">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+    <div className="fixed bottom-20 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-96 h-[70vh] sm:h-[520px] max-h-[520px] bg-white rounded-2xl shadow-xl border border-border-gray flex flex-col z-50">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border-gray">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-green-500" />
-          <span className="font-semibold text-gray-800 text-sm">{t('dashboard.managerAssistant')}</span>
+          <span className="font-semibold text-deep-charcoal text-sm">{t('dashboard.managerAssistant')}</span>
         </div>
-        <button type="button" aria-label="Close" onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg leading-none">x</button>
+        <button type="button" aria-label="Close" onClick={onClose} className="text-muted-stone hover:text-deep-charcoal text-lg leading-none">&times;</button>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-        {isLoading && <p className="text-xs text-gray-400 text-center">Loading history...</p>}
+        {isLoading && <p className="text-xs text-muted-stone text-center">Loading history...</p>}
         {messages.length === 0 && !isLoading && (
-          <p className="text-xs text-gray-400 text-center mt-8">{t('dashboard.managerAssistantHint')}</p>
+          <p className="text-xs text-muted-stone text-center mt-8">{t('dashboard.managerAssistantHint')}</p>
         )}
         {messages.map((m, i) => (
           <div key={i} className={'flex ' + (m.role === 'manager' ? 'justify-end' : 'justify-start')}>
-            <div className={'max-w-[80%] rounded-xl px-3 py-2 text-sm break-words ' + (m.role === 'manager' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800')}>
+            <div className={'max-w-[80%] rounded-xl px-3 py-2 text-sm break-words ' + (m.role === 'manager' ? 'bg-burgundy text-white' : 'bg-soft-gray text-deep-charcoal')}>
               {m.content}
             </div>
           </div>
         ))}
         {sendMutation.isPending && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-xl px-3 py-2 text-sm text-gray-400 animate-pulse">{t('dashboard.thinking')}</div>
+            <div className="bg-soft-gray rounded-xl px-3 py-2 text-sm text-muted-stone animate-pulse">{t('dashboard.thinking')}</div>
           </div>
         )}
         <div ref={bottomRef} />
@@ -114,13 +114,13 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
       {isQuotaExhausted && (
         <div className="px-4 py-2 text-xs text-amber-700 bg-amber-50 border-t border-amber-100 flex items-center justify-between">
           <span>{t('dashboard.limitReached')}</span>
-          <a href="/subscription/manage" className="underline font-medium">Upgrade →</a>
+          <a href="/subscription/manage" className="underline font-medium">Upgrade &rarr;</a>
         </div>
       )}
 
-      <div className="flex gap-2 px-4 py-3 border-t border-gray-100">
+      <div className="flex gap-2 px-4 py-3 border-t border-border-gray">
         <input
-          className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 min-w-0 rounded-lg border border-border-gray px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
           placeholder={isQuotaExhausted ? t('dashboard.limitReachedUpgrade') : t('dashboard.managerInputPlaceholder')}
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -131,7 +131,7 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
           type="button"
           onClick={handleSend}
           disabled={!input.trim() || sendMutation.isPending || isQuotaExhausted}
-          className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white rounded-lg px-3 py-2 text-sm font-medium"
+          className="bg-burgundy hover:bg-burgundy-dark disabled:opacity-40 text-white rounded-lg px-3 py-2 text-sm font-medium flex-shrink-0"
         >
           Send
         </button>

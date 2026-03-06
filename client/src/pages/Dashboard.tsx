@@ -177,7 +177,7 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto space-y-6">
           {/* ---- Header ---- */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-14 sm:mt-0">
-            <div>
+            <div className="pl-12 lg:pl-0">
               <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
                 {t('navigation.dashboard')}
               </h1>
@@ -204,7 +204,7 @@ export default function Dashboard() {
           {/* ---- Payment Failure Banner ---- */}
           {subStatus === 'past_due' && (
             <div className="bg-red-50 border border-red-300 rounded-2xl px-5 py-3.5 flex items-center justify-between gap-3">
-              <p className="text-sm text-red-800">
+              <p className="text-sm text-red-800 flex-1 min-w-0">
                 <span className="font-semibold">{t('dashboard.paymentFailed', 'Payment failed')}</span>
                 {' — '}
                 {t('dashboard.paymentFailedHint', 'Please update your payment method to keep your subscription active.')}
@@ -221,7 +221,7 @@ export default function Dashboard() {
           {/* ---- Trial Banner ---- */}
           {isTrial && isActive && trialDaysLeft !== null && (
             <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3.5 flex items-center justify-between gap-3">
-              <p className="text-sm text-amber-800">
+              <p className="text-sm text-amber-800 flex-1 min-w-0">
                 <span className="font-semibold">{t('dashboard.freeTrial')}</span>
                 {' — '}
                 {trialDaysLeft === 0 ? t('dashboard.trialExpiresToday') : t('dashboard.trialDaysRemaining', { count: trialDaysLeft })}

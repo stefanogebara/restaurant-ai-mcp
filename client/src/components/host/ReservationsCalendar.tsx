@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { UpcomingReservation } from '../../types/host.types';
 import ReservationDetailsModal from './ReservationDetailsModal';
 import RiskBadge from './RiskBadge';
@@ -13,6 +14,8 @@ interface ReservationsCalendarProps {
 }
 
 export default function ReservationsCalendar({ reservations, onCheckIn, onRecordOutcome, onReservationUpdated }: ReservationsCalendarProps) {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US';
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [detailsReservation, setDetailsReservation] = useState<UpcomingReservation | null>(null);
 
@@ -32,7 +35,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
       }
     } catch (error) {
       console.error('Failed to update reservation:', error);
-      alert('Failed to update reservation notes. Please try again.');
+      alert(t('reservationsCalendar.updateError'));
     }
   };
 
@@ -77,15 +80,15 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
     const todayStr = today.toISOString().split('T')[0];
     const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
-    if (dateStr === todayStr) return 'Today';
-    if (dateStr === tomorrowStr) return 'Tomorrow';
+    if (dateStr === todayStr) return t('reservationsCalendar.today');
+    if (dateStr === tomorrowStr) return t('reservationsCalendar.tomorrow');
 
     const options: Intl.DateTimeFormatOptions = {
       weekday: 'long',
       month: 'short',
       day: 'numeric'
     };
-    return date.toLocaleDateString('en-US', options);
+    return date.toLocaleDateString(dateLocale, options);
   };
 
   // Format time for display
@@ -106,7 +109,15 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
   // Export reservations to CSV
   const exportToCSV = () => {
     // CSV headers
-    const headers = ['Date', 'Time', 'Customer Name', 'Phone', 'Party Size', 'Status', 'Special Requests'];
+    const headers = [
+      t('reservationsCalendar.csvDate'),
+      t('reservationsCalendar.csvTime'),
+      t('reservationsCalendar.csvCustomerName'),
+      t('reservationsCalendar.csvPhone'),
+      t('reservationsCalendar.csvPartySize'),
+      t('reservationsCalendar.csvStatus'),
+      t('reservationsCalendar.csvSpecialRequests')
+    ];
 
     // CSV rows
     const rows = reservations.map(r => [
@@ -115,7 +126,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
       r.customer_name,
       r.customer_phone || '',
       r.party_size.toString(),
-      r.checked_in ? 'Checked In' : r.status || 'Confirmed',
+      r.checked_in ? t('reservationsCalendar.checkedIn') : r.status || t('reservationsCalendar.confirmed'),
       r.special_requests || ''
     ]);
 
@@ -145,8 +156,8 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
         <div className="w-16 h-16 mx-auto mb-4 bg-soft-gray rounded-2xl flex items-center justify-center">
           <ThiingsIcon name="calendar" pxSize={28} />
         </div>
-        <p className="font-semibold text-deep-charcoal">No upcoming reservations</p>
-        <p className="text-sm text-stone-gray mt-1">Reservations will appear here when customers book</p>
+        <p className="font-semibold text-deep-charcoal">{t('reservationsCalendar.noUpcoming')}</p>
+        <p className="text-sm text-stone-gray mt-1">{t('reservationsCalendar.noUpcomingHint')}</p>
       </div>
     );
   }
@@ -193,7 +204,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
                       {formatDate(date)}
                     </div>
                     <div className="text-sm text-stone-gray">
-                      {count} {count === 1 ? 'reservation' : 'reservations'}
+                      {t('reservationsCalendar.reservationCount', { count })}
                     </div>
                   </div>
                 </div>
@@ -216,7 +227,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
                             <span className="font-semibold text-deep-charcoal">{reservation.customer_name}</span>
                             {reservation.checked_in && (
                               <span className="px-2 py-0.5 bg-green-600/10 text-green-600 text-xs rounded-full">
-                                ✓ Checked In
+                                ✓ {t('reservationsCalendar.checkedIn')}
                               </span>
                             )}
                             <RiskBadge
@@ -226,7 +237,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
                             />
                           </div>
                           <div className="text-sm text-stone-gray mt-1">
-                            Party of {reservation.party_size} · {formatTime(reservation.time || '')}
+                            {t('reservationsCalendar.partyOf', { size: reservation.party_size })} · {formatTime(reservation.time || '')}
                           </div>
                           {reservation.customer_phone && (
                             <div className="text-xs text-muted-stone mt-1">
@@ -243,7 +254,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
 
                       {reservation.special_requests && (
                         <div className="text-xs text-stone-gray bg-white rounded-lg p-2 mb-2 border border-border-gray">
-                          <span className="text-muted-stone">Note:</span> {reservation.special_requests}
+                          <span className="text-muted-stone">{t('reservationsCalendar.note')}:</span> {reservation.special_requests}
                         </div>
                       )}
 
@@ -256,7 +267,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
                             }}
                             className="flex-1 px-3 py-2 text-sm bg-burgundy text-white rounded-xl hover:bg-burgundy-dark transition-colors font-medium"
                           >
-                            Check In
+                            {t('reservationsCalendar.checkIn')}
                           </button>
                         )}
                         {reservation.no_show_risk_score && onRecordOutcome && (
@@ -268,7 +279,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
                             className="px-3 py-2 text-sm bg-violet-600 text-white rounded-xl hover:bg-violet-700 transition-colors font-medium"
                             title="Record actual outcome for ML training"
                           >
-                            📊 Outcome
+                            📊 {t('reservationsCalendar.outcome')}
                           </button>
                         )}
                         <button
@@ -278,7 +289,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
                           }}
                           className="px-3 py-2 text-sm bg-white text-stone-gray border border-border-gray rounded-xl hover:bg-border-gray transition"
                         >
-                          Details
+                          {t('reservationsCalendar.details')}
                         </button>
                       </div>
                     </div>
@@ -296,7 +307,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
         className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
       >
         <ThiingsIcon name="download" pxSize={20} />
-        Export to CSV ({reservations.length} reservations)
+        {t('reservationsCalendar.exportCsv', { count: reservations.length })}
       </button>
 
       {/* Summary Stats */}
@@ -304,17 +315,17 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <div className="text-2xl font-bold text-deep-charcoal">{reservations.length}</div>
-            <div className="text-xs text-muted-stone">Total Reservations</div>
+            <div className="text-xs text-muted-stone">{t('reservationsCalendar.totalReservations')}</div>
           </div>
           <div>
             <div className="text-2xl font-bold text-burgundy">{sortedDates.length}</div>
-            <div className="text-xs text-muted-stone">Days with Bookings</div>
+            <div className="text-xs text-muted-stone">{t('reservationsCalendar.daysWithBookings')}</div>
           </div>
           <div>
             <div className="text-2xl font-bold text-violet-600">
               {reservations.reduce((sum, r) => sum + (r.party_size || 0), 0)}
             </div>
-            <div className="text-xs text-muted-stone">Total Guests</div>
+            <div className="text-xs text-muted-stone">{t('reservationsCalendar.totalGuests')}</div>
           </div>
         </div>
       </div>

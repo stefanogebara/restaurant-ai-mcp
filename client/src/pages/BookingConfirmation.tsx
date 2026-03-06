@@ -132,8 +132,8 @@ export default function BookingConfirmation() {
             {/* Restaurant Row */}
             <div className="flex items-center gap-4 pb-5 mb-5 border-b border-soft-gray">
               <div className="w-14 h-14 rounded-[14px] bg-gradient-to-br from-charcoal-dark to-stone-700 flex-shrink-0" />
-              <div>
-                <h3 className="text-lg font-semibold text-deep-charcoal tracking-tight">{reservation.restaurant_name}</h3>
+              <div className="min-w-0">
+                <h3 className="text-lg font-semibold text-deep-charcoal tracking-tight truncate">{reservation.restaurant_name}</h3>
                 <p className="text-[13px] text-warm-stone font-light">{t('reservations.reservationDetails')}</p>
               </div>
             </div>
@@ -169,7 +169,7 @@ export default function BookingConfirmation() {
 
             <div className="flex justify-between items-center py-2.5">
               <span className="text-[13px] text-warm-stone">{t('reservations.confirmationId')}</span>
-              <span className="text-[13px] font-mono font-medium text-burgundy bg-burgundy/[6%] px-2.5 py-0.5 rounded-lg">{reservation.id}</span>
+              <span className="text-[13px] font-mono font-medium text-burgundy bg-burgundy/[6%] px-2.5 py-0.5 rounded-lg truncate max-w-[180px] sm:max-w-none">{reservation.id}</span>
             </div>
           </div>
 

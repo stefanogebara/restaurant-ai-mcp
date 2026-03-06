@@ -145,7 +145,7 @@ export default function ReservationNotesEditor({
             <h3 className="text-lg font-semibold text-deep-charcoal">Dietary Restrictions</h3>
             <span className="text-xs text-muted-stone">(Important for cochinillo alternatives)</span>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {['Vegetarian', 'Vegan', 'Gluten-Free', 'Lactose-Free', 'Halal', 'Kosher'].map((restriction) => (
               <button
                 key={restriction}
@@ -251,7 +251,7 @@ export default function ReservationNotesEditor({
             <ThiingsIcon name="accessibility" pxSize={20} />
             <h3 className="text-lg font-semibold text-deep-charcoal">Accessibility Needs</h3>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {['None', 'Wheelchair', 'High Chair'].map((need) => (
               <button
                 key={need}

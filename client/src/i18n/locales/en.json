@@ -268,6 +268,7 @@
     "averagePartySize": "Average Party Size",
     "averageDiningTime": "Average Dining Time",
     "errorTitle": "Error loading analytics",
+    "errorDescription": "Failed to load analytics data. Please try again.",
     "noData": "No analytics data available",
     "thirtyDays": "30 days",
     "sevenDays": "7 days",
@@ -1192,5 +1193,23 @@
     "upgradeFor": "Upgrade for",
     "month": "mo",
     "resets": "Resets"
+  },
+  "upgrade": {
+    "featureAvailable": "This feature is available on the {{planName}} plan",
+    "pricePerMonth": "{{price}}/month",
+    "unlockWith": "Unlock with {{planName}}",
+    "upgradeTo": "Upgrade to {{planName}}",
+    "goBack": "Go Back",
+    "trialNote": "14-day free trial \u2022 Cancel anytime",
+    "benefits": {
+      "mlInsights": "ML-powered performance insights and ROI tracking",
+      "customerLtv": "Customer lifetime value analytics",
+      "voiceAi": "Voice AI agent and advanced analytics",
+      "customerDna": "Customer DNA behavioral profiling"
+    }
+  },
+  "voiceSettings": {
+    "upgradeFeature": "Voice AI Agent",
+    "upgradeDescription": "Configure your AI voice agent to handle phone reservations automatically. Available on Growth and Scale plans."
   }
 }

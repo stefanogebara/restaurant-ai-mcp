@@ -116,7 +116,7 @@ export default function BookingPage() {
     );
   }
 
-  const restaurantType = restaurant.type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const restaurantType = t(`onboarding.restaurantTypes.${restaurant.type}`, restaurant.type.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()));
 
   return (
     <div className="min-h-screen bg-warm-white">
@@ -134,7 +134,7 @@ export default function BookingPage() {
       <div className="flex flex-col lg:flex-row max-w-[1200px] mx-auto w-full px-6 sm:px-10 py-8 lg:py-12 gap-10 lg:gap-16">
         {/* Left: Restaurant Info */}
         <div className="lg:flex-shrink-0 lg:w-[340px]">
-          <div className="w-full h-[220px] rounded-[20px] bg-gradient-to-br from-charcoal-dark to-stone-700 mb-7 flex items-end p-6">
+          <div className="w-full h-[220px] rounded-2xl bg-gradient-to-br from-charcoal-dark to-stone-700 mb-7 flex items-end p-6">
             <div>
               <h2 className="font-serif text-[28px] font-medium text-white tracking-tight mb-1">
                 {restaurant.name}

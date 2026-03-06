@@ -41,7 +41,7 @@ export default function AIInsights() {
     <DashboardLayout>
       <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 mt-14 sm:mt-0">
           <div className="flex items-center gap-3 mb-1">
             <div className="w-8 h-8 rounded-xl bg-burgundy/10 flex items-center justify-center">
               <ThiingsIcon name="star" pxSize={16} className="text-burgundy" />

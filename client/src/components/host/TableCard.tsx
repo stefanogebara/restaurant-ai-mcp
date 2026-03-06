@@ -101,7 +101,7 @@ export default function TableCard({ table, onClick }: TableCardProps) {
           </div>
 
           {/* Location */}
-          <div className="text-xs text-muted-stone mb-3 text-left">
+          <div className="text-xs text-muted-stone mb-3 text-left truncate">
             {table.location}
           </div>
 

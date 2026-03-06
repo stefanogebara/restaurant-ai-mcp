@@ -294,8 +294,8 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
         <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
           {data.business_hours.map((day, index) => (
             <div key={day.day}>
-              <div className="flex items-center gap-3 p-3 bg-soft-gray rounded-xl border border-border-gray">
-                <div className="w-24">
+              <div className="flex flex-wrap items-center gap-3 p-3 bg-soft-gray rounded-xl border border-border-gray">
+                <div className="w-20 sm:w-24">
                   <span className="text-deep-charcoal font-medium text-sm">{day.day}</span>
                 </div>
                 <label className="flex items-center">

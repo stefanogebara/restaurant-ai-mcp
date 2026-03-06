@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { Reservation } from './customerProfile.types';
 
@@ -8,6 +9,8 @@ interface CustomerVisitHistoryProps {
 }
 
 export default function CustomerVisitHistory({ reservations, showAll, onToggle }: CustomerVisitHistoryProps) {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US';
   const visible = showAll ? reservations : reservations.slice(0, 5);
 
   return (
@@ -15,7 +18,7 @@ export default function CustomerVisitHistory({ reservations, showAll, onToggle }
       <button onClick={onToggle} aria-expanded={showAll} className="w-full flex items-center justify-between">
         <h2 className="text-lg font-semibold font-serif text-deep-charcoal flex items-center gap-2">
           <ThiingsIcon name="utensils" size="sm" />
-          Visit History
+          {t('customerVisitHistory.title')}
           <span className="px-2 py-0.5 bg-burgundy/10 text-burgundy text-xs rounded-full font-semibold">{reservations.length}</span>
         </h2>
         {showAll ? <ThiingsIcon name="chevron-up" size="sm" /> : <ThiingsIcon name="chevron-down" size="sm" />}
@@ -27,12 +30,12 @@ export default function CustomerVisitHistory({ reservations, showAll, onToggle }
             <div className="flex items-center gap-4">
               <div>
                 <div className="text-sm font-medium text-deep-charcoal">
-                  {new Date(res.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  {new Date(res.date).toLocaleDateString(dateLocale, { month: 'short', day: 'numeric', year: 'numeric' })}
                 </div>
                 <div className="text-xs text-stone-gray">{res.time}</div>
               </div>
               <div>
-                <div className="text-sm text-deep-charcoal">Party of {res.party_size}</div>
+                <div className="text-sm text-deep-charcoal">{t('customerVisitHistory.partyOf', { size: res.party_size })}</div>
                 <div className="text-xs text-stone-gray capitalize">{res.status}</div>
               </div>
             </div>
@@ -49,7 +52,7 @@ export default function CustomerVisitHistory({ reservations, showAll, onToggle }
             <div className="w-10 h-10 mx-auto mb-2 bg-soft-gray rounded-xl flex items-center justify-center">
               <ThiingsIcon name="calendar" pxSize={18} />
             </div>
-            <p className="text-sm text-stone-gray">No reservation history</p>
+            <p className="text-sm text-stone-gray">{t('customerVisitHistory.noHistory')}</p>
           </div>
         )}
       </div>

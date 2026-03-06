@@ -103,7 +103,7 @@ function PartyRow({ party, billValue, onBillChange, onComplete }: PartyRowProps)
   return (
     <div>
       <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-burgundy/15 to-violet-600/15 flex items-center justify-center text-[10px] font-bold text-burgundy border border-burgundy/20 flex-shrink-0">
             {party.customer_name
               .split(' ')

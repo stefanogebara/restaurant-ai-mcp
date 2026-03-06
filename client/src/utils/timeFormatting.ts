@@ -137,14 +137,22 @@ export function formatWaitTime(estimatedMinutes: number | null | undefined): str
  * @param includeDate - Whether to include the date portion
  * @returns Formatted time string
  */
-export function formatAbsoluteTime(date: Date | string, includeDate = false): string {
+export function formatAbsoluteTime(
+  date: Date | string,
+  includeDate = false,
+  options?: { locale?: string; todayLabel?: string; tomorrowLabel?: string; atSeparator?: string }
+): string {
   const timestamp = typeof date === 'string' ? new Date(date) : date;
+  const locale = options?.locale ?? 'en-US';
+  const todayLabel = options?.todayLabel ?? 'Today';
+  const tomorrowLabel = options?.tomorrowLabel ?? 'Tomorrow';
+  const atSeparator = options?.atSeparator ?? 'at';
 
   if (isNaN(timestamp.getTime())) {
     return 'Invalid time';
   }
 
-  const timeStr = timestamp.toLocaleTimeString('en-US', {
+  const timeStr = timestamp.toLocaleTimeString(locale, {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true
@@ -160,21 +168,21 @@ export function formatAbsoluteTime(date: Date | string, includeDate = false): st
 
   // Check if it's today
   if (timestamp.toDateString() === today.toDateString()) {
-    return `Today at ${timeStr}`;
+    return `${todayLabel} ${atSeparator} ${timeStr}`;
   }
 
   // Check if it's tomorrow
   if (timestamp.toDateString() === tomorrow.toDateString()) {
-    return `Tomorrow at ${timeStr}`;
+    return `${tomorrowLabel} ${atSeparator} ${timeStr}`;
   }
 
   // Otherwise show full date
-  const dateStr = timestamp.toLocaleDateString('en-US', {
+  const dateStr = timestamp.toLocaleDateString(locale, {
     month: 'short',
     day: 'numeric'
   });
 
-  return `${dateStr} at ${timeStr}`;
+  return `${dateStr} ${atSeparator} ${timeStr}`;
 }
 
 /**

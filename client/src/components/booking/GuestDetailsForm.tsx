@@ -27,7 +27,7 @@ export default function GuestDetailsForm({
       <div className="text-xs font-semibold tracking-wider uppercase text-warm-stone mb-3">
         {t('booking.yourDetails')}
       </div>
-      <div className="grid grid-cols-2 gap-3.5 mb-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-3.5">
         <div>
           <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('booking.name')}</label>
           <input

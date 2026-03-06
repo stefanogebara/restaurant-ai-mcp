@@ -68,7 +68,7 @@ export default function AnalyticsDashboard() {
               <ThiingsIcon name="alert-circle" pxSize={32} className="text-red-600" />
             </div>
             <h3 className="text-lg font-bold text-deep-charcoal mb-2">{t('analytics.errorTitle')}</h3>
-            <p className="text-sm text-warm-stone mb-6">{error instanceof Error ? error.message : 'Failed to load analytics'}</p>
+            <p className="text-sm text-warm-stone mb-6">{t('analytics.errorDescription')}</p>
             <button
               type="button"
               onClick={() => refetch()}

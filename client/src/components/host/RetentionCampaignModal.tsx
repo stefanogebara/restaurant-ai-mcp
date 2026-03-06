@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { IconName } from '../common/ThiingsIcon';
 
@@ -42,6 +43,8 @@ const CAMPAIGN_TEMPLATES = {
 };
 
 export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampaign }: RetentionCampaignModalProps) {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US';
   const [selectedCampaign, setSelectedCampaign] = useState<keyof typeof CAMPAIGN_TEMPLATES>('win_back');
   const [customMessage, setCustomMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -76,7 +79,7 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border-gray">
           <h2 className="text-lg font-semibold text-deep-charcoal">
-            Retention Campaign
+            {t('retentionCampaign.title')}
           </h2>
           <button type="button" onClick={onClose} aria-label="Close" className="p-2 hover:bg-soft-gray rounded-xl transition-colors">
             <ThiingsIcon name="close" pxSize={20} />
@@ -88,9 +91,9 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
             <div className="w-16 h-16 bg-green-600/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <ThiingsIcon name="mail" pxSize={32} />
             </div>
-            <h3 className="text-lg font-medium text-deep-charcoal mb-2">Campaign Sent!</h3>
+            <h3 className="text-lg font-medium text-deep-charcoal mb-2">{t('retentionCampaign.sent')}</h3>
             <p className="text-stone-gray">
-              Your retention message has been queued for {customerName}.
+              {t('retentionCampaign.sentMessage', { name: customerName })}
             </p>
           </div>
         ) : (
@@ -106,7 +109,7 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
                 <div>
                   <p className="font-medium text-deep-charcoal">{customerName}</p>
                   <p className="text-sm text-stone-gray">
-                    Last visit: {new Date(customer.last_visit_date).toLocaleDateString()} · {customer.total_visits} visits · {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(customer.lifetime_value)} LTV
+                    {t('retentionCampaign.lastVisit')}: {new Date(customer.last_visit_date).toLocaleDateString(dateLocale)} · {t('retentionCampaign.visits', { count: customer.total_visits })} · {new Intl.NumberFormat(dateLocale, { style: 'currency', currency: 'EUR' }).format(customer.lifetime_value)} LTV
                   </p>
                 </div>
               </div>
@@ -114,7 +117,7 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
 
             {/* Campaign Type Selection */}
             <div className="p-4 space-y-3">
-              <label className="text-sm font-medium text-deep-charcoal">Campaign Type</label>
+              <label className="text-sm font-medium text-deep-charcoal">{t('retentionCampaign.campaignType')}</label>
               <div className="grid grid-cols-3 gap-2">
                 {Object.entries(CAMPAIGN_TEMPLATES).map(([key, tmpl]) => (
                     <button
@@ -138,15 +141,15 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
 
             {/* Message Preview/Edit */}
             <div className="p-4 space-y-3">
-              <label className="text-sm font-medium text-deep-charcoal">Message</label>
+              <label className="text-sm font-medium text-deep-charcoal">{t('retentionCampaign.message')}</label>
               <textarea
                 value={customMessage || template.message}
                 onChange={(e) => setCustomMessage(e.target.value)}
                 rows={4}
                 className="w-full px-3 py-2 border border-border-gray rounded-xl text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
-                placeholder="Customize your message..."
+                placeholder={t('retentionCampaign.customizePlaceholder')}
               />
-              <p className="text-xs text-stone-gray">Use {'{name}'} to personalize with customer name</p>
+              <p className="text-xs text-stone-gray">{t('retentionCampaign.personalizeHint')}</p>
             </div>
 
             {/* Actions */}
@@ -155,7 +158,7 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
                 onClick={onClose}
                 className="flex-1 px-4 py-2 border border-border-gray rounded-xl hover:bg-soft-gray text-deep-charcoal font-medium transition-colors"
               >
-                Cancel
+                {t('retentionCampaign.cancel')}
               </button>
               <button
                 onClick={handleSend}
@@ -163,11 +166,11 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
                 className="flex-1 px-4 py-2 bg-burgundy text-white rounded-xl hover:bg-burgundy-dark disabled:opacity-50 flex items-center justify-center gap-2 font-medium transition-colors"
               >
                 {sending ? (
-                  <>Sending...</>
+                  <>{t('retentionCampaign.sending')}</>
                 ) : (
                   <>
                     <ThiingsIcon name="mail" pxSize={16} />
-                    Send Campaign
+                    {t('retentionCampaign.sendCampaign')}
                   </>
                 )}
               </button>

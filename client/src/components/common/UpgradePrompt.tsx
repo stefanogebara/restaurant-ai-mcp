@@ -1,6 +1,7 @@
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from './ThiingsIcon';
 import { PLAN_NAMES, PLAN_PRICES, type PlanType } from '../../config/planFeatures';
-import { formatCurrency } from '../../utils/currency';
+import { detectCurrency, formatPrice } from '../../utils/currency';
 
 interface UpgradePromptProps {
   requiredPlan: PlanType;
@@ -9,11 +10,13 @@ interface UpgradePromptProps {
 }
 
 export default function UpgradePrompt({ requiredPlan, feature, description }: UpgradePromptProps) {
+  const { t } = useTranslation();
   const planName = PLAN_NAMES[requiredPlan];
   const price = PLAN_PRICES[requiredPlan as keyof typeof PLAN_PRICES];
+  const currency = detectCurrency();
+  const priceDisplay = price ? formatPrice(price, currency) : '';
 
   const handleUpgrade = () => {
-    // Navigate to pricing page or open upgrade modal
     window.location.href = '/#pricing';
   };
 
@@ -36,33 +39,33 @@ export default function UpgradePrompt({ requiredPlan, feature, description }: Up
           <div className="flex items-center gap-3 mb-6 p-4 bg-soft-gray rounded-xl border border-border-gray">
             <ThiingsIcon name="sparkles" pxSize={24} className="flex-shrink-0" />
             <p className="text-deep-charcoal">
-              This feature is available on the <span className="font-bold text-burgundy">{planName}</span> plan
-              {price && (
-                <span className="text-stone-gray"> ({formatCurrency(price)}/month)</span>
+              {t('upgrade.featureAvailable', { planName })}
+              {priceDisplay && (
+                <span className="text-stone-gray"> ({t('upgrade.pricePerMonth', { price: priceDisplay })})</span>
               )}
             </p>
           </div>
 
           {/* Benefits */}
           <div className="space-y-3 mb-8">
-            <h3 className="font-semibold text-deep-charcoal text-lg mb-4">Unlock with {planName}:</h3>
+            <h3 className="font-semibold text-deep-charcoal text-lg mb-4">{t('upgrade.unlockWith', { planName })}:</h3>
             {(requiredPlan === 'growth' || requiredPlan === 'scale') && (
               <ul className="space-y-2">
                 <li className="flex items-start gap-2 text-stone-gray">
                   <div className="w-1.5 h-1.5 rounded-full bg-burgundy mt-2 flex-shrink-0" />
-                  <span>ML-powered performance insights and ROI tracking</span>
+                  <span>{t('upgrade.benefits.mlInsights')}</span>
                 </li>
                 <li className="flex items-start gap-2 text-stone-gray">
                   <div className="w-1.5 h-1.5 rounded-full bg-burgundy mt-2 flex-shrink-0" />
-                  <span>Customer lifetime value analytics</span>
+                  <span>{t('upgrade.benefits.customerLtv')}</span>
                 </li>
                 <li className="flex items-start gap-2 text-stone-gray">
                   <div className="w-1.5 h-1.5 rounded-full bg-burgundy mt-2 flex-shrink-0" />
-                  <span>Voice AI agent and advanced analytics</span>
+                  <span>{t('upgrade.benefits.voiceAi')}</span>
                 </li>
                 <li className="flex items-start gap-2 text-stone-gray">
                   <div className="w-1.5 h-1.5 rounded-full bg-burgundy mt-2 flex-shrink-0" />
-                  <span>Customer DNA behavioral profiling</span>
+                  <span>{t('upgrade.benefits.customerDna')}</span>
                 </li>
               </ul>
             )}
@@ -75,7 +78,7 @@ export default function UpgradePrompt({ requiredPlan, feature, description }: Up
               onClick={handleUpgrade}
               className="flex-1 bg-burgundy hover:bg-burgundy-dark text-white font-semibold py-3 px-6 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center justify-center gap-2"
             >
-              <span>Upgrade to {planName}</span>
+              <span>{t('upgrade.upgradeTo', { planName })}</span>
               <ThiingsIcon name="arrow-right" pxSize={20} />
             </button>
             <button
@@ -83,13 +86,13 @@ export default function UpgradePrompt({ requiredPlan, feature, description }: Up
               onClick={() => window.history.back()}
               className="flex-1 bg-soft-gray hover:bg-border-gray text-deep-charcoal font-semibold py-3 px-6 rounded-xl transition-colors"
             >
-              Go Back
+              {t('upgrade.goBack')}
             </button>
           </div>
 
           {/* Footer note */}
           <p className="text-center text-sm text-stone-gray mt-6">
-            14-day free trial • Cancel anytime
+            {t('upgrade.trialNote')}
           </p>
         </div>
       </div>

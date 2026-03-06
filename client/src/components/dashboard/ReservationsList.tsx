@@ -234,9 +234,9 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="text-sm font-semibold text-deep-charcoal tracking-tight truncate">{reservation.customer_name}</div>
-        <div className="text-xs text-muted-stone mt-0.5">
+        <div className="text-xs text-muted-stone mt-0.5 truncate">
           {reservation.party_size} {t.people}
-          {reservation.special_requests && <span className="break-words"> · {reservation.special_requests}</span>}
+          {reservation.special_requests && <span> · {reservation.special_requests}</span>}
         </div>
         {/* Risk + Deposit badges */}
         {(reservation.ml_risk_score !== undefined || reservation.deposit_amount) && (

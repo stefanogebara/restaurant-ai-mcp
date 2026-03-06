@@ -9,7 +9,7 @@ export default function WeeklyReportSummaryCards({ summary }: WeeklyReportSummar
   const { t } = useTranslation();
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
       <div className="bg-white rounded-2xl p-5 border border-border-gray text-center">
         <div className="text-[11px] font-medium text-muted-stone mb-1.5 tracking-wide">{t('analytics.totalReservations')}</div>
         <div className="text-2xl font-bold tracking-tight">{summary.total_reservations}</div>
