@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Table, ActiveParty } from '../../types/host.types';
 import ThiingsIcon from '../common/ThiingsIcon';
 import FloorPlanProgressRing from './FloorPlanProgressRing';
@@ -25,6 +26,7 @@ export default function FloorPlanView({
   onTableClick,
   compact = false,
 }: FloorPlanViewProps) {
+  const { t } = useTranslation();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(680);
@@ -75,9 +77,9 @@ export default function FloorPlanView({
         <div className="w-16 h-16 mx-auto mb-4 bg-soft-gray rounded-2xl flex items-center justify-center">
           <ThiingsIcon name="layout-grid" pxSize={28} />
         </div>
-        <p className="font-semibold text-deep-charcoal">No tables set up yet</p>
+        <p className="font-semibold text-deep-charcoal">{t('floorPlan.noTablesTitle', 'No tables set up yet')}</p>
         <p className="text-sm text-stone-gray mt-1">
-          Complete your onboarding or add tables in Settings to see your floor plan
+          {t('floorPlan.noTablesDescription', 'Complete your onboarding or add tables in Settings to see your floor plan')}
         </p>
       </div>
     );
@@ -122,7 +124,7 @@ export default function FloorPlanView({
               <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: dotColor }} />
               <span className="text-sm font-semibold text-deep-charcoal">{location}</span>
               <span className="text-xs bg-soft-gray text-muted-stone px-2 py-0.5 rounded-full font-medium flex-shrink-0">
-                {locTables.length} {locTables.length === 1 ? 'table' : 'tables'}
+                {locTables.length} {locTables.length === 1 ? t('floorPlan.table', 'table') : t('floorPlan.tables', 'tables')}
               </span>
               <div className="flex-1 h-px bg-border-gray" />
             </div>
@@ -248,7 +250,7 @@ export default function FloorPlanView({
                         fontFamily="Inter,-apple-system,sans-serif">
                         {isOccupied && party
                           ? party.guestName.split(' ')[0].substring(0, 9)
-                          : `${table.capacity} seats`}
+                          : `${table.capacity} ${t('floorPlan.seats', 'seats')}`}
                       </text>
 
                       {party?.isVIP && (

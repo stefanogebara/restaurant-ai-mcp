@@ -30,6 +30,10 @@ const translations = {
     takeAction: 'Take Action',
     actionTaken: 'Action taken',
     people: 'people',
+    lunch: 'Lunch',
+    dinner: 'Dinner',
+    atRisk: 'At Risk',
+    confirmed: 'Confirmed',
   },
   es: {
     upcoming: 'Próximas Reservas',
@@ -45,6 +49,10 @@ const translations = {
     takeAction: 'Tomar Acción',
     actionTaken: 'Acción tomada',
     people: 'personas',
+    lunch: 'Almuerzo',
+    dinner: 'Cena',
+    atRisk: 'En Riesgo',
+    confirmed: 'Confirmado',
   },
   'pt-BR': {
     upcoming: 'Próximas Reservas',
@@ -60,6 +68,10 @@ const translations = {
     takeAction: 'Tomar Ação',
     actionTaken: 'Ação realizada',
     people: 'pessoas',
+    lunch: 'Almoço',
+    dinner: 'Jantar',
+    atRisk: 'Em Risco',
+    confirmed: 'Confirmado',
   },
 };
 
@@ -186,8 +198,8 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
 
   const getMealPeriod = (time: string) => {
     const hour = parseInt(time.split(':')[0]);
-    if (hour < 15) return language === 'en' ? 'Lunch' : 'Almuerzo';
-    return language === 'en' ? 'Dinner' : 'Cena';
+    if (hour < 15) return t.lunch;
+    return t.dinner;
   };
 
   const isHighRisk = reservation.ml_risk_level === 'high' || reservation.ml_risk_level === 'very-high';
@@ -202,8 +214,8 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
   const statusBadge = reservation.checked_in
     ? { label: t.seated, classes: 'bg-violet-600/[8%] text-violet-600' }
     : isHighRisk
-    ? { label: 'At Risk', classes: 'bg-amber-600/[8%] text-amber-600' }
-    : { label: 'Confirmed', classes: 'bg-green-600/[8%] text-green-600' };
+    ? { label: t.atRisk, classes: 'bg-amber-600/[8%] text-amber-600' }
+    : { label: t.confirmed, classes: 'bg-green-600/[8%] text-green-600' };
 
   const hue = (reservation.customer_name?.charCodeAt(0) ?? 65) * 137 % 360;
   const avatarStyle = { background: `linear-gradient(135deg, hsl(${hue},50%,75%), hsl(${(hue + 40) % 360},50%,65%))` };

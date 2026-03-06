@@ -14,7 +14,7 @@ export default function FloorPlanLegend() {
             <span className="w-1.5 h-1.5 rounded-full" style={{ background: stroke }} />
           </span>
           <span className="text-xs text-warm-stone font-medium">
-            {t(`settings.tableStatus.${key}`, label)}
+            {t(`floorPlan.legend${key.charAt(0).toUpperCase() + key.slice(1)}`, label)}
           </span>
         </div>
       ))}

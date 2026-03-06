@@ -22,7 +22,8 @@
     "signOut": "Sair",
     "retry": "Tentar Novamente",
     "settingUp": "Configurando tudo...",
-    "saved": "Salvo"
+    "saved": "Salvo",
+    "searchPlaceholder": "Buscar..."
   },
   "navigation": {
     "dashboard": "Painel",
@@ -41,7 +42,10 @@
     "sectionMain": "Principal",
     "sectionAI": "IA",
     "sectionInsights": "Análises",
-    "sectionManage": "Gerenciar"
+    "sectionManage": "Gerenciar",
+    "lockedFeature": "Recurso bloqueado",
+    "upgradeToUnlock": "Atualize para desbloquear",
+    "upgradePlanToUnlock": "Atualize para o plano Profissional para desbloquear"
   },
   "dashboard": {
     "welcome": "Bem-vindo",
@@ -733,7 +737,12 @@
     "legendOccupied": "Ocupada",
     "legendReserved": "Reservada",
     "legendCleaning": "Limpeza",
-    "linkedTables": "Mesas vinculadas"
+    "linkedTables": "Mesas vinculadas",
+    "noTablesTitle": "Nenhuma mesa configurada ainda",
+    "noTablesDescription": "Complete seu cadastro ou adicione mesas em Configurações para ver a planta do salão",
+    "table": "mesa",
+    "tables": "mesas",
+    "seats": "lugares"
   },
   "insights": {
     "title": "Insights de IA",
@@ -1175,5 +1184,14 @@
       "q9": "Posso testar antes de contratar?",
       "a9": "Sim! Todos os planos incluem 14 dias de teste gratuito, sem cartão de crédito. Você também pode experimentar nossa demo ao vivo no site para ouvir o assistente de voz em ação antes de se cadastrar."
     }
+  },
+  "managerAI": {
+    "title": "IA do Gerente",
+    "unlimited": "Ilimitado",
+    "messages": "mensagens",
+    "runningLow": "Quase no limite",
+    "upgradeFor": "Atualize para",
+    "month": "mês",
+    "resets": "Renova em"
   }
 }

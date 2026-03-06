@@ -162,7 +162,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
             <ThiingsIcon name="search" pxSize={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-stone" />
             <input
               type="text"
-              placeholder="Search..."
+              placeholder={t('common.searchPlaceholder', 'Search...')}
               aria-label="Search waitlist"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

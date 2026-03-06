@@ -201,9 +201,9 @@ export default function Sidebar() {
                           ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
                         `}
                         title={isCollapsed
-                          ? `${item.label} - Upgrade to unlock`
-                          : 'Upgrade to Professional plan to unlock'}
-                        aria-label={`${item.label} - Locked feature`}
+                          ? `${t(NAV_KEYS[item.label] ?? item.label, item.label)} - ${t('navigation.upgradeToUnlock', 'Upgrade to unlock')}`
+                          : t('navigation.upgradePlanToUnlock', 'Upgrade to Professional plan to unlock')}
+                        aria-label={`${t(NAV_KEYS[item.label] ?? item.label, item.label)} - ${t('navigation.lockedFeature', 'Locked feature')}`}
                         aria-disabled="true"
                       >
                         <span

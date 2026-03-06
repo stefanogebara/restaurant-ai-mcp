@@ -22,7 +22,8 @@
     "signOut": "Sign Out",
     "retry": "Retry",
     "settingUp": "Setting things up...",
-    "saved": "Saved"
+    "saved": "Saved",
+    "searchPlaceholder": "Search..."
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -41,7 +42,10 @@
     "sectionMain": "Main",
     "sectionAI": "AI",
     "sectionInsights": "Insights",
-    "sectionManage": "Manage"
+    "sectionManage": "Manage",
+    "lockedFeature": "Locked feature",
+    "upgradeToUnlock": "Upgrade to unlock",
+    "upgradePlanToUnlock": "Upgrade to Professional plan to unlock"
   },
   "dashboard": {
     "welcome": "Welcome",
@@ -732,7 +736,12 @@
     "legendOccupied": "Occupied",
     "legendReserved": "Reserved",
     "legendCleaning": "Cleaning",
-    "linkedTables": "Linked tables"
+    "linkedTables": "Linked tables",
+    "noTablesTitle": "No tables set up yet",
+    "noTablesDescription": "Complete your onboarding or add tables in Settings to see your floor plan",
+    "table": "table",
+    "tables": "tables",
+    "seats": "seats"
   },
   "insights": {
     "title": "AI Insights",
@@ -1166,5 +1175,14 @@
       "q9": "Can I try it before committing?",
       "a9": "Yes! All plans come with a 14-day free trial, no credit card required. You can also try our live AI demo on the website to hear the voice assistant in action before signing up."
     }
+  },
+  "managerAI": {
+    "title": "Manager AI",
+    "unlimited": "Unlimited",
+    "messages": "messages",
+    "runningLow": "Running low",
+    "upgradeFor": "Upgrade for",
+    "month": "mo",
+    "resets": "Resets"
   }
 }
