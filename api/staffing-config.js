@@ -12,7 +12,9 @@ module.exports = async (req, res) => {
 
 async function handleGet(req, res) {
   try {
-    const { restaurantId } = verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
+    const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
+    if (!user?.restaurant_id) throw new Error('UNAUTHORIZED');
+    const restaurantId = user.restaurant_id;
     const { data, error } = await supabaseAdmin
       .from('restaurant_config')
       .select('staffing_config')
@@ -29,7 +31,9 @@ async function handleGet(req, res) {
 
 async function handlePatch(req, res) {
   try {
-    const { restaurantId } = verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
+    const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
+    if (!user?.restaurant_id) throw new Error('UNAUTHORIZED');
+    const restaurantId = user.restaurant_id;
     const body = req.body || {};
 
     if (!Array.isArray(body.roles)) {

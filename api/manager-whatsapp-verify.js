@@ -11,7 +11,9 @@ module.exports = async (req, res) => {
 
   try {
     const token = (req.headers.authorization || '').replace('Bearer ', '');
-    const { restaurantId } = await verifyJWT(token);
+    const user = await verifyJWT(token);
+    if (!user?.restaurant_id) throw new Error('UNAUTHORIZED');
+    const restaurantId = user.restaurant_id;
     const { action, phone, code } = req.body || {};
 
     if (action === 'send') {

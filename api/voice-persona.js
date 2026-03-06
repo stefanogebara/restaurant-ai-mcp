@@ -12,7 +12,9 @@ module.exports = async (req, res) => {
 
 async function handleGet(req, res) {
   try {
-    const { restaurantId } = verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
+    const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
+    if (!user?.restaurant_id) throw new Error('UNAUTHORIZED');
+    const restaurantId = user.restaurant_id;
     const { data, error } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
@@ -33,7 +35,9 @@ async function handleGet(req, res) {
 
 async function handlePatch(req, res) {
   try {
-    const { restaurantId } = verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
+    const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
+    if (!user?.restaurant_id) throw new Error('UNAUTHORIZED');
+    const restaurantId = user.restaurant_id;
     const { agent_name, agent_greeting } = req.body || {};
 
     if (agent_name !== undefined && (typeof agent_name !== 'string' || agent_name.length > 50)) {

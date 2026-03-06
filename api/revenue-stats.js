@@ -10,7 +10,9 @@ module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { restaurantId } = verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
+    const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
+    if (!user?.restaurant_id) throw new Error('UNAUTHORIZED');
+    const restaurantId = user.restaurant_id;
 
     const { data, error } = await supabaseAdmin
       .from('service_records')
