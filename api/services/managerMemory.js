@@ -41,17 +41,22 @@ async function writeMemory(restaurantId, type, category, content, source, import
 }
 
 async function retrieveRelevantMemories(restaurantId, query, limit = 10) {
-  const embedding = await embedText(query);
-  const { data, error } = await supabaseAdmin.rpc('match_manager_memories', {
-    p_restaurant_id: restaurantId,
-    p_embedding: embedding,
-    p_limit: limit,
-  });
-  if (error) {
-    logger.error('retrieveRelevantMemories failed', { restaurantId, error: error.message });
-    throw new Error(error.message);
+  try {
+    const embedding = await embedText(query);
+    const { data, error } = await supabaseAdmin.rpc('match_manager_memories', {
+      p_restaurant_id: restaurantId,
+      p_embedding: embedding,
+      p_limit: limit,
+    });
+    if (error) {
+      logger.error('retrieveRelevantMemories failed', { restaurantId, error: error.message });
+      return [];
+    }
+    return data || [];
+  } catch (err) {
+    logger.warn('retrieveRelevantMemories skipped (embedding unavailable)', { restaurantId, error: err.message });
+    return [];
   }
-  return data || [];
 }
 
 module.exports = { writeMemory, retrieveRelevantMemories, embedText };
