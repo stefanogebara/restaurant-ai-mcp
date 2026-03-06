@@ -452,7 +452,15 @@
     "termsOfService": "Termos de Serviço",
     "legalAnd": "e",
     "privacyPolicy": "Política de Privacidade",
-    "confirmationSent": "Verifique seu e-mail para um link de confirmação e completar seu cadastro."
+    "confirmationSent": "Verifique seu e-mail para um link de confirmação e completar seu cadastro.",
+    "errors": {
+      "missingEmail": "Por favor, insira seu endereço de e-mail.",
+      "invalidCredentials": "E-mail ou senha inválidos.",
+      "emailNotConfirmed": "Por favor, confirme seu e-mail antes de entrar.",
+      "userAlreadyRegistered": "Já existe uma conta com este e-mail.",
+      "passwordTooShort": "A senha deve ter pelo menos 6 caracteres.",
+      "generic": "Algo deu errado. Por favor, tente novamente."
+    }
   },
   "settings": {
     "title": "Configurações",

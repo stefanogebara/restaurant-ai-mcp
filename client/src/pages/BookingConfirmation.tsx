@@ -8,7 +8,8 @@ export default function BookingConfirmation() {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US';
   const [searchParams] = useSearchParams();
 
   const state = location.state as { reservation?: ReservationData; restaurant_name?: string; restaurant_id?: string } | null;
@@ -142,7 +143,7 @@ export default function BookingConfirmation() {
               <div className="flex justify-between items-center py-2.5 border-b border-soft-gray">
                 <span className="text-[13px] text-warm-stone">{t('reservations.date')}</span>
                 <span className="text-sm font-medium text-deep-charcoal">
-                  {new Date(reservation.date + 'T12:00:00').toLocaleDateString('en-US', {
+                  {new Date(reservation.date + 'T12:00:00').toLocaleDateString(dateLocale, {
                     weekday: 'long',
                     month: 'long',
                     day: 'numeric',

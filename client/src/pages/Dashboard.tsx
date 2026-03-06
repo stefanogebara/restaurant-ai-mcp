@@ -144,8 +144,9 @@ export default function Dashboard() {
   }, [isTrial, trialEnd]);
 
   // ---- Date display ----
-  const dayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-  const dateStr = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+  const dateLocale = i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US';
+  const dayName = new Date().toLocaleDateString(dateLocale, { weekday: 'long' });
+  const dateStr = new Date().toLocaleDateString(dateLocale, { day: 'numeric', month: 'short' });
 
   // ---- Error state ----
   if (isError && !isLoading) {

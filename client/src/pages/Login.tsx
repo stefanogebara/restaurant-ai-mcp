@@ -16,6 +16,15 @@ import LoginBrandPanel from '../components/auth/LoginBrandPanel';
 
 type AuthMode = 'signin' | 'signup';
 
+// Translate common Supabase auth error messages
+const AUTH_ERROR_KEYS: Record<string, string> = {
+  'missing email or phone': 'login.errors.missingEmail',
+  'invalid login credentials': 'login.errors.invalidCredentials',
+  'email not confirmed': 'login.errors.emailNotConfirmed',
+  'user already registered': 'login.errors.userAlreadyRegistered',
+  'password should be at least 6 characters': 'login.errors.passwordTooShort',
+};
+
 export default function Login() {
   const { t } = useTranslation();
   const { user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
@@ -71,7 +80,9 @@ export default function Login() {
     try {
       await signInWithGoogle(Object.keys(extraRedirectParams).length > 0 ? extraRedirectParams : undefined);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to sign in with Google');
+      const msg = err instanceof Error ? err.message : '';
+      const key = AUTH_ERROR_KEYS[msg.toLowerCase()];
+      setError(key ? t(key) : (msg || t('login.errors.generic')));
       setIsSigningIn(false);
     }
   };
@@ -95,7 +106,9 @@ export default function Login() {
         }
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : `Failed to ${mode === 'signin' ? 'sign in' : 'create account'}`);
+      const msg = err instanceof Error ? err.message : '';
+      const key = AUTH_ERROR_KEYS[msg.toLowerCase()];
+      setError(key ? t(key) : (msg || t('login.errors.generic')));
       setIsSigningIn(false);
     }
   };
@@ -129,7 +142,7 @@ export default function Login() {
           transition={{ duration: 0.5 }}
           className="w-full max-w-md"
         >
-          <div className="bg-white border border-border-gray rounded-[2rem] p-10 shadow-xl">
+          <div className="bg-white border border-border-gray rounded-2xl p-8 sm:p-10 shadow-xl">
             {/* Logo and Title */}
             <div className="text-center mb-8">
               <Link to="/" className="inline-block mb-6 lg:hidden">
@@ -300,7 +313,7 @@ export default function Login() {
           </div>
 
           {/* Trust Indicators - Mobile only (desktop has left panel) */}
-          <div className="mt-8 flex justify-center gap-8 text-center lg:hidden">
+          <div className="mt-8 flex flex-wrap justify-center gap-6 sm:gap-8 text-center lg:hidden">
             <div>
               <div className="text-xl font-serif font-bold text-deep-charcoal">2.3s</div>
               <div className="text-xs text-stone-gray uppercase tracking-wider">{t('login.statResponse')}</div>

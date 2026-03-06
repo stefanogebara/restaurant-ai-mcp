@@ -256,7 +256,7 @@ export default function CustomerPortal() {
                             <div className="flex justify-between py-2.5 border-b border-soft-gray">
                               <span className="text-[13px] text-warm-stone">{t('reservations.date')}</span>
                               <span className="text-sm font-medium text-deep-charcoal">
-                                {date ? new Date(date + 'T00:00:00').toLocaleDateString(i18n.language === 'es' ? 'es-ES' : 'en-US', {
+                                {date ? new Date(date + 'T00:00:00').toLocaleDateString(i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US', {
                                   weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
                                 }) : 'Not set'}
                               </span>

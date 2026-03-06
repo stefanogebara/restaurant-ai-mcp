@@ -310,7 +310,15 @@
     "createAccountBtn": "Crear Cuenta",
     "newToSeatable": "¿Nuevo en Seatable?",
     "createAnAccount": "Crear una cuenta",
-    "alreadyHaveAccount": "¿Ya tienes una cuenta?"
+    "alreadyHaveAccount": "¿Ya tienes una cuenta?",
+    "errors": {
+      "missingEmail": "Por favor, ingresa tu correo electrónico.",
+      "invalidCredentials": "Correo o contraseña incorrectos.",
+      "emailNotConfirmed": "Por favor, confirma tu correo antes de iniciar sesión.",
+      "userAlreadyRegistered": "Ya existe una cuenta con este correo.",
+      "passwordTooShort": "La contraseña debe tener al menos 6 caracteres.",
+      "generic": "Algo salió mal. Por favor, inténtalo de nuevo."
+    }
   },
   "settings": {
     "title": "Configuración",

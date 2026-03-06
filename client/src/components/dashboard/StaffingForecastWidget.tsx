@@ -2,7 +2,8 @@ import { useTranslation } from 'react-i18next';
 import { useStaffingForecast } from '../../hooks/useStaffingForecast';
 
 export default function StaffingForecastWidget() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US';
   const { data: forecast, isLoading, isError } = useStaffingForecast();
 
   if (isLoading) {
@@ -37,7 +38,7 @@ export default function StaffingForecastWidget() {
               <div className="min-w-[44px]">
                 <span className="text-sm font-semibold text-deep-charcoal">{day.day}</span>
                 <span className="block text-xs text-warm-stone">
-                  {new Date(day.date + 'T12:00:00Z').toLocaleDateString('en-US', {
+                  {new Date(day.date + 'T12:00:00Z').toLocaleDateString(dateLocale, {
                     month: 'short',
                     day: 'numeric',
                     timeZone: 'UTC',

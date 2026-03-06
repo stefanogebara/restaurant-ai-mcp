@@ -451,7 +451,15 @@
     "termsOfService": "Terms of Service",
     "legalAnd": "and",
     "privacyPolicy": "Privacy Policy",
-    "confirmationSent": "Check your email for a confirmation link to complete your registration."
+    "confirmationSent": "Check your email for a confirmation link to complete your registration.",
+    "errors": {
+      "missingEmail": "Please enter your email address.",
+      "invalidCredentials": "Invalid email or password.",
+      "emailNotConfirmed": "Please confirm your email before signing in.",
+      "userAlreadyRegistered": "An account with this email already exists.",
+      "passwordTooShort": "Password must be at least 6 characters.",
+      "generic": "Something went wrong. Please try again."
+    }
   },
   "settings": {
     "title": "Settings",

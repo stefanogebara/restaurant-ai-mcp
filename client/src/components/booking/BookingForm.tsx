@@ -48,7 +48,8 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 }
 
 export default function BookingForm({ restaurant }: BookingFormProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US';
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
 
@@ -91,7 +92,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       const dayKey = dayNames[d.getDay()];
       const dayHours = restaurant.business_hours[dayKey];
       if (!dayHours || dayHours.is_open === false || dayHours.closed) continue;
-      const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      const label = d.toLocaleDateString(dateLocale, { weekday: 'short', month: 'short', day: 'numeric' });
       days.push({ value, label, dayKey, dayNum: d.getDate(), isToday: value === todayStr });
     }
     return days;
@@ -233,7 +234,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
           ) : timeSlots.length === 0 ? (
             <p className="text-sm text-warm-stone py-4">{t('booking.noAvailableTimes')}</p>
           ) : (
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {timeSlots.map(slot => (
                 <button
                   type="button"
@@ -355,7 +356,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
           <SummaryRow label={t('booking.restaurant')} value={restaurant.name} />
           <SummaryRow
             label={t('reservations.date')}
-            value={new Date(selectedDate + 'T12:00:00').toLocaleDateString('en-US', {
+            value={new Date(selectedDate + 'T12:00:00').toLocaleDateString(dateLocale, {
               weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
             })}
           />
@@ -420,7 +421,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
         </button>
       )}
       <p className="text-center text-xs text-muted-stone mt-3">
-        {restaurant.cancellation_policy || 'Free cancellation up to 2 hours before your reservation.'}
+        {restaurant.cancellation_policy || t('booking.cancellationPolicy')}
       </p>
     </div>
   );
