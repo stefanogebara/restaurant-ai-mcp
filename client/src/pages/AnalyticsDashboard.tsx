@@ -24,7 +24,7 @@ export default function AnalyticsDashboard() {
   const [dateRange, setDateRange] = useState<DateRangeValue>({ preset: '30d', ...init30d });
   const [includeExport, setIncludeExport] = useState(false);
 
-  const { data, isLoading, isError, error, refetch } = useAnalytics({
+  const { data, isLoading, isError, refetch } = useAnalytics({
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
     includeExport,
