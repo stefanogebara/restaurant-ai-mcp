@@ -161,7 +161,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
               className="flex items-center gap-2 px-3 py-1.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm rounded-xl transition"
             >
               <ThiingsIcon name="edit" pxSize={16} />
-              Edit Notes
+              {t('reservationDetails.editNotes')}
             </button>
           </div>
 
@@ -171,12 +171,12 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
               <div className="flex items-start gap-3">
                 <ThiingsIcon name="users" pxSize={20} className="mt-0.5" />
                 <div>
-                  <div className="text-xs text-muted-stone">Customer Type</div>
+                  <div className="text-xs text-muted-stone">{t('reservationDetails.customerType')}</div>
                   <div className="text-deep-charcoal font-medium">{reservation.customer_type}</div>
                   {reservation.first_time_visitor && (
                     <div className="flex items-center gap-1 text-xs text-amber-600 mt-1">
                       <ThiingsIcon name="star" pxSize={12} />
-                      First Time Visitor
+                      {t('reservationDetails.firstTimeVisitor')}
                     </div>
                   )}
                 </div>
@@ -188,7 +188,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
               <div className="flex items-start gap-3">
                 <ThiingsIcon name="utensils" pxSize={20} className="mt-0.5" />
                 <div>
-                  <div className="text-xs text-muted-stone">Dietary Restrictions</div>
+                  <div className="text-xs text-muted-stone">{t('reservationDetails.dietaryRestrictions')}</div>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {reservation.dietary_restrictions.map((restriction) => (
                       <span
@@ -208,7 +208,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
               <div className="flex items-start gap-3">
                 <ThiingsIcon name="languages" pxSize={20} className="mt-0.5" />
                 <div>
-                  <div className="text-xs text-muted-stone">Language</div>
+                  <div className="text-xs text-muted-stone">{t('reservationDetails.language')}</div>
                   <div className="text-deep-charcoal font-medium">{reservation.language_preference}</div>
                 </div>
               </div>
@@ -219,7 +219,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
               <div className="flex items-start gap-3">
                 <ThiingsIcon name="map-pin" pxSize={20} className="mt-0.5" />
                 <div>
-                  <div className="text-xs text-muted-stone">Seating Preference</div>
+                  <div className="text-xs text-muted-stone">{t('reservationDetails.seatingPreference')}</div>
                   <div className="text-deep-charcoal font-medium">{reservation.seating_preference}</div>
                 </div>
               </div>
@@ -230,7 +230,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
               <div className="flex items-start gap-3">
                 <ThiingsIcon name="calendar" pxSize={20} className="mt-0.5" />
                 <div>
-                  <div className="text-xs text-muted-stone">Special Occasion</div>
+                  <div className="text-xs text-muted-stone">{t('reservationDetails.specialOccasion')}</div>
                   <div className="text-deep-charcoal font-medium">{reservation.special_occasion}</div>
                 </div>
               </div>
@@ -241,7 +241,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
               <div className="flex items-start gap-3">
                 <ThiingsIcon name="accessibility" pxSize={20} className="mt-0.5" />
                 <div>
-                  <div className="text-xs text-muted-stone">Accessibility</div>
+                  <div className="text-xs text-muted-stone">{t('reservationDetails.accessibility')}</div>
                   <div className="text-deep-charcoal font-medium">{reservation.accessibility_needs}</div>
                 </div>
               </div>
@@ -254,7 +254,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
               <div className="flex items-start gap-3">
                 <ThiingsIcon name="file-text" pxSize={20} className="mt-0.5" />
                 <div className="flex-1">
-                  <div className="text-xs text-muted-stone mb-1">Internal Notes (Staff Only)</div>
+                  <div className="text-xs text-muted-stone mb-1">{t('reservationDetails.internalNotes')}</div>
                   <div className="text-stone-gray text-sm">{reservation.internal_notes}</div>
                 </div>
               </div>
@@ -272,8 +272,8 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
               <div className="w-10 h-10 mx-auto mb-2 bg-soft-gray rounded-xl flex items-center justify-center">
                 <ThiingsIcon name="file-text" pxSize={18} />
               </div>
-              <p className="text-sm text-muted-stone">No additional notes yet.</p>
-              <p className="text-xs text-muted-stone mt-1">Click "Edit Notes" to add customer information.</p>
+              <p className="text-sm text-muted-stone">{t('reservationDetails.noNotes')}</p>
+              <p className="text-xs text-muted-stone mt-1">{t('reservationDetails.noNotesHint')}</p>
             </div>
           )}
         </div>
@@ -284,7 +284,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
             onClick={onClose}
             className="flex-1 px-4 py-3 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors font-medium"
           >
-            Close
+            {t('reservationDetails.close')}
           </button>
         </div>
       </div>
