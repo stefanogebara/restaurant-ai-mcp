@@ -65,16 +65,16 @@ export default function WeeklyReport() {
             <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-5">
               <ThiingsIcon name="file-text" pxSize={32} className="text-amber-600" />
             </div>
-            <h3 className="text-xl font-bold text-deep-charcoal mb-2">Weekly Reports on Growth & Scale</h3>
+            <h3 className="text-xl font-bold text-deep-charcoal mb-2">{t('analytics.weeklyReportsUpgradeTitle')}</h3>
             <p className="text-sm text-stone-gray mb-6 leading-relaxed">
-              Upgrade to unlock weekly performance reports with guest demographics, busiest times, and preference breakdowns.
+              {t('analytics.weeklyReportsUpgradeDesc')}
             </p>
             <a
               href="/subscription/manage"
               className="inline-flex items-center gap-2 px-6 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors text-sm"
             >
               <ThiingsIcon name="lightning" size="xs" />
-              Upgrade Plan
+              {t('analytics.upgradePlan')}
             </a>
           </div>
         </div>
@@ -133,8 +133,8 @@ export default function WeeklyReport() {
             <div className="w-16 h-16 mx-auto mb-4 bg-soft-gray rounded-2xl flex items-center justify-center">
               <ThiingsIcon name="bar-chart" pxSize={28} />
             </div>
-            <p className="font-semibold text-deep-charcoal">No report data available</p>
-            <p className="text-sm text-stone-gray mt-1">Select a date range to generate a report</p>
+            <p className="font-semibold text-deep-charcoal">{t('analytics.noReportData')}</p>
+            <p className="text-sm text-stone-gray mt-1">{t('analytics.selectDateRange')}</p>
           </div>
         </div>
       </DashboardLayout>

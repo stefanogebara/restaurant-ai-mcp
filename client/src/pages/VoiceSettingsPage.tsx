@@ -214,14 +214,14 @@ export default function VoiceSettingsPage() {
               <ThiingsIcon name="volume" pxSize={48} className="mx-auto mb-4" />
               <h2 className="text-lg font-bold text-deep-charcoal mb-2">{t('settings.noAgentConfigured')}</h2>
               <p className="text-sm text-stone-gray mb-6">
-                Complete the onboarding process to set up your AI voice agent, then return here to customize voice settings.
+                {t('settings.noAgentDesc')}
               </p>
               <a
                 href="/onboarding"
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors"
               >
                 <ThiingsIcon name="lightning" size="xs" />
-                Complete Setup
+                {t('settings.completeSetup')}
               </a>
             </div>
           </div>

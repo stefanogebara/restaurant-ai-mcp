@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useRevenueOpportunities } from '../../hooks/usePredictiveAnalytics';
 import { DEFAULT_CURRENCY } from '../../utils/currency';
 
 export default function RevenueOpportunities() {
+  const { t } = useTranslation();
   const { data, isLoading } = useRevenueOpportunities();
   const opportunities = data?.opportunities ?? [];
   const summary = data?.summary ?? null;
@@ -41,7 +43,7 @@ export default function RevenueOpportunities() {
       <div className="bg-white border border-border-gray/50 rounded-2xl p-8 shadow-sm">
         <div role="status" className="flex items-center justify-center">
           <div aria-hidden="true" className="w-8 h-8 border-4 border-burgundy border-t-transparent rounded-full animate-spin"></div>
-          <span className="ml-3 text-warm-stone">Analyzing revenue opportunities...</span>
+          <span className="ml-3 text-warm-stone">{t('analytics.analyzingOpportunities')}</span>
         </div>
       </div>
     );
@@ -51,9 +53,9 @@ export default function RevenueOpportunities() {
     <div className="bg-white border border-border-gray/50 rounded-2xl overflow-hidden shadow-sm">
       {/* Header */}
       <div className="p-6 border-b border-border-gray">
-        <h2 className="text-lg font-semibold text-deep-charcoal tracking-tight mb-1">Revenue Opportunities</h2>
+        <h2 className="text-lg font-semibold text-deep-charcoal tracking-tight mb-1">{t('analytics.revenueOpportunities')}</h2>
         <p className="text-sm text-warm-stone">
-          Data-driven insights to maximize revenue and improve operational efficiency
+          {t('analytics.revenueOpportunitiesDesc')}
         </p>
       </div>
 
@@ -62,19 +64,19 @@ export default function RevenueOpportunities() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-soft-gray/30 border-b border-border-gray">
           <div className="text-center">
             <div className="text-3xl font-bold text-green-600">{formatCurrency(summary.total_potential_revenue)}</div>
-            <div className="text-xs text-warm-stone mt-1">Total Potential</div>
+            <div className="text-xs text-warm-stone mt-1">{t('analytics.totalPotential')}</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-burgundy">{formatCurrency(summary.estimated_monthly_impact)}</div>
-            <div className="text-xs text-warm-stone mt-1">Monthly Impact</div>
+            <div className="text-xs text-warm-stone mt-1">{t('analytics.monthlyImpact')}</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-deep-charcoal">{summary.quick_wins}</div>
-            <div className="text-xs text-warm-stone mt-1">Quick Wins</div>
+            <div className="text-xs text-warm-stone mt-1">{t('analytics.quickWins')}</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-red-600">{summary.high_priority}</div>
-            <div className="text-xs text-warm-stone mt-1">High Priority</div>
+            <div className="text-xs text-warm-stone mt-1">{t('analytics.highPriority')}</div>
           </div>
         </div>
       )}
@@ -109,15 +111,15 @@ export default function RevenueOpportunities() {
                 {/* Metrics */}
                 <div className="grid grid-cols-2 gap-4 mt-4">
                   <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3">
-                    <div className="text-xs text-green-600 font-medium mb-1">Potential Gain</div>
+                    <div className="text-xs text-green-600 font-medium mb-1">{t('analytics.potentialGain')}</div>
                     <div className="text-2xl font-bold text-green-700">{formatCurrency(opp.potential_gain)}</div>
-                    <div className="text-xs text-green-600 mt-1">{opp.recovery_rate} recovery rate</div>
+                    <div className="text-xs text-green-600 mt-1">{t('analytics.recoveryRate', { rate: opp.recovery_rate })}</div>
                   </div>
                   <div className="bg-soft-gray/50 border border-border-gray rounded-xl p-3">
-                    <div className="text-xs text-warm-stone font-medium mb-1">Timeline</div>
+                    <div className="text-xs text-warm-stone font-medium mb-1">{t('analytics.timeline')}</div>
                     <div className="text-lg font-bold text-deep-charcoal">{opp.estimated_timeline}</div>
                     <div className={`text-xs px-2 py-1 rounded-full inline-block mt-1 ${getDifficultyBadge(opp.implementation_difficulty)}`}>
-                      {opp.implementation_difficulty} difficulty
+                      {t('analytics.difficulty', { level: opp.implementation_difficulty })}
                     </div>
                   </div>
                 </div>
@@ -128,7 +130,7 @@ export default function RevenueOpportunities() {
                 <div className="p-5 bg-soft-gray/30">
                   <div className="flex items-center gap-2 mb-3">
                     <ThiingsIcon name="check-circle" pxSize={20} className="text-burgundy" />
-                    <h4 className="font-semibold text-deep-charcoal">Action Steps:</h4>
+                    <h4 className="font-semibold text-deep-charcoal">{t('analytics.actionSteps')}</h4>
                   </div>
                   <div className="space-y-2">
                     {opp.actions.map((action, idx) => (
@@ -142,14 +144,14 @@ export default function RevenueOpportunities() {
                   </div>
                   <div className="mt-4 pt-4 border-t border-border-gray flex justify-between items-center">
                     <div className="text-xs text-warm-stone">
-                      <span className="font-semibold">ROI Potential:</span> High
+                      <span className="font-semibold">{t('analytics.roiPotential')}</span> High
                     </div>
                     <button
                       type="button"
                       onClick={(e) => e.stopPropagation()}
                       className="px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-medium rounded-xl transition-all"
                     >
-                      Start Implementation
+                      {t('analytics.startImplementation')}
                     </button>
                   </div>
                 </div>
@@ -164,8 +166,7 @@ export default function RevenueOpportunities() {
         <div className="flex items-center gap-2 text-xs text-warm-stone">
           <ThiingsIcon name="lightbulb" pxSize={16} />
           <span>
-            Opportunities are ranked by potential revenue impact and implementation feasibility.
-            Click on any opportunity card to see detailed action steps.
+            {t('analytics.opportunitiesFooter')}
           </span>
         </div>
       </div>

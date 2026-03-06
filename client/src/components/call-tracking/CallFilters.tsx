@@ -1,11 +1,5 @@
+import { useTranslation } from 'react-i18next';
 import type { CallFilter } from './callTrackingTypes';
-
-const PERIOD_OPTIONS = [
-  { value: '1d',  label: '24h' },
-  { value: '7d',  label: '7 days' },
-  { value: '30d', label: '30 days' },
-  { value: '90d', label: '90 days' },
-] as const;
 
 interface Props {
   filter: CallFilter;
@@ -13,12 +7,21 @@ interface Props {
 }
 
 export default function CallFilters({ filter, onChange }: Props) {
+  const { t } = useTranslation();
+
+  const PERIOD_OPTIONS = [
+    { value: '1d',  label: t('callTracking.twentyFourHours') },
+    { value: '7d',  label: t('callTracking.sevenDays') },
+    { value: '30d', label: t('callTracking.thirtyDays') },
+    { value: '90d', label: t('callTracking.ninetyDays') },
+  ] as const;
+
   return (
     <div className="bg-white rounded-2xl border border-border-gray overflow-hidden">
       <div className="flex items-center gap-6 px-6 py-4">
         {/* Period */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-muted-stone">Period</span>
+          <span className="text-xs font-medium text-muted-stone">{t('callTracking.period')}</span>
           <div className="flex gap-0">
             {PERIOD_OPTIONS.map((opt) => (
               <button
@@ -39,31 +42,31 @@ export default function CallFilters({ filter, onChange }: Props) {
 
         {/* Outcome */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-muted-stone">Outcome</span>
+          <span className="text-xs font-medium text-muted-stone">{t('callTracking.outcome')}</span>
           <select
-            aria-label="Filter by outcome"
+            aria-label={t('callTracking.outcome')}
             value={filter.outcome}
             onChange={(e) => onChange({ ...filter, outcome: e.target.value })}
             className="text-xs font-medium px-3 py-1.5 bg-soft-gray border-0 rounded-xl text-deep-charcoal cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy/20"
           >
-            <option value="all">All</option>
-            <option value="reservation_created">Booked</option>
-            <option value="information_only">Info</option>
-            <option value="error">Errors</option>
-            <option value="abandoned">Abandoned</option>
+            <option value="all">{t('callTracking.outcomeAll')}</option>
+            <option value="reservation_created">{t('callTracking.outcomeBooked')}</option>
+            <option value="information_only">{t('callTracking.outcomeInfo')}</option>
+            <option value="error">{t('callTracking.outcomeErrors')}</option>
+            <option value="abandoned">{t('callTracking.outcomeAbandoned')}</option>
           </select>
         </div>
 
         {/* Language */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-muted-stone">Language</span>
+          <span className="text-xs font-medium text-muted-stone">{t('callTracking.language')}</span>
           <select
-            aria-label="Filter by language"
+            aria-label={t('callTracking.language')}
             value={filter.language}
             onChange={(e) => onChange({ ...filter, language: e.target.value })}
             className="text-xs font-medium px-3 py-1.5 bg-soft-gray border-0 rounded-xl text-deep-charcoal cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy/20"
           >
-            <option value="all">All</option>
+            <option value="all">{t('callTracking.outcomeAll')}</option>
             <option value="en">EN</option>
             <option value="es">ES</option>
             <option value="pt">PT</option>

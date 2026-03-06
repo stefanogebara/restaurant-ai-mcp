@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import type { Formatter as LegendFormatter, LegendPayload } from 'recharts/types/component/DefaultLegendContent';
 import type { PieLabelRenderProps } from 'recharts';
@@ -8,6 +9,7 @@ interface StatusBreakdownPieProps {
 }
 
 export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreakdownPieProps) {
+  const { t } = useTranslation();
   // Transform object data into array for Recharts
   const chartData = Object.entries(reservationsByStatus).map(([status, count]) => ({
     name: status.charAt(0).toUpperCase() + status.slice(1), // Capitalize
@@ -39,10 +41,10 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
         <div className="bg-white border border-border-gray/50 rounded-2xl p-3 shadow-lg">
           <p className="text-sm font-semibold text-deep-charcoal mb-1">{payload[0].name}</p>
           <p className="text-sm" style={{ color: payload[0].payload.fill }}>
-            Count: <span className="font-bold">{payload[0].value}</span>
+            {t('analytics.count')}: <span className="font-bold">{payload[0].value}</span>
           </p>
           <p className="text-xs text-warm-stone">
-            {percent}% of total reservations
+            {percent}% {t('analytics.ofTotalReservations')}
           </p>
         </div>
       );
@@ -53,7 +55,7 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
   return (
     <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
       <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
-        <span className="text-[15px] font-semibold tracking-tight">Status Breakdown</span>
+        <span className="text-[15px] font-semibold tracking-tight">{t('analytics.statusBreakdown')}</span>
       </div>
       <div role="img" aria-label="Pie chart showing reservation status breakdown" className="p-6">
 

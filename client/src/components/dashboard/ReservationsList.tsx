@@ -11,7 +11,7 @@ interface ReservationsListProps {
   onCheckIn: (reservation: UpcomingReservation) => void;
   onIntervention: (reservation: UpcomingReservation) => void;
   onDepositAction?: () => void;
-  language?: 'en' | 'es';
+  language?: 'en' | 'es' | 'pt-BR';
   isLoading?: boolean;
 }
 
@@ -45,6 +45,21 @@ const translations = {
     takeAction: 'Tomar Acción',
     actionTaken: 'Acción tomada',
     people: 'personas',
+  },
+  'pt-BR': {
+    upcoming: 'Próximas Reservas',
+    tomorrow: 'Amanhã',
+    today: 'Hoje',
+    week: 'Semana',
+    allClear: 'Tudo em Dia',
+    noUpcoming: 'Sem reservas futuras para hoje',
+    noTomorrow: 'Sem reservas amanhã',
+    aiHint: 'Reservas do assistente de IA ou adicionadas manualmente aparecerão aqui',
+    checkIn: 'Check In',
+    seated: 'Sentado',
+    takeAction: 'Tomar Ação',
+    actionTaken: 'Ação realizada',
+    people: 'pessoas',
   },
 };
 

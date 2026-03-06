@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 interface TableUtilizationHeatmapProps {
   tableUtilization: Array<{
     table_number: number;
@@ -9,6 +11,7 @@ interface TableUtilizationHeatmapProps {
 }
 
 export default function TableUtilizationHeatmap({ tableUtilization }: TableUtilizationHeatmapProps) {
+  const { t } = useTranslation();
   // Get utilization as number for color calculations
   const getUtilizationValue = (percentage: string | number): number => {
     if (typeof percentage === 'number') return percentage;
@@ -46,8 +49,8 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
   return (
     <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
       <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
-        <span className="text-[15px] font-semibold tracking-tight">Booking Heatmap</span>
-        <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">Peak Hours</span>
+        <span className="text-[15px] font-semibold tracking-tight">{t('analytics.bookingHeatmap')}</span>
+        <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">{t('analytics.peakHoursLabel')}</span>
       </div>
       <div className="p-6">
 
@@ -70,7 +73,7 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
               {table.utilization_rate}%
             </div>
             <div className="text-[10px] opacity-80">
-              {table.times_used} services
+              {table.times_used} {t('analytics.services')}
             </div>
           </div>
         ))}
@@ -80,19 +83,19 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
       <div className="flex items-center justify-center gap-4 mb-4 text-xs flex-wrap">
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded bg-burgundy/80 border-2 border-burgundy"></div>
-          <span className="text-warm-stone">High (75%+)</span>
+          <span className="text-warm-stone">{t('analytics.highUtilization')}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded bg-amber-600/60 border-2 border-amber-600"></div>
-          <span className="text-warm-stone">Medium-High (50-74%)</span>
+          <span className="text-warm-stone">{t('analytics.mediumHighUtilization')}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded bg-warm-stone/40 border-2 border-warm-stone"></div>
-          <span className="text-warm-stone">Medium-Low (25-49%)</span>
+          <span className="text-warm-stone">{t('analytics.mediumLowUtilization')}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded bg-soft-gray border-2 border-muted-stone"></div>
-          <span className="text-warm-stone">Low (&lt;25%)</span>
+          <span className="text-warm-stone">{t('analytics.lowUtilization')}</span>
         </div>
       </div>
 
@@ -100,14 +103,14 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
       <div className="space-y-2">
         <div className="p-3 bg-burgundy/10 border border-burgundy/20 rounded-xl">
           <p className="text-xs text-warm-stone">
-            <span className="font-semibold text-deep-charcoal">Most Used:</span>{' '}
-            Table {mostUsed.table_number} ({mostUsed.utilization_rate}%) - {mostUsed.times_used} services
+            <span className="font-semibold text-deep-charcoal">{t('analytics.mostUsed')}:</span>{' '}
+            Table {mostUsed.table_number} ({mostUsed.utilization_rate}%) - {mostUsed.times_used} {t('analytics.services')}
           </p>
         </div>
         <div className="p-3 bg-soft-gray/50 border border-border-gray/50 rounded-xl">
           <p className="text-xs text-warm-stone">
-            <span className="font-semibold text-deep-charcoal">Least Used:</span>{' '}
-            Table {leastUsed.table_number} ({leastUsed.utilization_rate}%) - {leastUsed.times_used} services
+            <span className="font-semibold text-deep-charcoal">{t('analytics.leastUsed')}:</span>{' '}
+            Table {leastUsed.table_number} ({leastUsed.utilization_rate}%) - {leastUsed.times_used} {t('analytics.services')}
           </p>
         </div>
       </div>

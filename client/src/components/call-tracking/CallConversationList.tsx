@@ -1,11 +1,6 @@
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { type Conversation, type CallFilter, getOutcomeLabel, getOutcomePillColor } from './callTrackingTypes';
-
-const OUTCOME_TABS = [
-  { value: 'all',                  label: 'All' },
-  { value: 'reservation_created',  label: 'Booked' },
-  { value: 'error',                label: 'Missed' },
-] as const;
 
 function callIconStyle(outcome?: string): string {
   switch (outcome) {
@@ -30,11 +25,19 @@ export default function CallConversationList({
   onOutcomeChange,
   onConversationClick,
 }: Props) {
+  const { t } = useTranslation();
+
+  const OUTCOME_TABS = [
+    { value: 'all',                  label: t('callTracking.outcomeAll') },
+    { value: 'reservation_created',  label: t('callTracking.outcomeBooked') },
+    { value: 'error',                label: t('callTracking.outcomeMissed') },
+  ] as const;
+
   return (
     <div className="bg-white rounded-2xl border border-border-gray overflow-hidden">
       {/* Header + tabs */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
-        <span className="text-[15px] font-semibold tracking-tight">Recent Calls</span>
+        <span className="text-[15px] font-semibold tracking-tight">{t('callTracking.recentCalls')}</span>
         <div className="flex gap-0">
           {OUTCOME_TABS.map((tab) => (
             <button
@@ -58,9 +61,9 @@ export default function CallConversationList({
           <div className="w-14 h-14 mx-auto mb-4 bg-soft-gray rounded-2xl flex items-center justify-center">
             <ThiingsIcon name="phone" pxSize={24} />
           </div>
-          <p className="text-sm font-semibold text-deep-charcoal mb-1">No calls recorded yet</p>
+          <p className="text-sm font-semibold text-deep-charcoal mb-1">{t('callTracking.noCallsRecorded')}</p>
           <p className="text-xs text-muted-stone">
-            Once your AI agent starts taking calls, conversations will appear here.
+            {t('callTracking.noCallsRecordedHint')}
           </p>
         </div>
       ) : (
@@ -86,11 +89,11 @@ export default function CallConversationList({
 
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-deep-charcoal tracking-[-0.2px]">
-                    {conv.customer_name || 'Unknown Caller'}
+                    {conv.customer_name || t('callTracking.unknownCaller')}
                   </div>
                   <div className="text-xs text-muted-stone mt-0.5 truncate">
-                    {conv.caller_phone || 'No number'}
-                    {conv.party_size ? ` · Party of ${conv.party_size}` : ''}
+                    {conv.caller_phone || t('callTracking.noNumber')}
+                    {conv.party_size ? ` · ${t('callTracking.partyOf', { size: conv.party_size })}` : ''}
                     {conv.language ? ` · ${conv.language.toUpperCase()}` : ''}
                   </div>
                 </div>

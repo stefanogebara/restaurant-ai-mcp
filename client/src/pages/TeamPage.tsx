@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { usePermission } from '../hooks/usePermission';
 import {
   useTeamMembers,
@@ -15,14 +16,15 @@ import {
 
 type Role = 'manager' | 'host' | 'staff';
 
-const ROLE_OPTIONS: { value: Role; label: string }[] = [
-  { value: 'manager', label: 'Manager' },
-  { value: 'host', label: 'Host' },
-  { value: 'staff', label: 'Staff' },
-];
-
 export default function TeamPage() {
+  const { t } = useTranslation();
   const { can } = usePermission();
+
+  const ROLE_OPTIONS: { value: Role; label: string }[] = [
+    { value: 'manager', label: t('team.roleManager') },
+    { value: 'host', label: t('team.roleHost') },
+    { value: 'staff', label: t('team.roleStaff') },
+  ];
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<Role>('host');
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
@@ -38,7 +40,7 @@ export default function TeamPage() {
     setFeedback(null);
     invite.mutate({ email: inviteEmail, role: inviteRole }, {
       onSuccess: () => {
-        setFeedback({ type: 'success', msg: `Invitation sent to ${inviteEmail}` });
+        setFeedback({ type: 'success', msg: t('team.invitationSent', { email: inviteEmail }) });
         setInviteEmail('');
       },
       onError: (err) => setFeedback({ type: 'error', msg: err.message }),
@@ -73,17 +75,17 @@ export default function TeamPage() {
   return (
     <div className="max-w-2xl mx-auto py-8 px-4 space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-deep-charcoal">Team</h1>
-        <p className="text-sm text-stone-gray mt-1">Manage who has access to your restaurant dashboard.</p>
+        <h1 className="text-2xl font-bold text-deep-charcoal">{t('team.title')}</h1>
+        <p className="text-sm text-stone-gray mt-1">{t('team.subtitle')}</p>
       </div>
 
       {can('manageTeam') && (
         <form onSubmit={handleInvite} className="bg-white border border-border-gray rounded-2xl p-6 space-y-4">
-          <h2 className="text-sm font-semibold text-deep-charcoal">Invite team member</h2>
+          <h2 className="text-sm font-semibold text-deep-charcoal">{t('team.inviteTitle')}</h2>
           <div className="flex gap-3">
             <input
               type="email" required
-              placeholder="Email address"
+              placeholder={t('team.emailPlaceholder')}
               value={inviteEmail}
               onChange={e => setInviteEmail(e.target.value)}
               className="flex-1 border border-border-gray rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30"
@@ -99,7 +101,7 @@ export default function TeamPage() {
               type="submit" disabled={invite.isPending}
               className="px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl disabled:opacity-50 transition-colors"
             >
-              {invite.isPending ? 'Sending…' : 'Invite'}
+              {invite.isPending ? t('team.sending') : t('team.invite')}
             </button>
           </div>
           {feedback && (
@@ -112,14 +114,14 @@ export default function TeamPage() {
 
       <div className="bg-white border border-border-gray rounded-2xl divide-y divide-border-gray">
         {isLoading ? (
-          <div className="p-6 text-center text-sm text-stone-gray">Loading…</div>
+          <div className="p-6 text-center text-sm text-stone-gray">{t('common.loading')}</div>
         ) : members.length === 0 ? (
-          <div className="p-6 text-center text-sm text-stone-gray">No team members yet.</div>
+          <div className="p-6 text-center text-sm text-stone-gray">{t('team.noMembers')}</div>
         ) : members.map(member => (
           <div key={member.id} className="flex items-center justify-between px-6 py-4">
             <div>
               <p className="text-sm font-medium text-deep-charcoal">{member.email}</p>
-              {member.status === 'pending' && <p className="text-xs text-muted-stone">Invitation pending</p>}
+              {member.status === 'pending' && <p className="text-xs text-muted-stone">{t('team.invitationPending')}</p>}
             </div>
             <div className="flex items-center gap-3">
               <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${roleBadge(member.role)}`}>
@@ -138,7 +140,7 @@ export default function TeamPage() {
                     onClick={() => handleRemove(member.id)}
                     className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
                   >
-                    Remove
+                    {t('team.remove')}
                   </button>
                 </>
               )}
@@ -151,9 +153,9 @@ export default function TeamPage() {
       {confirmRemoveId && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-sm w-full">
-            <h3 className="text-lg font-bold text-deep-charcoal mb-2">Remove Team Member</h3>
+            <h3 className="text-lg font-bold text-deep-charcoal mb-2">{t('team.removeTitle')}</h3>
             <p className="text-sm text-stone-gray mb-6">
-              Are you sure you want to remove this team member? They will lose access to the dashboard.
+              {t('team.removeConfirm')}
             </p>
             <div className="flex gap-3">
               <button
@@ -161,14 +163,14 @@ export default function TeamPage() {
                 onClick={() => setConfirmRemoveId(null)}
                 className="flex-1 px-4 py-2.5 border border-border-gray text-stone-gray rounded-xl hover:bg-soft-gray transition-colors font-medium"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
                 onClick={confirmRemove}
                 className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition-colors"
               >
-                Remove
+                {t('team.remove')}
               </button>
             </div>
           </div>

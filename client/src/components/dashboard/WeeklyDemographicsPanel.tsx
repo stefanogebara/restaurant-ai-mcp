@@ -9,7 +9,7 @@ interface WeeklyDemographicsPanelProps {
 
 export default function WeeklyDemographicsPanel({ demographics }: WeeklyDemographicsPanelProps) {
   const { t } = useTranslation();
-  const demoRows = buildDemoRows(demographics);
+  const demoRows = buildDemoRows(demographics, t);
 
   return (
     <div className="bg-white rounded-2xl border border-border-gray overflow-hidden">

@@ -122,7 +122,7 @@ export default function WhatsAppSettingsPage() {
           {/* Phone Number */}
           <div>
             <label htmlFor="wa-phone" className="block text-sm font-medium text-deep-charcoal mb-1">
-              Owner WhatsApp Number
+              {t('settings.ownerWhatsAppNumber')}
             </label>
             <input
               id="wa-phone"
@@ -132,7 +132,7 @@ export default function WhatsAppSettingsPage() {
               onChange={(e) => setPendingPhone(e.target.value)}
               className="w-full px-3 py-2 border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-whatsapp/40 focus:border-whatsapp"
             />
-            <p className="text-xs text-warm-stone mt-1">Used for wa.me link on your booking page</p>
+            <p className="text-xs text-warm-stone mt-1">{t('settings.ownerWhatsAppHint')}</p>
           </div>
 
           {/* Save Button */}
@@ -145,7 +145,7 @@ export default function WhatsAppSettingsPage() {
                 : 'bg-border-gray text-muted-stone cursor-not-allowed'
             }`}
           >
-            {saveMutation.isPending ? 'Saving...' : 'Save Changes'}
+            {saveMutation.isPending ? t('common.loading') : t('common.save')}
           </button>
           {saveMutation.isError && (
             <p className="text-sm text-red-600">{(saveMutation.error as Error).message}</p>
@@ -155,7 +155,7 @@ export default function WhatsAppSettingsPage() {
         {/* wa.me Link Card */}
         {status?.wa_me_link && (
           <div className="bg-white border border-border-gray rounded-2xl p-6 shadow-sm">
-            <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider mb-3">WhatsApp Link</h2>
+            <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider mb-3">{t('settings.whatsAppLink')}</h2>
             <div className="flex items-center gap-3">
               <a
                 href={status.wa_me_link}
@@ -169,18 +169,18 @@ export default function WhatsAppSettingsPage() {
                 onClick={() => navigator.clipboard.writeText(status.wa_me_link || '')}
                 className="flex-shrink-0 px-3 py-1.5 text-xs font-medium bg-soft-gray hover:bg-border-gray rounded-xl transition-colors text-stone-gray"
               >
-                Copy
+                {t('settings.copyLink')}
               </button>
             </div>
             <p className="text-xs text-warm-stone mt-2">
-              Share this link with customers so they can message your restaurant directly.
+              {t('settings.shareLinkHint')}
             </p>
           </div>
         )}
 
         {/* Stats Card */}
         <div className="bg-white border border-border-gray rounded-2xl p-6 shadow-sm">
-          <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider mb-4">Statistics</h2>
+          <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider mb-4">{t('settings.statistics')}</h2>
           {statsLoading ? (
             <div role="status" aria-label="Loading statistics" className="animate-pulse flex gap-6">
               {[1, 2, 3].map((i) => (
@@ -191,15 +191,15 @@ export default function WhatsAppSettingsPage() {
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-soft-gray rounded-xl p-4 text-center">
                 <p className="text-2xl font-bold text-deep-charcoal">{stats?.active_sessions ?? 0}</p>
-                <p className="text-xs text-warm-stone mt-1">Active Sessions</p>
+                <p className="text-xs text-warm-stone mt-1">{t('settings.activeSessions')}</p>
               </div>
               <div className="bg-soft-gray rounded-xl p-4 text-center">
                 <p className="text-2xl font-bold text-deep-charcoal">{stats?.total_sessions ?? 0}</p>
-                <p className="text-xs text-warm-stone mt-1">Total Sessions</p>
+                <p className="text-xs text-warm-stone mt-1">{t('settings.totalSessions')}</p>
               </div>
               <div className="bg-soft-gray rounded-xl p-4 text-center">
                 <p className="text-2xl font-bold text-deep-charcoal">{stats?.messages_this_month ?? 0}</p>
-                <p className="text-xs text-warm-stone mt-1">Messages (Month)</p>
+                <p className="text-xs text-warm-stone mt-1">{t('settings.messagesMonth')}</p>
               </div>
             </div>
           )}
@@ -207,7 +207,7 @@ export default function WhatsAppSettingsPage() {
 
         {/* Test Message Card */}
         <div className="bg-white border border-border-gray rounded-2xl p-6 shadow-sm">
-          <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider mb-3">Send Test Message</h2>
+          <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider mb-3">{t('settings.sendTestMessage')}</h2>
           <div className="flex gap-3">
             <input
               type="tel"
@@ -226,7 +226,7 @@ export default function WhatsAppSettingsPage() {
                   : 'bg-border-gray text-muted-stone cursor-not-allowed'
               }`}
             >
-              {testMutation.isPending ? 'Sending...' : 'Send Test'}
+              {testMutation.isPending ? t('settings.sendingTest') : t('settings.sendTest')}
             </button>
           </div>
           {testResult && (

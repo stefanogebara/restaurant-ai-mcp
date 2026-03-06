@@ -1,24 +1,26 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useManagerPreferences, useSaveManagerPreferences } from '../../hooks/useManagerPreferences';
 import type { NotificationPreferences } from '../../hooks/useManagerPreferences';
 import { useToast } from '../../contexts/ToastContext';
 
 type BriefingChannel = 'text' | 'voice_note' | 'phone_call';
 
-const CHANNEL_OPTIONS: { value: BriefingChannel; label: string; description: string }[] = [
-  { value: 'text', label: 'Text Message', description: 'WhatsApp text (default)' },
-  { value: 'voice_note', label: 'Voice Note', description: 'AI-generated audio via WhatsApp' },
-  { value: 'phone_call', label: 'Phone Call', description: 'Automated call reads the briefing aloud' },
-];
-
-const ALERT_OPTIONS: { key: keyof NotificationPreferences; label: string; description: string }[] = [
-  { key: 'alert_low_covers', label: 'Low covers', description: 'Alert at 6pm when tonight is under 50% capacity' },
-  { key: 'alert_high_noshows', label: 'High no-show risk', description: 'Alert at 3pm when 3+ reservations have >70% no-show probability' },
-  { key: 'alert_late_cancellations', label: 'Late cancellations', description: 'Alert every 2h (12–8pm) when 2+ cancellations in the last 2 hours' },
-];
-
 export default function ManagerNotificationsPanel() {
+  const { t } = useTranslation();
   const toast = useToast();
+
+  const CHANNEL_OPTIONS: { value: BriefingChannel; label: string; description: string }[] = [
+    { value: 'text', label: t('settings.channelText'), description: t('settings.channelTextDesc') },
+    { value: 'voice_note', label: t('settings.channelVoiceNote'), description: t('settings.channelVoiceNoteDesc') },
+    { value: 'phone_call', label: t('settings.channelPhoneCall'), description: t('settings.channelPhoneCallDesc') },
+  ];
+
+  const ALERT_OPTIONS: { key: keyof NotificationPreferences; label: string; description: string }[] = [
+    { key: 'alert_low_covers', label: t('settings.alertLowCovers'), description: t('settings.alertLowCoversDesc') },
+    { key: 'alert_high_noshows', label: t('settings.alertHighNoshows'), description: t('settings.alertHighNoshowsDesc') },
+    { key: 'alert_late_cancellations', label: t('settings.alertLateCancellations'), description: t('settings.alertLateCancellationsDesc') },
+  ];
   const { data: prefs, isLoading } = useManagerPreferences();
   const saveMutation = useSaveManagerPreferences();
 
@@ -36,10 +38,10 @@ export default function ManagerNotificationsPanel() {
     if (!isDirty) return;
     saveMutation.mutate(pending, {
       onSuccess: () => {
-        toast.success('Notification preferences saved');
+        toast.success(t('settings.notificationsSaved'));
         setPending({});
       },
-      onError: () => toast.error('Failed to save preferences'),
+      onError: () => toast.error(t('settings.notificationsSaveFailed')),
     });
   };
 
@@ -49,7 +51,7 @@ export default function ManagerNotificationsPanel() {
     <div className="bg-white border border-border-gray rounded-2xl p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">
-          Manager Notifications
+          {t('settings.managerNotifications')}
         </h2>
         <button
           type="button"
@@ -57,13 +59,13 @@ export default function ManagerNotificationsPanel() {
           disabled={!isDirty || saveMutation.isPending}
           className="px-4 py-1.5 bg-burgundy hover:bg-burgundy-dark text-white text-xs font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {saveMutation.isPending ? 'Saving...' : 'Save'}
+          {saveMutation.isPending ? t('common.loading') : t('common.save')}
         </button>
       </div>
 
       {/* Briefing channel */}
       <div>
-        <p className="text-sm font-medium text-deep-charcoal mb-3">Daily briefing delivery</p>
+        <p className="text-sm font-medium text-deep-charcoal mb-3">{t('settings.dailyBriefingDelivery')}</p>
         <div className="space-y-2">
           {CHANNEL_OPTIONS.map(opt => {
             const current = getValue('briefing_channel') ?? 'text';
@@ -90,7 +92,7 @@ export default function ManagerNotificationsPanel() {
 
       {/* Alert toggles */}
       <div>
-        <p className="text-sm font-medium text-deep-charcoal mb-3">Proactive alerts</p>
+        <p className="text-sm font-medium text-deep-charcoal mb-3">{t('settings.proactiveAlerts')}</p>
         <div className="space-y-3">
           {ALERT_OPTIONS.map(({ key, label, description }) => (
             <label key={key} className="flex items-start gap-3 cursor-pointer">

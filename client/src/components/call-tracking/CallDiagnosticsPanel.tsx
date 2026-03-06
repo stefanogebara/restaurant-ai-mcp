@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import Spinner from '../common/Spinner';
 import type { DiagnoseData } from './callTrackingTypes';
@@ -17,12 +18,13 @@ export default function CallDiagnosticsPanel({
   onFixTools,
   onClose,
 }: Props) {
+  const { t } = useTranslation();
   return (
     <div className="bg-white rounded-2xl border border-border-gray overflow-hidden p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <ThiingsIcon name="stethoscope" size="sm" />
-          <h2 className="text-lg font-semibold text-deep-charcoal">Agent Diagnostics</h2>
+          <h2 className="text-lg font-semibold text-deep-charcoal">{t('callTracking.agentDiagnostics')}</h2>
         </div>
         <button
           type="button"
@@ -43,20 +45,20 @@ export default function CallDiagnosticsPanel({
           {/* Agent info grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="bg-soft-gray/30 rounded-xl p-3">
-              <p className="text-xs text-stone-gray mb-1">Agent Name</p>
-              <p className="text-sm font-medium text-deep-charcoal">{diagnoseData.agent_name || 'Unnamed'}</p>
+              <p className="text-xs text-stone-gray mb-1">{t('callTracking.agentName')}</p>
+              <p className="text-sm font-medium text-deep-charcoal">{diagnoseData.agent_name || t('callTracking.unnamed')}</p>
             </div>
             <div className="bg-soft-gray/30 rounded-xl p-3">
-              <p className="text-xs text-stone-gray mb-1">Language</p>
-              <p className="text-sm font-medium text-deep-charcoal uppercase">{diagnoseData.language || 'Not set'}</p>
+              <p className="text-xs text-stone-gray mb-1">{t('callTracking.language')}</p>
+              <p className="text-sm font-medium text-deep-charcoal uppercase">{diagnoseData.language || t('callTracking.notSet')}</p>
             </div>
             <div className="bg-soft-gray/30 rounded-xl p-3">
-              <p className="text-xs text-stone-gray mb-1">Tools (via tool_ids)</p>
+              <p className="text-xs text-stone-gray mb-1">{t('callTracking.toolsViaToolIds')}</p>
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-deep-charcoal">{diagnoseData.tool_ids_count} configured</p>
+                <p className="text-sm font-medium text-deep-charcoal">{t('callTracking.toolsConfiguredCount', { count: diagnoseData.tool_ids_count })}</p>
                 {diagnoseData.tool_ids_count === 0 && (
                   <span className="px-1.5 py-0.5 bg-red-600/10 text-red-600 text-xs rounded-lg font-medium">
-                    Missing
+                    {t('callTracking.missing')}
                   </span>
                 )}
               </div>
@@ -66,7 +68,7 @@ export default function CallDiagnosticsPanel({
           {/* Embedded tool names */}
           {diagnoseData.tools.length > 0 && (
             <div>
-              <p className="text-xs text-stone-gray mb-2">Embedded Tools ({diagnoseData.tool_count})</p>
+              <p className="text-xs text-stone-gray mb-2">{t('callTracking.embeddedTools', { count: diagnoseData.tool_count })}</p>
               <div className="flex flex-wrap gap-2">
                 {diagnoseData.tools.map((tool, idx) => (
                   <span
@@ -83,7 +85,7 @@ export default function CallDiagnosticsPanel({
           {/* Tool IDs */}
           {diagnoseData.tool_ids.length > 0 && (
             <div>
-              <p className="text-xs text-stone-gray mb-2">Tool IDs ({diagnoseData.tool_ids_count})</p>
+              <p className="text-xs text-stone-gray mb-2">{t('callTracking.toolIds', { count: diagnoseData.tool_ids_count })}</p>
               <div className="flex flex-wrap gap-2">
                 {diagnoseData.tool_ids.map((id, idx) => (
                   <span
@@ -101,7 +103,7 @@ export default function CallDiagnosticsPanel({
           {/* First message preview */}
           {diagnoseData.first_message && (
             <div>
-              <p className="text-xs text-stone-gray mb-1">First Message Preview</p>
+              <p className="text-xs text-stone-gray mb-1">{t('callTracking.firstMessagePreview')}</p>
               <div className="bg-soft-gray/30 rounded-xl p-3">
                 <p className="text-sm text-deep-charcoal italic">
                   &quot;{diagnoseData.first_message.length > 200
@@ -118,11 +120,9 @@ export default function CallDiagnosticsPanel({
               <div className="flex items-start gap-3">
                 <ThiingsIcon name="alert-circle" size="sm" className="shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-deep-charcoal">No tools configured</p>
+                  <p className="text-sm font-medium text-deep-charcoal">{t('callTracking.noToolsConfigured')}</p>
                   <p className="text-xs text-stone-gray mt-1">
-                    Your agent has no webhook tools attached. Without tools, the agent cannot check
-                    availability or create reservations. Click "Fix Tools" to auto-create and attach
-                    the required tools.
+                    {t('callTracking.noToolsConfiguredDesc')}
                   </p>
                   <button
                     type="button"
@@ -131,9 +131,9 @@ export default function CallDiagnosticsPanel({
                     className="mt-3 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
                   >
                     {fixToolsLoading ? (
-                      <><Spinner size="sm" />Fixing tools...</>
+                      <><Spinner size="sm" />{t('callTracking.fixingTools')}</>
                     ) : (
-                      <><ThiingsIcon name="wrench" size="xs" />Fix Tools</>
+                      <><ThiingsIcon name="wrench" size="xs" />{t('callTracking.fixTools')}</>
                     )}
                   </button>
                 </div>
@@ -143,7 +143,7 @@ export default function CallDiagnosticsPanel({
         </div>
       ) : (
         <p className="text-sm text-stone-gray text-center py-4">
-          No diagnostic data available. Click "Diagnose Agent" to check your agent configuration.
+          {t('callTracking.noDiagnosticData')}
         </p>
       )}
     </div>

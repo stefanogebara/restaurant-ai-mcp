@@ -38,16 +38,16 @@ export default function AnalyticsDashboard() {
             <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-5">
               <ThiingsIcon name="bar-chart" pxSize={32} className="text-amber-600" />
             </div>
-            <h3 className="text-xl font-bold text-deep-charcoal mb-2">Analytics on Growth & Scale</h3>
+            <h3 className="text-xl font-bold text-deep-charcoal mb-2">{t('analytics.upgradeTitle')}</h3>
             <p className="text-sm text-stone-gray mb-6 leading-relaxed">
-              Upgrade to access reservation trends, peak hour heatmaps, table utilization, and AI-powered no-show predictions.
+              {t('analytics.upgradeDescription')}
             </p>
             <a
               href="/subscription/manage"
               className="inline-flex items-center gap-2 px-6 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors text-sm"
             >
               <ThiingsIcon name="lightning" size="xs" />
-              Upgrade Plan
+              {t('analytics.upgradePlan')}
             </a>
           </div>
         </div>

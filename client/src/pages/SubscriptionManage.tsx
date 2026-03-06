@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { usePermission } from '../hooks/usePermission';
 import { useNavigate } from 'react-router-dom';
@@ -5,18 +6,19 @@ import { SkeletonSubscription } from '../components/common/Skeleton';
 import { useToast } from '../contexts/ToastContext';
 import { useSubscriptionData, useCustomerPortal } from '../hooks/useSubscriptionManage';
 
-const plans = [
-  { name: 'Starter', price: '€29', desc: 'For small restaurants getting started.', features: ['AI Chat & WhatsApp', 'Host dashboard', 'Basic analytics', '50 reservations/mo', 'Email support'] },
-  { name: 'Growth', price: '€99', desc: 'For growing restaurants that want more.', features: ['Everything in Starter', 'AI Voice agent', 'Advanced analytics', '150 reservations/mo', 'SMS notifications'], featured: true },
-  { name: 'Scale', price: '€199', desc: 'For high-volume restaurants.', features: ['Everything in Growth', 'Unlimited reservations', 'Unlimited SMS', 'Priority support', 'Custom integrations'] },
-];
-
 const planTiers = ['starter', 'growth', 'scale'];
 
 export default function SubscriptionManage() {
+  const { t } = useTranslation();
   const { can } = usePermission();
   const navigate = useNavigate();
   const { error } = useToast();
+
+  const plans = [
+    { key: 'starter', name: t('subscription.starterName'), price: t('subscription.starterPrice'), desc: t('subscription.starterDesc'), features: [t('subscription.starterF1'), t('subscription.starterF2'), t('subscription.starterF3'), t('subscription.starterF4'), t('subscription.starterF5')] },
+    { key: 'growth', name: t('subscription.growthName'), price: t('subscription.growthPrice'), desc: t('subscription.growthDesc'), features: [t('subscription.growthF1'), t('subscription.growthF2'), t('subscription.growthF3'), t('subscription.growthF4'), t('subscription.growthF5')], featured: true },
+    { key: 'scale', name: t('subscription.scaleName'), price: t('subscription.scalePrice'), desc: t('subscription.scaleDesc'), features: [t('subscription.scaleF1'), t('subscription.scaleF2'), t('subscription.scaleF3'), t('subscription.scaleF4'), t('subscription.scaleF5')] },
+  ];
 
   const { data: subscription, isLoading } = useSubscriptionData();
   const portal = useCustomerPortal();
@@ -24,14 +26,14 @@ export default function SubscriptionManage() {
   const handleManageSubscription = () => {
     portal.mutate(undefined, {
       onSuccess: ({ url }) => { window.location.href = url; },
-      onError: (err) => error(err.message || 'Failed to open subscription management. Please try again.'),
+      onError: (err) => error(err.message || t('subscription.failedToOpen')),
     });
   };
 
   if (!can('manageSubscription')) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center">
-        <p className="text-stone-gray text-sm">Only the restaurant owner can manage the subscription.</p>
+        <p className="text-stone-gray text-sm">{t('subscription.ownerOnly')}</p>
       </div>
     );
   }
@@ -54,15 +56,15 @@ export default function SubscriptionManage() {
             <div className="w-16 h-16 rounded-full bg-soft-gray flex items-center justify-center mx-auto mb-5" aria-hidden="true">
               <ThiingsIcon name="close" pxSize={28} className="text-muted-stone" />
             </div>
-            <h1 className="font-serif text-2xl font-medium text-deep-charcoal mb-2">No Active Subscription</h1>
+            <h1 className="font-serif text-2xl font-medium text-deep-charcoal mb-2">{t('subscription.noActiveSubscription')}</h1>
             <p className="text-[15px] text-warm-stone font-light mb-8">
-              You don't have an active subscription yet. Choose a plan to get started!
+              {t('subscription.noActiveSubscriptionDesc')}
             </p>
             <button
               onClick={() => navigate('/#pricing')}
               className="px-8 py-3.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors"
             >
-              View Pricing Plans
+              {t('subscription.viewPricingPlans')}
             </button>
           </div>
         </div>
@@ -81,7 +83,7 @@ export default function SubscriptionManage() {
           seatable<span className="text-burgundy">.</span>
         </div>
         <button type="button" onClick={() => navigate('/host-dashboard/simple')} className="text-[13px] text-warm-stone hover:text-stone-gray flex items-center gap-1.5 transition-colors">
-          &larr; Back to Dashboard
+          &larr; {t('subscription.backToDashboard')}
         </button>
       </header>
 
@@ -89,18 +91,18 @@ export default function SubscriptionManage() {
         <div className="max-w-[1100px] mx-auto">
           {/* Header */}
           <div className="mb-10">
-            <h1 className="font-serif text-[32px] font-medium text-deep-charcoal tracking-tight mb-2">Subscription &amp; Billing</h1>
-            <p className="text-[15px] text-warm-stone font-light">Manage your plan, billing info, and usage.</p>
+            <h1 className="font-serif text-[32px] font-medium text-deep-charcoal tracking-tight mb-2">{t('subscription.title')}</h1>
+            <p className="text-[15px] text-warm-stone font-light">{t('subscription.manageSubtitle')}</p>
           </div>
 
           {/* Current Plan Card */}
           <div className="bg-white border border-border-gray rounded-2xl px-8 py-7 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-12">
             <div>
               <div className="flex items-center gap-2.5 mb-1">
-                <span className="text-xl font-bold text-deep-charcoal">{subscription.planName} Plan</span>
-                <span className="text-xs font-semibold tracking-wide uppercase text-burgundy bg-burgundy/[8%] px-3.5 py-1.5 rounded-full">Current</span>
+                <span className="text-xl font-bold text-deep-charcoal">{t('subscription.plan', { name: subscription.planName })}</span>
+                <span className="text-xs font-semibold tracking-wide uppercase text-burgundy bg-burgundy/[8%] px-3.5 py-1.5 rounded-full">{t('subscription.current')}</span>
               </div>
-              <div className="text-sm text-warm-stone">{subscription.planPrice} &middot; Billed monthly</div>
+              <div className="text-sm text-warm-stone">{subscription.planPrice} &middot; {t('subscription.billedMonthly')}</div>
             </div>
             <div className="flex items-center gap-5">
               <div>
@@ -110,15 +112,15 @@ export default function SubscriptionManage() {
                   subscription.status === 'past_due' ? 'bg-red-600/[8%] text-red-600' :
                   'bg-soft-gray text-stone-gray'
                 }`}>
-                  {subscription.status === 'trialing' ? 'Trial' : subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
+                  {subscription.status === 'trialing' ? t('subscription.trial') : subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
                 </span>
                 {subscription.currentPeriodEnd && (
                   <div className="text-[13px] text-warm-stone mt-1.5">
-                    {subscription.cancelAtPeriodEnd ? 'Ends' : 'Next billing'}: {subscription.currentPeriodEnd}
+                    {subscription.cancelAtPeriodEnd ? t('subscription.ends') : t('subscription.nextBilling')}: {subscription.currentPeriodEnd}
                   </div>
                 )}
                 {subscription.status === 'trialing' && subscription.trialEnd && (
-                  <div className="text-[13px] text-warm-stone mt-1.5">Trial ends: {subscription.trialEnd}</div>
+                  <div className="text-[13px] text-warm-stone mt-1.5">{t('subscription.trialEnds')}: {subscription.trialEnd}</div>
                 )}
               </div>
               <button
@@ -127,42 +129,42 @@ export default function SubscriptionManage() {
                 className="px-5 py-2.5 border border-border-gray rounded-xl text-[13px] font-medium text-stone-gray bg-white hover:border-muted-stone transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {portal.isPending ? (
-                  <><div aria-hidden="true" className="w-3.5 h-3.5 border-2 border-stone-gray border-t-transparent rounded-full animate-spin" />Opening...</>
-                ) : 'Manage Billing'}
+                  <><div aria-hidden="true" className="w-3.5 h-3.5 border-2 border-stone-gray border-t-transparent rounded-full animate-spin" />{t('subscription.opening')}</>
+                ) : t('subscription.manageBilling')}
               </button>
             </div>
           </div>
 
           {subscription.cancelAtPeriodEnd && (
             <div className="bg-red-600/[4%] border border-red-600/20 rounded-2xl p-5 mb-12 -mt-8">
-              <p className="text-sm text-red-600 font-medium">Your subscription is set to cancel at the end of the current billing period.</p>
+              <p className="text-sm text-red-600 font-medium">{t('subscription.cancelNotice')}</p>
             </div>
           )}
 
           {/* Plan Comparison */}
           <div className="mb-9">
-            <div className="text-xs font-semibold tracking-[2px] uppercase text-burgundy mb-3">Plans</div>
-            <h2 className="font-serif text-[28px] font-medium tracking-tight text-deep-charcoal mb-2">Choose the right plan</h2>
-            <p className="text-[15px] text-warm-stone font-light">No hidden fees. Cancel anytime.</p>
+            <div className="text-xs font-semibold tracking-[2px] uppercase text-burgundy mb-3">{t('subscription.plans')}</div>
+            <h2 className="font-serif text-[28px] font-medium tracking-tight text-deep-charcoal mb-2">{t('subscription.chooseRightPlan')}</h2>
+            <p className="text-[15px] text-warm-stone font-light">{t('subscription.noHiddenFees')}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-[2px] bg-border-gray rounded-[20px] overflow-hidden">
             {plans.map((p) => {
-              const isCurrent = currentPlanName === p.name.toLowerCase();
+              const isCurrent = currentPlanName === p.key;
               const isFeatured = !!p.featured;
-              const tierIndex = planTiers.indexOf(p.name.toLowerCase());
-              const buttonLabel = isCurrent ? 'Current Plan' : tierIndex > currentTierIndex ? 'Upgrade' : 'Downgrade';
+              const tierIndex = planTiers.indexOf(p.key);
+              const buttonLabel = isCurrent ? t('subscription.currentPlan') : tierIndex > currentTierIndex ? t('subscription.upgrade') : t('subscription.downgrade');
 
               return (
-                <div key={p.name} className={`relative px-8 py-10 ${isFeatured ? 'bg-deep-charcoal' : 'bg-warm-white'}`}>
+                <div key={p.key} className={`relative px-8 py-10 ${isFeatured ? 'bg-deep-charcoal' : 'bg-warm-white'}`}>
                   {isCurrent && (
                     <span className={`absolute top-4 right-4 text-xs font-semibold px-3 py-1 rounded-full ${isFeatured ? 'bg-burgundy/30 text-white' : 'bg-burgundy/[8%] text-burgundy'}`}>
-                      Current Plan
+                      {t('subscription.currentPlan')}
                     </span>
                   )}
                   <div className={`text-xs font-semibold tracking-[1.5px] uppercase mb-2 ${isFeatured ? 'text-burgundy' : 'text-warm-stone'}`}>{p.name}</div>
                   <div className={`font-serif text-[48px] font-medium tracking-tight leading-none mb-1 ${isFeatured ? 'text-white' : 'text-deep-charcoal'}`}>
-                    {p.price}<span className="text-lg font-normal text-muted-stone">/mo</span>
+                    {p.price}<span className="text-lg font-normal text-muted-stone">{t('subscription.perMonth')}</span>
                   </div>
                   <p className={`text-sm font-light mb-7 ${isFeatured ? 'text-muted-stone' : 'text-warm-stone'}`}>{p.desc}</p>
                   <ul className="mb-8">
@@ -191,8 +193,8 @@ export default function SubscriptionManage() {
 
           {/* Help */}
           <p className="text-center text-sm text-muted-stone mt-10">
-            Need help?{' '}
-            <a href="mailto:hello@seatable.io" className="text-burgundy hover:text-burgundy-dark transition-colors">Contact our support team</a>
+            {t('subscription.needHelp')}{' '}
+            <a href="mailto:hello@seatable.io" className="text-burgundy hover:text-burgundy-dark transition-colors">{t('subscription.contactSupport')}</a>
           </p>
         </div>
       </div>

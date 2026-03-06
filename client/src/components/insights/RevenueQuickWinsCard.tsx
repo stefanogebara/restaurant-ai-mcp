@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useRevenueOpportunities } from '../../hooks/usePredictiveAnalytics';
 
@@ -6,6 +7,7 @@ const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(amount);
 
 export default function RevenueQuickWinsCard() {
+  const { t } = useTranslation();
   const { data, isLoading } = useRevenueOpportunities();
   const [expanded, setExpanded] = useState<number | null>(0);
 
@@ -27,20 +29,20 @@ export default function RevenueQuickWinsCard() {
           <ThiingsIcon name="bar-chart" pxSize={16} className="text-green-600" />
         </div>
         <div>
-          <h2 className="text-sm font-semibold text-deep-charcoal">Revenue Quick Wins</h2>
-          <p className="text-xs text-warm-stone">Top opportunities to act on</p>
+          <h2 className="text-sm font-semibold text-deep-charcoal">{t('insights.revenueQuickWins')}</h2>
+          <p className="text-xs text-warm-stone">{t('insights.topOpportunities')}</p>
         </div>
         {data?.summary && (
           <div className="ml-auto text-right">
             <div className="text-sm font-bold text-green-600">{formatCurrency(data.summary.estimated_monthly_impact)}</div>
-            <div className="text-xs text-warm-stone">/month potential</div>
+            <div className="text-xs text-warm-stone">{t('insights.monthPotential')}</div>
           </div>
         )}
       </div>
 
       <div className="p-5 space-y-2">
         {opportunities.length === 0 ? (
-          <p className="text-sm text-warm-stone text-center py-4">No opportunities found yet.</p>
+          <p className="text-sm text-warm-stone text-center py-4">{t('analytics.noOpportunities')}</p>
         ) : (
           opportunities.map((opp, index) => (
             <div key={index} className="border border-border-gray rounded-xl overflow-hidden">
@@ -67,7 +69,7 @@ export default function RevenueQuickWinsCard() {
 
               {expanded === index && (
                 <div className="px-4 pb-4 pt-0 border-t border-border-gray bg-soft-gray/20">
-                  <p className="text-xs font-semibold text-deep-charcoal mb-2 pt-3">Actions:</p>
+                  <p className="text-xs font-semibold text-deep-charcoal mb-2 pt-3">{t('insights.actions')}</p>
                   <ul className="space-y-1.5">
                     {opp.actions.map((action, i) => (
                       <li key={i} className="flex items-start gap-2 text-xs text-stone-gray">

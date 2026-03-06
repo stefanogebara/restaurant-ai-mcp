@@ -68,8 +68,8 @@ export const CAPACITIES = [2, 4, 6, 8, 10];
 // ── Legend items ──────────────────────────────────────────────────────────────
 
 export const LEGEND_ITEMS = [
-  { label: 'Available', stroke: '#10B981', fill: '#ECFDF5' },
-  { label: 'Occupied',  stroke: '#E11D48', fill: '#FFF1F2' },
-  { label: 'Reserved',  stroke: '#7C3AED', fill: '#F5F3FF' },
-  { label: 'Cleaning',  stroke: '#D97706', fill: '#FFFBEB' },
+  { key: 'available', label: 'Available', stroke: '#10B981', fill: '#ECFDF5' },
+  { key: 'occupied',  label: 'Occupied',  stroke: '#E11D48', fill: '#FFF1F2' },
+  { key: 'reserved',  label: 'Reserved',  stroke: '#7C3AED', fill: '#F5F3FF' },
+  { key: 'cleaning',  label: 'Cleaning',  stroke: '#D97706', fill: '#FFFBEB' },
 ];

@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useStaffingConfig, useSaveStaffingConfig } from '../../hooks/useStaffingConfig';
 import type { StaffingConfig, StaffingRole } from '../../hooks/useStaffingConfig';
 import { useToast } from '../../contexts/ToastContext';
 
 export default function StaffingSettingsPanel() {
+  const { t } = useTranslation();
   const toast = useToast();
   const { data: config, isLoading } = useStaffingConfig();
   const saveMutation = useSaveStaffingConfig();
@@ -28,10 +30,10 @@ export default function StaffingSettingsPanel() {
     const payload: StaffingConfig = { roles: pendingRoles };
     saveMutation.mutate(payload, {
       onSuccess: () => {
-        toast.success('Staffing ratios saved');
+        toast.success(t('settings.staffingRatiosSaved'));
         setPendingRoles(null);
       },
-      onError: () => toast.error('Failed to save staffing ratios'),
+      onError: () => toast.error(t('settings.staffingRatiosSaveFailed')),
     });
   };
 
@@ -48,7 +50,7 @@ export default function StaffingSettingsPanel() {
     <div className="bg-white border border-border-gray rounded-2xl p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">
-          Staffing Ratios
+          {t('settings.staffingRatios')}
         </h2>
         <button
           type="button"
@@ -56,12 +58,12 @@ export default function StaffingSettingsPanel() {
           disabled={!isDirty || saveMutation.isPending}
           className="px-4 py-1.5 bg-burgundy hover:bg-burgundy-dark text-white text-xs font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {saveMutation.isPending ? 'Saving...' : 'Save'}
+          {saveMutation.isPending ? t('common.loading') : t('common.save')}
         </button>
       </div>
 
       <p className="text-xs text-warm-stone">
-        Set how many covers each staff member handles per service.
+        {t('settings.staffingRatiosDesc')}
       </p>
 
       <div className="space-y-3">
@@ -70,7 +72,7 @@ export default function StaffingSettingsPanel() {
             <span className="text-sm font-medium text-deep-charcoal w-16">{role.name}</span>
             <div className="flex items-center gap-2">
               <label className="text-xs text-warm-stone" htmlFor={`role-${role.name}`}>
-                covers / staff
+                {t('settings.coversPerStaff')}
               </label>
               <input
                 id={`role-${role.name}`}

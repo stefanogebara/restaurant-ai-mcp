@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { type Conversation, formatDate, getOutcomeColor, getOutcomeLabel } from './callTrackingTypes';
 
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export default function CallConversationModal({ conversation, onClose }: Props) {
+  const { t } = useTranslation();
   const durationText = conversation.duration_seconds
     ? `${Math.floor(conversation.duration_seconds / 60)}m ${conversation.duration_seconds % 60}s`
     : 'Unknown';
@@ -22,7 +24,7 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-border-gray p-6 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-deep-charcoal">Conversation Details</h2>
+            <h2 className="text-xl font-semibold text-deep-charcoal">{t('callTracking.conversationDetails')}</h2>
             <p className="text-sm text-stone-gray mt-1">{formatDate(conversation.started_at)}</p>
           </div>
           <button
@@ -43,7 +45,7 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
               <div className="flex items-start gap-3">
                 <ThiingsIcon name="chat" size="sm" className="mt-0.5" />
                 <div>
-                  <h3 className="font-semibold text-deep-charcoal mb-1">Summary</h3>
+                  <h3 className="font-semibold text-deep-charcoal mb-1">{t('callTracking.summary')}</h3>
                   <p className="text-sm text-stone-gray">{conversation.summary}</p>
                 </div>
               </div>
@@ -53,22 +55,22 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
           {/* Metadata */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-stone-gray">Outcome</p>
+              <p className="text-sm text-stone-gray">{t('callTracking.outcome')}</p>
               <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${getOutcomeColor(conversation.outcome)}`}>
                 {getOutcomeLabel(conversation.outcome)}
               </span>
             </div>
             <div>
-              <p className="text-sm text-stone-gray">Duration</p>
+              <p className="text-sm text-stone-gray">{t('callTracking.duration')}</p>
               <p className="text-sm font-medium text-deep-charcoal mt-1">{durationText}</p>
             </div>
             <div>
-              <p className="text-sm text-stone-gray">Language</p>
+              <p className="text-sm text-stone-gray">{t('callTracking.language')}</p>
               <p className="text-sm font-medium text-deep-charcoal mt-1 uppercase">{conversation.language}</p>
             </div>
             {conversation.reservation_id && (
               <div>
-                <p className="text-sm text-stone-gray">Reservation ID</p>
+                <p className="text-sm text-stone-gray">{t('callTracking.reservationId')}</p>
                 <p className="text-sm font-medium text-deep-charcoal mt-1">{conversation.reservation_id}</p>
               </div>
             )}
@@ -77,7 +79,7 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
           {/* Tools Used */}
           {conversation.tools_used && conversation.tools_used.length > 0 && (
             <div>
-              <h3 className="font-semibold text-deep-charcoal mb-3">Tools Used</h3>
+              <h3 className="font-semibold text-deep-charcoal mb-3">{t('callTracking.toolsUsed')}</h3>
               <div className="space-y-2">
                 {conversation.tools_used.map((tool, idx) => (
                   <div key={idx} className="bg-soft-gray/50 rounded-xl p-3">
@@ -98,7 +100,7 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
           {/* Transcript */}
           {conversation.transcript && conversation.transcript.length > 0 && (
             <div>
-              <h3 className="font-semibold text-deep-charcoal mb-3">Transcript</h3>
+              <h3 className="font-semibold text-deep-charcoal mb-3">{t('callTracking.transcript')}</h3>
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {conversation.transcript.map((message, idx) => (
                   <div
@@ -110,7 +112,7 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
                     }`}
                   >
                     <p className="text-xs text-stone-gray mb-1">
-                      {message.role === 'user' ? 'Customer' : 'Agent'}
+                      {message.role === 'user' ? t('callTracking.customer') : t('callTracking.agent')}
                     </p>
                     <p className="text-sm text-deep-charcoal">{message.content}</p>
                   </div>
@@ -122,7 +124,7 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
           {/* Errors */}
           {conversation.errors_encountered && conversation.errors_encountered.length > 0 && (
             <div>
-              <h3 className="font-semibold text-red-600 mb-3">Errors Encountered</h3>
+              <h3 className="font-semibold text-red-600 mb-3">{t('callTracking.errorsEncountered')}</h3>
               <div className="space-y-2">
                 {conversation.errors_encountered.map((error, idx) => (
                   <div key={idx} className="bg-red-600/10 border border-red-600/20 rounded-xl p-3">
@@ -142,7 +144,7 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
             onClick={onClose}
             className="w-full px-4 py-2 bg-burgundy text-white rounded-xl font-medium hover:bg-burgundy-dark transition-colors"
           >
-            Close
+            {t('common.close')}
           </button>
         </div>
       </div>

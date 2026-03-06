@@ -12,7 +12,11 @@ module.exports = async function handler(req, res) {
 
   let restaurantId;
   try {
-    ({ restaurantId } = verifyJWT(req.headers.authorization?.replace('Bearer ', '')));
+    const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
+    if (!user || !user.restaurant_id) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    restaurantId = user.restaurant_id;
   } catch {
     return res.status(401).json({ error: 'Unauthorized' });
   }

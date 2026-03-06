@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useLTVAtRisk, useLTVTopVIPs, useSendCampaign } from '../../hooks/useLTVData';
 import { useToast } from '../../contexts/ToastContext';
@@ -13,6 +14,7 @@ interface SendModalProps {
 }
 
 function SendModal({ customer, onClose }: SendModalProps) {
+  const { t } = useTranslation();
   const [message, setMessage] = useState(RE_ENGAGEMENT_MESSAGE);
   const { mutate: sendCampaign, isPending } = useSendCampaign();
   const toast = useToast();
@@ -22,11 +24,11 @@ function SendModal({ customer, onClose }: SendModalProps) {
       { customerId: customer.customer_id, campaignType: 'win_back', message },
       {
         onSuccess: () => {
-          toast.success('Re-engagement message sent');
+          toast.success(t('insights.reEngagementSent', 'Re-engagement message sent'));
           onClose();
         },
         onError: (err) => {
-          toast.error(err.message || 'Failed to send message');
+          toast.error(err.message || t('insights.reEngagementFailed', 'Failed to send message'));
         },
       }
     );
@@ -36,7 +38,7 @@ function SendModal({ customer, onClose }: SendModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-border-gray">
         <div className="p-5 border-b border-border-gray flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-deep-charcoal">Send Re-engagement</h3>
+          <h3 className="text-sm font-semibold text-deep-charcoal">{t('insights.sendReEngagement')}</h3>
           <button
             type="button"
             onClick={onClose}
@@ -51,13 +53,13 @@ function SendModal({ customer, onClose }: SendModalProps) {
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-burgundy to-rose-700 flex-shrink-0" />
             <div>
               <div className="text-sm font-semibold text-deep-charcoal">{customer.customer_name || customer.customer_id}</div>
-              <div className="text-xs text-warm-stone">Churn risk: {customer.churn_risk_score}% · {customer.total_visits} visits</div>
+              <div className="text-xs text-warm-stone">{t('insights.churnRisk', { score: customer.churn_risk_score })} · {t('insights.visits', { count: customer.total_visits })}</div>
             </div>
           </div>
 
           <div>
             <label htmlFor="re-engagement-msg" className="text-xs font-semibold text-deep-charcoal block mb-1.5">
-              Message
+              {t('insights.message')}
             </label>
             <textarea
               id="re-engagement-msg"
@@ -75,7 +77,7 @@ function SendModal({ customer, onClose }: SendModalProps) {
             onClick={onClose}
             className="flex-1 py-2.5 border border-border-gray text-deep-charcoal text-sm font-semibold rounded-xl hover:bg-soft-gray transition-colors"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             type="button"
@@ -83,7 +85,7 @@ function SendModal({ customer, onClose }: SendModalProps) {
             disabled={isPending || !message.trim()}
             className="flex-1 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-50"
           >
-            {isPending ? 'Sending...' : 'Send Email'}
+            {isPending ? t('insights.sending') : t('insights.sendEmail')}
           </button>
         </div>
       </div>
@@ -98,6 +100,7 @@ interface CustomerRowProps {
 }
 
 function CustomerRow({ customer, showChurn, onSend }: CustomerRowProps) {
+  const { t } = useTranslation();
   const churnColor =
     customer.churn_risk_score >= 80
       ? 'text-red-600'
@@ -114,7 +117,7 @@ function CustomerRow({ customer, showChurn, onSend }: CustomerRowProps) {
       <div className="w-7 h-7 rounded-full bg-gradient-to-br from-stone-200 to-stone-300 flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium text-deep-charcoal truncate">{customer.customer_name || customer.customer_id}</div>
-        <div className="text-xs text-warm-stone">{customer.total_visits} visits · Last: {lastVisit}</div>
+        <div className="text-xs text-warm-stone">{t('insights.visits', { count: customer.total_visits })} · Last: {lastVisit}</div>
       </div>
       {showChurn && (
         <span className={`text-xs font-semibold flex-shrink-0 ${churnColor}`}>
@@ -127,7 +130,7 @@ function CustomerRow({ customer, showChurn, onSend }: CustomerRowProps) {
           onClick={() => onSend(customer)}
           className="flex-shrink-0 px-2.5 py-1 text-xs font-semibold text-burgundy border border-burgundy/30 rounded-lg hover:bg-burgundy hover:text-white transition-colors"
         >
-          Send
+          {t('insights.send')}
         </button>
       )}
     </div>
@@ -135,6 +138,7 @@ function CustomerRow({ customer, showChurn, onSend }: CustomerRowProps) {
 }
 
 export default function CustomerIntelligenceCard() {
+  const { t } = useTranslation();
   const { data: atRisk = [], isLoading: loadingAtRisk } = useLTVAtRisk();
   const { data: vips = [], isLoading: loadingVIPs } = useLTVTopVIPs();
   const [sendTarget, setSendTarget] = useState<Customer | null>(null);
@@ -159,25 +163,25 @@ export default function CustomerIntelligenceCard() {
             <ThiingsIcon name="user" pxSize={16} className="text-rose-600" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-deep-charcoal">Customer Intelligence</h2>
-            <p className="text-xs text-warm-stone">At-risk & VIP guests</p>
+            <h2 className="text-sm font-semibold text-deep-charcoal">{t('insights.customerIntelligence')}</h2>
+            <p className="text-xs text-warm-stone">{t('insights.atRiskAndVip')}</p>
           </div>
         </div>
 
         {/* Tab switcher */}
         <div className="flex border-b border-border-gray">
-          {(['at-risk', 'vips'] as const).map((t) => (
+          {(['at-risk', 'vips'] as const).map((tabKey) => (
             <button
-              key={t}
+              key={tabKey}
               type="button"
-              onClick={() => setTab(t)}
+              onClick={() => setTab(tabKey)}
               className={`flex-1 py-2.5 text-xs font-semibold transition-colors ${
-                tab === t
+                tab === tabKey
                   ? 'text-burgundy border-b-2 border-burgundy bg-burgundy/5'
                   : 'text-warm-stone hover:text-deep-charcoal'
               }`}
             >
-              {t === 'at-risk' ? `At Risk (${atRisk.length})` : `VIPs (${vips.length})`}
+              {tabKey === 'at-risk' ? `${t('insights.atRisk')} (${atRisk.length})` : `${t('insights.vips')} (${vips.length})`}
             </button>
           ))}
         </div>
@@ -187,11 +191,11 @@ export default function CustomerIntelligenceCard() {
             atRisk.length === 0 ? (
               <div className="flex items-center gap-2 py-3 px-4 bg-green-500/8 rounded-xl border border-green-500/20">
                 <ThiingsIcon name="check-circle" pxSize={16} className="text-green-600 flex-shrink-0" />
-                <span className="text-sm text-green-700 font-medium">No high-risk customers right now</span>
+                <span className="text-sm text-green-700 font-medium">{t('insights.noHighRiskCustomers')}</span>
               </div>
             ) : (
               <div>
-                <p className="text-xs text-warm-stone mb-3">Churn risk &gt;70% — consider reaching out</p>
+                <p className="text-xs text-warm-stone mb-3">{t('insights.churnRiskHint')}</p>
                 {atRisk.map((c) => (
                   <CustomerRow key={c.customer_id} customer={c} showChurn onSend={setSendTarget} />
                 ))}
@@ -201,10 +205,10 @@ export default function CustomerIntelligenceCard() {
 
           {tab === 'vips' && (
             vips.length === 0 ? (
-              <p className="text-sm text-warm-stone text-center py-4">No VIP customers yet.</p>
+              <p className="text-sm text-warm-stone text-center py-4">{t('insights.noVipCustomers')}</p>
             ) : (
               <div>
-                <p className="text-xs text-warm-stone mb-3">Your most loyal guests</p>
+                <p className="text-xs text-warm-stone mb-3">{t('insights.mostLoyalGuests')}</p>
                 {vips.map((c) => (
                   <CustomerRow key={c.customer_id} customer={c} />
                 ))}

@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 interface AnalyticsStatsProps {
   overview: {
     total_reservations: number;
@@ -11,6 +13,7 @@ interface AnalyticsStatsProps {
 }
 
 export default function AnalyticsStats({ overview }: AnalyticsStatsProps) {
+  const { t } = useTranslation();
   const MIN_SAMPLE_SIZE = 5;
   const hasEnoughData = overview.total_reservations >= MIN_SAMPLE_SIZE;
   const noShowRate = hasEnoughData
@@ -18,10 +21,10 @@ export default function AnalyticsStats({ overview }: AnalyticsStatsProps) {
     : null;
 
   const stats = [
-    { value: overview.total_reservations, label: 'Total Reservations', change: null },
-    { value: noShowRate !== null ? `${noShowRate}%` : '—', label: 'No-Show Rate', color: noShowRate !== null && parseFloat(noShowRate) > 5 ? 'text-red-600' : undefined },
-    { value: overview.avg_party_size.toFixed(1), label: 'Avg Party Size', change: null },
-    { value: `${overview.current_occupancy_percentage}%`, label: 'Occupancy Rate', color: 'text-burgundy' },
+    { value: overview.total_reservations, label: t('analytics.totalReservations'), change: null },
+    { value: noShowRate !== null ? `${noShowRate}%` : '—', label: t('analytics.noShowRate'), color: noShowRate !== null && parseFloat(noShowRate) > 5 ? 'text-red-600' : undefined },
+    { value: overview.avg_party_size.toFixed(1), label: t('analytics.averagePartySize'), change: null },
+    { value: `${overview.current_occupancy_percentage}%`, label: t('analytics.occupancyRate'), color: 'text-burgundy' },
   ];
 
   return (

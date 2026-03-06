@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { colors } from '../../utils/colors';
 
@@ -6,6 +7,7 @@ interface DayOfWeekChartProps {
 }
 
 export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProps) {
+  const { t } = useTranslation();
   const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   const chartData = daysOrder.map(day => ({
@@ -22,7 +24,7 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
         <div className="bg-white border border-border-gray rounded-2xl p-3 shadow-lg">
           <p className="text-sm font-semibold text-deep-charcoal mb-1">{fullDay}</p>
           <p className="text-sm text-burgundy">
-            Reservations: <span className="font-bold">{payload[0].value}</span>
+            {t('analytics.reservations')}: <span className="font-bold">{payload[0].value}</span>
           </p>
         </div>
       );
@@ -33,7 +35,7 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
   return (
     <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
       <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
-        <span className="text-[15px] font-semibold tracking-tight">Reservations by Day</span>
+        <span className="text-[15px] font-semibold tracking-tight">{t('analytics.reservationsByDay')}</span>
       </div>
       <div role="img" aria-label="Bar chart showing number of reservations by day of the week" className="p-6">
         <ResponsiveContainer width="100%" height={220}>

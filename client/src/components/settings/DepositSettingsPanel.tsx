@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDepositConfig, useUpdateDepositConfig } from '../../hooks/useDepositConfig';
 
 export default function DepositSettingsPanel() {
+  const { t } = useTranslation();
   const { data: config, isLoading } = useDepositConfig();
   const updateConfig = useUpdateDepositConfig();
 
@@ -35,9 +37,9 @@ export default function DepositSettingsPanel() {
 
   return (
     <div className="bg-white border border-border-gray rounded-2xl p-6">
-      <h3 className="text-[15px] font-semibold text-deep-charcoal mb-1">Reservation Deposits</h3>
+      <h3 className="text-[15px] font-semibold text-deep-charcoal mb-1">{t('settings.depositTitle')}</h3>
       <p className="text-xs text-warm-stone mb-5">
-        Require a card hold when guests book online. Capture on no-show, release on arrival.
+        {t('settings.depositDesc')}
       </p>
 
       {/* Enable toggle */}
@@ -53,7 +55,7 @@ export default function DepositSettingsPanel() {
           <div className="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform peer-checked:translate-x-4" />
         </div>
         <span className="text-sm font-medium text-deep-charcoal">
-          {enabled ? 'Deposits enabled' : 'Deposits disabled'}
+          {enabled ? t('settings.depositsEnabled') : t('settings.depositsDisabled')}
         </span>
       </label>
 
@@ -62,21 +64,21 @@ export default function DepositSettingsPanel() {
           {/* Deposit type */}
           <div>
             <label className="block text-xs font-semibold tracking-wider uppercase text-warm-stone mb-2">
-              Deposit Type
+              {t('settings.depositType')}
             </label>
             <div className="flex gap-2">
-              {(['flat', 'per_person'] as const).map((t) => (
+              {(['flat', 'per_person'] as const).map((dt) => (
                 <button
-                  key={t}
+                  key={dt}
                   type="button"
-                  onClick={() => setType(t)}
+                  onClick={() => setType(dt)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                    type === t
+                    type === dt
                       ? 'border-burgundy bg-burgundy/[4%] text-burgundy'
                       : 'border-border-gray text-stone-gray hover:border-stone-300'
                   }`}
                 >
-                  {t === 'flat' ? 'Flat rate' : 'Per person'}
+                  {dt === 'flat' ? t('settings.depositFlat') : t('settings.depositPerPerson')}
                 </button>
               ))}
             </div>
@@ -85,7 +87,7 @@ export default function DepositSettingsPanel() {
           {/* Amount */}
           <div>
             <label className="block text-xs font-semibold tracking-wider uppercase text-warm-stone mb-2">
-              Amount (EUR)
+              {t('settings.depositAmount')}
             </label>
             <div className="relative w-32">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-warm-stone">EUR</span>
@@ -101,7 +103,7 @@ export default function DepositSettingsPanel() {
             </div>
             {type === 'per_person' && (
               <p className="text-xs text-muted-stone mt-1">
-                Example: party of 4 = EUR {parseFloat(amount || '0') * 4} total hold
+                {t('settings.depositExample', { total: parseFloat(amount || '0') * 4 })}
               </p>
             )}
           </div>
@@ -116,10 +118,10 @@ export default function DepositSettingsPanel() {
           disabled={updateConfig.isPending}
           className="px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark disabled:bg-border-gray text-white font-semibold text-sm rounded-lg transition-colors"
         >
-          {updateConfig.isPending ? 'Saving...' : 'Save Deposit Settings'}
+          {updateConfig.isPending ? t('common.loading') : t('settings.saveDepositSettings')}
         </button>
         {updateConfig.isSuccess && (
-          <span className="ml-3 text-xs text-green-600 font-medium">Saved</span>
+          <span className="ml-3 text-xs text-green-600 font-medium">{t('common.saved')}</span>
         )}
         {updateConfig.isError && (
           <span className="ml-3 text-xs text-red-600 font-medium">

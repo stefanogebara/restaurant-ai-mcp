@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { colors } from '../../utils/colors';
 
@@ -11,6 +12,7 @@ interface ReservationTrendChartProps {
 }
 
 export default function ReservationTrendChart({ dailyTrend }: ReservationTrendChartProps) {
+  const { t } = useTranslation();
   // Custom tooltip with shadcn/ui styling
   const CustomTooltip = ({ active, payload, label }: { active?: boolean; label?: string; payload?: Array<{ name: string; value: number; color: string }> }) => {
     if (active && payload && payload.length) {
@@ -31,8 +33,8 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
   return (
     <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
       <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
-        <span className="text-[15px] font-semibold tracking-tight">Reservations Over Time</span>
-        <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">Trending Up</span>
+        <span className="text-[15px] font-semibold tracking-tight">{t('analytics.reservationsOverTime')}</span>
+        <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">{t('analytics.trendingUp')}</span>
       </div>
       <div role="img" aria-label="Line chart showing reservation trends over time" className="p-6">
 
@@ -62,7 +64,7 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
           <Line
             type="monotone"
             dataKey="reservations"
-            name="Reservations"
+            name={t('analytics.reservations')}
             stroke={colors.burgundy}
             strokeWidth={3}
             dot={{ fill: colors.burgundy, r: 5 }}
@@ -71,7 +73,7 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
           <Line
             type="monotone"
             dataKey="completed_services"
-            name="Completed Services"
+            name={t('analytics.completedServices')}
             stroke={colors.stoneGray}
             strokeWidth={3}
             dot={{ fill: colors.stoneGray, r: 5 }}
