@@ -24,6 +24,7 @@ module.exports = async (req, res) => {
 
   try {
     const { data: configs } = await supabaseAdmin
+      .schema('restaurant')
       .from('restaurant_config')
       .select('id, manager_phone, notification_preferences')
       .eq('manager_whatsapp_verified', true)

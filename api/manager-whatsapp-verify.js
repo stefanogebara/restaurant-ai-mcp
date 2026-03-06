@@ -27,6 +27,7 @@ module.exports = async (req, res) => {
       const verificationCode = String(Math.floor(100000 + Math.random() * 900000));
 
       const { error: updateError } = await supabaseAdmin
+        .schema('restaurant')
         .from('restaurant_config')
         .update({
           manager_phone: phone,
@@ -54,6 +55,7 @@ module.exports = async (req, res) => {
       if (!code) return res.status(400).json({ error: 'code is required' });
 
       const { data, error } = await supabaseAdmin
+        .schema('restaurant')
         .from('restaurant_config')
         .select('manager_whatsapp_code, manager_whatsapp_code_expires_at')
         .eq('id', restaurantId)
@@ -74,6 +76,7 @@ module.exports = async (req, res) => {
       }
 
       await supabaseAdmin
+        .schema('restaurant')
         .from('restaurant_config')
         .update({ manager_whatsapp_verified: true, manager_whatsapp_code: null, manager_whatsapp_code_expires_at: null })
         .eq('id', restaurantId);

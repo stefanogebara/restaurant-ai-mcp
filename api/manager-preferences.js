@@ -25,6 +25,7 @@ async function handleGet(req, res) {
     if (!user?.restaurant_id) throw new Error('UNAUTHORIZED');
     const restaurantId = user.restaurant_id;
     const { data, error } = await supabaseAdmin
+      .schema('restaurant')
       .from('restaurant_config')
       .select('notification_preferences')
       .eq('id', restaurantId)
@@ -56,6 +57,7 @@ async function handlePatch(req, res) {
 
     // Read existing preferences
     const { data: existing, error: fetchError } = await supabaseAdmin
+      .schema('restaurant')
       .from('restaurant_config')
       .select('notification_preferences')
       .eq('id', restaurantId)
@@ -66,6 +68,7 @@ async function handlePatch(req, res) {
 
     // Write merged preferences back
     const { data: updated, error: updateError } = await supabaseAdmin
+      .schema('restaurant')
       .from('restaurant_config')
       .update({ notification_preferences: merged })
       .eq('id', restaurantId)

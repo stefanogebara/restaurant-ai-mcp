@@ -30,6 +30,7 @@ module.exports = async (req, res) => {
     const phone = From.replace('whatsapp:', '');
 
     const { data: config } = await supabaseAdmin
+      .schema('restaurant')
       .from('restaurant_config')
       .select('id, manager_phone, manager_whatsapp_verified')
       .eq('manager_phone', phone)

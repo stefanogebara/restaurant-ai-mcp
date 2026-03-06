@@ -32,6 +32,7 @@ async function getRestaurantSnapshot(restaurantId) {
       .eq('status', 'active')
       .limit(50),
     supabaseAdmin
+      .schema('restaurant')
       .from('restaurant_config')
       .select('staffing_config')
       .eq('id', restaurantId)

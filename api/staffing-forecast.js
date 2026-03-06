@@ -21,6 +21,7 @@ module.exports = async (req, res) => {
 
     // Fetch staffing config
     const { data: configData, error: configError } = await supabaseAdmin
+      .schema('restaurant')
       .from('restaurant_config')
       .select('staffing_config')
       .eq('id', restaurantId)

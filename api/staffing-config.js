@@ -16,6 +16,7 @@ async function handleGet(req, res) {
     if (!user?.restaurant_id) throw new Error('UNAUTHORIZED');
     const restaurantId = user.restaurant_id;
     const { data, error } = await supabaseAdmin
+      .schema('restaurant')
       .from('restaurant_config')
       .select('staffing_config')
       .eq('id', restaurantId)
@@ -46,6 +47,7 @@ async function handlePatch(req, res) {
     }
 
     const { data, error } = await supabaseAdmin
+      .schema('restaurant')
       .from('restaurant_config')
       .update({ staffing_config: body })
       .eq('id', restaurantId)

@@ -40,6 +40,7 @@ module.exports = async (req, res) => {
   try {
     // Load all verified restaurants
     const { data: restaurants, error } = await supabaseAdmin
+      .schema('restaurant')
       .from('restaurant_config')
       .select('id, manager_phone, notification_preferences, timezone')
       .eq('manager_whatsapp_verified', true)
