@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { UpcomingReservation } from '../../types/host.types';
 import ReservationNotesEditor from './ReservationNotesEditor';
 import ThiingsIcon from '../common/ThiingsIcon';
@@ -11,6 +12,8 @@ interface ReservationDetailsModalProps {
 }
 
 export default function ReservationDetailsModal({ isOpen, reservation, onClose, onUpdate }: ReservationDetailsModalProps) {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US';
   const [isEditingNotes, setIsEditingNotes] = useState(false);
 
   if (!isOpen || !reservation) return null;
@@ -42,7 +45,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
       month: 'long',
       day: 'numeric'
     };
-    return date.toLocaleDateString('en-US', options);
+    return date.toLocaleDateString(dateLocale, options);
   };
 
   return (
@@ -57,7 +60,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
         {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-deep-charcoal mb-1">Reservation Details</h2>
+            <h2 className="text-2xl font-bold text-deep-charcoal mb-1">{t('reservationDetails.title')}</h2>
             <p className="text-muted-stone text-sm">ID: {reservation.reservation_id}</p>
           </div>
           <button
@@ -74,7 +77,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
           <div className="mb-4">
             <span className="px-3 py-1.5 bg-green-600/10 text-green-600 text-sm rounded-xl inline-flex items-center gap-2">
               <ThiingsIcon name="check-circle" pxSize={16} />
-              Checked In
+              {t('reservationDetails.checkedIn')}
               {reservation.checked_in_at && (
                 <span className="text-xs">· {new Date(reservation.checked_in_at).toLocaleTimeString()}</span>
               )}
@@ -86,28 +89,28 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
         <div className="grid grid-cols-2 gap-4 mb-6">
           {/* Customer Name */}
           <div className="bg-soft-gray rounded-xl p-4 border border-border-gray">
-            <div className="text-xs text-muted-stone mb-1">Customer Name</div>
+            <div className="text-xs text-muted-stone mb-1">{t('reservationDetails.customerName')}</div>
             <div className="text-deep-charcoal font-semibold text-lg">{reservation.customer_name}</div>
           </div>
 
           {/* Party Size */}
           <div className="bg-soft-gray rounded-xl p-4 border border-border-gray">
-            <div className="text-xs text-muted-stone mb-1">Party Size</div>
+            <div className="text-xs text-muted-stone mb-1">{t('reservationDetails.partySize')}</div>
             <div className="text-deep-charcoal font-semibold text-lg flex items-center gap-2">
               <ThiingsIcon name="users" pxSize={20} className="text-burgundy" />
-              {reservation.party_size} guests
+              {t('reservationDetails.guests', { count: reservation.party_size })}
             </div>
           </div>
 
           {/* Date */}
           <div className="bg-soft-gray rounded-xl p-4 border border-border-gray">
-            <div className="text-xs text-muted-stone mb-1">Date</div>
+            <div className="text-xs text-muted-stone mb-1">{t('reservationDetails.date')}</div>
             <div className="text-deep-charcoal font-semibold">{formatDate(reservation.date)}</div>
           </div>
 
           {/* Time */}
           <div className="bg-soft-gray rounded-xl p-4 border border-border-gray">
-            <div className="text-xs text-muted-stone mb-1">Time</div>
+            <div className="text-xs text-muted-stone mb-1">{t('reservationDetails.time')}</div>
             <div className="text-deep-charcoal font-semibold text-lg flex items-center gap-2">
               <ThiingsIcon name="clock" pxSize={20} className="text-burgundy" />
               {formatTime(reservation.time || '')}
@@ -117,7 +120,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
           {/* Phone */}
           {reservation.customer_phone && (
             <div className="bg-soft-gray rounded-xl p-4 border border-border-gray">
-              <div className="text-xs text-muted-stone mb-1">Phone Number</div>
+              <div className="text-xs text-muted-stone mb-1">{t('reservationDetails.phoneNumber')}</div>
               <div className="text-deep-charcoal font-semibold flex items-center gap-2">
                 <ThiingsIcon name="phone" pxSize={20} className="text-green-600" />
                 {reservation.customer_phone}
@@ -128,7 +131,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
           {/* Status */}
           {reservation.status && (
             <div className="bg-soft-gray rounded-xl p-4 border border-border-gray">
-              <div className="text-xs text-muted-stone mb-1">Status</div>
+              <div className="text-xs text-muted-stone mb-1">{t('reservationDetails.status')}</div>
               <div className="text-deep-charcoal font-semibold capitalize">{reservation.status}</div>
             </div>
           )}
@@ -141,7 +144,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
               <div className="flex items-start gap-3">
                 <ThiingsIcon name="chat" pxSize={20} className="text-amber-600 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
-                  <div className="text-xs text-muted-stone mb-1">Special Requests</div>
+                  <div className="text-xs text-muted-stone mb-1">{t('reservationDetails.specialRequests')}</div>
                   <div className="text-deep-charcoal">{reservation.special_requests}</div>
                 </div>
               </div>
@@ -152,7 +155,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
         {/* Enhanced Notes Section */}
         <div className="mb-6 bg-soft-gray rounded-xl p-5 border border-border-gray">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-deep-charcoal">Customer Notes</h3>
+            <h3 className="text-lg font-semibold text-deep-charcoal">{t('reservationDetails.customerNotes')}</h3>
             <button
               onClick={() => setIsEditingNotes(true)}
               className="flex items-center gap-2 px-3 py-1.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm rounded-xl transition"
