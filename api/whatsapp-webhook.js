@@ -35,13 +35,19 @@ const { trackUsage } = require('./_lib/usage-tracking');
 const { generateSecureReservationId } = require('./_lib/secure-id');
 const { extractMemoriesFromWhatsApp } = require('./services/memoryExtractor');
 const { buildGuestContext } = require('./services/guestMemory');
+const { findPendingFeedbackForPhone, processFeedbackReply } = require('./services/feedbackService');
+const { updateDeliveryStatus, handleOptOut } = require('./services/campaignService');
 
-// AI provider configuration - supports any OpenAI-compatible API
-const AI_CONFIG = {
-  apiKey: process.env.OPENROUTER_API_KEY || process.env.MOONSHOT_API_KEY,
-  baseUrl: process.env.AI_BASE_URL || 'https://openrouter.ai/api/v1',
-  model: process.env.AI_MODEL || 'moonshotai/kimi-k2.5',
-};
+// AI provider: Anthropic Claude (primary) with OpenRouter fallback
+const Anthropic = require('@anthropic-ai/sdk');
+let anthropicClient = null;
+function getAnthropic() {
+  if (!anthropicClient) {
+    anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  }
+  return anthropicClient;
+}
+const AI_MODEL = process.env.AI_MODEL || 'claude-sonnet-4-20250514';
 
 // WhatsApp API base URL
 const WHATSAPP_API_URL = 'https://graph.facebook.com/v18.0';
@@ -835,44 +841,85 @@ async function executeTool(toolName, toolInput, session) {
 /**
  * Call the OpenAI-compatible chat completions endpoint
  */
+/**
+ * Call Anthropic Claude and return response in OpenAI-compatible format.
+ * Converts OpenAI tool format → Anthropic tool format, and response back.
+ */
 async function callChatCompletions(messages, tools) {
-  // 30-second timeout to avoid Vercel function timeout
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  logger.info(` AI call: model=${AI_MODEL}, provider=anthropic`);
 
-  try {
-    logger.info(` AI call: model=${AI_CONFIG.model}, baseUrl=${AI_CONFIG.baseUrl}, keySet=${!!AI_CONFIG.apiKey}`);
+  // Separate system message from conversation messages
+  const systemContent = messages.find(m => m.role === 'system')?.content || '';
+  const conversationMessages = messages.filter(m => m.role !== 'system');
 
-    const response = await fetch(`${AI_CONFIG.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${AI_CONFIG.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: AI_CONFIG.model,
-        max_tokens: 1024,
-        messages,
-        tools,
-      }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      const errorBody = await response.text();
-      throw new Error(`AI API error ${response.status}: ${errorBody}`);
+  // Convert OpenAI messages → Anthropic messages format
+  const anthropicMessages = [];
+  for (const msg of conversationMessages) {
+    if (msg.role === 'user') {
+      anthropicMessages.push({ role: 'user', content: msg.content });
+    } else if (msg.role === 'assistant') {
+      // May contain tool_calls from previous round
+      if (msg.tool_calls) {
+        const content = [];
+        if (msg.content) content.push({ type: 'text', text: msg.content });
+        for (const tc of msg.tool_calls) {
+          content.push({
+            type: 'tool_use',
+            id: tc.id,
+            name: tc.function.name,
+            input: JSON.parse(tc.function.arguments),
+          });
+        }
+        anthropicMessages.push({ role: 'assistant', content });
+      } else {
+        anthropicMessages.push({ role: 'assistant', content: msg.content });
+      }
+    } else if (msg.role === 'tool') {
+      anthropicMessages.push({
+        role: 'user',
+        content: [{ type: 'tool_result', tool_use_id: msg.tool_call_id, content: msg.content }],
+      });
     }
-
-    return response.json();
-  } catch (error) {
-    clearTimeout(timeoutId);
-    if (error.name === 'AbortError') {
-      throw new Error('AI API timeout after 30s');
-    }
-    throw error;
   }
+
+  // Convert OpenAI tools → Anthropic tools format
+  const anthropicTools = (tools || []).map(t => ({
+    name: t.function.name,
+    description: t.function.description,
+    input_schema: t.function.parameters,
+  }));
+
+  const response = await getAnthropic().messages.create({
+    model: AI_MODEL,
+    max_tokens: 1024,
+    system: systemContent,
+    messages: anthropicMessages,
+    tools: anthropicTools.length > 0 ? anthropicTools : undefined,
+  });
+
+  // Convert Anthropic response → OpenAI format
+  const textBlocks = response.content.filter(b => b.type === 'text');
+  const toolUseBlocks = response.content.filter(b => b.type === 'tool_use');
+
+  const result = {
+    choices: [{
+      message: {
+        role: 'assistant',
+        content: textBlocks.map(b => b.text).join('') || null,
+      },
+      finish_reason: toolUseBlocks.length > 0 ? 'tool_calls' : 'stop',
+    }],
+  };
+
+  if (toolUseBlocks.length > 0) {
+    result.choices[0].message.tool_calls = toolUseBlocks.map(b => ({
+      id: b.id,
+      type: 'function',
+      function: { name: b.name, arguments: JSON.stringify(b.input) },
+    }));
+  }
+
+  return result;
 }
 
 /**
@@ -1054,10 +1101,9 @@ module.exports = async (req, res) => {
 
       // Log incoming webhook (abbreviated to avoid log bloat)
       logger.info(' Webhook POST received, AI config:', {
-        model: AI_CONFIG.model,
-        baseUrl: AI_CONFIG.baseUrl,
-        apiKeySet: !!AI_CONFIG.apiKey,
-        apiKeyPrefix: AI_CONFIG.apiKey?.substring(0, 8) || 'NONE',
+        model: AI_MODEL,
+        provider: 'anthropic',
+        apiKeySet: !!process.env.ANTHROPIC_API_KEY,
       });
 
       // Extract message data
@@ -1169,6 +1215,26 @@ module.exports = async (req, res) => {
           return res.status(200).json({ status: 'ok' });
         }
 
+        // Opt-out keywords for marketing campaigns
+        if (normalizedText === 'STOP' || normalizedText === 'UNSUBSCRIBE' || normalizedText === 'PARAR') {
+          // Opt out from all restaurants (best-effort per-restaurant scoping)
+          try {
+            const session = await getSessionByPhone(from);
+            const restaurantId = session?.restaurant?.id;
+            if (restaurantId) {
+              await handleOptOut(restaurantId, from);
+            }
+          } catch (e) {
+            logger.error('Opt-out handling error:', e.message);
+          }
+          await sendWhatsAppMessage(from,
+            normalizedText === 'PARAR'
+              ? 'Voce foi removido da nossa lista de marketing. Nao recebera mais mensagens promocionais.'
+              : 'You have been unsubscribed from marketing messages. You will no longer receive promotional messages from us.'
+          );
+          return res.status(200).json({ status: 'ok' });
+        }
+
         // Deduplicate: Meta retries on timeout, ignore messages we've already seen
         // Uses Redis so dedup works across all Vercel serverless instances
         const messageId = message.id;
@@ -1181,6 +1247,24 @@ module.exports = async (req, res) => {
         if (isRateLimited(from)) {
           logger.info(` Rate limited ${from}`);
           return res.status(200).json({ status: 'ok' });
+        }
+
+        // Check if this is a feedback reply (before normal conversation routing)
+        try {
+          const pendingFeedback = await findPendingFeedbackForPhone(from);
+          if (pendingFeedback) {
+            const result = await processFeedbackReply(pendingFeedback.restaurantId, from, messageText);
+            if (result) {
+              const thankYou = result.rating
+                ? `Thank you for your feedback! You rated us ${result.rating}/5.${result.comment ? ' We appreciate your comments.' : ''} We look forward to welcoming you again!`
+                : 'Thank you for your feedback! We appreciate you taking the time to share your thoughts.';
+              await sendWhatsAppMessage(from, thankYou);
+              return res.status(200).json({ status: 'ok' });
+            }
+          }
+        } catch (feedbackErr) {
+          logger.error('Feedback reply check failed:', feedbackErr.message);
+          // Fall through to normal conversation flow
         }
 
         // Get or create session for this phone number
@@ -1274,16 +1358,23 @@ module.exports = async (req, res) => {
         return res.status(200).json({ status: 'ok' });
       }
 
-      // Log status updates (delivery receipts) for debugging
+      // Process status updates (delivery receipts)
       if (value?.statuses) {
-        for (const status of value.statuses) {
+        for (const statusUpdate of value.statuses) {
           logger.info(' Message status update:', {
-            id: status.id,
-            recipientId: status.recipient_id,
-            status: status.status,
-            timestamp: status.timestamp,
-            errors: status.errors || null,
+            id: statusUpdate.id,
+            recipientId: statusUpdate.recipient_id,
+            status: statusUpdate.status,
+            timestamp: statusUpdate.timestamp,
+            errors: statusUpdate.errors || null,
           });
+
+          // Route delivery status to campaign tracking (fire-and-forget)
+          if (statusUpdate.id && ['delivered', 'read', 'failed'].includes(statusUpdate.status)) {
+            updateDeliveryStatus(statusUpdate.id, statusUpdate.status).catch(err => {
+              logger.error('Campaign delivery status update failed:', err.message);
+            });
+          }
         }
       }
 
