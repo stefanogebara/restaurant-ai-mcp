@@ -1050,6 +1050,22 @@ module.exports = async (req, res) => {
     return res.status(200).end();
   }
 
+  // With bodyParser disabled, read the raw body for signature verification
+  if (req.method === 'POST' && !req.body) {
+    const chunks = [];
+    await new Promise((resolve, reject) => {
+      req.on('data', (chunk) => chunks.push(chunk));
+      req.on('end', resolve);
+      req.on('error', reject);
+    });
+    req._rawBody = Buffer.concat(chunks).toString('utf8');
+    try {
+      req.body = JSON.parse(req._rawBody);
+    } catch {
+      req.body = {};
+    }
+  }
+
   // Reject oversized payloads (> 1 MB)
   if (rejectOversizedBody(req, res)) return;
 
@@ -1090,7 +1106,7 @@ module.exports = async (req, res) => {
       logger.error('Missing X-Hub-Signature-256 header');
       return res.status(403).json({ error: 'Missing signature' });
     }
-    const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+    const rawBody = req._rawBody || (typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
     const expectedSig = 'sha256=' + crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex');
     if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig))) {
       logger.error('Invalid Meta webhook signature');
@@ -1390,3 +1406,7 @@ module.exports = async (req, res) => {
 
   return res.status(405).json({ error: 'Method not allowed' });
 };
+
+// Disable Vercel's automatic body parsing so we can access the raw body
+// for HMAC signature verification (Meta signs the raw bytes, not re-serialized JSON)
+module.exports.config = { api: { bodyParser: false } };
