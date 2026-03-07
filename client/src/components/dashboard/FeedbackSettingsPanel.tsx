@@ -45,7 +45,7 @@ export default function FeedbackSettingsPanel() {
     <div className="bg-white border border-border-gray rounded-2xl p-5">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
-          <ThiingsIcon name="message-circle" pxSize={16} className="text-amber-600" />
+          <ThiingsIcon name="chat" pxSize={16} className="text-amber-600" />
         </div>
         <h3 className="text-sm font-semibold text-deep-charcoal">Post-Visit Feedback</h3>
       </div>

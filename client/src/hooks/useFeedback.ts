@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../services/api';
+import { api as apiClient } from '../services/api';
 
 interface FeedbackStats {
   avg_rating: number | null;
