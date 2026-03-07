@@ -56,7 +56,7 @@ export default function Sidebar() {
   const { can } = usePermission();
   const { i18n, t } = useTranslation();
   const isSubscriptionLoading = subscription.isLoading;
-  const planType = subscription.data?.subscription?.plan?.toLowerCase() as PlanType | undefined;
+  const planType = (subscription.data?.subscription?.plan?.toLowerCase() ?? 'free') as PlanType;
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);

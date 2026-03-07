@@ -60,25 +60,35 @@ module.exports = async (req, res) => {
  */
 async function handleGet(req, res) {
   try {
-    // Get restaurant info to find agent_id
+    const restaurantId = req.user?.restaurant_id;
+    // Get restaurant info to find agent_id — filter by restaurant_id for multi-tenancy
     const { data: restaurant, error: dbError } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_info')
       .select('id, elevenlabs_agent_id, agent_voice_id, agent_voice_name, agent_language, voice_settings, tts_model_id, agent_updated_at, restaurant_name')
-      .limit(1)
-      .single();
+      .eq('id', restaurantId)
+      .maybeSingle();
 
-    if (dbError || !restaurant) {
-      return res.status(404).json({
-        success: false,
-        error: 'Restaurant not found'
-      });
+    if (dbError) {
+      logger.error('[VoiceSettings] DB error fetching restaurant:', dbError);
+      return res.status(500).json({ success: false, error: 'Database error' });
     }
 
-    if (!restaurant.elevenlabs_agent_id) {
-      return res.status(404).json({
-        success: false,
-        error: 'No ElevenLabs agent configured for this restaurant'
+    if (!restaurant || !restaurant.elevenlabs_agent_id) {
+      // No agent configured yet — return empty defaults so page can render setup UI
+      return res.status(200).json({
+        success: true,
+        data: {
+          voice_id: null,
+          voice_name: null,
+          language: 'en',
+          tts_model_id: 'eleven_turbo_v2_5',
+          voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.0, speed: 1.0 },
+          agent_id: null,
+          restaurant_name: restaurant?.restaurant_name || null,
+          agent_updated_at: null,
+          source: 'not_configured'
+        }
       });
     }
 
@@ -166,22 +176,21 @@ async function handlePatch(req, res) {
       tts_model_id
     } = req.body;
 
-    // Get restaurant info
+    const restaurantId = req.user?.restaurant_id;
+    // Get restaurant info — filter by restaurant_id for multi-tenancy
     const { data: restaurant, error: dbError } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_info')
       .select('id, elevenlabs_agent_id, agent_language, restaurant_name')
-      .limit(1)
-      .single();
+      .eq('id', restaurantId)
+      .maybeSingle();
 
-    if (dbError || !restaurant) {
-      return res.status(404).json({
-        success: false,
-        error: 'Restaurant not found'
-      });
+    if (dbError) {
+      logger.error('[VoiceSettings] DB error on PATCH:', dbError);
+      return res.status(500).json({ success: false, error: 'Database error' });
     }
 
-    if (!restaurant.elevenlabs_agent_id) {
+    if (!restaurant || !restaurant.elevenlabs_agent_id) {
       return res.status(400).json({
         success: false,
         error: 'No ElevenLabs agent configured. Complete onboarding first.'

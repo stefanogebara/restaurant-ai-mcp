@@ -34,17 +34,17 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
     return value >= 50 ? 'text-white' : 'text-deep-charcoal';
   };
 
-  // Sort tables by number
-  const sortedTables = [...tableUtilization].sort((a, b) => a.table_number - b.table_number);
+  // Sort tables by number (filter out any undefined/null entries)
+  const sortedTables = [...tableUtilization].filter(Boolean).sort((a, b) => a.table_number - b.table_number);
 
   // Find most and least used tables
-  const mostUsed = sortedTables.reduce((max, table) =>
+  const mostUsed = sortedTables.length > 0 ? sortedTables.reduce((max, table) =>
     getUtilizationValue(table.utilization_rate) > getUtilizationValue(max.utilization_rate) ? table : max
-  , sortedTables[0]);
+  , sortedTables[0]) : null;
 
-  const leastUsed = sortedTables.reduce((min, table) =>
+  const leastUsed = sortedTables.length > 0 ? sortedTables.reduce((min, table) =>
     getUtilizationValue(table.utilization_rate) < getUtilizationValue(min.utilization_rate) ? table : min
-  , sortedTables[0]);
+  , sortedTables[0]) : null;
 
   return (
     <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
@@ -100,6 +100,7 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
       </div>
 
       {/* Insights */}
+      {sortedTables.length > 0 && mostUsed && leastUsed && (
       <div className="space-y-2">
         <div className="p-3 bg-burgundy/10 border border-burgundy/20 rounded-xl">
           <p className="text-xs text-warm-stone">
@@ -114,6 +115,7 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
           </p>
         </div>
       </div>
+      )}
       </div>
     </div>
   );

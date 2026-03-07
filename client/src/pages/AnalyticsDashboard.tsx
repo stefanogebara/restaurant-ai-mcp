@@ -125,7 +125,7 @@ export default function AnalyticsDashboard() {
 
           {/* Bottom Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <TableUtilizationHeatmap tableUtilization={data.table_utilization} />
+            <TableUtilizationHeatmap tableUtilization={data.table_utilization ?? []} />
             <PeakHoursChart reservationsByTimeSlot={data.reservations_by_time_slot} />
           </div>
 
