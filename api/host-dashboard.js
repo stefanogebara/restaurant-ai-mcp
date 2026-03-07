@@ -30,6 +30,7 @@ const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { getDiningDuration, DEFAULT_DINING_DURATION_MINUTES } = require('./_lib/constants');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { initSentry, captureException } = require('./_lib/sentry');
+const { scheduleFeedback } = require('./services/feedbackService');
 initSentry();
 
 const logger = createSecureLogger('HostDashboard');
@@ -582,6 +583,15 @@ async function handleCompleteService(req, res) {
   const seatedAt = updateResult.service_record.seated_at;
   if (reservationId) {
     await logCustomerShowedUp(reservationId, seatedAt, departedAt);
+  }
+
+  // Schedule post-visit feedback (fire-and-forget)
+  const guestName = updateResult.service_record.guest_name;
+  const guestPhone = updateResult.service_record.customer_phone;
+  if (guestPhone) {
+    scheduleFeedback(restaurantId, reservationId, guestPhone, guestName).catch(err => {
+      logger.error('Failed to schedule feedback', { error: err.message });
+    });
   }
 
   const tableIdsRaw = updateResult.service_record.table_ids;

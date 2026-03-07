@@ -7,6 +7,7 @@ import TonightBriefingCard from '../components/insights/TonightBriefingCard';
 import CustomerIntelligenceCard from '../components/insights/CustomerIntelligenceCard';
 import RevenueQuickWinsCard from '../components/insights/RevenueQuickWinsCard';
 import WeeklyForecastCard from '../components/insights/WeeklyForecastCard';
+import CampaignManager from '../components/dashboard/CampaignManager';
 
 export default function AIInsights() {
   const { t } = useTranslation();
@@ -61,6 +62,11 @@ export default function AIInsights() {
           <CustomerIntelligenceCard />
           <RevenueQuickWinsCard />
           <WeeklyForecastCard />
+        </div>
+
+        {/* WhatsApp Campaigns */}
+        <div className="mt-6">
+          <CampaignManager />
         </div>
       </div>
     </DashboardLayout>

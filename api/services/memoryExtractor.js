@@ -70,10 +70,10 @@ async function extractMemoriesFromConversation(conversationId) {
       return 0;
     }
 
-    // 2. Call Claude to extract structured memories
-    const memories = await extractWithClaude(transcriptText);
+    // 2. Call Claude to extract structured memories + CRM data
+    const { memories, crm } = await extractWithClaude(transcriptText);
 
-    if (!memories || memories.length === 0) {
+    if ((!memories || memories.length === 0) && !crm) {
       logger.info('No memories extracted from conversation:', conversationId);
       return 0;
     }
@@ -91,10 +91,16 @@ async function extractMemoriesFromConversation(conversationId) {
       if (result) stored++;
     }
 
+    // 4. Store CRM facts in customer_ltv preferences
+    if (crm) {
+      await mergeCrmPreferences(restaurant_info_id, caller_phone, crm);
+    }
+
     logger.info('Memories extracted from conversation', {
       conversationId,
       extracted: memories.length,
-      stored
+      stored,
+      hasCrm: !!crm
     });
 
     return stored;
@@ -124,9 +130,9 @@ async function extractMemoriesFromWhatsApp(restaurantId, guestPhone, conversatio
 
     if (transcriptText.length < 20) return 0;
 
-    const memories = await extractWithClaude(transcriptText);
+    const { memories, crm } = await extractWithClaude(transcriptText);
 
-    if (!memories || memories.length === 0) return 0;
+    if ((!memories || memories.length === 0) && !crm) return 0;
 
     let stored = 0;
     for (const mem of memories) {
@@ -140,10 +146,16 @@ async function extractMemoriesFromWhatsApp(restaurantId, guestPhone, conversatio
       if (result) stored++;
     }
 
+    // Store CRM facts in customer_ltv preferences
+    if (crm) {
+      await mergeCrmPreferences(restaurantId, guestPhone, crm);
+    }
+
     logger.info('Memories extracted from WhatsApp', {
       guestPhone: guestPhone.slice(0, 4) + '***',
       extracted: memories.length,
-      stored
+      stored,
+      hasCrm: !!crm
     });
 
     return stored;
@@ -162,7 +174,7 @@ async function extractWithClaude(transcriptText) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     logger.warn('ANTHROPIC_API_KEY not set, skipping memory extraction');
-    return [];
+    return { memories: [], crm: null };
   }
 
   try {
@@ -170,41 +182,50 @@ async function extractWithClaude(transcriptText) {
 
     const response = await client.messages.create({
       model: EXTRACTION_MODEL,
-      max_tokens: 1024,
+      max_tokens: 1500,
       messages: [
         {
           role: 'user',
-          content: `Extract guest memories from this restaurant conversation transcript. Return a JSON array of memories.
+          content: `Extract guest memories AND CRM facts from this restaurant conversation transcript.
 
-Each memory should have:
-- "content": A concise, factual statement about the guest (not about the conversation)
+Return a JSON object with two fields:
+
+1. "memories": An array of memories, each with:
+- "content": A concise, factual statement about the guest
 - "type": One of: "observation", "preference", "occasion"
-  - "observation" = something the guest did or said (e.g., "Ordered the seafood pasta")
-  - "preference" = an explicit preference or dietary need (e.g., "Vegetarian", "Prefers window seat")
-  - "occasion" = a special date or event (e.g., "Wedding anniversary on March 15")
+  - "observation" = something the guest did or said
+  - "preference" = an explicit preference or dietary need
+  - "occasion" = a special date or event
 - "importance": 1-10 score
   - 1-3: Trivial (e.g., "Asked about parking")
   - 4-6: Useful (e.g., "Booked for 4 guests on Friday")
   - 7-8: Important (e.g., "Allergic to nuts", "VIP celebrating birthday")
-  - 9-10: Critical (e.g., "Severe food allergy", "Major complaint about service")
+  - 9-10: Critical (e.g., "Severe food allergy", "Major complaint")
+
+2. "crm": Structured CRM facts (null if none found). Include ONLY fields mentioned in the conversation:
+- "dietary": Array of dietary restrictions/allergies (e.g., ["shellfish allergy", "vegetarian"])
+- "celebrations": Array of {type, date?} (e.g., [{"type": "anniversary", "date": "2026-03-15"}])
+- "seating": Seating preference string (e.g., "window table", "quiet corner", "terrace")
+- "wine_preference": Wine/drink preference (e.g., "prefers red Burgundy", "non-drinker")
+- "party_type": Party composition (e.g., "business dinner", "family", "couple", "group of friends")
+- "special_requests": Array of special requests (e.g., ["high chair needed", "wheelchair accessible"])
 
 Rules:
-- Only extract memories about the GUEST, not the restaurant or AI
-- Skip generic conversation (greetings, confirmations, etc.)
-- Be concise - one sentence per memory
-- If no meaningful memories, return an empty array []
-- Maximum 5 memories per conversation
+- Only extract about the GUEST, not the restaurant or AI
+- Skip generic conversation (greetings, confirmations)
+- Maximum 5 memories
+- For CRM, only include fields explicitly mentioned — do NOT infer
 
 Transcript:
 ${transcriptText}
 
-Return ONLY a valid JSON array, no other text.`
+Return ONLY a valid JSON object, no other text.`
         }
       ]
     });
 
     const responseText = response.content?.[0]?.text?.trim();
-    if (!responseText) return [];
+    if (!responseText) return { memories: [], crm: null };
 
     // Parse JSON - handle potential markdown wrapping
     let jsonText = responseText;
@@ -214,11 +235,21 @@ Return ONLY a valid JSON array, no other text.`
 
     const parsed = JSON.parse(jsonText);
 
-    if (!Array.isArray(parsed)) return [];
+    // Handle both old format (array) and new format (object with memories + crm)
+    let memoriesRaw, crmData;
+    if (Array.isArray(parsed)) {
+      memoriesRaw = parsed;
+      crmData = null;
+    } else {
+      memoriesRaw = parsed.memories || [];
+      crmData = parsed.crm || null;
+    }
 
-    // Validate and sanitize each memory
+    if (!Array.isArray(memoriesRaw)) memoriesRaw = [];
+
+    // Validate and sanitize memories
     const validTypes = ['observation', 'preference', 'occasion'];
-    return parsed
+    const memories = memoriesRaw
       .filter(m => m.content && validTypes.includes(m.type))
       .map(m => ({
         content: String(m.content).slice(0, 500),
@@ -226,14 +257,137 @@ Return ONLY a valid JSON array, no other text.`
         importance: Math.max(1, Math.min(10, parseInt(m.importance) || 5))
       }))
       .slice(0, 5);
+
+    // Sanitize CRM data
+    const crm = sanitizeCrmData(crmData);
+
+    return { memories, crm };
   } catch (error) {
     logger.error('Claude extraction error:', error.message);
-    return [];
+    return { memories: [], crm: null };
+  }
+}
+
+/**
+ * Sanitize CRM data from extraction to ensure valid structure.
+ */
+function sanitizeCrmData(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+
+  const crm = {};
+  let hasData = false;
+
+  if (Array.isArray(raw.dietary) && raw.dietary.length > 0) {
+    crm.dietary = raw.dietary.map(d => String(d).slice(0, 100)).slice(0, 10);
+    hasData = true;
+  }
+  if (Array.isArray(raw.celebrations) && raw.celebrations.length > 0) {
+    crm.celebrations = raw.celebrations
+      .filter(c => c && c.type)
+      .map(c => ({ type: String(c.type).slice(0, 50), date: c.date || null }))
+      .slice(0, 5);
+    hasData = true;
+  }
+  if (raw.seating && typeof raw.seating === 'string') {
+    crm.seating = raw.seating.slice(0, 100);
+    hasData = true;
+  }
+  if (raw.wine_preference && typeof raw.wine_preference === 'string') {
+    crm.wine_preference = raw.wine_preference.slice(0, 100);
+    hasData = true;
+  }
+  if (raw.party_type && typeof raw.party_type === 'string') {
+    crm.party_type = raw.party_type.slice(0, 100);
+    hasData = true;
+  }
+  if (Array.isArray(raw.special_requests) && raw.special_requests.length > 0) {
+    crm.special_requests = raw.special_requests.map(s => String(s).slice(0, 200)).slice(0, 5);
+    hasData = true;
+  }
+
+  return hasData ? crm : null;
+}
+
+/**
+ * Merge extracted CRM facts into customer_ltv preferences JSONB.
+ * Uses fetch-then-merge to avoid overwriting existing data.
+ */
+async function mergeCrmPreferences(restaurantId, guestPhone, crm) {
+  if (!crm || !restaurantId || !guestPhone) return;
+
+  try {
+    // Fetch existing customer_ltv record
+    const { data: existing } = await supabaseAdmin
+      .schema('restaurant')
+      .from('customer_ltv')
+      .select('id, dietary_preferences, special_occasions')
+      .eq('restaurant_id', restaurantId)
+      .eq('customer_phone', guestPhone)
+      .maybeSingle();
+
+    if (!existing) {
+      // No customer_ltv record yet — will be created on next churn cron run.
+      // Store CRM in guest_memories as preference memories instead.
+      logger.info('No customer_ltv record for CRM merge, storing as memories', {
+        phone: guestPhone.slice(0, 4) + '***'
+      });
+      return;
+    }
+
+    const updates = {};
+
+    // Merge dietary preferences into the text[] column
+    if (crm.dietary?.length > 0) {
+      const existingDietary = existing.dietary_preferences || [];
+      const merged = [...new Set([...existingDietary, ...crm.dietary])];
+      updates.dietary_preferences = merged;
+    }
+
+    // Merge celebrations into special_occasions JSONB
+    if (crm.celebrations?.length > 0) {
+      const existingOccasions = existing.special_occasions || {};
+      const newOccasions = { ...existingOccasions };
+      for (const c of crm.celebrations) {
+        // Use type as key to deduplicate
+        newOccasions[c.type] = { date: c.date, updated_at: new Date().toISOString() };
+      }
+      updates.special_occasions = newOccasions;
+    }
+
+    // Store other CRM fields in special_occasions as well (seating, wine, etc.)
+    const extraFields = ['seating', 'wine_preference', 'party_type', 'special_requests'];
+    const hasExtra = extraFields.some(f => crm[f]);
+    if (hasExtra) {
+      const occasions = updates.special_occasions || existing.special_occasions || {};
+      if (crm.seating) occasions._seating_preference = crm.seating;
+      if (crm.wine_preference) occasions._wine_preference = crm.wine_preference;
+      if (crm.party_type) occasions._party_type = crm.party_type;
+      if (crm.special_requests) occasions._special_requests = crm.special_requests;
+      updates.special_occasions = occasions;
+    }
+
+    if (Object.keys(updates).length === 0) return;
+
+    updates.updated_at = new Date().toISOString();
+
+    await supabaseAdmin
+      .schema('restaurant')
+      .from('customer_ltv')
+      .update(updates)
+      .eq('id', existing.id);
+
+    logger.info('CRM preferences merged into customer_ltv', {
+      phone: guestPhone.slice(0, 4) + '***',
+      fields: Object.keys(updates).filter(k => k !== 'updated_at'),
+    });
+  } catch (error) {
+    logger.error('Failed to merge CRM preferences', { error: error.message });
   }
 }
 
 module.exports = {
   extractMemoriesFromConversation,
   extractMemoriesFromWhatsApp,
-  extractWithClaude
+  extractWithClaude,
+  mergeCrmPreferences,
 };

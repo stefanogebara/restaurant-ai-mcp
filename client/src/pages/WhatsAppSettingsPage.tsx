@@ -4,6 +4,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import ManagerNotificationsPanel from '../components/dashboard/ManagerNotificationsPanel';
 import StaffingSettingsPanel from '../components/dashboard/StaffingSettingsPanel';
 import DepositSettingsPanel from '../components/settings/DepositSettingsPanel';
+import FeedbackSettingsPanel from '../components/dashboard/FeedbackSettingsPanel';
 import {
   useWhatsAppStatus,
   useWhatsAppStats,
@@ -244,6 +245,9 @@ export default function WhatsAppSettingsPage() {
 
         {/* Reservation Deposits */}
         <DepositSettingsPanel />
+
+        {/* Post-Visit Feedback */}
+        <FeedbackSettingsPanel />
       </div>
     </DashboardLayout>
   );

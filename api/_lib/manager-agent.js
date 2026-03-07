@@ -8,6 +8,7 @@
 const Anthropic = require('@anthropic-ai/sdk').default;
 const { retrieveRelevantMemories, writeMemory } = require('../services/managerMemory');
 const { getRestaurantSnapshot } = require('../services/restaurantSnapshot');
+const { buildRestaurantIdentitySection } = require('./persona-prompt-builder');
 const { supabaseAdmin } = require('./supabase');
 const { createSecureLogger } = require('./secure-logger');
 const { getPlanLimits } = require('../services/subscription-limits');
@@ -131,7 +132,9 @@ async function saveTurn(restaurantId, role, content, channel) {
   }
 }
 
-function buildSystemPrompt(memories, snapshot) {
+function buildSystemPrompt(memories, snapshot, config) {
+  const restaurantName = config?.restaurant_name || config?.name || 'this restaurant';
+
   const memoryBlock =
     memories.length > 0
       ? memories
@@ -148,11 +151,21 @@ function buildSystemPrompt(memories, snapshot) {
           ? ' ★regular'
           : '';
       const visitInfo = r.visit_count ? ` (${r.visit_count} visits)` : '';
+      const dietaryInfo = r.dietary_preferences?.length ? ` [DIETARY: ${r.dietary_preferences.join(', ')}]` : '';
+      const occasionInfo = r.special_occasions
+        ? Object.entries(r.special_occasions)
+          .filter(([k]) => !k.startsWith('_'))
+          .map(([type]) => type)
+          .join(', ')
+        : '';
+      const seatingInfo = r.special_occasions?._seating_preference ? ` [SEATING: ${r.special_occasions._seating_preference}]` : '';
+      const crmTags = [dietaryInfo, occasionInfo ? ` [${occasionInfo}]` : '', seatingInfo].filter(Boolean).join('');
       return (
         '  - ' +
         r.guest_name +
         vipTag +
         visitInfo +
+        crmTags +
         ', party of ' +
         r.party_size +
         ' at ' +
@@ -169,9 +182,29 @@ function buildSystemPrompt(memories, snapshot) {
       f.roles.map(r => r.name + ': ' + r.recommended).join(', '))
     .join('\n');
 
+  // Build identity section from restaurant_profile
+  const identitySection = buildRestaurantIdentitySection(config || {});
+
+  // Adapt communication tone from profile
+  const commStyle = config?.restaurant_profile?.communication_style;
+  const toneDirective = commStyle?.tone
+    ? `Match this communication tone: ${commStyle.tone}.`
+    : '';
+
   let systemPrompt =
-    'You are the AI manager assistant for this restaurant. ' +
-    'You know the restaurant deeply and help the manager run their business.\n\n' +
+    `You are the AI manager for ${restaurantName}. ` +
+    'You know this restaurant deeply and help the manager run their business.\n\n';
+
+  // Inject restaurant soul between role and operational data
+  if (identitySection) {
+    systemPrompt += identitySection;
+  }
+
+  if (toneDirective) {
+    systemPrompt += toneDirective + '\n\n';
+  }
+
+  systemPrompt +=
     '## What You Know About This Restaurant\n' +
     memoryBlock +
     '\n\n## Current Live Status\n' +
@@ -188,6 +221,19 @@ function buildSystemPrompt(memories, snapshot) {
     const { count, total_amount } = snapshot.deposit_summary;
     const formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(total_amount);
     systemPrompt += `\n\n[DEPOSITS HELD TONIGHT]\n${count} reservation${count !== 1 ? 's' : ''} with deposits held — total ${formatted} at risk of no-show capture.`;
+  }
+
+  if (snapshot.feedback_summary && snapshot.feedback_summary.total > 0) {
+    const fb = snapshot.feedback_summary;
+    let feedbackBlock = `\n\n[RECENT GUEST FEEDBACK — LAST 7 DAYS]`;
+    if (fb.avg_rating != null) {
+      feedbackBlock += `\nAvg rating: ${fb.avg_rating}/5 (${fb.answered_count} responses, ${fb.response_rate}% response rate)`;
+    }
+    if (fb.recent?.length > 0) {
+      const latest = fb.recent[0];
+      feedbackBlock += `\nLatest: "${latest.comment || 'No comment'}" (${latest.rating}★) — ${latest.customer_name || 'Anonymous'}`;
+    }
+    systemPrompt += feedbackBlock;
   }
 
   systemPrompt +=
@@ -227,13 +273,20 @@ async function runManagerAgent(restaurantId, userMessage, channel) {
   }
   // ─────────────────────────────────────────────────────────────
 
-  const [memories, snapshot, history] = await Promise.all([
+  const [memories, snapshot, history, configResult] = await Promise.all([
     retrieveRelevantMemories(restaurantId, userMessage),
     getRestaurantSnapshot(restaurantId),
     getConversationHistory(restaurantId),
+    supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('restaurant_name, name, restaurant_profile')
+      .eq('id', restaurantId)
+      .maybeSingle(),
   ]);
 
-  const systemPrompt = buildSystemPrompt(memories, snapshot);
+  const config = configResult?.data || {};
+  const systemPrompt = buildSystemPrompt(memories, snapshot, config);
   const messages = [
     ...history.map((h) => ({
       role: h.role === 'manager' ? 'user' : 'assistant',

@@ -248,6 +248,8 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             <DepositBadge amount={reservation.deposit_amount} />
           </div>
         )}
+        {/* CRM preference icons */}
+        <CrmBadges reservation={reservation} />
       </div>
 
       {/* Time */}
@@ -308,6 +310,41 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
           />
         </div>
       )}
+    </div>
+  );
+}
+
+/** Compact CRM preference badges for reservation cards */
+function CrmBadges({ reservation }: { reservation: UpcomingReservation }) {
+  const badges: Array<{ icon: string; label: string; color: string }> = [];
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const r = reservation as any;
+
+  if (r.dietary_preferences?.length > 0) {
+    badges.push({ icon: '⚠️', label: r.dietary_preferences[0], color: 'bg-red-50 text-red-700' });
+  }
+  if (r.special_occasions) {
+    const occasions = r.special_occasions;
+    const types = Object.keys(occasions).filter(k => !k.startsWith('_'));
+    if (types.length > 0) {
+      badges.push({ icon: '🎂', label: types[0], color: 'bg-purple-50 text-purple-700' });
+    }
+    if (occasions._seating_preference) {
+      badges.push({ icon: '💺', label: occasions._seating_preference, color: 'bg-blue-50 text-blue-700' });
+    }
+  }
+
+  if (badges.length === 0) return null;
+
+  return (
+    <div className="flex items-center gap-1 mt-1 flex-wrap">
+      {badges.map((b, i) => (
+        <span key={i} className={`inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${b.color}`}>
+          <span>{b.icon}</span>
+          <span className="truncate max-w-[80px]">{b.label}</span>
+        </span>
+      ))}
     </div>
   );
 }

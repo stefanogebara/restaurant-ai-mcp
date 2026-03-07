@@ -1,6 +1,7 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { buildForecast } = require('./staffingService');
+const { getFeedbackStats } = require('./feedbackService');
 
 const logger = createSecureLogger('restaurant-snapshot');
 
@@ -65,7 +66,7 @@ async function getRestaurantSnapshot(restaurantId) {
     const { data: ltvRows } = await supabaseAdmin
       .schema('restaurant')
       .from('customer_ltv')
-      .select('customer_phone, customer_tier, total_visits, avg_revenue_per_visit')
+      .select('customer_phone, customer_tier, total_visits, avg_revenue_per_visit, dietary_preferences, special_occasions')
       .eq('restaurant_id', restaurantId)
       .in('customer_phone', phones);
 
@@ -82,6 +83,8 @@ async function getRestaurantSnapshot(restaurantId) {
       customer_tier: ltv?.customer_tier || null,
       visit_count: ltv?.total_visits || null,
       avg_spend: ltv?.avg_revenue_per_visit || null,
+      dietary_preferences: ltv?.dietary_preferences || null,
+      special_occasions: ltv?.special_occasions || null,
     };
   });
 
@@ -114,6 +117,14 @@ async function getRestaurantSnapshot(restaurantId) {
     total_amount: depositsTonight.reduce((sum, r) => sum + (parseFloat(r.deposit_amount) || 0), 0),
   };
 
+  // Fetch recent feedback stats (non-blocking)
+  let feedback_summary = null;
+  try {
+    feedback_summary = await getFeedbackStats(restaurantId, 7);
+  } catch (e) {
+    logger.error('Failed to fetch feedback stats for snapshot', { error: e.message });
+  }
+
   return {
     snapshot_time: new Date().toISOString(),
     upcoming_reservations: enrichedReservations,
@@ -121,6 +132,7 @@ async function getRestaurantSnapshot(restaurantId) {
     active_parties: activeRes.data || [],
     staffing_forecast,
     deposit_summary,
+    feedback_summary,
     errors: [
       reservationsRes.error && 'reservations',
       waitlistRes.error && 'waitlist',

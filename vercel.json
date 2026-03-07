@@ -196,6 +196,14 @@
     {
       "path": "/api/cron/manager-alerts?type=late_cancellations",
       "schedule": "0 12,14,16,18,20 * * *"
+    },
+    {
+      "path": "/api/cron/send-feedback",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/send-campaigns",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

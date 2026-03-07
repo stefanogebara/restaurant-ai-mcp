@@ -13,6 +13,7 @@ const { checkSubscription, requireFeature } = require('./_lib/subscription-middl
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { sendRetentionCampaignEmail } = require('./_lib/email');
+const { createCampaign, sendCampaignBatch, getCampaignStats, getSegmentCustomers } = require('./services/campaignService');
 const logger = createSecureLogger('RetentionCampaigns');
 
 /**
@@ -194,6 +195,118 @@ async function handleStats(req, res) {
 }
 
 /**
+ * Create a WhatsApp campaign with segment targeting
+ */
+async function handleCreateWhatsApp(req, res) {
+  try {
+    const { name, segment, message, scheduled_at, campaign_type } = req.body;
+
+    if (!segment || !message) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: segment, message',
+      });
+    }
+
+    const validSegments = ['all', 'vip', 'at_risk', 'birthday_this_month', 'inactive_30d', 'new_customers'];
+    if (!validSegments.includes(segment)) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid segment. Must be one of: ${validSegments.join(', ')}`,
+      });
+    }
+
+    const result = await createCampaign(req.user.restaurant_id, {
+      name: name || `${segment} campaign`,
+      segment,
+      message,
+      scheduledAt: scheduled_at || null,
+      campaignType: campaign_type || 'win_back',
+    });
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    return res.status(200).json(result);
+  } catch (error) {
+    logger.error('Error creating WhatsApp campaign:', error);
+    return res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+/**
+ * Get delivery stats for a specific campaign
+ */
+async function handleCampaignDeliveryStats(req, res) {
+  try {
+    const { campaign_id } = req.query;
+    if (!campaign_id) {
+      return res.status(400).json({ success: false, error: 'Missing campaign_id' });
+    }
+
+    const stats = await getCampaignStats(campaign_id);
+    if (!stats) {
+      return res.status(404).json({ success: false, error: 'Campaign not found' });
+    }
+
+    return res.status(200).json({ success: true, data: stats });
+  } catch (error) {
+    logger.error('Error getting campaign delivery stats:', error);
+    return res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+/**
+ * Trigger immediate send for a campaign
+ */
+async function handleSend(req, res) {
+  try {
+    const { campaign_id } = req.body;
+    if (!campaign_id) {
+      return res.status(400).json({ success: false, error: 'Missing campaign_id' });
+    }
+
+    // Activate the campaign
+    await supabaseAdmin
+      .schema('restaurant')
+      .from('retention_campaigns')
+      .update({ status: 'active' })
+      .eq('id', campaign_id)
+      .eq('restaurant_id', req.user.restaurant_id);
+
+    // Send first batch immediately
+    const sent = await sendCampaignBatch(campaign_id, 10);
+
+    return res.status(200).json({ success: true, sent });
+  } catch (error) {
+    logger.error('Error triggering campaign send:', error);
+    return res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+/**
+ * Get segment preview (customer counts per segment)
+ */
+async function handleSegments(req, res) {
+  try {
+    const restaurantId = req.user.restaurant_id;
+    const segments = ['all', 'vip', 'at_risk', 'birthday_this_month', 'inactive_30d', 'new_customers'];
+
+    const counts = {};
+    for (const segment of segments) {
+      const customers = await getSegmentCustomers(restaurantId, segment);
+      counts[segment] = customers.length;
+    }
+
+    return res.status(200).json({ success: true, data: counts });
+  } catch (error) {
+    logger.error('Error getting segment counts:', error);
+    return res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+/**
  * Main serverless function handler
  */
 module.exports = async (req, res) => {
@@ -248,17 +361,35 @@ module.exports = async (req, res) => {
         }
         return await handleCreate(req, res);
 
+      case 'create_whatsapp':
+        if (req.method !== 'POST') {
+          return res.status(405).json({ success: false, error: 'Method not allowed. Use POST.' });
+        }
+        return await handleCreateWhatsApp(req, res);
+
       case 'list':
         return await handleList(req, res);
 
       case 'stats':
         return await handleStats(req, res);
 
+      case 'campaign_stats':
+        return await handleCampaignDeliveryStats(req, res);
+
+      case 'send':
+        if (req.method !== 'POST') {
+          return res.status(405).json({ success: false, error: 'Method not allowed. Use POST.' });
+        }
+        return await handleSend(req, res);
+
+      case 'segments':
+        return await handleSegments(req, res);
+
       default:
         return res.status(400).json({
           success: false,
           error: `Unknown action: ${action}`,
-          available_actions: ['create', 'list', 'stats']
+          available_actions: ['create', 'create_whatsapp', 'list', 'stats', 'campaign_stats', 'send', 'segments']
         });
     }
   } catch (error) {
