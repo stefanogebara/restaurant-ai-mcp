@@ -1372,7 +1372,7 @@ module.exports = async (req, res) => {
         const sendResult = await sendWhatsAppMessage(from, response);
         logger.info(` Send result:`, JSON.stringify(sendResult));
 
-        return res.status(200).json({ status: 'ok' });
+        return res.status(200).json({ status: 'ok', sendResult });
       }
 
       // Process status updates (delivery receipts)
