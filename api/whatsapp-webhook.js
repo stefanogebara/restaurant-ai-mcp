@@ -38,11 +38,12 @@ const { buildGuestContext } = require('./services/guestMemory');
 const { findPendingFeedbackForPhone, processFeedbackReply } = require('./services/feedbackService');
 const { updateDeliveryStatus, handleOptOut } = require('./services/campaignService');
 
-// AI provider: Anthropic Claude (primary) with OpenRouter fallback
-const Anthropic = require('@anthropic-ai/sdk');
+// AI provider: Anthropic Claude
 let anthropicClient = null;
 function getAnthropic() {
   if (!anthropicClient) {
+    const AnthropicModule = require('@anthropic-ai/sdk');
+    const Anthropic = AnthropicModule.default || AnthropicModule;
     anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   }
   return anthropicClient;
