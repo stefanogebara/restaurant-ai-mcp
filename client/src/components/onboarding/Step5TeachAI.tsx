@@ -1,17 +1,15 @@
 /**
- * Step 5: Teach Your AI
+ * Step 6: Teach Your AI (Chat Interview)
  *
- * Optional onboarding step that lets restaurant managers answer a set of
- * guided questions and optionally upload a document so the AI manager
- * is pre-loaded with knowledge about their restaurant.
+ * Interactive chat-based interview that deeply learns about the restaurant.
+ * Uses the /api/restaurant-learning/research + /chat endpoints to run an
+ * adaptive 12-topic conversation. Replaces the old 5-textarea approach.
  *
- * The interview answers are combined into a single text payload and
- * POSTed to /api/manager-documents as multipart/form-data.  The step is
- * entirely optional — "Skip for now" proceeds to the next step without
- * any API call.
+ * The interview is optional — "Skip for now" proceeds without any API call.
+ * Progress is shown via a topic progress bar + completion percentage.
  */
 
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import ThiingsIcon from '../common/ThiingsIcon';
@@ -19,85 +17,217 @@ import { api } from '../../services/api';
 
 interface Step5TeachAIProps {
   restaurantId: string;
+  restaurantName?: string;
+  city?: string;
+  country?: string;
+  website?: string;
   onNext: () => void;
 }
 
-const INTERVIEW_QUESTIONS = [
-  "What's one thing you're most proud of about your restaurant?",
-  'What are your busiest days and times?',
-  'Do you have any signature dishes or specialties?',
-  "What's your approach to handling no-shows?",
-  'What would you like your AI assistant to help with most?',
-];
-
-interface DocumentUploadResponse {
-  success: boolean;
-  facts_stored?: number;
-  message?: string;
+interface ChatMessage {
+  role: 'assistant' | 'user';
+  content: string;
 }
 
-export default function Step5TeachAI({ restaurantId: _restaurantId, onNext }: Step5TeachAIProps) {
-  const [answers, setAnswers] = useState<Record<number, string>>({});
-  const [file, setFile] = useState<File | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+interface ResearchResponse {
+  success: boolean;
+  session_id: string;
+  initial_ai_message: string;
+}
+
+interface ChatResponse {
+  success: boolean;
+  ai_message: string;
+  quick_replies?: string[] | null;
+  completion_percentage: number;
+  is_complete: boolean;
+  current_topic_label?: string;
+}
+
+type InterviewPhase = 'idle' | 'researching' | 'chatting' | 'generating' | 'complete';
+
+export default function Step5TeachAI({
+  restaurantId: _restaurantId,
+  restaurantName,
+  city,
+  country,
+  website,
+  onNext,
+}: Step5TeachAIProps) {
+  const [phase, setPhase] = useState<InterviewPhase>('idle');
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState('');
+  const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [factsStored, setFactsStored] = useState<number | null>(null);
+  const [completionPct, setCompletionPct] = useState(0);
+  const [currentTopic, setCurrentTopic] = useState('');
+  const [quickReplies, setQuickReplies] = useState<string[]>([]);
 
-  function updateAnswer(index: number, value: string) {
-    setAnswers((prev) => ({ ...prev, [index]: value }));
-  }
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const hasAnyAnswer = INTERVIEW_QUESTIONS.some((_, i) => answers[i]?.trim());
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
-  async function handleSubmit() {
-    setIsLoading(true);
+  // Start the interview: research + get first AI message
+  const startInterview = useCallback(async () => {
+    setPhase('researching');
     setError(null);
 
     try {
-      let totalFacts = 0;
+      const res = await api.post<ResearchResponse>('/restaurant-learning/research', {
+        restaurant_name: restaurantName || 'My Restaurant',
+        city: city || 'Unknown',
+        country: country || 'Unknown',
+        website: website || undefined,
+      });
 
-      // Build text from answered questions — reduce preserves original indices
-      const interviewText = INTERVIEW_QUESTIONS
-        .reduce<string[]>((acc, q, i) => {
-          const answer = answers[i]?.trim();
-          if (answer) acc.push(`Q: ${q}\nA: ${answer}`);
-          return acc;
-        }, [])
-        .join('\n\n');
-
-      if (interviewText) {
-        const formData = new FormData();
-        const blob = new Blob([interviewText], { type: 'text/plain' });
-        formData.append('file', blob, 'onboarding-interview.txt');
-        const res = await api.post<DocumentUploadResponse>('/manager-documents', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        totalFacts += res.data.facts_stored ?? 0;
-      }
-
-      // Upload optional document
-      if (file) {
-        const formData = new FormData();
-        formData.append('file', file, file.name);
-        const res = await api.post<DocumentUploadResponse>('/manager-documents', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        totalFacts += res.data.facts_stored ?? 0;
-      }
-
-      setFactsStored(totalFacts);
+      setSessionId(res.data.session_id);
+      setMessages([{ role: 'assistant', content: res.data.initial_ai_message }]);
+      setPhase('chatting');
+      setTimeout(() => inputRef.current?.focus(), 100);
     } catch (err: unknown) {
       const message = axios.isAxiosError(err)
-        ? (err.response?.data?.error as string) || 'Failed to save facts. You can try again later.'
-        : err instanceof Error ? err.message : 'Failed to save facts. You can try again later.';
+        ? (err.response?.data?.error as string) || 'Failed to start interview.'
+        : 'Failed to start interview.';
+      setError(message);
+      setPhase('idle');
+    }
+  }, [restaurantName, city, country, website]);
+
+  // Send a message in the interview
+  async function sendMessage(text: string) {
+    if (!sessionId || !text.trim() || isSending) return;
+
+    const userMsg = text.trim();
+    setInput('');
+    setQuickReplies([]);
+    setMessages((prev) => [...prev, { role: 'user', content: userMsg }]);
+    setIsSending(true);
+    setError(null);
+
+    try {
+      const res = await api.post<ChatResponse>('/restaurant-learning/chat', {
+        session_id: sessionId,
+        message: userMsg,
+      });
+
+      setMessages((prev) => [...prev, { role: 'assistant', content: res.data.ai_message }]);
+      setCompletionPct(res.data.completion_percentage);
+      if (res.data.current_topic_label) setCurrentTopic(res.data.current_topic_label);
+      if (res.data.quick_replies) setQuickReplies(res.data.quick_replies);
+
+      if (res.data.is_complete) {
+        // Auto-generate persona
+        setPhase('generating');
+        try {
+          await api.post('/restaurant-learning/generate-persona', { session_id: sessionId });
+          setPhase('complete');
+        } catch {
+          // Persona generation failed but interview data is saved
+          setPhase('complete');
+        }
+      }
+    } catch (err: unknown) {
+      const message = axios.isAxiosError(err)
+        ? (err.response?.data?.error as string) || 'Failed to send message.'
+        : 'Failed to send message.';
       setError(message);
     } finally {
-      setIsLoading(false);
+      setIsSending(false);
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   }
 
-  // Success state
-  if (factsStored !== null) {
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(input);
+    }
+  }
+
+  // ── Idle state: start button ──
+  if (phase === 'idle') {
+    return (
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="space-y-6"
+      >
+        <div>
+          <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">
+            Teach Your AI
+          </h2>
+          <p className="text-stone-gray text-sm">
+            Have a quick conversation with our AI so it truly understands your restaurant's
+            personality, cuisine, and what makes you special. This takes about 5 minutes.
+          </p>
+        </div>
+
+        <div className="bg-burgundy/5 border border-burgundy/10 rounded-xl p-5 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-burgundy/10 rounded-full flex items-center justify-center">
+              <ThiingsIcon name="chat" pxSize={20} className="text-burgundy" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-deep-charcoal">Interactive Interview</p>
+              <p className="text-xs text-stone-gray">12 topics covering cuisine, atmosphere, team, goals & more</p>
+            </div>
+          </div>
+          <p className="text-xs text-stone-gray">
+            Your answers train both the AI receptionist (voice agent) and the AI manager (dashboard chat).
+            The more you share, the better they represent your restaurant.
+          </p>
+        </div>
+
+        {error && (
+          <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700">
+            <ThiingsIcon name="alert-circle" pxSize={16} className="flex-shrink-0 mt-0.5" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <div className="flex justify-between pt-2">
+          <button
+            type="button"
+            onClick={onNext}
+            className="text-sm text-warm-stone hover:text-deep-charcoal transition-colors"
+          >
+            Skip for now
+          </button>
+          <button
+            type="button"
+            onClick={startInterview}
+            className="px-6 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl flex items-center gap-2 transition-all duration-300"
+          >
+            <ThiingsIcon name="chat" pxSize={16} />
+            Start Interview
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // ── Researching state ──
+  if (phase === 'researching') {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex flex-col items-center justify-center py-16 space-y-4"
+      >
+        <div className="w-12 h-12 border-3 border-burgundy/20 border-t-burgundy rounded-full animate-spin" />
+        <p className="text-sm text-stone-gray">Researching your restaurant...</p>
+        <p className="text-xs text-muted-stone">Finding info online to personalize the conversation</p>
+      </motion.div>
+    );
+  }
+
+  // ── Complete state ──
+  if (phase === 'complete') {
     return (
       <motion.div
         initial={{ opacity: 0, x: 20 }}
@@ -108,14 +238,14 @@ export default function Step5TeachAI({ restaurantId: _restaurantId, onNext }: St
           <div className="w-20 h-20 bg-burgundy/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <ThiingsIcon name="check-circle" pxSize={40} className="text-burgundy" />
           </div>
-          <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">Your AI is ready!</h2>
+          <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">
+            Your AI knows your restaurant!
+          </h2>
           <p className="text-stone-gray text-sm mb-1">
-            {factsStored > 0
-              ? `${factsStored} fact${factsStored !== 1 ? 's' : ''} saved to your AI manager.`
-              : 'Your answers have been saved to your AI manager.'}
+            Your AI receptionist and manager are now personalized with your restaurant's identity.
           </p>
           <p className="text-stone-gray text-sm">
-            You can teach it more anytime from the dashboard.
+            You can refine this anytime from the dashboard.
           </p>
         </div>
 
@@ -131,95 +261,152 @@ export default function Step5TeachAI({ restaurantId: _restaurantId, onNext }: St
     );
   }
 
+  // ── Generating state ──
+  if (phase === 'generating') {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex flex-col items-center justify-center py-16 space-y-4"
+      >
+        <div className="w-12 h-12 border-3 border-burgundy/20 border-t-burgundy rounded-full animate-spin" />
+        <p className="text-sm text-stone-gray">Generating your AI persona...</p>
+        <p className="text-xs text-muted-stone">Building a unique personality from your answers</p>
+      </motion.div>
+    );
+  }
+
+  // ── Chat state ──
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      className="space-y-6"
+      className="flex flex-col h-[520px]"
     >
-      <div>
-        <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">Teach Your AI</h2>
-        <p className="text-stone-gray text-sm">
-          Answer a few questions so your AI assistant understands your restaurant. All fields are optional.
-        </p>
-      </div>
-
-      {/* Interview questions */}
-      <div className="space-y-4">
-        {INTERVIEW_QUESTIONS.map((question, index) => (
-          <div key={index}>
-            <label className="block text-sm font-medium text-deep-charcoal mb-1.5">
-              {question}
-            </label>
-            <textarea
-              className="w-full border border-border-gray rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy resize-none bg-white placeholder:text-muted-stone transition-colors"
-              rows={2}
-              placeholder="Optional — skip if you prefer"
-              value={answers[index] ?? ''}
-              onChange={(e) => updateAnswer(index, e.target.value)}
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* Document upload */}
-      <div>
-        <label htmlFor="step5-doc-upload" className="block text-sm font-medium text-deep-charcoal mb-1.5">
-          Upload a document (menu, policy, etc.) — optional
-        </label>
-        <input
-          id="step5-doc-upload"
-          type="file"
-          accept=".pdf,.txt,.md,.csv"
-          className="text-sm text-stone-gray file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-soft-gray file:text-deep-charcoal hover:file:bg-border-gray cursor-pointer"
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-        />
-        {file && (
-          <p className="text-xs text-stone-gray mt-1">Selected: {file.name}</p>
+      {/* Header with progress */}
+      <div className="flex-shrink-0 mb-3">
+        <div className="flex items-center justify-between mb-1.5">
+          <h2 className="font-serif text-lg font-bold text-deep-charcoal">Teach Your AI</h2>
+          <span className="text-xs text-stone-gray">{completionPct}% complete</span>
+        </div>
+        <div className="w-full bg-soft-gray rounded-full h-1.5">
+          <div
+            className="bg-burgundy h-1.5 rounded-full transition-all duration-500"
+            style={{ width: `${completionPct}%` }}
+          />
+        </div>
+        {currentTopic && (
+          <p className="text-xs text-muted-stone mt-1">Topic: {currentTopic}</p>
         )}
       </div>
 
-      {/* Error message */}
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto space-y-3 pr-1 mb-3">
+        {messages.map((msg, i) => (
+          <div
+            key={i}
+            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
+            <div
+              className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                msg.role === 'user'
+                  ? 'bg-burgundy text-white rounded-br-md'
+                  : 'bg-soft-gray text-deep-charcoal rounded-bl-md'
+              }`}
+            >
+              {msg.content}
+            </div>
+          </div>
+        ))}
+
+        {isSending && (
+          <div className="flex justify-start">
+            <div className="bg-soft-gray rounded-2xl rounded-bl-md px-4 py-3">
+              <div className="flex gap-1">
+                <span className="w-1.5 h-1.5 bg-stone-gray rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1.5 h-1.5 bg-stone-gray rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1.5 h-1.5 bg-stone-gray rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div ref={chatEndRef} />
+      </div>
+
+      {/* Quick replies */}
+      {quickReplies.length > 0 && !isSending && (
+        <div className="flex-shrink-0 flex flex-wrap gap-1.5 mb-2">
+          {quickReplies.map((reply, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => sendMessage(reply)}
+              className="px-3 py-1.5 text-xs bg-white border border-border-gray rounded-full text-deep-charcoal hover:bg-soft-gray transition-colors"
+            >
+              {reply}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Input */}
+      <div className="flex-shrink-0 flex items-end gap-2">
+        <textarea
+          ref={inputRef}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={isSending}
+          placeholder="Type your answer..."
+          rows={1}
+          className="flex-1 border border-border-gray rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy resize-none bg-white placeholder:text-muted-stone transition-colors disabled:opacity-50"
+        />
+        <button
+          type="button"
+          onClick={() => sendMessage(input)}
+          disabled={isSending || !input.trim()}
+          className="px-3 py-2.5 bg-burgundy hover:bg-burgundy-dark disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200"
+        >
+          <ThiingsIcon name="send" pxSize={16} />
+        </button>
+      </div>
+
+      {/* Error */}
       {error && (
-        <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700">
-          <ThiingsIcon name="alert-circle" pxSize={16} className="flex-shrink-0 mt-0.5" />
+        <div className="flex-shrink-0 mt-2 flex items-start gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">
+          <ThiingsIcon name="alert-circle" pxSize={14} className="flex-shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
 
-      {/* Actions */}
-      <div className="flex justify-between pt-2">
+      {/* Skip option */}
+      <div className="flex-shrink-0 flex justify-between items-center mt-2">
         <button
           type="button"
           onClick={onNext}
-          disabled={isLoading}
-          className="text-sm text-warm-stone hover:text-deep-charcoal transition-colors disabled:opacity-50"
+          disabled={isSending}
+          className="text-xs text-warm-stone hover:text-deep-charcoal transition-colors disabled:opacity-50"
         >
-          Skip for now
+          Skip & finish later
         </button>
-
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isLoading || (!hasAnyAnswer && !file)}
-          className="px-6 py-2.5 bg-burgundy hover:bg-burgundy-dark disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl flex items-center gap-2 transition-all duration-300"
-        >
-          {isLoading ? (
-            <>
-              <div
-                aria-hidden="true"
-                className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
-              />
-              Saving...
-            </>
-          ) : (
-            <>
-              <ThiingsIcon name="brain" pxSize={16} />
-              Teach AI &amp; Continue
-            </>
-          )}
-        </button>
+        {completionPct >= 60 && (
+          <button
+            type="button"
+            onClick={async () => {
+              setPhase('generating');
+              try {
+                await api.post('/restaurant-learning/generate-persona', { session_id: sessionId });
+              } catch {
+                // Best effort
+              }
+              setPhase('complete');
+            }}
+            className="text-xs text-burgundy hover:text-burgundy-dark font-medium transition-colors"
+          >
+            Finish early & generate persona
+          </button>
+        )}
       </div>
     </motion.div>
   );
