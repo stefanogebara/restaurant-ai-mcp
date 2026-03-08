@@ -269,7 +269,7 @@ async function handleTemplateStatus(req, res) {
     });
   }
 
-  const token = process.env.WHATSAPP_TOKEN || process.env.META_WHATSAPP_TOKEN;
+  const token = process.env.WHATSAPP_ACCESS_TOKEN || process.env.WHATSAPP_TOKEN || process.env.META_WHATSAPP_TOKEN;
   if (!token) {
     return res.status(200).json({
       success: true,
