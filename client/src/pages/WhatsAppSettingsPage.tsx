@@ -47,7 +47,7 @@ function WhatsAppTemplateStatusPanel() {
   const { data, isLoading } = useQuery({
     queryKey: ['whatsapp-template-status'],
     queryFn: async (): Promise<{ success: boolean; templates: TemplateStatus[]; missing_env?: boolean; message?: string }> => {
-      const res = await authFetch('/whatsapp-settings?action=template_status');
+      const res = await authFetch('/api/whatsapp-settings?action=template_status');
       return res.json();
     },
     staleTime: 5 * 60 * 1000,
