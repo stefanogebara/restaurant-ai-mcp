@@ -228,7 +228,7 @@ async function calculateAnalytics(restaurantId, period = '30d', startDate = null
         avg_service_time_minutes: Math.round(avgServiceTime),
         total_capacity: totalCapacity,
         current_occupancy: currentOccupancy,
-        current_occupancy_percentage: ((currentOccupancy / totalCapacity) * 100).toFixed(1)
+        current_occupancy_percentage: totalCapacity > 0 ? ((currentOccupancy / totalCapacity) * 100).toFixed(1) : '0.0'
       },
       reservations_by_status: statusCounts,
       reservations_by_day: dayOfWeekCounts,
