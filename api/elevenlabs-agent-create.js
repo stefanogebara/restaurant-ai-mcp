@@ -20,6 +20,8 @@ const { verifyAuth } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { buildPersonaPrompt } = require('./_lib/persona-prompt-builder');
+const { refreshVoiceAgentPrompt } = require('./services/voiceAgentService');
 const logger = createSecureLogger('ElevenLabsAgentCreate');
 
 module.exports = async (req, res) => {
@@ -152,15 +154,23 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Build custom system prompt for single restaurant
-    systemPrompt = buildSystemPrompt({
+    // Fetch full restaurant_config for persona-aware prompt
+    const { data: restaurantConfig } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('*')
+      .eq('id', restaurant_id)
+      .maybeSingle();
+
+    // Build hyper-personalized system prompt (falls back to basics if no config yet)
+    const configForPrompt = restaurantConfig || {
       restaurant_name,
-      language,
-      business_hours,
-      custom_greeting,
       phone,
-      address
-    });
+      address,
+      business_hours,
+      language
+    };
+    systemPrompt = buildPersonaPrompt(configForPrompt, { channel: 'voice' });
 
     // Build first message
     firstMessage = buildFirstMessage({
@@ -241,6 +251,11 @@ module.exports = async (req, res) => {
           .eq('id', restaurant_id);
 
         logger.info(`Saved agent_id to restaurant_config for restaurant: ${restaurant_id}`);
+
+        // Refresh prompt with full restaurant persona (fire-and-forget)
+        refreshVoiceAgentPrompt(restaurant_id).catch(err =>
+          logger.error('Voice prompt refresh failed after agent create:', err.message)
+        );
       } catch (dbError) {
         logger.error('Failed to save agent_id to restaurant_config — agent exists in ElevenLabs but is unlinked:', dbError.message);
       }

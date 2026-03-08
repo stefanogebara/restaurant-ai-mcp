@@ -56,10 +56,12 @@ module.exports = async (req, res) => {
         return await handleUpdate(req, res, restaurantId);
       case 'test':
         return await handleTest(req, res, restaurantId);
+      case 'template_status':
+        return await handleTemplateStatus(req, res);
       default:
         return res.status(400).json({
           success: false,
-          error: 'Invalid action. Use: status, stats, update, test'
+          error: 'Invalid action. Use: status, stats, update, test, template_status'
         });
     }
   } catch (error) {
@@ -243,4 +245,53 @@ async function handleTest(req, res, restaurantId) {
     message: 'Test message sent successfully',
     messageId: result.messageId,
   });
+}
+
+// ============================================================
+// GET ?action=template_status
+// ============================================================
+const OUR_TEMPLATES = [
+  'seatable_feedback_request',
+  'seatable_reengagement',
+  'seatable_birthday',
+  'seatable_promotion'
+];
+
+async function handleTemplateStatus(req, res) {
+  const wabaId = process.env.WHATSAPP_WABA_ID;
+
+  if (!wabaId) {
+    return res.status(200).json({
+      success: true,
+      templates: [],
+      missing_env: true,
+      message: 'Add WHATSAPP_WABA_ID to your Vercel environment variables'
+    });
+  }
+
+  const token = process.env.WHATSAPP_TOKEN || process.env.META_WHATSAPP_TOKEN;
+  if (!token) {
+    return res.status(200).json({
+      success: true,
+      templates: [],
+      missing_env: true,
+      message: 'Add WHATSAPP_TOKEN (or META_WHATSAPP_TOKEN) to your Vercel environment variables'
+    });
+  }
+
+  const resp = await fetch(
+    `https://graph.facebook.com/v19.0/${wabaId}/message_templates?fields=name,status,category&limit=50`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+
+  if (!resp.ok) {
+    const errText = await resp.text();
+    logger.error('[WhatsAppSettings] Template status fetch failed:', resp.status, errText);
+    return res.status(200).json({ success: false, templates: [], error: `Meta API error: ${resp.status}` });
+  }
+
+  const data = await resp.json();
+  const templates = (data.data || []).filter(t => OUR_TEMPLATES.includes(t.name));
+
+  return res.status(200).json({ success: true, templates });
 }

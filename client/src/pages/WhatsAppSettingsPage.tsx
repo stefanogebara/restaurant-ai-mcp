@@ -1,16 +1,106 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import ManagerNotificationsPanel from '../components/dashboard/ManagerNotificationsPanel';
 import StaffingSettingsPanel from '../components/dashboard/StaffingSettingsPanel';
 import DepositSettingsPanel from '../components/settings/DepositSettingsPanel';
 import FeedbackSettingsPanel from '../components/dashboard/FeedbackSettingsPanel';
+import { authFetch } from '../services/api';
 import {
   useWhatsAppStatus,
   useWhatsAppStats,
   useSaveWhatsAppSettings,
   useSendTestMessage,
 } from '../hooks/useWhatsAppSettings';
+
+interface TemplateStatus {
+  name: string;
+  status: string;
+  category: string;
+}
+
+const TEMPLATE_LABELS: Record<string, string> = {
+  seatable_feedback_request: 'Feedback Request',
+  seatable_reengagement: 'Re-engagement',
+  seatable_birthday: 'Birthday Greeting',
+  seatable_promotion: 'Promotion',
+};
+
+const STATUS_STYLES: Record<string, string> = {
+  APPROVED: 'bg-emerald-50 text-emerald-700',
+  PENDING: 'bg-amber-50 text-amber-700',
+  IN_REVIEW: 'bg-amber-50 text-amber-700',
+  REJECTED: 'bg-red-50 text-red-700',
+  PAUSED: 'bg-gray-100 text-gray-600',
+};
+
+const STATUS_DOT: Record<string, string> = {
+  APPROVED: 'bg-emerald-500',
+  PENDING: 'bg-amber-500',
+  IN_REVIEW: 'bg-amber-500',
+  REJECTED: 'bg-red-500',
+  PAUSED: 'bg-gray-400',
+};
+
+function WhatsAppTemplateStatusPanel() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['whatsapp-template-status'],
+    queryFn: async (): Promise<{ success: boolean; templates: TemplateStatus[]; missing_env?: boolean; message?: string }> => {
+      const res = await authFetch('/whatsapp-settings?action=template_status');
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const ALL_TEMPLATES = Object.keys(TEMPLATE_LABELS);
+
+  return (
+    <div className="bg-white border border-border-gray rounded-2xl p-6 shadow-sm">
+      <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider mb-4">Message Templates</h2>
+
+      {isLoading && (
+        <div role="status" aria-label="Loading templates" className="animate-pulse space-y-3">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-8 bg-soft-gray rounded-lg" />)}
+        </div>
+      )}
+
+      {!isLoading && data?.missing_env && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
+          <p className="font-medium mb-1">Environment variable missing</p>
+          <p>{data.message}</p>
+          <p className="mt-2 text-xs text-amber-700">
+            Add <code className="bg-amber-100 px-1 rounded">WHATSAPP_WABA_ID</code> to your Vercel project settings,
+            then redeploy.
+          </p>
+        </div>
+      )}
+
+      {!isLoading && !data?.missing_env && (
+        <div className="space-y-2">
+          {ALL_TEMPLATES.map(name => {
+            const template = data?.templates?.find(t => t.name === name);
+            const status = template?.status || 'NOT_SUBMITTED';
+            const dotClass = STATUS_DOT[status] || 'bg-gray-300';
+            const badgeClass = STATUS_STYLES[status] || 'bg-gray-100 text-gray-600';
+            return (
+              <div key={name} className="flex items-center justify-between py-2 border-b border-border-gray last:border-0">
+                <div>
+                  <p className="text-sm font-medium text-deep-charcoal">{TEMPLATE_LABELS[name]}</p>
+                  <p className="text-xs text-warm-stone font-mono">{name}</p>
+                </div>
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${badgeClass}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${dotClass}`} />
+                  {status.replace(/_/g, ' ')}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function WhatsAppSettingsPage() {
   const { t } = useTranslation();
@@ -236,6 +326,9 @@ export default function WhatsAppSettingsPage() {
             </p>
           )}
         </div>
+
+        {/* WhatsApp Template Status */}
+        <WhatsAppTemplateStatusPanel />
 
         {/* Manager Notifications */}
         <ManagerNotificationsPanel />

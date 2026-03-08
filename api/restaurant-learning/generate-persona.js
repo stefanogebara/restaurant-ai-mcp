@@ -13,6 +13,7 @@ const { createSecureLogger } = require('../_lib/secure-logger');
 const { verifyAuth } = require('../_lib/auth');
 const { checkAndApplyRateLimit } = require('../_lib/rate-limit');
 const { generatePersona } = require('../services/personaGenerator');
+const { refreshVoiceAgentPrompt } = require('../services/voiceAgentService');
 
 const logger = createSecureLogger('GeneratePersona');
 
@@ -91,6 +92,11 @@ module.exports = async (req, res) => {
         .update({ learning_status: 'persona_generated' })
         .eq('id', restaurantId);
     }
+
+    // Sync voice agent prompt with new persona (fire-and-forget)
+    refreshVoiceAgentPrompt(restaurantId).catch(err =>
+      logger.error('Voice prompt refresh failed after persona generation:', err.message)
+    );
 
     logger.info('Persona generated successfully:', {
       session_id,

@@ -13,7 +13,7 @@ const logger = createSecureLogger('VoiceSettings');
 module.exports = async (req, res) => {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, PATCH, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
@@ -43,17 +43,33 @@ module.exports = async (req, res) => {
   requireFeature('voice_ai')(req, res, () => { featureAllowed = true; });
   if (!featureAllowed) return;
 
-  if (req.method === 'GET') {
+  if (req.method === 'POST' && req.query.action === 'refresh_prompt') {
+    return handleRefreshPrompt(req, res);
+  } else if (req.method === 'GET') {
     return handleGet(req, res);
   } else if (req.method === 'PATCH') {
     return handlePatch(req, res);
   } else {
     return res.status(405).json({
       success: false,
-      error: 'Method not allowed. Use GET or PATCH.'
+      error: 'Method not allowed. Use GET, PATCH, or POST?action=refresh_prompt.'
     });
   }
 };
+
+/**
+ * POST ?action=refresh_prompt — Re-sync ElevenLabs agent prompt with current restaurant persona.
+ */
+async function handleRefreshPrompt(req, res) {
+  try {
+    const { refreshVoiceAgentPrompt } = require('./services/voiceAgentService');
+    const result = await refreshVoiceAgentPrompt(req.user?.restaurant_id);
+    return res.status(200).json({ success: true, ...result });
+  } catch (error) {
+    logger.error('[VoiceSettings] refresh_prompt error:', error);
+    return res.status(500).json({ success: false, error: error.message || 'Failed to refresh prompt' });
+  }
+}
 
 /**
  * GET - Fetch current voice configuration from the ElevenLabs agent.
