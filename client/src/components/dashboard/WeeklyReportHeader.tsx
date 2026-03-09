@@ -10,11 +10,12 @@ interface WeeklyReportHeaderProps {
   onApply: () => void;
   onPrint: () => void;
   onRefresh: () => void;
+  onShare: () => void;
 }
 
 export default function WeeklyReportHeader({
   startDate, endDate, onStartDateChange, onEndDateChange,
-  onPrevious, onNext, onApply, onPrint, onRefresh,
+  onPrevious, onNext, onApply, onPrint, onRefresh, onShare,
 }: WeeklyReportHeaderProps) {
   const { t } = useTranslation();
 
@@ -49,7 +50,8 @@ export default function WeeklyReportHeader({
           {t('analytics.downloadPdf')}
         </button>
         <button
-          onClick={onRefresh}
+          type="button"
+          onClick={onShare}
           className="px-4 py-2 bg-burgundy text-white hover:bg-burgundy-dark rounded-xl text-[13px] font-medium transition-colors"
         >
           {t('analytics.shareReport')}

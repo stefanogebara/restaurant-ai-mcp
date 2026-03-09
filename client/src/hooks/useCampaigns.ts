@@ -38,7 +38,7 @@ export function useCampaignList() {
   return useQuery({
     queryKey: ['campaigns'],
     queryFn: async () => {
-      const res = await apiClient.get('/api/retention-campaigns?action=list&limit=50');
+      const res = await apiClient.get('/retention-campaigns?action=list&limit=50');
       return res.data.data.campaigns as Campaign[];
     },
     staleTime: 2 * 60 * 1000,
@@ -49,7 +49,7 @@ export function useCampaignDeliveryStats(campaignId: string | null) {
   return useQuery({
     queryKey: ['campaign-stats', campaignId],
     queryFn: async () => {
-      const res = await apiClient.get(`/api/retention-campaigns?action=campaign_stats&campaign_id=${campaignId}`);
+      const res = await apiClient.get(`/retention-campaigns?action=campaign_stats&campaign_id=${campaignId}`);
       return res.data.data as CampaignDeliveryStats;
     },
     enabled: !!campaignId,
@@ -61,7 +61,7 @@ export function useSegmentCounts() {
   return useQuery({
     queryKey: ['segment-counts'],
     queryFn: async () => {
-      const res = await apiClient.get('/api/retention-campaigns?action=segments');
+      const res = await apiClient.get('/retention-campaigns?action=segments');
       return res.data.data as SegmentCounts;
     },
     staleTime: 5 * 60 * 1000,
@@ -77,7 +77,7 @@ export function useCreateWhatsAppCampaign() {
       campaign_type?: string;
       scheduled_at?: string;
     }) => {
-      const res = await apiClient.post('/api/retention-campaigns?action=create_whatsapp', data);
+      const res = await apiClient.post('/retention-campaigns?action=create_whatsapp', data);
       return res.data;
     },
     onSuccess: () => {
@@ -90,7 +90,7 @@ export function useSendCampaignNow() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (campaignId: string) => {
-      const res = await apiClient.post('/api/retention-campaigns?action=send', { campaign_id: campaignId });
+      const res = await apiClient.post('/retention-campaigns?action=send', { campaign_id: campaignId });
       return res.data;
     },
     onSuccess: () => {

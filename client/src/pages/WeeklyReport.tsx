@@ -57,6 +57,23 @@ export default function WeeklyReport() {
     setEndDate(newEnd.toISOString().split('T')[0]);
   };
 
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `Weekly Report ${startDate} – ${endDate}`, url });
+      } catch {
+        // user cancelled or share failed — fall through to clipboard
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        // clipboard not available — silent fail
+      }
+    }
+  };
+
   if (!can('viewAnalytics')) {
     return (
       <DashboardLayout>
@@ -155,6 +172,7 @@ export default function WeeklyReport() {
             onApply={() => refetch()}
             onPrint={() => window.print()}
             onRefresh={() => refetch()}
+            onShare={handleShare}
           />
           <WeeklyReportSummaryCards summary={report.summary} />
           <WeeklyBusiestTimesChart times={report.busiest.times} />

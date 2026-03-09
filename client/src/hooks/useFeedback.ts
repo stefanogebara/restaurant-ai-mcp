@@ -26,7 +26,7 @@ export function useFeedbackStats(range = '7d') {
   return useQuery({
     queryKey: ['feedback-stats', range],
     queryFn: async () => {
-      const res = await apiClient.get(`/api/guest-feedback?action=stats&range=${range}`);
+      const res = await apiClient.get(`/guest-feedback?action=stats&range=${range}`);
       return res.data.data as FeedbackStats;
     },
     staleTime: 5 * 60 * 1000,
@@ -37,7 +37,7 @@ export function useFeedbackConfig() {
   return useQuery({
     queryKey: ['feedback-config'],
     queryFn: async () => {
-      const res = await apiClient.get('/api/guest-feedback?action=config');
+      const res = await apiClient.get('/guest-feedback?action=config');
       return res.data.data as FeedbackConfig;
     },
     staleTime: 10 * 60 * 1000,
@@ -48,7 +48,7 @@ export function useUpdateFeedbackConfig() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (config: Partial<FeedbackConfig>) => {
-      const res = await apiClient.patch('/api/guest-feedback?action=config', config);
+      const res = await apiClient.patch('/guest-feedback?action=config', config);
       return res.data.data as FeedbackConfig;
     },
     onSuccess: () => {
