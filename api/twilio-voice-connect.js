@@ -150,6 +150,18 @@ async function lookupRestaurantByPhone(phoneNumber) {
       .maybeSingle());
   }
 
+  // If still not found, try matching against ai_config.phone.number (Twilio AI number)
+  if (!data && !error) {
+    ({ data, error } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('id, restaurant_name, phone, voice_engine, voice_engine_status, voice_ws_endpoint, elevenlabs_agent_id, ai_config')
+      .filter('ai_config->phone->>number', 'eq', normalizedPhone)
+      .eq('is_active', true)
+      .limit(1)
+      .maybeSingle());
+  }
+
   if (error) {
     logger.error('Restaurant lookup error:', { message: error.message });
     return null;
