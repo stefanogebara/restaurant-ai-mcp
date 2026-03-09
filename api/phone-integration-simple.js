@@ -147,13 +147,12 @@ async function handleRegister(req, res) {
   // Use the resolved agent ID going forward
   restaurant.elevenlabs_agent_id = agentId;
 
-  // Update status to pending
+  // Update status to pending (stored in ai_config.phone to avoid schema migration dependency)
   await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
     .update({
-      phone_integration_status: 'pending',
-      phone_integration_error: null,
+      ai_config: { ...(restaurant.ai_config || {}), phone: { status: 'pending' } },
       updated_at: new Date().toISOString()
     })
     .eq('id', restaurant_id);
@@ -298,17 +297,20 @@ async function handleRegister(req, res) {
       logger.warn(`Auto tool creation failed: ${toolErr.message}. Phone registration will continue.`);
     }
 
-    // Step 4: Save successful configuration
+    // Step 4: Save successful configuration (stored in ai_config.phone)
     await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
       .update({
-        twilio_phone_number: PLATFORM_TWILIO_NUMBER,
-        elevenlabs_phone_number_id: phoneNumberId,
-        elevenlabs_phone_number: PLATFORM_TWILIO_NUMBER,
-        phone_integration_status: 'active',
-        phone_integration_error: null,
-        phone_configured_at: new Date().toISOString(),
+        ai_config: {
+          ...(restaurant.ai_config || {}),
+          phone: {
+            status: 'active',
+            number: PLATFORM_TWILIO_NUMBER,
+            number_id: phoneNumberId,
+            configured_at: new Date().toISOString()
+          }
+        },
         updated_at: new Date().toISOString()
       })
       .eq('id', restaurant_id);
@@ -354,16 +356,17 @@ async function handleUnregister(req, res) {
     });
   }
 
-  // Clear phone fields from restaurant (but don't delete from ElevenLabs - reusable)
+  // Clear phone status from ai_config (but don't delete from ElevenLabs - reusable)
+  const { data: currentConfig } = await supabaseAdmin
+    .schema('restaurant').from('restaurant_config')
+    .select('ai_config').eq('id', restaurant_id).single();
+  const currentAiConfig = currentConfig?.ai_config || {};
+  const { phone: _removedPhone, ...aiConfigWithoutPhone } = currentAiConfig;
   await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
     .update({
-      twilio_phone_number: null,
-      elevenlabs_phone_number: null,
-      phone_integration_status: 'not_configured',
-      phone_integration_error: null,
-      phone_configured_at: null,
+      ai_config: aiConfigWithoutPhone,
       updated_at: new Date().toISOString()
     })
     .eq('id', restaurant_id);
@@ -404,24 +407,22 @@ async function handleStatus(req, res) {
   if (fetchError || !restaurant) {
     return res.status(404).json({
       success: false,
-      error: 'Restaurant not found',
-      debug_error: fetchError ? { message: fetchError.message, code: fetchError.code, details: fetchError.details } : null,
-      debug_restaurant: restaurant === null ? 'null' : 'undefined',
-      debug_id: restaurant_id
+      error: 'Restaurant not found'
     });
   }
 
+  const phoneInfo = restaurant.ai_config?.phone || {};
   return res.status(200).json({
     success: true,
     restaurant: {
       name: restaurant.restaurant_name,
       has_agent: !!restaurant.elevenlabs_agent_id,
       agent_id: restaurant.elevenlabs_agent_id,
-      phone_number: restaurant.elevenlabs_phone_number || restaurant.twilio_phone_number,
-      phone_number_id: restaurant.elevenlabs_phone_number_id,
-      status: restaurant.phone_integration_status || 'not_configured',
-      error: restaurant.phone_integration_error,
-      configured_at: restaurant.phone_configured_at
+      phone_number: phoneInfo.number || null,
+      phone_number_id: phoneInfo.number_id || null,
+      status: phoneInfo.status || 'not_configured',
+      error: phoneInfo.error || null,
+      configured_at: phoneInfo.configured_at || null
     },
     platform: {
       twilio_phone: PLATFORM_TWILIO_NUMBER
@@ -446,15 +447,16 @@ async function handleTestCall(req, res) {
   const { data: restaurant } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('restaurant_name, phone_integration_status, elevenlabs_agent_id')
+    .select('restaurant_name, ai_config, elevenlabs_agent_id')
     .eq('id', restaurant_id)
     .single();
 
-  if (!restaurant || restaurant.phone_integration_status !== 'active') {
+  const phoneStatus = restaurant?.ai_config?.phone?.status;
+  if (!restaurant || phoneStatus !== 'active') {
     return res.status(400).json({
       success: false,
       error: 'Restaurant phone integration not active. Register first.',
-      status: restaurant?.phone_integration_status
+      status: phoneStatus || 'not_configured'
     });
   }
 
@@ -792,15 +794,20 @@ async function createAndAssignTools(restaurant_id, agent_id) {
 }
 
 /**
- * Helper to update error status
+ * Helper to update error status (stored in ai_config.phone)
  */
 async function updateError(restaurant_id, errorMessage) {
+  const { data: current } = await supabaseAdmin
+    .schema('restaurant').from('restaurant_config')
+    .select('ai_config').eq('id', restaurant_id).single();
   await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
     .update({
-      phone_integration_status: 'error',
-      phone_integration_error: errorMessage,
+      ai_config: {
+        ...(current?.ai_config || {}),
+        phone: { status: 'error', error: errorMessage }
+      },
       updated_at: new Date().toISOString()
     })
     .eq('id', restaurant_id);
