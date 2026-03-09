@@ -58,7 +58,7 @@ async function handleGetCode(req, res) {
   const { data: config, error } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, referral_code')
+    .select('*')
     .eq('id', restaurantId)
     .single();
 
@@ -66,7 +66,7 @@ async function handleGetCode(req, res) {
     return res.status(404).json({ success: false, message: 'Restaurant not found' });
   }
 
-  let code = config.referral_code;
+  let code = config.referral_code || null;
 
   if (!code) {
     code = generateCode();
@@ -77,24 +77,17 @@ async function handleGetCode(req, res) {
       .eq('id', restaurantId);
 
     if (updateError) {
-      code = generateCode();
-      const { error: retryError } = await supabaseAdmin
-        .schema('restaurant')
-        .from('restaurant_config')
-        .update({ referral_code: code })
-        .eq('id', restaurantId);
-
-      if (retryError) {
-        logger.error('Failed to generate and persist referral code after retry:', retryError.message);
-        return res.status(500).json({ success: false, message: 'Could not generate referral code. Please try again.' });
-      }
+      // Column may not exist yet — return a temporary code without persisting
+      logger.warn('[Referral] Could not persist referral code (column may be missing):', updateError.message);
     }
   }
 
   const { data: referrals } = await supabaseAdmin
     .from('referrals')
     .select('status')
-    .eq('referral_code', code);
+    .eq('referral_code', code)
+    .throwOnError()
+    .catch(() => ({ data: [] }));
 
   const all = referrals || [];
   const pending   = all.filter(r => r.status === 'pending').length;

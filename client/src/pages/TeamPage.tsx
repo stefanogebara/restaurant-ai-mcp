@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePermission } from '../hooks/usePermission';
+import DashboardLayout from '../components/layout/DashboardLayout';
 import {
   useTeamMembers,
   useInviteTeamMember,
@@ -73,6 +74,7 @@ export default function TeamPage() {
   };
 
   return (
+    <DashboardLayout>
     <div className="max-w-2xl mx-auto py-8 px-4 space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-deep-charcoal">{t('team.title')}</h1>
@@ -177,5 +179,6 @@ export default function TeamPage() {
         </div>
       )}
     </div>
+    </DashboardLayout>
   );
 }

@@ -50,7 +50,7 @@ export default function VoiceCurrentCard({
                   </span>
                 </span>
               ) : (
-                savedVoiceName || savedVoiceId || 'No voice set'
+                savedVoiceName || (savedVoiceId ? `Voice ID: ${savedVoiceId.slice(0, 8)}…` : 'No voice set')
               )}
             </p>
             <div className="flex items-center gap-3 mt-1 text-sm text-stone-gray">

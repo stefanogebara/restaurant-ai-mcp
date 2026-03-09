@@ -3,6 +3,72 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 
+/** Render simple markdown: bold, tables, bullets, line breaks */
+function renderMarkdown(text: string) {
+  const lines = text.split('\n');
+  const elements: React.ReactNode[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    // Table block: lines that start and end with |
+    if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
+      const tableLines: string[] = [];
+      while (i < lines.length && lines[i].trim().startsWith('|')) {
+        tableLines.push(lines[i]);
+        i++;
+      }
+      // Filter separator rows (---|)
+      const rows = tableLines.filter(l => !l.match(/^\s*\|[\s\-|:]+\|\s*$/));
+      elements.push(
+        <table key={`t${i}`} className="text-xs border-collapse w-full my-1">
+          <tbody>
+            {rows.map((row, ri) => (
+              <tr key={ri} className={ri === 0 ? 'font-semibold border-b border-current' : ''}>
+                {row.split('|').filter((_, ci, arr) => ci > 0 && ci < arr.length - 1).map((cell, ci) => (
+                  <td key={ci} className="px-1 py-0.5 border-r border-current/20 last:border-0">{cell.trim()}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+      continue;
+    }
+    // Bullet list item
+    if (line.match(/^\s*[-*]\s+/)) {
+      const items: string[] = [];
+      while (i < lines.length && lines[i].match(/^\s*[-*]\s+/)) {
+        items.push(lines[i].replace(/^\s*[-*]\s+/, ''));
+        i++;
+      }
+      elements.push(
+        <ul key={`ul${i}`} className="list-disc list-inside my-1 space-y-0.5">
+          {items.map((item, ii) => <li key={ii}>{applyInline(item)}</li>)}
+        </ul>
+      );
+      continue;
+    }
+    // Empty line → spacer
+    if (line.trim() === '') {
+      elements.push(<div key={`sp${i}`} className="h-1" />);
+    } else {
+      elements.push(<p key={`p${i}`}>{applyInline(line)}</p>);
+    }
+    i++;
+  }
+  return <>{elements}</>;
+}
+
+function applyInline(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+}
+
 interface Message {
   role: 'manager' | 'assistant';
   content: string;
@@ -93,7 +159,7 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
         {messages.map((m, i) => (
           <div key={i} className={'flex ' + (m.role === 'manager' ? 'justify-end' : 'justify-start')}>
             <div className={'max-w-[80%] rounded-xl px-3 py-2 text-sm break-words ' + (m.role === 'manager' ? 'bg-burgundy text-white' : 'bg-soft-gray text-deep-charcoal')}>
-              {m.content}
+              {m.role === 'assistant' ? renderMarkdown(m.content) : m.content}
             </div>
           </div>
         ))}
