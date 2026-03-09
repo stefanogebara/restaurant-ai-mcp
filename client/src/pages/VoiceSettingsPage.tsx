@@ -33,6 +33,7 @@ import Spinner from '../components/common/Spinner';
 import ReferralWidget from '../components/dashboard/ReferralWidget';
 import VoicePersonaPanel from '../components/dashboard/VoicePersonaPanel';
 import EmbedSnippetPanel from '../components/dashboard/EmbedSnippetPanel';
+import PhoneIntegrationPanel from '../components/voice/PhoneIntegrationPanel';
 import { useQuery } from '@tanstack/react-query';
 import { authFetch } from '../services/api';
 
@@ -354,6 +355,7 @@ export default function VoiceSettingsPage() {
               )}
             </div>
           )}
+          <PhoneIntegrationPanel />
           <VoicePersonaPanel />
           {slug && <EmbedSnippetPanel slug={slug} />}
           <ReferralWidget />
