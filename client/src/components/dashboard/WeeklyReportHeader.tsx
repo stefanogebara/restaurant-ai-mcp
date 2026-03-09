@@ -9,13 +9,12 @@ interface WeeklyReportHeaderProps {
   onNext: () => void;
   onApply: () => void;
   onPrint: () => void;
-  onRefresh: () => void;
   onShare: () => void;
 }
 
 export default function WeeklyReportHeader({
   startDate, endDate, onStartDateChange, onEndDateChange,
-  onPrevious, onNext, onApply, onPrint, onRefresh, onShare,
+  onPrevious, onNext, onApply, onPrint, onShare,
 }: WeeklyReportHeaderProps) {
   const { t } = useTranslation();
 

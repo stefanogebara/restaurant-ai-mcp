@@ -171,7 +171,6 @@ export default function WeeklyReport() {
             onNext={handleNext}
             onApply={() => refetch()}
             onPrint={() => window.print()}
-            onRefresh={() => refetch()}
             onShare={handleShare}
           />
           <WeeklyReportSummaryCards summary={report.summary} />
