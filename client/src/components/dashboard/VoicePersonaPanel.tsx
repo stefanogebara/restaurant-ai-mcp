@@ -13,7 +13,7 @@ export default function VoicePersonaPanel() {
 
   const refreshMutation = useMutation({
     mutationFn: async () => {
-      const res = await authFetch('/elevenlabs-voice-settings?action=refresh_prompt', { method: 'POST' });
+      const res = await authFetch('/api/elevenlabs-voice-settings?action=refresh_prompt', { method: 'POST' });
       const data = await res.json();
       if (!data.success && !data.skipped) throw new Error(data.error || 'Refresh failed');
       return data;
