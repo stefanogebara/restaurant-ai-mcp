@@ -42,6 +42,7 @@ const DemoSetupPage = lazy(() => import('./pages/DemoSetupPage'));
 const DemoDashboard = lazy(() => import('./pages/DemoDashboard'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -132,6 +133,7 @@ function App() {
               <Route path="/host-dashboard/team" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/portfolio" element={<PortfolioPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             </Suspense>
