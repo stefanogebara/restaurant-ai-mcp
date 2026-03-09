@@ -77,10 +77,10 @@ async function handleRefreshPrompt(req, res) {
 async function handleGet(req, res) {
   try {
     const restaurantId = req.user?.restaurant_id;
-    // Get restaurant info to find agent_id — filter by restaurant_id for multi-tenancy
+    // Query restaurant_config (restaurant_id = restaurant_config.id)
     const { data: restaurant, error: dbError } = await supabaseAdmin
       .schema('restaurant')
-      .from('restaurant_info')
+      .from('restaurant_config')
       .select('id, elevenlabs_agent_id, agent_voice_id, agent_voice_name, agent_language, voice_settings, tts_model_id, agent_updated_at, restaurant_name')
       .eq('id', restaurantId)
       .maybeSingle();
@@ -88,6 +88,30 @@ async function handleGet(req, res) {
     if (dbError) {
       logger.error('[VoiceSettings] DB error fetching restaurant:', dbError);
       return res.status(500).json({ success: false, error: 'Database error' });
+    }
+
+    // If agent not in restaurant_config, fall back to restaurant_info by name
+    if (restaurant && !restaurant.elevenlabs_agent_id) {
+      const { data: infoRow } = await supabaseAdmin
+        .schema('restaurant').from('restaurant_info')
+        .select('elevenlabs_agent_id, agent_voice_id, agent_voice_name, agent_language, voice_settings, tts_model_id, agent_updated_at')
+        .eq('restaurant_name', restaurant.restaurant_name)
+        .maybeSingle();
+      if (infoRow?.elevenlabs_agent_id) {
+        // Sync to restaurant_config
+        await supabaseAdmin.schema('restaurant').from('restaurant_config')
+          .update({
+            elevenlabs_agent_id: infoRow.elevenlabs_agent_id,
+            agent_voice_id: infoRow.agent_voice_id,
+            agent_voice_name: infoRow.agent_voice_name,
+            agent_language: infoRow.agent_language || restaurant.agent_language,
+            voice_settings: infoRow.voice_settings,
+            tts_model_id: infoRow.tts_model_id,
+            agent_updated_at: infoRow.agent_updated_at
+          })
+          .eq('id', restaurantId);
+        Object.assign(restaurant, infoRow);
+      }
     }
 
     if (!restaurant || !restaurant.elevenlabs_agent_id) {
@@ -193,10 +217,10 @@ async function handlePatch(req, res) {
     } = req.body;
 
     const restaurantId = req.user?.restaurant_id;
-    // Get restaurant info — filter by restaurant_id for multi-tenancy
+    // Query restaurant_config (restaurant_id = restaurant_config.id)
     const { data: restaurant, error: dbError } = await supabaseAdmin
       .schema('restaurant')
-      .from('restaurant_info')
+      .from('restaurant_config')
       .select('id, elevenlabs_agent_id, agent_language, restaurant_name')
       .eq('id', restaurantId)
       .maybeSingle();
@@ -204,6 +228,20 @@ async function handlePatch(req, res) {
     if (dbError) {
       logger.error('[VoiceSettings] DB error on PATCH:', dbError);
       return res.status(500).json({ success: false, error: 'Database error' });
+    }
+
+    // Fallback to restaurant_info by name if agent not in restaurant_config
+    if (restaurant && !restaurant.elevenlabs_agent_id) {
+      const { data: infoRow } = await supabaseAdmin
+        .schema('restaurant').from('restaurant_info')
+        .select('elevenlabs_agent_id, agent_language')
+        .eq('restaurant_name', restaurant.restaurant_name).maybeSingle();
+      if (infoRow?.elevenlabs_agent_id) {
+        await supabaseAdmin.schema('restaurant').from('restaurant_config')
+          .update({ elevenlabs_agent_id: infoRow.elevenlabs_agent_id }).eq('id', restaurantId);
+        restaurant.elevenlabs_agent_id = infoRow.elevenlabs_agent_id;
+        restaurant.agent_language = restaurant.agent_language || infoRow.agent_language;
+      }
     }
 
     if (!restaurant || !restaurant.elevenlabs_agent_id) {
@@ -303,9 +341,9 @@ async function handlePatch(req, res) {
 
     const { error: updateError } = await supabaseAdmin
       .schema('restaurant')
-      .from('restaurant_info')
+      .from('restaurant_config')
       .update(dbUpdates)
-      .eq('id', restaurant.id);
+      .eq('id', restaurantId);
 
     if (updateError) {
       logger.error('[VoiceSettings PATCH] DB update error:', updateError);
