@@ -404,7 +404,10 @@ async function handleStatus(req, res) {
   if (fetchError || !restaurant) {
     return res.status(404).json({
       success: false,
-      error: 'Restaurant not found'
+      error: 'Restaurant not found',
+      debug_error: fetchError ? { message: fetchError.message, code: fetchError.code, details: fetchError.details } : null,
+      debug_restaurant: restaurant === null ? 'null' : 'undefined',
+      debug_id: restaurant_id
     });
   }
 
