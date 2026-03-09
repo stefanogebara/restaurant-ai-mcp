@@ -132,7 +132,26 @@ export default function FloorPlanEditor() {
   // ─── Drag handlers ────────────────────────────────────────────────────────────
 
   const handlePointerDown = useCallback((e: React.PointerEvent, table: Table) => {
-    if (linkMode) return;
+    if (linkMode) {
+      e.preventDefault(); e.stopPropagation();
+      // Handle link mode click via pointerdown — more reliable than onClick on SVG
+      if (!linkSource) {
+        setLinkSource(table.id);
+      } else if (linkSource !== table.id) {
+        const isLinked =
+          table.joinable_with?.includes(linkSource) ||
+          tables.find(t => t.id === linkSource)?.joinable_with?.includes(table.id);
+        showSaving();
+        const promise = isLinked
+          ? hostAPI.unlinkTables(linkSource, table.id)
+          : hostAPI.linkTables(linkSource, table.id);
+        promise
+          .then(() => { queryClient.invalidateQueries({ queryKey: ['floorPlanTables'] }); showSaved(); })
+          .catch(() => setSaveStatus('idle'));
+        setLinkSource(null);
+      }
+      return;
+    }
     e.preventDefault(); e.stopPropagation();
     (e.target as SVGElement).setPointerCapture?.(e.pointerId);
     const pt = svgPoint(e.clientX, e.clientY);
@@ -143,7 +162,7 @@ export default function FloorPlanEditor() {
     setDraggingId(table.id);
     setDragPos({ x: gx * CELL, y: gy * CELL });
     setSelectedTable(null);
-  }, [linkMode, svgPoint, autoPositions]);
+  }, [linkMode, linkSource, tables, svgPoint, autoPositions, queryClient, showSaving, showSaved]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!draggingId) return;
@@ -173,30 +192,10 @@ export default function FloorPlanEditor() {
   // ─── Table click ──────────────────────────────────────────────────────────────
 
   const handleTableClick = useCallback((e: React.MouseEvent, table: Table) => {
-    if (draggingId) return;
-
-    if (linkMode) {
-      if (!linkSource) {
-        setLinkSource(table.id);
-      } else if (linkSource !== table.id) {
-        const isLinked =
-          table.joinable_with?.includes(linkSource) ||
-          tables.find(t => t.id === linkSource)?.joinable_with?.includes(table.id);
-        showSaving();
-        const promise = isLinked
-          ? hostAPI.unlinkTables(linkSource, table.id)
-          : hostAPI.linkTables(linkSource, table.id);
-        promise
-          .then(() => { queryClient.invalidateQueries({ queryKey: ['floorPlanTables'] }); showSaved(); })
-          .catch(() => setSaveStatus('idle'));
-        setLinkSource(null);
-      }
-      return;
-    }
-
+    if (draggingId || linkMode) return; // link mode handled in handlePointerDown
     const rect = (e.currentTarget as SVGElement).getBoundingClientRect();
     setSelectedTable({ table, screenPos: { x: rect.right + 10, y: rect.top } });
-  }, [draggingId, linkMode, linkSource, tables, queryClient, showSaving, showSaved]);
+  }, [draggingId, linkMode]);
 
   // ─── CRUD ─────────────────────────────────────────────────────────────────────
 
