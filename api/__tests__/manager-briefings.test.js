@@ -1,6 +1,10 @@
 // mockSupabaseAdmin must be declared with var so it is hoisted above jest.mock() calls
 // (jest.mock factories run before const/let declarations are initialized)
-var mockSupabaseAdmin = { from: jest.fn() };
+var mockSchemaFrom = jest.fn();
+var mockSupabaseAdmin = {
+  from: jest.fn(),
+  schema: jest.fn().mockReturnValue({ from: mockSchemaFrom }),
+};
 var mockSendBriefing = jest.fn().mockResolvedValue(undefined);
 var mockGetVIPsForToday = jest.fn().mockResolvedValue([]);
 
@@ -43,7 +47,7 @@ beforeEach(() => {
 });
 
 it('sends end-of-day briefing to opted-in restaurants via sendBriefing', async () => {
-  mockSupabaseAdmin.from.mockReturnValue(mockChain([
+  mockSchemaFrom.mockReturnValue(mockChain([
     { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { end_of_day_briefing: true, briefing_channel: 'text' } },
   ]));
 
@@ -57,7 +61,7 @@ it('sends end-of-day briefing to opted-in restaurants via sendBriefing', async (
 });
 
 it('uses voice_note channel when briefing_channel is voice_note', async () => {
-  mockSupabaseAdmin.from.mockReturnValue(mockChain([
+  mockSchemaFrom.mockReturnValue(mockChain([
     { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { end_of_day_briefing: true, briefing_channel: 'voice_note' } },
   ]));
 
@@ -69,7 +73,7 @@ it('uses voice_note channel when briefing_channel is voice_note', async () => {
 });
 
 it('defaults to text channel when briefing_channel is not set', async () => {
-  mockSupabaseAdmin.from.mockReturnValue(mockChain([
+  mockSchemaFrom.mockReturnValue(mockChain([
     { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { end_of_day_briefing: true } },
   ]));
 
@@ -81,7 +85,7 @@ it('defaults to text channel when briefing_channel is not set', async () => {
 });
 
 it('skips restaurants without end_of_day_briefing preference', async () => {
-  mockSupabaseAdmin.from.mockReturnValue(mockChain([
+  mockSchemaFrom.mockReturnValue(mockChain([
     { id: 'rest-2', manager_phone: '+15559999999', notification_preferences: { end_of_day_briefing: false } },
   ]));
 
@@ -102,7 +106,7 @@ it('returns 401 for wrong CRON_SECRET', async () => {
 });
 
 it('sends morning briefing to opted-in restaurants', async () => {
-  mockSupabaseAdmin.from.mockReturnValue(mockChain([
+  mockSchemaFrom.mockReturnValue(mockChain([
     { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { morning_briefing: true, briefing_channel: 'phone_call' } },
   ]));
 
@@ -122,7 +126,7 @@ it('injects [VIP GUESTS TODAY] block in morning prompt when VIPs exist', async (
     { customer_name: 'Maria Sanchez', customer_tier: 'vip', total_visits: 22 },
     { customer_name: "John O'Brien", customer_tier: 'regular', total_visits: 8 },
   ]);
-  mockSupabaseAdmin.from.mockReturnValue(mockChain([
+  mockSchemaFrom.mockReturnValue(mockChain([
     { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { morning_briefing: true, briefing_channel: 'text' } },
   ]));
 
@@ -138,7 +142,7 @@ it('injects [VIP GUESTS TODAY] block in morning prompt when VIPs exist', async (
 
 it('uses base morning prompt when no VIPs today', async () => {
   mockGetVIPsForToday.mockResolvedValue([]);
-  mockSupabaseAdmin.from.mockReturnValue(mockChain([
+  mockSchemaFrom.mockReturnValue(mockChain([
     { id: 'rest-1', manager_phone: '+15551234567', notification_preferences: { morning_briefing: true, briefing_channel: 'text' } },
   ]));
 

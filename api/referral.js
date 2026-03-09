@@ -82,12 +82,16 @@ async function handleGetCode(req, res) {
     }
   }
 
-  const { data: referrals } = await supabaseAdmin
-    .from('referrals')
-    .select('status')
-    .eq('referral_code', code)
-    .throwOnError()
-    .catch(() => ({ data: [] }));
+  let referrals = [];
+  try {
+    const { data } = await supabaseAdmin
+      .from('referrals')
+      .select('status')
+      .eq('referral_code', code);
+    referrals = data || [];
+  } catch {
+    referrals = [];
+  }
 
   const all = referrals || [];
   const pending   = all.filter(r => r.status === 'pending').length;

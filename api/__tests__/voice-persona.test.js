@@ -31,7 +31,7 @@ const handler = require('../voice-persona');
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockVerifyJWT.mockReturnValue({ restaurantId: 'rest-1' });
+  mockVerifyJWT.mockReturnValue({ restaurant_id: 'rest-1' });
   mockSupabaseAdmin.schema = jest.fn().mockReturnValue(mockSupabaseAdmin);
   mockSupabaseAdmin.from.mockReturnValue(makeChain({ agent_name: 'Sofia', agent_greeting: 'Welcome!' }));
 });

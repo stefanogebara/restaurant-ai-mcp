@@ -18,7 +18,7 @@ const handler = require('../revenue-stats');
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockVerifyJWT.mockReturnValue({ restaurantId: 'rest-1' });
+  mockVerifyJWT.mockReturnValue({ restaurant_id: 'rest-1' });
 });
 
 it('GET returns avg_spend_per_cover and data_points from service_records', async () => {

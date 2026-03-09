@@ -335,6 +335,10 @@ export default function Onboarding() {
           {currentStep === 6 && (
             <Step6TeachAI
               restaurantId={onboardingData.restaurant_id}
+              restaurantName={onboardingData.restaurant_name}
+              city={onboardingData.city}
+              country={onboardingData.country}
+              website={onboardingData.website}
               onNext={() => setShowSuccessModal(true)}
             />
           )}

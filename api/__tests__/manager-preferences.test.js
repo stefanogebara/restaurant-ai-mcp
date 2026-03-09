@@ -35,7 +35,8 @@ const managerPrefs = require('../manager-preferences');
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockVerifyJWT.mockReturnValue({ restaurantId: 'rest-1' });
+  mockVerifyJWT.mockReturnValue({ restaurant_id: 'rest-1' });
+  mockSupabaseAdmin.schema = jest.fn().mockReturnValue(mockSupabaseAdmin);
 });
 
 it('GET returns notification_preferences', async () => {

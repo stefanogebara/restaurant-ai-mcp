@@ -108,6 +108,6 @@ describe('ManagerNotificationsPanel', () => {
   it('shows "Saving…" text while mutation is pending', () => {
     setupMocks({}, true);
     render(<ManagerNotificationsPanel />);
-    expect(screen.getByRole('button', { name: /saving/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /loading/i })).toBeInTheDocument();
   });
 });

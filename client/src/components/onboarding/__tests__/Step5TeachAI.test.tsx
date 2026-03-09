@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Step5TeachAI from '../Step5TeachAI';
+
+// Mock scrollIntoView (not available in jsdom)
+Element.prototype.scrollIntoView = vi.fn();
 
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => ({
@@ -17,7 +20,7 @@ vi.mock('../../common/ThiingsIcon', () => ({
   default: ({ name }: { name: string }) => <span data-testid={`icon-${name}`} />,
 }));
 
-// Mock the api service — pass arguments through so tests can inspect call args
+// Mock the api service
 const mockPost = vi.fn();
 vi.mock('../../../services/api', () => ({
   api: {
@@ -25,55 +28,32 @@ vi.mock('../../../services/api', () => ({
   },
 }));
 
-describe('Step5TeachAI', () => {
+describe('Step5TeachAI (Chat Interview)', () => {
   const defaultProps = {
     restaurantId: 'restaurant-123',
+    restaurantName: 'Test Bistro',
+    city: 'London',
+    country: 'UK',
     onNext: vi.fn(),
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockPost.mockResolvedValue({ data: { success: true, facts_stored: 3 } });
   });
 
-  it('renders the heading and description', () => {
+  it('renders the heading and description in idle state', () => {
     render(<Step5TeachAI {...defaultProps} />);
     expect(screen.getByText('Teach Your AI')).toBeInTheDocument();
-    expect(screen.getByText(/Answer a few questions/)).toBeInTheDocument();
+    expect(screen.getByText(/quick conversation/)).toBeInTheDocument();
   });
 
-  it('renders all interview questions as textarea labels', () => {
+  it('renders Start Interview and Skip buttons', () => {
     render(<Step5TeachAI {...defaultProps} />);
-    expect(screen.getByText("What's one thing you're most proud of about your restaurant?")).toBeInTheDocument();
-    expect(screen.getByText('What are your busiest days and times?')).toBeInTheDocument();
-    expect(screen.getByText('Do you have any signature dishes or specialties?')).toBeInTheDocument();
-    expect(screen.getByText("What's your approach to handling no-shows?")).toBeInTheDocument();
-    expect(screen.getByText('What would you like your AI assistant to help with most?')).toBeInTheDocument();
-  });
-
-  it('renders 5 textareas', () => {
-    render(<Step5TeachAI {...defaultProps} />);
-    const textareas = screen.getAllByRole('textbox');
-    expect(textareas).toHaveLength(5);
-  });
-
-  it('renders the skip button', () => {
-    render(<Step5TeachAI {...defaultProps} />);
+    expect(screen.getByRole('button', { name: /start interview/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /skip for now/i })).toBeInTheDocument();
   });
 
-  it('renders the submit button', () => {
-    render(<Step5TeachAI {...defaultProps} />);
-    expect(screen.getByRole('button', { name: /teach ai/i })).toBeInTheDocument();
-  });
-
-  it('submit button is disabled when no answers and no file', () => {
-    render(<Step5TeachAI {...defaultProps} />);
-    const submitBtn = screen.getByRole('button', { name: /teach ai/i });
-    expect(submitBtn).toBeDisabled();
-  });
-
-  it('clicking skip calls onNext without making an API call', async () => {
+  it('clicking skip calls onNext without API call', async () => {
     const user = userEvent.setup();
     render(<Step5TeachAI {...defaultProps} />);
 
@@ -83,135 +63,138 @@ describe('Step5TeachAI', () => {
     expect(mockPost).not.toHaveBeenCalled();
   });
 
-  it('enables submit button when at least one answer is typed', async () => {
-    const user = userEvent.setup();
-    render(<Step5TeachAI {...defaultProps} />);
-
-    const textareas = screen.getAllByRole('textbox');
-    await user.type(textareas[0], 'We have a great view');
-
-    expect(screen.getByRole('button', { name: /teach ai/i })).not.toBeDisabled();
-  });
-
-  it('shows loading state while submitting', async () => {
-    // Make the API call take a while
-    let resolve!: (value: unknown) => void;
-    mockPost.mockReturnValueOnce(new Promise((r) => { resolve = r; }));
+  it('shows researching state when Start Interview is clicked', async () => {
+    // Make the research call hang
+    mockPost.mockReturnValue(new Promise(() => {}));
 
     const user = userEvent.setup();
     render(<Step5TeachAI {...defaultProps} />);
 
-    const textareas = screen.getAllByRole('textbox');
-    await user.type(textareas[0], 'A cozy family restaurant');
+    await user.click(screen.getByRole('button', { name: /start interview/i }));
 
-    await user.click(screen.getByRole('button', { name: /teach ai/i }));
-
-    expect(screen.getByText('Saving...')).toBeInTheDocument();
-
-    // Resolve so the component can clean up
-    resolve({ data: { success: true, facts_stored: 2 } });
-    await waitFor(() => expect(screen.queryByText('Saving...')).not.toBeInTheDocument());
+    expect(screen.getByText(/researching your restaurant/i)).toBeInTheDocument();
   });
 
-  it('shows success state with fact count after submit', async () => {
-    mockPost.mockResolvedValue({ data: { success: true, facts_stored: 5 } });
+  it('shows chat UI after research completes', async () => {
+    mockPost.mockResolvedValueOnce({
+      data: {
+        success: true,
+        session_id: 'sess-123',
+        initial_ai_message: 'Tell me about your cuisine!',
+      },
+    });
 
     const user = userEvent.setup();
     render(<Step5TeachAI {...defaultProps} />);
 
-    const textareas = screen.getAllByRole('textbox');
-    await user.type(textareas[0], 'We serve the best tapas in town');
+    await user.click(screen.getByRole('button', { name: /start interview/i }));
 
-    fireEvent.click(screen.getByRole('button', { name: /teach ai/i }));
+    await waitFor(() => {
+      expect(screen.getByText('Tell me about your cuisine!')).toBeInTheDocument();
+    });
 
-    await waitFor(() => expect(screen.getByText('Your AI is ready!')).toBeInTheDocument());
-    expect(screen.getByText(/5 facts saved/)).toBeInTheDocument();
+    // Chat input should be visible
+    expect(screen.getByPlaceholderText(/type your answer/i)).toBeInTheDocument();
   });
 
-  it('shows singular "fact" when only 1 fact is stored', async () => {
-    mockPost.mockResolvedValue({ data: { success: true, facts_stored: 1 } });
+  it('calls research endpoint with restaurant data', async () => {
+    mockPost.mockResolvedValueOnce({
+      data: { success: true, session_id: 'sess-1', initial_ai_message: 'Hi!' },
+    });
 
     const user = userEvent.setup();
     render(<Step5TeachAI {...defaultProps} />);
 
-    const textareas = screen.getAllByRole('textbox');
-    await user.type(textareas[0], 'We close on Mondays');
+    await user.click(screen.getByRole('button', { name: /start interview/i }));
 
-    fireEvent.click(screen.getByRole('button', { name: /teach ai/i }));
-
-    await waitFor(() => expect(screen.getByText('Your AI is ready!')).toBeInTheDocument());
-    expect(screen.getByText(/1 fact saved/)).toBeInTheDocument();
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith(
+      '/restaurant-learning/research',
+      expect.objectContaining({
+        restaurant_name: 'Test Bistro',
+        city: 'London',
+        country: 'UK',
+      }),
+    ));
   });
 
-  it('shows Go to Dashboard button in success state and calls onNext on click', async () => {
+  it('sends user message and shows AI response', async () => {
+    // Research call
+    mockPost.mockResolvedValueOnce({
+      data: { success: true, session_id: 'sess-1', initial_ai_message: 'Hello!' },
+    });
+    // Chat call
+    mockPost.mockResolvedValueOnce({
+      data: {
+        success: true,
+        ai_message: 'Great answer! Tell me more.',
+        completion_percentage: 10,
+        is_complete: false,
+      },
+    });
+
     const user = userEvent.setup();
     render(<Step5TeachAI {...defaultProps} />);
 
-    const textareas = screen.getAllByRole('textbox');
-    await user.type(textareas[0], 'Our specialty is wood-fired pizza');
+    await user.click(screen.getByRole('button', { name: /start interview/i }));
+    await waitFor(() => screen.getByText('Hello!'));
 
-    fireEvent.click(screen.getByRole('button', { name: /teach ai/i }));
+    const input = screen.getByPlaceholderText(/type your answer/i);
+    await user.type(input, 'We serve Italian food');
+    await user.keyboard('{Enter}');
 
-    await waitFor(() => expect(screen.getByRole('button', { name: /go to dashboard/i })).toBeInTheDocument());
+    // User message should appear
+    expect(screen.getByText('We serve Italian food')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /go to dashboard/i }));
-    expect(defaultProps.onNext).toHaveBeenCalledTimes(1);
+    // AI response should appear
+    await waitFor(() => {
+      expect(screen.getByText('Great answer! Tell me more.')).toBeInTheDocument();
+    });
   });
 
-  it('shows error message and does not navigate when API fails', async () => {
-    mockPost.mockRejectedValue(new Error('Network error'));
+  it('shows error when research fails and returns to idle', async () => {
+    mockPost.mockRejectedValueOnce(new Error('Network error'));
 
     const user = userEvent.setup();
     render(<Step5TeachAI {...defaultProps} />);
 
-    const textareas = screen.getAllByRole('textbox');
-    await user.type(textareas[0], 'We are the best');
+    await user.click(screen.getByRole('button', { name: /start interview/i }));
 
-    fireEvent.click(screen.getByRole('button', { name: /teach ai/i }));
-
-    await waitFor(() => expect(screen.getByText('Network error')).toBeInTheDocument());
-    expect(defaultProps.onNext).not.toHaveBeenCalled();
-    // Form is still visible (not success state)
-    expect(screen.getByText('Teach Your AI')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/failed to start interview/i)).toBeInTheDocument();
+    });
+    // Should return to idle — start button visible again
+    expect(screen.getByRole('button', { name: /start interview/i })).toBeInTheDocument();
   });
 
-  it('renders file input for document upload', () => {
+  it('shows completion state when interview is done', async () => {
+    // Research call
+    mockPost.mockResolvedValueOnce({
+      data: { success: true, session_id: 'sess-1', initial_ai_message: 'Hello!' },
+    });
+    // Chat call — complete
+    mockPost.mockResolvedValueOnce({
+      data: {
+        success: true,
+        ai_message: 'All done!',
+        completion_percentage: 100,
+        is_complete: true,
+      },
+    });
+    // Persona generation
+    mockPost.mockResolvedValueOnce({ data: { success: true } });
+
+    const user = userEvent.setup();
     render(<Step5TeachAI {...defaultProps} />);
-    const fileInput = screen.getByLabelText(/upload a document/i);
-    expect(fileInput).toBeInTheDocument();
-    expect(fileInput).toHaveAttribute('type', 'file');
-    expect(fileInput).toHaveAttribute('accept', '.pdf,.txt,.md,.csv');
-  });
 
-  it('pairs answers with correct questions after filtering', async () => {
-    render(<Step5TeachAI restaurantId="rest-1" onNext={vi.fn()} />);
-    const textareas = screen.getAllByRole('textbox');
-    // Fill only the 4th question (index 3), leave others empty
-    await userEvent.type(textareas[3], 'We have a strict no-show policy');
+    await user.click(screen.getByRole('button', { name: /start interview/i }));
+    await waitFor(() => screen.getByText('Hello!'));
 
-    mockPost.mockResolvedValueOnce({ data: { facts_stored: 1 } });
-    fireEvent.click(screen.getByRole('button', { name: /teach/i }));
+    const input = screen.getByPlaceholderText(/type your answer/i);
+    await user.type(input, 'Final answer');
+    await user.keyboard('{Enter}');
 
-    await waitFor(() => expect(mockPost).toHaveBeenCalled());
-    // The second argument to post should be a FormData instance
-    const [, body] = mockPost.mock.calls[0] as [string, FormData];
-    expect(body).toBeInstanceOf(FormData);
-  });
-
-  it('enables submit when file selected but no text answers', () => {
-    render(<Step5TeachAI restaurantId="rest-1" onNext={vi.fn()} />);
-    const fileInput = screen.getByLabelText(/upload a document/i);
-    const file = new File(['menu content'], 'menu.pdf', { type: 'application/pdf' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
-    expect(screen.getByRole('button', { name: /teach/i })).not.toBeDisabled();
-  });
-
-  it('shows fallback text when facts_stored is 0', async () => {
-    render(<Step5TeachAI restaurantId="rest-1" onNext={vi.fn()} />);
-    const textareas = screen.getAllByRole('textbox');
-    await userEvent.type(textareas[0], 'Some info');
-    mockPost.mockResolvedValueOnce({ data: { facts_stored: 0 } });
-    fireEvent.click(screen.getByRole('button', { name: /teach/i }));
-    await waitFor(() => screen.getByText(/Your answers have been saved/i));
+    await waitFor(() => {
+      expect(screen.getByText(/your ai knows your restaurant/i)).toBeInTheDocument();
+    });
   });
 });

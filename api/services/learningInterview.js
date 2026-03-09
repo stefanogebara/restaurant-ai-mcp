@@ -65,7 +65,31 @@ const INTERVIEW_TOPICS = [
     id: 'things_to_know',
     label: 'Important Details',
     description: 'Things guests should know',
-    starter: "Finally, are there any important things that guests or the AI receptionist should always know? Dietary accommodations, parking tips, dress code, or any other details that come up often?"
+    starter: "Are there any important things that guests or the AI receptionist should always know? Dietary accommodations, parking tips, dress code, or any other details that come up often?"
+  },
+  {
+    id: 'operations_philosophy',
+    label: 'Operations Philosophy',
+    description: 'How you run your restaurant day-to-day',
+    starter: "Now let's talk about how you run things behind the scenes. What's your approach to managing a busy service? Any rituals, systems, or philosophies that keep your team in sync?"
+  },
+  {
+    id: 'team_culture',
+    label: 'Team Culture',
+    description: 'Your team dynamics and values',
+    starter: "Tell me about your team. What kind of culture have you built? How do you handle training, feedback, or team morale? What makes your staff stick around?"
+  },
+  {
+    id: 'business_goals',
+    label: 'Business Goals',
+    description: 'Where you want to take the restaurant',
+    starter: "What are your goals for the next 6-12 months? Are you looking to grow covers, improve margins, launch new concepts, or something else entirely?"
+  },
+  {
+    id: 'ai_expectations',
+    label: 'AI Expectations',
+    description: 'What you want from your AI manager',
+    starter: "Finally, what would make your AI manager truly valuable to you? What tasks drain your time the most? What decisions would you love help with? What would make you say 'this was worth it'?"
   }
 ];
 
@@ -438,6 +462,26 @@ function generateQuickReplies(topicId) {
       "We accommodate most dietary needs",
       "Parking can be tricky, so we always mention...",
       "We have a smart casual dress code"
+    ],
+    operations_philosophy: [
+      "We run tight pre-service briefings every day",
+      "Our kitchen and front-of-house communicate constantly",
+      "We rely on checklists and routines"
+    ],
+    team_culture: [
+      "We're like a family — everyone pitches in",
+      "We invest heavily in training and development",
+      "Low turnover is our biggest achievement"
+    ],
+    business_goals: [
+      "We want to grow covers without sacrificing quality",
+      "We're focused on improving margins this year",
+      "We're planning to expand or open a new location"
+    ],
+    ai_expectations: [
+      "Help me stay on top of no-shows and cancellations",
+      "I want daily insights without checking 10 reports",
+      "Help with staffing decisions and forecasting"
     ]
   };
 

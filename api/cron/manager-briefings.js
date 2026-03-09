@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
     const { data: configs } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, manager_phone, notification_preferences')
+      .select('id, manager_phone, notification_preferences, restaurant_name, restaurant_profile')
       .eq('manager_whatsapp_verified', true)
       .not('manager_phone', 'is', null);
 
@@ -36,6 +36,15 @@ module.exports = async (req, res) => {
     for (const config of eligible) {
       try {
         let promptToSend = prompt;
+
+        // Inject restaurant identity into briefing context
+        const profile = config.restaurant_profile;
+        if (profile?.communication_style?.tone) {
+          promptToSend += `\n\nAdapt your tone to: ${profile.communication_style.tone}.`;
+        }
+        if (config.restaurant_name) {
+          promptToSend += `\nRestaurant: ${config.restaurant_name}.`;
+        }
 
         if (type === 'morning') {
           const vips = await getVIPsForToday(config.id).catch(() => []);

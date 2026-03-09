@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { SidebarProvider } from '../../contexts/SidebarContext';
 
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({ user: { email: 'owner@test.com' }, role: 'owner' }),
@@ -28,7 +29,9 @@ function renderTeamPage() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter><TeamPage /></MemoryRouter>
+      <SidebarProvider>
+        <MemoryRouter><TeamPage /></MemoryRouter>
+      </SidebarProvider>
     </QueryClientProvider>,
   );
 }

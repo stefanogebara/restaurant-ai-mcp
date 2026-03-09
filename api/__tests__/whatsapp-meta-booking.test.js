@@ -2,6 +2,17 @@
 
 // ─── Mocks (hoisted before require) ───────────────────────────────────────────
 
+// Mock Anthropic SDK — messages.create is controlled per-test via mockAnthropicCreate
+const mockAnthropicCreate = jest.fn();
+jest.mock('@anthropic-ai/sdk', () => {
+  return {
+    __esModule: true,
+    default: jest.fn().mockImplementation(() => ({
+      messages: { create: mockAnthropicCreate },
+    })),
+  };
+});
+
 jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({
     info: jest.fn(),
@@ -213,41 +224,18 @@ function mockRes() {
   return res;
 }
 
-function aiToolCallResponse(name, args, id = 'call_1') {
+// Anthropic SDK response format helpers
+function anthropicToolCallResponse(name, args, id = 'call_1') {
   return {
-    ok: true,
-    json: async () => ({
-      choices: [{
-        finish_reason: 'tool_calls',
-        message: {
-          role: 'assistant',
-          content: null,
-          tool_calls: [{
-            id,
-            type: 'function',
-            function: {
-              name,
-              arguments: JSON.stringify(args),
-            },
-          }],
-        },
-      }],
-    }),
+    content: [{ type: 'tool_use', id, name, input: args }],
+    stop_reason: 'tool_use',
   };
 }
 
-function aiEndTurnResponse(text) {
+function anthropicEndTurnResponse(text) {
   return {
-    ok: true,
-    json: async () => ({
-      choices: [{
-        finish_reason: 'stop',
-        message: {
-          role: 'assistant',
-          content: text,
-        },
-      }],
-    }),
+    content: [{ type: 'text', text }],
+    stop_reason: 'end_turn',
   };
 }
 
@@ -292,6 +280,8 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
     });
     getOrCreateSession.mockResolvedValue(makeSession());
     getSessionByPhone.mockResolvedValue(makeSession());
+    // Default AI: end-turn response (overridden per test)
+    mockAnthropicCreate.mockResolvedValue(anthropicEndTurnResponse('Hello!'));
   });
 
   // ── 1. GET verification challenge ──────────────────────────────────────────
@@ -314,20 +304,17 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
   // ── 2. Full booking flow — restaurant in session ────────────────────────────
   it('completes full booking: check_availability → create_reservation → end_turn', async () => {
     let aiCallCount = 0;
-    global.fetch = jest.fn().mockImplementation(async (url) => {
-      if (url.includes('graph.facebook.com')) {
-        return metaApiOk();
-      }
+    mockAnthropicCreate.mockImplementation(async () => {
       aiCallCount++;
       if (aiCallCount === 1) {
-        return aiToolCallResponse('check_availability', {
+        return anthropicToolCallResponse('check_availability', {
           date: '2026-03-01',
           time: '19:00',
           party_size: 4,
         }, 'call_chk');
       }
       if (aiCallCount === 2) {
-        return aiToolCallResponse('create_reservation', {
+        return anthropicToolCallResponse('create_reservation', {
           customer_name: 'Test User',
           customer_phone: '+15551234567',
           date: '2026-03-01',
@@ -335,7 +322,11 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
           party_size: 4,
         }, 'call_res');
       }
-      return aiEndTurnResponse('Your table is booked for March 1st at 7pm!');
+      return anthropicEndTurnResponse('Your table is booked for March 1st at 7pm!');
+    });
+    global.fetch = jest.fn().mockImplementation(async (url) => {
+      if (url.includes('graph.facebook.com')) return metaApiOk();
+      return metaApiOk();
     });
 
     const req = mockReq('POST', {
@@ -394,18 +385,20 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
     });
 
     let aiCallCount = 0;
-    global.fetch = jest.fn().mockImplementation(async (url) => {
-      if (url.includes('graph.facebook.com')) return metaApiOk();
+    mockAnthropicCreate.mockImplementation(async () => {
       aiCallCount++;
       if (aiCallCount === 1) {
-        return aiToolCallResponse('check_availability', {
+        return anthropicToolCallResponse('check_availability', {
           date: '2026-03-01',
           time: '19:00',
           party_size: 4,
         });
       }
-      // After check_availability returns unavailable, AI sends a sorry message
-      return aiEndTurnResponse("Sorry, we don't have availability for that time.");
+      return anthropicEndTurnResponse("Sorry, we don't have availability for that time.");
+    });
+    global.fetch = jest.fn().mockImplementation(async (url) => {
+      if (url.includes('graph.facebook.com')) return metaApiOk();
+      return metaApiOk();
     });
 
     const req = mockReq('POST', {
@@ -463,15 +456,18 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
       .mockImplementationOnce(() => localBuilder(null));
 
     let aiCallCount = 0;
-    global.fetch = jest.fn().mockImplementation(async (url) => {
-      if (url.includes('graph.facebook.com')) return metaApiOk();
+    mockAnthropicCreate.mockImplementation(async () => {
       aiCallCount++;
       if (aiCallCount === 1) {
-        return aiToolCallResponse('cancel_reservation', {
+        return anthropicToolCallResponse('cancel_reservation', {
           reservation_id: 'RES-TEST-001',
         }, 'call_cancel');
       }
-      return aiEndTurnResponse('Your reservation RES-TEST-001 has been cancelled.');
+      return anthropicEndTurnResponse('Your reservation RES-TEST-001 has been cancelled.');
+    });
+    global.fetch = jest.fn().mockImplementation(async (url) => {
+      if (url.includes('graph.facebook.com')) return metaApiOk();
+      return metaApiOk();
     });
 
     const req = mockReq('POST', {
@@ -514,17 +510,20 @@ describe('whatsapp-webhook (Meta Cloud API)', () => {
       .mockImplementationOnce(() => localBuilder(updatedRes));
 
     let aiCallCount = 0;
-    global.fetch = jest.fn().mockImplementation(async (url) => {
-      if (url.includes('graph.facebook.com')) return metaApiOk();
+    mockAnthropicCreate.mockImplementation(async () => {
       aiCallCount++;
       if (aiCallCount === 1) {
-        return aiToolCallResponse('modify_reservation', {
+        return anthropicToolCallResponse('modify_reservation', {
           reservation_id: 'RES-TEST-001',
           new_date: '2026-03-08',
           new_time: '20:00',
         }, 'call_modify');
       }
-      return aiEndTurnResponse('Your reservation has been updated to March 8th at 8pm.');
+      return anthropicEndTurnResponse('Your reservation has been updated to March 8th at 8pm.');
+    });
+    global.fetch = jest.fn().mockImplementation(async (url) => {
+      if (url.includes('graph.facebook.com')) return metaApiOk();
+      return metaApiOk();
     });
 
     const req = mockReq('POST', {

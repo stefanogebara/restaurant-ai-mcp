@@ -11,7 +11,24 @@ jest.mock('../_lib/secure-logger', () => ({
 
 const { getRestaurantSnapshot } = require('../services/restaurantSnapshot');
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+  // Default: schema().from() returns appropriate chains per table
+  const emptyLtvChain = { select: jest.fn(), eq: jest.fn(), in: jest.fn() };
+  emptyLtvChain.select.mockReturnValue(emptyLtvChain);
+  emptyLtvChain.eq.mockReturnValue(emptyLtvChain);
+  emptyLtvChain.in.mockResolvedValue({ data: [], error: null });
+  const defaultConfigChain = { select: jest.fn(), eq: jest.fn(), single: jest.fn() };
+  defaultConfigChain.select.mockReturnValue(defaultConfigChain);
+  defaultConfigChain.eq.mockReturnValue(defaultConfigChain);
+  defaultConfigChain.single.mockResolvedValue({ data: { staffing_config: null }, error: null });
+  mockSchema.mockReturnValue({
+    from: jest.fn().mockImplementation((table) => {
+      if (table === 'restaurant_config') return defaultConfigChain;
+      return emptyLtvChain;
+    }),
+  });
+});
 
 function mockChain(data) {
   const chain = { select: jest.fn(), eq: jest.fn(), gte: jest.fn(), not: jest.fn(), in: jest.fn(), order: jest.fn(), limit: jest.fn() };
@@ -123,7 +140,16 @@ it('enriches upcoming reservations with is_regular and customer_tier when phone 
   ltvChain.select.mockReturnValue(ltvChain);
   ltvChain.eq.mockReturnValue(ltvChain);
   ltvChain.in.mockResolvedValue({ data: [{ customer_phone: '+353861234567', customer_tier: 'vip', total_visits: 14, avg_revenue_per_visit: 65 }], error: null });
-  mockSchema.mockReturnValue({ from: jest.fn().mockReturnValue(ltvChain) });
+  const configChain = { select: jest.fn(), eq: jest.fn(), single: jest.fn() };
+  configChain.select.mockReturnValue(configChain);
+  configChain.eq.mockReturnValue(configChain);
+  configChain.single.mockResolvedValue({ data: { staffing_config: null }, error: null });
+  mockSchema.mockReturnValue({
+    from: jest.fn().mockImplementation((table) => {
+      if (table === 'restaurant_config') return configChain;
+      return ltvChain;
+    }),
+  });
 
   const snap = await getRestaurantSnapshot('rest-1');
   const r = snap.upcoming_reservations[0];

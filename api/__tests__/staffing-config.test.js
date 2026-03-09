@@ -27,7 +27,8 @@ const handler = require('../staffing-config');
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockVerifyJWT.mockReturnValue({ restaurantId: 'rest-1' });
+  mockVerifyJWT.mockReturnValue({ restaurant_id: 'rest-1' });
+  mockSupabaseAdmin.schema = jest.fn().mockReturnValue(mockSupabaseAdmin);
 });
 
 it('GET returns staffing_config', async () => {

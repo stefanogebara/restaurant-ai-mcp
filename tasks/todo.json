@@ -1,11 +1,26 @@
 {
   "audit_date": "2026-03-06",
+  "twilio_brazil_bundle": {
+    "status": "pending-review",
+    "submitted_at": "2026-03-09T00:12:26Z",
+    "check_email": "stefanogebara@gmail.com",
+    "eta": "1-3 business days",
+    "bundle_sid": "BUb7c11af84eccd61e20d265dc65ed7636",
+    "end_user_sid": "IT285eaa1ad592b68c4056819f781fb079",
+    "document_sid": "RD5344f19a3d71ac07e0d21a8e0182d590",
+    "address_sid": "AD7f9f9f32b626b14367007727c8f9fecd",
+    "target_number": "+55 11 5039-1081",
+    "cnpj": "65.087.663/0001-30",
+    "business_name": "STEFANO CHAP CHAP GEBARA",
+    "purchase_command": "see .env.local for credentials",
+    "check_status_command": "see .env.local for credentials"
+  },
   "remaining_issues": [
     { "id": 1, "priority": "HIGH", "status": "fixed", "title": "Voice Settings paywall in English", "description": "UpgradePrompt.tsx fully i18n'd with useTranslation(). VoiceSettingsPage passes translated feature/description." },
-    { "id": 2, "priority": "HIGH", "status": "requires_env", "title": "Manager Chat POST 500", "description": "Root cause: OPENAI_API_KEY not set on Vercel. Needed for manager memory embeddings (text-embedding-ada-002). Fix: add OPENAI_API_KEY to Vercel env vars." },
+    { "id": 2, "priority": "HIGH", "status": "fixed", "title": "Manager Chat POST 500", "description": "Root cause: OPENAI_API_KEY was invalid. Fix: (1) graceful degradation in retrieveRelevantMemories (returns [] on failure), (2) new valid key 'seatable-embeddings' created on OpenAI platform and deployed to all Vercel envs + .env.local. Embeddings now work for memory-augmented chat." },
     { "id": 3, "priority": "HIGH", "status": "fixed", "title": "Analytics error detail in English", "description": "AnalyticsDashboard.tsx now uses t('analytics.errorDescription') instead of raw error.message." },
     { "id": 4, "priority": "MEDIUM", "status": "fixed", "title": "Restaurant type not translated on booking page", "description": "BookingPage.tsx now uses t('onboarding.restaurantTypes.${type}') with fallback. PT-BR already had 'Other': 'Outro'." },
-    { "id": 5, "priority": "MEDIUM", "status": "in_progress", "title": "Remaining en-US locale strings in internal components", "description": "Background agent fixing: ReservationsCalendar, ReservationsCalendarGrid, CustomerVisitHistory, CustomerPredictions, RetentionCampaignModal, ReservationDetailsModal, timeFormatting.ts" },
+    { "id": 5, "priority": "MEDIUM", "status": "fixed", "title": "Remaining en-US locale strings in internal components", "description": "All 7 components i18n'd: ReservationsCalendar, ReservationsCalendarGrid, CustomerVisitHistory, CustomerPredictions, RetentionCampaignModal, ReservationDetailsModal, timeFormatting.ts. 80+ strings translated across en/pt-BR/es." },
     { "id": 6, "priority": "MEDIUM", "status": "fixed", "title": "Voice Settings paywall shows EUR not R$", "description": "UpgradePrompt now uses detectCurrency() + formatPrice() instead of formatCurrency(). Shows R$ for PT-BR users." },
     { "id": 7, "priority": "LOW", "status": "fixed", "title": "Sidebar title clipped on dashboard", "description": "Added pl-12 lg:pl-0 to Dashboard header div, pushes title past hamburger button on mobile." }
   ]

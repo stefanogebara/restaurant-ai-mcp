@@ -26,7 +26,7 @@ const MOCK_RESULT = {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockVerifyJWT.mockReturnValue({ restaurantId: 'rest-1' });
+  mockVerifyJWT.mockReturnValue({ restaurant_id: 'rest-1' });
   mockComparePeriods.mockResolvedValue(MOCK_RESULT);
 });
 

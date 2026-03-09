@@ -46,6 +46,7 @@ beforeEach(() => {
     data: { id: 'rest-1', manager_phone: '+15551234567', manager_whatsapp_verified: true, notification_preferences: {} },
     error: null,
   });
+  mockSupabaseAdmin.schema = jest.fn().mockReturnValue(mockSupabaseAdmin);
   mockSupabaseAdmin.from.mockReturnValue(chain);
 });
 

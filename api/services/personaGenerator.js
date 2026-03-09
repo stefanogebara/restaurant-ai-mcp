@@ -11,6 +11,7 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { getAnthropicClient } = require('./restaurantIntelligence');
+const { seedManagerMemoryFromInterview } = require('./managerMemory');
 
 const logger = createSecureLogger('PersonaGenerator');
 
@@ -176,6 +177,10 @@ Generate this JSON structure:
       completed_at: new Date().toISOString()
     })
     .eq('id', sessionId);
+
+  // Fire-and-forget: seed manager_memory from interview knowledge
+  seedManagerMemoryFromInterview(restaurantConfigId, interviewKnowledge, profileWithMetadata)
+    .catch((err) => logger.error('seedManagerMemoryFromInterview failed', { restaurantConfigId, error: err.message }));
 
   logger.info('Persona generated for restaurant:', restaurantConfigId);
 

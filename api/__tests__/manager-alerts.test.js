@@ -40,6 +40,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   jest.resetModules();
   process.env.CRON_SECRET = CRON_SECRET;
+  mockSupabaseAdmin.schema = jest.fn().mockReturnValue(mockSupabaseAdmin);
 });
 
 it('returns 401 when CRON_SECRET is wrong', async () => {

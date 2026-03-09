@@ -28,8 +28,12 @@ jest.mock('../services/restaurantSnapshot', () => ({
 }));
 
 const mockFrom = jest.fn();
+const mockSchemaFrom = jest.fn();
 jest.mock('../_lib/supabase', () => ({
-  supabaseAdmin: { from: mockFrom },
+  supabaseAdmin: {
+    from: mockFrom,
+    schema: jest.fn().mockReturnValue({ from: mockSchemaFrom }),
+  },
 }));
 
 const mockAnthropic = { messages: { create: mockMessagesCreate } };
@@ -39,6 +43,10 @@ jest.mock('@anthropic-ai/sdk', () => ({
 
 jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ error: jest.fn(), info: jest.fn(), warn: jest.fn() }),
+}));
+
+jest.mock('../_lib/persona-prompt-builder', () => ({
+  buildRestaurantIdentitySection: jest.fn().mockReturnValue(null),
 }));
 
 jest.mock('../services/subscription-limits', () => ({
@@ -108,6 +116,13 @@ beforeEach(() => {
   // subscriptions maybeSingle → null (will make plan = 'free')
   chain.maybeSingle.mockResolvedValue({ data: null });
   mockFrom.mockReturnValue(chain);
+
+  // restaurant_config chain (schema('restaurant').from('restaurant_config'))
+  const configChain = makeChain();
+  configChain.maybeSingle.mockResolvedValue({
+    data: { restaurant_name: 'Test Restaurant', name: null, restaurant_profile: null },
+  });
+  mockSchemaFrom.mockReturnValue(configChain);
 });
 
 // ─── Existing tests ──────────────────────────────────────────────────────────
