@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import ManagerNotificationsPanel from '../components/dashboard/ManagerNotificationsPanel';
 import StaffingSettingsPanel from '../components/dashboard/StaffingSettingsPanel';
@@ -97,6 +97,129 @@ function WhatsAppTemplateStatusPanel() {
             );
           })}
         </div>
+      )}
+    </div>
+  );
+}
+
+function PhoneVerificationPanel() {
+  const qc = useQueryClient();
+  const [code, setCode] = useState('');
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const { data: phoneData, isLoading } = useQuery({
+    queryKey: ['whatsapp-phone-status'],
+    queryFn: async () => {
+      const res = await authFetch('/api/whatsapp-settings?action=phone_status');
+      return res.json();
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const requestMutation = useMutation({
+    mutationFn: async () => {
+      const res = await authFetch('/api/whatsapp-settings?action=request_verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code_method: 'SMS', language: 'en' }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setMessage({ type: data.success ? 'success' : 'error', text: data.message || data.error });
+    },
+  });
+
+  const verifyMutation = useMutation({
+    mutationFn: async (verifyCode: string) => {
+      const res = await authFetch('/api/whatsapp-settings?action=submit_verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: verifyCode }),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        setMessage({ type: 'success', text: 'Phone number verified!' });
+        setCode('');
+        qc.invalidateQueries({ queryKey: ['whatsapp-phone-status'] });
+      } else {
+        setMessage({ type: 'error', text: data.error });
+      }
+    },
+  });
+
+  const phone = phoneData?.phone;
+  const isExpired = phone?.code_verification_status === 'EXPIRED';
+  const isVerified = phone?.code_verification_status === 'VERIFIED';
+
+  if (!phoneData?.configured || isLoading) return null;
+
+  return (
+    <div className="bg-white border border-border-gray rounded-2xl p-6 shadow-sm">
+      <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider mb-4">Phone Verification</h2>
+
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className="text-sm font-medium text-deep-charcoal">{phone?.display_phone_number}</p>
+          <p className="text-xs text-warm-stone">{phone?.verified_name}</p>
+        </div>
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+          isVerified ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+        }`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${isVerified ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+          {isVerified ? 'Verified' : (phone?.code_verification_status || 'Unknown').replace(/_/g, ' ')}
+        </span>
+      </div>
+
+      {isExpired && (
+        <div className="space-y-3">
+          <p className="text-xs text-warm-stone">
+            Your phone verification has expired. Request a new SMS code, then enter it below.
+          </p>
+          <button
+            type="button"
+            onClick={() => requestMutation.mutate()}
+            disabled={requestMutation.isPending}
+            className="text-xs bg-soft-gray hover:bg-border-gray text-deep-charcoal px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+          >
+            {requestMutation.isPending ? 'Sending...' : 'Send SMS Code'}
+          </button>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={code}
+              onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="6-digit code"
+              className="flex-1 text-sm border border-border-gray rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-burgundy"
+              maxLength={6}
+            />
+            <button
+              type="button"
+              onClick={() => verifyMutation.mutate(code)}
+              disabled={code.length < 6 || verifyMutation.isPending}
+              className="text-xs bg-burgundy text-white px-3 py-1.5 rounded-lg hover:bg-burgundy/90 transition-colors disabled:opacity-50"
+            >
+              {verifyMutation.isPending ? 'Verifying...' : 'Verify'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {message && (
+        <p className={`text-xs mt-2 ${message.type === 'success' ? 'text-emerald-600' : 'text-red-600'}`}>
+          {message.text}
+        </p>
+      )}
+
+      {!phone?.is_official_business_account && (
+        <p className="text-xs text-warm-stone mt-3 pt-3 border-t border-border-gray">
+          For the green verified badge, complete{' '}
+          <a href="https://business.facebook.com" target="_blank" rel="noopener noreferrer" className="text-burgundy underline">
+            Meta Business Verification
+          </a>.
+        </p>
       )}
     </div>
   );
@@ -326,6 +449,9 @@ export default function WhatsAppSettingsPage() {
             </p>
           )}
         </div>
+
+        {/* Phone Verification */}
+        <PhoneVerificationPanel />
 
         {/* WhatsApp Template Status */}
         <WhatsAppTemplateStatusPanel />

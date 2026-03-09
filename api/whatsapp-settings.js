@@ -58,10 +58,16 @@ module.exports = async (req, res) => {
         return await handleTest(req, res, restaurantId);
       case 'template_status':
         return await handleTemplateStatus(req, res);
+      case 'phone_status':
+        return await handlePhoneStatus(req, res);
+      case 'request_verification':
+        return await handleRequestVerification(req, res);
+      case 'submit_verification':
+        return await handleSubmitVerification(req, res);
       default:
         return res.status(400).json({
           success: false,
-          error: 'Invalid action. Use: status, stats, update, test, template_status'
+          error: 'Invalid action. Use: status, stats, update, test, template_status, phone_status, request_verification, submit_verification'
         });
     }
   } catch (error) {
@@ -245,6 +251,92 @@ async function handleTest(req, res, restaurantId) {
     message: 'Test message sent successfully',
     messageId: result.messageId,
   });
+}
+
+// ============================================================
+// GET ?action=phone_status
+// ============================================================
+async function handlePhoneStatus(req, res) {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+
+  if (!phoneNumberId || !token) {
+    return res.status(200).json({ success: true, configured: false });
+  }
+
+  try {
+    const resp = await fetch(
+      `https://graph.facebook.com/v19.0/${phoneNumberId}?fields=display_phone_number,verified_name,code_verification_status,is_official_business_account,quality_rating`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const data = await resp.json();
+    if (data.error) return res.status(200).json({ success: false, error: data.error.message });
+    return res.status(200).json({ success: true, configured: true, phone: data });
+  } catch (err) {
+    logger.error('Phone status error:', err);
+    return res.status(500).json({ success: false, error: 'Failed to fetch phone status' });
+  }
+}
+
+// ============================================================
+// POST ?action=request_verification
+// ============================================================
+async function handleRequestVerification(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
+
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+
+  if (!phoneNumberId || !token) {
+    return res.status(400).json({ success: false, error: 'WhatsApp not configured' });
+  }
+
+  const { code_method = 'SMS', language = 'en' } = req.body || {};
+
+  try {
+    const resp = await fetch(`https://graph.facebook.com/v19.0/${phoneNumberId}/request_code`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code_method, language })
+    });
+    const data = await resp.json();
+    if (data.error) return res.status(400).json({ success: false, error: data.error.message });
+    return res.status(200).json({ success: true, message: `Verification code sent via ${code_method}` });
+  } catch (err) {
+    logger.error('Request verification error:', err);
+    return res.status(500).json({ success: false, error: 'Failed to request verification code' });
+  }
+}
+
+// ============================================================
+// POST ?action=submit_verification
+// ============================================================
+async function handleSubmitVerification(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
+
+  const { code } = req.body || {};
+  if (!code) return res.status(400).json({ success: false, error: 'Verification code is required' });
+
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+
+  if (!phoneNumberId || !token) {
+    return res.status(400).json({ success: false, error: 'WhatsApp not configured' });
+  }
+
+  try {
+    const resp = await fetch(`https://graph.facebook.com/v19.0/${phoneNumberId}/verify_code`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    const data = await resp.json();
+    if (data.error) return res.status(400).json({ success: false, error: data.error.error_user_msg || data.error.message });
+    return res.status(200).json({ success: true, message: 'Phone number verified successfully' });
+  } catch (err) {
+    logger.error('Submit verification error:', err);
+    return res.status(500).json({ success: false, error: 'Failed to verify code' });
+  }
 }
 
 // ============================================================
