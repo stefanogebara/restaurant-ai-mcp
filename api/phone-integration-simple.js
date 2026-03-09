@@ -99,10 +99,10 @@ async function handleRegister(req, res) {
 
   logger.info(`Registering platform phone ${PLATFORM_TWILIO_NUMBER} for restaurant ${restaurant_id}`);
 
-  // Get restaurant info
+  // Get restaurant config (restaurant_id = restaurant_config.id)
   const { data: restaurant, error: fetchError } = await supabaseAdmin
     .schema('restaurant')
-    .from('restaurant_info')
+    .from('restaurant_config')
     .select('elevenlabs_agent_id, restaurant_name')
     .eq('id', restaurant_id)
     .single();
@@ -114,7 +114,29 @@ async function handleRegister(req, res) {
     });
   }
 
-  if (!restaurant.elevenlabs_agent_id) {
+  // If agent not in restaurant_config, fall back to restaurant_info (legacy storage path)
+  let agentId = restaurant.elevenlabs_agent_id;
+  if (!agentId) {
+    const { data: infoRow } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_info')
+      .select('elevenlabs_agent_id')
+      .eq('restaurant_name', restaurant.restaurant_name)
+      .single();
+    agentId = infoRow?.elevenlabs_agent_id || null;
+
+    // Sync back to restaurant_config so future lookups work
+    if (agentId) {
+      await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .update({ elevenlabs_agent_id: agentId })
+        .eq('id', restaurant_id);
+      logger.info(`Synced agent ${agentId} from restaurant_info to restaurant_config`);
+    }
+  }
+
+  if (!agentId) {
     return res.status(400).json({
       success: false,
       error: 'Restaurant does not have an AI agent configured. Complete onboarding first.',
@@ -122,10 +144,13 @@ async function handleRegister(req, res) {
     });
   }
 
+  // Use the resolved agent ID going forward
+  restaurant.elevenlabs_agent_id = agentId;
+
   // Update status to pending
   await supabaseAdmin
     .schema('restaurant')
-    .from('restaurant_info')
+    .from('restaurant_config')
     .update({
       phone_integration_status: 'pending',
       phone_integration_error: null,
@@ -276,7 +301,7 @@ async function handleRegister(req, res) {
     // Step 4: Save successful configuration
     await supabaseAdmin
       .schema('restaurant')
-      .from('restaurant_info')
+      .from('restaurant_config')
       .update({
         twilio_phone_number: PLATFORM_TWILIO_NUMBER,
         elevenlabs_phone_number_id: phoneNumberId,
@@ -332,7 +357,7 @@ async function handleUnregister(req, res) {
   // Clear phone fields from restaurant (but don't delete from ElevenLabs - reusable)
   await supabaseAdmin
     .schema('restaurant')
-    .from('restaurant_info')
+    .from('restaurant_config')
     .update({
       twilio_phone_number: null,
       elevenlabs_phone_number: null,
@@ -371,7 +396,7 @@ async function handleStatus(req, res) {
 
   const { data: restaurant, error: fetchError } = await supabaseAdmin
     .schema('restaurant')
-    .from('restaurant_info')
+    .from('restaurant_config')
     .select(`
       restaurant_name,
       elevenlabs_agent_id,
@@ -426,7 +451,7 @@ async function handleTestCall(req, res) {
   // Get restaurant to verify it's configured
   const { data: restaurant } = await supabaseAdmin
     .schema('restaurant')
-    .from('restaurant_info')
+    .from('restaurant_config')
     .select('restaurant_name, phone_integration_status, elevenlabs_agent_id')
     .eq('id', restaurant_id)
     .single();
@@ -501,16 +526,32 @@ async function handleFixTools(req, res) {
 
   const { data: restaurant } = await supabaseAdmin
     .schema('restaurant')
-    .from('restaurant_info')
+    .from('restaurant_config')
     .select('restaurant_name, elevenlabs_agent_id')
     .eq('id', restaurant_id)
     .single();
 
-  if (!restaurant || !restaurant.elevenlabs_agent_id) {
-    return res.status(404).json({ success: false, error: 'Restaurant or agent not found' });
+  if (!restaurant) {
+    return res.status(404).json({ success: false, error: 'Restaurant not found' });
   }
 
-  const result = await createAndAssignTools(restaurant_id, restaurant.elevenlabs_agent_id);
+  let agentId = restaurant.elevenlabs_agent_id;
+  if (!agentId) {
+    const { data: infoRow } = await supabaseAdmin
+      .schema('restaurant').from('restaurant_info')
+      .select('elevenlabs_agent_id').eq('restaurant_name', restaurant.restaurant_name).single();
+    agentId = infoRow?.elevenlabs_agent_id || null;
+    if (agentId) {
+      await supabaseAdmin.schema('restaurant').from('restaurant_config')
+        .update({ elevenlabs_agent_id: agentId }).eq('id', restaurant_id);
+    }
+  }
+
+  if (!agentId) {
+    return res.status(404).json({ success: false, error: 'Restaurant agent not found. Complete onboarding first.' });
+  }
+
+  const result = await createAndAssignTools(restaurant_id, agentId);
 
   if (!result.success) {
     return res.status(500).json({
@@ -539,18 +580,34 @@ async function handleDiagnose(req, res) {
 
   const { data: restaurant } = await supabaseAdmin
     .schema('restaurant')
-    .from('restaurant_info')
+    .from('restaurant_config')
     .select('restaurant_name, elevenlabs_agent_id, phone_integration_status')
     .eq('id', restaurant_id)
     .single();
 
-  if (!restaurant || !restaurant.elevenlabs_agent_id) {
-    return res.status(404).json({ success: false, error: 'Restaurant or agent not found' });
+  if (!restaurant) {
+    return res.status(404).json({ success: false, error: 'Restaurant not found' });
+  }
+
+  let resolvedAgentId = restaurant.elevenlabs_agent_id;
+  if (!resolvedAgentId) {
+    const { data: infoRow } = await supabaseAdmin
+      .schema('restaurant').from('restaurant_info')
+      .select('elevenlabs_agent_id').eq('restaurant_name', restaurant.restaurant_name).single();
+    resolvedAgentId = infoRow?.elevenlabs_agent_id || null;
+    if (resolvedAgentId) {
+      await supabaseAdmin.schema('restaurant').from('restaurant_config')
+        .update({ elevenlabs_agent_id: resolvedAgentId }).eq('id', restaurant_id);
+    }
+  }
+
+  if (!resolvedAgentId) {
+    return res.status(404).json({ success: false, error: 'Restaurant agent not found. Complete onboarding first.' });
   }
 
   // Fetch agent config from ElevenLabs
   const agentResponse = await fetch(
-    `https://api.elevenlabs.io/v1/convai/agents/${restaurant.elevenlabs_agent_id}`,
+    `https://api.elevenlabs.io/v1/convai/agents/${resolvedAgentId}`,
     { headers: { 'xi-api-key': ELEVENLABS_API_KEY } }
   );
 
@@ -565,7 +622,7 @@ async function handleDiagnose(req, res) {
   return res.status(200).json({
     success: true,
     restaurant_name: restaurant.restaurant_name,
-    agent_id: restaurant.elevenlabs_agent_id,
+    agent_id: resolvedAgentId,
     agent_name: agentData.name,
     has_tools: tools.length > 0,
     tool_count: tools.length,
@@ -746,7 +803,7 @@ async function createAndAssignTools(restaurant_id, agent_id) {
 async function updateError(restaurant_id, errorMessage) {
   await supabaseAdmin
     .schema('restaurant')
-    .from('restaurant_info')
+    .from('restaurant_config')
     .update({
       phone_integration_status: 'error',
       phone_integration_error: errorMessage,
