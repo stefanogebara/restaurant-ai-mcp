@@ -61,7 +61,7 @@ export default function RevenueOpportunities() {
 
       {/* Summary Stats */}
       {summary && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-soft-gray/30 border-b border-border-gray">
+        <div className="grid grid-cols-2 gap-4 p-6 bg-soft-gray/30 border-b border-border-gray">
           <div className="text-center">
             <div className="text-3xl font-bold text-green-600">{formatCurrency(summary.total_potential_revenue)}</div>
             <div className="text-xs text-warm-stone mt-1">{t('analytics.totalPotential')}</div>
@@ -83,7 +83,7 @@ export default function RevenueOpportunities() {
 
       {/* Opportunities Cards */}
       <div className="p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {opportunities.map((opp) => (
             <div
               key={opp.rank}
