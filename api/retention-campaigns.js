@@ -293,11 +293,10 @@ async function handleSegments(req, res) {
     const restaurantId = req.user.restaurant_id;
     const segments = ['all', 'vip', 'at_risk', 'birthday_this_month', 'inactive_30d', 'new_customers'];
 
-    const counts = {};
-    for (const segment of segments) {
-      const customers = await getSegmentCustomers(restaurantId, segment);
-      counts[segment] = customers.length;
-    }
+    const results = await Promise.all(
+      segments.map(segment => getSegmentCustomers(restaurantId, segment))
+    );
+    const counts = Object.fromEntries(segments.map((s, i) => [s, results[i].length]));
 
     return res.status(200).json({ success: true, data: counts });
   } catch (error) {

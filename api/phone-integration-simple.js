@@ -12,6 +12,7 @@
  */
 
 const { supabaseAdmin } = require('./_lib/supabase');
+const { verifyAuth } = require('./_lib/auth');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('PhoneIntegrationSimple');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
@@ -28,6 +29,9 @@ module.exports = async (req, res) => {
   if (handlePreflight(req, res)) {
     return;
   }
+
+  const auth = await verifyAuth(req);
+  if (auth.error) return res.status(auth.status).json({ error: auth.error });
 
   const action = req.query.action || req.body?.action;
 

@@ -11,6 +11,7 @@
  * The actual WebSocket server runs separately (ws-server.js on Railway/Fly.io).
  */
 
+const twilio = require('twilio');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setWebhookCors, handlePreflight } = require('./_lib/cors');
@@ -25,6 +26,21 @@ module.exports = async (req, res) => {
   res.setHeader('Content-Type', 'text/xml');
 
   if (handlePreflight(req, res)) return;
+
+  // Validate Twilio webhook signature
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  if (!authToken) {
+    logger.error('TWILIO_AUTH_TOKEN not set — rejecting all voice webhook requests');
+    res.status(403).send(buildErrorTwiml('Service unavailable'));
+    return;
+  }
+  const signature = req.headers['x-twilio-signature'];
+  const url = `https://${req.headers.host}${req.url}`;
+  if (!signature || !twilio.validateRequest(authToken, signature, url, req.body || {})) {
+    logger.error('TwilioVoiceConnect: Invalid webhook signature');
+    res.status(403).send(buildErrorTwiml('Forbidden'));
+    return;
+  }
 
   try {
     // Extract call details from Twilio's webhook

@@ -19,7 +19,8 @@ module.exports = async (req, res) => {
       return res.status(403).send('Forbidden');
     }
   } else {
-    logger.warn('manager-whatsapp: TWILIO_AUTH_TOKEN not set — skipping signature verification');
+    logger.error('manager-whatsapp: TWILIO_AUTH_TOKEN not set — rejecting all requests');
+    return res.status(403).send('Forbidden');
   }
 
   const { From, Body, MessageSid } = req.body || {};

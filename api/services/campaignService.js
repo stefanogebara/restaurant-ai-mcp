@@ -120,7 +120,7 @@ async function createCampaign(restaurantId, { name, segment, message, scheduledA
       channel: 'whatsapp',
       status: scheduledAt ? 'scheduled' : 'active',
       scheduled_at: scheduledAt || null,
-      customer_id: segment, // Use segment as the customer_id field for whatsapp campaigns
+      segment_name: segment,
       created_at: new Date().toISOString(),
     })
     .select()

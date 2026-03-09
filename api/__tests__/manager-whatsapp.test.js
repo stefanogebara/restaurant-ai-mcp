@@ -2,6 +2,12 @@
 // (jest.mock factories run before const/let declarations are initialized)
 var mockSupabaseAdmin = { from: jest.fn() };
 
+jest.mock('twilio', () => ({
+  validateRequest: jest.fn().mockReturnValue(true),
+}));
+// Set TWILIO_AUTH_TOKEN so the fail-closed guard doesn't block requests in tests
+process.env.TWILIO_AUTH_TOKEN = 'test-token';
+
 const managerWhatsapp = require('../manager-whatsapp');
 
 jest.mock('../_lib/manager-agent', () => {
@@ -37,6 +43,10 @@ function mockRes() {
   return res;
 }
 
+function twilioHeaders() {
+  return { 'x-twilio-signature': 'test-sig', host: 'test.vercel.app' };
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
   const chain = { select: jest.fn(), eq: jest.fn(), single: jest.fn() };
@@ -48,11 +58,15 @@ beforeEach(() => {
   });
   mockSupabaseAdmin.schema = jest.fn().mockReturnValue(mockSupabaseAdmin);
   mockSupabaseAdmin.from.mockReturnValue(chain);
+  // Reset twilio mock to return true
+  const twilio = require('twilio');
+  twilio.validateRequest.mockReturnValue(true);
 });
 
 it('routes verified manager message to runManagerAgent and replies', async () => {
   const req = {
     method: 'POST',
+    headers: twilioHeaders(),
     body: { From: 'whatsapp:+15551234567', Body: 'How many covers tonight?', MessageSid: 'SM123' },
   };
   const res = mockRes();
@@ -72,21 +86,21 @@ it('returns 200 silently for unknown phone numbers', async () => {
   chain.single.mockResolvedValue({ data: null, error: null });
   mockSupabaseAdmin.from.mockReturnValue(chain);
 
-  const req = { method: 'POST', body: { From: 'whatsapp:+19999999999', Body: 'hello', MessageSid: 'SM999' } };
+  const req = { method: 'POST', headers: twilioHeaders(), body: { From: 'whatsapp:+19999999999', Body: 'hello', MessageSid: 'SM999' } };
   const res = mockRes();
   await managerWhatsapp(req, res);
   expect(res.status).toHaveBeenCalledWith(200);
 });
 
 it('returns 405 for non-POST methods', async () => {
-  const req = { method: 'GET', body: {} };
+  const req = { method: 'GET', headers: twilioHeaders(), body: {} };
   const res = mockRes();
   await managerWhatsapp(req, res);
   expect(res.status).toHaveBeenCalledWith(405);
 });
 
 it('returns 200 silently when Body is missing', async () => {
-  const req = { method: 'POST', body: { From: 'whatsapp:+15551234567' } };
+  const req = { method: 'POST', headers: twilioHeaders(), body: { From: 'whatsapp:+15551234567' } };
   const res = mockRes();
   await managerWhatsapp(req, res);
   const { runManagerAgent } = require('../_lib/manager-agent');
@@ -100,6 +114,7 @@ it('sends upgrade message via WhatsApp when quota exceeded', async () => {
   runManagerAgent.mockRejectedValueOnce(quotaErr);
   const req = {
     method: 'POST',
+    headers: twilioHeaders(),
     body: { From: 'whatsapp:+15551234567', Body: 'How many covers tonight?', MessageSid: 'SM123' },
   };
   const res = mockRes();
@@ -122,6 +137,7 @@ it('returns 200 silently and sends NO message when upgrade_required on WhatsApp'
   runManagerAgent.mockRejectedValueOnce(quotaErr);
   const req = {
     method: 'POST',
+    headers: twilioHeaders(),
     body: { From: 'whatsapp:+15551234567', Body: 'Hello', MessageSid: 'SM777' },
   };
   const res = mockRes();
@@ -141,7 +157,7 @@ it('returns 200 silently when manager not verified', async () => {
   });
   mockSupabaseAdmin.from.mockReturnValue(chain);
 
-  const req = { method: 'POST', body: { From: 'whatsapp:+15551234567', Body: 'hello', MessageSid: 'SM000' } };
+  const req = { method: 'POST', headers: twilioHeaders(), body: { From: 'whatsapp:+15551234567', Body: 'hello', MessageSid: 'SM000' } };
   const res = mockRes();
   await managerWhatsapp(req, res);
   const { runManagerAgent } = require('../_lib/manager-agent');

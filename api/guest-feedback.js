@@ -119,7 +119,7 @@ async function handleGetConfig(req, res, restaurantId) {
     .from('restaurant_config')
     .select('feedback_config')
     .eq('id', restaurantId)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
 
