@@ -199,12 +199,12 @@ async function handleStats(req, res) {
  */
 async function handleCreateWhatsApp(req, res) {
   try {
-    const { name, segment, message, scheduled_at, campaign_type } = req.body;
+    const { name, segment, message, scheduled_at, campaign_type, template_name } = req.body;
 
-    if (!segment || !message) {
+    if (!segment) {
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields: segment, message',
+        error: 'Missing required field: segment',
       });
     }
 
@@ -219,9 +219,10 @@ async function handleCreateWhatsApp(req, res) {
     const result = await createCampaign(req.user.restaurant_id, {
       name: name || `${segment} campaign`,
       segment,
-      message,
+      message: message || '',
       scheduledAt: scheduled_at || null,
       campaignType: campaign_type || 'win_back',
+      whatsappTemplateName: template_name || null,
     });
 
     if (!result.success) {

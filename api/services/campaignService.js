@@ -9,7 +9,7 @@
  */
 
 const { supabaseAdmin } = require('../_lib/supabase');
-const { sendWhatsAppMessage } = require('../_lib/whatsapp-sender');
+const { sendWhatsAppMessage, sendTemplateMessage } = require('../_lib/whatsapp-sender');
 const { createSecureLogger } = require('../_lib/secure-logger');
 
 const logger = createSecureLogger('CampaignService');
@@ -84,7 +84,17 @@ async function getSegmentCustomers(restaurantId, segment) {
 /**
  * Create a campaign and populate its recipient list.
  */
-async function createCampaign(restaurantId, { name, segment, message, scheduledAt, campaignType }) {
+// Map segment → default WhatsApp template
+const SEGMENT_TEMPLATE_MAP = {
+  birthday_this_month: 'seatable_birthday',
+  inactive_30d: 'seatable_reengagement',
+  at_risk: 'seatable_reengagement',
+  all: 'seatable_promotion',
+  vip: 'seatable_promotion',
+  new_customers: 'seatable_promotion',
+};
+
+async function createCampaign(restaurantId, { name, segment, message, scheduledAt, campaignType, whatsappTemplateName }) {
   // Get segment customers
   const customers = await getSegmentCustomers(restaurantId, segment);
 
@@ -118,6 +128,7 @@ async function createCampaign(restaurantId, { name, segment, message, scheduledA
       campaign_type: campaignType || 'win_back',
       message,
       channel: 'whatsapp',
+      whatsapp_template_name: whatsappTemplateName || SEGMENT_TEMPLATE_MAP[segment] || 'seatable_promotion',
       status: scheduledAt ? 'scheduled' : 'active',
       scheduled_at: scheduledAt || null,
       segment_name: segment,
@@ -176,7 +187,7 @@ async function sendCampaignBatch(campaignId, batchSize = 10) {
   const { data: campaign, error: campErr } = await supabaseAdmin
     .schema('restaurant')
     .from('retention_campaigns')
-    .select('id, message, status, restaurant_id')
+    .select('id, message, status, restaurant_id, whatsapp_template_name, channel')
     .eq('id', campaignId)
     .single();
 
@@ -217,15 +228,43 @@ async function sendCampaignBatch(campaignId, batchSize = 10) {
     .update({ status: 'sending' })
     .eq('id', campaignId);
 
+  // Fetch restaurant name for template personalization
+  let restaurantName = 'our restaurant';
+  try {
+    const { data: rc } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('restaurant_name')
+      .eq('id', campaign.restaurant_id)
+      .single();
+    if (rc?.restaurant_name) restaurantName = rc.restaurant_name;
+  } catch { /* keep default */ }
+
   let sentCount = 0;
 
   for (const recipient of recipients) {
-    // Personalize message
-    const personalizedMsg = campaign.message
-      .replace(/\{name\}/g, recipient.customer_name || '')
-      .replace(/\{phone\}/g, recipient.customer_phone || '');
+    const customerName = recipient.customer_name || '';
+    let result;
 
-    const result = await sendWhatsAppMessage(recipient.customer_phone, personalizedMsg);
+    if (campaign.channel === 'whatsapp' && campaign.whatsapp_template_name) {
+      // Build body parameters: all templates use {{1}}=name, {{2}}=restaurant
+      // seatable_promotion also uses {{3}}=message
+      const bodyParams = [customerName, restaurantName];
+      if (campaign.whatsapp_template_name === 'seatable_promotion' && campaign.message) {
+        bodyParams.push(campaign.message);
+      }
+      result = await sendTemplateMessage(
+        recipient.customer_phone,
+        campaign.whatsapp_template_name,
+        'en',
+        bodyParams,
+      );
+    } else {
+      const personalizedMsg = (campaign.message || '')
+        .replace(/\{name\}/g, customerName)
+        .replace(/\{phone\}/g, recipient.customer_phone || '');
+      result = await sendWhatsAppMessage(recipient.customer_phone, personalizedMsg);
+    }
 
     if (result.success) {
       await supabaseAdmin
