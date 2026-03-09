@@ -96,6 +96,12 @@ export function useDemoLocale() {
   const stored = localStorage.getItem(STORAGE_KEY) as DemoLang | null;
   const browserLang = detectBrowserLang();
 
+  // Read restaurant identity from URL params (set by demo creation API)
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlName = urlParams.get('name');
+  const urlCuisine = urlParams.get('cuisine');
+  const urlCity = urlParams.get('city');
+
   // Default is PT-BR. Show popup only if browser is NOT Portuguese (offer English).
   const [showLangPopup, setShowLangPopup] = useState(!stored && !browserLang.startsWith('pt'));
   const [lang, setLangState] = useState<DemoLang>(stored || 'pt-BR');
@@ -121,7 +127,13 @@ export function useDemoLocale() {
     setShowLangPopup(false);
   }, [lang]);
 
-  const t = strings[lang];
+  const base = strings[lang];
+  const t: DemoStrings = urlName ? {
+    ...base,
+    restaurantName: urlName,
+    cuisine: urlCuisine || base.cuisine,
+    neighborhood: urlCity || base.neighborhood,
+  } : base;
   const dateLocale = lang === 'pt-BR' ? 'pt-BR' : 'en-US';
 
   return { lang, setLang, t, dateLocale, showLangPopup, dismissPopup };

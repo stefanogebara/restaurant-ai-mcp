@@ -332,7 +332,7 @@ async function handleCreate(req, res) {
     logger.warn('Exception seeding fake reservations (non-fatal):', err.message);
   }
 
-  const demoUrl = `${BASE_URL}/demo/${demo_token}`;
+  const demoUrl = `${BASE_URL}/demo/${demo_token}?name=${encodeURIComponent(restaurant_name.trim())}&cuisine=${encodeURIComponent(cuisine_type.trim())}&city=${encodeURIComponent(city.trim())}`;
 
   // Send welcome email (fire-and-forget — don't fail if email fails)
   sendDemoWelcomeEmail({
