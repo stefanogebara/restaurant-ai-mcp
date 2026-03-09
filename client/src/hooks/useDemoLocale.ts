@@ -128,7 +128,7 @@ export function useDemoLocale() {
   }, [lang]);
 
   const base = strings[lang];
-  const t: DemoStrings = urlName ? {
+  const t = urlName ? {
     ...base,
     restaurantName: urlName,
     cuisine: urlCuisine || base.cuisine,
