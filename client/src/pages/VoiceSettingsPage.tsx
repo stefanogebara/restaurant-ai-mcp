@@ -34,6 +34,7 @@ import ReferralWidget from '../components/dashboard/ReferralWidget';
 import VoicePersonaPanel from '../components/dashboard/VoicePersonaPanel';
 import EmbedSnippetPanel from '../components/dashboard/EmbedSnippetPanel';
 import PhoneIntegrationPanel from '../components/voice/PhoneIntegrationPanel';
+import AIStrategyPanel from '../components/dashboard/AIStrategyPanel';
 import { useQuery } from '@tanstack/react-query';
 import { authFetch } from '../services/api';
 
@@ -357,6 +358,7 @@ export default function VoiceSettingsPage() {
           )}
           <PhoneIntegrationPanel />
           <VoicePersonaPanel />
+          <AIStrategyPanel />
           {slug && <EmbedSnippetPanel slug={slug} />}
           <ReferralWidget />
         </div>

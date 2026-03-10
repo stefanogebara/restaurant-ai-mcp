@@ -236,6 +236,11 @@ function buildSystemPrompt(memories, snapshot, config) {
     systemPrompt += feedbackBlock;
   }
 
+  if (config?.ai_strategy_doc) {
+    systemPrompt += '\n\n[RESTAURANT STRATEGY — OWNER DEFINED]\n' + config.ai_strategy_doc;
+    systemPrompt += '\n\nApply this strategy when advising on operations, marketing, and guest experience.';
+  }
+
   systemPrompt +=
     '\n\nRespond concisely. For operational questions, be direct. ' +
     'Keep responses under 200 words unless detail is specifically requested.';
@@ -280,9 +285,21 @@ async function runManagerAgent(restaurantId, userMessage, channel) {
     supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('restaurant_name, name, restaurant_profile')
+      .select('restaurant_name, name, restaurant_profile, ai_strategy_doc')
       .eq('id', restaurantId)
-      .maybeSingle(),
+      .maybeSingle()
+      .then(r => {
+        // Gracefully handle missing column (migration not yet applied)
+        if (r.error?.message?.includes('ai_strategy_doc')) {
+          return supabaseAdmin
+            .schema('restaurant')
+            .from('restaurant_config')
+            .select('restaurant_name, name, restaurant_profile')
+            .eq('id', restaurantId)
+            .maybeSingle();
+        }
+        return r;
+      }),
   ]);
 
   const config = configResult?.data || {};

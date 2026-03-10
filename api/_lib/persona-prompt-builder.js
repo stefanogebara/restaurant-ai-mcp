@@ -151,6 +151,12 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
   prompt += '- Keep responses concise - this is a phone conversation, not a text chat\n';
   prompt += '- Use natural speech patterns, not bullet points or formatted text\n';
 
+  // Strategy document — injects owner-defined priorities into voice agent context
+  if (restaurantConfig.ai_strategy_doc) {
+    prompt += '\n[RESTAURANT STRATEGY]\n' + restaurantConfig.ai_strategy_doc + '\n';
+    prompt += 'Apply these business priorities naturally during conversations.\n';
+  }
+
   return prompt;
 }
 

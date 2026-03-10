@@ -15,6 +15,10 @@
   },
   "rewrites": [
     {
+      "source": "/api/ai-strategy",
+      "destination": "/api/ai-strategy"
+    },
+    {
       "source": "/api/revenue-stats",
       "destination": "/api/revenue-stats"
     },

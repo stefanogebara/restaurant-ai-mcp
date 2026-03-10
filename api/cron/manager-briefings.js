@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
     const { data: configs } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('id, manager_phone, notification_preferences, restaurant_name, restaurant_profile')
+      .select('id, manager_phone, notification_preferences, restaurant_name, restaurant_profile, ai_strategy_doc')
       .eq('manager_whatsapp_verified', true)
       .not('manager_phone', 'is', null);
 
@@ -53,6 +53,14 @@ module.exports = async (req, res) => {
               .map(v => `- ${v.customer_name || v.customer_phone} (${v.customer_tier}, ${v.total_visits} visits)`)
               .join('\n');
             promptToSend += `\n\n[VIP GUESTS TODAY]\n${vipLines}`;
+          }
+        }
+
+        // Inject owner strategy + ask for suggestions at end of day
+        if (config.ai_strategy_doc) {
+          promptToSend += `\n\n[OWNER STRATEGY]\n${config.ai_strategy_doc}`;
+          if (type === 'end_of_day') {
+            promptToSend += '\n\nBased on today\'s data and the owner strategy above, end your briefing with 1-2 specific strategy suggestions: what to adjust, why, and what outcome to expect. Label this section "[STRATEGY SUGGESTIONS]".';
           }
         }
 
