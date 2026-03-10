@@ -28,10 +28,10 @@ describe('setInternalCors', () => {
   });
 
   test('sets origin header for production URL', () => {
-    const req = { headers: { origin: 'https://restaurant-ai-mcp.vercel.app' }, method: 'GET' };
+    const req = { headers: { origin: 'https://seatable.one' }, method: 'GET' };
     const res = createMockRes();
     setInternalCors(req, res);
-    expect(res.headers['Access-Control-Allow-Origin']).toBe('https://restaurant-ai-mcp.vercel.app');
+    expect(res.headers['Access-Control-Allow-Origin']).toBe('https://seatable.one');
   });
 
   test('does not set origin header for disallowed origin', () => {
@@ -134,6 +134,6 @@ describe('ALLOWED_ORIGINS', () => {
   test('is an array with expected origins', () => {
     expect(Array.isArray(ALLOWED_ORIGINS)).toBe(true);
     expect(ALLOWED_ORIGINS).toContain('http://localhost:5173');
-    expect(ALLOWED_ORIGINS).toContain('https://restaurant-ai-mcp.vercel.app');
+    expect(ALLOWED_ORIGINS).toContain('https://seatable.one');
   });
 });

@@ -6,7 +6,7 @@ process.env.SUPABASE_URL = 'https://fake.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'fake-service-role-key';
 process.env.SUPABASE_ANON_KEY = 'fake-anon-key';
 process.env.JWT_SECRET = 'test-secret';
-process.env.CLIENT_URL = 'https://app.seatable.io';
+process.env.CLIENT_URL = 'https://seatable.one';
 
 const RESTAURANT_ID = 'rest-team-001';
 const OWNER_USER = { sub: 'owner-uid', restaurant_id: RESTAURANT_ID, role: 'owner' };
