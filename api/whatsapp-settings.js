@@ -17,6 +17,7 @@ const { isWhatsAppConfigured, sendWhatsAppMessage } = require('./_lib/whatsapp-s
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { initSentry, captureException } = require('./_lib/sentry');
+const { upsertRestaurant, updateRestaurant: updateRegistryRestaurant } = require('./_lib/restaurant-registry');
 initSentry();
 
 const logger = createSecureLogger('WhatsAppSettings');
@@ -197,6 +198,36 @@ async function handleUpdate(req, res, restaurantId) {
   }
 
   logger.info(`WhatsApp settings updated for ${restaurantId}:`, updates);
+
+  // Sync enabled/disabled state to restaurant_registry so the webhook can route messages
+  if (typeof enabled === 'boolean') {
+    try {
+      if (!enabled) {
+        await updateRegistryRestaurant(restaurantId, { is_active: false });
+        logger.info(`Registry deactivated for ${restaurantId}`);
+      } else {
+        // Fetch restaurant name for registry upsert
+        const { data: config } = await supabaseAdmin
+          .schema('restaurant')
+          .from('restaurant_config')
+          .select('restaurant_name, language')
+          .eq('id', restaurantId)
+          .single();
+
+        if (config) {
+          await upsertRestaurant(restaurantId, {
+            restaurant_name: config.restaurant_name,
+            language: config.language || 'en',
+            is_active: true,
+          });
+          logger.info(`Registry upserted for ${restaurantId} (${config.restaurant_name})`);
+        }
+      }
+    } catch (syncErr) {
+      // Non-fatal: log but don't fail the settings update
+      logger.warn(`Registry sync failed for ${restaurantId} (non-fatal):`, syncErr.message);
+    }
+  }
 
   return res.status(200).json({
     success: true,

@@ -30,7 +30,8 @@ const {
 } = require('./_lib/whatsapp-sessions');
 const { getRestaurantByName, getAllActiveRestaurants } = require('./_lib/restaurant-registry');
 const { getMultiTenantClient } = require('./_lib/multi-tenant-supabase');
-const { canAccommodateParty } = require('./_lib/supabase');
+const { canAccommodateParty, supabaseAdmin } = require('./_lib/supabase');
+const { buildPersonaPrompt } = require('./_lib/persona-prompt-builder');
 const { trackUsage } = require('./_lib/usage-tracking');
 const { generateSecureReservationId } = require('./_lib/secure-id');
 const { extractMemoriesFromWhatsApp } = require('./services/memoryExtractor');
@@ -938,29 +939,58 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
     languageInstruction = '\nIMPORTANT: Always respond in Spanish. Use the formal "usted" form. Never switch to English unless the customer writes in English.\n';
   }
 
-  // Build system prompt
-  let systemPrompt = `You are a friendly AI assistant helping customers make restaurant reservations via WhatsApp.
+  // Build system prompt — use rich per-restaurant persona when available
+  let systemPrompt = null;
+
+  if (session?.restaurant?.id) {
+    try {
+      const { data: restaurantConfig } = await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('*')
+        .eq('id', session.restaurant.id)
+        .single();
+
+      if (restaurantConfig) {
+        systemPrompt = buildPersonaPrompt(restaurantConfig, { language });
+        systemPrompt += `\n\nCurrent date and time: ${currentDateTime.formatted}\nToday is ${currentDateTime.dayOfWeek}, ${currentDateTime.date}\n`;
+        systemPrompt += '\nWhatsApp-specific guidelines:\n';
+        systemPrompt += '- Keep responses concise (under 500 characters when possible)\n';
+        systemPrompt += '- Use plain conversational messages, no bullet points or formatted text\n';
+        systemPrompt += `- When they mention "today", use ${currentDateTime.date}\n`;
+        systemPrompt += '- When they mention "tomorrow", calculate the next day\n';
+        systemPrompt += '- If they give a time like "7pm", convert to 24-hour format (19:00)\n';
+        if (languageInstruction) systemPrompt += languageInstruction;
+      }
+    } catch (configErr) {
+      logger.warn('Failed to load restaurant config for prompt (non-fatal):', configErr.message);
+    }
+  }
+
+  // Fallback to generic prompt
+  if (!systemPrompt) {
+    systemPrompt = `You are a friendly AI assistant helping customers make restaurant reservations via WhatsApp.
 ${languageInstruction}
 Current date and time: ${currentDateTime.formatted}
 Today is ${currentDateTime.dayOfWeek}, ${currentDateTime.date}
 
 `;
 
-  if (session?.restaurant) {
-    systemPrompt += `
+    if (session?.restaurant) {
+      systemPrompt += `
 The customer is booking at: ${session.restaurant.restaurant_name}
 Restaurant ID: ${session.restaurant.id}
 
 You can now help them check availability and make reservations.
 `;
-  } else {
-    systemPrompt += `
+    } else {
+      systemPrompt += `
 The customer has not yet specified a restaurant.
 First, ask them which restaurant they'd like to book at, or use the identify_restaurant tool if they mention one.
 `;
-  }
+    }
 
-  systemPrompt += `
+    systemPrompt += `
 Guidelines:
 - Be conversational and helpful
 - When they mention "today", use ${currentDateTime.date}
@@ -969,6 +999,7 @@ Guidelines:
 - Keep responses concise for WhatsApp (under 500 characters when possible)
 - If they give a time like "7pm", convert to 24-hour format (19:00)
 `;
+  }
 
   // Inject guest memory context if available
   if (session?.restaurant?.id && session?.sender_phone) {

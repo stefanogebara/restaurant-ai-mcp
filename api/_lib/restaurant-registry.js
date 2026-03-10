@@ -214,6 +214,44 @@ async function updateRestaurant(id, updates) {
 }
 
 /**
+ * Upsert a restaurant in the registry by ID (insert or update on conflict)
+ * @param {string} id - Restaurant UUID (same as restaurant_config.id)
+ * @param {object} restaurantData - Fields to set
+ * @returns {Promise<object>} Result with data or error
+ */
+async function upsertRestaurant(id, restaurantData) {
+  if (!isCentralConfigured()) {
+    return { data: null, error: 'Central Supabase not configured' };
+  }
+
+  try {
+    const { data, error } = await centralSupabase
+      .from('restaurant_registry')
+      .upsert({
+        id,
+        restaurant_name: restaurantData.restaurant_name,
+        restaurant_aliases: restaurantData.restaurant_aliases || [],
+        language: restaurantData.language || 'en',
+        is_active: restaurantData.is_active !== undefined ? restaurantData.is_active : true,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' })
+      .select()
+      .single();
+
+    if (error) {
+      logger.error('[RestaurantRegistry] Error upserting restaurant:', error);
+      return { data: null, error: error.message };
+    }
+
+    logger.info(`[RestaurantRegistry] Upserted restaurant: ${restaurantData.restaurant_name}`);
+    return { data, error: null };
+  } catch (error) {
+    logger.error('[RestaurantRegistry] Error:', error);
+    return { data: null, error: error.message };
+  }
+}
+
+/**
  * Deactivate a restaurant (soft delete)
  * @param {string} id - Restaurant UUID
  * @returns {Promise<boolean>} Success status
@@ -258,6 +296,7 @@ module.exports = {
   getAllActiveRestaurants,
   registerRestaurant,
   updateRestaurant,
+  upsertRestaurant,
   deactivateRestaurant,
   getRestaurantsByEmail
 };
