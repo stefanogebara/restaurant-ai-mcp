@@ -8,6 +8,7 @@ import CustomerIntelligenceCard from '../components/insights/CustomerIntelligenc
 import RevenueQuickWinsCard from '../components/insights/RevenueQuickWinsCard';
 import WeeklyForecastCard from '../components/insights/WeeklyForecastCard';
 import CampaignManager from '../components/dashboard/CampaignManager';
+import StrategyMetricsWidget from '../components/dashboard/StrategyMetricsWidget';
 
 export default function AIInsights() {
   const { t } = useTranslation();
@@ -62,6 +63,19 @@ export default function AIInsights() {
           <CustomerIntelligenceCard />
           <RevenueQuickWinsCard />
           <WeeklyForecastCard />
+        </div>
+
+        {/* Strategy Scorecard — val_bpb for the autoresearch loop */}
+        <div className="mt-6">
+          <StrategyMetricsWidget />
+          <div className="mt-2 flex justify-end">
+            <Link
+              to="/host-dashboard/voice-settings"
+              className="text-xs text-muted-stone hover:text-burgundy transition-colors"
+            >
+              Edit AI strategy document →
+            </Link>
+          </div>
         </div>
 
         {/* WhatsApp Campaigns */}
