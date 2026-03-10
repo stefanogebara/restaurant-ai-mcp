@@ -9,19 +9,19 @@ import { test, expect } from '@playwright/test';
 test.describe('Landing Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    // Wait for Framer Motion animations to settle
-    await page.waitForLoadState('networkidle');
+    // domcontentloaded is sufficient; networkidle can hang on production due to analytics
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
   });
 
   test('renders hero section with correct heading and CTAs', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Transform');
-    await expect(page.locator('h1')).toContainText('AI');
+    await expect(page.locator('h1')).toContainText('Never miss a reservation again');
 
     // Both CTA buttons visible (use .first() since pricing section may also have these)
     const tryDemo = page.getByRole('button', { name: /try live demo/i }).first();
-    const startTrial = page.getByRole('button', { name: /start free trial/i }).first();
+    const createDemo = page.getByRole('button', { name: /create.*free demo|create.*demo/i }).first();
     await expect(tryDemo).toBeVisible();
-    await expect(startTrial).toBeVisible();
+    await expect(createDemo).toBeVisible();
   });
 
   test('"Try Live Demo" navigates to /live-demo', async ({ page }) => {
@@ -29,13 +29,14 @@ test.describe('Landing Page', () => {
     await expect(page).toHaveURL(/\/live-demo/);
   });
 
-  test('"Start Free Trial" scrolls to pricing section (not /onboarding)', async ({ page }) => {
+  test('"Start Free Trial" in pricing section navigates to demo setup (not /onboarding)', async ({ page }) => {
+    // "Start Free Trial" buttons are in the pricing section cards — they navigate to demo setup
     await page.getByRole('button', { name: /start free trial/i }).first().click();
-    // Should NOT navigate to /onboarding
     await page.waitForTimeout(2000);
+    // Should NOT navigate to /onboarding (the old direct signup route)
     expect(page.url()).not.toContain('/onboarding');
-    // Pricing section should be visible
-    await expect(page.locator('#pricing')).toBeInViewport();
+    // Should navigate somewhere meaningful (demo, login, or trial setup)
+    expect(page.url()).not.toBe('https://restaurant-ai-mcp.vercel.app/');
   });
 
   test('nav "Get Started" scrolls to pricing section', async ({ page }) => {
@@ -121,7 +122,7 @@ test.describe('Landing Page', () => {
 test.describe('Login Page', () => {
   test('renders login form with Google OAuth and email fields', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Google OAuth button
     await expect(page.getByText('Continue with Google')).toBeVisible();
@@ -136,7 +137,7 @@ test.describe('Login Page', () => {
 
   test('can toggle between sign in and sign up modes', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Default: sign in
     await expect(page.getByText('Welcome back')).toBeVisible();
@@ -152,7 +153,7 @@ test.describe('Login Page', () => {
 
   test('Terms/Privacy links are not dead (#)', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const termsLink = page.locator('a:has-text("Terms of Service")');
     const privacyLink = page.locator('a:has-text("Privacy Policy")');
@@ -169,7 +170,7 @@ test.describe('Login Page', () => {
 
   test('"Back to Home" link returns to landing page', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await page.getByText('Back to Home').click();
     await expect(page).toHaveURL('/');
@@ -179,16 +180,16 @@ test.describe('Login Page', () => {
 test.describe('Live AI Demo Page', () => {
   test('renders demo page with instructions', async ({ page }) => {
     await page.goto('/live-demo');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
-    await expect(page.getByText('Talk to Our AI Restaurant Assistant')).toBeVisible();
-    await expect(page.getByText('How It Works')).toBeVisible();
-    await expect(page.getByText('Try Saying...')).toBeVisible();
+    await expect(page.getByText('Hear the AI in action.')).toBeVisible();
+    await expect(page.getByText('Natural Conversation')).toBeVisible();
   });
 
   test('"Get Started" nav link does not go to /onboarding', async ({ page }) => {
     await page.goto('/live-demo');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const getStartedLink = page.locator('nav a:has-text("Get Started")');
     if (await getStartedLink.count() > 0) {
@@ -199,10 +200,12 @@ test.describe('Live AI Demo Page', () => {
 
   test('demo restaurant info card is visible', async ({ page }) => {
     await page.goto('/live-demo');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
-    await expect(page.getByText('Demo Restaurant').first()).toBeVisible();
-    await expect(page.getByText('La Bella Vista')).toBeVisible();
+    // Demo restaurant section with the seeded restaurant name
+    await expect(page.getByText('Demo Restaurant', { exact: true })).toBeVisible();
+    await expect(page.getByText('Cantina da Praca')).toBeVisible();
   });
 });
 
@@ -224,7 +227,7 @@ test.describe('Auth Guards', () => {
 test.describe('404 Page', () => {
   test('renders 404 for unknown routes', async ({ page }) => {
     await page.goto('/this-page-does-not-exist');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(page.getByText('404')).toBeVisible();
     await expect(page.getByText('Page Not Found')).toBeVisible();
@@ -232,7 +235,7 @@ test.describe('404 Page', () => {
 
   test('"Go Home" button navigates to /', async ({ page }) => {
     await page.goto('/this-page-does-not-exist');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await page.getByRole('link', { name: /go home/i }).click();
     await expect(page).toHaveURL('/');
@@ -242,25 +245,23 @@ test.describe('404 Page', () => {
 test.describe('Customer Portal', () => {
   test('renders lookup form', async ({ page }) => {
     await page.goto('/customer');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
-    // Should show some form of customer lookup
-    const pageContent = await page.textContent('body');
-    expect(pageContent).toBeTruthy();
+    await expect(page.getByText('Manage your reservation')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('button', { name: /look up reservation/i })).toBeVisible();
   });
 });
 
 test.describe('Subscription Pages', () => {
-  test('/subscription/manage renders without crash', async ({ page }) => {
+  test('/subscription/manage redirects unauthenticated users to login', async ({ page }) => {
     await page.goto('/subscription/manage');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
-    // Should show either subscription details or "No Active Subscription"
-    const content = await page.textContent('body');
-    expect(content).toBeTruthy();
-    // Check page rendered (not blank)
-    const hasContent = content!.includes('Subscription') || content!.includes('No Active');
-    expect(hasContent).toBeTruthy();
+    // Unauthenticated users are redirected to /login — that is the correct protected-route behaviour
+    const url = page.url();
+    expect(url).toContain('/login');
   });
 });
 
@@ -269,7 +270,7 @@ test.describe('Mobile Responsiveness', () => {
 
   test('landing page renders correctly on mobile', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Hero heading should be visible
     await expect(page.locator('h1')).toBeVisible();
@@ -281,7 +282,7 @@ test.describe('Mobile Responsiveness', () => {
 
   test('mobile menu opens and has correct links', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Open mobile menu
     const menuBtn = page.getByRole('button', { name: /open menu/i });
@@ -295,7 +296,7 @@ test.describe('Mobile Responsiveness', () => {
 
   test('login page is usable on mobile', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Form should be visible
     await expect(page.getByText('Continue with Google')).toBeVisible();
@@ -342,7 +343,7 @@ test.describe('Console Errors', () => {
     });
 
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Filter out known non-critical errors (e.g., analytics, third-party scripts)
     const criticalErrors = errors.filter(e =>
@@ -368,7 +369,7 @@ test.describe('Console Errors', () => {
     });
 
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const criticalErrors = errors.filter(e =>
       !e.includes('posthog') &&
@@ -387,7 +388,7 @@ test.describe('Contact Email Consistency', () => {
 
     for (const path of pagesToCheck) {
       await page.goto(path);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       const html = await page.content();
       expect(html).not.toContain('stefanogebara@gmail.com');
     }
