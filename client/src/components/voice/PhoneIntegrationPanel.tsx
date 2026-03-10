@@ -114,7 +114,7 @@ export default function PhoneIntegrationPanel() {
 
   // ── No data fallback ────────────────────────────────────────────────────────
 
-  if (!status) {
+  if (!status?.restaurant || !status?.platform) {
     return (
       <div className="bg-white border border-border-gray rounded-2xl p-6">
         <p className="text-sm text-warm-stone">Não foi possível carregar o status do telefone.</p>
