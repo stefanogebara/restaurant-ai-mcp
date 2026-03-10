@@ -19,6 +19,10 @@
       "destination": "/api/ai-strategy"
     },
     {
+      "source": "/api/strategy-metrics",
+      "destination": "/api/strategy-metrics"
+    },
+    {
       "source": "/api/revenue-stats",
       "destination": "/api/revenue-stats"
     },
