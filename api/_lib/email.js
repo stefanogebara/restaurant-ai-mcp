@@ -342,7 +342,7 @@ async function sendNewBookingAlertEmail({
           ` : ''}
         </div>
         <p style="color: #78716C; font-size: 13px; text-align: center; margin: 0;">
-          Manage all reservations in your <a href="https://restaurant-ai-mcp.vercel.app/host-dashboard/simple" style="color: #9F1239;">Seatable dashboard</a>.
+          Manage all reservations in your <a href="https://seatable.one/host-dashboard/simple" style="color: #9F1239;">Seatable dashboard</a>.
         </p>
       `),
     });

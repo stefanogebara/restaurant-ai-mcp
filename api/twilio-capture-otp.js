@@ -22,7 +22,7 @@ module.exports = async (req, res) => {
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Say voice="Polly.Amy">Recording verification call now.</Say>
-  <Record maxLength="30" playBeep="false" recordingStatusCallback="https://restaurant-ai-mcp.vercel.app/api/twilio-capture-otp" />
+  <Record maxLength="30" playBeep="false" recordingStatusCallback="https://seatable.one/api/twilio-capture-otp" />
   <Say voice="Polly.Amy">Recording complete. Thank you.</Say>
 </Response>`;
 

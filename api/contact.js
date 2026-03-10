@@ -3,7 +3,7 @@
  *
  * Receives { name, email, phone, restaurant, tables, message }.
  * Saves to Supabase `contacts` table and sends a Resend email alert
- * to hello@seatable.io so the owner never misses a new lead.
+ * to hello@seatable.one so the owner never misses a new lead.
  */
 
 const { Resend } = require('resend');
@@ -59,7 +59,7 @@ module.exports = async (req, res) => {
     const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
       from: 'noreply@seatable.one',
-      to: 'hello@seatable.io',
+      to: 'hello@seatable.one',
       subject: `New contact: ${escapeHtml(name)} — ${escapeHtml(restaurant) || 'no restaurant'}`,
       html: `
         <h2>New Contact Form Submission</h2>

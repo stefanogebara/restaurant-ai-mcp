@@ -41,7 +41,7 @@ export default function DashboardMockup() {
           <div className="w-3 h-3 rounded-full bg-green-500/70" />
         </div>
         <div className="flex-1 mx-4 bg-[#1a1a1a] rounded-md px-3 py-1 text-[11px] text-white/30 text-center truncate">
-          restaurant-ai-mcp.vercel.app/host-dashboard
+          seatable.one/host-dashboard
         </div>
       </div>
 

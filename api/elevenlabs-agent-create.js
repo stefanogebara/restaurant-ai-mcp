@@ -65,7 +65,7 @@ module.exports = async (req, res) => {
     // Build base URL for webhooks
     const baseUrl = process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
-      : 'https://restaurant-ai-mcp.vercel.app';
+      : 'https://seatable.one';
 
     let systemPrompt, firstMessage, agentName;
 
@@ -117,7 +117,7 @@ module.exports = async (req, res) => {
           },
           platform_settings: {
             widget_config: {
-              avatar_url: 'https://restaurant-ai-mcp.vercel.app/logo.png',
+              avatar_url: 'https://seatable.one/logo.png',
               title: 'Seatable Multi-Restaurant AI'
             }
           }
@@ -218,7 +218,7 @@ module.exports = async (req, res) => {
         },
         platform_settings: {
           widget_config: {
-            avatar_url: 'https://restaurant-ai-mcp.vercel.app/logo.png',
+            avatar_url: 'https://seatable.one/logo.png',
             title: `${restaurant_name} AI Receptionist`
           }
         }

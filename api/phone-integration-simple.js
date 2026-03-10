@@ -645,7 +645,7 @@ async function handleDiagnose(req, res) {
  * Returns { success, toolCount, error }
  */
 async function createAndAssignTools(restaurant_id, agent_id) {
-  const baseUrl = 'https://restaurant-ai-mcp.vercel.app';
+  const baseUrl = 'https://seatable.one';
   const rid = restaurant_id;
 
   const toolDefinitions = [

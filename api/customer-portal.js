@@ -45,7 +45,7 @@ module.exports = async (req, res) => {
     }
 
     // Get the origin for return URL
-    const origin = req.headers.origin || process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
+    const origin = req.headers.origin || process.env.CLIENT_URL || 'https://seatable.one';
 
     // Create a portal session
     const portalSession = await stripe.billingPortal.sessions.create({

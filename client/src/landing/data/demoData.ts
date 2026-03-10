@@ -7,7 +7,7 @@ export const DEMO_RESTAURANT = {
   name: "Cantina da Praca",
   tagline: "Cozinha Brasileira Contemporanea",
   phone: "+55 (11) 99999-DEMO",
-  email: "demo@seatable.io",
+  email: "demo@seatable.one",
   address: "Rua Augusta, 1234 — Jardins, Sao Paulo",
   tables: 12,
   capacity: 48,
@@ -311,7 +311,7 @@ export const STATS = [
 ];
 
 export const CONTACT_INFO = {
-  email: "hello@seatable.io",
+  email: "hello@seatable.one",
   formFields: [
     { name: "name", label: "Full Name", type: "text", required: true },
     { name: "email", label: "Email Address", type: "email", required: true },

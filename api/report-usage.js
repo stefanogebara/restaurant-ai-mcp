@@ -10,7 +10,7 @@
  *   { "crons": [{ "path": "/api/report-usage", "schedule": "0 4 * * *" }] }
  *
  * Manual trigger:
- *   curl -H "Authorization: Bearer <CRON_SECRET>" https://restaurant-ai-mcp.vercel.app/api/report-usage
+ *   curl -H "Authorization: Bearer <CRON_SECRET>" https://seatable.one/api/report-usage
  */
 
 const { createSecureLogger } = require('./_lib/secure-logger');

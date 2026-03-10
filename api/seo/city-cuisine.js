@@ -24,7 +24,7 @@ function sanitizeCopy(rawCopy) {
   }
   return matches.map(([, inner]) => `<p>${escapeHtml(inner)}</p>`).join('\n');
 }
-const BASE_URL = process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
+const BASE_URL = process.env.CLIENT_URL || 'https://seatable.one';
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') {

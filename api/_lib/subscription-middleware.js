@@ -62,7 +62,7 @@ async function checkSubscription(req, res, next) {
       return res.status(401).json({
         error: 'Authentication required',
         message: 'Customer email not provided',
-        upgrade_url: `${process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app'}/#pricing`
+        upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/#pricing`
       });
     }
 
@@ -73,7 +73,7 @@ async function checkSubscription(req, res, next) {
       return res.status(403).json({
         error: 'No active subscription',
         message: 'Please subscribe to access this feature',
-        upgrade_url: `${process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app'}/#pricing`
+        upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/#pricing`
       });
     }
 
@@ -85,7 +85,7 @@ async function checkSubscription(req, res, next) {
         error: 'Subscription inactive',
         message: `Your subscription is ${subscription.status}. Please update your payment method.`,
         status: subscription.status,
-        upgrade_url: `${process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app'}/#pricing`
+        upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/#pricing`
       });
     }
 
@@ -126,7 +126,7 @@ function requireFeature(featureName) {
         message: getUpgradeMessage(featureName, plan),
         feature: featureName,
         current_plan: plan,
-        upgrade_url: `${process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app'}/#pricing`
+        upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/#pricing`
       });
     }
 

@@ -194,7 +194,7 @@ export default function SubscriptionManage() {
           {/* Help */}
           <p className="text-center text-sm text-muted-stone mt-10">
             {t('subscription.needHelp')}{' '}
-            <a href="mailto:hello@seatable.io" className="text-burgundy hover:text-burgundy-dark transition-colors">{t('subscription.contactSupport')}</a>
+            <a href="mailto:hello@seatable.one" className="text-burgundy hover:text-burgundy-dark transition-colors">{t('subscription.contactSupport')}</a>
           </p>
         </div>
       </div>

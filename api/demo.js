@@ -22,7 +22,7 @@ const { Resend } = require('resend');
 initSentry();
 const logger = createSecureLogger('Demo');
 
-const BASE_URL = process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
+const BASE_URL = process.env.CLIENT_URL || 'https://seatable.one';
 
 // Dedicated system user for demo restaurants (created once in Supabase Auth)
 const DEMO_SYSTEM_USER_ID = 'bfe5f299-1361-4a13-a898-fa76b2e8add0';

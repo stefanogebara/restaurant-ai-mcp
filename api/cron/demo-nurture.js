@@ -17,7 +17,7 @@ const { Resend } = require('resend');
 initSentry();
 const logger = createSecureLogger('CronDemoNurture');
 
-const BASE_URL = process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
+const BASE_URL = process.env.CLIENT_URL || 'https://seatable.one';
 
 // Resend free tier: 10 req/s burst limit. Add 100ms delay between sends to stay safe.
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

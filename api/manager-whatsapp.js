@@ -47,7 +47,7 @@ module.exports = async (req, res) => {
       reply = await runManagerAgent(config.id, Body.trim(), 'whatsapp');
     } catch (agentErr) {
       if (agentErr instanceof ManagerQuotaError && agentErr.type === 'quota_exceeded') {
-        await sendWhatsAppMessage(phone, `You've reached your ${agentErr.limit} message limit for this month. Upgrade to Growth for 500/mo — seatable.io/pricing`);
+        await sendWhatsAppMessage(phone, `You've reached your ${agentErr.limit} message limit for this month. Upgrade to Growth for 500/mo — seatable.one/pricing`);
       }
       return res.status(200).send('OK');
     }

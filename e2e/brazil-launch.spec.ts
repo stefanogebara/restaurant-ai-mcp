@@ -84,7 +84,7 @@ test.describe('Contact Section', () => {
 
     // Should have email reference
     const contactText = await contactSection.textContent();
-    const hasContactInfo = contactText!.includes('hello@seatable.io') || contactText!.includes('contact');
+    const hasContactInfo = contactText!.includes('hello@seatable.one') || contactText!.includes('contact');
     expect(hasContactInfo).toBeTruthy();
   });
 });

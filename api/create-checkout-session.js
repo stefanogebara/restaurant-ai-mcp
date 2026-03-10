@@ -59,7 +59,7 @@ module.exports = async (req, res) => {
     }
 
     // Get the origin for success/cancel URLs
-    const origin = req.headers.origin || process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
+    const origin = req.headers.origin || process.env.CLIENT_URL || 'https://seatable.one';
 
     // Build line items: base subscription + metered prices
     const lineItems = [

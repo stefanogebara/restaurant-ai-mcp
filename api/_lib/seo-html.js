@@ -2,7 +2,7 @@
  * SEO HTML renderer — shared shell for all SEO landing pages.
  */
 
-const BASE_URL = process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
+const BASE_URL = process.env.CLIENT_URL || 'https://seatable.one';
 
 /**
  * Convert a string to a URL-safe slug.

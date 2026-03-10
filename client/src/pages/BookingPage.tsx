@@ -20,7 +20,7 @@ export default function BookingPage() {
     const DEFAULT_TITLE = 'seatable - AI Restaurant Management';
     const title = `${restaurant.name} — Reserve a Table | Seatable`;
     const description = `Book a table at ${restaurant.name} in ${restaurant.city}, ${restaurant.country}. Check availability and reserve online — quick and easy.`;
-    const canonicalUrl = `https://restaurant-ai-mcp.vercel.app/book/${restaurant.slug}`;
+    const canonicalUrl = `https://seatable.one/book/${restaurant.slug}`;
 
     document.title = title;
 

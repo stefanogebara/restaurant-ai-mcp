@@ -7,7 +7,7 @@
 
 const { supabaseAdmin } = require('./_lib/supabase');
 
-const BASE_URL = 'https://restaurant-ai-mcp.vercel.app';
+const BASE_URL = 'https://seatable.one';
 
 module.exports = async (req, res) => {
   // CORS not needed — this is XML consumed by search engines

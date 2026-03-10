@@ -52,7 +52,7 @@ export default function InteractiveDemoSection() {
                 </div>
                 <div className="flex-1 mx-2">
                   <div className="bg-white rounded px-3 py-1 text-[10px] text-muted-stone text-center border border-border-gray">
-                    app.seatable.io/host-dashboard
+                    app.seatable.one/host-dashboard
                   </div>
                 </div>
               </div>

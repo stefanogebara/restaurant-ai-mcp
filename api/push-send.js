@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
 
   // C-1: Set VAPID details inside the handler so it only runs when keys are present
   webpush.setVapidDetails(
-    'mailto:hello@seatable.io',
+    'mailto:hello@seatable.one',
     process.env.VAPID_PUBLIC_KEY,
     process.env.VAPID_PRIVATE_KEY
   );

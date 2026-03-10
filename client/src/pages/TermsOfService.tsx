@@ -84,7 +84,7 @@ export default function TermsOfService() {
 
           <section>
             <h2 className="text-lg font-semibold text-deep-charcoal mb-3">12. Contact</h2>
-            <p><a href="mailto:hello@seatable.io" className="text-burgundy hover:underline">hello@seatable.io</a></p>
+            <p><a href="mailto:hello@seatable.one" className="text-burgundy hover:underline">hello@seatable.one</a></p>
           </section>
         </div>
 

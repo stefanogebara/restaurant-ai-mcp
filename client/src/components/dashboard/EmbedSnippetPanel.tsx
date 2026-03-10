@@ -4,7 +4,7 @@ interface Props { slug: string; }
 
 export default function EmbedSnippetPanel({ slug }: Props) {
   const [copied, setCopied] = useState(false);
-  const snippet = `<script src="https://restaurant-ai-mcp.vercel.app/widget.js?slug=${slug}"></script>`;
+  const snippet = `<script src="https://seatable.one/widget.js?slug=${slug}"></script>`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(snippet).then(() => {

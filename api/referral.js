@@ -14,7 +14,7 @@ const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const logger = createSecureLogger('Referral');
 
-const BASE_URL = process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
+const BASE_URL = process.env.CLIENT_URL || 'https://seatable.one';
 
 function generateCode() {
   const words = ['BELLA', 'PRIMO', 'GUSTO', 'FORNO', 'CIBO', 'VINO', 'PASTO', 'TAVOLA'];

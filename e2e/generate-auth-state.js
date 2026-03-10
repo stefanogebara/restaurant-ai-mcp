@@ -9,7 +9,7 @@ const https = require('https');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
 const SUPABASE_URL = 'https://ckforlwdhewexyqljsaf.supabase.co';
 const EMAIL = 'stefanogebara@gmail.com';
-const REDIRECT_TO = 'https://restaurant-ai-mcp.vercel.app/host-dashboard';
+const REDIRECT_TO = 'https://seatable.one/host-dashboard';
 const AUTH_STATE_PATH = path.join(__dirname, 'auth-state.json');
 
 async function getMagicLink(serviceKey) {

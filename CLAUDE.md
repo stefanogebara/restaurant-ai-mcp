@@ -74,7 +74,7 @@
 
 **Seatable** is an AI-powered multi-tenant restaurant management platform that enables customers to make reservations through natural conversation (voice, text, WhatsApp) while providing restaurant hosts with real-time dashboards to manage walk-ins, reservations, and table assignments.
 
-**Production URL**: https://restaurant-ai-mcp.vercel.app
+**Production URL**: https://seatable.one
 
 ---
 
@@ -334,7 +334,7 @@ Push to `main` branch triggers automatic Vercel deployment.
 
 ## Contact
 
-- **Email**: hello@seatable.io
+- **Email**: hello@seatable.one
 - **Response Time**: Within 24 hours
 
 ---

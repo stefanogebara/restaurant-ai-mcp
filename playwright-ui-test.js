@@ -11,7 +11,7 @@
 
 const { chromium } = require('playwright');
 
-const BASE_URL = 'https://restaurant-ai-mcp.vercel.app';
+const BASE_URL = 'https://seatable.one';
 
 async function testUI() {
   console.log('🎭 Playwright UI Tests\n');

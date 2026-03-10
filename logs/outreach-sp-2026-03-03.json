@@ -1,0 +1,100 @@
+[
+  {
+    "restaurant": "Dalva e Dito",
+    "email": "eventos@dalvaedito.com.br",
+    "status": "sent",
+    "messageId": "<a4a495c7-2a8b-7292-a9a1-6267d5126ecc@gmail.com>",
+    "sentAt": "2026-03-03T22:43:48.393Z"
+  },
+  {
+    "restaurant": "Capim Santo",
+    "email": "cs.eventos@capimsanto.com.br",
+    "status": "sent",
+    "messageId": "<cf8f5f14-e4b0-84af-0229-0caa738ef538@gmail.com>",
+    "sentAt": "2026-03-03T22:43:52.660Z"
+  },
+  {
+    "restaurant": "Cuia (Bel Coelho)",
+    "email": "eventos@belcoelho.com.br",
+    "status": "sent",
+    "messageId": "<3de643e0-fb09-e167-9709-0d0e118242b0@gmail.com>",
+    "sentAt": "2026-03-03T22:43:56.505Z"
+  },
+  {
+    "restaurant": "Mapu Restaurante",
+    "email": "contato@mapurestaurante.com.br",
+    "status": "sent",
+    "messageId": "<1467ae75-c793-21c0-1a82-1aa08e052bd6@gmail.com>",
+    "sentAt": "2026-03-03T22:44:00.434Z"
+  },
+  {
+    "restaurant": "Rabo di Galo (Rosewood São Paulo)",
+    "email": "saopaulo@rosewoodhotels.com",
+    "status": "sent",
+    "messageId": "<319dd2b4-9fa3-e142-af79-5d7c9137b660@gmail.com>",
+    "sentAt": "2026-03-03T22:44:04.300Z"
+  },
+  {
+    "restaurant": "Riviera Bar e Restaurante",
+    "email": "contato@rivierabarerestaurante.com.br",
+    "status": "sent",
+    "messageId": "<9833ea31-90d3-e3cb-92f7-6d838dae28f8@gmail.com>",
+    "sentAt": "2026-03-03T22:44:08.475Z"
+  },
+  {
+    "restaurant": "Jui Restaurante",
+    "email": "contato@juirestaurante.com.br",
+    "status": "sent",
+    "messageId": "<eaded3c4-cbad-82d4-2201-970e78c810b0@gmail.com>",
+    "sentAt": "2026-03-03T22:44:12.433Z"
+  },
+  {
+    "restaurant": "Philippe Bistrô",
+    "email": "contato@philipperestaurante.com",
+    "status": "sent",
+    "messageId": "<cd6990c1-8def-9cdd-e162-5ab55a917a9a@gmail.com>",
+    "sentAt": "2026-03-03T22:44:16.307Z"
+  },
+  {
+    "restaurant": "Portucho",
+    "email": "sac@portucho.com.br",
+    "status": "sent",
+    "messageId": "<251c404e-cf04-3854-0139-bb769531a310@gmail.com>",
+    "sentAt": "2026-03-03T22:44:20.702Z"
+  },
+  {
+    "restaurant": "Fitó Pinheiros",
+    "email": "contato@fitocozinha.com.br",
+    "status": "sent",
+    "messageId": "<04e8f0d0-a1a0-bd48-331a-f4b86765fac0@gmail.com>",
+    "sentAt": "2026-03-03T22:44:24.577Z"
+  },
+  {
+    "restaurant": "Manioca",
+    "email": "atendimentomanioca@manimanioca.com.br",
+    "status": "sent",
+    "messageId": "<19da6094-76ba-c483-9542-6c75589713b6@gmail.com>",
+    "sentAt": "2026-03-03T22:44:28.532Z"
+  },
+  {
+    "restaurant": "Petí Gastronomia",
+    "email": "eventos@petirestaurante.com.br",
+    "status": "sent",
+    "messageId": "<0b905779-ba8c-d6c9-46c5-7dc9c8323a4a@gmail.com>",
+    "sentAt": "2026-03-03T22:44:32.674Z"
+  },
+  {
+    "restaurant": "Selvagem Ibirapuera",
+    "email": "reservas@selvagemibirapuera.com.br",
+    "status": "sent",
+    "messageId": "<d7943e05-bc80-d7d1-35d8-58234985c96c@gmail.com>",
+    "sentAt": "2026-03-03T22:44:36.837Z"
+  },
+  {
+    "restaurant": "Terraço Itália",
+    "email": "eventos@terracoitalia.com.br",
+    "status": "sent",
+    "messageId": "<a87416c5-a3eb-813f-28c8-b2f23f15f0f6@gmail.com>",
+    "sentAt": "2026-03-03T22:44:40.710Z"
+  }
+]

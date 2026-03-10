@@ -12,7 +12,7 @@ const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('MLTrainingStatus');
 
 module.exports = async (req, res) => {
-  const CLIENT_URL = process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app';
+  const CLIENT_URL = process.env.CLIENT_URL || 'https://seatable.one';
   res.setHeader('Access-Control-Allow-Origin', CLIENT_URL);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');

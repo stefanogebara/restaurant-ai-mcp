@@ -1,5 +1,5 @@
 // Twilio WhatsApp webhook (fallback integration)
-// Webhook URL: https://restaurant-ai-mcp.vercel.app/api/twilio-whatsapp-webhook
+// Webhook URL: https://seatable.one/api/twilio-whatsapp-webhook
 
 /**
  * Twilio WhatsApp Webhook Handler
@@ -7,7 +7,7 @@
  * Handles WhatsApp messages via Twilio's Messaging API.
  * This is an alternative to the direct Meta WhatsApp Cloud API.
  *
- * Webhook URL: https://restaurant-ai-mcp.vercel.app/api/twilio-whatsapp-webhook
+ * Webhook URL: https://seatable.one/api/twilio-whatsapp-webhook
  *
  * Required environment variables:
  * - TWILIO_ACCOUNT_SID: Twilio Account SID

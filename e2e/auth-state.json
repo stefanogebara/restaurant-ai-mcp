@@ -1,0 +1,26 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "https://restaurant-ai-mcp.vercel.app",
+      "localStorage": [
+        {
+          "name": "i18nextLng",
+          "value": "en-US"
+        },
+        {
+          "name": "sb-ckforlwdhewexyqljsaf-auth-token",
+          "value": "{\"access_token\":\"eyJhbGciOiJFUzI1NiIsImtpZCI6ImRlYTQzYTU3LWExMzAtNGUxMi05NDJmLWMzZTZhNzkzZGZhMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2NrZm9ybHdkaGV3ZXh5cWxqc2FmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJjNzhhMmY5Mi00MzIyLTQ4NTQtYjBkZi1mYjY3M2QzZmZjZWYiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzczMTU0NjQyLCJpYXQiOjE3NzMxNTEwNDIsImVtYWlsIjoic3RlZmFub2dlYmFyYUBnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6Imdvb2dsZSIsInByb3ZpZGVycyI6WyJnb29nbGUiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWwiOiJzdGVmYW5vZ2ViYXJhQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmdWxsX25hbWUiOiJTdGVmYW5vIEdlYmFyYSIsImlzcyI6Imh0dHBzOi8vYWNjb3VudHMuZ29vZ2xlLmNvbSIsIm5hbWUiOiJTdGVmYW5vIEdlYmFyYSIsInBob25lX3ZlcmlmaWVkIjpmYWxzZSwicHJvdmlkZXJfaWQiOiIxMDY0OTMyMTEzMDAzMTQwNDc1MjYiLCJzdWIiOiIxMDY0OTMyMTEzMDAzMTQwNDc1MjYifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJvdHAiLCJ0aW1lc3RhbXAiOjE3NzMxNTEwNDJ9XSwic2Vzc2lvbl9pZCI6ImVjMjE1Y2RhLWRiNGYtNDExOC1iYzJjLTIyMDcxMGNhNWFhNCIsImlzX2Fub255bW91cyI6ZmFsc2V9.b_VYA6OdcV4F56SruD9w6u1PWBNC_MZKOvyDPN2hqu33Omy_Hg9JkU_n4yyu5BlAgX99-kiQmSAM39Qhv7WS2A\",\"expires_in\":3600,\"expires_at\":1773154642,\"refresh_token\":\"kk743gcd4wyk\",\"token_type\":\"bearer\",\"user\":{\"id\":\"c78a2f92-4322-4854-b0df-fb673d3ffcef\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"stefanogebara@gmail.com\",\"email_confirmed_at\":\"2026-02-14T18:14:48.814485Z\",\"phone\":\"\",\"confirmed_at\":\"2026-02-14T18:14:48.814485Z\",\"recovery_sent_at\":\"2026-03-10T13:57:20.717232Z\",\"last_sign_in_at\":\"2026-03-10T13:57:22.317158Z\",\"app_metadata\":{\"provider\":\"google\",\"providers\":[\"google\"]},\"user_metadata\":{\"email\":\"stefanogebara@gmail.com\",\"email_verified\":true,\"full_name\":\"Stefano Gebara\",\"iss\":\"https://accounts.google.com\",\"name\":\"Stefano Gebara\",\"phone_verified\":false,\"provider_id\":\"106493211300314047526\",\"sub\":\"106493211300314047526\"},\"identities\":[{\"identity_id\":\"5d4a54ca-31ad-4adf-9734-3424dc4ff011\",\"id\":\"106493211300314047526\",\"user_id\":\"c78a2f92-4322-4854-b0df-fb673d3ffcef\",\"identity_data\":{\"email\":\"stefanogebara@gmail.com\",\"email_verified\":true,\"full_name\":\"Stefano Gebara\",\"iss\":\"https://accounts.google.com\",\"name\":\"Stefano Gebara\",\"phone_verified\":false,\"provider_id\":\"106493211300314047526\",\"sub\":\"106493211300314047526\"},\"provider\":\"google\",\"last_sign_in_at\":\"2026-02-14T18:14:48.809084Z\",\"created_at\":\"2026-02-14T18:14:48.809141Z\",\"updated_at\":\"2026-03-09T13:04:21.285702Z\",\"email\":\"stefanogebara@gmail.com\"}],\"created_at\":\"2026-02-14T18:14:48.79969Z\",\"updated_at\":\"2026-03-10T13:57:22.335871Z\",\"is_anonymous\":false}}"
+        },
+        {
+          "name": "ph_phc_umoyCFzqJtZkP69oADD21TOMAC4Q41lPPfTEa2JhJLL\n_posthog",
+          "value": "{\"$initialization_time\":\"2026-03-10T13:57:23.716Z\",\"$configured_session_timeout_ms\":1800000,\"distinct_id\":\"019cd809-c08c-797a-b7fc-b63461f48fed\",\"$device_id\":\"019cd809-c08c-797a-b7fc-b63461f48fed\",\"$user_state\":\"anonymous\",\"$autocapture_disabled_server_side\":false,\"$heatmaps_enabled_server_side\":false,\"$product_tours_enabled_server_side\":false,\"$web_vitals_enabled_server_side\":false,\"$web_vitals_allowed_metrics\":null,\"$exception_capture_enabled_server_side\":false,\"$error_tracking_suppression_rules\":[],\"$dead_clicks_enabled_server_side\":false}"
+        },
+        {
+          "name": "customer_email",
+          "value": "stefanogebara@gmail.com"
+        }
+      ]
+    }
+  ]
+}

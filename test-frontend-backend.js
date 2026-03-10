@@ -11,7 +11,7 @@
 const axios = require('axios');
 
 // Production URL
-const BASE_URL = 'https://restaurant-ai-mcp.vercel.app';
+const BASE_URL = 'https://seatable.one';
 const API_URL = `${BASE_URL}/api`;
 
 // ============================================================================

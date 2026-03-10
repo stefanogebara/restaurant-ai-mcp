@@ -18,8 +18,8 @@ export default function PrivacyPolicy() {
         <div className="space-y-10 text-[15px] text-warm-stone leading-relaxed">
           <section>
             <h2 className="text-lg font-semibold text-deep-charcoal mb-3">1. Who we are</h2>
-            <p>Seatable operates the restaurant management platform at seatable.io ("the Service"). We are the data controller for personal data you provide to us.</p>
-            <p className="mt-2">Contact: <a href="mailto:hello@seatable.io" className="text-burgundy hover:underline">hello@seatable.io</a></p>
+            <p>Seatable operates the restaurant management platform at seatable.one ("the Service"). We are the data controller for personal data you provide to us.</p>
+            <p className="mt-2">Contact: <a href="mailto:hello@seatable.one" className="text-burgundy hover:underline">hello@seatable.one</a></p>
           </section>
 
           <section>
@@ -69,7 +69,7 @@ export default function PrivacyPolicy() {
 
           <section>
             <h2 className="text-lg font-semibold text-deep-charcoal mb-3">7. Your rights</h2>
-            <p>Under GDPR you have the right to: access, rectify, or erase your personal data; restrict or object to processing; and data portability. To exercise any right, email <a href="mailto:hello@seatable.io" className="text-burgundy hover:underline">hello@seatable.io</a>.</p>
+            <p>Under GDPR you have the right to: access, rectify, or erase your personal data; restrict or object to processing; and data portability. To exercise any right, email <a href="mailto:hello@seatable.one" className="text-burgundy hover:underline">hello@seatable.one</a>.</p>
           </section>
 
           <section>
@@ -79,7 +79,7 @@ export default function PrivacyPolicy() {
 
           <section>
             <h2 className="text-lg font-semibold text-deep-charcoal mb-3">9. Contact</h2>
-            <p>For privacy questions: <a href="mailto:hello@seatable.io" className="text-burgundy hover:underline">hello@seatable.io</a></p>
+            <p>For privacy questions: <a href="mailto:hello@seatable.one" className="text-burgundy hover:underline">hello@seatable.one</a></p>
           </section>
         </div>
 

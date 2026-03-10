@@ -36,7 +36,7 @@ test.describe('Landing Page', () => {
     // Should NOT navigate to /onboarding (the old direct signup route)
     expect(page.url()).not.toContain('/onboarding');
     // Should navigate somewhere meaningful (demo, login, or trial setup)
-    expect(page.url()).not.toBe('https://restaurant-ai-mcp.vercel.app/');
+    expect(page.url()).not.toBe('https://seatable.one/');
   });
 
   test('nav "Get Started" scrolls to pricing section', async ({ page }) => {
@@ -86,11 +86,11 @@ test.describe('Landing Page', () => {
       const href = await getStartedLink.getAttribute('href');
       expect(href).not.toBe('/onboarding');
     }
-    // Contact link should use hello@seatable.io
+    // Contact link should use hello@seatable.one
     const contactLink = footer.locator('a:has-text("Contact")');
     if (await contactLink.count() > 0) {
       const href = await contactLink.getAttribute('href');
-      expect(href).toContain('hello@seatable.io');
+      expect(href).toContain('hello@seatable.one');
     }
   });
 

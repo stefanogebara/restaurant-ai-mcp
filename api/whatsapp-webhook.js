@@ -1,5 +1,5 @@
 // Meta Cloud API WhatsApp webhook
-// Webhook URL: https://restaurant-ai-mcp.vercel.app/api/whatsapp-webhook
+// Webhook URL: https://seatable.one/api/whatsapp-webhook
 // Verify token: process.env.WHATSAPP_VERIFY_TOKEN
 
 /**
@@ -8,7 +8,7 @@
  * Custom WhatsApp AI agent for restaurant reservations.
  * Receives messages from Meta's WhatsApp Business Platform and responds using AI.
  *
- * Webhook URL: https://restaurant-ai-mcp.vercel.app/api/whatsapp-webhook
+ * Webhook URL: https://seatable.one/api/whatsapp-webhook
  *
  * Required environment variables:
  * - WHATSAPP_VERIFY_TOKEN: Token for webhook verification

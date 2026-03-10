@@ -47,7 +47,7 @@ module.exports = async (req, res) => {
       const result = await addTeamMember(restaurantId, { email, role, invitedBy: user.sub });
       if (!result.success) return res.status(400).json({ success: false, error: result.error });
 
-      const inviteUrl = `${process.env.CLIENT_URL || 'https://restaurant-ai-mcp.vercel.app'}/join?token=${result.member.invite_token}`;
+      const inviteUrl = `${process.env.CLIENT_URL || 'https://seatable.one'}/join?token=${result.member.invite_token}`;
       sendInviteEmail({ to: email, inviteUrl, role }).catch(err => {
         logger.error('Failed to send invite email:', err.message);
       });

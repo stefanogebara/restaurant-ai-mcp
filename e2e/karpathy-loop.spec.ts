@@ -18,7 +18,7 @@ import { test, expect } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
 
-const BASE = 'https://restaurant-ai-mcp.vercel.app';
+const BASE = 'https://seatable.one';
 const AUTH_STATE = path.join(__dirname, 'auth-state.json');
 const hasAuthState = fs.existsSync(AUTH_STATE);
 

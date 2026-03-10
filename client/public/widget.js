@@ -7,7 +7,7 @@
   var match = src.match(/[?&]slug=([^&]+)/);
   if (!match) return;
   var slug = decodeURIComponent(match[1]);
-  var BASE = 'https://restaurant-ai-mcp.vercel.app';
+  var BASE = 'https://seatable.one';
 
   var btn = document.createElement('button');
   btn.textContent = 'Book a Table';
