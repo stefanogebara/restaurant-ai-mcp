@@ -1081,8 +1081,10 @@ module.exports = async (req, res) => {
     return res.status(200).end();
   }
 
-  // With bodyParser disabled, read the raw body for signature verification
-  if (req.method === 'POST' && !req.body) {
+  // Capture raw body for HMAC signature verification.
+  // Vercel's Node.js runtime auto-parses JSON bodies and exposes req.rawBody (Buffer).
+  // Fall back to stream-reading if running in a non-Vercel environment.
+  if (req.method === 'POST' && !req.body && !req.rawBody) {
     const chunks = [];
     await new Promise((resolve, reject) => {
       req.on('data', (chunk) => chunks.push(chunk));
@@ -1137,12 +1139,14 @@ module.exports = async (req, res) => {
       logger.error('Missing X-Hub-Signature-256 header');
       return res.status(403).json({ error: 'Missing signature' });
     }
-    const rawBody = req._rawBody || (typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
+    // Use raw body for HMAC: Vercel exposes req.rawBody (Buffer), matching how Stripe webhooks work
+    const rawBodySource = req._rawBody ? '_rawBody' : req.rawBody ? 'req.rawBody' : typeof req.body === 'string' ? 'body-string' : 'body-json';
+    const rawBody = req._rawBody || req.rawBody || (typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
     const expectedSig = 'sha256=' + crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex');
     logger.info('Sig check', {
       rawBodyLen: rawBody?.length,
-      rawBodySnippet: rawBody?.substring(0, 80),
-      rawBodySource: req._rawBody ? '_rawBody' : (typeof req.body === 'string' ? 'body-string' : 'body-json'),
+      rawBodySnippet: (typeof rawBody === 'string' ? rawBody : rawBody?.toString('utf8'))?.substring(0, 80),
+      rawBodySource,
       receivedSig: signature,
       expectedSig,
     });
