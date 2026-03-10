@@ -1139,6 +1139,13 @@ module.exports = async (req, res) => {
     }
     const rawBody = req._rawBody || (typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
     const expectedSig = 'sha256=' + crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex');
+    logger.info('Sig check', {
+      rawBodyLen: rawBody?.length,
+      rawBodySnippet: rawBody?.substring(0, 80),
+      rawBodySource: req._rawBody ? '_rawBody' : (typeof req.body === 'string' ? 'body-string' : 'body-json'),
+      receivedSig: signature,
+      expectedSig,
+    });
     if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig))) {
       logger.error('Invalid Meta webhook signature');
       return res.status(403).json({ error: 'Invalid signature' });
