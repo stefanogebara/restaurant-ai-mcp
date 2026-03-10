@@ -2,7 +2,6 @@ import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '../contexts/ToastContext';
-import { useVoiceSettings } from '../hooks/useVoiceSettings';
 
 interface Reservation {
   reservation_id: string;
@@ -28,8 +27,7 @@ function parseReservationDateTime(reservation: Reservation) {
 
 export default function CustomerPortal() {
   const { t, i18n } = useTranslation();
-  const { data: voiceConfig } = useVoiceSettings();
-  const restaurantName = voiceConfig?.restaurant_name;
+  const restaurantName = null;
   const [lookupMethod, setLookupMethod] = useState<'id' | 'phone'>('id');
   const [reservationId, setReservationId] = useState('');
   const [phone, setPhone] = useState('');

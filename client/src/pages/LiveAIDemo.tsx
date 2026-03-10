@@ -103,7 +103,7 @@ export default function LiveAIDemo() {
           <div className="border-t border-border-gray pt-6 mt-2">
             <p className="text-[12px] text-muted-stone mb-3">{t('landing.liveDemo.widget.bookingFlowLabel')}</p>
             <Link
-              to="/book/celeri-madrid"
+              to="/demo/setup"
               className="inline-flex items-center gap-2 px-5 py-2.5 border border-border-gray hover:border-burgundy/40 text-sm font-medium text-deep-charcoal hover:text-burgundy rounded-xl transition-colors"
             >
               {t('landing.liveDemo.widget.tryBooking')}
