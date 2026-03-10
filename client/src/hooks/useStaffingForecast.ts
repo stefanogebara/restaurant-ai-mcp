@@ -14,7 +14,7 @@ export interface ForecastDay {
 }
 
 async function fetchForecast(): Promise<ForecastDay[]> {
-  const res = await authFetch('/staffing-forecast');
+  const res = await authFetch('/api/staffing-forecast');
   if (!res.ok) throw new Error('Failed to load staffing forecast');
   const json = await res.json() as { forecast: ForecastDay[] };
   return json.forecast;

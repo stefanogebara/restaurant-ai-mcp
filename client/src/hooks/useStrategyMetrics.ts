@@ -29,7 +29,7 @@ export function useStrategyMetrics(range = 30) {
   return useQuery<StrategyMetricsData>({
     queryKey: ['strategyMetrics', range],
     queryFn: async () => {
-      const res = await authFetch(`/strategy-metrics?range=${range}`);
+      const res = await authFetch(`/api/strategy-metrics?range=${range}`);
       const json = await res.json();
       if (!json.success) throw new Error('Failed to load metrics');
       return json.data;

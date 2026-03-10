@@ -8,7 +8,7 @@ export interface RevenueStats {
 }
 
 async function fetchRevenueStats(): Promise<RevenueStats> {
-  const res = await authFetch('/revenue-stats');
+  const res = await authFetch('/api/revenue-stats');
   if (!res.ok) throw new Error('Failed to load revenue stats');
   return res.json() as Promise<RevenueStats>;
 }

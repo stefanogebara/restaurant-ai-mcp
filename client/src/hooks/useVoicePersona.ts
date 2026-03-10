@@ -7,13 +7,13 @@ export interface VoicePersona {
 }
 
 async function fetchPersona(): Promise<VoicePersona> {
-  const res = await authFetch('/voice-persona');
+  const res = await authFetch('/api/voice-persona');
   if (!res.ok) throw new Error('Failed to load voice persona');
   return res.json() as Promise<VoicePersona>;
 }
 
 async function patchPersona(updates: Partial<VoicePersona>): Promise<VoicePersona> {
-  const res = await authFetch('/voice-persona', {
+  const res = await authFetch('/api/voice-persona', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates),

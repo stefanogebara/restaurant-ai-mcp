@@ -21,7 +21,7 @@ export function useAIStrategy() {
   return useQuery<AIStrategyData>({
     queryKey: ['aiStrategy'],
     queryFn: async () => {
-      const res = await authFetch('/ai-strategy?action=get');
+      const res = await authFetch('/api/ai-strategy?action=get');
       const json: StrategyResponse = await res.json();
       if (!json.success) throw new Error('Failed to load strategy');
       return json.data;
@@ -34,7 +34,7 @@ export function useSaveAIStrategy() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (strategyDoc: string) => {
-      const res = await authFetch('/ai-strategy?action=update', {
+      const res = await authFetch('/api/ai-strategy?action=update', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ strategy_doc: strategyDoc }),
@@ -52,7 +52,7 @@ export function useSaveAIStrategy() {
 export function useGenerateStrategySuggestions() {
   return useMutation({
     mutationFn: async () => {
-      const res = await authFetch('/ai-strategy?action=suggest', {
+      const res = await authFetch('/api/ai-strategy?action=suggest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),

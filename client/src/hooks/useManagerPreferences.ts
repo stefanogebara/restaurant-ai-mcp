@@ -11,14 +11,14 @@ export interface NotificationPreferences {
 }
 
 async function fetchPreferences(): Promise<NotificationPreferences> {
-  const res = await authFetch('/manager-preferences');
+  const res = await authFetch('/api/manager-preferences');
   if (!res.ok) throw new Error('Failed to load notification preferences');
   const json = await res.json();
   return json.notification_preferences || {};
 }
 
 async function patchPreferences(updates: Partial<NotificationPreferences>): Promise<NotificationPreferences> {
-  const res = await authFetch('/manager-preferences', {
+  const res = await authFetch('/api/manager-preferences', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates),

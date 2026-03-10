@@ -11,14 +11,14 @@ export interface StaffingConfig {
 }
 
 async function fetchConfig(): Promise<StaffingConfig | null> {
-  const res = await authFetch('/staffing-config');
+  const res = await authFetch('/api/staffing-config');
   if (!res.ok) throw new Error('Failed to load staffing config');
   const json = await res.json() as { staffing_config: StaffingConfig | null };
   return json.staffing_config;
 }
 
 async function patchConfig(config: StaffingConfig): Promise<StaffingConfig> {
-  const res = await authFetch('/staffing-config', {
+  const res = await authFetch('/api/staffing-config', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(config),
