@@ -14,9 +14,16 @@ export default defineConfig({
     video: 'retain-on-failure',
   },
   projects: [
+    // One-time auth setup: npx playwright test e2e/auth.setup.ts --headed
+    {
+      name: 'setup',
+      testMatch: /auth\.setup\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      dependencies: [],  // don't force setup — auth-state.json is optional
     },
   ],
 });

@@ -211,7 +211,7 @@ export default function VoiceSettingsPage() {
   if (!config?.agent_id) {
     return (
       <DashboardLayout>
-        <div className="p-6 lg:p-8">
+        <div className="p-6 lg:p-8 max-w-5xl space-y-6">
           <div className="mt-8 text-center py-16">
             <div className="bg-burgundy/5 border border-burgundy/20 rounded-2xl p-8 max-w-md mx-auto">
               <ThiingsIcon name="volume" pxSize={48} className="mx-auto mb-4" />
@@ -228,6 +228,7 @@ export default function VoiceSettingsPage() {
               </a>
             </div>
           </div>
+          <AIStrategyPanel />
         </div>
       </DashboardLayout>
     );
