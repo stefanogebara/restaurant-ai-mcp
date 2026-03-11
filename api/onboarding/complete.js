@@ -628,6 +628,16 @@ module.exports = async (req, res) => {
 
         logger.info(' ElevenLabs agent created:', agentId);
         logger.info(' Agent URL: https://elevenlabs.io/app/conversational-ai/' + agentId);
+
+        // Step 4b: Sync knowledge base to ElevenLabs agent (fire-and-forget)
+        const { syncKnowledgeBase } = require('../services/elevenlabsAgentService');
+        syncKnowledgeBase(generatedRestaurantId).then(result => {
+          if (result.success) {
+            logger.info('KB synced to ElevenLabs agent', { documentId: result.documentId });
+          } else {
+            logger.warn('KB sync skipped or failed:', result.error);
+          }
+        }).catch(err => logger.error('KB sync error:', err.message));
       } else {
         const errorText = await agentResponse.text();
         logger.error(' ❌ Failed to create agent:', {

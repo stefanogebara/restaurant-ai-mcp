@@ -67,6 +67,10 @@
       "destination": "/api/elevenlabs-kb-sync"
     },
     {
+      "source": "/api/elevenlabs-agent-cleanup",
+      "destination": "/api/elevenlabs-agent-cleanup"
+    },
+    {
       "source": "/api/contact",
       "destination": "/api/contact"
     },

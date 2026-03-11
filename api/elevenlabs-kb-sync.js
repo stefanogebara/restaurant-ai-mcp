@@ -12,7 +12,7 @@
  */
 
 const { supabaseAdmin } = require('./_lib/supabase');
-const { verifyJWT, getRestaurantId } = require('./_lib/auth');
+const { verifyJWT, getRestaurantIdForUser } = require('./_lib/auth');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
@@ -137,7 +137,7 @@ function buildKnowledgeDoc(config, managerFacts) {
   return lines.join('\n');
 }
 
-module.exports = async (req, res) => {
+const handler = async (req, res) => {
   setInternalCors(req, res);
   if (handlePreflight(req, res)) return;
 
@@ -153,7 +153,8 @@ module.exports = async (req, res) => {
     return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 
-  const restaurantId = getRestaurantId(user);
+  const restaurantResult = await getRestaurantIdForUser(user.sub);
+  const restaurantId = restaurantResult?.restaurantId || null;
   if (!restaurantId) {
     return res.status(400).json({ success: false, error: 'No restaurant associated with this account' });
   }
@@ -163,10 +164,7 @@ module.exports = async (req, res) => {
     return res.status(500).json({ success: false, error: 'ElevenLabs API key not configured' });
   }
 
-  const agentId = process.env.VITE_ELEVENLABS_AGENT_ID;
-  if (!agentId) {
-    return res.status(500).json({ success: false, error: 'ElevenLabs agent not configured' });
-  }
+  // agentId resolved from DB after config fetch (per-restaurant)
 
   try {
     // Fetch restaurant config + manager facts in parallel
@@ -174,7 +172,7 @@ module.exports = async (req, res) => {
       supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('restaurant_name, phone, email, address, city, country, restaurant_type, timezone, business_hours, avg_dining_duration_minutes, deposit_config, restaurant_profile')
+        .select('restaurant_name, phone, email, address, city, country, restaurant_type, timezone, business_hours, avg_dining_duration_minutes, deposit_config, restaurant_profile, elevenlabs_agent_id, elevenlabs_kb_doc_id')
         .eq('id', restaurantId)
         .single(),
       supabaseAdmin
@@ -191,9 +189,35 @@ module.exports = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Restaurant not found' });
     }
 
+    // Resolve per-restaurant agent ID from DB
+    const agentId = configResult.data.elevenlabs_agent_id;
+    if (!agentId) {
+      return res.status(400).json({ success: false, error: 'Agent not provisioned for this restaurant' });
+    }
+
     const knowledgeDoc = buildKnowledgeDoc(configResult.data, factsResult.data || []);
 
-    // Step 1: Create (or update) knowledge base document
+    // Step 1: Delete old KB doc if one exists
+    const oldDocId = configResult.data.elevenlabs_kb_doc_id;
+    if (oldDocId) {
+      try {
+        const deleteRes = await fetch(`https://api.elevenlabs.io/v1/convai/knowledge-base/${encodeURIComponent(oldDocId)}`, {
+          method: 'DELETE',
+          headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
+        });
+        if (deleteRes.ok) {
+          logger.info('Deleted old KB doc', { restaurantId, oldDocId });
+        } else if (deleteRes.status !== 404) {
+          const body = await deleteRes.text();
+          logger.error('Failed to delete old KB doc', { oldDocId, status: deleteRes.status, body: body.substring(0, 300) });
+        }
+      } catch (delErr) {
+        logger.error('Error deleting old KB doc', { oldDocId, error: delErr.message });
+        // Continue anyway
+      }
+    }
+
+    // Step 2: Create new knowledge base document
     const docName = `${configResult.data.restaurant_name || 'Restaurant'} - Knowledge Base`;
 
     const createResponse = await fetch('https://api.elevenlabs.io/v1/convai/knowledge-base/text', {
@@ -217,7 +241,7 @@ module.exports = async (req, res) => {
     const docData = await createResponse.json();
     const documentId = docData.id;
 
-    // Step 2: Link document to agent's knowledge base
+    // Step 3: Link document to agent's knowledge base
     const patchResponse = await fetch(`https://api.elevenlabs.io/v1/convai/agents/${encodeURIComponent(agentId)}`, {
       method: 'PATCH',
       headers: {
@@ -241,6 +265,18 @@ module.exports = async (req, res) => {
       return res.status(502).json({ success: false, error: 'Failed to link knowledge base to agent' });
     }
 
+    // Step 4: Save new KB doc ID to restaurant_config
+    const { error: saveError } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .update({ elevenlabs_kb_doc_id: documentId })
+      .eq('id', restaurantId);
+
+    if (saveError) {
+      logger.error('Failed to save KB doc ID to restaurant_config', { restaurantId, error: saveError.message });
+      // Non-fatal — KB is already synced
+    }
+
     logger.info('KB synced to ElevenLabs', { restaurantId, documentId, docLength: knowledgeDoc.length });
 
     return res.json({
@@ -253,3 +289,9 @@ module.exports = async (req, res) => {
     return res.status(500).json({ success: false, error: 'Internal error' });
   }
 };
+
+// Default export is the handler (Vercel serverless convention)
+module.exports = handler;
+
+// Named export for reuse by elevenlabsAgentService
+module.exports.buildKnowledgeDoc = buildKnowledgeDoc;

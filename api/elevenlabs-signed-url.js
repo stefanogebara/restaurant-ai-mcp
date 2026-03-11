@@ -1,4 +1,5 @@
 const { verifyJWT } = require('./_lib/auth');
+const { supabaseAdmin } = require('./_lib/supabase');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
@@ -28,9 +29,26 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: 'ElevenLabs API key not configured' });
   }
 
-  const agentId = req.query.agent_id || process.env.VITE_ELEVENLABS_AGENT_ID;
+  let agentId = req.query.agent_id;
   if (!agentId) {
-    logger.error('No agent_id provided and VITE_ELEVENLABS_AGENT_ID not configured');
+    // Auto-resolve from restaurant config
+    const restaurantId = user.restaurant_id;
+    if (restaurantId) {
+      const { data: config } = await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('elevenlabs_agent_id')
+        .eq('id', restaurantId)
+        .single();
+      agentId = config?.elevenlabs_agent_id;
+    }
+  }
+  // Final fallback to global agent (for demo/testing)
+  if (!agentId) {
+    agentId = process.env.VITE_ELEVENLABS_AGENT_ID;
+  }
+  if (!agentId) {
+    logger.error('No agent_id resolved and VITE_ELEVENLABS_AGENT_ID not configured');
     return res.status(400).json({ error: 'agent_id is required' });
   }
 
