@@ -1300,10 +1300,10 @@ module.exports = async (req, res) => {
           return res.status(200).json({ status: 'ok' });
         }
 
-        // Deduplicate: Meta retries on timeout, ignore messages we've already seen
-        // Uses Redis so dedup works across all Vercel serverless instances
+        // Deduplicate: Meta retries failed webhooks for up to 24h with exponential backoff.
+        // Use 24h TTL to catch retries that come in hours after the original.
         const messageId = message.id;
-        if (messageId && await isMessageDuplicate(messageId)) {
+        if (messageId && await isMessageDuplicate(messageId, 86400)) {
           logger.info(` Duplicate message ${messageId}, skipping`);
           return res.status(200).json({ status: 'ok' });
         }
