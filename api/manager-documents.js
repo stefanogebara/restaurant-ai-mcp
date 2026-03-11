@@ -3,7 +3,12 @@
 const path = require('path');
 const Busboy = require('busboy');
 const Anthropic = require('@anthropic-ai/sdk').default;
-const pdfParse = require('pdf-parse');
+// pdf-parse v2 uses ESM-first; lazy-require the CJS build to avoid Vercel cold-start crashes
+let pdfParse;
+function getPdfParse() {
+  if (!pdfParse) pdfParse = require('pdf-parse');
+  return pdfParse;
+}
 const { verifyJWT } = require('./_lib/auth');
 const { writeMemory } = require('./services/managerMemory');
 const { createSecureLogger } = require('./_lib/secure-logger');
@@ -74,7 +79,7 @@ async function extractText(buffer, mimetype, filename) {
     (typeof filename === 'string' && filename.toLowerCase().endsWith('.pdf'));
 
   if (isPdf) {
-    const result = await pdfParse(buffer);
+    const result = await getPdfParse()(buffer);
     return result.text || '';
   }
 

@@ -279,61 +279,59 @@ module.exports = async (req, res) => {
 
     const SELECT_FIELDS = 'id, restaurant_name, demo_token, demo_contact_email, demo_contact_name, demo_expires_at';
 
-    // Fetch day-3 candidates
-    const { data: day3Demos, error: day3Error } = await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_config')
-      .select(SELECT_FIELDS)
-      .eq('is_demo', true)
-      .gte('demo_expires_at', day3Start)
-      .lte('demo_expires_at', day3End)
-      .is('demo_day3_sent_at', null);
+    /**
+     * Fetch demo candidates for a given time window and dedup column.
+     * Falls back gracefully if the dedup column hasn't been migrated yet.
+     */
+    async function fetchDemoCandidates(start, end, dedupCol) {
+      let query = supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select(SELECT_FIELDS)
+        .eq('is_demo', true)
+        .gte('demo_expires_at', start)
+        .lte('demo_expires_at', end);
 
-    if (day3Error) {
-      logger.error('Error fetching day-3 demos:', day3Error);
-      return res.status(500).json({
-        success: false,
-        error: 'Failed to fetch day-3 demos',
-        details: day3Error.message,
-      });
+      // Add dedup filter — may fail if migration hasn't run yet
+      query = query.is(dedupCol, null);
+
+      const { data, error } = await query;
+      if (error) {
+        // If the column doesn't exist yet, log a warning and skip (migration pending)
+        if (error.message && error.message.includes('does not exist')) {
+          logger.warn(`Dedup column ${dedupCol} missing — run migration 20260311_demo_nurture_columns.sql. Skipping this window.`);
+          return [];
+        }
+        throw error;
+      }
+      return data || [];
+    }
+
+    // Fetch day-3 candidates
+    let day3Demos;
+    try {
+      day3Demos = await fetchDemoCandidates(day3Start, day3End, 'demo_day3_sent_at');
+    } catch (err) {
+      logger.error('Error fetching day-3 demos:', err);
+      return res.status(500).json({ success: false, error: 'Failed to fetch day-3 demos', details: err.message });
     }
 
     // Fetch day-5 candidates
-    const { data: day5Demos, error: day5Error } = await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_config')
-      .select(SELECT_FIELDS)
-      .eq('is_demo', true)
-      .gte('demo_expires_at', day5Start)
-      .lte('demo_expires_at', day5End)
-      .is('demo_day5_sent_at', null);
-
-    if (day5Error) {
-      logger.error('Error fetching day-5 demos:', day5Error);
-      return res.status(500).json({
-        success: false,
-        error: 'Failed to fetch day-5 demos',
-        details: day5Error.message,
-      });
+    let day5Demos;
+    try {
+      day5Demos = await fetchDemoCandidates(day5Start, day5End, 'demo_day5_sent_at');
+    } catch (err) {
+      logger.error('Error fetching day-5 demos:', err);
+      return res.status(500).json({ success: false, error: 'Failed to fetch day-5 demos', details: err.message });
     }
 
     // Fetch day-7 candidates
-    const { data: day7Demos, error: day7Error } = await supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_config')
-      .select(SELECT_FIELDS)
-      .eq('is_demo', true)
-      .gte('demo_expires_at', day7Start)
-      .lte('demo_expires_at', day7End)
-      .is('demo_day7_sent_at', null);
-
-    if (day7Error) {
-      logger.error('Error fetching day-7 demos:', day7Error);
-      return res.status(500).json({
-        success: false,
-        error: 'Failed to fetch day-7 demos',
-        details: day7Error.message,
-      });
+    let day7Demos;
+    try {
+      day7Demos = await fetchDemoCandidates(day7Start, day7End, 'demo_day7_sent_at');
+    } catch (err) {
+      logger.error('Error fetching day-7 demos:', err);
+      return res.status(500).json({ success: false, error: 'Failed to fetch day-7 demos', details: err.message });
     }
 
     logger.info(

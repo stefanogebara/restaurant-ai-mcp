@@ -1,5 +1,7 @@
 'use strict';
 
+const { Readable } = require('stream');
+
 // ─── Mocks (hoisted before require) ───────────────────────────────────────────
 
 // Mock Anthropic SDK — messages.create is controlled per-test via mockAnthropicCreate
@@ -199,18 +201,27 @@ const crypto = require('crypto');
 function mockReq(method, opts = {}) {
   const body = opts.body || {};
   const headers = opts.headers || {};
+  let rawBody = '';
   if (method === 'POST') {
-    const rawBody = JSON.stringify(body);
+    rawBody = JSON.stringify(body);
     const sig = 'sha256=' + crypto.createHmac('sha256', process.env.META_APP_SECRET).update(rawBody).digest('hex');
     headers['x-hub-signature-256'] = sig;
   }
-  return {
+  // Use a real Node.js Readable stream so the webhook's stream-reading block works
+  // (jest.useFakeTimers mocks setImmediate/nextTick, but real streams use native I/O)
+  const stream = method === 'POST' && rawBody
+    ? Readable.from([Buffer.from(rawBody)])
+    : Readable.from([]);
+
+  const req = {
     method,
     headers,
     query: opts.query || {},
     body,
     url: '/api/whatsapp-webhook',
+    on: (event, cb) => { stream.on(event, cb); return req; },
   };
+  return req;
 }
 
 function mockRes() {

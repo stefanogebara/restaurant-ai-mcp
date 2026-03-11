@@ -26,10 +26,10 @@ module.exports = async (req, res) => {
   }
 
   // Require JWT auth — ML stats contain restaurant-specific training data
-  try {
-    const token = (req.headers.authorization || '').replace('Bearer ', '');
-    await verifyJWT(token);
-  } catch {
+  // verifyJWT returns null (not throws) for empty/invalid tokens, so check the return value
+  const token = (req.headers.authorization || '').replace('Bearer ', '');
+  const authUser = await verifyJWT(token).catch(() => null);
+  if (!authUser) {
     return res.status(401).json({ success: false, error: 'Unauthorized' });
   }
 

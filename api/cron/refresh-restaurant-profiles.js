@@ -63,6 +63,11 @@ module.exports = async (req, res) => {
       .not('last_gathered_at', 'is', null);
 
     if (fetchError) {
+      // Table doesn't exist yet — migration pending, exit cleanly
+      if (fetchError.message && (fetchError.message.includes('does not exist') || fetchError.code === '42P01')) {
+        logger.warn('restaurant_intelligence table missing — run migration 20260311_demo_nurture_columns.sql. Skipping refresh.');
+        return res.status(200).json({ success: true, message: 'Migration pending — no intelligence data yet', refreshed: 0 });
+      }
       logger.error('Error fetching intelligence records:', fetchError);
       return res.status(500).json({ success: false, error: 'Failed to fetch intelligence data' });
     }
