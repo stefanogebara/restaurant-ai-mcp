@@ -64,11 +64,18 @@ module.exports = async (req, res) => {
 
     if (fetchError) {
       // Table doesn't exist yet — migration pending, exit cleanly
-      if (fetchError.message && (fetchError.message.includes('does not exist') || fetchError.code === '42P01')) {
+      // Supabase JS may return error as object with code/message or nested under .error
+      const errMsg = fetchError.message || fetchError.error?.message || JSON.stringify(fetchError);
+      const errCode = fetchError.code || fetchError.error?.code || '';
+      const isMissingTable = errCode === '42P01'
+        || errMsg.includes('does not exist')
+        || errMsg.includes('relation')
+        || errMsg.includes('undefined_table');
+      if (isMissingTable) {
         logger.warn('restaurant_intelligence table missing — run migration 20260311_demo_nurture_columns.sql. Skipping refresh.');
         return res.status(200).json({ success: true, message: 'Migration pending — no intelligence data yet', refreshed: 0 });
       }
-      logger.error('Error fetching intelligence records:', fetchError);
+      logger.error('Error fetching intelligence records:', { code: errCode, message: errMsg });
       return res.status(500).json({ success: false, error: 'Failed to fetch intelligence data' });
     }
 
