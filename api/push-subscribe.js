@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
     return res.status(200).end();
   }
 
-  const rateLimited = await checkAndApplyRateLimit(req, res, 'public');
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'reservation');
   if (rateLimited) return;
 
   if (req.method !== 'POST') {
@@ -41,6 +41,17 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // Validate restaurant_id exists to prevent flooding with arbitrary UUIDs
+    const { data: restaurant } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('id')
+      .eq('id', restaurant_id)
+      .single();
+    if (!restaurant) {
+      return res.status(400).json({ success: false, error: 'Invalid restaurant' });
+    }
+
     const { error } = await supabaseAdmin
       .from('customer_push_subscriptions')
       .insert({

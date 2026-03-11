@@ -145,6 +145,15 @@ describe('push-subscribe', () => {
 
     mockSupabaseAdmin = {
       from: jest.fn(),
+      schema: jest.fn().mockReturnValue({
+        from: jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({ data: { id: 'rest-1' }, error: null }),
+            }),
+          }),
+        }),
+      }),
     };
 
     jest.mock('../_lib/supabase', () => ({ supabaseAdmin: mockSupabaseAdmin }));

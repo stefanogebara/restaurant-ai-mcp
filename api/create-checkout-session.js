@@ -1,19 +1,14 @@
 const Stripe = require('stripe');
 const { verifyAuth } = require('./_lib/auth');
 const { getMeteredPriceMap } = require('./_lib/stripe-usage-reporter');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const logger = createSecureLogger('CheckoutSession');
 
 module.exports = async (req, res) => {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  setInternalCors(req, res);
+  if (handlePreflight(req, res)) return;
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });

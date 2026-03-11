@@ -32,11 +32,11 @@ export default function RevenueStatsWidget() {
         <div className="flex items-center gap-2">
           {stats.using_default && (
             <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5">
-              estimated
+              {t('dashboard.estimated', 'estimado')}
             </span>
           )}
           <span className="text-sm font-semibold text-deep-charcoal">{formatCurrency(totalProjected)}</span>
-          <span className="text-xs text-warm-stone">/ 7 days</span>
+          <span className="text-xs text-warm-stone">/ 7 {t('dashboard.days', 'dias')}</span>
         </div>
       </div>
 
@@ -63,7 +63,7 @@ export default function RevenueStatsWidget() {
 
       {stats.using_default && (
         <p className="text-xs text-warm-stone">
-          Based on {formatCurrency(stats.avg_spend_per_cover)}/cover (default). Add bills when completing service to improve accuracy.
+          {t('dashboard.revenueDefault', `Baseado em ${formatCurrency(stats.avg_spend_per_cover)}/couvert (padrão). Adicione contas ao finalizar o serviço para melhorar a precisão.`)}
         </p>
       )}
     </div>
