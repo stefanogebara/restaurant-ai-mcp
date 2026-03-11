@@ -21,7 +21,11 @@ async function handleGet(req, res) {
       .select('agent_name, agent_greeting')
       .eq('id', restaurantId)
       .single();
-    if (error) throw new Error(error.message);
+    if (error) {
+      // Column or table may not exist yet — return defaults instead of 500
+      logger.warn('voice-persona GET query error, returning defaults', { error: error.message });
+      return res.json({ agent_name: null, agent_greeting: null });
+    }
     return res.json({
       agent_name: data?.agent_name || null,
       agent_greeting: data?.agent_greeting || null,

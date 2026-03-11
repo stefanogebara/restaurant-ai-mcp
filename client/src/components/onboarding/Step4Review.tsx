@@ -6,6 +6,7 @@
  */
 
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import type { OnboardingStepProps } from '../../types/onboarding.types';
 import ThiingsIcon from '../common/ThiingsIcon';
 
@@ -16,39 +17,40 @@ interface Step4ReviewProps extends OnboardingStepProps {
 }
 
 export default function Step4Review({ data, onBack, onComplete, isSubmitting, goToStep }: Step4ReviewProps) {
-  const totalTables = data.areas.reduce((sum, area) => sum + area.tables.reduce((s, t) => s + t.count, 0), 0);
-  const totalCapacity = data.areas.reduce((sum, area) => sum + area.tables.reduce((s, t) => s + t.capacity * t.count, 0), 0);
+  const { t } = useTranslation();
+  const totalTables = data.areas.reduce((sum, area) => sum + area.tables.reduce((s, tbl) => s + tbl.count, 0), 0);
+  const totalCapacity = data.areas.reduce((sum, area) => sum + area.tables.reduce((s, tbl) => s + tbl.capacity * tbl.count, 0), 0);
 
   const openDays = data.business_hours.filter(h => h.is_open).length;
 
   const sections = [
     {
-      title: 'Restaurant Info',
+      title: t('onboarding.sectionRestaurantInfo'),
       step: 1,
       items: [
-        { label: 'Name', value: data.restaurant_name },
-        { label: 'Type', value: data.restaurant_type },
-        { label: 'Location', value: `${data.city}, ${data.country}` },
+        { label: t('onboarding.labelName'), value: data.restaurant_name },
+        { label: t('onboarding.labelType'), value: data.restaurant_type },
+        { label: t('onboarding.labelLocation'), value: `${data.city}, ${data.country}` },
       ],
     },
     {
-      title: 'Contact & Hours',
+      title: t('onboarding.sectionContactHours'),
       step: 2,
       items: [
-        { label: 'Phone', value: data.phone_number },
-        { label: 'Email', value: data.email },
-        ...(data.website ? [{ label: 'Website', value: data.website }] : []),
-        { label: 'Open days', value: `${openDays} days/week` },
+        { label: t('onboarding.labelPhone'), value: data.phone_number },
+        { label: t('onboarding.labelEmail'), value: data.email },
+        ...(data.website ? [{ label: t('onboarding.labelWebsite'), value: data.website }] : []),
+        { label: t('onboarding.labelOpenDays'), value: t('onboarding.daysPerWeek', { count: openDays }) },
       ],
     },
     {
-      title: 'Tables & Settings',
+      title: t('onboarding.sectionTablesSettings'),
       step: 3,
       items: [
-        { label: 'Areas', value: data.areas.map(a => a.name).join(', ') },
-        { label: 'Tables', value: `${totalTables} tables (${totalCapacity} seats)` },
-        { label: 'Booking window', value: `${data.advance_booking_days} days` },
-        { label: 'Buffer time', value: `${data.buffer_time} minutes` },
+        { label: t('onboarding.labelAreas'), value: data.areas.map(a => a.name).join(', ') },
+        { label: t('onboarding.labelTables'), value: t('onboarding.tablesAndSeats', { tables: totalTables, seats: totalCapacity }) },
+        { label: t('onboarding.labelBookingWindow'), value: t('onboarding.daysValue', { count: data.advance_booking_days }) },
+        { label: t('onboarding.labelBufferTime'), value: t('onboarding.minutesValue', { count: data.buffer_time }) },
       ],
     },
   ];
@@ -61,8 +63,8 @@ export default function Step4Review({ data, onBack, onComplete, isSubmitting, go
       className="space-y-6"
     >
       <div>
-        <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">Review & Launch</h2>
-        <p className="text-stone-gray text-sm">Everything looks good? Let's get your restaurant live!</p>
+        <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">{t('onboarding.step4Heading')}</h2>
+        <p className="text-stone-gray text-sm">{t('onboarding.step4Subtitle')}</p>
       </div>
 
       {/* Summary Sections */}
@@ -76,7 +78,7 @@ export default function Step4Review({ data, onBack, onComplete, isSubmitting, go
                   onClick={() => goToStep(section.step)}
                   className="text-xs font-medium text-burgundy hover:text-burgundy-dark transition-colors"
                 >
-                  Edit
+                  {t('onboarding.edit')}
                 </button>
               )}
             </div>
@@ -99,11 +101,11 @@ export default function Step4Review({ data, onBack, onComplete, isSubmitting, go
         <div className="flex items-start gap-3">
           <ThiingsIcon name="info" pxSize={20} className="text-burgundy flex-shrink-0 mt-0.5" />
           <div className="text-sm text-stone-gray">
-            <p className="font-medium text-deep-charcoal mb-1">After launch, you can customize:</p>
+            <p className="font-medium text-deep-charcoal mb-1">{t('onboarding.afterLaunchTitle')}</p>
             <ul className="space-y-1">
-              <li>AI voice personality and language</li>
-              <li>AI learning from your restaurant profile</li>
-              <li>Team member access and roles</li>
+              <li>{t('onboarding.afterLaunchVoice')}</li>
+              <li>{t('onboarding.afterLaunchLearning')}</li>
+              <li>{t('onboarding.afterLaunchTeam')}</li>
             </ul>
           </div>
         </div>
@@ -116,7 +118,7 @@ export default function Step4Review({ data, onBack, onComplete, isSubmitting, go
           className="px-6 py-3 bg-white hover:bg-soft-gray border border-border-gray text-deep-charcoal font-semibold rounded-xl transition-all flex items-center gap-2"
         >
           <ThiingsIcon name="chevron-left" pxSize={20} />
-          Back
+          {t('onboarding.back')}
         </button>
         <button
           onClick={onComplete}
@@ -126,11 +128,11 @@ export default function Step4Review({ data, onBack, onComplete, isSubmitting, go
           {isSubmitting ? (
             <>
               <div aria-hidden="true" className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Setting up...
+              {t('onboarding.settingUp')}
             </>
           ) : (
             <>
-              Launch My Restaurant
+              {t('onboarding.launchMyRestaurant')}
               <ThiingsIcon name="lightning" pxSize={20} />
             </>
           )}

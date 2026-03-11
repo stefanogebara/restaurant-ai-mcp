@@ -5,6 +5,7 @@ const { verifyJWT } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { writeMemory } = require('./services/managerMemory');
 const { parseCSVBuffer, normalizeRow, buildLTVRecord, buildServiceRecord } = require('./_lib/importPipeline');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 
 const logger = createSecureLogger('import-history');
@@ -44,6 +45,9 @@ function parseMultipart(req) {
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'reservation');
+  if (rateLimited) return;
 
   let restaurantId;
   try {

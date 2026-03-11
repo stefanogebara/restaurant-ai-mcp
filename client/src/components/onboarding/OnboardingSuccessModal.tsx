@@ -32,7 +32,7 @@ export default function OnboardingSuccessModal({ countdown, ownReferral }: Onboa
             return (
               <div className="mb-6 border border-border-gray rounded-2xl p-4">
                 <p className="text-[13px] font-medium text-deep-charcoal mb-3">
-                  Know another restaurateur? Share Seatable and earn rewards.
+                  {t('onboarding.referralNudge')}
                 </p>
                 <div className="flex gap-3 justify-center">
                   <a
@@ -62,10 +62,10 @@ export default function OnboardingSuccessModal({ countdown, ownReferral }: Onboa
             onClick={() => navigate('/host-dashboard/simple')}
             className="w-full px-8 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all duration-300 mb-2"
           >
-            Go to Dashboard →
+            {t('onboarding.goToDashboard')} →
           </button>
           <p className="text-sm text-stone-gray text-center">
-            Redirecting automatically in {countdown}s
+            {t('onboarding.redirectingIn', { count: countdown })}
           </p>
         </div>
       </div>

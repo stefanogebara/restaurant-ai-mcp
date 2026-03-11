@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { Navigate, Link, useSearchParams } from 'react-router-dom';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useAuth } from '../contexts/AuthContext';
 import { LS_PENDING_DEMO_TOKEN } from '../config/localStorageKeys';
 import ThiingsIcon from '../components/common/ThiingsIcon';
@@ -26,6 +27,7 @@ const AUTH_ERROR_KEYS: Record<string, string> = {
 };
 
 export default function Login() {
+  useDocumentTitle('Entrar | seatable');
   const { t } = useTranslation();
   const { user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
   const [searchParams] = useSearchParams();

@@ -13,6 +13,9 @@ jest.mock('../_lib/supabase', () => ({
 jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() }),
 }));
+jest.mock('../_lib/rate-limit', () => ({
+  checkAndApplyRateLimit: jest.fn().mockResolvedValue(false),
+}));
 
 const { EventEmitter } = require('events');
 const Busboy = require('busboy');
@@ -49,7 +52,7 @@ describe('POST /api/import-history', () => {
       headers: { 'content-type': 'multipart/form-data', authorization: 'Bearer token' },
       pipe: jest.fn(),
     };
-    res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    res = { status: jest.fn().mockReturnThis(), json: jest.fn(), setHeader: jest.fn() };
 
     verifyJWT.mockReturnValue({ restaurant_id: 'rest-123' });
     writeMemory.mockResolvedValue(undefined);

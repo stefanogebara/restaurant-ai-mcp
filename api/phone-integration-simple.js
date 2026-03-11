@@ -409,9 +409,26 @@ async function handleStatus(req, res) {
     .single();
 
   if (fetchError || !restaurant) {
-    return res.status(404).json({
-      success: false,
-      error: 'Restaurant not found'
+    // Return sensible defaults instead of 404/500 when table/column missing or restaurant not found
+    logger.warn('phone-integration status: restaurant query failed, returning defaults', {
+      restaurant_id,
+      error: fetchError?.message || 'not found'
+    });
+    return res.status(200).json({
+      success: true,
+      restaurant: {
+        name: null,
+        has_agent: false,
+        agent_id: null,
+        phone_number: null,
+        phone_number_id: null,
+        status: 'not_configured',
+        error: null,
+        configured_at: null
+      },
+      platform: {
+        twilio_phone: PLATFORM_TWILIO_NUMBER
+      }
     });
   }
 

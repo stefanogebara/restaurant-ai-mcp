@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import BookingForm from '../components/booking/BookingForm';
 import { useRestaurantBySlug } from '../hooks/useBooking';
 
 export default function BookingPage() {
+  useDocumentTitle('Reservar | seatable');
   const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
@@ -105,9 +107,15 @@ export default function BookingPage() {
             <ThiingsIcon name="close" pxSize={32} className="text-red-600" />
           </div>
           <h1 className="text-xl font-bold text-deep-charcoal mb-2">{t('reservations.restaurantNotFound')}</h1>
-          <p className="text-sm text-stone-gray">
+          <p className="text-sm text-stone-gray mb-4">
             {t('reservations.restaurantNotFoundDesc')}
           </p>
+          <Link
+            to="/"
+            className="inline-block px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors text-sm"
+          >
+            Voltar
+          </Link>
         </div>
         <p className="mt-6 text-xs text-muted-stone">
           Powered by <span className="font-serif">seatable<span className="text-burgundy">.</span></span>

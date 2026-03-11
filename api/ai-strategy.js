@@ -237,8 +237,9 @@ async function fetchStrategyMetrics(restaurantId) {
       .not('total_bill', 'is', null),
   ]);
 
-  const totalReservations = reservationsRes.count || 0;
-  const noShows = noShowRes.count || 0;
+  // Gracefully handle missing tables/columns — return zero metrics
+  const totalReservations = reservationsRes.error ? 0 : (reservationsRes.count || 0);
+  const noShows = noShowRes.error ? 0 : (noShowRes.count || 0);
   const noShowRate = totalReservations > 0 ? ((noShows / totalReservations) * 100).toFixed(1) : 'N/A';
 
   const serviceRecords = serviceRes.data || [];

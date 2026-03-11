@@ -65,6 +65,14 @@ module.exports = async (req, res) => {
         .order('seated_at', { ascending: true }),
     ]);
 
+    // If queries fail (missing table/column/migration), return empty defaults
+    if (reservationsRes.error) {
+      logger.warn('reservations query error, returning empty metrics', { error: reservationsRes.error.message });
+    }
+    if (serviceRes.error) {
+      logger.warn('service_records query error, returning empty metrics', { error: serviceRes.error.message });
+    }
+
     const reservations = reservationsRes.data || [];
     const serviceRecords = serviceRes.data || [];
 

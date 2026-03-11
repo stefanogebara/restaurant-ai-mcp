@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { colors } from '../../utils/colors';
 import ThiingsIcon from '../common/ThiingsIcon';
 import {
@@ -28,6 +29,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   onCityChange,
   error,
 }) => {
+  const { t } = useTranslation();
   const [isCountryOpen, setIsCountryOpen] = useState(false);
   const [isCityOpen, setIsCityOpen] = useState(false);
   const [countrySearchQuery, setCountrySearchQuery] = useState('');
@@ -106,7 +108,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
       {/* Country Selector */}
       <div className="relative location-selector-dropdown">
         <label className="block text-sm font-semibold text-deep-charcoal mb-2">
-          Country *
+          {t('onboarding.country')} *
         </label>
         <button
           type="button"
@@ -125,7 +127,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                 <span>{selectedCountry.name}</span>
               </span>
             ) : (
-              <span className="text-muted-stone">Select your country</span>
+              <span className="text-muted-stone">{t('onboarding.selectCountry')}</span>
             )}
           </div>
           <span className={`inline-flex transition-transform duration-200 ${isCountryOpen ? 'rotate-180' : ''}`}>
@@ -144,7 +146,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             <div className="p-3 border-b border-border-gray">
               <input
                 type="text"
-                placeholder="Search countries..."
+                placeholder={t('onboarding.searchCountries')}
                 value={countrySearchQuery}
                 onChange={(e) => setCountrySearchQuery(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl bg-soft-gray border border-border-gray text-deep-charcoal placeholder-muted-stone focus:outline-none focus:border-burgundy focus:ring-2 focus:ring-burgundy transition-colors"
@@ -156,7 +158,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             <div className="overflow-y-auto max-h-80 custom-scrollbar">
               {filteredLanguageGroups.length === 0 ? (
                 <div className="p-4 text-center text-stone-gray">
-                  No countries found
+                  {t('onboarding.noCountriesFound')}
                 </div>
               ) : (
                 filteredLanguageGroups.map((group) => (
@@ -196,7 +198,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
       {/* City Selector */}
       <div className="relative location-selector-dropdown">
         <label className="block text-sm font-semibold text-deep-charcoal mb-2">
-          City *
+          {t('onboarding.city')} *
         </label>
         <button
           type="button"
@@ -222,7 +224,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
               <span>{selectedCity}</span>
             ) : (
               <span className="text-muted-stone">
-                {selectedCountryCode ? 'Select your city' : 'Select country first'}
+                {selectedCountryCode ? t('onboarding.selectCity') : t('onboarding.selectCountryFirst')}
               </span>
             )}
           </div>
@@ -242,7 +244,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             <div className="p-3 border-b border-border-gray">
               <input
                 type="text"
-                placeholder="Search cities..."
+                placeholder={t('onboarding.searchCities')}
                 value={citySearchQuery}
                 onChange={(e) => setCitySearchQuery(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl bg-soft-gray border border-border-gray text-deep-charcoal placeholder-muted-stone focus:outline-none focus:border-burgundy focus:ring-2 focus:ring-burgundy transition-colors"
@@ -254,7 +256,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             <div className="overflow-y-auto max-h-80 custom-scrollbar">
               {filteredCities.length === 0 ? (
                 <div className="p-4 text-center text-stone-gray">
-                  No cities found
+                  {t('onboarding.noCitiesFound')}
                 </div>
               ) : (
                 filteredCities.map((city, index) => (

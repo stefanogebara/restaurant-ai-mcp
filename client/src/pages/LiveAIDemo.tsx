@@ -1,11 +1,13 @@
 /// <reference path="../types/elevenlabs.d.ts" />
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import ElevenLabsWidget from '../components/ElevenLabsWidget';
 import { useNavigate, Link } from 'react-router-dom';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 
 export default function LiveAIDemo() {
+  useDocumentTitle('Demo | seatable');
   const navigate = useNavigate();
   const { t } = useTranslation();
 

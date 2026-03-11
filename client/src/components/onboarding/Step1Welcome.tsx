@@ -37,16 +37,16 @@ export default function Step1Welcome({ data, updateData, onNext, isDemoLoading }
     const newErrors: Record<string, string> = {};
 
     if (!data.restaurant_name.trim()) {
-      newErrors.restaurant_name = 'Restaurant name is required';
+      newErrors.restaurant_name = t('onboarding.restaurantNameRequired');
     }
     if (!data.restaurant_type) {
-      newErrors.restaurant_type = 'Please select a restaurant type';
+      newErrors.restaurant_type = t('onboarding.restaurantTypeRequired');
     }
     if (!data.country_code || !data.country.trim()) {
-      newErrors.country = 'Country is required';
+      newErrors.country = t('onboarding.countryRequired');
     }
     if (!data.city.trim()) {
-      newErrors.city = 'City is required';
+      newErrors.city = t('onboarding.cityRequired');
     }
 
     setErrors(newErrors);
@@ -82,12 +82,12 @@ export default function Step1Welcome({ data, updateData, onNext, isDemoLoading }
       className="space-y-6"
     >
       <div>
-        <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">What's your restaurant called?</h2>
-        <p className="text-stone-gray text-sm">Tell us a bit about your restaurant to get started</p>
+        <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">{t('onboarding.step1Heading')}</h2>
+        <p className="text-stone-gray text-sm">{t('onboarding.step1Subtitle')}</p>
         {isDemoLoading && (
           <div className="flex items-center gap-2 mt-2 text-sm text-muted-stone">
             <div className="w-3 h-3 border border-muted-stone border-t-transparent rounded-full animate-spin" />
-            Loading your demo data…
+            {t('onboarding.loadingDemoData')}
           </div>
         )}
       </div>
@@ -95,7 +95,7 @@ export default function Step1Welcome({ data, updateData, onNext, isDemoLoading }
       {/* Restaurant Name */}
       <div>
         <label htmlFor="restaurant_name" className="block text-sm font-semibold text-deep-charcoal mb-2">
-          Restaurant Name *
+          {t('onboarding.restaurantNameLabel')}
         </label>
         <input
           id="restaurant_name"
@@ -103,8 +103,8 @@ export default function Step1Welcome({ data, updateData, onNext, isDemoLoading }
           value={data.restaurant_name}
           onChange={(e) => updateData({ restaurant_name: e.target.value })}
           onFocus={() => setErrors((prev) => ({ ...prev, restaurant_name: '' }))}
-          onBlur={(e) => { if (!e.target.value.trim()) setErrors((prev) => ({ ...prev, restaurant_name: 'Restaurant name is required' })); }}
-          placeholder="e.g. La Bella Vista"
+          onBlur={(e) => { if (!e.target.value.trim()) setErrors((prev) => ({ ...prev, restaurant_name: t('onboarding.restaurantNameRequired') })); }}
+          placeholder={t('onboarding.restaurantNamePlaceholder')}
           className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
         />
         {errors.restaurant_name && (
@@ -115,7 +115,7 @@ export default function Step1Welcome({ data, updateData, onNext, isDemoLoading }
       {/* Restaurant Type - Card Selection */}
       <div>
         <label className="block text-sm font-semibold text-deep-charcoal mb-3">
-          What type of restaurant? *
+          {t('onboarding.restaurantTypeLabel')}
         </label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {RESTAURANT_TYPES.map((type) => (
@@ -161,10 +161,10 @@ export default function Step1Welcome({ data, updateData, onNext, isDemoLoading }
             </div>
             <div>
               <p className="text-sm font-semibold text-deep-charcoal">
-                Language automatically set
+                {t('onboarding.languageAutoSet')}
               </p>
               <p className="text-xs text-stone-gray">
-                Based on your country selection: <span className="text-burgundy font-medium">{data.language}</span>
+                {t('onboarding.languageBasedOnCountry')} <span className="text-burgundy font-medium">{data.language}</span>
               </p>
             </div>
           </div>
@@ -177,7 +177,7 @@ export default function Step1Welcome({ data, updateData, onNext, isDemoLoading }
           onClick={handleContinue}
           className="px-8 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300"
         >
-          Continue
+          {t('onboarding.continue')}
           <ThiingsIcon name="chevron-right" pxSize={20} />
         </button>
       </div>

@@ -7,11 +7,20 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import type { OnboardingStepProps, RestaurantArea, TableShape, TableConfiguration } from '../../types/onboarding.types';
 import type { RestaurantSize } from '../../types/profile.types';
 import ThiingsIcon from '../common/ThiingsIcon';
 import TableAreaCard, { TABLE_CAPACITIES } from './TableAreaCard';
 import ReservationSettingsPanel from './ReservationSettingsPanel';
+
+const AREA_TEMPLATE_KEYS: Record<string, string> = {
+  Indoor: 'onboarding.areaIndoor',
+  Patio: 'onboarding.areaPatio',
+  Bar: 'onboarding.areaBar',
+  'Private Room': 'onboarding.areaPrivateRoom',
+  Custom: 'onboarding.areaCustom',
+};
 
 const AREA_TEMPLATES = ['Indoor', 'Patio', 'Bar', 'Private Room', 'Custom'];
 
@@ -63,6 +72,7 @@ function calculateTableDistribution(size: RestaurantSize, totalSeats: number): {
 }
 
 export default function Step3TablesAndSettings({ data, updateData, onNext, onBack }: OnboardingStepProps) {
+  const { t } = useTranslation();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const hasInitialized = useRef(false);
 
@@ -115,8 +125,8 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    if (data.areas.length === 0) newErrors.areas = 'At least one area is required';
-    if (totalTables === 0) newErrors.tables = 'At least one table is required';
+    if (data.areas.length === 0) newErrors.areas = t('onboarding.areaRequired');
+    if (totalTables === 0) newErrors.tables = t('onboarding.tableRequired');
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -160,19 +170,19 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
       <div>
-        <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">Tables & Settings</h2>
-        <p className="text-stone-gray text-sm">Set up your dining areas and reservation preferences</p>
+        <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">{t('onboarding.step3Heading')}</h2>
+        <p className="text-stone-gray text-sm">{t('onboarding.step3Subtitle')}</p>
       </div>
 
       <div className="bg-soft-gray border border-border-gray rounded-xl p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-deep-charcoal font-semibold text-lg">Total Capacity</p>
-            <p className="text-stone-gray text-sm">Across all dining areas</p>
+            <p className="text-deep-charcoal font-semibold text-lg">{t('onboarding.totalCapacity')}</p>
+            <p className="text-stone-gray text-sm">{t('onboarding.acrossAllAreas')}</p>
           </div>
           <div className="text-right">
-            <p className="text-3xl font-bold text-deep-charcoal">{totalCapacity} seats</p>
-            <p className="text-burgundy text-sm font-medium">{totalTables} tables</p>
+            <p className="text-3xl font-bold text-deep-charcoal">{totalCapacity} {t('onboarding.seats')}</p>
+            <p className="text-burgundy text-sm font-medium">{totalTables} {t('onboarding.tablesCount')}</p>
           </div>
         </div>
       </div>
@@ -194,7 +204,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
       </div>
 
       <div>
-        <p className="text-sm font-semibold text-deep-charcoal mb-2">Add another area:</p>
+        <p className="text-sm font-semibold text-deep-charcoal mb-2">{t('onboarding.addAnotherArea')}</p>
         <div className="flex flex-wrap gap-2">
           {AREA_TEMPLATES.map((template) => (
             <button
@@ -203,7 +213,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
               disabled={template !== 'Custom' && data.areas.some((a) => a.name === template)}
               className="px-4 py-2 bg-white hover:bg-soft-gray disabled:bg-soft-gray disabled:text-muted-stone disabled:cursor-not-allowed text-deep-charcoal border border-border-gray rounded-xl transition-colors text-sm"
             >
-              + {template}
+              + {t(AREA_TEMPLATE_KEYS[template] || template)}
             </button>
           ))}
         </div>
@@ -219,15 +229,15 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
         onUpdate={(key, value) => updateData({ [key]: value })}
       />
 
-      <p className="text-xs text-muted-stone">You can always adjust tables and settings later in your dashboard.</p>
+      <p className="text-xs text-muted-stone">{t('onboarding.adjustLater')}</p>
 
       <div className="flex justify-between pt-4">
         <button onClick={onBack} className="px-6 py-3 bg-white hover:bg-soft-gray border border-border-gray text-deep-charcoal font-semibold rounded-xl transition-all flex items-center gap-2">
           <ThiingsIcon name="chevron-left" pxSize={20} />
-          Back
+          {t('onboarding.back')}
         </button>
         <button onClick={() => validate() && onNext?.()} className="px-8 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300">
-          Continue
+          {t('onboarding.continue')}
           <ThiingsIcon name="chevron-right" pxSize={20} />
         </button>
       </div>

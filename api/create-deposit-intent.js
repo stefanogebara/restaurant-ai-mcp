@@ -36,6 +36,10 @@ module.exports = async (req, res) => {
     return res.status(400).json({ success: false, error: 'Invalid party_size' });
   }
 
+  if (parsedPartySize > 50) {
+    return res.status(400).json({ success: false, error: 'party_size cannot exceed 50' });
+  }
+
   try {
     // Fetch deposit config for this restaurant
     const { data: config, error: configError } = await supabaseAdmin

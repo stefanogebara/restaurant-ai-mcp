@@ -12,6 +12,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { api } from '../../services/api';
 
@@ -54,6 +55,7 @@ export default function Step5TeachAI({
   website,
   onNext,
 }: Step5TeachAIProps) {
+  const { t } = useTranslation();
   const [phase, setPhase] = useState<InterviewPhase>('idle');
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -159,11 +161,10 @@ export default function Step5TeachAI({
       >
         <div>
           <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">
-            Teach Your AI
+            {t('onboarding.teachAIHeading')}
           </h2>
           <p className="text-stone-gray text-sm">
-            Have a quick conversation with our AI so it truly understands your restaurant's
-            personality, cuisine, and what makes you special. This takes about 5 minutes.
+            {t('onboarding.teachAISubtitle')}
           </p>
         </div>
 
@@ -173,13 +174,12 @@ export default function Step5TeachAI({
               <ThiingsIcon name="chat" pxSize={20} className="text-burgundy" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-deep-charcoal">Interactive Interview</p>
-              <p className="text-xs text-stone-gray">12 topics covering cuisine, atmosphere, team, goals & more</p>
+              <p className="text-sm font-semibold text-deep-charcoal">{t('onboarding.interactiveInterview')}</p>
+              <p className="text-xs text-stone-gray">{t('onboarding.interviewTopics')}</p>
             </div>
           </div>
           <p className="text-xs text-stone-gray">
-            Your answers train both the AI receptionist (voice agent) and the AI manager (dashboard chat).
-            The more you share, the better they represent your restaurant.
+            {t('onboarding.interviewExplainer')}
           </p>
         </div>
 
@@ -196,7 +196,7 @@ export default function Step5TeachAI({
             onClick={onNext}
             className="text-sm text-warm-stone hover:text-deep-charcoal transition-colors"
           >
-            Skip for now
+            {t('onboarding.skipForNow')}
           </button>
           <button
             type="button"
@@ -204,7 +204,7 @@ export default function Step5TeachAI({
             className="px-6 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl flex items-center gap-2 transition-all duration-300"
           >
             <ThiingsIcon name="chat" pxSize={16} />
-            Start Interview
+            {t('onboarding.startInterview')}
           </button>
         </div>
       </motion.div>
@@ -220,8 +220,8 @@ export default function Step5TeachAI({
         className="flex flex-col items-center justify-center py-16 space-y-4"
       >
         <div className="w-12 h-12 border-3 border-burgundy/20 border-t-burgundy rounded-full animate-spin" />
-        <p className="text-sm text-stone-gray">Researching your restaurant...</p>
-        <p className="text-xs text-muted-stone">Finding info online to personalize the conversation</p>
+        <p className="text-sm text-stone-gray">{t('onboarding.researchingRestaurant')}</p>
+        <p className="text-xs text-muted-stone">{t('onboarding.researchingHint')}</p>
       </motion.div>
     );
   }
@@ -239,13 +239,13 @@ export default function Step5TeachAI({
             <ThiingsIcon name="check-circle" pxSize={40} className="text-burgundy" />
           </div>
           <h2 className="font-serif text-2xl font-bold text-deep-charcoal mb-2">
-            Your AI knows your restaurant!
+            {t('onboarding.aiKnowsRestaurant')}
           </h2>
           <p className="text-stone-gray text-sm mb-1">
-            Your AI receptionist and manager are now personalized with your restaurant's identity.
+            {t('onboarding.aiPersonalized')}
           </p>
           <p className="text-stone-gray text-sm">
-            You can refine this anytime from the dashboard.
+            {t('onboarding.refineAnytime')}
           </p>
         </div>
 
@@ -254,7 +254,7 @@ export default function Step5TeachAI({
           onClick={onNext}
           className="w-full px-8 py-3.5 bg-burgundy hover:bg-burgundy-dark text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all duration-300 shadow-lg shadow-burgundy/20"
         >
-          Go to Dashboard
+          {t('onboarding.goToDashboard')}
           <ThiingsIcon name="arrow-right" pxSize={20} />
         </button>
       </motion.div>
@@ -270,8 +270,8 @@ export default function Step5TeachAI({
         className="flex flex-col items-center justify-center py-16 space-y-4"
       >
         <div className="w-12 h-12 border-3 border-burgundy/20 border-t-burgundy rounded-full animate-spin" />
-        <p className="text-sm text-stone-gray">Generating your AI persona...</p>
-        <p className="text-xs text-muted-stone">Building a unique personality from your answers</p>
+        <p className="text-sm text-stone-gray">{t('onboarding.generatingPersona')}</p>
+        <p className="text-xs text-muted-stone">{t('onboarding.generatingHint')}</p>
       </motion.div>
     );
   }
@@ -286,8 +286,8 @@ export default function Step5TeachAI({
       {/* Header with progress */}
       <div className="flex-shrink-0 mb-3">
         <div className="flex items-center justify-between mb-1.5">
-          <h2 className="font-serif text-lg font-bold text-deep-charcoal">Teach Your AI</h2>
-          <span className="text-xs text-stone-gray">{completionPct}% complete</span>
+          <h2 className="font-serif text-lg font-bold text-deep-charcoal">{t('onboarding.teachAIHeading')}</h2>
+          <span className="text-xs text-stone-gray">{t('onboarding.completePercent', { pct: completionPct })}</span>
         </div>
         <div className="w-full bg-soft-gray rounded-full h-1.5">
           <div
@@ -296,7 +296,7 @@ export default function Step5TeachAI({
           />
         </div>
         {currentTopic && (
-          <p className="text-xs text-muted-stone mt-1">Topic: {currentTopic}</p>
+          <p className="text-xs text-muted-stone mt-1">{t('onboarding.topicLabel', { topic: currentTopic })}</p>
         )}
       </div>
 
@@ -358,7 +358,7 @@ export default function Step5TeachAI({
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={isSending}
-          placeholder="Type your answer..."
+          placeholder={t('onboarding.typeYourAnswer')}
           rows={1}
           className="flex-1 border border-border-gray rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy resize-none bg-white placeholder:text-muted-stone transition-colors disabled:opacity-50"
         />
@@ -388,7 +388,7 @@ export default function Step5TeachAI({
           disabled={isSending}
           className="text-xs text-warm-stone hover:text-deep-charcoal transition-colors disabled:opacity-50"
         >
-          Skip & finish later
+          {t('onboarding.skipAndFinishLater')}
         </button>
         {completionPct >= 60 && (
           <button
@@ -404,7 +404,7 @@ export default function Step5TeachAI({
             }}
             className="text-xs text-burgundy hover:text-burgundy-dark font-medium transition-colors"
           >
-            Finish early & generate persona
+            {t('onboarding.finishEarlyGenerate')}
           </button>
         )}
       </div>

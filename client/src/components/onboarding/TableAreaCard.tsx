@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { RestaurantArea, TableShape, TableConfiguration } from '../../types/onboarding.types';
 
@@ -16,9 +17,15 @@ interface TableAreaCardProps {
 
 export { TABLE_CAPACITIES };
 
+const SHAPE_KEYS: Record<string, string> = {
+  round: 'onboarding.round',
+  square: 'onboarding.square',
+};
+
 export default function TableAreaCard({
   area, areaIndex, canRemove, getTableCount, getTableConfig, updateTableConfig, updateAreaName, onRemove,
 }: TableAreaCardProps) {
+  const { t } = useTranslation();
   return (
     <div className="bg-soft-gray border border-border-gray rounded-xl p-5">
       <div className="flex items-center justify-between mb-4">
@@ -42,13 +49,13 @@ export default function TableAreaCard({
       <div className="space-y-4">
         {TABLE_CAPACITIES.map((capacity) => (
           <div key={capacity} className="bg-white rounded-xl p-4 border border-border-gray">
-            <h4 className="text-sm font-semibold text-deep-charcoal mb-3">{capacity}-Person Tables</h4>
+            <h4 className="text-sm font-semibold text-deep-charcoal mb-3">{t('onboarding.personTables', { count: capacity })}</h4>
             <div className="grid grid-cols-2 gap-3">
               {(['round', 'square'] as TableShape[]).map((shape) => (
                 <div key={shape} className="p-3 bg-soft-gray rounded-xl">
                   <div className="flex items-center gap-2 mb-2">
                     <div className={`w-6 h-6 border-2 border-burgundy ${shape === 'round' ? 'rounded-full' : 'rounded'}`} />
-                    <span className="text-sm font-medium text-deep-charcoal capitalize">{shape}</span>
+                    <span className="text-sm font-medium text-deep-charcoal">{t(SHAPE_KEYS[shape] || shape)}</span>
                   </div>
                   <input
                     type="number"
@@ -66,8 +73,8 @@ export default function TableAreaCard({
                       className="w-4 h-4 rounded border-border-gray text-burgundy focus:ring-burgundy"
                     />
                     <span className="text-xs text-stone-gray">
-                      Fixed seating{' '}
-                      <span title="Tick if this table cannot be moved or combined with adjacent tables." className="cursor-help">ⓘ</span>
+                      {t('onboarding.fixedSeating')}{' '}
+                      <span title={t('onboarding.fixedSeatingHint')} className="cursor-help">ⓘ</span>
                     </span>
                   </div>
                 </div>

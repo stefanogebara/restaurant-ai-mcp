@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { usePermission } from '../hooks/usePermission';
 import { useAnalytics } from '../hooks/useAnalytics';
 import { SkeletonAnalytics } from '../components/common/Skeleton';
@@ -19,6 +20,7 @@ import ThiingsIcon from '../components/common/ThiingsIcon';
 const init30d = presetToRange('30d');
 
 export default function AnalyticsDashboard() {
+  useDocumentTitle('Análises | seatable');
   const { t } = useTranslation();
   const { can } = usePermission();
   const [dateRange, setDateRange] = useState<DateRangeValue>({ preset: '30d', ...init30d });

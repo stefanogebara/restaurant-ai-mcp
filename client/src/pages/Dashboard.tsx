@@ -13,6 +13,7 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { hostAPI } from '../services/api';
@@ -48,6 +49,7 @@ function maybeTrackFirstReservation() {
 }
 
 export default function Dashboard() {
+  useDocumentTitle('Dashboard | seatable');
   const { t, i18n } = useTranslation();
   const { success } = useToast();
 

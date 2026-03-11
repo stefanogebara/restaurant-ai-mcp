@@ -14,6 +14,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../contexts/ToastContext';
@@ -35,6 +36,7 @@ const STEP_NAME_KEYS = ['onboarding.stepName1', 'onboarding.stepName2', 'onboard
 const TOTAL_STEPS = 6;
 
 export default function Onboarding() {
+  useDocumentTitle('Configuração | seatable');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { error: showError } = useToast();
@@ -277,7 +279,7 @@ export default function Onboarding() {
           {currentStep === 1 && isPreFilledFromDemo && (
             <div className="mb-5 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-burgundy/[0.06] border border-burgundy/20 text-[13px] text-burgundy font-medium">
               <ThiingsIcon name="sparkles" pxSize={15} />
-              We've pre-filled your info from your demo — feel free to adjust anything.
+              {t('onboarding.prefilledFromDemo')}
             </div>
           )}
           {currentStep === 1 && (
@@ -306,13 +308,13 @@ export default function Onboarding() {
           )}
           {currentStep === 4 && submitError && (
             <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between gap-4">
-              <p className="text-sm text-red-700">Setup failed. Your data is saved — please try again.</p>
+              <p className="text-sm text-red-700">{t('onboarding.setupFailed')}</p>
               <button
                 type="button"
                 onClick={() => { setSubmitError(false); completeOnboarding(); }}
                 className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 flex-shrink-0"
               >
-                Try again
+                {t('onboarding.tryAgain')}
               </button>
             </div>
           )}
