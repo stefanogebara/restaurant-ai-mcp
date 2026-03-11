@@ -1141,7 +1141,16 @@ module.exports = async (req, res) => {
     }
     // Use raw body for HMAC: Vercel exposes req.rawBody (Buffer), matching how Stripe webhooks work
     const rawBody = req._rawBody || req.rawBody || (typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
+    const rawBodySource = req._rawBody ? '_rawBody' : req.rawBody ? 'req.rawBody' : 'JSON.stringify';
     const expectedSig = 'sha256=' + crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex');
+    logger.info('[WA-SIG]', {
+      source: rawBodySource,
+      bodyDefined: req.body !== undefined,
+      rawBodyAvail: !!req.rawBody,
+      _rawBodyAvail: !!req._rawBody,
+      rawBodyLen: rawBody ? rawBody.length ?? rawBody.byteLength : 0,
+      sigMatch: signature === expectedSig,
+    });
     if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig))) {
       logger.error('Invalid Meta webhook signature');
       return res.status(403).json({ error: 'Invalid signature' });
