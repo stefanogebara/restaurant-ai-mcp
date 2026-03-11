@@ -1082,20 +1082,25 @@ module.exports = async (req, res) => {
   }
 
   // Capture raw body for HMAC signature verification.
-  // Vercel's Node.js runtime auto-parses JSON bodies and exposes req.rawBody (Buffer).
-  // Fall back to stream-reading if running in a non-Vercel environment.
-  if (req.method === 'POST' && !req.body && !req.rawBody) {
+  // module.exports.config bodyParser:false is a Next.js-only feature — it has NO effect on
+  // standalone Vercel functions. Vercel's Node.js 20 runtime auto-parses JSON bodies and
+  // does NOT expose req.rawBody for standalone functions.
+  // Fix: always attempt to read from the stream. In Vercel's runtime the stream remains
+  // readable even after req.body is populated (the runtime buffers internally then replays).
+  if (req.method === 'POST') {
     const chunks = [];
     await new Promise((resolve, reject) => {
       req.on('data', (chunk) => chunks.push(chunk));
       req.on('end', resolve);
       req.on('error', reject);
     });
-    req._rawBody = Buffer.concat(chunks).toString('utf8');
-    try {
-      req.body = JSON.parse(req._rawBody);
-    } catch {
-      req.body = {};
+    const streamBuf = Buffer.concat(chunks);
+    if (streamBuf.length > 0) {
+      req._rawBody = streamBuf.toString('utf8');
+      // Only parse body if Vercel hasn't already done so
+      if (!req.body) {
+        try { req.body = JSON.parse(req._rawBody); } catch { req.body = {}; }
+      }
     }
   }
 
@@ -1139,9 +1144,9 @@ module.exports = async (req, res) => {
       logger.error('Missing X-Hub-Signature-256 header');
       return res.status(403).json({ error: 'Missing signature' });
     }
-    // Use raw body for HMAC: Vercel exposes req.rawBody (Buffer), matching how Stripe webhooks work
+    // Use raw body for HMAC: prefer stream-captured body, then req.rawBody, then fallback
     const rawBody = req._rawBody || req.rawBody || (typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
-    const rawBodySource = req._rawBody ? '_rawBody' : req.rawBody ? 'req.rawBody' : 'JSON.stringify';
+    const rawBodySource = req._rawBody ? 'stream' : req.rawBody ? 'req.rawBody' : (typeof req.body === 'string' ? 'string-body' : 'JSON.stringify');
     const expectedSig = 'sha256=' + crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex');
     logger.info('[WA-SIG]', {
       source: rawBodySource,
