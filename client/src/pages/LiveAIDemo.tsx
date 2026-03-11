@@ -87,7 +87,7 @@ export default function LiveAIDemo() {
                 </span>
                 <span className="text-[13px] font-medium text-green-600">{t('landing.liveDemo.widget.agentOnline')}</span>
               </div>
-              <ElevenLabsWidget agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID} />
+              <ElevenLabsWidget agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID} useSignedUrl={false} />
             </div>
           ) : (
             <div className="mb-6 p-6 bg-soft-gray rounded-2xl text-left">

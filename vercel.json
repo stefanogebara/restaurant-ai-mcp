@@ -59,6 +59,10 @@
       "destination": "/api/release-deposit"
     },
     {
+      "source": "/api/elevenlabs-signed-url",
+      "destination": "/api/elevenlabs-signed-url"
+    },
+    {
       "source": "/api/contact",
       "destination": "/api/contact"
     },
