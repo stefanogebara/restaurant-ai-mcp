@@ -91,6 +91,12 @@ function App() {
         <ToastProvider>
           <SidebarProvider>
             <SentryBrowserRouter>
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-white focus:px-4 focus:py-2 focus:rounded focus:text-deep-charcoal focus:shadow-md"
+            >
+              Pular para o conteúdo
+            </a>
             <ErrorBoundary>
             <Suspense fallback={
               <div className="min-h-screen bg-warm-white flex flex-col items-center justify-center gap-4">
@@ -100,6 +106,7 @@ function App() {
                 <div role="status" aria-label="Loading application" className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy"></div>
               </div>
             }>
+            <main id="main-content">
             <Routes>
               <Route path="/" element={<ErrorBoundary fallback={<RouteErrorFallback />}><LandingPage /></ErrorBoundary>} />
               <Route path="/login" element={<Login />} />
@@ -136,6 +143,7 @@ function App() {
               <Route path="/portfolio" element={<PortfolioPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </main>
             </Suspense>
             </ErrorBoundary>
           </SentryBrowserRouter>

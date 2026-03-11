@@ -347,6 +347,8 @@
     "locations": "Ubicaciones",
     "inactiveTables": "Mesas Inactivas",
     "addNewTable": "Agregar Nueva Mesa",
+    "noTablesTitle": "Ninguna mesa configurada",
+    "noTablesDescription": "Agregue mesas para empezar a recibir reservas y gestionar su salón.",
     "editTable": "Editar Mesa",
     "setAdjacent": "Establecer Adyacente",
     "voiceEngine": "Motor de Voz",

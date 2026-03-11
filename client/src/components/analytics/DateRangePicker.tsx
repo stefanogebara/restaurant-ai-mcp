@@ -57,7 +57,7 @@ export default function DateRangePicker({ value, onChange }: Props) {
           key={key}
           type="button"
           onClick={() => handle(key)}
-          className={`px-3 py-1.5 rounded-xl text-[13px] font-medium transition-colors ${
+          className={`px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded-xl text-[13px] font-medium transition-colors ${
             value.preset === key
               ? 'bg-deep-charcoal text-white border border-deep-charcoal'
               : 'bg-white border border-border-gray text-stone-gray hover:border-muted-stone'
@@ -73,7 +73,7 @@ export default function DateRangePicker({ value, onChange }: Props) {
             value={value.startDate}
             max={value.endDate}
             onChange={e => onChange({ ...value, startDate: e.target.value })}
-            className="px-3 py-1.5 bg-white border border-border-gray rounded-xl text-[13px] text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy"
+            className="px-3 py-1.5 min-h-[44px] sm:min-h-0 bg-white border border-border-gray rounded-xl text-[13px] text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy"
           />
           <span className="text-stone-gray text-sm">→</span>
           <input
@@ -81,7 +81,7 @@ export default function DateRangePicker({ value, onChange }: Props) {
             value={value.endDate}
             min={value.startDate}
             onChange={e => onChange({ ...value, endDate: e.target.value })}
-            className="px-3 py-1.5 bg-white border border-border-gray rounded-xl text-[13px] text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy"
+            className="px-3 py-1.5 min-h-[44px] sm:min-h-0 bg-white border border-border-gray rounded-xl text-[13px] text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy"
           />
         </div>
       )}

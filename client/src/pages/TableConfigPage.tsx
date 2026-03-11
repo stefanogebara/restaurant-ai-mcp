@@ -188,6 +188,33 @@ export default function TableConfigPage() {
         </div>
       </div>
 
+        {/* Empty state */}
+        {tables.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16 px-6">
+            <div className="bg-white border border-border-gray rounded-2xl p-10 max-w-md text-center shadow-sm">
+              <div className="w-16 h-16 bg-soft-gray rounded-full flex items-center justify-center mx-auto mb-5">
+                <span className="text-2xl">🪑</span>
+              </div>
+              <h3 className="text-lg font-bold text-deep-charcoal mb-2">
+                {t('settings.noTablesTitle')}
+              </h3>
+              <p className="text-sm text-warm-stone mb-6 leading-relaxed">
+                {t('settings.noTablesDescription')}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData(defaultFormData);
+                  setShowAddModal(true);
+                }}
+                className="px-6 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors text-sm"
+              >
+                + {t('settings.addNewTable')}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Tables by Location */}
         {Object.entries(tablesByLocation).map(([location, locationTables]) => (
           <div key={location} className="mb-8">

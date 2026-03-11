@@ -650,6 +650,8 @@
     "locations": "Localizações",
     "inactiveTables": "Mesas Inativas",
     "addNewTable": "Adicionar Nova Mesa",
+    "noTablesTitle": "Nenhuma mesa configurada",
+    "noTablesDescription": "Adicione mesas para começar a receber reservas e gerenciar seu salão.",
     "editTable": "Editar Mesa",
     "setAdjacent": "Definir Adjacente",
     "voiceEngine": "Motor de Voz",
@@ -895,7 +897,7 @@
   },
   "floorPlan": {
     "title": "Planta do Salão",
-    "subtitle": "Arraste as mesas para reorganizar · Clique em uma mesa para editar",
+    "subtitle": "Arraste as mesas para organizar o layout do seu restaurante · Clique em uma mesa para editar · Use \"Vincular Mesas\" para juntar mesas adjacentes",
     "saving": "Salvando...",
     "saved": "Salvo",
     "linking": "Vinculando...",

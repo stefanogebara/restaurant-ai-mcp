@@ -649,6 +649,8 @@
     "locations": "Locations",
     "inactiveTables": "Inactive Tables",
     "addNewTable": "Add New Table",
+    "noTablesTitle": "No tables configured",
+    "noTablesDescription": "Add tables to start receiving reservations and managing your floor.",
     "editTable": "Edit Table",
     "setAdjacent": "Set Adjacent",
     "voiceEngine": "Voice Engine",
@@ -894,7 +896,7 @@
   },
   "floorPlan": {
     "title": "Floor Plan",
-    "subtitle": "Drag tables to rearrange · Click a table to edit its properties",
+    "subtitle": "Drag tables to arrange your restaurant layout · Click a table to edit · Use \"Link Tables\" to join adjacent tables",
     "saving": "Saving...",
     "saved": "Saved",
     "linking": "Linking...",
