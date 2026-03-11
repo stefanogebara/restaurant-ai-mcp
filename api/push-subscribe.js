@@ -42,12 +42,16 @@ module.exports = async (req, res) => {
 
   try {
     // Validate restaurant_id exists to prevent flooding with arbitrary UUIDs
-    const { data: restaurant } = await supabaseAdmin
+    const { data: restaurant, error: lookupError } = await supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
       .select('id')
       .eq('id', restaurant_id)
       .single();
+    if (lookupError) {
+      logger.error('push-subscribe: restaurant lookup failed', lookupError.message);
+      return res.status(500).json({ success: false, error: 'Internal server error' });
+    }
     if (!restaurant) {
       return res.status(400).json({ success: false, error: 'Invalid restaurant' });
     }

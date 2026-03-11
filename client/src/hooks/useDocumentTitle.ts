@@ -1,15 +1,16 @@
-import { useEffect } from 'react';
-
-const DEFAULT_TITLE = 'seatable - Gestão de Restaurantes com IA';
+import { useEffect, useRef } from 'react';
 
 /**
- * Sets document.title on mount and restores the default on unmount.
+ * Sets document.title on mount and restores the previous title on unmount.
  */
 export function useDocumentTitle(title: string) {
+  const previousTitle = useRef(document.title);
+
   useEffect(() => {
+    previousTitle.current = document.title;
     document.title = title;
     return () => {
-      document.title = DEFAULT_TITLE;
+      document.title = previousTitle.current;
     };
   }, [title]);
 }

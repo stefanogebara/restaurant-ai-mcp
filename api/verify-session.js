@@ -4,17 +4,12 @@ const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { verifyJWT } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const logger = createSecureLogger('VerifySession');
 
 module.exports = async (req, res) => {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  setInternalCors(req, res);
+  if (handlePreflight(req, res)) return;
 
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -72,10 +67,14 @@ module.exports = async (req, res) => {
         .limit(1)
         .single();
 
-      // If we found a restaurant record and emails don't match, deny access
-      if (restaurant && restaurant.customer_email && restaurant.customer_email !== sessionEmail) {
-        logger.warn('verify-session ownership mismatch', { userId: authUser.sub });
-        return res.status(403).json({ success: false, error: 'Forbidden' });
+      // If we found a restaurant record, enforce ownership
+      if (restaurant) {
+        if (!restaurant.customer_email) {
+          logger.warn('verify-session: restaurant has no customer_email, skipping ownership check', { userId: authUser.sub });
+        } else if (restaurant.customer_email !== sessionEmail) {
+          logger.warn('verify-session ownership mismatch', { userId: authUser.sub });
+          return res.status(403).json({ success: false, error: 'Forbidden' });
+        }
       }
     }
 
@@ -93,7 +92,6 @@ module.exports = async (req, res) => {
     logger.error('Error verifying session:', error);
     return res.status(500).json({
       error: 'Failed to verify session',
-      message: error.message,
     });
   }
 };

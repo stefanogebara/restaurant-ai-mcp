@@ -24,25 +24,31 @@ export default function ElevenLabsWidget({ agentId }: ElevenLabsWidgetProps) {
   const { i18n } = useTranslation();
 
   useEffect(() => {
-    if (containerRef.current && agentId && agentId !== 'YOUR_AGENT_ID_HERE') {
-      const lang = i18n.language || 'en';
-      const widgetLang = LANG_MAP[lang] || lang.split('-')[0] || 'en';
+    const container = containerRef.current;
+    if (!container || !agentId || agentId === 'YOUR_AGENT_ID_HERE') return;
 
-      // Create the custom element programmatically
-      const widget = document.createElement('elevenlabs-convai');
-      widget.setAttribute('agent-id', agentId);
-      widget.setAttribute('language', widgetLang);
+    const lang = i18n.language || 'en';
+    const widgetLang = LANG_MAP[lang] || lang.split('-')[0] || 'en';
 
-      // Override the default English "Need help?" bubble text
-      const ctaText = CTA_MAP[lang] || CTA_MAP.en;
-      widget.setAttribute('avatar-text', ctaText);
+    // Create the custom element programmatically
+    const widget = document.createElement('elevenlabs-convai') as HTMLElement & { destroy?: () => void };
+    widget.setAttribute('agent-id', agentId);
+    widget.setAttribute('language', widgetLang);
 
-      // Remove any previous widget children safely
-      while (containerRef.current.firstChild) {
-        containerRef.current.removeChild(containerRef.current.firstChild);
-      }
-      containerRef.current.appendChild(widget);
+    // Override the default English "Need help?" bubble text
+    const ctaText = CTA_MAP[lang] || CTA_MAP.en;
+    widget.setAttribute('avatar-text', ctaText);
+
+    // Remove any previous widget children safely
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
     }
+    container.appendChild(widget);
+
+    return () => {
+      widget.destroy?.();
+      if (container.contains(widget)) container.removeChild(widget);
+    };
   }, [agentId, i18n.language]);
 
   return <div ref={containerRef} className="elevenlabs-widget-container" />;

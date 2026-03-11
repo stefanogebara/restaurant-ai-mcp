@@ -1,9 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useStaffingForecast } from '../../hooks/useStaffingForecast';
-
-const DAY_PT: Record<string, string> = {
-  Mon: 'Seg', Tue: 'Ter', Wed: 'Qua', Thu: 'Qui', Fri: 'Sex', Sat: 'Sáb', Sun: 'Dom',
-};
+import { getDayAbbrevPt } from '../../utils/dayNames';
 
 export default function StaffingForecastWidget() {
   const { t, i18n } = useTranslation();
@@ -41,7 +38,7 @@ export default function StaffingForecastWidget() {
           {forecast.map((day) => (
             <div key={day.date} className="flex items-start justify-between gap-4">
               <div className="min-w-[44px]">
-                <span className="text-sm font-semibold text-deep-charcoal">{isPt ? (DAY_PT[day.day] || day.day) : day.day}</span>
+                <span className="text-sm font-semibold text-deep-charcoal">{isPt ? getDayAbbrevPt(day.day) : day.day}</span>
                 <span className="block text-xs text-warm-stone">
                   {new Date(day.date + 'T12:00:00Z').toLocaleDateString(dateLocale, {
                     month: 'short',

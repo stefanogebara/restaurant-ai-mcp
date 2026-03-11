@@ -1,13 +1,11 @@
 import { useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import BookingForm from '../components/booking/BookingForm';
 import { useRestaurantBySlug } from '../hooks/useBooking';
 
 export default function BookingPage() {
-  useDocumentTitle('Reservar | seatable');
   const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();

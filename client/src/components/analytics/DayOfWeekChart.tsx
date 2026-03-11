@@ -1,28 +1,20 @@
 import { useTranslation } from 'react-i18next';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { colors } from '../../utils/colors';
+import { getDayAbbrevPt } from '../../utils/dayNames';
 
 interface DayOfWeekChartProps {
   reservationsByDay: Record<string, number>;
 }
 
-const DAY_ABBREV_PT: Record<string, string> = {
-  Monday: 'Seg',
-  Tuesday: 'Ter',
-  Wednesday: 'Qua',
-  Thursday: 'Qui',
-  Friday: 'Sex',
-  Saturday: 'Sáb',
-  Sunday: 'Dom',
-};
+const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProps) {
   const { t, i18n } = useTranslation();
-  const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  const isPtBr = i18n.language === 'pt-BR' || i18n.language === 'pt';
+  const isPt = i18n.language?.startsWith('pt');
 
   const chartData = daysOrder.map(day => ({
-    day: isPtBr ? DAY_ABBREV_PT[day] : day.substring(0, 3),
+    day: isPt ? getDayAbbrevPt(day) : day.substring(0, 3),
     count: reservationsByDay[day] || 0,
   }));
 
