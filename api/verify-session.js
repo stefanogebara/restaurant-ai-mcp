@@ -2,13 +2,15 @@ const Stripe = require('stripe');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { verifyJWT } = require('./_lib/auth');
+const { supabaseAdmin } = require('./_lib/supabase');
 const logger = createSecureLogger('VerifySession');
 
 module.exports = async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -19,6 +21,11 @@ module.exports = async (req, res) => {
   }
 
   if (await checkAndApplyRateLimit(req, res, 'api')) return;
+
+  // Require JWT auth — session data contains Stripe PII
+  const token = (req.headers.authorization || '').replace('Bearer ', '');
+  const authUser = await verifyJWT(token).catch(() => null);
+  if (!authUser) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
   try {
     const { session_id } = req.query;
@@ -52,6 +59,24 @@ module.exports = async (req, res) => {
         error: 'Payment not completed',
         status: session.payment_status,
       });
+    }
+
+    // Verify the session belongs to the authenticated user by matching customer_email
+    const sessionEmail = session.customer_details?.email;
+    if (sessionEmail && authUser.sub) {
+      const { data: restaurant } = await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('customer_email')
+        .eq('user_id', authUser.sub)
+        .limit(1)
+        .single();
+
+      // If we found a restaurant record and emails don't match, deny access
+      if (restaurant && restaurant.customer_email && restaurant.customer_email !== sessionEmail) {
+        logger.warn('verify-session ownership mismatch', { userId: authUser.sub });
+        return res.status(403).json({ success: false, error: 'Forbidden' });
+      }
     }
 
     // Return relevant session information

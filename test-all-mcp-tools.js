@@ -7,7 +7,8 @@ const readline = require('readline');
 
 // MCP Inspector proxy details
 const MCP_PROXY_URL = 'http://localhost:6277';
-const AUTH_TOKEN = '1c05e6bc2ae21dd04d68f9e4d6e393a1499a65d86bfeb6f34b3bfd13107cc9bd';
+// Set TEST_AUTH_TOKEN env var before running: export TEST_AUTH_TOKEN=<your_token>
+const AUTH_TOKEN = process.env.TEST_AUTH_TOKEN || '';
 
 // Test results storage
 const testResults = [];

@@ -3,7 +3,7 @@ const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 
 const logger = createSecureLogger('revenue-stats');
-const DEFAULT_AVG_SPEND = 40;
+const DEFAULT_AVG_SPEND = 80;
 const MIN_DATA_POINTS = 5;
 
 module.exports = async (req, res) => {

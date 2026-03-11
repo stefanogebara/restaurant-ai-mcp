@@ -30,7 +30,6 @@ import VoiceEngineSwitchModal from '../components/voice/VoiceEngineSwitchModal';
 import VoiceFilters from '../components/voice/VoiceFilters';
 import VoiceGrid from '../components/voice/VoiceGrid';
 import Spinner from '../components/common/Spinner';
-import ReferralWidget from '../components/dashboard/ReferralWidget';
 import VoicePersonaPanel from '../components/dashboard/VoicePersonaPanel';
 import EmbedSnippetPanel from '../components/dashboard/EmbedSnippetPanel';
 import PhoneIntegrationPanel from '../components/voice/PhoneIntegrationPanel';
@@ -363,7 +362,6 @@ export default function VoiceSettingsPage() {
           <StrategyMetricsWidget />
           <AIStrategyPanel />
           {slug && <EmbedSnippetPanel slug={slug} />}
-          <ReferralWidget />
         </div>
 
         <VoiceEngineSwitchModal isOpen={showEngineSwitchConfirm} engineSwitchTarget={engineSwitchTarget} onConfirm={confirmEngineSwitch} onClose={() => setShowEngineSwitchConfirm(false)} />

@@ -1,47 +1,12 @@
-import Anthropic from '@anthropic-ai/sdk';
+const Anthropic = require('@anthropic-ai/sdk');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
-// In-memory rate limiting fallback
-const ipCounts = new Map();
-const WINDOW_MS = 10 * 60 * 1000; // 10 minutes
-const MAX_REQUESTS = 20;
-
-function checkRateLimit(ip) {
-  const now = Date.now();
-  const entry = ipCounts.get(ip);
-
-  if (!entry || now - entry.start > WINDOW_MS) {
-    ipCounts.set(ip, { start: now, count: 1 });
-    return true;
-  }
-
-  if (entry.count >= MAX_REQUESTS) {
-    return false;
-  }
-
-  entry.count += 1;
-  return true;
-}
-
-// Clean up old entries periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, entry] of ipCounts) {
-    if (now - entry.start > WINDOW_MS) {
-      ipCounts.delete(ip);
-    }
-  }
-}, 60_000);
-
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
-
-  if (!checkRateLimit(ip)) {
-    return res.status(429).json({ error: 'Rate limit exceeded. Try again in a few minutes.' });
-  }
+  if (await checkAndApplyRateLimit(req, res, 'chat')) return;
 
   const { message, context, lang } = req.body || {};
 

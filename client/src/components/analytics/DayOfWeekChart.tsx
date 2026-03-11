@@ -6,12 +6,23 @@ interface DayOfWeekChartProps {
   reservationsByDay: Record<string, number>;
 }
 
+const DAY_ABBREV_PT: Record<string, string> = {
+  Monday: 'Seg',
+  Tuesday: 'Ter',
+  Wednesday: 'Qua',
+  Thursday: 'Qui',
+  Friday: 'Sex',
+  Saturday: 'Sáb',
+  Sunday: 'Dom',
+};
+
 export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const isPtBr = i18n.language === 'pt-BR' || i18n.language === 'pt';
 
   const chartData = daysOrder.map(day => ({
-    day: day.substring(0, 3),
+    day: isPtBr ? DAY_ABBREV_PT[day] : day.substring(0, 3),
     count: reservationsByDay[day] || 0,
   }));
 

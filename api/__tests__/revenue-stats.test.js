@@ -57,7 +57,7 @@ it('GET returns default avg_spend when fewer than 5 data points', async () => {
 
   const call = res.json.mock.calls[0][0];
   expect(call.using_default).toBe(true);
-  expect(call.avg_spend_per_cover).toBe(40);
+  expect(call.avg_spend_per_cover).toBe(80);
 });
 
 it('returns 401 when JWT invalid', async () => {

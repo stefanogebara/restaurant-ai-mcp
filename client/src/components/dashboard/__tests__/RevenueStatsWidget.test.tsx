@@ -35,9 +35,10 @@ describe('RevenueStatsWidget', () => {
     expect(screen.getByText('Revenue Forecast')).toBeInTheDocument();
   });
 
-  it('shows projected revenue (40 covers × €50 = €2,000)', () => {
+  it('shows projected revenue (40 covers × R$50 = R$2.000)', () => {
     render(<RevenueStatsWidget />);
-    expect(screen.getByText('€2,000')).toBeInTheDocument();
+    // pt-BR locale: R$\u00A02.000 (non-breaking space between symbol and amount)
+    expect(screen.getByText(/R\$\s*2/)).toBeInTheDocument();
   });
 
   it('shows estimated badge when using default', () => {

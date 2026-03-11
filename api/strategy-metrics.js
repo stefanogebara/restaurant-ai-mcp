@@ -160,7 +160,7 @@ module.exports = async (req, res) => {
     // ── Targets (from strategy doc defaults) ────────────────────────────────
     const targets = {
       no_show_rate: 5,       // < 5%
-      avg_revenue_per_cover: 45, // € 45+
+      avg_revenue_per_cover: 90, // R$ 90+
       conversion_rate: 90,   // > 90%
     };
 

@@ -51,7 +51,7 @@ describe('POST /api/import-history', () => {
     };
     res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
 
-    verifyJWT.mockReturnValue({ restaurantId: 'rest-123' });
+    verifyJWT.mockReturnValue({ restaurant_id: 'rest-123' });
     writeMemory.mockResolvedValue(undefined);
 
     // Default LTV mock (schema chain)

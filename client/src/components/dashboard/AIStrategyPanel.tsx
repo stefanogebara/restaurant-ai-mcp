@@ -32,7 +32,7 @@ PROMOTIONS:
 
 GOALS:
 - Target no-show rate below 5%
-- Target avg revenue per cover above €45`;
+- Target avg revenue per cover above R$90`;
 
 export default function AIStrategyPanel() {
   const toast = useToast();

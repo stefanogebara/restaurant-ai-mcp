@@ -4,7 +4,7 @@
  * The "val_bpb" scoreboard for the autoresearch loop — shows whether
  * the AI strategy is actually moving the 3 key business metrics:
  *   1. No-show rate (target < 5%)
- *   2. Avg revenue per cover (target €45+)
+ *   2. Avg revenue per cover (target R$90+)
  *   3. Reservation conversion rate (target > 90%)
  */
 
@@ -41,13 +41,13 @@ const METRICS = [
     label: 'Avg Revenue / Cover',
     summaryKey: 'avg_revenue_per_cover' as const,
     targetKey: 'avg_revenue_per_cover' as const,
-    unit: '€',
-    format: (v: number) => `€${v}`,
+    unit: 'R$',
+    format: (v: number) => `R$${v}`,
     lowerIsBetter: false,
     color: '#57534E',
     dateKey: 'week' as const,
     valueKey: 'avg_per_cover' as const,
-    targetLabel: '€45+',
+    targetLabel: 'R$90+',
   },
   {
     key: 'conversion' as const,
