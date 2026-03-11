@@ -63,6 +63,10 @@
       "destination": "/api/elevenlabs-signed-url"
     },
     {
+      "source": "/api/elevenlabs-kb-sync",
+      "destination": "/api/elevenlabs-kb-sync"
+    },
+    {
       "source": "/api/contact",
       "destination": "/api/contact"
     },
