@@ -1056,11 +1056,11 @@
       "subtext": "Buscamos primeiros usuários. Teste gratuito disponível, sem cartão de crédito."
     },
     "hero": {
-      "heading": "Seu restaurante,",
-      "headingEm": "reimaginado.",
-      "subtitle": "Gerencie reservas, encante seus clientes e cresça com uma IA que realmente entende o seu restaurante.",
-      "cta": "Começar Grátis",
-      "demo": "Ver Demo",
+      "heading": "Nunca mais perca uma reserva.",
+      "headingEm": "",
+      "subtitle": "A IA do Seatable atende ligações, WhatsApp e reservas online 24/7 — para você focar na hospitalidade.",
+      "cta": "Crie Sua Demo Grátis",
+      "demo": "Experimente a Demo",
       "earlyAccess": "Plano gratuito disponível · Sem cartão de crédito"
     },
     "features": {
@@ -1114,16 +1114,16 @@
       "heading": "Pronto para reimaginar",
       "headingLine2": "seu restaurante?",
       "subtitle": "Seja um dos primeiros restaurantes a usar o Seatable no Brasil. Sem cartão de crédito.",
-      "button": "Começar Grátis"
+      "button": "Começar Teste Grátis"
     },
     "nav": {
       "features": "Funcionalidades",
-      "pricing": "Preços",
+      "pricing": "Planos",
       "demo": "Demo",
       "contact": "Contato",
       "tryFree": "Teste grátis",
       "signIn": "Entrar",
-      "getStarted": "Começar Agora"
+      "getStarted": "Começar"
     },
     "demo": {
       "label": "Demo ao Vivo",
@@ -1195,14 +1195,14 @@
     },
     "pricing": {
       "title": "Planos e Preços",
-      "label": "Preços",
-      "heading": "Preços simples e transparentes.",
+      "label": "Planos",
+      "heading": "Planos simples e transparentes.",
       "subheading": "Sem taxas ocultas. Cancele quando quiser.",
       "subtitle": "Escolha o plano ideal para seu restaurante",
       "free": "Grátis",
       "starter": {
         "desc": "Perfeito para restaurantes pequenos",
-        "cta": "Começar Agora",
+        "cta": "Começar",
         "f1": "Reservas com IA (Chat + WhatsApp)",
         "f2": "Painel do anfitrião",
         "f3": "Análises básicas",
@@ -1211,7 +1211,7 @@
       },
       "growth": {
         "desc": "Para restaurantes em crescimento",
-        "cta": "Iniciar Teste Grátis",
+        "cta": "Começar Teste Grátis",
         "f1": "Tudo do Inicial",
         "f2": "Agente de voz com IA",
         "f3": "Análises avançadas",
@@ -1221,7 +1221,7 @@
       },
       "scale": {
         "desc": "Para restaurantes de alto volume",
-        "cta": "Iniciar Teste Grátis",
+        "cta": "Começar Teste Grátis",
         "f1": "Tudo do Crescimento",
         "f2": "Reservas ilimitadas",
         "f3": "SMS ilimitado",
@@ -1235,6 +1235,7 @@
       "tryFree": "Experimentar Grátis",
       "usageBased": "Cobranças por uso se aplicam",
       "usageDetail": "além dos limites do plano: reservas adicionais, ligações de IA, SMS e mensagens de WhatsApp são cobrados por uso. Preços em {{currency}}. Cancele ou atualize quando quiser.",
+      "checkoutError": "Falha ao iniciar o pagamento. Tente novamente.",
       "customSolution": "Precisa de uma solução personalizada?",
       "enterpriseLink": "Fale conosco para planos enterprise"
     },

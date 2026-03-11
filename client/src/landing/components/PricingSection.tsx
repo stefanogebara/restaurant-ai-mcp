@@ -71,7 +71,7 @@ export default function PricingSection() {
       window.location.href = url;
     } catch (error) {
       console.error('Error creating checkout session:', error);
-      toast.error('Failed to start checkout. Please try again.');
+      toast.error(t('landing.pricing.checkoutError'));
       setLoadingPlan(null);
     }
   };
@@ -151,7 +151,7 @@ export default function PricingSection() {
                   {loadingPlan === tier.name ? (
                     <>
                       <Loader2 aria-hidden="true" className="w-4 h-4 animate-spin" />
-                      Loading...
+                      {t('common.loading')}
                     </>
                   ) : (
                     t(`landing.pricing.${tierKey}.cta`, tier.cta)

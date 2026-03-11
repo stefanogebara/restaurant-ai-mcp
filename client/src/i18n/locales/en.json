@@ -1198,6 +1198,7 @@
       "subheading": "No hidden fees. Cancel anytime.",
       "usageBased": "Usage-based fees apply",
       "usageDetail": "beyond plan limits: additional reservations, AI phone calls, SMS notifications, and WhatsApp messages are billed per use. All prices in {{currency}}. Cancel or upgrade anytime.",
+      "checkoutError": "Failed to start checkout. Please try again.",
       "customSolution": "Need a custom solution?",
       "enterpriseLink": "Contact us for enterprise pricing",
       "starter": {
