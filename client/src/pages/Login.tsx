@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Navigate, Link, useSearchParams } from 'react-router-dom';
+import { Navigate, Link, useSearchParams, useLocation } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useAuth } from '../contexts/AuthContext';
 import { LS_PENDING_DEMO_TOKEN } from '../config/localStorageKeys';
@@ -31,6 +31,7 @@ export default function Login() {
   const { t } = useTranslation();
   const { user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -50,9 +51,11 @@ export default function Login() {
     }
   }, [searchParams]);
 
-  // Redirect if already logged in
+  // Redirect if already logged in — honour the page the user originally tried to visit
+  // (ProtectedRoute saves it as location.state.from)
+  const redirectTo = (location.state as { from?: { pathname: string } })?.from?.pathname || '/welcome';
   if (!loading && user) {
-    return <Navigate to="/welcome" replace />;
+    return <Navigate to={redirectTo} replace />;
   }
 
   // While auth is resolving (e.g. returning from OAuth callback), show spinner
