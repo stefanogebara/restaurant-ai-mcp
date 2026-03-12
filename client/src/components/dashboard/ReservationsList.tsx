@@ -4,6 +4,7 @@ import type { UpcomingReservation } from '../../types/host.types';
 import NoShowRiskBadge from './NoShowRiskBadge';
 import DepositBadge from './DepositBadge';
 import DepositActions from './DepositActions';
+import { formatCurrency } from '../../utils/currency';
 
 interface ReservationsListProps {
   todayReservations: UpcomingReservation[];
@@ -11,6 +12,10 @@ interface ReservationsListProps {
   onCheckIn: (reservation: UpcomingReservation) => void;
   onIntervention: (reservation: UpcomingReservation) => void;
   onDepositAction?: () => void;
+  onAdd?: () => void;
+  onEdit?: (reservation: UpcomingReservation) => void;
+  onCancel?: (reservation: UpcomingReservation) => void;
+  avgSpendPerCover?: number;
   language?: 'en' | 'es' | 'pt-BR';
   isLoading?: boolean;
 }
@@ -34,6 +39,9 @@ const translations = {
     dinner: 'Dinner',
     atRisk: 'At Risk',
     confirmed: 'Confirmed',
+    edit: 'Edit',
+    cancel: 'Cancel',
+    addReservation: '+ Add',
   },
   es: {
     upcoming: 'Próximas Reservas',
@@ -53,6 +61,9 @@ const translations = {
     dinner: 'Cena',
     atRisk: 'En Riesgo',
     confirmed: 'Confirmado',
+    edit: 'Editar',
+    cancel: 'Cancelar',
+    addReservation: '+ Agregar',
   },
   'pt-BR': {
     upcoming: 'Próximas Reservas',
@@ -72,6 +83,9 @@ const translations = {
     dinner: 'Jantar',
     atRisk: 'Em Risco',
     confirmed: 'Confirmado',
+    edit: 'Editar',
+    cancel: 'Cancelar',
+    addReservation: '+ Adicionar',
   },
 };
 
@@ -81,6 +95,10 @@ export default function ReservationsList({
   onCheckIn,
   onIntervention,
   onDepositAction,
+  onAdd,
+  onEdit,
+  onCancel,
+  avgSpendPerCover,
   language = 'en',
   isLoading,
 }: ReservationsListProps) {
@@ -118,29 +136,40 @@ export default function ReservationsList({
             {displayed.length}
           </span>
         </div>
-        <div className="flex gap-0.5 bg-soft-gray rounded-lg p-0.5">
-          <button
-            type="button"
-            onClick={() => setShowTomorrow(false)}
-            className={`text-xs font-medium px-3 py-1 rounded-md transition-all ${
-              !showTomorrow
-                ? 'bg-white text-deep-charcoal shadow-sm'
-                : 'text-muted-stone hover:text-stone-gray'
-            }`}
-          >
-            {t.today}
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowTomorrow(true)}
-            className={`text-xs font-medium px-3 py-1 rounded-md transition-all ${
-              showTomorrow
-                ? 'bg-white text-deep-charcoal shadow-sm'
-                : 'text-muted-stone hover:text-stone-gray'
-            }`}
-          >
-            {t.tomorrow}
-          </button>
+        <div className="flex items-center gap-2">
+          <div className="flex gap-0.5 bg-soft-gray rounded-lg p-0.5">
+            <button
+              type="button"
+              onClick={() => setShowTomorrow(false)}
+              className={`text-xs font-medium px-3 py-1 rounded-md transition-all ${
+                !showTomorrow
+                  ? 'bg-white text-deep-charcoal shadow-sm'
+                  : 'text-muted-stone hover:text-stone-gray'
+              }`}
+            >
+              {t.today}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowTomorrow(true)}
+              className={`text-xs font-medium px-3 py-1 rounded-md transition-all ${
+                showTomorrow
+                  ? 'bg-white text-deep-charcoal shadow-sm'
+                  : 'text-muted-stone hover:text-stone-gray'
+              }`}
+            >
+              {t.tomorrow}
+            </button>
+          </div>
+          {onAdd && (
+            <button
+              type="button"
+              onClick={onAdd}
+              className="text-xs font-semibold px-3 py-1 rounded-lg bg-burgundy/[8%] text-burgundy hover:bg-burgundy/[14%] transition-colors"
+            >
+              {t.addReservation}
+            </button>
+          )}
         </div>
       </div>
 
@@ -165,6 +194,9 @@ export default function ReservationsList({
               onCheckIn={() => onCheckIn(reservation)}
               onIntervention={() => onIntervention(reservation)}
               onDepositAction={onDepositAction}
+              onEdit={onEdit ? () => onEdit(reservation) : undefined}
+              onCancel={onCancel ? () => onCancel(reservation) : undefined}
+              avgSpendPerCover={avgSpendPerCover}
               language={language}
             />
           ))}
@@ -181,10 +213,13 @@ interface ReservationRowProps {
   onCheckIn: () => void;
   onIntervention: () => void;
   onDepositAction?: () => void;
+  onEdit?: () => void;
+  onCancel?: () => void;
+  avgSpendPerCover?: number;
   language: 'en' | 'es' | 'pt-BR';
 }
 
-function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositAction, language }: ReservationRowProps) {
+function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositAction, onEdit, onCancel, avgSpendPerCover, language }: ReservationRowProps) {
   const t = translations[language];
 
   const formatTime = (time: string) => {
@@ -236,6 +271,9 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
         <div className="text-sm font-semibold text-deep-charcoal tracking-tight truncate">{reservation.customer_name}</div>
         <div className="text-xs text-muted-stone mt-0.5 truncate">
           {reservation.party_size} {t.people}
+          {avgSpendPerCover ? (
+            <span className="text-emerald-600 font-medium"> · ~{formatCurrency(reservation.party_size * avgSpendPerCover)}</span>
+          ) : null}
           {reservation.special_requests && <span> · {reservation.special_requests}</span>}
         </div>
         {/* Risk + Deposit badges */}
@@ -308,6 +346,32 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             depositAmount={reservation.deposit_amount}
             onActionComplete={onDepositAction || (() => {})}
           />
+        </div>
+      )}
+
+      {/* Edit / Cancel actions */}
+      {(onEdit || onCancel) && !reservation.checked_in && (
+        <div className="flex-shrink-0 flex items-center gap-1">
+          {onEdit && (
+            <button
+              type="button"
+              onClick={onEdit}
+              aria-label={t.edit}
+              className="p-1.5 rounded-lg text-muted-stone hover:text-deep-charcoal hover:bg-soft-gray transition-colors"
+            >
+              <ThiingsIcon name="pencil" pxSize={14} />
+            </button>
+          )}
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              aria-label={t.cancel}
+              className="p-1.5 rounded-lg text-muted-stone hover:text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <ThiingsIcon name="close" pxSize={14} />
+            </button>
+          )}
         </div>
       )}
     </div>

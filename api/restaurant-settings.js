@@ -214,7 +214,7 @@ module.exports = async function handler(req, res) {
       const { data: restaurant, error } = await supabase
         .schema('restaurant')
         .from('restaurant_info')
-        .select('language, restaurant_name, city, country')
+        .select('language, restaurant_name, city, country, phone, email, business_hours, timezone, reservation_settings')
         .eq('id', restaurantId)
         .single();
 
@@ -234,13 +234,18 @@ module.exports = async function handler(req, res) {
           restaurant_name: restaurant.restaurant_name,
           city: restaurant.city,
           country: restaurant.country,
+          phone: restaurant.phone || '',
+          email: restaurant.email || '',
+          business_hours: restaurant.business_hours || null,
+          timezone: restaurant.timezone || 'UTC',
+          reservation_settings: restaurant.reservation_settings || null,
         },
       });
     }
 
     // PUT / - Update settings
     if (method === 'PUT' && !path.includes('/profile')) {
-      const ALLOWED_FIELDS = ['language', 'restaurant_name', 'city', 'country', 'phone', 'email', 'business_hours', 'timezone'];
+      const ALLOWED_FIELDS = ['language', 'restaurant_name', 'city', 'country', 'phone', 'email', 'business_hours', 'timezone', 'reservation_settings'];
       const { language } = req.body;
 
       if (language && !ALLOWED_LANGUAGES.includes(language)) {

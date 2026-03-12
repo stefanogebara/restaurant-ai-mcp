@@ -362,6 +362,18 @@ export default function Sidebar() {
 
                 <div className="border-t border-stone-mid" />
 
+                {/* Restaurant Settings */}
+                <Link
+                  to="/host-dashboard/settings"
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/[0.05] transition-colors text-stone-300"
+                >
+                  <ThiingsIcon name="settings" pxSize={16} />
+                  <span className="text-sm">{t('navigation.restaurantSettings', 'Restaurant Settings')}</span>
+                </Link>
+
+                <div className="border-t border-stone-mid" />
+
                 {/* Logout */}
                 <button
                   onClick={handleLogout}

@@ -2,6 +2,7 @@ import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { colors } from '../../utils/colors';
+import { formatCurrency } from '../../utils/currency';
 
 interface StatsBarProps {
   occupiedTables: number;
@@ -12,6 +13,7 @@ interface StatsBarProps {
   estimatedWaitTime?: number;
   activeParties: number;
   totalGuests: number;
+  predictedRevenue?: number;
   isLoading?: boolean;
 }
 
@@ -24,6 +26,7 @@ export default function StatsBar({
   estimatedWaitTime,
   activeParties,
   totalGuests,
+  predictedRevenue,
   isLoading,
 }: StatsBarProps) {
   const { t } = useTranslation();
@@ -85,16 +88,28 @@ export default function StatsBar({
         icon={<ThiingsIcon name="users" pxSize={16} className="text-muted-stone" />}
       />
 
-      {/* Active Parties */}
-      <StatCard
-        label={t('dashboard.stats.aiCalls')}
-        value={String(activeParties)}
-        change={totalGuests > 0 ? `${totalGuests} ${t('dashboard.stats.seated')}` : ''}
-        changeColor="text-stone-gray"
-        barPercent={totalTables > 0 ? Math.round((activeParties / totalTables) * 100) : 0}
-        barColor="#d97706"
-        icon={<ThiingsIcon name="utensils-crossed" pxSize={16} className="text-muted-stone" />}
-      />
+      {/* Predicted Revenue / Active Parties */}
+      {predictedRevenue !== undefined && predictedRevenue > 0 ? (
+        <StatCard
+          label={t('dashboard.stats.predictedRevenue', 'Predicted Revenue')}
+          value={formatCurrency(predictedRevenue)}
+          change={`${activeParties} ${t('dashboard.stats.activeParties', 'active')} · ${totalGuests} ${t('dashboard.stats.seated', 'seated')}`}
+          changeColor="text-emerald-600"
+          barPercent={Math.min(100, Math.round((predictedRevenue / Math.max(predictedRevenue * 1.3, 1)) * 100))}
+          barColor="#10b981"
+          icon={<ThiingsIcon name="trending-up" pxSize={16} className="text-muted-stone" />}
+        />
+      ) : (
+        <StatCard
+          label={t('dashboard.stats.aiCalls')}
+          value={String(activeParties)}
+          change={totalGuests > 0 ? `${totalGuests} ${t('dashboard.stats.seated')}` : ''}
+          changeColor="text-stone-gray"
+          barPercent={totalTables > 0 ? Math.round((activeParties / totalTables) * 100) : 0}
+          barColor="#d97706"
+          icon={<ThiingsIcon name="utensils-crossed" pxSize={16} className="text-muted-stone" />}
+        />
+      )}
     </div>
   );
 }

@@ -456,6 +456,146 @@ async function sendInviteEmail({ to, inviteUrl, role }) {
   }
 }
 
+/**
+ * Send a reservation cancellation email to the customer
+ */
+async function sendReservationCancellationEmail({
+  customerEmail, customerName, restaurantName, reservationId,
+  partySize, date, time, reason
+}) {
+  const resend = getResendClient();
+  if (!resend) { logger.warn('RESEND_API_KEY not set, skipping cancellation email'); return; }
+
+  const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: customerEmail,
+      subject: `Reservation Cancelled — ${restaurantName}`,
+      html: wrapEmailHtml(`
+        <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 16px; padding: 32px; margin-bottom: 24px;">
+          <h2 style="font-size: 22px; color: #991B1B; margin: 0 0 8px 0;">
+            Reservation Cancelled
+          </h2>
+          <p style="color: #57534E; margin: 0 0 24px 0;">
+            Hi ${he(customerName)}, your reservation has been cancelled.
+          </p>
+
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #78716C; font-size: 14px;">Restaurant</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #1C1917; font-weight: 600; text-align: right;">${he(restaurantName)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #78716C; font-size: 14px;">Date</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #1C1917; font-weight: 600; text-align: right;">${he(formattedDate)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #78716C; font-size: 14px;">Time</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #1C1917; font-weight: 600; text-align: right;">${he(time)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #78716C; font-size: 14px;">Party Size</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #1C1917; font-weight: 600; text-align: right;">${partySize} ${partySize === 1 ? 'guest' : 'guests'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; color: #78716C; font-size: 14px;">Confirmation ID</td>
+              <td style="padding: 12px 0; color: #9F1239; font-weight: 700; text-align: right; font-family: monospace;">${he(reservationId)}</td>
+            </tr>
+          </table>
+
+          ${reason ? `
+          <div style="margin-top: 16px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #FECACA;">
+            <p style="color: #78716C; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">Reason</p>
+            <p style="color: #1C1917; margin: 0; font-size: 14px;">${he(reason)}</p>
+          </div>
+          ` : ''}
+        </div>
+        <p style="color: #78716C; font-size: 13px; text-align: center; margin: 0;">
+          Would you like to rebook? Contact the restaurant directly or visit our booking page.
+        </p>
+      `),
+    });
+    logger.info('Reservation cancellation email sent to:', customerEmail);
+  } catch (err) {
+    logger.error('Failed to send reservation cancellation email:', err.message);
+  }
+}
+
+/**
+ * Send a reservation modification email to the customer
+ */
+async function sendReservationModificationEmail({
+  customerEmail, customerName, restaurantName, reservationId,
+  partySize, date, time, changes
+}) {
+  const resend = getResendClient();
+  if (!resend) { logger.warn('RESEND_API_KEY not set, skipping modification email'); return; }
+
+  const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  const changeLines = (changes || []).map(c => `<li style="color: #57534E; margin-bottom: 4px;">${he(c)}</li>`).join('');
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: customerEmail,
+      subject: `Reservation Updated — ${restaurantName}`,
+      html: wrapEmailHtml(`
+        <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 16px; padding: 32px; margin-bottom: 24px;">
+          <h2 style="font-size: 22px; color: #92400E; margin: 0 0 8px 0;">
+            Reservation Updated
+          </h2>
+          <p style="color: #57534E; margin: 0 0 24px 0;">
+            Hi ${he(customerName)}, your reservation has been updated. Here are the current details:
+          </p>
+
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #78716C; font-size: 14px;">Restaurant</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #1C1917; font-weight: 600; text-align: right;">${he(restaurantName)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #78716C; font-size: 14px;">Date</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #1C1917; font-weight: 600; text-align: right;">${he(formattedDate)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #78716C; font-size: 14px;">Time</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #1C1917; font-weight: 600; text-align: right;">${he(time)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #78716C; font-size: 14px;">Party Size</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #1C1917; font-weight: 600; text-align: right;">${partySize} ${partySize === 1 ? 'guest' : 'guests'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; color: #78716C; font-size: 14px;">Confirmation ID</td>
+              <td style="padding: 12px 0; color: #9F1239; font-weight: 700; text-align: right; font-family: monospace;">${he(reservationId)}</td>
+            </tr>
+          </table>
+
+          ${changeLines ? `
+          <div style="margin-top: 16px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #FDE68A;">
+            <p style="color: #78716C; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">What Changed</p>
+            <ul style="margin: 0; padding-left: 18px; font-size: 14px;">${changeLines}</ul>
+          </div>
+          ` : ''}
+        </div>
+        <p style="color: #78716C; font-size: 13px; text-align: center; margin: 0;">
+          Need to make further changes? Contact the restaurant directly.
+        </p>
+      `),
+    });
+    logger.info('Reservation modification email sent to:', customerEmail);
+  } catch (err) {
+    logger.error('Failed to send reservation modification email:', err.message);
+  }
+}
+
 module.exports = {
   sendPaymentReceiptEmail,
   sendPaymentFailedEmail,
@@ -463,6 +603,8 @@ module.exports = {
   sendRetentionCampaignEmail,
   sendReservationConfirmationEmail,
   sendNewBookingAlertEmail,
+  sendReservationCancellationEmail,
+  sendReservationModificationEmail,
   sendInviteEmail,
   sendReferralRewardEmail,
   wrapEmailHtml,

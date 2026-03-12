@@ -22,6 +22,7 @@ export function useCompleteService() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hostDashboard'] });
       queryClient.invalidateQueries({ queryKey: ['revenue-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['activity-feed'] });
     },
   });
 }

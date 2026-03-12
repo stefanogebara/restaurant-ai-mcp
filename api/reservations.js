@@ -51,6 +51,9 @@ const { createMemory } = require('./services/guestMemory');
 // WhatsApp confirmation for customers
 const { isWhatsAppConfigured, sendReservationConfirmation } = require('./_lib/whatsapp-sender');
 
+// Email notifications
+const { sendReservationModificationEmail } = require('./_lib/email');
+
 // ============================================================================
 // SMS CONFIRMATION HELPER
 // ============================================================================
@@ -576,6 +579,10 @@ async function handleModify(req, res, restaurantId) {
     });
   }
 
+  // Find existing reservation to get customer details for notification
+  const findResult = await findReservation(restaurantId, { reservation_id });
+  const existingReservation = findResult.success ? findResult.reservation : null;
+
   const timezone = req.user.timezone || 'UTC';
   const updateFields = {
     'Updated At': getLocalDate(timezone)
@@ -595,12 +602,40 @@ async function handleModify(req, res, restaurantId) {
   }
 
   const changes = [];
-  if (date) changes.push(`date to ${date}`);
-  if (time) changes.push(`time to ${time}`);
-  if (party_size) changes.push(`party size to ${party_size}`);
-  if (special_requests !== undefined) changes.push('special requests');
+  if (date) changes.push(`Date changed to ${date}`);
+  if (time) changes.push(`Time changed to ${time}`);
+  if (party_size) changes.push(`Party size changed to ${party_size}`);
+  if (special_requests !== undefined) changes.push('Special requests updated');
 
-  const changesList = changes.length > 0 ? ` I've updated your ${changes.join(', ')}.` : '';
+  // Send modification email if customer has email
+  if (existingReservation?.customer_email) {
+    let restaurantName = 'Your Restaurant';
+    try {
+      const { data: config } = await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('restaurant_name')
+        .eq('restaurant_id', restaurantId)
+        .single();
+      if (config?.restaurant_name) restaurantName = config.restaurant_name;
+    } catch (err) {
+      logger.warn('Could not fetch restaurant name for modification email:', err.message);
+    }
+
+    sendReservationModificationEmail({
+      customerEmail: existingReservation.customer_email,
+      customerName: existingReservation.customer_name,
+      restaurantName,
+      reservationId: reservation_id,
+      partySize: parseInt(party_size) || existingReservation.party_size,
+      date: date || existingReservation.date,
+      time: time || existingReservation.time,
+      changes,
+    }).catch(err => {
+      logger.warn('Modification email failed (non-fatal):', err.message);
+    });
+  }
+
   return res.status(200).json({
     success: true,
     message: 'Reservation modified successfully'

@@ -941,6 +941,7 @@ const updateServiceRecord = async (restaurantId, serviceId, fields) => {
 
   if (fields['Status']) updates.status = fields['Status'];
   if (fields['Actual Departure']) updates.actual_departure = fields['Actual Departure'];
+  if (fields.total_bill !== undefined) updates.total_bill = fields.total_bill;
 
   logger.info(`[updateServiceRecord] Updating service ${serviceId} with:`, updates);
 

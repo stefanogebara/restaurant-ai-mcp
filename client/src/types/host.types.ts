@@ -95,6 +95,7 @@ export interface UpcomingReservation {
   reservation_id: string;
   customer_name: string;
   customer_phone: string;
+  customer_email?: string;
   party_size: number;
   date: string;
   time: string;

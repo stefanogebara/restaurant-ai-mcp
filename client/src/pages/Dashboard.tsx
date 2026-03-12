@@ -30,13 +30,19 @@ import { ManagerChatPanel } from '../components/dashboard/ManagerChatPanel';
 import ManagerAIUsageBar from '../components/dashboard/ManagerAIUsageBar';
 import StaffingForecastWidget from '../components/dashboard/StaffingForecastWidget';
 import RevenueStatsWidget from '../components/dashboard/RevenueStatsWidget';
+import RevenueByPartySizeWidget from '../components/dashboard/RevenueByPartySizeWidget';
+import ActivityFeedWidget from '../components/dashboard/ActivityFeedWidget';
 import FeedbackWidget from '../components/dashboard/FeedbackWidget';
 import WalkInModal from '../components/host/WalkInModal';
 import SeatPartyModal from '../components/host/SeatPartyModal';
 import CheckInModal from '../components/host/CheckInModal';
 import QuickInterventionModal from '../components/host/QuickInterventionModal';
+import AddReservationModal from '../components/host/AddReservationModal';
+import EditReservationModal from '../components/host/EditReservationModal';
+import CancelReservationDialog from '../components/host/CancelReservationDialog';
 import type { UpcomingReservation, ActiveParty, SeatModalData } from '../types/host.types';
 import { trackFirstReservationCreated } from '../lib/analytics';
+import { useRevenueStats } from '../hooks/useRevenueStats';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { LS_FIRST_RESERVATION_TRACKED } from '../config/localStorageKeys';
 import { useToast } from '../contexts/ToastContext';
@@ -72,6 +78,9 @@ export default function Dashboard() {
   const [interventionReservation, setInterventionReservation] = useState<UpcomingReservation | null>(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [serviceToComplete, setServiceToComplete] = useState<ActiveParty | null>(null);
+  const [showAddReservation, setShowAddReservation] = useState(false);
+  const [editReservation, setEditReservation] = useState<UpcomingReservation | null>(null);
+  const [cancelReservation, setCancelReservation] = useState<UpcomingReservation | null>(null);
 
   // ---- Data fetching ----
   const { data: dashboardData, refetch, isLoading, isError } = useQuery({
@@ -90,6 +99,13 @@ export default function Dashboard() {
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
   const todayReservations = reservations.filter((r) => r.date === today);
   const tomorrowReservations = reservations.filter((r) => r.date === tomorrow);
+
+  // Revenue prediction
+  const { data: revenueStats } = useRevenueStats();
+  const avgSpendPerCover = revenueStats?.avg_spend_per_cover;
+  const predictedRevenueToday = avgSpendPerCover
+    ? todayReservations.reduce((sum, r) => sum + r.party_size * avgSpendPerCover, 0)
+    : undefined;
 
   const occupiedTables = tables.filter((t: { status: string }) => t.status === 'Occupied').length;
   const totalTables = tables.length;
@@ -250,6 +266,7 @@ export default function Dashboard() {
             estimatedWaitTime={rawStats.estimated_wait_time}
             activeParties={activeParties.length}
             totalGuests={totalGuests}
+            predictedRevenue={predictedRevenueToday}
             isLoading={isLoading}
           />
 
@@ -269,6 +286,10 @@ export default function Dashboard() {
                 tomorrowReservations={tomorrowReservations}
                 onCheckIn={handleCheckIn}
                 onIntervention={(r) => setInterventionReservation(r)}
+                onAdd={() => setShowAddReservation(true)}
+                onEdit={(r) => setEditReservation(r)}
+                onCancel={(r) => setCancelReservation(r)}
+                avgSpendPerCover={avgSpendPerCover}
                 isLoading={isLoading}
                 language={i18n.language as 'en' | 'es' | 'pt-BR'}
               />
@@ -276,6 +297,8 @@ export default function Dashboard() {
               <FeedbackWidget />
               <StaffingForecastWidget />
               <RevenueStatsWidget />
+              <RevenueByPartySizeWidget />
+              <ActivityFeedWidget />
             </div>
 
             {/* Right Column: Waitlist + Active Parties */}
@@ -399,6 +422,29 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      {showAddReservation && (
+        <AddReservationModal
+          isOpen={showAddReservation}
+          onClose={() => setShowAddReservation(false)}
+        />
+      )}
+
+      {editReservation && (
+        <EditReservationModal
+          isOpen={!!editReservation}
+          reservation={editReservation}
+          onClose={() => setEditReservation(null)}
+        />
+      )}
+
+      {cancelReservation && (
+        <CancelReservationDialog
+          isOpen={!!cancelReservation}
+          reservation={cancelReservation}
+          onClose={() => setCancelReservation(null)}
+        />
+      )}
+
       {chatOpen && <ManagerChatPanel onClose={() => setChatOpen(false)} />}
     </DashboardLayout>
   );

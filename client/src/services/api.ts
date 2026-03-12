@@ -159,6 +159,30 @@ export const hostAPI = {
 
   getTableSuggestion: (partySize: number) =>
     api.get(`/table-suggestion?party_size=${partySize}`),
+
+  // Reservation management (host creates/modifies/cancels from dashboard)
+  createReservation: (data: {
+    date: string;
+    time: string;
+    party_size: number;
+    customer_name: string;
+    customer_phone: string;
+    customer_email?: string;
+    special_requests?: string;
+  }) => api.post('/reservations?action=create', data),
+
+  modifyReservation: (data: {
+    reservation_id: string;
+    date?: string;
+    time?: string;
+    party_size?: number;
+    special_requests?: string;
+  }) => api.post('/reservations?action=modify', data),
+
+  cancelReservation: (data: {
+    reservation_id: string;
+    reason?: string;
+  }) => api.post('/host-dashboard?action=cancel-reservation', data),
 };
 
 // Table Configuration API

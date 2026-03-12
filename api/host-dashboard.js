@@ -23,6 +23,7 @@ const {
 } = require('./_lib/supabase');
 
 const { logCustomerShowedUp, logCustomerCancelled } = require('./ml/data-logger');
+const { sendReservationCancellationEmail } = require('./_lib/email');
 const { validateServiceRecord, sanitizeInput } = require('./_lib/validation');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { verifyAuth } = require('./_lib/auth');
@@ -92,10 +93,12 @@ module.exports = async (req, res) => {
         return await handleCreateTable(req, res);
       case 'auto-assign-shapes':
         return await handleAutoAssignShapes(req, res);
+      case 'cancel-reservation':
+        return await handleCancelReservation(req, res);
       default:
         return res.status(400).json({
           success: false,
-          error: 'Invalid action. Use: dashboard, check-in, check-walk-in, seat-party, complete-service, mark-table-clean, update-table-status, update-reservation, update-table-position, update-table-properties, link-tables, unlink-tables, delete-table, or create-table'
+          error: 'Invalid action. Use: dashboard, check-in, check-walk-in, seat-party, complete-service, mark-table-clean, update-table-status, update-reservation, cancel-reservation, update-table-position, update-table-properties, link-tables, unlink-tables, delete-table, or create-table'
         });
     }
   } catch (error) {
@@ -1223,5 +1226,90 @@ async function handleAutoAssignShapes(req, res) {
     message: `Updated shapes for ${updatedCount} tables`,
     updated: updatedCount,
     shapes: updates.map(u => ({ id: u.id, shape: u.shape, table_number: u.table_number }))
+  });
+}
+
+/**
+ * Cancel a reservation from the dashboard with optional customer notification.
+ * Body: { reservation_id, reason? }
+ */
+async function handleCancelReservation(req, res) {
+  const restaurantId = req.user.restaurant_id;
+  const { reservation_id, reason } = req.body;
+
+  if (!reservation_id) {
+    return res.status(400).json({
+      success: false,
+      error: 'reservation_id is required'
+    });
+  }
+
+  // Find the reservation first to get customer details for notification
+  const findResult = await findReservation(restaurantId, { reservation_id });
+  if (!findResult.success || !findResult.reservation) {
+    return res.status(404).json({
+      success: false,
+      error: 'Reservation not found'
+    });
+  }
+
+  const reservation = findResult.reservation;
+
+  // Cancel the reservation
+  const updateResult = await updateReservation(restaurantId, reservation.record_id, {
+    status: 'cancelled',
+    cancellation_reason: reason || null,
+    updated_at: new Date().toISOString()
+  });
+
+  if (!updateResult.success) {
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to cancel reservation'
+    });
+  }
+
+  // Log cancellation for ML training data
+  await logCustomerCancelled(reservation_id).catch(err => {
+    logger.warn('ML log failed (non-fatal):', err.message);
+  });
+
+  // Fetch restaurant name for the email
+  let restaurantName = 'Your Restaurant';
+  try {
+    const { data: config } = await supabase
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('restaurant_name')
+      .eq('restaurant_id', restaurantId)
+      .single();
+    if (config?.restaurant_name) restaurantName = config.restaurant_name;
+  } catch (err) {
+    logger.warn('Could not fetch restaurant name for cancellation email:', err.message);
+  }
+
+  // Send cancellation email if customer has email
+  const customerEmail = reservation.customer_email;
+  if (customerEmail) {
+    sendReservationCancellationEmail({
+      customerEmail,
+      customerName: reservation.customer_name,
+      restaurantName,
+      reservationId: reservation_id,
+      partySize: reservation.party_size,
+      date: reservation.date,
+      time: reservation.time,
+      reason: reason || null
+    }).catch(err => {
+      logger.warn('Cancellation email failed (non-fatal):', err.message);
+    });
+  }
+
+  logger.info('Reservation cancelled from dashboard', { reservation_id, reason: reason || 'none' });
+
+  return res.status(200).json({
+    success: true,
+    message: 'Reservation cancelled successfully',
+    notification_sent: !!customerEmail
   });
 }
