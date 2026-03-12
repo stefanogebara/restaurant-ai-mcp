@@ -159,9 +159,22 @@ Restaurant config lives in `restaurant.restaurant_config` schema.
 | Schedule | Endpoint | Description |
 |----------|----------|-------------|
 | Every 5 min | `/api/cron/check-late-reservations` | Marks 20+ min late reservations as no-show |
-| Daily 9 AM | `/api/cron/send-reminders` | Sends reservation reminders |
-| Daily 6 AM | `/api/cron/update-churn-scores` | Recalculates customer churn risk |
+| Every 5 min | `/api/cron/send-campaigns` | Sends scheduled retention campaigns |
+| Every 30 min | `/api/cron/send-feedback` | Sends post-visit feedback requests |
+| Daily 2 AM | `/api/cron/warm-seo-cache` | Pre-warms SEO page cache |
+| Daily 3 AM | `/api/cron/cleanup-expired-demos` | Deletes expired demo restaurants |
+| Daily 3 AM Mon | `/api/cron/refresh-restaurant-profiles` | Refreshes restaurant profile data |
 | Daily 4 AM | `/api/report-usage` | Reports metered usage to Stripe |
+| Daily 5 AM | `/api/cron/generate-reflections` | Generates manager AI reflections |
+| Daily 6 AM | `/api/cron/update-churn-scores` | Recalculates customer churn risk |
+| Daily 8 AM | `/api/cron/manager-briefings?type=morning` | Morning manager briefing |
+| Daily 9 AM | `/api/cron/send-reminders` | Sends reservation reminders |
+| Daily 10 AM | `/api/cron/demo-nurture` | Sends demo nurture email sequence |
+| Daily 10 AM Sun | `/api/cron/proactive-comms` | Weekly proactive communications |
+| Daily 3 PM | `/api/cron/manager-alerts?type=high_noshows` | Alerts on high no-show rate |
+| Daily 6 PM | `/api/cron/manager-alerts?type=low_covers` | Alerts on low cover count |
+| Every 2h 12-8 PM | `/api/cron/manager-alerts?type=late_cancellations` | Alerts on late cancellations |
+| Daily 11 PM | `/api/cron/manager-briefings?type=end_of_day` | End-of-day manager briefing |
 
 All cron jobs are secured with `CRON_SECRET` Bearer token and use `createSecureLogger`.
 
@@ -462,7 +475,7 @@ Push to `main` branch triggers automatic Vercel deployment.
 - [x] DepositSettingsPanel.tsx — deposit config UI in WhatsApp Settings page
 - [x] vercel.json — rewrites for all 7 new endpoints
 
-### Phase 11 — First Real Customers 🚧 IN PROGRESS
+### Phase 11 — First Real Customers ✅ COMPLETE
 - [x] 11A: import-history.js — POST /api/import-history (CSV upload, multipart)
 - [x] 11A: importPipeline.js — seeds customer_ltv, service_records, manager_memory
 - [x] 11A: Step5ImportHistory.tsx — drag-and-drop CSV upload with VIP/regular summary
@@ -471,3 +484,47 @@ Push to `main` branch triggers automatic Vercel deployment.
 - [x] 11B: manager-briefings.js — add [VIP GUESTS TODAY] block to morning briefing prompt
 - [x] 11C: analytics/compare.js — GET /api/analytics/compare (period aggregation)
 - [x] 11C: manager-agent.js — add compare_periods tool
+
+### Phase 11.5 — Per-Restaurant ElevenLabs Agents ✅ COMPLETE
+- [x] elevenlabsAgentService.js — consolidated agent lifecycle (create/sync KB/delete)
+- [x] elevenlabs-kb-sync.js — per-restaurant KB sync with doc tracking
+- [x] elevenlabs-signed-url.js — auto-resolve per-restaurant agent
+- [x] elevenlabs-agent-cleanup.js — deactivate/delete with ownership validation
+- [x] ElevenLabsWidget.tsx — WebRTC + signed URL auth
+- [x] onboarding/complete.js — fire-and-forget KB sync after agent creation
+- [x] DB migration — elevenlabs_kb_doc_id column on restaurant_config
+- [x] E2E tests — 15 tests (auth guards, method validation, CORS, authenticated flows, UI)
+- [x] DNS — seatable.one A record → 216.150.1.1, CNAME www → vercel-dns-017
+
+### Phase 12 — Demo Conversion & Product-Market Fit 🚧 IN PROGRESS
+*Driven by Renan's strategic review (2026-03-12). Full plan: tasks/plan.md*
+
+#### 12A: Demo Flow Overhaul (kill conversion friction)
+- [x] 12A-1: Google Maps auto-scraper — hours, reviews, cuisine, photos, phone, address
+- [x] 12A-2: Kill demo data wall — `/demo/setup` → auto-scrape → land in pre-populated dashboard
+- [ ] 12A-3: Real-time micro-animations — pulsing buttons, live reservation pop-ins, ticking timers
+- [ ] 12A-4: Exit-intent popup with WhatsApp CTA instead of entry gate
+
+#### 12B: Revenue Intelligence (entrepreneur value)
+- [ ] 12B-1: Revenue prediction per reservation — predicted spend next to each booking
+- [ ] 12B-2: Aggregate predicted daily revenue KPI on dashboard
+- [ ] 12B-3: Real-time revenue update — metrics recalculate when entering bill amounts
+- [ ] 12B-4: Average revenue by table size tracking
+
+#### 12C: Manager AI UX Overhaul
+- [ ] 12C-1: Replace chat bubble with full-screen Manager AI interface (ChatGPT-style)
+- [ ] 12C-2: Pre-reservation WhatsApp upsell — AI sends dish recs + chef special before visit
+
+#### 12D: Landing Page & Demo Polish
+- [ ] 12D-1: Landing page overhaul — embedded video/GIF of WhatsApp + voice agent in action
+- [ ] 12D-2: Fix language inconsistencies — English strings in PT/ES UI
+- [ ] 12D-3: Build 3 mock restaurant demos with realistic fake data
+
+#### 12E: Production Readiness (from Phase 12 plan)
+- [ ] 12E-1: AddReservationModal — host creates reservations from dashboard
+- [ ] 12E-2: EditReservationModal — inline edit from ReservationsList
+- [ ] 12E-3: Cancel from dashboard with customer notification
+- [ ] 12E-4: Restaurant settings page — edit hours/policies post-onboarding
+- [ ] 12E-5: Reservation confirmation/modification/cancellation emails
+- [ ] 12E-6: Activity log + feed on dashboard
+- [ ] 12E-7: Cron health monitoring

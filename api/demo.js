@@ -228,10 +228,17 @@ async function handleCreate(req, res) {
     advance_booking_days = 30,
     cancellation_policy,
     custom_policy,
+    scraped_data, // Optional: Google Places data from /api/scrape-restaurant
   } = req.body || {};
 
-  // Validate required fields
-  const required = { restaurant_name, cuisine_type, city, contact_email, contact_name };
+  // With scraped_data, only restaurant_name + city + contact_email are required
+  // Without scraped_data, cuisine_type and contact_name are also required (legacy flow)
+  const hasScrape = scraped_data && typeof scraped_data === 'object';
+
+  const required = hasScrape
+    ? { restaurant_name, city, contact_email }
+    : { restaurant_name, cuisine_type, city, contact_email, contact_name };
+
   for (const [field, value] of Object.entries(required)) {
     if (!value || typeof value !== 'string' || !value.trim()) {
       return res.status(400).json({ error: `Missing required field: ${field}` });
@@ -255,15 +262,39 @@ async function handleCreate(req, res) {
     return res.status(400).json({ success: false, message: 'advance_booking_days must be between 1 and 365' });
   }
 
+  // Derive fields from scraped data when available
+  const effectiveCuisine = cuisine_type || scraped_data?.cuisine_type || 'Restaurant';
+  const effectiveCountry = (country || '').trim() || null;
+  const effectiveName = contact_name || contact_email.split('@')[0];
+  const effectivePhone = scraped_data?.phone || 'N/A';
+  const effectiveWebsite = scraped_data?.website || null;
+
   const demo_token = crypto.randomUUID();
   const demo_expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
   const slug = `demo-${demo_token.slice(0, 8)}`;
 
+  // Use scraped business hours if available, otherwise build from open/close times
   const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-  const business_hours = {};
-  days.forEach(d => {
-    business_hours[d] = { open_time, close_time, is_open: true };
-  });
+  let business_hours;
+  if (scraped_data?.business_hours && typeof scraped_data.business_hours === 'object') {
+    // Validate scraped hours have the right shape, fill gaps with defaults
+    business_hours = {};
+    days.forEach(d => {
+      const scraped = scraped_data.business_hours[d];
+      if (scraped && scraped.is_open && scraped.open_time && scraped.close_time) {
+        business_hours[d] = { open_time: scraped.open_time, close_time: scraped.close_time, is_open: true };
+      } else if (scraped && scraped.is_open === false) {
+        business_hours[d] = { open_time: null, close_time: null, is_open: false };
+      } else {
+        business_hours[d] = { open_time, close_time, is_open: true };
+      }
+    });
+  } else {
+    business_hours = {};
+    days.forEach(d => {
+      business_hours[d] = { open_time, close_time, is_open: true };
+    });
+  }
 
   // Build reservation_settings JSONB (where max_party_size etc. live)
   const reservation_settings = {
@@ -277,29 +308,38 @@ async function handleCreate(req, res) {
     special_notes: custom_policy || '',
   };
 
-  // Insert demo restaurant config
+  // Insert demo restaurant config — uses scraped data when available
+  const insertPayload = {
+    user_id: DEMO_SYSTEM_USER_ID,
+    restaurant_name: restaurant_name.trim(),
+    restaurant_type: normalizeRestaurantType(effectiveCuisine.trim()),
+    city: city.trim(),
+    country: effectiveCountry || 'Unknown',
+    email: contact_email.trim(),
+    phone: effectivePhone,
+    slug,
+    business_hours,
+    reservation_settings,
+    is_active: true,
+    onboarding_completed: true,
+    is_demo: true,
+    demo_token,
+    demo_expires_at,
+    demo_contact_email: contact_email.trim(),
+    demo_contact_name: effectiveName.trim(),
+  };
+
+  // Add optional fields from scrape
+  if (effectiveWebsite) insertPayload.website = effectiveWebsite;
+  if (scraped_data?.address) insertPayload.address = scraped_data.address;
+  if (scraped_data?.google_maps_url) insertPayload.google_maps_url = scraped_data.google_maps_url;
+  if (scraped_data?.rating) insertPayload.google_rating = scraped_data.rating;
+  if (scraped_data?.review_count) insertPayload.google_review_count = scraped_data.review_count;
+
   const { data: demoConfig, error: insertError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .insert({
-      user_id: DEMO_SYSTEM_USER_ID,
-      restaurant_name: restaurant_name.trim(),
-      restaurant_type: normalizeRestaurantType((cuisine_type || '').trim()),
-      city: city.trim(),
-      country: (country || '').trim() || 'Unknown',
-      email: contact_email.trim(),
-      phone: 'N/A',
-      slug,
-      business_hours,
-      reservation_settings,
-      is_active: true,
-      onboarding_completed: true,
-      is_demo: true,
-      demo_token,
-      demo_expires_at,
-      demo_contact_email: contact_email.trim(),
-      demo_contact_name: contact_name.trim(),
-    })
+    .insert(insertPayload)
     .select()
     .single();
 
@@ -343,11 +383,11 @@ async function handleCreate(req, res) {
     logger.warn('Exception seeding fake reservations (non-fatal):', err.message);
   }
 
-  const demoUrl = `${BASE_URL}/demo/${demo_token}?name=${encodeURIComponent(restaurant_name.trim())}&cuisine=${encodeURIComponent(cuisine_type.trim())}&city=${encodeURIComponent(city.trim())}`;
+  const demoUrl = `${BASE_URL}/demo/${demo_token}?name=${encodeURIComponent(restaurant_name.trim())}&cuisine=${encodeURIComponent(effectiveCuisine.trim())}&city=${encodeURIComponent(city.trim())}`;
 
   // Send welcome email (fire-and-forget — don't fail if email fails)
   sendDemoWelcomeEmail({
-    contactName: contact_name.trim(),
+    contactName: effectiveName.trim(),
     contactEmail: contact_email.trim(),
     restaurantName: restaurant_name.trim(),
     demoUrl,
