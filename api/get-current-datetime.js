@@ -24,19 +24,21 @@
  */
 
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('DateTime');
 
 module.exports = async (req, res) => {
   // Set CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setInternalCors(req, res);
 
   // Handle OPTIONS request for CORS preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).json({ success: true });
   }
+
+  // Rate limit (60 req/min)
+  if (await checkAndApplyRateLimit(req, res, 'api')) return;
 
   // Accept both GET and POST requests (ElevenLabs webhooks use POST)
   if (req.method !== 'GET' && req.method !== 'POST') {
@@ -112,7 +114,7 @@ module.exports = async (req, res) => {
       success: false,
       error: true,
       message: 'Failed to get current date/time',
-      details: error.message
+      details: 'An unexpected error occurred'
     });
   }
 };

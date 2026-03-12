@@ -1,5 +1,6 @@
 const Stripe = require('stripe');
 const { verifyAuth } = require('./_lib/auth');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const { getSubscriptions } = require('./_lib/db-subscriptions');
 const { createSecureLogger } = require('./_lib/secure-logger');
@@ -7,9 +8,7 @@ const logger = createSecureLogger('CustomerPortal');
 
 module.exports = async (req, res) => {
   // Enable CORS
-  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  setInternalCors(req, res);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();

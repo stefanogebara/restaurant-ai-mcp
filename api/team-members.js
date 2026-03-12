@@ -12,14 +12,13 @@ const { getTeamMembers, addTeamMember, updateTeamMemberRole, removeTeamMember } 
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { sendInviteEmail } = require('./_lib/email');
 const { initSentry, captureException } = require('./_lib/sentry');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 
 initSentry();
 const logger = createSecureLogger('TeamMembers');
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  setInternalCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const { user, error: authError, status: authStatus } = await verifyAuth(req);

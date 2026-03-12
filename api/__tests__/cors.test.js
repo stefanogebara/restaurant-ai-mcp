@@ -74,18 +74,18 @@ describe('setWebhookCors', () => {
     expect(res.headers['Access-Control-Allow-Origin']).toBe('http://localhost:5174');
   });
 
-  test('sets * for requests without origin header (server-to-server webhooks)', () => {
+  test('sets default origin for requests without origin header (server-to-server webhooks)', () => {
     const req = { headers: {}, method: 'POST' };
     const res = createMockRes();
     setWebhookCors(req, res);
-    expect(res.headers['Access-Control-Allow-Origin']).toBe('*');
+    expect(ALLOWED_ORIGINS).toContain(res.headers['Access-Control-Allow-Origin']);
   });
 
-  test('sets * for unrecognized origins (external webhook senders)', () => {
+  test('does not set origin header for unrecognized origins', () => {
     const req = { headers: { origin: 'https://unknown-service.io' }, method: 'POST' };
     const res = createMockRes();
     setWebhookCors(req, res);
-    expect(res.headers['Access-Control-Allow-Origin']).toBe('*');
+    expect(res.headers['Access-Control-Allow-Origin']).toBeUndefined();
   });
 
   test('allows ElevenLabs webhook origin', () => {

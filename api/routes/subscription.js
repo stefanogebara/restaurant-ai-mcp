@@ -53,8 +53,7 @@ router.get('/', async (req, res) => {
   } catch (error) {
     logger.error('Error fetching subscription:', error);
     res.status(500).json({
-      error: 'Failed to fetch subscription',
-      details: error.message
+      error: 'Failed to fetch subscription'
     });
   }
 });
@@ -128,8 +127,7 @@ router.post('/test', async (req, res) => {
   } catch (error) {
     logger.error('Error creating test subscription:', error);
     res.status(500).json({
-      error: 'Failed to create test subscription',
-      details: error.message
+      error: 'Failed to create test subscription'
     });
   }
 });

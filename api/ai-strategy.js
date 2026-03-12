@@ -15,6 +15,7 @@
  */
 
 const { verifyAuth } = require('./_lib/auth');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
@@ -25,9 +26,7 @@ initSentry();
 const logger = createSecureLogger('AIStrategy');
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, PATCH, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  setInternalCors(req, res);
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 

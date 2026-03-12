@@ -9,14 +9,13 @@ const { verifyAuth } = require('./_lib/auth');
 const { acceptInvite, supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { initSentry, captureException } = require('./_lib/sentry');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 
 initSentry();
 const logger = createSecureLogger('Invitations');
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  setInternalCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {

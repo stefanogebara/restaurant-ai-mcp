@@ -65,6 +65,23 @@ function clearSessionTimestamps(): void {
   localStorage.removeItem(STORAGE_KEY_LAST_ACTIVITY);
 }
 
+/**
+ * Force sign-out and redirect to /login.
+ * Prevents stale sessions from leaving users on broken pages (C-05).
+ */
+async function forceSignOutToLogin(): Promise<void> {
+  clearSessionTimestamps();
+  try {
+    await supabase.auth.signOut();
+  } catch {
+    // Even if signOut fails, redirect to login
+  }
+  // Use replaceState so the user can't "back" into an expired session page
+  if (window.location.pathname !== '/login' && !window.location.pathname.startsWith('/book/')) {
+    window.location.replace('/login');
+  }
+}
+
 // Listen for auth state changes to set session start and enforce timeouts.
 supabase.auth.onAuthStateChange((event, session) => {
   if (event === 'SIGNED_IN' && session) {
@@ -80,19 +97,24 @@ supabase.auth.onAuthStateChange((event, session) => {
     return;
   }
 
-  // On TOKEN_REFRESHED, check whether the session has exceeded its limits.
+  // Token refresh succeeded but session has exceeded custom limits → force sign-out
   if (event === 'TOKEN_REFRESHED' && session) {
     if (isSessionExpired()) {
-      clearSessionTimestamps();
-      supabase.auth.signOut();
+      forceSignOutToLogin();
+      return;
     }
+  }
+
+  // Token refresh failed (session is null) → force sign-out (C-05)
+  if (event === 'TOKEN_REFRESHED' && !session) {
+    forceSignOutToLogin();
+    return;
   }
 });
 
 // On app load, immediately enforce timeouts if a session is already active.
 supabase.auth.getSession().then(({ data }) => {
   if (data.session && isSessionExpired()) {
-    clearSessionTimestamps();
-    supabase.auth.signOut();
+    forceSignOutToLogin();
   }
 });

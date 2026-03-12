@@ -2,13 +2,12 @@ const { getReservations, getRestaurantInfo } = require('./_lib/supabase');
 const { checkTimeSlotAvailability, getSuggestedTimes } = require('./_lib/availability-calculator');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const logger = createSecureLogger('CheckAvailability');
 
 module.exports = async (req, res) => {
-  // Enable CORS for ElevenLabs
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // Enable CORS
+  setInternalCors(req, res);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).json({ success: true });
@@ -38,10 +37,17 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Validate restaurant_id format (UUID)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(restaurantId)) {
+      return res.status(400).json({ success: false, error: true, message: 'Invalid restaurant ID format' });
+    }
+
     // Get restaurant info
     const restaurantResult = await getRestaurantInfo(restaurantId);
     if (!restaurantResult.success) {
-      return res.status(500).json(restaurantResult);
+      logger.error('Failed to get restaurant info:', restaurantResult);
+      return res.status(500).json({ success: false, error: true, message: 'Failed to load restaurant configuration' });
     }
 
     const restaurant = restaurantResult.data.records[0];
@@ -63,7 +69,8 @@ module.exports = async (req, res) => {
     const reservationsResult = await getReservations(restaurantId, filter);
 
     if (!reservationsResult.success) {
-      return res.status(500).json(reservationsResult);
+      logger.error('Failed to get reservations:', reservationsResult);
+      return res.status(500).json({ success: false, error: true, message: 'Failed to load reservations' });
     }
 
     const existingReservations = reservationsResult.data.records || [];

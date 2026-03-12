@@ -6,6 +6,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { verifyAuth } = require('./_lib/auth');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const logger = createSecureLogger('RestaurantSettings');
 
 const supabase = createClient(
@@ -119,9 +120,7 @@ function recommendProfile(characteristics) {
 }
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Restaurant-ID');
+  setInternalCors(req, res);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();

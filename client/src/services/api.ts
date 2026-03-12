@@ -23,6 +23,34 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+// Redirect to /login on 401 responses — catches expired sessions that
+// slipped past the auth state listener (C-05 fix).
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      // Only redirect if user is on a protected page (not public booking pages)
+      const path = window.location.pathname;
+      const isProtectedPage = path.startsWith('/host-dashboard') ||
+        path.startsWith('/analytics') ||
+        path.startsWith('/onboarding') ||
+        path.startsWith('/welcome') ||
+        path.startsWith('/subscription/manage') ||
+        path.startsWith('/settings');
+      if (isProtectedPage) {
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          // Ignore sign-out errors
+        }
+        window.location.replace('/login');
+        return new Promise(() => {}); // Prevent further error handling during redirect
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 /**
  * Authenticated fetch wrapper - use instead of raw fetch() for API calls.
  * Automatically attaches the Supabase session token as Bearer auth.

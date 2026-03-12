@@ -12,6 +12,7 @@
 
 const crypto = require('crypto');
 const { supabaseAdmin } = require('../_lib/supabase');
+const { setInternalCors, handlePreflight } = require('../_lib/cors');
 const fetch = require('node-fetch');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { verifyAuth } = require('../_lib/auth');
@@ -106,9 +107,7 @@ async function generateUniqueSlug(name, supabaseClient) {
 
 module.exports = async (req, res) => {
   // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  setInternalCors(req, res);
 
   // Handle preflight
   if (req.method === 'OPTIONS') {

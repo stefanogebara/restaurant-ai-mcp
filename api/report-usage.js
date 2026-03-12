@@ -15,14 +15,13 @@
 
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { reportAllUsage } = require('./_lib/stripe-usage-reporter');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 
 const logger = createSecureLogger('ReportUsageCron');
 
 module.exports = async (req, res) => {
   // CORS
-  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  setInternalCors(req, res);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();

@@ -1,3 +1,7 @@
+jest.mock('../_lib/rate-limit', () => ({
+  checkAndApplyRateLimit: jest.fn().mockResolvedValue(false),
+}));
+
 const handler = require('../seo/vs');
 
 function makeRes() {

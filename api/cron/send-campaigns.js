@@ -27,6 +27,6 @@ module.exports = async (req, res) => {
     return res.status(200).json({ success: true, sent });
   } catch (error) {
     logger.error('send-campaigns cron error', { error: error.message });
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, error: 'Campaign sending failed' });
   }
 };

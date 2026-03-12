@@ -7,6 +7,7 @@
 
 const { analyzeCustomerDNA, analyzeAllCustomersDNA, getCustomerDNAProfile, getFullCustomerProfile, listCustomerProfiles } = require('./services/customerDNA');
 const { verifyAuth } = require('./_lib/auth');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { supabaseAdmin } = require('./_lib/supabase');
@@ -15,9 +16,7 @@ const logger = createSecureLogger('CustomerDNA');
 
 module.exports = async (req, res) => {
   // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-customer-email');
+  setInternalCors(req, res);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -357,7 +356,7 @@ module.exports = async (req, res) => {
     logger.error('Customer DNA API Error:', error);
     return res.status(500).json({
       success: false,
-      error: error.message || 'Internal server error'
+      error: 'Internal server error'
     });
   }
 };

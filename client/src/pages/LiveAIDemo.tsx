@@ -56,7 +56,7 @@ export default function LiveAIDemo() {
         <h1 className="font-serif text-4xl sm:text-[56px] font-medium leading-[1.1] tracking-tight mb-4">
           {t('landing.liveDemo.hero.title')} <em className="text-burgundy">{t('landing.liveDemo.hero.titleEm')}</em>
         </h1>
-        <p className="text-[17px] text-warm-stone font-light leading-relaxed max-w-[520px] mx-auto">
+        <p className="text-[17px] text-stone-gray font-light leading-relaxed max-w-[520px] mx-auto">
           {t('landing.liveDemo.hero.subtitle')}
         </p>
       </section>
@@ -64,18 +64,18 @@ export default function LiveAIDemo() {
       {/* Demo Widget */}
       <section className="max-w-[720px] mx-auto px-6 sm:px-16 pb-20">
         <div className="bg-white border border-border-gray rounded-[20px] p-8 sm:p-12 text-center">
-          <div className="text-xs font-semibold tracking-[1.5px] uppercase text-muted-stone mb-5">{t('landing.liveDemo.widget.label')}</div>
+          <div className="text-xs font-semibold tracking-[1.5px] uppercase text-warm-stone mb-5">{t('landing.liveDemo.widget.label')}</div>
           <h2 className="font-serif text-[28px] font-medium mb-2">{t('landing.liveDemo.widget.name')}</h2>
-          <p className="text-sm text-warm-stone font-light mb-9">{t('landing.liveDemo.widget.details')}</p>
+          <p className="text-sm text-stone-gray font-light mb-9">{t('landing.liveDemo.widget.details')}</p>
 
           {/* Voice Demo */}
           {import.meta.env.VITE_ELEVENLABS_AGENT_ID ? (
             <div className="mb-6">
               <div className="bg-soft-gray rounded-2xl p-6 mb-5 text-left">
-                <p className="text-[13px] text-warm-stone font-light leading-relaxed mb-3">
+                <p className="text-[13px] text-stone-gray font-light leading-relaxed mb-3">
                   {t('landing.liveDemo.widget.instructions')}
                 </p>
-                <div className="flex items-center gap-2 text-[12px] text-muted-stone">
+                <div className="flex items-center gap-2 text-[12px] text-warm-stone">
                   <span>↘</span>
                   <span>{t('landing.liveDemo.widget.instructionsHint')}</span>
                 </div>
@@ -95,7 +95,7 @@ export default function LiveAIDemo() {
                 <div className="w-8 h-8 bg-burgundy/10 rounded-lg flex items-center justify-center text-burgundy text-base">☎</div>
                 <span className="text-sm font-semibold text-deep-charcoal">{t('landing.liveDemo.widget.voiceComingSoon')}</span>
               </div>
-              <p className="text-[13px] text-stone-gray font-light leading-relaxed">
+              <p className="text-[13px] text-stone-gray leading-relaxed">
                 {t('landing.liveDemo.widget.voiceComingSoonDesc')}
               </p>
             </div>
@@ -103,7 +103,7 @@ export default function LiveAIDemo() {
 
           {/* Booking Demo Link */}
           <div className="border-t border-border-gray pt-6 mt-2">
-            <p className="text-[12px] text-muted-stone mb-3">{t('landing.liveDemo.widget.bookingFlowLabel')}</p>
+            <p className="text-[12px] text-warm-stone mb-3">{t('landing.liveDemo.widget.bookingFlowLabel')}</p>
             <Link
               to="/demo/setup"
               className="inline-flex items-center gap-2 px-5 py-2.5 border border-border-gray hover:border-burgundy/40 text-sm font-medium text-deep-charcoal hover:text-burgundy rounded-xl transition-colors"
@@ -127,7 +127,7 @@ export default function LiveAIDemo() {
                 <ThiingsIcon name={item.icon} pxSize={20} />
               </div>
               <h3 className="text-base font-semibold text-deep-charcoal mb-2 tracking-tight">{item.title}</h3>
-              <p className="text-[13px] text-warm-stone font-light leading-relaxed">{item.desc}</p>
+              <p className="text-[13px] text-stone-gray leading-relaxed">{item.desc}</p>
             </div>
           ))}
         </div>

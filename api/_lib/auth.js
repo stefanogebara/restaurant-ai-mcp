@@ -14,7 +14,7 @@ const logger = createSecureLogger('Auth');
 // JWT_SECRET for internally generated tokens (HS256)
 const JWT_SECRET = process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET;
 
-const JWT_EXPIRY = '24h';
+const JWT_EXPIRY = '8h';
 
 // JWKS client for verifying Supabase ECC (ES256) tokens
 // Supabase migrated from HS256 to ECC (P-256) signing
@@ -53,7 +53,7 @@ const CACHE_TTL = 5 * 60 * 1000;
 // Intentionally short: a revoked token will only replay for at most TOKEN_CACHE_TTL ms
 // before the next liveness check forces it out.
 const tokenCache = new Map();
-const TOKEN_CACHE_TTL = 10 * 1000;
+const TOKEN_CACHE_TTL = 3 * 1000;
 
 /**
  * Look up the restaurant_id for a given user ID

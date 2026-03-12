@@ -63,7 +63,7 @@ module.exports = async (req, res) => {
     });
   } catch (error) {
     logger.error('Proactive comms cron error:', error.message);
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, error: 'Proactive comms processing failed' });
   }
 };
 

@@ -13,6 +13,7 @@
 
 const { initSentry, captureException } = require('./_lib/sentry');
 const { analyzeMetrics, checkSystemHealth } = require('./_lib/alerts');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('Observability');
 
@@ -162,9 +163,7 @@ function getRecentErrors(limit = 50) {
 }
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  setInternalCors(req, res);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).json({ success: true });

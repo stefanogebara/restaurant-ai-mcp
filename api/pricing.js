@@ -10,6 +10,7 @@
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { verifyAuth } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const logger = createSecureLogger('Pricing');
 const {
   calculatePrice,
@@ -640,9 +641,7 @@ async function handleGetStats(req, res) {
  */
 module.exports = async (req, res) => {
   // Enable CORS
-  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  setInternalCors(req, res);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();

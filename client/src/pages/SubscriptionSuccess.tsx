@@ -14,20 +14,18 @@ export default function SubscriptionSuccess() {
   const { data, isLoading } = useVerifySession(sessionId);
 
   const plan = data?.plan || 'Growth';
-  const customerEmail = data?.customer_email || '';
 
   // Side effects: persist to localStorage + redirect after success
   useEffect(() => {
     if (!data) return;
     if (data.customer_id) localStorage.setItem(LS_STRIPE_CUSTOMER_ID, data.customer_id);
     if (data.plan) localStorage.setItem(LS_SUBSCRIPTION_PLAN, data.plan);
-    if (data.customer_email) {
-      localStorage.setItem(LS_CUSTOMER_EMAIL, data.customer_email);
-      const timer = setTimeout(() => {
-        navigate(`/onboarding?email=${encodeURIComponent(data.customer_email!)}&plan=${encodeURIComponent(data.plan || 'Growth')}`);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
+    if (data.customer_email) localStorage.setItem(LS_CUSTOMER_EMAIL, data.customer_email);
+
+    const timer = setTimeout(() => {
+      navigate('/host-dashboard/simple');
+    }, 4000);
+    return () => clearTimeout(timer);
   }, [data, navigate]);
 
   if (isLoading) {
@@ -65,11 +63,9 @@ export default function SubscriptionSuccess() {
               {t('subscription.upgradeActive')}
             </p>
 
-            {customerEmail && (
-              <p className="text-[13px] text-green-600 font-medium mb-6">
-                {t('subscription.redirecting')}
-              </p>
-            )}
+            <p className="text-[13px] text-green-600 font-medium mb-6">
+              {t('subscription.redirecting')}
+            </p>
 
             <button
               onClick={() => navigate('/host-dashboard/simple')}

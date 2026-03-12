@@ -18,15 +18,14 @@ const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { initSentry, captureException } = require('./_lib/sentry');
 const { upsertRestaurant, updateRestaurant: updateRegistryRestaurant } = require('./_lib/restaurant-registry');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 initSentry();
 
 const logger = createSecureLogger('WhatsAppSettings');
 
 module.exports = async (req, res) => {
   // CORS
-  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, PATCH, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  setInternalCors(req, res);
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 

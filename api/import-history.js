@@ -127,6 +127,6 @@ module.exports = async (req, res) => {
 
   } catch (err) {
     logger.error('import-history error', { error: err.message });
-    return res.status(500).json({ error: err.message || 'Import failed' });
+    return res.status(500).json({ error: 'Import failed' });
   }
 };

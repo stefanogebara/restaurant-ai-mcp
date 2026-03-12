@@ -6,6 +6,7 @@
  */
 
 const { renderPage, escapeHtml } = require('../_lib/seo-html');
+const { checkAndApplyRateLimit } = require('../_lib/rate-limit');
 
 const COMPETITORS = {
   opentable: {
@@ -68,7 +69,10 @@ const COMPETITORS = {
 };
 
 module.exports = async (req, res) => {
-  if (req.method !== 'GET') {
+  // Rate limit (60 req/min)
+  if (await checkAndApplyRateLimit(req, res, 'api')) return;
+
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
     return res.status(405).send('Method not allowed');
   }
 

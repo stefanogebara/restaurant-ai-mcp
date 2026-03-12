@@ -135,9 +135,9 @@ export default function InteractiveDemoSection() {
             </a>
 
             {/* Live Indicator */}
-            <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-2 bg-white/90 rounded-full shadow-md">
+            <div className="absolute top-3 left-3 sm:top-6 sm:right-6 sm:left-auto flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 bg-white/90 rounded-full shadow-md z-10">
               <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-              <span className="text-xs text-deep-charcoal font-bold tracking-wider">{t('landing.demo.liveBadge')}</span>
+              <span className="text-[10px] sm:text-xs text-deep-charcoal font-bold tracking-wider">{t('landing.demo.liveBadge')}</span>
             </div>
           </motion.div>
 

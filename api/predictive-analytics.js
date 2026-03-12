@@ -15,6 +15,7 @@ const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const logger = createSecureLogger('PredictiveAnalytics');
 
 /**
@@ -340,9 +341,7 @@ async function getRevenueOpportunities(restaurantId) {
  * Main handler for predictive analytics endpoints
  */
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-customer-email');
+  setInternalCors(req, res);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).json({ success: true });

@@ -1,5 +1,7 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { createSecureLogger } = require('./_lib/secure-logger');
+const logger = createSecureLogger('DemoChat');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -54,7 +56,7 @@ Rules:
     const reply = response.content?.[0]?.text || '';
     return res.status(200).json({ reply });
   } catch (err) {
-    console.error('Demo chat error:', err?.message || err);
+    logger.error('Demo chat error:', err?.message || err);
     return res.status(500).json({ error: 'AI service error' });
   }
 }

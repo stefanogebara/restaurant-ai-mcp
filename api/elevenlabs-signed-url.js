@@ -45,10 +45,10 @@ module.exports = async (req, res) => {
   }
   // Final fallback to global agent (for demo/testing)
   if (!agentId) {
-    agentId = process.env.VITE_ELEVENLABS_AGENT_ID;
+    agentId = process.env.ELEVENLABS_AGENT_ID || process.env.VITE_ELEVENLABS_AGENT_ID;
   }
   if (!agentId) {
-    logger.error('No agent_id resolved and VITE_ELEVENLABS_AGENT_ID not configured');
+    logger.error('No agent_id resolved and ELEVENLABS_AGENT_ID not configured');
     return res.status(400).json({ error: 'agent_id is required' });
   }
 

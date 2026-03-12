@@ -98,6 +98,6 @@ module.exports = async (req, res) => {
     });
   } catch (error) {
     logger.error('Guest memory import error:', error.message);
-    return res.status(500).json({ message: 'Import failed', error: error.message });
+    return res.status(500).json({ message: 'Import failed', error: 'Internal server error' });
   }
 };

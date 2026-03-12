@@ -12,6 +12,8 @@
 
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { escapeHtml } = require('./_lib/seo-html');
+const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 const twilio = require('twilio');
 
 const logger = createSecureLogger('TwilioSmsWebhook');
@@ -20,11 +22,11 @@ const logger = createSecureLogger('TwilioSmsWebhook');
 function generateHtmlViewer(messages) {
   const messageRows = messages.map(msg => `
     <tr>
-      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${new Date(msg.created_at).toLocaleString()}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-family: monospace;">${msg.from_number || 'Unknown'}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-family: monospace;">${msg.to_number || 'Unknown'}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #059669;">${msg.body || ''}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 12px; color: #6b7280;">${msg.from_city || ''} ${msg.from_state || ''} ${msg.from_country || ''}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${escapeHtml(new Date(msg.created_at).toLocaleString())}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-family: monospace;">${escapeHtml(msg.from_number || 'Unknown')}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-family: monospace;">${escapeHtml(msg.to_number || 'Unknown')}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #059669;">${escapeHtml(msg.body || '')}</td>
+      <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 12px; color: #6b7280;">${escapeHtml(msg.from_city || '')} ${escapeHtml(msg.from_state || '')} ${escapeHtml(msg.from_country || '')}</td>
     </tr>
   `).join('');
 
@@ -91,9 +93,7 @@ function generateHtmlViewer(messages) {
 
 module.exports = async (req, res) => {
   // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setWebhookCors(req, res);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -104,8 +104,7 @@ module.exports = async (req, res) => {
   if (req.method === 'GET') {
     const cronSecret = process.env.CRON_SECRET;
     const authHeader = req.headers.authorization || '';
-    const queryKey = req.query.key || '';
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}` && queryKey !== cronSecret) {
+    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     try {
@@ -139,7 +138,7 @@ module.exports = async (req, res) => {
       });
     } catch (err) {
       logger.error('Error:', err);
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: 'Internal server error' });
     }
   }
 

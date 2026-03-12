@@ -13,15 +13,14 @@ const { checkSubscription, requireFeature } = require('./_lib/subscription-middl
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('VoiceEngineSettings');
 
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const VALID_ENGINES = ['elevenlabs', 'openai_realtime'];
 const VALID_OPENAI_VOICES = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
 const VALID_STATUSES = ['active', 'testing', 'disabled'];
 
 module.exports = async (req, res) => {
   // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, PATCH, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  setInternalCors(req, res);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();

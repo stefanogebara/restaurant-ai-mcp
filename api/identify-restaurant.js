@@ -7,17 +7,20 @@
 
 const { getRestaurantByName, getAllActiveRestaurants } = require('./_lib/restaurant-registry');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('IdentifyRestaurant');
 
 module.exports = async (req, res) => {
-  // Enable CORS for ElevenLabs
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // Enable CORS
+  setInternalCors(req, res);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).json({ success: true });
   }
+
+  // Rate limit (60 req/min)
+  if (await checkAndApplyRateLimit(req, res, 'api')) return;
 
   try {
     const { restaurant_name } = req.method === 'POST' ? req.body : req.query;

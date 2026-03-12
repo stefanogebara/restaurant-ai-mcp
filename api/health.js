@@ -16,6 +16,7 @@
 
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const logger = createSecureLogger('Health');
 
 // Health check uses supabaseAdmin (service_role) for unscoped cross-tenant
@@ -30,10 +31,7 @@ const THRESHOLDS = {
 
 module.exports = async (req, res) => {
   // Set CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+  setInternalCors(req, res);
 
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -73,12 +71,16 @@ module.exports = async (req, res) => {
       status: isHealthy ? 'healthy' : 'degraded',
       timestamp: new Date().toISOString(),
       responseTime: `${responseTime}ms`,
-      checks: {
+    };
+
+    // Only include detailed checks for authenticated requests
+    if (detailed) {
+      healthStatus.checks = {
         database: databaseHealth,
         staleData: staleDataCheck,
         dataQuality: dataQualityCheck
-      }
-    };
+      };
+    }
 
     // Add detailed metrics if requested
     if (detailed) {
@@ -86,35 +88,36 @@ module.exports = async (req, res) => {
       healthStatus.thresholds = THRESHOLDS;
     }
 
-    // Add alerts if any issues found
-    const alerts = [];
-    if (staleDataCheck.staleServiceRecords > 0) {
-      alerts.push({
-        severity: 'warning',
-        type: 'stale_data',
-        message: `Found ${staleDataCheck.staleServiceRecords} stale service record(s) older than ${THRESHOLDS.SERVICE_RECORD_MAX_HOURS} hours`,
-        action: 'DELETE old service records via Complete Service flow or direct cleanup'
-      });
-    }
-    if (staleDataCheck.staleWaitlistEntries > 0) {
-      alerts.push({
-        severity: 'warning',
-        type: 'stale_data',
-        message: `Found ${staleDataCheck.staleWaitlistEntries} stale waitlist entry(ies) older than ${THRESHOLDS.WAITLIST_ENTRY_MAX_HOURS} hours`,
-        action: 'DELETE old waitlist entries via /api/waitlist DELETE endpoint'
-      });
-    }
-    if (dataQualityCheck.nullDataCount > 0) {
-      alerts.push({
-        severity: 'info',
-        type: 'data_quality',
-        message: `Found ${dataQualityCheck.nullDataCount} record(s) with NULL/missing required fields`,
-        action: 'Review data validation in API endpoints'
-      });
-    }
-
-    if (alerts.length > 0) {
-      healthStatus.alerts = alerts;
+    // Add alerts only for authenticated detailed requests
+    if (detailed) {
+      const alerts = [];
+      if (staleDataCheck.staleServiceRecords > 0) {
+        alerts.push({
+          severity: 'warning',
+          type: 'stale_data',
+          message: `Found ${staleDataCheck.staleServiceRecords} stale service record(s) older than ${THRESHOLDS.SERVICE_RECORD_MAX_HOURS} hours`,
+          action: 'DELETE old service records via Complete Service flow or direct cleanup'
+        });
+      }
+      if (staleDataCheck.staleWaitlistEntries > 0) {
+        alerts.push({
+          severity: 'warning',
+          type: 'stale_data',
+          message: `Found ${staleDataCheck.staleWaitlistEntries} stale waitlist entry(ies) older than ${THRESHOLDS.WAITLIST_ENTRY_MAX_HOURS} hours`,
+          action: 'DELETE old waitlist entries via /api/waitlist DELETE endpoint'
+        });
+      }
+      if (dataQualityCheck.nullDataCount > 0) {
+        alerts.push({
+          severity: 'info',
+          type: 'data_quality',
+          message: `Found ${dataQualityCheck.nullDataCount} record(s) with NULL/missing required fields`,
+          action: 'Review data validation in API endpoints'
+        });
+      }
+      if (alerts.length > 0) {
+        healthStatus.alerts = alerts;
+      }
     }
 
     // Return appropriate status code
@@ -126,8 +129,7 @@ module.exports = async (req, res) => {
     return res.status(503).json({
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
-      error: 'Health check failed',
-      details: error.message
+      error: 'Health check failed'
     });
   }
 };
@@ -154,14 +156,14 @@ async function checkDatabaseConnectivity() {
       return {
         status: 'unhealthy',
         message: 'Database query failed',
-        error: error.message
+        error: 'Internal error'
       };
     }
   } catch (error) {
     return {
       status: 'unhealthy',
       message: 'Database connection failed',
-      error: error.message
+      error: 'Internal error'
     };
   }
 }
@@ -226,7 +228,7 @@ async function checkForStaleData() {
     return {
       status: 'error',
       message: 'Stale data check failed',
-      error: error.message
+      error: 'Internal error'
     };
   }
 }
@@ -291,7 +293,7 @@ async function checkDataQuality() {
     return {
       status: 'error',
       message: 'Data quality check failed',
-      error: error.message
+      error: 'Internal error'
     };
   }
 }

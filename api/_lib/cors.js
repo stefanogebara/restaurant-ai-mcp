@@ -33,6 +33,7 @@ function setInternalCors(req, res) {
 
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
   } else if (!origin) {
     // Allow same-origin requests (no origin header) and server-to-server
     res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGINS[0]);
@@ -55,10 +56,12 @@ function setWebhookCors(req, res) {
   // may not send an origin header, or may send from various subdomains
   if (origin && (ALLOWED_ORIGINS.includes(origin) || WEBHOOK_ORIGINS.some(wo => origin.includes(wo)))) {
     res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    // Webhooks often don't have origin headers - allow for server-to-server calls
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Vary', 'Origin');
+  } else if (!origin) {
+    // Server-to-server webhooks (no origin header) — use default allowed origin
+    res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGINS[0]);
   }
+  // Unknown browser origins get no CORS header (request will be blocked)
 
   // Webhooks are server-to-server — credentials are not applicable
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');

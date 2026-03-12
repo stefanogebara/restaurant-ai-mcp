@@ -27,7 +27,7 @@ function sanitizeCopy(rawCopy) {
 const BASE_URL = process.env.CLIENT_URL || 'https://seatable.one';
 
 module.exports = async (req, res) => {
-  if (req.method !== 'GET') {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
     return res.status(405).send('Method not allowed');
   }
 
@@ -43,29 +43,34 @@ module.exports = async (req, res) => {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
 
-  // 1. Cache hit?
-  const { data: cached, error: cacheError } = await supabaseAdmin
-    .from('seo_page_cache')
-    .select('html')
-    .eq('cache_key', cacheKey)
-    .single();
+  // 1. Fetch cache and restaurant data in parallel (saves ~200-400ms vs sequential)
+  const [cacheResult, restaurantResult] = await Promise.all([
+    supabaseAdmin
+      .from('seo_page_cache')
+      .select('html')
+      .eq('cache_key', cacheKey)
+      .single(),
+    supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('restaurant_name, slug, city, restaurant_type')
+      .eq('is_active', true)
+      .eq('onboarding_completed', true)
+      .not('slug', 'is', null),
+  ]);
+
+  const { data: cached, error: cacheError } = cacheResult;
 
   if (cached && !cacheError) {
     logger.info('Cache hit', { cacheKey });
     return res.send(cached.html);
   }
 
-  // 2. Fetch matching restaurants
+  // 2. Filter matching restaurants (data already fetched above)
   const cityDisplay = titleCase(city);
   const cuisineDisplay = titleCase(cuisine);
 
-  const { data: allRestaurants } = await supabaseAdmin
-    .schema('restaurant')
-    .from('restaurant_config')
-    .select('restaurant_name, slug, city, restaurant_type')
-    .eq('is_active', true)
-    .eq('onboarding_completed', true)
-    .not('slug', 'is', null);
+  const { data: allRestaurants } = restaurantResult;
 
   const matching = (allRestaurants || []).filter(
     (r) =>

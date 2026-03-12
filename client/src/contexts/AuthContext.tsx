@@ -63,8 +63,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
 
-        // Clear stale state when sign-out or token refresh fails
-        if (event === 'SIGNED_OUT') {
+        // Clear stale state when sign-out or token refresh fails (C-05)
+        if (event === 'SIGNED_OUT' || !session) {
           localStorage.removeItem(LS_CUSTOMER_EMAIL);
           setRole(null);
         }

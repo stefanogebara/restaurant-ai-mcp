@@ -240,7 +240,7 @@ export default function VoiceSettingsPage() {
       <div className="dashboard p-6 lg:p-8 max-w-5xl">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
-            Voice Agent <span className="font-light text-warm-stone">/ Settings</span>
+            {t('navigation.voiceAgent')} <span className="font-light text-warm-stone">/ {t('common.settings')}</span>
           </h1>
           <button
             type="button"
@@ -249,7 +249,7 @@ export default function VoiceSettingsPage() {
             className="px-6 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-[13px] font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isSaving && <Spinner size="sm" className="border-white border-t-white/30" />}
-            {isSaving ? 'Saving...' : 'Save Changes'}
+            {isSaving ? t('voiceSettings.saving', 'Saving...') : t('voiceSettings.saveChanges', 'Save Changes')}
           </button>
         </div>
 
@@ -284,7 +284,7 @@ export default function VoiceSettingsPage() {
                 <section className="bg-white border border-border-gray rounded-2xl p-6">
                   <h2 className="text-lg font-bold text-deep-charcoal mb-4 flex items-center gap-2">
                     <ThiingsIcon name="search" pxSize={20} />
-                    Voice Library
+                    {t('voiceSettings.voiceLibrary', 'Voice Library')}
                   </h2>
                   <VoiceFilters filters={filters} onChange={setFilters} defaultLanguage={currentLanguage} hideSearch={voicesSource === 'own_voices_fallback'} />
                   <VoiceGrid
@@ -315,21 +315,23 @@ export default function VoiceSettingsPage() {
           )}
           {waStatus && (
             <div className="bg-white border border-border-gray rounded-2xl p-6">
-              <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider mb-3">WhatsApp Status</h2>
+              <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider mb-3">
+                {t('voiceSettings.whatsappStatus', 'WhatsApp Status')}
+              </h2>
               {waStatus.meta.approved ? (
                 <div className="space-y-1">
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                    Connected
+                    {t('voiceSettings.waConnected', 'Connected')}
                   </span>
                   {waStatus.meta.phone_number && (
                     <p className="text-sm text-deep-charcoal mt-2">
-                      <span className="text-warm-stone">Phone:</span> {waStatus.meta.phone_number}
+                      <span className="text-warm-stone">{t('voiceSettings.waPhone', 'Phone')}:</span> {waStatus.meta.phone_number}
                     </p>
                   )}
                   {waStatus.meta.quality_rating && (
                     <p className="text-sm text-deep-charcoal">
-                      <span className="text-warm-stone">Quality rating:</span> {waStatus.meta.quality_rating}
+                      <span className="text-warm-stone">{t('voiceSettings.waQualityRating', 'Quality rating')}:</span> {waStatus.meta.quality_rating}
                     </p>
                   )}
                 </div>
@@ -337,21 +339,21 @@ export default function VoiceSettingsPage() {
                 <div className="space-y-2">
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                     <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
-                    Pending Approval
+                    {t('voiceSettings.waPendingApproval', 'Pending Approval')}
                   </span>
                   <a href="https://business.facebook.com/" target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline block">
-                    Check Meta Business Manager →
+                    {t('voiceSettings.waCheckMeta', 'Check Meta Business Manager')} &rarr;
                   </a>
                 </div>
               ) : (
                 <div className="space-y-2">
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                    Not Configured
+                    {t('voiceSettings.waNotConfigured', 'Not Configured')}
                   </span>
                   {waStatus.meta.error && <p className="text-xs text-red-600">{waStatus.meta.error}</p>}
                   <a href="https://business.facebook.com/" target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline block">
-                    Check Meta Business Manager →
+                    {t('voiceSettings.waCheckMeta', 'Check Meta Business Manager')} &rarr;
                   </a>
                 </div>
               )}

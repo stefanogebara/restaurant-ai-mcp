@@ -8,13 +8,12 @@
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { verifyAuth } = require('./_lib/auth');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const logger = createSecureLogger('MLOutcomes');
 
 module.exports = async (req, res) => {
   // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  setInternalCors(req, res);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -63,8 +62,7 @@ module.exports = async (req, res) => {
     logger.error('ML Outcomes API error:', error);
     return res.status(500).json({
       success: false,
-      error: 'Internal server error',
-      details: error.message
+      error: 'Internal server error'
     });
   }
 };
@@ -207,7 +205,7 @@ async function handleRecordOutcome(req, res) {
       return res.status(500).json({
         success: false,
         error: 'Failed to create intervention record',
-        details: interventionError.message
+        details: 'Database operation failed'
       });
     }
 
@@ -240,8 +238,7 @@ async function handleRecordOutcome(req, res) {
     logger.error('Error recording outcome:', error);
     return res.status(500).json({
       success: false,
-      error: 'Internal server error',
-      details: error.message
+      error: 'Internal server error'
     });
   }
 }
@@ -331,8 +328,7 @@ async function handleROISummary(req, res) {
     logger.error('Error fetching ROI summary:', error);
     return res.status(500).json({
       success: false,
-      error: 'Failed to fetch ROI summary',
-      details: error.message
+      error: 'Failed to fetch ROI summary'
     });
   }
 }
@@ -430,7 +426,7 @@ async function handleMarkActionTaken(req, res) {
       return res.status(500).json({
         success: false,
         error: 'Failed to update reservation',
-        details: updateError.message
+        details: 'Database operation failed'
       });
     }
 
@@ -476,8 +472,7 @@ async function handleMarkActionTaken(req, res) {
     logger.error('Error marking action taken:', error);
     return res.status(500).json({
       success: false,
-      error: 'Internal server error',
-      details: error.message
+      error: 'Internal server error'
     });
   }
 }

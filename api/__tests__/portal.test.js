@@ -133,7 +133,7 @@ describe('Portal: CORS and OPTIONS', () => {
   test('sets CORS headers', async () => {
     const { req, res } = createMockReqRes({ method: 'OPTIONS' });
     await handler(req, res);
-    expect(res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', '*');
+    expect(res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', expect.any(String));
     expect(res.status).toHaveBeenCalledWith(200);
   });
 });

@@ -2,6 +2,7 @@ const Stripe = require('stripe');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 
 const logger = createSecureLogger('DepositIntent');
 let stripe;
@@ -12,9 +13,7 @@ function getStripe() {
 
 module.exports = async (req, res) => {
   // Public endpoint — no auth required (customer-facing booking flow)
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setInternalCors(req, res);
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 

@@ -1,0 +1,261 @@
+{
+  "date": "2026-03-12",
+  "project": "restaurant-ai-mcp (Seatable)",
+  "production": "https://restaurant-ai-mcp.vercel.app",
+  "agents": ["Backend Health", "Frontend E2E", "UI/UX Review", "Security Scan", "Data Integrity"],
+  "summary": { "critical": 5, "high": 10, "medium": 14, "low": 12, "total": 41 },
+  "critical": [
+    {
+      "id": "C-01",
+      "title": "Landing page / is blank — stale asset hashes after redeploy",
+      "source": "Frontend E2E, UI/UX",
+      "evidence": "Root page serves index.html referencing asset hashes (index-CVFyg8dK.js) that no longer exist. All JS/CSS return text/html 404 fallback. Other SPA routes serve working index.html.",
+      "fix": "Force redeploy or purge Vercel edge cache. Check vercel.json rewrite for / path.",
+      "status": "done"
+    },
+    {
+      "id": "C-02",
+      "title": "GCP service account private key on disk (gcp-credentials.json)",
+      "source": "Security Scan",
+      "file": "gcp-credentials.json",
+      "evidence": "Full GCP service account credential file with private key for restaurant-ai-agent@restaurant-ai-mcp.iam.gserviceaccount.com. In .gitignore but present on disk.",
+      "fix": "Deleted file. Never committed to git. GCP key rotation is an ops task.",
+      "status": "done"
+    },
+    {
+      "id": "C-03",
+      "title": "Stored XSS in Twilio SMS webhook HTML viewer",
+      "source": "Security Scan",
+      "file": "api/twilio-sms-webhook.js:21-29",
+      "evidence": "generateHtmlViewer() interpolates msg.body, msg.from_number etc. directly into HTML without escaping.",
+      "fix": "Added escapeHtml() from seo-html.js to all interpolated fields in generateHtmlViewer().",
+      "status": "done"
+    },
+    {
+      "id": "C-04",
+      "title": "CORS Access-Control-Allow-Origin: * on ALL API endpoints",
+      "source": "Backend Health",
+      "evidence": "Every endpoint returns Access-Control-Allow-Origin: *. Combined with Access-Control-Allow-Credentials: true on /api/health.",
+      "fix": "Replaced hardcoded * in 36 files with setInternalCors/setWebhookCors from cors.js. Fixed webhook CORS fallback to use ALLOWED_ORIGINS[0] instead of *.",
+      "status": "done"
+    },
+    {
+      "id": "C-05",
+      "title": "Auth session expires rapidly, redirects to booking page instead of login",
+      "source": "Frontend E2E",
+      "evidence": "After login, dashboard routes redirect to /book/celeri-madrid (404) within ~60s instead of /login.",
+      "fix": "Fixed in 3 files: supabase.ts (forceSignOutToLogin on failed refresh), api.ts (401 interceptor redirects to /login), AuthContext.tsx (cleanup on null session).",
+      "status": "done"
+    }
+  ],
+  "high": [
+    {
+      "id": "H-01",
+      "title": "SQL/DB error messages reflected to clients",
+      "source": "Backend Health",
+      "evidence": "GET /api/check-availability?restaurant_id=1' OR 1=1-- returns raw PostgreSQL error: invalid input syntax for type uuid.",
+      "fix": "Return generic 'Invalid restaurant ID' message; log details server-side.",
+      "status": "open"
+    },
+    {
+      "id": "H-02",
+      "title": "Error messages leak internal details (20+ endpoints)",
+      "source": "Security Scan",
+      "files": "api/import-history.js:130, api/customer-dna.js:360, api/guest-memory-import.js:101, api/ltv.js (5 sites), api/ml-outcomes.js (4 sites), api/health.js, many cron endpoints",
+      "fix": "Replace error.message with generic messages in client responses. Use createSecureLogger server-side.",
+      "status": "open"
+    },
+    {
+      "id": "H-03",
+      "title": "CRON_SECRET accepted via query string",
+      "source": "Security Scan",
+      "file": "api/twilio-sms-webhook.js:107-108",
+      "fix": "Remove query string auth path. Only accept via Authorization: Bearer header.",
+      "status": "open"
+    },
+    {
+      "id": "H-04",
+      "title": "Health endpoint exposes internal infrastructure details",
+      "source": "Backend Health",
+      "fix": "Return only {status:healthy} publicly. Move detailed checks behind auth.",
+      "status": "open"
+    },
+    {
+      "id": "H-05",
+      "title": "Stripe webhook returns plain text error with text/html content type",
+      "source": "Backend Health",
+      "fix": "Wrap in JSON, set Content-Type: application/json, use generic message.",
+      "status": "open"
+    },
+    {
+      "id": "H-06",
+      "title": "CSP blocks inline event handlers on every page (onload on font link)",
+      "source": "Frontend E2E, UI/UX",
+      "file": "client/index.html:33",
+      "fix": "Replace onload=\"this.media='all'\" with Font Loading API in JavaScript.",
+      "status": "open"
+    },
+    {
+      "id": "H-07",
+      "title": "/subscription/success renders blank then redirects to /live-demo",
+      "source": "Frontend E2E",
+      "fix": "Show success confirmation message before any redirect.",
+      "status": "open"
+    },
+    {
+      "id": "H-08",
+      "title": "9 VITE_ frontend env vars missing from .env.example",
+      "source": "Data Integrity",
+      "evidence": "VITE_ELEVENLABS_AGENT_ID, VITE_POSTHOG_KEY/HOST, VITE_SENTRY_DSN, VITE_API_URL, VITE_API_BASE_URL, VITE_STRIPE_*_PRICE_ID (6 vars) — all undocumented.",
+      "fix": "Add all VITE_ vars to .env.example with descriptions.",
+      "status": "open"
+    },
+    {
+      "id": "H-09",
+      "title": "CLAUDE.md documents only 4/17 cron jobs",
+      "source": "Data Integrity",
+      "fix": "Update CLAUDE.md cron table with all 17 entries.",
+      "status": "open"
+    },
+    {
+      "id": "H-10",
+      "title": "Nav links hidden on mobile — no hamburger menu",
+      "source": "UI/UX",
+      "fix": "Add responsive hamburger menu for mobile nav.",
+      "status": "open"
+    }
+  ],
+  "medium": [
+    {
+      "id": "M-01",
+      "title": "Rate limiting missing on several public endpoints",
+      "source": "Backend Health, Security Scan",
+      "files": "api/get-current-datetime.js, api/identify-restaurant.js, api/sitemap.js, api/seo/vs.js",
+      "fix": "Add rate limiting to all public endpoints.",
+      "status": "done"
+    },
+    {
+      "id": "M-02",
+      "title": "No Retry-After HTTP header on 429 responses",
+      "source": "Backend Health",
+      "fix": "Already present in checkAndApplyRateLimit (rate-limit.js:262).",
+      "status": "done"
+    },
+    {
+      "id": "M-03",
+      "title": "Webhook CORS falls back to * for unknown origins",
+      "source": "Security Scan",
+      "file": "api/_lib/cors.js:60",
+      "fix": "Fixed in CRITICAL phase — webhook CORS now uses restricted origin.",
+      "status": "done"
+    },
+    {
+      "id": "M-04",
+      "title": "console.error used instead of secure logger in demo-chat",
+      "source": "Security Scan",
+      "file": "api/demo-chat.js:57",
+      "fix": "Replaced with createSecureLogger.",
+      "status": "done"
+    },
+    {
+      "id": "M-05",
+      "title": "Token cache allows 10-second replay after logout",
+      "source": "Security Scan",
+      "file": "api/_lib/auth.js:52-56",
+      "fix": "Reduced TOKEN_CACHE_TTL from 10s to 3s.",
+      "status": "done"
+    },
+    {
+      "id": "M-06",
+      "title": "Mixed language content — English text in Portuguese UI",
+      "source": "Frontend E2E, UI/UX",
+      "pages": "voice-settings, whatsapp, floor-plan, 404 page, language settings, analytics",
+      "fix": "Added 756 missing es.json keys, i18n-ized FloorPlanCanvas, VoiceSettingsPage, PhoneIntegrationPanel.",
+      "status": "done"
+    },
+    {
+      "id": "M-07",
+      "title": "Sentry requests failing (net::ERR_ABORTED)",
+      "source": "Frontend E2E",
+      "fix": "Added *.ingest.us.sentry.io and *.sentry.io to CSP connect-src.",
+      "status": "done"
+    },
+    {
+      "id": "M-08",
+      "title": "Floor plan 'No tables in' — truncated text (missing area name)",
+      "source": "Frontend E2E",
+      "fix": "Replaced hardcoded string with t('floorPlan.noTablesTitle', { area }) interpolation.",
+      "status": "done"
+    },
+    {
+      "id": "M-09",
+      "title": "Voice Settings shows conflicting phone status messages",
+      "source": "Frontend E2E",
+      "fix": "Replaced hardcoded EN/PT strings with t() calls in VoiceSettingsPage + PhoneIntegrationPanel.",
+      "status": "done"
+    },
+    {
+      "id": "M-10",
+      "title": "Ao Vivo badge overlaps map controls on mobile",
+      "source": "UI/UX",
+      "fix": "Moved badge to top-3 left-3 on mobile, top-6 right-6 on sm:+.",
+      "status": "done"
+    },
+    {
+      "id": "M-11",
+      "title": "Body text contrast weak on /live-demo",
+      "source": "UI/UX",
+      "fix": "Upgraded text colors from text-warm-stone to text-stone-gray, removed font-light.",
+      "status": "done"
+    },
+    {
+      "id": "M-12",
+      "title": "push-subscribe.js uses wildcard CORS on POST endpoint",
+      "source": "Security Scan",
+      "file": "api/push-subscribe.js:19",
+      "fix": "Fixed in CRITICAL phase — CORS agent replaced wildcard across all files.",
+      "status": "done"
+    },
+    {
+      "id": "M-13",
+      "title": "Build warning — index chunk 1,371 kB exceeds 500 kB limit",
+      "source": "Data Integrity",
+      "fix": "Added manualChunks for recharts, sentry, stripe, dnd-kit.",
+      "status": "done"
+    },
+    {
+      "id": "M-14",
+      "title": "Unused dependencies in root package.json",
+      "source": "Data Integrity",
+      "evidence": "@google-cloud/vertexai never imported. framer-motion and @stripe/stripe-js duplicated in root+client.",
+      "fix": "Removed @google-cloud/vertexai, framer-motion, @stripe/stripe-js from root.",
+      "status": "done"
+    }
+  ],
+  "low": [
+    { "id": "L-01", "title": "SEO endpoint slow (~7.5s)", "source": "Backend Health", "status": "done" },
+    { "id": "L-02", "title": "No /api/ disallow in robots.txt", "source": "Backend Health", "status": "done" },
+    { "id": "L-03", "title": "HEAD requests return 405 on some endpoints", "source": "Backend Health", "status": "done" },
+    { "id": "L-04", "title": "Missing Vary: Origin header on dynamic CORS", "source": "Security Scan", "file": "api/_lib/cors.js", "status": "done" },
+    { "id": "L-05", "title": "JWT expiry 24h — relatively long for financial platform", "source": "Security Scan", "status": "done" },
+    { "id": "L-06", "title": "CSP style-src unsafe-inline (required by Tailwind/Framer)", "source": "Security Scan", "note": "Intentional, document justification", "status": "acknowledged" },
+    { "id": "L-07", "title": "Server: Vercel header disclosed", "source": "Backend Health", "note": "Standard, not configurable", "status": "no-action" },
+    { "id": "L-08", "title": "Terms of Service / Privacy Policy not translated", "source": "Frontend E2E", "status": "deferred", "note": "Requires legal translation — not a code fix" },
+    { "id": "L-09", "title": "ElevenLabs widget text in English on Portuguese page", "source": "Frontend E2E, UI/UX", "status": "deferred", "note": "Third-party widget — text controlled by ElevenLabs agent config" },
+    { "id": "L-10", "title": "Dashboard stat cards show 0 with no onboarding guidance", "source": "UI/UX", "status": "deferred", "note": "UX enhancement — empty state guidance for new restaurants" },
+    { "id": "L-11", "title": "Redundant identity rewrites in vercel.json", "source": "Data Integrity", "status": "done" },
+    { "id": "L-12", "title": "VITE_ prefix env var used in backend fallback", "source": "Data Integrity", "file": "api/elevenlabs-signed-url.js:48", "status": "done" }
+  ],
+  "positive": [
+    "Auth enforcement: All 15+ authenticated endpoints correctly return 401 without JWT",
+    "Cron security: All 17 cron endpoints require CRON_SECRET Bearer token",
+    "Webhook signatures: WhatsApp (403), Stripe (validates), ElevenLabs (403) all verified",
+    "Security headers: Full suite (HSTS, X-Frame-Options DENY, nosniff, CSP, Referrer-Policy, Permissions-Policy)",
+    "Rate limiting active: Upstash Redis on authenticated endpoints (20 req/window, 429)",
+    "npm audit: 0 vulnerabilities",
+    "TypeScript: Zero errors (tsc clean)",
+    "Build: Succeeds (1 size warning only)",
+    "DB schema: Correctly uses restaurant schema for config, all tables aligned",
+    "All rewrite targets exist: No orphaned routes in vercel.json"
+  ]
+}

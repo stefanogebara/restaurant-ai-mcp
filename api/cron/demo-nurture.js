@@ -313,7 +313,7 @@ module.exports = async (req, res) => {
       day3Demos = await fetchDemoCandidates(day3Start, day3End, 'demo_day3_sent_at');
     } catch (err) {
       logger.error('Error fetching day-3 demos:', err);
-      return res.status(500).json({ success: false, error: 'Failed to fetch day-3 demos', details: err.message });
+      return res.status(500).json({ success: false, error: 'Failed to fetch day-3 demos' });
     }
 
     // Fetch day-5 candidates
@@ -322,7 +322,7 @@ module.exports = async (req, res) => {
       day5Demos = await fetchDemoCandidates(day5Start, day5End, 'demo_day5_sent_at');
     } catch (err) {
       logger.error('Error fetching day-5 demos:', err);
-      return res.status(500).json({ success: false, error: 'Failed to fetch day-5 demos', details: err.message });
+      return res.status(500).json({ success: false, error: 'Failed to fetch day-5 demos' });
     }
 
     // Fetch day-7 candidates
@@ -331,7 +331,7 @@ module.exports = async (req, res) => {
       day7Demos = await fetchDemoCandidates(day7Start, day7End, 'demo_day7_sent_at');
     } catch (err) {
       logger.error('Error fetching day-7 demos:', err);
-      return res.status(500).json({ success: false, error: 'Failed to fetch day-7 demos', details: err.message });
+      return res.status(500).json({ success: false, error: 'Failed to fetch day-7 demos' });
     }
 
     logger.info(

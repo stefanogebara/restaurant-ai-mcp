@@ -105,8 +105,8 @@ describe('generateJWT', () => {
     const decoded = jwt.verify(token, TEST_SECRET);
     expect(decoded.iat).toBeDefined();
     expect(decoded.exp).toBeDefined();
-    // exp should be ~24h after iat
-    expect(decoded.exp - decoded.iat).toBe(24 * 60 * 60);
+    // exp should be ~8h after iat
+    expect(decoded.exp - decoded.iat).toBe(8 * 60 * 60);
   });
 
   it('looks up restaurant_id from DB when not provided in payload', async () => {

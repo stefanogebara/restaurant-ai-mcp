@@ -111,7 +111,7 @@ module.exports = async (req, res) => {
     });
   } catch (error) {
     logger.error('Reflection cron error:', error.message);
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, error: 'Reflection generation failed' });
   }
 };
 

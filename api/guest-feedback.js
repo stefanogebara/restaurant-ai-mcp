@@ -53,7 +53,7 @@ module.exports = async (req, res) => {
     }
   } catch (error) {
     logger.error('GuestFeedback API error', { error: error.message });
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 };
 

@@ -8,13 +8,12 @@ const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { validateElevenLabsVoiceId } = require('./_lib/validation');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const logger = createSecureLogger('ElevenLabsPreview');
 
 module.exports = async (req, res) => {
   // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  setInternalCors(req, res);
 
   // Handle OPTIONS request for CORS preflight
   if (req.method === 'OPTIONS') {

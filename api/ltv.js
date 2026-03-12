@@ -13,6 +13,7 @@ const { createSecureLogger } = require('./_lib/secure-logger');
 const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 
 const logger = createSecureLogger('LTV');
 
@@ -116,7 +117,7 @@ async function handleCalculateAll(req, res) {
 
   } catch (error) {
     logger.error('Error in batch LTV calculation:', error);
-    return res.status(500).json({ success: false, error: error.message || 'Failed to calculate LTV' });
+    return res.status(500).json({ success: false, error: 'Failed to calculate LTV' });
   }
 }
 
@@ -150,7 +151,7 @@ async function handleGet(req, res) {
 
   } catch (error) {
     logger.error('Error fetching LTV data:', error);
-    return res.status(500).json({ success: false, error: error.message || 'Failed to fetch LTV data' });
+    return res.status(500).json({ success: false, error: 'Failed to fetch LTV data' });
   }
 }
 
@@ -191,7 +192,7 @@ async function handleList(req, res) {
 
   } catch (error) {
     logger.error('Error listing customers:', error);
-    return res.status(500).json({ success: false, error: error.message || 'Failed to list customers' });
+    return res.status(500).json({ success: false, error: 'Failed to list customers' });
   }
 }
 
@@ -238,7 +239,7 @@ async function handleStats(req, res) {
 
   } catch (error) {
     logger.error('Error calculating LTV stats:', error);
-    return res.status(500).json({ success: false, error: error.message || 'Failed to calculate LTV statistics' });
+    return res.status(500).json({ success: false, error: 'Failed to calculate LTV statistics' });
   }
 }
 
@@ -307,7 +308,7 @@ async function handleTrends(req, res) {
 
   } catch (error) {
     logger.error('Error calculating LTV trends:', error);
-    return res.status(500).json({ success: false, error: error.message || 'Failed to calculate LTV trends' });
+    return res.status(500).json({ success: false, error: 'Failed to calculate LTV trends' });
   }
 }
 
@@ -316,9 +317,7 @@ async function handleTrends(req, res) {
  */
 module.exports = async (req, res) => {
   // Enable CORS
-  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-customer-email');
+  setInternalCors(req, res);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -387,7 +386,7 @@ module.exports = async (req, res) => {
     logger.error('LTV API Error:', error);
     return res.status(500).json({
       success: false,
-      error: error.message || 'Internal server error'
+      error: 'Internal server error'
     });
   }
 };

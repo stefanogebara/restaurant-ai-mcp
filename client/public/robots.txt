@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /host-dashboard/
+Disallow: /onboarding
+Disallow: /subscription/
+
+Sitemap: https://seatable.one/sitemap.xml

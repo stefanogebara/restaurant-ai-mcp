@@ -111,7 +111,7 @@ describe('StripeWebhook: Signature verification', () => {
     const { req, res } = createMockReqRes();
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.send).toHaveBeenCalledWith(expect.stringContaining('Webhook Error'));
+    expect(res.json).toHaveBeenCalledWith({ error: 'Invalid webhook request' });
   });
 });
 

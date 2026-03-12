@@ -12,6 +12,7 @@ const {
   supabaseAdmin,
 } = require('./_lib/supabase');
 const { sendPaymentReceiptEmail, sendPaymentFailedEmail, sendTrialEndingEmail, sendReferralRewardEmail } = require('./_lib/email');
+const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 
 // This is your Stripe webhook secret for verifying webhook signatures
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -141,9 +142,7 @@ async function rewardReferralIfEligible(refereeRestaurantId, refereeStripeCustom
 
 module.exports = async (req, res) => {
   // Enable CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, stripe-signature');
+  setWebhookCors(req, res);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -163,7 +162,7 @@ module.exports = async (req, res) => {
     event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
   } catch (err) {
     logger.error('Webhook signature verification failed:', err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+    return res.status(400).json({ error: 'Invalid webhook request' });
   }
 
   // Handle the event
@@ -391,7 +390,6 @@ module.exports = async (req, res) => {
     logger.error('Error processing webhook:', error);
     return res.status(500).json({
       error: 'Webhook processing failed',
-      message: error.message,
     });
   }
 };

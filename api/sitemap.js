@@ -6,10 +6,14 @@
  */
 
 const { supabaseAdmin } = require('./_lib/supabase');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const BASE_URL = 'https://seatable.one';
 
 module.exports = async (req, res) => {
+  // Rate limit (60 req/min)
+  if (await checkAndApplyRateLimit(req, res, 'api')) return;
+
   // CORS not needed — this is XML consumed by search engines
   res.setHeader('Content-Type', 'application/xml; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');

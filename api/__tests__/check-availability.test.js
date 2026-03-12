@@ -66,7 +66,7 @@ const defaultAvailabilityCheck = {
 };
 
 const defaultParams = {
-  restaurant_id: "rest_123",
+  restaurant_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   date: "2026-03-01",
   time: "19:00",
   party_size: "4",
@@ -95,9 +95,9 @@ describe("check-availability handler", function() {
     it("sets CORS headers on every request", async function() {
       var r = mkReqRes({ method: "OPTIONS" });
       await handler(r.req, r.res);
-      expect(r.res.setHeader).toHaveBeenCalledWith("Access-Control-Allow-Origin", "*");
-      expect(r.res.setHeader).toHaveBeenCalledWith("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-      expect(r.res.setHeader).toHaveBeenCalledWith("Access-Control-Allow-Headers", "Content-Type");
+      expect(r.res.setHeader).toHaveBeenCalledWith("Access-Control-Allow-Origin", expect.any(String));
+      expect(r.res.setHeader).toHaveBeenCalledWith("Access-Control-Allow-Methods", expect.stringContaining("GET"));
+      expect(r.res.setHeader).toHaveBeenCalledWith("Access-Control-Allow-Headers", expect.stringContaining("Authorization"));
     });
   });
 
@@ -168,7 +168,7 @@ describe("check-availability handler", function() {
       var r = mkReqRes({ query: Object.assign({}, defaultParams) });
       await handler(r.req, r.res);
       expect(r.res._status).toBe(500);
-      expect(r.res._body).toEqual(errorResult);
+      expect(r.res._body).toMatchObject({ success: false, error: true, message: 'Failed to load restaurant configuration' });
     });
 
     it("returns 500 when restaurant records array is empty", async function() {
@@ -193,7 +193,7 @@ describe("check-availability handler", function() {
       var r = mkReqRes({ query: Object.assign({}, defaultParams) });
       await handler(r.req, r.res);
       expect(r.res._status).toBe(500);
-      expect(r.res._body).toEqual(errorResult);
+      expect(r.res._body).toMatchObject({ success: false, error: true, message: 'Failed to load reservations' });
     });
 
     it("passes a filter that includes the requested date and active statuses", async function() {
@@ -202,7 +202,7 @@ describe("check-availability handler", function() {
       expect(getReservations).toHaveBeenCalledTimes(1);
       var calledRestaurantId = getReservations.mock.calls[0][0];
       var calledFilter = getReservations.mock.calls[0][1];
-      expect(calledRestaurantId).toBe("rest_123");
+      expect(calledRestaurantId).toBe("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
       expect(calledFilter).toContain("2026-03-01");
       expect(calledFilter).toContain("Confirmed");
       expect(calledFilter).toContain("Seated");
@@ -309,7 +309,7 @@ describe("check-availability handler", function() {
       await handler(r.req, r.res);
       expect(r.res._status).toBe(200);
       expect(r.res._body.available).toBe(true);
-      expect(getRestaurantInfo).toHaveBeenCalledWith("rest_123");
+      expect(getRestaurantInfo).toHaveBeenCalledWith("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
     });
 
     it("returns 400 when POST body is missing restaurant_id", async function() {

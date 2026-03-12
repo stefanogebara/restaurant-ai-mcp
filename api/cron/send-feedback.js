@@ -37,6 +37,6 @@ module.exports = async (req, res) => {
     });
   } catch (error) {
     logger.error('send-feedback cron error', { error: error.message });
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, error: 'Feedback sending failed' });
   }
 };

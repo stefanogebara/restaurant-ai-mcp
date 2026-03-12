@@ -1,4 +1,5 @@
 import type { RefObject } from 'react';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { Table } from '../../types/host.types';
 import {
@@ -68,6 +69,7 @@ export default function FloorPlanCanvas({
   linkMode, linkSource, selectedTableId,
   svgRef, onPointerMove, onPointerUp, onPointerDown, onTableClick,
 }: Props) {
+  const { t } = useTranslation();
   return (
     <div
       className="rounded-2xl border border-border-gray overflow-hidden"
@@ -82,9 +84,9 @@ export default function FloorPlanCanvas({
           <div className="w-16 h-16 rounded-2xl bg-white border border-border-gray flex items-center justify-center mb-5 shadow-sm">
             <span className="text-muted-stone"><ThiingsIcon name="map" pxSize={30} /></span>
           </div>
-          <p className="font-semibold text-deep-charcoal text-base">No tables in {activeLocation}</p>
+          <p className="font-semibold text-deep-charcoal text-base">{t('floorPlan.noTablesTitle', { area: activeLocation })}</p>
           <p className="text-sm text-warm-stone mt-1.5 max-w-[260px]">
-            Click "Add Table" to start building your floor plan
+            {t('floorPlan.noTablesDescription')}
           </p>
         </div>
       ) : (

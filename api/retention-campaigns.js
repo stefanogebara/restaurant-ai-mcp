@@ -13,6 +13,7 @@ const { checkSubscription, requireFeature } = require('./_lib/subscription-middl
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { sendRetentionCampaignEmail } = require('./_lib/email');
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { createCampaign, sendCampaignBatch, getCampaignStats, getSegmentCustomers } = require('./services/campaignService');
 const logger = createSecureLogger('RetentionCampaigns');
 
@@ -107,7 +108,7 @@ async function handleCreate(req, res) {
     logger.error('Error creating campaign:', error);
     return res.status(500).json({
       success: false,
-      error: error.message || 'Failed to create campaign'
+      error: 'Failed to create campaign'
     });
   }
 }
@@ -147,7 +148,7 @@ async function handleList(req, res) {
     logger.error('Error listing campaigns:', error);
     return res.status(500).json({
       success: false,
-      error: error.message || 'Failed to list campaigns'
+      error: 'Failed to list campaigns'
     });
   }
 }
@@ -189,7 +190,7 @@ async function handleStats(req, res) {
     logger.error('Error getting campaign stats:', error);
     return res.status(500).json({
       success: false,
-      error: error.message || 'Failed to get campaign statistics'
+      error: 'Failed to get campaign statistics'
     });
   }
 }
@@ -232,7 +233,7 @@ async function handleCreateWhatsApp(req, res) {
     return res.status(200).json(result);
   } catch (error) {
     logger.error('Error creating WhatsApp campaign:', error);
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 }
 
@@ -254,7 +255,7 @@ async function handleCampaignDeliveryStats(req, res) {
     return res.status(200).json({ success: true, data: stats });
   } catch (error) {
     logger.error('Error getting campaign delivery stats:', error);
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 }
 
@@ -282,7 +283,7 @@ async function handleSend(req, res) {
     return res.status(200).json({ success: true, sent });
   } catch (error) {
     logger.error('Error triggering campaign send:', error);
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 }
 
@@ -302,7 +303,7 @@ async function handleSegments(req, res) {
     return res.status(200).json({ success: true, data: counts });
   } catch (error) {
     logger.error('Error getting segment counts:', error);
-    return res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 }
 
@@ -311,9 +312,7 @@ async function handleSegments(req, res) {
  */
 module.exports = async (req, res) => {
   // Enable CORS
-  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-customer-email');
+  setInternalCors(req, res);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -396,7 +395,7 @@ module.exports = async (req, res) => {
     logger.error('Retention Campaigns API Error:', error);
     return res.status(500).json({
       success: false,
-      error: error.message || 'Internal server error'
+      error: 'Internal server error'
     });
   }
 };
