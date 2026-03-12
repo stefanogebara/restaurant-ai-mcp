@@ -68,9 +68,34 @@ async function getMagicLink(serviceKey) {
     // Allow any client-side redirects to settle
     await page.waitForLoadState('networkidle', { timeout: 15000 });
 
-    // Verify we landed on the app (not an error page)
-    const url = page.url();
-    console.log('Landed at:', url);
+    const vercelUrl = page.url();
+    console.log('Landed at:', vercelUrl);
+
+    // Extract localStorage from vercel.app
+    const lsData = await page.evaluate(() => {
+      const items = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        items[key] = localStorage.getItem(key);
+      }
+      return items;
+    });
+    console.log('Extracted', Object.keys(lsData).length, 'localStorage entries from vercel.app');
+
+    // Transfer auth to seatable.one
+    await page.goto('https://seatable.one/login', { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.evaluate((data) => {
+      for (const [key, value] of Object.entries(data)) {
+        localStorage.setItem(key, value);
+      }
+    }, lsData);
+    console.log('Injected localStorage into seatable.one');
+
+    // Navigate to dashboard to let Supabase client pick up the token
+    await page.goto('https://seatable.one/host-dashboard/simple', { waitUntil: 'networkidle', timeout: 30000 });
+    await page.waitForTimeout(3000);
+    const finalUrl = page.url();
+    console.log('Final URL on seatable.one:', finalUrl);
 
     await context.storageState({ path: AUTH_STATE_PATH });
     console.log('✅ Auth state saved to', AUTH_STATE_PATH);

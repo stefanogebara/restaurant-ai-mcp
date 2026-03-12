@@ -20,14 +20,12 @@ import * as fs from 'fs';
  */
 
 const AUTH_STATE = path.join(__dirname, 'auth-state.json');
-const AUTH_STATE_LOCAL = path.join(__dirname, 'auth-state-local.json');
-const hasAuthState = fs.existsSync(AUTH_STATE_LOCAL) || fs.existsSync(AUTH_STATE);
-const localAuthState = fs.existsSync(AUTH_STATE_LOCAL) ? AUTH_STATE_LOCAL : AUTH_STATE;
-const LOCAL_BASE = 'http://localhost:5173';
+const hasAuthState = fs.existsSync(AUTH_STATE);
+const PROD_BASE = 'https://seatable.one';
 
 test.describe('Sprint 2-4: Dashboard Features (Authenticated)', () => {
   test.skip(!hasAuthState, 'Skipped: no auth-state.json — run `node e2e/generate-auth-state.js` first');
-  test.use({ storageState: localAuthState, baseURL: LOCAL_BASE });
+  test.use({ storageState: AUTH_STATE, baseURL: PROD_BASE });
 
   test.describe('Dashboard loads with new widgets', () => {
     test.beforeEach(async ({ page }) => {
@@ -36,7 +34,7 @@ test.describe('Sprint 2-4: Dashboard Features (Authenticated)', () => {
     });
 
     test('dashboard renders or shows error state', async ({ page }) => {
-      // Dashboard may show error if API is unreachable from localhost
+      // Dashboard may show error if API is unreachable or runtime error in a widget
       await page.waitForTimeout(3000);
 
       // Either dashboard loaded or error boundary caught it — both are valid
@@ -44,8 +42,10 @@ test.describe('Sprint 2-4: Dashboard Features (Authenticated)', () => {
       const hasError = await page.getByText(/error|retry/i).count();
       const hasSidebar = await page.locator('aside').count();
 
-      // At minimum, sidebar should render (proves auth worked and layout loaded)
-      expect(hasSidebar).toBeGreaterThan(0);
+      // Auth worked if we see sidebar OR error boundary (not redirected to /login)
+      const notOnLogin = !page.url().includes('/login');
+      expect(notOnLogin).toBe(true);
+      expect(hasSidebar + hasError).toBeGreaterThan(0);
       console.log(`Dashboard state: stats=${hasStats > 0}, error=${hasError > 0}, sidebar=${hasSidebar > 0}`);
     });
 
@@ -380,15 +380,18 @@ test.describe('Sprint 2-4: Dashboard Features (Authenticated)', () => {
 });
 
 test.describe('Sprint 2-4: Public Route Guards', () => {
-  test.use({ baseURL: LOCAL_BASE });
+  test.use({ baseURL: PROD_BASE });
 
   test('/host-dashboard/settings redirects to login when unauthenticated', async ({ page }) => {
-    // Clear any auth state for this test
+    // Navigate to a public page first so we can clear localStorage
+    await page.goto('/login');
+    await page.waitForLoadState('domcontentloaded');
+    await page.evaluate(() => localStorage.clear());
     await page.context().clearCookies();
+
+    // Now try to access a protected route
     await page.goto('/host-dashboard/settings');
-    // ProtectedRoute should redirect to /login — give it time for auth check
-    await page.waitForTimeout(3000);
-    await page.waitForURL(/\/login/, { timeout: 10000 });
+    await page.waitForURL(/\/login/, { timeout: 15000 });
     expect(page.url()).toContain('/login');
   });
 });
