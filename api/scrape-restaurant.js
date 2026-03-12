@@ -126,19 +126,15 @@ function inferCuisineType(types, primaryType) {
 }
 
 module.exports = async function handler(req, res) {
-  setInternalCors(res);
+  setInternalCors(req, res);
   if (handlePreflight(req, res)) return;
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Rate limit: 5 requests/minute per IP
-  const rateLimited = await checkAndApplyRateLimit(req, res, {
-    maxRequests: 5,
-    windowMs: 60 * 1000,
-    prefix: 'scrape',
-  });
+  // Rate limit: standard API rate limiting
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'api');
   if (rateLimited) return;
 
   const { query, city, country } = req.body || {};
