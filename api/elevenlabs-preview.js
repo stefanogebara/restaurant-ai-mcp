@@ -7,6 +7,7 @@
 const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { validateElevenLabsVoiceId } = require('./_lib/validation');
 const logger = createSecureLogger('ElevenLabsPreview');
 
 module.exports = async (req, res) => {
@@ -47,11 +48,12 @@ module.exports = async (req, res) => {
   try {
     const { voice_id, text, voice_settings, model_id } = req.body;
 
-    // Validate input
-    if (!voice_id) {
+    // Validate voice_id format — must be alphanumeric only to prevent path traversal SSRF
+    const voiceIdValidation = validateElevenLabsVoiceId(voice_id);
+    if (!voiceIdValidation.valid) {
       return res.status(400).json({
         success: false,
-        error: 'voice_id is required'
+        error: voiceIdValidation.error
       });
     }
 
@@ -99,9 +101,11 @@ module.exports = async (req, res) => {
     if (!response.ok) {
       const errorText = await response.text();
       logger.error('[ElevenLabs] TTS API error:', response.status, errorText);
-      return res.status(response.status).json({
+      // Return a generic client error — do not leak raw ElevenLabs error details
+      const clientStatus = response.status >= 400 && response.status < 500 ? 400 : 502;
+      return res.status(clientStatus).json({
         success: false,
-        error: `ElevenLabs TTS error: ${response.status} ${errorText}`
+        error: 'Failed to generate voice preview. Please try a different voice.'
       });
     }
 
@@ -124,7 +128,7 @@ module.exports = async (req, res) => {
     logger.error('[ElevenLabs] Error generating preview:', error);
     return res.status(500).json({
       success: false,
-      error: error.message || 'Failed to generate preview'
+      error: 'Failed to generate preview'
     });
   }
 };

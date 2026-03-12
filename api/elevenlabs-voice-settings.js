@@ -8,6 +8,7 @@ const { supabaseAdmin } = require('./_lib/supabase');
 const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { validateElevenLabsVoiceId } = require('./_lib/validation');
 const logger = createSecureLogger('VoiceSettings');
 
 module.exports = async (req, res) => {
@@ -67,7 +68,7 @@ async function handleRefreshPrompt(req, res) {
     return res.status(200).json({ success: true, ...result });
   } catch (error) {
     logger.error('[VoiceSettings] refresh_prompt error:', error);
-    return res.status(500).json({ success: false, error: error.message || 'Failed to refresh prompt' });
+    return res.status(500).json({ success: false, error: 'Failed to refresh prompt' });
   }
 }
 
@@ -198,7 +199,7 @@ async function handleGet(req, res) {
     logger.error('[VoiceSettings GET] Error:', error);
     return res.status(500).json({
       success: false,
-      error: error.message || 'Failed to fetch voice settings'
+      error: 'Failed to fetch voice settings'
     });
   }
 }
@@ -249,6 +250,17 @@ async function handlePatch(req, res) {
         success: false,
         error: 'No ElevenLabs agent configured. Complete onboarding first.'
       });
+    }
+
+    // Validate voice_id format if provided — prevents path traversal via agent update payload
+    if (voice_id) {
+      const voiceIdValidation = validateElevenLabsVoiceId(voice_id);
+      if (!voiceIdValidation.valid) {
+        return res.status(400).json({
+          success: false,
+          error: voiceIdValidation.error
+        });
+      }
     }
 
     // Build PATCH payload for agent update
@@ -323,9 +335,11 @@ async function handlePatch(req, res) {
     if (!patchResponse.ok) {
       const errorText = await patchResponse.text();
       logger.error('[VoiceSettings PATCH] ElevenLabs error:', patchResponse.status, errorText);
-      return res.status(patchResponse.status).json({
+      // Return a generic error — do not leak raw ElevenLabs error details to the client
+      const clientStatus = patchResponse.status >= 400 && patchResponse.status < 500 ? 400 : 502;
+      return res.status(clientStatus).json({
         success: false,
-        error: `Failed to update agent: ${errorText}`
+        error: 'Failed to update voice settings. Please try again.'
       });
     }
 
@@ -365,7 +379,7 @@ async function handlePatch(req, res) {
     logger.error('[VoiceSettings PATCH] Error:', error);
     return res.status(500).json({
       success: false,
-      error: error.message || 'Failed to update voice settings'
+      error: 'Failed to update voice settings'
     });
   }
 }

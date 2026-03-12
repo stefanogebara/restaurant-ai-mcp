@@ -2,7 +2,7 @@ const { verifyJWT } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { sendWhatsAppMessage } = require('./_lib/whatsapp-sender');
 const { createSecureLogger } = require('./_lib/secure-logger');
-const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { checkAndApplyRateLimit, checkRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('manager-whatsapp-verify');
 
@@ -17,6 +17,19 @@ module.exports = async (req, res) => {
     const { action, phone, code } = req.body || {};
 
     if (action === 'send') {
+      const sendRateResult = await checkRateLimit(`restaurant:${restaurantId}`, 'otp-send');
+      res.setHeader('X-RateLimit-Limit', sendRateResult.limit);
+      res.setHeader('X-RateLimit-Remaining', sendRateResult.remaining);
+      res.setHeader('X-RateLimit-Reset', sendRateResult.resetSeconds);
+      if (!sendRateResult.allowed) {
+        res.setHeader('Retry-After', sendRateResult.resetSeconds);
+        return res.status(429).json({
+          error: 'Too Many Requests',
+          message: sendRateResult.message,
+          retryAfter: sendRateResult.resetSeconds,
+        });
+      }
+
       if (!phone) return res.status(400).json({ error: 'phone is required' });
 
       const phoneRegex = /^\+[1-9]\d{7,14}$/;
@@ -24,7 +37,7 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'Phone must be in E.164 format (e.g., +15551234567)' });
       }
 
-      const verificationCode = String(Math.floor(100000 + Math.random() * 900000));
+      const verificationCode = String(require('crypto').randomInt(100000, 1000000));
 
       const { error: updateError } = await supabaseAdmin
         .schema('restaurant')

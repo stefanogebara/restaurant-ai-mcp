@@ -451,6 +451,90 @@ function sanitizeSearchQuery(input) {
     .substring(0, 100);
 }
 
+/**
+ * Validate an ElevenLabs voice ID.
+ *
+ * ElevenLabs voice IDs are alphanumeric strings of up to 32 characters
+ * (e.g. "21m00Tcm4TlvDq8ikWAM"). Allowing any other characters would let
+ * an attacker traverse the ElevenLabs API path tree using sequences like
+ * "../voices" or "../user/subscription", which constitutes a non-blind SSRF.
+ *
+ * @param {string} voiceId - The voice_id to validate
+ * @returns {{valid: boolean, error?: string}}
+ */
+function validateElevenLabsVoiceId(voiceId) {
+  if (!voiceId || typeof voiceId !== 'string') {
+    return { valid: false, error: 'voice_id is required' };
+  }
+
+  // Only allow alphanumeric characters — no slashes, dots, or path separators
+  const VOICE_ID_PATTERN = /^[a-zA-Z0-9]{1,32}$/;
+  if (!VOICE_ID_PATTERN.test(voiceId)) {
+    return { valid: false, error: 'Invalid voice_id format' };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Validate password strength for account creation.
+ *
+ * Enforces a minimum baseline that prevents trivially weak passwords:
+ * 8+ chars, at least one uppercase letter, one lowercase letter, one digit.
+ *
+ * @param {string} password - Password to validate
+ * @returns {{valid: boolean, error?: string}}
+ */
+function validatePasswordStrength(password) {
+  if (!password || typeof password !== 'string') {
+    return { valid: false, error: 'Password is required' };
+  }
+
+  if (password.length < 8) {
+    return { valid: false, error: 'Password must be at least 8 characters' };
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one uppercase letter' };
+  }
+
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one lowercase letter' };
+  }
+
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one number' };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Escape a string for safe use inside an Airtable formula string literal.
+ *
+ * Airtable formula strings are delimited by single quotes. The only escape
+ * mechanism Airtable recognises inside a string literal is doubling the
+ * single quote character ('' represents a literal '). This prevents formula
+ * injection attacks such as:
+ *
+ *   Input:  ' >= '
+ *   Naive:  {Email} = '' >= ''   → evaluates TRUE for every row
+ *   Safe:   {Email} = ''' >= ''' → literal string ' >= '
+ *
+ * Always apply this function to every user-supplied value before interpolating
+ * it into a filterByFormula string.
+ *
+ * @param {string} value - The raw user-supplied value
+ * @returns {string} - The escaped value, safe to embed between single quotes
+ */
+function escapeAirtableFormula(value) {
+  if (typeof value !== 'string') {
+    return '';
+  }
+  // Replace every single quote with two single quotes (Airtable convention)
+  return value.replace(/'/g, "''");
+}
+
 module.exports = {
   validatePhoneNumber,
   validateEmail,
@@ -462,8 +546,11 @@ module.exports = {
   validateWaitlistEntry,
   validateServiceRecord,
   validateReservation,
+  validatePasswordStrength,
   sanitizeInput,
   sanitizeStringXSS,
   sanitizeObject,
   sanitizeSearchQuery,
+  escapeAirtableFormula,
+  validateElevenLabsVoiceId,
 };

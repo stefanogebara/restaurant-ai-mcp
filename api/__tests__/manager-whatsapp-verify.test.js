@@ -13,12 +13,14 @@ jest.mock('../_lib/secure-logger', () => ({
 }));
 jest.mock('../_lib/rate-limit', () => ({
   checkAndApplyRateLimit: jest.fn().mockResolvedValue(false), // false = not blocked
+  checkRateLimit: jest.fn().mockResolvedValue({ allowed: true, remaining: 2, limit: 3, resetSeconds: 900 }),
 }));
 
 function mockRes() {
   const r = {};
   r.status = jest.fn().mockReturnValue(r);
   r.json = jest.fn().mockReturnValue(r);
+  r.setHeader = jest.fn();
   return r;
 }
 

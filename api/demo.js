@@ -19,6 +19,17 @@ const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { validateEmail } = require('./_lib/validation');
 const { Resend } = require('resend');
 
+// HTML-escape helper — prevents XSS when interpolating user data into email HTML
+function he(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 initSentry();
 const logger = createSecureLogger('Demo');
 
@@ -163,10 +174,10 @@ async function sendDemoWelcomeEmail({ contactName, contactEmail, restaurantName,
 
           <div style="background: #FAFAF9; border: 1px solid #E7E5E4; border-radius: 16px; padding: 32px; margin-bottom: 24px;">
             <h2 style="font-size: 22px; color: #1C1917; margin: 0 0 16px 0;">
-              Hi ${contactName}, your demo is ready!
+              Hi ${he(contactName)}, your demo is ready!
             </h2>
             <p style="color: #57534E; margin: 0 0 24px 0;">
-              Your personalised <strong>${restaurantName}</strong> demo has been set up on Seatable.
+              Your personalised <strong>${he(restaurantName)}</strong> demo has been set up on Seatable.
               Click the button below to explore your dashboard:
             </p>
             <div style="text-align: center; margin: 24px 0;">

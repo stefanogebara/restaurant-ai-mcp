@@ -1,5 +1,29 @@
 {
   "audit_date": "2026-02-26",
+  "shannon_pentest": {
+    "date": "2026-03-11",
+    "tool": "Shannon AI Pentester (Keygraph)",
+    "duration": "3h 24m",
+    "cost": "$52.56",
+    "report": "~/shannon/audit-logs/seatable-pentest-5/deliverables/"
+  },
+  "security_fixes": [
+    {"id":"SEC-01","priority":"P0","title":"Airtable Formula Injection via email — 93 cross-tenant PII records exfiltrated","status":"done","file":"api/_lib/customer-history.js:60-64","fix":"escapeAirtableFormula() + validateEmail() applied before formula construction"},
+    {"id":"SEC-02","priority":"P0","title":"Airtable Formula Injection via phone — same 93 records via phone field","status":"done","file":"api/_lib/customer-history.js:80-86","fix":"escapeAirtableFormula() + validatePhoneNumber() applied after normalization"},
+    {"id":"SEC-03","priority":"P0","title":"ElevenLabs SSRF via voice_id path traversal — arbitrary API access","status":"done","file":"api/elevenlabs-preview.js, elevenlabs-voice-settings.js, elevenlabs-agent-create.js","fix":"validateElevenLabsVoiceId() gate + sanitized error responses"},
+    {"id":"SEC-04","priority":"P1","title":"Stored XSS in Demo Welcome Email — no auth, HTML in emails to any address","status":"done","file":"api/demo.js:166,169","fix":"he() HTML-encoding on contactName and restaurantName"},
+    {"id":"SEC-05","priority":"P1","title":"Stored XSS in Reservation Confirmation Email — raw cancellationPolicy","status":"done","file":"api/_lib/email.js:262","fix":"he() on cancellationPolicy + roleLabel interpolations"},
+    {"id":"SEC-06","priority":"P1","title":"JSON-LD Script Block Breakout — </script> in restaurant name","status":"done","file":"client/src/pages/BookingPage.tsx:70","fix":"</script> replaced with <\\/script> in JSON-LD output"},
+    {"id":"SEC-07","priority":"P1","title":"ILIKE Wildcard Injection — sanitizeSearchQuery() exists but never called","status":"done","file":"api/_lib/db-reservations.js:208, api/_lib/supabase.js:1304","fix":"sanitizeSearchQuery() imported and applied at all .ilike() sites"},
+    {"id":"SEC-08","priority":"P1","title":"Unlimited WhatsApp OTP Flooding — no rate limit on action=send","status":"done","file":"api/manager-whatsapp-verify.js","fix":"otp-send rate limit: 3 per 15 min per restaurant, 429 with Retry-After headers"},
+    {"id":"SEC-09","priority":"P1","title":"Post-Logout Token Replay — revoked JWTs accepted for 1 hour","status":"done","file":"api/_lib/auth.js","fix":"checkSessionLiveness() after HS256/JWKS verification; cache eviction on revoked; Cache-Control: no-store on 401/403"},
+    {"id":"SEC-10","priority":"P1","title":"Indefinitely Persistent Sessions — no idle/absolute timeout","status":"done","file":"client/src/lib/supabase.ts","fix":"30d absolute + 7d idle timeout with localStorage timestamps; enforced on TOKEN_REFRESHED + app load"},
+    {"id":"SEC-11","priority":"P1","title":"Weak Password Policy — accounts with 'aaaaaa', no brute-force protection","status":"done","file":"client/src/pages/Login.tsx, api/_lib/validation.js","fix":"validatePasswordStrength(): 8+ chars, upper+lower+digit; client-side validation on signup"},
+    {"id":"SEC-12","priority":"P2","title":"PostgREST DSL Filter Injection — .or() with unsanitized q + supabaseAdmin","status":"done","file":"api/revenue.js:558","fix":"sanitizeSearchQuery() on q; restaurant_id scoping via verifyAuth()"},
+    {"id":"SEC-13","priority":"P2","title":"Open Redirect via Origin Header in Stripe URLs","status":"done","file":"api/create-checkout-session.js, api/customer-portal.js","fix":"ALLOWED_RETURN_ORIGINS allowlist replaces raw req.headers.origin"},
+    {"id":"SEC-14","priority":"P2","title":"CSP unsafe-inline — zero XSS mitigation","status":"done","file":"vercel.json:150","fix":"Removed 'unsafe-inline' from script-src (Vite build has no inline scripts). style-src 'unsafe-inline' retained — required by Tailwind/Framer Motion inline styles."},
+    {"id":"SEC-15","priority":"P2","title":"Secret Rotation — JWT_SECRET, SERVICE_ROLE_KEY, AIRTABLE_API_KEY, META_APP_SECRET exposed","status":"manual","fix":"Ops task: rotate JWT_SECRET in Vercel env + Supabase JWT secret. Rotate SERVICE_ROLE_KEY in Supabase dashboard → Settings → API. Rotate AIRTABLE_API_KEY in Airtable account. Rotate META_APP_SECRET in Meta Developer portal. .env files already gitignored."}
+  ],
   "fixes": [
     {"id":"P0-1","priority":"P0","title":"Analytics/Reports dead-end blank page — no layout, no upgrade CTA","status":"done"},
     {"id":"P0-2","priority":"P0","title":"All /book/:slug return Restaurant Not Found (API 500)","status":"done","note":"Updated celeri-madrid restaurant in Supabase DB"},

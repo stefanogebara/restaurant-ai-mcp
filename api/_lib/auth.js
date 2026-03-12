@@ -49,7 +49,9 @@ async function verifyWithJWKS(token) {
 const restaurantCache = new Map();
 const CACHE_TTL = 5 * 60 * 1000;
 
-// Cache token→decoded user (TTL 1 minute) to avoid repeated Supabase getUser() calls
+// Cache token→decoded user (TTL 10 seconds) to avoid repeated Supabase getUser() calls.
+// Intentionally short: a revoked token will only replay for at most TOKEN_CACHE_TTL ms
+// before the next liveness check forces it out.
 const tokenCache = new Map();
 const TOKEN_CACHE_TTL = 10 * 1000;
 
@@ -143,10 +145,33 @@ async function verifyJWT(token) {
 
   let decoded = null;
 
+  // Helper: confirm the session is still live with Supabase.
+  // Returns the Supabase user object on success, null on revoked/error.
+  // SEC-09: This is the critical liveness gate that prevents post-logout token replay.
+  async function checkSessionLiveness() {
+    if (!supabase) return null; // Supabase client unavailable — skip (defense in depth)
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      if (error || !user) return null;
+      return user;
+    } catch {
+      return null;
+    }
+  }
+
   // 1. Try HS256 verification with JWT_SECRET (for internally generated tokens)
   if (JWT_SECRET) {
     try {
-      decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
+      const hs256Decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
+      // SEC-09 fix: signature alone is not enough — confirm the session is still active
+      const liveUser = await checkSessionLiveness();
+      if (!liveUser) {
+        // Session revoked (logged out) — evict any stale cache entry and reject
+        tokenCache.delete(token);
+        logger.info('[Auth] HS256 token rejected: session no longer active (post-logout replay)');
+        return null;
+      }
+      decoded = hs256Decoded;
     } catch (jwtError) {
       // Not a custom HS256 token — try JWKS next
     }
@@ -155,13 +180,23 @@ async function verifyJWT(token) {
   // 2. Try JWKS verification (for Supabase ECC/ES256 tokens)
   if (!decoded && jwks) {
     try {
-      decoded = await verifyWithJWKS(token);
+      const jwksDecoded = await verifyWithJWKS(token);
+      // SEC-09 fix: signature alone is not enough — confirm the session is still active
+      const liveUser = await checkSessionLiveness();
+      if (!liveUser) {
+        // Session revoked (logged out) — evict any stale cache entry and reject
+        tokenCache.delete(token);
+        logger.info('[Auth] JWKS token rejected: session no longer active (post-logout replay)');
+        return null;
+      }
+      decoded = jwksDecoded;
     } catch (jwksError) {
       // JWKS verification failed — try Supabase API as final fallback
     }
   }
 
-  // 3. Final fallback: Supabase API (handles edge cases, token refresh)
+  // 3. Final fallback: Supabase API (handles edge cases, token refresh).
+  // This path already validates session liveness via getUser(), so no extra check needed.
   if (!decoded && supabase) {
     try {
       const { data: { user }, error } = await supabase.auth.getUser(token);
@@ -255,6 +290,7 @@ function authMiddleware(options = {}) {
     const user = await verifyJWT(token);
 
     if (!user && required) {
+      res.setHeader('Cache-Control', 'no-store');
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'Authentication required'
@@ -263,6 +299,7 @@ function authMiddleware(options = {}) {
 
     // Check roles if specified
     if (user && roles.length > 0 && !roles.includes(user.role)) {
+      res.setHeader('Cache-Control', 'no-store');
       return res.status(403).json({
         error: 'Forbidden',
         message: 'Insufficient permissions'

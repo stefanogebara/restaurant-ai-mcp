@@ -17,6 +17,7 @@ const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { verifyAuth } = require('./_lib/auth');
 const { calculateCustomerLTV, upsertCustomerLTV } = require('./services/ltvCalculator');
+const { sanitizeSearchQuery } = require('./_lib/validation');
 
 const logger = createSecureLogger('Revenue');
 
@@ -319,9 +320,17 @@ async function handleUpdate(req, res) {
       });
     }
 
-    // Remove fields that shouldn't be updated
-    delete updates.created_at;
-    delete updates.customer_id; // Can't change customer_id
+    // Only allow specific fields to be updated (prevent cross-tenant escalation)
+    const ALLOWED_UPDATE_FIELDS = [
+      'customer_name', 'customer_phone', 'customer_email',
+      'total_revenue', 'tip_amount', 'party_size',
+      'payment_method', 'notes', 'date', 'time',
+    ];
+    for (const key of Object.keys(updates)) {
+      if (!ALLOWED_UPDATE_FIELDS.includes(key)) {
+        delete updates[key];
+      }
+    }
 
     // If phone is being updated, normalize it
     if (updates.customer_phone) {
@@ -550,12 +559,33 @@ async function handleCustomerSearch(req, res) {
       });
     }
 
-    // Search in revenue_records for unique customers
+    // Sanitize q to prevent PostgREST DSL filter injection
+    const safeQ = sanitizeSearchQuery(q);
+
+    if (!safeQ || safeQ.length < 2) {
+      return res.status(400).json({
+        success: false,
+        error: 'Search query must be at least 2 characters'
+      });
+    }
+
+    // Scope query to the authenticated restaurant only
+    const auth = await verifyAuth(req);
+    if (auth.error) {
+      return res.status(auth.status).json({ error: auth.error });
+    }
+    const restaurantId = auth.user?.restaurant_id;
+    if (!restaurantId) {
+      return res.status(403).json({ success: false, error: 'Restaurant context required' });
+    }
+
+    // Search in revenue_records for unique customers scoped to this restaurant
     const { data, error } = await supabaseAdmin
       .from('revenue_records')
       .select('customer_id, customer_name, customer_phone, customer_email')
       .eq('is_deleted', false)
-      .or(`customer_phone.ilike.%${q}%,customer_name.ilike.%${q}%,customer_email.ilike.%${q}%`)
+      .eq('restaurant_id', restaurantId)
+      .or(`customer_phone.ilike.%${safeQ}%,customer_name.ilike.%${safeQ}%,customer_email.ilike.%${safeQ}%`)
       .limit(20);
 
     if (error) {

@@ -7,6 +7,7 @@
 
 const { supabase, handleSupabaseResponse, logger, withRetry } = require('./db-clients');
 const { getLocalDate, getLocalTime } = require('./timezone');
+const { sanitizeSearchQuery } = require('./validation');
 
 // ============ RESERVATIONS ============
 
@@ -205,7 +206,7 @@ const findReservation = async (restaurantId, { reservation_id, customer_phone, c
         .eq('restaurant_id', restaurantId);
       if (reservation_id) query = query.eq('reservation_id', reservation_id);
       else if (customer_phone) query = query.eq('customer_phone', customer_phone);
-      else if (customer_name) query = query.ilike('customer_name', `%${customer_name}%`);
+      else if (customer_name) query = query.ilike('customer_name', `%${sanitizeSearchQuery(customer_name)}%`);
       return query.limit(1).single();
     }));
   } catch (err) {

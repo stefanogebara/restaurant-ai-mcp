@@ -7,6 +7,7 @@
 
 const axios = require('axios');
 const { createSecureLogger } = require('./secure-logger');
+const { escapeAirtableFormula, validateEmail, validatePhoneNumber } = require('./validation');
 const logger = createSecureLogger('CustomerHistory');
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
@@ -57,9 +58,18 @@ async function airtableRequest(method, endpoint, data = null) {
 async function findCustomerByEmail(email, restaurantId) {
   if (!email) return null;
 
-  const baseFilter = `{Email} = '${email.toLowerCase().trim()}'`;
+  // Reject inputs that do not look like an email — prevents formula injection
+  // and avoids unnecessary Airtable round-trips for garbage input.
+  const emailValidation = validateEmail(email, true);
+  if (!emailValidation.valid) {
+    logger.warn('[CustomerHistory] findCustomerByEmail: invalid email rejected');
+    return null;
+  }
+
+  const safeEmail = escapeAirtableFormula(email.toLowerCase().trim());
+  const baseFilter = `{Email} = '${safeEmail}'`;
   const filter = restaurantId
-    ? `AND(${baseFilter}, {Restaurant ID} = '${restaurantId}')`
+    ? `AND(${baseFilter}, {Restaurant ID} = '${escapeAirtableFormula(String(restaurantId))}')`
     : baseFilter;
   const result = await airtableRequest('GET', `${CUSTOMER_HISTORY_TABLE_ID}?filterByFormula=${encodeURIComponent(filter)}`);
 
@@ -76,12 +86,21 @@ async function findCustomerByEmail(email, restaurantId) {
 async function findCustomerByPhone(phone, restaurantId) {
   if (!phone) return null;
 
-  // Normalize phone number (remove spaces, dashes, etc.)
-  const normalizedPhone = phone.replace(/[\s\-\(\)]/g, '');
+  // Reject inputs that do not look like a phone number — prevents formula
+  // injection via characters that survive the normalization regex (e.g. quotes).
+  const phoneValidation = validatePhoneNumber(phone);
+  if (!phoneValidation.valid) {
+    logger.warn('[CustomerHistory] findCustomerByPhone: invalid phone rejected');
+    return null;
+  }
 
-  const baseFilter = `{Phone} = '${normalizedPhone}'`;
+  // Normalize phone number (remove spaces, dashes, parentheses, dots)
+  const normalizedPhone = phone.replace(/[\s\-\(\)\.]/g, '');
+
+  const safePhone = escapeAirtableFormula(normalizedPhone);
+  const baseFilter = `{Phone} = '${safePhone}'`;
   const filter = restaurantId
-    ? `AND(${baseFilter}, {Restaurant ID} = '${restaurantId}')`
+    ? `AND(${baseFilter}, {Restaurant ID} = '${escapeAirtableFormula(String(restaurantId))}')`
     : baseFilter;
   const result = await airtableRequest('GET', `${CUSTOMER_HISTORY_TABLE_ID}?filterByFormula=${encodeURIComponent(filter)}`);
 

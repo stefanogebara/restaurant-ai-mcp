@@ -25,6 +25,7 @@ const { generateSecureReservationId, generateSecureServiceId } = require('./secu
 const { getLocalDate, getLocalTime } = require('./timezone');
 const { createSecureLogger } = require('./secure-logger');
 const { withRetry: _withRetry } = require('./db-clients');
+const { sanitizeSearchQuery } = require('./validation');
 const logger = createSecureLogger('Supabase');
 
 // ============ SUPABASE CLIENTS ============
@@ -1301,7 +1302,7 @@ const findReservation = async (restaurantId, { reservation_id, customer_phone, c
   } else if (customer_phone) {
     query = query.eq('customer_phone', customer_phone);
   } else if (customer_name) {
-    query = query.ilike('customer_name', `%${customer_name}%`);
+    query = query.ilike('customer_name', `%${sanitizeSearchQuery(customer_name)}%`);
   }
 
   const { data, error } = await query.limit(1).single();

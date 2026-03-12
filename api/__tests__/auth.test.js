@@ -59,12 +59,19 @@ function mockRes() {
   const res = {};
   res.status = jest.fn().mockReturnValue(res);
   res.json = jest.fn().mockReturnValue(res);
+  res.setHeader = jest.fn().mockReturnValue(res);
   return res;
 }
 
 // ── Reset mocks between tests ──
 beforeEach(() => {
   jest.clearAllMocks();
+  // Default: Supabase session liveness check succeeds (SEC-09 liveness gate).
+  // Tests that need a revoked session must override this with mockResolvedValueOnce.
+  mockGetUser.mockResolvedValue({
+    data: { user: { id: 'default-user', email: 'default@test.com', role: 'authenticated' } },
+    error: null,
+  });
   // Default: restaurant lookup returns null (no restaurant found)
   mockSingle.mockResolvedValue({ data: null, error: { message: 'not found' } });
 });
@@ -297,6 +304,24 @@ describe('verifyJWT', () => {
     expect(result).not.toBeNull();
     expect(result.sub).toBe('user-no-rest');
     expect(result.restaurant_id).toBeUndefined();
+  });
+
+  // SEC-09: Post-logout token replay prevention
+  it('rejects a valid HS256 token whose session has been revoked (post-logout replay)', async () => {
+    const token = jwt.sign(
+      { sub: 'logged-out-user', restaurant_id: 'r1' },
+      TEST_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    // Supabase reports the session as revoked (logout happened)
+    mockGetUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: { message: 'session not found' },
+    });
+
+    const result = await verifyJWT(token);
+    expect(result).toBeNull();
   });
 });
 

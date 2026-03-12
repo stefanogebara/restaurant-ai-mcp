@@ -92,11 +92,28 @@ export default function Login() {
     }
   };
 
+  const validatePasswordStrength = (pw: string): string | null => {
+    if (pw.length < 8) return 'Password must be at least 8 characters';
+    if (!/[A-Z]/.test(pw)) return 'Password must contain at least one uppercase letter';
+    if (!/[a-z]/.test(pw)) return 'Password must contain at least one lowercase letter';
+    if (!/[0-9]/.test(pw)) return 'Password must contain at least one number';
+    return null;
+  };
+
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSigningIn(true);
     setError(null);
     setSuccessMessage(null);
+
+    if (mode === 'signup') {
+      const pwError = validatePasswordStrength(password);
+      if (pwError) {
+        setError(pwError);
+        setIsSigningIn(false);
+        return;
+      }
+    }
 
     try {
       if (mode === 'signin') {
@@ -256,7 +273,7 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={mode === 'signup' ? t('login.passwordMinChars') : t('login.yourPassword')}
                   required
-                  minLength={6}
+                  minLength={mode === 'signup' ? 8 : 6}
                   className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-burgundy/[6%] focus:border-burgundy transition-all"
                 />
               </div>

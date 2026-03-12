@@ -259,7 +259,7 @@ async function sendReservationConfirmationEmail({
 
         ${cancellationPolicy ? `
         <p style="color: #78716C; font-size: 13px; text-align: center; margin: 0 0 16px 0;">
-          ${cancellationPolicy}
+          ${he(cancellationPolicy)}
         </p>
         ` : ''}
         <p style="color: #78716C; font-size: 13px; text-align: center; margin: 0;">
@@ -435,7 +435,7 @@ async function sendInviteEmail({ to, inviteUrl, role }) {
           <h2 style="font-size: 22px; color: #1C1917; margin: 0 0 8px 0;">You're invited!</h2>
           <p style="color: #57534E; margin: 0 0 24px 0;">
             You've been invited to join a restaurant team on Seatable as a
-            <strong style="color: #1C1917;">${roleLabel}</strong>.
+            <strong style="color: #1C1917;">${he(roleLabel)}</strong>.
             Click the button below to accept your invitation.
           </p>
           <div style="text-align: center; margin: 24px 0;">

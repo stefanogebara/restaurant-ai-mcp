@@ -22,6 +22,7 @@ const { checkSubscription, requireFeature } = require('./_lib/subscription-middl
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { buildPersonaPrompt } = require('./_lib/persona-prompt-builder');
 const { refreshVoiceAgentPrompt } = require('./services/voiceAgentService');
+const { validateElevenLabsVoiceId } = require('./_lib/validation');
 const logger = createSecureLogger('ElevenLabsAgentCreate');
 
 module.exports = async (req, res) => {
@@ -72,6 +73,12 @@ module.exports = async (req, res) => {
     // Multi-tenant mode: Create a platform-wide agent for all restaurants
     if (multi_tenant_mode) {
       // Use default voice for multi-tenant (Rachel - professional voice)
+      if (voice_id) {
+        const voiceCheck = validateElevenLabsVoiceId(voice_id);
+        if (!voiceCheck.valid) {
+          return res.status(400).json({ success: false, error: voiceCheck.error });
+        }
+      }
       const defaultVoiceId = voice_id || '21m00Tcm4TlvDq8ikWAM';
 
       systemPrompt = buildMultiTenantSystemPrompt({ language });
@@ -126,11 +133,10 @@ module.exports = async (req, res) => {
 
       if (!agentResponse.ok) {
         const errorText = await agentResponse.text();
-        logger.error('ElevenLabs API Error:', errorText);
-        return res.status(500).json({
+        logger.error('ElevenLabs API Error (multi-tenant):', errorText);
+        return res.status(502).json({
           success: false,
-          error: 'Failed to create multi-tenant agent',
-          details: errorText
+          error: 'Failed to create multi-tenant agent. Please try again.'
         });
       }
 
@@ -151,6 +157,15 @@ module.exports = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Missing required fields: restaurant_id, restaurant_name, voice_id'
+      });
+    }
+
+    // Validate voice_id format — must be alphanumeric only to prevent path traversal
+    const voiceIdValidation = validateElevenLabsVoiceId(voice_id);
+    if (!voiceIdValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        error: voiceIdValidation.error
       });
     }
 
@@ -227,11 +242,10 @@ module.exports = async (req, res) => {
 
     if (!agentResponse.ok) {
       const errorText = await agentResponse.text();
-      logger.error('ElevenLabs API Error:', errorText);
-      return res.status(500).json({
+      logger.error('ElevenLabs API Error (single-tenant):', errorText);
+      return res.status(502).json({
         success: false,
-        error: 'Failed to create agent',
-        details: errorText
+        error: 'Failed to create agent. Please try again.'
       });
     }
 
@@ -275,8 +289,7 @@ module.exports = async (req, res) => {
     logger.error('Error creating ElevenLabs agent:', error);
     return res.status(500).json({
       success: false,
-      error: 'Internal server error',
-      details: error.message
+      error: 'Internal server error'
     });
   }
 };

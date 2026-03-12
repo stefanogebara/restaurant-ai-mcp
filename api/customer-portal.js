@@ -44,8 +44,17 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'No Stripe customer found for this restaurant' });
     }
 
-    // Get the origin for return URL
-    const origin = req.headers.origin || process.env.CLIENT_URL || 'https://seatable.one';
+    // Resolve origin against an explicit allowlist to prevent open-redirect via
+    // a spoofed Origin header. Attacker-supplied origins fall back to CLIENT_URL.
+    const ALLOWED_RETURN_ORIGINS = [
+      'https://seatable.one',
+      'https://restaurant-ai-mcp.vercel.app',
+      process.env.CLIENT_URL,
+    ].filter(Boolean);
+
+    const origin = ALLOWED_RETURN_ORIGINS.includes(req.headers.origin)
+      ? req.headers.origin
+      : (process.env.CLIENT_URL || 'https://seatable.one');
 
     // Create a portal session
     const portalSession = await stripe.billingPortal.sessions.create({

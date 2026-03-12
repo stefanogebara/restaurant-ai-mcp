@@ -67,7 +67,9 @@ export default function BookingPage() {
       script.type = 'application/ld+json';
       document.head.appendChild(script);
     }
-    script.text = JSON.stringify(jsonLd);
+    // Escape </script> sequences to prevent script block breakout (XSS-VULN-03).
+    // JSON.stringify does not escape these per ECMA-262, so we do it manually.
+    script.text = JSON.stringify(jsonLd).replace(/<\/script>/gi, '<\\/script>');
 
     return () => {
       document.title = DEFAULT_TITLE;

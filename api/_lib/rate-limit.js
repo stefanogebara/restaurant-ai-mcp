@@ -26,6 +26,13 @@ const RATE_LIMITS = {
     message: 'Too many verification attempts. Please request a new code and try again in 15 minutes.',
   },
 
+  // OTP send requests (prevents WhatsApp flooding / Twilio cost abuse)
+  'otp-send': {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    maxRequests: 3,           // 3 OTP sends per window per user
+    message: 'Too many verification code requests. Please wait 15 minutes before requesting again.',
+  },
+
   // Demo restaurant creation
   'demo-create': {
     windowMs: 15 * 60 * 1000, // 15 minutes
