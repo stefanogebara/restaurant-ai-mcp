@@ -21,7 +21,7 @@ export default function DemoSetupPage() {
     restaurant_name: string;
     city: string;
     contact_email: string;
-    scraped_data: Record<string, unknown> | null;
+    scraped_data: unknown;
   }) => {
     setIsSubmitting(true);
     setSubmitError(null);
@@ -35,7 +35,7 @@ export default function DemoSetupPage() {
           city: data.city,
           contact_email: data.contact_email,
           contact_name: data.contact_email.split('@')[0],
-          cuisine_type: (data.scraped_data as Record<string, string> | null)?.cuisine_type || 'Restaurant',
+          cuisine_type: (data.scraped_data as Record<string, string> | null)?.cuisine_type ?? 'Restaurant',
           scraped_data: data.scraped_data,
         }),
       });

@@ -5,6 +5,7 @@
  * connect or disconnect the shared AI phone number to their ElevenLabs agent.
  */
 
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../../contexts/ToastContext';
 import { usePhoneIntegration } from '../../hooks/usePhoneIntegration';
 
@@ -20,12 +21,13 @@ function formatBrazilianPhone(raw: string): string {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function StatusBadge({ status }: { status: 'active' | 'not_configured' | 'error' }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function StatusBadge({ status, t }: { status: 'active' | 'not_configured' | 'error'; t: any }) {
   if (status === 'active') {
     return (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
-        Ativo
+        {t('phoneIntegration.statusActive', 'Active')}
       </span>
     );
   }
@@ -33,14 +35,14 @@ function StatusBadge({ status }: { status: 'active' | 'not_configured' | 'error'
     return (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
         <span className="w-1.5 h-1.5 rounded-full bg-red-500" aria-hidden="true" />
-        Erro
+        {t('phoneIntegration.statusError', 'Error')}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
       <span className="w-1.5 h-1.5 rounded-full bg-amber-500" aria-hidden="true" />
-      Não conectado
+      {t('phoneIntegration.statusNotConnected', 'Not Connected')}
     </span>
   );
 }
@@ -57,6 +59,7 @@ function Spinner() {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function PhoneIntegrationPanel() {
+  const { t } = useTranslation();
   const toast = useToast();
   const {
     status,
@@ -74,26 +77,26 @@ export default function PhoneIntegrationPanel() {
 
   const handleRegister = () => {
     register(undefined, {
-      onSuccess: () => toast.success('Telefone conectado com sucesso'),
-      onError: (err) => toast.error(err instanceof Error ? err.message : 'Falha ao conectar'),
+      onSuccess: () => toast.success(t('phoneIntegration.connected', 'Phone connected successfully')),
+      onError: (err) => toast.error(err instanceof Error ? err.message : t('phoneIntegration.connectFailed', 'Failed to connect')),
     });
   };
 
   const handleUnregister = () => {
     unregister(undefined, {
-      onSuccess: () => toast.success('Telefone desconectado'),
-      onError: (err) => toast.error(err instanceof Error ? err.message : 'Falha ao desconectar'),
+      onSuccess: () => toast.success(t('phoneIntegration.disconnected', 'Phone disconnected')),
+      onError: (err) => toast.error(err instanceof Error ? err.message : t('phoneIntegration.disconnectFailed', 'Failed to disconnect')),
     });
   };
 
   const handleTestCall = () => {
     const trimmed = testNumber.trim();
     if (!trimmed) {
-      toast.error('Digite um número para testar');
+      toast.error(t('phoneIntegration.enterNumber', 'Enter a number to test'));
       return;
     }
     sendTestCall(trimmed);
-    toast.info('Iniciando chamada de teste…');
+    toast.info(t('phoneIntegration.startingTestCall', 'Starting test call...'));
   };
 
   // ── Loading skeleton ────────────────────────────────────────────────────────
@@ -103,7 +106,7 @@ export default function PhoneIntegrationPanel() {
       <div
         className="bg-white border border-border-gray rounded-2xl p-6 animate-pulse space-y-3"
         aria-busy="true"
-        aria-label="Carregando status do telefone"
+        aria-label={t('phoneIntegration.loadingStatus', 'Loading phone status')}
       >
         <div className="h-4 bg-gray-100 rounded w-48" />
         <div className="h-6 bg-gray-100 rounded w-32" />
@@ -117,7 +120,7 @@ export default function PhoneIntegrationPanel() {
   if (!status?.restaurant || !status?.platform) {
     return (
       <div className="bg-white border border-border-gray rounded-2xl p-6">
-        <p className="text-sm text-warm-stone">Não foi possível carregar o status do telefone.</p>
+        <p className="text-sm text-warm-stone">{t('phoneIntegration.loadFailed', 'Could not load phone status.')}</p>
       </div>
     );
   }
@@ -133,16 +136,16 @@ export default function PhoneIntegrationPanel() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">
-          Telefone IA — Voz
+          {t('phoneIntegration.title', 'AI Phone — Voice')}
         </h2>
-        <StatusBadge status={restaurant.status} />
+        <StatusBadge status={restaurant.status} t={t} />
       </div>
 
       {/* No-agent warning */}
       {!restaurant.has_agent && (
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
           <span aria-hidden="true">⚠</span>
-          Agente de voz não configurado. Configure um agente de voz antes de conectar o telefone.
+          {t('phoneIntegration.noAgentWarning', 'Voice agent not configured. Set up a voice agent before connecting the phone.')}
         </div>
       )}
 
@@ -160,7 +163,7 @@ export default function PhoneIntegrationPanel() {
           </svg>
         </div>
         <div>
-          <p className="text-xs text-warm-stone">Número da plataforma</p>
+          <p className="text-xs text-warm-stone">{t('phoneIntegration.platformNumber', 'Platform number')}</p>
           <p className="text-sm font-semibold text-deep-charcoal">{displayPhone}</p>
         </div>
       </div>
@@ -182,7 +185,7 @@ export default function PhoneIntegrationPanel() {
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isRegistering && <Spinner />}
-            {isRegistering ? 'Conectando…' : 'Conectar'}
+            {isRegistering ? t('phoneIntegration.connecting', 'Connecting...') : t('phoneIntegration.connect', 'Connect')}
           </button>
         ) : (
           <button
@@ -192,7 +195,7 @@ export default function PhoneIntegrationPanel() {
             className="inline-flex items-center gap-2 px-5 py-2.5 border border-border-gray hover:bg-soft-gray text-deep-charcoal text-sm font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isUnregistering && <Spinner />}
-            {isUnregistering ? 'Desconectando…' : 'Desconectar'}
+            {isUnregistering ? t('phoneIntegration.disconnecting', 'Disconnecting...') : t('phoneIntegration.disconnect', 'Disconnect')}
           </button>
         )}
       </div>
@@ -200,7 +203,7 @@ export default function PhoneIntegrationPanel() {
       {/* Test call — shown only when active */}
       {isActive && (
         <div className="border-t border-border-gray pt-4 space-y-2">
-          <p className="text-xs font-medium text-warm-stone">Testar chamada</p>
+          <p className="text-xs font-medium text-warm-stone">{t('phoneIntegration.testCall', 'Test call')}</p>
           <div className="flex items-center gap-2">
             <input
               type="tel"
@@ -208,7 +211,7 @@ export default function PhoneIntegrationPanel() {
               value={testNumber}
               onChange={(e) => setTestNumber(e.target.value)}
               className="flex-1 border border-border-gray rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
-              aria-label="Número para chamada de teste"
+              aria-label={t('phoneIntegration.testCallNumber', 'Number for test call')}
             />
             <button
               type="button"
@@ -217,7 +220,7 @@ export default function PhoneIntegrationPanel() {
               className="inline-flex items-center gap-2 px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
             >
               {isTestingCall && <Spinner />}
-              {isTestingCall ? 'Chamando…' : 'Testar chamada'}
+              {isTestingCall ? t('phoneIntegration.calling', 'Calling...') : t('phoneIntegration.testCall', 'Test call')}
             </button>
           </div>
         </div>
