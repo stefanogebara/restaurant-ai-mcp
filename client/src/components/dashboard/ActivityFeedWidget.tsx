@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useActivityFeed } from '../../hooks/useActivityFeed';
-import ThiingsIcon from '../common/ThiingsIcon';
+import ThiingsIcon, { type IconName } from '../common/ThiingsIcon';
 
 const COLOR_MAP: Record<string, string> = {
   red: 'bg-red-100 text-red-600',
@@ -58,7 +58,7 @@ export default function ActivityFeedWidget() {
               className="flex items-start gap-3 py-2 border-b border-border-gray last:border-0"
             >
               <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${colorClass}`}>
-                <ThiingsIcon name={event.icon} pxSize={12} />
+                <ThiingsIcon name={event.icon as IconName} pxSize={12} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-deep-charcoal truncate">{event.message}</p>
