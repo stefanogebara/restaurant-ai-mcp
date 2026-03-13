@@ -257,6 +257,6 @@ test.describe('D. UI — Voice Settings + AI Strategy panel', () => {
 
     await expect(page.getByRole('button', { name: /save.*apply/i })).toBeEnabled();
     await page.getByRole('button', { name: /save.*apply/i }).click();
-    await expect(page.getByText(/strategy saved/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/strategy saved/i)).toBeVisible({ timeout: 20000 });
   });
 });

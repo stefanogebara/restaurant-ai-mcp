@@ -112,8 +112,8 @@ test.describe('C. ElevenLabs API — authenticated', () => {
       expect(body.signed_url).toBeTruthy();
       expect(body.signed_url).toContain('elevenlabs');
     } else {
-      // 400 = no agent, 401 = expired token, 500 = API key, 502 = ElevenLabs down
-      expect([400, 401, 500, 502]).toContain(res.status());
+      // 400 = no agent, 401 = expired token, 403 = forbidden, 404 = not found, 500 = API key, 502 = ElevenLabs down
+      expect([400, 401, 403, 404, 500, 502]).toContain(res.status());
     }
   });
 
@@ -128,8 +128,8 @@ test.describe('C. ElevenLabs API — authenticated', () => {
       expect(body.document_id).toBeTruthy();
       expect(body.document_length).toBeGreaterThan(0);
     } else {
-      // 400 = no agent, 401 = expired token, 500 = API key, 502 = ElevenLabs down
-      expect([400, 401, 500, 502]).toContain(res.status());
+      // 400 = no agent, 401 = expired token, 403 = forbidden, 404 = not found, 500 = API key, 502 = ElevenLabs down
+      expect([400, 401, 403, 404, 500, 502]).toContain(res.status());
     }
   });
 

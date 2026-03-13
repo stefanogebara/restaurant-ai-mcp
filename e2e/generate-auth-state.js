@@ -60,13 +60,13 @@ async function getMagicLink(serviceKey) {
   const page = await context.newPage();
 
   try {
-    await page.goto(actionLink, { waitUntil: 'networkidle', timeout: 30000 });
+    await page.goto(actionLink, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-    // Wait for redirect to dashboard
-    await page.waitForURL(/restaurant-ai-mcp\.vercel\.app/, { timeout: 20000 });
+    // Wait for redirect to vercel.app (Supabase verifies token then redirects)
+    await page.waitForURL(/restaurant-ai-mcp\.vercel\.app/, { timeout: 30000 });
 
-    // Allow any client-side redirects to settle
-    await page.waitForLoadState('networkidle', { timeout: 15000 });
+    // Allow client-side redirects to settle
+    await page.waitForTimeout(3000);
 
     const vercelUrl = page.url();
     console.log('Landed at:', vercelUrl);

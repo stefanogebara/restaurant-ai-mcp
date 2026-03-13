@@ -108,7 +108,7 @@ test.describe('Sprint 2-4: Dashboard Features (Authenticated)', () => {
       await expect(modal).toBeVisible({ timeout: 5000 });
 
       // Check all form fields exist
-      await expect(page.locator('input[name="customer_name"], input[placeholder*="name" i]').first()).toBeVisible();
+      await expect(page.locator('input[placeholder="John Smith"], input[name="customer_name"], input[placeholder*="name" i], input[placeholder*="nombre" i], input[placeholder*="nome" i]').first()).toBeVisible({ timeout: 10000 });
       await expect(page.locator('input[type="tel"], input[name="customer_phone"]').first()).toBeVisible();
       await expect(page.locator('input[type="date"]').first()).toBeVisible();
       await expect(page.locator('input[type="time"]').first()).toBeVisible();

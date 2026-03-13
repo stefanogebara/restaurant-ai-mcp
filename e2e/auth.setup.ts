@@ -7,13 +7,22 @@
  * Opens the app in a real browser, waits for you to complete Google OAuth,
  * then saves the session to e2e/auth-state.json.
  * Subsequent authenticated test runs load that state automatically.
+ *
+ * For headless auth (CI), use: node e2e/generate-auth-state.js
  */
 import { test as setup, expect } from '@playwright/test';
 import path from 'path';
+import fs from 'fs';
 
 const AUTH_STATE_PATH = path.join(__dirname, 'auth-state.json');
 
 setup('authenticate via Google OAuth', async ({ page }) => {
+  // Skip if auth-state.json already exists (use generate-auth-state.js for headless)
+  if (fs.existsSync(AUTH_STATE_PATH)) {
+    setup.skip(true, 'auth-state.json already exists. Delete it to re-authenticate.');
+    return;
+  }
+
   await page.goto('/host-dashboard');
 
   // Already authenticated? Save immediately.
@@ -35,5 +44,5 @@ setup('authenticate via Google OAuth', async ({ page }) => {
   await page.waitForSelector('text=Floor Plan', { timeout: 60000 });
 
   await page.context().storageState({ path: AUTH_STATE_PATH });
-  console.log('✅ Auth state saved to', AUTH_STATE_PATH);
+  console.log('Auth state saved to', AUTH_STATE_PATH);
 });
