@@ -331,12 +331,9 @@ async function handleCreate(req, res) {
     demo_contact_name: effectiveName.trim(),
   };
 
-  // Add optional fields from scrape
+  // Add optional fields from scrape (only columns that exist in restaurant_config)
   if (effectiveWebsite) insertPayload.website = effectiveWebsite;
   if (scraped_data?.address) insertPayload.address = scraped_data.address;
-  if (scraped_data?.google_maps_url) insertPayload.google_maps_url = scraped_data.google_maps_url;
-  if (scraped_data?.rating) insertPayload.google_rating = scraped_data.rating;
-  if (scraped_data?.review_count) insertPayload.google_review_count = scraped_data.review_count;
 
   const { data: demoConfig, error: insertError } = await supabaseAdmin
     .schema('restaurant')
