@@ -62,6 +62,6 @@ const translations: Record<'en' | 'es', ManualRevenueTranslations> = {
   },
 };
 
-export function getManualRevenueTranslations(language: 'en' | 'es'): ManualRevenueTranslations {
-  return translations[language];
+export function getManualRevenueTranslations(language: string): ManualRevenueTranslations {
+  return translations[language as keyof typeof translations] || translations.en;
 }

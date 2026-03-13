@@ -13,6 +13,7 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { initSentry, captureMessage } = require('../_lib/sentry');
 const { Resend } = require('resend');
+const { logCronRun } = require('../_lib/cron-tracker');
 
 initSentry();
 const logger = createSecureLogger('CronDemoNurture');
@@ -448,6 +449,7 @@ module.exports = async (req, res) => {
     };
 
     logger.info('Demo nurture job complete:', JSON.stringify(summary, null, 2));
+    await logCronRun('demo-nurture', { day3: results.day3.sent, day5: results.day5.sent, day7: results.day7.sent });
 
     return res.status(200).json(summary);
   } catch (error) {

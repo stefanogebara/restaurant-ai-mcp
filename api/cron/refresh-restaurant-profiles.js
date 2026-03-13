@@ -12,6 +12,7 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { regeneratePersona } = require('../services/personaGenerator');
 const { initSentry, captureMessage } = require('../_lib/sentry');
+const { logCronRun } = require('../_lib/cron-tracker');
 initSentry();
 
 const logger = createSecureLogger('CronRefreshProfiles');
@@ -162,6 +163,7 @@ module.exports = async (req, res) => {
     };
 
     logger.info('Profile refresh complete', summary);
+    await logCronRun('refresh-restaurant-profiles', { refreshed: refreshed.length, errors: errors.length });
     return res.status(200).json(summary);
   } catch (error) {
     logger.error('Fatal error refreshing profiles:', error);

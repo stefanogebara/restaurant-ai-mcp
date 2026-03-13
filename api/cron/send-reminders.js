@@ -11,6 +11,7 @@ const twilio = require('twilio');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { initSentry, captureMessage } = require('../_lib/sentry');
+const { logCronRun } = require('../_lib/cron-tracker');
 initSentry();
 const logger = createSecureLogger('CronReminders');
 
@@ -283,6 +284,7 @@ module.exports = async (req, res) => {
     };
 
     logger.info(' Reminder job complete:', JSON.stringify(summary, null, 2));
+    await logCronRun('send-reminders', { sent: results.sent, failed: results.failed });
 
     return res.status(200).json(summary);
   } catch (error) {

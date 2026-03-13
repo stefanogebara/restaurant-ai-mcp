@@ -502,7 +502,7 @@ Push to `main` branch triggers automatic Vercel deployment.
 #### 12A: Demo Flow Overhaul (kill conversion friction)
 - [x] 12A-1: Google Maps auto-scraper — hours, reviews, cuisine, photos, phone, address
 - [x] 12A-2: Kill demo data wall — `/demo/setup` → auto-scrape → land in pre-populated dashboard
-- [ ] 12A-3: Real-time micro-animations — pulsing buttons, live reservation pop-ins, ticking timers
+- [x] 12A-3: Real-time micro-animations — pulsing buttons, live reservation pop-ins, ticking timers
 - [ ] 12A-4: Exit-intent popup with WhatsApp CTA instead of entry gate
 
 #### 12B: Revenue Intelligence (entrepreneur value)
@@ -517,7 +517,7 @@ Push to `main` branch triggers automatic Vercel deployment.
 
 #### 12D: Landing Page & Demo Polish
 - [ ] 12D-1: Landing page overhaul — embedded video/GIF of WhatsApp + voice agent in action
-- [ ] 12D-2: Fix language inconsistencies — English strings in PT/ES UI
+- [x] 12D-2: Fix language inconsistencies — English strings in PT/ES UI
 - [ ] 12D-3: Build 3 mock restaurant demos with realistic fake data
 
 #### 12E: Production Readiness (from Phase 12 plan)
@@ -527,4 +527,4 @@ Push to `main` branch triggers automatic Vercel deployment.
 - [ ] 12E-4: Restaurant settings page — edit hours/policies post-onboarding
 - [ ] 12E-5: Reservation confirmation/modification/cancellation emails
 - [ ] 12E-6: Activity log + feed on dashboard
-- [ ] 12E-7: Cron health monitoring
+- [x] 12E-7: Cron health monitoring

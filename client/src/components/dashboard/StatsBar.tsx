@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react';
+import { useState, useEffect, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { colors } from '../../utils/colors';
@@ -127,8 +127,11 @@ interface StatCardProps {
 }
 
 function StatCard({ label, value, valueSuffix, valueColor, change, changeColor, barPercent, barColor, icon }: StatCardProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setMounted(true), 50); return () => clearTimeout(t); }, []);
+
   return (
-    <div className="bg-white rounded-2xl p-5 border border-border-gray hover:shadow-sm transition-shadow duration-200">
+    <div className="bg-white rounded-2xl p-5 border border-border-gray hover:shadow-sm transition-all duration-300 opacity-0 translate-y-2 animate-[fadeInUp_0.4s_ease-out_forwards]">
       {icon && (
         <div className="flex items-center gap-2.5 mb-4">
           <div className="w-8 h-8 rounded-lg bg-soft-gray flex items-center justify-center flex-shrink-0">
@@ -152,8 +155,8 @@ function StatCard({ label, value, valueSuffix, valueColor, change, changeColor, 
       )}
       <div className="h-2 bg-soft-gray rounded-full mt-3 overflow-hidden">
         <div
-          className="h-full rounded-full transition-all duration-700"
-          style={{ width: `${barPercent}%`, backgroundColor: barColor }}
+          className="h-full rounded-full transition-all duration-700 ease-out"
+          style={{ width: mounted ? `${barPercent}%` : '0%', backgroundColor: barColor }}
         />
       </div>
     </div>

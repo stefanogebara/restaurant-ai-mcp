@@ -1,6 +1,7 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { sendWhatsAppMessage } = require('../_lib/whatsapp-sender');
 const { createSecureLogger } = require('../_lib/secure-logger');
+const { logCronRun } = require('../_lib/cron-tracker');
 
 const logger = createSecureLogger('manager-alerts');
 
@@ -74,6 +75,9 @@ module.exports = async (req, res) => {
       sent++;
       logger.info('alert sent', { restaurantId: restaurant.id, alertType });
     }
+
+    const jobName = `manager-alerts-${alertType.replace(/_/g, '-')}`;
+    await logCronRun(jobName, { checked, sent });
 
     return res.status(200).json({ checked, sent });
   } catch (err) {

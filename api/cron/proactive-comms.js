@@ -15,6 +15,7 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { buildGuestContext } = require('../services/guestMemory');
+const { logCronRun } = require('../_lib/cron-tracker');
 
 const logger = createSecureLogger('CronProactiveComms');
 
@@ -52,6 +53,8 @@ module.exports = async (req, res) => {
     if (opportunities.length > 0) {
       await storeOpportunities(opportunities);
     }
+
+    await logCronRun('proactive-comms', { opportunities: opportunities.length });
 
     return res.status(200).json({
       success: true,

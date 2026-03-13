@@ -8,6 +8,7 @@
 
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { processActiveCampaigns } = require('../services/campaignService');
+const { logCronRun } = require('../_lib/cron-tracker');
 
 const logger = createSecureLogger('CronSendCampaigns');
 
@@ -24,6 +25,7 @@ module.exports = async (req, res) => {
   try {
     const sent = await processActiveCampaigns();
     logger.info('send-campaigns cron complete', { sent });
+    await logCronRun('send-campaigns', { sent });
     return res.status(200).json({ success: true, sent });
   } catch (error) {
     logger.error('send-campaigns cron error', { error: error.message });

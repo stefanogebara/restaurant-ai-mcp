@@ -10,6 +10,7 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { initSentry, captureMessage } = require('../_lib/sentry');
+const { logCronRun } = require('../_lib/cron-tracker');
 initSentry();
 
 const logger = createSecureLogger('CronLateReservations');
@@ -157,6 +158,7 @@ module.exports = async (req, res) => {
     };
 
     logger.info('Late reservation check complete', summary);
+    await logCronRun('check-late-reservations', { marked: markedAsNoShow.length, errors: errors.length });
 
     return res.status(200).json(summary);
   } catch (error) {

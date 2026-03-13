@@ -145,7 +145,22 @@
       "guest": "Cliente",
       "errorSave": "Error al guardar la nota",
       "errorDelete": "Error al eliminar la nota"
-    }
+    },
+    "activityFeed": "Actividad Reciente",
+    "revenueByPartySize": "Ingresos por Tamaño de Grupo",
+    "guests": "comensales",
+    "cover": "cubierto",
+    "table": "mesa",
+    "services": "servicios",
+    "estimated": "estimado",
+    "days": "días",
+    "revenueDefault": "Basado en {{amount}}/cubierto (predeterminado). Añade cuentas al completar el servicio para mejorar la precisión."
+  },
+  "time": {
+    "justNow": "ahora",
+    "minsAgo": "hace {{count}}m",
+    "hoursAgo": "hace {{count}}h",
+    "daysAgo": "hace {{count}}d"
   },
   "reservations": {
     "title": "Reservas",
@@ -728,7 +743,33 @@
     "createTable": "Crear Mesa",
     "saveChanges": "Guardar Cambios",
     "deactivating": "Desactivando...",
-    "deactivateTable": "Desactivar Mesa"
+    "deactivateTable": "Desactivar Mesa",
+    "saved": "Configuración guardada",
+    "saveFailed": "Error al guardar",
+    "hoursSaved": "Horario guardado",
+    "policiesSaved": "Políticas guardadas",
+    "subtitle": "Administra los datos, horarios y políticas de reserva de tu restaurante.",
+    "restaurantInfo": "Información del Restaurante",
+    "name": "Nombre del Restaurante",
+    "phone": "Teléfono",
+    "email": "Email",
+    "city": "Ciudad",
+    "country": "País",
+    "timezone": "Zona Horaria",
+    "saveInfo": "Guardar Info",
+    "businessHours": "Horario de Atención",
+    "open": "Abierto",
+    "closed": "Cerrado",
+    "saveHours": "Guardar Horario",
+    "reservationPolicies": "Políticas de Reserva",
+    "advanceBooking": "Reserva Anticipada (días)",
+    "bufferTime": "Tiempo entre Reservas (min)",
+    "minPartySize": "Tamaño Mínimo de Grupo",
+    "maxPartySize": "Tamaño Máximo de Grupo",
+    "cancellationPolicy": "Política de Cancelación",
+    "cancellationPlaceholder": "Cancelación gratuita hasta 24 horas antes...",
+    "allowWaitlist": "Permitir lista de espera cuando esté lleno",
+    "savePolicies": "Guardar Políticas"
   },
   "customers": {
     "title": "Clientes",

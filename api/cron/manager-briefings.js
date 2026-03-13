@@ -3,6 +3,7 @@ const { runManagerAgent } = require('../_lib/manager-agent');
 const { sendBriefing } = require('../_lib/briefing-sender');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { getVIPsForToday } = require('../services/restaurantSnapshot');
+const { logCronRun } = require('../_lib/cron-tracker');
 
 const logger = createSecureLogger('manager-briefings');
 
@@ -76,6 +77,9 @@ module.exports = async (req, res) => {
         logger.error('briefing failed', { restaurantId: config.id, error: err.message });
       }
     }
+
+    const jobName = type === 'morning' ? 'manager-briefings-morning' : 'manager-briefings-eod';
+    await logCronRun(jobName, { sent, total: eligible.length });
 
     return res.json({ sent, total: eligible.length });
   } catch (err) {

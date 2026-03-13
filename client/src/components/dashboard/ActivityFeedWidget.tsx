@@ -11,15 +11,15 @@ const COLOR_MAP: Record<string, string> = {
   gray: 'bg-gray-100 text-gray-500',
 };
 
-function timeAgo(timestamp: string): string {
+function timeAgo(timestamp: string, t: (key: string, fallback: string, opts?: Record<string, unknown>) => string): string {
   const diff = Date.now() - new Date(timestamp).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t('time.justNow', 'just now');
+  if (mins < 60) return t('time.minsAgo', '{{count}}m ago', { count: mins });
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t('time.hoursAgo', '{{count}}h ago', { count: hours });
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return t('time.daysAgo', '{{count}}d ago', { count: days });
 }
 
 export default function ActivityFeedWidget() {
@@ -65,7 +65,7 @@ export default function ActivityFeedWidget() {
                 <p className="text-xs text-muted-stone truncate">{event.detail}</p>
               </div>
               <span className="text-[10px] text-muted-stone flex-shrink-0 pt-0.5">
-                {timeAgo(event.timestamp)}
+                {timeAgo(event.timestamp, t)}
               </span>
             </div>
           );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ActiveParty } from '../../types/host.types';
 import ThiingsIcon from '../common/ThiingsIcon';
@@ -18,6 +18,14 @@ export default function ActivePartiesPanel({
 }: ActivePartiesPanelProps) {
   const { t } = useTranslation();
   const [billInputs, setBillInputs] = useState<Record<string, string>>({});
+
+  // Tick every 60s to keep elapsed timers live
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (parties.length === 0) return;
+    const id = setInterval(() => setTick((n) => n + 1), 60000);
+    return () => clearInterval(id);
+  }, [parties.length]);
   if (isLoading) {
     return (
       <div role="status" aria-label="Loading active parties" className="bg-white border border-border-gray rounded-2xl p-5">
@@ -44,6 +52,15 @@ export default function ActivePartiesPanel({
             <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">
               {parties.length}
             </span>
+            {parties.length > 0 && (
+              <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-600">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+                Live
+              </span>
+            )}
           </div>
           {parties.reduce((sum, p) => sum + (p.party_size ?? 0), 0) > 0 && (
             <p className="text-xs text-muted-stone mt-0.5">
@@ -105,7 +122,7 @@ function PartyRow({ party, billValue, onBillChange, onComplete }: PartyRowProps)
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2 min-w-0">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-burgundy/15 to-violet-600/15 flex items-center justify-center text-[10px] font-bold text-burgundy border border-burgundy/20 flex-shrink-0">
-            {party.customer_name
+            {(party.customer_name || '--')
               .split(' ')
               .map((n) => n[0])
               .slice(0, 2)

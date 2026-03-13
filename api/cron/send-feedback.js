@@ -8,6 +8,7 @@
 
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { sendPendingFeedback, expireOldFeedback } = require('../services/feedbackService');
+const { logCronRun } = require('../_lib/cron-tracker');
 
 const logger = createSecureLogger('CronSendFeedback');
 
@@ -29,6 +30,7 @@ module.exports = async (req, res) => {
     ]);
 
     logger.info('send-feedback cron complete', { sent, expired });
+    await logCronRun('send-feedback', { sent, expired });
 
     return res.status(200).json({
       success: true,

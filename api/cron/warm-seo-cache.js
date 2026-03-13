@@ -8,6 +8,7 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { slugify } = require('../_lib/seo-html');
+const { logCronRun } = require('../_lib/cron-tracker');
 const cityHandler = require('../seo/city-cuisine');
 
 const logger = createSecureLogger('warm-seo-cache');
@@ -74,6 +75,8 @@ module.exports = async (req, res) => {
       failed++;
     }
   }
+
+  await logCronRun('warm-seo-cache', { warmed, failed });
 
   return res.status(200).json({
     warmed,

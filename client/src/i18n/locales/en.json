@@ -145,7 +145,22 @@
       "seated": "seated",
       "capacity": "capacity",
       "waiting": "on waitlist"
-    }
+    },
+    "activityFeed": "Recent Activity",
+    "revenueByPartySize": "Revenue by Party Size",
+    "guests": "guests",
+    "cover": "cover",
+    "table": "table",
+    "services": "services",
+    "estimated": "estimated",
+    "days": "days",
+    "revenueDefault": "Based on {{amount}}/cover (default). Add bills when completing service to improve accuracy."
+  },
+  "time": {
+    "justNow": "just now",
+    "minsAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago"
   },
   "reservations": {
     "title": "Reservations",
@@ -728,7 +743,33 @@
     "createTable": "Create Table",
     "saveChanges": "Save Changes",
     "deactivating": "Deactivating...",
-    "deactivateTable": "Deactivate Table"
+    "deactivateTable": "Deactivate Table",
+    "saved": "Settings saved",
+    "saveFailed": "Failed to save settings",
+    "hoursSaved": "Business hours saved",
+    "policiesSaved": "Policies saved",
+    "subtitle": "Manage your restaurant details, hours, and booking policies.",
+    "restaurantInfo": "Restaurant Info",
+    "name": "Restaurant Name",
+    "phone": "Phone",
+    "email": "Email",
+    "city": "City",
+    "country": "Country",
+    "timezone": "Timezone",
+    "saveInfo": "Save Info",
+    "businessHours": "Business Hours",
+    "open": "Open",
+    "closed": "Closed",
+    "saveHours": "Save Hours",
+    "reservationPolicies": "Reservation Policies",
+    "advanceBooking": "Advance Booking (days)",
+    "bufferTime": "Buffer Between Reservations (min)",
+    "minPartySize": "Min Party Size",
+    "maxPartySize": "Max Party Size",
+    "cancellationPolicy": "Cancellation Policy",
+    "cancellationPlaceholder": "Free cancellation up to 24 hours before...",
+    "allowWaitlist": "Allow waitlist when fully booked",
+    "savePolicies": "Save Policies"
   },
   "tableLayout": {
     "title": "Table Layout",

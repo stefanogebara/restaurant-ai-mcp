@@ -15,6 +15,7 @@
 
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { reportAllUsage } = require('./_lib/stripe-usage-reporter');
+const { logCronRun } = require('./_lib/cron-tracker');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 
 const logger = createSecureLogger('ReportUsageCron');
@@ -67,6 +68,7 @@ module.exports = async (req, res) => {
 
     const duration = Date.now() - startTime;
     logger.info('Usage reporting completed', { ...result, duration_ms: duration });
+    await logCronRun('report-usage', { ...result, duration_ms: duration });
 
     return res.status(200).json({
       success: true,

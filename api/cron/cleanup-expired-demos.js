@@ -15,6 +15,7 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { initSentry, captureMessage } = require('../_lib/sentry');
 
+const { logCronRun } = require('../_lib/cron-tracker');
 initSentry();
 const logger = createSecureLogger('CronCleanupExpiredDemos');
 
@@ -134,6 +135,7 @@ module.exports = async (req, res) => {
     };
 
     logger.info('Cleanup job complete:', JSON.stringify(summary, null, 2));
+    await logCronRun('cleanup-expired-demos', { deleted: deletedDemos });
 
     return res.status(200).json(summary);
   } catch (error) {

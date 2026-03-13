@@ -17,6 +17,7 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { createMemory } = require('../services/guestMemory');
 const { initSentry, captureMessage } = require('../_lib/sentry');
+const { logCronRun } = require('../_lib/cron-tracker');
 initSentry();
 
 const logger = createSecureLogger('CronReflections');
@@ -103,6 +104,8 @@ module.exports = async (req, res) => {
       processed: Math.min(eligibleGuests.length, 20),
       reflections: totalReflections
     });
+
+    await logCronRun('generate-reflections', { eligible: eligibleGuests.length, reflections: totalReflections });
 
     return res.status(200).json({
       success: true,

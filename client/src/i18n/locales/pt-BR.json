@@ -145,7 +145,22 @@
       "seated": "sentados",
       "capacity": "capacidade",
       "waiting": "na fila"
-    }
+    },
+    "activityFeed": "Atividade Recente",
+    "revenueByPartySize": "Receita por Tamanho de Mesa",
+    "guests": "pessoas",
+    "cover": "couvert",
+    "table": "mesa",
+    "services": "serviços",
+    "estimated": "estimado",
+    "days": "dias",
+    "revenueDefault": "Baseado em {{amount}}/couvert (padrão). Adicione contas ao finalizar o serviço para melhorar a precisão."
+  },
+  "time": {
+    "justNow": "agora",
+    "minsAgo": "{{count}}m atrás",
+    "hoursAgo": "{{count}}h atrás",
+    "daysAgo": "{{count}}d atrás"
   },
   "reservations": {
     "title": "Reservas",
@@ -729,7 +744,33 @@
       "occupied": "Ocupada",
       "reserved": "Reservada",
       "cleaning": "Limpeza"
-    }
+    },
+    "saved": "Configurações salvas",
+    "saveFailed": "Falha ao salvar",
+    "hoursSaved": "Horário salvo",
+    "policiesSaved": "Políticas salvas",
+    "subtitle": "Gerencie os dados, horários e políticas de reserva do seu restaurante.",
+    "restaurantInfo": "Informações do Restaurante",
+    "name": "Nome do Restaurante",
+    "phone": "Telefone",
+    "email": "Email",
+    "city": "Cidade",
+    "country": "País",
+    "timezone": "Fuso Horário",
+    "saveInfo": "Salvar Info",
+    "businessHours": "Horário de Funcionamento",
+    "open": "Aberto",
+    "closed": "Fechado",
+    "saveHours": "Salvar Horário",
+    "reservationPolicies": "Políticas de Reserva",
+    "advanceBooking": "Reserva Antecipada (dias)",
+    "bufferTime": "Intervalo entre Reservas (min)",
+    "minPartySize": "Tamanho Mínimo do Grupo",
+    "maxPartySize": "Tamanho Máximo do Grupo",
+    "cancellationPolicy": "Política de Cancelamento",
+    "cancellationPlaceholder": "Cancelamento gratuito até 24 horas antes...",
+    "allowWaitlist": "Permitir lista de espera quando lotado",
+    "savePolicies": "Salvar Políticas"
   },
   "tableLayout": {
     "title": "Mapa de Mesas",

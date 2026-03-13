@@ -111,7 +111,7 @@ export default function QuickInterventionModal({
     }
   };
 
-  const t = translations[language];
+  const t = translations[language as keyof typeof translations] || translations.en;
 
   const actionOptions: Array<{ id: string; label: string; icon: IconName; color: string }> = [
     { id: 'phone_call', label: t.called, icon: 'phone', color: 'bg-blue-500' },

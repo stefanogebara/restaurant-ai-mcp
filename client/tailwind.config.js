@@ -79,6 +79,20 @@ export default {
         'stone-mid': '#3a3533',
         'stone-pale': '#EEECEB',
       },
+      keyframes: {
+        fadeInUp: {
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        pulseGlow: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.5' },
+        },
+      },
+      animation: {
+        'fade-in-up': 'fadeInUp 0.4s ease-out forwards',
+        'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

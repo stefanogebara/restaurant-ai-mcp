@@ -10,6 +10,7 @@
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { initSentry, captureMessage } = require('../_lib/sentry');
+const { logCronRun } = require('../_lib/cron-tracker');
 initSentry();
 
 const logger = createSecureLogger('CronChurnScores');
@@ -166,6 +167,7 @@ module.exports = async (req, res) => {
     }
 
     logger.info(`Updated LTV + churn for ${totalUpserted} customers across ${restaurants.length} restaurants`);
+    await logCronRun('update-churn-scores', { customers: totalUpserted, restaurants: restaurants.length });
 
     return res.status(200).json({
       success: true,
