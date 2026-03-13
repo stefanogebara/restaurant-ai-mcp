@@ -36,7 +36,7 @@ const RATE_LIMITS = {
   // Demo restaurant creation
   'demo-create': {
     windowMs: 15 * 60 * 1000, // 15 minutes
-    maxRequests: 3,           // 3 demo creations per 15 min per IP
+    maxRequests: 10,          // 10 demo creations per 15 min per IP
     message: 'Too many demo creation attempts. Please try again in 15 minutes.',
   },
 
