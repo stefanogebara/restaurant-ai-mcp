@@ -84,7 +84,7 @@ module.exports = async (req, res) => {
     for (const demo of expiredDemos) {
       logger.info(`Processing demo ${demo.id} (${demo.restaurant_name}, expired ${demo.demo_expires_at})`);
 
-      // Step 1: Delete reservations for this demo restaurant
+      // Step 1a: Delete reservations for this demo restaurant
       const { error: reservationsError, count: resCount } = await supabaseAdmin
         .from('reservations')
         .delete({ count: 'exact' })
@@ -99,6 +99,16 @@ module.exports = async (req, res) => {
       const reservationsDeleted = resCount || 0;
       deletedReservations += reservationsDeleted;
       logger.info(`Deleted ${reservationsDeleted} reservation(s) for demo ${demo.id}`);
+
+      // Step 1b: Delete tables for this demo restaurant
+      const { error: tablesError } = await supabaseAdmin
+        .from('tables')
+        .delete()
+        .eq('restaurant_id', demo.id);
+
+      if (tablesError) {
+        logger.warn(`Failed to delete tables for demo ${demo.id} (non-fatal):`, tablesError.message);
+      }
 
       // Step 2: Delete the restaurant_config row
       const { error: configError } = await supabaseAdmin

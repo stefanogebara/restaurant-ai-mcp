@@ -35,9 +35,6 @@ const logger = createSecureLogger('Demo');
 
 const BASE_URL = process.env.CLIENT_URL || 'https://seatable.one';
 
-// Dedicated system user for demo restaurants (created once in Supabase Auth)
-const DEMO_SYSTEM_USER_ID = 'bfe5f299-1361-4a13-a898-fa76b2e8add0';
-
 // Lazy-init Resend client
 let resendClient = null;
 function getResendClient() {
@@ -273,6 +270,11 @@ async function handleCreate(req, res) {
   const demo_expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
   const slug = `demo-${demo_token.slice(0, 8)}`;
 
+  // Each demo needs its own user_id to satisfy the UNIQUE(user_id) constraint
+  // on restaurant_config. Generate a fresh UUID per demo instead of reusing
+  // DEMO_SYSTEM_USER_ID (which only allows one demo at a time).
+  const demoUserId = crypto.randomUUID();
+
   // Use scraped business hours if available, otherwise build from open/close times
   const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
   let business_hours;
@@ -310,7 +312,7 @@ async function handleCreate(req, res) {
 
   // Insert demo restaurant config — uses scraped data when available
   const insertPayload = {
-    user_id: DEMO_SYSTEM_USER_ID,
+    user_id: demoUserId,
     restaurant_name: restaurant_name.trim(),
     restaurant_type: normalizeRestaurantType(effectiveCuisine.trim()),
     city: city.trim(),
