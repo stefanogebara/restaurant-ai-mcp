@@ -332,8 +332,9 @@ async function handleCreate(req, res) {
   };
 
   // Add optional fields from scrape (only columns that exist in restaurant_config)
+  // NOTE: address, google_rating, google_review_count, google_maps_url do NOT exist
+  // on restaurant_config — they live on restaurant_info. Only set website here.
   if (effectiveWebsite) insertPayload.website = effectiveWebsite;
-  if (scraped_data?.address) insertPayload.address = scraped_data.address;
 
   const { data: demoConfig, error: insertError } = await supabaseAdmin
     .schema('restaurant')
