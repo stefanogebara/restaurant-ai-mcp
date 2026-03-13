@@ -8,6 +8,7 @@ import DemoWaitlistPanel from '../components/demo/DemoWaitlistPanel';
 import DemoManagerChat from '../components/demo/DemoManagerChat';
 import { useDemoState } from '../hooks/useDemoState';
 import { useDemoLocale } from '../hooks/useDemoLocale';
+import { useExitIntent } from '../hooks/useExitIntent';
 import type { UpcomingReservation, ActiveParty } from '../types/host.types';
 
 export default function DemoDashboard() {
@@ -16,6 +17,7 @@ export default function DemoDashboard() {
 
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const { showPopup: showExitPopup, dismiss: dismissExitPopup } = useExitIntent();
 
   // Walk-in form state
   const [walkInForm, setWalkInForm] = useState({
@@ -249,6 +251,53 @@ export default function DemoDashboard() {
           onClose={() => setChatOpen(false)}
           lang={lang}
         />
+      )}
+
+      {/* Exit Intent Popup */}
+      {showExitPopup && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) dismissExitPopup(); }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={t.exitTitle}
+            className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-sm w-full text-center animate-in fade-in zoom-in-95 duration-200"
+          >
+            <div className="w-14 h-14 rounded-2xl bg-green-50 flex items-center justify-center mx-auto mb-4">
+              <ThiingsIcon name="chat" pxSize={28} className="text-green-600" />
+            </div>
+            <h3 className="text-lg font-bold text-deep-charcoal mb-2">
+              {t.exitTitle}
+            </h3>
+            <p className="text-sm text-stone-gray mb-6 leading-relaxed">
+              {t.exitMessage}
+            </p>
+            <div className="flex flex-col gap-2.5">
+              <a
+                href={`https://wa.me/551150289356?text=${encodeURIComponent(
+                  lang === 'pt-BR'
+                    ? 'Oi! Tenho interesse em saber mais sobre o Seatable para meu restaurante. Podem me ajudar?'
+                    : 'Hi! I\'m interested in learning more about Seatable for my restaurant. Can you help me?'
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
+              >
+                <ThiingsIcon name="chat" pxSize={16} className="text-white" />
+                {t.exitWhatsappCTA}
+              </a>
+              <button
+                type="button"
+                onClick={dismissExitPopup}
+                className="w-full px-4 py-3 border border-border-gray text-stone-gray font-medium rounded-xl hover:bg-soft-gray transition-colors text-sm"
+              >
+                {t.exitContinue}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Walk-In Modal */}

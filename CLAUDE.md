@@ -503,13 +503,13 @@ Push to `main` branch triggers automatic Vercel deployment.
 - [x] 12A-1: Google Maps auto-scraper — hours, reviews, cuisine, photos, phone, address
 - [x] 12A-2: Kill demo data wall — `/demo/setup` → auto-scrape → land in pre-populated dashboard
 - [x] 12A-3: Real-time micro-animations — pulsing buttons, live reservation pop-ins, ticking timers
-- [ ] 12A-4: Exit-intent popup with WhatsApp CTA instead of entry gate
+- [x] 12A-4: Exit-intent popup with WhatsApp CTA instead of entry gate
 
-#### 12B: Revenue Intelligence (entrepreneur value)
-- [ ] 12B-1: Revenue prediction per reservation — predicted spend next to each booking
-- [ ] 12B-2: Aggregate predicted daily revenue KPI on dashboard
-- [ ] 12B-3: Real-time revenue update — metrics recalculate when entering bill amounts
-- [ ] 12B-4: Average revenue by table size tracking
+#### 12B: Revenue Intelligence (entrepreneur value) ✅ COMPLETE
+- [x] 12B-1: Revenue prediction per reservation — predicted spend next to each booking
+- [x] 12B-2: Aggregate predicted daily revenue KPI on dashboard
+- [x] 12B-3: Real-time revenue update — metrics recalculate when entering bill amounts
+- [x] 12B-4: Average revenue by table size tracking
 
 #### 12C: Manager AI UX Overhaul
 - [ ] 12C-1: Replace chat bubble with full-screen Manager AI interface (ChatGPT-style)
@@ -521,10 +521,10 @@ Push to `main` branch triggers automatic Vercel deployment.
 - [ ] 12D-3: Build 3 mock restaurant demos with realistic fake data
 
 #### 12E: Production Readiness (from Phase 12 plan)
-- [ ] 12E-1: AddReservationModal — host creates reservations from dashboard
-- [ ] 12E-2: EditReservationModal — inline edit from ReservationsList
-- [ ] 12E-3: Cancel from dashboard with customer notification
-- [ ] 12E-4: Restaurant settings page — edit hours/policies post-onboarding
-- [ ] 12E-5: Reservation confirmation/modification/cancellation emails
-- [ ] 12E-6: Activity log + feed on dashboard
+- [x] 12E-1: AddReservationModal — host creates reservations from dashboard
+- [x] 12E-2: EditReservationModal — inline edit from ReservationsList
+- [x] 12E-3: Cancel from dashboard with customer notification
+- [x] 12E-4: Restaurant settings page — edit hours/policies post-onboarding
+- [x] 12E-5: Reservation confirmation/modification/cancellation emails
+- [x] 12E-6: Activity log + feed on dashboard
 - [x] 12E-7: Cron health monitoring

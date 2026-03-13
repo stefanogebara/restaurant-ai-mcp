@@ -43,6 +43,11 @@ const strings = {
     langPopupDesc: 'This demo is also available in English.',
     langSwitchYes: 'Switch to English',
     langKeepEn: 'Manter Portugues',
+    // Exit intent
+    exitTitle: 'Before you go...',
+    exitMessage: 'Have questions about bringing Seatable to your restaurant? Our team is ready to help.',
+    exitWhatsappCTA: 'Chat with us on WhatsApp',
+    exitContinue: 'Continue Demo',
   },
   'pt-BR': {
     banner: 'Demo Interativa — todas as acoes sao locais, nenhum dado real e afetado',
@@ -81,6 +86,11 @@ const strings = {
     langPopupDesc: 'This demo is also available in English.',
     langSwitchYes: 'Switch to English',
     langKeepEn: 'Manter Portugues',
+    // Exit intent
+    exitTitle: 'Antes de sair...',
+    exitMessage: 'Tem duvidas sobre o Seatable para seu restaurante? Nossa equipe esta pronta para ajudar.',
+    exitWhatsappCTA: 'Falar no WhatsApp',
+    exitContinue: 'Continuar Demo',
   },
 } as const;
 
