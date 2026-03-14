@@ -1140,7 +1140,34 @@
       "subtitle": "Seatable's AI handles calls, WhatsApp, and online bookings 24/7 — so you can focus on hospitality.",
       "cta": "Create Your Free Demo",
       "demo": "Try Live Demo",
-      "earlyAccess": "Free plan available · No credit card required"
+      "earlyAccess": "Free plan available · No credit card required",
+      "headlineA": "Last night at 2 AM, someone booked a table at your restaurant.",
+      "headlineA2": "Your AI answered.",
+      "headlineB": "The host that never calls in sick.",
+      "headlineC": "Your restaurant never sleeps.",
+      "subtitle2": "Seatable handles WhatsApp, phone calls, and walk-ins — so your team focuses on hospitality.",
+      "ctaNew": "See it live \u2193"
+    },
+    "tryDemo": {
+      "label": "Try it right now",
+      "heading": "Pick a restaurant. Explore the dashboard.",
+      "subtitle": "No signup, no email. Just click and see how it works.",
+      "cta": "Want YOUR restaurant?",
+      "ctaLink": "Set it up here \u2192"
+    },
+    "voice": {
+      "label": "Try it live",
+      "heading": "Call our AI host",
+      "subtitle": "Have a real conversation. Ask to book a table for 4 tonight — and hear the AI respond naturally.",
+      "powered": "Powered by ElevenLabs \u00b7 English, Portuguese, Spanish",
+      "micHint": "Click the mic to start talking"
+    },
+    "whatsapp": {
+      "label": "Real AI, real WhatsApp",
+      "heading": "Text our AI right now",
+      "subtitle": "Send a message on WhatsApp and get an instant response from our AI. No app to download, no signup needed.",
+      "cta": "Send a test message",
+      "trust": "Real number: +55 11 5028-9356 \u00b7 S\u00e3o Paulo, Brazil"
     },
     "features": {
       "label": "Features",
@@ -1283,7 +1310,8 @@
     },
     "footer": {
       "privacy": "Privacy Policy",
-      "terms": "Terms of Service"
+      "terms": "Terms of Service",
+      "faq": "Frequently Asked Questions"
     },
     "pricing": {
       "label": "Pricing",

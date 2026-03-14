@@ -1134,7 +1134,34 @@
       "subtitle": "A IA do Seatable atende ligações, WhatsApp e reservas online 24/7 — para você focar na hospitalidade.",
       "cta": "Crie Sua Demo Grátis",
       "demo": "Experimente a Demo",
-      "earlyAccess": "Plano gratuito disponível · Sem cartão de crédito"
+      "earlyAccess": "Plano gratuito disponível · Sem cartão de crédito",
+      "headlineA": "Ontem às 2 da manhã, alguém reservou uma mesa no seu restaurante.",
+      "headlineA2": "Sua IA atendeu.",
+      "headlineB": "O anfitrião que nunca falta.",
+      "headlineC": "Seu restaurante nunca dorme.",
+      "subtitle2": "O Seatable cuida do WhatsApp, ligações e walk-ins — para sua equipe focar na hospitalidade.",
+      "ctaNew": "Veja ao vivo \u2193"
+    },
+    "tryDemo": {
+      "label": "Experimente agora",
+      "heading": "Escolha um restaurante. Explore o painel.",
+      "subtitle": "Sem cadastro, sem e-mail. Clique e veja como funciona.",
+      "cta": "Quer ver SEU restaurante?",
+      "ctaLink": "Configure aqui \u2192"
+    },
+    "voice": {
+      "label": "Teste ao vivo",
+      "heading": "Ligue para nossa IA",
+      "subtitle": "Tenha uma conversa real. Peça para reservar uma mesa para 4 hoje à noite — e ouça a IA responder naturalmente.",
+      "powered": "Powered by ElevenLabs \u00b7 Inglês, Português, Espanhol",
+      "micHint": "Clique no microfone para começar"
+    },
+    "whatsapp": {
+      "label": "IA real, WhatsApp real",
+      "heading": "Mande mensagem para nossa IA",
+      "subtitle": "Envie uma mensagem no WhatsApp e receba uma resposta instantânea da nossa IA. Sem app, sem cadastro.",
+      "cta": "Enviar mensagem de teste",
+      "trust": "Número real: +55 11 5028-9356 \u00b7 São Paulo, Brasil"
     },
     "features": {
       "label": "Funcionalidades",
@@ -1277,7 +1304,8 @@
     },
     "footer": {
       "privacy": "Política de Privacidade",
-      "terms": "Termos de Serviço"
+      "terms": "Termos de Serviço",
+      "faq": "Perguntas Frequentes"
     },
     "pricing": {
       "title": "Planos e Preços",

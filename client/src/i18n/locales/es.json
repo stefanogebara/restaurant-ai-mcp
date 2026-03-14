@@ -941,7 +941,34 @@
       "subtitle": "La IA de Seatable gestiona llamadas, WhatsApp y reservas online 24/7 — para que puedas centrarte en la hospitalidad.",
       "cta": "Crea Tu Demo Gratuita",
       "demo": "Probar Demo en Vivo",
-      "earlyAccess": "Plan gratuito disponible · Sin tarjeta de crédito"
+      "earlyAccess": "Plan gratuito disponible · Sin tarjeta de crédito",
+      "headlineA": "Anoche a las 2 AM, alguien reservó una mesa en tu restaurante.",
+      "headlineA2": "Tu IA respondió.",
+      "headlineB": "El anfitrión que nunca falta.",
+      "headlineC": "Tu restaurante nunca duerme.",
+      "subtitle2": "Seatable gestiona WhatsApp, llamadas y walk-ins — para que tu equipo se enfoque en la hospitalidad.",
+      "ctaNew": "Verlo en vivo \u2193"
+    },
+    "tryDemo": {
+      "label": "Pruébalo ahora",
+      "heading": "Elige un restaurante. Explora el panel.",
+      "subtitle": "Sin registro, sin correo. Solo haz clic y mira cómo funciona.",
+      "cta": "¿Quieres ver TU restaurante?",
+      "ctaLink": "Configúralo aquí \u2192"
+    },
+    "voice": {
+      "label": "Prueba en vivo",
+      "heading": "Llama a nuestra IA",
+      "subtitle": "Ten una conversación real. Pide reservar una mesa para 4 esta noche — y escucha a la IA responder naturalmente.",
+      "powered": "Powered by ElevenLabs \u00b7 Inglés, Portugués, Español",
+      "micHint": "Haz clic en el micrófono para empezar"
+    },
+    "whatsapp": {
+      "label": "IA real, WhatsApp real",
+      "heading": "Escríbele a nuestra IA",
+      "subtitle": "Envía un mensaje por WhatsApp y recibe una respuesta instantánea de nuestra IA. Sin app, sin registro.",
+      "cta": "Enviar mensaje de prueba",
+      "trust": "Número real: +55 11 5028-9356 \u00b7 São Paulo, Brasil"
     },
     "features": {
       "label": "Funcionalidades",
@@ -1148,7 +1175,8 @@
     },
     "footer": {
       "privacy": "Política de Privacidad",
-      "terms": "Términos de Servicio"
+      "terms": "Términos de Servicio",
+      "faq": "Preguntas Frecuentes"
     },
     "liveDemo": {
       "nav": {

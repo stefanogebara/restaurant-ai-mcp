@@ -1,25 +1,68 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ChevronDown } from 'lucide-react';
+import { FAQS } from '../data/demoData';
+
+function FAQItem({ question, answer }: { question: string; answer: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="border-b border-border-gray last:border-b-0">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-between w-full py-4 text-left text-sm font-medium text-deep-charcoal hover:text-burgundy transition-colors"
+        aria-expanded={open}
+      >
+        {question}
+        <ChevronDown
+          className={`w-4 h-4 text-muted-stone flex-shrink-0 ml-4 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+      <div
+        className={`overflow-hidden transition-all duration-200 ${open ? 'max-h-60 pb-4' : 'max-h-0'}`}
+      >
+        <p className="text-sm text-warm-stone leading-relaxed">{answer}</p>
+      </div>
+    </div>
+  );
+}
 
 export default function Footer() {
   const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 sm:px-16 py-10 border-t border-border-gray">
-      <div className="font-serif text-xl font-semibold text-deep-charcoal">
-        seatable<span className="text-burgundy">.</span>
+    <footer className="border-t border-border-gray">
+      {/* FAQ Accordion */}
+      <div className="max-w-3xl mx-auto px-6 sm:px-16 py-16">
+        <h3 className="font-serif text-2xl font-medium text-deep-charcoal text-center mb-8">
+          {t('landing.footer.faq', 'Frequently Asked Questions')}
+        </h3>
+        <div className="border-t border-border-gray">
+          {FAQS.map((faq) => (
+            <FAQItem key={faq.question} question={faq.question} answer={faq.answer} />
+          ))}
+        </div>
       </div>
-      <div className="flex items-center gap-6">
-        <Link to="/privacy" className="text-[13px] text-muted-stone hover:text-deep-charcoal transition-colors">
-          {t('landing.footer.privacy')}
-        </Link>
-        <Link to="/terms" className="text-[13px] text-muted-stone hover:text-deep-charcoal transition-colors">
-          {t('landing.footer.terms')}
-        </Link>
-        <p className="text-[13px] text-muted-stone">
-          &copy; {currentYear} Seatable.
-        </p>
+
+      {/* Bottom bar */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 sm:px-16 py-10 border-t border-border-gray">
+        <div className="font-serif text-xl font-semibold text-deep-charcoal">
+          seatable<span className="text-burgundy">.</span>
+        </div>
+        <div className="flex items-center gap-6">
+          <Link to="/privacy" className="text-[13px] text-muted-stone hover:text-deep-charcoal transition-colors">
+            {t('landing.footer.privacy')}
+          </Link>
+          <Link to="/terms" className="text-[13px] text-muted-stone hover:text-deep-charcoal transition-colors">
+            {t('landing.footer.terms')}
+          </Link>
+          <p className="text-[13px] text-muted-stone">
+            &copy; {currentYear} Seatable.
+          </p>
+        </div>
       </div>
     </footer>
   );
