@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface DemoAIInsightsBarProps {
   restaurantName: string;
@@ -14,107 +14,137 @@ interface DemoAIInsightsBarProps {
 interface Insight {
   id: string;
   text: string;
+  icon: string;
+  label: string;
 }
 
-const cannedResponses = {
-  en: [
-    'Based on current trends, tonight should peak around 19:30. Consider pre-setting tables for large parties.',
-    'Your average table turn time this week is 52 minutes. That is 8% faster than last week.',
-    'I recommend checking on Table 5 -- they have been seated for over 90 minutes without ordering dessert.',
-  ],
-  'pt-BR': [
-    'Com base nas tendencias atuais, o pico de hoje deve ser por volta das 19:30. Considere preparar mesas para grupos grandes.',
-    'O tempo medio de rotacao de mesa esta semana e de 52 minutos. Isso e 8% mais rapido que na semana passada.',
-    'Recomendo verificar a Mesa 5 -- estao sentados ha mais de 90 minutos sem pedir sobremesa.',
-  ],
-} as const;
+interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  text: string;
+}
+
+// ── i18n ──
 
 const labels = {
   en: {
-    title: 'AI Insights',
-    askPlaceholder: 'Ask AI anything...',
-    viewForecast: 'View forecast',
-    generateBriefing: 'Generate briefing',
-    toastForecast: 'Forecast available in the full version',
-    toastBriefing: 'Briefing available in the full version',
+    title: 'Manager AI',
+    inputPlaceholder: 'Ask about your restaurant...',
+    typing: 'Thinking...',
+    insightCapLabel: 'Capacity',
+    insightStaffLabel: 'Staffing',
+    insightWaitLabel: 'Waitlist',
+    insightVipLabel: 'VIP Alert',
+    powered: 'Powered by Seatable AI',
   },
   'pt-BR': {
-    title: 'Insights IA',
-    askPlaceholder: 'Pergunte qualquer coisa...',
-    viewForecast: 'Ver previsao',
-    generateBriefing: 'Gerar briefing',
-    toastForecast: 'Previsao disponivel na versao completa',
-    toastBriefing: 'Briefing disponivel na versao completa',
+    title: 'IA do Gerente',
+    inputPlaceholder: 'Pergunte sobre seu restaurante...',
+    typing: 'Pensando...',
+    insightCapLabel: 'Capacidade',
+    insightStaffLabel: 'Equipe',
+    insightWaitLabel: 'Fila de Espera',
+    insightVipLabel: 'Alerta VIP',
+    powered: 'Powered by Seatable AI',
   },
 } as const;
+
+const cannedResponses: Record<string, string[]> = {
+  en: [
+    "Based on current trends, tonight should peak around 19:30. I'd recommend pre-setting tables for large parties and briefing the kitchen on expected volume.",
+    "Your average table turn time this week is 52 minutes — that's 8% faster than last week. Great efficiency from the team.",
+    "I'd suggest checking on Table 5. They've been seated for over 90 minutes without ordering dessert — could be a good upsell opportunity.",
+    "Looking at your reservation patterns, Fridays between 19:00-20:30 consistently fill up. Consider adding a second seating window.",
+  ],
+  'pt-BR': [
+    "Com base nas tendências atuais, o pico deve ser por volta das 19:30. Recomendo preparar mesas para grupos grandes e avisar a cozinha sobre o volume esperado.",
+    "O tempo médio de rotação de mesa esta semana é de 52 minutos — 8% mais rápido que semana passada. Ótima eficiência da equipe.",
+    "Sugiro verificar a Mesa 5. Estão sentados há mais de 90 minutos sem pedir sobremesa — pode ser uma boa oportunidade de upsell.",
+    "Analisando seus padrões de reserva, sextas entre 19:00-20:30 lotam consistentemente. Considere adicionar um segundo turno.",
+  ],
+};
+
+// ── Insight Builder ──
 
 function buildInsights(
   props: Omit<DemoAIInsightsBarProps, 'lang'>,
   lang: string,
 ): Insight[] {
-  const { occupiedTables, totalTables, reservationsToday, waitlistCount, totalGuests } = props;
+  const { occupiedTables, totalTables, waitlistCount, totalGuests, reservationsToday } = props;
   const occupancy = totalTables > 0 ? Math.round((occupiedTables / totalTables) * 100) : 0;
   const available = totalTables - occupiedTables;
   const hour = new Date().getHours();
+  const isPt = lang === 'pt-BR';
   const insights: Insight[] = [];
 
-  if (lang === 'pt-BR') {
-    // Capacity insight
-    if (occupancy >= 80) {
-      insights.push({ id: 'cap', text: `Hoje esta ${occupancy}% lotado — considere abrir o patio para walk-ins (${available} mesa${available !== 1 ? 's' : ''} livre${available !== 1 ? 's' : ''}).` });
-    } else if (occupancy >= 50) {
-      insights.push({ id: 'cap', text: `Ocupacao em ${occupancy}% com ${available} mesa${available !== 1 ? 's' : ''} disponiveis. Noite movimentada com ${reservationsToday} reservas.` });
-    } else {
-      insights.push({ id: 'cap', text: `Ocupacao tranquila em ${occupancy}% — ${available} mesa${available !== 1 ? 's' : ''} livres. Bom momento para aceitar walk-ins.` });
-    }
-
-    // Staffing suggestion
-    if (hour >= 18 && hour <= 21) {
-      const suggestedServers = Math.max(2, Math.ceil(totalGuests / 8));
-      insights.push({ id: 'staff', text: `Horario de pico ${hour}:00-${hour + 1}:30 — sugiro ${suggestedServers} garcons no salao para ${totalGuests} clientes.` });
-    }
-
-    // Waitlist insight
-    if (waitlistCount > 0) {
-      insights.push({ id: 'wait', text: `${waitlistCount} grupo${waitlistCount !== 1 ? 's' : ''} na lista de espera. Tempo estimado: ${waitlistCount * 12}-${waitlistCount * 18} min.` });
-    }
+  // Capacity
+  if (occupancy >= 80) {
+    insights.push({
+      id: 'cap',
+      label: isPt ? 'Capacidade' : 'Capacity',
+      icon: '📊',
+      text: isPt
+        ? `${occupancy}% lotado — ${available} mesa${available !== 1 ? 's' : ''} livre${available !== 1 ? 's' : ''}. Considere o patio.`
+        : `${occupancy}% full — ${available} table${available !== 1 ? 's' : ''} free. Consider the patio.`,
+    });
   } else {
-    // Capacity insight
-    if (occupancy >= 80) {
-      insights.push({ id: 'cap', text: `Tonight is ${occupancy}% booked — consider opening the patio for walk-ins (${available} table${available !== 1 ? 's' : ''} free).` });
-    } else if (occupancy >= 50) {
-      insights.push({ id: 'cap', text: `Occupancy at ${occupancy}% with ${available} table${available !== 1 ? 's' : ''} available. Busy evening ahead with ${reservationsToday} reservations.` });
-    } else {
-      insights.push({ id: 'cap', text: `Light occupancy at ${occupancy}% — ${available} table${available !== 1 ? 's' : ''} free. Good time to accept walk-ins.` });
-    }
+    insights.push({
+      id: 'cap',
+      label: isPt ? 'Capacidade' : 'Capacity',
+      icon: '📊',
+      text: isPt
+        ? `${occupancy}% ocupação, ${available} mesa${available !== 1 ? 's' : ''} disponíveis`
+        : `${occupancy}% occupancy, ${available} table${available !== 1 ? 's' : ''} available`,
+    });
+  }
 
-    // Staffing suggestion
-    if (hour >= 18 && hour <= 21) {
-      const suggestedServers = Math.max(2, Math.ceil(totalGuests / 8));
-      insights.push({ id: 'staff', text: `Peak hour ${hour}:00-${hour + 1}:30 — suggest adding ${suggestedServers} server${suggestedServers !== 1 ? 's' : ''} for ${totalGuests} guests.` });
-    }
+  // Staffing
+  if (hour >= 17 && hour <= 22) {
+    const servers = Math.max(2, Math.ceil(totalGuests / 8));
+    insights.push({
+      id: 'staff',
+      label: isPt ? 'Equipe' : 'Staffing',
+      icon: '👥',
+      text: isPt
+        ? `Pico ${hour}h-${hour + 1}:30 — ${servers} garçons para ${totalGuests} clientes`
+        : `Peak ${hour}:00-${hour + 1}:30 — ${servers} servers for ${totalGuests} guests`,
+    });
+  } else {
+    insights.push({
+      id: 'staff',
+      label: isPt ? 'Equipe' : 'Staffing',
+      icon: '👥',
+      text: isPt
+        ? `${reservationsToday} reservas hoje, equipe padrão suficiente`
+        : `${reservationsToday} reservations today, standard staffing sufficient`,
+    });
+  }
 
-    // Waitlist insight
-    if (waitlistCount > 0) {
-      insights.push({ id: 'wait', text: `${waitlistCount} part${waitlistCount !== 1 ? 'ies' : 'y'} on the waitlist. Estimated wait: ${waitlistCount * 12}-${waitlistCount * 18} min.` });
-    }
+  // Waitlist
+  if (waitlistCount > 0) {
+    insights.push({
+      id: 'wait',
+      label: isPt ? 'Fila' : 'Waitlist',
+      icon: '⏳',
+      text: isPt
+        ? `${waitlistCount} grupo${waitlistCount !== 1 ? 's' : ''} esperando (~${waitlistCount * 15}min)`
+        : `${waitlistCount} part${waitlistCount !== 1 ? 'ies' : 'y'} waiting (~${waitlistCount * 15}min)`,
+    });
   }
 
   return insights;
 }
 
+// ── Sparkle Icon ──
+
 const SparkleIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M8 1L9.5 6.5L15 8L9.5 9.5L8 15L6.5 9.5L1 8L6.5 6.5L8 1Z" fill="currentColor" />
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" opacity="0.9" />
+    <path d="M19 2L19.8 4.2L22 5L19.8 5.8L19 8L18.2 5.8L16 5L18.2 4.2L19 2Z" fill="currentColor" opacity="0.5" />
   </svg>
 );
 
-const SendIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="22" y1="2" x2="11" y2="13" />
-    <polygon points="22 2 15 22 11 13 2 9 22 2" />
-  </svg>
-);
+// ── Component ──
 
 export default function DemoAIInsightsBar({
   restaurantName,
@@ -125,9 +155,11 @@ export default function DemoAIInsightsBar({
   totalGuests,
   lang,
 }: DemoAIInsightsBarProps) {
-  const [query, setQuery] = useState('');
-  const [aiResponse, setAiResponse] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const langKey = lang === 'pt-BR' ? 'pt-BR' : 'en';
   const ui = labels[langKey];
@@ -137,104 +169,199 @@ export default function DemoAIInsightsBar({
     [restaurantName, occupiedTables, totalTables, reservationsToday, waitlistCount, totalGuests, lang],
   );
 
-  const handleAsk = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
-    const responses = cannedResponses[langKey];
-    const idx = query.length % responses.length;
-    setAiResponse(responses[idx]);
-    setQuery('');
-    setTimeout(() => setAiResponse(null), 6000);
-  };
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isTyping]);
 
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2500);
+  const handleSend = (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = input.trim();
+    if (!text || isTyping) return;
+
+    const userMsg: ChatMessage = { id: `u-${Date.now()}`, role: 'user', text };
+    setMessages((prev) => [...prev, userMsg]);
+    setInput('');
+    setIsTyping(true);
+
+    // Simulate AI typing delay
+    const delay = 800 + Math.random() * 1200;
+    setTimeout(() => {
+      const responses = cannedResponses[langKey];
+      const idx = text.length % responses.length;
+      const aiMsg: ChatMessage = { id: `a-${Date.now()}`, role: 'assistant', text: responses[idx] };
+      setMessages((prev) => [...prev, aiMsg]);
+      setIsTyping(false);
+    }, delay);
   };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: 'easeOut' }}
-      className="bg-white border border-border-gray rounded-2xl p-5 shadow-sm relative"
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className="rounded-2xl overflow-hidden"
       data-testid="ai-insights-bar"
     >
-      {/* Toast */}
-      {toast && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0 }}
-          className="absolute top-2 right-4 bg-deep-charcoal text-white text-xs px-3 py-1.5 rounded-lg shadow-md z-10"
-        >
-          {toast}
-        </motion.div>
-      )}
+      <div className="flex flex-col lg:flex-row gap-4">
+        {/* ── Left: Liquid Glass Insight Cards ── */}
+        <div className="flex flex-col sm:flex-row gap-3 lg:w-[45%] flex-shrink-0">
+          {insights.map((insight, i) => (
+            <motion.div
+              key={insight.id}
+              initial={{ opacity: 0, y: 16, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.4, delay: 0.1 + i * 0.08 }}
+              className="flex-1 relative group"
+            >
+              {/* Liquid glass card */}
+              <div className="relative rounded-2xl p-4 h-full overflow-hidden
+                bg-gradient-to-br from-white/80 to-white/50
+                backdrop-blur-xl
+                border border-white/60
+                shadow-[0_4px_24px_-4px_rgba(159,18,57,0.08),inset_0_1px_0_rgba(255,255,255,0.8)]
+                hover:shadow-[0_8px_32px_-4px_rgba(159,18,57,0.12),inset_0_1px_0_rgba(255,255,255,0.9)]
+                transition-all duration-300
+              ">
+                {/* Subtle gradient sheen overlay */}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-burgundy/[0.03] via-transparent to-burgundy/[0.02] pointer-events-none" />
+                {/* Top glow line */}
+                <div className="absolute top-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-white/90 to-transparent" />
 
-      <div className="flex flex-col lg:flex-row lg:items-start gap-4">
-        {/* Left: Insights */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-burgundy"><SparkleIcon /></span>
-            <h3 className="text-sm font-semibold text-deep-charcoal">{ui.title}</h3>
+                <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-base">{insight.icon}</span>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-burgundy/70">
+                      {insight.label}
+                    </span>
+                  </div>
+                  <p className="text-[13px] leading-relaxed text-deep-charcoal/80 font-medium">
+                    {insight.text}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* ── Right: LLM-style Chat ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+          className="flex-1 min-w-0 flex flex-col rounded-2xl overflow-hidden
+            bg-gradient-to-br from-white/90 to-white/70
+            backdrop-blur-xl
+            border border-white/60
+            shadow-[0_4px_24px_-4px_rgba(159,18,57,0.08),inset_0_1px_0_rgba(255,255,255,0.8)]
+          "
+        >
+          {/* Chat header */}
+          <div className="flex items-center gap-2.5 px-4 py-3 border-b border-white/40">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-burgundy to-burgundy-dark flex items-center justify-center shadow-sm">
+              <span className="text-white"><SparkleIcon /></span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold text-deep-charcoal leading-none">{ui.title}</h3>
+              <p className="text-[10px] text-muted-stone mt-0.5">{ui.powered}</p>
+            </div>
+            <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.4)]" />
           </div>
 
-          <ul className="space-y-2">
-            {insights.map((insight) => (
-              <li key={insight.id} className="flex items-start gap-2.5 text-[13px] leading-relaxed text-stone-gray">
-                <span className="w-1.5 h-1.5 rounded-full bg-burgundy mt-1.5 flex-shrink-0" />
-                <span>{insight.text}</span>
-              </li>
-            ))}
-          </ul>
+          {/* Messages area */}
+          <div className="flex-1 px-4 py-3 space-y-3 max-h-[200px] overflow-y-auto scrollbar-thin">
+            {messages.length === 0 && (
+              <div className="text-center py-4">
+                <p className="text-xs text-muted-stone/70 italic">
+                  {langKey === 'pt-BR'
+                    ? '"Como está o movimento hoje?" ou "Sugira algo para o jantar"'
+                    : '"How is tonight looking?" or "Suggest something for dinner service"'}
+                </p>
+              </div>
+            )}
 
-          {/* AI Response */}
-          {aiResponse && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="mt-3 px-3 py-2 bg-burgundy/5 border border-burgundy/10 rounded-xl text-[13px] text-deep-charcoal leading-relaxed"
-            >
-              {aiResponse}
-            </motion.div>
-          )}
-        </div>
+            <AnimatePresence mode="popLayout">
+              {messages.map((msg) => (
+                <motion.div
+                  key={msg.id}
+                  initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.97 }}
+                  transition={{ duration: 0.2 }}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  {msg.role === 'assistant' && (
+                    <div className="w-6 h-6 rounded-md bg-gradient-to-br from-burgundy to-burgundy-dark flex items-center justify-center mr-2 mt-0.5 flex-shrink-0 shadow-sm">
+                      <SparkleIcon />
+                    </div>
+                  )}
+                  <div
+                    className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-[13px] leading-relaxed ${
+                      msg.role === 'user'
+                        ? 'bg-burgundy text-white rounded-br-md'
+                        : 'bg-white/80 text-deep-charcoal border border-border-gray/50 rounded-bl-md shadow-sm'
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
 
-        {/* Right: Quick Actions */}
-        <div className="flex flex-col gap-2.5 lg:w-56 flex-shrink-0">
-          <form onSubmit={handleAsk} className="relative">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={ui.askPlaceholder}
-              className="w-full pl-3.5 pr-9 py-2 bg-stone-50 border border-border-gray rounded-xl text-[13px] text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30"
-            />
-            <button
-              type="submit"
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-stone hover:text-burgundy transition-colors"
-              aria-label={langKey === 'pt-BR' ? 'Enviar' : 'Send'}
-            >
-              <SendIcon />
-            </button>
+            {/* Typing indicator */}
+            {isTyping && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex items-center gap-2"
+              >
+                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-burgundy to-burgundy-dark flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <SparkleIcon />
+                </div>
+                <div className="bg-white/80 border border-border-gray/50 rounded-2xl rounded-bl-md px-4 py-2.5 shadow-sm">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-stone">{ui.typing}</span>
+                    <div className="flex gap-0.5">
+                      {[0, 1, 2].map((i) => (
+                        <motion.span
+                          key={i}
+                          animate={{ opacity: [0.3, 1, 0.3] }}
+                          transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+                          className="w-1 h-1 rounded-full bg-burgundy/60"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input */}
+          <form onSubmit={handleSend} className="px-3 pb-3 pt-1">
+            <div className="flex items-center gap-2 bg-white/60 backdrop-blur-sm border border-border-gray/60 rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-burgundy/20 focus-within:border-burgundy/30 transition-all">
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={ui.inputPlaceholder}
+                className="flex-1 bg-transparent text-[13px] text-deep-charcoal placeholder-muted-stone focus:outline-none py-1"
+              />
+              <button
+                type="submit"
+                disabled={!input.trim() || isTyping}
+                className="w-7 h-7 rounded-lg bg-burgundy hover:bg-burgundy-dark disabled:bg-muted-stone/30 disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors flex-shrink-0"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="19" x2="12" y2="5" />
+                  <polyline points="5 12 12 5 19 12" />
+                </svg>
+              </button>
+            </div>
           </form>
-
-          <button
-            type="button"
-            onClick={() => showToast(ui.toastForecast)}
-            className="text-left text-[13px] font-medium text-burgundy hover:underline underline-offset-2 transition-colors"
-          >
-            {ui.viewForecast} &rarr;
-          </button>
-          <button
-            type="button"
-            onClick={() => showToast(ui.toastBriefing)}
-            className="text-left text-[13px] font-medium text-burgundy hover:underline underline-offset-2 transition-colors"
-          >
-            {ui.generateBriefing} &rarr;
-          </button>
-        </div>
+        </motion.div>
       </div>
     </motion.div>
   );
