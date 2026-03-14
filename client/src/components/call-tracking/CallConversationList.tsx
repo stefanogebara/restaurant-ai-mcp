@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
-import { type Conversation, type CallFilter, getOutcomeLabel, getOutcomePillColor } from './callTrackingTypes';
+import { type Conversation, type CallFilter, getOutcomeLabelKey, getOutcomePillColor } from './callTrackingTypes';
 
 function callIconStyle(outcome?: string): string {
   switch (outcome) {
@@ -69,7 +69,7 @@ export default function CallConversationList({
       ) : (
         <div>
           {conversations.map((conv) => {
-            const startTime = new Date(conv.started_at).toLocaleTimeString('en-US', {
+            const startTime = new Date(conv.started_at).toLocaleTimeString(undefined, {
               hour: '2-digit',
               minute: '2-digit',
             });
@@ -80,7 +80,7 @@ export default function CallConversationList({
             return (
               <div
                 key={conv.id}
-                className="flex items-center px-6 py-4 border-b border-warm-white gap-4 cursor-pointer hover:bg-warm-white transition-colors"
+                className="flex items-center px-4 sm:px-6 py-4 border-b border-warm-white gap-3 sm:gap-4 cursor-pointer hover:bg-warm-white transition-colors"
                 onClick={() => onConversationClick(conv.id)}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${callIconStyle(conv.outcome)}`}>
@@ -99,7 +99,7 @@ export default function CallConversationList({
                 </div>
 
                 <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ${getOutcomePillColor(conv.outcome)}`}>
-                  {getOutcomeLabel(conv.outcome)}
+                  {t(getOutcomeLabelKey(conv.outcome))}
                 </span>
 
                 <div className="text-right flex-shrink-0 ml-2">

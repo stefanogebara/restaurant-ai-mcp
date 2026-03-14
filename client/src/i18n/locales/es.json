@@ -1574,7 +1574,14 @@
     "twentyFourHours": "24h",
     "sevenDays": "7 días",
     "thirtyDays": "30 días",
-    "ninetyDays": "90 días"
+    "ninetyDays": "90 días",
+    "outcomeReservationCreated": "Reserva Creada",
+    "outcomeInformationOnly": "Solo Información",
+    "outcomeError": "Error",
+    "outcomeAbandonedLabel": "Abandonada",
+    "outcomeUnknown": "Desconocido",
+    "durationUnknown": "Desconocido",
+    "noTranscriptAvailable": "No hay transcripción disponible para esta conversación."
   },
   "managerAI": {
     "title": "IA del Gerente",

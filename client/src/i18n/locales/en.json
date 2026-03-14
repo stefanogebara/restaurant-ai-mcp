@@ -1118,7 +1118,14 @@
     "twentyFourHours": "24h",
     "sevenDays": "7 days",
     "thirtyDays": "30 days",
-    "ninetyDays": "90 days"
+    "ninetyDays": "90 days",
+    "outcomeReservationCreated": "Reservation Created",
+    "outcomeInformationOnly": "Information Only",
+    "outcomeError": "Error",
+    "outcomeAbandonedLabel": "Abandoned",
+    "outcomeUnknown": "Unknown",
+    "durationUnknown": "Unknown",
+    "noTranscriptAvailable": "No transcript available for this conversation."
   },
   "landing": {
     "badge": "AI-Powered Restaurant Management",

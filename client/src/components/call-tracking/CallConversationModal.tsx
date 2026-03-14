@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
-import { type Conversation, formatDate, getOutcomeColor, getOutcomeLabel } from './callTrackingTypes';
+import { type Conversation, formatDate, getOutcomeColor, getOutcomeLabelKey } from './callTrackingTypes';
 
 interface Props {
   conversation: Conversation;
@@ -11,14 +11,14 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
   const { t } = useTranslation();
   const durationText = conversation.duration_seconds
     ? `${Math.floor(conversation.duration_seconds / 60)}m ${conversation.duration_seconds % 60}s`
-    : 'Unknown';
+    : t('callTracking.durationUnknown');
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Conversation Details"
+        aria-label={t('callTracking.conversationDetails')}
         className="bg-white rounded-2xl border border-border-gray shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
       >
         {/* Header */}
@@ -53,11 +53,11 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
           )}
 
           {/* Metadata */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-stone-gray">{t('callTracking.outcome')}</p>
               <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${getOutcomeColor(conversation.outcome)}`}>
-                {getOutcomeLabel(conversation.outcome)}
+                {t(getOutcomeLabelKey(conversation.outcome))}
               </span>
             </div>
             <div>
@@ -98,28 +98,30 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
           )}
 
           {/* Transcript */}
-          {conversation.transcript && conversation.transcript.length > 0 && (
-            <div>
-              <h3 className="font-semibold text-deep-charcoal mb-3">{t('callTracking.transcript')}</h3>
+          <div>
+            <h3 className="font-semibold text-deep-charcoal mb-3">{t('callTracking.transcript')}</h3>
+            {conversation.transcript && conversation.transcript.length > 0 ? (
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {conversation.transcript.map((message, idx) => (
                   <div
                     key={idx}
                     className={`p-3 rounded-xl ${
                       message.role === 'user'
-                        ? 'bg-blue-500/10 ml-8'
-                        : 'bg-green-500/10 mr-8'
+                        ? 'bg-blue-500/10 ml-4 sm:ml-8'
+                        : 'bg-green-500/10 mr-4 sm:mr-8'
                     }`}
                   >
                     <p className="text-xs text-stone-gray mb-1">
                       {message.role === 'user' ? t('callTracking.customer') : t('callTracking.agent')}
                     </p>
-                    <p className="text-sm text-deep-charcoal">{message.content}</p>
+                    <p className="text-sm text-deep-charcoal whitespace-pre-wrap break-words">{message.content}</p>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-muted-stone italic">{t('callTracking.noTranscriptAvailable')}</p>
+            )}
+          </div>
 
           {/* Errors */}
           {conversation.errors_encountered && conversation.errors_encountered.length > 0 && (

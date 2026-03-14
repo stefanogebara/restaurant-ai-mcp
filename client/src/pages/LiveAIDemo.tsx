@@ -71,7 +71,7 @@ export default function LiveAIDemo() {
           {/* Voice Demo */}
           {import.meta.env.VITE_ELEVENLABS_AGENT_ID ? (
             <div className="mb-6">
-              <div className="bg-soft-gray rounded-2xl p-6 mb-5 text-left">
+              <div className="bg-soft-gray rounded-2xl p-6 pb-16 sm:pb-6 mb-5 text-left">
                 <p className="text-[13px] text-stone-gray font-light leading-relaxed mb-3">
                   {t('landing.liveDemo.widget.instructions')}
                 </p>

@@ -18,7 +18,7 @@ export default function CallFilters({ filter, onChange }: Props) {
 
   return (
     <div className="bg-white rounded-2xl border border-border-gray overflow-hidden">
-      <div className="flex items-center gap-6 px-6 py-4">
+      <div className="flex flex-wrap items-center gap-4 sm:gap-6 px-4 sm:px-6 py-4">
         {/* Period */}
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-muted-stone">{t('callTracking.period')}</span>

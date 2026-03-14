@@ -86,7 +86,7 @@ export interface CallFilter {
 // ─── Helper functions ──────────────────────────────────────────────────────────
 
 export function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleString('en-US', {
+  return new Date(dateString).toLocaleString(undefined, {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -96,7 +96,7 @@ export function formatDate(dateString: string): string {
 
 export function formatConfiguredDate(dateString: string | null): string {
   if (!dateString) return 'N/A';
-  return new Date(dateString).toLocaleString('en-US', {
+  return new Date(dateString).toLocaleString(undefined, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -115,13 +115,14 @@ export function getOutcomeColor(outcome?: string): string {
   }
 }
 
-export function getOutcomeLabel(outcome?: string): string {
+/** Returns an i18n key under callTracking.* — caller must pass through t() */
+export function getOutcomeLabelKey(outcome?: string): string {
   switch (outcome) {
-    case 'reservation_created': return 'Reservation Created';
-    case 'information_only':    return 'Information Only';
-    case 'error':               return 'Error';
-    case 'abandoned':           return 'Abandoned';
-    default:                    return 'Unknown';
+    case 'reservation_created': return 'callTracking.outcomeReservationCreated';
+    case 'information_only':    return 'callTracking.outcomeInformationOnly';
+    case 'error':               return 'callTracking.outcomeError';
+    case 'abandoned':           return 'callTracking.outcomeAbandonedLabel';
+    default:                    return 'callTracking.outcomeUnknown';
   }
 }
 
