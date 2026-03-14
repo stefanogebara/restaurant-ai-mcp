@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { trackWhatsAppTapped } from '../../lib/analytics';
 
 const WA_URL = 'https://wa.me/551150289356?text=Hi!%20I\'d%20like%20to%20book%20a%20table%20for%204%20tomorrow%20at%208pm';
 const MESSAGE_TEXT = "Hi! I'd like to book a table for 4 tomorrow at 8pm";
@@ -92,6 +93,7 @@ export default function WhatsAppWidgetSection() {
             href={WA_URL}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackWhatsAppTapped()}
             className="inline-flex items-center gap-2 px-8 py-3.5 bg-whatsapp hover:bg-whatsapp/90 text-white text-[15px] font-semibold rounded-full transition-colors mb-6"
           >
             {t('landing.whatsapp.cta', 'Send a test message')} &rarr;

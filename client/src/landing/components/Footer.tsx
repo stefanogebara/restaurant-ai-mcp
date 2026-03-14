@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown } from 'lucide-react';
-import { FAQS } from '../data/demoData';
 
-function FAQItem({ question, answer }: { question: string; answer: string }) {
+const FAQ_COUNT = 9;
+
+function FAQItem({ questionKey, answerKey }: { questionKey: string; answerKey: string }) {
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation();
 
   return (
     <div className="border-b border-border-gray last:border-b-0">
@@ -15,7 +17,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
         className="flex items-center justify-between w-full py-4 text-left text-sm font-medium text-deep-charcoal hover:text-burgundy transition-colors"
         aria-expanded={open}
       >
-        {question}
+        {t(questionKey)}
         <ChevronDown
           className={`w-4 h-4 text-muted-stone flex-shrink-0 ml-4 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         />
@@ -23,7 +25,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
       <div
         className={`overflow-hidden transition-all duration-200 ${open ? 'max-h-60 pb-4' : 'max-h-0'}`}
       >
-        <p className="text-sm text-warm-stone leading-relaxed">{answer}</p>
+        <p className="text-sm text-warm-stone leading-relaxed">{t(answerKey)}</p>
       </div>
     </div>
   );
@@ -33,6 +35,11 @@ export default function Footer() {
   const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
 
+  const faqKeys = Array.from({ length: FAQ_COUNT }, (_, i) => ({
+    q: `landing.faq.q${i + 1}`,
+    a: `landing.faq.a${i + 1}`,
+  }));
+
   return (
     <footer className="border-t border-border-gray">
       {/* FAQ Accordion */}
@@ -41,8 +48,8 @@ export default function Footer() {
           {t('landing.footer.faq', 'Frequently Asked Questions')}
         </h3>
         <div className="border-t border-border-gray">
-          {FAQS.map((faq) => (
-            <FAQItem key={faq.question} question={faq.question} answer={faq.answer} />
+          {faqKeys.map((faq) => (
+            <FAQItem key={faq.q} questionKey={faq.q} answerKey={faq.a} />
           ))}
         </div>
       </div>

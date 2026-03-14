@@ -1,16 +1,26 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
+
 interface WhatsAppPhoneAnimationProps {
   onMessageStep?: (step: number) => void;
   className?: string;
 }
 
-const MESSAGES = [
-  { from: 'customer' as const, text: 'Hi! Table for 4 tomorrow at 8pm?' },
-  { from: 'ai' as const, text: 'Of course! I have a lovely table available at 8pm. Name for the reservation?' },
-  { from: 'customer' as const, text: 'Maria Santos' },
-  { from: 'ai' as const, text: 'Perfect! Table for 4, tomorrow at 8pm. Confirmed \u2713 See you soon, Maria!' },
-];
+interface ChatMessage {
+  from: 'customer' | 'ai';
+  text: string;
+}
+
+function useMessages(): ChatMessage[] {
+  const { t } = useTranslation();
+  return [
+    { from: 'customer', text: t('landing.heroChat.msg1', 'Hi! Table for 4 tomorrow at 8pm?') },
+    { from: 'ai', text: t('landing.heroChat.msg2', 'Of course! I have a lovely table available at 8pm. Name for the reservation?') },
+    { from: 'customer', text: t('landing.heroChat.msg3', 'Maria Santos') },
+    { from: 'ai', text: t('landing.heroChat.msg4', 'Perfect! Table for 4, tomorrow at 8pm. Confirmed \u2713 See you soon, Maria!') },
+  ];
+}
 
 const MESSAGE_DELAY = 1500;
 const TYPING_DURATION = 800;
@@ -33,7 +43,7 @@ function TypingIndicator() {
   );
 }
 
-function ChatBubble({ message }: { message: typeof MESSAGES[number] }) {
+function ChatBubble({ message }: { message: ChatMessage }) {
   const isCustomer = message.from === 'customer';
 
   return (
@@ -60,6 +70,7 @@ export default function WhatsAppPhoneAnimation({
   onMessageStep,
   className = '',
 }: WhatsAppPhoneAnimationProps) {
+  const messages = useMessages();
   const [visibleMessages, setVisibleMessages] = useState<number[]>([]);
   const [showTyping, setShowTyping] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -94,10 +105,10 @@ export default function WhatsAppPhoneAnimation({
         setVisibleMessages([]);
         setShowTyping(false);
 
-        for (let i = 0; i < MESSAGES.length; i++) {
+        for (let i = 0; i < messages.length; i++) {
           if (cancelled) return;
 
-          if (MESSAGES[i].from === 'ai') {
+          if (messages[i].from === 'ai') {
             setShowTyping(true);
             await sleep(TYPING_DURATION);
             if (cancelled) return;
@@ -107,7 +118,7 @@ export default function WhatsAppPhoneAnimation({
           setVisibleMessages((prev) => [...prev, i]);
           onMessageStep?.(i);
 
-          if (i < MESSAGES.length - 1) {
+          if (i < messages.length - 1) {
             await sleep(MESSAGE_DELAY);
           }
         }
@@ -123,6 +134,7 @@ export default function WhatsAppPhoneAnimation({
       cancelled = true;
       clearTimer();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onMessageStep, clearTimer]);
 
   return (
@@ -171,7 +183,7 @@ export default function WhatsAppPhoneAnimation({
           >
             <AnimatePresence mode="sync">
               {visibleMessages.map((idx) => (
-                <ChatBubble key={`${idx}-${visibleMessages.length}`} message={MESSAGES[idx]} />
+                <ChatBubble key={`${idx}-${visibleMessages.length}`} message={messages[idx]} />
               ))}
             </AnimatePresence>
 

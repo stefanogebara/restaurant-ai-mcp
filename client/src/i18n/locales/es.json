@@ -961,7 +961,42 @@
       "heading": "Llama a nuestra IA",
       "subtitle": "Ten una conversación real. Pide reservar una mesa para 4 esta noche — y escucha a la IA responder naturalmente.",
       "powered": "Powered by ElevenLabs \u00b7 Inglés, Portugués, Español",
-      "micHint": "Haz clic en el micrófono para empezar"
+      "micHint": "Haz clic en el micrófono para empezar",
+      "loading": "Cargando agente de voz...",
+      "fallbackTitle": "Demo de voz no disponible",
+      "fallbackDesc": "Prueba nuestra IA por WhatsApp — envía un mensaje y recibe una respuesta instantánea."
+    },
+    "heroChat": {
+      "msg1": "¡Hola! ¿Mesa para 4 mañana a las 8pm?",
+      "msg2": "¡Por supuesto! Tengo una mesa disponible a las 8pm. ¿Nombre para la reserva?",
+      "msg3": "María Santos",
+      "msg4": "¡Perfecto! Mesa para 4, mañana a las 8pm. Confirmada \u2713 ¡Hasta pronto, María!"
+    },
+    "slideIn": {
+      "title": "Estos son datos de ejemplo",
+      "subtitle": "¿Quieres ver TU restaurante aquí? La configuración toma 30 segundos.",
+      "cta": "Configurar mi restaurante",
+      "later": "Quizás después"
+    },
+    "faq": {
+      "q1": "¿Cómo funciona el asistente de reservas con IA?",
+      "a1": "Nuestra IA usa procesamiento de lenguaje natural para entender solicitudes de clientes por llamadas o mensajes. Verifica disponibilidad de mesas en tiempo real, gestiona detalles y confirma reservas — todo sin intervención humana.",
+      "q2": "¿Puedo personalizar las respuestas de la IA?",
+      "a2": "¡Sí! Cada restaurante puede personalizar la personalidad, saludos, conocimiento del menú y políticas especiales de la IA. La entrenamos con los detalles específicos de tu restaurante.",
+      "q3": "¿Qué pasa si la IA no puede manejar una solicitud?",
+      "a3": "Si la IA encuentra una situación compleja que no puede resolver, transfiere la llamada a tu equipo con todo el contexto de la conversación. Ningún cliente queda sin atención.",
+      "q4": "¿Cuánto tiempo toma la configuración?",
+      "a4": "La mayoría de los restaurantes están funcionando en 24 horas. Importamos tu layout de mesas, configuramos la IA con tu menú y políticas, y capacitamos a tu equipo.",
+      "q5": "¿Necesito hardware especial?",
+      "a5": "¡No se necesita hardware especial! Nuestro sistema funciona completamente en la nube. Solo necesitas acceso a internet y un dispositivo (computadora, tablet o teléfono).",
+      "q6": "¿Los clientes aún pueden llamar directamente?",
+      "a6": "Por supuesto. La IA maneja las solicitudes de reserva, pero los clientes aún pueden hablar con el personal para ocasiones especiales o preguntas específicas.",
+      "q7": "¿Qué idiomas soporta la IA?",
+      "a7": "Nuestra IA soporta 6+ idiomas incluyendo Inglés, Español, Portugués, Francés, Italiano y Alemán. Detecta automáticamente el idioma del cliente.",
+      "q8": "¿Mis datos del restaurante están seguros?",
+      "a8": "Absolutamente. Todos los datos están cifrados en tránsito y en reposo. Usamos seguridad de base de datos de nivel empresarial con controles de acceso por fila.",
+      "q9": "¿Puedo probarlo antes de comprometerme?",
+      "a9": "¡Sí! Todos los planes incluyen 14 días de prueba gratis, sin tarjeta de crédito. También puedes probar nuestra demo de IA en vivo en el sitio web."
     },
     "whatsapp": {
       "label": "IA real, WhatsApp real",

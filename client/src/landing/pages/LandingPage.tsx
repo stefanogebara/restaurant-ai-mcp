@@ -31,7 +31,10 @@ export default function LandingPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ referral_code: ref }),
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) return null;
+        return res.json();
+      })
       .then((data) => {
         if (data?.valid === true) {
           localStorage.setItem(LS_REFERRAL_CODE, ref);

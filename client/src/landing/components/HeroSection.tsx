@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import { trackCtaClicked } from '../../lib/analytics';
+import { trackCtaClicked, trackHeadlineVariantViewed } from '../../lib/analytics';
 import HeroSplitScreen from './HeroSplitScreen';
+import { useEffect } from 'react';
 
 const HEADLINES: Record<string, { key: string; fallback: string }> = {
   a: { key: 'landing.hero.headlineA', fallback: 'Last night at 2 AM, someone booked a table at your restaurant.' },
@@ -16,6 +17,10 @@ export default function HeroSection() {
   // A/B headline via ?headline=a|b|c (default: a)
   const variant = (params.get('headline') || 'a').toLowerCase();
   const headline = HEADLINES[variant] || HEADLINES.a;
+
+  useEffect(() => {
+    trackHeadlineVariantViewed({ variant });
+  }, [variant]);
 
   const scrollToDemo = () => {
     trackCtaClicked({ cta: 'primary', location: 'hero' });

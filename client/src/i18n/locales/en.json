@@ -1160,7 +1160,42 @@
       "heading": "Call our AI host",
       "subtitle": "Have a real conversation. Ask to book a table for 4 tonight — and hear the AI respond naturally.",
       "powered": "Powered by ElevenLabs \u00b7 English, Portuguese, Spanish",
-      "micHint": "Click the mic to start talking"
+      "micHint": "Click the mic to start talking",
+      "loading": "Loading voice agent...",
+      "fallbackTitle": "Voice demo unavailable",
+      "fallbackDesc": "Try our WhatsApp AI instead — send a message and get an instant response."
+    },
+    "heroChat": {
+      "msg1": "Hi! Table for 4 tomorrow at 8pm?",
+      "msg2": "Of course! I have a lovely table available at 8pm. Name for the reservation?",
+      "msg3": "Maria Santos",
+      "msg4": "Perfect! Table for 4, tomorrow at 8pm. Confirmed \u2713 See you soon, Maria!"
+    },
+    "slideIn": {
+      "title": "This is sample data",
+      "subtitle": "Want to see YOUR restaurant here? Setup takes 30 seconds.",
+      "cta": "Set up my restaurant",
+      "later": "Maybe later"
+    },
+    "faq": {
+      "q1": "How does the AI reservation assistant work?",
+      "a1": "Our AI uses natural language processing to understand customer requests via phone calls or text messages. It checks real-time table availability, handles booking details, and confirms reservations — all without human intervention.",
+      "q2": "Can I customize the AI's responses?",
+      "a2": "Yes! Each restaurant can customize the AI's personality, greetings, menu knowledge, and special policies. We train the AI on your specific restaurant details during onboarding.",
+      "q3": "What happens if the AI can't handle a request?",
+      "a3": "If the AI encounters a complex situation it can't resolve, it seamlessly transfers the call to your staff with full context of the conversation. This ensures no customer is left frustrated.",
+      "q4": "How long does setup take?",
+      "a4": "Most restaurants are up and running within 24 hours. We'll import your table layout, configure the AI with your menu and policies, and train your staff on the host dashboard.",
+      "q5": "Do I need special hardware?",
+      "a5": "No special hardware required! Our system works entirely in the cloud. You just need internet access and a device (computer, tablet, or phone) to access the host dashboard.",
+      "q6": "Can customers still call directly?",
+      "a6": "Absolutely. The AI handles reservation requests, but customers can still speak to staff for special occasions, large parties, or specific questions. The AI and humans work together seamlessly.",
+      "q7": "What languages does the AI support?",
+      "a7": "Our AI currently supports 6+ languages including English, Spanish, Portuguese, French, Italian, and German. It auto-detects the caller's language and responds naturally.",
+      "q8": "Is my restaurant data secure?",
+      "a8": "Absolutely. All data is encrypted in transit and at rest. We use enterprise-grade database security with row-level access controls, and we never share your customer data with third parties.",
+      "q9": "Can I try it before committing?",
+      "a9": "Yes! All plans come with a 14-day free trial, no credit card required. You can also try our live AI demo on the website to hear the voice assistant in action before signing up."
     },
     "whatsapp": {
       "label": "Real AI, real WhatsApp",

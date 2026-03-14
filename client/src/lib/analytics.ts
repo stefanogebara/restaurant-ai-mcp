@@ -72,3 +72,21 @@ export function trackOnboardingCompleted(props: { plan: string; country: string;
 export function trackFirstReservationCreated(): void {
   posthog.capture('first_reservation_created');
 }
+
+// ─── Phase 13 Landing Events ────────────────────────────────────────────────
+
+export function trackPresetDemoClicked(props: { restaurant: string }): void {
+  posthog.capture('preset_demo_clicked', props);
+}
+
+export function trackWhatsAppTapped(): void {
+  posthog.capture('whatsapp_demo_tapped');
+}
+
+export function trackDemoSlideInAction(props: { action: 'cta' | 'dismiss' | 'later' }): void {
+  posthog.capture('demo_slidein_action', props);
+}
+
+export function trackHeadlineVariantViewed(props: { variant: string }): void {
+  posthog.capture('headline_variant_viewed', props);
+}

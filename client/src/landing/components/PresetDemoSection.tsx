@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { trackPresetDemoClicked } from '../../lib/analytics';
 
 const presets = [
   { id: 'italian', flag: '\u{1F1EE}\u{1F1F9}', name: 'Trattoria da Marco', cuisine: 'Italian', brief: '8 tables \u00b7 Little Italy', accent: 'bg-amber-50 text-amber-700' },
@@ -35,6 +36,7 @@ export default function PresetDemoSection() {
             >
               <Link
                 to={`/demo?preset=${p.id}`}
+                onClick={() => trackPresetDemoClicked({ restaurant: p.id })}
                 aria-label={t('landing.tryDemo.cardAria', { name: p.name, defaultValue: `Explore ${p.name} demo` })}
                 className="group relative flex flex-col items-center gap-3 p-8 bg-white rounded-2xl border border-border-gray
                   hover:border-burgundy hover:-translate-y-1 hover:shadow-lg
