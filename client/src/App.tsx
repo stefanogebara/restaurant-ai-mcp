@@ -44,6 +44,7 @@ const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
 const RestaurantSettingsPage = lazy(() => import('./pages/RestaurantSettingsPage'));
+const ManagerAIChatPage = lazy(() => import('./pages/ManagerAIChatPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -140,6 +141,7 @@ function App() {
               {/* Team management — protected */}
               <Route path="/host-dashboard/team" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
               <Route path="/host-dashboard/settings" element={<ProtectedRoute><RestaurantSettingsPage /></ProtectedRoute>} />
+              <Route path="/host-dashboard/manager-ai" element={<ProtectedRoute><ManagerAIChatPage /></ProtectedRoute>} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
               <Route path="/portfolio" element={<PortfolioPage />} />

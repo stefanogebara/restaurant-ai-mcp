@@ -13,6 +13,7 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -26,8 +27,6 @@ import ReservationsList from '../components/dashboard/ReservationsList';
 import ActivePartiesPanel from '../components/dashboard/ActivePartiesPanel';
 import WaitlistPanel from '../components/host/WaitlistPanel';
 import ManagerNotesPanel from '../components/dashboard/ManagerNotesPanel';
-import { ManagerChatPanel } from '../components/dashboard/ManagerChatPanel';
-import ManagerAIUsageBar from '../components/dashboard/ManagerAIUsageBar';
 import StaffingForecastWidget from '../components/dashboard/StaffingForecastWidget';
 import RevenueStatsWidget from '../components/dashboard/RevenueStatsWidget';
 import RevenueByPartySizeWidget from '../components/dashboard/RevenueByPartySizeWidget';
@@ -43,6 +42,7 @@ import CancelReservationDialog from '../components/host/CancelReservationDialog'
 import type { UpcomingReservation, ActiveParty, SeatModalData } from '../types/host.types';
 import { trackFirstReservationCreated } from '../lib/analytics';
 import { useRevenueStats } from '../hooks/useRevenueStats';
+import { predictDailyRevenue, predictReservationRevenue } from '../utils/revenuePredictor';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import { LS_FIRST_RESERVATION_TRACKED } from '../config/localStorageKeys';
 import { useToast } from '../contexts/ToastContext';
@@ -69,7 +69,7 @@ export default function Dashboard() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---- Modal state ----
-  const [chatOpen, setChatOpen] = useState(false);
+  // chatOpen state removed — Manager AI is now a full-page view at /host-dashboard/manager-ai
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [showSeatModal, setShowSeatModal] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
@@ -104,7 +104,7 @@ export default function Dashboard() {
   const { data: revenueStats } = useRevenueStats();
   const avgSpendPerCover = revenueStats?.avg_spend_per_cover;
   const predictedRevenueToday = avgSpendPerCover
-    ? todayReservations.reduce((sum, r) => sum + r.party_size * avgSpendPerCover, 0)
+    ? predictDailyRevenue(todayReservations, avgSpendPerCover, revenueStats?.by_party_size)
     : undefined;
 
   const occupiedTables = tables.filter((t: { status: string }) => t.status === 'Occupied').length;
@@ -290,6 +290,7 @@ export default function Dashboard() {
                 onEdit={(r) => setEditReservation(r)}
                 onCancel={(r) => setCancelReservation(r)}
                 avgSpendPerCover={avgSpendPerCover}
+                byPartySize={revenueStats?.by_party_size}
                 isLoading={isLoading}
                 language={i18n.language as 'en' | 'es' | 'pt-BR'}
               />
@@ -327,21 +328,14 @@ export default function Dashboard() {
           <ThiingsIcon name="plus" pxSize={24} />
         </button>
 
-        {/* Manager AI Usage — shown above chat FAB when panel is closed */}
-        {!chatOpen && (
-          <div className="fixed bottom-32 sm:bottom-20 right-4 sm:right-6 z-40 bg-white rounded-xl shadow border border-gray-100 w-48 sm:w-56">
-            <ManagerAIUsageBar />
-          </div>
-        )}
-
-        {/* ---- FAB: Manager AI Chat ---- */}
-        <button
-          onClick={() => setChatOpen((prev) => !prev)}
+        {/* ---- FAB: Manager AI (links to full-page chat) ---- */}
+        <Link
+          to="/host-dashboard/manager-ai"
           aria-label="Open AI Manager Assistant"
-          className="fixed bottom-20 sm:bottom-6 right-20 sm:right-24 z-40 w-14 h-14 bg-blue-600 hover:bg-blue-700 hover:scale-105 active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center text-xl"
+          className="fixed bottom-20 sm:bottom-6 right-20 sm:right-24 z-40 w-14 h-14 bg-blue-600 hover:bg-blue-700 hover:scale-105 active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
         >
-          💬
-        </button>
+          <ThiingsIcon name="sparkles" pxSize={22} />
+        </Link>
       </div>
 
       {/* ---- Modals ---- */}
@@ -445,7 +439,6 @@ export default function Dashboard() {
         />
       )}
 
-      {chatOpen && <ManagerChatPanel onClose={() => setChatOpen(false)} />}
     </DashboardLayout>
   );
 }

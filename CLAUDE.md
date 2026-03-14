@@ -512,7 +512,7 @@ Push to `main` branch triggers automatic Vercel deployment.
 - [x] 12B-4: Average revenue by table size tracking
 
 #### 12C: Manager AI UX Overhaul
-- [ ] 12C-1: Replace chat bubble with full-screen Manager AI interface (ChatGPT-style)
+- [x] 12C-1: Replace chat bubble with full-screen Manager AI interface (ChatGPT-style)
 - [ ] 12C-2: Pre-reservation WhatsApp upsell — AI sends dish recs + chef special before visit
 
 #### 12D: Landing Page & Demo Polish
