@@ -8,6 +8,7 @@ import HeroSection from '../components/HeroSection';
 import SocialProofSection from '../components/SocialProofSection';
 import FeaturesGrid from '../components/FeaturesGrid';
 import HowItWorksSection from '../components/HowItWorksSection';
+import VideoShowcaseSection from '../components/VideoShowcaseSection';
 import InteractiveDemoSection from '../components/InteractiveDemoSection';
 import PricingSection from '../components/PricingSection';
 import FAQSection from '../components/FAQSection';
@@ -74,6 +75,7 @@ export default function LandingPage() {
       <SocialProofSection />
       <FeaturesGrid />
       <HowItWorksSection />
+      <VideoShowcaseSection />
       <PricingSection />
 
       {/* CTA */}

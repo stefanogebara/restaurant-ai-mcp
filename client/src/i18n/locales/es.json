@@ -37,6 +37,7 @@
     "pricing": "Precios",
     "team": "Equipo",
     "logout": "Cerrar Sesión",
+    "managerAI": "IA del Gerente",
     "voiceAgent": "Agente de Voz",
     "callHistory": "Historial de Llamadas",
     "sectionMain": "Principal",
@@ -99,7 +100,8 @@
       "aiCalls": "Grupos Activos",
       "seated": "sentados",
       "capacity": "capacidad",
-      "waiting": "en espera"
+      "waiting": "en espera",
+      "predictedRevenue": "Ingresos Estimados"
     },
     "paymentFailed": "Pago fallido",
     "paymentFailedHint": "Actualiza tu método de pago para mantener tu suscripción activa.",
@@ -212,7 +214,34 @@
     "lookUpAnother": "Buscar otra reserva",
     "saving": "Guardando...",
     "saveChanges": "Guardar Cambios",
-    "restaurantNotFoundDesc": "O restaurante que você procura no existe o no está aceitando reservas online."
+    "restaurantNotFoundDesc": "El restaurante que buscas no existe o no acepta reservas en línea.",
+    "addTitle": "Agregar Reserva",
+    "addSuccess": "Reserva creada exitosamente",
+    "addFailed": "Error al crear la reserva",
+    "customerPhone": "Teléfono",
+    "customerEmail": "Correo",
+    "creating": "Creando...",
+    "create": "Crear Reserva",
+    "specialRequestsPlaceholder": "Celebración de cumpleaños, silla alta...",
+    "editTitle": "Editar Reserva",
+    "editSuccess": "Reserva actualizada",
+    "editFailed": "Error al actualizar la reserva",
+    "cancelTitle": "Cancelar Reserva",
+    "cancelConfirm": "¿Estás seguro de que quieres cancelar esta reserva?",
+    "cancelReason": "Motivo",
+    "cancelReasonNone": "Selecciona un motivo (opcional)",
+    "cancelReasonCustomer": "Solicitud del cliente",
+    "cancelReasonNoShow": "No se presentó",
+    "cancelReasonDuplicate": "Reserva duplicada",
+    "cancelReasonClosed": "Restaurante cerrado",
+    "cancelReasonCapacity": "Problema de capacidad",
+    "cancelReasonOther": "Otro",
+    "cancelEmailHint": "El cliente será notificado por correo electrónico.",
+    "cancelledWithNotification": "Reserva cancelada. Cliente notificado por correo.",
+    "cancelledNoNotification": "Reserva cancelada.",
+    "cancelFailed": "Error al cancelar",
+    "cancelling": "Cancelando...",
+    "confirmCancel": "Cancelar Reserva"
   },
   "booking": {
     "reserveTable": "Reservar una mesa",
@@ -1059,7 +1088,20 @@
       "sidebarCustomers": "Clientes",
       "sidebarAnalytics": "Análisis",
       "tryLiveDemo": "Probar Demo en Vivo",
-      "liveBadge": "EN VIVO"
+      "liveBadge": "EN VIVO",
+      "tryPreset": "O prueba un restaurante de ejemplo"
+    },
+    "showcase": {
+      "label": "Velo en Accion",
+      "heading": "Tu equipo de IA, trabajando 24/7",
+      "subtitle": "Mira como Seatable gestiona reservas por WhatsApp, llamadas y tu panel en tiempo real — automaticamente.",
+      "whatsappTitle": "Reserva por WhatsApp",
+      "whatsappDesc": "El cliente envia un mensaje, la IA verifica disponibilidad, confirma la reserva y envia recordatorios — todo por WhatsApp.",
+      "voiceTitle": "Agente de Voz IA",
+      "voiceDesc": "Tu recepcionista IA contesta llamadas naturalmente, acepta reservas y habla con la personalidad de tu restaurante.",
+      "dashboardTitle": "Panel en Vivo",
+      "dashboardDesc": "Ve reservas, estado de mesas, lista de espera e ingresos actualizandose en tiempo real mientras tu IA trabaja.",
+      "comingSoon": "Video proximamente"
     },
     "contact": {
       "label": "Contacto",
@@ -1533,11 +1575,13 @@
   },
   "managerAI": {
     "title": "IA del Gerente",
+    "subtitle": "Tu asistente de inteligencia para el restaurante",
+    "upgrade": "Mejorar",
     "unlimited": "Ilimitado",
     "messages": "mensajes",
-    "runningLow": "Quase no limite",
-    "upgradeFor": "Atualize para",
-    "month": "mês",
+    "runningLow": "Casi al límite",
+    "upgradeFor": "Mejora por",
+    "month": "mes",
     "resets": "Se reinicia"
   }
 }

@@ -516,7 +516,7 @@ Push to `main` branch triggers automatic Vercel deployment.
 - [x] 12C-2: Pre-reservation WhatsApp upsell — AI sends dish recs + chef special before visit
 
 #### 12D: Landing Page & Demo Polish
-- [ ] 12D-1: Landing page overhaul — embedded video/GIF of WhatsApp + voice agent in action
+- [x] 12D-1: Landing page overhaul — embedded video/GIF of WhatsApp + voice agent in action
 - [x] 12D-2: Fix language inconsistencies — English strings in PT/ES UI
 - [x] 12D-3: Build 3 mock restaurant demos with realistic fake data
 
