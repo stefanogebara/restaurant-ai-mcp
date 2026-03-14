@@ -15,6 +15,13 @@ function departureAt(minutesFromNow: number): string {
   return new Date(Date.now() + minutesFromNow * 60_000).toISOString();
 }
 
+/** Fixed evening timestamp for demo — always shows a realistic dinner time */
+function eveningTime(hour: number, minute: number): string {
+  const d = new Date();
+  d.setHours(hour, minute, 0, 0);
+  return d.toISOString();
+}
+
 // ---------- Seed tables ----------
 
 interface DemoTable {
@@ -120,8 +127,8 @@ const INITIAL_ACTIVE_PARTIES: ActiveParty[] = [
     customer_phone: '+55 11 92111-2222',
     party_size: 2,
     tables: ['2'],
-    seated_at: seededAt(45),
-    estimated_departure: departureAt(30),
+    seated_at: eveningTime(19, 15),
+    estimated_departure: eveningTime(20, 30),
     time_elapsed_minutes: 45,
     time_remaining_minutes: 30,
     is_overdue: false,
@@ -132,8 +139,8 @@ const INITIAL_ACTIVE_PARTIES: ActiveParty[] = [
     customer_phone: '+55 11 91333-4444',
     party_size: 5,
     tables: ['5'],
-    seated_at: seededAt(20),
-    estimated_departure: departureAt(70),
+    seated_at: eveningTime(19, 40),
+    estimated_departure: eveningTime(20, 50),
     time_elapsed_minutes: 20,
     time_remaining_minutes: 70,
     is_overdue: false,
@@ -160,7 +167,7 @@ const INITIAL_WAITLIST: DemoWaitlistEntry[] = [
     customer_phone: '+55 11 99567-8901',
     party_size: 2,
     estimated_wait: 15,
-    added_at: seededAt(10),
+    added_at: eveningTime(19, 50),
     status: 'Waiting',
   },
   {
@@ -169,7 +176,7 @@ const INITIAL_WAITLIST: DemoWaitlistEntry[] = [
     customer_phone: '+55 11 99678-9012',
     party_size: 4,
     estimated_wait: 25,
-    added_at: seededAt(5),
+    added_at: eveningTime(19, 55),
     status: 'Waiting',
     special_requests: 'Cadeirinha infantil',
   },

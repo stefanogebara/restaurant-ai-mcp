@@ -53,11 +53,41 @@ const SHOWCASE_ITEMS: ShowcaseItem[] = [
   },
 ];
 
+const FEATURE_HIGHLIGHTS: Record<string, { emoji: string; points: string[] }> = {
+  whatsapp: {
+    emoji: '💬',
+    points: [
+      'Guests text naturally — "Table for 2 tonight?"',
+      'AI checks availability and confirms instantly',
+      'Automatic reminders 2 hours before',
+      'Works in Portuguese, English, and Spanish',
+    ],
+  },
+  voice: {
+    emoji: '📞',
+    points: [
+      'AI answers calls in your restaurant\'s personality',
+      'Handles reservations, questions & directions',
+      'Speaks 6+ languages naturally',
+      'Seamless handoff to staff when needed',
+    ],
+  },
+  dashboard: {
+    emoji: '📊',
+    points: [
+      'Real-time table map with status colors',
+      'Walk-ins, waitlist, and reservations unified',
+      'Revenue & staffing forecasts built in',
+      'Manager AI assistant for quick insights',
+    ],
+  },
+};
+
 function VideoPlaceholder({ item }: { item: ShowcaseItem }) {
-  const { t } = useTranslation();
+  const highlights = FEATURE_HIGHLIGHTS[item.id];
 
   return (
-    <div className={`relative aspect-[16/10] rounded-xl ${item.bgColor} flex flex-col items-center justify-center gap-3 overflow-hidden`}>
+    <div className={`relative rounded-xl ${item.bgColor} overflow-hidden px-8 py-10 sm:px-12 sm:py-14`}>
       {/* Animated grid dots background */}
       <div className="absolute inset-0 opacity-10">
         <div className="w-full h-full" style={{
@@ -66,12 +96,19 @@ function VideoPlaceholder({ item }: { item: ShowcaseItem }) {
         }} />
       </div>
 
-      <div className={`relative w-16 h-16 rounded-2xl ${item.bgColor} border-2 border-current/20 ${item.color} flex items-center justify-center`}>
-        <Play className="w-7 h-7" />
+      <div className="relative flex flex-col items-center text-center gap-6">
+        <span className="text-5xl">{highlights.emoji}</span>
+        <ul className="space-y-3 text-left max-w-md">
+          {highlights.points.map((point, i) => (
+            <li key={i} className="flex items-start gap-3">
+              <span className={`mt-1 w-5 h-5 rounded-full ${item.bgColor} border border-current/20 ${item.color} flex items-center justify-center flex-shrink-0 text-xs font-bold`}>
+                {i + 1}
+              </span>
+              <span className="text-sm sm:text-base text-deep-charcoal/80 font-light">{point}</span>
+            </li>
+          ))}
+        </ul>
       </div>
-      <p className={`relative text-sm font-medium ${item.color}`}>
-        {t('landing.showcase.comingSoon', 'Video coming soon')}
-      </p>
     </div>
   );
 }
@@ -158,7 +195,7 @@ export default function VideoShowcaseSection() {
               }`}
             >
               {item.icon}
-              <span className="hidden sm:inline">{t(item.titleKey, item.id)}</span>
+              <span className="text-xs sm:text-sm">{t(item.titleKey, item.id)}</span>
             </button>
           ))}
         </div>

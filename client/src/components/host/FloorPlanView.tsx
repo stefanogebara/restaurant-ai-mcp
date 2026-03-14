@@ -77,9 +77,9 @@ export default function FloorPlanView({
         <div className="w-16 h-16 mx-auto mb-4 bg-soft-gray rounded-2xl flex items-center justify-center">
           <ThiingsIcon name="layout-grid" pxSize={28} />
         </div>
-        <p className="font-semibold text-deep-charcoal">{t('floorPlan.noTablesTitle', 'No tables set up yet')}</p>
+        <p className="font-semibold text-deep-charcoal">{t('settings.noTablesTitle', 'No tables configured')}</p>
         <p className="text-sm text-stone-gray mt-1">
-          {t('floorPlan.noTablesDescription', 'Complete your onboarding or add tables in Settings to see your floor plan')}
+          {t('settings.noTablesDescription', 'Add tables to start receiving reservations and managing your floor.')}
         </p>
       </div>
     );

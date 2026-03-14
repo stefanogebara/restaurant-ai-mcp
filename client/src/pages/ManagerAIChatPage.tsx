@@ -30,15 +30,15 @@ const SUGGESTED_PROMPTS = {
     'Suggest staffing for Friday dinner',
   ],
   'pt-BR': [
-    'Como estao as reservas de hoje?',
+    'Como estão as reservas de hoje?',
     'Quais mesas geraram mais receita?',
     'Teve no-shows essa semana?',
-    'Sugerir escala para sexta a noite',
+    'Sugerir escala para sexta à noite',
   ],
   es: [
-    'Como estan las reservas de hoy?',
-    'Que mesas generaron mas ingresos?',
-    'Hubo no-shows esta semana?',
+    '¿Cómo están las reservas de hoy?',
+    '¿Qué mesas generaron más ingresos?',
+    '¿Hubo no-shows esta semana?',
     'Sugerir personal para el viernes',
   ],
 };
@@ -62,6 +62,7 @@ export default function ManagerAIChatPage() {
     queryKey: ['manager-usage'],
     queryFn: () => api.get('/manager-usage').then((r) => r.data),
     staleTime: 5 * 60 * 1000,
+    retry: false,
   });
 
   const isQuotaExhausted =
@@ -159,7 +160,7 @@ export default function ManagerAIChatPage() {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-4">
           {isLoading && (
-            <p className="text-sm text-muted-stone text-center py-12">Loading history...</p>
+            <p className="text-sm text-muted-stone text-center py-12">{t('managerAI.loadingHistory', 'Loading history...')}</p>
           )}
 
           {/* Empty state with suggested prompts */}
@@ -231,7 +232,7 @@ export default function ManagerAIChatPage() {
           {sendMutation.isError && (
             <div className="text-center">
               <p className="text-sm text-red-500 bg-red-50 rounded-xl px-4 py-2 inline-block">
-                Failed to send. Please try again.
+                {t('managerAI.failedToSend', 'Failed to send. Please try again.')}
               </p>
             </div>
           )}
@@ -271,6 +272,7 @@ export default function ManagerAIChatPage() {
             type="button"
             onClick={handleSend}
             disabled={!input.trim() || sendMutation.isPending || isQuotaExhausted}
+            aria-label={t('managerAI.sendMessage', 'Send message')}
             className="bg-burgundy hover:bg-burgundy-dark disabled:opacity-40 text-white rounded-xl px-4 py-3 text-sm font-medium flex-shrink-0 transition-colors flex items-center gap-2"
           >
             <ThiingsIcon name="arrow-right" pxSize={16} className="text-white" />

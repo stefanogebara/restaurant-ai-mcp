@@ -121,7 +121,7 @@ export default function DemoDashboard() {
               aria-label="Toggle language"
             >
               <ThiingsIcon name="globe" pxSize={12} className="text-white/70" />
-              {lang === 'en' ? 'PT' : 'EN'}
+              {lang === 'en' ? 'EN' : 'PT'}
             </button>
             <Link
               to="/"

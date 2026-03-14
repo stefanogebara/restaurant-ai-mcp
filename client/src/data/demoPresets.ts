@@ -20,6 +20,13 @@ function departureAt(minutesFromNow: number): string {
   return new Date(Date.now() + minutesFromNow * 60_000).toISOString();
 }
 
+/** Fixed evening timestamp for demo — always shows a realistic dinner time */
+function eveningTime(hour: number, minute: number): string {
+  const d = new Date();
+  d.setHours(hour, minute, 0, 0);
+  return d.toISOString();
+}
+
 interface DemoTable {
   id: string;
   table_number: string;
@@ -132,8 +139,8 @@ const italianPreset: DemoPreset = {
       customer_phone: '+39 345 111 2222',
       party_size: 2,
       tables: ['1'],
-      seated_at: seededAt(55),
-      estimated_departure: departureAt(25),
+      seated_at: eveningTime(19, 5),
+      estimated_departure: eveningTime(20, 25),
       time_elapsed_minutes: 55,
       time_remaining_minutes: 25,
       is_overdue: false,
@@ -144,8 +151,8 @@ const italianPreset: DemoPreset = {
       customer_phone: '+39 333 444 5555',
       party_size: 4,
       tables: ['7'],
-      seated_at: seededAt(30),
-      estimated_departure: departureAt(60),
+      seated_at: eveningTime(19, 30),
+      estimated_departure: eveningTime(20, 30),
       time_elapsed_minutes: 30,
       time_remaining_minutes: 60,
       is_overdue: false,
@@ -158,7 +165,7 @@ const italianPreset: DemoPreset = {
       customer_phone: '+1 555-567-8901',
       party_size: 2,
       estimated_wait: 20,
-      added_at: seededAt(12),
+      added_at: eveningTime(19, 48),
       status: 'Waiting',
     },
     {
@@ -167,7 +174,7 @@ const italianPreset: DemoPreset = {
       customer_phone: '+39 349 678 9012',
       party_size: 4,
       estimated_wait: 30,
-      added_at: seededAt(5),
+      added_at: eveningTime(19, 55),
       status: 'Waiting',
       special_requests: 'High chair needed',
     },
@@ -269,7 +276,7 @@ const japanesePreset: DemoPreset = {
       customer_phone: '+81 90-5555-1111',
       party_size: 2,
       tables: ['2'],
-      seated_at: seededAt(40),
+      seated_at: eveningTime(19, 20),
       estimated_departure: departureAt(20),
       time_elapsed_minutes: 40,
       time_remaining_minutes: 20,
@@ -281,7 +288,7 @@ const japanesePreset: DemoPreset = {
       customer_phone: '+81 80-6666-2222',
       party_size: 2,
       tables: ['7'],
-      seated_at: seededAt(25),
+      seated_at: eveningTime(19, 35),
       estimated_departure: departureAt(50),
       time_elapsed_minutes: 25,
       time_remaining_minutes: 50,
@@ -295,7 +302,7 @@ const japanesePreset: DemoPreset = {
       customer_phone: '+1 555-789-0123',
       party_size: 2,
       estimated_wait: 15,
-      added_at: seededAt(8),
+      added_at: eveningTime(19, 52),
       status: 'Waiting',
     },
     {
@@ -304,7 +311,7 @@ const japanesePreset: DemoPreset = {
       customer_phone: '+81 90-7777-3333',
       party_size: 6,
       estimated_wait: 35,
-      added_at: seededAt(3),
+      added_at: eveningTime(19, 57),
       status: 'Waiting',
       special_requests: 'Private tatami room',
     },
@@ -406,7 +413,7 @@ const mexicanPreset: DemoPreset = {
       customer_phone: '+52 55 8888 1111',
       party_size: 4,
       tables: ['2'],
-      seated_at: seededAt(35),
+      seated_at: eveningTime(19, 25),
       estimated_departure: departureAt(45),
       time_elapsed_minutes: 35,
       time_remaining_minutes: 45,
@@ -418,7 +425,7 @@ const mexicanPreset: DemoPreset = {
       customer_phone: '+52 81 9999 2222',
       party_size: 2,
       tables: ['8'],
-      seated_at: seededAt(15),
+      seated_at: eveningTime(19, 45),
       estimated_departure: departureAt(60),
       time_elapsed_minutes: 15,
       time_remaining_minutes: 60,
@@ -432,7 +439,7 @@ const mexicanPreset: DemoPreset = {
       customer_phone: '+52 55 6789 0123',
       party_size: 4,
       estimated_wait: 20,
-      added_at: seededAt(10),
+      added_at: eveningTime(19, 50),
       status: 'Waiting',
     },
     {
@@ -441,7 +448,7 @@ const mexicanPreset: DemoPreset = {
       customer_phone: '+52 33 7890 1234',
       party_size: 2,
       estimated_wait: 10,
-      added_at: seededAt(4),
+      added_at: eveningTime(19, 56),
       status: 'Waiting',
       special_requests: 'Patio seating preferred',
     },
