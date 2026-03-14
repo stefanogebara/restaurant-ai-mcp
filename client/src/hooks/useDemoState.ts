@@ -7,10 +7,6 @@ import { DEMO_PRESETS, type DemoPreset } from '../data/demoPresets';
 const today = new Date().toISOString().split('T')[0];
 const tomorrow = new Date(Date.now() + 86_400_000).toISOString().split('T')[0];
 
-function seededAt(minutesAgo: number): string {
-  return new Date(Date.now() - minutesAgo * 60_000).toISOString();
-}
-
 function departureAt(minutesFromNow: number): string {
   return new Date(Date.now() + minutesFromNow * 60_000).toISOString();
 }

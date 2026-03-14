@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import DemoSlideIn from '../landing/components/DemoSlideIn';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import StatsBar from '../components/dashboard/StatsBar';
 import ReservationsList from '../components/dashboard/ReservationsList';
@@ -395,6 +396,9 @@ export default function DemoDashboard() {
           </div>
         </div>
       )}
+
+      {/* Conversion nudge — appears after 60s */}
+      <DemoSlideIn />
     </div>
   );
 }

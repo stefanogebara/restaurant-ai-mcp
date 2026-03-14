@@ -58,20 +58,14 @@ export default function LandingNav() {
 
       {/* Desktop Navigation */}
       <div className="hidden md:flex items-center gap-9">
-        <button type="button" onClick={() => scrollToSection('features')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
-          {t('landing.nav.features')}
+        <button type="button" onClick={() => scrollToSection('try-demo')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
+          {t('landing.nav.demo', 'Demo')}
         </button>
         <button type="button" onClick={() => scrollToSection('pricing')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
           {t('landing.nav.pricing')}
         </button>
-        <button type="button" onClick={() => navigate('/live-demo')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
-          {t('landing.nav.demo')}
-        </button>
-        <button type="button" onClick={() => scrollToSection('contact')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
-          {t('landing.nav.contact')}
-        </button>
         <Link to="/demo/setup" className="text-sm font-medium text-burgundy hover:text-burgundy-dark transition-colors">
-          {t('landing.nav.tryFree')}
+          {t('landing.nav.tryFree', 'Try free demo')}
         </Link>
         <Link to="/login" className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
           {t('landing.nav.signIn')}
@@ -132,20 +126,14 @@ export default function LandingNav() {
         }`}
         style={{ zIndex: 50 }}
       >
-        <button type="button" onClick={() => scrollToSection('features')} className="block w-full text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal hover:bg-stone-50 transition-colors py-3 px-2 rounded-lg">
-          {t('landing.nav.features')}
+        <button type="button" onClick={() => scrollToSection('try-demo')} className="block w-full text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal hover:bg-stone-50 transition-colors py-3 px-2 rounded-lg">
+          {t('landing.nav.demo', 'Demo')}
         </button>
         <button type="button" onClick={() => scrollToSection('pricing')} className="block w-full text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal hover:bg-stone-50 transition-colors py-3 px-2 rounded-lg">
           {t('landing.nav.pricing')}
         </button>
-        <button type="button" onClick={() => { navigate('/live-demo'); closeMobileMenu(); }} className="block w-full text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal hover:bg-stone-50 transition-colors py-3 px-2 rounded-lg">
-          {t('landing.nav.demo')}
-        </button>
-        <button type="button" onClick={() => scrollToSection('contact')} className="block w-full text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal hover:bg-stone-50 transition-colors py-3 px-2 rounded-lg">
-          {t('landing.nav.contact')}
-        </button>
         <Link to="/demo/setup" onClick={closeMobileMenu} className="block text-left text-sm font-medium text-burgundy hover:text-burgundy-dark hover:bg-stone-50 transition-colors py-3 px-2 rounded-lg">
-          {t('landing.nav.tryFree')}
+          {t('landing.nav.tryFree', 'Try free demo')}
         </Link>
         <Link to="/login" onClick={closeMobileMenu} className="block text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal hover:bg-stone-50 transition-colors py-3 px-2 rounded-lg">
           {t('landing.nav.signIn')}
