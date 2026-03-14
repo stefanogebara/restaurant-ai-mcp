@@ -27,6 +27,8 @@ export default function VoiceWidgetSection() {
     script.src = ELEVENLABS_SCRIPT_URL;
     script.async = true;
     script.type = 'text/javascript';
+    script.integrity = 'sha384-bXCYeZFO48oeemxAoIkbF3wTkdbbJT99316+t9hWOAAgfvqL9bkWuBQLb5pjSV3v';
+    script.crossOrigin = 'anonymous';
     script.onload = () => setScriptLoaded(true);
     script.onerror = () => setScriptError(true);
     document.body.appendChild(script);
