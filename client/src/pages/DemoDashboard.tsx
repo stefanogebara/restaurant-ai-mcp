@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import StatsBar from '../components/dashboard/StatsBar';
 import ReservationsList from '../components/dashboard/ReservationsList';
@@ -12,7 +12,9 @@ import { useExitIntent } from '../hooks/useExitIntent';
 import type { UpcomingReservation, ActiveParty } from '../types/host.types';
 
 export default function DemoDashboard() {
-  const demo = useDemoState();
+  const [searchParams] = useSearchParams();
+  const presetKey = searchParams.get('preset') || undefined;
+  const demo = useDemoState(presetKey);
   const { t, dateLocale, lang, setLang, showLangPopup, dismissPopup } = useDemoLocale();
 
   const [showWalkInModal, setShowWalkInModal] = useState(false);

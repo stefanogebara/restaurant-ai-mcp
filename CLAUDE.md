@@ -518,7 +518,7 @@ Push to `main` branch triggers automatic Vercel deployment.
 #### 12D: Landing Page & Demo Polish
 - [ ] 12D-1: Landing page overhaul — embedded video/GIF of WhatsApp + voice agent in action
 - [x] 12D-2: Fix language inconsistencies — English strings in PT/ES UI
-- [ ] 12D-3: Build 3 mock restaurant demos with realistic fake data
+- [x] 12D-3: Build 3 mock restaurant demos with realistic fake data
 
 #### 12E: Production Readiness (from Phase 12 plan)
 - [x] 12E-1: AddReservationModal — host creates reservations from dashboard

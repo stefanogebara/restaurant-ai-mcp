@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { ExternalLink, Phone, MessageSquare, ArrowRight, LayoutDashboard, Clock, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { DEMO_RESTAURANT } from '../data/demoData';
 
 export default function InteractiveDemoSection() {
@@ -229,6 +230,29 @@ export default function InteractiveDemoSection() {
                 {t('landing.demo.ctaButton')}
                 <ArrowRight aria-hidden="true" className="w-4 h-4" />
               </button>
+            </div>
+
+            {/* Quick-start preset demos */}
+            <div className="pt-6 border-t border-border-gray mt-6">
+              <p className="text-xs font-medium text-muted-stone uppercase tracking-wide text-center mb-3">
+                {t('landing.demo.tryPreset', 'Or try a sample restaurant')}
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { key: 'italian', label: 'Trattoria da Marco', flag: '🇮🇹' },
+                  { key: 'japanese', label: 'Sakura Izakaya', flag: '🇯🇵' },
+                  { key: 'mexican', label: 'Casa Oaxaca', flag: '🇲🇽' },
+                ].map((p) => (
+                  <Link
+                    key={p.key}
+                    to={`/demo?preset=${p.key}`}
+                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-soft-gray hover:bg-burgundy/5 border border-border-gray rounded-xl text-xs font-medium text-deep-charcoal transition-colors"
+                  >
+                    <span>{p.flag}</span>
+                    <span className="truncate">{p.label}</span>
+                  </Link>
+                ))}
+              </div>
             </div>
           </motion.div>
         </div>

@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { UpcomingReservation, ActiveParty } from '../types/host.types';
+import { DEMO_PRESETS, type DemoPreset } from '../data/demoPresets';
 
 // ---------- Seed data helpers ----------
 
@@ -192,11 +193,12 @@ function genId(prefix: string): string {
 
 // ---------- Hook ----------
 
-export function useDemoState() {
-  const [tables, setTables] = useState<DemoTable[]>(INITIAL_TABLES);
-  const [reservations, setReservations] = useState<UpcomingReservation[]>(INITIAL_RESERVATIONS);
-  const [activeParties, setActiveParties] = useState<ActiveParty[]>(INITIAL_ACTIVE_PARTIES);
-  const [waitlist, setWaitlist] = useState<DemoWaitlistEntry[]>(INITIAL_WAITLIST);
+export function useDemoState(presetKey?: string) {
+  const preset: DemoPreset | undefined = presetKey ? DEMO_PRESETS[presetKey] : undefined;
+  const [tables, setTables] = useState<DemoTable[]>(preset?.tables ?? INITIAL_TABLES);
+  const [reservations, setReservations] = useState<UpcomingReservation[]>(preset?.reservations ?? INITIAL_RESERVATIONS);
+  const [activeParties, setActiveParties] = useState<ActiveParty[]>(preset?.activeParties ?? INITIAL_ACTIVE_PARTIES);
+  const [waitlist, setWaitlist] = useState<DemoWaitlistEntry[]>(preset?.waitlist ?? INITIAL_WAITLIST);
   const [completedCount, setCompletedCount] = useState(3);
 
   // ---- Derived ----

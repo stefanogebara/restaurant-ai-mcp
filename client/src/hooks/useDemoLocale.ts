@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import i18n from '../i18n/config';
+import { DEMO_PRESETS } from '../data/demoPresets';
 
 export type DemoLang = 'en' | 'pt-BR';
 
@@ -106,19 +107,22 @@ export function useDemoLocale() {
   const stored = localStorage.getItem(STORAGE_KEY) as DemoLang | null;
   const browserLang = detectBrowserLang();
 
-  // Read restaurant identity from URL params (set by demo creation API)
+  // Read restaurant identity from URL params (set by demo creation API or preset)
   const urlParams = new URLSearchParams(window.location.search);
-  const urlName = urlParams.get('name');
-  const urlCuisine = urlParams.get('cuisine');
-  const urlCity = urlParams.get('city');
+  const presetKey = urlParams.get('preset');
+  const preset = presetKey ? DEMO_PRESETS[presetKey] : undefined;
+  const urlName = preset?.name || urlParams.get('name');
+  const urlCuisine = preset?.cuisine || urlParams.get('cuisine');
+  const urlCity = preset?.neighborhood || urlParams.get('city');
 
-  // Default is PT-BR. Show popup only if browser is NOT Portuguese (offer English).
-  const [showLangPopup, setShowLangPopup] = useState(!stored && !browserLang.startsWith('pt'));
-  const [lang, setLangState] = useState<DemoLang>(stored || 'pt-BR');
+  // Presets default to English; regular demo defaults to PT-BR
+  const defaultLang: DemoLang = preset ? 'en' : 'pt-BR';
+  const [showLangPopup, setShowLangPopup] = useState(!stored && !preset && !browserLang.startsWith('pt'));
+  const [lang, setLangState] = useState<DemoLang>(stored || defaultLang);
 
   // Sync i18next with demo locale on mount
   useEffect(() => {
-    const target = stored || 'pt-BR';
+    const target = stored || defaultLang;
     if (i18n.language !== target) {
       i18n.changeLanguage(target);
     }
