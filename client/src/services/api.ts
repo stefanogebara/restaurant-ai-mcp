@@ -169,6 +169,7 @@ export const hostAPI = {
     customer_phone: string;
     customer_email?: string;
     special_requests?: string;
+    source?: string;
   }) => api.post('/reservations?action=create', data),
 
   modifyReservation: (data: {
