@@ -45,9 +45,9 @@ const strings = {
     langSwitchYes: 'Switch to English',
     langKeepEn: 'Manter Portugues',
     // Exit intent
-    exitTitle: 'Before you go...',
-    exitMessage: 'Have questions about bringing Seatable to your restaurant? Our team is ready to help.',
-    exitWhatsappCTA: 'Chat with us on WhatsApp',
+    exitTitle: 'Ready to get started?',
+    exitMessage: 'Set up your own AI receptionist in under 5 minutes. No credit card required.',
+    exitTrialCTA: 'Start Free Trial',
     exitContinue: 'Continue Demo',
   },
   'pt-BR': {
@@ -88,9 +88,9 @@ const strings = {
     langSwitchYes: 'Switch to English',
     langKeepEn: 'Manter Portugues',
     // Exit intent
-    exitTitle: 'Antes de sair...',
-    exitMessage: 'Tem duvidas sobre o Seatable para seu restaurante? Nossa equipe esta pronta para ajudar.',
-    exitWhatsappCTA: 'Falar no WhatsApp',
+    exitTitle: 'Pronto para comecar?',
+    exitMessage: 'Configure sua recepcionista IA em menos de 5 minutos. Sem cartao de credito.',
+    exitTrialCTA: 'Comecar Teste Gratis',
     exitContinue: 'Continuar Demo',
   },
 } as const;

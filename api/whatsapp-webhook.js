@@ -81,115 +81,6 @@ setInterval(() => {
 }, 5 * 60 * 1000);
 
 /**
- * Simple language detection from message text
- */
-function detectLanguage(text) {
-  const lower = text.toLowerCase();
-  const ptWords = ['oi', 'olá', 'ola', 'tenho', 'interesse', 'restaurante', 'podem', 'ajudar', 'gostaria', 'saber', 'como', 'funciona', 'quanto', 'custa', 'obrigado', 'preciso', 'quero'];
-  const esWords = ['hola', 'estoy', 'interesado', 'restaurante', 'pueden', 'ayudar', 'quisiera', 'saber', 'cómo', 'cuánto', 'cuesta', 'gracias', 'necesito', 'quiero'];
-  const ptHits = ptWords.filter(w => lower.includes(w)).length;
-  const esHits = esWords.filter(w => lower.includes(w)).length;
-  if (ptHits >= 2) return 'pt';
-  if (esHits >= 2) return 'es';
-  if (ptHits === 1 && esHits === 0) return 'pt';
-  if (esHits === 1 && ptHits === 0) return 'es';
-  return null;
-}
-
-// ─── Sales Intent Detection & Routing ─────────────────────────────────────────
-
-/**
- * Pre-filled messages from the exit-intent popup (exact match)
- */
-const SALES_PREFILLED_MESSAGES = [
-  'oi! tenho interesse em saber mais sobre o seatable para meu restaurante. podem me ajudar?',
-  'hi! i\'m interested in learning more about seatable for my restaurant. can you help me?',
-];
-
-/**
- * Keywords that indicate a sales/product inquiry (not a restaurant reservation)
- */
-const SALES_KEYWORDS = [
-  'seatable', 'sistema', 'plataforma', 'software', 'pricing', 'preço', 'preco',
-  'plano', 'plans', 'subscription', 'assinatura', 'demo', 'demonstração',
-  'demonstracao', 'produto', 'product', 'funcionalidades', 'features',
-  'inteligência artificial', 'inteligencia artificial', 'ai agent', 'ai para restaurante',
-  'ai for restaurant', 'how does it work', 'como funciona',
-  'quanto custa', 'how much', 'free trial', 'teste grátis', 'teste gratis',
-];
-
-/**
- * Detect whether a message is a sales inquiry about Seatable (the product)
- * vs a restaurant reservation request.
- */
-function isSalesInquiry(messageText, conversationHistory = []) {
-  const lower = messageText.toLowerCase().trim();
-
-  // Exact match on pre-filled exit-intent messages
-  if (SALES_PREFILLED_MESSAGES.includes(lower)) return true;
-
-  // Keyword match
-  if (SALES_KEYWORDS.some(kw => lower.includes(kw))) return true;
-
-  // If the conversation already started as sales, keep it as sales
-  if (conversationHistory.length > 0) {
-    const firstUserMsg = conversationHistory.find(m => m.role === 'user');
-    if (firstUserMsg && isSalesInquiry(firstUserMsg.content, [])) return true;
-  }
-
-  return false;
-}
-
-/**
- * Build the Seatable Sales Agent system prompt
- */
-function buildSalesPrompt(language = 'pt') {
-  const langBlock = language === 'es'
-    ? '\nIMPORTANT: Responde siempre en español. Usa un tono profesional pero amable.\n'
-    : language === 'pt'
-      ? '\nIMPORTANT: Responda sempre em português brasileiro. Use um tom profissional mas amigável, com "você".\n'
-      : '\nIMPORTANT: Always respond in English. Use a professional but friendly tone.\n';
-
-  return `You are the Seatable Sales Assistant — a friendly, knowledgeable AI that helps restaurant owners learn about Seatable, an AI-powered restaurant management platform.
-
-${langBlock}
-
-## About Seatable
-Seatable (seatable.one) is an AI-powered platform that helps restaurants manage reservations, walk-ins, and customer communication through:
-- **AI Voice Agent**: Answers phone calls 24/7, takes reservations in natural conversation (multiple languages)
-- **AI WhatsApp Agent**: Handles bookings via WhatsApp automatically
-- **Smart Host Dashboard**: Real-time table management, waitlist, active parties
-- **Manager AI**: AI assistant that helps managers with briefings, staffing forecasts, revenue insights
-- **Customer Intelligence**: LTV tracking, churn prediction, retention campaigns
-- **Booking Widget**: Embeddable booking page for your website
-
-## Pricing Plans
-| Plan | Price | Key Features |
-|------|-------|-------------|
-| Starter | €29/month | AI reservations (Chat + WhatsApp), Host dashboard, Up to 50 reservations/month |
-| Growth | €99/month | Everything in Starter + Voice AI, Waitlist management, Up to 150 reservations/month, 14-day free trial |
-| Scale | €199/month | Everything in Growth + Unlimited reservations, Priority support, Custom integrations |
-
-## Your Goals
-1. Answer questions about Seatable's features, pricing, and capabilities
-2. Collect the prospect's contact info (name, restaurant name, email) when appropriate
-3. Offer to schedule a personalized demo
-4. Direct them to seatable.one for more info or to start a free trial
-
-## Guidelines
-- Keep responses concise for WhatsApp (under 500 characters when possible)
-- Be enthusiastic but not pushy
-- If they ask technical questions you're unsure about, say you'll have the team follow up
-- Never make up features that don't exist
-- If they want to make a restaurant reservation (not learn about the product), tell them this number is for Seatable product inquiries and direct them to the restaurant's booking page
-
-## Contact
-- Website: seatable.one
-- Email: hello@seatable.one
-`;
-}
-
-/**
  * Send a WhatsApp message via Meta Cloud API
  */
 async function sendWhatsAppMessage(to, message) {
@@ -1038,31 +929,8 @@ async function callChatCompletions(messages, tools) {
  * Process a message with AI (OpenAI-compatible API)
  */
 async function processWithAI(userMessage, session, conversationHistory = []) {
-  const language = session?.restaurant?.language || detectLanguage(userMessage) || 'pt';
+  const language = session?.restaurant?.language || 'en';
   const currentDateTime = getCurrentDateTime(language);
-
-  // ─── Sales Intent Routing ───────────────────────────────────────────────────
-  // If the message is a product inquiry about Seatable, route to the sales agent
-  // instead of the restaurant reservation bot.
-  if (isSalesInquiry(userMessage, conversationHistory)) {
-    logger.info('[SALES] Sales inquiry detected, routing to Seatable Sales Agent');
-    const salesPrompt = buildSalesPrompt(language);
-    const salesMessages = [
-      { role: 'system', content: salesPrompt },
-      ...conversationHistory,
-      { role: 'user', content: userMessage }
-    ];
-
-    try {
-      const data = await callChatCompletions(salesMessages, []);
-      const choice = data.choices?.[0];
-      return choice?.message?.content || 'Thanks for your interest in Seatable! Please visit seatable.one or email hello@seatable.one for more info.';
-    } catch (error) {
-      logger.error('[SALES] AI error:', error);
-      return 'Thanks for your interest in Seatable! Please visit seatable.one or email hello@seatable.one for more information.';
-    }
-  }
-  // ─── End Sales Routing ──────────────────────────────────────────────────────
 
   // Language instruction based on restaurant setting
   let languageInstruction = '';

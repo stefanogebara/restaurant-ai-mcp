@@ -268,8 +268,8 @@ export default function DemoDashboard() {
             aria-label={t.exitTitle}
             className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-sm w-full text-center animate-in fade-in zoom-in-95 duration-200"
           >
-            <div className="w-14 h-14 rounded-2xl bg-green-50 flex items-center justify-center mx-auto mb-4">
-              <ThiingsIcon name="chat" pxSize={28} className="text-green-600" />
+            <div className="w-14 h-14 rounded-2xl bg-burgundy/10 flex items-center justify-center mx-auto mb-4">
+              <ThiingsIcon name="star" pxSize={28} className="text-burgundy" />
             </div>
             <h3 className="text-lg font-bold text-deep-charcoal mb-2">
               {t.exitTitle}
@@ -278,19 +278,13 @@ export default function DemoDashboard() {
               {t.exitMessage}
             </p>
             <div className="flex flex-col gap-2.5">
-              <a
-                href={`https://wa.me/551150289356?text=${encodeURIComponent(
-                  lang === 'pt-BR'
-                    ? 'Oi! Tenho interesse em saber mais sobre o Seatable para meu restaurante. Podem me ajudar?'
-                    : 'Hi! I\'m interested in learning more about Seatable for my restaurant. Can you help me?'
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
+              <Link
+                to="/login"
+                className="w-full px-4 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
               >
-                <ThiingsIcon name="chat" pxSize={16} className="text-white" />
-                {t.exitWhatsappCTA}
-              </a>
+                <ThiingsIcon name="star" pxSize={16} className="text-white" />
+                {t.exitTrialCTA}
+              </Link>
               <button
                 type="button"
                 onClick={dismissExitPopup}
