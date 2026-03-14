@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 
 // Framer Motion's whileInView uses IntersectionObserver (needs class-based mock)
 beforeAll(() => {
-  global.IntersectionObserver = class MockIntersectionObserver {
+  (globalThis as any).IntersectionObserver = class MockIntersectionObserver {
     observe = vi.fn();
     unobserve = vi.fn();
     disconnect = vi.fn();
