@@ -163,6 +163,29 @@ const TEMPLATES = {
       `Por favor dirija-se a recepcao. Guardaremos sua mesa por 10 minutos.`,
   },
 
+  pre_reservation_upsell: {
+    en: ({ name, restaurant, dishes, partyNote }) =>
+      `Hi ${name}! 👋\n\n` +
+      `You have a reservation tomorrow at *${restaurant}* and our chef has some special recommendations:\n\n` +
+      `${dishes}\n` +
+      `${partyNote ? `\n${partyNote}\n` : ''}` +
+      `\nWe look forward to seeing you! 🍽️`,
+
+    es: ({ name, restaurant, dishes, partyNote }) =>
+      `Hola ${name}! 👋\n\n` +
+      `Manana tienes reserva en *${restaurant}* y nuestro chef preparo sugerencias especiales:\n\n` +
+      `${dishes}\n` +
+      `${partyNote ? `\n${partyNote}\n` : ''}` +
+      `\nTe esperamos! 🍽️`,
+
+    pt: ({ name, restaurant, dishes, partyNote }) =>
+      `Oi ${name}! 👋\n\n` +
+      `Amanha voce tem reserva no *${restaurant}* e nosso chef separou algumas sugestoes especiais:\n\n` +
+      `${dishes}\n` +
+      `${partyNote ? `\n${partyNote}\n` : ''}` +
+      `\nTe esperamos! 🍽️`,
+  },
+
   new_booking_alert: {
     en: ({ customerName, partySize, date, time, phone, reservationId }) =>
       `New booking!\n\n` +
