@@ -82,7 +82,7 @@ export default function DemoVoiceAgent({ restaurantName, scrapedData, onContinue
       transition: {
         duration: 2.2 + i * 0.3,
         repeat: Infinity,
-        ease: 'easeOut',
+        ease: 'easeOut' as const,
         delay: i * 0.4,
       },
     }),
