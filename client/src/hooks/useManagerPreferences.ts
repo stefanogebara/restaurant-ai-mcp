@@ -8,6 +8,7 @@ export interface NotificationPreferences {
   alert_low_covers?: boolean;
   alert_high_noshows?: boolean;
   alert_late_cancellations?: boolean;
+  pre_reservation_upsell?: boolean;
 }
 
 async function fetchPreferences(): Promise<NotificationPreferences> {

@@ -111,6 +111,26 @@ export default function ManagerNotificationsPanel() {
           ))}
         </div>
       </div>
+
+      {/* Customer engagement */}
+      <div>
+        <p className="text-sm font-medium text-deep-charcoal mb-3">{t('settings.customerEngagement', 'Customer Engagement')}</p>
+        <div className="space-y-3">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={!!getValue('pre_reservation_upsell')}
+              onChange={e => set('pre_reservation_upsell', e.target.checked)}
+              aria-label={t('settings.upsellLabel', 'Pre-reservation dish recommendations')}
+              className="mt-0.5 accent-burgundy"
+            />
+            <span>
+              <span className="text-sm font-medium text-deep-charcoal">{t('settings.upsellLabel', 'Pre-reservation dish recommendations')}</span>
+              <span className="block text-xs text-warm-stone">{t('settings.upsellDesc', 'Send AI-personalized dish suggestions via WhatsApp the day before each reservation')}</span>
+            </span>
+          </label>
+        </div>
+      </div>
     </div>
   );
 }

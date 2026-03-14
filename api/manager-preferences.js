@@ -11,6 +11,7 @@ const ALLOWED_PREF_KEYS = new Set([
   'alert_low_covers',
   'alert_high_noshows',
   'alert_late_cancellations',
+  'pre_reservation_upsell',
 ]);
 
 module.exports = async (req, res) => {

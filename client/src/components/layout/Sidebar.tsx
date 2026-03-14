@@ -32,6 +32,7 @@ const navSections: NavSection[] = [
   {
     label: 'AI',
     items: [
+      { path: '/host-dashboard/manager-ai', label: 'Manager AI', requiredFeature: 'overview' },
       { path: '/host-dashboard/voice-settings', label: 'Voice Agent', requiredFeature: 'voiceAI' },
       { path: '/host-dashboard/whatsapp', label: 'WhatsApp', requiredFeature: 'overview' },
       { path: '/host-dashboard/calls', label: 'Call History', requiredFeature: 'aiAgentTracking' },
@@ -93,6 +94,7 @@ export default function Sidebar() {
   const NAV_KEYS: Record<string, string> = {
     Dashboard: 'navigation.dashboard',
     Tables: 'navigation.tables',
+    'Manager AI': 'navigation.managerAI',
     'Voice Agent': 'navigation.voiceAgent',
     'Call History': 'navigation.callHistory',
     'AI Insights': 'navigation.aiInsights',
