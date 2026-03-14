@@ -25,6 +25,6 @@ export function useRevenueStats() {
   return useQuery({
     queryKey: ['revenue-stats'],
     queryFn: fetchRevenueStats,
-    staleTime: 10 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
   });
 }

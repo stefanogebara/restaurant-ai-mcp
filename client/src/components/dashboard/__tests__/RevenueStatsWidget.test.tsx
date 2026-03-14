@@ -44,7 +44,7 @@ describe('RevenueStatsWidget', () => {
   it('shows estimated badge when using default', () => {
     mockStats.mockReturnValue({ data: { avg_spend_per_cover: 40, data_points: 2, using_default: true }, isLoading: false });
     render(<RevenueStatsWidget />);
-    expect(screen.getByText(/estimad/i)).toBeInTheDocument();
+    expect(screen.getByText(/estimated/i)).toBeInTheDocument();
   });
 
   it('returns null when no data', () => {

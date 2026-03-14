@@ -74,4 +74,19 @@ describe('StatsBar', () => {
     expect(screen.getByText('Guests Expected')).toBeInTheDocument();
     expect(screen.getByText('Active Parties')).toBeInTheDocument();
   });
+
+  it('shows predicted revenue card when predictedRevenue > 0', () => {
+    render(<StatsBar {...defaultProps} predictedRevenue={1200} />);
+    expect(screen.getByText('Predicted Revenue')).toBeInTheDocument();
+  });
+
+  it('hides predicted revenue card when predictedRevenue is 0', () => {
+    render(<StatsBar {...defaultProps} predictedRevenue={0} />);
+    expect(screen.queryByText('Predicted Revenue')).not.toBeInTheDocument();
+  });
+
+  it('hides predicted revenue card when predictedRevenue is undefined', () => {
+    render(<StatsBar {...defaultProps} />);
+    expect(screen.queryByText('Predicted Revenue')).not.toBeInTheDocument();
+  });
 });
