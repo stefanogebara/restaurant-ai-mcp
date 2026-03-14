@@ -25,8 +25,8 @@ vi.mock('../../components/demo/DemoWaitlistPanel', () => ({
   ),
 }));
 
-vi.mock('../../components/demo/DemoManagerChat', () => ({
-  default: () => <div data-testid="manager-chat" />,
+vi.mock('../../components/demo/DemoAIInsightsBar', () => ({
+  default: () => <div data-testid="ai-insights-bar" />,
 }));
 
 function renderDemoDashboard() {
@@ -102,13 +102,9 @@ describe('DemoDashboard', () => {
     expect(screen.getByRole('dialog', { name: /adicionar walk-in/i })).toBeInTheDocument();
   });
 
-  it('opens manager chat on FAB click', () => {
+  it('renders AI Insights Bar inline', () => {
     renderDemoDashboard();
 
-    // PT-BR default aria-label
-    const chatFab = screen.getByLabelText('Abrir Assistente IA');
-    fireEvent.click(chatFab);
-
-    expect(screen.getByTestId('manager-chat')).toBeInTheDocument();
+    expect(screen.getByTestId('ai-insights-bar')).toBeInTheDocument();
   });
 });

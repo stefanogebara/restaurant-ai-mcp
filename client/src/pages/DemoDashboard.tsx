@@ -6,7 +6,7 @@ import StatsBar from '../components/dashboard/StatsBar';
 import ReservationsList from '../components/dashboard/ReservationsList';
 import ActivePartiesPanel from '../components/dashboard/ActivePartiesPanel';
 import DemoWaitlistPanel from '../components/demo/DemoWaitlistPanel';
-import DemoManagerChat from '../components/demo/DemoManagerChat';
+import DemoAIInsightsBar from '../components/demo/DemoAIInsightsBar';
 import { useDemoState } from '../hooks/useDemoState';
 import { useDemoLocale } from '../hooks/useDemoLocale';
 import { useExitIntent } from '../hooks/useExitIntent';
@@ -19,7 +19,6 @@ export default function DemoDashboard() {
   const { t, dateLocale, lang, setLang, showLangPopup, dismissPopup } = useDemoLocale();
 
   const [showWalkInModal, setShowWalkInModal] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
   const { showPopup: showExitPopup, dismiss: dismissExitPopup } = useExitIntent();
 
   // Walk-in form state
@@ -172,6 +171,17 @@ export default function DemoDashboard() {
           isLoading={false}
         />
 
+        {/* AI Insights Bar */}
+        <DemoAIInsightsBar
+          restaurantName={t.restaurantName}
+          occupiedTables={demo.stats.occupiedTables}
+          totalTables={demo.stats.totalTables}
+          reservationsToday={demo.stats.reservationsToday}
+          waitlistCount={demo.stats.waitlistCount}
+          totalGuests={demo.stats.totalGuests}
+          lang={lang}
+        />
+
         {/* Main Content: Unified container with 2px dividers */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-[2px] bg-border-gray rounded-2xl overflow-hidden">
           {/* Left Column: Reservations — spans all right-column rows */}
@@ -231,30 +241,6 @@ export default function DemoDashboard() {
       >
         <ThiingsIcon name="plus" pxSize={24} />
       </button>
-
-      {/* FAB: Manager AI Chat */}
-      <button
-        type="button"
-        onClick={() => setChatOpen((prev) => !prev)}
-        aria-label={lang === 'pt-BR' ? 'Abrir Assistente IA' : 'Open AI Manager Assistant'}
-        className="fixed bottom-20 sm:bottom-6 right-20 sm:right-24 z-40 w-14 h-14 bg-blue-600 hover:bg-blue-700 hover:scale-105 active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
-      >
-        <ThiingsIcon name="chat" pxSize={22} />
-      </button>
-
-      {/* Manager Chat Panel */}
-      {chatOpen && (
-        <DemoManagerChat
-          occupiedTables={demo.stats.occupiedTables}
-          totalTables={demo.stats.totalTables}
-          activeParties={demo.stats.activeParties}
-          waitlistCount={demo.stats.waitlistCount}
-          reservationsToday={demo.stats.reservationsToday}
-          totalGuests={demo.stats.totalGuests}
-          onClose={() => setChatOpen(false)}
-          lang={lang}
-        />
-      )}
 
       {/* Exit Intent Popup */}
       {showExitPopup && (
