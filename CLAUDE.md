@@ -513,7 +513,7 @@ Push to `main` branch triggers automatic Vercel deployment.
 
 #### 12C: Manager AI UX Overhaul
 - [x] 12C-1: Replace chat bubble with full-screen Manager AI interface (ChatGPT-style)
-- [ ] 12C-2: Pre-reservation WhatsApp upsell — AI sends dish recs + chef special before visit
+- [x] 12C-2: Pre-reservation WhatsApp upsell — AI sends dish recs + chef special before visit
 
 #### 12D: Landing Page & Demo Polish
 - [ ] 12D-1: Landing page overhaul — embedded video/GIF of WhatsApp + voice agent in action
