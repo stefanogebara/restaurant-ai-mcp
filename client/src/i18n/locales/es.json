@@ -741,7 +741,10 @@
     "alertHighNoshows": "Alto risco de no-show",
     "alertHighNoshowsDesc": "Alerta às 15h quando 3+ reservas têm >70% de probabilidade de no-show",
     "alertLateCancellations": "Cancelaciones tardías",
-    "alertLateCancellationsDesc": "Alerta a cada 2h (12–20h) quando 2+ cancelamentos nas últimas 2 horas",
+    "alertLateCancellationsDesc": "Alerta cada 2h (12–20h) cuando 2+ cancelaciones en las últimas 2 horas",
+    "customerEngagement": "Engagement con Clientes",
+    "upsellLabel": "Recomendaciones de platos pre-reserva",
+    "upsellDesc": "Enviar sugerencias de platos personalizadas por IA via WhatsApp el día antes de cada reserva",
     "staffingRatios": "Ratios de Personal",
     "staffingRatiosDesc": "Defina quantos couverts cada funcionario atende por serviço.",
     "staffingRatiosSaved": "Ratios de personal guardados",
@@ -1582,6 +1585,9 @@
     "runningLow": "Casi al límite",
     "upgradeFor": "Mejora por",
     "month": "mes",
-    "resets": "Se reinicia"
+    "resets": "Se reinicia",
+    "loadingHistory": "Cargando historial...",
+    "failedToSend": "Error al enviar. Intenta de nuevo.",
+    "sendMessage": "Enviar mensaje"
   }
 }

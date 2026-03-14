@@ -12,6 +12,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { hostAPI } from '../../services/api';
 import { useToast } from '../../contexts/ToastContext';
 import ThiingsIcon from '../common/ThiingsIcon';
+import PhoneInput from '../common/PhoneInput';
 
 interface AddReservationModalProps {
   isOpen: boolean;
@@ -45,6 +46,7 @@ export default function AddReservationModal({ isOpen, onClose }: AddReservationM
         customer_phone: form.customer_phone.trim(),
         customer_email: form.customer_email.trim() || undefined,
         special_requests: form.special_requests.trim() || undefined,
+        source: 'dashboard',
       }),
     onSuccess: () => {
       toast.success(t('reservations.addSuccess', 'Reservation created successfully'));
@@ -125,19 +127,12 @@ export default function AddReservationModal({ isOpen, onClose }: AddReservationM
           </div>
 
           {/* Phone */}
-          <div>
-            <label className="block text-sm font-medium text-deep-charcoal mb-1">
-              {t('reservations.customerPhone', 'Phone')} *
-            </label>
-            <input
-              type="tel"
-              required
-              value={form.customer_phone}
-              onChange={(e) => update('customer_phone', e.target.value)}
-              className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
-              placeholder="+34 612 345 678"
-            />
-          </div>
+          <PhoneInput
+            value={form.customer_phone}
+            onChange={(fullNumber) => update('customer_phone', fullNumber)}
+            label={t('reservations.customerPhone', 'Phone')}
+            required
+          />
 
           {/* Email (optional) */}
           <div>

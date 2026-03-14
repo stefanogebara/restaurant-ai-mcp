@@ -5,6 +5,7 @@ import NoShowRiskBadge from './NoShowRiskBadge';
 import DepositBadge from './DepositBadge';
 import DepositActions from './DepositActions';
 import { formatCurrency } from '../../utils/currency';
+import { predictReservationRevenue, type PartySizeRevenue } from '../../utils/revenuePredictor';
 
 interface ReservationsListProps {
   todayReservations: UpcomingReservation[];
@@ -16,6 +17,7 @@ interface ReservationsListProps {
   onEdit?: (reservation: UpcomingReservation) => void;
   onCancel?: (reservation: UpcomingReservation) => void;
   avgSpendPerCover?: number;
+  byPartySize?: PartySizeRevenue[];
   language?: 'en' | 'es' | 'pt-BR';
   isLoading?: boolean;
 }
@@ -99,6 +101,7 @@ export default function ReservationsList({
   onEdit,
   onCancel,
   avgSpendPerCover,
+  byPartySize,
   language = 'en',
   isLoading,
 }: ReservationsListProps) {
@@ -206,6 +209,7 @@ export default function ReservationsList({
               onEdit={onEdit ? () => onEdit(reservation) : undefined}
               onCancel={onCancel ? () => onCancel(reservation) : undefined}
               avgSpendPerCover={avgSpendPerCover}
+              byPartySize={byPartySize}
               language={language}
             />
           ))}
@@ -225,10 +229,11 @@ interface ReservationRowProps {
   onEdit?: () => void;
   onCancel?: () => void;
   avgSpendPerCover?: number;
+  byPartySize?: PartySizeRevenue[];
   language: 'en' | 'es' | 'pt-BR';
 }
 
-function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositAction, onEdit, onCancel, avgSpendPerCover, language }: ReservationRowProps) {
+function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositAction, onEdit, onCancel, avgSpendPerCover, byPartySize, language }: ReservationRowProps) {
   const t = translations[language] || translations.en;
 
   const formatTime = (time: string) => {
@@ -281,7 +286,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
         <div className="text-xs text-muted-stone mt-0.5 truncate">
           {reservation.party_size} {t.people}
           {avgSpendPerCover ? (
-            <span className="text-emerald-600 font-medium"> · ~{formatCurrency(reservation.party_size * avgSpendPerCover)}</span>
+            <span className="text-emerald-600 font-medium"> · ~{formatCurrency(predictReservationRevenue(reservation.party_size, avgSpendPerCover, byPartySize))}</span>
           ) : null}
           {reservation.special_requests && <span> · {reservation.special_requests}</span>}
         </div>

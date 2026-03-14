@@ -732,6 +732,9 @@
     "alertHighNoshowsDesc": "Alerta às 15h quando 3+ reservas têm >70% de probabilidade de no-show",
     "alertLateCancellations": "Cancelamentos tardios",
     "alertLateCancellationsDesc": "Alerta a cada 2h (12\u201320h) quando 2+ cancelamentos nas últimas 2 horas",
+    "customerEngagement": "Engajamento com Clientes",
+    "upsellLabel": "Recomendações de pratos pré-reserva",
+    "upsellDesc": "Enviar sugestões de pratos personalizadas por IA via WhatsApp no dia anterior a cada reserva",
     "staffingRatios": "Proporções de Equipe",
     "staffingRatiosDesc": "Defina quantos couverts cada funcionário atende por serviço.",
     "staffingRatiosSaved": "Proporções de equipe salvas",
@@ -1448,7 +1451,10 @@
     "runningLow": "Quase no limite",
     "upgradeFor": "Atualize para",
     "month": "mês",
-    "resets": "Renova em"
+    "resets": "Renova em",
+    "loadingHistory": "Carregando histórico...",
+    "failedToSend": "Falha ao enviar. Tente novamente.",
+    "sendMessage": "Enviar mensagem"
   },
   "upgrade": {
     "featureAvailable": "Este recurso está disponível no plano {{planName}}",

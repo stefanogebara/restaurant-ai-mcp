@@ -164,6 +164,24 @@ describe('ReservationsList', () => {
     expect(screen.getByRole('button', { name: /take action/i })).toBeInTheDocument();
   });
 
+  it('shows per-reservation predicted revenue when avgSpendPerCover provided', () => {
+    render(
+      <ReservationsList
+        {...defaultProps}
+        avgSpendPerCover={80}
+        byPartySize={[
+          { range: '1-2', avg_per_cover: 65, avg_total: 130, count: 10 },
+          { range: '3-4', avg_per_cover: 78, avg_total: 312, count: 8 },
+        ]}
+      />
+    );
+    // Party of 4 → bucket 3-4, avg_per_cover 78, predicted = 4*78 = 312 → formatted as currency
+    // Party of 2 → bucket 1-2, avg_per_cover 65, predicted = 2*65 = 130
+    // Should show emerald-colored revenue estimates
+    const revenueSpans = document.querySelectorAll('.text-emerald-600');
+    expect(revenueSpans.length).toBeGreaterThanOrEqual(2);
+  });
+
   it('shows Take Action button for high-risk reservations', async () => {
     const user = userEvent.setup();
     const onIntervention = vi.fn();

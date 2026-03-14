@@ -52,7 +52,7 @@ const { createMemory } = require('./services/guestMemory');
 const { isWhatsAppConfigured, sendReservationConfirmation } = require('./_lib/whatsapp-sender');
 
 // Email notifications
-const { sendReservationModificationEmail } = require('./_lib/email');
+const { sendReservationModificationEmail, sendReservationConfirmationEmail, sendReservationCancellationEmail } = require('./_lib/email');
 
 // ============================================================================
 // SMS CONFIRMATION HELPER
@@ -173,7 +173,8 @@ async function handleCreate(req, res, restaurantId, timezone) {
     customer_name,
     customer_phone,
     customer_email,
-    special_requests
+    special_requests,
+    source
   } = req.method === 'POST' ? req.body : req.query;
 
   if (!date || !time || !party_size || !customer_name || !customer_phone) {
@@ -221,7 +222,7 @@ async function handleCreate(req, res, restaurantId, timezone) {
     'Updated At': getLocalDate(timezone),
     'Confirmation Sent': true,
     'Reminder Sent': false,
-    'Notes': 'Created via AI Phone System'
+    'Notes': source === 'dashboard' ? 'Created from dashboard' : 'Created via AI Phone System'
   };
 
   const result = await createReservation(restaurantId, fields);
@@ -446,6 +447,22 @@ async function handleCreate(req, res, restaurantId, timezone) {
   }
 
   // ============================================================================
+  // EMAIL CONFIRMATION (fire-and-forget, non-fatal)
+  // ============================================================================
+  if (customer_email) {
+    sendReservationConfirmationEmail({
+      customerEmail: customer_email,
+      customerName: customer_name,
+      restaurantName: restaurantConfig?.restaurant_name || 'Your Restaurant',
+      reservationId,
+      partySize: parseInt(party_size),
+      date,
+      time,
+      specialRequests: special_requests,
+    }).catch(err => logger.warn('Confirmation email failed (non-fatal):', err.message));
+  }
+
+  // ============================================================================
   // GUEST MEMORY - Store booking observations (fire-and-forget)
   // ============================================================================
   try {
@@ -475,7 +492,8 @@ async function handleCreate(req, res, restaurantId, timezone) {
   }
 
   return res.status(200).json({
-    message: `Perfect! Your reservation is confirmed for ${customer_name}, party of ${party_size}, on ${date} at ${time}. Your confirmation number is ${reservationId}. We've sent you a text message with the details. We look forward to seeing you!`
+    message: `Perfect! Your reservation is confirmed for ${customer_name}, party of ${party_size}, on ${date} at ${time}. Your confirmation number is ${reservationId}. We've sent you a text message with the details. We look forward to seeing you!`,
+    notification_sent: !!customer_email,
   });
 }
 
@@ -651,6 +669,10 @@ async function handleCancel(req, res, restaurantId) {
     });
   }
 
+  // Look up reservation before cancelling (for email notification)
+  const findResult = await findReservation(restaurantId, { reservation_id });
+  const reservation = findResult.success ? findResult.reservation : null;
+
   const result = await airtableCancelReservation(restaurantId, reservation_id);
 
   if (!result.success) {
@@ -662,8 +684,35 @@ async function handleCancel(req, res, restaurantId) {
   // Log cancellation for ML training data
   await logCustomerCancelled(reservation_id);
 
+  // Send cancellation email (fire-and-forget, non-fatal)
+  if (reservation?.customer_email) {
+    let restaurantName = 'Your Restaurant';
+    try {
+      const { data: config } = await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('restaurant_name')
+        .eq('id', restaurantId)
+        .single();
+      if (config?.restaurant_name) restaurantName = config.restaurant_name;
+    } catch (err) {
+      logger.warn('Could not fetch restaurant name for cancellation email:', err.message);
+    }
+
+    sendReservationCancellationEmail({
+      customerEmail: reservation.customer_email,
+      customerName: reservation.customer_name,
+      restaurantName,
+      reservationId: reservation_id,
+      partySize: reservation.party_size,
+      date: reservation.date,
+      time: reservation.time,
+    }).catch(err => logger.warn('Cancellation email failed (non-fatal):', err.message));
+  }
+
   return res.status(200).json({
     success: true,
-    message: 'Reservation cancelled successfully'
+    message: 'Reservation cancelled successfully',
+    notification_sent: !!reservation?.customer_email,
   });
 }

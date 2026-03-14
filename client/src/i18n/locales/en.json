@@ -731,6 +731,9 @@
     "alertHighNoshowsDesc": "Alert at 3pm when 3+ reservations have >70% no-show probability",
     "alertLateCancellations": "Late cancellations",
     "alertLateCancellationsDesc": "Alert every 2h (12\u20138pm) when 2+ cancellations in the last 2 hours",
+    "customerEngagement": "Customer Engagement",
+    "upsellLabel": "Pre-reservation dish recommendations",
+    "upsellDesc": "Send AI-personalized dish suggestions via WhatsApp the day before each reservation",
     "staffingRatios": "Staffing Ratios",
     "staffingRatiosDesc": "Set how many covers each staff member handles per service.",
     "staffingRatiosSaved": "Staffing ratios saved",
@@ -1439,7 +1442,10 @@
     "runningLow": "Running low",
     "upgradeFor": "Upgrade for",
     "month": "mo",
-    "resets": "Resets"
+    "resets": "Resets",
+    "loadingHistory": "Loading history...",
+    "failedToSend": "Failed to send. Please try again.",
+    "sendMessage": "Send message"
   },
   "upgrade": {
     "featureAvailable": "This feature is available on the {{planName}} plan",
