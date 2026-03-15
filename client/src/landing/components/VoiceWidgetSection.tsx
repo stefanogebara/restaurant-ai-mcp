@@ -209,16 +209,18 @@ export default function VoiceWidgetSection() {
           ))}
         </motion.div>
 
-        {/* Powered-by */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-          className="text-xs text-white/25 mt-5"
-        >
-          {t('landing.voice.powered', 'Powered by ElevenLabs \u00b7 English, Portuguese, Spanish')}
-        </motion.p>
+        {/* Powered-by — only show when voice agent is available */}
+        {!scriptError && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="text-xs text-white/25 mt-5"
+          >
+            {t('landing.voice.powered', 'Powered by ElevenLabs \u00b7 English, Portuguese, Spanish')}
+          </motion.p>
+        )}
       </div>
     </section>
   );
