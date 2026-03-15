@@ -42,9 +42,9 @@ export function useVoiceAgent({ agentId, useSignedUrl = false, requireConfirmati
         { role: message.source === 'ai' ? 'agent' : 'user', text: message.message },
       ]);
     },
-    onError: (err: Error) => {
-      console.error('Voice agent error:', err);
-      setError(err.message || 'Voice connection failed');
+    onError: (message: string, context?: unknown) => {
+      console.error('Voice agent error:', message, context);
+      setError(message || 'Voice connection failed');
       setAgentState('idle');
     },
   });
@@ -78,9 +78,9 @@ export function useVoiceAgent({ agentId, useSignedUrl = false, requireConfirmati
         const res = await fetch('/api/elevenlabs-signed-url');
         if (!res.ok) throw new Error('Failed to get signed URL');
         const data = await res.json();
-        await conversation.startSession({ signedUrl: data.signed_url });
+        await conversation.startSession({ signedUrl: data.signed_url } as any);
       } else {
-        await conversation.startSession({ agentId });
+        await conversation.startSession({ agentId, connectionType: 'websocket' } as any);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to start voice agent';

@@ -113,7 +113,7 @@ function PlaceholderIcon({ type }: { type: 'whatsapp' | 'phone' | 'dashboard' })
   );
 }
 
-function VideoPlaceholder({ item, t }: { item: ShowcaseItem; t: (key: string, fallback: string) => string }) {
+function VideoPlaceholder({ item, t }: { item: ShowcaseItem; t: (key: string, fallback?: string) => string }) {
   const highlights = FEATURE_HIGHLIGHTS[item.id];
 
   return (
@@ -144,18 +144,18 @@ function VideoPlaceholder({ item, t }: { item: ShowcaseItem; t: (key: string, fa
 }
 
 function VideoPlayer({ src }: { src: string }) {
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
 
   return (
-    <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-black">
+    <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-black shadow-xl">
       <video
         className="w-full h-full object-cover"
         src={src}
         muted
         loop
         playsInline
-        preload="metadata"
-        autoPlay={isPlaying}
+        preload="auto"
+        autoPlay
         aria-label={isPlaying ? 'Click to pause video' : 'Click to play video'}
         role="button"
         tabIndex={0}
@@ -257,7 +257,7 @@ export default function VideoShowcaseSection() {
           {activeItem.videoSrc ? (
             <VideoPlayer src={activeItem.videoSrc} />
           ) : (
-            <VideoPlaceholder item={activeItem} t={t} />
+            <VideoPlaceholder item={activeItem} t={t as unknown as (key: string, fallback?: string) => string} />
           )}
 
           {/* Description below video */}

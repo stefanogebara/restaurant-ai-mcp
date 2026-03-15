@@ -76,7 +76,7 @@ export default function VoiceWidgetSection() {
         >
           {!agentId ? (
             /* Fallback — no agent configured */
-            <FallbackWhatsApp t={t} />
+            <FallbackWhatsApp t={t as unknown as (key: string, fallback?: string) => string} />
           ) : (
             <>
               {/* Sesame-style voice orb */}
@@ -204,7 +204,7 @@ export default function VoiceWidgetSection() {
 }
 
 /** WhatsApp fallback when voice agent isn't configured */
-function FallbackWhatsApp({ t }: { t: (key: string, fallback: string) => string }) {
+function FallbackWhatsApp({ t }: { t: (key: string, fallback?: string) => string }) {
   return (
     <div className="flex flex-col items-center gap-5">
       <div className="w-20 h-20 rounded-full bg-burgundy/20 flex items-center justify-center">
