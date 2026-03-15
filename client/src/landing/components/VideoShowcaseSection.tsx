@@ -156,6 +156,9 @@ function VideoPlayer({ src }: { src: string }) {
         playsInline
         preload="metadata"
         autoPlay={isPlaying}
+        aria-label={isPlaying ? 'Click to pause video' : 'Click to play video'}
+        role="button"
+        tabIndex={0}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onClick={(e) => {
@@ -164,6 +167,17 @@ function VideoPlayer({ src }: { src: string }) {
             video.play();
           } else {
             video.pause();
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            const video = e.currentTarget;
+            if (video.paused) {
+              video.play();
+            } else {
+              video.pause();
+            }
           }
         }}
       />

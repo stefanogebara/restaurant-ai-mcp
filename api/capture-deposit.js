@@ -3,6 +3,7 @@ const { supabaseAdmin } = require('./_lib/supabase');
 const { verifyAuth } = require('./_lib/auth');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('CaptureDeposit');
 let stripe;
@@ -14,6 +15,8 @@ function getStripe() {
 module.exports = async (req, res) => {
   setInternalCors(req, res);
   if (handlePreflight(req, res)) return;
+
+  if (await checkAndApplyRateLimit(req, res, 'api')) return;
 
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });

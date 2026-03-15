@@ -13,7 +13,7 @@ export default function PresetDemoSection() {
   const { t } = useTranslation();
 
   return (
-    <section id="try-demo" className="py-24 px-6 sm:px-16 bg-warm-white">
+    <section id="try-demo" data-section="preset-demo" className="py-24 px-6 sm:px-16 bg-warm-white">
       <div className="max-w-5xl mx-auto text-center">
         <p className="text-xs font-semibold tracking-[2px] uppercase text-burgundy mb-3">
           {t('landing.tryDemo.label', 'Try it right now')}

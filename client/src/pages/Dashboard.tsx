@@ -321,7 +321,7 @@ export default function Dashboard() {
         <button
           onClick={() => setShowWalkInModal(true)}
           aria-label="Add walk-in"
-          className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-deep-charcoal hover:bg-charcoal-dark hover:scale-105 active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
+          className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-40 w-14 h-14 bg-deep-charcoal hover:bg-charcoal-dark hover:scale-105 active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
         >
           <ThiingsIcon name="plus" pxSize={24} />
         </button>

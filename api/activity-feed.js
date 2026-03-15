@@ -9,6 +9,7 @@ const { verifyJWT } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors } = require('./_lib/cors');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('activity-feed');
 
@@ -16,6 +17,8 @@ module.exports = async (req, res) => {
   setInternalCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+  if (await checkAndApplyRateLimit(req, res, 'api')) return;
 
   try {
     const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));

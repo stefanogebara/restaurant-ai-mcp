@@ -3,12 +3,15 @@ const { verifyAuth } = require('./_lib/auth');
 const { getMeteredPriceMap } = require('./_lib/stripe-usage-reporter');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const logger = createSecureLogger('CheckoutSession');
 
 module.exports = async (req, res) => {
   setInternalCors(req, res);
   if (handlePreflight(req, res)) return;
+
+  if (await checkAndApplyRateLimit(req, res, 'api')) return;
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });

@@ -173,7 +173,7 @@ export default function PricingSection() {
         {/* Bottom Note */}
         <p className="text-center text-sm text-muted-stone mt-6">
           {t('landing.pricing.customSolution')}{' '}
-          <button type="button" onClick={scrollToContact} className="text-burgundy hover:text-burgundy-dark font-medium transition-colors">
+          <button type="button" onClick={scrollToContact} className="text-burgundy hover:text-burgundy-dark font-medium transition-colors min-h-[44px] inline-flex items-center">
             {t('landing.pricing.enterpriseLink')}
           </button>
         </p>

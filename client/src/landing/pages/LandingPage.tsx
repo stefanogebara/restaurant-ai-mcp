@@ -109,8 +109,8 @@ export default function LandingPage() {
       {showScrollTop && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="fixed bottom-8 right-8 z-40 w-12 h-12 bg-deep-charcoal hover:bg-burgundy text-white rounded-full flex items-center justify-center transition-colors"
-          aria-label="Scroll to top"
+          className="fixed bottom-20 right-8 z-40 w-12 h-12 bg-deep-charcoal hover:bg-burgundy text-white rounded-full flex items-center justify-center transition-colors"
+          aria-label={t('landing.scrollToTop', 'Scroll to top')}
         >
           <ArrowUp className="w-5 h-5" />
         </button>

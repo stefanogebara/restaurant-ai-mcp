@@ -1,9 +1,12 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { setInternalCors } = require('./_lib/cors');
 const logger = createSecureLogger('DemoChat');
 
 module.exports = async function handler(req, res) {
+  setInternalCors(res);
+  if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

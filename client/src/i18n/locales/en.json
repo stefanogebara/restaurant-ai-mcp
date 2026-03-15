@@ -25,7 +25,8 @@
     "saved": "Saved",
     "searchPlaceholder": "Search...",
     "skipToContent": "Skip to content",
-    "goBack": "Go back"
+    "goBack": "Go back",
+    "poweredBy": "Powered by"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -59,6 +60,12 @@
     "quickStats": "Quick Stats",
     "upcomingReservations": "Upcoming Reservations",
     "recentActivity": "Recent Activity",
+    "usage": {
+      "title": "Usage This Month",
+      "trial": "Trial",
+      "noUsage": "No usage recorded yet",
+      "totalEvents": "Total Events"
+    },
     "walkIn": {
       "addCustomer": "Add Walk-in Customer",
       "selectTable": "Select Table",
@@ -1142,7 +1149,7 @@
       "subtitle": "Seatable's AI handles calls, WhatsApp, and online bookings 24/7 — so you can focus on hospitality.",
       "cta": "Create Your Free Demo",
       "demo": "Try Live Demo",
-      "earlyAccess": "Free plan available · No credit card required",
+      "earlyAccess": "14-day free trial · No credit card required",
       "headlineA": "Last night at 2 AM, someone booked a table at your restaurant.",
       "headlineA2": "Your AI answered.",
       "headlineB": "The host that never calls in sick.",
@@ -1180,7 +1187,8 @@
       "msg1": "Hi! Table for 4 tomorrow at 8pm?",
       "msg2": "Of course! I have a lovely table available at 8pm. Name for the reservation?",
       "msg3": "Maria Santos",
-      "msg4": "Perfect! Table for 4, tomorrow at 8pm. Confirmed \u2713 See you soon, Maria!"
+      "msg4": "Perfect! Table for 4, tomorrow at 8pm. Confirmed \u2713 See you soon, Maria!",
+      "inputPlaceholder": "Type a message..."
     },
     "slideIn": {
       "title": "This is sample data",
@@ -1266,9 +1274,10 @@
     "cta": {
       "heading": "Ready to reimagine",
       "headingLine2": "your restaurant?",
-      "subtitle": "Join the first restaurants using Seatable. Free plan available, no credit card required.",
+      "subtitle": "Join the first restaurants using Seatable. 14-day free trial, no credit card required.",
       "button": "Start Free Trial"
     },
+    "scrollToTop": "Scroll to top",
     "nav": {
       "features": "Features",
       "pricing": "Pricing",
@@ -1464,7 +1473,7 @@
       "todaysReservations": "Today's Reservations",
       "aiHandlingCalls": "AI agent handling calls",
       "dashboard": "Dashboard",
-      "todayDate": "Today · March 14",
+      "todayDate": "Today",
       "walkIn": "Walk-in",
       "confirmed": "confirmed",
       "pending": "pending"

@@ -2,6 +2,7 @@ const { verifyJWT } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { buildForecast } = require('./services/staffingService');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('staffing-forecast');
 
@@ -13,6 +14,8 @@ const DEFAULT_ROLES = [
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+  if (await checkAndApplyRateLimit(req, res, 'api')) return;
 
   try {
     const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));

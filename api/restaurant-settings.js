@@ -7,6 +7,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { verifyAuth } = require('./_lib/auth');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('RestaurantSettings');
 
 const supabase = createClient(
@@ -125,6 +126,8 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
+
+  if (await checkAndApplyRateLimit(req, res, 'api')) return;
 
   try {
     const { method } = req;

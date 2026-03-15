@@ -25,7 +25,8 @@
     "saved": "Guardado",
     "searchPlaceholder": "Buscar...",
     "skipToContent": "Saltar al contenido",
-    "goBack": "Volver"
+    "goBack": "Volver",
+    "poweredBy": "Desarrollado por"
   },
   "navigation": {
     "dashboard": "Panel",
@@ -59,6 +60,12 @@
     "quickStats": "Estadísticas Rápidas",
     "upcomingReservations": "Próximas Reservas",
     "recentActivity": "Actividad Reciente",
+    "usage": {
+      "title": "Uso Este Mes",
+      "trial": "Prueba",
+      "noUsage": "Sin uso registrado a\u00fan",
+      "totalEvents": "Total de Eventos"
+    },
     "walkIn": {
       "addCustomer": "Agregar Cliente sin Reserva",
       "selectTable": "Seleccionar Mesa",
@@ -943,7 +950,7 @@
       "subtitle": "La IA de Seatable gestiona llamadas, WhatsApp y reservas online 24/7 — para que puedas centrarte en la hospitalidad.",
       "cta": "Crea Tu Demo Gratuita",
       "demo": "Probar Demo en Vivo",
-      "earlyAccess": "Plan gratuito disponible · Sin tarjeta de crédito",
+      "earlyAccess": "Prueba gratis de 14 días · Sin tarjeta de crédito",
       "headlineA": "Anoche a las 2 AM, alguien reservó una mesa en tu restaurante.",
       "headlineA2": "Tu IA respondió.",
       "headlineB": "El anfitrión que nunca falta.",
@@ -968,7 +975,7 @@
       "label": "Prueba en vivo",
       "heading": "Llama a nuestra IA",
       "subtitle": "Ten una conversación real. Pide reservar una mesa para 4 esta noche — y escucha a la IA responder naturalmente.",
-      "powered": "Powered by ElevenLabs \u00b7 Inglés, Portugués, Español",
+      "powered": "Desarrollado con ElevenLabs \u00b7 Inglés, Portugués, Español",
       "micHint": "Haz clic en el micrófono para empezar",
       "loading": "Cargando agente de voz...",
       "fallbackTitle": "Demo de voz no disponible",
@@ -981,7 +988,8 @@
       "msg1": "¡Hola! ¿Mesa para 4 mañana a las 8pm?",
       "msg2": "¡Por supuesto! Tengo una mesa disponible a las 8pm. ¿Nombre para la reserva?",
       "msg3": "María Santos",
-      "msg4": "¡Perfecto! Mesa para 4, mañana a las 8pm. Confirmada \u2713 ¡Hasta pronto, María!"
+      "msg4": "¡Perfecto! Mesa para 4, mañana a las 8pm. Confirmada \u2713 ¡Hasta pronto, María!",
+      "inputPlaceholder": "Escribe un mensaje..."
     },
     "slideIn": {
       "title": "Estos son datos de ejemplo",
@@ -1067,9 +1075,10 @@
     "cta": {
       "heading": "¿Listo para reimaginar",
       "headingLine2": "tu restaurante?",
-      "subtitle": "Únete a los primeros restaurantes que usan Seatable. Plan gratuito disponible, sin tarjeta de crédito.",
+      "subtitle": "Únete a los primeros restaurantes que usan Seatable. Prueba gratis de 14 días, sin tarjeta de crédito.",
       "button": "Empezar Gratis"
     },
+    "scrollToTop": "Volver arriba",
     "pricing": {
       "label": "Precios",
       "heading": "Precios simples y transparentes.",
@@ -1188,9 +1197,9 @@
       "voice3": "Habla 6+ idiomas naturalmente",
       "voice4": "Transferencia al equipo cuando sea necesario",
       "dashboard1": "Mapa de mesas en tiempo real con colores de estado",
-      "dashboard2": "Walk-ins, espera y reservas unificados",
+      "dashboard2": "Sin reserva, espera y reservas unificados",
       "dashboard3": "Pron\u00f3sticos de ingresos y personal integrados",
-      "dashboard4": "Asistente IA del gerente para insights r\u00e1pidos"
+      "dashboard4": "Asistente IA del gerente para an\u00e1lisis r\u00e1pidos"
     },
     "contact": {
       "label": "Contacto",
@@ -1291,7 +1300,7 @@
       "todaysReservations": "Reservas de Hoy",
       "aiHandlingCalls": "Agente IA atendiendo llamadas",
       "dashboard": "Panel",
-      "todayDate": "Hoy · 14 de Marzo",
+      "todayDate": "Hoy",
       "walkIn": "Sin reserva",
       "confirmed": "confirmado",
       "pending": "pendiente"

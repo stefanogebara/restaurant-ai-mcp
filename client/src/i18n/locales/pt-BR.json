@@ -25,7 +25,8 @@
     "saved": "Salvo",
     "searchPlaceholder": "Buscar...",
     "skipToContent": "Pular para o conteúdo",
-    "goBack": "Voltar"
+    "goBack": "Voltar",
+    "poweredBy": "Desenvolvido por"
   },
   "navigation": {
     "dashboard": "Painel",
@@ -59,6 +60,12 @@
     "quickStats": "Estatísticas Rápidas",
     "upcomingReservations": "Próximas Reservas",
     "recentActivity": "Atividade Recente",
+    "usage": {
+      "title": "Uso Este M\u00eas",
+      "trial": "Teste",
+      "noUsage": "Nenhum uso registrado ainda",
+      "totalEvents": "Total de Eventos"
+    },
     "walkIn": {
       "addCustomer": "Adicionar Cliente sem Reserva",
       "selectTable": "Selecionar Mesa",
@@ -1136,7 +1143,7 @@
       "subtitle": "A IA do Seatable atende ligações, WhatsApp e reservas online 24/7 — para você focar na hospitalidade.",
       "cta": "Crie Sua Demo Grátis",
       "demo": "Experimente a Demo",
-      "earlyAccess": "Plano gratuito disponível · Sem cartão de crédito",
+      "earlyAccess": "Teste grátis por 14 dias · Sem cartão de crédito",
       "headlineA": "Ontem às 2 da manhã, alguém reservou uma mesa no seu restaurante.",
       "headlineA2": "Sua IA atendeu.",
       "headlineB": "O anfitrião que nunca falta.",
@@ -1161,7 +1168,7 @@
       "label": "Teste ao vivo",
       "heading": "Ligue para nossa IA",
       "subtitle": "Tenha uma conversa real. Peça para reservar uma mesa para 4 hoje à noite — e ouça a IA responder naturalmente.",
-      "powered": "Powered by ElevenLabs \u00b7 Inglês, Português, Espanhol",
+      "powered": "Desenvolvido com ElevenLabs \u00b7 Inglês, Português, Espanhol",
       "micHint": "Clique no microfone para começar",
       "loading": "Carregando agente de voz...",
       "fallbackTitle": "Demo de voz indisponível",
@@ -1174,7 +1181,8 @@
       "msg1": "Oi! Mesa para 4 amanhã às 20h?",
       "msg2": "Claro! Tenho uma mesa disponível às 20h. Nome para a reserva?",
       "msg3": "Maria Santos",
-      "msg4": "Perfeito! Mesa para 4, amanhã às 20h. Confirmada \u2713 Até lá, Maria!"
+      "msg4": "Perfeito! Mesa para 4, amanhã às 20h. Confirmada \u2713 Até lá, Maria!",
+      "inputPlaceholder": "Digite uma mensagem..."
     },
     "slideIn": {
       "title": "Estes são dados de exemplo",
@@ -1263,6 +1271,7 @@
       "subtitle": "Seja um dos primeiros restaurantes a usar o Seatable no Brasil. Sem cartão de crédito.",
       "button": "Começar Teste Grátis"
     },
+    "scrollToTop": "Voltar ao topo",
     "nav": {
       "features": "Funcionalidades",
       "pricing": "Planos",
@@ -1317,9 +1326,9 @@
       "voice3": "Fala 6+ idiomas naturalmente",
       "voice4": "Transfer\u00eancia para equipe quando necess\u00e1rio",
       "dashboard1": "Mapa de mesas em tempo real com cores de status",
-      "dashboard2": "Walk-ins, espera e reservas em um s\u00f3 lugar",
+      "dashboard2": "Sem reserva, espera e reservas em um s\u00f3 lugar",
       "dashboard3": "Previs\u00e3o de receita e equipe integrada",
-      "dashboard4": "Assistente IA do gerente para insights r\u00e1pidos"
+      "dashboard4": "Assistente IA do gerente para an\u00e1lises r\u00e1pidas"
     },
     "contact": {
       "label": "Contato",
@@ -1410,7 +1419,7 @@
       "usageDetail": "além dos limites do plano: reservas adicionais, ligações de IA, SMS e mensagens de WhatsApp são cobrados por uso. Preços em {{currency}}. Cancele ou atualize quando quiser.",
       "checkoutError": "Falha ao iniciar o pagamento. Tente novamente.",
       "customSolution": "Precisa de uma solução personalizada?",
-      "enterpriseLink": "Fale conosco para planos enterprise"
+      "enterpriseLink": "Fale conosco para planos corporativos"
     },
     "liveDemo": {
       "nav": {
@@ -1466,7 +1475,7 @@
       "todaysReservations": "Reservas de Hoje",
       "aiHandlingCalls": "Agente IA atendendo liga\u00e7\u00f5es",
       "dashboard": "Painel",
-      "todayDate": "Hoje · 14 de Mar\u00e7o",
+      "todayDate": "Hoje",
       "walkIn": "Sem reserva",
       "confirmed": "confirmado",
       "pending": "pendente"

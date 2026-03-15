@@ -70,6 +70,7 @@ export default function WhatsAppPhoneAnimation({
   onMessageStep,
   className = '',
 }: WhatsAppPhoneAnimationProps) {
+  const { t } = useTranslation();
   const messages = useMessages();
   const [visibleMessages, setVisibleMessages] = useState<number[]>([]);
   const [showTyping, setShowTyping] = useState(false);
@@ -190,7 +191,7 @@ export default function WhatsAppPhoneAnimation({
           {/* Input bar */}
           <div className="bg-soft-gray px-3 py-2 flex items-center gap-2 border-t border-border-gray">
             <div className="flex-1 bg-white rounded-full px-4 py-2 text-[12px] text-muted-stone">
-              Type a message...
+              {t('landing.heroChat.inputPlaceholder', 'Type a message...')}
             </div>
             <div className="w-8 h-8 rounded-full bg-whatsapp flex items-center justify-center">
               <svg

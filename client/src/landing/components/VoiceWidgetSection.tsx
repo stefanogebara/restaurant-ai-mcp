@@ -3,13 +3,27 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import ElevenLabsWidget from '../../components/ElevenLabsWidget';
 
+const ELEVENLABS_SCRIPT_URL = '/js/convai-widget-embed.js';
+
 const SUGGESTION_KEYS = [
   { key: 'landing.voice.suggestion1', fallback: 'Book a table for 2 tonight' },
   { key: 'landing.voice.suggestion2', fallback: "What's on the menu?" },
   { key: 'landing.voice.suggestion3', fallback: 'Do you have a terrace?' },
 ];
 
-const ELEVENLABS_SCRIPT_URL = '/js/convai-widget-embed.js';
+/** Pulsing ring animation — concentric ripples radiating from the orb center */
+const ringVariants = {
+  pulse: (i: number) => ({
+    scale: [1, 1.5 + i * 0.25],
+    opacity: [0.35 - i * 0.07, 0],
+    transition: {
+      duration: 2.4 + i * 0.3,
+      repeat: Infinity,
+      ease: 'easeOut' as const,
+      delay: i * 0.4,
+    },
+  }),
+};
 
 export default function VoiceWidgetSection() {
   const { t } = useTranslation();
@@ -34,60 +48,67 @@ export default function VoiceWidgetSection() {
   }, [agentId]);
 
   return (
-    <section className="py-24 px-6 bg-warm-white">
-      <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
-        {/* Left — Copy */}
+    <section className="py-24 sm:py-32 px-6 bg-[#1a1a2e] overflow-hidden">
+      <div className="max-w-3xl mx-auto flex flex-col items-center text-center">
+        {/* Label */}
         <motion.div
-          initial={{ opacity: 0, x: -30 }}
-          whileInView={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.5 }}
+          className="text-xs font-semibold tracking-[2px] uppercase text-burgundy mb-4"
         >
-          <div className="text-xs font-semibold tracking-[2px] uppercase text-burgundy mb-4">
-            {t('landing.voice.label', 'Try it live')}
-          </div>
-          <h2 className="font-serif text-[40px] font-medium tracking-tight text-deep-charcoal leading-tight mb-4">
-            {t('landing.voice.heading', 'Call our AI host')}
-          </h2>
-          <p className="text-lg text-warm-stone font-light leading-relaxed mb-8">
-            {t('landing.voice.subtitle', 'Have a real conversation. Ask to book a table for 4 tonight — and hear the AI respond naturally.')}
-          </p>
-          <div className="flex flex-wrap gap-2 mb-6">
-            {SUGGESTION_KEYS.map((s) => (
-              <span key={s.key} className="px-4 py-1.5 rounded-full border border-border-gray text-sm text-deep-charcoal">
-                {t(s.key, s.fallback)}
-              </span>
-            ))}
-          </div>
-          <p className="text-xs text-muted-stone">
-            {t('landing.voice.powered', 'Powered by ElevenLabs · English, Portuguese, Spanish')}
-          </p>
+          {t('landing.voice.label', 'Try it live')}
         </motion.div>
 
-        {/* Right — Widget or Fallback */}
-        <motion.div
-          initial={{ opacity: 0, x: 30 }}
-          whileInView={{ opacity: 1, x: 0 }}
+        {/* Heading */}
+        <motion.h2
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="flex flex-col items-center"
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="font-serif text-3xl sm:text-[44px] font-medium tracking-tight text-white leading-tight mb-3"
+        >
+          {t('landing.voice.heading', 'Call our AI host')}
+        </motion.h2>
+
+        {/* Subtitle */}
+        <motion.p
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.15 }}
+          className="text-base sm:text-lg text-white/50 font-light leading-relaxed max-w-xl mb-12"
+        >
+          {t('landing.voice.subtitle', 'Have a real conversation. Ask to book a table for 4 tonight \u2014 and hear the AI respond naturally.')}
+        </motion.p>
+
+        {/* ── Orb + Widget Card ── */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.25 }}
+          className="relative w-full max-w-md rounded-3xl bg-white/[5%] backdrop-blur-sm border border-white/[8%] p-8 sm:p-10 flex flex-col items-center"
         >
           {scriptError ? (
-            /* Fallback when widget can't load */
-            <div className="w-full max-w-sm rounded-2xl bg-soft-gray border border-border-gray p-8 text-center">
-              <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-burgundy/10 flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-7 h-7 text-burgundy" fill="none" stroke="currentColor" strokeWidth={2}>
+            /* ── Fallback ── */
+            <div className="flex flex-col items-center gap-5">
+              <div className="w-20 h-20 rounded-full bg-burgundy/20 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" className="w-9 h-9 text-burgundy" fill="none" stroke="currentColor" strokeWidth={1.5}>
                   <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3.09 5.18 2 2 0 0 1 5.11 3h3a2 2 0 0 1 2 1.72c.13.81.36 1.6.68 2.34a2 2 0 0 1-.45 2.11L8.91 10.6a16 16 0 0 0 6.49 6.49l1.43-1.43a2 2 0 0 1 2.11-.45c.74.32 1.53.55 2.34.68A2 2 0 0 1 22 16.92z" />
                 </svg>
               </div>
-              <h3 className="font-serif text-lg font-semibold text-deep-charcoal mb-2">
-                {t('landing.voice.fallbackTitle', 'Voice demo unavailable')}
-              </h3>
-              <p className="text-sm text-muted-stone mb-4">
-                {t('landing.voice.fallbackDesc', 'Try our WhatsApp AI instead — send a message and get an instant response.')}
-              </p>
+              <div>
+                <h3 className="font-serif text-lg font-semibold text-white mb-1">
+                  {t('landing.voice.fallbackTitle', 'Voice demo unavailable')}
+                </h3>
+                <p className="text-sm text-white/40 mb-5">
+                  {t('landing.voice.fallbackDesc', 'Try our WhatsApp AI instead \u2014 send a message and get an instant response.')}
+                </p>
+              </div>
               <a
-                href="https://wa.me/551150289356?text=Hi!%20I%27d%20like%20to%20book%20a%20table"
+                href={`https://wa.me/551150289356?text=${encodeURIComponent(t('landing.whatsapp.previewMessage', "Hi! I'd like to book a table for 4 tomorrow at 8pm"))}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-6 py-2.5 bg-whatsapp hover:bg-whatsapp/90 text-white text-sm font-semibold rounded-full transition-colors"
@@ -100,33 +121,104 @@ export default function VoiceWidgetSection() {
             </div>
           ) : (
             <>
-              {/* Pulse icon */}
-              <div className="relative w-16 h-16 mb-6">
-                <div className="absolute inset-0 rounded-full bg-burgundy/10 animate-ping" />
-                <div className="absolute inset-2 rounded-full bg-burgundy/20 animate-pulse" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <svg viewBox="0 0 24 24" className="w-7 h-7 text-burgundy" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3.09 5.18 2 2 0 0 1 5.11 3h3a2 2 0 0 1 2 1.72c.13.81.36 1.6.68 2.34a2 2 0 0 1-.45 2.11L8.91 10.6a16 16 0 0 0 6.49 6.49l1.43-1.43a2 2 0 0 1 2.11-.45c.74.32 1.53.55 2.34.68A2 2 0 0 1 22 16.92z" />
+              {/* ── Pulsing orb ── */}
+              <div className="relative w-44 h-44 sm:w-52 sm:h-52 flex items-center justify-center mb-6">
+                {/* Concentric ripple rings */}
+                {[0, 1, 2, 3].map((i) => (
+                  <motion.div
+                    key={i}
+                    custom={i}
+                    animate="pulse"
+                    variants={ringVariants}
+                    className="absolute inset-0 rounded-full border border-burgundy/30"
+                  />
+                ))}
+
+                {/* Core orb */}
+                <motion.div
+                  animate={{
+                    scale: [1, 1.04, 1],
+                    boxShadow: [
+                      '0 0 40px rgba(159, 18, 57, 0.25)',
+                      '0 0 70px rgba(159, 18, 57, 0.45)',
+                      '0 0 40px rgba(159, 18, 57, 0.25)',
+                    ],
+                  }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                  className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-burgundy to-burgundy-dark flex items-center justify-center"
+                >
+                  <svg
+                    className="w-10 h-10 sm:w-11 sm:h-11 text-white/90"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                    <line x1="12" y1="19" x2="12" y2="23" />
+                    <line x1="8" y1="23" x2="16" y2="23" />
                   </svg>
-                </div>
+                </motion.div>
               </div>
 
-              {/* Widget container */}
-              <div className="w-full max-w-sm rounded-2xl bg-soft-gray border border-border-gray p-6">
+              {/* Online indicator */}
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/[6%] rounded-full mb-6">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                </span>
+                <span className="text-xs font-medium text-white/60">
+                  {scriptLoaded
+                    ? t('landing.voice.micHint', 'Click the mic to start talking')
+                    : t('landing.voice.loading', 'Loading voice agent...')}
+                </span>
+              </div>
+
+              {/* ElevenLabs widget */}
+              <div className="w-full rounded-2xl bg-white/[4%] border border-white/[6%] p-4">
                 {scriptLoaded ? (
                   <ElevenLabsWidget agentId={agentId} useSignedUrl={false} />
                 ) : (
-                  <div className="flex items-center justify-center h-24 text-sm text-muted-stone">
+                  <div className="flex items-center justify-center h-16 text-sm text-white/30">
                     {t('landing.voice.loading', 'Loading voice agent...')}
                   </div>
                 )}
               </div>
-              <p className="mt-4 text-sm text-muted-stone">
-                {t('landing.voice.micHint', 'Click the mic to start talking')}
-              </p>
             </>
           )}
         </motion.div>
+
+        {/* ── Suggestion chips ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="flex flex-wrap justify-center gap-2 mt-8"
+        >
+          {SUGGESTION_KEYS.map((s) => (
+            <span
+              key={s.key}
+              className="px-4 py-1.5 rounded-full border border-white/10 text-sm text-white/50 bg-white/[3%]"
+            >
+              {t(s.key, s.fallback)}
+            </span>
+          ))}
+        </motion.div>
+
+        {/* Powered-by */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="text-xs text-white/25 mt-5"
+        >
+          {t('landing.voice.powered', 'Powered by ElevenLabs \u00b7 English, Portuguese, Spanish')}
+        </motion.p>
       </div>
     </section>
   );

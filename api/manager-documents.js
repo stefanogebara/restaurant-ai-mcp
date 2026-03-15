@@ -13,6 +13,7 @@ const { verifyJWT } = require('./_lib/auth');
 const { writeMemory } = require('./services/managerMemory');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('manager-documents');
 
@@ -131,6 +132,8 @@ ${text.slice(0, MAX_TEXT_FOR_CLAUDE)}`,
 module.exports = async function handler(req, res) {
   setInternalCors(req, res);
   if (handlePreflight(req, res)) return;
+
+  if (await checkAndApplyRateLimit(req, res, 'chat')) return;
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });

@@ -1,10 +1,12 @@
 const { verifyJWT } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('staffing-config');
 
 module.exports = async (req, res) => {
+  if (await checkAndApplyRateLimit(req, res, 'api')) return;
   if (req.method === 'GET') return handleGet(req, res);
   if (req.method === 'PATCH') return handlePatch(req, res);
   return res.status(405).json({ error: 'Method not allowed' });

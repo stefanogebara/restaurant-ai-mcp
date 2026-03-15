@@ -118,7 +118,7 @@ export default function BookingPage() {
           </Link>
         </div>
         <p className="mt-6 text-xs text-muted-stone">
-          Powered by <span className="font-serif">seatable<span className="text-burgundy">.</span></span>
+          {t('common.poweredBy')} <span className="font-serif">seatable<span className="text-burgundy">.</span></span>
         </p>
       </div>
     );
@@ -177,7 +177,7 @@ export default function BookingPage() {
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border-gray bg-warm-white hover:bg-soft-gray transition-colors text-xs text-muted-stone hover:text-warm-stone"
         >
           <span className="text-burgundy font-semibold">⚡</span>
-          Powered by Seatable
+          {t('common.poweredBy')} Seatable
         </a>
       </div>
     </div>
