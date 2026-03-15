@@ -116,7 +116,7 @@
       "elapsed": "decorridos",
       "left": "restantes",
       "guestsSeated": "clientes sentados",
-      "billAmount": "Valor da conta (opcional)"
+      "billAmount": "Conta (opcional)"
     },
     "managerNotes": {
       "title": "Memória IA & Notas do Gerente",
@@ -257,7 +257,7 @@
     "guests_other": "pessoas",
     "reservationSummary": "Resumo da Reserva",
     "restaurant": "Restaurante",
-    "estimatedDuration": "Duracao estimada",
+    "estimatedDuration": "Dura\u00e7\u00e3o estimada",
     "confirming": "Confirmando...",
     "continueToPayment": "Continuar para Pagamento",
     "confirmReservation": "Confirmar Reserva",
@@ -1159,7 +1159,10 @@
       "micHint": "Clique no microfone para começar",
       "loading": "Carregando agente de voz...",
       "fallbackTitle": "Demo de voz indisponível",
-      "fallbackDesc": "Experimente nossa IA pelo WhatsApp — envie uma mensagem e receba uma resposta instantânea."
+      "fallbackDesc": "Experimente nossa IA pelo WhatsApp — envie uma mensagem e receba uma resposta instantânea.",
+      "suggestion1": "Reservar mesa para 2 hoje à noite",
+      "suggestion2": "O que tem no cardápio?",
+      "suggestion3": "Vocês têm terraço?"
     },
     "heroChat": {
       "msg1": "Oi! Mesa para 4 amanhã às 20h?",
@@ -1288,16 +1291,16 @@
       "tryPreset": "Ou experimente um restaurante modelo"
     },
     "showcase": {
-      "label": "Veja em Acao",
+      "label": "Veja em A\u00e7\u00e3o",
       "heading": "Sua equipe de IA, trabalhando 24/7",
-      "subtitle": "Veja como o Seatable gerencia reservas via WhatsApp, ligacoes e seu painel em tempo real — automaticamente.",
+      "subtitle": "Veja como o Seatable gerencia reservas via WhatsApp, liga\u00e7\u00f5es e seu painel em tempo real — automaticamente.",
       "whatsappTitle": "Reserva via WhatsApp",
       "whatsappDesc": "O cliente manda mensagem, a IA verifica disponibilidade, confirma a reserva e envia lembretes — tudo pelo WhatsApp.",
       "voiceTitle": "Agente de Voz IA",
-      "voiceDesc": "Sua recepcionista IA atende ligacoes naturalmente, aceita reservas e fala com a personalidade do seu restaurante.",
+      "voiceDesc": "Sua recepcionista IA atende liga\u00e7\u00f5es naturalmente, aceita reservas e fala com a personalidade do seu restaurante.",
       "dashboardTitle": "Painel ao Vivo",
       "dashboardDesc": "Veja reservas, status das mesas, lista de espera e receita atualizando em tempo real enquanto sua IA trabalha.",
-      "comingSoon": "Video em breve"
+      "comingSoon": "V\u00eddeo em breve"
     },
     "contact": {
       "label": "Contato",
@@ -1436,6 +1439,19 @@
         "button": "Teste com Seu Restaurante"
       }
     },
+    "dashboardAnim": {
+      "tables": "Mesas",
+      "today": "Hoje",
+      "waitlist": "Espera",
+      "guests": "Pessoas",
+      "todaysReservations": "Reservas de Hoje",
+      "aiHandlingCalls": "Agente IA atendendo liga\u00e7\u00f5es",
+      "dashboard": "Painel",
+      "todayDate": "Hoje · 14 de Mar\u00e7o",
+      "walkIn": "Sem reserva",
+      "confirmed": "confirmado",
+      "pending": "pendente"
+    },
     "demoSetup": {
       "nav": {
         "signIn": "J\u00e1 tem uma conta? Entrar"
@@ -1477,7 +1493,23 @@
         "workEmailPlaceholder": "maria@cantina.com.br",
         "createButton": "Criar meu demo \u2192",
         "creating": "Criando seu demo\u2026",
-        "noCreditCard": "Sem cart\u00e3o de cr\u00e9dito. Seu demo fica pronto em segundos."
+        "noCreditCard": "Sem cart\u00e3o de cr\u00e9dito. Seu demo fica pronto em segundos.",
+        "findYourRestaurant": "Encontre seu restaurante",
+        "restaurantNameSearch": "Nome do restaurante",
+        "findIt": "Buscar",
+        "searching": "Buscando...",
+        "selectYourRestaurant": "Selecione seu restaurante:",
+        "reviews": "avalia\u00e7\u00f5es",
+        "change": "Alterar",
+        "businessHours": "Hor\u00e1rio de funcionamento",
+        "continueWithout": "Continuar sem busca",
+        "notListed": "N\u00e3o encontrou? Continue manualmente",
+        "noExactMatch": "Nenhuma correspond\u00eancia exata \u2014 configuraremos seu demo com os dados fornecidos.",
+        "almostThere": "Quase l\u00e1",
+        "emailPlaceholder": "Seu e-mail profissional",
+        "emailHint": "Enviaremos o link do demo aqui",
+        "launchDemo": "Iniciar meu demo",
+        "creatingDemo": "Criando seu demo..."
       }
     },
     "faq": {

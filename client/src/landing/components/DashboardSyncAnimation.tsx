@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface DashboardSyncAnimationProps {
   currentStep: number;
@@ -26,16 +27,17 @@ export default function DashboardSyncAnimation({
   currentStep,
   className = '',
 }: DashboardSyncAnimationProps) {
+  const { t } = useTranslation();
   const showNew = currentStep >= 3;
 
   const stats = useMemo(
     () => [
-      { label: 'Tables', value: '5/8' },
-      { label: 'Today', value: showNew ? '12' : '11' },
-      { label: 'Waitlist', value: '2' },
-      { label: 'Guests', value: showNew ? '28' : '24' },
+      { label: t('landing.dashboardAnim.tables', 'Tables'), value: '5/8' },
+      { label: t('landing.dashboardAnim.today', 'Today'), value: showNew ? '12' : '11' },
+      { label: t('landing.dashboardAnim.waitlist', 'Waitlist'), value: '2' },
+      { label: t('landing.dashboardAnim.guests', 'Guests'), value: showNew ? '28' : '24' },
     ],
-    [showNew],
+    [showNew, t],
   );
 
   const statusBadge = (s: 'confirmed' | 'pending') =>
@@ -66,12 +68,12 @@ export default function DashboardSyncAnimation({
         <div className="px-4 pt-3 pb-2 flex items-center justify-between">
           <div>
             <div className="text-[13px] font-bold text-[#1C1917] font-sans">
-              Dashboard
+              {t('landing.dashboardAnim.dashboard', 'Dashboard')}
             </div>
-            <div className="text-[10px] text-[#A8A29E]">Today · March 14</div>
+            <div className="text-[10px] text-[#A8A29E]">{t('landing.dashboardAnim.todayDate', 'Today · March 14')}</div>
           </div>
           <div className="px-3 py-1 bg-[#9F1239] text-white text-[10px] font-semibold rounded-lg">
-            + Walk-in
+            + {t('landing.dashboardAnim.walkIn', 'Walk-in')}
           </div>
         </div>
 
@@ -103,7 +105,7 @@ export default function DashboardSyncAnimation({
         <div className="px-4 mt-3 flex-1 min-h-0">
           <div className="bg-white border border-[#E7E5E4] rounded-xl p-3 h-full flex flex-col">
             <div className="text-[10px] font-semibold text-[#1C1917] mb-2">
-              Today's Reservations
+              {t('landing.dashboardAnim.todaysReservations', "Today's Reservations")}
             </div>
 
             <div className="space-y-0 flex-1">
@@ -137,7 +139,7 @@ export default function DashboardSyncAnimation({
                       <div
                         className={`px-1.5 py-0.5 rounded-full text-[8px] font-medium ${statusBadge(NEW_RESERVATION.status)}`}
                       >
-                        confirmed
+                        {t('landing.dashboardAnim.confirmed', 'confirmed')}
                       </div>
                     </motion.div>
                   </motion.div>
@@ -161,7 +163,9 @@ export default function DashboardSyncAnimation({
                   <div
                     className={`px-1.5 py-0.5 rounded-full text-[8px] font-medium ${statusBadge(r.status)}`}
                   >
-                    {r.status}
+                    {r.status === 'confirmed'
+                      ? t('landing.dashboardAnim.confirmed', 'confirmed')
+                      : t('landing.dashboardAnim.pending', 'pending')}
                   </div>
                 </div>
               ))}
@@ -174,7 +178,7 @@ export default function DashboardSyncAnimation({
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#10b981]" />
               </span>
               <span className="text-[9px] text-[#A8A29E]">
-                AI agent handling calls
+                {t('landing.dashboardAnim.aiHandlingCalls', 'AI agent handling calls')}
               </span>
             </div>
           </div>

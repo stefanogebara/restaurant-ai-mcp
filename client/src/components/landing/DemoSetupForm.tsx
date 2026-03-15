@@ -121,7 +121,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
       {/* Step 1: Find your restaurant */}
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-[1.6px] text-muted-stone mb-4">
-          Find your restaurant
+          {t('landing.demoSetup.form.findYourRestaurant', 'Find your restaurant')}
         </p>
         <div className="space-y-3">
           <div>
@@ -130,7 +130,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
               value={restaurantName}
               onChange={(e) => { setRestaurantName(e.target.value); setSearchResults(null); setSelectedResult(null); }}
               onKeyDown={handleKeyDown}
-              placeholder="Restaurant name"
+              placeholder={t('landing.demoSetup.form.restaurantNameSearch', 'Restaurant name')}
               className={inputBase}
               autoFocus
             />
@@ -141,7 +141,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
               value={city}
               onChange={(e) => { setCity(e.target.value); setSearchResults(null); setSelectedResult(null); }}
               onKeyDown={handleKeyDown}
-              placeholder="City"
+              placeholder={t('landing.demoSetup.form.city', 'City')}
               className={inputBase}
             />
             <button
@@ -153,10 +153,10 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
               {isSearching ? (
                 <span className="inline-flex items-center gap-2">
                   <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                  Searching...
+                  {t('landing.demoSetup.form.searching', 'Searching...')}
                 </span>
               ) : (
-                'Find it'
+                t('landing.demoSetup.form.findIt', 'Find it')
               )}
             </button>
           </div>
@@ -168,7 +168,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
         <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-sm">
           {searchError}
           <button type="button" onClick={handleSkipSearch} className="ml-2 underline text-amber-900 font-medium">
-            Continue without search
+            {t('landing.demoSetup.form.continueWithout', 'Continue without search')}
           </button>
         </motion.div>
       )}
@@ -182,7 +182,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
             exit={{ opacity: 0, height: 0 }}
             className="space-y-2 overflow-hidden"
           >
-            <p className="text-xs text-muted-stone">Select your restaurant:</p>
+            <p className="text-xs text-muted-stone">{t('landing.demoSetup.form.selectYourRestaurant', 'Select your restaurant:')}</p>
             {searchResults.map((result, i) => (
               <button
                 key={i}
@@ -203,7 +203,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
                         <span className="text-sm font-semibold text-deep-charcoal">{result.rating}</span>
                       </div>
                       {result.review_count > 0 && (
-                        <p className="text-[10px] text-muted-stone mt-0.5">{result.review_count.toLocaleString()} reviews</p>
+                        <p className="text-[10px] text-muted-stone mt-0.5">{result.review_count.toLocaleString()} {t('landing.demoSetup.form.reviews', 'reviews')}</p>
                       )}
                     </div>
                   )}
@@ -211,7 +211,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
               </button>
             ))}
             <button type="button" onClick={handleSkipSearch} className="text-xs text-muted-stone hover:text-stone-gray transition-colors underline">
-              Not listed? Continue manually
+              {t('landing.demoSetup.form.notListed', 'Not listed? Continue manually')}
             </button>
           </motion.div>
         )}
@@ -236,7 +236,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
                 onClick={() => { setSelectedResult(null); setSearchResults(null); }}
                 className="text-xs text-muted-stone hover:text-stone-gray underline flex-shrink-0"
               >
-                Change
+                {t('landing.demoSetup.form.change', 'Change')}
               </button>
             </div>
 
@@ -263,7 +263,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
             {selectedResult.hours_text && selectedResult.hours_text.length > 0 && (
               <details className="mt-3">
                 <summary className="text-[11px] font-medium text-stone-gray cursor-pointer hover:text-deep-charcoal transition-colors">
-                  Business hours
+                  {t('landing.demoSetup.form.businessHours', 'Business hours')}
                 </summary>
                 <ul className="mt-1.5 text-[11px] text-stone-gray space-y-0.5 pl-1">
                   {selectedResult.hours_text.map((line, i) => (
@@ -285,7 +285,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
       {/* No results message */}
       {searchResults && searchResults.length === 0 && !selectedResult && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-4">
-          <p className="text-sm text-stone-gray">No exact match found — we'll set up your demo with the details you provided.</p>
+          <p className="text-sm text-stone-gray">{t('landing.demoSetup.form.noExactMatch', "No exact match found — we'll set up your demo with the details you provided.")}</p>
         </motion.div>
       )}
 
@@ -300,17 +300,17 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
           >
             <div className="h-px bg-border-gray mb-6" />
             <p className="text-[11px] font-semibold uppercase tracking-[1.6px] text-muted-stone mb-3">
-              Almost there
+              {t('landing.demoSetup.form.almostThere', 'Almost there')}
             </p>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Your work email"
+              placeholder={t('landing.demoSetup.form.emailPlaceholder', 'Your work email')}
               className={inputBase}
             />
-            <p className="text-[10px] text-muted-stone mt-1.5 ml-1">We'll send your demo link here</p>
+            <p className="text-[10px] text-muted-stone mt-1.5 ml-1">{t('landing.demoSetup.form.emailHint', "We'll send your demo link here")}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -333,10 +333,10 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
             {isSubmitting ? (
               <>
                 <span className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" aria-hidden="true" />
-                <span>Creating your demo...</span>
+                <span>{t('landing.demoSetup.form.creatingDemo', 'Creating your demo...')}</span>
               </>
             ) : (
-              <span>Launch my demo</span>
+              <span>{t('landing.demoSetup.form.launchDemo', 'Launch my demo')}</span>
             )}
           </button>
           <p className="text-center text-xs text-muted-stone font-light mt-3">{t('landing.demoSetup.form.noCreditCard')}</p>

@@ -31,6 +31,22 @@ async function loadLocale(lng: string) {
   i18n.addResourceBundle(key, 'translation', mod.default, true, true);
 }
 
+// One-time migration: move explicit language choice from old key to new key.
+// Existing users may have 'i18nextLng' set from the old detector config.
+if (!localStorage.getItem('seatable-user-lang') && localStorage.getItem('i18nextLng')) {
+  const oldLang = localStorage.getItem('i18nextLng')!;
+  localStorage.setItem('seatable-user-lang', oldLang);
+  localStorage.removeItem('i18nextLng');
+}
+
+/** Normalize detected language codes to our supported set (en, es, pt-BR). */
+function normalizeLanguage(lng: string): string {
+  if (lng === 'pt' || lng.startsWith('pt-')) return 'pt-BR';
+  if (lng.startsWith('es')) return 'es';
+  if (lng.startsWith('en')) return 'en';
+  return lng;
+}
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -44,19 +60,17 @@ i18n
       escapeValue: false, // React already escapes values
     },
     detection: {
+      // Explicit user choice (seatable-user-lang) takes priority.
+      // i18nextLng is the auto-written cache — only used as secondary fallback.
       order: ['localStorage', 'navigator'],
       caches: ['localStorage'],
-      lookupLocalStorage: 'i18nextLng',
+      lookupLocalStorage: 'seatable-user-lang',
+      convertDetectedLanguage: normalizeLanguage,
     },
   });
 
 // Load the detected language on startup (if not English)
-// Also handle prefix fallback: navigator may report 'pt' but we need 'pt-BR'
-let detectedLng = i18n.language;
-if (detectedLng === 'pt' || detectedLng?.startsWith('pt-')) {
-  detectedLng = 'pt-BR';
-  if (i18n.language !== 'pt-BR') i18n.changeLanguage('pt-BR');
-}
+const detectedLng = i18n.language;
 if (detectedLng && !detectedLng.startsWith('en')) {
   loadLocale(detectedLng);
   document.documentElement.lang = detectedLng;

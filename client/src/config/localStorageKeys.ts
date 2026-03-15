@@ -14,8 +14,9 @@ export const LS_RESTAURANT_ID = 'restaurant_id';
 /** Referral code captured from ?ref= query param on landing page */
 export const LS_REFERRAL_CODE = 'referral_code';
 
-/** i18next active language code (e.g. 'en', 'es') */
-export const LS_LANGUAGE = 'i18nextLng';
+/** Explicit user language choice (e.g. 'en', 'es', 'pt-BR').
+ *  This key is also used by i18next-browser-languagedetector (lookupLocalStorage). */
+export const LS_LANGUAGE = 'seatable-user-lang';
 
 /** Flag: has the first-reservation PostHog event been fired this session */
 export const LS_FIRST_RESERVATION_TRACKED = 'seatable_first_reservation_tracked';

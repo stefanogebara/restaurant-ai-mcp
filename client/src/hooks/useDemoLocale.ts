@@ -1,10 +1,27 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import i18n from '../i18n/config';
 import { DEMO_PRESETS } from '../data/demoPresets';
 
 export type DemoLang = 'en' | 'pt-BR';
 
 const STORAGE_KEY = 'seatable-demo-lang';
+const USER_LANG_KEY = 'seatable-user-lang';
+
+/**
+ * Change i18n language for the demo WITHOUT corrupting the user's global
+ * language preference stored in localStorage.
+ */
+function changeDemoLanguage(lng: string): void {
+  const savedUserLang = localStorage.getItem(USER_LANG_KEY);
+  i18n.changeLanguage(lng);
+  // i18next-browser-languagedetector writes to localStorage on changeLanguage —
+  // restore the user's original explicit choice so demo doesn't corrupt it.
+  if (savedUserLang !== null) {
+    localStorage.setItem(USER_LANG_KEY, savedUserLang);
+  } else {
+    localStorage.removeItem(USER_LANG_KEY);
+  }
+}
 
 const strings = {
   'en': {
@@ -120,12 +137,21 @@ export function useDemoLocale() {
   const [showLangPopup, setShowLangPopup] = useState(!stored && !preset && !browserLang.startsWith('pt'));
   const [lang, setLangState] = useState<DemoLang>(stored || defaultLang);
 
-  // Sync i18next with demo locale on mount
+  // Sync i18next with demo locale on mount, restore original on unmount.
+  // Uses changeDemoLanguage to avoid corrupting the user's saved language.
+  const originalLngRef = useRef(i18n.language);
   useEffect(() => {
     const target = stored || defaultLang;
     if (i18n.language !== target) {
-      i18n.changeLanguage(target);
+      changeDemoLanguage(target);
     }
+    return () => {
+      // Restore the user's original language when leaving the demo
+      const original = originalLngRef.current;
+      if (original && original !== i18n.language) {
+        changeDemoLanguage(original);
+      }
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setLang = useCallback((newLang: DemoLang) => {
@@ -133,7 +159,7 @@ export function useDemoLocale() {
     setLangState(newLang);
     setShowLangPopup(false);
     // Sync i18next so shared components (StatsBar etc.) update too
-    i18n.changeLanguage(newLang === 'pt-BR' ? 'pt-BR' : 'en');
+    changeDemoLanguage(newLang === 'pt-BR' ? 'pt-BR' : 'en');
   }, []);
 
   const dismissPopup = useCallback(() => {

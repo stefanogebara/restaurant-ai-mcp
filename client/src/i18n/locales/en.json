@@ -1165,7 +1165,10 @@
       "micHint": "Click the mic to start talking",
       "loading": "Loading voice agent...",
       "fallbackTitle": "Voice demo unavailable",
-      "fallbackDesc": "Try our WhatsApp AI instead — send a message and get an instant response."
+      "fallbackDesc": "Try our WhatsApp AI instead — send a message and get an instant response.",
+      "suggestion1": "Book a table for 2 tonight",
+      "suggestion2": "What's on the menu?",
+      "suggestion3": "Do you have a terrace?"
     },
     "heroChat": {
       "msg1": "Hi! Table for 4 tomorrow at 8pm?",
@@ -1434,6 +1437,19 @@
         "button": "Try It With Your Restaurant"
       }
     },
+    "dashboardAnim": {
+      "tables": "Tables",
+      "today": "Today",
+      "waitlist": "Waitlist",
+      "guests": "Guests",
+      "todaysReservations": "Today's Reservations",
+      "aiHandlingCalls": "AI agent handling calls",
+      "dashboard": "Dashboard",
+      "todayDate": "Today · March 14",
+      "walkIn": "Walk-in",
+      "confirmed": "confirmed",
+      "pending": "pending"
+    },
     "demoSetup": {
       "nav": {
         "signIn": "Already have an account? Sign in"
@@ -1475,7 +1491,23 @@
         "workEmailPlaceholder": "sofia@bellaroma.com",
         "createButton": "Create my demo \u2192",
         "creating": "Creating your demo\u2026",
-        "noCreditCard": "No credit card required. Your demo is ready in seconds."
+        "noCreditCard": "No credit card required. Your demo is ready in seconds.",
+        "findYourRestaurant": "Find your restaurant",
+        "restaurantNameSearch": "Restaurant name",
+        "findIt": "Find it",
+        "searching": "Searching...",
+        "selectYourRestaurant": "Select your restaurant:",
+        "reviews": "reviews",
+        "change": "Change",
+        "businessHours": "Business hours",
+        "continueWithout": "Continue without search",
+        "notListed": "Not listed? Continue manually",
+        "noExactMatch": "No exact match found — we'll set up your demo with the details you provided.",
+        "almostThere": "Almost there",
+        "emailPlaceholder": "Your work email",
+        "emailHint": "We'll send your demo link here",
+        "launchDemo": "Launch my demo",
+        "creatingDemo": "Creating your demo..."
       }
     },
     "faq": {

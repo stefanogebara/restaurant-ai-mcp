@@ -966,7 +966,10 @@
       "micHint": "Haz clic en el micrófono para empezar",
       "loading": "Cargando agente de voz...",
       "fallbackTitle": "Demo de voz no disponible",
-      "fallbackDesc": "Prueba nuestra IA por WhatsApp — envía un mensaje y recibe una respuesta instantánea."
+      "fallbackDesc": "Prueba nuestra IA por WhatsApp — envía un mensaje y recibe una respuesta instantánea.",
+      "suggestion1": "Reservar mesa para 2 esta noche",
+      "suggestion2": "¿Qué hay en el menú?",
+      "suggestion3": "¿Tienen terraza?"
     },
     "heroChat": {
       "msg1": "¡Hola! ¿Mesa para 4 mañana a las 8pm?",
@@ -1261,9 +1264,22 @@
         "button": "Teste con Tu Restaurante"
       }
     },
+    "dashboardAnim": {
+      "tables": "Mesas",
+      "today": "Hoy",
+      "waitlist": "Espera",
+      "guests": "Comensales",
+      "todaysReservations": "Reservas de Hoy",
+      "aiHandlingCalls": "Agente IA atendiendo llamadas",
+      "dashboard": "Panel",
+      "todayDate": "Hoy · 14 de Marzo",
+      "walkIn": "Sin reserva",
+      "confirmed": "confirmado",
+      "pending": "pendiente"
+    },
     "demoSetup": {
       "nav": {
-        "signIn": "Já tem una conta? Entrar"
+        "signIn": "J\u00e1 tem una conta? Entrar"
       },
       "badge": "Demo Gratuito",
       "title": "Veja o Seatable funcionando",
@@ -1302,7 +1318,23 @@
         "workEmailPlaceholder": "maria@cantina.con.br",
         "createButton": "Criar meu demo →",
         "creating": "Criando tu demo…",
-        "noCreditCard": "Sem cartão de cresdito. Tu demo fica pronto em segundos."
+        "noCreditCard": "Sem cart\u00e3o de cr\u00e9dito. Tu demo fica pronto en segundos.",
+        "findYourRestaurant": "Encuentra tu restaurante",
+        "restaurantNameSearch": "Nombre del restaurante",
+        "findIt": "Buscar",
+        "searching": "Buscando...",
+        "selectYourRestaurant": "Selecciona tu restaurante:",
+        "reviews": "rese\u00f1as",
+        "change": "Cambiar",
+        "businessHours": "Horario de atenci\u00f3n",
+        "continueWithout": "Continuar sin b\u00fasqueda",
+        "notListed": "\u00bfNo aparece? Contin\u00faa manualmente",
+        "noExactMatch": "No se encontr\u00f3 coincidencia exacta \u2014 configuraremos tu demo con los datos proporcionados.",
+        "almostThere": "Casi listo",
+        "emailPlaceholder": "Tu correo profesional",
+        "emailHint": "Enviaremos el enlace del demo aqu\u00ed",
+        "launchDemo": "Lanzar mi demo",
+        "creatingDemo": "Creando tu demo..."
       }
     }
   },

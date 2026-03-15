@@ -3,10 +3,10 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import ElevenLabsWidget from '../../components/ElevenLabsWidget';
 
-const SUGGESTIONS = [
-  'Book a table for 2 tonight',
-  "What's on the menu?",
-  'Do you have a terrace?',
+const SUGGESTION_KEYS = [
+  { key: 'landing.voice.suggestion1', fallback: 'Book a table for 2 tonight' },
+  { key: 'landing.voice.suggestion2', fallback: "What's on the menu?" },
+  { key: 'landing.voice.suggestion3', fallback: 'Do you have a terrace?' },
 ];
 
 const ELEVENLABS_SCRIPT_URL = '/js/convai-widget-embed.js';
@@ -53,9 +53,9 @@ export default function VoiceWidgetSection() {
             {t('landing.voice.subtitle', 'Have a real conversation. Ask to book a table for 4 tonight — and hear the AI respond naturally.')}
           </p>
           <div className="flex flex-wrap gap-2 mb-6">
-            {SUGGESTIONS.map((s) => (
-              <span key={s} className="px-4 py-1.5 rounded-full border border-border-gray text-sm text-deep-charcoal">
-                {s}
+            {SUGGESTION_KEYS.map((s) => (
+              <span key={s.key} className="px-4 py-1.5 rounded-full border border-border-gray text-sm text-deep-charcoal">
+                {t(s.key, s.fallback)}
               </span>
             ))}
           </div>
