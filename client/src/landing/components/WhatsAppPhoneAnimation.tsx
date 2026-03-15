@@ -153,13 +153,10 @@ export default function WhatsAppPhoneAnimation({
 
           {/* WhatsApp header */}
           <div className="bg-[#075E54] px-4 pb-3 pt-1 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-whatsapp/30 flex items-center justify-center">
-              <svg
-                viewBox="0 0 24 24"
-                className="w-5 h-5 text-white"
-                fill="currentColor"
-              >
-                <path d="M12 2a9 9 0 0 0-6.95 14.68l-.95 3.32 3.42-.9A9 9 0 1 0 12 2Zm0 16.5a7.5 7.5 0 1 1 3.58-.91l-.25.15-2.48.65.66-2.42-.16-.27A7.46 7.46 0 0 1 12 18.5Z" />
+            <div className="w-9 h-9 rounded-full bg-burgundy flex items-center justify-center">
+              <svg viewBox="0 0 32 32" className="w-6 h-6" aria-label="Seatable">
+                <text x="6" y="24" fontFamily="Georgia, 'Palatino Linotype', serif" fontSize="22" fontWeight="700" fill="white">S</text>
+                <circle cx="24" cy="22" r="3" fill="white" opacity="0.6" />
               </svg>
             </div>
             <div className="flex-1">

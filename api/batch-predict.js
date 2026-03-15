@@ -9,13 +9,79 @@
  */
 
 const { getUpcomingReservations, updateReservation, supabaseAdmin } = require('./_lib/supabase');
-const { getCustomerStats } = require('./_lib/customer-history');
 const { predictNoShow } = require('./ml/predict');
 const { verifyAuth } = require('./_lib/auth');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 
 const logger = createSecureLogger('BatchPredict');
+
+/**
+ * Fetch customer stats from Supabase customer_history table.
+ * Returns an Airtable-style record for compatibility with ml/features.js,
+ * or default new-customer stats when no record exists.
+ */
+async function getCustomerStats(email, phone, restaurantId) {
+  const DEFAULT_STATS = {
+    is_repeat_customer: false,
+    total_reservations: 0,
+    completed_reservations: 0,
+    no_show_count: 0,
+    no_show_rate: 0.15,
+    cancellation_count: 0,
+    average_party_size: 0,
+    days_since_last_visit: null,
+    vip_status: false,
+    customer_id: null
+  };
+
+  try {
+    let data = null;
+
+    if (phone) {
+      const result = await supabaseAdmin
+        .from('customer_history')
+        .select('*')
+        .eq('customer_phone', phone)
+        .single();
+      if (!result.error) data = result.data;
+    }
+
+    if (!data && email) {
+      const result = await supabaseAdmin
+        .from('customer_history')
+        .select('*')
+        .eq('customer_email', email)
+        .single();
+      if (!result.error) data = result.data;
+    }
+
+    if (!data) return DEFAULT_STATS;
+
+    const totalReservations = (data.total_visits || 0) + (data.total_no_shows || 0) + (data.total_cancellations || 0);
+    const noShowRate = totalReservations > 0
+      ? (data.total_no_shows || 0) / totalReservations
+      : 0.15;
+
+    return {
+      is_repeat_customer: (data.total_visits || 0) > 0,
+      total_reservations: totalReservations,
+      completed_reservations: data.total_visits || 0,
+      no_show_count: data.total_no_shows || 0,
+      no_show_rate: parseFloat(noShowRate.toFixed(3)),
+      cancellation_count: data.total_cancellations || 0,
+      average_party_size: data.average_party_size || 0,
+      days_since_last_visit: data.last_visit_date
+        ? Math.ceil(Math.abs(new Date() - new Date(data.last_visit_date)) / (1000 * 60 * 60 * 24))
+        : null,
+      vip_status: data.vip_status || false,
+      customer_id: data.id || null
+    };
+  } catch (error) {
+    logger.error('Error fetching customer stats from Supabase:', error.message);
+    return DEFAULT_STATS;
+  }
+}
 
 /**
  * Fetch all active restaurant IDs from restaurant_config.

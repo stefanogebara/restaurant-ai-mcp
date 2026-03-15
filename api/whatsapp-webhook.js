@@ -119,7 +119,7 @@ async function sendWhatsAppMessage(to, message) {
     return { success: true, messageId: data.messages?.[0]?.id };
   } catch (error) {
     logger.error(' Send exception:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: 'Failed to send message' };
   }
 }
 
@@ -191,7 +191,7 @@ async function sendTemplateMessage(to, templateName, languageCode = 'en', bodyPa
     return { success: true, messageId: data.messages?.[0]?.id };
   } catch (error) {
     logger.error(' Template send exception:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: 'Failed to send template message' };
   }
 }
 

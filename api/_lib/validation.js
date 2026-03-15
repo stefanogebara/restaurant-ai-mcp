@@ -509,32 +509,6 @@ function validatePasswordStrength(password) {
   return { valid: true };
 }
 
-/**
- * Escape a string for safe use inside an Airtable formula string literal.
- *
- * Airtable formula strings are delimited by single quotes. The only escape
- * mechanism Airtable recognises inside a string literal is doubling the
- * single quote character ('' represents a literal '). This prevents formula
- * injection attacks such as:
- *
- *   Input:  ' >= '
- *   Naive:  {Email} = '' >= ''   → evaluates TRUE for every row
- *   Safe:   {Email} = ''' >= ''' → literal string ' >= '
- *
- * Always apply this function to every user-supplied value before interpolating
- * it into a filterByFormula string.
- *
- * @param {string} value - The raw user-supplied value
- * @returns {string} - The escaped value, safe to embed between single quotes
- */
-function escapeAirtableFormula(value) {
-  if (typeof value !== 'string') {
-    return '';
-  }
-  // Replace every single quote with two single quotes (Airtable convention)
-  return value.replace(/'/g, "''");
-}
-
 module.exports = {
   validatePhoneNumber,
   validateEmail,
@@ -551,6 +525,5 @@ module.exports = {
   sanitizeStringXSS,
   sanitizeObject,
   sanitizeSearchQuery,
-  escapeAirtableFormula,
   validateElevenLabsVoiceId,
 };

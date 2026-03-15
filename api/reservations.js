@@ -8,12 +8,6 @@ const {
   supabaseAdmin
 } = require('./_lib/supabase');
 
-const {
-  findOrCreateCustomer,
-  updateCustomerHistory,
-  getCustomerStats
-} = require('./_lib/customer-history');
-
 // Authentication
 const { verifyAuth } = require('./_lib/auth');
 
@@ -245,45 +239,10 @@ async function handleCreate(req, res, restaurantId, timezone) {
   }
 
   // ============================================================================
-  // CUSTOMER HISTORY TRACKING (ML Foundation)
-  // ============================================================================
-  try {
-    // Find or create customer in Customer History table
-    const customer = await findOrCreateCustomer(
-      customer_email,
-      customer_phone,
-      customer_name
-    );
-
-    if (customer) {
-      logger.info(`Customer found/created: ${customer.id}`);
-
-      // Update customer statistics (increment total reservations)
-      await updateCustomerHistory(customer.id, fields, 'created');
-
-      logger.info(`Updated customer ${customer.id} statistics`);
-
-      // Link reservation to customer record
-      if (result.data && result.data.id) {
-        await updateReservation(restaurantId, result.data.id, {
-          'Customer History': [customer.id]
-        });
-        logger.info(`Linked reservation ${result.data.id} to customer ${customer.id}`);
-      }
-    }
-  } catch (error) {
-    // Don't fail the reservation if customer tracking fails
-    logger.error('Error tracking customer', error);
-  }
-
-  // ============================================================================
   // ML PREDICTION - NO-SHOW RISK SCORING (Heuristic Model)
   // ============================================================================
   try {
     logger.info('Starting no-show prediction with heuristic model');
-
-    // Get customer history for feature extraction
-    const customerHistory = await getCustomerStats(customer_email, customer_phone, restaurantId);
 
     // Create reservation object for prediction
     const reservationForPrediction = {
@@ -335,7 +294,7 @@ async function handleCreate(req, res, restaurantId, timezone) {
         reservation_id: result.data.fields['Reservation ID'],
         created_at: reservationForPrediction.created_at
       };
-      await logReservationCreated(reservationWithId, prediction, customerHistory);
+      await logReservationCreated(reservationWithId, prediction, null);
     }
 
     // ============================================================================

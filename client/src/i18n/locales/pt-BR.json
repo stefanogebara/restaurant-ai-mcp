@@ -1149,7 +1149,13 @@
       "heading": "Escolha um restaurante. Explore o painel.",
       "subtitle": "Sem cadastro, sem e-mail. Clique e veja como funciona.",
       "cta": "Quer ver SEU restaurante?",
-      "ctaLink": "Configure aqui \u2192"
+      "ctaLink": "Configure aqui \u2192",
+      "cuisineItalian": "Italiana",
+      "cuisineJapanese": "Japonesa",
+      "cuisineMexican": "Mexicana",
+      "briefItalian": "8 mesas \u00b7 Little Italy",
+      "briefJapanese": "8 mesas \u00b7 Midtown",
+      "briefMexican": "9 mesas \u00b7 Mission District"
     },
     "voice": {
       "label": "Teste ao vivo",
@@ -1201,6 +1207,7 @@
       "heading": "Mande mensagem para nossa IA",
       "subtitle": "Envie uma mensagem no WhatsApp e receba uma resposta instantânea da nossa IA. Sem app, sem cadastro.",
       "cta": "Enviar mensagem de teste",
+      "previewMessage": "Oi! Gostaria de reservar uma mesa para 4 amanhã às 20h",
       "trust": "Número real: +55 11 5028-9356 \u00b7 São Paulo, Brasil"
     },
     "features": {
@@ -1300,7 +1307,19 @@
       "voiceDesc": "Sua recepcionista IA atende liga\u00e7\u00f5es naturalmente, aceita reservas e fala com a personalidade do seu restaurante.",
       "dashboardTitle": "Painel ao Vivo",
       "dashboardDesc": "Veja reservas, status das mesas, lista de espera e receita atualizando em tempo real enquanto sua IA trabalha.",
-      "comingSoon": "V\u00eddeo em breve"
+      "comingSoon": "V\u00eddeo em breve",
+      "whatsapp1": "Clientes mandam mensagem naturalmente \u2014 \u201cMesa para 2 hoje?\u201d",
+      "whatsapp2": "IA verifica disponibilidade e confirma na hora",
+      "whatsapp3": "Lembretes autom\u00e1ticos 2 horas antes",
+      "whatsapp4": "Funciona em Portugu\u00eas, Ingl\u00eas e Espanhol",
+      "voice1": "IA atende liga\u00e7\u00f5es com a personalidade do seu restaurante",
+      "voice2": "Cuida de reservas, d\u00favidas e endere\u00e7o",
+      "voice3": "Fala 6+ idiomas naturalmente",
+      "voice4": "Transfer\u00eancia para equipe quando necess\u00e1rio",
+      "dashboard1": "Mapa de mesas em tempo real com cores de status",
+      "dashboard2": "Walk-ins, espera e reservas em um s\u00f3 lugar",
+      "dashboard3": "Previs\u00e3o de receita e equipe integrada",
+      "dashboard4": "Assistente IA do gerente para insights r\u00e1pidos"
     },
     "contact": {
       "label": "Contato",
@@ -1459,12 +1478,15 @@
       "badge": "Demo Gratuito",
       "title": "Veja o Seatable funcionando",
       "titleEm": "no seu restaurante",
-      "titleSuffix": "em 2 minutos.",
-      "subtitle": "Configure seu demo personalizado \u2014 sua marca, seus hor\u00e1rios, seu card\u00e1pio.",
+      "titleSuffix": "em segundos.",
+      "subtitle": "Basta informar o nome do seu restaurante e a cidade. Puxamos hor\u00e1rios, avalia\u00e7\u00f5es e detalhes automaticamente.",
       "trust": {
         "avgResponse": "Tempo de Resposta",
         "languages": "Idiomas",
-        "aiBooking": "Reserva IA"
+        "aiBooking": "Reserva IA",
+        "setupTime": "Tempo de Setup",
+        "realData": "Dados Reais",
+        "hoursReviews": "Seus Hor\u00e1rios e Avalia\u00e7\u00f5es"
       },
       "form": {
         "sectionRestaurant": "Seu Restaurante",
@@ -1695,5 +1717,16 @@
     "noNotes": "Nenhuma nota adicional ainda.",
     "noNotesHint": "Clique em \"Editar Notas\" para adicionar informações do cliente.",
     "close": "Fechar"
+  },
+  "demo": {
+    "voice": {
+      "unavailable": "Pr\u00e9via de voz indispon\u00edvel",
+      "redirecting": "Redirecionando para seu painel...",
+      "title": "Conhe\u00e7a sua recepcionista IA",
+      "subtitle": "\u00c9 isso que seus clientes v\u00e3o ouvir quando ligarem",
+      "clickToTalk": "Clique no widget abaixo para come\u00e7ar a conversar",
+      "loading": "Carregando agente de voz...",
+      "skipToDashboard": "Ir para o painel"
+    }
   }
 }

@@ -1155,7 +1155,13 @@
       "heading": "Pick a restaurant. Explore the dashboard.",
       "subtitle": "No signup, no email. Just click and see how it works.",
       "cta": "Want YOUR restaurant?",
-      "ctaLink": "Set it up here \u2192"
+      "ctaLink": "Set it up here \u2192",
+      "cuisineItalian": "Italian",
+      "cuisineJapanese": "Japanese",
+      "cuisineMexican": "Mexican",
+      "briefItalian": "8 tables \u00b7 Little Italy",
+      "briefJapanese": "8 tables \u00b7 Midtown",
+      "briefMexican": "9 tables \u00b7 Mission District"
     },
     "voice": {
       "label": "Try it live",
@@ -1207,6 +1213,7 @@
       "heading": "Text our AI right now",
       "subtitle": "Send a message on WhatsApp and get an instant response from our AI. No app to download, no signup needed.",
       "cta": "Send a test message",
+      "previewMessage": "Hi! I'd like to book a table for 4 tomorrow at 8pm",
       "trust": "Real number: +55 11 5028-9356 \u00b7 S\u00e3o Paulo, Brazil"
     },
     "features": {
@@ -1306,7 +1313,19 @@
       "voiceDesc": "Your AI receptionist answers calls naturally, takes reservations, and speaks in your restaurant's personality.",
       "dashboardTitle": "Live Dashboard",
       "dashboardDesc": "See reservations, table status, waitlist, and revenue metrics update in real-time as your AI works.",
-      "comingSoon": "Video coming soon"
+      "comingSoon": "Video coming soon",
+      "whatsapp1": "Guests text naturally \u2014 \u201cTable for 2 tonight?\u201d",
+      "whatsapp2": "AI checks availability and confirms instantly",
+      "whatsapp3": "Automatic reminders 2 hours before",
+      "whatsapp4": "Works in Portuguese, English, and Spanish",
+      "voice1": "AI answers calls in your restaurant\u2019s personality",
+      "voice2": "Handles reservations, questions & directions",
+      "voice3": "Speaks 6+ languages naturally",
+      "voice4": "Seamless handoff to staff when needed",
+      "dashboard1": "Real-time table map with status colors",
+      "dashboard2": "Walk-ins, waitlist, and reservations unified",
+      "dashboard3": "Revenue & staffing forecasts built in",
+      "dashboard4": "Manager AI assistant for quick insights"
     },
     "contact": {
       "label": "Contact",
@@ -1457,12 +1476,15 @@
       "badge": "Free Demo",
       "title": "See Seatable running",
       "titleEm": "in your restaurant",
-      "titleSuffix": "in 2 minutes.",
-      "subtitle": "Set up your personalised demo \u2014 your branding, your hours, your menu.",
+      "titleSuffix": "in seconds.",
+      "subtitle": "Just tell us your restaurant name and city. We'll pull in your hours, reviews, and details automatically.",
       "trust": {
         "avgResponse": "Avg Response",
         "languages": "Languages",
-        "aiBooking": "AI Booking"
+        "aiBooking": "AI Booking",
+        "setupTime": "Setup Time",
+        "realData": "Real Data",
+        "hoursReviews": "Your Hours & Reviews"
       },
       "form": {
         "sectionRestaurant": "Your Restaurant",
@@ -1693,5 +1715,16 @@
     "noNotes": "No additional notes yet.",
     "noNotesHint": "Click \"Edit Notes\" to add customer information.",
     "close": "Close"
+  },
+  "demo": {
+    "voice": {
+      "unavailable": "Voice preview unavailable",
+      "redirecting": "Redirecting to your dashboard...",
+      "title": "Meet your AI receptionist",
+      "subtitle": "This is what your customers will hear when they call",
+      "clickToTalk": "Click the widget below to start talking",
+      "loading": "Loading voice agent...",
+      "skipToDashboard": "Skip to dashboard"
+    }
   }
 }

@@ -956,7 +956,13 @@
       "heading": "Elige un restaurante. Explora el panel.",
       "subtitle": "Sin registro, sin correo. Solo haz clic y mira cómo funciona.",
       "cta": "¿Quieres ver TU restaurante?",
-      "ctaLink": "Configúralo aquí \u2192"
+      "ctaLink": "Configúralo aquí \u2192",
+      "cuisineItalian": "Italiana",
+      "cuisineJapanese": "Japonesa",
+      "cuisineMexican": "Mexicana",
+      "briefItalian": "8 mesas \u00b7 Little Italy",
+      "briefJapanese": "8 mesas \u00b7 Midtown",
+      "briefMexican": "9 mesas \u00b7 Mission District"
     },
     "voice": {
       "label": "Prueba en vivo",
@@ -1008,6 +1014,7 @@
       "heading": "Escríbele a nuestra IA",
       "subtitle": "Envía un mensaje por WhatsApp y recibe una respuesta instantánea de nuestra IA. Sin app, sin registro.",
       "cta": "Enviar mensaje de prueba",
+      "previewMessage": "¡Hola! Me gustaría reservar una mesa para 4 mañana a las 8pm",
       "trust": "Número real: +55 11 5028-9356 \u00b7 São Paulo, Brasil"
     },
     "features": {
@@ -1171,7 +1178,19 @@
       "voiceDesc": "Tu recepcionista IA contesta llamadas naturalmente, acepta reservas y habla con la personalidad de tu restaurante.",
       "dashboardTitle": "Panel en Vivo",
       "dashboardDesc": "Ve reservas, estado de mesas, lista de espera e ingresos actualizandose en tiempo real mientras tu IA trabaja.",
-      "comingSoon": "Video proximamente"
+      "comingSoon": "Video pr\u00f3ximamente",
+      "whatsapp1": "Los clientes escriben naturalmente \u2014 \u201cMesa para 2 esta noche?\u201d",
+      "whatsapp2": "La IA verifica disponibilidad y confirma al instante",
+      "whatsapp3": "Recordatorios autom\u00e1ticos 2 horas antes",
+      "whatsapp4": "Funciona en Portugu\u00e9s, Ingl\u00e9s y Espa\u00f1ol",
+      "voice1": "La IA responde llamadas con la personalidad de tu restaurante",
+      "voice2": "Maneja reservas, preguntas y direcciones",
+      "voice3": "Habla 6+ idiomas naturalmente",
+      "voice4": "Transferencia al equipo cuando sea necesario",
+      "dashboard1": "Mapa de mesas en tiempo real con colores de estado",
+      "dashboard2": "Walk-ins, espera y reservas unificados",
+      "dashboard3": "Pron\u00f3sticos de ingresos y personal integrados",
+      "dashboard4": "Asistente IA del gerente para insights r\u00e1pidos"
     },
     "contact": {
       "label": "Contacto",
@@ -1279,46 +1298,49 @@
     },
     "demoSetup": {
       "nav": {
-        "signIn": "J\u00e1 tem una conta? Entrar"
+        "signIn": "\u00bfYa tienes cuenta? Iniciar sesi\u00f3n"
       },
       "badge": "Demo Gratuito",
-      "title": "Veja o Seatable funcionando",
-      "titleEm": "no tu restaurante",
-      "titleSuffix": "em 2 minutos.",
-      "subtitle": "Configure tu demo personalizado — tu marca, seus horarios, tu cardápio.",
+      "title": "Mira Seatable funcionando",
+      "titleEm": "en tu restaurante",
+      "titleSuffix": "en segundos.",
+      "subtitle": "Solo dinos el nombre de tu restaurante y la ciudad. Importamos horarios, rese\u00f1as y detalles autom\u00e1ticamente.",
       "trust": {
-        "avgResponse": "Tempo de Resposta",
+        "avgResponse": "Tiempo de Respuesta",
         "languages": "Idiomas",
-        "aiBooking": "Reserva IA"
+        "aiBooking": "Reserva IA",
+        "setupTime": "Tiempo de Setup",
+        "realData": "Datos Reales",
+        "hoursReviews": "Tus Horarios y Rese\u00f1as"
       },
       "form": {
         "sectionRestaurant": "Tu Restaurante",
-        "restaurantName": "Nome del restaurante",
-        "restaurantNamePlaceholder": "Cantina de la Praça",
-        "cuisineType": "Tipo de culinária",
-        "cuisineTypePlaceholder": "Brasileira · Contemporânea · Farm-to-table",
+        "restaurantName": "Nombre del restaurante",
+        "restaurantNamePlaceholder": "Casa de la Abuela",
+        "cuisineType": "Tipo de cocina",
+        "cuisineTypePlaceholder": "Mexicana \u00b7 Mediterr\u00e1nea \u00b7 Fusión",
         "city": "Ciudad",
-        "cityPlaceholder": "São Paulo",
-        "country": "País",
-        "countryPlaceholder": "Brasil",
-        "sectionHours": "Horarios e Capacidade",
+        "cityPlaceholder": "Madrid",
+        "country": "Pa\u00eds",
+        "countryPlaceholder": "Espa\u00f1a",
+        "sectionHours": "Horarios y Capacidad",
         "opensAt": "Abre a las",
         "closesAt": "Cierra a las",
-        "maxPartySize": "Tamaño máximo de grupo",
-        "sectionPolicies": "Políticas",
+        "maxPartySize": "Tama\u00f1o m\u00e1ximo de grupo",
+        "sectionPolicies": "Pol\u00edticas",
         "optional": "opcional",
-        "cancellationPolicy": "Política de cancelación",
-        "cancellationPolicyPlaceholder": "Cancelación gratuita hasta 24h antes",
-        "houseRules": "Regras de la casa",
-        "houseRulesPlaceholder": "Proibido bolo de fora, sem pets no terraço...",
+        "cancellationPolicy": "Pol\u00edtica de cancelaci\u00f3n",
+        "cancellationPolicyPlaceholder": "Cancelaci\u00f3n gratuita hasta 24h antes",
+        "houseRules": "Reglas de la casa",
+        "houseRulesPlaceholder": "No se permite pastel externo, sin mascotas en terraza...",
         "sectionAboutYou": "Sobre Ti",
         "yourName": "Tu nombre",
-        "yourNamePlaceholder": "Maria",
-        "workEmail": "E-mail profissional",
-        "workEmailPlaceholder": "maria@cantina.con.br",
-        "createButton": "Criar meu demo →",
-        "creating": "Criando tu demo…",
-        "noCreditCard": "Sem cart\u00e3o de cr\u00e9dito. Tu demo fica pronto en segundos.",
+        "yourNamePlaceholder": "Mar\u00eda",
+        "workEmail": "Correo profesional",
+        "workEmailPlaceholder": "maria@restaurante.es",
+        "createButton": "Crear mi demo \u2192",
+        "creating": "Creando tu demo\u2026",
+        "noCreditCard": "Sin tarjeta de cr\u00e9dito. Tu demo estar\u00e1 listo en segundos.",
         "findYourRestaurant": "Encuentra tu restaurante",
         "restaurantNameSearch": "Nombre del restaurante",
         "findIt": "Buscar",
@@ -1693,5 +1715,16 @@
     "loadingHistory": "Cargando historial...",
     "failedToSend": "Error al enviar. Intenta de nuevo.",
     "sendMessage": "Enviar mensaje"
+  },
+  "demo": {
+    "voice": {
+      "unavailable": "Vista previa de voz no disponible",
+      "redirecting": "Redirigiendo a tu panel...",
+      "title": "Conoce a tu recepcionista IA",
+      "subtitle": "Esto es lo que tus clientes escuchar\u00e1n cuando llamen",
+      "clickToTalk": "Haz clic en el widget de abajo para empezar a hablar",
+      "loading": "Cargando agente de voz...",
+      "skipToDashboard": "Ir al panel"
+    }
   }
 }

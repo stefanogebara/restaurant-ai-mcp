@@ -125,7 +125,7 @@ module.exports = async (req, res) => {
       logger.error('[ElevenLabs] ELEVENLABS_API_KEY not configured');
       return res.status(500).json({
         success: false,
-        error: 'ElevenLabs API key not configured'
+        error: 'Voice service is not available. Please try again later.'
       });
     }
 
@@ -261,9 +261,10 @@ async function fallbackToOwnVoices(req, res, targetLanguage, normalizedLanguage,
 
   if (!response.ok) {
     const errorText = await response.text();
-    return res.status(response.status).json({
+    logger.error('[ElevenLabs] Own voices API error:', response.status, errorText);
+    return res.status(502).json({
       success: false,
-      error: `ElevenLabs API error: ${response.status} ${errorText}`
+      error: 'Voice service is temporarily unavailable. Please try again later.'
     });
   }
 

@@ -283,7 +283,7 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    return res.status(405).json({ success: false, error: `Method ${method} not allowed for path ${path}` });
+    return res.status(405).json({ success: false, error: 'Method not allowed' });
   } catch (error) {
     logger.error('Restaurant settings API error:', error);
     return res.status(500).json({ success: false, error: 'Internal server error', details: 'Something went wrong. Please try again.' });

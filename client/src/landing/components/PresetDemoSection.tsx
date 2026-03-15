@@ -4,9 +4,9 @@ import { Link } from 'react-router-dom';
 import { trackPresetDemoClicked } from '../../lib/analytics';
 
 const presets = [
-  { id: 'italian', flag: '\u{1F1EE}\u{1F1F9}', name: 'Trattoria da Marco', cuisine: 'Italian', brief: '8 tables \u00b7 Little Italy', accent: 'bg-amber-50 text-amber-700' },
-  { id: 'japanese', flag: '\u{1F1EF}\u{1F1F5}', name: 'Sakura Izakaya', cuisine: 'Japanese', brief: '8 tables \u00b7 Midtown', accent: 'bg-rose-50 text-rose-700' },
-  { id: 'mexican', flag: '\u{1F1F2}\u{1F1FD}', name: 'Casa Oaxaca', cuisine: 'Mexican', brief: '9 tables \u00b7 Mission District', accent: 'bg-teal-50 text-teal-700' },
+  { id: 'italian', flag: '\u{1F1EE}\u{1F1F9}', name: 'Trattoria da Marco', cuisineKey: 'landing.tryDemo.cuisineItalian', brief: 'landing.tryDemo.briefItalian', accent: 'bg-amber-50 text-amber-700' },
+  { id: 'japanese', flag: '\u{1F1EF}\u{1F1F5}', name: 'Sakura Izakaya', cuisineKey: 'landing.tryDemo.cuisineJapanese', brief: 'landing.tryDemo.briefJapanese', accent: 'bg-rose-50 text-rose-700' },
+  { id: 'mexican', flag: '\u{1F1F2}\u{1F1FD}', name: 'Casa Oaxaca', cuisineKey: 'landing.tryDemo.cuisineMexican', brief: 'landing.tryDemo.briefMexican', accent: 'bg-teal-50 text-teal-700' },
 ] as const;
 
 export default function PresetDemoSection() {
@@ -45,8 +45,8 @@ export default function PresetDemoSection() {
               >
                 <span className="text-4xl">{p.flag}</span>
                 <h3 className="font-serif text-lg font-semibold text-deep-charcoal">{p.name}</h3>
-                <span className={`text-xs font-medium px-3 py-0.5 rounded-full ${p.accent}`}>{p.cuisine}</span>
-                <span className="text-sm text-muted-stone">{p.brief}</span>
+                <span className={`text-xs font-medium px-3 py-0.5 rounded-full ${p.accent}`}>{t(p.cuisineKey)}</span>
+                <span className="text-sm text-muted-stone">{t(p.brief)}</span>
                 <span className="absolute bottom-4 right-4 text-muted-stone opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true">&rarr;</span>
               </Link>
             </motion.div>

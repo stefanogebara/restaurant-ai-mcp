@@ -90,7 +90,7 @@
 | **Deployment** | Vercel (auto-deploy on push to main) |
 | **State** | React Query (@tanstack/react-query) |
 | **Rate Limiting** | Upstash Redis (with in-memory fallback) |
-| **Testing** | Jest (backend, 164 tests), Vitest + RTL (frontend, 100 tests) |
+| **Testing** | Jest (backend, 1434+ tests), Vitest + RTL (frontend, 458+ tests) |
 | **Logging** | createSecureLogger (masks sensitive data) |
 
 ---
@@ -271,7 +271,7 @@ restaurant-ai-mcp/
 
 ### Backend (Jest)
 ```bash
-npx jest --forceExit    # 164 tests across 3 suites
+npx jest --forceExit    # 1434+ tests across 80 suites
 ```
 
 Test files:
@@ -281,7 +281,7 @@ Test files:
 
 ### Frontend (Vitest + React Testing Library)
 ```bash
-cd client && npx vitest run    # 100 tests across 8 suites
+cd client && npx vitest run    # 458+ tests across 45 suites
 ```
 
 Test files:

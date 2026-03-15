@@ -294,12 +294,6 @@ jest.mock('../_lib/whatsapp-sender', () => ({
   sendReservationConfirmation: jest.fn(() => Promise.resolve({ success: true })),
 }));
 
-jest.mock('../_lib/customer-history', () => ({
-  findOrCreateCustomer: jest.fn(() => Promise.resolve({ id: 'cust-001' })),
-  updateCustomerHistory: jest.fn(() => Promise.resolve()),
-  getCustomerStats: jest.fn(() => Promise.resolve(null)),
-}));
-
 jest.mock('../ml/data-logger', () => ({
   logCustomerShowedUp: jest.fn(() => Promise.resolve()),
   logCustomerCancelled: jest.fn(() => Promise.resolve()),

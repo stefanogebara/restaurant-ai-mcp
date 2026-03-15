@@ -6,6 +6,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { buildDemoPrompt, buildDemoFirstMessage } from '../../utils/buildDemoPrompt';
 import type { ScrapedData } from '../../utils/buildDemoPrompt';
 
@@ -18,6 +19,7 @@ interface DemoVoiceAgentProps {
 const AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID as string | undefined;
 
 export default function DemoVoiceAgent({ restaurantName, scrapedData, onContinue }: DemoVoiceAgentProps) {
+  const { t } = useTranslation();
   const widgetContainerRef = useRef<HTMLDivElement>(null);
   const [widgetLoaded, setWidgetLoaded] = useState(false);
 
@@ -97,8 +99,8 @@ export default function DemoVoiceAgent({ restaurantName, scrapedData, onContinue
           transition={{ duration: 0.5 }}
           className="text-center"
         >
-          <p className="text-lg text-white/70 mb-2">Voice preview unavailable</p>
-          <p className="text-sm text-white/40">Redirecting to your dashboard...</p>
+          <p className="text-lg text-white/70 mb-2">{t('demo.voice.unavailable', 'Voice preview unavailable')}</p>
+          <p className="text-sm text-white/40">{t('demo.voice.redirecting', 'Redirecting to your dashboard...')}</p>
         </motion.div>
       </div>
     );
@@ -128,10 +130,10 @@ export default function DemoVoiceAgent({ restaurantName, scrapedData, onContinue
           className="text-center"
         >
           <h1 className="text-2xl sm:text-3xl font-serif font-medium text-white tracking-tight mb-2">
-            Meet your AI receptionist
+            {t('demo.voice.title', 'Meet your AI receptionist')}
           </h1>
           <p className="text-sm sm:text-base text-white/50 font-light">
-            This is what your customers will hear when they call
+            {t('demo.voice.subtitle', 'This is what your customers will hear when they call')}
           </p>
         </motion.div>
 
@@ -195,7 +197,7 @@ export default function DemoVoiceAgent({ restaurantName, scrapedData, onContinue
             <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
           </span>
           <span className="text-xs font-medium text-white/70">
-            {widgetLoaded ? 'Click the widget below to start talking' : 'Loading voice agent...'}
+            {widgetLoaded ? t('demo.voice.clickToTalk', 'Click the widget below to start talking') : t('demo.voice.loading', 'Loading voice agent...')}
           </span>
         </motion.div>
       </div>
@@ -215,7 +217,7 @@ export default function DemoVoiceAgent({ restaurantName, scrapedData, onContinue
           onClick={onContinue}
           className="text-sm text-white/40 hover:text-white/70 transition-colors font-light"
         >
-          Skip to dashboard &rarr;
+          {t('demo.voice.skipToDashboard', 'Skip to dashboard')} &rarr;
         </button>
       </motion.div>
     </div>

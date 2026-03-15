@@ -5,9 +5,42 @@
  */
 
 const { predictNoShow, predictBatch, getModelInfo, explainPrediction } = require('../ml/predict');
-const { findOrCreateCustomer } = require('../_lib/customer-history');
+const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const logger = createSecureLogger('MLPredictions');
+
+/**
+ * Look up customer history from Supabase for ML feature extraction.
+ * Returns null when no record exists (features.js uses safe defaults).
+ */
+async function lookupCustomerHistory(email, phone) {
+  try {
+    let data = null;
+
+    if (email) {
+      const result = await supabaseAdmin
+        .from('customer_history')
+        .select('*')
+        .eq('customer_email', email)
+        .single();
+      if (!result.error) data = result.data;
+    }
+
+    if (!data && phone) {
+      const result = await supabaseAdmin
+        .from('customer_history')
+        .select('*')
+        .eq('customer_phone', phone)
+        .single();
+      if (!result.error) data = result.data;
+    }
+
+    return data;
+  } catch (error) {
+    logger.error('Error looking up customer history:', error.message);
+    return null;
+  }
+}
 
 // ============================================================================
 // PREDICTION ENDPOINTS
@@ -47,10 +80,9 @@ async function handlePredict(req, res) {
     let customerHistory = null;
 
     if (reservation.customer_email || reservation.customer_phone) {
-      customerHistory = await findOrCreateCustomer(
+      customerHistory = await lookupCustomerHistory(
         reservation.customer_email,
-        reservation.customer_phone,
-        reservation.customer_name || 'Unknown'
+        reservation.customer_phone
       );
     }
 
@@ -98,11 +130,7 @@ async function handlePredictBatch(req, res) {
       const phone = reservation.customer_phone;
 
       if ((email || phone) && !customerHistoryMap[email] && !customerHistoryMap[phone]) {
-        const history = await findOrCreateCustomer(
-          email,
-          phone,
-          reservation.customer_name || 'Unknown'
-        );
+        const history = await lookupCustomerHistory(email, phone);
 
         if (email) customerHistoryMap[email] = history;
         if (phone) customerHistoryMap[phone] = history;
@@ -172,10 +200,9 @@ async function handleExplain(req, res) {
     let customerHistory = null;
 
     if (reservation.customer_email || reservation.customer_phone) {
-      customerHistory = await findOrCreateCustomer(
+      customerHistory = await lookupCustomerHistory(
         reservation.customer_email,
-        reservation.customer_phone,
-        reservation.customer_name || 'Unknown'
+        reservation.customer_phone
       );
     }
 

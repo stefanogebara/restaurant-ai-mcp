@@ -112,12 +112,6 @@ jest.mock('../_lib/supabase', () => ({
   },
 }));
 
-jest.mock('../_lib/customer-history', () => ({
-  findOrCreateCustomer: jest.fn(() => Promise.resolve({ id: 'cust-001' })),
-  updateCustomerHistory: jest.fn(() => Promise.resolve()),
-  getCustomerStats: jest.fn(() => Promise.resolve(null)),
-}));
-
 jest.mock('../_lib/auth', () => ({
   verifyAuth: jest.fn(() =>
     Promise.resolve({

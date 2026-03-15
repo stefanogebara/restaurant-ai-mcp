@@ -5,10 +5,10 @@ function calculateStaffing(covers, roles) {
   }));
 }
 
-function buildForecast(reservationsByDate, roles) {
+function buildForecast(reservationsByDate, roles, locale = 'en-US') {
   return reservationsByDate.map(({ date, covers }) => ({
     date,
-    day: new Date(date + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }),
+    day: new Date(date + 'T12:00:00Z').toLocaleDateString(locale, { weekday: 'short', timeZone: 'UTC' }),
     expected_covers: covers,
     roles: calculateStaffing(covers, roles),
   }));

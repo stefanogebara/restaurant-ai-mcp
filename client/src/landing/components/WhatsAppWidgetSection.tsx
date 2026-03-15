@@ -2,11 +2,10 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { trackWhatsAppTapped } from '../../lib/analytics';
 
-const WA_URL = 'https://wa.me/551150289356?text=Hi!%20I\'d%20like%20to%20book%20a%20table%20for%204%20tomorrow%20at%208pm';
-const MESSAGE_TEXT = "Hi! I'd like to book a table for 4 tomorrow at 8pm";
-
 export default function WhatsAppWidgetSection() {
   const { t } = useTranslation();
+  const messageText = t('landing.whatsapp.previewMessage', "Hi! I'd like to book a table for 4 tomorrow at 8pm");
+  const waUrl = `https://wa.me/551150289356?text=${encodeURIComponent(messageText)}`;
 
   return (
     <section className="py-24 px-6 bg-soft-gray border-t border-border-gray">
@@ -20,7 +19,7 @@ export default function WhatsAppWidgetSection() {
           className="flex justify-center"
         >
           <motion.a
-            href={WA_URL}
+            href={waUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="block w-[280px] sm:w-[320px] select-none"
@@ -36,9 +35,10 @@ export default function WhatsAppWidgetSection() {
                 </div>
                 {/* Header */}
                 <div className="bg-[#075E54] px-4 pb-3 pt-1 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-whatsapp/30 flex items-center justify-center">
-                    <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="currentColor">
-                      <path d="M12 2a9 9 0 0 0-6.95 14.68l-.95 3.32 3.42-.9A9 9 0 1 0 12 2Zm0 16.5a7.5 7.5 0 1 1 3.58-.91l-.25.15-2.48.65.66-2.42-.16-.27A7.46 7.46 0 0 1 12 18.5Z" />
+                  <div className="w-9 h-9 rounded-full bg-burgundy flex items-center justify-center">
+                    <svg viewBox="0 0 32 32" className="w-6 h-6" aria-label="Seatable">
+                      <text x="6" y="24" fontFamily="Georgia, 'Palatino Linotype', serif" fontSize="22" fontWeight="700" fill="white">S</text>
+                      <circle cx="24" cy="22" r="3" fill="white" opacity="0.6" />
                     </svg>
                   </div>
                   <div>
@@ -53,14 +53,14 @@ export default function WhatsAppWidgetSection() {
                 <div className="px-3 py-4 min-h-[200px]" style={{ backgroundImage: 'radial-gradient(circle at 20% 80%, #e8e5e0 0%, #ede9e3 100%)' }}>
                   <div className="flex justify-end">
                     <div className="max-w-[85%] px-3 py-2 bg-green-100 rounded-2xl rounded-tr-sm text-[13px] text-deep-charcoal shadow-sm">
-                      {MESSAGE_TEXT}
+                      {messageText}
                     </div>
                   </div>
                 </div>
                 {/* Input bar with Send */}
                 <div className="bg-soft-gray px-3 py-2 flex items-center gap-2 border-t border-border-gray">
                   <div className="flex-1 bg-white rounded-full px-4 py-2 text-[12px] text-muted-stone truncate">
-                    {MESSAGE_TEXT}
+                    {messageText}
                   </div>
                   <div className="w-8 h-8 rounded-full bg-whatsapp flex items-center justify-center flex-shrink-0">
                     <svg viewBox="0 0 24 24" className="w-4 h-4 text-white" fill="currentColor">
@@ -90,7 +90,7 @@ export default function WhatsAppWidgetSection() {
             {t('landing.whatsapp.subtitle', 'Send a message on WhatsApp and get an instant response from our AI. No app to download, no signup needed.')}
           </p>
           <a
-            href={WA_URL}
+            href={waUrl}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => trackWhatsAppTapped()}
