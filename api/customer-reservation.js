@@ -48,7 +48,7 @@ module.exports = async (req, res) => {
  * Returns the most recent non-cancelled reservation when searching by phone.
  */
 async function handleLookup(req, res) {
-  const { reservation_id, customer_phone } = req.query;
+  const { reservation_id, customer_phone, restaurant_id } = req.query;
 
   if (!reservation_id && !customer_phone) {
     return res.status(400).json({
@@ -62,8 +62,15 @@ async function handleLookup(req, res) {
   if (reservation_id) {
     query = query.eq('reservation_id', reservation_id.trim().toUpperCase());
   } else {
-    // Phone lookup: return the most recent reservation for this number
+    // Phone lookup requires restaurant_id to prevent cross-tenant data leaks
+    if (!restaurant_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'restaurant_id is required for phone lookups',
+      });
+    }
     query = query.eq('customer_phone', customer_phone.trim())
+      .eq('restaurant_id', restaurant_id)
       .order('date', { ascending: false })
       .order('time', { ascending: false });
   }

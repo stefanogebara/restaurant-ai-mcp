@@ -8,6 +8,10 @@ node_modules
 gcp-credentials.json
 *-credentials.json
 
+# E2E auth state (contains JWTs and tokens)
+e2e/auth-state.json
+e2e/auth-state-local.json
+
 # Test/debug files with potential sensitive data
 check-*.js
 check-*.py

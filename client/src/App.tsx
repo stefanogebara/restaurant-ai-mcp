@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react';
+import { useTranslation } from 'react-i18next';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ThiingsIcon from './components/common/ThiingsIcon';
 import "./i18n/config";
@@ -87,6 +88,7 @@ function RouteErrorFallback() {
 }
 
 function App() {
+  const { t } = useTranslation();
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -97,7 +99,7 @@ function App() {
               href="#main-content"
               className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-white focus:px-4 focus:py-2 focus:rounded focus:text-deep-charcoal focus:shadow-md"
             >
-              Pular para o conteúdo
+              {t('common.skipToContent', 'Skip to content')}
             </a>
             <ErrorBoundary>
             <Suspense fallback={

@@ -1447,7 +1447,7 @@ module.exports = async (req, res) => {
 
     } catch (error) {
       logger.error(' Webhook error:', error);
-      return res.status(200).json({ status: 'error', message: error.message });
+      return res.status(200).json({ status: 'error', message: 'Something went wrong. Please try again.' });
     }
   }
 

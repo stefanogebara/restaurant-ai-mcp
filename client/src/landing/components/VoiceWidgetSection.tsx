@@ -9,7 +9,7 @@ const SUGGESTIONS = [
   'Do you have a terrace?',
 ];
 
-const ELEVENLABS_SCRIPT_URL = 'https://unpkg.com/@elevenlabs/convai-widget-embed@0.0.5';
+const ELEVENLABS_SCRIPT_URL = '/js/convai-widget-embed.js';
 
 export default function VoiceWidgetSection() {
   const { t } = useTranslation();
@@ -27,8 +27,6 @@ export default function VoiceWidgetSection() {
     script.src = ELEVENLABS_SCRIPT_URL;
     script.async = true;
     script.type = 'text/javascript';
-    script.integrity = 'sha384-bXCYeZFO48oeemxAoIkbF3wTkdbbJT99316+t9hWOAAgfvqL9bkWuBQLb5pjSV3v';
-    script.crossOrigin = 'anonymous';
     script.onload = () => setScriptLoaded(true);
     script.onerror = () => setScriptError(true);
     document.body.appendChild(script);

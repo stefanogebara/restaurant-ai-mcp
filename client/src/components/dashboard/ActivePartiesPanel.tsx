@@ -129,7 +129,7 @@ function PartyRow({ party, billValue, onBillChange, onComplete }: PartyRowProps)
               .join('')
               .toUpperCase()}
           </div>
-          <div className="font-semibold text-deep-charcoal text-sm truncate min-w-0">
+          <div className="font-semibold text-deep-charcoal text-sm truncate min-w-0" title={party.customer_name || ''}>
             {party.customer_name}
           </div>
         </div>

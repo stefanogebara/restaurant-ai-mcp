@@ -37,6 +37,7 @@ const CRON_JOBS = [
   { name: 'manager-alerts-late-cancellations', intervalMinutes: 120 }, // every 2h
   { name: 'proactive-comms', intervalMinutes: 10080 },       // weekly
   { name: 'refresh-restaurant-profiles', intervalMinutes: 10080 }, // weekly
+  { name: 'pre-reservation-upsell', intervalMinutes: 1440 },     // daily
 ];
 
 function getStatus(lastRanAt, intervalMinutes) {

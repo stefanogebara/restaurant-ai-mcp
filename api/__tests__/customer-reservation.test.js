@@ -92,11 +92,21 @@ describe('customer-reservation: lookup', () => {
     expect(json.reservation.reservation_id).toBe('CEL-2026-0218-A7K3');
   });
 
-  test('returns reservation by phone', async () => {
+  test('returns 400 for phone lookup without restaurant_id', async () => {
+    const { req, res } = mkReqRes({
+      query: { action: 'lookup', customer_phone: '+15550001' },
+    });
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json.mock.calls[0][0].message).toMatch(/restaurant_id/i);
+  });
+
+  test('returns reservation by phone with restaurant_id', async () => {
     mockSingle.mockResolvedValueOnce({ data: RESERVATION, error: null });
 
     const { req, res } = mkReqRes({
-      query: { action: 'lookup', customer_phone: '+15550001' },
+      query: { action: 'lookup', customer_phone: '+15550001', restaurant_id: 'rest-123' },
     });
     await handler(req, res);
 

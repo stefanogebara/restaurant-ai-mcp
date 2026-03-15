@@ -12,6 +12,7 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { initSentry, captureMessage } = require('../_lib/sentry');
 const { logCronRun } = require('../_lib/cron-tracker');
+const { getLocalDate } = require('../_lib/timezone');
 initSentry();
 const logger = createSecureLogger('CronReminders');
 
@@ -90,18 +91,37 @@ module.exports = async (req, res) => {
   try {
     logger.info(' Starting reservation reminder job...');
 
-    // Get today's date in YYYY-MM-DD format
-    const today = new Date().toISOString().split('T')[0];
-    logger.info(` Looking for reservations on ${today}`);
+    // Fetch restaurant timezones to determine each restaurant's "today"
+    const { data: restaurantConfigs } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('id, timezone');
+    const timezoneMap = {};
+    for (const cfg of (restaurantConfigs || [])) {
+      timezoneMap[cfg.id] = cfg.timezone || 'UTC';
+    }
 
-    // Find all confirmed reservations for today that have a phone number
-    const { data: reservations, error } = await supabaseAdmin
+    // Query yesterday+today+tomorrow (UTC) to cover all timezones (UTC-12 to UTC+14)
+    const todayUTC = new Date().toISOString().split('T')[0];
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    logger.info(` Looking for reservations on ${yesterday}..${tomorrow} (timezone-safe)`);
+
+    // Find all confirmed reservations in the date window that have a phone number
+    const { data: allReservations, error } = await supabaseAdmin
       .from('reservations')
       .select('id, reservation_id, restaurant_id, customer_name, customer_phone, date, time, party_size, ml_risk_level, ml_risk_score')
-      .eq('date', today)
+      .in('date', [yesterday, todayUTC, tomorrow])
       .eq('status', 'confirmed')
       .not('customer_phone', 'is', null)
-      .limit(500);
+      .limit(1500);
+
+    // Filter to only reservations where date matches restaurant's local "today"
+    const reservations = (allReservations || []).filter(r => {
+      const tz = timezoneMap[r.restaurant_id] || 'UTC';
+      const localToday = getLocalDate(tz);
+      return r.date === localToday;
+    });
 
     if (error) {
       logger.error(' Error fetching reservations:', error);
@@ -267,14 +287,14 @@ module.exports = async (req, res) => {
       captureMessage(
         `CronReminders: ${results.failed} reminder(s) failed to send`,
         'warning',
-        { errors: failedDetails, date: today }
+        { errors: failedDetails, date: todayUTC }
       );
     }
 
     const summary = {
       success: true,
       run_at: new Date().toISOString(),
-      date: today,
+      date: todayUTC,
       total_reservations: reservations?.length || 0,
       reminders_sent: results.sent,
       reminders_failed: results.failed,

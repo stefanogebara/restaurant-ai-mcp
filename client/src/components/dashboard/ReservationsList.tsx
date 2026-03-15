@@ -270,10 +270,10 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
   const avatarStyle = { background: `linear-gradient(135deg, hsl(${hue},50%,75%), hsl(${(hue + 40) % 360},50%,65%))` };
 
   return (
-    <div className={`flex items-center py-[18px] border-b border-warm-white last:border-b-0 gap-4 hover:bg-warm-white/50 transition-colors ${
+    <div className={`flex items-center py-[18px] border-b border-warm-white last:border-b-0 gap-2.5 sm:gap-4 hover:bg-warm-white/50 transition-colors ${
   reservation.party_size >= 6
-    ? 'pl-5 pr-6 border-l-2 border-l-burgundy/30'
-    : 'px-6'
+    ? 'pl-3 sm:pl-5 pr-4 sm:pr-6 border-l-2 border-l-burgundy/30'
+    : 'px-3 sm:px-6'
 }`}>
       {/* Avatar */}
       <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[13px] font-semibold text-warm-stone flex-shrink-0" style={avatarStyle}>
@@ -282,7 +282,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-semibold text-deep-charcoal tracking-tight truncate">{reservation.customer_name}</div>
+        <div className="text-sm font-semibold text-deep-charcoal tracking-tight truncate" title={reservation.customer_name}>{reservation.customer_name}</div>
         <div className="text-xs text-muted-stone mt-0.5 truncate">
           {reservation.party_size} {t.people}
           {avgSpendPerCover ? (

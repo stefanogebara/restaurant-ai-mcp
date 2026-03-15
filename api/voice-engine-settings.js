@@ -95,7 +95,7 @@ async function handleGet(req, res) {
     logger.error('[VoiceEngineSettings GET] Error:', error);
     return res.status(500).json({
       success: false,
-      error: error.message || 'Failed to fetch voice engine settings'
+      error: 'Something went wrong. Please try again.'
     });
   }
 }
@@ -181,7 +181,7 @@ async function handlePatch(req, res) {
     logger.error('[VoiceEngineSettings PATCH] Error:', error);
     return res.status(500).json({
       success: false,
-      error: error.message || 'Failed to update voice engine settings'
+      error: 'Something went wrong. Please try again.'
     });
   }
 }

@@ -34,7 +34,7 @@ export default function DemoVoiceAgent({ restaurantName, scrapedData, onContinue
     if (!AGENT_ID) return;
 
     const script = document.createElement('script');
-    script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
+    script.src = '/js/convai-widget-embed.js';
     script.async = true;
     script.type = 'text/javascript';
 

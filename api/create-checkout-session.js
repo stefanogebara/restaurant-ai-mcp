@@ -116,7 +116,7 @@ module.exports = async (req, res) => {
     logger.error('Error creating checkout session:', error.message);
     return res.status(500).json({
       error: 'Failed to create checkout session',
-      message: error.message,
+      message: 'Something went wrong. Please try again.',
     });
   }
 };

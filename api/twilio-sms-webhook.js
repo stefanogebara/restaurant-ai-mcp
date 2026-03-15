@@ -146,13 +146,15 @@ module.exports = async (req, res) => {
   if (req.method === 'POST') {
     // Verify Twilio signature
     const authToken = process.env.TWILIO_AUTH_TOKEN;
-    if (authToken) {
-      const signature = req.headers['x-twilio-signature'];
-      const url = `https://${req.headers.host}${req.url}`;
-      if (!signature || !twilio.validateRequest(authToken, signature, url, req.body || {})) {
-        logger.error('[SMS] Invalid Twilio webhook signature');
-        return res.status(403).json({ error: 'Invalid signature' });
-      }
+    if (!authToken) {
+      logger.error('[SMS] TWILIO_AUTH_TOKEN not configured — rejecting webhook');
+      return res.status(403).json({ error: 'Webhook signature verification not configured' });
+    }
+    const signature = req.headers['x-twilio-signature'];
+    const url = `https://${req.headers.host}${req.url}`;
+    if (!signature || !twilio.validateRequest(authToken, signature, url, req.body || {})) {
+      logger.error('[SMS] Invalid Twilio webhook signature');
+      return res.status(403).json({ error: 'Invalid signature' });
     }
 
     try {

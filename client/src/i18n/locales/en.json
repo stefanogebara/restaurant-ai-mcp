@@ -23,7 +23,9 @@
     "retry": "Retry",
     "settingUp": "Setting things up...",
     "saved": "Saved",
-    "searchPlaceholder": "Search..."
+    "searchPlaceholder": "Search...",
+    "skipToContent": "Skip to content",
+    "goBack": "Go back"
   },
   "navigation": {
     "dashboard": "Dashboard",

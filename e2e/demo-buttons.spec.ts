@@ -160,15 +160,17 @@ test.describe('Demo Dashboard — All Buttons Work', () => {
     await expect(modal).not.toBeVisible({ timeout: 3000 });
     console.log('✓ Walk-In modal Close (X) works');
 
-    // ===== TEST 8: Manager AI panel — open, verify fields, close =====
-    await page.getByRole('button', { name: /Abrir Assistente IA|Open AI Assistant/ }).click();
-    await expect(page.getByText(/Gerente IA|Manager AI/).first()).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText(/Modo demo/i)).toBeVisible();
-    await expect(page.getByRole('textbox', { name: /Pergunte|Ask/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Enviar|Send/ })).toBeVisible();
-    await page.getByRole('button', { name: /Fechar chat|Close chat/ }).click();
-    await page.waitForTimeout(1000);
-    console.log('✓ Manager AI panel open/close works');
+    // ===== TEST 8: Manager AI inline panel — verify visible on dashboard =====
+    // Dismiss DemoSlideIn if it appeared (blocks interactions after 60s)
+    const slideInDismiss = page.getByText(/Talvez depois|Maybe later/i);
+    if (await slideInDismiss.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await slideInDismiss.click();
+      await page.waitForTimeout(500);
+    }
+    await expect(page.getByText(/IA do Gerente|Manager AI/).first()).toBeVisible({ timeout: 5000 });
+    const chatInput = page.getByPlaceholder(/Pergunte sobre|Ask about/);
+    await expect(chatInput).toBeVisible();
+    console.log('✓ Manager AI inline panel visible with chat input');
 
     // ===== TEST 9: Language toggle =====
     const langBtn = page.getByRole('button', { name: /Toggle language/ });

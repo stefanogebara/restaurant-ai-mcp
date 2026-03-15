@@ -5,7 +5,7 @@
  * Falls back to EUR for all other locales.
  */
 
-export const DEFAULT_CURRENCY = 'BRL';
+export const DEFAULT_CURRENCY = 'EUR';
 
 /**
  * Format an amount as a currency string using the default (BRL) or specified currency.

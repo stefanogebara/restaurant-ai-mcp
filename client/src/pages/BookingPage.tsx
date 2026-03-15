@@ -114,7 +114,7 @@ export default function BookingPage() {
             to="/"
             className="inline-block px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors text-sm"
           >
-            Voltar
+            {t('common.goBack', 'Go back')}
           </Link>
         </div>
         <p className="mt-6 text-xs text-muted-stone">

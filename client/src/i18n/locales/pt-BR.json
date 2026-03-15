@@ -23,7 +23,9 @@
     "retry": "Tentar Novamente",
     "settingUp": "Configurando tudo...",
     "saved": "Salvo",
-    "searchPlaceholder": "Buscar..."
+    "searchPlaceholder": "Buscar...",
+    "skipToContent": "Pular para o conteúdo",
+    "goBack": "Voltar"
   },
   "navigation": {
     "dashboard": "Painel",

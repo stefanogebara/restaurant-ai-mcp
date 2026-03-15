@@ -192,7 +192,7 @@ module.exports = async (req, res) => {
     return res.status(500).json({
       success: false,
       error: 'Batch prediction failed',
-      message: error.message
+      message: 'Something went wrong. Please try again.'
     });
   }
 };

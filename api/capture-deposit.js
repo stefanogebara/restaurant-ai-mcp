@@ -79,7 +79,7 @@ module.exports = async (req, res) => {
     if (error.type === 'StripeInvalidRequestError') {
       return res.status(400).json({
         success: false,
-        error: `Stripe error: ${error.message}`,
+        error: 'Something went wrong. Please try again.',
       });
     }
 

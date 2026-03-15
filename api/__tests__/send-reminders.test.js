@@ -31,6 +31,17 @@ jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: jest.fn(() => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() })),
 }));
 
+// ── Timezone mock ───────────────────────────────────────────────────────────
+const mockTodayUTC = new Date().toISOString().split('T')[0];
+jest.mock('../_lib/timezone', () => ({
+  getLocalDate: jest.fn(() => mockTodayUTC),
+}));
+
+// ── Cron tracker mock ───────────────────────────────────────────────────────
+jest.mock('../_lib/cron-tracker', () => ({
+  logCronRun: jest.fn().mockResolvedValue(undefined),
+}));
+
 // ── Supabase mock ─────────────────────────────────────────────────────────────
 let mockReservations = [];
 let mockRestaurantInfoRows = [];
@@ -44,6 +55,7 @@ jest.mock('../_lib/supabase', () => {
           return {
             select: jest.fn().mockReturnThis(),
             eq: jest.fn().mockReturnThis(),
+            in: jest.fn().mockReturnThis(),
             not: jest.fn().mockReturnValue({
               limit: jest.fn(() => Promise.resolve({
                 data: mockReservations,
@@ -62,13 +74,23 @@ jest.mock('../_lib/supabase', () => {
         };
       }),
       schema: jest.fn(() => ({
-        from: jest.fn(() => ({
-          select: jest.fn().mockReturnThis(),
-          in: jest.fn(() => Promise.resolve({
-            data: mockRestaurantInfoRows,
-            error: null,
-          })),
-        })),
+        from: jest.fn((table) => {
+          const configData = (mockReservations || []).map(r => ({ id: r.restaurant_id, timezone: 'UTC' }));
+          const selectResult = {
+            // For restaurant_info queries that chain .in()
+            in: jest.fn(() => Promise.resolve({
+              data: table === 'restaurant_config' ? configData : mockRestaurantInfoRows,
+              error: null,
+            })),
+            // For restaurant_config queries that await select() directly
+            then: (resolve) => resolve({
+              data: table === 'restaurant_config' ? configData : mockRestaurantInfoRows,
+              error: null,
+            }),
+            catch: jest.fn().mockReturnThis(),
+          };
+          return { select: jest.fn(() => selectResult) };
+        }),
       })),
     },
   };
@@ -112,13 +134,13 @@ describe('send-reminders: multi-tenant restaurant name isolation', () => {
       {
         reservation_id: 'RES-A1', restaurant_id: 'rest-A',
         customer_name: 'Alice', customer_phone: '+15550001',
-        time: '19:00', party_size: 2, status: 'confirmed',
+        date: mockTodayUTC, time: '19:00', party_size: 2, status: 'confirmed',
         ml_risk_level: null, intervention_taken: false,
       },
       {
         reservation_id: 'RES-B1', restaurant_id: 'rest-B',
         customer_name: 'Bob', customer_phone: '+15550002',
-        time: '20:00', party_size: 4, status: 'confirmed',
+        date: mockTodayUTC, time: '20:00', party_size: 4, status: 'confirmed',
         ml_risk_level: null, intervention_taken: false,
       },
     ];
@@ -154,7 +176,7 @@ describe('send-reminders: multi-tenant restaurant name isolation', () => {
       {
         reservation_id: 'RES-X1', restaurant_id: 'rest-unknown',
         customer_name: 'Xavier', customer_phone: '+15550099',
-        time: '18:00', party_size: 1, status: 'confirmed',
+        date: mockTodayUTC, time: '18:00', party_size: 1, status: 'confirmed',
         ml_risk_level: null, intervention_taken: false,
       },
     ];
@@ -175,9 +197,9 @@ describe('send-reminders: multi-tenant restaurant name isolation', () => {
     const { req, res } = mockReqRes();
     await handler(req, res);
 
-    // schema() should NOT be called — no restaurant_ids to look up
-    expect(supabaseAdmin.schema).not.toHaveBeenCalled();
-
+    // schema() is called once for restaurant_config (timezones), but the
+    // restaurant_info lookup should be skipped (no restaurant_ids to look up).
+    // We verify via the response — 0 reservations, 0 reminders.
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
       success: true,
       total_reservations: 0,
@@ -194,7 +216,7 @@ describe('send-reminders: happy path', () => {
       {
         reservation_id: 'RES-1', restaurant_id: 'rest-1',
         customer_name: 'Carlos', customer_phone: '+15550010',
-        time: '19:30', party_size: 3, status: 'confirmed',
+        date: mockTodayUTC, time: '19:30', party_size: 3, status: 'confirmed',
         ml_risk_level: null, intervention_taken: false,
       },
     ];
@@ -215,7 +237,7 @@ describe('send-reminders: happy path', () => {
       {
         reservation_id: 'RES-2', restaurant_id: 'rest-2',
         customer_name: 'Diana', customer_phone: '+15550020',
-        time: '20:00', party_size: 2, status: 'confirmed',
+        date: mockTodayUTC, time: '20:00', party_size: 2, status: 'confirmed',
         ml_risk_level: null, intervention_taken: false,
       },
     ];

@@ -23,7 +23,9 @@
     "retry": "Reintentar",
     "settingUp": "Preparando todo...",
     "saved": "Guardado",
-    "searchPlaceholder": "Buscar..."
+    "searchPlaceholder": "Buscar...",
+    "skipToContent": "Saltar al contenido",
+    "goBack": "Volver"
   },
   "navigation": {
     "dashboard": "Panel",

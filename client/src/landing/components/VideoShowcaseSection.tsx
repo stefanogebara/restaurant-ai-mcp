@@ -124,6 +124,7 @@ function VideoPlayer({ src }: { src: string }) {
         muted
         loop
         playsInline
+        preload="metadata"
         autoPlay={isPlaying}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
@@ -139,6 +140,7 @@ function VideoPlayer({ src }: { src: string }) {
       {!isPlaying && (
         <button
           type="button"
+          aria-label="Play video"
           className="absolute inset-0 flex items-center justify-center bg-black/30 transition-opacity hover:bg-black/20"
           onClick={(e) => {
             const video = (e.currentTarget as HTMLElement).previousElementSibling as HTMLVideoElement;

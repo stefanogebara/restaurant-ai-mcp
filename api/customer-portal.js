@@ -68,7 +68,7 @@ module.exports = async (req, res) => {
     logger.error('Error creating portal session:', error);
     return res.status(500).json({
       error: 'Failed to create portal session',
-      message: error.message,
+      message: 'Something went wrong. Please try again.',
     });
   }
 };

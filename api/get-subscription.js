@@ -82,7 +82,7 @@ module.exports = async (req, res) => {
     logger.error('Error fetching subscription:', error);
     return res.status(500).json({
       error: 'Failed to fetch subscription',
-      message: error.message,
+      message: 'Something went wrong. Please try again.',
     });
   }
 };

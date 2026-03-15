@@ -223,7 +223,7 @@ module.exports = async (req, res) => {
     logger.error('[ElevenLabs] Error fetching voices:', error);
     return res.status(500).json({
       success: false,
-      error: error.message || 'Failed to fetch voices'
+      error: 'Something went wrong. Please try again.'
     });
   }
 };

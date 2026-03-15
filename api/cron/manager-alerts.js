@@ -2,6 +2,7 @@ const { supabaseAdmin } = require('../_lib/supabase');
 const { sendWhatsAppMessage } = require('../_lib/whatsapp-sender');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { logCronRun } = require('../_lib/cron-tracker');
+const { getLocalDate } = require('../_lib/timezone');
 
 const logger = createSecureLogger('manager-alerts');
 
@@ -87,7 +88,8 @@ module.exports = async (req, res) => {
 };
 
 async function checkTrigger(alertType, restaurant) {
-  const today = new Date().toISOString().split('T')[0];
+  const tz = restaurant.timezone || 'UTC';
+  const today = getLocalDate(tz);
   const restaurantId = restaurant.id;
 
   if (alertType === 'low_covers') {

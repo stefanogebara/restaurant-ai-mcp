@@ -53,7 +53,7 @@ module.exports = async (req, res) => {
     return res.status(500).json({
       success: false,
       error: 'Internal server error',
-      message: error.message
+      message: 'Something went wrong. Please try again.'
     });
   }
 };
@@ -124,7 +124,7 @@ async function handleListConversations(req, res) {
       return res.status(500).json({
         success: false,
         error: 'Database error',
-        message: error.message
+        message: 'Something went wrong. Please try again.'
       });
     }
 
@@ -144,7 +144,7 @@ async function handleListConversations(req, res) {
     return res.status(500).json({
       success: false,
       error: 'Internal error',
-      message: error.message
+      message: 'Something went wrong. Please try again.'
     });
   }
 }
@@ -188,7 +188,7 @@ async function handleGetConversation(req, res) {
       return res.status(500).json({
         success: false,
         error: 'Database error',
-        message: error.message
+        message: 'Something went wrong. Please try again.'
       });
     }
 
@@ -202,7 +202,7 @@ async function handleGetConversation(req, res) {
     return res.status(500).json({
       success: false,
       error: 'Internal error',
-      message: error.message
+      message: 'Something went wrong. Please try again.'
     });
   }
 }
@@ -271,7 +271,7 @@ async function handleGetStats(req, res) {
       return res.status(500).json({
         success: false,
         error: 'Database error',
-        message: error.message
+        message: 'Something went wrong. Please try again.'
       });
     }
 
@@ -331,7 +331,7 @@ async function handleGetStats(req, res) {
     return res.status(500).json({
       success: false,
       error: 'Internal error',
-      message: error.message
+      message: 'Something went wrong. Please try again.'
     });
   }
 }
