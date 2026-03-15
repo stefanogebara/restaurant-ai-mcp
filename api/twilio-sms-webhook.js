@@ -105,7 +105,7 @@ module.exports = async (req, res) => {
     const cronSecret = process.env.CRON_SECRET;
     const authHeader = req.headers.authorization || '';
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: 'Authentication required' });
     }
     try {
       const { data, error } = await supabaseAdmin

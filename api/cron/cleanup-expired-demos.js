@@ -28,7 +28,7 @@ module.exports = async (req, res) => {
   }
   const authHeader = req.headers.authorization;
   if (authHeader !== `Bearer ${cronSecret}`) {
-    return res.status(401).json({ success: false, error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Authentication required' });
   }
 
   // Verify Supabase admin client is available

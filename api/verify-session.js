@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
   // Require JWT auth — session data contains Stripe PII
   const token = (req.headers.authorization || '').replace('Bearer ', '');
   const authUser = await verifyJWT(token).catch(() => null);
-  if (!authUser) return res.status(401).json({ success: false, error: 'Unauthorized' });
+  if (!authUser) return res.status(401).json({ error: 'Authentication required' });
 
   try {
     const { session_id } = req.query;

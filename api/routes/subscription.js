@@ -21,10 +21,7 @@ router.get('/', async (req, res) => {
     const customerEmail = req.user?.email || req.query.email;
 
     if (!customerEmail) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'Customer email is required'
-      });
+      return res.status(401).json({ error: 'Authentication required' });
     }
 
     // Fetch the subscription from Supabase

@@ -9,6 +9,7 @@ const { getTrainingDataStats } = require('./ml/data-logger');
 const { getSegoviaInsights } = require('./ml/data-logger-supabase');
 const { verifyJWT } = require('./_lib/auth');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('MLTrainingStatus');
 
 module.exports = async (req, res) => {
@@ -25,12 +26,15 @@ module.exports = async (req, res) => {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'ml_training_status', 60, 60);
+  if (rateLimited) return;
+
   // Require JWT auth — ML stats contain restaurant-specific training data
   // verifyJWT returns null (not throws) for empty/invalid tokens, so check the return value
   const token = (req.headers.authorization || '').replace('Bearer ', '');
   const authUser = await verifyJWT(token).catch(() => null);
   if (!authUser) {
-    return res.status(401).json({ success: false, error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Authentication required' });
   }
 
   const { action } = req.query;

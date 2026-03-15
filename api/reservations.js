@@ -119,7 +119,7 @@ module.exports = async (req, res) => {
   // ============================================================================
   const auth = await verifyAuth(req);
   if (auth.error) {
-    return res.status(auth.status || 401).json({ message: auth.error });
+    return res.status(auth.status || 401).json({ error: auth.error });
   }
   const restaurantId = auth.user.restaurant_id;
   const timezone = auth.user.timezone || 'UTC';

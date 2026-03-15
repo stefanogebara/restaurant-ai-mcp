@@ -10,6 +10,7 @@ const { checkSubscription, requireFeature } = require('./_lib/subscription-middl
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { validateElevenLabsVoiceId } = require('./_lib/validation');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('VoiceSettings');
 
 module.exports = async (req, res) => {
@@ -26,6 +27,9 @@ module.exports = async (req, res) => {
       error: 'ElevenLabs API key not configured'
     });
   }
+
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'elevenlabs_voice_settings', 30, 60);
+  if (rateLimited) return;
 
   // Verify authentication
   const authResult = await verifyAuth(req, { required: true });

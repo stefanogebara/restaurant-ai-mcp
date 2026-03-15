@@ -13,6 +13,7 @@ const { verifyAuth } = require('./_lib/auth');
 const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { createMemory, listMemories, deleteMemory } = require('./services/guestMemory');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('ManagerNotes');
 
@@ -20,10 +21,13 @@ module.exports = async (req, res) => {
   setWebhookCors(req, res);
   if (handlePreflight(req, res)) return;
 
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'manager_notes', 30, 60);
+  if (rateLimited) return;
+
   // Authenticate
   const auth = await verifyAuth(req);
   if (auth.error) {
-    return res.status(auth.status || 401).json({ message: auth.error });
+    return res.status(auth.status || 401).json({ error: auth.error });
   }
 
   const restaurantId = auth.user.restaurant_id;

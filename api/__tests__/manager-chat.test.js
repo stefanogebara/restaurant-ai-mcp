@@ -71,7 +71,7 @@ describe('POST /api/manager-chat', () => {
     const res = mockRes();
     await managerChat(req, res);
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
+    expect(res.json).toHaveBeenCalledWith({ error: 'Authentication required' });
   });
 
   it('returns 403 when plan is free (upgrade_required)', async () => {

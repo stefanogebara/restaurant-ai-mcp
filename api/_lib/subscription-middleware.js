@@ -59,11 +59,7 @@ async function checkSubscription(req, res, next) {
     const customerEmail = req.user?.email || req.body?.customer_email || req.query?.customer_email || req.headers?.['x-customer-email'];
 
     if (!customerEmail) {
-      return res.status(401).json({
-        error: 'Authentication required',
-        message: 'Customer email not provided',
-        upgrade_url: `${process.env.CLIENT_URL || 'https://seatable.one'}/#pricing`
-      });
+      return res.status(401).json({ error: 'Authentication required' });
     }
 
     // Get subscription from database

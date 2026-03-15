@@ -17,6 +17,7 @@ const fetch = require('node-fetch');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { verifyAuth } = require('../_lib/auth');
 const { suggestTimezone } = require('../_lib/timezone');
+const { checkAndApplyRateLimit } = require('../_lib/rate-limit');
 const logger = createSecureLogger('Onboarding');
 
 // ============ Voice Defaults ============
@@ -117,6 +118,9 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'onboarding_complete', 10, 60);
+  if (rateLimited) return;
 
   // Require authentication
   const auth = await verifyAuth(req);

@@ -22,7 +22,7 @@ module.exports = async (req, res) => {
 
   try {
     const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
-    if (!user?.restaurant_id) return res.status(401).json({ error: 'Unauthorized' });
+    if (!user?.restaurant_id) return res.status(401).json({ error: 'Authentication required' });
 
     const restaurantId = user.restaurant_id;
     const limit = Math.min(parseInt(req.query?.limit) || 20, 50);

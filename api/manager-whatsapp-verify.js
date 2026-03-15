@@ -100,7 +100,7 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'action must be send or confirm' });
   } catch (err) {
     logger.error('verify error', { error: err.message });
-    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Unauthorized' });
+    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Authentication required' });
     return res.status(500).json({ error: 'Internal error' });
   }
 };

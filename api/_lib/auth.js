@@ -291,10 +291,7 @@ function authMiddleware(options = {}) {
 
     if (!user && required) {
       res.setHeader('Cache-Control', 'no-store');
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'Authentication required'
-      });
+      return res.status(401).json({ error: 'Authentication required' });
     }
 
     // Check roles if specified

@@ -33,7 +33,7 @@ async function handleGet(req, res) {
       agent_greeting: data?.agent_greeting || null,
     });
   } catch (err) {
-    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Unauthorized' });
+    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Authentication required' });
     logger.error('voice-persona GET error', { error: err.message });
     return res.status(500).json({ error: 'Internal error' });
   }
@@ -72,7 +72,7 @@ async function handlePatch(req, res) {
       agent_greeting: data.agent_greeting,
     });
   } catch (err) {
-    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Unauthorized' });
+    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Authentication required' });
     logger.error('voice-persona PATCH error', { error: err.message });
     return res.status(500).json({ error: 'Internal error' });
   }

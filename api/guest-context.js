@@ -12,6 +12,7 @@ const { verifyAuth } = require('./_lib/auth');
 const { setWebhookCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { buildGuestContext, getRecentMemories } = require('./services/guestMemory');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('GuestContext');
 
@@ -23,10 +24,13 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'guest_context', 60, 60);
+  if (rateLimited) return;
+
   // Authenticate
   const auth = await verifyAuth(req);
   if (auth.error) {
-    return res.status(auth.status || 401).json({ message: auth.error });
+    return res.status(auth.status || 401).json({ error: auth.error });
   }
 
   const restaurantId = auth.user.restaurant_id;

@@ -26,7 +26,7 @@ async function handleGet(req, res) {
     if (error) throw new Error(error.message);
     return res.json({ staffing_config: data?.staffing_config || null });
   } catch (err) {
-    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Unauthorized' });
+    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Authentication required' });
     logger.error('staffing-config GET error', { error: err.message });
     return res.status(500).json({ error: 'Internal error' });
   }
@@ -60,7 +60,7 @@ async function handlePatch(req, res) {
     logger.info('staffing_config updated', { restaurantId, roleCount: body.roles.length });
     return res.json({ staffing_config: data.staffing_config });
   } catch (err) {
-    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Unauthorized' });
+    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Authentication required' });
     logger.error('staffing-config PATCH error', { error: err.message });
     return res.status(500).json({ error: 'Internal error' });
   }

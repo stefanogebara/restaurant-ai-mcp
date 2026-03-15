@@ -304,7 +304,7 @@ describe('Method not allowed', () => {
 describe('Authentication', () => {
   test('returns 401 without auth', async () => {
     const { verifyAuth } = require('../_lib/auth');
-    verifyAuth.mockResolvedValueOnce({ error: 'Unauthorized', status: 401 });
+    verifyAuth.mockResolvedValueOnce({ error: 'Authentication required', status: 401 });
 
     const { req, res } = mockReqRes({ method: 'GET' });
 

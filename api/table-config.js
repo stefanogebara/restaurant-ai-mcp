@@ -17,6 +17,7 @@ const {
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { verifyAuth } = require('./_lib/auth');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('TableConfig');
 
 module.exports = async (req, res) => {
@@ -25,6 +26,9 @@ module.exports = async (req, res) => {
   if (handlePreflight(req, res)) {
     return;
   }
+
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'table_config', 30, 60);
+  if (rateLimited) return;
 
   // Require authentication
   const auth = await verifyAuth(req);

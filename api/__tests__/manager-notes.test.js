@@ -22,13 +22,15 @@ const handler = require('../manager-notes').default || require('../manager-notes
 const AUTH_USER = { restaurant_id: 'rest-uuid-1' };
 
 function mkReqRes(method = 'GET', body = {}, query = {}) {
-  const req = { method, body, query };
+  const req = { method, body, query, headers: {} };
   const res = {
     _status: null,
     _json: null,
     status(code) { this._status = code; return this; },
     json(data) { this._json = data; return this; },
     end() { return this; },
+    setHeader() { return this; },
+    getHeader() { return undefined; },
   };
   return { req, res };
 }
@@ -54,7 +56,7 @@ describe('manager-notes handler', () => {
 
   describe('authentication', () => {
     it('returns 401 when verifyAuth returns an error', async () => {
-      verifyAuth.mockResolvedValue({ error: 'Unauthorized', status: 401 });
+      verifyAuth.mockResolvedValue({ error: 'Authentication required', status: 401 });
       const { req, res } = mkReqRes('GET');
       await handler(req, res);
       expect(res._status).toBe(401);

@@ -15,7 +15,7 @@ const logger = createSecureLogger('warm-seo-cache');
 
 module.exports = async (req, res) => {
   if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Authentication required' });
   }
 
   // Fetch all unique (city, restaurant_type) pairs from active restaurants

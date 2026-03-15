@@ -10,6 +10,7 @@ const { acceptInvite, supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { initSentry, captureException } = require('./_lib/sentry');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 initSentry();
 const logger = createSecureLogger('Invitations');
@@ -17,6 +18,9 @@ const logger = createSecureLogger('Invitations');
 module.exports = async (req, res) => {
   setInternalCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'invitations', 30, 60);
+  if (rateLimited) return;
 
   try {
     if (req.method === 'GET') {

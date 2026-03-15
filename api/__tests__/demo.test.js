@@ -255,7 +255,7 @@ describe('POST ?action=convert', () => {
   });
 
   test('no auth returns 401', async () => {
-    verifyAuth.mockResolvedValue({ error: 'Unauthorized', status: 401 });
+    verifyAuth.mockResolvedValue({ error: 'Authentication required', status: 401 });
     const req = {
       method: 'POST',
       query: { action: 'convert' },

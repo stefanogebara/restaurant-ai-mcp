@@ -14,6 +14,7 @@ const { supabaseAdmin } = require('./_lib/supabase');
 const { verifyAuth } = require('./_lib/auth');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('Reports');
 
 module.exports = async (req, res) => {
@@ -22,6 +23,9 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') {
     return res.status(200).json({ success: true });
   }
+
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'reports', 60, 60);
+  if (rateLimited) return;
 
   // Require authentication
   const auth = await verifyAuth(req);

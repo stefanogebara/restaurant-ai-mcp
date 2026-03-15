@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
   const token = (req.headers.authorization || '').replace('Bearer ', '');
   const user = await verifyJWT(token).catch(() => null);
   if (!user) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Authentication required' });
   }
 
   const apiKey = process.env.ELEVENLABS_API_KEY;

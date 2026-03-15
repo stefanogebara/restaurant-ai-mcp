@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
 
   const authHeader = req.headers.authorization;
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Authentication required' });
   }
 
   try {

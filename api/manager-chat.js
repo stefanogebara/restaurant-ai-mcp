@@ -16,7 +16,7 @@ async function handleChat(req, res) {
   try {
     const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
     if (!user || !user.restaurant_id) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: 'Authentication required' });
     }
     const restaurantId = user.restaurant_id;
 
@@ -41,7 +41,7 @@ async function handleChat(req, res) {
       return res.status(402).json({ error: 'Manager AI access restricted', type: err.type });
     }
     logger.error('manager-chat error', { error: err.message });
-    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Unauthorized' });
+    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Authentication required' });
     return res.status(500).json({ error: 'Internal error' });
   }
 }
@@ -50,7 +50,7 @@ async function handleHistory(req, res) {
   try {
     const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
     if (!user || !user.restaurant_id) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: 'Authentication required' });
     }
     const restaurantId = user.restaurant_id;
 
@@ -67,7 +67,7 @@ async function handleHistory(req, res) {
     return res.json({ history: data || [] });
   } catch (err) {
     logger.error('manager-chat history error', { error: err.message });
-    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Unauthorized' });
+    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Authentication required' });
     return res.status(500).json({ error: 'Internal error' });
   }
 }

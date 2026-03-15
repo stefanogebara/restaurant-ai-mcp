@@ -145,7 +145,7 @@ module.exports = async function handler(req, res) {
     const decoded = await verifyJWT(token);
     restaurantId = decoded.restaurant_id;
   } catch {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Authentication required' });
   }
 
   try {

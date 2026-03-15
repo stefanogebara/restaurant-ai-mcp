@@ -4,21 +4,25 @@ const { verifyJWT } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { getPlanLimits } = require('./services/subscription-limits');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('manager-usage');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'manager_usage', 60, 60);
+  if (rateLimited) return;
+
   let restaurantId;
   try {
     const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
     if (!user || !user.restaurant_id) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: 'Authentication required' });
     }
     restaurantId = user.restaurant_id;
   } catch {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Authentication required' });
   }
 
   try {

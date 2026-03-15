@@ -42,7 +42,7 @@ module.exports = async (req, res) => {
   if (!isVercelCron && !isAdminCall) {
     // Also check for x-vercel-cron header (Vercel internal cron)
     if (!req.headers['x-vercel-cron']) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: 'Authentication required' });
     }
   }
 
@@ -56,7 +56,7 @@ module.exports = async (req, res) => {
       }
       // Optionally check for admin role here
     } catch (err) {
-      return res.status(401).json({ error: 'Invalid token' });
+      return res.status(401).json({ error: 'Authentication required' });
     }
   }
 

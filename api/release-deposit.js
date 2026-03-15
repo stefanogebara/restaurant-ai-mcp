@@ -3,6 +3,7 @@ const { supabaseAdmin } = require('./_lib/supabase');
 const { verifyAuth } = require('./_lib/auth');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('ReleaseDeposit');
 let stripe;
@@ -18,6 +19,9 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
+
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'release_deposit', 30, 60);
+  if (rateLimited) return;
 
   const authResult = await verifyAuth(req, { required: true });
   if (authResult.error) {

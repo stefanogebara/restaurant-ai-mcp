@@ -18,6 +18,7 @@ const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { verifyAuth } = require('./_lib/auth');
 const { calculateCustomerLTV, upsertCustomerLTV } = require('./services/ltvCalculator');
 const { sanitizeSearchQuery } = require('./_lib/validation');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('Revenue');
 
@@ -25,6 +26,9 @@ module.exports = async (req, res) => {
   // Set CORS headers
   setInternalCors(req, res);
   if (handlePreflight(req, res)) return;
+
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'revenue', 30, 60);
+  if (rateLimited) return;
 
   // Require authentication
   const auth = await verifyAuth(req);

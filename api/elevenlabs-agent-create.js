@@ -23,6 +23,7 @@ const { createSecureLogger } = require('./_lib/secure-logger');
 const { buildPersonaPrompt } = require('./_lib/persona-prompt-builder');
 const { refreshVoiceAgentPrompt } = require('./services/voiceAgentService');
 const { validateElevenLabsVoiceId } = require('./_lib/validation');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('ElevenLabsAgentCreate');
 
 module.exports = async (req, res) => {
@@ -33,6 +34,9 @@ module.exports = async (req, res) => {
       error: 'Method not allowed'
     });
   }
+
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'elevenlabs_agent_create', 10, 60);
+  if (rateLimited) return;
 
   // Require authentication
   const auth = await verifyAuth(req);

@@ -4,6 +4,7 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const { getSubscriptions } = require('./_lib/db-subscriptions');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('GetSubscription');
 
 module.exports = async (req, res) => {
@@ -13,6 +14,9 @@ module.exports = async (req, res) => {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'get_subscription', 60, 60);
+  if (rateLimited) return;
 
   // Require authentication
   const auth = await verifyAuth(req);

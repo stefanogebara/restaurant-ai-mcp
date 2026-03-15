@@ -13,6 +13,7 @@ const { createSecureLogger } = require('./_lib/secure-logger');
 const { sendInviteEmail } = require('./_lib/email');
 const { initSentry, captureException } = require('./_lib/sentry');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 initSentry();
 const logger = createSecureLogger('TeamMembers');
@@ -20,6 +21,9 @@ const logger = createSecureLogger('TeamMembers');
 module.exports = async (req, res) => {
   setInternalCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'team_members', 30, 60);
+  if (rateLimited) return;
 
   const { user, error: authError, status: authStatus } = await verifyAuth(req);
   if (authError) return res.status(authStatus).json({ success: false, error: authError });

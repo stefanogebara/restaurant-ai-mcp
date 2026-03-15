@@ -815,7 +815,7 @@ describe('mark-action-taken action', () => {
 describe('Auth guard', () => {
   test('ml-outcomes returns 401 when auth fails', async () => {
     const { verifyAuth } = require('../_lib/auth');
-    verifyAuth.mockResolvedValueOnce({ error: 'Unauthorized', status: 401 });
+    verifyAuth.mockResolvedValueOnce({ error: 'Authentication required', status: 401 });
 
     const { req, res } = mockReqRes({
       action: 'roi-summary',

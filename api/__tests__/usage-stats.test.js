@@ -95,12 +95,12 @@ describe('UsageStats: Rate limiting', () => {
 // ============================================================
 describe('UsageStats: Authentication', () => {
   test('returns 401 when not authenticated', async () => {
-    verifyAuth.mockResolvedValueOnce({ error: 'Unauthorized', status: 401 });
+    verifyAuth.mockResolvedValueOnce({ error: 'Authentication required', status: 401 });
 
     const { req, res } = createMockReqRes();
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Unauthorized' }));
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Authentication required' }));
   });
 
   test('returns 400 when no restaurant_id on user', async () => {

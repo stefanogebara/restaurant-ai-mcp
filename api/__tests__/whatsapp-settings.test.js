@@ -93,7 +93,7 @@ describe('WhatsApp Settings: Auth', () => {
   });
 
   test('returns 401 when not authenticated', async () => {
-    verifyAuth.mockResolvedValue({ error: 'Unauthorized', status: 401 });
+    verifyAuth.mockResolvedValue({ error: 'Authentication required', status: 401 });
     const { req, res } = mkReqRes({ query: { action: 'status' } });
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(401);

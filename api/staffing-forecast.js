@@ -68,7 +68,7 @@ module.exports = async (req, res) => {
 
     return res.json({ forecast });
   } catch (err) {
-    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Unauthorized' });
+    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Authentication required' });
     logger.error('staffing-forecast error', { error: err.message });
     return res.status(500).json({ error: 'Internal error' });
   }

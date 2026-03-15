@@ -9,6 +9,7 @@ const { checkSubscription, requireFeature } = require('./_lib/subscription-middl
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { validateElevenLabsVoiceId } = require('./_lib/validation');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('ElevenLabsPreview');
 
 module.exports = async (req, res) => {
@@ -27,6 +28,9 @@ module.exports = async (req, res) => {
       error: 'Method not allowed. Use POST.'
     });
   }
+
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'elevenlabs_preview', 10, 60);
+  if (rateLimited) return;
 
   // Verify authentication
   const authResult = await verifyAuth(req, { required: true });

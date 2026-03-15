@@ -81,7 +81,7 @@ const invitationsHandler = require('../invitations');
 // ============================================================
 describe('GET /api/team-members', () => {
   it('returns 401 without auth', async () => {
-    mockVerifyAuth.mockResolvedValueOnce({ error: 'Unauthorized', status: 401 });
+    mockVerifyAuth.mockResolvedValueOnce({ error: 'Authentication required', status: 401 });
     const res = mockRes();
     await teamMembersHandler(mockReq('GET'), res);
     expect(res.status).toHaveBeenCalledWith(401);
@@ -202,7 +202,7 @@ describe('GET /api/invitations', () => {
 // ============================================================
 describe('POST /api/invitations', () => {
   it('returns 401 without auth', async () => {
-    mockVerifyAuth.mockResolvedValueOnce({ error: 'Unauthorized', status: 401 });
+    mockVerifyAuth.mockResolvedValueOnce({ error: 'Authentication required', status: 401 });
     const res = mockRes();
     await invitationsHandler(mockReq('POST', { token: 'tok' }), res);
     expect(res.status).toHaveBeenCalledWith(401);

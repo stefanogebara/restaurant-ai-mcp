@@ -11,6 +11,7 @@ const { supabaseAdmin } = require('./_lib/supabase');
 const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('VoiceEngineSettings');
 
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
@@ -25,6 +26,9 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
+
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'voice_engine_settings', 30, 60);
+  if (rateLimited) return;
 
   // Verify authentication
   const authResult = await verifyAuth(req, { required: true });

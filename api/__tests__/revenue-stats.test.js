@@ -11,6 +11,8 @@ function mockRes() {
   const res = {};
   res.status = jest.fn().mockReturnValue(res);
   res.json = jest.fn().mockReturnValue(res);
+  res.setHeader = jest.fn();
+  res.getHeader = jest.fn();
   return res;
 }
 

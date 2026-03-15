@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
   // Internal endpoint — secured with CRON_SECRET
   const authHeader = req.headers.authorization || '';
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ success: false, error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Authentication required' });
   }
 
   if (req.method !== 'POST') {

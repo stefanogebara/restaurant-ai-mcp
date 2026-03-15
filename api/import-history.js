@@ -54,7 +54,7 @@ module.exports = async (req, res) => {
     const decoded = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
     restaurantId = decoded.restaurant_id;
   } catch {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Authentication required' });
   }
 
   try {

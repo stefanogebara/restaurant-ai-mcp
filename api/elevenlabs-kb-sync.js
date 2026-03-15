@@ -150,7 +150,7 @@ const handler = async (req, res) => {
   const token = (req.headers.authorization || '').replace('Bearer ', '');
   const user = await verifyJWT(token).catch(() => null);
   if (!user) {
-    return res.status(401).json({ success: false, error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Authentication required' });
   }
 
   const restaurantResult = await getRestaurantIdForUser(user.sub);

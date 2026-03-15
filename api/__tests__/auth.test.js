@@ -362,8 +362,7 @@ describe('authMiddleware', () => {
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
-        error: 'Unauthorized',
-        message: 'Authentication required',
+        error: 'Authentication required',
       })
     );
     expect(next).not.toHaveBeenCalled();

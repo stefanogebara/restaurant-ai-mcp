@@ -1,6 +1,7 @@
 const { verifyJWT } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('manager-preferences');
 
@@ -15,6 +16,9 @@ const ALLOWED_PREF_KEYS = new Set([
 ]);
 
 module.exports = async (req, res) => {
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'manager_preferences', 30, 60);
+  if (rateLimited) return;
+
   if (req.method === 'GET') return handleGet(req, res);
   if (req.method === 'PATCH') return handlePatch(req, res);
   return res.status(405).json({ error: 'Method not allowed' });
@@ -34,7 +38,7 @@ async function handleGet(req, res) {
     if (error) throw new Error(error.message);
     return res.json({ notification_preferences: data?.notification_preferences || {} });
   } catch (err) {
-    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Unauthorized' });
+    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Authentication required' });
     logger.error('manager-preferences GET error', { error: err.message });
     return res.status(500).json({ error: 'Internal error' });
   }
@@ -80,7 +84,7 @@ async function handlePatch(req, res) {
     logger.info('notification_preferences updated', { restaurantId, keys: Object.keys(updates) });
     return res.json({ notification_preferences: updated.notification_preferences });
   } catch (err) {
-    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Unauthorized' });
+    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Authentication required' });
     logger.error('manager-preferences PATCH error', { error: err.message });
     return res.status(500).json({ error: 'Internal error' });
   }

@@ -352,13 +352,13 @@ describe('Validation', () => {
 
   test('returns auth error when verifyAuth fails (line 99)', async () => {
     const { verifyAuth } = require('../_lib/auth');
-    verifyAuth.mockResolvedValueOnce({ error: 'Unauthorized', status: 401 });
+    verifyAuth.mockResolvedValueOnce({ error: 'Authentication required', status: 401 });
 
     const { req, res } = mockReqRes(BASE_BODY);
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Unauthorized' }));
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Authentication required' }));
   });
 });
 

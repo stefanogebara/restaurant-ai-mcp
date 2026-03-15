@@ -63,7 +63,7 @@ beforeEach(() => jest.clearAllMocks());
 // ============================================================
 describe('GET ?action=code', () => {
   test('returns 401 when not authenticated', async () => {
-    verifyAuth.mockResolvedValue({ error: 'Unauthorized', status: 401 });
+    verifyAuth.mockResolvedValue({ error: 'Authentication required', status: 401 });
     const req = makeReq({ method: 'GET', query: { action: 'code' } });
     const res = makeRes();
     await handler(req, res);
@@ -261,7 +261,7 @@ describe('POST ?action=attach', () => {
   });
 
   test('returns 401 when not authenticated', async () => {
-    verifyAuth.mockResolvedValue({ error: 'Unauthorized', status: 401 });
+    verifyAuth.mockResolvedValue({ error: 'Authentication required', status: 401 });
     const req = makeReq({
       method: 'POST',
       query: { action: 'attach' },

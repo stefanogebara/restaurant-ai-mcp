@@ -12,6 +12,7 @@ const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('ElevenLabsVoices');
 
 // Language mapping for countries
@@ -93,6 +94,9 @@ module.exports = async (req, res) => {
       error: 'Method not allowed. Use GET.'
     });
   }
+
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'elevenlabs_voices', 60, 60);
+  if (rateLimited) return;
 
   // Verify authentication
   const authResult = await verifyAuth(req, { required: true });

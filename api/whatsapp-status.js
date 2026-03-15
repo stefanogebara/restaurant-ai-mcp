@@ -2,11 +2,15 @@
 // Returns Meta Cloud API approval status + Twilio configuration status
 
 const { verifyAuth } = require('./_lib/auth');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'whatsapp_status', 60, 60);
+  if (rateLimited) return;
 
   const authResult = await verifyAuth(req);
   if (authResult.error) {

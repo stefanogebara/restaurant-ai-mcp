@@ -25,7 +25,7 @@ describe('GET /api/manager-usage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockVerifyJWT.mockReturnValue({ restaurant_id: 'rest-1' });
-    res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    res = { status: jest.fn().mockReturnThis(), json: jest.fn(), setHeader: jest.fn(), getHeader: jest.fn() };
     // Default: starter plan, 47 usage count
     mockSupabaseFrom.mockImplementation((table) => {
       if (table === 'subscriptions') {

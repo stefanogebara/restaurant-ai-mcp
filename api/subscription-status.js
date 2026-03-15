@@ -8,6 +8,7 @@ const { getSubscriptionByEmail } = require('./_lib/supabase');
 const { verifyAuth } = require('./_lib/auth');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('SubscriptionStatus');
 
 module.exports = async (req, res) => {
@@ -21,6 +22,9 @@ module.exports = async (req, res) => {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'subscription_status', 60, 60);
+  if (rateLimited) return;
 
   // Require authentication
   const auth = await verifyAuth(req);

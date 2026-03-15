@@ -1,6 +1,7 @@
 const { verifyJWT } = require('./_lib/auth');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('revenue-stats');
 const DEFAULT_AVG_SPEND = 80;
@@ -8,6 +9,9 @@ const MIN_DATA_POINTS = 5;
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'revenue_stats', 60, 60);
+  if (rateLimited) return;
 
   try {
     const user = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
@@ -63,7 +67,7 @@ module.exports = async (req, res) => {
       by_party_size,
     });
   } catch (err) {
-    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Unauthorized' });
+    if (err.message === 'UNAUTHORIZED') return res.status(401).json({ error: 'Authentication required' });
     logger.error('revenue-stats error', { error: err.message });
     return res.status(500).json({ error: 'Internal error' });
   }
