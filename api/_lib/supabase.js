@@ -1380,6 +1380,8 @@ const getUpcomingReservations = async (restaurantId, timezone) => {
     .from('reservations')
     .select('*')
     .eq('restaurant_id', restaurantId)
+    // SAFE: today and currentTime are server-generated date strings from getLocalDate/getLocalTime,
+    // not user input. No injection risk via .or() interpolation.
     .or(`date.gt.${today},and(date.eq.${today},time.gte.${currentTime})`)
     .in('status', ['confirmed', 'waitlist'])
     .order('date', { ascending: true })

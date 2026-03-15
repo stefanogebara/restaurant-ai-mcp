@@ -3,9 +3,21 @@ process.env.SUPABASE_URL = "https://fake.supabase.co";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "fake-service-role-key";
 process.env.SUPABASE_ANON_KEY = "fake-anon-key";
 
+const mockSupabaseFrom = jest.fn().mockReturnValue({
+  select: jest.fn().mockReturnValue({
+    eq: jest.fn().mockReturnValue({
+      eq: jest.fn().mockResolvedValue({
+        data: [{ capacity: 4 }, { capacity: 6 }, { capacity: 2 }],
+        error: null,
+      }),
+    }),
+  }),
+});
+
 jest.mock("../_lib/supabase", () => ({
   getReservations: jest.fn(),
   getRestaurantInfo: jest.fn(),
+  supabaseAdmin: { from: (...args) => mockSupabaseFrom(...args) },
 }));
 
 jest.mock("../_lib/availability-calculator", () => ({
@@ -46,10 +58,16 @@ const defaultRestaurantResult = {
   data: {
     records: [{
       fields: {
-        Capacity: 60,
-        "Opening Time": "17:00",
-        "Closing Time": "22:00",
         Timezone: "America/New_York",
+        "Business Hours": {
+          monday: { open_time: "17:00", close_time: "22:00", is_open: true },
+          tuesday: { open_time: "17:00", close_time: "22:00", is_open: true },
+          wednesday: { open_time: "17:00", close_time: "22:00", is_open: true },
+          thursday: { open_time: "17:00", close_time: "22:00", is_open: true },
+          friday: { open_time: "17:00", close_time: "23:00", is_open: true },
+          saturday: { open_time: "12:00", close_time: "23:00", is_open: true },
+          sunday: { open_time: "12:00", close_time: "22:00", is_open: true },
+        },
       },
     }],
   },
@@ -196,16 +214,14 @@ describe("check-availability handler", function() {
       expect(r.res._body).toMatchObject({ success: false, error: true, message: 'Failed to load reservations' });
     });
 
-    it("passes a filter that includes the requested date and active statuses", async function() {
+    it("passes a filter with the requested date to getReservations", async function() {
       var r = mkReqRes({ query: Object.assign({}, defaultParams) });
       await handler(r.req, r.res);
       expect(getReservations).toHaveBeenCalledTimes(1);
       var calledRestaurantId = getReservations.mock.calls[0][0];
       var calledFilter = getReservations.mock.calls[0][1];
       expect(calledRestaurantId).toBe("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
-      expect(calledFilter).toContain("2026-03-01");
-      expect(calledFilter).toContain("Confirmed");
-      expect(calledFilter).toContain("Seated");
+      expect(calledFilter).toEqual({ date: "2026-03-01" });
     });
   });
   // -------------------------------------------------------
@@ -297,7 +313,8 @@ describe("check-availability handler", function() {
       getSuggestedTimes.mockReturnValue([]);
       var r = mkReqRes({ query: Object.assign({}, defaultParams) });
       await handler(r.req, r.res);
-      expect(getSuggestedTimes).toHaveBeenCalledWith("19:00", 4, expect.any(Array), 60, "17:00", "22:00");
+      // capacity=12 from mocked tables (4+6+2), open/close from business_hours sunday
+      expect(getSuggestedTimes).toHaveBeenCalledWith("19:00", 4, expect.any(Array), 12, "12:00", "22:00");
     });
   });
   // -------------------------------------------------------

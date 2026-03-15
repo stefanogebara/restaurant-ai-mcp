@@ -25,6 +25,9 @@ jest.mock('../_lib/cors', () => ({
   setInternalCors: mockSetInternalCors,
   handlePreflight: mockHandlePreflight,
 }));
+jest.mock('../_lib/rate-limit', () => ({
+  checkAndApplyRateLimit: jest.fn().mockResolvedValue(false),
+}));
 
 // Mock busboy to control multipart parsing behaviour in tests
 jest.mock('busboy', () => {

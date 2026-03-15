@@ -252,7 +252,7 @@ async function checkDataQuality() {
     // Check waitlist for NULL required fields - unscoped query via Supabase
     const { data: waitlistRecords, error: waitlistError } = await supabaseAdmin
       .from('waitlist')
-      .select('id, customer_name, party_size');
+      .select('customer_name, party_size');
 
     if (!waitlistError && waitlistRecords) {
       waitlistRecords.forEach(record => {
@@ -263,7 +263,6 @@ async function checkDataQuality() {
           nullDataCount++;
           issues.push({
             table: 'waitlist',
-            recordId: record.id,
             field: 'customer_name',
             issue: 'NULL or Unknown'
           });
@@ -273,7 +272,6 @@ async function checkDataQuality() {
           nullDataCount++;
           issues.push({
             table: 'waitlist',
-            recordId: record.id,
             field: 'party_size',
             issue: 'NULL or invalid'
           });

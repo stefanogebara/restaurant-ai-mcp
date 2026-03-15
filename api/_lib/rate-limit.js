@@ -153,15 +153,13 @@ async function checkRateLimitRedis(clientId, endpointType) {
       message: config.message,
     };
   } catch (err) {
-    // Redis error - fail open (allow request)
-    logger.error('Redis error, allowing request:', err.message);
-    return {
-      allowed: true,
-      limit: config.maxRequests,
-      remaining: config.maxRequests - 1,
-      resetSeconds: windowSeconds,
-      message: config.message,
-    };
+    // Redis error - fall back to in-memory rate limiting
+    logger.error('Redis rate-limit error, falling back to in-memory store', {
+      error: err.message,
+      clientId,
+      endpointType,
+    });
+    return checkRateLimitMemory(clientId, endpointType);
   }
 }
 

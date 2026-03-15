@@ -1,4 +1,4 @@
-const { getReservations, getRestaurantInfo } = require('./_lib/supabase');
+const { getReservations, getRestaurantInfo, supabaseAdmin } = require('./_lib/supabase');
 const { checkTimeSlotAvailability, getSuggestedTimes } = require('./_lib/availability-calculator');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
@@ -59,21 +59,46 @@ module.exports = async (req, res) => {
       });
     }
 
-    const capacity = restaurant.fields.Capacity || 60;
-    const openTime = restaurant.fields['Opening Time'] || '17:00';
-    const closeTime = restaurant.fields['Closing Time'] || '22:00';
     const timezone = restaurant.fields.Timezone || 'UTC';
 
-    // Get existing reservations for that date
-    const filter = `AND(IS_SAME({Date}, '${date}', 'day'), OR({Status} = 'Confirmed', {Status} = 'Seated'))`;
-    const reservationsResult = await getReservations(restaurantId, filter);
+    // Derive total capacity from active tables
+    let capacity = 60;
+    if (supabaseAdmin) {
+      const { data: tables } = await supabaseAdmin
+        .from('tables')
+        .select('capacity')
+        .eq('restaurant_id', restaurantId)
+        .eq('is_active', true);
+      if (tables && tables.length > 0) {
+        capacity = tables.reduce((sum, t) => sum + (t.capacity || 0), 0) || 60;
+      }
+    }
+
+    // Extract open/close times from business_hours for the requested date
+    let openTime = '17:00';
+    let closeTime = '22:00';
+    const businessHours = restaurant.fields['Business Hours'];
+    if (businessHours && typeof businessHours === 'object') {
+      const dayOfWeek = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', timeZone: timezone }).toLowerCase();
+      const dayHours = businessHours[dayOfWeek];
+      if (dayHours && dayHours.is_open) {
+        openTime = dayHours.open_time || openTime;
+        closeTime = dayHours.close_time || closeTime;
+      }
+    }
+
+    // Get existing reservations for that date (confirmed or seated only)
+    const reservationsResult = await getReservations(restaurantId, { date });
 
     if (!reservationsResult.success) {
       logger.error('Failed to get reservations:', reservationsResult);
       return res.status(500).json({ success: false, error: true, message: 'Failed to load reservations' });
     }
 
-    const existingReservations = reservationsResult.data.records || [];
+    const existingReservations = (reservationsResult.data.records || []).filter(r => {
+      const status = r.fields.Status;
+      return status === 'confirmed' || status === 'seated' || status === 'Confirmed' || status === 'Seated';
+    });
     const partySize = parseInt(party_size);
 
     // Check availability using the sophisticated calculator

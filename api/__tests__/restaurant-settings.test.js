@@ -47,6 +47,9 @@ jest.mock('../_lib/secure-logger', () => ({
     error: jest.fn(),
   }),
 }));
+jest.mock('../_lib/rate-limit', () => ({
+  checkAndApplyRateLimit: jest.fn().mockResolvedValue(false),
+}));
 
 const handler = require('../restaurant-settings');
 const { verifyAuth } = require('../_lib/auth');

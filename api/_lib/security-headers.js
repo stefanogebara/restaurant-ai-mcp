@@ -14,8 +14,9 @@ const SECURITY_HEADERS = {
   // Prevent clickjacking
   'X-Frame-Options': 'DENY',
 
-  // XSS protection (legacy, but still useful for older browsers)
-  'X-XSS-Protection': '1; mode=block',
+  // X-XSS-Protection removed: modern browsers ignore it and it can
+  // introduce XSS vulnerabilities in older IE versions (OWASP recommends '0').
+  // CSP is the proper mitigation.
 
   // Control referrer information
   'Referrer-Policy': 'strict-origin-when-cross-origin',

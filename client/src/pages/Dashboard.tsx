@@ -190,7 +190,7 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="dashboard min-h-screen bg-soft-gray p-6 sm:p-8 md:p-10 pb-16 sm:pb-10">
+      <div className="dashboard min-h-screen bg-soft-gray p-6 sm:p-8 md:p-10 pb-28 sm:pb-10">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* ---- Header ---- */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-14 sm:mt-0">

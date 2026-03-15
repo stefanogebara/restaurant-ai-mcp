@@ -6,6 +6,9 @@ jest.mock('../_lib/supabase', () => ({ supabaseAdmin: mockSupabaseAdmin }));
 jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ error: jest.fn(), info: jest.fn() }),
 }));
+jest.mock('../_lib/rate-limit', () => ({
+  checkAndApplyRateLimit: jest.fn().mockResolvedValue(false),
+}));
 
 function makeChain(data) {
   const chain = {
