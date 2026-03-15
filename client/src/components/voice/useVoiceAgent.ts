@@ -6,15 +6,17 @@
 import { useConversation } from '@elevenlabs/react';
 import { useState, useCallback, useRef, useEffect } from 'react';
 
-export type AgentState = 'idle' | 'connecting' | 'listening' | 'thinking' | 'talking';
+export type AgentState = 'idle' | 'ready' | 'connecting' | 'listening' | 'thinking' | 'talking';
 
 interface UseVoiceAgentOptions {
   agentId: string;
   /** If true, fetch signed URL from /api/elevenlabs-signed-url */
   useSignedUrl?: boolean;
+  /** If true, show "Ready to call?" confirmation before requesting mic (default: true) */
+  requireConfirmation?: boolean;
 }
 
-export function useVoiceAgent({ agentId, useSignedUrl = false }: UseVoiceAgentOptions) {
+export function useVoiceAgent({ agentId, useSignedUrl = false, requireConfirmation = true }: UseVoiceAgentOptions) {
   const [agentState, setAgentState] = useState<AgentState>('idle');
   const [error, setError] = useState<string | null>(null);
   const [transcript, setTranscript] = useState<Array<{ role: 'user' | 'agent'; text: string }>>([]);
@@ -61,7 +63,8 @@ export function useVoiceAgent({ agentId, useSignedUrl = false }: UseVoiceAgentOp
     return () => cancelAnimationFrame(animId);
   }, [agentState, conversation]);
 
-  const start = useCallback(async () => {
+  /** Actually connect to the voice agent (requests mic permission) */
+  const connect = useCallback(async () => {
     if (conversation.status === 'connected') return;
 
     setAgentState('connecting');
@@ -86,6 +89,25 @@ export function useVoiceAgent({ agentId, useSignedUrl = false }: UseVoiceAgentOp
     }
   }, [conversation, agentId, useSignedUrl]);
 
+  /** Show pre-flight confirmation, or connect directly if confirmation disabled */
+  const start = useCallback(async () => {
+    if (requireConfirmation) {
+      setAgentState('ready');
+    } else {
+      await connect();
+    }
+  }, [requireConfirmation, connect]);
+
+  /** Confirm the pre-flight and actually connect */
+  const confirmStart = useCallback(async () => {
+    await connect();
+  }, [connect]);
+
+  /** Dismiss the pre-flight and go back to idle */
+  const cancelStart = useCallback(() => {
+    setAgentState('idle');
+  }, []);
+
   const stop = useCallback(async () => {
     await conversation.endSession();
     setAgentState('idle');
@@ -94,10 +116,12 @@ export function useVoiceAgent({ agentId, useSignedUrl = false }: UseVoiceAgentOp
   const toggle = useCallback(async () => {
     if (agentState === 'idle') {
       await start();
+    } else if (agentState === 'ready') {
+      await confirmStart();
     } else {
       await stop();
     }
-  }, [agentState, start, stop]);
+  }, [agentState, start, confirmStart, stop]);
 
   return {
     agentState,
@@ -106,6 +130,8 @@ export function useVoiceAgent({ agentId, useSignedUrl = false }: UseVoiceAgentOp
     toggle,
     start,
     stop,
+    confirmStart,
+    cancelStart,
     isSpeaking: conversation.isSpeaking,
     status: conversation.status,
     getInputVolume: () => inputVolumeRef.current,

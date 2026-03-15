@@ -30,8 +30,6 @@ export default function VoiceWidgetSection() {
     toggle();
   }, [agentId, toggle]);
 
-  const isActive = agentState !== 'idle' && agentState !== 'connecting';
-
   return (
     <section className="py-24 sm:py-32 px-6 bg-[#1a1a2e] overflow-hidden">
       <div className="max-w-3xl mx-auto flex flex-col items-center text-center">
@@ -206,7 +204,7 @@ export default function VoiceWidgetSection() {
 }
 
 /** WhatsApp fallback when voice agent isn't configured */
-function FallbackWhatsApp({ t }: { t: (key: string, fallback?: string) => string }) {
+function FallbackWhatsApp({ t }: { t: (key: string, fallback: string) => string }) {
   return (
     <div className="flex flex-col items-center gap-5">
       <div className="w-20 h-20 rounded-full bg-burgundy/20 flex items-center justify-center">

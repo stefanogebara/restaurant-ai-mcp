@@ -29,7 +29,7 @@ const SHOWCASE_ITEMS: ShowcaseItem[] = [
     icon: <MessageSquare className="w-5 h-5" />,
     titleKey: 'landing.showcase.whatsappTitle',
     descKey: 'landing.showcase.whatsappDesc',
-    videoSrc: null, // TODO: add /videos/whatsapp-demo.mp4
+    videoSrc: '/videos/whatsapp-demo.mp4',
     color: 'text-green-600',
     bgColor: 'bg-green-50',
   },
@@ -38,7 +38,7 @@ const SHOWCASE_ITEMS: ShowcaseItem[] = [
     icon: <Phone className="w-5 h-5" />,
     titleKey: 'landing.showcase.voiceTitle',
     descKey: 'landing.showcase.voiceDesc',
-    videoSrc: null, // TODO: add /videos/voice-demo.mp4
+    videoSrc: '/videos/voice-demo.mp4',
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
   },
@@ -47,7 +47,7 @@ const SHOWCASE_ITEMS: ShowcaseItem[] = [
     icon: <LayoutDashboard className="w-5 h-5" />,
     titleKey: 'landing.showcase.dashboardTitle',
     descKey: 'landing.showcase.dashboardDesc',
-    videoSrc: null, // TODO: add /videos/dashboard-demo.mp4
+    videoSrc: '/videos/dashboard-demo.mp4',
     color: 'text-burgundy',
     bgColor: 'bg-burgundy/5',
   },
@@ -113,7 +113,7 @@ function PlaceholderIcon({ type }: { type: 'whatsapp' | 'phone' | 'dashboard' })
   );
 }
 
-function VideoPlaceholder({ item, t }: { item: ShowcaseItem; t: (key: string, fallback?: string) => string }) {
+function VideoPlaceholder({ item, t }: { item: ShowcaseItem; t: (key: string, fallback: string) => string }) {
   const highlights = FEATURE_HIGHLIGHTS[item.id];
 
   return (

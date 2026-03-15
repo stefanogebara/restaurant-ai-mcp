@@ -22,6 +22,7 @@ interface VoiceOrbProps {
 /** Color palette per state */
 const STATE_COLORS: Record<AgentState, { from: string; to: string; glow: string }> = {
   idle: { from: '#9f1239', to: '#be123c', glow: 'rgba(159,18,57,0.25)' },
+  ready: { from: '#16a34a', to: '#22c55e', glow: 'rgba(34,197,94,0.35)' },
   connecting: { from: '#9f1239', to: '#f59e0b', glow: 'rgba(245,158,11,0.3)' },
   listening: { from: '#2563eb', to: '#7c3aed', glow: 'rgba(37,99,235,0.35)' },
   thinking: { from: '#7c3aed', to: '#a855f7', glow: 'rgba(124,58,237,0.35)' },
@@ -30,6 +31,7 @@ const STATE_COLORS: Record<AgentState, { from: string; to: string; glow: string 
 
 const STATE_LABELS: Record<AgentState, string> = {
   idle: 'Tap to talk',
+  ready: 'Ready to call?',
   connecting: 'Connecting...',
   listening: 'Listening...',
   thinking: 'Thinking...',
@@ -50,7 +52,7 @@ export default function VoiceOrb({
 
   // Smooth volume polling via rAF
   useEffect(() => {
-    if (agentState === 'idle' || agentState === 'connecting') {
+    if (agentState === 'idle' || agentState === 'ready' || agentState === 'connecting') {
       setVolume(0);
       return;
     }
@@ -74,7 +76,7 @@ export default function VoiceOrb({
   }, [agentState, getInputVolume, getOutputVolume]);
 
   const colors = STATE_COLORS[agentState];
-  const isActive = agentState !== 'idle' && agentState !== 'connecting';
+  const isActive = agentState !== 'idle' && agentState !== 'ready' && agentState !== 'connecting';
   const mergedLabels = { ...STATE_LABELS, ...labels };
 
   // Dynamic scale: volume boost on top of base
@@ -140,17 +142,21 @@ export default function VoiceOrb({
           animate={{
             scale: agentState === 'connecting'
               ? [1, 1.05, 1]
-              : isActive
-                ? volumeScale
-                : [1, 1.03, 1],
+              : agentState === 'ready'
+                ? [1, 1.08, 1]
+                : isActive
+                  ? volumeScale
+                  : [1, 1.03, 1],
             boxShadow: `0 0 ${glowSize}px ${colors.glow}`,
           }}
           transition={
             agentState === 'connecting'
               ? { duration: 1.2, repeat: Infinity, ease: 'easeInOut' }
-              : isActive
-                ? { duration: 0.1, ease: 'linear' }
-                : { duration: 3, repeat: Infinity, ease: 'easeInOut' }
+              : agentState === 'ready'
+                ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
+                : isActive
+                  ? { duration: 0.1, ease: 'linear' }
+                  : { duration: 3, repeat: Infinity, ease: 'easeInOut' }
           }
           aria-label={mergedLabels[agentState]}
         >
@@ -164,7 +170,9 @@ export default function VoiceOrb({
                 : { duration: 0.3 }
             }
           >
-            {agentState === 'idle' || agentState === 'connecting' ? (
+            {agentState === 'ready' ? (
+              <PhoneIcon size={size * 0.28} />
+            ) : agentState === 'idle' || agentState === 'connecting' ? (
               <MicIcon size={size * 0.28} />
             ) : agentState === 'talking' ? (
               <WaveIcon size={size * 0.28} volume={volume} />
@@ -192,6 +200,24 @@ export default function VoiceOrb({
         </span>
       </motion.div>
     </div>
+  );
+}
+
+function PhoneIcon({ size }: { size: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="text-white/90"
+    >
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3.09 5.18 2 2 0 0 1 5.11 3h3a2 2 0 0 1 2 1.72c.13.81.36 1.6.68 2.34a2 2 0 0 1-.45 2.11L8.91 10.6a16 16 0 0 0 6.49 6.49l1.43-1.43a2 2 0 0 1 2.11-.45c.74.32 1.53.55 2.34.68A2 2 0 0 1 22 16.92z" />
+    </svg>
   );
 }
 

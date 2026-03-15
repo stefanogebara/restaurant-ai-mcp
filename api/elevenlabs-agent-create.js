@@ -115,7 +115,7 @@ module.exports = async (req, res) => {
             agent: {
               prompt: {
                 prompt: systemPrompt,
-                llm: 'gpt-4-turbo',
+                llm: 'gpt-4o-mini',
                 tool_ids: toolIds
               },
               first_message: firstMessage,
@@ -123,7 +123,15 @@ module.exports = async (req, res) => {
             },
             tts: {
               voice_id: defaultVoiceId,
-              model_id: 'eleven_turbo_v2_5'
+              model_id: 'eleven_flash_v2_5'
+            },
+            conversation: {
+              turn_timeout: 8,
+              client_events: ['agent_response', 'agent_response_correction', 'user_transcript', 'internal_tentative_agent_response']
+            },
+            asr: {
+              quality: 'high',
+              provider: 'elevenlabs'
             }
           },
           platform_settings: {
@@ -219,12 +227,12 @@ module.exports = async (req, res) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        name: `${restaurant_name} AI Receptionist`,
+        name: `${restaurant_name} AI Host`,
         conversation_config: {
           agent: {
             prompt: {
               prompt: systemPrompt,
-              llm: 'gpt-4-turbo',
+              llm: 'gpt-4o-mini',
               tool_ids: toolIds
             },
             first_message: firstMessage,
@@ -232,13 +240,21 @@ module.exports = async (req, res) => {
           },
           tts: {
             voice_id: voice_id,
-            model_id: 'eleven_turbo_v2_5'
+            model_id: 'eleven_flash_v2_5'
+          },
+          conversation: {
+            turn_timeout: 8,
+            client_events: ['agent_response', 'agent_response_correction', 'user_transcript', 'internal_tentative_agent_response']
+          },
+          asr: {
+            quality: 'high',
+            provider: 'elevenlabs'
           }
         },
         platform_settings: {
           widget_config: {
             avatar_url: 'https://seatable.one/logo.png',
-            title: `${restaurant_name} AI Receptionist`
+            title: `${restaurant_name} AI Host`
           }
         }
       })
