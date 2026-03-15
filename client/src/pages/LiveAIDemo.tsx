@@ -1,151 +1,308 @@
-/// <reference path="../types/elevenlabs.d.ts" />
-import { useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
-import ElevenLabsWidget from '../components/ElevenLabsWidget';
-import { useNavigate, Link } from 'react-router-dom';
-import ThiingsIcon from '../components/common/ThiingsIcon';
+import VoiceOrb from '../components/voice/VoiceOrb';
+import { useVoiceAgent } from '../components/voice/useVoiceAgent';
+import VoiceDemoDashboard from './VoiceDemoDashboard';
+import type { MockReservation } from './VoiceDemoDashboard';
+
+/** Parse agent messages for reservation keywords */
+function parseReservationFromText(text: string): MockReservation | null {
+  const lower = text.toLowerCase();
+
+  if (lower.includes('confirmed') || lower.includes('booked') || lower.includes('reserved')) {
+    const nameMatch = text.match(/(?:for|name[:\s]+)\s*([A-Z][a-z]+(?:\s[A-Z][a-z]*)?)/);
+    const name = nameMatch?.[1] || 'Guest';
+    const sizeMatch = text.match(/(?:table for|party of|for)\s*(\d+)/i);
+    const size = sizeMatch ? parseInt(sizeMatch[1], 10) : 2;
+    const timeMatch = text.match(/(\d{1,2}(?::\d{2})?\s*(?:pm|am)?)/i);
+    const time = timeMatch?.[1] || '20:00';
+
+    return {
+      id: `voice-${Date.now()}`,
+      name,
+      time,
+      size,
+      status: 'confirmed',
+      isNew: true,
+    };
+  }
+
+  if (lower.includes('cancelled') || lower.includes('canceled')) {
+    const nameMatch = text.match(/(?:for|name[:\s]+)\s*([A-Z][a-z]+(?:\s[A-Z][a-z]*)?)/);
+    return {
+      id: `voice-cancel-${Date.now()}`,
+      name: nameMatch?.[1] || 'Guest',
+      time: '',
+      size: 0,
+      status: 'cancelled',
+      isNew: true,
+    };
+  }
+
+  return null;
+}
 
 export default function LiveAIDemo() {
-  useDocumentTitle('Demo | seatable');
-  const navigate = useNavigate();
+  useDocumentTitle('Voice Demo | seatable');
   const { t } = useTranslation();
+  const agentId = import.meta.env.VITE_ELEVENLABS_AGENT_ID || '';
 
+  const {
+    agentState,
+    error,
+    transcript,
+    toggle,
+    confirmStart,
+    cancelStart,
+    getInputVolume,
+    getOutputVolume,
+  } = useVoiceAgent({ agentId, useSignedUrl: false, requireConfirmation: true });
+
+  const [liveReservations, setLiveReservations] = useState<MockReservation[]>([]);
+  const [callDuration, setCallDuration] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const processedRef = useRef(new Set<string>());
+
+  const isActive = agentState !== 'idle' && agentState !== 'connecting';
+
+  // Call timer
   useEffect(() => {
-    // Load ElevenLabs widget script
-    const script = document.createElement('script');
-    script.src = '/js/convai-widget-embed.js';
-    script.async = true;
-    script.type = 'text/javascript';
-    document.body.appendChild(script);
-
-    return () => {
-      // Cleanup script when component unmounts
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
+    if (isActive) {
+      setCallDuration(0);
+      timerRef.current = setInterval(() => setCallDuration((d) => d + 1), 1000);
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
       }
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, []);
+  }, [isActive]);
+
+  // Watch transcript for reservation confirmations
+  useEffect(() => {
+    for (const msg of transcript) {
+      if (msg.role !== 'agent') continue;
+      if (processedRef.current.has(msg.text)) continue;
+      processedRef.current.add(msg.text);
+
+      const reservation = parseReservationFromText(msg.text);
+      if (reservation) {
+        setLiveReservations((prev) => [reservation, ...prev]);
+      }
+    }
+  }, [transcript]);
+
+  const handleOrbClick = useCallback(() => {
+    if (!agentId) return;
+    toggle();
+  }, [agentId, toggle]);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
 
   return (
-    <div className="min-h-screen bg-warm-white">
-      {/* Nav */}
-      <nav className="flex items-center justify-between px-6 sm:px-16 py-6 bg-warm-white/80 backdrop-blur-xl border-b border-border-gray">
-        <Link to="/" className="font-serif text-2xl font-semibold text-deep-charcoal tracking-tight">
+    <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col">
+      {/* Minimal top bar */}
+      <nav className="flex items-center justify-between px-6 py-4 border-b border-white/[5%]">
+        <Link
+          to="/"
+          className="font-serif text-xl font-semibold text-white/90 tracking-tight"
+        >
           seatable<span className="text-burgundy">.</span>
         </Link>
-        <div className="hidden md:flex items-center gap-9">
-          <Link to="/#features" className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">{t('landing.liveDemo.nav.features')}</Link>
-          <Link to="/#pricing" className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">{t('landing.liveDemo.nav.pricing')}</Link>
-          <Link to="/live-demo" className="text-sm font-medium text-deep-charcoal">{t('landing.liveDemo.nav.demo')}</Link>
-          <Link to="/#contact" className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">{t('landing.liveDemo.nav.contact')}</Link>
-        </div>
         <Link
-          to="/#pricing"
-          className="px-6 py-2.5 bg-deep-charcoal text-white text-sm font-semibold rounded-full hover:bg-charcoal-dark transition-colors"
+          to="/"
+          className="text-sm text-white/40 hover:text-white/60 transition-colors"
         >
-          {t('landing.liveDemo.nav.getStarted')}
+          {t('landing.voiceDemo.backToSite', '\u2190 Back')}
         </Link>
       </nav>
 
-      {/* Hero */}
-      <section className="pt-24 pb-20 text-center max-w-[1200px] mx-auto px-6 sm:px-16">
-        <div className="inline-block text-xs font-semibold tracking-[1.5px] uppercase text-burgundy bg-burgundy/[6%] border border-burgundy/15 px-4 py-1.5 rounded-full mb-7">
-          {t('landing.liveDemo.hero.badge')}
-        </div>
-        <h1 className="font-serif text-4xl sm:text-[56px] font-medium leading-[1.1] tracking-tight mb-4">
-          {t('landing.liveDemo.hero.title')} <em className="text-burgundy">{t('landing.liveDemo.hero.titleEm')}</em>
-        </h1>
-        <p className="text-[17px] text-stone-gray font-light leading-relaxed max-w-[520px] mx-auto">
-          {t('landing.liveDemo.hero.subtitle')}
-        </p>
-      </section>
+      {/* Main content */}
+      <div className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16 px-6 py-8 lg:py-0">
+        {/* Left: Voice Orb + Controls */}
+        <div className="flex flex-col items-center gap-6 max-w-md w-full">
+          {/* Restaurant info */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-center mb-2"
+          >
+            <h1 className="font-serif text-2xl sm:text-3xl font-medium tracking-tight text-white/90 mb-1">
+              {t('landing.voiceDemo.title', 'Talk to our AI host')}
+            </h1>
+            <p className="text-sm text-white/35 font-light">
+              {t('landing.voiceDemo.subtitle', 'Ask to book a table, check availability, or inquire about the menu')}
+            </p>
+          </motion.div>
 
-      {/* Demo Widget */}
-      <section className="max-w-[720px] mx-auto px-6 sm:px-16 pb-20">
-        <div className="bg-white border border-border-gray rounded-[20px] p-8 sm:p-12 text-center">
-          <div className="text-xs font-semibold tracking-[1.5px] uppercase text-warm-stone mb-5">{t('landing.liveDemo.widget.label')}</div>
-          <h2 className="font-serif text-[28px] font-medium mb-2">{t('landing.liveDemo.widget.name')}</h2>
-          <p className="text-sm text-stone-gray font-light mb-9">{t('landing.liveDemo.widget.details')}</p>
+          {/* The Orb */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+          >
+            <VoiceOrb
+              agentState={agentState}
+              getInputVolume={getInputVolume}
+              getOutputVolume={getOutputVolume}
+              onClick={handleOrbClick}
+              size={220}
+              labels={{
+                idle: t('landing.voice.tapToTalk', 'Tap to talk'),
+                connecting: t('landing.voice.connecting', 'Connecting...'),
+                listening: t('landing.voice.listening', 'Listening...'),
+                thinking: t('landing.voice.thinking', 'Thinking...'),
+                talking: t('landing.voice.speaking', 'Speaking...'),
+              }}
+            />
+          </motion.div>
 
-          {/* Voice Demo */}
-          {import.meta.env.VITE_ELEVENLABS_AGENT_ID ? (
-            <div className="mb-6">
-              <div className="bg-soft-gray rounded-2xl p-6 pb-16 sm:pb-6 mb-5 text-left">
-                <p className="text-[13px] text-stone-gray font-light leading-relaxed mb-3">
-                  {t('landing.liveDemo.widget.instructions')}
+          {/* Ready to call? confirmation */}
+          <AnimatePresence>
+            {agentState === 'ready' && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="flex flex-col items-center gap-3"
+              >
+                <p className="text-sm text-white/50">
+                  {t('landing.voiceDemo.readyPrompt', 'This will use your microphone to talk with our AI host.')}
                 </p>
-                <div className="flex items-center gap-2 text-[12px] text-warm-stone">
-                  <span>↘</span>
-                  <span>{t('landing.liveDemo.widget.instructionsHint')}</span>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={confirmStart}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-500 text-white text-sm font-medium rounded-full transition-colors"
+                  >
+                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2}>
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3.09 5.18 2 2 0 0 1 5.11 3h3a2 2 0 0 1 2 1.72c.13.81.36 1.6.68 2.34a2 2 0 0 1-.45 2.11L8.91 10.6a16 16 0 0 0 6.49 6.49l1.43-1.43a2 2 0 0 1 2.11-.45c.74.32 1.53.55 2.34.68A2 2 0 0 1 22 16.92z" />
+                    </svg>
+                    {t('landing.voiceDemo.startCall', 'Start call')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelStart}
+                    className="px-5 py-2.5 text-white/40 hover:text-white/60 text-sm font-medium rounded-full transition-colors"
+                  >
+                    {t('landing.voiceDemo.cancel', 'Cancel')}
+                  </button>
                 </div>
-              </div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-600/[6%] rounded-full">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-600" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Call controls — visible when active */}
+          <AnimatePresence>
+            {isActive && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="flex items-center gap-6"
+              >
+                <span className="text-sm text-white/40 font-mono tabular-nums">
+                  {formatTime(callDuration)}
                 </span>
-                <span className="text-[13px] font-medium text-green-600">{t('landing.liveDemo.widget.agentOnline')}</span>
-              </div>
-              <ElevenLabsWidget agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID} useSignedUrl={false} />
-            </div>
-          ) : (
-            <div className="mb-6 p-6 bg-soft-gray rounded-2xl text-left">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 bg-burgundy/10 rounded-lg flex items-center justify-center text-burgundy text-base">☎</div>
-                <span className="text-sm font-semibold text-deep-charcoal">{t('landing.liveDemo.widget.voiceComingSoon')}</span>
-              </div>
-              <p className="text-[13px] text-stone-gray leading-relaxed">
-                {t('landing.liveDemo.widget.voiceComingSoonDesc')}
-              </p>
-            </div>
+                <button
+                  type="button"
+                  onClick={toggle}
+                  className="flex items-center gap-2 px-5 py-2 bg-red-600/80 hover:bg-red-600 text-white text-sm font-medium rounded-full transition-colors"
+                >
+                  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3.09 5.18 2 2 0 0 1 5.11 3h3a2 2 0 0 1 2 1.72c.13.81.36 1.6.68 2.34a2 2 0 0 1-.45 2.11L8.91 10.6a16 16 0 0 0 6.49 6.49l1.43-1.43a2 2 0 0 1 2.11-.45c.74.32 1.53.55 2.34.68A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                  {t('landing.voiceDemo.endCall', 'End call')}
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Error */}
+          {error && (
+            <p className="text-sm text-red-400/80 text-center max-w-xs">{error}</p>
           )}
 
-          {/* Booking Demo Link */}
-          <div className="border-t border-border-gray pt-6 mt-2">
-            <p className="text-[12px] text-warm-stone mb-3">{t('landing.liveDemo.widget.bookingFlowLabel')}</p>
-            <Link
-              to="/demo/setup"
-              className="inline-flex items-center gap-2 px-5 py-2.5 border border-border-gray hover:border-burgundy/40 text-sm font-medium text-deep-charcoal hover:text-burgundy rounded-xl transition-colors"
-            >
-              {t('landing.liveDemo.widget.tryBooking')}
-            </Link>
+          {/* Transcript */}
+          <AnimatePresence>
+            {transcript.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="w-full max-w-sm space-y-2 max-h-48 overflow-y-auto"
+              >
+                {transcript.slice(-5).map((msg, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: msg.role === 'user' ? 20 : -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className={`text-sm px-3 py-2 rounded-xl ${
+                      msg.role === 'user'
+                        ? 'bg-white/[6%] text-white/60 ml-8 rounded-br-sm'
+                        : 'bg-burgundy/15 text-white/70 mr-8 rounded-bl-sm'
+                    }`}
+                  >
+                    {msg.text}
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Right: Live Dashboard — desktop only */}
+        <motion.div
+          initial={{ opacity: 0, x: 30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.6, duration: 0.6 }}
+          className="hidden lg:block"
+        >
+          <div className="mb-3 flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+            </span>
+            <span className="text-xs text-white/30">
+              {t('landing.voiceDemo.liveDashboard', 'Live dashboard \u2014 reservations appear in real-time')}
+            </span>
           </div>
-        </div>
-      </section>
+          <VoiceDemoDashboard reservations={liveReservations} />
+        </motion.div>
+      </div>
 
-      {/* Feature Callouts */}
-      <section className="max-w-[900px] mx-auto px-6 sm:px-16 pb-24">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            { icon: 'phone-call' as const, title: t('landing.liveDemo.features.natural.title'), desc: t('landing.liveDemo.features.natural.desc') },
-            { icon: 'star' as const, title: t('landing.liveDemo.features.personality.title'), desc: t('landing.liveDemo.features.personality.desc') },
-            { icon: 'clock' as const, title: t('landing.liveDemo.features.available.title'), desc: t('landing.liveDemo.features.available.desc') },
-          ].map((item, i) => (
-            <div key={i} className="bg-white border border-border-gray rounded-2xl p-8">
-              <div className="w-10 h-10 rounded-xl bg-burgundy/[6%] flex items-center justify-center mb-4 text-burgundy">
-                <ThiingsIcon name={item.icon} pxSize={20} />
-              </div>
-              <h3 className="text-base font-semibold text-deep-charcoal mb-2 tracking-tight">{item.title}</h3>
-              <p className="text-[13px] text-stone-gray leading-relaxed">{item.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="px-6 sm:px-16 pb-24">
-        <div className="max-w-[700px] mx-auto bg-deep-charcoal rounded-3xl p-10 sm:p-16 text-center">
-          <h2 className="font-serif text-3xl sm:text-4xl font-medium text-white mb-3 tracking-tight">{t('landing.liveDemo.cta.title')}</h2>
-          <p className="text-[15px] text-muted-stone font-light mb-8">{t('landing.liveDemo.cta.subtitle')}</p>
-          <button
-            onClick={() => navigate('/demo/setup')}
-            className="px-8 py-3.5 bg-burgundy hover:bg-burgundy-dark text-white text-[15px] font-semibold rounded-full transition-colors"
+      {/* Bottom bar */}
+      <div className="border-t border-white/[5%] px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <p className="text-xs text-white/20">
+          {t('landing.voiceDemo.powered', 'Powered by ElevenLabs \u00b7 Seatable AI')}
+        </p>
+        <div className="flex items-center gap-4">
+          <Link
+            to="/demo/setup"
+            className="text-xs text-burgundy hover:text-burgundy/80 transition-colors font-medium"
           >
-            {t('landing.liveDemo.cta.button')}
-          </button>
+            {t('landing.voiceDemo.tryDashboard', 'Try the full dashboard')} &rarr;
+          </Link>
+          <Link
+            to="/#pricing"
+            className="text-xs text-white/30 hover:text-white/50 transition-colors"
+          >
+            {t('landing.voiceDemo.pricing', 'Pricing')}
+          </Link>
         </div>
-      </section>
+      </div>
     </div>
   );
 }

@@ -19,9 +19,11 @@ export default function VoiceWidgetSection() {
     error,
     transcript,
     toggle,
+    confirmStart,
+    cancelStart,
     getInputVolume,
     getOutputVolume,
-  } = useVoiceAgent({ agentId, useSignedUrl: false });
+  } = useVoiceAgent({ agentId, useSignedUrl: false, requireConfirmation: true });
 
   const handleOrbClick = useCallback(() => {
     if (!agentId) return;
@@ -95,6 +97,31 @@ export default function VoiceWidgetSection() {
                 }}
               />
 
+              {/* Ready to call? confirmation */}
+              {agentState === 'ready' && (
+                <div className="flex flex-col items-center gap-3 mt-4">
+                  <p className="text-xs text-white/40">
+                    {t('landing.voice.readyPrompt', 'This will use your microphone.')}
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={confirmStart}
+                      className="px-5 py-2 bg-green-600 hover:bg-green-500 text-white text-sm font-medium rounded-full transition-colors"
+                    >
+                      {t('landing.voice.startCall', 'Start call')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelStart}
+                      className="px-4 py-2 text-white/40 hover:text-white/60 text-sm rounded-full transition-colors"
+                    >
+                      {t('landing.voice.cancel', 'Cancel')}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Error message */}
               {error && (
                 <p className="text-sm text-red-400/80 mt-2 max-w-xs">
@@ -142,6 +169,24 @@ export default function VoiceWidgetSection() {
             </span>
           ))}
         </motion.div>
+
+        {/* Full experience CTA */}
+        {agentId && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.45 }}
+            className="mt-6"
+          >
+            <a
+              href="/live-demo"
+              className="inline-flex items-center gap-2 px-6 py-2.5 border border-white/10 hover:border-burgundy/40 text-sm font-medium text-white/60 hover:text-white rounded-full transition-all"
+            >
+              {t('landing.voice.fullExperience', 'Try the full experience')} &rarr;
+            </a>
+          </motion.div>
+        )}
 
         {/* Powered-by */}
         {agentId && (
