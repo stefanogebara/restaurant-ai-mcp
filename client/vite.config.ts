@@ -26,6 +26,8 @@ export default defineConfig({
           'vendor-sentry': ['@sentry/react'],
           'vendor-stripe': ['@stripe/react-stripe-js', '@stripe/stripe-js'],
           'vendor-dnd': ['@dnd-kit/core', '@dnd-kit/utilities'],
+          'vendor-icons': ['lucide-react'],
+          'vendor-supabase': ['@supabase/supabase-js'],
         },
       },
     },

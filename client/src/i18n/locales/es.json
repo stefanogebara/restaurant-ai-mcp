@@ -133,7 +133,7 @@
       "elapsed": "transcurridos",
       "left": "restantes",
       "guestsSeated": "comensales sentados",
-      "billAmount": "Importe de la cuenta (opcional)"
+      "billAmount": "Cuenta (opc.)"
     },
     "managerNotes": {
       "title": "Memoria IA & Notas del Gerente",
@@ -977,6 +977,11 @@
       "subtitle": "Ten una conversación real. Pide reservar una mesa para 4 esta noche — y escucha a la IA responder naturalmente.",
       "powered": "Desarrollado con ElevenLabs \u00b7 Inglés, Portugués, Español",
       "micHint": "Haz clic en el micrófono para empezar",
+      "tapToTalk": "Toca para hablar",
+      "connecting": "Conectando...",
+      "listening": "Escuchando...",
+      "thinking": "Pensando...",
+      "speaking": "Hablando...",
       "loading": "Cargando agente de voz...",
       "fallbackTitle": "Demo de voz no disponible",
       "fallbackDesc": "Prueba nuestra IA por WhatsApp — envía un mensaje y recibe una respuesta instantánea.",

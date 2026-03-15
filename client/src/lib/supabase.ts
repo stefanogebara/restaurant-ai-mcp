@@ -77,7 +77,11 @@ async function forceSignOutToLogin(): Promise<void> {
     // Even if signOut fails, redirect to login
   }
   // Use replaceState so the user can't "back" into an expired session page
-  if (window.location.pathname !== '/login' && !window.location.pathname.startsWith('/book/')) {
+  if (
+    window.location.pathname !== '/login' &&
+    !window.location.pathname.startsWith('/book/') &&
+    !window.location.pathname.startsWith('/demo')
+  ) {
     window.location.replace('/login');
   }
 }

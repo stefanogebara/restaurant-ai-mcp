@@ -67,7 +67,7 @@ describe('DemoDashboard', () => {
     expect(screen.getByText(/demo interativa/i)).toBeInTheDocument();
 
     // Restaurant name (PT-BR default)
-    expect(screen.getByText('Cantina da Praca')).toBeInTheDocument();
+    expect(screen.getByText('Cantina da Praça')).toBeInTheDocument();
 
     // All panels present
     expect(screen.getByTestId('stats-bar')).toBeInTheDocument();

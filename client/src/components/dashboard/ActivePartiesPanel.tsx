@@ -178,7 +178,7 @@ function PartyRow({ party, billValue, onBillChange, onComplete }: PartyRowProps)
           placeholder={t('dashboard.activePartiesPanel.billAmount')}
           value={billValue}
           onChange={e => onBillChange(e.target.value)}
-          className="w-28 border border-border-gray rounded-lg px-2 py-1 text-xs text-deep-charcoal focus:outline-none focus:ring-1 focus:ring-burgundy/30"
+          className="w-24 sm:w-28 border border-border-gray rounded-lg px-2 py-1 text-xs text-deep-charcoal focus:outline-none focus:ring-1 focus:ring-burgundy/30"
           aria-label="Total bill amount"
         />
         <button

@@ -123,7 +123,7 @@
       "elapsed": "elapsed",
       "left": "left",
       "guestsSeated": "guests seated",
-      "billAmount": "Bill amount (optional)"
+      "billAmount": "Bill (opt.)"
     },
     "managerNotes": {
       "title": "AI Memory & Manager Notes",
@@ -1176,6 +1176,11 @@
       "subtitle": "Have a real conversation. Ask to book a table for 4 tonight — and hear the AI respond naturally.",
       "powered": "Powered by ElevenLabs \u00b7 English, Portuguese, Spanish",
       "micHint": "Click the mic to start talking",
+      "tapToTalk": "Tap to talk",
+      "connecting": "Connecting...",
+      "listening": "Listening...",
+      "thinking": "Thinking...",
+      "speaking": "Speaking...",
       "loading": "Loading voice agent...",
       "fallbackTitle": "Voice demo unavailable",
       "fallbackDesc": "Try our WhatsApp AI instead — send a message and get an instant response.",
