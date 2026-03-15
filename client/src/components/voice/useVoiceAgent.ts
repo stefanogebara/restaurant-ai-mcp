@@ -33,13 +33,15 @@ export function useVoiceAgent({ agentId, useSignedUrl = false, requireConfirmati
     onDisconnect: () => {
       setAgentState('idle');
     },
-    onModeChange: ({ mode }: { mode: string }) => {
-      setAgentState(mode === 'speaking' ? 'talking' : 'listening');
+    onModeChange: (mode: { mode: string }) => {
+      const m = typeof mode === 'string' ? mode : mode.mode;
+      setAgentState(m === 'speaking' ? 'talking' : 'listening');
     },
-    onMessage: (message: { message: string; source: 'user' | 'ai' }) => {
+    onMessage: (message: { message: string; role: string; source?: string }) => {
+      const role = message.role === 'assistant' || message.source === 'ai' ? 'agent' : 'user';
       setTranscript((prev) => [
         ...prev,
-        { role: message.source === 'ai' ? 'agent' : 'user', text: message.message },
+        { role, text: message.message },
       ]);
     },
     onError: (message: string, context?: unknown) => {
@@ -80,7 +82,7 @@ export function useVoiceAgent({ agentId, useSignedUrl = false, requireConfirmati
         const data = await res.json();
         await conversation.startSession({ signedUrl: data.signed_url } as any);
       } else {
-        await conversation.startSession({ agentId, connectionType: 'websocket' } as any);
+        await conversation.startSession({ agentId, connectionType: 'webrtc' } as any);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to start voice agent';
