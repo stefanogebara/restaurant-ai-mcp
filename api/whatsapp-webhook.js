@@ -306,7 +306,7 @@ async function handleIncomingMessage(message, res) {
         return res.status(200).json({ status: 'ok' });
       }
     } catch (autoErr) {
-      logger.error(' Auto-assign error (non-fatal):', autoErr.message);
+      logger.error(' Auto-assign error (non-fatal):', autoErr.message, autoErr.stack);
     }
   }
 
