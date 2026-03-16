@@ -33,7 +33,7 @@ const { setWebhookCors } = require('./_lib/cors');
 const { updateDeliveryStatus } = require('./services/campaignService');
 
 // Extracted modules
-const { sendWhatsAppMessage } = require('./services/whatsapp/message-sender');
+const { sendWhatsAppMessage, sendInteractiveListMessage } = require('./services/whatsapp/message-sender');
 const { isRateLimited } = require('./services/whatsapp/rate-limiter');
 const { processWithAI } = require('./services/whatsapp/conversation');
 const { handleKeyword } = require('./services/whatsapp/keyword-handler');
@@ -161,12 +161,28 @@ async function handlePost(req, res) {
 async function handleIncomingMessage(message, res) {
   const from = message.from; // Sender's WhatsApp number
   const messageType = message.type;
-  const messageText = message.text?.body || '';
 
-  logger.info(` Message from ${from}: ${messageText}`);
+  // Extract text from text messages OR interactive replies (list selections)
+  let messageText = '';
+  let interactiveSelection = null;
 
-  // Only handle text messages for now
-  if (messageType !== 'text') {
+  if (messageType === 'text') {
+    messageText = message.text?.body || '';
+  } else if (messageType === 'interactive') {
+    const interactiveType = message.interactive?.type;
+    if (interactiveType === 'list_reply') {
+      interactiveSelection = message.interactive.list_reply;
+      messageText = interactiveSelection.title || '';
+    } else if (interactiveType === 'button_reply') {
+      interactiveSelection = message.interactive.button_reply;
+      messageText = interactiveSelection.title || '';
+    }
+  }
+
+  logger.info(` Message from ${from}: ${messageText} (type=${messageType})`);
+
+  // Only handle text and interactive messages
+  if (messageType !== 'text' && messageType !== 'interactive') {
     await sendWhatsAppMessage(from, 'I can only process text messages at the moment. Please type your request.');
     return res.status(200).json({ status: 'ok' });
   }
@@ -231,7 +247,7 @@ async function handleIncomingMessage(message, res) {
     return res.status(200).json({ status: 'ok' });
   }
 
-  // Auto-assign restaurant if only one exists and session has no restaurant
+  // Auto-assign restaurant if only one exists, or handle interactive selection
   if (!session.restaurant) {
     try {
       logger.info(' [STEP 2] Getting active restaurants...');
@@ -241,12 +257,53 @@ async function handleIncomingMessage(message, res) {
         new Promise((_, reject) => setTimeout(() => reject(new Error('Restaurant lookup timeout after 8s')), 8000))
       ]);
       logger.info(` [STEP 2] Restaurants done in ${Date.now() - restStart}ms, count=${activeRestaurants.length}`);
+
       if (activeRestaurants.length === 1) {
+        // Single restaurant — auto-assign
         logger.info(` Auto-assigning single restaurant: ${activeRestaurants[0].restaurant_name}`);
         const updated = await setSessionRestaurant(session.id, activeRestaurants[0].id);
         if (updated) {
           session = updated;
         }
+      } else if (activeRestaurants.length > 1) {
+        // Check if this is an interactive list reply selecting a restaurant
+        if (interactiveSelection?.id?.startsWith('restaurant_')) {
+          const selectedId = interactiveSelection.id.replace('restaurant_', '');
+          const selectedRestaurant = activeRestaurants.find(r => r.id === selectedId);
+          if (selectedRestaurant) {
+            logger.info(` User selected restaurant: ${selectedRestaurant.restaurant_name}`);
+            const updated = await setSessionRestaurant(session.id, selectedRestaurant.id);
+            if (updated) {
+              session = updated;
+            }
+            await sendWhatsAppMessage(from, `Great! You've selected ${selectedRestaurant.restaurant_name}. How can I help you today? I can check availability, make a reservation, or answer questions about the restaurant.`);
+            return res.status(200).json({ status: 'ok' });
+          }
+        }
+
+        // No restaurant selected yet — send interactive list
+        // Group restaurants into sections of max 10 rows each (WhatsApp limit)
+        const sections = [];
+        const chunkSize = 10;
+        for (let i = 0; i < activeRestaurants.length; i += chunkSize) {
+          const chunk = activeRestaurants.slice(i, i + chunkSize);
+          sections.push({
+            title: sections.length === 0 ? 'Restaurants' : `More (${sections.length + 1})`,
+            rows: chunk.map(r => ({
+              id: `restaurant_${r.id}`,
+              title: r.restaurant_name,
+              description: r.restaurant_aliases?.join(', ') || ''
+            }))
+          });
+        }
+
+        await sendInteractiveListMessage(
+          from,
+          `Welcome to Seatable! We partner with ${activeRestaurants.length} restaurants. Which restaurant would you like to book at?`,
+          'Select restaurant',
+          sections
+        );
+        return res.status(200).json({ status: 'ok' });
       }
     } catch (autoErr) {
       logger.error(' Auto-assign error (non-fatal):', autoErr.message);
