@@ -25,35 +25,11 @@ export function useVoiceAgent({ agentId, useSignedUrl = false, requireConfirmati
   const inputVolumeRef = useRef(0);
   const outputVolumeRef = useRef(0);
 
-  const conversation = useConversation({
-    onConnect: () => {
-      setAgentState('listening');
-      setError(null);
-    },
-    onDisconnect: () => {
-      setAgentState('idle');
-    },
-    onModeChange: (mode: { mode: string }) => {
-      const m = typeof mode === 'string' ? mode : mode.mode;
-      setAgentState(m === 'speaking' ? 'talking' : 'listening');
-    },
-    onMessage: (message: { message: string; role: string; source?: string }) => {
-      const role = message.role === 'assistant' || message.source === 'ai' ? 'agent' : 'user';
-      setTranscript((prev) => [
-        ...prev,
-        { role, text: message.message },
-      ]);
-    },
-    onError: (message: string, context?: unknown) => {
-      console.error('Voice agent error:', message, context);
-      setError(message || 'Voice connection failed');
-      setAgentState('idle');
-    },
-  });
+  const conversation = useConversation();
 
   // Poll volumes in rAF for smooth animation
   useEffect(() => {
-    if (agentState === 'idle' || agentState === 'connecting') return;
+    if (agentState === 'idle' || agentState === 'connecting' || agentState === 'ready') return;
 
     let animId: number;
     const poll = () => {
@@ -65,7 +41,7 @@ export function useVoiceAgent({ agentId, useSignedUrl = false, requireConfirmati
     return () => cancelAnimationFrame(animId);
   }, [agentState, conversation]);
 
-  /** Actually connect to the voice agent (requests mic permission) */
+  /** Actually connect to the voice agent */
   const connect = useCallback(async () => {
     if (conversation.status === 'connected') return;
 
@@ -74,17 +50,50 @@ export function useVoiceAgent({ agentId, useSignedUrl = false, requireConfirmati
     setTranscript([]);
 
     try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Let the SDK handle mic access internally
+      const sessionOpts: Record<string, unknown> = {
+        onConnect: () => {
+          console.log('[VoiceAgent] Connected');
+          setAgentState('listening');
+          setError(null);
+        },
+        onDisconnect: () => {
+          console.log('[VoiceAgent] Disconnected');
+          setAgentState('idle');
+        },
+        onModeChange: ({ mode }: { mode: string }) => {
+          console.log('[VoiceAgent] Mode:', mode);
+          setAgentState(mode === 'speaking' ? 'talking' : 'listening');
+        },
+        onMessage: (message: { message: string; role?: string; source?: string }) => {
+          console.log('[VoiceAgent] Message:', message);
+          const role = message.role === 'assistant' || message.source === 'ai' ? 'agent' : 'user';
+          setTranscript((prev) => [...prev, { role, text: message.message }]);
+        },
+        onError: (errorMsg: string, context?: unknown) => {
+          console.error('[VoiceAgent] Error:', errorMsg, context);
+          setError(typeof errorMsg === 'string' ? errorMsg : 'Voice connection failed');
+          setAgentState('idle');
+        },
+      };
 
       if (useSignedUrl) {
         const res = await fetch('/api/elevenlabs-signed-url');
         if (!res.ok) throw new Error('Failed to get signed URL');
         const data = await res.json();
-        await conversation.startSession({ signedUrl: data.signed_url } as any);
+        await conversation.startSession({
+          signedUrl: data.signed_url,
+          ...sessionOpts,
+        } as any);
       } else {
-        await conversation.startSession({ agentId, connectionType: 'webrtc' } as any);
+        await conversation.startSession({
+          agentId,
+          connectionType: 'webrtc',
+          ...sessionOpts,
+        } as any);
       }
     } catch (err: unknown) {
+      console.error('[VoiceAgent] Connection failed:', err);
       const msg = err instanceof Error ? err.message : 'Failed to start voice agent';
       setError(msg);
       setAgentState('idle');
@@ -111,7 +120,11 @@ export function useVoiceAgent({ agentId, useSignedUrl = false, requireConfirmati
   }, []);
 
   const stop = useCallback(async () => {
-    await conversation.endSession();
+    try {
+      await conversation.endSession();
+    } catch (e) {
+      console.error('[VoiceAgent] End session error:', e);
+    }
     setAgentState('idle');
   }, [conversation]);
 
