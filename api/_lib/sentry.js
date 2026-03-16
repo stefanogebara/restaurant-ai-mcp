@@ -107,7 +107,8 @@ function withErrorTracking(handler) {
         method: req.method,
         url: req.url,
         query: req.query,
-        body: req.body
+        // Never send full body to Sentry — may contain passwords, tokens, PII
+        bodyKeys: req.body ? Object.keys(req.body) : []
       });
 
       throw error;

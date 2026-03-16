@@ -9,12 +9,15 @@
 const { addRequestId } = require('./request-id');
 
 const ALLOWED_ORIGINS = [
-  process.env.CLIENT_URL || 'http://localhost:5173',
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://localhost:8086',
-  'https://seatable.one'
-];
+  'https://seatable.one',
+  process.env.CLIENT_URL,
+  // Only allow localhost in development
+  ...(process.env.NODE_ENV !== 'production' ? [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:8086',
+  ] : [])
+].filter(Boolean);
 
 // Trusted webhook origins (these services call our webhooks)
 const WEBHOOK_ORIGINS = [
