@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence, useInView } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
 
 /**
  * PROTOTYPE PAGE — Once UI-inspired patterns for Seatable
