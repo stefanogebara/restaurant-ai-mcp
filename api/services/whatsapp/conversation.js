@@ -139,6 +139,10 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
         systemPrompt += `- When they mention "today", use ${currentDateTime.date}\n`;
         systemPrompt += '- When they mention "tomorrow", calculate the next day\n';
         systemPrompt += '- If they give a time like "7pm", convert to 24-hour format (19:00)\n';
+        if (session?.sender_phone) {
+          systemPrompt += `- The customer's WhatsApp phone number is ${session.sender_phone}. Use this as customer_phone when creating reservations — do NOT ask for their phone number.\n`;
+          systemPrompt += '- Instead, ask for their name and optionally their email (for confirmation email). Only ask for email if they seem interested.\n';
+        }
         if (languageInstruction) systemPrompt += languageInstruction;
       }
     } catch (configErr) {
@@ -178,6 +182,10 @@ Guidelines:
 - Keep responses concise for WhatsApp (under 500 characters when possible)
 - If they give a time like "7pm", convert to 24-hour format (19:00)
 `;
+    if (session?.sender_phone) {
+      systemPrompt += `- The customer's WhatsApp phone number is ${session.sender_phone}. Use this as customer_phone when creating reservations — do NOT ask for their phone number.\n`;
+      systemPrompt += '- Instead, ask for their name and optionally their email (for confirmation email). Only ask for email if they seem interested.\n';
+    }
   }
 
   // Inject guest memory context if available

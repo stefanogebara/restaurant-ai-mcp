@@ -11,6 +11,7 @@ const {
   setSessionRestaurant,
 } = require('../../_lib/whatsapp-sessions');
 const { sendTemplateMessage } = require('./message-sender');
+const { sendReservationConfirmationEmail } = require('../../_lib/email');
 
 /**
  * Get current date/time in restaurant timezone
@@ -106,7 +107,11 @@ const RESERVATION_TOOLS = [
           },
           customer_phone: {
             type: 'string',
-            description: 'Phone number of the customer'
+            description: 'Phone number of the customer. Use the sender WhatsApp number from context if available.'
+          },
+          customer_email: {
+            type: 'string',
+            description: 'Email address of the customer (optional, for sending confirmation email)'
           },
           special_requests: {
             type: 'string',
@@ -356,7 +361,13 @@ async function executeTool(toolName, toolInput, session) {
           return { success: false, error: 'Could not connect to restaurant database' };
         }
 
-        const { date, time, party_size, customer_name, customer_phone, special_requests } = toolInput;
+        const { date, time, party_size, customer_name, customer_email, special_requests } = toolInput;
+        // Use provided phone or fall back to sender's WhatsApp number
+        const customer_phone = toolInput.customer_phone || session?.sender_phone;
+
+        if (!customer_phone) {
+          return { success: false, error: 'Customer phone number is required' };
+        }
 
         // Generate reservation ID
         const reservationId = generateSecureReservationId();
@@ -417,6 +428,25 @@ async function executeTool(toolName, toolInput, session) {
           ]
         );
         logger.info(' Template confirmation result:', templateResult);
+
+        // Send email confirmation if customer provided an email
+        if (customer_email) {
+          try {
+            await sendReservationConfirmationEmail({
+              customerEmail: customer_email,
+              customerName: customer_name,
+              restaurantName: session.restaurant.restaurant_name,
+              reservationId,
+              partySize: party_size,
+              date,
+              time,
+              specialRequests: special_requests || ''
+            });
+            logger.info(` Confirmation email sent to ${customer_email}`);
+          } catch (emailErr) {
+            logger.warn(' Email confirmation failed (non-fatal):', emailErr.message);
+          }
+        }
 
         return {
           success: true,
