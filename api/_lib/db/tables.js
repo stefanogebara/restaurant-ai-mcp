@@ -630,7 +630,10 @@ const calculateAvailableCovers = async (restaurantId) => {
   const tablesResult = await getAllTables(restaurantId);
   if (!tablesResult.success) return { success: false, available_covers: 0 };
 
-  const availableTables = tablesResult.tables.filter(t => t.status === 'available');
+  // Use ALL active tables for capacity checks — runtime status (occupied/reserved)
+  // reflects current service, not future availability. Time conflicts are checked
+  // separately via existing reservations at the requested date/time.
+  const availableTables = tablesResult.tables;
 
   // Calculate total direct capacity from available tables
   const directCapacity = availableTables.reduce((sum, t) => sum + t.capacity, 0);
@@ -731,7 +734,10 @@ const canAccommodateParty = async (restaurantId, partySize) => {
   const tablesResult = await getAllTables(restaurantId);
   if (!tablesResult.success) return { success: false, can_accommodate: false };
 
-  const availableTables = tablesResult.tables.filter(t => t.status === 'available');
+  // Use ALL active tables for capacity checks — runtime status (occupied/reserved)
+  // reflects current service, not future availability. Time conflicts are checked
+  // separately via existing reservations at the requested date/time.
+  const availableTables = tablesResult.tables;
 
   // Check single tables first
   const singleTable = availableTables.find(t => t.capacity >= partySize);
