@@ -66,7 +66,7 @@ export default function LiveAIDemo() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const processedRef = useRef(new Set<string>());
 
-  const isActive = agentState !== 'idle' && agentState !== 'connecting';
+  const isActive = agentState !== 'idle' && agentState !== 'connecting' && agentState !== 'ready';
 
   // Call timer
   useEffect(() => {
