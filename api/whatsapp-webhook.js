@@ -292,7 +292,7 @@ async function handleIncomingMessage(message, res) {
             rows: chunk.map(r => ({
               id: `restaurant_${r.id}`,
               title: r.restaurant_name,
-              description: r.restaurant_aliases?.join(', ') || ''
+              description: ''
             }))
           });
         }
