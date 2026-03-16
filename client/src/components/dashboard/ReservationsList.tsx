@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { UpcomingReservation } from '../../types/host.types';
 import NoShowRiskBadge from './NoShowRiskBadge';
@@ -22,75 +23,6 @@ interface ReservationsListProps {
   isLoading?: boolean;
 }
 
-const translations = {
-  en: {
-    upcoming: 'Upcoming Reservations',
-    tomorrow: 'Tomorrow',
-    today: 'Today',
-    week: 'Week',
-    allClear: 'All Caught Up',
-    noUpcoming: 'No upcoming reservations for today',
-    noTomorrow: 'No reservations tomorrow',
-    aiHint: 'Reservations from the AI assistant or added manually will appear here',
-    checkIn: 'Check In',
-    seated: 'Seated',
-    takeAction: 'Take Action',
-    actionTaken: 'Action taken',
-    people: 'people',
-    lunch: 'Lunch',
-    dinner: 'Dinner',
-    atRisk: 'At Risk',
-    confirmed: 'Confirmed',
-    edit: 'Edit',
-    cancel: 'Cancel',
-    addReservation: '+ Add',
-  },
-  es: {
-    upcoming: 'Próximas Reservas',
-    tomorrow: 'Mañana',
-    today: 'Hoy',
-    week: 'Semana',
-    allClear: 'Todo al dia',
-    noUpcoming: 'Sin reservas pendientes para hoy',
-    noTomorrow: 'Sin reservas mañana',
-    aiHint: 'Las reservas del asistente AI o las añadidas manualmente aparecerán aquí',
-    checkIn: 'Check In',
-    seated: 'Sentado',
-    takeAction: 'Tomar Acción',
-    actionTaken: 'Acción tomada',
-    people: 'personas',
-    lunch: 'Almuerzo',
-    dinner: 'Cena',
-    atRisk: 'En Riesgo',
-    confirmed: 'Confirmado',
-    edit: 'Editar',
-    cancel: 'Cancelar',
-    addReservation: '+ Agregar',
-  },
-  'pt-BR': {
-    upcoming: 'Próximas Reservas',
-    tomorrow: 'Amanhã',
-    today: 'Hoje',
-    week: 'Semana',
-    allClear: 'Tudo em Dia',
-    noUpcoming: 'Sem reservas futuras para hoje',
-    noTomorrow: 'Sem reservas amanhã',
-    aiHint: 'Reservas do assistente de IA ou adicionadas manualmente aparecerão aqui',
-    checkIn: 'Check In',
-    seated: 'Sentado',
-    takeAction: 'Tomar Ação',
-    actionTaken: 'Ação realizada',
-    people: 'pessoas',
-    lunch: 'Almoço',
-    dinner: 'Jantar',
-    atRisk: 'Em Risco',
-    confirmed: 'Confirmado',
-    edit: 'Editar',
-    cancel: 'Cancelar',
-    addReservation: '+ Adicionar',
-  },
-};
-
 export default function ReservationsList({
   todayReservations,
   tomorrowReservations,
@@ -105,9 +37,10 @@ export default function ReservationsList({
   language = 'en',
   isLoading,
 }: ReservationsListProps) {
+  const { t } = useTranslation();
   const [showTomorrow, setShowTomorrow] = useState(false);
   const displayed = showTomorrow ? tomorrowReservations : todayReservations;
-  const t = translations[language] || translations.en;
+  const tl = (key: string) => t(`dashboard.reservationsList.${key}`);
 
   if (isLoading) {
     return (
@@ -134,7 +67,7 @@ export default function ReservationsList({
       {/* Panel Header */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
         <div className="flex items-center gap-2.5">
-          <span className="text-[15px] font-semibold text-deep-charcoal tracking-tight">{t.upcoming}</span>
+          <span className="text-[15px] font-semibold text-deep-charcoal tracking-tight">{tl('upcoming')}</span>
           <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">
             {displayed.length}
           </span>
@@ -144,7 +77,7 @@ export default function ReservationsList({
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
-              Live
+              {t('common.live', 'Live')}
             </span>
           )}
         </div>
@@ -159,7 +92,7 @@ export default function ReservationsList({
                   : 'text-muted-stone hover:text-stone-gray'
               }`}
             >
-              {t.today}
+              {tl('today')}
             </button>
             <button
               type="button"
@@ -170,7 +103,7 @@ export default function ReservationsList({
                   : 'text-muted-stone hover:text-stone-gray'
               }`}
             >
-              {t.tomorrow}
+              {tl('tomorrow')}
             </button>
           </div>
           {onAdd && (
@@ -179,7 +112,7 @@ export default function ReservationsList({
               onClick={onAdd}
               className="text-xs font-semibold px-3 py-1 rounded-lg bg-burgundy/[8%] text-burgundy hover:bg-burgundy/[14%] transition-colors"
             >
-              {t.addReservation}
+              {tl('addReservation')}
             </button>
           )}
         </div>
@@ -191,11 +124,11 @@ export default function ReservationsList({
           <div className="w-12 h-12 rounded-2xl bg-soft-gray flex items-center justify-center mb-3 mx-auto">
             <ThiingsIcon name="calendar-x" pxSize={20} className="text-muted-stone" />
           </div>
-          <p className="text-sm font-semibold text-deep-charcoal mb-1">{t.allClear}</p>
+          <p className="text-sm font-semibold text-deep-charcoal mb-1">{tl('allClear')}</p>
           <p className="text-xs text-stone-gray">
-            {showTomorrow ? t.noTomorrow : t.noUpcoming}
+            {showTomorrow ? tl('noTomorrow') : tl('noUpcoming')}
           </p>
-          {!showTomorrow && <p className="text-xs text-muted-stone mt-1">{t.aiHint}</p>}
+          {!showTomorrow && <p className="text-xs text-muted-stone mt-1">{tl('aiHint')}</p>}
         </div>
       ) : (
         <div>
@@ -234,7 +167,8 @@ interface ReservationRowProps {
 }
 
 function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositAction, onEdit, onCancel, avgSpendPerCover, byPartySize, language }: ReservationRowProps) {
-  const t = translations[language] || translations.en;
+  const { t } = useTranslation();
+  const tl = (key: string) => t(`dashboard.reservationsList.${key}`);
 
   const formatTime = (time: string) => {
     if (language !== 'en') return time;
@@ -247,8 +181,8 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
 
   const getMealPeriod = (time: string) => {
     const hour = parseInt(time.split(':')[0]);
-    if (hour < 15) return t.lunch;
-    return t.dinner;
+    if (hour < 15) return tl('lunch');
+    return tl('dinner');
   };
 
   const isHighRisk = reservation.ml_risk_level === 'high' || reservation.ml_risk_level === 'very-high';
@@ -261,10 +195,10 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
     .toUpperCase();
 
   const statusBadge = reservation.checked_in
-    ? { label: t.seated, classes: 'bg-violet-600/[8%] text-violet-600' }
+    ? { label: tl('seated'), classes: 'bg-violet-600/[8%] text-violet-600' }
     : isHighRisk
-    ? { label: t.atRisk, classes: 'bg-amber-600/[8%] text-amber-600' }
-    : { label: t.confirmed, classes: 'bg-green-600/[8%] text-green-600' };
+    ? { label: tl('atRisk'), classes: 'bg-amber-600/[8%] text-amber-600' }
+    : { label: tl('confirmed'), classes: 'bg-green-600/[8%] text-green-600' };
 
   const hue = (reservation.customer_name?.charCodeAt(0) ?? 65) * 137 % 360;
   const avatarStyle = { background: `linear-gradient(135deg, hsl(${hue},50%,75%), hsl(${(hue + 40) % 360},50%,65%))` };
@@ -284,7 +218,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
       <div className="flex-1 min-w-0">
         <div className="text-sm font-semibold text-deep-charcoal tracking-tight break-words" title={reservation.customer_name}>{reservation.customer_name}</div>
         <div className="text-xs text-muted-stone mt-0.5 truncate">
-          {reservation.party_size} {t.people}
+          {reservation.party_size} {tl('people')}
           {avgSpendPerCover ? (
             <span className="text-emerald-600 font-medium"> · ~{formatCurrency(predictReservationRevenue(reservation.party_size, avgSpendPerCover, byPartySize))}</span>
           ) : null}
@@ -316,7 +250,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
           <button
             type="button"
             onClick={onCheckIn}
-            aria-label={t.checkIn}
+            aria-label={tl('checkIn')}
             className={`text-xs font-semibold px-3 py-1 rounded-full ${statusBadge.classes}`}
           >
             <span className="inline-flex items-center gap-1.5">
@@ -332,14 +266,14 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
           >
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0" />
-              {t.takeAction}
+              {tl('takeAction')}
             </span>
           </button>
         ) : reservation.intervention_taken ? (
           <span className="text-xs font-semibold px-3 py-1 rounded-full bg-green-600/[8%] text-green-600">
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0" />
-              {t.actionTaken}
+              {tl('actionTaken')}
             </span>
           </span>
         ) : (
@@ -370,7 +304,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             <button
               type="button"
               onClick={onEdit}
-              aria-label={t.edit}
+              aria-label={tl('edit')}
               className="p-1.5 rounded-lg text-muted-stone hover:text-deep-charcoal hover:bg-soft-gray transition-colors"
             >
               <ThiingsIcon name="pencil" pxSize={14} />
@@ -380,7 +314,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             <button
               type="button"
               onClick={onCancel}
-              aria-label={t.cancel}
+              aria-label={tl('cancel')}
               className="p-1.5 rounded-lg text-muted-stone hover:text-red-600 hover:bg-red-50 transition-colors"
             >
               <ThiingsIcon name="close" pxSize={14} />
@@ -396,21 +330,14 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
 function CrmBadges({ reservation }: { reservation: UpcomingReservation }) {
   const badges: Array<{ icon: string; label: string; color: string }> = [];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const r = reservation as any;
-
-  if (r.dietary_preferences?.length > 0) {
-    badges.push({ icon: '⚠️', label: r.dietary_preferences[0], color: 'bg-red-50 text-red-700' });
+  if (reservation.dietary_restrictions && reservation.dietary_restrictions.length > 0) {
+    badges.push({ icon: '⚠️', label: reservation.dietary_restrictions[0], color: 'bg-red-50 text-red-700' });
   }
-  if (r.special_occasions) {
-    const occasions = r.special_occasions;
-    const types = Object.keys(occasions).filter(k => !k.startsWith('_'));
-    if (types.length > 0) {
-      badges.push({ icon: '🎂', label: types[0], color: 'bg-purple-50 text-purple-700' });
-    }
-    if (occasions._seating_preference) {
-      badges.push({ icon: '💺', label: occasions._seating_preference, color: 'bg-blue-50 text-blue-700' });
-    }
+  if (reservation.special_occasion) {
+    badges.push({ icon: '🎂', label: reservation.special_occasion, color: 'bg-purple-50 text-purple-700' });
+  }
+  if (reservation.seating_preference) {
+    badges.push({ icon: '💺', label: reservation.seating_preference, color: 'bg-blue-50 text-blue-700' });
   }
 
   if (badges.length === 0) return null;

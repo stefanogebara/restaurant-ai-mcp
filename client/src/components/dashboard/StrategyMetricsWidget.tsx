@@ -28,6 +28,7 @@ const METRICS = [
   {
     key: 'no_show' as const,
     label: 'No-show Rate',
+    i18nKey: 'strategy.noShowRate',
     summaryKey: 'no_show_rate' as const,
     targetKey: 'no_show_rate' as const,
     unit: '%',
@@ -41,6 +42,7 @@ const METRICS = [
   {
     key: 'revenue' as const,
     label: 'Avg Revenue / Cover',
+    i18nKey: 'strategy.avgRevenue',
     summaryKey: 'avg_revenue_per_cover' as const,
     targetKey: 'avg_revenue_per_cover' as const,
     unit: '',
@@ -49,11 +51,12 @@ const METRICS = [
     color: '#57534E',
     dateKey: 'week' as const,
     valueKey: 'avg_per_cover' as const,
-    targetLabel: '', // filled dynamically below
+    targetLabel: '',
   },
   {
     key: 'conversion' as const,
     label: 'Conversion Rate',
+    i18nKey: 'strategy.conversionRate',
     summaryKey: 'conversion_rate' as const,
     targetKey: 'conversion_rate' as const,
     unit: '%',
@@ -99,7 +102,7 @@ function MetricCard({
     <div className="bg-white border border-border-gray rounded-xl p-4">
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs font-medium text-stone-gray uppercase tracking-wide">
-          {metric.label}
+          {t(metric.i18nKey, metric.label)}
         </span>
         <TrendIcon value={value} target={target} lowerIsBetter={metric.lowerIsBetter} />
       </div>
@@ -109,7 +112,7 @@ function MetricCard({
           {value !== null ? metric.format(value) : '—'}
         </span>
         <span className="text-xs text-muted-stone">
-          target {metric.key === 'revenue' ? `${formatCurrency(target)}+` : metric.targetLabel}
+          {t('strategy.target', 'target')} {metric.key === 'revenue' ? `${formatCurrency(target)}+` : metric.targetLabel}
         </span>
       </div>
 
@@ -217,10 +220,10 @@ export default function StrategyMetricsWidget() {
             </p>
           ) : (
             <p className="text-xs text-muted-stone mt-4">
-              Based on {data.summary.total_reservations} reservations
-              {data.summary.data_points > 0 ? ` · ${data.summary.data_points} completed services` : ''}
-              {' '}since {data.since}
-              {' · '}Dashed line = target
+              {t('strategy.basedOn', 'Based on {{count}} reservations', { count: data.summary.total_reservations })}
+              {data.summary.data_points > 0 ? ` · ${t('strategy.completedServices', '{{count}} completed services', { count: data.summary.data_points })}` : ''}
+              {' '}{t('strategy.since', 'since {{date}}', { date: data.since })}
+              {' · '}{t('strategy.dashedLine', 'Dashed line = target')}
             </p>
           )}
         </>
