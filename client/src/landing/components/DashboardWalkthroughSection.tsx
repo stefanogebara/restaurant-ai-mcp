@@ -670,9 +670,9 @@ function SceneManagerAI({ progress }: { progress: number }) {
 
 // ─── Scene 3: Smart Staffing ────────────────────────────────────
 function SceneStaffing({ progress }: { progress: number }) {
-  const showForecast = progress > 0.08;
-  const showGrid = progress > 0.4;
-  const showRecommendation = progress > 0.65;
+  const showForecast = progress >= 0;
+  const showGrid = progress > 0.35;
+  const showRecommendation = progress > 0.6;
 
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const covers = [28, 32, 25, 38, 42, 55, 48];

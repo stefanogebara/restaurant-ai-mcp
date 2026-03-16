@@ -51,29 +51,29 @@ export default function LandingNav() {
       {/* Logo */}
       <Link
         to="/"
-        className="font-serif text-2xl font-semibold text-deep-charcoal tracking-tight hover:opacity-80 transition-opacity"
+        className="font-serif text-2xl font-semibold text-deep-charcoal tracking-tight hover:opacity-80 transition-opacity min-h-[44px] flex items-center"
       >
         seatable<span className="text-burgundy">.</span>
       </Link>
 
       {/* Desktop Navigation */}
       <div className="hidden md:flex items-center gap-9">
-        <button type="button" onClick={() => scrollToSection('try-demo')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
+        <button type="button" onClick={() => scrollToSection('try-demo')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors min-h-[44px] flex items-center">
           {t('landing.nav.demo', 'Demo')}
         </button>
-        <button type="button" onClick={() => scrollToSection('pricing')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
+        <button type="button" onClick={() => scrollToSection('pricing')} className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors min-h-[44px] flex items-center">
           {t('landing.nav.pricing')}
         </button>
-        <Link to="/demo/setup" className="text-sm font-medium text-burgundy hover:text-burgundy-dark transition-colors">
+        <Link to="/demo/setup" className="text-sm font-medium text-burgundy hover:text-burgundy-dark transition-colors min-h-[44px] flex items-center">
           {t('landing.nav.tryFree', 'Try free demo')}
         </Link>
-        <Link to="/login" className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors">
+        <Link to="/login" className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors min-h-[44px] flex items-center">
           {t('landing.nav.signIn')}
         </Link>
         <button
           type="button"
           onClick={toggleLanguage}
-          className="flex items-center gap-1.5 text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors"
+          className="flex items-center gap-1.5 text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors min-h-[44px]"
           aria-label="Toggle language"
         >
           <Globe className="w-4 h-4" />
@@ -89,7 +89,7 @@ export default function LandingNav() {
           if (el) el.scrollIntoView({ behavior: 'smooth' });
           else navigate('/#pricing');
         }}
-        className="hidden md:block px-6 py-2.5 bg-deep-charcoal text-white text-sm font-semibold rounded-full hover:bg-charcoal-dark transition-colors"
+        className="hidden md:flex items-center px-6 py-2.5 min-h-[44px] bg-deep-charcoal text-white text-sm font-semibold rounded-full hover:bg-charcoal-dark transition-colors"
       >
         {t('landing.nav.getStarted')}
       </button>
