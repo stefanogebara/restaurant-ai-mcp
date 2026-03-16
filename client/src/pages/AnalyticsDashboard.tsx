@@ -20,8 +20,8 @@ import ThiingsIcon from '../components/common/ThiingsIcon';
 const init30d = presetToRange('30d');
 
 export default function AnalyticsDashboard() {
-  useDocumentTitle('Análises | seatable');
   const { t } = useTranslation();
+  useDocumentTitle(t('pageTitles.analytics'));
   const { can } = usePermission();
   const [dateRange, setDateRange] = useState<DateRangeValue>({ preset: '30d', ...init30d });
   const [includeExport, setIncludeExport] = useState(false);

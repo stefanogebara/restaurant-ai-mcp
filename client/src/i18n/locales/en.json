@@ -165,7 +165,29 @@
     "services": "services",
     "estimated": "estimated",
     "days": "days",
-    "revenueDefault": "Based on {{amount}}/cover (default). Add bills when completing service to improve accuracy."
+    "revenueDefault": "Based on {{amount}}/cover (default). Add bills when completing service to improve accuracy.",
+    "reservationsList": {
+      "upcoming": "Upcoming Reservations",
+      "tomorrow": "Tomorrow",
+      "today": "Today",
+      "week": "Week",
+      "allClear": "All Caught Up",
+      "noUpcoming": "No upcoming reservations for today",
+      "noTomorrow": "No reservations tomorrow",
+      "aiHint": "Reservations from the AI assistant or added manually will appear here",
+      "checkIn": "Check In",
+      "seated": "Seated",
+      "takeAction": "Take Action",
+      "actionTaken": "Action taken",
+      "people": "people",
+      "lunch": "Lunch",
+      "dinner": "Dinner",
+      "atRisk": "At Risk",
+      "confirmed": "Confirmed",
+      "edit": "Edit",
+      "cancel": "Cancel",
+      "addReservation": "+ Add"
+    }
   },
   "time": {
     "justNow": "just now",
@@ -406,7 +428,90 @@
     "visitors": "visitors",
     "residents": "residents",
     "newCustomers": "new customers",
-    "returning": "returning"
+    "returning": "returning",
+    "guide": {
+      "noMbaRequired": "No MBA required - just simple explanations of what you're seeing",
+      "example": "Example:",
+      "whatsGood": "What's Good:",
+      "tip": "Tip:",
+      "tipText": "Hover over any metric with a {{icon}} icon for more details. Don't worry if some numbers are zero - your data will build up over time!",
+      "ml": {
+        "title": "Understanding ML Performance (in Plain English)",
+        "roiTerm": "ROI (Return on Investment)",
+        "roiSimple": "Money saved vs money spent",
+        "roiExample": "Spent €10 on calls → Prevented €70 in lost revenue → ROI = 600%",
+        "roiGood": "Anything above 300% is excellent (€3 saved per €1 spent)",
+        "successRateTerm": "Success Rate",
+        "successRateSimple": "How often our predictions work",
+        "successRateExample": "Made 10 confirmation calls → 7 customers showed up → 70% success",
+        "successRateGood": "Above 60% means the AI is helping",
+        "interventionsTerm": "Interventions",
+        "interventionsSimple": "Actions we take to prevent no-shows",
+        "interventionsExample": "Calling high-risk customers, sending reminders, requiring deposits",
+        "interventionsGood": "More interventions = better at preventing losses",
+        "valueSavedTerm": "Value Saved",
+        "valueSavedSimple": "Money you didn't lose",
+        "valueSavedExample": "Customer was going to no-show (€50 lost) → We called them → They came → €50 saved",
+        "valueSavedGood": "Higher is better - means fewer empty tables"
+      },
+      "pricing": {
+        "title": "Understanding Dynamic Pricing (in Plain English)",
+        "revenueLiftTerm": "Revenue Lift",
+        "revenueLiftSimple": "Extra money from charging more during busy times",
+        "revenueLiftExample": "Normal price: €50 → Friday night price: €65 → Revenue lift: €15",
+        "revenueLiftGood": "Positive lift = making more money without more customers",
+        "discountsTerm": "Discounts Given",
+        "discountsSimple": "Money given away to fill empty tables",
+        "discountsExample": "Tuesday 6pm discount: 20% off (€10 per person)",
+        "discountsGood": "OK if it fills tables that would be empty anyway",
+        "netImpactTerm": "Net Impact",
+        "netImpactSimple": "Revenue lift minus discounts = actual profit",
+        "netImpactExample": "Made €1,000 from surges, gave €300 in discounts = €700 net profit",
+        "netImpactGood": "Positive is good! Aim for at least €3 made per €1 given away",
+        "demandTerm": "Demand Level",
+        "demandSimple": "How busy you are",
+        "demandExample": "Low = lots of empty tables, Surge = fully booked",
+        "demandGood": "Surge pricing during high demand, discounts during low"
+      },
+      "ltv": {
+        "title": "Understanding Customer Value (in Plain English)",
+        "ltvTerm": "LTV (Lifetime Value)",
+        "ltvSimple": "Total money a customer will spend over time",
+        "ltvExample": "Customer visits 4x per year, spends €50 each time, stays 3 years = €600 LTV",
+        "ltvGood": "Higher LTV = more valuable customer, worth investing in",
+        "frequencyTerm": "Visit Frequency",
+        "frequencySimple": "How often they come back",
+        "frequencyExample": "Once a month, twice a year, every week, etc.",
+        "frequencyGood": "More frequent = more predictable revenue",
+        "avgSpendTerm": "Average Spend",
+        "avgSpendSimple": "How much they typically spend per visit",
+        "avgSpendExample": "Always orders wine and appetizers = higher spend",
+        "avgSpendGood": "High spenders deserve VIP treatment",
+        "retentionTerm": "Retention Risk",
+        "retentionSimple": "Chance they'll stop coming",
+        "retentionExample": "Haven't visited in 6 months = high risk of losing them",
+        "retentionGood": "Catch at-risk customers early with special offers"
+      },
+      "dna": {
+        "title": "Understanding Customer DNA (in Plain English)",
+        "diningStyleTerm": "Dining Style Profile",
+        "diningStyleSimple": "What type of diner they are",
+        "diningStyleExample": "Business lunches, romantic dates, family dinners, solo meals",
+        "diningStyleGood": "Helps you prepare (quiet table for business, kid menu for families)",
+        "spontaneityTerm": "Booking Spontaneity",
+        "spontaneitySimple": "How far ahead they plan",
+        "spontaneityExample": "Same-day booker vs plans 2 weeks ahead",
+        "spontaneityGood": "Planners are reliable, spontaneous need reminders",
+        "occasionTerm": "Occasion Type",
+        "occasionSimple": "Why they're dining",
+        "occasionExample": "Birthday, anniversary, business meeting, casual meal",
+        "occasionGood": "Know what they're celebrating = better service",
+        "timePrefTerm": "Time Preferences",
+        "timePrefSimple": "When they like to dine",
+        "timePrefExample": "Always Friday 8pm, or Tuesday lunch, or weekend brunch",
+        "timePrefGood": "Predict when they'll book next, send targeted offers"
+      }
+    }
   },
   "onboarding": {
     "welcome": "Welcome to Seatable",
@@ -686,6 +791,10 @@
     "changeLanguage": "Change Language",
     "languageUpdated": "Language updated successfully",
     "updateFailed": "Failed to update language",
+    "languagePreferencesTitle": "Language preferences",
+    "languagePreferencesDesc": "Your language selection will be applied to the entire dashboard, all customer communications, and AI interactions. This change takes effect immediately and is saved automatically.",
+    "returnToDashboard": "Return to your main dashboard",
+    "manageSubscription": "Manage your subscription and settings",
     "whatsApp": "WhatsApp Integration",
     "whatsAppDesc": "Send reservation confirmations and chat with customers via WhatsApp.",
     "connectionStatus": "Connection Status",
@@ -739,7 +848,7 @@
     "alertHighNoshows": "High no-show risk",
     "alertHighNoshowsDesc": "Alert at 3pm when 3+ reservations have >70% no-show probability",
     "alertLateCancellations": "Late cancellations",
-    "alertLateCancellationsDesc": "Alert every 2h (12\u20138pm) when 2+ cancellations in the last 2 hours",
+    "alertLateCancellationsDesc": "Alert every 2h (12–8pm) when 2+ cancellations in the last 2 hours",
     "customerEngagement": "Customer Engagement",
     "upsellLabel": "Pre-reservation dish recommendations",
     "upsellDesc": "Send AI-personalized dish suggestions via WhatsApp the day before each reservation",
@@ -810,7 +919,25 @@
     "cancellationPolicy": "Cancellation Policy",
     "cancellationPlaceholder": "Free cancellation up to 24 hours before...",
     "allowWaitlist": "Allow waitlist when fully booked",
-    "savePolicies": "Save Policies"
+    "savePolicies": "Save Policies",
+    "messageTemplates": "Message Templates",
+    "templateFeedback": "Feedback Request",
+    "templateReengagement": "Re-engagement",
+    "templateBirthday": "Birthday Greeting",
+    "templatePromotion": "Promotion",
+    "envMissing": "Environment variable missing",
+    "phoneVerification": "Phone Verification",
+    "verified": "Verified",
+    "phoneVerExpired": "Your phone verification has expired. Request a new SMS code, then enter it below.",
+    "sendingSms": "Sending...",
+    "sendSmsCode": "Send SMS Code",
+    "sixDigitCode": "6-digit code",
+    "verifying": "Verifying...",
+    "verify": "Verify",
+    "phoneVerified": "Phone number verified!",
+    "metaVerificationHint": "For the green verified badge, complete",
+    "metaBusinessVerification": "Meta Business Verification",
+    "testMessageSent": "Test message sent!"
   },
   "tableLayout": {
     "title": "Table Layout",
@@ -900,7 +1027,7 @@
     "goBack": "Go Back",
     "copyright": "© 2026 Seatable. All rights reserved."
   },
-    "subscription": {
+  "subscription": {
     "verifying": "Verifying your subscription...",
     "welcomeTo": "Welcome to {{plan}}!",
     "upgradeActive": "Your upgrade is active. You now have access to the AI Voice Agent and advanced analytics.",
@@ -967,7 +1094,7 @@
     "roleHost": "Host",
     "roleStaff": "Staff",
     "roleOwner": "Owner",
-    "sending": "Sending\u2026",
+    "sending": "Sending…",
     "invite": "Invite",
     "invitationSent": "Invitation sent to {{email}}",
     "invitationPending": "Invitation pending",
@@ -1156,26 +1283,26 @@
       "headlineB": "The host that never calls in sick.",
       "headlineC": "Your restaurant never sleeps.",
       "subtitle2": "Seatable handles WhatsApp, phone calls, and walk-ins — so your team focuses on hospitality.",
-      "ctaNew": "See it live \u2193"
+      "ctaNew": "See it live ↓"
     },
     "tryDemo": {
       "label": "Try it right now",
       "heading": "Pick a restaurant. Explore the dashboard.",
       "subtitle": "No signup, no email. Just click and see how it works.",
       "cta": "Want YOUR restaurant?",
-      "ctaLink": "Set it up here \u2192",
+      "ctaLink": "Set it up here →",
       "cuisineItalian": "Italian",
       "cuisineJapanese": "Japanese",
       "cuisineMexican": "Mexican",
-      "briefItalian": "8 tables \u00b7 Little Italy",
-      "briefJapanese": "8 tables \u00b7 Midtown",
-      "briefMexican": "9 tables \u00b7 Mission District"
+      "briefItalian": "8 tables · Little Italy",
+      "briefJapanese": "8 tables · Midtown",
+      "briefMexican": "9 tables · Mission District"
     },
     "voice": {
       "label": "Try it live",
       "heading": "Call our AI host",
       "subtitle": "Have a real conversation. Ask to book a table for 4 tonight — and hear the AI respond naturally.",
-      "powered": "Powered by ElevenLabs \u00b7 English, Portuguese, Spanish",
+      "powered": "Powered by ElevenLabs · English, Portuguese, Spanish",
       "micHint": "Click the mic to start talking",
       "tapToTalk": "Tap to talk",
       "connecting": "Connecting...",
@@ -1193,7 +1320,7 @@
       "msg1": "Hi! Table for 4 tomorrow at 8pm?",
       "msg2": "Of course! I have a lovely table available at 8pm. Name for the reservation?",
       "msg3": "Maria Santos",
-      "msg4": "Perfect! Table for 4, tomorrow at 8pm. Confirmed \u2713 See you soon, Maria!",
+      "msg4": "Perfect! Table for 4, tomorrow at 8pm. Confirmed ✓ See you soon, Maria!",
       "inputPlaceholder": "Type a message..."
     },
     "slideIn": {
@@ -1203,8 +1330,14 @@
       "later": "Maybe later"
     },
     "faq": {
+      "label": "FAQ",
+      "heading": "Frequently asked questions",
+      "subheading": "Everything you need to know about Seatable",
+      "cta": "Still have questions?",
+      "ctaSubtext": "We're here to help. Reach out to our team anytime.",
+      "ctaButton": "Contact Support",
       "q1": "How does the AI reservation assistant work?",
-      "a1": "Our AI uses natural language processing to understand customer requests via phone calls or text messages. It checks real-time table availability, handles booking details, and confirms reservations — all without human intervention.",
+      "a1": "Our AI uses natural language processing to understand customer requests via phone calls or text messages. It checks real-time table availability, handles booking details, and confirms reservations - all without human intervention.",
       "q2": "Can I customize the AI's responses?",
       "a2": "Yes! Each restaurant can customize the AI's personality, greetings, menu knowledge, and special policies. We train the AI on your specific restaurant details during onboarding.",
       "q3": "What happens if the AI can't handle a request?",
@@ -1216,9 +1349,9 @@
       "q6": "Can customers still call directly?",
       "a6": "Absolutely. The AI handles reservation requests, but customers can still speak to staff for special occasions, large parties, or specific questions. The AI and humans work together seamlessly.",
       "q7": "What languages does the AI support?",
-      "a7": "Our AI currently supports 6+ languages including English, Spanish, Portuguese, French, Italian, and German. It auto-detects the caller's language and responds naturally.",
+      "a7": "Our AI currently supports 6+ languages including English, Spanish, Portuguese, French, Italian, and German. It auto-detects the caller's language and responds naturally. More languages are being added regularly.",
       "q8": "Is my restaurant data secure?",
-      "a8": "Absolutely. All data is encrypted in transit and at rest. We use enterprise-grade database security with row-level access controls, and we never share your customer data with third parties.",
+      "a8": "Absolutely. All data is encrypted in transit and at rest. We use enterprise-grade database security with row-level access controls, and we never share your customer data with third parties. You own your data completely.",
       "q9": "Can I try it before committing?",
       "a9": "Yes! All plans come with a 14-day free trial, no credit card required. You can also try our live AI demo on the website to hear the voice assistant in action before signing up."
     },
@@ -1228,37 +1361,28 @@
       "subtitle": "Send a message on WhatsApp and get an instant response from our AI. No app to download, no signup needed.",
       "cta": "Send a test message",
       "previewMessage": "Hi! I'd like to book a table for 4 tomorrow at 8pm",
-      "trust": "Real number: +55 11 5028-9356 \u00b7 S\u00e3o Paulo, Brazil"
+      "trust": "Real number: +55 11 5028-9356 · São Paulo, Brazil"
     },
     "features": {
-      "label": "Features",
-      "heading": "Everything you need,",
-      "headingLine2": "nothing you don't.",
-      "subtitle": "A complete suite designed for modern restaurants that value simplicity and results.",
-      "voice": {
-        "title": "AI Voice Agent",
-        "desc": "An AI receptionist that answers calls, takes reservations, and speaks naturally in your restaurant's voice and personality."
-      },
-      "whatsapp": {
-        "title": "WhatsApp Booking",
-        "desc": "Guests book through WhatsApp with natural conversation. The AI handles availability, confirmations, and reminders automatically."
-      },
-      "dashboard": {
-        "title": "Smart Dashboard",
-        "desc": "Real-time view of reservations, walk-ins, and table assignments. Everything your host team needs on one screen."
-      },
-      "memory": {
-        "title": "Guest Memory",
-        "desc": "The AI remembers dietary preferences, birthdays, and favorite tables. Every returning guest feels recognized."
-      },
-      "tables": {
-        "title": "Table Management",
-        "desc": "Intelligent table assignment optimizes seating. Manage walk-ins, no-shows, and waitlists without the chaos."
-      },
-      "analytics": {
-        "title": "Analytics & Insights",
-        "desc": "Understand your busiest hours, no-show patterns, and customer lifetime value with beautiful, actionable reports."
-      }
+      "label": "Beyond Reservations",
+      "heading": "Intelligence built in.",
+      "subtitle": "Not just booking tables — managing your entire operation with AI.",
+      "managerTitle": "Manager AI",
+      "managerDesc": "Get daily briefings, ask business questions, and receive proactive alerts via WhatsApp.",
+      "managerStat1": "morning briefing",
+      "managerStat2": "end-of-day recap",
+      "revenueTitle": "Revenue Intelligence",
+      "revenueDesc": "Predicted spend per reservation, daily revenue projections, and average ticket tracking by table size.",
+      "revenueStat1": "avg spend",
+      "revenueStat2": "more revenue",
+      "customerTitle": "Customer Intelligence",
+      "customerDesc": "Lifetime value scoring, churn risk detection, and automated retention campaigns for your best guests.",
+      "customerStat1": "VIP retention",
+      "customerStat2": "more visits",
+      "staffingTitle": "Smart Staffing",
+      "staffingDesc": "7-day demand forecast with per-shift staffing recommendations — FOH, kitchen, and bar.",
+      "staffingStat1": "forecast",
+      "staffingStat2": "less idle time"
     },
     "howItWorks": {
       "label": "How It Works",
@@ -1329,11 +1453,11 @@
       "dashboardTitle": "Live Dashboard",
       "dashboardDesc": "See reservations, table status, waitlist, and revenue metrics update in real-time as your AI works.",
       "comingSoon": "Video coming soon",
-      "whatsapp1": "Guests text naturally \u2014 \u201cTable for 2 tonight?\u201d",
+      "whatsapp1": "Guests text naturally — “Table for 2 tonight?”",
       "whatsapp2": "AI checks availability and confirms instantly",
       "whatsapp3": "Automatic reminders 2 hours before",
       "whatsapp4": "Works in Portuguese, English, and Spanish",
-      "voice1": "AI answers calls in your restaurant\u2019s personality",
+      "voice1": "AI answers calls in your restaurant’s personality",
       "voice2": "Handles reservations, questions & directions",
       "voice3": "Speaks 6+ languages naturally",
       "voice4": "Seamless handoff to staff when needed",
@@ -1374,32 +1498,15 @@
       "confirmed": "confirmed",
       "predictedRevenue": "Predicted Revenue"
     },
-    "features": {
-      "label": "Beyond Reservations",
-      "heading": "Intelligence built in.",
-      "subtitle": "Not just booking tables — managing your entire operation with AI.",
-      "managerTitle": "Manager AI",
-      "managerDesc": "Get daily briefings, ask business questions, and receive proactive alerts via WhatsApp.",
-      "managerStat1": "morning briefing",
-      "managerStat2": "end-of-day recap",
-      "revenueTitle": "Revenue Intelligence",
-      "revenueDesc": "Predicted spend per reservation, daily revenue projections, and average ticket tracking by table size.",
-      "revenueStat1": "avg spend",
-      "revenueStat2": "more revenue",
-      "customerTitle": "Customer Intelligence",
-      "customerDesc": "Lifetime value scoring, churn risk detection, and automated retention campaigns for your best guests.",
-      "customerStat1": "VIP retention",
-      "customerStat2": "more visits",
-      "staffingTitle": "Smart Staffing",
-      "staffingDesc": "7-day demand forecast with per-shift staffing recommendations — FOH, kitchen, and bar.",
-      "staffingStat1": "forecast",
-      "staffingStat2": "less idle time"
-    },
     "walkthrough": {
       "label": "Beyond Reservations",
       "heading": "Watch the AI work.",
       "subtitle": "Revenue predictions, no-show protection, proactive insights, and smart staffing — all happening automatically.",
-      "cta": "Try it free"
+      "cta": "Try it free",
+      "sceneRevenue": "Revenue Intelligence",
+      "sceneNoShow": "No-Show Protection",
+      "sceneManagerAI": "Manager AI",
+      "sceneStaffing": "Smart Staffing"
     },
     "contact": {
       "label": "Contact",
@@ -1501,14 +1608,14 @@
       "widget": {
         "label": "Demo Restaurant",
         "name": "Cantina da Praca",
-        "details": "Brasileira \u00b7 Contemporanea \u00b7 Jardins, SP",
-        "instructions": "The AI voice agent is live. Click the button in the bottom-right corner of the screen to start a conversation \u2014 try making a reservation for 2 people this Friday evening.",
+        "details": "Brasileira · Contemporanea · Jardins, SP",
+        "instructions": "The AI voice agent is live. Click the button in the bottom-right corner of the screen to start a conversation — try making a reservation for 2 people this Friday evening.",
         "instructionsHint": "Look for the chat button in the corner",
         "agentOnline": "AI Agent Online",
         "voiceComingSoon": "Voice Demo Coming Soon",
         "voiceComingSoonDesc": "The live voice agent demo requires ElevenLabs configuration. In the meantime, try the customer booking experience below.",
         "bookingFlowLabel": "Or experience the customer booking flow:",
-        "tryBooking": "Try booking a table \u2192"
+        "tryBooking": "Try booking a table →"
       },
       "features": {
         "natural": {
@@ -1565,7 +1672,7 @@
         "restaurantName": "Restaurant name",
         "restaurantNamePlaceholder": "Bella Roma",
         "cuisineType": "Cuisine type",
-        "cuisineTypePlaceholder": "Italian \u00b7 Mediterranean \u00b7 Farm-to-table",
+        "cuisineTypePlaceholder": "Italian · Mediterranean · Farm-to-table",
         "city": "City",
         "cityPlaceholder": "Madrid",
         "country": "Country",
@@ -1585,8 +1692,8 @@
         "yourNamePlaceholder": "Sofia",
         "workEmail": "Work email",
         "workEmailPlaceholder": "sofia@bellaroma.com",
-        "createButton": "Create my demo \u2192",
-        "creating": "Creating your demo\u2026",
+        "createButton": "Create my demo →",
+        "creating": "Creating your demo…",
         "noCreditCard": "No credit card required. Your demo is ready in seconds.",
         "findYourRestaurant": "Find your restaurant",
         "restaurantNameSearch": "Restaurant name",
@@ -1605,32 +1712,6 @@
         "launchDemo": "Launch my demo",
         "creatingDemo": "Creating your demo..."
       }
-    },
-    "faq": {
-      "label": "FAQ",
-      "heading": "Frequently asked questions",
-      "subheading": "Everything you need to know about Seatable",
-      "cta": "Still have questions?",
-      "ctaSubtext": "We're here to help. Reach out to our team anytime.",
-      "ctaButton": "Contact Support",
-      "q1": "How does the AI reservation assistant work?",
-      "a1": "Our AI uses natural language processing to understand customer requests via phone calls or text messages. It checks real-time table availability, handles booking details, and confirms reservations - all without human intervention.",
-      "q2": "Can I customize the AI's responses?",
-      "a2": "Yes! Each restaurant can customize the AI's personality, greetings, menu knowledge, and special policies. We train the AI on your specific restaurant details during onboarding.",
-      "q3": "What happens if the AI can't handle a request?",
-      "a3": "If the AI encounters a complex situation it can't resolve, it seamlessly transfers the call to your staff with full context of the conversation. This ensures no customer is left frustrated.",
-      "q4": "How long does setup take?",
-      "a4": "Most restaurants are up and running within 24 hours. We'll import your table layout, configure the AI with your menu and policies, and train your staff on the host dashboard.",
-      "q5": "Do I need special hardware?",
-      "a5": "No special hardware required! Our system works entirely in the cloud. You just need internet access and a device (computer, tablet, or phone) to access the host dashboard.",
-      "q6": "Can customers still call directly?",
-      "a6": "Absolutely. The AI handles reservation requests, but customers can still speak to staff for special occasions, large parties, or specific questions. The AI and humans work together seamlessly.",
-      "q7": "What languages does the AI support?",
-      "a7": "Our AI currently supports 6+ languages including English, Spanish, Portuguese, French, Italian, and German. It auto-detects the caller's language and responds naturally. More languages are being added regularly.",
-      "q8": "Is my restaurant data secure?",
-      "a8": "Absolutely. All data is encrypted in transit and at rest. We use enterprise-grade database security with row-level access controls, and we never share your customer data with third parties. You own your data completely.",
-      "q9": "Can I try it before committing?",
-      "a9": "Yes! All plans come with a 14-day free trial, no credit card required. You can also try our live AI demo on the website to hear the voice assistant in action before signing up."
     }
   },
   "managerAI": {
@@ -1653,7 +1734,7 @@
     "unlockWith": "Unlock with {{planName}}",
     "upgradeTo": "Upgrade to {{planName}}",
     "goBack": "Go Back",
-    "trialNote": "14-day free trial \u2022 Cancel anytime",
+    "trialNote": "14-day free trial • Cancel anytime",
     "benefits": {
       "mlInsights": "ML-powered performance insights and ROI tracking",
       "customerLtv": "Customer lifetime value analytics",
@@ -1673,7 +1754,9 @@
     "waQualityRating": "Quality rating",
     "waPendingApproval": "Pending Approval",
     "waCheckMeta": "Check Meta Business Manager",
-    "waNotConfigured": "Not Configured"
+    "waNotConfigured": "Not Configured",
+    "languages": "Languages",
+    "languageChangeWarning": "Changing the language will update your agent's greeting message. The voice will speak in the selected language using its multilingual capabilities."
   },
   "phoneIntegration": {
     "title": "AI Phone — Voice",
@@ -1800,5 +1883,15 @@
       "loading": "Loading voice agent...",
       "skipToDashboard": "Skip to dashboard"
     }
+  },
+  "pageTitles": {
+    "dashboard": "Dashboard | seatable",
+    "analytics": "Analytics | seatable",
+    "voiceDemo": "Voice Demo | seatable",
+    "onboarding": "Setup | seatable",
+    "login": "Sign In | seatable",
+    "settings": "Settings | seatable",
+    "bookingPage": "{{name}} — Reserve a Table | Seatable",
+    "bookingDescription": "Book a table at {{name}} in {{city}}, {{country}}. Check availability and reserve online — quick and easy."
   }
 }

@@ -10,6 +10,11 @@ const { Redis } = require('@upstash/redis');
 const { createSecureLogger } = require('./secure-logger');
 const logger = createSecureLogger('RateLimit');
 
+// Track consecutive Redis failures for escalated logging
+let redisFailCount = 0;
+const REDIS_FAIL_WARN_THRESHOLD = 3;
+const REDIS_FAIL_CRIT_THRESHOLD = 10;
+
 // Rate limit configuration per endpoint type
 const RATE_LIMITS = {
   // Strict limits for sensitive endpoints
@@ -137,6 +142,7 @@ async function checkRateLimitRedis(clientId, endpointType) {
   try {
     // Atomic increment + set TTL if new key
     const count = await redis.incr(key);
+    if (redisFailCount > 0) redisFailCount = 0; // Reset on success
     if (count === 1) {
       await redis.expire(key, windowSeconds);
     }
@@ -153,11 +159,14 @@ async function checkRateLimitRedis(clientId, endpointType) {
       message: config.message,
     };
   } catch (err) {
-    // Redis error - fall back to in-memory rate limiting
-    logger.error('Redis rate-limit error, falling back to in-memory store', {
+    redisFailCount++;
+    const logLevel = redisFailCount >= REDIS_FAIL_CRIT_THRESHOLD ? 'error'
+      : redisFailCount >= REDIS_FAIL_WARN_THRESHOLD ? 'warn' : 'info';
+    logger[logLevel]('Redis rate-limit error, falling back to in-memory store', {
       error: err.message,
       clientId,
       endpointType,
+      consecutiveFailures: redisFailCount,
     });
     return checkRateLimitMemory(clientId, endpointType);
   }
@@ -288,7 +297,11 @@ async function isMessageDuplicate(messageId, ttlSeconds = 300) {
     const result = await redis.set(`wa:dedup:${messageId}`, '1', { nx: true, ex: ttlSeconds });
     return result === null; // null = key already existed = duplicate
   } catch (err) {
-    logger.error('Redis dedup error, allowing message through:', err.message);
+    redisFailCount++;
+    logger.warn('Redis dedup error, allowing message through:', {
+      error: err.message,
+      consecutiveFailures: redisFailCount,
+    });
     return false; // fail open — better to process twice than drop messages
   }
 }

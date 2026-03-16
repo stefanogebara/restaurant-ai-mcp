@@ -46,8 +46,8 @@ function parseReservationFromText(text: string): MockReservation | null {
 }
 
 export default function LiveAIDemo() {
-  useDocumentTitle('Voice Demo | seatable');
   const { t } = useTranslation();
+  useDocumentTitle(t('pageTitles.voiceDemo'));
   const agentId = import.meta.env.VITE_ELEVENLABS_AGENT_ID || '';
 
   const {

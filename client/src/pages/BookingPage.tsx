@@ -18,8 +18,8 @@ export default function BookingPage() {
     if (!restaurant) return;
 
     const DEFAULT_TITLE = 'seatable - AI Restaurant Management';
-    const title = `${restaurant.name} — Reserve a Table | Seatable`;
-    const description = `Book a table at ${restaurant.name} in ${restaurant.city}, ${restaurant.country}. Check availability and reserve online — quick and easy.`;
+    const title = t('pageTitles.bookingPage', { name: restaurant.name });
+    const description = t('pageTitles.bookingDescription', { name: restaurant.name, city: restaurant.city, country: restaurant.country });
     const canonicalUrl = `https://seatable.one/book/${restaurant.slug}`;
 
     document.title = title;

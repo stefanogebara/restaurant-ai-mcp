@@ -12,7 +12,13 @@ interface ReservationTrendChartProps {
 }
 
 export default function ReservationTrendChart({ dailyTrend }: ReservationTrendChartProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  // Format day labels using browser locale instead of server-hardcoded English
+  const localizedTrend = dailyTrend.map(d => ({
+    ...d,
+    dayLabel: new Date(d.date + 'T12:00:00Z').toLocaleDateString(i18n.language, { weekday: 'short', timeZone: 'UTC' }),
+  }));
   // Custom tooltip with shadcn/ui styling
   const CustomTooltip = ({ active, payload, label }: { active?: boolean; label?: string; payload?: Array<{ name: string; value: number; color: string }> }) => {
     if (active && payload && payload.length) {
@@ -40,12 +46,12 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
 
       <ResponsiveContainer width="100%" height={300}>
         <LineChart
-          data={dailyTrend}
+          data={localizedTrend}
           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke={colors.borderGray} opacity={0.3} />
           <XAxis
-            dataKey="dayName"
+            dataKey="dayLabel"
             stroke={colors.warmStone}
             style={{ fontSize: '12px' }}
           />

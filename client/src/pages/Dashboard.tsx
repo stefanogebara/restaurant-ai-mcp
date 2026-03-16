@@ -54,8 +54,8 @@ function maybeTrackFirstReservation() {
 }
 
 export default function Dashboard() {
-  useDocumentTitle('Dashboard | seatable');
   const { t, i18n } = useTranslation();
+  useDocumentTitle(t('pageTitles.dashboard'));
   const { success } = useToast();
 
   // Show a one-time welcome toast when arriving from demo conversion

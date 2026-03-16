@@ -27,8 +27,8 @@ const AUTH_ERROR_KEYS: Record<string, string> = {
 };
 
 export default function Login() {
-  useDocumentTitle('Entrar | seatable');
   const { t } = useTranslation();
+  useDocumentTitle(t('pageTitles.login'));
   const { user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
   const [searchParams] = useSearchParams();
   const location = useLocation();

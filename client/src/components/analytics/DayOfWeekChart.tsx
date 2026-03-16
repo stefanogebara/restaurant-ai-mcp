@@ -1,20 +1,27 @@
 import { useTranslation } from 'react-i18next';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { colors } from '../../utils/colors';
-import { getDayAbbrevPt } from '../../utils/dayNames';
-
 interface DayOfWeekChartProps {
   reservationsByDay: Record<string, number>;
 }
 
 const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+// Map English day names to Date objects for locale formatting
+const dayDates: Record<string, Date> = {
+  Monday: new Date('2024-01-01T12:00:00Z'),    // Mon
+  Tuesday: new Date('2024-01-02T12:00:00Z'),
+  Wednesday: new Date('2024-01-03T12:00:00Z'),
+  Thursday: new Date('2024-01-04T12:00:00Z'),
+  Friday: new Date('2024-01-05T12:00:00Z'),
+  Saturday: new Date('2024-01-06T12:00:00Z'),
+  Sunday: new Date('2024-01-07T12:00:00Z'),
+};
 
 export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProps) {
   const { t, i18n } = useTranslation();
-  const isPt = i18n.language?.startsWith('pt');
 
   const chartData = daysOrder.map(day => ({
-    day: isPt ? getDayAbbrevPt(day) : day.substring(0, 3),
+    day: dayDates[day].toLocaleDateString(i18n.language, { weekday: 'short', timeZone: 'UTC' }),
     count: reservationsByDay[day] || 0,
   }));
 

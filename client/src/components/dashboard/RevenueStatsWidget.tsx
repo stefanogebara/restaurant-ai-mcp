@@ -4,7 +4,7 @@ import { useStaffingForecast } from '../../hooks/useStaffingForecast';
 import { formatCurrency } from '../../utils/currency';
 
 export default function RevenueStatsWidget() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: stats, isLoading: statsLoading } = useRevenueStats();
   const { data: forecast, isLoading: forecastLoading } = useStaffingForecast();
 
@@ -46,7 +46,9 @@ export default function RevenueStatsWidget() {
           const pct = Math.round((projected / maxProjected) * 100);
           return (
             <div key={day.date} className="flex items-center gap-3">
-              <span className="text-xs font-medium text-warm-stone w-8">{day.day}</span>
+              <span className="text-xs font-medium text-warm-stone w-8">
+                {new Date(day.date + 'T12:00:00Z').toLocaleDateString(i18n.language, { weekday: 'short', timeZone: 'UTC' })}
+              </span>
               <div className="flex-1 h-2 bg-soft-gray rounded-full overflow-hidden">
                 <div
                   className="h-full bg-emerald-400 rounded-full transition-all"

@@ -23,8 +23,8 @@ const DAY_LABELS: Record<string, Record<string, string>> = {
 };
 
 export default function RestaurantSettingsPage() {
-  useDocumentTitle('Settings | seatable');
   const { t, i18n } = useTranslation();
+  useDocumentTitle(t('pageTitles.settings'));
   const toast = useToast();
   const { data: settings, isLoading } = useRestaurantSettings();
   const updateMutation = useUpdateRestaurantSettings();

@@ -36,12 +36,12 @@ const STEP_NAME_KEYS = ['onboarding.stepName1', 'onboarding.stepName2', 'onboard
 const TOTAL_STEPS = 6;
 
 export default function Onboarding() {
-  useDocumentTitle('Configuração | seatable');
+  const { t } = useTranslation();
+  useDocumentTitle(t('pageTitles.onboarding'));
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { error: showError } = useToast();
   const { user } = useAuth();
-  const { t } = useTranslation();
   const showSubscribeBanner = searchParams.get('reason') === 'subscribe';
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);

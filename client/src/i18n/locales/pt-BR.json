@@ -61,7 +61,7 @@
     "upcomingReservations": "Próximas Reservas",
     "recentActivity": "Atividade Recente",
     "usage": {
-      "title": "Uso Este M\u00eas",
+      "title": "Uso Este Mês",
       "trial": "Teste",
       "noUsage": "Nenhum uso registrado ainda",
       "totalEvents": "Total de Eventos"
@@ -165,7 +165,29 @@
     "services": "serviços",
     "estimated": "estimado",
     "days": "dias",
-    "revenueDefault": "Baseado em {{amount}}/couvert (padrão). Adicione contas ao finalizar o serviço para melhorar a precisão."
+    "revenueDefault": "Baseado em {{amount}}/couvert (padrão). Adicione contas ao finalizar o serviço para melhorar a precisão.",
+    "reservationsList": {
+      "upcoming": "Próximas Reservas",
+      "tomorrow": "Amanhã",
+      "today": "Hoje",
+      "week": "Semana",
+      "allClear": "Tudo em Dia",
+      "noUpcoming": "Sem reservas futuras para hoje",
+      "noTomorrow": "Sem reservas amanhã",
+      "aiHint": "Reservas do assistente de IA ou adicionadas manualmente aparecerão aqui",
+      "checkIn": "Check In",
+      "seated": "Sentado",
+      "takeAction": "Tomar Ação",
+      "actionTaken": "Ação realizada",
+      "people": "pessoas",
+      "lunch": "Almoço",
+      "dinner": "Jantar",
+      "atRisk": "Em Risco",
+      "confirmed": "Confirmado",
+      "edit": "Editar",
+      "cancel": "Cancelar",
+      "addReservation": "+ Adicionar"
+    }
   },
   "time": {
     "justNow": "agora",
@@ -264,7 +286,7 @@
     "guests_other": "pessoas",
     "reservationSummary": "Resumo da Reserva",
     "restaurant": "Restaurante",
-    "estimatedDuration": "Dura\u00e7\u00e3o estimada",
+    "estimatedDuration": "Duração estimada",
     "confirming": "Confirmando...",
     "continueToPayment": "Continuar para Pagamento",
     "confirmReservation": "Confirmar Reserva",
@@ -406,7 +428,90 @@
     "visitors": "visitantes",
     "residents": "moradores",
     "newCustomers": "novos clientes",
-    "returning": "recorrentes"
+    "returning": "recorrentes",
+    "guide": {
+      "noMbaRequired": "Sem MBA necessário - apenas explicações simples do que você está vendo",
+      "example": "Exemplo:",
+      "whatsGood": "O que é Bom:",
+      "tip": "Dica:",
+      "tipText": "Passe o mouse sobre qualquer métrica com um ícone {{icon}} para mais detalhes. Não se preocupe se alguns números estiverem zerados - seus dados vão se acumular com o tempo!",
+      "ml": {
+        "title": "Entendendo o Desempenho de ML (em Português Simples)",
+        "roiTerm": "ROI (Retorno sobre Investimento)",
+        "roiSimple": "Dinheiro economizado vs dinheiro gasto",
+        "roiExample": "Gastou €10 em ligações → Preveniu €70 em receita perdida → ROI = 600%",
+        "roiGood": "Qualquer valor acima de 300% é excelente (€3 economizados por €1 gasto)",
+        "successRateTerm": "Taxa de Sucesso",
+        "successRateSimple": "Com que frequência nossas previsões funcionam",
+        "successRateExample": "Fizemos 10 ligações de confirmação → 7 clientes compareceram → 70% de sucesso",
+        "successRateGood": "Acima de 60% significa que a IA está ajudando",
+        "interventionsTerm": "Intervenções",
+        "interventionsSimple": "Ações que tomamos para prevenir no-shows",
+        "interventionsExample": "Ligar para clientes de alto risco, enviar lembretes, exigir depósitos",
+        "interventionsGood": "Mais intervenções = melhor prevenção de perdas",
+        "valueSavedTerm": "Valor Economizado",
+        "valueSavedSimple": "Dinheiro que você não perdeu",
+        "valueSavedExample": "O cliente ia dar no-show (€50 perdidos) → Ligamos → Ele veio → €50 economizados",
+        "valueSavedGood": "Quanto maior, melhor - significa menos mesas vazias"
+      },
+      "pricing": {
+        "title": "Entendendo Preços Dinâmicos (em Português Simples)",
+        "revenueLiftTerm": "Aumento de Receita",
+        "revenueLiftSimple": "Dinheiro extra ao cobrar mais em horários movimentados",
+        "revenueLiftExample": "Preço normal: €50 → Preço sexta à noite: €65 → Aumento: €15",
+        "revenueLiftGood": "Aumento positivo = mais dinheiro sem mais clientes",
+        "discountsTerm": "Descontos Concedidos",
+        "discountsSimple": "Dinheiro cedido para encher mesas vazias",
+        "discountsExample": "Desconto terça 18h: 20% (€10 por pessoa)",
+        "discountsGood": "OK se enche mesas que estariam vazias de qualquer forma",
+        "netImpactTerm": "Impacto Líquido",
+        "netImpactSimple": "Aumento de receita menos descontos = lucro real",
+        "netImpactExample": "Ganhou €1.000 com acréscimos, deu €300 em descontos = €700 de lucro líquido",
+        "netImpactGood": "Positivo é bom! Mire em pelo menos €3 ganhos por €1 cedido",
+        "demandTerm": "Nível de Demanda",
+        "demandSimple": "Quão lotado você está",
+        "demandExample": "Baixo = muitas mesas vazias, Pico = totalmente reservado",
+        "demandGood": "Preços de pico em alta demanda, descontos em baixa"
+      },
+      "ltv": {
+        "title": "Entendendo o Valor do Cliente (em Português Simples)",
+        "ltvTerm": "LTV (Valor Vitalício do Cliente)",
+        "ltvSimple": "Dinheiro total que um cliente vai gastar ao longo do tempo",
+        "ltvExample": "Cliente visita 4x por ano, gasta €50 cada vez, fica 3 anos = €600 LTV",
+        "ltvGood": "Maior LTV = cliente mais valioso, vale o investimento",
+        "frequencyTerm": "Frequência de Visitas",
+        "frequencySimple": "Com que frequência eles voltam",
+        "frequencyExample": "Uma vez por mês, duas vezes por ano, toda semana, etc.",
+        "frequencyGood": "Mais frequente = receita mais previsível",
+        "avgSpendTerm": "Gasto Médio",
+        "avgSpendSimple": "Quanto geralmente gastam por visita",
+        "avgSpendExample": "Sempre pede vinho e entradas = gasto mais alto",
+        "avgSpendGood": "Quem gasta mais merece tratamento VIP",
+        "retentionTerm": "Risco de Retenção",
+        "retentionSimple": "Chance de pararem de vir",
+        "retentionExample": "Não visitou em 6 meses = alto risco de perder o cliente",
+        "retentionGood": "Detectar clientes em risco cedo com ofertas especiais"
+      },
+      "dna": {
+        "title": "Entendendo o DNA do Cliente (em Português Simples)",
+        "diningStyleTerm": "Perfil de Estilo Gastronômico",
+        "diningStyleSimple": "Que tipo de cliente eles são",
+        "diningStyleExample": "Almoços de negócios, jantares românticos, jantares em família, refeições solo",
+        "diningStyleGood": "Ajuda você a se preparar (mesa tranquila para negócios, cardápio infantil para famílias)",
+        "spontaneityTerm": "Espontaneidade de Reserva",
+        "spontaneitySimple": "Com quanta antecedência planejam",
+        "spontaneityExample": "Reserva no mesmo dia vs planeja 2 semanas antes",
+        "spontaneityGood": "Planejadores são confiáveis, espontâneos precisam de lembretes",
+        "occasionTerm": "Tipo de Ocasião",
+        "occasionSimple": "Por que estão jantando",
+        "occasionExample": "Aniversário, bodas, reunião de negócios, refeição casual",
+        "occasionGood": "Saber o que estão comemorando = melhor serviço",
+        "timePrefTerm": "Preferências de Horário",
+        "timePrefSimple": "Quando gostam de jantar",
+        "timePrefExample": "Sempre sexta 20h, ou almoço de terça, ou brunch de fim de semana",
+        "timePrefGood": "Prever quando vão reservar, enviar ofertas direcionadas"
+      }
+    }
   },
   "onboarding": {
     "welcome": "Bem-vindo ao Seatable",
@@ -687,6 +792,10 @@
     "changeLanguage": "Alterar Idioma",
     "languageUpdated": "Idioma atualizado com sucesso",
     "updateFailed": "Falha ao atualizar o idioma",
+    "languagePreferencesTitle": "Preferências de idioma",
+    "languagePreferencesDesc": "Sua seleção de idioma será aplicada a todo o painel, todas as comunicações com clientes e interações de IA. Esta alteração entra em vigor imediatamente e é salva automaticamente.",
+    "returnToDashboard": "Voltar ao seu painel principal",
+    "manageSubscription": "Gerenciar sua assinatura e configurações",
     "whatsApp": "Integração WhatsApp",
     "whatsAppDesc": "Envie confirmações de reservas e converse com clientes pelo WhatsApp.",
     "connectionStatus": "Status da Conexão",
@@ -740,7 +849,7 @@
     "alertHighNoshows": "Alto risco de no-show",
     "alertHighNoshowsDesc": "Alerta às 15h quando 3+ reservas têm >70% de probabilidade de no-show",
     "alertLateCancellations": "Cancelamentos tardios",
-    "alertLateCancellationsDesc": "Alerta a cada 2h (12\u201320h) quando 2+ cancelamentos nas últimas 2 horas",
+    "alertLateCancellationsDesc": "Alerta a cada 2h (12–20h) quando 2+ cancelamentos nas últimas 2 horas",
     "customerEngagement": "Engajamento com Clientes",
     "upsellLabel": "Recomendações de pratos pré-reserva",
     "upsellDesc": "Enviar sugestões de pratos personalizadas por IA via WhatsApp no dia anterior a cada reserva",
@@ -811,7 +920,25 @@
     "cancellationPolicy": "Política de Cancelamento",
     "cancellationPlaceholder": "Cancelamento gratuito até 24 horas antes...",
     "allowWaitlist": "Permitir lista de espera quando lotado",
-    "savePolicies": "Salvar Políticas"
+    "savePolicies": "Salvar Políticas",
+    "messageTemplates": "Modelos de Mensagem",
+    "templateFeedback": "Solicitação de Feedback",
+    "templateReengagement": "Reengajamento",
+    "templateBirthday": "Felicitação de Aniversário",
+    "templatePromotion": "Promoção",
+    "envMissing": "Variável de ambiente ausente",
+    "phoneVerification": "Verificação de Telefone",
+    "verified": "Verificado",
+    "phoneVerExpired": "Sua verificação de telefone expirou. Solicite um novo código SMS e insira abaixo.",
+    "sendingSms": "Enviando...",
+    "sendSmsCode": "Enviar Código SMS",
+    "sixDigitCode": "Código de 6 dígitos",
+    "verifying": "Verificando...",
+    "verify": "Verificar",
+    "phoneVerified": "Número de telefone verificado!",
+    "metaVerificationHint": "Para o selo verde de verificado, complete a",
+    "metaBusinessVerification": "Verificação Meta Business",
+    "testMessageSent": "Mensagem de teste enviada!"
   },
   "tableLayout": {
     "title": "Mapa de Mesas",
@@ -968,7 +1095,7 @@
     "roleHost": "Anfitrião",
     "roleStaff": "Funcionário",
     "roleOwner": "Proprietário",
-    "sending": "Enviando\u2026",
+    "sending": "Enviando…",
     "invite": "Convidar",
     "invitationSent": "Convite enviado para {{email}}",
     "invitationPending": "Convite pendente",
@@ -1128,7 +1255,14 @@
     "twentyFourHours": "24h",
     "sevenDays": "7 dias",
     "thirtyDays": "30 dias",
-    "ninetyDays": "90 dias"
+    "ninetyDays": "90 dias",
+    "outcomeReservationCreated": "Reserva Criada",
+    "outcomeInformationOnly": "Apenas Informação",
+    "outcomeError": "Erro",
+    "outcomeAbandonedLabel": "Abandonada",
+    "outcomeUnknown": "Desconhecido",
+    "durationUnknown": "Desconhecido",
+    "noTranscriptAvailable": "Nenhuma transcrição disponível para esta conversa."
   },
   "landing": {
     "badge": "Gestão de Restaurantes com IA",
@@ -1150,26 +1284,26 @@
       "headlineB": "O anfitrião que nunca falta.",
       "headlineC": "Seu restaurante nunca dorme.",
       "subtitle2": "O Seatable cuida do WhatsApp, ligações e walk-ins — para sua equipe focar na hospitalidade.",
-      "ctaNew": "Veja ao vivo \u2193"
+      "ctaNew": "Veja ao vivo ↓"
     },
     "tryDemo": {
       "label": "Experimente agora",
       "heading": "Escolha um restaurante. Explore o painel.",
       "subtitle": "Sem cadastro, sem e-mail. Clique e veja como funciona.",
       "cta": "Quer ver SEU restaurante?",
-      "ctaLink": "Configure aqui \u2192",
+      "ctaLink": "Configure aqui →",
       "cuisineItalian": "Italiana",
       "cuisineJapanese": "Japonesa",
       "cuisineMexican": "Mexicana",
-      "briefItalian": "8 mesas \u00b7 Little Italy",
-      "briefJapanese": "8 mesas \u00b7 Midtown",
-      "briefMexican": "9 mesas \u00b7 Mission District"
+      "briefItalian": "8 mesas · Little Italy",
+      "briefJapanese": "8 mesas · Midtown",
+      "briefMexican": "9 mesas · Mission District"
     },
     "voice": {
       "label": "Teste ao vivo",
       "heading": "Ligue para nossa IA",
       "subtitle": "Tenha uma conversa real. Peça para reservar uma mesa para 4 hoje à noite — e ouça a IA responder naturalmente.",
-      "powered": "Desenvolvido com ElevenLabs \u00b7 Inglês, Português, Espanhol",
+      "powered": "Desenvolvido com ElevenLabs · Inglês, Português, Espanhol",
       "micHint": "Clique no microfone para começar",
       "tapToTalk": "Toque para falar",
       "connecting": "Conectando...",
@@ -1187,7 +1321,7 @@
       "msg1": "Oi! Mesa para 4 amanhã às 20h?",
       "msg2": "Claro! Tenho uma mesa disponível às 20h. Nome para a reserva?",
       "msg3": "Maria Santos",
-      "msg4": "Perfeito! Mesa para 4, amanhã às 20h. Confirmada \u2713 Até lá, Maria!",
+      "msg4": "Perfeito! Mesa para 4, amanhã às 20h. Confirmada ✓ Até lá, Maria!",
       "inputPlaceholder": "Digite uma mensagem..."
     },
     "slideIn": {
@@ -1197,24 +1331,30 @@
       "later": "Talvez depois"
     },
     "faq": {
+      "label": "Perguntas Frequentes",
+      "heading": "Perguntas frequentes",
+      "subheading": "Tudo que você precisa saber sobre o Seatable",
+      "cta": "Ainda tem dúvidas?",
+      "ctaSubtext": "Estamos aqui para ajudar. Entre em contato a qualquer momento.",
+      "ctaButton": "Falar com Suporte",
       "q1": "Como funciona o assistente de reservas com IA?",
-      "a1": "Nossa IA usa processamento de linguagem natural para entender pedidos de clientes via ligações ou mensagens de texto. Ela verifica disponibilidade de mesas em tempo real, gerencia detalhes da reserva e confirma — tudo sem intervenção humana.",
+      "a1": "Nossa IA usa processamento de linguagem natural para entender pedidos de clientes por ligações ou mensagens de texto. Ela verifica a disponibilidade de mesas em tempo real, cuida dos detalhes da reserva e confirma — tudo sem intervenção humana.",
       "q2": "Posso personalizar as respostas da IA?",
-      "a2": "Sim! Cada restaurante pode personalizar a personalidade, saudações, conhecimento do cardápio e políticas especiais da IA. Treinamos a IA com os detalhes específicos do seu restaurante durante o onboarding.",
+      "a2": "Sim! Cada restaurante pode personalizar a personalidade da IA, saudações, conhecimento do cardápio e políticas especiais. Treinamos a IA com os detalhes específicos do seu restaurante durante a configuração.",
       "q3": "O que acontece se a IA não conseguir atender um pedido?",
-      "a3": "Se a IA encontrar uma situação complexa que não consegue resolver, ela transfere a ligação para sua equipe com todo o contexto da conversa. Nenhum cliente fica sem atendimento.",
+      "a3": "Se a IA encontrar uma situação complexa que não consiga resolver, ela transfere a ligação para sua equipe com todo o contexto da conversa. Isso garante que nenhum cliente fique frustrado.",
       "q4": "Quanto tempo leva a configuração?",
-      "a4": "A maioria dos restaurantes está funcionando em 24 horas. Importamos seu layout de mesas, configuramos a IA com seu cardápio e políticas, e treinamos sua equipe no painel do anfitrião.",
-      "q5": "Preciso de hardware especial?",
-      "a5": "Nenhum hardware especial necessário! Nosso sistema funciona inteiramente na nuvem. Você só precisa de acesso à internet e um dispositivo (computador, tablet ou celular).",
+      "a4": "A maioria dos restaurantes está funcionando em até 24 horas. Importamos o layout das mesas, configuramos a IA com seu cardápio e políticas, e treinamos sua equipe no painel.",
+      "q5": "Preciso de equipamento especial?",
+      "a5": "Nenhum equipamento especial necessário! Nosso sistema funciona inteiramente na nuvem. Você só precisa de acesso à internet e um dispositivo (computador, tablet ou celular) para acessar o painel.",
       "q6": "Os clientes ainda podem ligar diretamente?",
-      "a6": "Com certeza. A IA cuida dos pedidos de reserva, mas os clientes ainda podem falar com a equipe para ocasiões especiais, grupos grandes ou perguntas específicas.",
+      "a6": "Com certeza. A IA cuida dos pedidos de reserva, mas os clientes ainda podem falar com a equipe para ocasiões especiais, grupos grandes ou dúvidas específicas. A IA e os humanos trabalham juntos perfeitamente.",
       "q7": "Quais idiomas a IA suporta?",
-      "a7": "Nossa IA suporta 6+ idiomas incluindo Inglês, Espanhol, Português, Francês, Italiano e Alemão. Ela detecta automaticamente o idioma do cliente.",
+      "a7": "Nossa IA suporta atualmente 6+ idiomas incluindo inglês, espanhol, português, francês, italiano e alemão. Ela detecta automaticamente o idioma do cliente e responde naturalmente. Mais idiomas estão sendo adicionados regularmente.",
       "q8": "Meus dados do restaurante estão seguros?",
-      "a8": "Com certeza. Todos os dados são criptografados em trânsito e em repouso. Usamos segurança de banco de dados de nível empresarial com controles de acesso por linha.",
-      "q9": "Posso experimentar antes de me comprometer?",
-      "a9": "Sim! Todos os planos incluem 14 dias de teste grátis, sem cartão de crédito. Você também pode experimentar nossa demo de IA ao vivo no site."
+      "a8": "Com certeza. Todos os dados são criptografados em trânsito e em repouso. Usamos segurança de nível empresarial com controles de acesso por linha, e nunca compartilhamos dados dos seus clientes com terceiros. Você é dono dos seus dados completamente.",
+      "q9": "Posso testar antes de contratar?",
+      "a9": "Sim! Todos os planos incluem 14 dias de teste gratuito, sem cartão de crédito. Você também pode experimentar nossa demo ao vivo no site para ouvir o assistente de voz em ação antes de se cadastrar."
     },
     "whatsapp": {
       "label": "IA real, WhatsApp real",
@@ -1222,37 +1362,28 @@
       "subtitle": "Envie uma mensagem no WhatsApp e receba uma resposta instantânea da nossa IA. Sem app, sem cadastro.",
       "cta": "Enviar mensagem de teste",
       "previewMessage": "Oi! Gostaria de reservar uma mesa para 4 amanhã às 20h",
-      "trust": "Número real: +55 11 5028-9356 \u00b7 São Paulo, Brasil"
+      "trust": "Número real: +55 11 5028-9356 · São Paulo, Brasil"
     },
     "features": {
-      "label": "Funcionalidades",
-      "heading": "Tudo que você precisa,",
-      "headingLine2": "nada que não precisa.",
-      "subtitle": "Uma suite completa para restaurantes modernos que valorizam simplicidade e resultados.",
-      "voice": {
-        "title": "Agente de Voz com IA",
-        "desc": "Um recepcionista de IA que atende ligações, recebe reservas e conversa naturalmente com a personalidade do seu restaurante."
-      },
-      "whatsapp": {
-        "title": "Reservas pelo WhatsApp",
-        "desc": "Os clientes reservam pelo WhatsApp de forma natural. A IA cuida da disponibilidade, confirmações e lembretes automaticamente."
-      },
-      "dashboard": {
-        "title": "Painel Inteligente",
-        "desc": "Visão em tempo real de reservas, walk-ins e distribuição de mesas. Tudo que sua equipe precisa em uma tela."
-      },
-      "memory": {
-        "title": "Memória do Cliente",
-        "desc": "A IA lembra preferências alimentares, aniversários e mesas favoritas. Cada cliente que volta se sente reconhecido."
-      },
-      "tables": {
-        "title": "Gestão de Mesas",
-        "desc": "Atribuição inteligente de mesas otimiza o atendimento. Gerencie walk-ins, no-shows e filas de espera sem caos."
-      },
-      "analytics": {
-        "title": "Análises e Insights",
-        "desc": "Entenda seus horários de pico, padrões de no-show e valor de vida do cliente com relatórios bonitos e acionáveis."
-      }
+      "label": "Além das Reservas",
+      "heading": "Inteligência integrada.",
+      "subtitle": "Não apenas reservas — gerenciando toda sua operação com IA.",
+      "managerTitle": "Gerente IA",
+      "managerDesc": "Receba briefings diários, faça perguntas sobre o negócio e receba alertas proativos via WhatsApp.",
+      "managerStat1": "briefing matinal",
+      "managerStat2": "resumo do dia",
+      "revenueTitle": "Receita Inteligente",
+      "revenueDesc": "Previsão de gasto por reserva, projeção de receita diária e acompanhamento de ticket médio por mesa.",
+      "revenueStat1": "gasto médio",
+      "revenueStat2": "mais receita",
+      "customerTitle": "Inteligência do Cliente",
+      "customerDesc": "Score de valor vitalício, risco de churn e campanhas de retenção automáticas para seus melhores clientes.",
+      "customerStat1": "retenção VIP",
+      "customerStat2": "mais visitas",
+      "staffingTitle": "Escala Inteligente",
+      "staffingDesc": "Previsão de demanda por 7 dias com recomendações de equipe por turno — FOH, cozinha e bar.",
+      "staffingStat1": "previsão",
+      "staffingStat2": "menos ocioso"
     },
     "howItWorks": {
       "label": "Como Funciona",
@@ -1313,28 +1444,28 @@
       "tryPreset": "Ou experimente um restaurante modelo"
     },
     "showcase": {
-      "label": "Veja em A\u00e7\u00e3o",
+      "label": "Veja em Ação",
       "heading": "Sua equipe de IA, trabalhando 24/7",
-      "subtitle": "Veja como o Seatable gerencia reservas via WhatsApp, liga\u00e7\u00f5es e seu painel em tempo real — automaticamente.",
+      "subtitle": "Veja como o Seatable gerencia reservas via WhatsApp, ligações e seu painel em tempo real — automaticamente.",
       "whatsappTitle": "Reserva via WhatsApp",
       "whatsappDesc": "O cliente manda mensagem, a IA verifica disponibilidade, confirma a reserva e envia lembretes — tudo pelo WhatsApp.",
       "voiceTitle": "Agente de Voz IA",
-      "voiceDesc": "Sua recepcionista IA atende liga\u00e7\u00f5es naturalmente, aceita reservas e fala com a personalidade do seu restaurante.",
+      "voiceDesc": "Sua recepcionista IA atende ligações naturalmente, aceita reservas e fala com a personalidade do seu restaurante.",
       "dashboardTitle": "Painel ao Vivo",
       "dashboardDesc": "Veja reservas, status das mesas, lista de espera e receita atualizando em tempo real enquanto sua IA trabalha.",
-      "comingSoon": "V\u00eddeo em breve",
-      "whatsapp1": "Clientes mandam mensagem naturalmente \u2014 \u201cMesa para 2 hoje?\u201d",
+      "comingSoon": "Vídeo em breve",
+      "whatsapp1": "Clientes mandam mensagem naturalmente — “Mesa para 2 hoje?”",
       "whatsapp2": "IA verifica disponibilidade e confirma na hora",
-      "whatsapp3": "Lembretes autom\u00e1ticos 2 horas antes",
-      "whatsapp4": "Funciona em Portugu\u00eas, Ingl\u00eas e Espanhol",
-      "voice1": "IA atende liga\u00e7\u00f5es com a personalidade do seu restaurante",
-      "voice2": "Cuida de reservas, d\u00favidas e endere\u00e7o",
+      "whatsapp3": "Lembretes automáticos 2 horas antes",
+      "whatsapp4": "Funciona em Português, Inglês e Espanhol",
+      "voice1": "IA atende ligações com a personalidade do seu restaurante",
+      "voice2": "Cuida de reservas, dúvidas e endereço",
       "voice3": "Fala 6+ idiomas naturalmente",
-      "voice4": "Transfer\u00eancia para equipe quando necess\u00e1rio",
+      "voice4": "Transferência para equipe quando necessário",
       "dashboard1": "Mapa de mesas em tempo real com cores de status",
-      "dashboard2": "Sem reserva, espera e reservas em um s\u00f3 lugar",
-      "dashboard3": "Previs\u00e3o de receita e equipe integrada",
-      "dashboard4": "Assistente IA do gerente para an\u00e1lises r\u00e1pidas"
+      "dashboard2": "Sem reserva, espera e reservas em um só lugar",
+      "dashboard3": "Previsão de receita e equipe integrada",
+      "dashboard4": "Assistente IA do gerente para análises rápidas"
     },
     "compare": {
       "label": "A Diferença",
@@ -1368,32 +1499,15 @@
       "confirmed": "confirmado",
       "predictedRevenue": "Receita Prevista"
     },
-    "features": {
-      "label": "Além das Reservas",
-      "heading": "Inteligência integrada.",
-      "subtitle": "Não apenas reservas — gerenciando toda sua operação com IA.",
-      "managerTitle": "Gerente IA",
-      "managerDesc": "Receba briefings diários, faça perguntas sobre o negócio e receba alertas proativos via WhatsApp.",
-      "managerStat1": "briefing matinal",
-      "managerStat2": "resumo do dia",
-      "revenueTitle": "Receita Inteligente",
-      "revenueDesc": "Previsão de gasto por reserva, projeção de receita diária e acompanhamento de ticket médio por mesa.",
-      "revenueStat1": "gasto médio",
-      "revenueStat2": "mais receita",
-      "customerTitle": "Inteligência do Cliente",
-      "customerDesc": "Score de valor vitalício, risco de churn e campanhas de retenção automáticas para seus melhores clientes.",
-      "customerStat1": "retenção VIP",
-      "customerStat2": "mais visitas",
-      "staffingTitle": "Escala Inteligente",
-      "staffingDesc": "Previsão de demanda por 7 dias com recomendações de equipe por turno — FOH, cozinha e bar.",
-      "staffingStat1": "previsão",
-      "staffingStat2": "menos ocioso"
-    },
     "walkthrough": {
       "label": "Além das Reservas",
       "heading": "Veja a IA em ação.",
       "subtitle": "Previsão de receita, proteção contra no-shows, insights proativos e escala inteligente — tudo automático.",
-      "cta": "Experimente grátis"
+      "cta": "Experimente grátis",
+      "sceneRevenue": "Receita Inteligente",
+      "sceneNoShow": "Proteção No-Show",
+      "sceneManagerAI": "Gerente IA",
+      "sceneStaffing": "Escala Inteligente"
     },
     "contact": {
       "label": "Contato",
@@ -1489,46 +1603,46 @@
     "liveDemo": {
       "nav": {
         "features": "Recursos",
-        "pricing": "Pre\u00e7os",
+        "pricing": "Preços",
         "demo": "Demo",
         "contact": "Contato",
-        "getStarted": "Come\u00e7ar"
+        "getStarted": "Começar"
       },
       "hero": {
         "badge": "Demo ao Vivo",
-        "title": "Ou\u00e7a a IA em",
-        "titleEm": "a\u00e7\u00e3o.",
-        "subtitle": "Ligue para nosso restaurante demo e experimente o agente de voz com IA que faz reservas naturalmente, como seu melhor anfitri\u00e3o faria."
+        "title": "Ouça a IA em",
+        "titleEm": "ação.",
+        "subtitle": "Ligue para nosso restaurante demo e experimente o agente de voz com IA que faz reservas naturalmente, como seu melhor anfitrião faria."
       },
       "widget": {
         "label": "Restaurante Demo",
-        "name": "Cantina da Pra\u00e7a",
-        "details": "Brasileira \u00b7 Contempor\u00e2nea \u00b7 Jardins, SP",
-        "instructions": "O agente de voz com IA est\u00e1 ao vivo. Clique no bot\u00e3o no canto inferior direito da tela para iniciar uma conversa \u2014 tente fazer uma reserva para 2 pessoas nesta sexta \u00e0 noite.",
-        "instructionsHint": "Procure o bot\u00e3o de chat no canto",
+        "name": "Cantina da Praça",
+        "details": "Brasileira · Contemporânea · Jardins, SP",
+        "instructions": "O agente de voz com IA está ao vivo. Clique no botão no canto inferior direito da tela para iniciar uma conversa — tente fazer uma reserva para 2 pessoas nesta sexta à noite.",
+        "instructionsHint": "Procure o botão de chat no canto",
         "agentOnline": "Agente IA Online",
         "voiceComingSoon": "Demo de Voz em Breve",
-        "voiceComingSoonDesc": "A demo do agente de voz ao vivo requer configura\u00e7\u00e3o do ElevenLabs. Enquanto isso, experimente o fluxo de reserva abaixo.",
+        "voiceComingSoonDesc": "A demo do agente de voz ao vivo requer configuração do ElevenLabs. Enquanto isso, experimente o fluxo de reserva abaixo.",
         "bookingFlowLabel": "Ou experimente o fluxo de reserva do cliente:",
-        "tryBooking": "Tente reservar uma mesa \u2192"
+        "tryBooking": "Tente reservar uma mesa →"
       },
       "features": {
         "natural": {
           "title": "Conversa Natural",
-          "desc": "A IA fala naturalmente, lidando com pedidos complexos como restri\u00e7\u00f5es alimentares, ocasi\u00f5es especiais e reservas em grupo."
+          "desc": "A IA fala naturalmente, lidando com pedidos complexos como restrições alimentares, ocasiões especiais e reservas em grupo."
         },
         "personality": {
           "title": "Personalidade do Restaurante",
-          "desc": "Cada agente de IA \u00e9 treinado com o estilo, card\u00e1pio e valores do seu restaurante para soar autenticamente seu."
+          "desc": "Cada agente de IA é treinado com o estilo, cardápio e valores do seu restaurante para soar autenticamente seu."
         },
         "available": {
-          "title": "Sempre Dispon\u00edvel",
-          "desc": "Nunca perca uma reserva. A IA atende liga\u00e7\u00f5es 24/7 em v\u00e1rios idiomas com verifica\u00e7\u00e3o instant\u00e2nea de disponibilidade."
+          "title": "Sempre Disponível",
+          "desc": "Nunca perca uma reserva. A IA atende ligações 24/7 em vários idiomas com verificação instantânea de disponibilidade."
         }
       },
       "cta": {
-        "title": "Pronto para ter seu pr\u00f3prio anfitri\u00e3o IA?",
-        "subtitle": "Configure em 5 minutos. Nenhum conhecimento t\u00e9cnico necess\u00e1rio.",
+        "title": "Pronto para ter seu próprio anfitrião IA?",
+        "subtitle": "Configure em 5 minutos. Nenhum conhecimento técnico necessário.",
         "button": "Teste com Seu Restaurante"
       }
     },
@@ -1538,7 +1652,7 @@
       "waitlist": "Espera",
       "guests": "Pessoas",
       "todaysReservations": "Reservas de Hoje",
-      "aiHandlingCalls": "Agente IA atendendo liga\u00e7\u00f5es",
+      "aiHandlingCalls": "Agente IA atendendo ligações",
       "dashboard": "Painel",
       "todayDate": "Hoje",
       "walkIn": "Sem reserva",
@@ -1547,92 +1661,66 @@
     },
     "demoSetup": {
       "nav": {
-        "signIn": "J\u00e1 tem uma conta? Entrar"
+        "signIn": "Já tem uma conta? Entrar"
       },
       "badge": "Demo Gratuito",
       "title": "Veja o Seatable funcionando",
       "titleEm": "no seu restaurante",
       "titleSuffix": "em segundos.",
-      "subtitle": "Basta informar o nome do seu restaurante e a cidade. Puxamos hor\u00e1rios, avalia\u00e7\u00f5es e detalhes automaticamente.",
+      "subtitle": "Basta informar o nome do seu restaurante e a cidade. Puxamos horários, avaliações e detalhes automaticamente.",
       "trust": {
         "avgResponse": "Tempo de Resposta",
         "languages": "Idiomas",
         "aiBooking": "Reserva IA",
         "setupTime": "Tempo de Setup",
         "realData": "Dados Reais",
-        "hoursReviews": "Seus Hor\u00e1rios e Avalia\u00e7\u00f5es"
+        "hoursReviews": "Seus Horários e Avaliações"
       },
       "form": {
         "sectionRestaurant": "Seu Restaurante",
         "restaurantName": "Nome do restaurante",
-        "restaurantNamePlaceholder": "Cantina da Pra\u00e7a",
-        "cuisineType": "Tipo de culin\u00e1ria",
-        "cuisineTypePlaceholder": "Brasileira \u00b7 Contempor\u00e2nea \u00b7 Farm-to-table",
+        "restaurantNamePlaceholder": "Cantina da Praça",
+        "cuisineType": "Tipo de culinária",
+        "cuisineTypePlaceholder": "Brasileira · Contemporânea · Farm-to-table",
         "city": "Cidade",
-        "cityPlaceholder": "S\u00e3o Paulo",
-        "country": "Pa\u00eds",
+        "cityPlaceholder": "São Paulo",
+        "country": "País",
         "countryPlaceholder": "Brasil",
-        "sectionHours": "Hor\u00e1rios e Capacidade",
-        "opensAt": "Abre \u00e0s",
-        "closesAt": "Fecha \u00e0s",
-        "maxPartySize": "Tamanho m\u00e1ximo do grupo",
-        "sectionPolicies": "Pol\u00edticas",
+        "sectionHours": "Horários e Capacidade",
+        "opensAt": "Abre às",
+        "closesAt": "Fecha às",
+        "maxPartySize": "Tamanho máximo do grupo",
+        "sectionPolicies": "Políticas",
         "optional": "opcional",
-        "cancellationPolicy": "Pol\u00edtica de cancelamento",
-        "cancellationPolicyPlaceholder": "Cancelamento gratuito at\u00e9 24h antes",
+        "cancellationPolicy": "Política de cancelamento",
+        "cancellationPolicyPlaceholder": "Cancelamento gratuito até 24h antes",
         "houseRules": "Regras da casa",
-        "houseRulesPlaceholder": "Proibido bolo de fora, sem pets no terra\u00e7o...",
-        "sectionAboutYou": "Sobre Voc\u00ea",
+        "houseRulesPlaceholder": "Proibido bolo de fora, sem pets no terraço...",
+        "sectionAboutYou": "Sobre Você",
         "yourName": "Seu nome",
         "yourNamePlaceholder": "Maria",
         "workEmail": "E-mail profissional",
         "workEmailPlaceholder": "maria@cantina.com.br",
-        "createButton": "Criar meu demo \u2192",
-        "creating": "Criando seu demo\u2026",
-        "noCreditCard": "Sem cart\u00e3o de cr\u00e9dito. Seu demo fica pronto em segundos.",
+        "createButton": "Criar meu demo →",
+        "creating": "Criando seu demo…",
+        "noCreditCard": "Sem cartão de crédito. Seu demo fica pronto em segundos.",
         "findYourRestaurant": "Encontre seu restaurante",
         "restaurantNameSearch": "Nome do restaurante",
         "findIt": "Buscar",
         "searching": "Buscando...",
         "selectYourRestaurant": "Selecione seu restaurante:",
-        "reviews": "avalia\u00e7\u00f5es",
+        "reviews": "avaliações",
         "change": "Alterar",
-        "businessHours": "Hor\u00e1rio de funcionamento",
+        "businessHours": "Horário de funcionamento",
         "continueWithout": "Continuar sem busca",
-        "notListed": "N\u00e3o encontrou? Continue manualmente",
-        "noExactMatch": "Nenhuma correspond\u00eancia exata \u2014 configuraremos seu demo com os dados fornecidos.",
-        "almostThere": "Quase l\u00e1",
+        "notListed": "Não encontrou? Continue manualmente",
+        "noExactMatch": "Nenhuma correspondência exata — configuraremos seu demo com os dados fornecidos.",
+        "almostThere": "Quase lá",
         "emailPlaceholder": "Seu e-mail profissional",
         "emailHint": "Enviaremos o link do demo aqui",
         "launchDemo": "Iniciar meu demo",
         "creatingDemo": "Criando seu demo..."
       }
-    },
-    "faq": {
-      "label": "Perguntas Frequentes",
-      "heading": "Perguntas frequentes",
-      "subheading": "Tudo que você precisa saber sobre o Seatable",
-      "cta": "Ainda tem dúvidas?",
-      "ctaSubtext": "Estamos aqui para ajudar. Entre em contato a qualquer momento.",
-      "ctaButton": "Falar com Suporte",
-      "q1": "Como funciona o assistente de reservas com IA?",
-      "a1": "Nossa IA usa processamento de linguagem natural para entender pedidos de clientes por ligações ou mensagens de texto. Ela verifica a disponibilidade de mesas em tempo real, cuida dos detalhes da reserva e confirma — tudo sem intervenção humana.",
-      "q2": "Posso personalizar as respostas da IA?",
-      "a2": "Sim! Cada restaurante pode personalizar a personalidade da IA, saudações, conhecimento do cardápio e políticas especiais. Treinamos a IA com os detalhes específicos do seu restaurante durante a configuração.",
-      "q3": "O que acontece se a IA não conseguir atender um pedido?",
-      "a3": "Se a IA encontrar uma situação complexa que não consiga resolver, ela transfere a ligação para sua equipe com todo o contexto da conversa. Isso garante que nenhum cliente fique frustrado.",
-      "q4": "Quanto tempo leva a configuração?",
-      "a4": "A maioria dos restaurantes está funcionando em até 24 horas. Importamos o layout das mesas, configuramos a IA com seu cardápio e políticas, e treinamos sua equipe no painel.",
-      "q5": "Preciso de equipamento especial?",
-      "a5": "Nenhum equipamento especial necessário! Nosso sistema funciona inteiramente na nuvem. Você só precisa de acesso à internet e um dispositivo (computador, tablet ou celular) para acessar o painel.",
-      "q6": "Os clientes ainda podem ligar diretamente?",
-      "a6": "Com certeza. A IA cuida dos pedidos de reserva, mas os clientes ainda podem falar com a equipe para ocasiões especiais, grupos grandes ou dúvidas específicas. A IA e os humanos trabalham juntos perfeitamente.",
-      "q7": "Quais idiomas a IA suporta?",
-      "a7": "Nossa IA suporta atualmente 6+ idiomas incluindo inglês, espanhol, português, francês, italiano e alemão. Ela detecta automaticamente o idioma do cliente e responde naturalmente. Mais idiomas estão sendo adicionados regularmente.",
-      "q8": "Meus dados do restaurante estão seguros?",
-      "a8": "Com certeza. Todos os dados são criptografados em trânsito e em repouso. Usamos segurança de nível empresarial com controles de acesso por linha, e nunca compartilhamos dados dos seus clientes com terceiros. Você é dono dos seus dados completamente.",
-      "q9": "Posso testar antes de contratar?",
-      "a9": "Sim! Todos os planos incluem 14 dias de teste gratuito, sem cartão de crédito. Você também pode experimentar nossa demo ao vivo no site para ouvir o assistente de voz em ação antes de se cadastrar."
     }
   },
   "managerAI": {
@@ -1655,7 +1743,7 @@
     "unlockWith": "Desbloqueie com o {{planName}}",
     "upgradeTo": "Assinar {{planName}}",
     "goBack": "Voltar",
-    "trialNote": "14 dias grátis \u2022 Cancele quando quiser",
+    "trialNote": "14 dias grátis • Cancele quando quiser",
     "benefits": {
       "mlInsights": "Insights de desempenho com IA e rastreamento de ROI",
       "customerLtv": "Análise de valor vitalício do cliente",
@@ -1675,7 +1763,9 @@
     "waQualityRating": "Classificação de qualidade",
     "waPendingApproval": "Aprovação Pendente",
     "waCheckMeta": "Verificar Meta Business Manager",
-    "waNotConfigured": "Não Configurado"
+    "waNotConfigured": "Não Configurado",
+    "languages": "Idiomas",
+    "languageChangeWarning": "Alterar o idioma atualizará a mensagem de boas-vindas do seu agente. A voz falará no idioma selecionado usando suas capacidades multilíngues."
   },
   "phoneIntegration": {
     "title": "Telefone IA — Voz",
@@ -1794,13 +1884,23 @@
   },
   "demo": {
     "voice": {
-      "unavailable": "Pr\u00e9via de voz indispon\u00edvel",
+      "unavailable": "Prévia de voz indisponível",
       "redirecting": "Redirecionando para seu painel...",
-      "title": "Conhe\u00e7a sua recepcionista IA",
-      "subtitle": "\u00c9 isso que seus clientes v\u00e3o ouvir quando ligarem",
-      "clickToTalk": "Clique no widget abaixo para come\u00e7ar a conversar",
+      "title": "Conheça sua recepcionista IA",
+      "subtitle": "É isso que seus clientes vão ouvir quando ligarem",
+      "clickToTalk": "Clique no widget abaixo para começar a conversar",
       "loading": "Carregando agente de voz...",
       "skipToDashboard": "Ir para o painel"
     }
+  },
+  "pageTitles": {
+    "dashboard": "Painel | seatable",
+    "analytics": "Análises | seatable",
+    "voiceDemo": "Demo de Voz | seatable",
+    "onboarding": "Configuração | seatable",
+    "login": "Entrar | seatable",
+    "settings": "Configurações | seatable",
+    "bookingPage": "{{name}} — Reservar Mesa | Seatable",
+    "bookingDescription": "Reserve uma mesa no {{name}} em {{city}}, {{country}}. Verifique disponibilidade e reserve online — rápido e fácil."
   }
 }
