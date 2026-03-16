@@ -857,7 +857,7 @@ export default function DashboardWalkthroughSection() {
         transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      <div className="max-w-4xl mx-auto relative">
+      <div className="max-w-4xl mx-auto relative overflow-x-hidden">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -878,7 +878,7 @@ export default function DashboardWalkthroughSection() {
         </motion.div>
 
         {/* Scene pills */}
-        <div className="flex justify-center gap-2 mb-8">
+        <div className="flex flex-wrap justify-center gap-2 mb-8">
           {labels.map((label, i) => (
             <motion.button
               key={i}

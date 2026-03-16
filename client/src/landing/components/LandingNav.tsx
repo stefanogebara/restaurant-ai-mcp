@@ -98,7 +98,7 @@ export default function LandingNav() {
       <button
         ref={toggleRef}
         type="button"
-        className="md:hidden text-deep-charcoal p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center"
+        className="md:hidden relative z-[51] text-deep-charcoal p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center"
         onClick={() => setIsMobileMenuOpen((prev) => !prev)}
         aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
         aria-expanded={isMobileMenuOpen}
