@@ -19,10 +19,13 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 )
-// Register service worker for PWA
+// Register service worker for PWA + force update check on every page load
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
+    navigator.serviceWorker.register('/sw.js').then(reg => {
+      // Check for SW updates on every page load (catches new deploys)
+      reg.update().catch(() => { /* non-critical */ });
+    }).catch(() => {
       // SW registration is non-critical
     });
   });

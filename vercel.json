@@ -1,6 +1,6 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "cd client && rm -rf dist node_modules/.vite && npm install && npm run build",
+  "buildCommand": "cd client && rm -rf dist node_modules/.vite && npm install && npm run build && sed -i \"s/seatable-v2/seatable-$(date +%s)/\" dist/sw.js",
   "outputDirectory": "client/dist",
   "build": {
     "env": {
