@@ -133,7 +133,7 @@ export default function VoiceSettingsPage() {
     const onCallComplete = () => {
       completedCalls++;
       if (completedCalls >= expectedCalls) {
-        toast.success('Voice settings saved successfully');
+        toast.success(t('voice.settingsSaved', 'Voice settings saved successfully'));
         setPendingVoiceId(null);
         setPendingSettings(null);
         setPendingLanguage(null);

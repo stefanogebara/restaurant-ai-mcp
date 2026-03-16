@@ -100,9 +100,9 @@ export default function ActivePartiesPanel({
 
 // ---- Internal row ----
 
-function formatTimestamp(ts: string): string {
+function formatTimestamp(ts: string, locale = 'en-US'): string {
   if (!ts) return '--:--';
-  return new Date(ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  return new Date(ts).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 }
 
 interface PartyRowProps {
@@ -114,7 +114,7 @@ interface PartyRowProps {
 }
 
 function PartyRow({ party, billValue, onBillChange, onComplete }: PartyRowProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isOverdue = party.is_overdue;
 
   return (
@@ -134,7 +134,7 @@ function PartyRow({ party, billValue, onBillChange, onComplete }: PartyRowProps)
           </div>
         </div>
         <span className="text-xs font-medium text-stone-gray flex-shrink-0 ml-2">
-          {formatTimestamp(party.seated_at)}
+          {formatTimestamp(party.seated_at, i18n.language)}
         </span>
       </div>
 

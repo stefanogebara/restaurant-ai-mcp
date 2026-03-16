@@ -134,7 +134,7 @@ export default function CallTrackingDashboard() {
                 type="button"
                 onClick={() => {
                   if (!conversations.length) return;
-                  const headers = ['Date', 'Caller', 'Duration', 'Outcome', 'Language'];
+                  const headers = [t('common.date', 'Date'), t('callTracking.caller', 'Caller'), t('callTracking.duration', 'Duration'), t('callTracking.outcome', 'Outcome'), t('common.language', 'Language')];
                   const rows = conversations.map((c: Record<string, unknown>) => [
                     c.created_at ? new Date(c.created_at as string).toLocaleString() : '',
                     (c.caller_number as string) || '',

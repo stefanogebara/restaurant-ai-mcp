@@ -9,6 +9,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TrendingDown, TrendingUp, Minus, BarChart3, RefreshCw } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -83,6 +84,7 @@ function MetricCard({
   target: number;
   timeline: { date?: string; week?: string; rate?: number; avg_per_cover?: number | null }[];
 }) {
+  const { t } = useTranslation();
   const good = value !== null && (metric.lowerIsBetter ? value <= target : value >= target);
   const bad = value !== null && !good;
 
@@ -142,7 +144,7 @@ function MetricCard({
         </div>
       ) : (
         <div className="h-14 mt-2 flex items-center justify-center">
-          <span className="text-xs text-muted-stone">Not enough data yet</span>
+          <span className="text-xs text-muted-stone">{t('strategy.notEnoughData', 'Not enough data yet')}</span>
         </div>
       )}
     </div>
@@ -150,6 +152,7 @@ function MetricCard({
 }
 
 export default function StrategyMetricsWidget() {
+  const { t } = useTranslation();
   const [range, setRange] = useState(30);
   const { data, isLoading, refetch, isFetching } = useStrategyMetrics(range);
 
@@ -162,8 +165,8 @@ export default function StrategyMetricsWidget() {
             <BarChart3 className="w-4.5 h-4.5 text-deep-charcoal" />
           </div>
           <div>
-            <h3 className="font-semibold text-deep-charcoal text-sm">Strategy Scorecard</h3>
-            <p className="text-xs text-muted-stone mt-0.5">Is the strategy loop working?</p>
+            <h3 className="font-semibold text-deep-charcoal text-sm">{t('strategy.scorecard', 'Strategy Scorecard')}</h3>
+            <p className="text-xs text-muted-stone mt-0.5">{t('strategy.scorecardSub', 'Is the strategy loop working?')}</p>
           </div>
         </div>
 
@@ -173,10 +176,10 @@ export default function StrategyMetricsWidget() {
             onChange={e => setRange(Number(e.target.value))}
             className="text-xs text-deep-charcoal bg-warm-white border border-border-gray rounded-lg px-2 py-1.5 cursor-pointer focus:outline-none"
           >
-            <option value={7}>7 days</option>
-            <option value={30}>30 days</option>
-            <option value={60}>60 days</option>
-            <option value={90}>90 days</option>
+            <option value={7}>{t('common.nDays', '{{count}} days', { count: 7 })}</option>
+            <option value={30}>{t('common.nDays', '{{count}} days', { count: 30 })}</option>
+            <option value={60}>{t('common.nDays', '{{count}} days', { count: 60 })}</option>
+            <option value={90}>{t('common.nDays', '{{count}} days', { count: 90 })}</option>
           </select>
           <button
             onClick={() => refetch()}
@@ -193,7 +196,7 @@ export default function StrategyMetricsWidget() {
           <Spinner />
         </div>
       ) : !data ? (
-        <p className="text-sm text-muted-stone text-center py-8">Failed to load metrics</p>
+        <p className="text-sm text-muted-stone text-center py-8">{t('strategy.loadFailed', 'Failed to load metrics')}</p>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -210,7 +213,7 @@ export default function StrategyMetricsWidget() {
 
           {data.summary.total_reservations === 0 ? (
             <p className="text-xs text-muted-stone text-center mt-4">
-              No reservations in this period yet — metrics will appear as data comes in
+              {t('strategy.noReservations', 'No reservations in this period yet — metrics will appear as data comes in')}
             </p>
           ) : (
             <p className="text-xs text-muted-stone mt-4">

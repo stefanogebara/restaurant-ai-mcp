@@ -141,7 +141,7 @@ export default function RestaurantSettingsPage() {
             <Field label={t('settings.email', 'Email')} value={info.email} onChange={(v) => setInfo({ ...info, email: v })} type="email" />
             <Field label={t('settings.city', 'City')} value={info.city} onChange={(v) => setInfo({ ...info, city: v })} />
             <Field label={t('settings.country', 'Country')} value={info.country} onChange={(v) => setInfo({ ...info, country: v })} />
-            <TimezoneSelect label={t('settings.timezone', 'Timezone')} value={info.timezone} onChange={(v) => setInfo({ ...info, timezone: v })} />
+            <TimezoneSelect label={t('settings.timezone', 'Timezone')} value={info.timezone} onChange={(v) => setInfo({ ...info, timezone: v })} selectPlaceholder={t('common.select', '— Select —')} />
           </div>
 
           <div className="flex justify-end pt-2">
@@ -335,7 +335,7 @@ const COMMON_TIMEZONES = [
   'Australia/Sydney', 'Pacific/Auckland',
 ];
 
-function TimezoneSelect({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function TimezoneSelect({ label, value, onChange, selectPlaceholder = '— Select —' }: { label: string; value: string; onChange: (v: string) => void; selectPlaceholder?: string }) {
   return (
     <div>
       <label className="block text-xs font-medium text-muted-stone mb-1">{label}</label>
@@ -344,7 +344,7 @@ function TimezoneSelect({ label, value, onChange }: { label: string; value: stri
         onChange={(e) => onChange(e.target.value)}
         className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
       >
-        <option value="">— Select —</option>
+        <option value="">{selectPlaceholder}</option>
         {COMMON_TIMEZONES.map((tz) => (
           <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
         ))}

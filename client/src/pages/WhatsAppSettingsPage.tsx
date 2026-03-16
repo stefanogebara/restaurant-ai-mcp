@@ -71,8 +71,7 @@ function WhatsAppTemplateStatusPanel() {
           <p className="font-medium mb-1">{t('settings.envMissing')}</p>
           <p>{data.message}</p>
           <p className="mt-2 text-xs text-amber-700">
-            Add <code className="bg-amber-100 px-1 rounded">WHATSAPP_WABA_ID</code> to your Vercel project settings,
-            then redeploy.
+            {t('whatsapp.contactSupport', 'Please contact support to complete your WhatsApp setup.')}
           </p>
         </div>
       )}
@@ -92,7 +91,7 @@ function WhatsAppTemplateStatusPanel() {
                 </div>
                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${badgeClass}`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${dotClass}`} />
-                  {status.replace(/_/g, ' ')}
+                  {t(`whatsapp.status.${status}`, status.replace(/_/g, ' ').toLowerCase())}
                 </span>
               </div>
             );

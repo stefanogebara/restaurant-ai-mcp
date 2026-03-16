@@ -12,6 +12,7 @@
 
 import { useState } from 'react';
 import { BookOpen, Sparkles, Save, Clock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAIStrategy, useSaveAIStrategy, useGenerateStrategySuggestions } from '../../hooks/useAIStrategy';
 import { useToast } from '../../contexts/ToastContext';
 import Spinner from '../common/Spinner';
@@ -35,6 +36,7 @@ GOALS:
 - Increase average revenue per cover`;
 
 export default function AIStrategyPanel() {
+  const { t, i18n } = useTranslation();
   const toast = useToast();
   const { data, isLoading } = useAIStrategy();
   const saveMutation = useSaveAIStrategy();
@@ -52,9 +54,9 @@ export default function AIStrategyPanel() {
     try {
       await saveMutation.mutateAsync(currentDoc);
       setDoc(null); // reset dirty state
-      toast.success('Strategy saved — AI agents will use this on their next run');
+      toast.success(t('strategy.saved', 'Strategy saved — AI agents will use this on their next run'));
     } catch {
-      toast.error('Failed to save strategy');
+      toast.error(t('strategy.saveFailed', 'Failed to save strategy'));
     }
   }
 
@@ -63,7 +65,7 @@ export default function AIStrategyPanel() {
       const result = await suggestMutation.mutateAsync();
       setSuggestions(result);
     } catch {
-      toast.error('Failed to generate suggestions');
+      toast.error(t('strategy.suggestFailed', 'Failed to generate suggestions'));
     }
   }
 
@@ -74,11 +76,11 @@ export default function AIStrategyPanel() {
       : suggestions;
     setDoc(newDoc);
     setSuggestions(null);
-    toast.info('Suggestions added to your strategy — review and save when ready');
+    toast.info(t('strategy.suggestionsAdded', 'Suggestions added to your strategy — review and save when ready'));
   }
 
   const updatedAt = data?.updated_at
-    ? new Date(data.updated_at).toLocaleDateString('en-GB', {
+    ? new Date(data.updated_at).toLocaleDateString(i18n.language, {
         day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
       })
     : null;
@@ -92,16 +94,16 @@ export default function AIStrategyPanel() {
             <BookOpen className="w-4.5 h-4.5 text-burgundy" />
           </div>
           <div>
-            <h3 className="font-semibold text-deep-charcoal text-sm">AI Strategy Document</h3>
+            <h3 className="font-semibold text-deep-charcoal text-sm">{t('strategy.title', 'AI Strategy Document')}</h3>
             <p className="text-xs text-muted-stone mt-0.5">
-              Your instructions to the AI — applied by Manager AI &amp; Voice Agent
+              {t('strategy.subtitle', 'Your instructions to the AI — applied by Manager AI & Voice Agent')}
             </p>
           </div>
         </div>
         {updatedAt && (
           <div className="flex items-center gap-1 text-xs text-muted-stone">
             <Clock className="w-3.5 h-3.5" />
-            <span>Saved {updatedAt}</span>
+            <span>{t('strategy.savedAt', 'Saved {{date}}', { date: updatedAt })}</span>
           </div>
         )}
       </div>
@@ -110,7 +112,7 @@ export default function AIStrategyPanel() {
       <div className="flex items-center gap-1.5 text-xs text-burgundy bg-burgundy/5 border border-burgundy/15 rounded-lg px-3 py-2 mb-4">
         <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
         <span>
-          The AI reads this every night — suggest it updates, then you edit and save. Repeat.
+          {t('strategy.howItWorks', 'The AI reads this every night — suggest it updates, then you edit and save. Repeat.')}
         </span>
       </div>
 
@@ -134,13 +136,13 @@ export default function AIStrategyPanel() {
         <div className="mt-4 p-4 bg-burgundy/5 border border-burgundy/20 rounded-xl">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-burgundy uppercase tracking-wide">
-              AI Strategy Suggestions
+              {t('strategy.suggestions', 'AI Strategy Suggestions')}
             </span>
             <button
               onClick={() => setSuggestions(null)}
               className="text-xs text-muted-stone hover:text-deep-charcoal cursor-pointer"
             >
-              Dismiss
+              {t('common.dismiss', 'Dismiss')}
             </button>
           </div>
           <pre className="text-sm text-deep-charcoal whitespace-pre-wrap font-sans leading-relaxed">
@@ -150,7 +152,7 @@ export default function AIStrategyPanel() {
             onClick={handleApplySuggestions}
             className="mt-3 text-xs font-medium text-burgundy hover:text-burgundy-dark cursor-pointer underline underline-offset-2"
           >
-            Add to strategy document
+            {t('strategy.addToDoc', 'Add to strategy document')}
           </button>
         </div>
       )}
@@ -167,7 +169,7 @@ export default function AIStrategyPanel() {
           ) : (
             <Save className="w-3.5 h-3.5" />
           )}
-          Save &amp; Apply
+          {t('strategy.saveApply', 'Save & Apply')}
         </button>
 
         <button
@@ -180,7 +182,7 @@ export default function AIStrategyPanel() {
           ) : (
             <Sparkles className="w-3.5 h-3.5" />
           )}
-          Generate from your data
+          {t('strategy.generate', 'Generate from your data')}
         </button>
 
         {isDirty && (
@@ -188,14 +190,14 @@ export default function AIStrategyPanel() {
             onClick={() => setDoc(null)}
             className="text-sm text-muted-stone hover:text-deep-charcoal cursor-pointer"
           >
-            Discard
+            {t('common.discard', 'Discard')}
           </button>
         )}
       </div>
 
       {/* Info footer */}
       <p className="text-xs text-muted-stone mt-4 leading-relaxed">
-        Write in plain English — what you want the AI to prioritise, how to position your restaurant, what promotions to mention. The AI applies this context every time it speaks with guests or advises you.
+        {t('strategy.footer', 'Write what you want the AI to prioritise, how to position your restaurant, what promotions to mention. The AI applies this context every time it speaks with guests or advises you.')}
       </p>
     </div>
   );

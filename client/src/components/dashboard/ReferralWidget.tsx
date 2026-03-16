@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
 import { SETTINGS_STALE_TIME } from '../../config/constants';
 import ThiingsIcon from '../common/ThiingsIcon';
@@ -16,6 +17,7 @@ interface ReferralData {
 }
 
 export default function ReferralWidget() {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -30,11 +32,11 @@ export default function ReferralWidget() {
   const { referral_url, stats } = data;
 
   const whatsappText = encodeURIComponent(
-    `I use Seatable – the AI that manages restaurant reservations. Try it free: ${referral_url}`
+    t('referral.whatsappText', 'I use Seatable – the AI that manages restaurant reservations. Try it free: {{url}}', { url: referral_url })
   );
-  const emailSubject = encodeURIComponent('Try Seatable – AI reservations for restaurants');
+  const emailSubject = encodeURIComponent(t('referral.emailSubject', 'Try Seatable – AI reservations for restaurants'));
   const emailBody = encodeURIComponent(
-    `Hey,\n\nI use Seatable – it handles restaurant reservations with AI. Thought you might find it useful.\n\nTry it free here: ${referral_url}\n\nCheers`
+    t('referral.emailBody', 'Hey,\n\nI use Seatable – it handles restaurant reservations with AI. Thought you might find it useful.\n\nTry it free here: {{url}}\n\nCheers', { url: referral_url })
   );
 
   const handleCopy = async () => {
@@ -58,10 +60,10 @@ export default function ReferralWidget() {
       >
         <div className="flex items-center gap-2.5">
           <ThiingsIcon name="users" pxSize={16} className="text-burgundy flex-shrink-0" />
-          <span className="text-sm font-medium text-deep-charcoal">Refer &amp; Earn</span>
+          <span className="text-sm font-medium text-deep-charcoal">{t('referral.title', 'Refer & Earn')}</span>
           {stats.total > 0 && (
             <span className="text-xs text-stone-gray">
-              {stats.total} referral{stats.total !== 1 ? 's' : ''}
+              {t('referral.count', '{{count}} referral', { count: stats.total })}
             </span>
           )}
         </div>
@@ -74,7 +76,7 @@ export default function ReferralWidget() {
           {/* Referral URL + Copy */}
           <div className="mt-4">
             <p className="text-xs text-muted-stone mb-2 font-medium tracking-wide uppercase">
-              Your referral link
+              {t('referral.yourLink', 'Your referral link')}
             </p>
             <div className="flex items-center gap-2">
               <div className="flex-1 min-w-0 bg-soft-gray border border-border-gray rounded-xl px-3 py-2">
@@ -89,7 +91,7 @@ export default function ReferralWidget() {
                     : 'bg-white border border-border-gray text-deep-charcoal hover:border-muted-stone'
                 }`}
               >
-                {copied ? 'Copied!' : 'Copy'}
+                {copied ? t('common.copied', 'Copied!') : t('common.copy', 'Copy')}
               </button>
             </div>
           </div>
@@ -97,10 +99,10 @@ export default function ReferralWidget() {
           {/* Stats badges */}
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-              <span className="font-bold">{stats.pending}</span> pending
+              <span className="font-bold">{stats.pending}</span> {t('referral.pending', 'pending')}
             </span>
             <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-green-50 text-green-700 border border-green-200">
-              <span className="font-bold">{stats.converted}</span> converted
+              <span className="font-bold">{stats.converted}</span> {t('referral.converted', 'converted')}
             </span>
           </div>
 
