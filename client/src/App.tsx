@@ -46,6 +46,7 @@ const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
 const RestaurantSettingsPage = lazy(() => import('./pages/RestaurantSettingsPage'));
 const ManagerAIChatPage = lazy(() => import('./pages/ManagerAIChatPage'));
+const Prototype = lazy(() => import('./pages/Prototype'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -115,6 +116,7 @@ function App() {
               <Route path="/" element={<ErrorBoundary fallback={<RouteErrorFallback />}><LandingPage /></ErrorBoundary>} />
               <Route path="/login" element={<Login />} />
               <Route path="/live-demo" element={<LiveAIDemo />} />
+              <Route path="/prototype" element={<Prototype />} />
               <Route path="/demo/setup" element={<DemoSetupPage />} />
               <Route path="/demo" element={<DemoDashboard />} />
               <Route path="/demo/:token" element={<DemoDashboard />} />

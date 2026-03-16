@@ -6,9 +6,9 @@ import { LS_REFERRAL_CODE } from '../../config/localStorageKeys';
 import LandingNav from '../components/LandingNav';
 import HeroSection from '../components/HeroSection';
 import PresetDemoSection from '../components/PresetDemoSection';
-import VoiceWidgetSection from '../components/VoiceWidgetSection';
 import WhatsAppWidgetSection from '../components/WhatsAppWidgetSection';
-import VideoShowcaseSection from '../components/VideoShowcaseSection';
+import BeforeAfterSection from '../components/BeforeAfterSection';
+import DashboardWalkthroughSection from '../components/DashboardWalkthroughSection';
 import PricingSection from '../components/PricingSection';
 import Footer from '../components/Footer';
 
@@ -72,14 +72,14 @@ export default function LandingPage() {
       {/* 2. Try it — 3 preset restaurant demos, zero friction */}
       <PresetDemoSection />
 
-      {/* 3. Call our AI — ElevenLabs voice widget embedded */}
-      <VoiceWidgetSection />
-
-      {/* 4. Text our AI — WhatsApp widget with real number */}
+      {/* 3. Text our AI — WhatsApp widget with real number */}
       <WhatsAppWidgetSection />
 
-      {/* 5. See it in action — video showcase (real videos when available) */}
-      <VideoShowcaseSection />
+      {/* 5. Before/After — animated side-by-side visual demo */}
+      <BeforeAfterSection />
+
+      {/* 6. Dashboard Walkthrough — animated "silent movie" of AI features */}
+      <DashboardWalkthroughSection />
 
       {/* 6. Pricing */}
       <PricingSection />

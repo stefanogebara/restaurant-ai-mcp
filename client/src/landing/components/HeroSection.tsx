@@ -2,7 +2,8 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { trackCtaClicked, trackHeadlineVariantViewed } from '../../lib/analytics';
 import HeroSplitScreen from './HeroSplitScreen';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 
 const HEADLINES: Record<string, { key: string; fallback: string }> = {
   a: { key: 'landing.hero.headlineA', fallback: 'Last night at 2 AM, someone booked a table at your restaurant.' },
@@ -10,8 +11,64 @@ const HEADLINES: Record<string, { key: string; fallback: string }> = {
   c: { key: 'landing.hero.headlineC', fallback: 'Your restaurant never sleeps.' },
 };
 
+// ─── TypeFx — cycling typewriter text ───────────────────────────
+function TypeFx({ words, className = '' }: { words: string[]; className?: string }) {
+  const [index, setIndex] = useState(0);
+  const [displayed, setDisplayed] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const word = words[index];
+    const speed = isDeleting ? 35 : 60;
+    const holdTime = 2200;
+
+    if (!isDeleting && displayed === word) {
+      const timeout = setTimeout(() => setIsDeleting(true), holdTime);
+      return () => clearTimeout(timeout);
+    }
+
+    if (isDeleting && displayed === '') {
+      setIsDeleting(false);
+      setIndex((index + 1) % words.length);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setDisplayed(
+        isDeleting ? word.slice(0, displayed.length - 1) : word.slice(0, displayed.length + 1)
+      );
+    }, speed);
+
+    return () => clearTimeout(timeout);
+  }, [displayed, isDeleting, index, words]);
+
+  return (
+    <span className={className}>
+      {displayed}
+      <motion.span
+        animate={{ opacity: [1, 0, 1] }}
+        transition={{ duration: 0.8, repeat: Infinity }}
+        className="inline-block w-[3px] h-[0.85em] bg-burgundy ml-0.5 align-middle"
+      />
+    </span>
+  );
+}
+
+// ─── Cycling words per language ─────────────────────────────────
+const TYPING_WORDS: Record<string, string[]> = {
+  en: ['a reservation.', 'a WhatsApp message.', 'a phone call.', 'a walk-in question.'],
+  pt: ['uma reserva.', 'uma mensagem no WhatsApp.', 'uma ligacao.', 'uma pergunta de walk-in.'],
+  es: ['una reserva.', 'un mensaje de WhatsApp.', 'una llamada.', 'una pregunta de walk-in.'],
+};
+
+function getTypingWords(lang: string): string[] {
+  if (lang.startsWith('pt')) return TYPING_WORDS.pt;
+  if (lang.startsWith('es')) return TYPING_WORDS.es;
+  return TYPING_WORDS.en;
+}
+
 export default function HeroSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [params] = useSearchParams();
 
   // A/B headline via ?headline=a|b|c (default: a)
@@ -28,6 +85,8 @@ export default function HeroSection() {
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const typingWords = getTypingWords(i18n.language);
+
   return (
     <section
       className="pt-24 pb-16 px-6 sm:px-16 max-w-[1200px] mx-auto text-center"
@@ -43,12 +102,15 @@ export default function HeroSection() {
         {t(headline.key, headline.fallback)}
       </h1>
 
-      {/* AI answered line (only for variant a) */}
-      {variant === 'a' && (
-        <p className="font-serif text-3xl sm:text-4xl lg:text-[48px] font-medium leading-[1.1] tracking-tight text-burgundy mb-7">
-          {t('landing.hero.headlineA2', 'Your AI answered.')}
+      {/* AI answered line with TypeFx (variant a) or static (b/c) */}
+      {variant === 'a' ? (
+        <p className="font-serif text-3xl sm:text-4xl lg:text-[48px] font-medium leading-[1.1] tracking-tight mb-7 max-w-[800px] mx-auto">
+          <span className="text-deep-charcoal">
+            {t('landing.hero.typingPrefix', 'Your AI answered')}{' '}
+          </span>
+          <TypeFx words={typingWords} className="text-burgundy" />
         </p>
-      )}
+      ) : null}
 
       {/* Subtitle */}
       <p className="text-lg text-warm-stone font-light leading-[1.7] max-w-[600px] mx-auto mb-10">
