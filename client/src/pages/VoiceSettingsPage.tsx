@@ -31,6 +31,7 @@ import VoiceFilters from '../components/voice/VoiceFilters';
 import VoiceGrid from '../components/voice/VoiceGrid';
 import Spinner from '../components/common/Spinner';
 import VoicePersonaPanel from '../components/dashboard/VoicePersonaPanel';
+// VoiceExperimentPanel removed — non-functional (K-1)
 import EmbedSnippetPanel from '../components/dashboard/EmbedSnippetPanel';
 import PhoneIntegrationPanel from '../components/voice/PhoneIntegrationPanel';
 import AIStrategyPanel from '../components/dashboard/AIStrategyPanel';
@@ -361,6 +362,7 @@ export default function VoiceSettingsPage() {
           )}
           <PhoneIntegrationPanel />
           <VoicePersonaPanel />
+          {/* VoiceExperimentPanel removed — buttons were non-functional (K-1) */}
           <StrategyMetricsWidget />
           <AIStrategyPanel />
           {slug && <EmbedSnippetPanel slug={slug} />}

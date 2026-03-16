@@ -132,7 +132,29 @@ export default function CallTrackingDashboard() {
               </button>
               <button
                 type="button"
-                className="px-4 py-2 bg-white border border-border-gray text-stone-gray hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors"
+                onClick={() => {
+                  if (!conversations.length) return;
+                  const headers = ['Date', 'Caller', 'Duration', 'Outcome', 'Language'];
+                  const rows = conversations.map((c: Record<string, unknown>) => [
+                    c.created_at ? new Date(c.created_at as string).toLocaleString() : '',
+                    (c.caller_number as string) || '',
+                    (c.duration as string) || '',
+                    (c.outcome as string) || '',
+                    (c.language as string) || '',
+                  ]);
+                  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+                  const blob = new Blob([csv], { type: 'text/csv' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `calls-${new Date().toISOString().slice(0, 10)}.csv`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                disabled={!conversations.length}
+                className={`px-4 py-2 bg-white border border-border-gray rounded-xl text-[13px] font-medium transition-colors ${
+                  conversations.length ? 'text-stone-gray hover:border-muted-stone' : 'text-muted-stone cursor-not-allowed'
+                }`}
               >
                 {t('common.export')}
               </button>

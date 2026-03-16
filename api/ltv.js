@@ -28,8 +28,22 @@ function ltvDb() {
 async function handleCalculateAll(req, res) {
   try {
     const restaurantId = req.user.restaurant_id;
-    const AVG_REVENUE_PER_COVER = 45;
     const now = new Date();
+
+    // Use actual avg revenue per cover from service_records, fall back to 40
+    let AVG_REVENUE_PER_COVER = 40;
+    const { data: serviceData } = await supabaseAdmin
+      .from('service_records')
+      .select('total_bill, party_size')
+      .eq('restaurant_id', restaurantId)
+      .not('total_bill', 'is', null)
+      .gt('total_bill', 0)
+      .limit(200);
+    if (serviceData && serviceData.length >= 5) {
+      const totalBill = serviceData.reduce((s, r) => s + (r.total_bill || 0), 0);
+      const totalCovers = serviceData.reduce((s, r) => s + (r.party_size || 2), 0);
+      AVG_REVENUE_PER_COVER = Math.round(totalBill / totalCovers);
+    }
 
     const { data: reservations, error: resError } = await supabaseAdmin
       .from('reservations')

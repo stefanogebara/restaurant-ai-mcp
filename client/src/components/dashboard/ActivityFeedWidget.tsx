@@ -40,7 +40,17 @@ export default function ActivityFeedWidget() {
     );
   }
 
-  if (!events || events.length === 0) return null;
+  if (!events || events.length === 0) {
+    return (
+      <div className="bg-white border border-border-gray rounded-2xl p-6">
+        <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider flex items-center gap-2 mb-3">
+          <ThiingsIcon name="activity" pxSize={14} className="text-muted-stone" />
+          {t('dashboard.activityFeed', 'Recent Activity')}
+        </h2>
+        <p className="text-sm text-muted-stone">{t('dashboard.noActivity', 'No recent activity yet')}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white border border-border-gray rounded-2xl p-6 space-y-4">

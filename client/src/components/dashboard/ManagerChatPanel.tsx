@@ -108,7 +108,7 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
 
       {sendMutation.isError && (
         <div className="px-4 py-2 text-xs text-red-500 bg-red-50 border-t border-red-100">
-          Failed to send. Please try again.
+          {t('manager.sendFailed', 'Failed to send. Please try again.')}
         </div>
       )}
 

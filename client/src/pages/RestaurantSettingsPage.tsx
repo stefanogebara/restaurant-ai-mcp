@@ -141,7 +141,7 @@ export default function RestaurantSettingsPage() {
             <Field label={t('settings.email', 'Email')} value={info.email} onChange={(v) => setInfo({ ...info, email: v })} type="email" />
             <Field label={t('settings.city', 'City')} value={info.city} onChange={(v) => setInfo({ ...info, city: v })} />
             <Field label={t('settings.country', 'Country')} value={info.country} onChange={(v) => setInfo({ ...info, country: v })} />
-            <Field label={t('settings.timezone', 'Timezone')} value={info.timezone} onChange={(v) => setInfo({ ...info, timezone: v })} placeholder="America/Sao_Paulo" />
+            <TimezoneSelect label={t('settings.timezone', 'Timezone')} value={info.timezone} onChange={(v) => setInfo({ ...info, timezone: v })} />
           </div>
 
           <div className="flex justify-end pt-2">
@@ -322,6 +322,33 @@ function Field({
         placeholder={placeholder}
         className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
       />
+    </div>
+  );
+}
+
+const COMMON_TIMEZONES = [
+  'America/Sao_Paulo', 'America/New_York', 'America/Chicago', 'America/Denver',
+  'America/Los_Angeles', 'America/Mexico_City', 'America/Buenos_Aires', 'America/Bogota',
+  'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Madrid', 'Europe/Rome',
+  'Europe/Lisbon', 'Europe/Amsterdam', 'Europe/Zurich', 'Europe/Vienna',
+  'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Dubai', 'Asia/Singapore', 'Asia/Kolkata',
+  'Australia/Sydney', 'Pacific/Auckland',
+];
+
+function TimezoneSelect({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-muted-stone mb-1">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3 py-2 bg-soft-gray border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
+      >
+        <option value="">— Select —</option>
+        {COMMON_TIMEZONES.map((tz) => (
+          <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
+        ))}
+      </select>
     </div>
   );
 }

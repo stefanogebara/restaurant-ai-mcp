@@ -24,7 +24,10 @@ export default function TableLayoutPanel({
   isLoading,
 }: TableLayoutPanelProps) {
   const { t } = useTranslation();
-  const [viewMode, setViewMode] = useState<'grid' | 'floorplan'>('floorplan');
+  const [viewMode, setViewMode] = useState<'grid' | 'floorplan'>(() => {
+    const saved = localStorage.getItem('seatable_table_view_mode');
+    return saved === 'grid' ? 'grid' : 'floorplan';
+  });
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
 
   const freeTable = useMutation({
@@ -89,7 +92,7 @@ export default function TableLayoutPanel({
           {/* View Mode Toggle */}
           <div className="flex items-center bg-soft-gray rounded-lg p-0.5">
             <button
-              onClick={() => setViewMode('floorplan')}
+              onClick={() => { setViewMode('floorplan'); localStorage.setItem('seatable_table_view_mode', 'floorplan'); }}
               aria-label="Floor Plan View"
               className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
                 viewMode === 'floorplan'
@@ -100,7 +103,7 @@ export default function TableLayoutPanel({
               <ThiingsIcon name="map" pxSize={16} />
             </button>
             <button
-              onClick={() => setViewMode('grid')}
+              onClick={() => { setViewMode('grid'); localStorage.setItem('seatable_table_view_mode', 'grid'); }}
               aria-label="Grid View"
               className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
                 viewMode === 'grid'

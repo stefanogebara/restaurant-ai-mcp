@@ -19,11 +19,11 @@ export default function ActivePartiesPanel({
   const { t } = useTranslation();
   const [billInputs, setBillInputs] = useState<Record<string, string>>({});
 
-  // Tick every 60s to keep elapsed timers live
+  // Tick every 15s to keep elapsed timers live
   const [, setTick] = useState(0);
   useEffect(() => {
     if (parties.length === 0) return;
-    const id = setInterval(() => setTick((n) => n + 1), 60000);
+    const id = setInterval(() => setTick((n) => n + 1), 15000);
     return () => clearInterval(id);
   }, [parties.length]);
   if (isLoading) {

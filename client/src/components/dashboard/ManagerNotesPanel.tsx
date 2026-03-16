@@ -11,11 +11,7 @@ import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useManagerNotes, useAddManagerNote, useDeleteManagerNote } from '../../hooks/useManagerNotes';
 
-interface ManagerNotesPanelProps {
-  language?: 'en' | 'es';
-}
-
-export default function ManagerNotesPanel({ language: _language }: ManagerNotesPanelProps) {
+export default function ManagerNotesPanel() {
   const { t } = useTranslation();
 
   const { data: notes = [], isLoading } = useManagerNotes();

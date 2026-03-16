@@ -17,7 +17,16 @@ export default function RevenueStatsWidget() {
     );
   }
 
-  if (!stats || !forecast || forecast.length === 0) return null;
+  if (!stats || !forecast || forecast.length === 0) {
+    return (
+      <div className="bg-white border border-border-gray rounded-2xl p-6">
+        <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">
+          {t('dashboard.revenueForecast')}
+        </h2>
+        <p className="text-sm text-warm-stone mt-3">{t('dashboard.revenueNoData', 'Revenue forecast will appear once you have reservations and service data.')}</p>
+      </div>
+    );
+  }
 
   const days = forecast.slice(0, 7);
   const totalProjected = days.reduce((s, d) => s + d.expected_covers * stats.avg_spend_per_cover, 0);

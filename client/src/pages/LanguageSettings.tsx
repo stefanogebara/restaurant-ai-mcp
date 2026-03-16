@@ -43,8 +43,6 @@ export default function LanguageSettings() {
               <LanguageSelector
                 variant="buttons"
                 size="lg"
-                onLanguageChange={(_lang) => {
-                }}
               />
             </div>
 
@@ -54,11 +52,9 @@ export default function LanguageSettings() {
                 <ThiingsIcon name="info" pxSize={20} className="text-burgundy mt-0.5" />
               </div>
               <div className="text-sm text-stone-gray">
-                <p className="font-medium mb-1 text-deep-charcoal">Language preferences</p>
+                <p className="font-medium mb-1 text-deep-charcoal">{t('settings.languagePreferencesTitle')}</p>
                 <p>
-                  Your language selection will be applied to the entire dashboard,
-                  all customer communications, and AI interactions. This change takes
-                  effect immediately and is saved automatically.
+                  {t('settings.languagePreferencesDesc')}
                 </p>
               </div>
             </div>
@@ -80,7 +76,7 @@ export default function LanguageSettings() {
               </h3>
             </div>
             <p className="text-sm text-stone-gray">
-              Return to your main dashboard
+              {t('settings.returnToDashboard')}
             </p>
           </button>
 
@@ -97,7 +93,7 @@ export default function LanguageSettings() {
               </h3>
             </div>
             <p className="text-sm text-stone-gray">
-              Manage your subscription and settings
+              {t('settings.manageSubscription')}
             </p>
           </button>
         </div>

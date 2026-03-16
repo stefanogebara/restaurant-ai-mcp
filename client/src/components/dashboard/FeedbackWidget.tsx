@@ -2,6 +2,7 @@
  * FeedbackWidget — shows avg NPS, response rate, and recent comments.
  * Placed in the dashboard left column.
  */
+import { useTranslation } from 'react-i18next';
 import { useFeedbackStats } from '../../hooks/useFeedback';
 import ThiingsIcon from '../common/ThiingsIcon';
 
@@ -14,9 +15,31 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export default function FeedbackWidget() {
+  const { t } = useTranslation();
   const { data: stats, isLoading } = useFeedbackStats('7d');
 
-  if (isLoading || !stats || stats.total === 0) return null;
+  if (isLoading) {
+    return (
+      <div className="bg-white border border-border-gray rounded-2xl p-5 animate-pulse">
+        <div className="h-4 bg-gray-100 rounded w-32 mb-4" />
+        <div className="h-16 bg-gray-100 rounded" />
+      </div>
+    );
+  }
+
+  if (!stats || stats.total === 0) {
+    return (
+      <div className="bg-white border border-border-gray rounded-2xl p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
+            <ThiingsIcon name="star" pxSize={16} className="text-amber-600" />
+          </div>
+          <h3 className="text-sm font-semibold text-deep-charcoal">Guest Feedback</h3>
+        </div>
+        <p className="text-sm text-muted-stone">No feedback collected yet. Ratings will appear here after guests respond.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white border border-border-gray rounded-2xl p-5">
@@ -24,8 +47,8 @@ export default function FeedbackWidget() {
         <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
           <ThiingsIcon name="star" pxSize={16} className="text-amber-600" />
         </div>
-        <h3 className="text-sm font-semibold text-deep-charcoal">Guest Feedback</h3>
-        <span className="text-xs text-muted-stone ml-auto">Last 7 days</span>
+        <h3 className="text-sm font-semibold text-deep-charcoal">{t('dashboard.guestFeedback', 'Guest Feedback')}</h3>
+        <span className="text-xs text-muted-stone ml-auto">{t('dashboard.last7days', 'Last 7 days')}</span>
       </div>
 
       {/* Stats row */}
@@ -34,15 +57,15 @@ export default function FeedbackWidget() {
           <p className="text-2xl font-bold text-deep-charcoal">
             {stats.avg_rating != null ? stats.avg_rating : '—'}
           </p>
-          <p className="text-xs text-muted-stone">Avg Rating</p>
+          <p className="text-xs text-muted-stone">{t('dashboard.avgRating', 'Avg Rating')}</p>
         </div>
         <div className="text-center">
           <p className="text-2xl font-bold text-deep-charcoal">{stats.response_rate}%</p>
-          <p className="text-xs text-muted-stone">Response Rate</p>
+          <p className="text-xs text-muted-stone">{t('dashboard.responseRate', 'Response Rate')}</p>
         </div>
         <div className="text-center">
           <p className="text-2xl font-bold text-deep-charcoal">{stats.answered_count}</p>
-          <p className="text-xs text-muted-stone">Responses</p>
+          <p className="text-xs text-muted-stone">{t('dashboard.responses', 'Responses')}</p>
         </div>
       </div>
 

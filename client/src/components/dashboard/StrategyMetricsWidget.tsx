@@ -20,6 +20,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { useStrategyMetrics } from '../../hooks/useStrategyMetrics';
+import { formatCurrency } from '../../utils/currency';
 import Spinner from '../common/Spinner';
 
 const METRICS = [
@@ -41,13 +42,13 @@ const METRICS = [
     label: 'Avg Revenue / Cover',
     summaryKey: 'avg_revenue_per_cover' as const,
     targetKey: 'avg_revenue_per_cover' as const,
-    unit: 'R$',
-    format: (v: number) => `R$${v}`,
+    unit: '',
+    format: (v: number) => formatCurrency(v),
     lowerIsBetter: false,
     color: '#57534E',
     dateKey: 'week' as const,
     valueKey: 'avg_per_cover' as const,
-    targetLabel: 'R$90+',
+    targetLabel: '', // filled dynamically below
   },
   {
     key: 'conversion' as const,
@@ -105,7 +106,9 @@ function MetricCard({
         <span className={`text-2xl font-semibold font-serif ${bad ? 'text-red-600' : good ? 'text-green-700' : 'text-deep-charcoal'}`}>
           {value !== null ? metric.format(value) : '—'}
         </span>
-        <span className="text-xs text-muted-stone">target {metric.targetLabel}</span>
+        <span className="text-xs text-muted-stone">
+          target {metric.key === 'revenue' ? `${formatCurrency(target)}+` : metric.targetLabel}
+        </span>
       </div>
 
       {/* Sparkline */}

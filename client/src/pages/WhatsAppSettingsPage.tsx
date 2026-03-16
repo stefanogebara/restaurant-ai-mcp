@@ -20,11 +20,11 @@ interface TemplateStatus {
   category: string;
 }
 
-const TEMPLATE_LABELS: Record<string, string> = {
-  seatable_feedback_request: 'Feedback Request',
-  seatable_reengagement: 'Re-engagement',
-  seatable_birthday: 'Birthday Greeting',
-  seatable_promotion: 'Promotion',
+const TEMPLATE_LABEL_KEYS: Record<string, string> = {
+  seatable_feedback_request: 'settings.templateFeedback',
+  seatable_reengagement: 'settings.templateReengagement',
+  seatable_birthday: 'settings.templateBirthday',
+  seatable_promotion: 'settings.templatePromotion',
 };
 
 const STATUS_STYLES: Record<string, string> = {
@@ -44,6 +44,7 @@ const STATUS_DOT: Record<string, string> = {
 };
 
 function WhatsAppTemplateStatusPanel() {
+  const { t } = useTranslation();
   const { data, isLoading } = useQuery({
     queryKey: ['whatsapp-template-status'],
     queryFn: async (): Promise<{ success: boolean; templates: TemplateStatus[]; missing_env?: boolean; message?: string }> => {
@@ -53,11 +54,11 @@ function WhatsAppTemplateStatusPanel() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const ALL_TEMPLATES = Object.keys(TEMPLATE_LABELS);
+  const ALL_TEMPLATES = Object.keys(TEMPLATE_LABEL_KEYS);
 
   return (
     <div className="bg-white border border-border-gray rounded-2xl p-6 shadow-sm">
-      <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider mb-4">Message Templates</h2>
+      <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider mb-4">{t('settings.messageTemplates')}</h2>
 
       {isLoading && (
         <div role="status" aria-label="Loading templates" className="animate-pulse space-y-3">
@@ -67,7 +68,7 @@ function WhatsAppTemplateStatusPanel() {
 
       {!isLoading && data?.missing_env && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
-          <p className="font-medium mb-1">Environment variable missing</p>
+          <p className="font-medium mb-1">{t('settings.envMissing')}</p>
           <p>{data.message}</p>
           <p className="mt-2 text-xs text-amber-700">
             Add <code className="bg-amber-100 px-1 rounded">WHATSAPP_WABA_ID</code> to your Vercel project settings,
@@ -86,7 +87,7 @@ function WhatsAppTemplateStatusPanel() {
             return (
               <div key={name} className="flex items-center justify-between py-2 border-b border-border-gray last:border-0">
                 <div>
-                  <p className="text-sm font-medium text-deep-charcoal">{TEMPLATE_LABELS[name]}</p>
+                  <p className="text-sm font-medium text-deep-charcoal">{t(TEMPLATE_LABEL_KEYS[name])}</p>
                   <p className="text-xs text-warm-stone font-mono">{name}</p>
                 </div>
                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${badgeClass}`}>
@@ -103,6 +104,7 @@ function WhatsAppTemplateStatusPanel() {
 }
 
 function PhoneVerificationPanel() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [code, setCode] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -141,7 +143,7 @@ function PhoneVerificationPanel() {
     },
     onSuccess: (data) => {
       if (data.success) {
-        setMessage({ type: 'success', text: 'Phone number verified!' });
+        setMessage({ type: 'success', text: t('settings.phoneVerified') });
         setCode('');
         qc.invalidateQueries({ queryKey: ['whatsapp-phone-status'] });
       } else {
@@ -158,7 +160,7 @@ function PhoneVerificationPanel() {
 
   return (
     <div className="bg-white border border-border-gray rounded-2xl p-6 shadow-sm">
-      <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider mb-4">Phone Verification</h2>
+      <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider mb-4">{t('settings.phoneVerification')}</h2>
 
       <div className="flex items-center justify-between mb-4">
         <div>
@@ -169,14 +171,14 @@ function PhoneVerificationPanel() {
           isVerified ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
         }`}>
           <span className={`w-1.5 h-1.5 rounded-full ${isVerified ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-          {isVerified ? 'Verified' : (phone?.code_verification_status || 'Unknown').replace(/_/g, ' ')}
+          {isVerified ? t('settings.verified') : (phone?.code_verification_status || 'Unknown').replace(/_/g, ' ')}
         </span>
       </div>
 
       {isExpired && (
         <div className="space-y-3">
           <p className="text-xs text-warm-stone">
-            Your phone verification has expired. Request a new SMS code, then enter it below.
+            {t('settings.phoneVerExpired')}
           </p>
           <button
             type="button"
@@ -184,14 +186,14 @@ function PhoneVerificationPanel() {
             disabled={requestMutation.isPending}
             className="text-xs bg-soft-gray hover:bg-border-gray text-deep-charcoal px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
           >
-            {requestMutation.isPending ? 'Sending...' : 'Send SMS Code'}
+            {requestMutation.isPending ? t('settings.sendingSms') : t('settings.sendSmsCode')}
           </button>
           <div className="flex gap-2">
             <input
               type="text"
               value={code}
               onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              placeholder="6-digit code"
+              placeholder={t('settings.sixDigitCode')}
               className="flex-1 text-sm border border-border-gray rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-burgundy"
               maxLength={6}
             />
@@ -201,7 +203,7 @@ function PhoneVerificationPanel() {
               disabled={code.length < 6 || verifyMutation.isPending}
               className="text-xs bg-burgundy text-white px-3 py-1.5 rounded-lg hover:bg-burgundy/90 transition-colors disabled:opacity-50"
             >
-              {verifyMutation.isPending ? 'Verifying...' : 'Verify'}
+              {verifyMutation.isPending ? t('settings.verifying') : t('settings.verify')}
             </button>
           </div>
         </div>
@@ -215,9 +217,9 @@ function PhoneVerificationPanel() {
 
       {!phone?.is_official_business_account && (
         <p className="text-xs text-warm-stone mt-3 pt-3 border-t border-border-gray">
-          For the green verified badge, complete{' '}
+          {t('settings.metaVerificationHint')}{' '}
           <a href="https://business.facebook.com" target="_blank" rel="noopener noreferrer" className="text-burgundy underline">
-            Meta Business Verification
+            {t('settings.metaBusinessVerification')}
           </a>.
         </p>
       )}
@@ -258,7 +260,7 @@ export default function WhatsAppSettingsPage() {
     if (!testPhone) return;
     setTestResult(null);
     testMutation.mutate(testPhone, {
-      onSuccess: () => setTestResult({ success: true, message: 'Test message sent!' }),
+      onSuccess: () => setTestResult({ success: true, message: t('settings.testMessageSent') }),
       onError: (err) => setTestResult({ success: false, message: (err as Error).message }),
     });
   };
@@ -436,7 +438,7 @@ export default function WhatsAppSettingsPage() {
               disabled={!testPhone || testMutation.isPending || !status?.api_configured}
               className={`px-5 py-2 rounded-xl text-sm font-semibold transition-colors ${
                 testPhone && status?.api_configured
-                  ? 'bg-whatsapp hover:bg-spotify text-white'
+                  ? 'bg-whatsapp hover:bg-whatsapp/80 text-white'
                   : 'bg-border-gray text-muted-stone cursor-not-allowed'
               }`}
             >

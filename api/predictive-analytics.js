@@ -214,6 +214,27 @@ async function getRevenueOpportunities(restaurantId) {
 
   const totalCapacity = tables.reduce((sum, table) => sum + table.capacity, 0);
 
+  // Fetch actual avg revenue per cover from service_records (fall back to 40 default)
+  let avgRevenuePerCover = 40;
+  let avgCoversPerReservation = 3;
+  try {
+    const { data: serviceData } = await supabaseAdmin
+      .from('service_records')
+      .select('total_bill, party_size')
+      .eq('restaurant_id', restaurantId)
+      .not('total_bill', 'is', null)
+      .gt('total_bill', 0)
+      .limit(200);
+    if (serviceData && serviceData.length >= 5) {
+      const totalBill = serviceData.reduce((s, r) => s + (r.total_bill || 0), 0);
+      const totalCovers = serviceData.reduce((s, r) => s + (r.party_size || 2), 0);
+      avgRevenuePerCover = Math.round(totalBill / totalCovers);
+      avgCoversPerReservation = Math.round(totalCovers / serviceData.length);
+    }
+  } catch (e) {
+    logger.warn('Failed to fetch service_records for revenue estimate, using default');
+  }
+
   // Calculate opportunities
   const opportunities = [];
 
@@ -223,8 +244,6 @@ async function getRevenueOpportunities(restaurantId) {
   ).length;
 
   if (cancelledOrNoShow > 0) {
-    const avgCoversPerReservation = 3; // Estimate
-    const avgRevenuePerCover = 45; // Estimate
     const potentialRevenue = cancelledOrNoShow * 0.5 * avgCoversPerReservation * avgRevenuePerCover;
 
     opportunities.push({
@@ -260,7 +279,7 @@ async function getRevenueOpportunities(restaurantId) {
   });
 
   if (offPeakHours.length > 0) {
-    const avgRevenuePerTable = 150;
+    const avgRevenuePerTable = avgRevenuePerCover * avgCoversPerReservation;
     const potentialTables = offPeakHours.length * 5; // 5 tables per off-peak hour
     const potentialRevenue = potentialTables * avgRevenuePerTable * 30; // Per month
 
@@ -287,7 +306,7 @@ async function getRevenueOpportunities(restaurantId) {
     category: 'Table Turnover',
     description: 'Improve table turnover rate during peak hours',
     current_loss: 0,
-    potential_gain: Math.round(totalCapacity * 12 * 45 * 0.2), // 20% increase potential
+    potential_gain: Math.round(totalCapacity * 12 * avgRevenuePerCover * 0.2), // 20% increase potential
     recovery_rate: '20%',
     actions: [
       'Optimize menu for faster service',
@@ -305,7 +324,7 @@ async function getRevenueOpportunities(restaurantId) {
     category: 'Revenue Per Cover',
     description: 'Increase average revenue per customer through upselling',
     current_loss: 0,
-    potential_gain: Math.round(recentReservations.length * 3 * 45 * 0.15), // 15% increase
+    potential_gain: Math.round(recentReservations.length * avgCoversPerReservation * avgRevenuePerCover * 0.15), // 15% increase
     recovery_rate: '15%',
     actions: [
       'Train staff on wine pairing suggestions',

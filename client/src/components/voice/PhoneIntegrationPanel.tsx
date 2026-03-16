@@ -207,7 +207,7 @@ export default function PhoneIntegrationPanel() {
           <div className="flex items-center gap-2">
             <input
               type="tel"
-              placeholder="+5511999998888"
+              placeholder="+1 (555) 000-0000"
               value={testNumber}
               onChange={(e) => setTestNumber(e.target.value)}
               className="flex-1 border border-border-gray rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
