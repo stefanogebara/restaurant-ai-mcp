@@ -62,8 +62,7 @@ module.exports = async (req, res) => {
       logger.error('Error fetching reservations:', error.message);
       return res.status(500).json({
         success: false,
-        error: 'Failed to fetch reservations',
-        details: error.message
+        error: 'Failed to fetch reservations'
       });
     }
 
@@ -165,8 +164,7 @@ module.exports = async (req, res) => {
     logger.error('Fatal error checking late reservations:', error.message);
     return res.status(500).json({
       success: false,
-      error: 'Internal server error',
-      message: error.message
+      error: 'Internal server error'
     });
   }
 };

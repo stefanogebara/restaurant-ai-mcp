@@ -250,16 +250,16 @@ module.exports = async (req, res) => {
     // STEP 2: Create Tables
     logger.info(' Step 2: Creating tables...');
 
-    // First, delete all existing tables (onboarding resets the restaurant)
+    // First, delete existing tables FOR THIS RESTAURANT ONLY
     const { error: deleteError } = await supabaseAdmin
       .from('tables')
       .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000');  // Delete all (using impossible UUID)
+      .eq('restaurant_id', restaurantInfoResult.id);
 
     if (deleteError) {
       logger.warn(' Warning: Could not delete existing tables:', deleteError);
     } else {
-      logger.info(' Cleared all existing tables');
+      logger.info(` Cleared existing tables for restaurant ${restaurantInfoResult.id}`);
     }
 
     // Create new tables from areas configuration

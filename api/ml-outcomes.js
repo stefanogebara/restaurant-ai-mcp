@@ -115,11 +115,17 @@ async function handleRecordOutcome(req, res) {
 
     logger.info(`\n📊 Recording outcome for ${reservation_id}: ${actual_outcome}`);
 
-    // 1. Fetch reservation with ML prediction
+    // 1. Fetch reservation with ML prediction (scoped to user's restaurant)
+    const restaurantId = req.user?.restaurant_id;
+    if (!restaurantId) {
+      return res.status(403).json({ success: false, error: 'Restaurant context required' });
+    }
+
     const { data: reservation, error: fetchError } = await supabaseAdmin
       .from('reservations')
       .select('*')
       .eq('reservation_id', reservation_id)
+      .eq('restaurant_id', restaurantId)
       .single();
 
     if (fetchError) {
@@ -141,7 +147,7 @@ async function handleRecordOutcome(req, res) {
     // 2. Calculate value saved based on outcome
     // Use actual average cover from service_records; fall back to €50 if no data yet
     let avg_revenue_per_party = 50;
-    const restaurantId = reservation.restaurant_id || req.user?.restaurant_id;
+    // restaurantId already validated above
     if (restaurantId) {
       const { data: revenueData } = await supabaseAdmin
         .from('service_records')
@@ -253,10 +259,36 @@ async function handleRecordOutcome(req, res) {
  */
 async function handleROISummary(req, res) {
   try {
-    // Fetch all intervention records
+    const restaurantId = req.user?.restaurant_id;
+    if (!restaurantId) {
+      return res.status(403).json({ success: false, error: 'Restaurant context required' });
+    }
+
+    // Pre-fetch this restaurant's reservation IDs for cross-table filtering
+    const { data: resIds } = await supabaseAdmin
+      .from('reservations')
+      .select('reservation_id')
+      .eq('restaurant_id', restaurantId);
+    const reservationIds = (resIds || []).map(r => r.reservation_id);
+
+    if (reservationIds.length === 0) {
+      return res.json({
+        success: true,
+        data: {
+          summary: { total_interventions: 0, total_cost: '0.00', total_value_saved: '0.00', total_roi: '0%', target_roi: '300-500%', meets_target: false },
+          outcomes: { showed_up: 0, no_show: 0, cancelled: 0 },
+          risk_levels: { 'very-high': 0, high: 0, medium: 0, low: 0 },
+          intervention_effectiveness: { interventions_with_action: 0, successful_interventions: 0, success_rate: '0.0%' },
+          recent_interventions: []
+        }
+      });
+    }
+
+    // Fetch intervention records scoped to this restaurant's reservations
     const { data: interventions, error } = await supabaseAdmin
       .from('ml_interventions')
       .select('*')
+      .in('reservation_id', reservationIds)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -396,11 +428,17 @@ async function handleMarkActionTaken(req, res) {
       logger.info(`   Staff: ${staff_name}`);
     }
 
-    // Fetch reservation to verify it exists and get ML data
+    // Fetch reservation scoped to user's restaurant
+    const restaurantId = req.user?.restaurant_id;
+    if (!restaurantId) {
+      return res.status(403).json({ success: false, error: 'Restaurant context required' });
+    }
+
     const { data: reservation, error: fetchError } = await supabaseAdmin
       .from('reservations')
       .select('*')
       .eq('reservation_id', reservation_id)
+      .eq('restaurant_id', restaurantId)
       .single();
 
     if (fetchError) {

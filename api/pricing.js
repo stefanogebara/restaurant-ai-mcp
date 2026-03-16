@@ -73,6 +73,7 @@ async function handleGetRules(req, res) {
     let query = supabaseAdmin
       .from('pricing_rules')
       .select('*')
+      .eq('restaurant_id', req.restaurantId)
       .order('priority', { ascending: false });
 
     // Filter by active status
@@ -158,6 +159,7 @@ async function handleCreateRule(req, res) {
       .from('pricing_rules')
       .insert({
         ...sanitizedData,
+        restaurant_id: req.restaurantId,
         is_active: sanitizedData.is_active !== undefined ? sanitizedData.is_active : true,
         priority: sanitizedData.priority || 100
       })
@@ -219,6 +221,7 @@ async function handleUpdateRule(req, res) {
       .from('pricing_rules')
       .update(sanitizedUpdates)
       .eq('id', rule_id)
+      .eq('restaurant_id', req.restaurantId)
       .select()
       .single();
 
@@ -264,7 +267,8 @@ async function handleDeleteRule(req, res) {
     const { error } = await supabaseAdmin
       .from('pricing_rules')
       .delete()
-      .eq('id', rule_id);
+      .eq('id', rule_id)
+      .eq('restaurant_id', req.restaurantId);
 
     if (error) throw error;
 
@@ -318,6 +322,7 @@ async function handleGetEvents(req, res) {
     let query = supabaseAdmin
       .from('pricing_events')
       .select('*')
+      .eq('restaurant_id', req.restaurantId)
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -371,7 +376,8 @@ async function handleGetAnalytics(req, res) {
 
     let query = supabaseAdmin
       .from('pricing_events')
-      .select('*');
+      .select('*')
+      .eq('restaurant_id', req.restaurantId);
 
     // Filter by date range
     if (start_date) {
@@ -573,7 +579,8 @@ async function handleGetStats(req, res) {
 
     let query = supabaseAdmin
       .from('pricing_events')
-      .select('*');
+      .select('*')
+      .eq('restaurant_id', req.restaurantId);
 
     // Filter by date range
     if (start_date) {
@@ -657,6 +664,12 @@ module.exports = async (req, res) => {
     return res.status(auth.status).json({ success: false, error: auth.error });
   }
 
+  // Multi-tenant: require restaurant_id from authenticated user
+  const restaurantId = req.user?.restaurant_id;
+  if (!restaurantId) {
+    return res.status(403).json({ success: false, error: 'Restaurant context required' });
+  }
+
   const { action } = req.query;
 
   if (!action) {
@@ -676,6 +689,9 @@ module.exports = async (req, res) => {
       ]
     });
   }
+
+  // Inject restaurantId into req for handler access
+  req.restaurantId = restaurantId;
 
   try {
     switch (action) {

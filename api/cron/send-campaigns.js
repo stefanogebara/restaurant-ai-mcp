@@ -17,8 +17,13 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    logger.error('CRON_SECRET not configured - denying request');
+    return res.status(500).json({ success: false, error: 'Cron not configured' });
+  }
   const authHeader = req.headers.authorization;
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return res.status(401).json({ error: 'Authentication required' });
   }
 

@@ -59,7 +59,7 @@ module.exports = async (req, res) => {
       return res.status(500).json({
         success: false,
         error: 'Failed to fetch expired demos',
-        details: fetchError.message,
+        details: 'Database query failed',
       });
     }
 
@@ -84,7 +84,32 @@ module.exports = async (req, res) => {
     for (const demo of expiredDemos) {
       logger.info(`Processing demo ${demo.id} (${demo.restaurant_name}, expired ${demo.demo_expires_at})`);
 
-      // Step 1a: Delete reservations for this demo restaurant
+      // Step 1: Delete all dependent table rows for this demo restaurant
+      // Order matters: delete leaf tables first to respect FK constraints
+      const dependentTables = [
+        'customer_push_subscriptions',
+        'ml_interventions',    // FK via reservation_id, but clean up by joining
+        'service_records',
+        'waitlist',
+        'customer_ltv',
+        'customer_history',
+        'usage_tracking',
+        'subscriptions',
+        'manager_conversations',
+        'manager_memory',
+      ];
+
+      for (const table of dependentTables) {
+        const { error: depError } = await supabaseAdmin
+          .from(table)
+          .delete()
+          .eq('restaurant_id', demo.id);
+        if (depError) {
+          logger.warn(`Failed to delete ${table} for demo ${demo.id} (non-fatal):`, depError.message);
+        }
+      }
+
+      // Delete reservations (count for summary)
       const { error: reservationsError, count: resCount } = await supabaseAdmin
         .from('reservations')
         .delete({ count: 'exact' })
@@ -100,7 +125,7 @@ module.exports = async (req, res) => {
       deletedReservations += reservationsDeleted;
       logger.info(`Deleted ${reservationsDeleted} reservation(s) for demo ${demo.id}`);
 
-      // Step 1b: Delete tables for this demo restaurant
+      // Delete tables
       const { error: tablesError } = await supabaseAdmin
         .from('tables')
         .delete()
@@ -153,7 +178,6 @@ module.exports = async (req, res) => {
     return res.status(500).json({
       success: false,
       error: 'Internal server error',
-      message: error.message,
     });
   }
 };

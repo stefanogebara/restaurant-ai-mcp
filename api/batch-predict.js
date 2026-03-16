@@ -39,20 +39,22 @@ async function getCustomerStats(email, phone, restaurantId) {
     let data = null;
 
     if (phone) {
-      const result = await supabaseAdmin
+      let query = supabaseAdmin
         .from('customer_history')
         .select('*')
-        .eq('customer_phone', phone)
-        .single();
+        .eq('customer_phone', phone);
+      if (restaurantId) query = query.eq('restaurant_id', restaurantId);
+      const result = await query.single();
       if (!result.error) data = result.data;
     }
 
     if (!data && email) {
-      const result = await supabaseAdmin
+      let query = supabaseAdmin
         .from('customer_history')
         .select('*')
-        .eq('customer_email', email)
-        .single();
+        .eq('customer_email', email);
+      if (restaurantId) query = query.eq('restaurant_id', restaurantId);
+      const result = await query.single();
       if (!result.error) data = result.data;
     }
 

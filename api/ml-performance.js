@@ -11,22 +11,19 @@ const logger = createSecureLogger('MLPerformance');
 /**
  * Get overall ROI summary metrics
  */
-async function getROISummary(days) {
-  const { data, error } = await supabaseAdmin.rpc('get_ml_roi_summary', { days_back: days });
+async function getROISummary(days, reservationIds = []) {
+  if (reservationIds.length === 0) return calculateROISummary([]);
 
-  if (error) {
-    // Fallback to direct query if RPC doesn't exist
-    const { data: fallbackData, error: fallbackError } = await supabaseAdmin
-      .from('ml_interventions')
-      .select('*')
-      .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString());
+  // Always use direct query with tenant scoping (RPC doesn't support restaurant_id filter)
+  const { data, error } = await supabaseAdmin
+    .from('ml_interventions')
+    .select('*')
+    .in('reservation_id', reservationIds)
+    .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString());
 
-    if (fallbackError) throw fallbackError;
+  if (error) throw error;
 
-    return calculateROISummary(fallbackData);
-  }
-
-  return data[0] || {};
+  return calculateROISummary(data);
 }
 
 /**
@@ -69,10 +66,13 @@ function calculateROISummary(interventions) {
 /**
  * Get recent intervention timeline with details
  */
-async function getInterventionTimeline(days, limit = 20) {
+async function getInterventionTimeline(days, limit = 20, reservationIds = []) {
+  if (reservationIds.length === 0) return [];
+
   const { data, error } = await supabaseAdmin
     .from('ml_interventions')
     .select('*')
+    .in('reservation_id', reservationIds)
     .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
     .order('created_at', { ascending: false })
     .limit(limit);
@@ -100,10 +100,13 @@ async function getInterventionTimeline(days, limit = 20) {
 /**
  * Get intervention type breakdown with performance metrics
  */
-async function getTypeBreakdown(days) {
+async function getTypeBreakdown(days, reservationIds = []) {
+  if (reservationIds.length === 0) return [];
+
   const { data, error } = await supabaseAdmin
     .from('ml_interventions')
     .select('*')
+    .in('reservation_id', reservationIds)
     .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString());
 
   if (error) throw error;
@@ -153,10 +156,13 @@ async function getTypeBreakdown(days) {
 /**
  * Get ROI trend over time (weekly)
  */
-async function getROITrend(days) {
+async function getROITrend(days, reservationIds = []) {
+  if (reservationIds.length === 0) return [];
+
   const { data, error } = await supabaseAdmin
     .from('ml_interventions')
     .select('*')
+    .in('reservation_id', reservationIds)
     .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
     .order('created_at', { ascending: true });
 
@@ -202,7 +208,11 @@ async function getROITrend(days) {
 /**
  * Get quick stats for dashboard widget
  */
-async function getQuickStats() {
+async function getQuickStats(reservationIds = []) {
+  if (reservationIds.length === 0) {
+    return { today_interventions: 0, change: 'No data', weekly_roi: 0, roi_status: 'below', value_saved_30d: 0 };
+  }
+
   try {
     // Today's interventions
     const today = new Date();
@@ -211,6 +221,7 @@ async function getQuickStats() {
     const { data: todayData, error: todayError } = await supabaseAdmin
       .from('ml_interventions')
       .select('*')
+      .in('reservation_id', reservationIds)
       .gte('created_at', today.toISOString());
 
     if (todayError) throw todayError;
@@ -222,6 +233,7 @@ async function getQuickStats() {
     const { data: yesterdayData, error: yesterdayError } = await supabaseAdmin
       .from('ml_interventions')
       .select('intervention_id')
+      .in('reservation_id', reservationIds)
       .gte('created_at', yesterday.toISOString())
       .lt('created_at', today.toISOString());
 
@@ -235,7 +247,7 @@ async function getQuickStats() {
     const changeStr = change > 0 ? `+${change} from yesterday` : change < 0 ? `${change} from yesterday` : 'Same as yesterday';
 
     // Get 7-day summary for ROI
-    const weekSummary = await getROISummary(7);
+    const weekSummary = await getROISummary(7, reservationIds);
     const weeklyRoi = parseInt(weekSummary.total_roi || 0);
 
     let roiStatus = 'below';
@@ -243,7 +255,7 @@ async function getQuickStats() {
     else if (weeklyRoi >= 300) roiStatus = 'meets';
 
     // Get 30-day summary for value saved
-    const monthSummary = await getROISummary(30);
+    const monthSummary = await getROISummary(30, reservationIds);
     const valueSaved30d = parseFloat(monthSummary.total_value_saved || 0);
 
     // Calculate 30d trend (compare to previous 30 days)
@@ -253,6 +265,7 @@ async function getQuickStats() {
     const { data: prevMonthData, error: prevMonthError } = await supabaseAdmin
       .from('ml_interventions')
       .select('value_saved')
+      .in('reservation_id', reservationIds)
       .gte('created_at', sixtyDaysAgo.toISOString())
       .lt('created_at', thirtyDaysAgo.toISOString());
 
@@ -480,11 +493,11 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { action = 'all', period = 30, restaurant_id } = req.query;
+    const { action = 'all', period = 30 } = req.query;
 
-    // REQUIRED: Restaurant ID for multi-tenant filtering
-    // Return empty data if no restaurant_id provided
-    if (!restaurant_id || restaurant_id === 'default') {
+    // Use authenticated user's restaurant_id (not query params — prevents spoofing)
+    const restaurant_id = auth.user?.restaurant_id;
+    if (!restaurant_id) {
       return res.status(200).json({
         success: true,
         data: getEmptyData(action),
@@ -502,36 +515,43 @@ module.exports = async (req, res) => {
 
     let result = {};
 
+    // Get this restaurant's reservation IDs for tenant-scoped ML queries
+    const { data: resIds } = await supabaseAdmin
+      .from('reservations')
+      .select('reservation_id')
+      .eq('restaurant_id', restaurant_id);
+    const reservationIds = (resIds || []).map(r => r.reservation_id);
+
     // Fetch different data based on action
     switch (action) {
       case 'summary':
-        result = await getROISummary(days);
+        result = await getROISummary(days, reservationIds);
         break;
 
       case 'timeline':
-        result = await getInterventionTimeline(days);
+        result = await getInterventionTimeline(days, 20, reservationIds);
         break;
 
       case 'breakdown':
-        result = await getTypeBreakdown(days);
+        result = await getTypeBreakdown(days, reservationIds);
         break;
 
       case 'trend':
-        result = await getROITrend(days);
+        result = await getROITrend(days, reservationIds);
         break;
 
       case 'quick-stats':
-        result = await getQuickStats();
+        result = await getQuickStats(reservationIds);
         break;
 
       case 'all':
       default:
         // Fetch all data in parallel
         const [summary, timeline, breakdown, trend] = await Promise.all([
-          getROISummary(days),
-          getInterventionTimeline(days),
-          getTypeBreakdown(days),
-          getROITrend(days)
+          getROISummary(days, reservationIds),
+          getInterventionTimeline(days, 20, reservationIds),
+          getTypeBreakdown(days, reservationIds),
+          getROITrend(days, reservationIds)
         ]);
 
         result = {
