@@ -103,7 +103,8 @@ function secureHandler(handler, options = {}) {
     } catch (error) {
       logger.error('Unhandled error in secure handler', error);
 
-      // Don't expose internal error details in production
+      // Don't expose internal error details in production.
+      // Exposing error.message in non-production is intentional — aids dev/staging debugging.
       const isProduction = process.env.NODE_ENV === 'production';
       res.status(500).json({
         error: 'Internal Server Error',

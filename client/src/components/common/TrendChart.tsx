@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
 import { colors } from '../../utils/colors';
 import ThiingsIcon from './ThiingsIcon';
 
@@ -34,6 +35,8 @@ export default function TrendChart({
   height = 300,
   loading = false
 }: TrendChartProps) {
+  const { t } = useTranslation();
+
   if (loading) {
     return (
       <div
@@ -56,9 +59,9 @@ export default function TrendChart({
           <div className="w-12 h-12 mx-auto mb-3 bg-soft-gray rounded-2xl flex items-center justify-center">
             <ThiingsIcon name="bar-chart" pxSize={22} />
           </div>
-          <p className="text-sm font-semibold text-deep-charcoal">No data available</p>
+          <p className="text-sm font-semibold text-deep-charcoal">{t('common.noData', 'No data available')}</p>
           <p className="text-xs text-stone-gray mt-1">
-            Data will appear here once interventions are tracked
+            {t('common.noDataDesc', 'Data will appear here once interventions are tracked')}
           </p>
         </div>
       </div>

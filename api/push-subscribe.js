@@ -23,7 +23,7 @@ module.exports = async (req, res) => {
     return res.status(200).end();
   }
 
-  const rateLimited = await checkAndApplyRateLimit(req, res, 'reservation');
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'customer_portal');
   if (rateLimited) return;
 
   if (req.method !== 'POST') {
@@ -53,6 +53,21 @@ module.exports = async (req, res) => {
     }
     if (!restaurant) {
       return res.status(400).json({ success: false, error: 'Invalid restaurant' });
+    }
+
+    // Cap subscriptions per reservation to prevent storage flooding
+    if (reservation_id) {
+      const { count, error: countError } = await supabaseAdmin
+        .from('customer_push_subscriptions')
+        .select('id', { count: 'exact', head: true })
+        .eq('reservation_id', reservation_id);
+      if (countError) {
+        logger.error('push-subscribe: subscription count check failed', countError.message);
+        return res.status(500).json({ success: false, error: 'Internal server error' });
+      }
+      if (count >= 10) {
+        return res.status(429).json({ success: false, error: 'Too many subscriptions for this reservation' });
+      }
     }
 
     const { error } = await supabaseAdmin

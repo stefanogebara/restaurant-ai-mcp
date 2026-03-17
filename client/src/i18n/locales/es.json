@@ -26,7 +26,9 @@
     "searchPlaceholder": "Buscar...",
     "skipToContent": "Saltar al contenido",
     "goBack": "Volver",
-    "poweredBy": "Desarrollado por"
+    "poweredBy": "Desarrollado por",
+    "noData": "No hay datos disponibles",
+    "noDataDesc": "Los datos aparecerán aquí cuando se registren las intervenciones"
   },
   "navigation": {
     "dashboard": "Panel",
@@ -380,6 +382,7 @@
     "lowUtilization": "Baixa (<25%)",
     "mostUsed": "Más Usada",
     "leastUsed": "Menos Usada",
+    "noTableUtilizationData": "Sin datos de utilización de mesas aún",
     "statusBreakdown": "Desglose por Estado",
     "ofTotalReservations": "del total de reservas",
     "count": "Cantidad",
@@ -766,10 +769,10 @@
     "brandFeature1Title": "Agente de Voz IA",
     "brandFeature1Desc": "Atende ligaciones e reservas con a voz e personalidade únicas del tu restaurante.",
     "brandFeature2Title": "Panel Inteligente",
-    "brandFeature2Desc": "Reservas em tempo real, walk-ins e gestão de mesas em una única tela.",
-    "brandFeature3Title": "Memória de Clientes",
-    "brandFeature3Desc": "Cada cliente que retorna se sente reconhecido con experiencias personalizadas.",
-    "statResponse": "Tempo de Resposta",
+    "brandFeature2Desc": "Reservas en tiempo real, walk-ins y gestión de mesas en una sola pantalla.",
+    "brandFeature3Title": "Memoria de Clientes",
+    "brandFeature3Desc": "Cada cliente que regresa se siente reconocido con experiencias personalizadas.",
+    "statResponse": "Tiempo de Respuesta",
     "statLanguages": "Idiomas",
     "statBooking": "Reservas IA",
     "orDivider": "o",

@@ -34,7 +34,9 @@
     "discard": "Discard",
     "select": "— Select —",
     "nDays": "{{count}} days",
-    "date": "Date"
+    "date": "Date",
+    "noData": "No data available",
+    "noDataDesc": "Data will appear here once interventions are tracked"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -394,6 +396,7 @@
     "lowUtilization": "Low (<25%)",
     "mostUsed": "Most Used",
     "leastUsed": "Least Used",
+    "noTableUtilizationData": "No table utilization data yet",
     "statusBreakdown": "Status Breakdown",
     "ofTotalReservations": "of total reservations",
     "count": "Count",
@@ -1963,6 +1966,7 @@
     "basedOn": "Based on {{count}} reservations",
     "completedServices": "{{count}} completed services",
     "since": "since {{date}}",
+    "sinceRange": "since {{count}} days ago",
     "dashedLine": "Dashed line = target"
   },
   "referral": {

@@ -100,22 +100,34 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
       </div>
 
       {/* Insights */}
-      {sortedTables.length > 0 && mostUsed && leastUsed && (
-      <div className="space-y-2">
-        <div className="p-3 bg-burgundy/10 border border-burgundy/20 rounded-xl">
-          <p className="text-xs text-warm-stone">
-            <span className="font-semibold text-deep-charcoal">{t('analytics.mostUsed')}:</span>{' '}
-            Table {mostUsed.table_number} ({mostUsed.utilization_rate}%) - {mostUsed.times_used} {t('analytics.services')}
-          </p>
-        </div>
-        <div className="p-3 bg-soft-gray/50 border border-border-gray/50 rounded-xl">
-          <p className="text-xs text-warm-stone">
-            <span className="font-semibold text-deep-charcoal">{t('analytics.leastUsed')}:</span>{' '}
-            Table {leastUsed.table_number} ({leastUsed.utilization_rate}%) - {leastUsed.times_used} {t('analytics.services')}
-          </p>
-        </div>
-      </div>
-      )}
+      {sortedTables.length > 0 && mostUsed && leastUsed && (() => {
+        const allZero = sortedTables.every(table => table.times_used === 0);
+        if (allZero) {
+          return (
+            <div className="p-3 bg-soft-gray/50 border border-border-gray/50 rounded-xl">
+              <p className="text-xs text-warm-stone text-center">
+                {t('analytics.noTableUtilizationData', 'No table utilization data yet')}
+              </p>
+            </div>
+          );
+        }
+        return (
+          <div className="space-y-2">
+            <div className="p-3 bg-burgundy/10 border border-burgundy/20 rounded-xl">
+              <p className="text-xs text-warm-stone">
+                <span className="font-semibold text-deep-charcoal">{t('analytics.mostUsed')}:</span>{' '}
+                Table {mostUsed.table_number} ({mostUsed.utilization_rate}%) - {mostUsed.times_used} {t('analytics.services')}
+              </p>
+            </div>
+            <div className="p-3 bg-soft-gray/50 border border-border-gray/50 rounded-xl">
+              <p className="text-xs text-warm-stone">
+                <span className="font-semibold text-deep-charcoal">{t('analytics.leastUsed')}:</span>{' '}
+                Table {leastUsed.table_number} ({leastUsed.utilization_rate}%) - {leastUsed.times_used} {t('analytics.services')}
+              </p>
+            </div>
+          </div>
+        );
+      })()}
       </div>
     </div>
   );

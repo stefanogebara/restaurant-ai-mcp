@@ -84,18 +84,10 @@ async function handleListConversations(req, res, user) {
 
   try {
     // REQUIRED: Always require restaurant_id for multi-tenant filtering
-    // Return empty results if no restaurant_id present on the JWT (should not happen in practice)
     if (!restaurant_id || restaurant_id === 'default') {
-      return res.status(200).json({
-        success: true,
-        conversations: [],
-        pagination: {
-          total: 0,
-          limit: parseInt(limit),
-          offset: parseInt(offset),
-          has_more: false
-        },
-        message: 'Restaurant ID required for data access'
+      return res.status(400).json({
+        success: false,
+        error: 'Restaurant ID required'
       });
     }
 
@@ -231,30 +223,9 @@ async function handleGetStats(req, res, user) {
   try {
     // REQUIRED: Always require restaurant_id for multi-tenant filtering
     if (!restaurant_id || restaurant_id === 'default') {
-      // Return empty stats for restaurants without data
-      return res.status(200).json({
-        success: true,
-        stats: {
-          period: {
-            start: new Date().toISOString(),
-            end: new Date().toISOString(),
-            days: 0
-          },
-          overview: {
-            total_calls: 0,
-            successful_bookings: 0,
-            success_rate: 0,
-            average_duration_seconds: 0,
-            average_duration_formatted: '0s'
-          },
-          breakdowns: {
-            by_outcome: {},
-            by_language: {},
-            by_day: {}
-          },
-          top_errors: []
-        },
-        message: 'Restaurant ID required for data access'
+      return res.status(400).json({
+        success: false,
+        error: 'Restaurant ID required'
       });
     }
 

@@ -13,6 +13,26 @@ const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 
 const logger = createSecureLogger('activity-feed');
 
+/**
+ * Format a date string (YYYY-MM-DD) and optional time (HH:MM:SS) for display.
+ * Returns e.g. "Mar 15, 19:30" or "Mar 15" if no time.
+ */
+function formatDateTimeForDisplay(dateStr, timeStr) {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(`${dateStr}T00:00:00`);
+    const month = d.toLocaleString('en-US', { month: 'short' });
+    const day = d.getDate();
+    if (timeStr) {
+      const shortTime = timeStr.slice(0, 5); // HH:MM from HH:MM:SS
+      return `${month} ${day}, ${shortTime}`;
+    }
+    return `${month} ${day}`;
+  } catch {
+    return timeStr ? `${dateStr} ${timeStr}` : dateStr;
+  }
+}
+
 module.exports = async (req, res) => {
   setInternalCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -70,7 +90,7 @@ async function fetchRecentReservations(restaurantId, limit) {
         icon: 'x-circle',
         color: 'red',
         message: `${r.customer_name} — reservation cancelled`,
-        detail: `Party of ${r.party_size} · ${r.date} ${r.time}`,
+        detail: `Party of ${r.party_size} · ${formatDateTimeForDisplay(r.date, r.time)}`,
         timestamp: r.updated_at || r.created_at,
       });
     } else if (r.status === 'checked_in') {
@@ -90,7 +110,7 @@ async function fetchRecentReservations(restaurantId, limit) {
         icon: 'alert-triangle',
         color: 'amber',
         message: `${r.customer_name} — no show`,
-        detail: `Party of ${r.party_size} · ${r.date} ${r.time}`,
+        detail: `Party of ${r.party_size} · ${formatDateTimeForDisplay(r.date, r.time)}`,
         timestamp: r.updated_at || r.created_at,
       });
     } else if (wasUpdated && r.status === 'confirmed') {
@@ -100,7 +120,7 @@ async function fetchRecentReservations(restaurantId, limit) {
         icon: 'edit',
         color: 'blue',
         message: `${r.customer_name} — reservation updated`,
-        detail: `Party of ${r.party_size} · ${r.date} ${r.time}`,
+        detail: `Party of ${r.party_size} · ${formatDateTimeForDisplay(r.date, r.time)}`,
         timestamp: r.updated_at,
       });
     }
@@ -112,7 +132,7 @@ async function fetchRecentReservations(restaurantId, limit) {
       icon: 'calendar',
       color: 'emerald',
       message: `${r.customer_name} booked`,
-      detail: `Party of ${r.party_size} · ${r.date} ${r.time}`,
+      detail: `Party of ${r.party_size} · ${formatDateTimeForDisplay(r.date, r.time)}`,
       timestamp: r.created_at,
     });
 

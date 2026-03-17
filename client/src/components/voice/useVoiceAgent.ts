@@ -53,20 +53,16 @@ export function useVoiceAgent({ agentId, useSignedUrl = false, requireConfirmati
       // Let the SDK handle mic access internally
       const sessionOpts: Record<string, unknown> = {
         onConnect: () => {
-          console.log('[VoiceAgent] Connected');
           setAgentState('listening');
           setError(null);
         },
         onDisconnect: () => {
-          console.log('[VoiceAgent] Disconnected');
           setAgentState('idle');
         },
         onModeChange: ({ mode }: { mode: string }) => {
-          console.log('[VoiceAgent] Mode:', mode);
           setAgentState(mode === 'speaking' ? 'talking' : 'listening');
         },
         onMessage: (message: { message: string; role?: string; source?: string }) => {
-          console.log('[VoiceAgent] Message:', message);
           const role = message.role === 'assistant' || message.source === 'ai' ? 'agent' : 'user';
           setTranscript((prev) => [...prev, { role, text: message.message }]);
         },

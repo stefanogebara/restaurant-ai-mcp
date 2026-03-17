@@ -34,7 +34,9 @@
     "discard": "Descartar",
     "select": "— Selecionar —",
     "nDays": "{{count}} dias",
-    "date": "Data"
+    "date": "Data",
+    "noData": "Nenhum dado disponível",
+    "noDataDesc": "Os dados aparecerão aqui quando as intervenções forem registradas"
   },
   "navigation": {
     "dashboard": "Painel",
@@ -394,6 +396,7 @@
     "lowUtilization": "Baixa (<25%)",
     "mostUsed": "Mais Usada",
     "leastUsed": "Menos Usada",
+    "noTableUtilizationData": "Nenhum dado de utilização de mesas ainda",
     "statusBreakdown": "Distribuição de Status",
     "ofTotalReservations": "do total de reservas",
     "count": "Quantidade",
@@ -1972,6 +1975,7 @@
     "basedOn": "Baseado em {{count}} reservas",
     "completedServices": "{{count}} atendimentos concluídos",
     "since": "desde {{date}}",
+    "sinceRange": "nos últimos {{count}} dias",
     "dashedLine": "Linha tracejada = meta"
   },
   "referral": {

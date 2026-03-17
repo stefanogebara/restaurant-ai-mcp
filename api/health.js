@@ -343,7 +343,7 @@ async function getDetailedMetrics() {
   } catch (error) {
     return {
       error: 'Failed to collect detailed metrics',
-      details: error.message
+      details: process.env.NODE_ENV === 'production' ? 'Internal error' : error.message
     };
   }
 }

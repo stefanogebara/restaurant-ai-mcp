@@ -78,17 +78,41 @@ export default function FloorPlanEditor() {
       (a, b) => (Number(a.table_number) || 0) - (Number(b.table_number) || 0),
     );
     const GAP = 1;
-    let curCol = 1, curRow = 1, rowMaxH = 0;
+    let curCol = 0, curRow = 0, rowMaxH = 0;
     sorted.forEach(t => {
       const shape = (t.shape?.toLowerCase() || 'round') as TableShape;
       const gridSize = getTableGridSize(shape, t.capacity || 2);
-      if (curCol + gridSize.width + GAP > GRID_COLS - 1 && curCol > 1) {
-        curCol = 1; curRow += rowMaxH + GAP + 1; rowMaxH = 0;
+      if (curCol + gridSize.width + GAP > GRID_COLS - 1 && curCol > 0) {
+        curCol = 0; curRow += rowMaxH + GAP + 1; rowMaxH = 0;
       }
       map.set(t.id, { gx: curCol, gy: curRow });
       curCol += gridSize.width + GAP + 1;
       rowMaxH = Math.max(rowMaxH, gridSize.height);
     });
+
+    // Center the layout in the grid
+    if (map.size > 0) {
+      let minGx = Infinity, minGy = Infinity, maxGx = 0, maxGy = 0;
+      sorted.forEach(t => {
+        const pos = map.get(t.id);
+        if (!pos) return;
+        const shape = (t.shape?.toLowerCase() || 'round') as TableShape;
+        const gridSize = getTableGridSize(shape, t.capacity || 2);
+        minGx = Math.min(minGx, pos.gx);
+        minGy = Math.min(minGy, pos.gy);
+        maxGx = Math.max(maxGx, pos.gx + gridSize.width);
+        maxGy = Math.max(maxGy, pos.gy + gridSize.height);
+      });
+      const GRID_ROWS_COUNT = 20;
+      const offsetX = Math.max(0, Math.floor((GRID_COLS - (maxGx - minGx)) / 2) - minGx);
+      const offsetY = Math.max(0, Math.floor((GRID_ROWS_COUNT - (maxGy - minGy)) / 2) - minGy);
+      if (offsetX > 0 || offsetY > 0) {
+        map.forEach((pos, id) => {
+          map.set(id, { gx: pos.gx + offsetX, gy: pos.gy + offsetY });
+        });
+      }
+    }
+
     return map;
   }, [needsAutoLayout, filteredTables]);
 

@@ -222,7 +222,14 @@ export default function StrategyMetricsWidget() {
             <p className="text-xs text-muted-stone mt-4">
               {t('strategy.basedOn', 'Based on {{count}} reservations', { count: data.summary.total_reservations })}
               {data.summary.data_points > 0 ? ` · ${t('strategy.completedServices', '{{count}} completed services', { count: data.summary.data_points })}` : ''}
-              {' '}{t('strategy.since', 'since {{date}}', { date: data.since })}
+              {' '}{(() => {
+                const sinceDate = new Date(data.since);
+                const isFuture = sinceDate.getTime() > Date.now();
+                if (isFuture) {
+                  return t('strategy.sinceRange', 'since {{count}} days ago', { count: range });
+                }
+                return t('strategy.since', 'since {{date}}', { date: data.since });
+              })()}
               {' · '}{t('strategy.dashedLine', 'Dashed line = target')}
             </p>
           )}
