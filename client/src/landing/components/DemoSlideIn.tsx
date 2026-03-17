@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { trackDemoSlideInAction } from '../../lib/analytics';
+import { trackDemoSlideInAction, trackShareClicked } from '../../lib/analytics';
 
 const STORAGE_KEY = 'seatable-demo-slidein-dismissed';
 
@@ -75,13 +75,24 @@ export default function DemoSlideIn() {
             {t('landing.slideIn.cta', 'Set up my restaurant')} &rarr;
           </button>
 
-          <button
-            type="button"
-            onClick={() => { trackDemoSlideInAction({ action: 'later' }); dismiss(); }}
-            className="w-full text-sm text-muted-stone hover:text-deep-charcoal mt-2 py-1 transition-colors"
-          >
-            {t('landing.slideIn.later', 'Maybe later')}
-          </button>
+          <div className="flex items-center gap-2 mt-3">
+            <button
+              type="button"
+              onClick={() => { trackDemoSlideInAction({ action: 'later' }); dismiss(); }}
+              className="flex-1 text-sm text-muted-stone hover:text-deep-charcoal py-1 transition-colors"
+            >
+              {t('landing.slideIn.later', 'Maybe later')}
+            </button>
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(t('landing.share.message', 'Check out Seatable — AI that answers calls, WhatsApp, and manages reservations for restaurants. Try the demo: https://seatable.one'))}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackShareClicked({ location: 'post_demo', channel: 'whatsapp' })}
+              className="text-xs text-warm-stone hover:text-[#25D366] transition-colors underline underline-offset-2"
+            >
+              {t('landing.slideIn.share', 'Share with a friend')}
+            </a>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

@@ -13,6 +13,90 @@ function getResendClient() {
 
 const FROM_ADDRESS = 'Seatable <bookings@seatable.one>';
 
+// Email translation strings per language
+const EMAIL_STRINGS = {
+  en: {
+    confirmSubject: (name) => `Reservation Confirmed — ${name}`,
+    confirmTitle: 'Your reservation is confirmed!',
+    confirmGreeting: (name) => `Hi ${name}, here are your booking details:`,
+    cancelSubject: (name) => `Reservation Cancelled — ${name}`,
+    cancelTitle: 'Reservation Cancelled',
+    cancelGreeting: (name) => `Hi ${name}, your reservation has been cancelled.`,
+    modifySubject: (name) => `Reservation Updated — ${name}`,
+    modifyTitle: 'Reservation Updated',
+    modifyGreeting: (name) => `Hi ${name}, your reservation has been updated. Here are the current details:`,
+    restaurant: 'Restaurant',
+    date: 'Date',
+    time: 'Time',
+    partySize: 'Party Size',
+    confirmationId: 'Confirmation ID',
+    specialRequests: 'Special Requests',
+    reason: 'Reason',
+    whatChanged: 'What Changed',
+    guest: 'guest',
+    guests: 'guests',
+    modifyContact: 'Need to make further changes? Contact the restaurant directly.',
+    cancelContact: 'Would you like to rebook? Contact the restaurant directly or visit our booking page.',
+    confirmContact: 'Need to modify or cancel? Contact the restaurant directly.',
+    dateLocale: 'en-US',
+  },
+  pt: {
+    confirmSubject: (name) => `Reserva Confirmada — ${name}`,
+    confirmTitle: 'Sua reserva está confirmada!',
+    confirmGreeting: (name) => `Olá ${name}, aqui estão os detalhes da sua reserva:`,
+    cancelSubject: (name) => `Reserva Cancelada — ${name}`,
+    cancelTitle: 'Reserva Cancelada',
+    cancelGreeting: (name) => `Olá ${name}, sua reserva foi cancelada.`,
+    modifySubject: (name) => `Reserva Atualizada — ${name}`,
+    modifyTitle: 'Reserva Atualizada',
+    modifyGreeting: (name) => `Olá ${name}, sua reserva foi atualizada. Confira os detalhes:`,
+    restaurant: 'Restaurante',
+    date: 'Data',
+    time: 'Horário',
+    partySize: 'Número de Pessoas',
+    confirmationId: 'ID de Confirmação',
+    specialRequests: 'Pedidos Especiais',
+    reason: 'Motivo',
+    whatChanged: 'O que Mudou',
+    guest: 'pessoa',
+    guests: 'pessoas',
+    modifyContact: 'Precisa fazer mais alterações? Entre em contato diretamente com o restaurante.',
+    cancelContact: 'Gostaria de reservar novamente? Entre em contato com o restaurante ou visite nossa página de reservas.',
+    confirmContact: 'Precisa modificar ou cancelar? Entre em contato diretamente com o restaurante.',
+    dateLocale: 'pt-BR',
+  },
+  es: {
+    confirmSubject: (name) => `Reserva Confirmada — ${name}`,
+    confirmTitle: '¡Su reserva está confirmada!',
+    confirmGreeting: (name) => `Hola ${name}, aquí están los detalles de su reserva:`,
+    cancelSubject: (name) => `Reserva Cancelada — ${name}`,
+    cancelTitle: 'Reserva Cancelada',
+    cancelGreeting: (name) => `Hola ${name}, su reserva ha sido cancelada.`,
+    modifySubject: (name) => `Reserva Actualizada — ${name}`,
+    modifyTitle: 'Reserva Actualizada',
+    modifyGreeting: (name) => `Hola ${name}, su reserva ha sido actualizada. Estos son los detalles:`,
+    restaurant: 'Restaurante',
+    date: 'Fecha',
+    time: 'Hora',
+    partySize: 'Número de Personas',
+    confirmationId: 'ID de Confirmación',
+    specialRequests: 'Solicitudes Especiales',
+    reason: 'Motivo',
+    whatChanged: 'Qué Cambió',
+    guest: 'persona',
+    guests: 'personas',
+    modifyContact: '¿Necesita hacer más cambios? Contacte directamente al restaurante.',
+    cancelContact: '¿Desea reservar de nuevo? Contacte al restaurante o visite nuestra página de reservas.',
+    confirmContact: '¿Necesita modificar o cancelar? Contacte directamente al restaurante.',
+    dateLocale: 'es-ES',
+  },
+};
+
+function getEmailStrings(language) {
+  const lang = (language || 'en').replace('-', '').substring(0, 2).toLowerCase();
+  return EMAIL_STRINGS[lang] || EMAIL_STRINGS.en;
+}
+
 // Escape user-provided strings before embedding in HTML to prevent injection
 function he(str) {
   if (!str) return '';
@@ -203,12 +287,13 @@ async function sendRetentionCampaignEmail({ customerEmail, customerName, message
  */
 async function sendReservationConfirmationEmail({
   customerEmail, customerName, restaurantName, reservationId,
-  partySize, date, time, specialRequests, cancellationPolicy
+  partySize, date, time, specialRequests, cancellationPolicy, language
 }) {
   const resend = getResendClient();
   if (!resend) { logger.warn('RESEND_API_KEY not set, skipping confirmation email'); return; }
 
-  const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
+  const t = getEmailStrings(language);
+  const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString(t.dateLocale, {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
 
@@ -216,42 +301,42 @@ async function sendReservationConfirmationEmail({
     await resend.emails.send({
       from: FROM_ADDRESS,
       to: customerEmail,
-      subject: `Reservation Confirmed — ${restaurantName}`,
+      subject: t.confirmSubject(restaurantName),
       html: wrapEmailHtml(`
         <div style="background: #FAFAF9; border: 1px solid #E7E5E4; border-radius: 16px; padding: 32px; margin-bottom: 24px;">
           <h2 style="font-size: 22px; color: #1C1917; margin: 0 0 8px 0;">
-            Your reservation is confirmed!
+            ${t.confirmTitle}
           </h2>
           <p style="color: #57534E; margin: 0 0 24px 0;">
-            Hi ${he(customerName)}, here are your booking details:
+            ${t.confirmGreeting(he(customerName))}
           </p>
 
           <table style="width: 100%; border-collapse: collapse;">
             <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Restaurant</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">${t.restaurant}</td>
               <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${he(restaurantName)}</td>
             </tr>
             <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Date</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">${t.date}</td>
               <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${he(formattedDate)}</td>
             </tr>
             <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Time</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">${t.time}</td>
               <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${he(time)}</td>
             </tr>
             <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">Party Size</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${partySize} ${partySize === 1 ? 'guest' : 'guests'}</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #78716C; font-size: 14px;">${t.partySize}</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #E7E5E4; color: #1C1917; font-weight: 600; text-align: right;">${partySize} ${partySize === 1 ? t.guest : t.guests}</td>
             </tr>
             <tr>
-              <td style="padding: 12px 0; color: #78716C; font-size: 14px;">Confirmation ID</td>
+              <td style="padding: 12px 0; color: #78716C; font-size: 14px;">${t.confirmationId}</td>
               <td style="padding: 12px 0; color: #9F1239; font-weight: 700; text-align: right; font-family: monospace;">${he(reservationId)}</td>
             </tr>
           </table>
 
           ${specialRequests ? `
           <div style="margin-top: 16px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #E7E5E4;">
-            <p style="color: #78716C; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">Special Requests</p>
+            <p style="color: #78716C; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">${t.specialRequests}</p>
             <p style="color: #1C1917; margin: 0; font-size: 14px;">${he(specialRequests)}</p>
           </div>
           ` : ''}
@@ -263,7 +348,7 @@ async function sendReservationConfirmationEmail({
         </p>
         ` : ''}
         <p style="color: #78716C; font-size: 13px; text-align: center; margin: 0;">
-          Need to modify or cancel? Contact the restaurant directly.
+          ${t.confirmContact}
         </p>
       `),
     });
@@ -461,12 +546,13 @@ async function sendInviteEmail({ to, inviteUrl, role }) {
  */
 async function sendReservationCancellationEmail({
   customerEmail, customerName, restaurantName, reservationId,
-  partySize, date, time, reason
+  partySize, date, time, reason, language
 }) {
   const resend = getResendClient();
   if (!resend) { logger.warn('RESEND_API_KEY not set, skipping cancellation email'); return; }
 
-  const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
+  const t = getEmailStrings(language);
+  const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString(t.dateLocale, {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
 
@@ -474,48 +560,48 @@ async function sendReservationCancellationEmail({
     await resend.emails.send({
       from: FROM_ADDRESS,
       to: customerEmail,
-      subject: `Reservation Cancelled — ${restaurantName}`,
+      subject: t.cancelSubject(restaurantName),
       html: wrapEmailHtml(`
         <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 16px; padding: 32px; margin-bottom: 24px;">
           <h2 style="font-size: 22px; color: #991B1B; margin: 0 0 8px 0;">
-            Reservation Cancelled
+            ${t.cancelTitle}
           </h2>
           <p style="color: #57534E; margin: 0 0 24px 0;">
-            Hi ${he(customerName)}, your reservation has been cancelled.
+            ${t.cancelGreeting(he(customerName))}
           </p>
 
           <table style="width: 100%; border-collapse: collapse;">
             <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #78716C; font-size: 14px;">Restaurant</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #78716C; font-size: 14px;">${t.restaurant}</td>
               <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #1C1917; font-weight: 600; text-align: right;">${he(restaurantName)}</td>
             </tr>
             <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #78716C; font-size: 14px;">Date</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #78716C; font-size: 14px;">${t.date}</td>
               <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #1C1917; font-weight: 600; text-align: right;">${he(formattedDate)}</td>
             </tr>
             <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #78716C; font-size: 14px;">Time</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #78716C; font-size: 14px;">${t.time}</td>
               <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #1C1917; font-weight: 600; text-align: right;">${he(time)}</td>
             </tr>
             <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #78716C; font-size: 14px;">Party Size</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #1C1917; font-weight: 600; text-align: right;">${partySize} ${partySize === 1 ? 'guest' : 'guests'}</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #78716C; font-size: 14px;">${t.partySize}</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FECACA; color: #1C1917; font-weight: 600; text-align: right;">${partySize} ${partySize === 1 ? t.guest : t.guests}</td>
             </tr>
             <tr>
-              <td style="padding: 12px 0; color: #78716C; font-size: 14px;">Confirmation ID</td>
+              <td style="padding: 12px 0; color: #78716C; font-size: 14px;">${t.confirmationId}</td>
               <td style="padding: 12px 0; color: #9F1239; font-weight: 700; text-align: right; font-family: monospace;">${he(reservationId)}</td>
             </tr>
           </table>
 
           ${reason ? `
           <div style="margin-top: 16px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #FECACA;">
-            <p style="color: #78716C; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">Reason</p>
+            <p style="color: #78716C; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">${t.reason}</p>
             <p style="color: #1C1917; margin: 0; font-size: 14px;">${he(reason)}</p>
           </div>
           ` : ''}
         </div>
         <p style="color: #78716C; font-size: 13px; text-align: center; margin: 0;">
-          Would you like to rebook? Contact the restaurant directly or visit our booking page.
+          ${t.cancelContact}
         </p>
       `),
     });
@@ -530,12 +616,13 @@ async function sendReservationCancellationEmail({
  */
 async function sendReservationModificationEmail({
   customerEmail, customerName, restaurantName, reservationId,
-  partySize, date, time, changes
+  partySize, date, time, changes, language
 }) {
   const resend = getResendClient();
   if (!resend) { logger.warn('RESEND_API_KEY not set, skipping modification email'); return; }
 
-  const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
+  const t = getEmailStrings(language);
+  const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString(t.dateLocale, {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
 
@@ -545,48 +632,48 @@ async function sendReservationModificationEmail({
     await resend.emails.send({
       from: FROM_ADDRESS,
       to: customerEmail,
-      subject: `Reservation Updated — ${restaurantName}`,
+      subject: t.modifySubject(restaurantName),
       html: wrapEmailHtml(`
         <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 16px; padding: 32px; margin-bottom: 24px;">
           <h2 style="font-size: 22px; color: #92400E; margin: 0 0 8px 0;">
-            Reservation Updated
+            ${t.modifyTitle}
           </h2>
           <p style="color: #57534E; margin: 0 0 24px 0;">
-            Hi ${he(customerName)}, your reservation has been updated. Here are the current details:
+            ${t.modifyGreeting(he(customerName))}
           </p>
 
           <table style="width: 100%; border-collapse: collapse;">
             <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #78716C; font-size: 14px;">Restaurant</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #78716C; font-size: 14px;">${t.restaurant}</td>
               <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #1C1917; font-weight: 600; text-align: right;">${he(restaurantName)}</td>
             </tr>
             <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #78716C; font-size: 14px;">Date</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #78716C; font-size: 14px;">${t.date}</td>
               <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #1C1917; font-weight: 600; text-align: right;">${he(formattedDate)}</td>
             </tr>
             <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #78716C; font-size: 14px;">Time</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #78716C; font-size: 14px;">${t.time}</td>
               <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #1C1917; font-weight: 600; text-align: right;">${he(time)}</td>
             </tr>
             <tr>
-              <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #78716C; font-size: 14px;">Party Size</td>
-              <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #1C1917; font-weight: 600; text-align: right;">${partySize} ${partySize === 1 ? 'guest' : 'guests'}</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #78716C; font-size: 14px;">${t.partySize}</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid #FDE68A; color: #1C1917; font-weight: 600; text-align: right;">${partySize} ${partySize === 1 ? t.guest : t.guests}</td>
             </tr>
             <tr>
-              <td style="padding: 12px 0; color: #78716C; font-size: 14px;">Confirmation ID</td>
+              <td style="padding: 12px 0; color: #78716C; font-size: 14px;">${t.confirmationId}</td>
               <td style="padding: 12px 0; color: #9F1239; font-weight: 700; text-align: right; font-family: monospace;">${he(reservationId)}</td>
             </tr>
           </table>
 
           ${changeLines ? `
           <div style="margin-top: 16px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #FDE68A;">
-            <p style="color: #78716C; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">What Changed</p>
+            <p style="color: #78716C; font-size: 12px; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">${t.whatChanged}</p>
             <ul style="margin: 0; padding-left: 18px; font-size: 14px;">${changeLines}</ul>
           </div>
           ` : ''}
         </div>
         <p style="color: #78716C; font-size: 13px; text-align: center; margin: 0;">
-          Need to make further changes? Contact the restaurant directly.
+          ${t.modifyContact}
         </p>
       `),
     });

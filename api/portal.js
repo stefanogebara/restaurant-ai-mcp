@@ -503,6 +503,7 @@ async function handleCreateReservation(req, res) {
       time,
       specialRequests: special_requests,
       cancellationPolicy: (restaurant.reservation_settings || {}).cancellation_policy,
+      language: restaurant.language || 'en',
     }).catch(err => logger.error('[Portal] Customer email failed:', err.message));
   }
 

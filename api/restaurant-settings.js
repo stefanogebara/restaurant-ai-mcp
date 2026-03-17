@@ -15,7 +15,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
 );
 
-const ALLOWED_LANGUAGES = ['en', 'es', 'pt', 'fr', 'it'];
+const ALLOWED_LANGUAGES = ['en', 'es', 'pt', 'pt-BR', 'fr', 'it'];
 
 function getDefaultMetricProfile(language = 'en') {
   return {

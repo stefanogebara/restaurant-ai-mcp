@@ -134,6 +134,7 @@ async function saveTurn(restaurantId, role, content, channel) {
 
 function buildSystemPrompt(memories, snapshot, config) {
   const restaurantName = config?.restaurant_name || config?.name || 'this restaurant';
+  const language = config?.language || 'en';
 
   const memoryBlock =
     memories.length > 0
@@ -169,10 +170,10 @@ function buildSystemPrompt(memories, snapshot, config) {
         ', party of ' +
         r.party_size +
         ' at ' +
-        new Date(r.reservation_time).toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-        })
+        new Date(r.reservation_time).toLocaleTimeString(
+          language === 'pt' || language === 'pt-BR' ? 'pt-BR' : language === 'es' ? 'es-ES' : 'en-US',
+          { hour: '2-digit', minute: '2-digit' }
+        )
       );
     })
     .join('\n');
@@ -241,6 +242,29 @@ function buildSystemPrompt(memories, snapshot, config) {
     systemPrompt += '\n\nApply this strategy when advising on operations, marketing, and guest experience.';
   }
 
+  // Language awareness — auto-detect from manager's message, fall back to restaurant config
+  systemPrompt +=
+    '\n\n## Language Rules\n' +
+    'CRITICAL: Always match the language the manager writes in. ' +
+    'If they write in Portuguese, respond in Portuguese. If in English, respond in English. ' +
+    'If in Spanish, respond in Spanish. Auto-detect and mirror their language.\n';
+  if (language === 'pt' || language === 'pt-BR') {
+    systemPrompt +=
+      'This restaurant is configured for Brazilian Portuguese — when in doubt, default to pt-BR.';
+  } else if (language === 'es') {
+    systemPrompt +=
+      'This restaurant is configured for Spanish — when in doubt, default to Spanish.';
+  } else if (language === 'fr') {
+    systemPrompt +=
+      'This restaurant is configured for French — when in doubt, default to French.';
+  } else if (language === 'it') {
+    systemPrompt +=
+      'This restaurant is configured for Italian — when in doubt, default to Italian.';
+  } else {
+    systemPrompt +=
+      'When in doubt, default to English.';
+  }
+
   systemPrompt +=
     '\n\nRespond concisely. For operational questions, be direct. ' +
     'Keep responses under 200 words unless detail is specifically requested.';
@@ -285,7 +309,7 @@ async function runManagerAgent(restaurantId, userMessage, channel) {
     supabaseAdmin
       .schema('restaurant')
       .from('restaurant_config')
-      .select('restaurant_name, name, restaurant_profile, ai_strategy_doc')
+      .select('restaurant_name, name, restaurant_profile, ai_strategy_doc, language')
       .eq('id', restaurantId)
       .maybeSingle()
       .then(r => {
@@ -294,7 +318,7 @@ async function runManagerAgent(restaurantId, userMessage, channel) {
           return supabaseAdmin
             .schema('restaurant')
             .from('restaurant_config')
-            .select('restaurant_name, name, restaurant_profile')
+            .select('restaurant_name, name, restaurant_profile, language')
             .eq('id', restaurantId)
             .maybeSingle();
         }

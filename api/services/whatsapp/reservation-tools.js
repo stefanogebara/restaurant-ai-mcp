@@ -440,7 +440,8 @@ async function executeTool(toolName, toolInput, session) {
               partySize: party_size,
               date,
               time,
-              specialRequests: special_requests || ''
+              specialRequests: special_requests || '',
+              language: session.restaurant.language || 'en',
             });
             logger.info(` Confirmation email sent to ${customer_email}`);
           } catch (emailErr) {

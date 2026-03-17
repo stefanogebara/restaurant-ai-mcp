@@ -112,3 +112,15 @@ export function trackDemoSlideInAction(props: { action: 'cta' | 'dismiss' | 'lat
 export function trackHeadlineVariantViewed(props: { variant: string }): void {
   safeCapture('headline_variant_viewed', props);
 }
+
+export function trackVoiceWidgetInteracted(props: { action: 'started' | 'ended' | 'fallback_whatsapp' }): void {
+  safeCapture('voice_widget_interacted', props);
+}
+
+export function trackShareClicked(props: { location: 'demo_dashboard' | 'landing' | 'post_demo'; channel: 'whatsapp' | 'copy_link' }): void {
+  safeCapture('share_clicked', props);
+}
+
+export function trackDemoFunnel(props: { step: 'demo_started' | 'demo_interacted' | 'demo_share_clicked' | 'signup_started'; preset?: string }): void {
+  safeCapture('demo_funnel', props);
+}

@@ -16,16 +16,13 @@ import { useTranslation } from 'react-i18next';
 const SCENE_DURATION = 7000;
 const SCENE_COUNT = 4;
 
-// ─── Scene Labels ───────────────────────────────────────────────
-const SCENE_LABELS_EN = ['Revenue Intelligence', 'No-Show Protection', 'Manager AI', 'Smart Staffing'];
-const SCENE_LABELS_PT = ['Receita Inteligente', 'Protecao No-Show', 'Gerente IA', 'Escala Inteligente'];
-const SCENE_LABELS_ES = ['Inteligencia de Ingresos', 'Proteccion No-Show', 'Gerente IA', 'Staffing Inteligente'];
-
-function getSceneLabels(lang: string) {
-  if (lang.startsWith('pt')) return SCENE_LABELS_PT;
-  if (lang.startsWith('es')) return SCENE_LABELS_ES;
-  return SCENE_LABELS_EN;
-}
+// ─── Scene Labels (i18n) ────────────────────────────────────────
+const SCENE_LABEL_KEYS = [
+  'landing.walkthrough.sceneRevenue',
+  'landing.walkthrough.sceneNoShow',
+  'landing.walkthrough.sceneManagerAI',
+  'landing.walkthrough.sceneStaffing',
+] as const;
 
 // ─── Glass helpers ──────────────────────────────────────────────
 const glass = 'backdrop-blur-xl bg-white/[0.03] border border-white/[0.07]';
@@ -814,10 +811,10 @@ const SCENE_ACCENTS = ['#34d399', '#ef4444', '#8B1A4A', '#8B1A4A'];
 
 // ─── Main Component ─────────────────────────────────────────────
 export default function DashboardWalkthroughSection() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [scene, setScene] = useState(0);
   const [progress, setProgress] = useState(0);
-  const labels = getSceneLabels(i18n.language);
+  const labels = SCENE_LABEL_KEYS.map(key => t(key));
 
   useEffect(() => {
     const interval = setInterval(() => {

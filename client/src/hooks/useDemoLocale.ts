@@ -60,7 +60,7 @@ const strings = {
     langPopupTitle: 'Prefer English?',
     langPopupDesc: 'This demo is also available in English.',
     langSwitchYes: 'Switch to English',
-    langKeepEn: 'Manter Portugues',
+    langKeepEn: 'Keep Portuguese',
     // Exit intent
     exitTitle: 'Ready to get started?',
     exitMessage: 'Set up your own AI receptionist in under 5 minutes. No credit card required.',
@@ -100,9 +100,9 @@ const strings = {
     askPlaceholder: 'Pergunte sobre seu restaurante...',
     sendMessage: 'Enviar mensagem',
     // Language popup
-    langPopupTitle: 'Prefer English?',
-    langPopupDesc: 'This demo is also available in English.',
-    langSwitchYes: 'Switch to English',
+    langPopupTitle: 'Prefere Inglês?',
+    langPopupDesc: 'Este demo também está disponível em inglês.',
+    langSwitchYes: 'Mudar para Inglês',
     langKeepEn: 'Manter Português',
     // Exit intent
     exitTitle: 'Pronto para começar?',

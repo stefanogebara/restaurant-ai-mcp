@@ -110,12 +110,16 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
   const language = session?.restaurant?.language || 'en';
   const currentDateTime = getCurrentDateTime(language);
 
-  // Language instruction based on restaurant setting
-  let languageInstruction = '';
-  if (language === 'pt') {
-    languageInstruction = '\nIMPORTANT: Always respond in Brazilian Portuguese (pt-BR). Use natural, friendly Brazilian Portuguese with "voce" form. Never switch to English unless the customer writes in English.\n';
+  // Language instruction — auto-detect from customer message, fall back to restaurant config
+  let languageInstruction = '\nCRITICAL LANGUAGE RULE: Always match the language the customer writes in. ' +
+    'If they write in Portuguese, respond in Portuguese. If in English, respond in English. ' +
+    'If in Spanish, respond in Spanish. Auto-detect and mirror their language.\n';
+  if (language === 'pt' || language === 'pt-BR') {
+    languageInstruction += 'This restaurant is configured for Brazilian Portuguese — when in doubt or on first message, default to pt-BR. Use natural, friendly Brazilian Portuguese with "você" form.\n';
   } else if (language === 'es') {
-    languageInstruction = '\nIMPORTANT: Always respond in Spanish. Use the formal "usted" form. Never switch to English unless the customer writes in English.\n';
+    languageInstruction += 'This restaurant is configured for Spanish — when in doubt or on first message, default to Spanish. Use the formal "usted" form.\n';
+  } else {
+    languageInstruction += 'When in doubt or on first message, default to English.\n';
   }
 
   // Build system prompt -- use rich per-restaurant persona when available

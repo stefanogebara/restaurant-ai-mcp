@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { SUPPORTED_LANGUAGES } from './voiceConstants';
 
 interface Props {
@@ -7,10 +8,11 @@ interface Props {
 }
 
 export default function VoiceLanguagePicker({ currentLanguage, savedLanguage, onChange }: Props) {
+  const { t } = useTranslation();
   return (
     <section className="bg-white border border-border-gray rounded-2xl overflow-hidden">
       <div className="px-6 py-5 border-b border-soft-gray">
-        <span className="text-[15px] font-semibold">Languages</span>
+        <span className="text-[15px] font-semibold">{t('voiceSettings.languages')}</span>
       </div>
 
       <div className="p-6">
@@ -33,7 +35,7 @@ export default function VoiceLanguagePicker({ currentLanguage, savedLanguage, on
 
         {currentLanguage !== savedLanguage && (
           <p className="mt-3 text-xs text-amber-600 bg-amber-600/10 rounded-xl px-3 py-2">
-            Changing the language will update your agent's greeting message. The voice will speak in the selected language using its multilingual capabilities.
+            {t('voiceSettings.languageChangeWarning')}
           </p>
         )}
       </div>

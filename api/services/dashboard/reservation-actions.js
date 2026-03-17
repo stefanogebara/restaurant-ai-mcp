@@ -133,18 +133,20 @@ async function handleCancelReservation(req, res) {
     logger.warn('ML log failed (non-fatal):', err.message);
   });
 
-  // Fetch restaurant name for the email
+  // Fetch restaurant config for the email
   let restaurantName = 'Your Restaurant';
+  let restaurantLanguage = 'en';
   try {
     const { data: config } = await supabase
       .schema('restaurant')
       .from('restaurant_config')
-      .select('restaurant_name')
+      .select('restaurant_name, language')
       .eq('restaurant_id', restaurantId)
       .single();
     if (config?.restaurant_name) restaurantName = config.restaurant_name;
+    if (config?.language) restaurantLanguage = config.language;
   } catch (err) {
-    logger.warn('Could not fetch restaurant name for cancellation email:', err.message);
+    logger.warn('Could not fetch restaurant config for cancellation email:', err.message);
   }
 
   // Send cancellation email if customer has email
@@ -158,7 +160,8 @@ async function handleCancelReservation(req, res) {
       partySize: reservation.party_size,
       date: reservation.date,
       time: reservation.time,
-      reason: reason || null
+      reason: reason || null,
+      language: restaurantLanguage,
     }).catch(err => {
       logger.warn('Cancellation email failed (non-fatal):', err.message);
     });

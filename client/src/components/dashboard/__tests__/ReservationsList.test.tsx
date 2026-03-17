@@ -4,6 +4,54 @@ import userEvent from '@testing-library/user-event';
 import ReservationsList from '../ReservationsList';
 import type { UpcomingReservation } from '../../../types/host.types';
 
+// i18n mock — resolves nested keys from EN locale
+const enTranslations: Record<string, string> = {
+  'dashboard.reservationsList.upcoming': 'Upcoming Reservations',
+  'dashboard.reservationsList.tomorrow': 'Tomorrow',
+  'dashboard.reservationsList.today': 'Today',
+  'dashboard.reservationsList.week': 'Week',
+  'dashboard.reservationsList.allClear': 'All Caught Up',
+  'dashboard.reservationsList.noUpcoming': 'No upcoming reservations for today',
+  'dashboard.reservationsList.noTomorrow': 'No reservations tomorrow',
+  'dashboard.reservationsList.aiHint': 'Reservations from the AI assistant or added manually will appear here',
+  'dashboard.reservationsList.checkIn': 'Check In',
+  'dashboard.reservationsList.seated': 'Seated',
+  'dashboard.reservationsList.takeAction': 'Take Action',
+  'dashboard.reservationsList.actionTaken': 'Action taken',
+  'dashboard.reservationsList.people': 'people',
+  'dashboard.reservationsList.lunch': 'Lunch',
+  'dashboard.reservationsList.dinner': 'Dinner',
+  'dashboard.reservationsList.atRisk': 'At Risk',
+  'dashboard.reservationsList.confirmed': 'Confirmed',
+  'dashboard.reservationsList.edit': 'Edit',
+  'dashboard.reservationsList.cancel': 'Cancel',
+  'dashboard.reservationsList.addReservation': '+ Add',
+};
+
+const esTranslations: Record<string, string> = {
+  'dashboard.reservationsList.upcoming': 'Próximas Reservas',
+  'dashboard.reservationsList.people': 'personas',
+  'dashboard.reservationsList.today': 'Hoy',
+  'dashboard.reservationsList.tomorrow': 'Mañana',
+  'dashboard.reservationsList.checkIn': 'Check In',
+  'dashboard.reservationsList.seated': 'Sentado',
+  'dashboard.reservationsList.confirmed': 'Confirmado',
+  'dashboard.reservationsList.takeAction': 'Tomar Acción',
+  'dashboard.reservationsList.lunch': 'Almuerzo',
+  'dashboard.reservationsList.dinner': 'Cena',
+};
+
+let currentLang = 'en';
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const translations = currentLang === 'es' ? esTranslations : enTranslations;
+      return translations[key] || key;
+    },
+    i18n: { language: currentLang, changeLanguage: (lang: string) => { currentLang = lang; } },
+  }),
+}));
+
 // ---- Test data ----
 
 const todayReservations: UpcomingReservation[] = [
@@ -141,9 +189,11 @@ describe('ReservationsList', () => {
   });
 
   it('renders in Spanish when language is "es"', () => {
+    currentLang = 'es';
     render(<ReservationsList {...defaultProps} language="es" />);
     expect(screen.getByText('Próximas Reservas')).toBeInTheDocument();
     expect(screen.getByText(/4 personas/)).toBeInTheDocument();
+    currentLang = 'en'; // reset for subsequent tests
   });
 
   it('shows action button for high-risk reservations', () => {

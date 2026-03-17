@@ -418,6 +418,7 @@ async function handleCreate(req, res, restaurantId, timezone) {
       date,
       time,
       specialRequests: special_requests,
+      language: restaurantConfig?.language || 'en',
     }).catch(err => logger.warn('Confirmation email failed (non-fatal):', err.message));
   }
 
@@ -587,16 +588,18 @@ async function handleModify(req, res, restaurantId) {
   // Send modification email if customer has email
   if (existingReservation?.customer_email) {
     let restaurantName = 'Your Restaurant';
+    let restaurantLanguage = 'en';
     try {
       const { data: config } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('restaurant_name')
+        .select('restaurant_name, language')
         .eq('restaurant_id', restaurantId)
         .single();
       if (config?.restaurant_name) restaurantName = config.restaurant_name;
+      if (config?.language) restaurantLanguage = config.language;
     } catch (err) {
-      logger.warn('Could not fetch restaurant name for modification email:', err.message);
+      logger.warn('Could not fetch restaurant config for modification email:', err.message);
     }
 
     sendReservationModificationEmail({
@@ -608,6 +611,7 @@ async function handleModify(req, res, restaurantId) {
       date: date || existingReservation.date,
       time: time || existingReservation.time,
       changes,
+      language: restaurantLanguage,
     }).catch(err => {
       logger.warn('Modification email failed (non-fatal):', err.message);
     });
@@ -646,16 +650,18 @@ async function handleCancel(req, res, restaurantId) {
   // Send cancellation email (fire-and-forget, non-fatal)
   if (reservation?.customer_email) {
     let restaurantName = 'Your Restaurant';
+    let restaurantLanguage = 'en';
     try {
       const { data: config } = await supabaseAdmin
         .schema('restaurant')
         .from('restaurant_config')
-        .select('restaurant_name')
+        .select('restaurant_name, language')
         .eq('id', restaurantId)
         .single();
       if (config?.restaurant_name) restaurantName = config.restaurant_name;
+      if (config?.language) restaurantLanguage = config.language;
     } catch (err) {
-      logger.warn('Could not fetch restaurant name for cancellation email:', err.message);
+      logger.warn('Could not fetch restaurant config for cancellation email:', err.message);
     }
 
     sendReservationCancellationEmail({
@@ -666,6 +672,7 @@ async function handleCancel(req, res, restaurantId) {
       partySize: reservation.party_size,
       date: reservation.date,
       time: reservation.time,
+      language: restaurantLanguage,
     }).catch(err => logger.warn('Cancellation email failed (non-fatal):', err.message));
   }
 

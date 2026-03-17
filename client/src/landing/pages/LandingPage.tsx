@@ -7,9 +7,11 @@ import LandingNav from '../components/LandingNav';
 import HeroSection from '../components/HeroSection';
 import PresetDemoSection from '../components/PresetDemoSection';
 import WhatsAppWidgetSection from '../components/WhatsAppWidgetSection';
+import VoiceWidgetSection from '../components/VoiceWidgetSection';
 import BeforeAfterSection from '../components/BeforeAfterSection';
 import DashboardWalkthroughSection from '../components/DashboardWalkthroughSection';
 import PricingSection from '../components/PricingSection';
+import SharePrompt from '../components/SharePrompt';
 import Footer from '../components/Footer';
 
 export default function LandingPage() {
@@ -75,13 +77,21 @@ export default function LandingPage() {
       {/* 3. Text our AI — WhatsApp widget with real number */}
       <WhatsAppWidgetSection />
 
-      {/* 5. Before/After — animated side-by-side visual demo */}
-      <BeforeAfterSection />
+      {/* 4. Call our AI — ElevenLabs voice agent */}
+      <VoiceWidgetSection />
 
-      {/* 6. Dashboard Walkthrough — animated "silent movie" of AI features */}
+      {/* 5. Dashboard Walkthrough — animated "silent movie" of AI features */}
       <DashboardWalkthroughSection />
 
-      {/* 6. Pricing */}
+      {/* 6. Before/After — animated side-by-side visual demo */}
+      <BeforeAfterSection />
+
+      {/* 7. Share prompt — viral referral */}
+      <div className="max-w-md mx-auto px-6 -mt-8 mb-8">
+        <SharePrompt location="landing" />
+      </div>
+
+      {/* 8. Pricing */}
       <PricingSection />
 
       {/* 7. Final CTA */}

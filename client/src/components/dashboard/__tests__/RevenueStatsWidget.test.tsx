@@ -47,10 +47,11 @@ describe('RevenueStatsWidget', () => {
     expect(screen.getByText(/estimated/i)).toBeInTheDocument();
   });
 
-  it('returns null when no data', () => {
+  it('shows no-data message when stats missing', () => {
     mockStats.mockReturnValue({ data: undefined, isLoading: false });
     mockForecast.mockReturnValue({ data: [], isLoading: false });
-    const { container } = render(<RevenueStatsWidget />);
-    expect(container.firstChild).toBeNull();
+    render(<RevenueStatsWidget />);
+    expect(screen.getByRole('heading', { name: /revenue forecast/i })).toBeInTheDocument();
+    expect(screen.getByText(/will appear once/i)).toBeInTheDocument();
   });
 });

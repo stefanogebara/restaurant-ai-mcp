@@ -627,12 +627,21 @@ describe('Step 4 — ROI Summary', () => {
     mockMlOutcomesSupabaseFrom = jest.fn((table) => {
       const chainable = (val) => {
         const obj = {};
-        ['select', 'insert', 'update', 'eq', 'not', 'gt', 'limit', 'single', 'order'].forEach(
+        ['select', 'insert', 'update', 'eq', 'in', 'not', 'gt', 'limit', 'single', 'order'].forEach(
           (m) => { obj[m] = jest.fn(() => chainable(val)); }
         );
         obj.then = (resolve) => resolve(val);
         return obj;
       };
+      if (table === 'reservations') {
+        return chainable({
+          data: [
+            { reservation_id: 'RES-001' },
+            { reservation_id: 'RES-002' },
+          ],
+          error: null,
+        });
+      }
       if (table === 'ml_interventions') {
         return chainable({
           data: [
