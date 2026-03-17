@@ -9,23 +9,12 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import DemoSetupForm from '../components/landing/DemoSetupForm';
-import DemoVoiceAgent from '../components/demo/DemoVoiceAgent';
-import type { ScrapedData } from '../utils/buildDemoPrompt';
-
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
-
-interface VoiceStep {
-  demoUrl: string;
-  scrapedData: ScrapedData;
-  restaurantName: string;
-}
 
 export default function DemoSetupPage() {
   const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [voiceStep, setVoiceStep] = useState<VoiceStep | null>(null);
-
   const handleSubmit = async (data: {
     restaurant_name: string;
     city: string;
@@ -53,32 +42,13 @@ export default function DemoSetupPage() {
         throw new Error(result.error || 'Failed to create demo. Please try again.');
       }
 
-      const scraped = data.scraped_data as ScrapedData | null;
-      if (scraped) {
-        setVoiceStep({
-          demoUrl: result.demo_url,
-          scrapedData: scraped,
-          restaurantName: scraped.name || data.restaurant_name,
-        });
-      } else {
-        window.location.href = result.demo_url;
-      }
+      window.location.href = result.demo_url;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
       setSubmitError(message);
       setIsSubmitting(false);
     }
   };
-
-  if (voiceStep) {
-    return (
-      <DemoVoiceAgent
-        restaurantName={voiceStep.restaurantName}
-        scrapedData={voiceStep.scrapedData}
-        onContinue={() => { window.location.href = voiceStep.demoUrl; }}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen bg-warm-white text-deep-charcoal">

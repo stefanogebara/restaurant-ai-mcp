@@ -787,6 +787,12 @@
     "legalAnd": "and",
     "privacyPolicy": "Privacy Policy",
     "confirmationSent": "Check your email for a confirmation link to complete your registration.",
+    "forgotPassword": "Forgot password?",
+    "resetPasswordTitle": "Reset your password",
+    "resetPasswordSubtitle": "Enter your email and we'll send you a reset link",
+    "sendResetLink": "Send Reset Link",
+    "backToSignIn": "Back to Sign In",
+    "resetLinkSent": "Check your email for a password reset link.",
     "errors": {
       "missingEmail": "Please enter your email address.",
       "invalidCredentials": "Invalid email or password.",

@@ -14,8 +14,9 @@ import { motion } from 'framer-motion';
 import { trackSignupStarted } from '../lib/analytics';
 import { useTranslation } from 'react-i18next';
 import LoginBrandPanel from '../components/auth/LoginBrandPanel';
+import { supabase } from '../lib/supabase';
 
-type AuthMode = 'signin' | 'signup';
+type AuthMode = 'signin' | 'signup' | 'forgot';
 
 // Translate common Supabase auth error messages
 const AUTH_ERROR_KEYS: Record<string, string> = {
@@ -135,6 +136,26 @@ export default function Login() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSigningIn(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/login?reset=true',
+      });
+      if (resetError) throw resetError;
+      setSuccessMessage(t('login.resetLinkSent'));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      setError(msg || t('login.errors.generic'));
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Brand + Features (hidden on mobile) */}
@@ -173,10 +194,10 @@ export default function Login() {
                 </span>
               </Link>
               <h1 className="font-serif text-2xl text-deep-charcoal mb-2">
-                {mode === 'signin' ? t('login.welcomeBack') : t('login.createAccount')}
+                {mode === 'forgot' ? t('login.resetPasswordTitle') : mode === 'signin' ? t('login.welcomeBack') : t('login.createAccount')}
               </h1>
               <p className="text-stone-gray font-light">
-                {mode === 'signin' ? t('login.signInSubtitle') : t('login.signUpSubtitle')}
+                {mode === 'forgot' ? t('login.resetPasswordSubtitle') : mode === 'signin' ? t('login.signInSubtitle') : t('login.signUpSubtitle')}
               </p>
             </div>
 
@@ -202,124 +223,187 @@ export default function Login() {
               </motion.div>
             )}
 
-            {/* Google Sign In Button */}
-            <button
-              onClick={handleGoogleSignIn}
-              disabled={isSigningIn}
-              className={`
-                w-full flex items-center justify-center gap-3 px-6 py-4
-                bg-white border border-border-gray hover:border-stone-300 hover:bg-warm-white
-                text-deep-charcoal font-medium text-[15px] rounded-xl
-                transition-all duration-300
-                ${isSigningIn ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-md'}
-              `}
-            >
-              {isSigningIn && !email ? (
-                <div aria-hidden="true" className="animate-spin rounded-full h-5 w-5 border-2 border-deep-charcoal border-t-transparent"></div>
-              ) : (
-                <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    fill="#4285F4"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  />
-                </svg>
-              )}
-              <span>{t('login.continueWithGoogle')}</span>
-            </button>
+            {mode === 'forgot' ? (
+              /* Forgot Password Form */
+              <>
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div>
+                    <label htmlFor="email" className="block text-[13px] font-medium text-stone-gray mb-1.5">
+                      {t('login.emailAddress')}
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@restaurant.com"
+                      required
+                      className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-burgundy/[6%] focus:border-burgundy transition-all"
+                    />
+                  </div>
 
-            {/* Divider */}
-            <div className="flex items-center gap-4 my-6">
-              <div className="flex-1 h-px bg-border-gray"></div>
-              <span className="text-xs text-muted-stone uppercase tracking-wider">{t('login.orDivider')}</span>
-              <div className="flex-1 h-px bg-border-gray"></div>
-            </div>
-
-            {/* Email/Password Form */}
-            <form onSubmit={handleEmailSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-[13px] font-medium text-stone-gray mb-1.5">
-                  {t('login.emailAddress')}
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@restaurant.com"
-                  required
-                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-burgundy/[6%] focus:border-burgundy transition-all"
-                />
-              </div>
-              <div>
-                <label htmlFor="password" className="block text-[13px] font-medium text-stone-gray mb-1.5">
-                  {t('login.password')}
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={mode === 'signup' ? t('login.passwordMinChars') : t('login.yourPassword')}
-                  required
-                  minLength={mode === 'signup' ? 8 : 6}
-                  className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-burgundy/[6%] focus:border-burgundy transition-all"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSigningIn}
-                className={`
-                  w-full flex items-center justify-center gap-3 px-6 py-3.5
-                  bg-burgundy hover:bg-burgundy-dark
-                  text-white font-semibold text-[15px] rounded-full
-                  transition-all duration-200
-                  ${isSigningIn ? 'opacity-70 cursor-not-allowed' : ''}
-                `}
-              >
-                {isSigningIn && email ? (
-                  <div aria-hidden="true" className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                ) : null}
-                <span>{mode === 'signin' ? t('login.signIn') : t('login.createAccountBtn')}</span>
-              </button>
-            </form>
-
-            {/* Toggle sign-in / sign-up */}
-            <div className="text-center mt-6">
-              {mode === 'signin' ? (
-                <p className="text-stone-gray text-sm">
-                  {t('login.newToSeatable')}{' '}
                   <button
-                    onClick={() => { setMode('signup'); setError(null); setSuccessMessage(null); }}
-                    className="text-burgundy font-semibold hover:underline"
+                    type="submit"
+                    disabled={isSigningIn}
+                    className={`
+                      w-full flex items-center justify-center gap-3 px-6 py-3.5
+                      bg-burgundy hover:bg-burgundy-dark
+                      text-white font-semibold text-[15px] rounded-full
+                      transition-all duration-200
+                      ${isSigningIn ? 'opacity-70 cursor-not-allowed' : ''}
+                    `}
                   >
-                    {t('login.createAnAccount')}
+                    {isSigningIn ? (
+                      <div aria-hidden="true" className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                    ) : null}
+                    <span>{t('login.sendResetLink')}</span>
                   </button>
-                </p>
-              ) : (
-                <p className="text-stone-gray text-sm">
-                  {t('login.alreadyHaveAccount')}{' '}
+                </form>
+
+                <div className="text-center mt-6">
                   <button
                     onClick={() => { setMode('signin'); setError(null); setSuccessMessage(null); }}
-                    className="text-burgundy font-semibold hover:underline"
+                    className="text-burgundy font-semibold text-sm hover:underline"
                   >
-                    {t('login.signIn')}
+                    {t('login.backToSignIn')}
                   </button>
-                </p>
-              )}
-            </div>
+                </div>
+              </>
+            ) : (
+              /* Sign In / Sign Up Forms */
+              <>
+                {/* Google Sign In Button */}
+                <button
+                  onClick={handleGoogleSignIn}
+                  disabled={isSigningIn}
+                  className={`
+                    w-full flex items-center justify-center gap-3 px-6 py-4
+                    bg-white border border-border-gray hover:border-stone-300 hover:bg-warm-white
+                    text-deep-charcoal font-medium text-[15px] rounded-xl
+                    transition-all duration-300
+                    ${isSigningIn ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-md'}
+                  `}
+                >
+                  {isSigningIn && !email ? (
+                    <div aria-hidden="true" className="animate-spin rounded-full h-5 w-5 border-2 border-deep-charcoal border-t-transparent"></div>
+                  ) : (
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        fill="#4285F4"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                      />
+                      <path
+                        fill="#FBBC05"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                      />
+                      <path
+                        fill="#EA4335"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                      />
+                    </svg>
+                  )}
+                  <span>{t('login.continueWithGoogle')}</span>
+                </button>
+
+                {/* Divider */}
+                <div className="flex items-center gap-4 my-6">
+                  <div className="flex-1 h-px bg-border-gray"></div>
+                  <span className="text-xs text-muted-stone uppercase tracking-wider">{t('login.orDivider')}</span>
+                  <div className="flex-1 h-px bg-border-gray"></div>
+                </div>
+
+                {/* Email/Password Form */}
+                <form onSubmit={handleEmailSubmit} className="space-y-4">
+                  <div>
+                    <label htmlFor="email" className="block text-[13px] font-medium text-stone-gray mb-1.5">
+                      {t('login.emailAddress')}
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@restaurant.com"
+                      required
+                      className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-burgundy/[6%] focus:border-burgundy transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="password" className="block text-[13px] font-medium text-stone-gray mb-1.5">
+                      {t('login.password')}
+                    </label>
+                    <input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={mode === 'signup' ? t('login.passwordMinChars') : t('login.yourPassword')}
+                      required
+                      minLength={mode === 'signup' ? 8 : 6}
+                      className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm text-deep-charcoal placeholder-stone-300 focus:outline-none focus:ring-[3px] focus:ring-burgundy/[6%] focus:border-burgundy transition-all"
+                    />
+                  </div>
+
+                  {mode === 'signin' && (
+                    <div className="text-right">
+                      <button
+                        type="button"
+                        onClick={() => { setMode('forgot'); setError(null); setSuccessMessage(null); }}
+                        className="text-sm text-burgundy hover:underline"
+                      >
+                        {t('login.forgotPassword')}
+                      </button>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isSigningIn}
+                    className={`
+                      w-full flex items-center justify-center gap-3 px-6 py-3.5
+                      bg-burgundy hover:bg-burgundy-dark
+                      text-white font-semibold text-[15px] rounded-full
+                      transition-all duration-200
+                      ${isSigningIn ? 'opacity-70 cursor-not-allowed' : ''}
+                    `}
+                  >
+                    {isSigningIn && email ? (
+                      <div aria-hidden="true" className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                    ) : null}
+                    <span>{mode === 'signin' ? t('login.signIn') : t('login.createAccountBtn')}</span>
+                  </button>
+                </form>
+
+                {/* Toggle sign-in / sign-up */}
+                <div className="text-center mt-6">
+                  {mode === 'signin' ? (
+                    <p className="text-stone-gray text-sm">
+                      {t('login.newToSeatable')}{' '}
+                      <button
+                        onClick={() => { setMode('signup'); setError(null); setSuccessMessage(null); }}
+                        className="text-burgundy font-semibold hover:underline"
+                      >
+                        {t('login.createAnAccount')}
+                      </button>
+                    </p>
+                  ) : (
+                    <p className="text-stone-gray text-sm">
+                      {t('login.alreadyHaveAccount')}{' '}
+                      <button
+                        onClick={() => { setMode('signin'); setError(null); setSuccessMessage(null); }}
+                        className="text-burgundy font-semibold hover:underline"
+                      >
+                        {t('login.signIn')}
+                      </button>
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
 
             {/* Terms */}
             <p className="mt-6 text-center text-xs text-muted-stone font-light">

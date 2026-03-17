@@ -788,6 +788,12 @@
     "legalAnd": "e",
     "privacyPolicy": "Política de Privacidade",
     "confirmationSent": "Verifique seu e-mail para um link de confirmação e completar seu cadastro.",
+    "forgotPassword": "Esqueceu a senha?",
+    "resetPasswordTitle": "Redefinir sua senha",
+    "resetPasswordSubtitle": "Insira seu e-mail e enviaremos um link de redefinição",
+    "sendResetLink": "Enviar link",
+    "backToSignIn": "Voltar para Entrar",
+    "resetLinkSent": "Verifique seu e-mail para um link de redefinição de senha.",
     "errors": {
       "missingEmail": "Por favor, insira seu endereço de e-mail.",
       "invalidCredentials": "E-mail ou senha inválidos.",

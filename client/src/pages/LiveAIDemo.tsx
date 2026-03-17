@@ -290,7 +290,7 @@ export default function LiveAIDemo() {
         </p>
         <div className="flex items-center gap-4">
           <Link
-            to="/demo/setup"
+            to="/demo?preset=italian"
             className="text-xs text-burgundy hover:text-burgundy/80 transition-colors font-medium"
           >
             {t('landing.voiceDemo.tryDashboard', 'Try the full dashboard')} &rarr;

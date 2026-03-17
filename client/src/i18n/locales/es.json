@@ -780,7 +780,13 @@
     "termsOfService": "Términos de Servicio",
     "legalAnd": "y",
     "privacyPolicy": "Política de Privacidad",
-    "confirmationSent": "Verifique tu e-mail para un link de confirmación e completar tu cadastro."
+    "confirmationSent": "Verifique tu e-mail para un link de confirmación e completar tu cadastro.",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "resetPasswordTitle": "Restablecer tu contraseña",
+    "resetPasswordSubtitle": "Ingresa tu correo y te enviaremos un enlace para restablecerla",
+    "sendResetLink": "Enviar enlace",
+    "backToSignIn": "Volver a Iniciar Sesión",
+    "resetLinkSent": "Revisa tu correo para un enlace de restablecimiento de contraseña."
   },
   "settings": {
     "title": "Configuración",
