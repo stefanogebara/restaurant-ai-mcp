@@ -65,7 +65,7 @@ export default function ReservationsList({
   return (
     <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
       {/* Panel Header */}
-      <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray gap-2 flex-wrap">
         <div className="flex items-center gap-2.5">
           <span className="text-[15px] font-semibold text-deep-charcoal tracking-tight">{tl('upcoming')}</span>
           <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">
@@ -82,11 +82,11 @@ export default function ReservationsList({
           )}
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex gap-0.5 bg-soft-gray rounded-lg p-0.5">
+          <div className="flex gap-0.5 bg-soft-gray rounded-lg p-0.5 flex-shrink-0">
             <button
               type="button"
               onClick={() => setShowTomorrow(false)}
-              className={`text-xs font-medium px-3 py-1 rounded-md transition-all ${
+              className={`text-xs font-medium px-3 py-2.5 min-h-[44px] rounded-md transition-all ${
                 !showTomorrow
                   ? 'bg-white text-deep-charcoal shadow-sm'
                   : 'text-muted-stone hover:text-stone-gray'
@@ -97,7 +97,7 @@ export default function ReservationsList({
             <button
               type="button"
               onClick={() => setShowTomorrow(true)}
-              className={`text-xs font-medium px-3 py-1 rounded-md transition-all ${
+              className={`text-xs font-medium px-3 py-2.5 min-h-[44px] rounded-md transition-all ${
                 showTomorrow
                   ? 'bg-white text-deep-charcoal shadow-sm'
                   : 'text-muted-stone hover:text-stone-gray'

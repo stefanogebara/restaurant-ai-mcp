@@ -1921,5 +1921,24 @@
     "settings": "Configuración | seatable",
     "bookingPage": "{{name}} — Reservar Mesa | Seatable",
     "bookingDescription": "Reserva una mesa en {{name}} en {{city}}, {{country}}. Consulta disponibilidad y reserva en línea — rápido y fácil."
+  },
+  "campaigns": {
+    "newCampaign": "+ Nueva Campaña",
+    "message": "Mensaje",
+    "targetAudience": "Público Objetivo",
+    "creating": "Creando...",
+    "createAndSend": "Crear y Enviar Campaña",
+    "noCampaigns": "Sin campañas aún",
+    "messageRequired": "El mensaje es obligatorio",
+    "messagePlaceholder": "Hola {name}, ¡te echamos de menos! Reserva tu próxima visita..."
+  },
+  "placeholders": {
+    "name": "Juan García",
+    "email": "juan@ejemplo.com",
+    "phone": "+34 612 345 678",
+    "agentName": "ej. Sofía",
+    "agentGreeting": "ej. ¡Bienvenido a nuestro restaurante!",
+    "tableName": "ej. Terraza",
+    "tags": "Añade etiquetas o notas separadas por comas..."
   }
 }

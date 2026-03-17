@@ -1988,5 +1988,24 @@
   },
   "manager": {
     "sendFailed": "Failed to send. Please try again."
+  },
+  "campaigns": {
+    "newCampaign": "+ New Campaign",
+    "message": "Message",
+    "targetAudience": "Target Audience",
+    "creating": "Creating...",
+    "createAndSend": "Create & Send Campaign",
+    "noCampaigns": "No campaigns yet",
+    "messageRequired": "Message is required",
+    "messagePlaceholder": "Hi {name}, we miss you at our restaurant! Book your next visit..."
+  },
+  "placeholders": {
+    "name": "John Smith",
+    "email": "john@example.com",
+    "phone": "+1 234 567 8900",
+    "agentName": "e.g. Sofia",
+    "agentGreeting": "e.g. Welcome to our restaurant!",
+    "tableName": "e.g. Terrace",
+    "tags": "Add comma-separated tags or notes..."
   }
 }

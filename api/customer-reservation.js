@@ -111,6 +111,10 @@ async function handleModify(req, res) {
     return res.status(404).json({ success: false, message: 'Reservation not found' });
   }
 
+  // SEC-H4: Phone-only auth design limitation — an attacker who knows the reservation_id
+  // can brute-force phone numbers. Mitigated by the customer_portal rate limit (30 req/hr/IP).
+  // Do NOT remove or bypass checkAndApplyRateLimit above. A future improvement would add
+  // a time-based OTP or magic-link flow to eliminate this reliance on phone alone.
   if (existing.customer_phone !== customer_phone) {
     return res.status(403).json({ success: false, message: 'Phone number does not match this reservation' });
   }
@@ -169,6 +173,8 @@ async function handleCancel(req, res) {
     return res.status(404).json({ success: false, message: 'Reservation not found' });
   }
 
+  // SEC-H4: See modify handler comment — same phone-only auth limitation applies.
+  // Rate limiting (customer_portal, 30 req/hr/IP) is the primary mitigation.
   if (existing.customer_phone !== customer_phone) {
     return res.status(403).json({ success: false, message: 'Phone number does not match this reservation' });
   }

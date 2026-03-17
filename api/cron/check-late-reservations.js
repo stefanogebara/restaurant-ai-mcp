@@ -52,7 +52,7 @@ module.exports = async (req, res) => {
     // that haven't been checked in and whose reservation time was more than 20 minutes ago
     const { data: lateReservations, error } = await supabaseAdmin
       .from('reservations')
-      .select('*')
+      .select('id, reservation_id, customer_name, time, table_ids, restaurant_id, status, date')
       .in('date', [today, yesterday])
       .eq('status', 'confirmed')
       .lte('time', lateTimeThreshold)
@@ -78,18 +78,21 @@ module.exports = async (req, res) => {
         reservation_id: resId,
         customer_name: customerName,
         time,
-        table_ids: tableIds
+        table_ids: tableIds,
+        restaurant_id: reservationRestaurantId
       } = reservation;
 
       try {
         // Mark as no-show
+        // SEC-H2: Add restaurant_id filter as defense-in-depth alongside the PK match
         const { error: updateError } = await supabaseAdmin
           .from('reservations')
           .update({
             status: 'no-show',
             notes: 'Automatically marked as no-show - 20+ minutes late without check-in'
           })
-          .eq('id', recordId);
+          .eq('id', recordId)
+          .eq('restaurant_id', reservationRestaurantId);
 
         if (updateError) {
           throw new Error(updateError.message);

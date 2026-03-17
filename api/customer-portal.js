@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const rateLimited = await checkAndApplyRateLimit(req, res, 'customer_portal', 30, 60);
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'customer_portal');
   if (rateLimited) return;
 
   // Require authentication

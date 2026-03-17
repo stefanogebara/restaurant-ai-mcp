@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useVoicePersona, useSaveVoicePersona } from '../../hooks/useVoicePersona';
 import type { VoicePersona } from '../../hooks/useVoicePersona';
 import { useToast } from '../../contexts/ToastContext';
@@ -6,6 +7,7 @@ import { useMutation } from '@tanstack/react-query';
 import { authFetch } from '../../services/api';
 
 export default function VoicePersonaPanel() {
+  const { t } = useTranslation();
   const toast = useToast();
   const { data: persona, isLoading } = useVoicePersona();
   const saveMutation = useSaveVoicePersona();
@@ -84,7 +86,7 @@ export default function VoicePersonaPanel() {
             id="agent-name"
             type="text"
             maxLength={50}
-            placeholder="e.g. Sofia"
+            placeholder={t('placeholders.agentName', 'e.g. Sofia')}
             value={getValue('agent_name')}
             onChange={e => set('agent_name', e.target.value)}
             className="w-full border border-border-gray rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"
@@ -98,7 +100,7 @@ export default function VoicePersonaPanel() {
             id="agent-greeting"
             type="text"
             maxLength={200}
-            placeholder="e.g. Welcome to our restaurant!"
+            placeholder={t('placeholders.agentGreeting', 'e.g. Welcome to our restaurant!')}
             value={getValue('agent_greeting')}
             onChange={e => set('agent_greeting', e.target.value)}
             className="w-full border border-border-gray rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/30"

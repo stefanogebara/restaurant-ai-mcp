@@ -5,21 +5,9 @@
  * Falls back to EUR for all other locales.
  */
 
-export const DEFAULT_CURRENCY = 'EUR';
-
-/**
- * Format an amount as a currency string using the default (BRL) or specified currency.
- */
-export function formatCurrency(amount: number, currency = DEFAULT_CURRENCY): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
 export type SupportedCurrency = 'EUR' | 'BRL';
+
+export const DEFAULT_CURRENCY = 'EUR';
 
 /**
  * Detect currency based on browser locale and navigator language.
@@ -61,6 +49,32 @@ export function detectCurrency(): SupportedCurrency {
   }
 
   return 'EUR';
+}
+
+/**
+ * Lazily detected currency — cached after first call.
+ */
+let _detectedCurrency: SupportedCurrency | null = null;
+
+function getDefaultCurrency(): SupportedCurrency {
+  if (_detectedCurrency === null) {
+    _detectedCurrency = detectCurrency();
+  }
+  return _detectedCurrency;
+}
+
+/**
+ * Format an amount as a currency string using the detected (BRL/EUR) or specified currency.
+ */
+export function formatCurrency(amount: number, currency?: SupportedCurrency): string {
+  const cur = currency ?? getDefaultCurrency();
+  const locale = cur === 'BRL' ? 'pt-BR' : 'en-US';
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: cur,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
 }
 
 /**

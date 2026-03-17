@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { Table, TableShape } from '../../types/host.types';
 import { SHAPES, CAPACITIES, GRID_COLS, GRID_ROWS } from './floorPlanConstants';
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export default function AddTableModal({ onClose, onAdd, nextNumber, locations, activeLocation, tables }: Props) {
+  const { t } = useTranslation();
   const [tableNumber, setTableNumber] = useState(nextNumber);
   const [capacity, setCapacity] = useState(4);
   const [shape, setShape] = useState<TableShape>('round');
@@ -152,7 +154,7 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
                   type="text"
                   value={newLocation}
                   onChange={e => setNewLocation(e.target.value)}
-                  placeholder="e.g. Terrace"
+                  placeholder={t('placeholders.tableName', 'e.g. Terrace')}
                   autoFocus
                   className="flex-1 px-3 py-2.5 border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy transition-colors"
                 />
@@ -161,7 +163,7 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
                   onClick={() => setShowNewLoc(false)}
                   className="px-3 py-2.5 border border-border-gray rounded-xl text-sm text-stone-gray hover:border-burgundy/40 transition-colors"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               </div>
             )}
@@ -171,7 +173,7 @@ export default function AddTableModal({ onClose, onAdd, nextNumber, locations, a
             type="submit"
             className="w-full py-2.5 bg-deep-charcoal hover:bg-stone-mid text-white font-semibold rounded-xl transition-colors text-sm"
           >
-            Add Table
+            {t('tables.addTable', 'Add Table')}
           </button>
         </form>
       </div>

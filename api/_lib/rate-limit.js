@@ -59,6 +59,13 @@ const RATE_LIMITS = {
     message: 'Too many chat requests. Please wait a moment.',
   },
 
+  // Customer portal / reservation lookup (public-facing)
+  customer_portal: {
+    windowMs: 60 * 60 * 1000, // 1 hour
+    maxRequests: 30,
+    message: 'Too many requests. Please try again later.',
+  },
+
   // Reservation creation
   reservation: {
     windowMs: 60 * 60 * 1000, // 1 hour

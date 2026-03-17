@@ -122,7 +122,7 @@ export default function AddReservationModal({ isOpen, onClose }: AddReservationM
               value={form.customer_name}
               onChange={(e) => update('customer_name', e.target.value)}
               className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
-              placeholder="John Smith"
+              placeholder={t('placeholders.name', 'John Smith')}
             />
           </div>
 
@@ -144,7 +144,7 @@ export default function AddReservationModal({ isOpen, onClose }: AddReservationM
               value={form.customer_email}
               onChange={(e) => update('customer_email', e.target.value)}
               className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
-              placeholder="john@example.com"
+              placeholder={t('placeholders.email', 'john@example.com')}
             />
           </div>
 

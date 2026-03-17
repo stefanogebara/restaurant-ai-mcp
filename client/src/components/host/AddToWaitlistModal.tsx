@@ -87,7 +87,7 @@ export default function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlist
                 value={formData.customer_name}
                 onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
                 className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
-                placeholder="John Smith"
+                placeholder={t('placeholders.name', 'John Smith')}
               />
             </div>
 
@@ -101,7 +101,7 @@ export default function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlist
                 value={formData.customer_phone}
                 onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
                 className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
-                placeholder="+1 234 567 8900"
+                placeholder={t('placeholders.phone', '+1 234 567 8900')}
               />
             </div>
 
@@ -114,7 +114,7 @@ export default function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlist
                 value={formData.customer_email}
                 onChange={(e) => setFormData({ ...formData, customer_email: e.target.value })}
                 className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all"
-                placeholder="john@example.com"
+                placeholder={t('placeholders.email', 'john@example.com')}
               />
             </div>
 
@@ -175,7 +175,7 @@ export default function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlist
                 onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
                 className="w-full px-4 py-2.5 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal placeholder-muted-stone focus:outline-none focus:ring-2 focus:ring-burgundy focus:border-transparent transition-all resize-none"
                 rows={2}
-                placeholder="Add comma-separated tags or notes..."
+                placeholder={t('placeholders.tags', 'Add comma-separated tags or notes...')}
               />
             </div>
 

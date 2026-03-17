@@ -75,7 +75,7 @@ export default function CallConversationList({
             });
             const duration = conv.duration_seconds
               ? `${Math.floor(conv.duration_seconds / 60)}:${String(conv.duration_seconds % 60).padStart(2, '0')}`
-              : 'Live';
+              : t('common.live', 'Live');
 
             return (
               <div

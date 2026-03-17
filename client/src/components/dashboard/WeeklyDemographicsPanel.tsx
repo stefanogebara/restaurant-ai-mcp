@@ -11,12 +11,19 @@ export default function WeeklyDemographicsPanel({ demographics }: WeeklyDemograp
   const { t } = useTranslation();
   const demoRows = buildDemoRows(demographics, t);
 
+  const hasData = demoRows.some((row) => (row.pct !== null && row.pct > 0) || (row.count !== null && row.count > 0));
+
   return (
     <div className="bg-white rounded-2xl border border-border-gray overflow-hidden">
       <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
         <span className="text-[15px] font-semibold tracking-tight">{t('analytics.guestDemographics')}</span>
       </div>
-      {demoRows.map((row) => (
+      {!hasData ? (
+        <div className="text-center py-10 px-6">
+          <p className="text-sm font-semibold text-deep-charcoal mb-1">{t('analytics.noDemographicsTitle', 'No demographic data yet')}</p>
+          <p className="text-xs text-stone-gray">{t('analytics.noDemographicsHint', 'Guest profiles will build over time as customers visit and interact.')}</p>
+        </div>
+      ) : demoRows.map((row) => (
         <div key={row.rank} className="flex items-center px-6 py-3.5 border-b border-soft-gray last:border-b-0 gap-3.5">
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-bold flex-shrink-0"

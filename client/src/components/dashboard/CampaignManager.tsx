@@ -3,6 +3,7 @@
  * Added as a section in the AI Insights page.
  */
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useCampaignList,
   useSegmentCounts,
@@ -41,11 +42,12 @@ export default function CampaignManager() {
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
   const [formSegment, setFormSegment] = useState('vip');
   const [formMessage, setFormMessage] = useState('');
+  const { t } = useTranslation();
   const [formError, setFormError] = useState('');
 
   const handleCreate = () => {
     if (!formMessage.trim()) {
-      setFormError('Message is required');
+      setFormError(t('campaigns.messageRequired', 'Message is required'));
       return;
     }
     setFormError('');
@@ -74,7 +76,7 @@ export default function CampaignManager() {
           onClick={() => setShowCreate(!showCreate)}
           className="text-xs font-semibold px-3 py-1.5 rounded-full bg-burgundy/10 text-burgundy hover:bg-burgundy/20 transition-colors"
         >
-          {showCreate ? 'Cancel' : '+ New Campaign'}
+          {showCreate ? t('common.cancel') : t('campaigns.newCampaign', '+ New Campaign')}
         </button>
       </div>
 
@@ -83,7 +85,7 @@ export default function CampaignManager() {
         <div className="bg-gray-50 rounded-xl p-4 mb-4 space-y-3">
           {/* Segment Picker */}
           <div>
-            <label className="block text-xs font-medium text-muted-stone mb-1.5">Target Audience</label>
+            <label className="block text-xs font-medium text-muted-stone mb-1.5">{t('campaigns.targetAudience', 'Target Audience')}</label>
             <div className="grid grid-cols-2 gap-2">
               {SEGMENTS.map((s) => (
                 <button
@@ -111,11 +113,11 @@ export default function CampaignManager() {
 
           {/* Message */}
           <div>
-            <label className="block text-xs font-medium text-muted-stone mb-1">Message</label>
+            <label className="block text-xs font-medium text-muted-stone mb-1">{t('campaigns.message', 'Message')}</label>
             <textarea
               value={formMessage}
               onChange={(e) => setFormMessage(e.target.value)}
-              placeholder="Hi {name}, we miss you at our restaurant! Book your next visit..."
+              placeholder={t('campaigns.messagePlaceholder', 'Hi {name}, we miss you at our restaurant! Book your next visit...')}
               rows={3}
               className="w-full border border-border-gray rounded-xl px-3 py-2 text-sm text-deep-charcoal resize-none"
               maxLength={500}
@@ -132,7 +134,7 @@ export default function CampaignManager() {
             disabled={createCampaign.isPending}
             className="w-full py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50"
           >
-            {createCampaign.isPending ? 'Creating...' : 'Create & Send Campaign'}
+            {createCampaign.isPending ? t('campaigns.creating', 'Creating...') : t('campaigns.createAndSend', 'Create & Send Campaign')}
           </button>
         </div>
       )}
@@ -146,7 +148,7 @@ export default function CampaignManager() {
         </div>
       ) : !campaigns?.length ? (
         <div className="text-center py-8">
-          <p className="text-sm text-muted-stone">No campaigns yet</p>
+          <p className="text-sm text-muted-stone">{t('campaigns.noCampaigns', 'No campaigns yet')}</p>
           <p className="text-xs text-muted-stone mt-1">Create your first WhatsApp campaign to re-engage guests</p>
         </div>
       ) : (

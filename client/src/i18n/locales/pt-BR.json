@@ -1997,5 +1997,24 @@
   },
   "manager": {
     "sendFailed": "Falha ao enviar. Tente novamente."
+  },
+  "campaigns": {
+    "newCampaign": "+ Nova Campanha",
+    "message": "Mensagem",
+    "targetAudience": "Público-Alvo",
+    "creating": "Criando...",
+    "createAndSend": "Criar e Enviar Campanha",
+    "noCampaigns": "Nenhuma campanha ainda",
+    "messageRequired": "Mensagem é obrigatória",
+    "messagePlaceholder": "Olá {name}, sentimos sua falta! Reserve sua próxima visita..."
+  },
+  "placeholders": {
+    "name": "João Silva",
+    "email": "joao@exemplo.com",
+    "phone": "+55 11 9999-8888",
+    "agentName": "ex. Sofia",
+    "agentGreeting": "ex. Bem-vindo ao nosso restaurante!",
+    "tableName": "ex. Terraço",
+    "tags": "Adicione tags ou notas separadas por vírgula..."
   }
 }

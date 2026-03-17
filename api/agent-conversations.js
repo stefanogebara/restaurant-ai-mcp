@@ -73,16 +73,18 @@ async function handleListConversations(req, res, user) {
     date_to,
     outcome,
     language,
-    restaurant_id,
     limit = 50,
     offset = 0,
     order_by = 'started_at',
     order_direction = 'desc'
   } = req.query;
 
+  // SEC-H1: Use JWT-bound restaurant_id — never trust req.query for tenant scoping
+  const restaurant_id = user.restaurant_id;
+
   try {
     // REQUIRED: Always require restaurant_id for multi-tenant filtering
-    // Return empty results if no restaurant_id provided (don't show other restaurants' data)
+    // Return empty results if no restaurant_id present on the JWT (should not happen in practice)
     if (!restaurant_id || restaurant_id === 'default') {
       return res.status(200).json({
         success: true,
@@ -221,7 +223,10 @@ async function handleGetConversation(req, res, user) {
  * GET /api/agent-conversations?action=stats&period=7d
  */
 async function handleGetStats(req, res, user) {
-  const { period = '7d', date_from, date_to, restaurant_id } = req.query;
+  const { period = '7d', date_from, date_to } = req.query;
+
+  // SEC-H1: Use JWT-bound restaurant_id — never trust req.query for tenant scoping
+  const restaurant_id = user.restaurant_id;
 
   try {
     // REQUIRED: Always require restaurant_id for multi-tenant filtering

@@ -56,8 +56,10 @@ function setWebhookCors(req, res) {
   const origin = req.headers.origin;
 
   // For webhooks, we need to be more permissive since services like ElevenLabs
-  // may not send an origin header, or may send from various subdomains
-  if (origin && (ALLOWED_ORIGINS.includes(origin) || WEBHOOK_ORIGINS.some(wo => origin.includes(wo)))) {
+  // may not send an origin header, or may send from various subdomains.
+  // SEC-H5: Use exact origin match instead of substring includes() to prevent
+  // a spoofed origin like "https://evil.com?x=https://api.elevenlabs.io" from matching.
+  if (origin && (ALLOWED_ORIGINS.includes(origin) || WEBHOOK_ORIGINS.some(wo => origin === wo))) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Vary', 'Origin');
   } else if (!origin) {

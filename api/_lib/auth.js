@@ -281,7 +281,11 @@ function authMiddleware(options = {}) {
       token = authHeader.substring(7);
     }
 
-    // Also check for token in cookies
+    // SEC-H3: Cookie fallback — backward-compat only.
+    // No production code sets the auth_token cookie (res.cookie / Set-Cookie are not used).
+    // verifyAuth() used by all Vercel serverless handlers does NOT read cookies.
+    // If a cookie-based flow is ever added, the Set-Cookie header MUST include
+    // SameSite=Strict; Secure; HttpOnly to prevent CSRF and interception.
     if (!token && req.cookies && req.cookies.auth_token) {
       token = req.cookies.auth_token;
     }
