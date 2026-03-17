@@ -19,6 +19,7 @@ function mockRes() {
   const res = {};
   res.status = jest.fn().mockReturnValue(res);
   res.json = jest.fn().mockReturnValue(res);
+  res.end = jest.fn().mockReturnValue(res);
   res.setHeader = jest.fn().mockReturnValue(res);
   res.end = jest.fn().mockReturnValue(res);
   return res;
@@ -157,6 +158,10 @@ describe('push-subscribe', () => {
     };
 
     jest.mock('../_lib/supabase', () => ({ supabaseAdmin: mockSupabaseAdmin }));
+    jest.mock('../_lib/cors', () => ({
+      setInternalCors: jest.fn(),
+      handlePreflight: jest.fn(() => false),
+    }));
     jest.mock('../_lib/rate-limit', () => ({
       checkAndApplyRateLimit: jest.fn().mockResolvedValue(false),
     }));
@@ -168,8 +173,14 @@ describe('push-subscribe', () => {
   });
 
   it('stores subscription and returns 201', async () => {
-    const chain = { insert: jest.fn().mockResolvedValue({ error: null }) };
-    mockSupabaseAdmin.from.mockReturnValue(chain);
+    const countChain = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockResolvedValue({ count: 0, error: null }),
+    };
+    const insertChain = { insert: jest.fn().mockResolvedValue({ error: null }) };
+    mockSupabaseAdmin.from
+      .mockReturnValueOnce(countChain)
+      .mockReturnValueOnce(insertChain);
 
     const req = {
       method: 'POST',

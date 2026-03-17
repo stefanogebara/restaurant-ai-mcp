@@ -45,9 +45,11 @@ function mkReqRes(overrides) {
   const res = {
     _status: null,
     _body: null,
+    _ended: false,
     setHeader: jest.fn(),
     status: function(code) { this._status = code; return this; },
     json: function(body) { this._body = body; return this; },
+    end: function() { this._ended = true; return this; },
   };
   const req = Object.assign({ method: "GET", query: {}, body: {}, headers: {} }, overrides);
   return { req: req, res: res };
@@ -107,7 +109,7 @@ describe("check-availability handler", function() {
       var r = mkReqRes({ method: "OPTIONS" });
       await handler(r.req, r.res);
       expect(r.res._status).toBe(200);
-      expect(r.res._body).toEqual({ success: true });
+      expect(r.res._ended).toBe(true);
     });
 
     it("sets CORS headers on every request", async function() {
