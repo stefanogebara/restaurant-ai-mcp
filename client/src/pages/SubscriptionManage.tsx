@@ -37,7 +37,14 @@ export default function SubscriptionManage() {
   const handleManageSubscription = () => {
     portal.mutate(undefined, {
       onSuccess: ({ url }) => { window.location.href = url; },
-      onError: (err) => error(err.message || t('subscription.failedToOpen')),
+      onError: (err) => {
+        const message = err.message || t('subscription.failedToOpen');
+        error(message);
+        // If no active subscription (e.g. canceled), redirect to pricing
+        if (message.includes('No active subscription')) {
+          navigate('/#pricing');
+        }
+      },
     });
   };
 
@@ -165,7 +172,10 @@ export default function SubscriptionManage() {
               const isCurrent = currentPlanName === p.key;
               const isFeatured = !!p.featured;
               const tierIndex = planTiers.indexOf(p.key);
-              const buttonLabel = isCurrent ? t('subscription.currentPlan') : tierIndex > currentTierIndex ? t('subscription.upgrade') : t('subscription.downgrade');
+              const isCanceled = subscription.status === 'canceled';
+              const buttonLabel = isCanceled
+                ? t('subscription.resubscribe', 'Resubscribe')
+                : isCurrent ? t('subscription.currentPlan') : tierIndex > currentTierIndex ? t('subscription.upgrade') : t('subscription.downgrade');
 
               return (
                 <div key={p.key} className={`relative px-8 py-10 ${isFeatured ? 'bg-deep-charcoal' : 'bg-warm-white'}`}>
@@ -188,15 +198,18 @@ export default function SubscriptionManage() {
                     ))}
                   </ul>
                   <button
-                    onClick={isCurrent ? undefined : handleManageSubscription}
-                    disabled={isCurrent || portal.isPending}
-                    className={`w-full py-3.5 rounded-full text-sm font-semibold transition-colors ${
-                      isFeatured && !isCurrent ? 'bg-burgundy text-white hover:bg-burgundy-dark' :
-                      isCurrent ? 'border border-border-gray text-muted-stone cursor-default' :
+                    onClick={(isCurrent && !isCanceled) ? undefined : handleManageSubscription}
+                    disabled={(isCurrent && !isCanceled) || portal.isPending}
+                    className={`w-full py-3.5 rounded-full text-sm font-semibold transition-colors flex items-center justify-center gap-2 ${
+                      (isCanceled || (isFeatured && !isCurrent)) ? 'bg-burgundy text-white hover:bg-burgundy-dark' :
+                      (isCurrent && !isCanceled) ? 'border border-border-gray text-muted-stone cursor-default' :
                       'border border-border-gray text-deep-charcoal hover:border-muted-stone'
-                    }`}
+                    } ${portal.isPending && !(isCurrent && !isCanceled) ? 'opacity-60' : ''}`}
                   >
-                    {buttonLabel}
+                    {portal.isPending && !(isCurrent && !isCanceled) && (
+                      <div aria-hidden="true" className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    )}
+                    {portal.isPending && !(isCurrent && !isCanceled) ? t('subscription.opening', 'Opening...') : buttonLabel}
                   </button>
                 </div>
               );

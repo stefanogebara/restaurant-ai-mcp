@@ -137,6 +137,7 @@ function App() {
               <Route path="/welcome" element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
               <Route path="/onboarding" element={<ProtectedRoute><ErrorBoundary fallback={<RouteErrorFallback />}><Onboarding /></ErrorBoundary></ProtectedRoute>} />
               <Route path="/settings/language" element={<ProtectedRoute><LanguageSettings /></ProtectedRoute>} />
+              <Route path="/settings/restaurant" element={<Navigate to="/host-dashboard/settings" replace />} />
               {/* Public booking portal */}
               <Route path="/book/:slug" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BookingPage /></ErrorBoundary>} />
               <Route path="/book/:slug/confirmed" element={<BookingConfirmation />} />

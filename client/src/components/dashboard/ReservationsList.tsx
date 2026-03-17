@@ -129,6 +129,15 @@ export default function ReservationsList({
             {showTomorrow ? tl('noTomorrow') : tl('noUpcoming')}
           </p>
           {!showTomorrow && <p className="text-xs text-muted-stone mt-1">{tl('aiHint')}</p>}
+          {onAdd && (
+            <button
+              type="button"
+              onClick={onAdd}
+              className="mt-3 text-xs font-semibold px-4 py-2 rounded-lg bg-burgundy/[8%] text-burgundy hover:bg-burgundy/[14%] transition-colors"
+            >
+              + {tl('addReservation')}
+            </button>
+          )}
         </div>
       ) : (
         <div>

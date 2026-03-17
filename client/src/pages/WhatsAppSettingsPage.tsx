@@ -449,6 +449,16 @@ export default function WhatsAppSettingsPage() {
               {testMutation.isPending ? t('settings.sendingTest') : t('settings.sendTest')}
             </button>
           </div>
+          {!status?.api_configured && (
+            <p className="text-xs text-amber-600 mt-2">
+              {t('settings.testRequiresApi', 'WhatsApp API must be configured before sending test messages. Contact support to complete setup.')}
+            </p>
+          )}
+          {status?.api_configured && !testPhone && (
+            <p className="text-xs text-warm-stone mt-2">
+              {t('settings.enterTestPhone', 'Enter a phone number above to send a test message.')}
+            </p>
+          )}
           {testResult && (
             <p className={`text-sm mt-2 ${testResult.success ? 'text-emerald-600' : 'text-red-600'}`}>
               {testResult.message}

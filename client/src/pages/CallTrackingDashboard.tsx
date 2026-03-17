@@ -12,6 +12,7 @@ import { SkeletonCallTracking } from '../components/common/Skeleton';
 import { useToast } from '../contexts/ToastContext';
 import { LS_RESTAURANT_ID } from '../config/localStorageKeys';
 
+import { toCsv, downloadCsv } from '../utils/exportCsv';
 import CallPhoneStatusCard from '../components/call-tracking/CallPhoneStatusCard';
 import CallDiagnosticsPanel from '../components/call-tracking/CallDiagnosticsPanel';
 import CallFilters from '../components/call-tracking/CallFilters';
@@ -134,24 +135,20 @@ export default function CallTrackingDashboard() {
                 type="button"
                 onClick={() => {
                   if (!conversations.length) return;
-                  const headers = [t('common.date', 'Date'), t('callTracking.caller', 'Caller'), t('callTracking.duration', 'Duration'), t('callTracking.outcome', 'Outcome'), t('common.language', 'Language')];
-                  const rows = conversations.map((c: Record<string, unknown>) => [
-                    c.created_at ? new Date(c.created_at as string).toLocaleString() : '',
-                    (c.caller_number as string) || '',
-                    (c.duration as string) || '',
-                    (c.outcome as string) || '',
-                    (c.language as string) || '',
-                  ]);
-                  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
-                  const blob = new Blob([csv], { type: 'text/csv' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = `calls-${new Date().toISOString().slice(0, 10)}.csv`;
-                  a.click();
-                  URL.revokeObjectURL(url);
+                  const rows = conversations.map(c => ({
+                    date: c.started_at ? new Date(c.started_at).toLocaleString() : '',
+                    caller: c.caller_phone || '',
+                    duration_seconds: c.duration_seconds ?? '',
+                    outcome: c.outcome || '',
+                    language: c.language || '',
+                    customer_name: c.customer_name || '',
+                    party_size: c.party_size ?? '',
+                  }));
+                  const columns = ['date', 'caller', 'duration_seconds', 'outcome', 'language', 'customer_name', 'party_size'];
+                  downloadCsv(`calls-${new Date().toISOString().slice(0, 10)}.csv`, toCsv(rows, columns));
                 }}
                 disabled={!conversations.length}
+                title={!conversations.length ? t('callTracking.noCallsToExport', 'No calls to export') : ''}
                 className={`px-4 py-2 bg-white border border-border-gray rounded-xl text-[13px] font-medium transition-colors ${
                   conversations.length ? 'text-stone-gray hover:border-muted-stone' : 'text-muted-stone cursor-not-allowed'
                 }`}

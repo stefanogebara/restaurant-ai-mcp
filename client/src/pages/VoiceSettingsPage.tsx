@@ -243,15 +243,22 @@ export default function VoiceSettingsPage() {
           <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
             {t('navigation.voiceAgent')} <span className="font-light text-warm-stone">/ {t('common.settings')}</span>
           </h1>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={!isDirty || isSaving}
-            className="px-6 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-[13px] font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {isSaving && <Spinner size="sm" className="border-white border-t-white/30" />}
-            {isSaving ? t('voiceSettings.saving', 'Saving...') : t('voiceSettings.saveChanges', 'Save Changes')}
-          </button>
+          <div className="flex flex-col items-end gap-1">
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={!isDirty || isSaving}
+              className="px-6 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-[13px] font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {isSaving && <Spinner size="sm" className="border-white border-t-white/30" />}
+              {isSaving ? t('voiceSettings.saving', 'Saving...') : t('voiceSettings.saveChanges', 'Save Changes')}
+            </button>
+            {!isDirty && !isSaving && (
+              <p className="text-xs text-warm-stone">
+                {t('voiceSettings.changeSettingsHint', 'Change a setting above to enable saving')}
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="space-y-6">
