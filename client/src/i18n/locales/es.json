@@ -1922,6 +1922,7 @@
     "onboarding": "Configuración | seatable",
     "login": "Iniciar Sesión | seatable",
     "settings": "Configuración | seatable",
+    "reports": "Informes | seatable",
     "bookingPage": "{{name}} — Reservar Mesa | Seatable",
     "bookingDescription": "Reserva una mesa en {{name}} en {{city}}, {{country}}. Consulta disponibilidad y reserva en línea — rápido y fácil."
   },

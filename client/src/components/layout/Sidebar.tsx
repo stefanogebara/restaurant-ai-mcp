@@ -254,6 +254,36 @@ export default function Sidebar() {
               </div>
             ))}
 
+            {/* Settings */}
+            <div className="mb-5">
+              {!isCollapsed && (
+                <div className="px-6 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-gray/70">
+                  {t('navigation.sectionSettings', 'Settings')}
+                </div>
+              )}
+              {isCollapsed && (
+                <div className="w-full flex justify-center mb-2">
+                  <div className="w-6 h-px bg-charcoal-dark" />
+                </div>
+              )}
+              <Link
+                to="/settings/language"
+                onClick={() => setIsMobileOpen(false)}
+                className={`
+                  flex items-center gap-3 transition-all duration-150
+                  ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
+                  ${isActive('/settings/language')
+                    ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
+                    : 'text-muted-stone hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
+                  }
+                `}
+                title={isCollapsed ? t('navigation.languageSettings', 'Language') : undefined}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors ${isActive('/settings/language') ? 'bg-burgundy' : 'bg-current opacity-40'}`} />
+                {!isCollapsed && <span className="text-sm">{t('navigation.languageSettings', 'Language')}</span>}
+              </Link>
+            </div>
+
             {/* Team section — owner only */}
             {can('manageTeam') && (
               <div className="mb-5">

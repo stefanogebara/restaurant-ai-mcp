@@ -1937,6 +1937,7 @@
     "onboarding": "Setup | seatable",
     "login": "Sign In | seatable",
     "settings": "Settings | seatable",
+    "reports": "Reports | seatable",
     "bookingPage": "{{name}} — Reserve a Table | Seatable",
     "bookingDescription": "Book a table at {{name}} in {{city}}, {{country}}. Check availability and reserve online — quick and easy."
   },

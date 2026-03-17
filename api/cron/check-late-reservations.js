@@ -125,7 +125,6 @@ module.exports = async (req, res) => {
 
         markedAsNoShow.push({
           reservation_id: resId,
-          customer_name: customerName,
           time: time,
           tables_released: tableIds?.length || 0
         });

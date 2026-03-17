@@ -55,10 +55,12 @@ export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChar
           <XAxis
             dataKey="time"
             stroke={colors.warmStone}
-            style={{ fontSize: '12px' }}
-            angle={-45}
+            style={{ fontSize: '11px' }}
+            angle={-35}
             textAnchor="end"
-            height={80}
+            height={60}
+            interval={0}
+            tick={{ dy: 5 }}
           />
           <YAxis
             stroke={colors.warmStone}

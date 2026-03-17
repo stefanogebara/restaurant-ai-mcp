@@ -7,6 +7,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { usePermission } from '../hooks/usePermission';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import Spinner from '../components/common/Spinner';
@@ -27,6 +28,7 @@ const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
 export default function WeeklyReport() {
   const { t } = useTranslation();
+  useDocumentTitle(t('pageTitles.reports'));
   const { can } = usePermission();
   const subscription = useSubscription();
   const currentPlan = (subscription.data?.subscription?.plan?.toLowerCase() as PlanType) || undefined;

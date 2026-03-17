@@ -1946,6 +1946,7 @@
     "onboarding": "Configuração | seatable",
     "login": "Entrar | seatable",
     "settings": "Configurações | seatable",
+    "reports": "Relatórios | seatable",
     "bookingPage": "{{name}} — Reservar Mesa | Seatable",
     "bookingDescription": "Reserve uma mesa no {{name}} em {{city}}, {{country}}. Verifique disponibilidade e reserve online — rápido e fácil."
   },

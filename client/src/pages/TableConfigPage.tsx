@@ -289,7 +289,7 @@ export default function TableConfigPage() {
                       {!table.is_fixed && (
                         <button
                           onClick={(e) => { e.stopPropagation(); openAdjacencyModal(table); }}
-                          className="flex-1 px-3 py-1.5 text-xs bg-burgundy/10 text-burgundy rounded-xl hover:bg-burgundy/20 transition-colors"
+                          className="flex-1 px-3 py-1.5 text-xs bg-soft-gray text-stone-gray rounded-xl hover:bg-border-gray transition-colors"
                         >
                           {t('settings.setAdjacent')}
                         </button>
