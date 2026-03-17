@@ -26,7 +26,15 @@
     "searchPlaceholder": "Search...",
     "skipToContent": "Skip to content",
     "goBack": "Go back",
-    "poweredBy": "Powered by"
+    "poweredBy": "Powered by",
+    "live": "Live",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "dismiss": "Dismiss",
+    "discard": "Discard",
+    "select": "— Select —",
+    "nDays": "{{count}} days",
+    "date": "Date"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -187,7 +195,13 @@
       "edit": "Edit",
       "cancel": "Cancel",
       "addReservation": "+ Add"
-    }
+    },
+    "guestFeedback": "Guest Feedback",
+    "last7days": "Last 7 days",
+    "avgRating": "Avg Rating",
+    "responseRate": "Response Rate",
+    "responses": "Responses",
+    "reports": "Reports"
   },
   "time": {
     "justNow": "just now",
@@ -1261,7 +1275,8 @@
     "outcomeAbandonedLabel": "Abandoned",
     "outcomeUnknown": "Unknown",
     "durationUnknown": "Unknown",
-    "noTranscriptAvailable": "No transcript available for this conversation."
+    "noTranscriptAvailable": "No transcript available for this conversation.",
+    "caller": "Caller"
   },
   "landing": {
     "badge": "AI-Powered Restaurant Management",
@@ -1758,6 +1773,34 @@
     "languages": "Languages",
     "languageChangeWarning": "Changing the language will update your agent's greeting message. The voice will speak in the selected language using its multilingual capabilities."
   },
+  "voiceExperiment": {
+    "title": "A/B Test Your Voice",
+    "subtitle": "Test different voice personas to find what works best",
+    "createExperiment": "Create Experiment",
+    "startExperiment": "Start Experiment",
+    "branchName": "Branch name",
+    "branchNamePlaceholder": "e.g. Friendly Sofia v2",
+    "agentNameOverride": "Agent name override",
+    "agentGreetingOverride": "Greeting override",
+    "speed": "Speed",
+    "trafficSplit": "Traffic split",
+    "trafficSplitLabel": "{{control}}% Control / {{variant}}% Variant",
+    "running": "Running",
+    "startedAt": "Started",
+    "control": "Control",
+    "variant": "Variant",
+    "conversations": "conversations",
+    "configDiff": "Variant changes",
+    "promoteVariant": "Promote Variant",
+    "rollBack": "Roll Back",
+    "promoteConfirm": "Promote the variant to production? This will apply the variant config to all traffic.",
+    "rollbackConfirm": "Roll back to the control? This will stop the experiment and discard the variant.",
+    "completed": "Completed",
+    "promoted": "Promoted",
+    "winner": "Winner",
+    "startNewExperiment": "Start New Experiment",
+    "noChanges": "No overrides configured"
+  },
   "phoneIntegration": {
     "title": "AI Phone — Voice",
     "statusActive": "Active",
@@ -1893,5 +1936,57 @@
     "settings": "Settings | seatable",
     "bookingPage": "{{name}} — Reserve a Table | Seatable",
     "bookingDescription": "Book a table at {{name}} in {{city}}, {{country}}. Check availability and reserve online — quick and easy."
+  },
+  "strategy": {
+    "title": "AI Strategy Document",
+    "subtitle": "Your instructions to the AI — applied by Manager AI & Voice Agent",
+    "saved": "Strategy saved — AI agents will use this on their next run",
+    "saveFailed": "Failed to save strategy",
+    "suggestFailed": "Failed to generate suggestions",
+    "suggestionsAdded": "Suggestions added to your strategy — review and save when ready",
+    "savedAt": "Saved {{date}}",
+    "howItWorks": "The AI reads this every night — suggest it updates, then you edit and save. Repeat.",
+    "suggestions": "AI Strategy Suggestions",
+    "addToDoc": "Add to strategy document",
+    "saveApply": "Save & Apply",
+    "generate": "Generate from your data",
+    "footer": "Write what you want the AI to prioritise, how to position your restaurant, what promotions to mention. The AI applies this context every time it speaks with guests or advises you.",
+    "scorecard": "Strategy Scorecard",
+    "scorecardSub": "Is the strategy loop working?",
+    "noShowRate": "No-show Rate",
+    "avgRevenue": "Avg Revenue / Cover",
+    "conversionRate": "Conversion Rate",
+    "target": "target",
+    "notEnoughData": "Not enough data yet",
+    "loadFailed": "Failed to load metrics",
+    "noReservations": "No reservations in this period yet — metrics will appear as data comes in",
+    "basedOn": "Based on {{count}} reservations",
+    "completedServices": "{{count}} completed services",
+    "since": "since {{date}}",
+    "dashedLine": "Dashed line = target"
+  },
+  "referral": {
+    "title": "Refer & Earn",
+    "count": "{{count}} referral",
+    "count_plural": "{{count}} referrals",
+    "yourLink": "Your referral link",
+    "pending": "pending",
+    "converted": "converted",
+    "whatsappText": "I use Seatable – the AI that manages restaurant reservations. Try it free: {{url}}",
+    "emailSubject": "Try Seatable – AI reservations for restaurants",
+    "emailBody": "Hey,\n\nI use Seatable – it handles restaurant reservations with AI. Thought you might find it useful.\n\nTry it free here: {{url}}\n\nCheers"
+  },
+  "whatsapp": {
+    "contactSupport": "Please contact support to complete your WhatsApp setup.",
+    "status.APPROVED": "approved",
+    "status.PENDING": "pending",
+    "status.REJECTED": "rejected",
+    "status.NOT_SUBMITTED": "not submitted"
+  },
+  "voice": {
+    "settingsSaved": "Voice settings saved successfully"
+  },
+  "manager": {
+    "sendFailed": "Failed to send. Please try again."
   }
 }

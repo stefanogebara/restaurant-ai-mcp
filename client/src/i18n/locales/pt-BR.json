@@ -26,7 +26,15 @@
     "searchPlaceholder": "Buscar...",
     "skipToContent": "Pular para o conteúdo",
     "goBack": "Voltar",
-    "poweredBy": "Desenvolvido por"
+    "poweredBy": "Desenvolvido por",
+    "live": "Ao vivo",
+    "copy": "Copiar",
+    "copied": "Copiado!",
+    "dismiss": "Dispensar",
+    "discard": "Descartar",
+    "select": "— Selecionar —",
+    "nDays": "{{count}} dias",
+    "date": "Data"
   },
   "navigation": {
     "dashboard": "Painel",
@@ -187,7 +195,13 @@
       "edit": "Editar",
       "cancel": "Cancelar",
       "addReservation": "+ Adicionar"
-    }
+    },
+    "guestFeedback": "Feedback dos Clientes",
+    "last7days": "Últimos 7 dias",
+    "avgRating": "Nota Média",
+    "responseRate": "Taxa de Resposta",
+    "responses": "Respostas",
+    "reports": "Relatórios"
   },
   "time": {
     "justNow": "agora",
@@ -1262,7 +1276,8 @@
     "outcomeAbandonedLabel": "Abandonada",
     "outcomeUnknown": "Desconhecido",
     "durationUnknown": "Desconhecido",
-    "noTranscriptAvailable": "Nenhuma transcrição disponível para esta conversa."
+    "noTranscriptAvailable": "Nenhuma transcrição disponível para esta conversa.",
+    "caller": "Chamador"
   },
   "landing": {
     "badge": "Gestão de Restaurantes com IA",
@@ -1767,6 +1782,34 @@
     "languages": "Idiomas",
     "languageChangeWarning": "Alterar o idioma atualizará a mensagem de boas-vindas do seu agente. A voz falará no idioma selecionado usando suas capacidades multilíngues."
   },
+  "voiceExperiment": {
+    "title": "Teste A/B da Sua Voz",
+    "subtitle": "Teste diferentes personalidades de voz para encontrar a melhor",
+    "createExperiment": "Criar Experimento",
+    "startExperiment": "Iniciar Experimento",
+    "branchName": "Nome da variante",
+    "branchNamePlaceholder": "ex. Sofia simpática v2",
+    "agentNameOverride": "Nome alternativo do agente",
+    "agentGreetingOverride": "Saudação alternativa",
+    "speed": "Velocidade",
+    "trafficSplit": "Divisão de tráfego",
+    "trafficSplitLabel": "{{control}}% Controle / {{variant}}% Variante",
+    "running": "Em andamento",
+    "startedAt": "Iniciado",
+    "control": "Controle",
+    "variant": "Variante",
+    "conversations": "conversas",
+    "configDiff": "Alterações da variante",
+    "promoteVariant": "Promover Variante",
+    "rollBack": "Reverter",
+    "promoteConfirm": "Promover a variante para produção? Isso aplicará a configuração variante para todo o tráfego.",
+    "rollbackConfirm": "Reverter para o controle? Isso encerrará o experimento e descartará a variante.",
+    "completed": "Concluído",
+    "promoted": "Promovido",
+    "winner": "Vencedor",
+    "startNewExperiment": "Novo Experimento",
+    "noChanges": "Sem alterações configuradas"
+  },
   "phoneIntegration": {
     "title": "Telefone IA — Voz",
     "statusActive": "Ativo",
@@ -1902,5 +1945,57 @@
     "settings": "Configurações | seatable",
     "bookingPage": "{{name}} — Reservar Mesa | Seatable",
     "bookingDescription": "Reserve uma mesa no {{name}} em {{city}}, {{country}}. Verifique disponibilidade e reserve online — rápido e fácil."
+  },
+  "strategy": {
+    "title": "Documento de Estratégia IA",
+    "subtitle": "Suas instruções para a IA — aplicadas pelo Gerente IA e Agente de Voz",
+    "saved": "Estratégia salva — os agentes IA usarão na próxima execução",
+    "saveFailed": "Falha ao salvar estratégia",
+    "suggestFailed": "Falha ao gerar sugestões",
+    "suggestionsAdded": "Sugestões adicionadas à estratégia — revise e salve quando pronto",
+    "savedAt": "Salvo em {{date}}",
+    "howItWorks": "A IA lê isso toda noite — sugira atualizações, edite e salve. Repita.",
+    "suggestions": "Sugestões de Estratégia IA",
+    "addToDoc": "Adicionar ao documento",
+    "saveApply": "Salvar e Aplicar",
+    "generate": "Gerar a partir dos seus dados",
+    "footer": "Escreva o que a IA deve priorizar, como posicionar seu restaurante, quais promoções mencionar. A IA aplica este contexto toda vez que fala com clientes ou aconselha você.",
+    "scorecard": "Painel de Métricas",
+    "scorecardSub": "A estratégia está funcionando?",
+    "noShowRate": "Taxa de No-show",
+    "avgRevenue": "Receita Média / Coberto",
+    "conversionRate": "Taxa de Conversão",
+    "target": "meta",
+    "notEnoughData": "Dados insuficientes",
+    "loadFailed": "Falha ao carregar métricas",
+    "noReservations": "Sem reservas neste período — as métricas aparecerão conforme os dados chegarem",
+    "basedOn": "Baseado em {{count}} reservas",
+    "completedServices": "{{count}} atendimentos concluídos",
+    "since": "desde {{date}}",
+    "dashedLine": "Linha tracejada = meta"
+  },
+  "referral": {
+    "title": "Indicar e Ganhar",
+    "count": "{{count}} indicação",
+    "count_plural": "{{count}} indicações",
+    "yourLink": "Seu link de indicação",
+    "pending": "pendentes",
+    "converted": "convertidos",
+    "whatsappText": "Eu uso o Seatable – a IA que gerencia reservas de restaurantes. Experimente grátis: {{url}}",
+    "emailSubject": "Experimente o Seatable – reservas com IA para restaurantes",
+    "emailBody": "Olá,\n\nEu uso o Seatable – ele gerencia reservas de restaurante com IA. Achei que poderia ser útil para você.\n\nExperimente grátis aqui: {{url}}\n\nAbraço"
+  },
+  "whatsapp": {
+    "contactSupport": "Entre em contato com o suporte para completar a configuração do WhatsApp.",
+    "status.APPROVED": "aprovado",
+    "status.PENDING": "pendente",
+    "status.REJECTED": "rejeitado",
+    "status.NOT_SUBMITTED": "não enviado"
+  },
+  "voice": {
+    "settingsSaved": "Configurações de voz salvas com sucesso"
+  },
+  "manager": {
+    "sendFailed": "Falha ao enviar. Tente novamente."
   }
 }
