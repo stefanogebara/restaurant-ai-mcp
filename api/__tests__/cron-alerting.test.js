@@ -35,9 +35,11 @@ jest.mock('../_lib/supabase', () => {
               })),
             })),
             update: jest.fn(() => ({
-              eq: jest.fn(() => Promise.resolve({
-                data: null,
-                error: mockUpdateShouldFail ? { message: 'DB error' } : null,
+              eq: jest.fn(() => ({
+                eq: jest.fn(() => Promise.resolve({
+                  data: null,
+                  error: mockUpdateShouldFail ? { message: 'DB error' } : null,
+                })),
               })),
             })),
           };
