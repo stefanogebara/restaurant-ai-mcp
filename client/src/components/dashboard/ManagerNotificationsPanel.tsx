@@ -50,7 +50,7 @@ export default function ManagerNotificationsPanel() {
   return (
     <div className="bg-white border border-border-gray rounded-2xl p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">
+        <h2 className="text-sm font-semibold text-deep-charcoal tracking-wider">
           {t('settings.managerNotifications')}
         </h2>
         <button

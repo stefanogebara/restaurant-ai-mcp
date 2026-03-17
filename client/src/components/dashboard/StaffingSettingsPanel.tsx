@@ -49,7 +49,7 @@ export default function StaffingSettingsPanel() {
   return (
     <div className="bg-white border border-border-gray rounded-2xl p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">
+        <h2 className="text-sm font-semibold text-deep-charcoal tracking-wider">
           {t('settings.staffingRatios')}
         </h2>
         <button

@@ -63,7 +63,7 @@ export default function DepositSettingsPanel() {
         <div className="space-y-4 pl-1">
           {/* Deposit type */}
           <div>
-            <label className="block text-xs font-semibold tracking-wider uppercase text-warm-stone mb-2">
+            <label className="block text-xs font-semibold tracking-wider text-warm-stone mb-2">
               {t('settings.depositType')}
             </label>
             <div className="flex gap-2">
@@ -86,7 +86,7 @@ export default function DepositSettingsPanel() {
 
           {/* Amount */}
           <div>
-            <label className="block text-xs font-semibold tracking-wider uppercase text-warm-stone mb-2">
+            <label className="block text-xs font-semibold tracking-wider text-warm-stone mb-2">
               {t('settings.depositAmount')}
             </label>
             <div className="relative w-32">
