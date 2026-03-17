@@ -1,14 +1,11 @@
-import React from 'react';
 import {
   useVoiceExperiment,
-  useCreateExperiment,
   usePromoteExperiment,
   useRollbackExperiment,
 } from '../../hooks/useVoiceExperiment';
 
 export default function VoiceExperimentPanel() {
   const { data: experiment, isLoading } = useVoiceExperiment();
-  const createMutation = useCreateExperiment();
   const promoteMutation = usePromoteExperiment();
   const rollbackMutation = useRollbackExperiment();
 

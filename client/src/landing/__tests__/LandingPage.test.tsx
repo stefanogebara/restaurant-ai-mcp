@@ -5,7 +5,8 @@ import { MemoryRouter } from 'react-router-dom';
 // Stub IntersectionObserver for jsdom (framer-motion viewport animations need it)
 beforeAll(() => {
   globalThis.IntersectionObserver = class IntersectionObserver {
-    constructor(private cb: IntersectionObserverCallback) {}
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    constructor(_cb: IntersectionObserverCallback) {}
     observe() {}
     unobserve() {}
     disconnect() {}

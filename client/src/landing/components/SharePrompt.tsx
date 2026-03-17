@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { X, Share2 } from 'lucide-react';
 import { trackShareClicked } from '../../lib/analytics';
 
-const WHATSAPP_SHARE_NUMBER = '';
 const SHARE_URL = 'https://seatable.one';
 
 interface SharePromptProps {

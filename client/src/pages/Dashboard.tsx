@@ -206,7 +206,7 @@ export default function Dashboard() {
                 onClick={() => window.location.href = '/host-dashboard/reports'}
                 className="flex items-center gap-2 px-4 py-2 bg-white border border-border-gray text-stone-gray hover:border-muted-stone rounded-xl text-[13px] font-medium transition-colors"
               >
-                <ThiingsIcon name="bar-chart-2" pxSize={14} />
+                <ThiingsIcon name="bar-chart" pxSize={14} />
                 {t('dashboard.reports', 'Reports')}
               </button>
               <button
