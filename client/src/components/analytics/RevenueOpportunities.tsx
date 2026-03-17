@@ -6,7 +6,7 @@ import { DEFAULT_CURRENCY } from '../../utils/currency';
 
 export default function RevenueOpportunities() {
   const { t } = useTranslation();
-  const { data, isLoading } = useRevenueOpportunities();
+  const { data, isLoading, isError } = useRevenueOpportunities();
   const opportunities = data?.opportunities ?? [];
   const summary = data?.summary ?? null;
   const [expandedCard, setExpandedCard] = useState<number | null>(null);
@@ -44,6 +44,18 @@ export default function RevenueOpportunities() {
         <div role="status" className="flex items-center justify-center">
           <div aria-hidden="true" className="w-8 h-8 border-4 border-burgundy border-t-transparent rounded-full animate-spin"></div>
           <span className="ml-3 text-warm-stone">{t('analytics.analyzingOpportunities')}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError || (!isLoading && opportunities.length === 0 && !summary)) {
+    return (
+      <div className="bg-white border border-border-gray/50 rounded-2xl p-8 shadow-sm">
+        <div className="text-center py-8">
+          <ThiingsIcon name="lightbulb" pxSize={32} className="mx-auto mb-3 text-warm-stone" />
+          <p className="font-semibold text-deep-charcoal mb-1">{t('analytics.noRevenueData', 'No revenue data yet')}</p>
+          <p className="text-sm text-warm-stone">{t('analytics.noRevenueDataDesc', 'Revenue opportunities will appear once there is enough booking history to analyze.')}</p>
         </div>
       </div>
     );

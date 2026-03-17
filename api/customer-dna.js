@@ -69,8 +69,8 @@ module.exports = async (req, res) => {
       }
 
       case 'analyze-all': {
-        // Batch analyze DNA for all customers
-        const results = await analyzeAllCustomersDNA();
+        // Batch analyze DNA for all customers scoped to this restaurant
+        const results = await analyzeAllCustomersDNA(req.user.restaurant_id);
 
         return res.status(200).json({
           success: true,
@@ -103,12 +103,13 @@ module.exports = async (req, res) => {
       }
 
       case 'stats': {
-        // Get DNA profiling statistics across all customers
+        // Get DNA profiling statistics scoped to this restaurant
 
         // Get profile statistics
         const { data: profiles, error: profilesError } = await supabaseAdmin
           .from('customer_behavioral_profiles')
-          .select('*');
+          .select('*')
+          .eq('restaurant_id', req.user.restaurant_id);
 
         if (profilesError) throw profilesError;
 

@@ -5,7 +5,7 @@
  * for consistent security across all API endpoints
  */
 
-const { corsMiddleware, applyCorsHeaders } = require('./cors');
+const { setInternalCors, handlePreflight } = require('./cors');
 const { checkAndApplyRateLimit, RATE_LIMITS } = require('./rate-limit');
 const { applySecurityHeaders } = require('./security-headers');
 const { verifyAuth } = require('./auth');
@@ -41,8 +41,8 @@ async function applySecurityMiddleware(req, res, options = {}) {
 
   // Handle CORS
   if (!skipCors) {
-    const isPreflightHandled = corsMiddleware(req, res);
-    if (isPreflightHandled) {
+    setInternalCors(req, res);
+    if (handlePreflight(req, res)) {
       return { handled: true }; // OPTIONS request handled
     }
   }

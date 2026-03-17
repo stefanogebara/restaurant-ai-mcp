@@ -6,7 +6,11 @@ import { useNoShowPredictions, type NoShowPrediction } from '../../hooks/usePred
 export default function NoShowPredictions() {
   const { t } = useTranslation();
   const { data, isLoading } = useNoShowPredictions();
-  const predictions = data?.predictions ?? [];
+  const rawPredictions = data?.predictions ?? [];
+  // Dedup by reservation_id to prevent duplicate cards
+  const predictions = rawPredictions.filter(
+    (p, i, arr) => arr.findIndex(q => q.reservation_id === p.reservation_id) === i
+  );
   const summary = data?.summary ?? null;
   const [selectedPrediction, setSelectedPrediction] = useState<NoShowPrediction | null>(null);
 
@@ -83,9 +87,9 @@ export default function NoShowPredictions() {
           </div>
         ) : (
           <div className="space-y-3">
-            {predictions.map((prediction, index) => (
+            {predictions.map((prediction) => (
               <button
-                key={index}
+                key={prediction.reservation_id}
                 type="button"
                 aria-expanded={selectedPrediction === prediction}
                 className={`w-full text-left border rounded-xl p-4 hover:shadow-md transition-all ${getRiskColor(prediction.risk_level)}`}

@@ -151,7 +151,7 @@ module.exports = async function handler(req, res) {
     if (method === 'GET' && path.includes('/profile')) {
       const { data: restaurant, error } = await supabase
         .schema('restaurant')
-        .from('restaurant_info')
+        .from('restaurant_config')
         .select('metric_profile, language')
         .eq('id', restaurantId)
         .single();
@@ -184,7 +184,7 @@ module.exports = async function handler(req, res) {
 
       const { data, error } = await supabase
         .schema('restaurant')
-        .from('restaurant_info')
+        .from('restaurant_config')
         .update({ metric_profile })
         .eq('id', restaurantId)
         .select('metric_profile')
@@ -216,7 +216,7 @@ module.exports = async function handler(req, res) {
     if (method === 'GET' && !path.includes('/profile')) {
       const { data: restaurant, error } = await supabase
         .schema('restaurant')
-        .from('restaurant_info')
+        .from('restaurant_config')
         .select('language, restaurant_name, city, country, phone, email, business_hours, timezone, reservation_settings')
         .eq('id', restaurantId)
         .single();
@@ -268,7 +268,7 @@ module.exports = async function handler(req, res) {
 
       const { data, error } = await supabase
         .schema('restaurant')
-        .from('restaurant_info')
+        .from('restaurant_config')
         .update(updates)
         .eq('id', restaurantId)
         .select('language, restaurant_name')

@@ -115,14 +115,10 @@ export default function PhoneIntegrationPanel() {
     );
   }
 
-  // ── No data fallback ────────────────────────────────────────────────────────
+  // ── No data fallback — hide entirely instead of showing raw error ────────
 
   if (!status?.restaurant || !status?.platform) {
-    return (
-      <div className="bg-white border border-border-gray rounded-2xl p-6">
-        <p className="text-sm text-warm-stone">{t('phoneIntegration.loadFailed', 'Could not load phone status.')}</p>
-      </div>
-    );
+    return null;
   }
 
   const { restaurant, platform } = status;

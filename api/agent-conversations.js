@@ -35,13 +35,13 @@ module.exports = async (req, res) => {
 
     switch (action) {
       case 'list':
-        return await handleListConversations(req, res);
+        return await handleListConversations(req, res, auth.user);
 
       case 'get':
-        return await handleGetConversation(req, res);
+        return await handleGetConversation(req, res, auth.user);
 
       case 'stats':
-        return await handleGetStats(req, res);
+        return await handleGetStats(req, res, auth.user);
 
       default:
         return res.status(400).json({
@@ -61,11 +61,13 @@ module.exports = async (req, res) => {
   }
 };
 
+const ALLOWED_ORDER_COLUMNS = new Set(['started_at', 'outcome', 'language', 'duration_seconds', 'created_at']);
+
 /**
  * List all conversations with filtering and pagination
  * GET /api/agent-conversations?action=list&date_from=2025-01-01&outcome=reservation_created&limit=50
  */
-async function handleListConversations(req, res) {
+async function handleListConversations(req, res, user) {
   const {
     date_from,
     date_to,
@@ -114,8 +116,9 @@ async function handleListConversations(req, res) {
       query = query.eq('language', language);
     }
 
-    // Apply ordering
-    query = query.order(order_by, { ascending: order_direction === 'asc' });
+    // Apply ordering — validate against allowlist to prevent injection
+    const safeOrderBy = ALLOWED_ORDER_COLUMNS.has(order_by) ? order_by : 'started_at';
+    query = query.order(safeOrderBy, { ascending: order_direction === 'asc' });
 
     // Apply pagination
     query = query.range(offset, offset + limit - 1);
@@ -156,7 +159,7 @@ async function handleListConversations(req, res) {
  * Get single conversation details
  * GET /api/agent-conversations?action=get&id=uuid
  */
-async function handleGetConversation(req, res) {
+async function handleGetConversation(req, res, user) {
   const { id, conversation_id } = req.query;
 
   if (!id && !conversation_id) {
@@ -168,7 +171,10 @@ async function handleGetConversation(req, res) {
   }
 
   try {
-    let query = supabaseAdmin.from('agent_conversations').select('*');
+    let query = supabaseAdmin
+      .from('agent_conversations')
+      .select('*')
+      .eq('restaurant_info_id', user.restaurant_id);
 
     if (id) {
       query = query.eq('id', id);
@@ -214,7 +220,7 @@ async function handleGetConversation(req, res) {
  * Get aggregate statistics
  * GET /api/agent-conversations?action=stats&period=7d
  */
-async function handleGetStats(req, res) {
+async function handleGetStats(req, res, user) {
   const { period = '7d', date_from, date_to, restaurant_id } = req.query;
 
   try {

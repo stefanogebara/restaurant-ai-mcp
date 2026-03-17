@@ -8,6 +8,17 @@ import { useSubscriptionData, useCustomerPortal } from '../hooks/useSubscription
 
 const planTiers = ['starter', 'growth', 'scale'];
 
+/** Map legacy/orphaned plan names to current plan names */
+function normalizePlanName(raw: string): string {
+  const mapping: Record<string, string> = {
+    professional: 'Growth',
+    pro: 'Scale',
+    basic: 'Starter',
+    enterprise: 'Scale',
+  };
+  return mapping[raw.toLowerCase()] ?? raw;
+}
+
 export default function SubscriptionManage() {
   const { t } = useTranslation();
   const { can } = usePermission();
@@ -72,7 +83,8 @@ export default function SubscriptionManage() {
     );
   }
 
-  const currentPlanName = subscription.planName.toLowerCase();
+  const displayPlanName = normalizePlanName(subscription.planName);
+  const currentPlanName = displayPlanName.toLowerCase();
   const currentTierIndex = planTiers.indexOf(currentPlanName);
 
   return (
@@ -99,7 +111,7 @@ export default function SubscriptionManage() {
           <div className="bg-white border border-border-gray rounded-2xl px-8 py-7 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-12">
             <div>
               <div className="flex items-center gap-2.5 mb-1">
-                <span className="text-xl font-bold text-deep-charcoal">{t('subscription.plan', { name: subscription.planName })}</span>
+                <span className="text-xl font-bold text-deep-charcoal">{t('subscription.plan', { name: displayPlanName })}</span>
                 <span className="text-xs font-semibold tracking-wide uppercase text-burgundy bg-burgundy/[8%] px-3.5 py-1.5 rounded-full">{t('subscription.current')}</span>
               </div>
               <div className="text-sm text-warm-stone">{subscription.planPrice} &middot; {t('subscription.billedMonthly')}</div>
