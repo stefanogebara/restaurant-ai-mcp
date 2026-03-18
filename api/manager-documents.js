@@ -2,7 +2,8 @@
 
 const path = require('path');
 const Busboy = require('busboy');
-const Anthropic = require('@anthropic-ai/sdk').default;
+const AnthropicModule = require('@anthropic-ai/sdk');
+const Anthropic = AnthropicModule.default || AnthropicModule;
 // pdf-parse v2 uses ESM-first; lazy-require the CJS build to avoid Vercel cold-start crashes
 let pdfParse;
 function getPdfParse() {

@@ -49,10 +49,16 @@ module.exports = async (req, res) => {
   const rateLimited = await checkAndApplyRateLimit(req, res, 'reservation');
   if (rateLimited) return;
 
+  // SECURITY: restaurant_id is extracted exclusively from the verified JWT claim.
+  // This guarantees the user can only import data into their own restaurant.
+  // Never use req.body.restaurant_id or req.query.restaurant_id here.
   let restaurantId;
   try {
     const decoded = await verifyJWT(req.headers.authorization?.replace('Bearer ', ''));
     restaurantId = decoded.restaurant_id;
+    if (!restaurantId) {
+      return res.status(403).json({ error: 'No restaurant_id in token — complete onboarding first' });
+    }
   } catch {
     return res.status(401).json({ error: 'Authentication required' });
   }
@@ -75,9 +81,32 @@ module.exports = async (req, res) => {
     const serviceRecords = [];
     let skipped = 0;
 
+    // Basic email regex — rejects obviously invalid addresses
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+    // Dedup set: tracks phone+name combos already seen in this import
+    const seen = new Set();
+
     for (const raw of rows) {
       const norm = normalizeRow(raw);
       if (!norm) { skipped++; continue; }
+
+      // Phone validation: strip non-digits, require at least 7 digits
+      const phoneDigits = norm.customer_phone.replace(/\D/g, '');
+      if (phoneDigits.length < 7) { skipped++; continue; }
+      // Normalize phone to digits-only for consistent storage
+      norm.customer_phone = phoneDigits;
+
+      // Email validation: skip invalid emails (set to null, don't skip row)
+      if (norm.customer_email && !EMAIL_RE.test(norm.customer_email)) {
+        norm.customer_email = null;
+      }
+
+      // Dedup: skip rows with duplicate phone+name combos within this import
+      const dedupKey = `${norm.customer_phone}|${(norm.customer_name || '').toLowerCase()}`;
+      if (seen.has(dedupKey)) { skipped++; continue; }
+      seen.add(dedupKey);
+
       ltvRecords.push(buildLTVRecord(norm, restaurantId));
       const sr = buildServiceRecord(norm, restaurantId);
       if (sr) serviceRecords.push(sr);

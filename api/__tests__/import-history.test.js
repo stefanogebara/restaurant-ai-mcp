@@ -102,7 +102,8 @@ describe('POST /api/import-history', () => {
   });
 
   test('counts skipped rows (missing phone)', async () => {
-    const csv = 'name,phone\nJohn,+1\n,\nNoPhone,\n';
+    // +15551234567 has 11 digits — passes 7-digit validation; NoPhone has empty phone — skipped
+    const csv = 'name,phone\nJohn,+15551234567\n,\nNoPhone,\n';
     mockBusboyWithCSV(csv);
     await handler(req, res);
 
@@ -112,7 +113,8 @@ describe('POST /api/import-history', () => {
   });
 
   test('seeds service_records when avg_spend is present', async () => {
-    const csv = 'name,phone,avg_spend\nJohn,+1,50\n';
+    // +15551234567 has 11 digits — passes 7-digit validation so the row is imported
+    const csv = 'name,phone,avg_spend\nJohn,+15551234567,50\n';
     mockBusboyWithCSV(csv);
     await handler(req, res);
 

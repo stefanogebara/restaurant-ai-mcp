@@ -17,16 +17,16 @@ import { getCountryByCode } from '../../data/countries';
 import ThiingsIcon from '../common/ThiingsIcon';
 
 const RESTAURANT_TYPES = [
-  'Fine Dining',
-  'Casual Dining',
-  'Fast Casual',
-  'Cafe',
-  'Bar',
-  'Bistro',
-  'Pizzeria',
-  'Steakhouse',
-  'Seafood',
-  'Other',
+  { value: 'fine-dining', label: 'Fine Dining' },
+  { value: 'casual-dining', label: 'Casual Dining' },
+  { value: 'fast-casual', label: 'Fast Casual' },
+  { value: 'cafe', label: 'Cafe' },
+  { value: 'bar', label: 'Bar' },
+  { value: 'bistro', label: 'Bistro' },
+  { value: 'pizzeria', label: 'Pizzeria' },
+  { value: 'steakhouse', label: 'Steakhouse' },
+  { value: 'seafood', label: 'Seafood' },
+  { value: 'other', label: 'Other' },
 ];
 
 export default function Step1Welcome({ data, updateData, onNext, isDemoLoading }: OnboardingStepProps & { isDemoLoading?: boolean }) {
@@ -118,20 +118,20 @@ export default function Step1Welcome({ data, updateData, onNext, isDemoLoading }
           {t('onboarding.restaurantTypeLabel')}
         </label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {RESTAURANT_TYPES.map((type) => (
+          {RESTAURANT_TYPES.map(({ value, label }) => (
             <button
-              key={type}
+              key={value}
               type="button"
-              onClick={() => updateData({ restaurant_type: type })}
+              onClick={() => updateData({ restaurant_type: value })}
               className={`
                 p-4 rounded-2xl border-2 transition-all duration-200 text-center font-semibold text-sm
-                ${data.restaurant_type === type
+                ${data.restaurant_type === value
                   ? 'border-burgundy bg-burgundy/10 text-burgundy'
                   : 'border-border-gray bg-white text-stone-gray hover:border-burgundy/50 hover:bg-warm-white'
                 }
               `}
             >
-              {t(`onboarding.restaurantTypes.${type}`, type)}
+              {t(`onboarding.restaurantTypes.${value}`, label)}
             </button>
           ))}
         </div>

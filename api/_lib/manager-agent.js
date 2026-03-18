@@ -5,7 +5,8 @@
  * Routes all messages through the same memory + snapshot + conversation logic.
  */
 
-const Anthropic = require('@anthropic-ai/sdk').default;
+const AnthropicModule = require('@anthropic-ai/sdk');
+const Anthropic = AnthropicModule.default || AnthropicModule;
 const { retrieveRelevantMemories, writeMemory } = require('../services/managerMemory');
 const { getRestaurantSnapshot } = require('../services/restaurantSnapshot');
 const { buildRestaurantIdentitySection } = require('./persona-prompt-builder');

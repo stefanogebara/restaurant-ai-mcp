@@ -35,8 +35,9 @@ async function resolveRestaurantId(stripeObject, customerEmail = null) {
     return metadataRestaurantId;
   }
 
-  // Method 2: Look up by customer email in restaurant_config
+  // Method 2: Look up by customer email in restaurant_config (less reliable fallback)
   if (customerEmail) {
+    logger.warn('Falling back to email lookup for restaurant_id — metadata was missing. Email:', customerEmail);
     try {
       const { data, error } = await supabase
         .schema('restaurant')
@@ -52,6 +53,27 @@ async function resolveRestaurantId(stripeObject, customerEmail = null) {
       }
     } catch (err) {
       logger.warn('Could not look up restaurant by email:', err.message);
+    }
+  }
+
+  // Method 3: Look up by stripe customer_id in subscriptions table
+  const stripeCustomerId = stripeObject.customer;
+  if (stripeCustomerId) {
+    logger.warn('Falling back to Stripe customer_id lookup in subscriptions. Customer:', stripeCustomerId);
+    try {
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('restaurant_id')
+        .eq('customer_id', stripeCustomerId)
+        .limit(1)
+        .single();
+
+      if (!error && data?.restaurant_id) {
+        logger.info('Restaurant ID resolved from subscriptions via customer_id:', data.restaurant_id);
+        return data.restaurant_id;
+      }
+    } catch (err) {
+      logger.warn('Could not look up restaurant by Stripe customer_id:', err.message);
     }
   }
 

@@ -126,12 +126,14 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
 
     if (!data.phone_number.trim()) {
       newErrors.phone_number = t('onboarding.phoneRequired');
+    } else if (!/^\+\d{7,14}$/.test(data.phone_number.replace(/\s/g, ''))) {
+      newErrors.phone_number = t('onboarding.phoneInvalidFormat', 'Phone must start with + followed by 7-14 digits (E.164 format)');
     } else if (errors.phone_number) {
       newErrors.phone_number = errors.phone_number;
     }
     if (!data.email.trim()) {
       newErrors.email = t('onboarding.emailRequired');
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(data.email)) {
       newErrors.email = t('onboarding.emailInvalid');
     }
 
@@ -215,7 +217,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
             const val = e.target.value.trim();
             if (!val) {
               setErrors((prev) => ({ ...prev, email: t('onboarding.emailRequired') }));
-            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+            } else if (!/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(val)) {
               setErrors((prev) => ({ ...prev, email: t('onboarding.emailInvalid') }));
             }
           }}

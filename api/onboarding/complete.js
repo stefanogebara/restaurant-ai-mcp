@@ -164,11 +164,43 @@ module.exports = async (req, res) => {
     logger.info(' Starting onboarding for:', customer_email);
     logger.info(' Restaurant:', restaurant_name);
 
+    // Validate and sanitize business_hours
+    const HH_MM_REGEX = /^\d{2}:\d{2}$/;
+    let validatedBusinessHours = Array.isArray(business_hours) ? business_hours : [];
+
+    // Validate time format for each day
+    validatedBusinessHours = validatedBusinessHours.map(day => ({
+      ...day,
+      open_time: HH_MM_REGEX.test(day.open_time) ? day.open_time : '11:00',
+      close_time: HH_MM_REGEX.test(day.close_time) ? day.close_time : '22:00',
+    }));
+
+    // Check if at least one day has valid open/close times
+    const hasAnyOpenDay = validatedBusinessHours.some(
+      day => day.is_open && day.open_time && day.close_time
+    );
+
+    if (!hasAnyOpenDay) {
+      logger.warn(' No open days in business_hours — applying default schedule (Mon-Sat 11:00-22:00)');
+      const defaultDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      validatedBusinessHours = defaultDays.map(day => ({
+        day,
+        is_open: day !== 'Sunday',
+        open_time: '11:00',
+        close_time: '22:00',
+      }));
+    }
+
     // Generate Restaurant ID
     const generatedRestaurantId = restaurant_id || `REST-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
     // Validate restaurant_type against allowed values
-    const ALLOWED_RESTAURANT_TYPES = ['traditional', 'modern', 'fast-casual', 'fine-dining'];
+    // Must include all slugified types sent by the frontend (Step1Welcome.tsx)
+    const ALLOWED_RESTAURANT_TYPES = [
+      'traditional', 'modern', 'fast-casual', 'fine-dining',
+      'casual-dining', 'cafe', 'bar', 'bistro',
+      'pizzeria', 'steakhouse', 'seafood', 'other',
+    ];
     const validatedRestaurantType = ALLOWED_RESTAURANT_TYPES.includes(restaurant_type)
       ? restaurant_type
       : null;  // Set to null if invalid value provided
@@ -186,7 +218,7 @@ module.exports = async (req, res) => {
       phone: phone_number,  // Schema uses 'phone' not 'phone_number'
       email: email,
       address: `${city}, ${country}`,
-      business_hours: business_hours || [],
+      business_hours: validatedBusinessHours,
       avg_dining_duration_minutes: average_dining_duration || 90,  // Schema uses this name
       timezone: suggestTimezone(country, city),
       language: 'en',
@@ -287,17 +319,32 @@ module.exports = async (req, res) => {
       }
     }
 
-    if (tablesToInsert.length > 0) {
-      const { data: tablesData, error: tablesError } = await supabaseAdmin
-        .from('tables')
-        .insert(tablesToInsert)
-        .select();
-
-      if (tablesError) throw tablesError;
-      logger.info(` Created ${tablesData.length} tables`);
-    } else {
-      logger.info(' No tables to create');
+    if (tablesToInsert.length === 0) {
+      logger.warn(' No tables provided in onboarding — creating 4 default tables');
+      for (let i = 1; i <= 4; i++) {
+        tablesToInsert.push({
+          restaurant_id: restaurantInfoResult.id,
+          table_number: i,
+          capacity: 4,
+          location: 'Main',
+          status: 'available',
+          is_active: true,
+          current_service_id: null,
+          is_fixed: false,
+          shape: 'square',
+          is_joinable: true,
+          is_fixed_seating: false
+        });
+      }
     }
+
+    const { data: tablesData, error: tablesError } = await supabaseAdmin
+      .from('tables')
+      .insert(tablesToInsert)
+      .select();
+
+    if (tablesError) throw tablesError;
+    logger.info(` Created ${tablesData.length} tables`);
 
     // STEP 3: Create/Update Restaurant Config (for AI Agent)
     logger.info(' Step 3: Creating restaurant_config for AI agent...');
@@ -331,18 +378,23 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Map restaurant_type to enum value
+    // Map restaurant_type slug to restaurant_config enum value
     const typeMapping = {
       'traditional': 'casual_dining',
       'modern': 'fine_dining',
       'fast-casual': 'fast_casual',
       'fine-dining': 'fine_dining',
+      'casual-dining': 'casual_dining',
       'italian': 'italian',
       'japanese': 'japanese',
       'mexican': 'mexican',
       'steakhouse': 'steakhouse',
       'cafe': 'cafe',
-      'bar': 'bar'
+      'bar': 'bar',
+      'bistro': 'bistro',
+      'pizzeria': 'pizzeria',
+      'seafood': 'seafood',
+      'other': 'other',
     };
     const mappedType = typeMapping[restaurant_type] || 'other';
 
@@ -425,7 +477,7 @@ module.exports = async (req, res) => {
       phone: phone_number,
       website: website || null,
       voice_id: selected_voice_id || 'default',
-      business_hours: business_hours.reduce((acc, day) => {
+      business_hours: validatedBusinessHours.reduce((acc, day) => {
         acc[day.day.toLowerCase()] = {
           is_open: day.is_open,
           open_time: day.open_time,
@@ -564,8 +616,8 @@ module.exports = async (req, res) => {
     // From: [{ day: "Monday", is_open: true, open_time: "12:00", close_time: "23:00" }]
     // To: { monday: { isOpen: true, open: "12:00", close: "23:00" } }
     const agentBusinessHours = {};
-    if (Array.isArray(business_hours)) {
-      business_hours.forEach(dayConfig => {
+    if (Array.isArray(validatedBusinessHours)) {
+      validatedBusinessHours.forEach(dayConfig => {
         const dayKey = dayConfig.day.toLowerCase();
         agentBusinessHours[dayKey] = {
           isOpen: dayConfig.is_open,

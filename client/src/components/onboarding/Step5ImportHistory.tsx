@@ -167,6 +167,9 @@ export default function Step5ImportHistory({ onNext }: Step5ImportHistoryProps) 
             <p className="mt-1 text-xs text-warm-stone">
               {t('onboarding.csvFormat')}
             </p>
+            <p className="mt-2 text-[11px] text-warm-stone/70">
+              {t('onboarding.csvOnlyHint', 'Only .csv files are accepted. Max columns: name, phone, email, visits, last_visit, avg_spend')}
+            </p>
           </>
         )}
       </div>
