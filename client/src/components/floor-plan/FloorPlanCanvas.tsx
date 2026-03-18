@@ -269,7 +269,7 @@ export default function FloorPlanCanvas({
               return (
                 <rect
                   x={gx * CELL} y={gy * CELL} width={CELL} height={CELL}
-                  fill="rgba(159,18,57,0.04)" stroke="rgba(159,18,57,0.3)"
+                  fill="rgba(13,148,136,0.04)" stroke="rgba(13,148,136,0.3)"
                   strokeWidth={1.5} rx={5} style={{ pointerEvents: 'none' }}
                 />
               );

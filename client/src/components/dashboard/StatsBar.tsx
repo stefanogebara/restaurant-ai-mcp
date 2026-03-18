@@ -38,7 +38,7 @@ export default function StatsBar({
     return (
       <div role="status" aria-label="Loading stats" className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="bg-white rounded-2xl p-5 border border-border-gray">
+          <div key={i} className="rounded-lg p-5 border border-border-gray">
             <div className="h-3 w-20 bg-border-gray rounded-full animate-pulse mb-3" />
             <div className="h-9 w-16 bg-border-gray rounded-lg animate-pulse mb-2" />
             <div className="h-3 w-24 bg-soft-gray rounded animate-pulse mb-3" />
@@ -58,7 +58,7 @@ export default function StatsBar({
         change={reservationsToday > 0 ? `${seatedReservations} ${t('dashboard.stats.seated')}` : ''}
         changeColor="text-green-600"
         barPercent={seatedPercent}
-        barColor={colors.burgundy}
+        barColor="#9F1239"
         icon={<ThiingsIcon name="calendar-days" pxSize={16} className="text-muted-stone" />}
       />
 
@@ -67,7 +67,7 @@ export default function StatsBar({
         label={t('dashboard.stats.tables')}
         value={String(availableTables)}
         valueSuffix={` / ${totalTables}`}
-        valueColor="text-burgundy"
+        valueColor="text-[#9F1239]"
         change={`${occupancyPercent}% ${t('dashboard.stats.capacity')}`}
         changeColor={occupancyPercent >= 80 ? 'text-red-600' : occupancyPercent >= 50 ? 'text-amber-600' : 'text-green-600'}
         barPercent={occupancyPercent}
@@ -131,7 +131,7 @@ function StatCard({ label, value, valueSuffix, valueColor, change, changeColor, 
   useEffect(() => { const t = setTimeout(() => setMounted(true), 50); return () => clearTimeout(t); }, []);
 
   return (
-    <div className="bg-white rounded-2xl p-5 border border-border-gray hover:shadow-sm transition-all duration-300 opacity-0 translate-y-2 animate-[fadeInUp_0.4s_ease-out_forwards]">
+    <div className="rounded-lg p-5 border border-border-gray transition-all duration-300 opacity-0 translate-y-2 animate-[fadeInUp_0.4s_ease-out_forwards]">
       {icon && (
         <div className="flex items-center gap-2.5 mb-4">
           <div className="w-8 h-8 rounded-lg bg-soft-gray flex items-center justify-center flex-shrink-0">

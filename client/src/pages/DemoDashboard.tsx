@@ -77,7 +77,7 @@ export default function DemoDashboard() {
       {/* Language Popup */}
       {showLangPopup && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-sm w-full text-center animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-lg shadow-lg border border-border-gray p-6 max-w-sm w-full text-center animate-in fade-in zoom-in-95 duration-200">
             <div className="w-12 h-12 rounded-2xl bg-burgundy/10 flex items-center justify-center mx-auto mb-4">
               <ThiingsIcon name="globe" pxSize={24} className="text-burgundy" />
             </div>
@@ -186,7 +186,7 @@ export default function DemoDashboard() {
         />
 
         {/* Main Content: Unified container with 2px dividers */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-[2px] bg-border-gray rounded-2xl overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-px border border-[#E5E7EB] rounded-lg overflow-hidden">
           {/* Left Column: Reservations — spans all right-column rows */}
           <div className="lg:row-span-3 bg-white [&>div]:border-0 [&>div]:rounded-none">
             <ReservationsList
@@ -255,7 +255,7 @@ export default function DemoDashboard() {
             role="dialog"
             aria-modal="true"
             aria-label={t.exitTitle}
-            className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-sm w-full text-center animate-in fade-in zoom-in-95 duration-200"
+            className="bg-white rounded-lg shadow-lg border border-border-gray p-6 max-w-sm w-full text-center animate-in fade-in zoom-in-95 duration-200"
           >
             <div className="w-14 h-14 rounded-2xl bg-burgundy/10 flex items-center justify-center mx-auto mb-4">
               <ThiingsIcon name="star" pxSize={28} className="text-burgundy" />
@@ -296,7 +296,7 @@ export default function DemoDashboard() {
             role="dialog"
             aria-modal="true"
             aria-label={t.walkInTitle}
-            className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-md w-full"
+            className="bg-white rounded-lg shadow-lg border border-border-gray p-6 max-w-md w-full"
           >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-deep-charcoal">{t.walkInTitle}</h2>

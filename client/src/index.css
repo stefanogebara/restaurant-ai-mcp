@@ -12,7 +12,7 @@
     --card-foreground: #1C1917;      /* Deep Charcoal */
     --popover: #FFFFFF;              /* White */
     --popover-foreground: #1C1917;   /* Deep Charcoal */
-    --primary: #9F1239;              /* Muted Burgundy */
+    --primary: #9F1239;              /* Nordic Teal */
     --primary-foreground: #FFFFFF;   /* White */
     --secondary: #F5F5F4;            /* Soft Gray */
     --secondary-foreground: #1C1917; /* Deep Charcoal */
@@ -24,7 +24,7 @@
     --destructive-foreground: #FFFFFF;
     --border: #E7E5E4;               /* Border Gray */
     --input: #E7E5E4;                /* Border Gray */
-    --ring: #9F1239;                 /* Muted Burgundy */
+    --ring: #9F1239;                 /* Nordic Teal */
     --chart-1: #9F1239;
     --chart-2: #1C1917;
     --chart-3: #57534E;
@@ -32,12 +32,12 @@
     --chart-5: #E7E5E4;
     --sidebar: #1C1917;              /* Deep Charcoal (Dark) */
     --sidebar-foreground: #D6D3D1;   /* Light Stone */
-    --sidebar-primary: #9F1239;      /* Muted Burgundy */
+    --sidebar-primary: #9F1239;      /* Nordic Teal */
     --sidebar-primary-foreground: #FFFFFF;
     --sidebar-accent: rgba(255,255,255,0.03); /* Subtle White */
     --sidebar-accent-foreground: #D6D3D1;
     --sidebar-border: #292524;       /* Dark Border */
-    --sidebar-ring: #9F1239;         /* Muted Burgundy */
+    --sidebar-ring: #9F1239;         /* Nordic Teal */
   }
 }
 

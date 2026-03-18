@@ -199,7 +199,7 @@ export default function DemoAIInsightsBar({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="rounded-2xl overflow-hidden"
+      className="rounded-lg overflow-hidden"
       data-testid="ai-insights-bar"
     >
       <div className="flex flex-col lg:flex-row gap-4">
@@ -214,18 +214,11 @@ export default function DemoAIInsightsBar({
               className="flex-1 relative group"
             >
               {/* Liquid glass card */}
-              <div className="relative rounded-2xl p-4 h-full overflow-hidden
-                bg-gradient-to-br from-white/80 to-white/50
-                backdrop-blur-xl
-                border border-white/60
-                shadow-[0_4px_24px_-4px_rgba(159,18,57,0.08),inset_0_1px_0_rgba(255,255,255,0.8)]
-                hover:shadow-[0_8px_32px_-4px_rgba(159,18,57,0.12),inset_0_1px_0_rgba(255,255,255,0.9)]
+              <div className="relative rounded-lg p-4 h-full overflow-hidden
+                bg-white
+                border border-[#E5E7EB]
                 transition-all duration-300
               ">
-                {/* Subtle gradient sheen overlay */}
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-burgundy/[0.03] via-transparent to-burgundy/[0.02] pointer-events-none" />
-                {/* Top glow line */}
-                <div className="absolute top-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-white/90 to-transparent" />
 
                 <div className="relative z-10">
                   <div className="flex items-center gap-2 mb-2">
@@ -248,15 +241,13 @@ export default function DemoAIInsightsBar({
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.3 }}
-          className="flex-1 min-w-0 flex flex-col rounded-2xl overflow-hidden
-            bg-gradient-to-br from-white/90 to-white/70
-            backdrop-blur-xl
-            border border-white/60
-            shadow-[0_4px_24px_-4px_rgba(159,18,57,0.08),inset_0_1px_0_rgba(255,255,255,0.8)]
+          className="flex-1 min-w-0 flex flex-col rounded-lg overflow-hidden
+            bg-white
+            border border-[#E5E7EB]
           "
         >
           {/* Chat header */}
-          <div className="flex items-center gap-2.5 px-4 py-3 border-b border-white/40">
+          <div className="flex items-center gap-2.5 px-4 py-3 border-b border-[#E5E7EB]">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-burgundy to-burgundy-dark flex items-center justify-center shadow-sm">
               <span className="text-white"><SparkleIcon /></span>
             </div>
