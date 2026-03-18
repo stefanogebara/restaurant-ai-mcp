@@ -20,7 +20,7 @@ export default function FeedbackWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-border-gray rounded-2xl p-5 animate-pulse">
+      <div className="p-5 animate-pulse">
         <div className="h-4 bg-gray-100 rounded w-32 mb-4" />
         <div className="h-16 bg-gray-100 rounded" />
       </div>
@@ -29,12 +29,12 @@ export default function FeedbackWidget() {
 
   if (!stats || stats.total === 0) {
     return (
-      <div className="bg-white border border-border-gray rounded-2xl p-5">
+      <div className="p-5">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
             <ThiingsIcon name="star" pxSize={16} className="text-amber-600" />
           </div>
-          <h3 className="text-sm font-semibold text-deep-charcoal">{t('dashboard.guestFeedback', 'Guest Feedback')}</h3>
+          <h3 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#8C8C8C]">{t('dashboard.guestFeedback', 'Guest Feedback')}</h3>
         </div>
         <p className="text-sm text-muted-stone">{t('dashboard.noFeedbackYet', 'No feedback collected yet. Ratings will appear here after guests respond.')}</p>
       </div>
@@ -42,12 +42,12 @@ export default function FeedbackWidget() {
   }
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl p-5">
+    <div className="p-5">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
           <ThiingsIcon name="star" pxSize={16} className="text-amber-600" />
         </div>
-        <h3 className="text-sm font-semibold text-deep-charcoal">{t('dashboard.guestFeedback', 'Guest Feedback')}</h3>
+        <h3 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#8C8C8C]">{t('dashboard.guestFeedback', 'Guest Feedback')}</h3>
         <span className="text-xs text-muted-stone ml-auto">{t('dashboard.last7days', 'Last 7 days')}</span>
       </div>
 

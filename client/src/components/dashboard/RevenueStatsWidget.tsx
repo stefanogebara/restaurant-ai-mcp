@@ -10,7 +10,7 @@ export default function RevenueStatsWidget() {
 
   if (statsLoading || forecastLoading) {
     return (
-      <div className="bg-white border border-border-gray rounded-2xl p-6 animate-pulse space-y-3">
+      <div className="p-6 animate-pulse space-y-3">
         <div className="h-4 bg-gray-100 rounded w-40" />
         {[0, 1, 2].map((i) => <div key={i} className="h-8 bg-gray-100 rounded" />)}
       </div>
@@ -19,8 +19,8 @@ export default function RevenueStatsWidget() {
 
   if (!stats || !forecast || forecast.length === 0) {
     return (
-      <div className="bg-white border border-border-gray rounded-2xl p-6">
-        <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">
+      <div className="p-6">
+        <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#8C8C8C]">
           {t('dashboard.revenueForecast')}
         </h2>
         <p className="text-sm text-warm-stone mt-3">{t('dashboard.revenueNoData', 'Revenue forecast will appear once you have reservations and service data.')}</p>
@@ -33,9 +33,9 @@ export default function RevenueStatsWidget() {
   const maxProjected = Math.max(...days.map(d => d.expected_covers * stats.avg_spend_per_cover), 1);
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl p-6 space-y-4">
+    <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">
+        <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#8C8C8C]">
           {t('dashboard.revenueForecast')}
         </h2>
         <div className="flex items-center gap-2">

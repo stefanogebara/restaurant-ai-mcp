@@ -42,7 +42,7 @@ export default function ActivityFeedWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-border-gray rounded-2xl p-6 animate-pulse space-y-3">
+      <div className="p-6 animate-pulse space-y-3">
         <div className="h-4 bg-gray-100 rounded w-36" />
         {[0, 1, 2, 3].map((i) => (
           <div key={i} className="flex items-center gap-3">
@@ -56,8 +56,8 @@ export default function ActivityFeedWidget() {
 
   if (!events || events.length === 0) {
     return (
-      <div className="bg-white border border-border-gray rounded-2xl p-6">
-        <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider flex items-center gap-2 mb-3">
+      <div className="p-6">
+        <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#8C8C8C] flex items-center gap-2 mb-3">
           <ThiingsIcon name="activity" pxSize={14} className="text-muted-stone" />
           {t('dashboard.activityFeed', 'Recent Activity')}
         </h2>
@@ -67,8 +67,8 @@ export default function ActivityFeedWidget() {
   }
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl p-6 space-y-4">
-      <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider flex items-center gap-2">
+    <div className="p-6 space-y-4">
+      <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#8C8C8C] flex items-center gap-2">
         <ThiingsIcon name="activity" pxSize={14} className="text-muted-stone" />
         {t('dashboard.activityFeed', 'Recent Activity')}
       </h2>
@@ -79,7 +79,7 @@ export default function ActivityFeedWidget() {
           return (
             <div
               key={event.id}
-              className="flex items-start gap-3 py-2 border-b border-border-gray last:border-0"
+              className="flex items-start gap-3 py-2 border-b border-warm-divider last:border-0"
             >
               <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${colorClass}`}>
                 <ThiingsIcon name={event.icon as IconName} pxSize={12} />

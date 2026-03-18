@@ -114,10 +114,10 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
   return (
     <>
       {/* Header */}
-      <div className="p-4 border-b border-border-gray/50">
+      <div className="p-4 border-b border-warm-divider">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-2.5">
-            <h2 className="text-[15px] font-semibold text-deep-charcoal tracking-tight">{t('waitlist.title')}</h2>
+            <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#8C8C8C]">{t('waitlist.title')}</h2>
             <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">
               {activeCount}
             </span>

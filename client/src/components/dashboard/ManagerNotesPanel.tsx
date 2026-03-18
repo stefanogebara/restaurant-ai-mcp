@@ -41,10 +41,10 @@ export default function ManagerNotesPanel() {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-border-gray p-5">
+    <div className="p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-[15px] font-semibold text-deep-charcoal tracking-tight">
+          <h3 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#8C8C8C]">
             {t('dashboard.managerNotes.title')}
           </h3>
           <p className="text-xs text-muted-stone mt-0.5">{t('dashboard.managerNotes.subtitle')}</p>

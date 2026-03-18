@@ -28,7 +28,7 @@ export default function ActivePartiesPanel({
   }, [parties.length]);
   if (isLoading) {
     return (
-      <div role="status" aria-label="Loading active parties" className="bg-white border border-border-gray rounded-2xl p-5">
+      <div role="status" aria-label="Loading active parties" className="p-5">
         <div className="h-5 w-32 bg-border-gray rounded animate-pulse mb-4" />
         <div className="space-y-3">
           {[1, 2].map((i) => (
@@ -43,12 +43,12 @@ export default function ActivePartiesPanel({
   }
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
+    <div className="overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-warm-divider">
         <div>
           <div className="flex items-center gap-2.5">
-            <h3 className="text-[15px] font-semibold text-deep-charcoal tracking-tight">{t('dashboard.activeParties')}</h3>
+            <h3 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#8C8C8C]">{t('dashboard.activeParties')}</h3>
             <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">
               {parties.length}
             </span>
@@ -151,7 +151,7 @@ function PartyRow({ party, billValue, onBillChange, onComplete }: PartyRowProps)
       {/* Time progress */}
       {party.time_elapsed_minutes !== undefined && (
         <div>
-          <div className="h-2 bg-soft-gray rounded-full overflow-hidden mt-2 mb-3">
+          <div className="h-[2px] bg-[#E8E5E0] rounded-full overflow-hidden mt-2 mb-3">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
@@ -160,7 +160,7 @@ function PartyRow({ party, billValue, onBillChange, onComplete }: PartyRowProps)
                     (party.time_elapsed_minutes + Math.max(party.time_remaining_minutes, 0))) * 100,
                   100
                 )}%`,
-                background: isOverdue ? '#ef4444' : 'linear-gradient(to right, #10b981, #34d399)',
+                background: isOverdue ? '#ef4444' : '#722F37',
               }}
             />
           </div>

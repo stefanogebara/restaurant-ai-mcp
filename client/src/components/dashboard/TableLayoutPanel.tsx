@@ -62,7 +62,7 @@ export default function TableLayoutPanel({
 
   if (isLoading) {
     return (
-      <div role="status" aria-label="Loading table layout" className="bg-white border border-border-gray rounded-2xl p-6">
+      <div role="status" aria-label="Loading table layout" className="p-6">
         <div className="h-6 w-40 bg-border-gray rounded-lg animate-pulse mb-4" />
         <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
           {Array.from({ length: 10 }).map((_, i) => (
@@ -75,11 +75,11 @@ export default function TableLayoutPanel({
 
   return (
     <>
-      <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
+      <div className="overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-warm-divider">
           <div className="flex items-center gap-2.5">
-            <span className="text-[15px] font-semibold text-deep-charcoal tracking-tight whitespace-nowrap">{t('tableLayout.title')}</span>
+            <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#8C8C8C] whitespace-nowrap">{t('tableLayout.title')}</span>
             <span className="relative flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
               <span className="relative flex h-2 w-2 flex-shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />

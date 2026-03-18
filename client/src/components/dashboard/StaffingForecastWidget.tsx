@@ -8,7 +8,7 @@ export default function StaffingForecastWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-border-gray rounded-2xl p-6 animate-pulse space-y-3">
+      <div className="p-6 animate-pulse space-y-3">
         <div className="h-4 bg-gray-100 rounded w-40" />
         {[0, 1, 2].map((i) => (
           <div key={i} className="h-12 bg-gray-100 rounded" />
@@ -18,8 +18,8 @@ export default function StaffingForecastWidget() {
   }
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl p-6 space-y-4">
-      <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">
+    <div className="p-6 space-y-4">
+      <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#8C8C8C]">
         {t('dashboard.staffingForecast')}
       </h2>
 

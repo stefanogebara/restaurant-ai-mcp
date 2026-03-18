@@ -44,7 +44,7 @@ export default function ReservationsList({
 
   if (isLoading) {
     return (
-      <div role="status" aria-label="Loading reservations" className="bg-white border border-border-gray rounded-2xl p-5">
+      <div role="status" aria-label="Loading reservations" className="p-5">
         <div className="h-6 w-52 bg-border-gray rounded-lg animate-pulse mb-4" />
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -63,11 +63,11 @@ export default function ReservationsList({
   }
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
+    <div className="overflow-hidden">
       {/* Panel Header */}
-      <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray gap-2 flex-wrap">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-warm-divider gap-2 flex-wrap">
         <div className="flex items-center gap-2.5">
-          <span className="text-[15px] font-semibold text-deep-charcoal tracking-tight">{tl('upcoming')}</span>
+          <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#8C8C8C]">{tl('upcoming')}</span>
           <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">
             {displayed.length}
           </span>
@@ -213,7 +213,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
   const avatarStyle = { background: `linear-gradient(135deg, hsl(${hue},50%,75%), hsl(${(hue + 40) % 360},50%,65%))` };
 
   return (
-    <div className={`flex items-center py-[18px] border-b border-warm-white last:border-b-0 gap-2.5 sm:gap-4 hover:bg-warm-white/50 transition-colors ${
+    <div className={`flex items-center py-[18px] border-b border-warm-divider last:border-b-0 gap-2.5 sm:gap-4 hover:bg-[#F5F3EF] transition-colors ${
   reservation.party_size >= 6
     ? 'pl-3 sm:pl-5 pr-4 sm:pr-6 border-l-2 border-l-burgundy/30'
     : 'px-3 sm:px-6'
