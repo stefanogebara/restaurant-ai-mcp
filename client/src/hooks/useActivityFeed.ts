@@ -9,6 +9,11 @@ export interface ActivityEvent {
   message: string;
   detail: string;
   timestamp: string;
+  customer_name?: string | null;
+  party_size?: number | null;
+  event_date?: string | null;
+  event_time?: string | null;
+  total_bill?: number | null;
 }
 
 async function fetchActivityFeed(limit: number): Promise<ActivityEvent[]> {
