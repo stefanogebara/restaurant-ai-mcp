@@ -122,9 +122,9 @@ export default function BeforeAfterSection() {
                   {t('landing.beforeAfter.paperNotepad', 'Paper notepad')}
                 </div>
                 <div className="space-y-1 text-[11px] text-white/20 italic font-mono">
-                  <div>Table 5 — Giovanni? 4ppl??</div>
-                  <div className="line-through opacity-40">Table 3 — cancelled</div>
-                  <div>8pm — someone called (name??)</div>
+                  <div>{t('landing.beforeAfter.note1', 'Table 5 — Giovanni? 4ppl??')}</div>
+                  <div className="line-through opacity-40">{t('landing.beforeAfter.note2', 'Table 3 — cancelled')}</div>
+                  <div>{t('landing.beforeAfter.note3', '8pm — someone called (name??)')}</div>
                 </div>
               </div>
             </div>
