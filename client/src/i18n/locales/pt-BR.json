@@ -1521,7 +1521,8 @@
       "subtitle": "Envie uma mensagem no WhatsApp e receba uma resposta instantânea da nossa IA. Sem app, sem cadastro.",
       "cta": "Enviar mensagem de teste",
       "previewMessage": "Oi! Gostaria de reservar uma mesa para 4 amanhã às 20h",
-      "trust": "Número real: +55 11 5028-9356 · São Paulo, Brasil"
+      "trust": "Número real: +55 11 5028-9356 · São Paulo, Brasil",
+      "inputPlaceholder": "Digite uma mensagem"
     },
     "features": {
       "label": "Além das Reservas",
@@ -1712,6 +1713,19 @@
       "privacy": "Política de Privacidade",
       "terms": "Termos de Serviço",
       "faq": "Perguntas Frequentes"
+    },
+    "share": {
+      "heading": "Conhece outro dono de restaurante?",
+      "body": "Compartilhe o Seatable — eles vão agradecer.",
+      "whatsapp": "Compartilhar via WhatsApp",
+      "copyLink": "Copiar link",
+      "copied": "Link copiado!"
+    },
+    "voice": {
+      "fullExperience": "Veja a experiência completa"
+    },
+    "heroChat": {
+      "inputPlaceholder": "Digite uma mensagem..."
     },
     "pricing": {
       "title": "Planos e Preços",
