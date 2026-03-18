@@ -10,8 +10,16 @@ export default {
       fontFamily: {
         sans: ['Inter', 'Lato', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
         serif: ['Playfair Display', 'Georgia', 'serif'],
+        mono: ['JetBrains Mono', 'monospace'],
       },
       colors: {
+        // Warm Editorial Theme Colors
+        'warm-bg': '#FAFAF8',
+        'warm-hover': '#F5F3EF',
+        'warm-divider': '#E8E5E0',
+        'accent-burgundy': '#8B1A2B',
+        'success-green': '#2D6A4F',
+        'warning-amber': '#D4A017',
         // Modern Elegant Theme Colors
         'warm-white': '#FAFAF9',
         'soft-gray': '#F5F5F4',
