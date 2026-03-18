@@ -208,6 +208,7 @@ function Sparkline() {
 
 // ─── Scene 0: Revenue Intelligence ─────────────────────────────
 function SceneRevenue({ progress }: { progress: number }) {
+  const { t } = useTranslation();
   const showScan = progress > 0.06;
   const showPrediction1 = progress > 0.18;
   const showPrediction2 = progress > 0.35;
@@ -221,9 +222,9 @@ function SceneRevenue({ progress }: { progress: number }) {
       {/* Top stats */}
       <div className="grid grid-cols-3 gap-2 mb-4">
         {[
-          { label: 'Reservations', value: '11', sub: 'today' },
-          { label: 'Covers', value: '38', sub: 'expected' },
-          { label: 'Avg Spend', value: '\u20AC42', sub: '/cover' },
+          { label: t('landing.walkthrough.reservations', 'Reservations'), value: '11', sub: t('landing.walkthrough.today', 'today') },
+          { label: t('landing.walkthrough.covers', 'Covers'), value: '38', sub: t('landing.walkthrough.expected', 'expected') },
+          { label: t('landing.walkthrough.avgSpend', 'Avg Spend'), value: 'R$42', sub: '/couvert' },
         ].map((s, i) => (
           <motion.div
             key={s.label}
@@ -249,7 +250,7 @@ function SceneRevenue({ progress }: { progress: number }) {
           className="origin-center"
         >
           <div className="text-[11px] font-semibold text-white/25 uppercase tracking-wider mb-2">
-            Today's Reservations
+            {t('landing.walkthrough.todaysReservations', "Today's Reservations")}
           </div>
 
           {/* Scanning line */}
@@ -370,7 +371,7 @@ function SceneRevenue({ progress }: { progress: number }) {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-[9px] uppercase tracking-widest text-rose-400/40 mb-1">
-                  Predicted Daily Revenue
+                  {t('landing.walkthrough.predictedRevenue', 'Predicted Daily Revenue')}
                 </div>
                 <div className="flex items-baseline gap-2.5">
                   <motion.span
@@ -412,6 +413,7 @@ function SceneRevenue({ progress }: { progress: number }) {
 
 // ─── Scene 1: No-Show Protection ────────────────────────────────
 function SceneNoShow({ progress }: { progress: number }) {
+  const { t } = useTranslation();
   const showRisk = progress > 0.12;
   const showDeposit = progress > 0.4;
   const showResolved = progress > 0.68;
@@ -482,7 +484,7 @@ function SceneNoShow({ progress }: { progress: number }) {
               color: showResolved ? '#4ade80' : showRisk ? '#f87171' : '#4ade80',
             }}
           >
-            {showResolved ? 'checked in' : 'confirmed'}
+            {showResolved ? t('landing.walkthrough.checkedIn', 'checked in') : t('landing.walkthrough.confirmed', 'confirmed')}
           </span>
         </motion.div>
 
@@ -540,6 +542,7 @@ function SceneNoShow({ progress }: { progress: number }) {
 
 // ─── Scene 2: Manager AI ────────────────────────────────────────
 function SceneManagerAI({ progress }: { progress: number }) {
+  const { t } = useTranslation();
   const showChat = progress > 0.08;
   const showTyping = progress > 0.08 && progress < 0.3;
   const showMessage = progress > 0.3;
@@ -550,10 +553,10 @@ function SceneManagerAI({ progress }: { progress: number }) {
       {/* Stats row */}
       <div className="grid grid-cols-4 gap-2 mb-4">
         {[
-          { label: 'Tables', value: '5/8' },
-          { label: 'Today', value: '11' },
-          { label: 'Waitlist', value: '2' },
-          { label: 'Guests', value: '24' },
+          { label: t('landing.walkthrough.tables', 'Tables'), value: '5/8' },
+          { label: t('landing.walkthrough.today', 'Today'), value: '11' },
+          { label: t('landing.walkthrough.waitlist', 'Waitlist'), value: '2' },
+          { label: t('landing.walkthrough.guests', 'Guests'), value: '24' },
         ].map((s, i) => (
           <motion.div
             key={s.label}
@@ -667,18 +670,24 @@ function SceneManagerAI({ progress }: { progress: number }) {
 
 // ─── Scene 3: Smart Staffing ────────────────────────────────────
 function SceneStaffing({ progress }: { progress: number }) {
+  const { t } = useTranslation();
   const showForecast = progress >= 0;
   const showGrid = progress > 0.35;
   const showRecommendation = progress > 0.6;
 
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const days = [
+    t('landing.walkthrough.mon', 'Mon'), t('landing.walkthrough.tue', 'Tue'),
+    t('landing.walkthrough.wed', 'Wed'), t('landing.walkthrough.thu', 'Thu'),
+    t('landing.walkthrough.fri', 'Fri'), t('landing.walkthrough.sat', 'Sat'),
+    t('landing.walkthrough.sun', 'Sun'),
+  ];
   const covers = [28, 32, 25, 38, 42, 55, 48];
   const maxCovers = 60;
 
   return (
     <div>
       <div className="text-[11px] font-semibold text-white/25 uppercase tracking-wider mb-3">
-        7-Day Staffing Forecast
+        {t('landing.walkthrough.staffingForecast', '7-Day Staffing Forecast')}
       </div>
 
       {/* Bar chart */}
