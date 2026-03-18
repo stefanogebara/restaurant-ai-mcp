@@ -96,6 +96,7 @@ export default function Sidebar() {
     Tables: 'navigation.tables',
     'Manager AI': 'navigation.managerAI',
     'Voice Agent': 'navigation.voiceAgent',
+    WhatsApp: 'navigation.whatsapp',
     'Call History': 'navigation.callHistory',
     'AI Insights': 'navigation.aiInsights',
     Analytics: 'navigation.analytics',
@@ -308,7 +309,7 @@ export default function Sidebar() {
                       : 'text-muted-stone hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
                     }
                   `}
-                  title={isCollapsed ? 'Team' : undefined}
+                  title={isCollapsed ? t('navigation.team', 'Team') : undefined}
                 >
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors ${isActive('/host-dashboard/team') ? 'bg-burgundy' : 'bg-current opacity-40'}`} />
                   {!isCollapsed && <span className="text-sm">{t('navigation.team', 'Team')}</span>}

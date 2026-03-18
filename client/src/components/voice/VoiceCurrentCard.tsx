@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import Spinner from '../common/Spinner';
 import { getPreviewText } from './voiceConstants';
@@ -32,10 +33,12 @@ export default function VoiceCurrentCard({
   onPlay,
   onToggleBrowser,
 }: Props) {
+  const { t } = useTranslation();
+
   return (
     <section className="bg-white border border-border-gray rounded-2xl overflow-hidden">
       <div className="px-6 py-5 border-b border-soft-gray">
-        <span className="text-[15px] font-semibold">Choose a Voice</span>
+        <span className="text-[15px] font-semibold">{t('voiceCurrentCard.chooseAVoice', 'Choose a Voice')}</span>
       </div>
 
       <div className="p-6">
@@ -46,11 +49,11 @@ export default function VoiceCurrentCard({
                 <span>
                   {selectedBrowserVoice?.name || pendingVoiceId}
                   <span className="ml-2 text-xs font-normal text-amber-600 bg-amber-600/10 px-2 py-0.5 rounded-full">
-                    pending
+                    {t('voiceCurrentCard.pending', 'pending')}
                   </span>
                 </span>
               ) : (
-                savedVoiceName || (savedVoiceId ? 'Custom Voice' : 'No voice set')
+                savedVoiceName || (savedVoiceId ? t('voiceCurrentCard.customVoice', 'Custom Voice') : t('voiceCurrentCard.noVoiceSet', 'No voice set'))
               )}
             </p>
             <div className="flex items-center gap-3 mt-1 text-sm text-stone-gray">
@@ -81,7 +84,7 @@ export default function VoiceCurrentCard({
                 ) : (
                   <ThiingsIcon name="play" pxSize={16} />
                 )}
-                Preview
+                {t('voiceCurrentCard.preview', 'Preview')}
               </button>
             )}
             <button
@@ -90,7 +93,7 @@ export default function VoiceCurrentCard({
               aria-expanded={isBrowserOpen}
               className="px-4 py-2 text-sm font-medium text-burgundy bg-burgundy/5 hover:bg-burgundy/10 rounded-xl transition-colors"
             >
-              {isBrowserOpen ? 'Hide Voice Browser' : 'Change Voice'}
+              {isBrowserOpen ? t('voiceCurrentCard.hideVoiceBrowser', 'Hide Voice Browser') : t('voiceCurrentCard.changeVoice', 'Change Voice')}
             </button>
           </div>
         </div>

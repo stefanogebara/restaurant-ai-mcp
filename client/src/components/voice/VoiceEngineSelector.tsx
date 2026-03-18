@@ -41,11 +41,11 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
             <div className="flex items-center justify-between mb-2">
               <span className="text-base font-semibold text-deep-charcoal">ElevenLabs</span>
               {currentEngine === 'elevenlabs' && (
-                <span className="text-xs font-medium text-burgundy bg-burgundy/10 px-2 py-0.5 rounded-full">Current</span>
+                <span className="text-xs font-medium text-burgundy bg-burgundy/10 px-2 py-0.5 rounded-full">{t('voiceEngine.current', 'Current')}</span>
               )}
             </div>
             <p className="text-sm text-stone-gray">
-              Managed voice agent with premium voice quality, voice cloning, and multilingual support.
+              {t('voiceEngine.elevenlabsDesc', 'Managed voice agent with premium voice quality, voice cloning, and multilingual support.')}
             </p>
           </button>
 
@@ -61,18 +61,18 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
             <div className="flex items-center justify-between mb-2">
               <span className="text-base font-semibold text-deep-charcoal">OpenAI Realtime</span>
               {currentEngine === 'openai_realtime' && (
-                <span className="text-xs font-medium text-burgundy bg-burgundy/10 px-2 py-0.5 rounded-full">Current</span>
+                <span className="text-xs font-medium text-burgundy bg-burgundy/10 px-2 py-0.5 rounded-full">{t('voiceEngine.current', 'Current')}</span>
               )}
             </div>
             <p className="text-sm text-stone-gray">
-              Lower cost, native tool calling with WebSocket-based real-time voice.
+              {t('voiceEngine.openaiDesc', 'Lower cost, native tool calling with WebSocket-based real-time voice.')}
             </p>
           </button>
         </div>
 
         {pendingEngine && (
           <p className="mt-3 text-xs text-amber-600 bg-amber-600/10 rounded-xl px-3 py-2">
-            Engine change pending. Click "Save Changes" to apply.
+            {t('voiceEngine.changePending', 'Engine change pending. Click "Save Changes" to apply.')}
           </p>
         )}
       </div>

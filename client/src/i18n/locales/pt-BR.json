@@ -65,7 +65,9 @@
     "languageSettings": "Idioma",
     "lockedFeature": "Recurso bloqueado",
     "upgradeToUnlock": "Atualize para desbloquear",
-    "upgradePlanToUnlock": "Atualize para o plano Profissional para desbloquear"
+    "upgradePlanToUnlock": "Atualize para o plano Profissional para desbloquear",
+    "whatsapp": "WhatsApp",
+    "restaurantSettings": "Configurações do Restaurante"
   },
   "dashboard": {
     "welcome": "Bem-vindo",
@@ -453,6 +455,8 @@
     "guestDemographics": "Perfil dos Clientes",
     "topGuestPreferences": "Principais Preferências",
     "noPreferenceData": "Sem dados de preferências para este período",
+    "noDemographicsTitle": "Sem dados demográficos ainda",
+    "noDemographicsHint": "Os perfis dos clientes serão construídos ao longo do tempo conforme visitam e interagem.",
     "occupancyRate": "Taxa de Ocupação",
     "reservationsOverTime": "Reservas ao Longo do Tempo",
     "trendingUp": "Em Alta",
@@ -1200,7 +1204,11 @@
     "scaleF4": "Suporte prioritário",
     "scaleF5": "Integrações personalizadas",
     "perMonth": "/mês",
-    "failedToOpen": "Falha ao abrir gerenciamento de assinatura. Tente novamente."
+    "failedToOpen": "Falha ao abrir gerenciamento de assinatura. Tente novamente.",
+    "resubscribe": "Reassinar",
+    "statusActive": "Ativo",
+    "statusPastDue": "Pagamento Pendente",
+    "statusCanceled": "Cancelado"
   },
   "team": {
     "title": "Equipe",
@@ -1393,7 +1401,9 @@
     "outcomeUnknown": "Desconhecido",
     "durationUnknown": "Desconhecido",
     "noTranscriptAvailable": "Nenhuma transcrição disponível para esta conversa.",
-    "caller": "Chamador"
+    "caller": "Chamador",
+    "noCallsToExport": "Nenhuma chamada para exportar",
+    "noRestaurantId": "Nenhum restaurante configurado. Complete o cadastro primeiro."
   },
   "landing": {
     "badge": "Gestão de Restaurantes com IA",
@@ -1896,7 +1906,46 @@
     "waCheckMeta": "Verificar Meta Business Manager",
     "waNotConfigured": "Não Configurado",
     "languages": "Idiomas",
-    "languageChangeWarning": "Alterar o idioma atualizará a mensagem de boas-vindas do seu agente. A voz falará no idioma selecionado usando suas capacidades multilíngues."
+    "languageChangeWarning": "Alterar o idioma atualizará a mensagem de boas-vindas do seu agente. A voz falará no idioma selecionado usando suas capacidades multilíngues.",
+    "changeSettingsHint": "Altere uma configuração acima para habilitar o salvamento",
+    "voiceLoadError": "Não foi possível carregar as vozes",
+    "voiceLoadErrorHint": "O serviço de voz pode estar temporariamente indisponível. Tente novamente."
+  },
+  "voiceTuning": {
+    "title": "Ajuste de Voz",
+    "resetToDefaults": "Restaurar padrões",
+    "stability": "Estabilidade",
+    "similarityBoost": "Impulso de Similaridade",
+    "style": "Estilo",
+    "speed": "Velocidade",
+    "variable": "Variável",
+    "stable": "Estável",
+    "low": "Baixo",
+    "high": "Alto",
+    "none": "Nenhum",
+    "expressive": "Expressivo",
+    "slow": "Lento",
+    "fast": "Rápido",
+    "previewWithSettings": "Pré-visualizar com configurações"
+  },
+  "voiceCurrentCard": {
+    "chooseAVoice": "Escolha uma Voz",
+    "pending": "pendente",
+    "customVoice": "Voz Personalizada",
+    "noVoiceSet": "Nenhuma voz definida",
+    "preview": "Pré-visualizar",
+    "hideVoiceBrowser": "Ocultar Navegador de Vozes",
+    "changeVoice": "Alterar Voz"
+  },
+  "voiceEngine": {
+    "current": "Atual",
+    "elevenlabsDesc": "Agente de voz gerenciado com qualidade premium, clonagem de voz e suporte multilíngue.",
+    "openaiDesc": "Menor custo, chamada nativa de ferramentas com voz em tempo real via WebSocket.",
+    "changePending": "Mudança de motor pendente. Clique em \"Salvar Alterações\" para aplicar."
+  },
+  "voice": {
+    "settingsSaved": "Configurações de voz salvas com sucesso",
+    "savedWithSyncWarning": "Configurações salvas localmente. A sincronização do agente será aplicada na próxima atualização."
   },
   "voiceExperiment": {
     "title": "Teste A/B da Sua Voz",

@@ -100,7 +100,7 @@ interface CustomerRowProps {
 }
 
 function CustomerRow({ customer, showChurn, onSend }: CustomerRowProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const churnColor =
     customer.churn_risk_score >= 80
       ? 'text-red-600'
@@ -108,8 +108,10 @@ function CustomerRow({ customer, showChurn, onSend }: CustomerRowProps) {
       ? 'text-amber-600'
       : 'text-warm-stone';
 
+  const localeMap: Record<string, string> = { 'pt-BR': 'pt-BR', es: 'es', en: 'en-US' };
+  const dateLocale = localeMap[i18n.language] ?? 'en-US';
   const lastVisit = customer.last_visit_date
-    ? new Date(customer.last_visit_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    ? new Date(customer.last_visit_date).toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' })
     : '—';
 
   return (
@@ -117,7 +119,7 @@ function CustomerRow({ customer, showChurn, onSend }: CustomerRowProps) {
       <div className="w-7 h-7 rounded-full bg-gradient-to-br from-stone-200 to-stone-300 flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium text-deep-charcoal truncate">{customer.customer_name || customer.customer_id}</div>
-        <div className="text-xs text-warm-stone">{t('insights.visits', { count: customer.total_visits })} · Last: {lastVisit}</div>
+        <div className="text-xs text-warm-stone">{t('insights.visits', { count: customer.total_visits })} · {t('insights.lastVisit', 'Last')}: {lastVisit}</div>
       </div>
       {showChurn && (
         <span className={`text-xs font-semibold flex-shrink-0 ${churnColor}`}>

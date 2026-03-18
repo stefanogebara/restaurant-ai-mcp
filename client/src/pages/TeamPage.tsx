@@ -127,7 +127,7 @@ export default function TeamPage() {
             </div>
             <div className="flex items-center gap-3">
               <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${roleBadge(member.role)}`}>
-                {member.role}
+                {t(`team.role${member.role.charAt(0).toUpperCase()}${member.role.slice(1)}`)}
               </span>
               {can('manageTeam') && member.role !== 'owner' && (
                 <>

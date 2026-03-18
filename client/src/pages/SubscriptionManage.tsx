@@ -131,7 +131,11 @@ export default function SubscriptionManage() {
                   subscription.status === 'past_due' ? 'bg-red-600/[8%] text-red-600' :
                   'bg-soft-gray text-stone-gray'
                 }`}>
-                  {subscription.status === 'trialing' ? t('subscription.trial') : subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
+                  {subscription.status === 'trialing' ? t('subscription.trial') :
+                   subscription.status === 'active' ? t('subscription.statusActive') :
+                   subscription.status === 'past_due' ? t('subscription.statusPastDue') :
+                   subscription.status === 'canceled' ? t('subscription.statusCanceled') :
+                   String(subscription.status)}
                 </span>
                 {subscription.currentPeriodEnd && (
                   <div className="text-[13px] text-warm-stone mt-1.5">

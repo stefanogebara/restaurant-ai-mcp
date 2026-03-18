@@ -65,7 +65,9 @@
     "languageSettings": "Language",
     "lockedFeature": "Locked feature",
     "upgradeToUnlock": "Upgrade to unlock",
-    "upgradePlanToUnlock": "Upgrade to Professional plan to unlock"
+    "upgradePlanToUnlock": "Upgrade to Professional plan to unlock",
+    "whatsapp": "WhatsApp",
+    "restaurantSettings": "Restaurant Settings"
   },
   "dashboard": {
     "welcome": "Welcome",
@@ -453,6 +455,8 @@
     "guestDemographics": "Guest Demographics",
     "topGuestPreferences": "Top Guest Preferences",
     "noPreferenceData": "No preference data for this period",
+    "noDemographicsTitle": "No demographic data yet",
+    "noDemographicsHint": "Guest profiles will build over time as customers visit and interact.",
     "occupancyRate": "Occupancy Rate",
     "reservationsOverTime": "Reservations Over Time",
     "trendingUp": "Trending Up",
@@ -1199,7 +1203,11 @@
     "scaleF4": "Priority support",
     "scaleF5": "Custom integrations",
     "perMonth": "/mo",
-    "failedToOpen": "Failed to open subscription management. Please try again."
+    "failedToOpen": "Failed to open subscription management. Please try again.",
+    "resubscribe": "Resubscribe",
+    "statusActive": "Active",
+    "statusPastDue": "Past Due",
+    "statusCanceled": "Canceled"
   },
   "team": {
     "title": "Team",
@@ -1392,7 +1400,9 @@
     "outcomeUnknown": "Unknown",
     "durationUnknown": "Unknown",
     "noTranscriptAvailable": "No transcript available for this conversation.",
-    "caller": "Caller"
+    "caller": "Caller",
+    "noCallsToExport": "No calls to export",
+    "noRestaurantId": "No restaurant configured. Please complete onboarding first."
   },
   "landing": {
     "badge": "AI-Powered Restaurant Management",
@@ -1887,7 +1897,46 @@
     "waCheckMeta": "Check Meta Business Manager",
     "waNotConfigured": "Not Configured",
     "languages": "Languages",
-    "languageChangeWarning": "Changing the language will update your agent's greeting message. The voice will speak in the selected language using its multilingual capabilities."
+    "languageChangeWarning": "Changing the language will update your agent's greeting message. The voice will speak in the selected language using its multilingual capabilities.",
+    "changeSettingsHint": "Change a setting above to enable saving",
+    "voiceLoadError": "Could not load voices",
+    "voiceLoadErrorHint": "The voice service may be temporarily unavailable. Please try again."
+  },
+  "voiceTuning": {
+    "title": "Voice Tuning",
+    "resetToDefaults": "Reset to defaults",
+    "stability": "Stability",
+    "similarityBoost": "Similarity Boost",
+    "style": "Style",
+    "speed": "Speed",
+    "variable": "Variable",
+    "stable": "Stable",
+    "low": "Low",
+    "high": "High",
+    "none": "None",
+    "expressive": "Expressive",
+    "slow": "Slow",
+    "fast": "Fast",
+    "previewWithSettings": "Preview with settings"
+  },
+  "voiceCurrentCard": {
+    "chooseAVoice": "Choose a Voice",
+    "pending": "pending",
+    "customVoice": "Custom Voice",
+    "noVoiceSet": "No voice set",
+    "preview": "Preview",
+    "hideVoiceBrowser": "Hide Voice Browser",
+    "changeVoice": "Change Voice"
+  },
+  "voiceEngine": {
+    "current": "Current",
+    "elevenlabsDesc": "Managed voice agent with premium voice quality, voice cloning, and multilingual support.",
+    "openaiDesc": "Lower cost, native tool calling with WebSocket-based real-time voice.",
+    "changePending": "Engine change pending. Click \"Save Changes\" to apply."
+  },
+  "voice": {
+    "settingsSaved": "Voice settings saved successfully",
+    "savedWithSyncWarning": "Settings saved locally. Agent sync will apply on next refresh."
   },
   "voiceExperiment": {
     "title": "A/B Test Your Voice",
