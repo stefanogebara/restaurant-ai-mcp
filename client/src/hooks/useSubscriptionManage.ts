@@ -31,7 +31,11 @@ export function useCustomerPortal() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
       });
-      if (!res.ok) throw new Error('Failed to create portal session');
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        const serverMsg = body?.error || body?.message;
+        throw new Error(serverMsg || 'Failed to create portal session');
+      }
       return res.json();
     },
   });

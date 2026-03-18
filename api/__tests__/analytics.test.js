@@ -50,8 +50,16 @@ jest.mock('../_lib/auth', () => ({
 }));
 
 jest.mock('../_lib/subscription-middleware', () => ({
-  checkSubscription: jest.fn().mockImplementation((req, res, next) => next()),
+  checkSubscription: jest.fn().mockImplementation((req, res, next) => {
+    // Simulate subscription middleware attaching plan info to req
+    req.subscription = req.subscription || { plan_name: 'growth' };
+    next();
+  }),
   requireFeature: jest.fn().mockReturnValue((req, res, next) => next()),
+}));
+
+jest.mock('../services/subscription-limits', () => ({
+  hasFeature: jest.fn().mockReturnValue(true),
 }));
 
 jest.mock('../_lib/rate-limit', () => ({

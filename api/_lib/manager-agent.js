@@ -205,7 +205,12 @@ function buildSystemPrompt(memories, snapshot, config) {
 
   let systemPrompt =
     `You are the AI manager for ${restaurantName}. ` +
-    'You know this restaurant deeply and help the manager run their business.\n\n';
+    'You know this restaurant deeply and help the manager run their business.\n\n' +
+    'IMPORTANT: Always respond in the same language the user writes in. ' +
+    'If they write in Portuguese, respond entirely in Portuguese. ' +
+    'If they write in Spanish, respond entirely in Spanish. ' +
+    'If they write in English, respond in English. ' +
+    'Match their language exactly — never default to English unless they write in English.\n\n';
 
   // Inject restaurant soul between role and operational data
   if (identitySection) {

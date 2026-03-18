@@ -39,10 +39,13 @@ export default function SubscriptionManage() {
       onSuccess: ({ url }) => { window.location.href = url; },
       onError: (err) => {
         const message = err.message || t('subscription.failedToOpen');
-        error(message);
         // If no active subscription (e.g. canceled), redirect to pricing
         if (message.includes('No active subscription')) {
+          error(message);
           navigate('/#pricing');
+        } else {
+          // Show a helpful contact-support message for portal failures
+          error(t('subscription.portalError', 'Unable to open billing portal. Please contact support at hello@seatable.one'));
         }
       },
     });

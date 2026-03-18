@@ -5,7 +5,8 @@ const {
 } = require('./_lib/supabase');
 
 const { verifyAuth } = require('./_lib/auth');
-const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
+const { checkSubscription } = require('./_lib/subscription-middleware');
+const { hasFeature } = require('./services/subscription-limits');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
@@ -283,10 +284,33 @@ module.exports = async (req, res) => {
   await checkSubscription(req, res, () => { subscriptionChecked = true; });
   if (!subscriptionChecked) return; // Response already sent by middleware
 
-  // Check feature access - advanced_analytics required for this endpoint
-  let featureAllowed = false;
-  requireFeature('advanced_analytics')(req, res, () => { featureAllowed = true; });
-  if (!featureAllowed) return; // Response already sent by middleware
+  // Check feature access - advanced_analytics required for full data
+  const plan = req.subscription?.plan_name?.toLowerCase();
+  const featureAllowed = hasFeature(plan, 'advanced_analytics');
+  if (!featureAllowed) {
+    // Instead of blocking with 403, return basic empty analytics so the page loads
+    const period = req.query.period || '30d';
+    return res.status(200).json({
+      success: true,
+      upgrade_required: true,
+      analytics: {
+        overview: {
+          total_reservations: 0,
+          total_completed_services: 0,
+          avg_party_size: 0,
+          avg_service_time_minutes: 0,
+          total_capacity: 0,
+          current_occupancy: 0,
+          current_occupancy_percentage: '0.0',
+        },
+        reservations_by_status: {},
+        reservations_by_day: {},
+        reservations_by_time_slot: {},
+        table_utilization: [],
+        daily_trend: [],
+      },
+    });
+  }
 
   try {
     const restaurantId = req.user.restaurant_id;

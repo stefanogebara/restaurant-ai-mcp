@@ -98,6 +98,24 @@ export default function AnalyticsDashboard() {
     <DashboardLayout>
       <div className="min-h-screen bg-soft-gray p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
         <div className="max-w-7xl mx-auto space-y-6">
+          {/* Upgrade banner for canceled/expired subscriptions */}
+          {data.upgrade_required && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <ThiingsIcon name="lightning" pxSize={20} className="text-amber-600 flex-shrink-0" />
+                <p className="text-sm text-amber-800">
+                  {t('analytics.upgradeRequired', 'Upgrade your plan to unlock full analytics with real-time data, trends, and AI insights.')}
+                </p>
+              </div>
+              <a
+                href="/subscription/manage"
+                className="px-5 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-lg transition-colors whitespace-nowrap"
+              >
+                {t('analytics.upgradePlan', 'Upgrade Plan')}
+              </a>
+            </div>
+          )}
+
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 pl-12 sm:pl-0">
             <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
