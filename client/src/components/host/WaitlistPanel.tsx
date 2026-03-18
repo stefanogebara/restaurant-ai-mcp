@@ -118,13 +118,13 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-2.5">
             <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('waitlist.title')}</h2>
-            <span className="text-[11px] font-semibold bg-[#0D9488]/[8%] text-[#0D9488] px-2.5 py-0.5 rounded-full">
+            <span className="text-[11px] font-semibold bg-[#9F1239]/[8%] text-[#9F1239] px-2.5 py-0.5 rounded-full">
               {activeCount}
             </span>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-3 py-1.5 bg-[#0D9488] hover:bg-[#0F766E] text-white text-sm font-semibold rounded-lg transition-all"
+            className="px-3 py-1.5 bg-[#9F1239] hover:bg-[#881337] text-white text-sm font-semibold rounded-lg transition-all"
           >
             + {t('waitlist.addGuest')}
           </button>
@@ -150,7 +150,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
               >
                 {tab.label}
                 <span className={`ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full ${
-                  activeTab === tab.key ? 'bg-[#0D9488]/10 text-[#0D9488]' : 'bg-border-gray text-stone-gray'
+                  activeTab === tab.key ? 'bg-[#9F1239]/10 text-[#9F1239]' : 'bg-border-gray text-stone-gray'
                 }`}>
                   {tab.count}
                 </span>
@@ -166,7 +166,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
               aria-label="Search waitlist"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 bg-soft-gray border border-border-gray rounded-xl text-xs focus:ring-2 focus:ring-[#0D9488] focus:border-transparent outline-none"
+              className="w-full pl-8 pr-3 py-1.5 bg-soft-gray border border-border-gray rounded-xl text-xs focus:ring-2 focus:ring-[#9F1239] focus:border-transparent outline-none"
             />
           </div>
         </div>

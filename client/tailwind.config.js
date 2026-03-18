@@ -26,7 +26,7 @@ export default {
         'warm-bg': '#FFFFFF',
         'warm-hover': '#F9FAFB',
         'warm-divider': '#E5E7EB',
-        'accent-burgundy': '#0D9488',
+        'accent-burgundy': '#9F1239',
         'success-green': '#059669',
         'warning-amber': '#D97706',
         // Modern Elegant Theme Colors

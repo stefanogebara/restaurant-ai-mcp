@@ -57,7 +57,7 @@ export default function ManagerNotificationsPanel() {
           type="button"
           onClick={handleSave}
           disabled={!isDirty || saveMutation.isPending}
-          className="px-4 py-1.5 bg-[#0D9488] hover:bg-[#0F766E] text-white text-xs font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="px-4 py-1.5 bg-[#9F1239] hover:bg-[#881337] text-white text-xs font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {saveMutation.isPending ? t('common.loading') : t('common.save')}
         </button>
@@ -78,7 +78,7 @@ export default function ManagerNotificationsPanel() {
                   checked={current === opt.value}
                   onChange={() => set('briefing_channel', opt.value)}
                   aria-label={opt.label}
-                  className="mt-0.5 accent-[#0D9488]"
+                  className="mt-0.5 accent-[#9F1239]"
                 />
                 <span>
                   <span className="text-sm font-medium text-deep-charcoal">{opt.label}</span>
@@ -101,7 +101,7 @@ export default function ManagerNotificationsPanel() {
                 checked={!!getValue(key)}
                 onChange={e => set(key, e.target.checked as NotificationPreferences[typeof key])}
                 aria-label={label}
-                className="mt-0.5 accent-[#0D9488]"
+                className="mt-0.5 accent-[#9F1239]"
               />
               <span>
                 <span className="text-sm font-medium text-deep-charcoal">{label}</span>
@@ -122,7 +122,7 @@ export default function ManagerNotificationsPanel() {
               checked={!!getValue('pre_reservation_upsell')}
               onChange={e => set('pre_reservation_upsell', e.target.checked)}
               aria-label={t('settings.upsellLabel', 'Pre-reservation dish recommendations')}
-              className="mt-0.5 accent-[#0D9488]"
+              className="mt-0.5 accent-[#9F1239]"
             />
             <span>
               <span className="text-sm font-medium text-deep-charcoal">{t('settings.upsellLabel', 'Pre-reservation dish recommendations')}</span>

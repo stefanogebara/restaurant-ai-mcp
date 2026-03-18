@@ -247,7 +247,7 @@ export default function Dashboard() {
               </button>
               <button
                 onClick={() => setShowWalkInModal(true)}
-                className="px-4 py-2 bg-[#0D9488] hover:bg-[#0F766E] text-white border border-[#0D9488] rounded-lg text-[13px] font-medium transition-colors"
+                className="px-4 py-2 bg-[#9F1239] hover:bg-[#881337] text-white border border-[#9F1239] rounded-lg text-[13px] font-medium transition-colors"
               >
                 + {t('dashboard.addWalkIn')}
               </button>
@@ -365,7 +365,7 @@ export default function Dashboard() {
         <button
           onClick={() => setShowWalkInModal(true)}
           aria-label={t('dashboard.addWalkIn', 'Add walk-in')}
-          className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-[#0D9488] hover:bg-[#0F766E] active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
+          className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-[#9F1239] hover:bg-[#881337] active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
         >
           <ThiingsIcon name="plus" pxSize={24} />
         </button>
@@ -442,7 +442,7 @@ export default function Dashboard() {
                   setShowCompleteModal(false);
                   setServiceToComplete(null);
                 }}
-                className="flex-1 px-4 py-2.5 bg-[#0D9488] hover:bg-[#0F766E] text-white font-semibold rounded-lg transition-colors"
+                className="flex-1 px-4 py-2.5 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-lg transition-colors"
               >
                 {t('dashboard.complete')}
               </button>

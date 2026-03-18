@@ -68,7 +68,7 @@ export default function ReservationsList({
       <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E7EB] gap-2 flex-wrap">
         <div className="flex items-center gap-2.5">
           <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{tl('upcoming')}</span>
-          <span className="text-[11px] font-semibold bg-[#0D9488]/[8%] text-[#0D9488] px-2.5 py-0.5 rounded-full">
+          <span className="text-[11px] font-semibold bg-[#9F1239]/[8%] text-[#9F1239] px-2.5 py-0.5 rounded-full">
             {displayed.length}
           </span>
           {displayed.length > 0 && (
@@ -110,7 +110,7 @@ export default function ReservationsList({
             <button
               type="button"
               onClick={onAdd}
-              className="text-xs font-semibold px-3 py-1 rounded-lg bg-[#0D9488]/[8%] text-[#0D9488] hover:bg-[#0D9488]/[14%] transition-colors"
+              className="text-xs font-semibold px-3 py-1 rounded-lg bg-[#9F1239]/[8%] text-[#9F1239] hover:bg-[#9F1239]/[14%] transition-colors"
             >
               {tl('addReservation')}
             </button>
@@ -133,7 +133,7 @@ export default function ReservationsList({
             <button
               type="button"
               onClick={onAdd}
-              className="mt-3 text-xs font-semibold px-4 py-2 rounded-lg bg-[#0D9488]/[8%] text-[#0D9488] hover:bg-[#0D9488]/[14%] transition-colors"
+              className="mt-3 text-xs font-semibold px-4 py-2 rounded-lg bg-[#9F1239]/[8%] text-[#9F1239] hover:bg-[#9F1239]/[14%] transition-colors"
             >
               + {tl('addReservation')}
             </button>
@@ -215,7 +215,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
   return (
     <div className={`flex items-center py-[18px] border-b border-[#F3F4F6] last:border-b-0 gap-2.5 sm:gap-4 transition-colors ${
   reservation.party_size >= 6
-    ? 'pl-3 sm:pl-5 pr-4 sm:pr-6 border-l-2 border-l-[#0D9488]/30'
+    ? 'pl-3 sm:pl-5 pr-4 sm:pr-6 border-l-2 border-l-[#9F1239]/30'
     : 'px-3 sm:px-6'
 }`}>
       {/* Avatar */}

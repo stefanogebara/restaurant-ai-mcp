@@ -169,8 +169,8 @@ export default function TableLayoutPanel({
 
             {/* Joinable info */}
             {selectedTable.is_joinable && selectedTable.joinable_with?.length > 0 && (
-              <div className="mb-4 p-3 bg-[#0D9488]/5 border border-[#0D9488]/15 rounded-xl">
-                <div className="text-sm font-semibold text-[#0D9488] mb-1.5">{t('tableLayout.joinableTables')}</div>
+              <div className="mb-4 p-3 bg-[#9F1239]/5 border border-[#9F1239]/15 rounded-xl">
+                <div className="text-sm font-semibold text-[#9F1239] mb-1.5">{t('tableLayout.joinableTables')}</div>
                 <div className="flex flex-wrap gap-1.5">
                   {selectedTable.joinable_with.map((linkedId: string) => {
                     const linked = tables.find((tbl) => tbl.id === linkedId);

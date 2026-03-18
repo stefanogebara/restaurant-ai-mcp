@@ -49,7 +49,7 @@ export default function ActivePartiesPanel({
         <div>
           <div className="flex items-center gap-2.5">
             <h3 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('dashboard.activeParties')}</h3>
-            <span className="text-[11px] font-semibold bg-[#0D9488]/[8%] text-[#0D9488] px-2.5 py-0.5 rounded-full">
+            <span className="text-[11px] font-semibold bg-[#9F1239]/[8%] text-[#9F1239] px-2.5 py-0.5 rounded-full">
               {parties.length}
             </span>
             {parties.length > 0 && (
@@ -121,7 +121,7 @@ function PartyRow({ party, billValue, onBillChange, onComplete }: PartyRowProps)
     <div>
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0D9488]/15 to-[#0D9488]/10 flex items-center justify-center text-[10px] font-bold text-[#0D9488] border border-[#0D9488]/20 flex-shrink-0">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#9F1239]/15 to-[#9F1239]/10 flex items-center justify-center text-[10px] font-bold text-[#9F1239] border border-[#9F1239]/20 flex-shrink-0">
             {(party.customer_name || '--')
               .split(' ')
               .map((n) => n[0])
@@ -160,7 +160,7 @@ function PartyRow({ party, billValue, onBillChange, onComplete }: PartyRowProps)
                     (party.time_elapsed_minutes + Math.max(party.time_remaining_minutes, 0))) * 100,
                   100
                 )}%`,
-                background: isOverdue ? '#ef4444' : '#0D9488',
+                background: isOverdue ? '#ef4444' : '#9F1239',
               }}
             />
           </div>
@@ -178,7 +178,7 @@ function PartyRow({ party, billValue, onBillChange, onComplete }: PartyRowProps)
           placeholder={t('dashboard.activePartiesPanel.billAmount')}
           value={billValue}
           onChange={e => onBillChange(e.target.value)}
-          className="w-24 sm:w-28 border border-border-gray rounded-lg px-2 py-1 text-xs text-deep-charcoal focus:outline-none focus:ring-1 focus:ring-[#0D9488]/30"
+          className="w-24 sm:w-28 border border-border-gray rounded-lg px-2 py-1 text-xs text-deep-charcoal focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30"
           aria-label="Total bill amount"
         />
         <button
