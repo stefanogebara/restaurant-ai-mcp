@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { AnalyticsData } from '../../hooks/useAnalytics';
 import { toCsv, downloadCsv } from '../../utils/exportCsv';
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export default function ExportDropdown({ data, dateLabel, onExportAll, isExporting }: Props) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -41,7 +43,7 @@ export default function ExportDropdown({ data, dateLabel, onExportAll, isExporti
           ? <span className="w-4 h-4 border border-stone-gray border-t-transparent rounded-full animate-spin inline-block" />
           : <ThiingsIcon name="download" pxSize={14} />
         }
-        Export
+        {t('analytics.export.export', 'Export')}
         <ThiingsIcon name="chevron-down" pxSize={12} />
       </button>
 
@@ -56,8 +58,8 @@ export default function ExportDropdown({ data, dateLabel, onExportAll, isExporti
             })), ['date', 'time', 'name', 'party_size', 'status', 'id'])}
             className={`w-full text-left px-4 py-2.5 text-sm text-stone-gray transition-colors ${hasReservations ? 'hover:bg-soft-gray' : 'opacity-40 cursor-not-allowed'}`}
           >
-            Reservations CSV
-            {!hasReservations && <span className="ml-1 text-xs text-muted-stone">(use All first)</span>}
+            {t('analytics.export.reservationsCsv', 'Reservations CSV')}
+            {!hasReservations && <span className="ml-1 text-xs text-muted-stone">({t('analytics.export.useAllFirst', 'use All first')})</span>}
           </button>
 
           <button
@@ -68,7 +70,7 @@ export default function ExportDropdown({ data, dateLabel, onExportAll, isExporti
             })), ['date', 'day', 'reservations', 'completed_services'])}
             className="w-full text-left px-4 py-2.5 text-sm text-stone-gray hover:bg-soft-gray transition-colors"
           >
-            Summary CSV
+            {t('analytics.export.summaryCsv', 'Summary CSV')}
           </button>
 
           <button
@@ -79,7 +81,7 @@ export default function ExportDropdown({ data, dateLabel, onExportAll, isExporti
             })), ['table', 'capacity', 'location', 'times_used', 'utilization_pct'])}
             className="w-full text-left px-4 py-2.5 text-sm text-stone-gray hover:bg-soft-gray transition-colors"
           >
-            Tables CSV
+            {t('analytics.export.tablesCsv', 'Tables CSV')}
           </button>
 
           <div className="border-t border-border-gray my-1" />
@@ -89,7 +91,7 @@ export default function ExportDropdown({ data, dateLabel, onExportAll, isExporti
             onClick={() => { onExportAll(); setOpen(false); }}
             className="w-full text-left px-4 py-2.5 text-sm font-semibold text-deep-charcoal hover:bg-soft-gray transition-colors"
           >
-            Download All
+            {t('analytics.export.downloadAll', 'Download All')}
           </button>
         </div>
       )}

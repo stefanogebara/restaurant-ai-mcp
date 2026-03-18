@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { getDiningStyleColor, type CustomerListItem } from './dnaHelpers';
 
@@ -20,13 +21,14 @@ export default function DNACustomerList({
   onStyleFilterChange,
 }: DNACustomerListProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <div className="p-4 bg-soft-gray rounded-xl">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <ThiingsIcon name="users" pxSize={16} />
-          <h3 className="text-sm font-semibold font-serif text-deep-charcoal">Customer Profiles</h3>
+          <h3 className="text-sm font-semibold font-serif text-deep-charcoal">{t('host.dnaCustomerList.title', 'Customer Profiles')}</h3>
         </div>
       </div>
 
@@ -37,7 +39,7 @@ export default function DNACustomerList({
           <input
             type="text"
             aria-label="Search by name or phone"
-            placeholder="Search by name or phone..."
+            placeholder={t('host.dnaCustomerList.searchPlaceholder', 'Search by name or phone...')}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-border-gray rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-600/30 focus:border-violet-600"
@@ -64,7 +66,7 @@ export default function DNACustomerList({
       {isLoading ? (
         <div role="status" className="flex items-center justify-center py-4 gap-2">
           <div aria-hidden="true" className="w-4 h-4 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm text-stone-gray">Loading customers...</span>
+          <span className="text-sm text-stone-gray">{t('host.dnaCustomerList.loading', 'Loading customers...')}</span>
         </div>
       ) : customers.length > 0 ? (
         <div className="space-y-1">
@@ -138,7 +140,7 @@ export default function DNACustomerList({
         </div>
       ) : (
         <div className="text-center py-4 text-sm text-stone-gray">
-          {searchQuery || styleFilter ? 'No customers match your filters' : 'No customer profiles available'}
+          {searchQuery || styleFilter ? t('host.dnaCustomerList.noMatch', 'No customers match your filters') : t('host.dnaCustomerList.noProfiles', 'No customer profiles available')}
         </div>
       )}
     </div>

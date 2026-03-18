@@ -11,6 +11,20 @@ const COLOR_MAP: Record<string, string> = {
   gray: 'bg-gray-100 text-gray-500',
 };
 
+// Translation keys for activity event types
+const EVENT_MESSAGE_KEYS: Record<string, string> = {
+  'reservation.create': 'activity.booked',
+  'reservation.cancel': 'activity.cancelled',
+  'reservation.check_in': 'activity.checkedIn',
+  'reservation.no_show': 'activity.noShow',
+  'reservation.update': 'activity.updated',
+  'service.complete': 'activity.serviceCompleted',
+  'service.seat': 'activity.seated',
+  'waitlist.add': 'activity.addedToWaitlist',
+  'waitlist.seat': 'activity.seatedFromWaitlist',
+  'waitlist.remove': 'activity.removedFromWaitlist',
+};
+
 function timeAgo(timestamp: string, t: (key: string, fallback: string, opts?: Record<string, unknown>) => string): string {
   const diff = Date.now() - new Date(timestamp).getTime();
   const mins = Math.floor(diff / 60000);
@@ -71,8 +85,16 @@ export default function ActivityFeedWidget() {
                 <ThiingsIcon name={event.icon as IconName} pxSize={12} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-deep-charcoal truncate">{event.message}</p>
-                <p className="text-xs text-muted-stone truncate">{event.detail}</p>
+                <p className="text-sm text-deep-charcoal truncate">
+                  {EVENT_MESSAGE_KEYS[event.type]
+                    ? t(EVENT_MESSAGE_KEYS[event.type], event.message, { name: event.customer_name || '' })
+                    : event.message}
+                </p>
+                <p className="text-xs text-muted-stone truncate">
+                  {event.party_size
+                    ? `${t('activity.partyOf', 'Party of')} ${event.party_size}${event.event_date ? ` · ${event.event_date}${event.event_time ? ` ${event.event_time.slice(0, 5)}` : ''}` : ''}`
+                    : event.detail}
+                </p>
               </div>
               <span className="text-[10px] text-muted-stone flex-shrink-0 pt-0.5">
                 {timeAgo(event.timestamp, t)}

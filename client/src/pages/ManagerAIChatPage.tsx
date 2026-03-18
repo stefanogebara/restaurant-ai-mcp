@@ -133,7 +133,7 @@ export default function ManagerAIChatPage() {
           <Link
             to="/host-dashboard/simple"
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-soft-gray text-muted-stone hover:text-deep-charcoal transition-colors"
-            aria-label="Back to dashboard"
+            aria-label={t('managerAI.backToDashboard', 'Back to dashboard')}
           >
             <ThiingsIcon name="arrow-left" pxSize={18} />
           </Link>

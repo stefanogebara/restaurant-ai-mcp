@@ -73,7 +73,7 @@ export default function AIInsights() {
               to="/host-dashboard/voice-settings"
               className="text-xs text-muted-stone hover:text-burgundy transition-colors"
             >
-              Edit AI strategy document →
+              {t('insights.editStrategy', 'Edit AI strategy document')} →
             </Link>
           </div>
         </div>

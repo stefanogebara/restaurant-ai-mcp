@@ -21,10 +21,10 @@ export default function VoicePersonaPanel() {
       return data;
     },
     onSuccess: (data) => {
-      if (data.skipped) toast.info(`Skipped: ${data.reason || 'no agent configured'}`);
-      else toast.success('Agent prompt refreshed successfully');
+      if (data.skipped) toast.info(t('dashboard.voicePersona.skipped', 'Skipped: {{reason}}', { reason: data.reason || t('dashboard.voicePersona.noAgentConfigured', 'no agent configured') }));
+      else toast.success(t('dashboard.voicePersona.refreshSuccess', 'Agent prompt refreshed successfully'));
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to refresh prompt'),
+    onError: (err) => toast.error(err instanceof Error ? err.message : t('dashboard.voicePersona.refreshFailed', 'Failed to refresh prompt')),
   });
 
   const getValue = (key: keyof VoicePersona): string =>
@@ -38,8 +38,8 @@ export default function VoicePersonaPanel() {
   const handleSave = () => {
     if (!isDirty) return;
     saveMutation.mutate(pending, {
-      onSuccess: () => { toast.success('Agent persona saved'); setPending({}); },
-      onError: () => toast.error('Failed to save persona'),
+      onSuccess: () => { toast.success(t('dashboard.voicePersona.saved', 'Agent persona saved')); setPending({}); },
+      onError: () => toast.error(t('dashboard.voicePersona.saveFailed', 'Failed to save persona')),
     });
   };
 
@@ -56,7 +56,7 @@ export default function VoicePersonaPanel() {
   return (
     <div className="bg-white border border-border-gray rounded-2xl p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">Agent Persona</h2>
+        <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">{t('dashboard.voicePersona.title', 'Agent Persona')}</h2>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -65,7 +65,7 @@ export default function VoicePersonaPanel() {
             title="Re-sync ElevenLabs agent prompt with current restaurant persona"
             className="px-3 py-1.5 border border-border-gray hover:bg-soft-gray text-warm-stone text-xs font-medium rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {refreshMutation.isPending ? 'Refreshing...' : 'Refresh Agent Prompt'}
+            {refreshMutation.isPending ? t('dashboard.voicePersona.refreshing', 'Refreshing...') : t('dashboard.voicePersona.refreshPrompt', 'Refresh Agent Prompt')}
           </button>
           <button
             type="button"
@@ -73,14 +73,14 @@ export default function VoicePersonaPanel() {
             disabled={!isDirty || saveMutation.isPending}
             className="px-4 py-1.5 bg-burgundy hover:bg-burgundy-dark text-white text-xs font-semibold rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {saveMutation.isPending ? 'Saving...' : 'Save'}
+            {saveMutation.isPending ? t('dashboard.voicePersona.saving', 'Saving...') : t('common.save', 'Save')}
           </button>
         </div>
       </div>
       <div className="space-y-3">
         <div>
           <label htmlFor="agent-name" className="block text-xs font-medium text-warm-stone mb-1">
-            Agent name <span className="text-gray-400">(max 50 chars)</span>
+            {t('dashboard.voicePersona.agentName', 'Agent name')} <span className="text-gray-400">{t('dashboard.voicePersona.max50', '(max 50 chars)')}</span>
           </label>
           <input
             id="agent-name"
@@ -94,7 +94,7 @@ export default function VoicePersonaPanel() {
         </div>
         <div>
           <label htmlFor="agent-greeting" className="block text-xs font-medium text-warm-stone mb-1">
-            Opening greeting <span className="text-gray-400">(max 200 chars)</span>
+            {t('dashboard.voicePersona.openingGreeting', 'Opening greeting')} <span className="text-gray-400">{t('dashboard.voicePersona.max200', '(max 200 chars)')}</span>
           </label>
           <input
             id="agent-greeting"

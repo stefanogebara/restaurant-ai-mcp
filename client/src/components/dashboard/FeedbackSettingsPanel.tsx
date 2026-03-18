@@ -3,10 +3,12 @@
  * Placed in WhatsApp Settings page.
  */
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useFeedbackConfig, useUpdateFeedbackConfig } from '../../hooks/useFeedback';
 import ThiingsIcon from '../common/ThiingsIcon';
 
 export default function FeedbackSettingsPanel() {
+  const { t } = useTranslation();
   const { data: config, isLoading } = useFeedbackConfig();
   const updateConfig = useUpdateFeedbackConfig();
 
@@ -47,16 +49,16 @@ export default function FeedbackSettingsPanel() {
         <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
           <ThiingsIcon name="chat" pxSize={16} className="text-amber-600" />
         </div>
-        <h3 className="text-sm font-semibold text-deep-charcoal">Post-Visit Feedback</h3>
+        <h3 className="text-sm font-semibold text-deep-charcoal">{t('dashboard.feedback.title', 'Post-Visit Feedback')}</h3>
       </div>
 
       <p className="text-xs text-muted-stone mb-4">
-        Automatically send a WhatsApp message after each dining experience to collect guest feedback.
+        {t('dashboard.feedback.description', 'Automatically send a WhatsApp message after each dining experience to collect guest feedback.')}
       </p>
 
       {/* Enable toggle */}
       <label className="flex items-center justify-between mb-4 cursor-pointer">
-        <span className="text-sm text-deep-charcoal">Enable post-visit feedback</span>
+        <span className="text-sm text-deep-charcoal">{t('dashboard.feedback.enableToggle', 'Enable post-visit feedback')}</span>
         <button
           type="button"
           role="switch"
@@ -75,32 +77,32 @@ export default function FeedbackSettingsPanel() {
           {/* Delay */}
           <div className="mb-4">
             <label className="block text-xs font-medium text-muted-stone mb-1">
-              Send feedback after (minutes)
+              {t('dashboard.feedback.sendAfter', 'Send feedback after (minutes)')}
             </label>
             <select
               value={delayMinutes}
               onChange={(e) => { setDelayMinutes(parseInt(e.target.value)); setDirty(true); }}
               className="w-full border border-border-gray rounded-xl px-3 py-2 text-sm text-deep-charcoal"
             >
-              <option value={30}>30 min</option>
-              <option value={60}>1 hour</option>
-              <option value={120}>2 hours</option>
-              <option value={180}>3 hours</option>
-              <option value={360}>6 hours</option>
-              <option value={720}>12 hours</option>
-              <option value={1440}>24 hours</option>
+              <option value={30}>{t('dashboard.feedback.time30min', '30 min')}</option>
+              <option value={60}>{t('dashboard.feedback.time1hour', '1 hour')}</option>
+              <option value={120}>{t('dashboard.feedback.time2hours', '2 hours')}</option>
+              <option value={180}>{t('dashboard.feedback.time3hours', '3 hours')}</option>
+              <option value={360}>{t('dashboard.feedback.time6hours', '6 hours')}</option>
+              <option value={720}>{t('dashboard.feedback.time12hours', '12 hours')}</option>
+              <option value={1440}>{t('dashboard.feedback.time24hours', '24 hours')}</option>
             </select>
           </div>
 
           {/* Custom template */}
           <div className="mb-4">
             <label className="block text-xs font-medium text-muted-stone mb-1">
-              Custom message (optional)
+              {t('dashboard.feedback.customMessage', 'Custom message (optional)')}
             </label>
             <textarea
               value={template}
               onChange={(e) => { setTemplate(e.target.value); setDirty(true); }}
-              placeholder="Leave blank for default message. Use {name} and {restaurant} as placeholders."
+              placeholder={t('dashboard.feedback.customPlaceholder', 'Leave blank for default message. Use {name} and {restaurant} as placeholders.')}
               rows={3}
               className="w-full border border-border-gray rounded-xl px-3 py-2 text-sm text-deep-charcoal resize-none"
               maxLength={1000}
@@ -118,7 +120,7 @@ export default function FeedbackSettingsPanel() {
           disabled={updateConfig.isPending}
           className="w-full py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50"
         >
-          {updateConfig.isPending ? 'Saving...' : 'Save Feedback Settings'}
+          {updateConfig.isPending ? t('dashboard.feedback.saving', 'Saving...') : t('dashboard.feedback.saveSettings', 'Save Feedback Settings')}
         </button>
       )}
     </div>

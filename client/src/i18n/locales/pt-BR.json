@@ -277,6 +277,19 @@
     "hoursAgo": "{{count}}h atrás",
     "daysAgo": "{{count}}d atrás"
   },
+  "activity": {
+    "booked": "{{name}} reservou",
+    "cancelled": "{{name}} — reserva cancelada",
+    "checkedIn": "{{name}} fez check-in",
+    "noShow": "{{name}} — não compareceu",
+    "updated": "{{name}} — reserva atualizada",
+    "serviceCompleted": "{{name}} — atendimento concluído",
+    "seated": "{{name}} sentou",
+    "addedToWaitlist": "{{name}} entrou na fila",
+    "seatedFromWaitlist": "{{name}} sentou da fila",
+    "removedFromWaitlist": "{{name}} saiu da fila",
+    "partyOf": "Mesa para"
+  },
   "reservations": {
     "title": "Reservas",
     "newReservation": "Nova Reserva",
@@ -952,6 +965,7 @@
     "messagesMonth": "Mensagens (Mês)",
     "sendTestMessage": "Enviar Mensagem de Teste",
     "sendTest": "Enviar Teste",
+    "enterTestPhone": "Insira um número de telefone acima para enviar uma mensagem de teste.",
     "sendingTest": "Enviando...",
     "managerNotifications": "Notificações do Gerente",
     "notificationsSaved": "Preferências de notificação salvas",

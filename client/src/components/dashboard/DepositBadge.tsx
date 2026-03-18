@@ -1,9 +1,12 @@
+import { useTranslation } from 'react-i18next';
+
 interface DepositBadgeProps {
   amount?: number | null;
   currency?: string;
 }
 
 export default function DepositBadge({ amount, currency = 'EUR' }: DepositBadgeProps) {
+  const { t } = useTranslation();
   if (!amount) return null;
 
   const formatted = new Intl.NumberFormat('en-US', {
@@ -15,7 +18,7 @@ export default function DepositBadge({ amount, currency = 'EUR' }: DepositBadgeP
 
   return (
     <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-violet-600/[8%] text-violet-600">
-      {formatted} held
+      {formatted} {t('dashboard.deposit.held', 'held')}
     </span>
   );
 }

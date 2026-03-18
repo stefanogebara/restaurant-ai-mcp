@@ -93,7 +93,7 @@ export default function TableLayoutPanel({
           <div className="flex items-center bg-soft-gray rounded-lg p-0.5">
             <button
               onClick={() => { setViewMode('floorplan'); localStorage.setItem('seatable_table_view_mode', 'floorplan'); }}
-              aria-label="Floor Plan View"
+              aria-label={t('tableLayout.floorPlanView', 'Floor Plan View')}
               className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
                 viewMode === 'floorplan'
                   ? 'bg-deep-charcoal text-white'
@@ -104,7 +104,7 @@ export default function TableLayoutPanel({
             </button>
             <button
               onClick={() => { setViewMode('grid'); localStorage.setItem('seatable_table_view_mode', 'grid'); }}
-              aria-label="Grid View"
+              aria-label={t('tableLayout.gridView', 'Grid View')}
               className={`min-h-[36px] min-w-[36px] flex items-center justify-center px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
                 viewMode === 'grid'
                   ? 'bg-deep-charcoal text-white'
@@ -154,7 +154,7 @@ export default function TableLayoutPanel({
                     {t('tableLayout.table')} {selectedTable.table_number}
                   </h3>
                   <p className="text-sm text-stone-gray">
-                    {selectedTable.capacity} {t('tableLayout.seats')} &middot; {selectedTable.location}
+                    {selectedTable.capacity} {t('tableLayout.seats')} &middot; {t(`floorPlan.location.${(selectedTable.location || 'indoor').toLowerCase()}`, selectedTable.location)}
                   </p>
                 </div>
               </div>

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { colors } from '../../utils/colors';
 import { getTierBadge } from './customerProfileHelpers';
@@ -8,6 +9,7 @@ interface CustomerProfileHeaderProps {
 }
 
 export default function CustomerProfileHeader({ data }: CustomerProfileHeaderProps) {
+  const { t } = useTranslation();
   const profile = data.profile;
   const textSignals = data.text_signals;
   const displayName = data.customer_name || data.customer_id;
@@ -26,17 +28,17 @@ export default function CustomerProfileHeader({ data }: CustomerProfileHeaderPro
               <span className={`px-3 py-1 rounded-full text-xs font-semibold ${tier.color}`}>{tier.label}</span>
               {textSignals?.vip_signals && (
                 <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-600/20 text-amber-600">
-                  <ThiingsIcon name="star" pxSize={12} className="inline mr-1" />VIP Signals
+                  <ThiingsIcon name="star" pxSize={12} className="inline mr-1" />{t('host.customerProfile.vipSignals', 'VIP Signals')}
                 </span>
               )}
             </div>
             <div className="flex items-center gap-4 mt-1 text-sm text-stone-gray">
               <span className="flex items-center gap-1"><ThiingsIcon name="phone" pxSize={12} />{data.customer_id}</span>
-              <span className="flex items-center gap-1"><ThiingsIcon name="calendar" pxSize={12} />{data.reservations.length} visits</span>
+              <span className="flex items-center gap-1"><ThiingsIcon name="calendar" pxSize={12} />{data.reservations.length} {t('host.customerProfile.visits', 'visits')}</span>
               {profile?.last_analyzed_at && (
                 <span className="flex items-center gap-1">
                   <ThiingsIcon name="clock" pxSize={12} />
-                  Analyzed {new Date(profile.last_analyzed_at).toLocaleDateString()}
+                  {t('host.customerProfile.analyzed', 'Analyzed')} {new Date(profile.last_analyzed_at).toLocaleDateString()}
                 </span>
               )}
             </div>
@@ -54,13 +56,13 @@ export default function CustomerProfileHeader({ data }: CustomerProfileHeaderPro
               {profile?.profile_confidence || 0}%
             </span>
           </div>
-          <div className="text-xs text-stone-gray mt-1">Confidence</div>
+          <div className="text-xs text-stone-gray mt-1">{t('host.customerProfile.confidence', 'Confidence')}</div>
         </div>
       </div>
 
       {profile?.data_sources_used && profile.data_sources_used.length > 0 && (
         <div className="mt-4 flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-stone-gray">Data sources:</span>
+          <span className="text-xs text-stone-gray">{t('host.customerProfile.dataSources', 'Data sources:')}</span>
           {profile.data_sources_used.map((src) => (
             <span key={src} className="px-2 py-0.5 bg-soft-gray rounded-full text-xs text-stone-gray">{src.replace('_', ' ')}</span>
           ))}

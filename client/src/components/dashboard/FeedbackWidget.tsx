@@ -34,9 +34,9 @@ export default function FeedbackWidget() {
           <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
             <ThiingsIcon name="star" pxSize={16} className="text-amber-600" />
           </div>
-          <h3 className="text-sm font-semibold text-deep-charcoal">Guest Feedback</h3>
+          <h3 className="text-sm font-semibold text-deep-charcoal">{t('dashboard.guestFeedback', 'Guest Feedback')}</h3>
         </div>
-        <p className="text-sm text-muted-stone">No feedback collected yet. Ratings will appear here after guests respond.</p>
+        <p className="text-sm text-muted-stone">{t('dashboard.noFeedbackYet', 'No feedback collected yet. Ratings will appear here after guests respond.')}</p>
       </div>
     );
   }

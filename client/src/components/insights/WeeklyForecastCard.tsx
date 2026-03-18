@@ -1,9 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useLTVStats } from '../../hooks/useLTVData';
-
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(amount);
+import { formatCurrency } from '../../utils/currency';
 
 interface StatRowProps {
   label: string;

@@ -10,6 +10,21 @@ interface DemoNavItem {
   locked?: boolean;
 }
 
+const NAV_LABELS: Record<string, Record<string, string>> = {
+  'pt-BR': {
+    Main: 'Principal', AI: 'IA', Insights: 'Análises',
+    Dashboard: 'Painel', Tables: 'Mesas', 'Manager AI': 'IA do Gerente',
+    'Voice Agent': 'Agente de Voz', WhatsApp: 'WhatsApp',
+    Analytics: 'Análises', Reports: 'Relatórios',
+  },
+  es: {
+    Main: 'Principal', AI: 'IA', Insights: 'Análisis',
+    Dashboard: 'Panel', Tables: 'Mesas', 'Manager AI': 'IA del Gerente',
+    'Voice Agent': 'Agente de Voz', WhatsApp: 'WhatsApp',
+    Analytics: 'Análisis', Reports: 'Informes',
+  },
+};
+
 const navSections: { label: string; items: DemoNavItem[] }[] = [
   {
     label: 'Main',
@@ -48,8 +63,9 @@ export default function DemoSidebar({ lang }: DemoSidebarProps) {
     setTimeout(() => setToast(null), 2500);
   };
 
-  const signupText = lang === 'pt-BR' ? 'Cadastre-se para acessar' : 'Sign up to access';
-  const signupCTA = lang === 'pt-BR' ? 'Criar conta gratis' : 'Start free';
+  const t = (key: string) => NAV_LABELS[lang]?.[key] ?? key;
+  const signupText = lang === 'pt-BR' ? 'Cadastre-se para acessar' : lang === 'es' ? 'Regístrate para acceder' : 'Sign up to access';
+  const signupCTA = lang === 'pt-BR' ? 'Criar conta grátis' : lang === 'es' ? 'Comenzar gratis' : 'Start free';
 
   const sidebar = (
     <aside
@@ -80,7 +96,7 @@ export default function DemoSidebar({ lang }: DemoSidebarProps) {
           {navSections.map((section) => (
             <div key={section.label} className="mb-5">
               <div className="px-5 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-gray/70">
-                {section.label}
+                {t(section.label)}
               </div>
 
               <div className="space-y-0.5">
@@ -92,7 +108,7 @@ export default function DemoSidebar({ lang }: DemoSidebarProps) {
                         className="flex items-center gap-3 px-5 py-2.5 text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium"
                       >
                         <ThiingsIcon name={item.icon} pxSize={16} className="text-burgundy" />
-                        <span className="text-sm">{item.label}</span>
+                        <span className="text-sm">{t(item.label)}</span>
                       </div>
                     );
                   }
@@ -101,11 +117,11 @@ export default function DemoSidebar({ lang }: DemoSidebarProps) {
                     <button
                       key={item.label}
                       type="button"
-                      onClick={() => handleLockedClick(item.label)}
+                      onClick={() => handleLockedClick(t(item.label))}
                       className="w-full flex items-center gap-3 px-5 py-2.5 text-muted-stone/50 hover:text-muted-stone/70 hover:bg-white/[0.02] border-l-2 border-l-transparent transition-all duration-150"
                     >
                       <ThiingsIcon name={item.icon} pxSize={16} />
-                      <span className="text-sm flex-1 text-left">{item.label}</span>
+                      <span className="text-sm flex-1 text-left">{t(item.label)}</span>
                       <ThiingsIcon name="lock" pxSize={11} className="opacity-60" />
                     </button>
                   );

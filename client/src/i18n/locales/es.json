@@ -265,6 +265,19 @@
     "hoursAgo": "hace {{count}}h",
     "daysAgo": "hace {{count}}d"
   },
+  "activity": {
+    "booked": "{{name}} reservó",
+    "cancelled": "{{name}} — reserva cancelada",
+    "checkedIn": "{{name}} hizo check-in",
+    "noShow": "{{name}} — no se presentó",
+    "updated": "{{name}} — reserva actualizada",
+    "serviceCompleted": "{{name}} — servicio completado",
+    "seated": "{{name}} sentado",
+    "addedToWaitlist": "{{name}} agregado a la lista",
+    "seatedFromWaitlist": "{{name}} sentado de la lista",
+    "removedFromWaitlist": "{{name}} eliminado de la lista",
+    "partyOf": "Mesa para"
+  },
   "reservations": {
     "title": "Reservas",
     "newReservation": "Nueva Reserva",

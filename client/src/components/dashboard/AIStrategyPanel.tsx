@@ -17,7 +17,8 @@ import { useAIStrategy, useSaveAIStrategy, useGenerateStrategySuggestions } from
 import { useToast } from '../../contexts/ToastContext';
 import Spinner from '../common/Spinner';
 
-const PLACEHOLDER = `Example strategy for your AI agents:
+const PLACEHOLDERS: Record<string, string> = {
+  en: `Example strategy for your AI agents:
 
 FOCUS AREAS:
 - Increase average bill by upselling wine pairings and desserts
@@ -33,7 +34,42 @@ PROMOTIONS:
 
 GOALS:
 - Target no-show rate below 5%
-- Increase average revenue per cover`;
+- Increase average revenue per cover`,
+  'pt-BR': `Exemplo de estratégia para seus agentes de IA:
+
+ÁREAS DE FOCO:
+- Aumentar ticket médio sugerindo harmonizações de vinho e sobremesas
+- Reduzir no-shows: priorizar confirmação de clientes que já cancelaram
+
+TOM E EXPERIÊNCIA:
+- Chamadas de fim de semana: destacar o menu degustação (experiência exclusiva)
+- Chamadas durante a semana: promover o menu executivo (valor acessível)
+
+PROMOÇÕES:
+- Terça a quinta: oferecer cortesia para mesas de 4+ pessoas
+- Mencionar a sala privativa para grupos de 8+
+
+METAS:
+- Taxa de no-show abaixo de 5%
+- Aumentar receita média por couvert`,
+  es: `Ejemplo de estrategia para sus agentes de IA:
+
+ÁREAS DE ENFOQUE:
+- Aumentar cuenta promedio sugiriendo maridajes y postres
+- Reducir no-shows: priorizar confirmación de clientes que ya cancelaron
+
+TONO Y EXPERIENCIA:
+- Llamadas de fin de semana: destacar el menú degustación (experiencia exclusiva)
+- Llamadas entre semana: promover el menú ejecutivo (propuesta de valor)
+
+PROMOCIONES:
+- Martes a jueves: ofrecer cortesía para mesas de 4+ personas
+- Mencionar el salón privado para grupos de 8+
+
+METAS:
+- Tasa de no-show por debajo del 5%
+- Aumentar ingreso promedio por cubierto`,
+};
 
 export default function AIStrategyPanel() {
   const { t, i18n } = useTranslation();
@@ -125,7 +161,7 @@ export default function AIStrategyPanel() {
         <textarea
           value={currentDoc}
           onChange={e => setDoc(e.target.value)}
-          placeholder={PLACEHOLDER}
+          placeholder={PLACEHOLDERS[i18n.language] || PLACEHOLDERS.en}
           rows={12}
           className="w-full text-sm font-mono text-deep-charcoal bg-warm-white border border-border-gray rounded-xl px-4 py-3 resize-y focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy/40 transition-colors placeholder:text-muted-stone/60"
         />

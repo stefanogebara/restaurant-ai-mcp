@@ -8,7 +8,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
-import { usePermission } from '../hooks/usePermission';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import Spinner from '../components/common/Spinner';
 import { SkeletonWeeklyReport } from '../components/common/Skeleton';
@@ -23,13 +22,11 @@ import WeeklyBusiestTimesChart from '../components/dashboard/WeeklyBusiestTimesC
 import WeeklyDemographicsPanel from '../components/dashboard/WeeklyDemographicsPanel';
 import WeeklyPreferencesPanel from '../components/dashboard/WeeklyPreferencesPanel';
 
-const today = new Date();
-const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-
 export default function WeeklyReport() {
+  const today = new Date();
+  const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
   const { t } = useTranslation();
   useDocumentTitle(t('pageTitles.reports'));
-  const { can } = usePermission();
   const subscription = useSubscription();
   const currentPlan = (subscription.data?.subscription?.plan?.toLowerCase() as PlanType) || undefined;
   const hasAccess = currentPlan ? hasFeatureAccess(currentPlan, 'weeklyReports') : false;
@@ -59,47 +56,27 @@ export default function WeeklyReport() {
     setEndDate(newEnd.toISOString().split('T')[0]);
   };
 
+  const [shareToast, setShareToast] = useState<string | null>(null);
+
   const handleShare = async () => {
     const url = window.location.href;
     if (navigator.share) {
       try {
-        await navigator.share({ title: `Weekly Report ${startDate} – ${endDate}`, url });
+        await navigator.share({ title: `${t('analytics.weeklyReports')} ${startDate} – ${endDate}`, url });
+        return;
       } catch {
         // user cancelled or share failed — fall through to clipboard
       }
-    } else {
-      try {
-        await navigator.clipboard.writeText(url);
-      } catch {
-        // clipboard not available — silent fail
-      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareToast(t('common.copiedToClipboard', 'Link copied!'));
+      setTimeout(() => setShareToast(null), 2000);
+    } catch {
+      setShareToast(t('common.shareFailed', 'Could not copy link'));
+      setTimeout(() => setShareToast(null), 2000);
     }
   };
-
-  if (!can('viewAnalytics')) {
-    return (
-      <DashboardLayout>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
-          <div className="bg-white border border-border-gray rounded-2xl p-10 max-w-md text-center shadow-sm">
-            <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-5">
-              <ThiingsIcon name="file-text" pxSize={32} className="text-amber-600" />
-            </div>
-            <h3 className="text-xl font-bold text-deep-charcoal mb-2">{t('analytics.weeklyReportsUpgradeTitle')}</h3>
-            <p className="text-sm text-stone-gray mb-6 leading-relaxed">
-              {t('analytics.weeklyReportsUpgradeDesc')}
-            </p>
-            <a
-              href="/subscription/manage"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors text-sm"
-            >
-              <ThiingsIcon name="lightning" size="xs" />
-              {t('analytics.upgradePlan')}
-            </a>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
 
   if (subscription.isLoading) {
     return (
@@ -183,6 +160,13 @@ export default function WeeklyReport() {
           </div>
         </div>
       </div>
+
+      {/* Share toast */}
+      {shareToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-deep-charcoal text-white text-sm rounded-xl shadow-lg">
+          {shareToast}
+        </div>
+      )}
     </DashboardLayout>
   );
 }

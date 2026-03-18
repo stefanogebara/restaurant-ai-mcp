@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { DashboardSummary } from '../../types/host.types';
 import { SkeletonStatCard } from '../common/Skeleton';
 import ThiingsIcon, { type IconName } from '../common/ThiingsIcon';
@@ -8,10 +9,12 @@ interface DashboardStatsProps {
 }
 
 export default function DashboardStats({ summary, isLoading }: DashboardStatsProps) {
+  const { t } = useTranslation();
+
   // Format wait time display
   const waitTimeDisplay = summary.estimated_wait_time !== undefined
     ? summary.estimated_wait_time === 0
-      ? 'No Wait'
+      ? t('dashboard.stats.noWait', 'No Wait')
       : `${summary.estimated_wait_time} min`
     : 'N/A';
 
@@ -29,37 +32,37 @@ export default function DashboardStats({ summary, isLoading }: DashboardStatsPro
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
       <StatCard
-        label="Total Capacity"
+        label={t('dashboard.stats.totalCapacity', 'Total Capacity')}
         value={summary.total_capacity}
         iconName="users"
         color="slate"
       />
       <StatCard
-        label="Available Seats"
+        label={t('dashboard.stats.availableSeats', 'Available Seats')}
         value={summary.available_seats}
         iconName="check"
         color="emerald"
       />
       <StatCard
-        label="Occupied Seats"
+        label={t('dashboard.stats.occupiedSeats', 'Occupied Seats')}
         value={summary.occupied_seats}
         iconName="user"
         color="red"
       />
       <StatCard
-        label="Occupancy"
+        label={t('dashboard.stats.occupancy', 'Occupancy')}
         value={`${summary.occupancy_percentage}%`}
         iconName="bar-chart"
         color="blue"
       />
       <StatCard
-        label="Active Parties"
+        label={t('dashboard.stats.activeParties', 'Active Parties')}
         value={summary.active_parties}
         iconName="dining"
         color="violet"
       />
       <StatCard
-        label="Est. Wait Time"
+        label={t('dashboard.stats.estWaitTime', 'Est. Wait Time')}
         value={waitTimeDisplay}
         iconName="clock"
         color="amber"

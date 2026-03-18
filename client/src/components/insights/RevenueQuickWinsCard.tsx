@@ -2,13 +2,26 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useRevenueOpportunities } from '../../hooks/usePredictiveAnalytics';
+import { formatCurrency } from '../../utils/currency';
 
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(amount);
+// Translate backend-generated category/description keys on the frontend
+const CATEGORY_I18N: Record<string, Record<string, string>> = {
+  'pt-BR': {
+    'Off-Peak Optimization': 'Otimização Fora de Pico',
+    'Table Turnover': 'Rotatividade de Mesas',
+    'No-Show Reduction': 'Redução de No-Shows',
+  },
+  es: {
+    'Off-Peak Optimization': 'Optimización Fuera de Pico',
+    'Table Turnover': 'Rotación de Mesas',
+    'No-Show Reduction': 'Reducción de No-Shows',
+  },
+};
 
 export default function RevenueQuickWinsCard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data, isLoading } = useRevenueOpportunities();
+  const tCat = (cat: string) => CATEGORY_I18N[i18n.language]?.[cat] ?? cat;
   const [expanded, setExpanded] = useState<number | null>(0);
 
   const opportunities = (data?.opportunities ?? []).slice(0, 3);
@@ -53,7 +66,7 @@ export default function RevenueQuickWinsCard() {
               >
                 <div className={`w-2 h-2 rounded-full flex-shrink-0 ${opp.priority === 'high' ? 'bg-red-500' : opp.priority === 'medium' ? 'bg-amber-500' : 'bg-green-500'}`} />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-deep-charcoal">{opp.category}</div>
+                  <div className="text-sm font-semibold text-deep-charcoal">{tCat(opp.category)}</div>
                   <div className="text-xs text-warm-stone truncate">{opp.description}</div>
                 </div>
                 <div className="text-right flex-shrink-0">

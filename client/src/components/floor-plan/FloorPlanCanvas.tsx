@@ -238,7 +238,7 @@ export default function FloorPlanCanvas({
                   <text x={cx} y={cy + 12} textAnchor="middle" dominantBaseline="middle"
                     fill={st.text} fontSize={9} opacity={0.5}
                     fontFamily="Inter,-apple-system,sans-serif" style={{ pointerEvents: 'none' }}>
-                    {table.capacity} seats
+                    {table.capacity} {t('floorPlan.seats', 'seats')}
                   </text>
 
                   {/* Joinable badge */}

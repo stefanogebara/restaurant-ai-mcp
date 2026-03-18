@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 export type DatePreset = 'today' | '7d' | '30d' | '90d' | 'this_month' | 'last_month' | 'custom';
 
 export interface DateRangeValue {
@@ -5,16 +7,6 @@ export interface DateRangeValue {
   startDate: string;
   endDate: string;
 }
-
-const PRESETS: { key: DatePreset; label: string }[] = [
-  { key: 'today',      label: 'Today' },
-  { key: '7d',         label: '7d' },
-  { key: '30d',        label: '30d' },
-  { key: '90d',        label: '90d' },
-  { key: 'this_month', label: 'This month' },
-  { key: 'last_month', label: 'Last month' },
-  { key: 'custom',     label: 'Custom' },
-];
 
 export function presetToRange(preset: DatePreset): { startDate: string; endDate: string } {
   const now = new Date();
@@ -47,12 +39,23 @@ interface Props {
 }
 
 export default function DateRangePicker({ value, onChange }: Props) {
+  const { t } = useTranslation();
   const handle = (key: DatePreset) =>
     onChange(key === 'custom' ? { ...value, preset: 'custom' } : { preset: key, ...presetToRange(key) });
 
+  const presets: { key: DatePreset; label: string }[] = [
+    { key: 'today',      label: t('analytics.presets.today', 'Today') },
+    { key: '7d',         label: t('analytics.presets.7d', '7d') },
+    { key: '30d',        label: t('analytics.presets.30d', '30d') },
+    { key: '90d',        label: t('analytics.presets.90d', '90d') },
+    { key: 'this_month', label: t('analytics.presets.thisMonth', 'This month') },
+    { key: 'last_month', label: t('analytics.presets.lastMonth', 'Last month') },
+    { key: 'custom',     label: t('analytics.presets.custom', 'Custom') },
+  ];
+
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {PRESETS.map(({ key, label }) => (
+      {presets.map(({ key, label }) => (
         <button
           key={key}
           type="button"

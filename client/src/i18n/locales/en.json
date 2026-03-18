@@ -277,6 +277,19 @@
     "hoursAgo": "{{count}}h ago",
     "daysAgo": "{{count}}d ago"
   },
+  "activity": {
+    "booked": "{{name}} booked",
+    "cancelled": "{{name}} — reservation cancelled",
+    "checkedIn": "{{name}} checked in",
+    "noShow": "{{name}} — no show",
+    "updated": "{{name}} — reservation updated",
+    "serviceCompleted": "{{name}} — service completed",
+    "seated": "{{name}} seated",
+    "addedToWaitlist": "{{name}} added to waitlist",
+    "seatedFromWaitlist": "{{name}} seated from waitlist",
+    "removedFromWaitlist": "{{name}} removed from waitlist",
+    "partyOf": "Party of"
+  },
   "reservations": {
     "title": "Reservations",
     "newReservation": "New Reservation",

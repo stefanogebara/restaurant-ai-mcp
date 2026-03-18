@@ -405,4 +405,121 @@ async function runManagerAgent(restaurantId, userMessage, channel) {
   return assistantText;
 }
 
-module.exports = { runManagerAgent, ManagerQuotaError };
+/**
+ * Streaming variant of runManagerAgent.
+ * Calls onToken(text) for each text delta, returns full assistantText.
+ */
+async function runManagerAgentStream(restaurantId, userMessage, channel, onToken) {
+  const plan = await getRestaurantPlan(restaurantId);
+  const planLimits = getPlanLimits(plan);
+  const monthlyLimit = planLimits?.managerAICallsMonthly ?? 0;
+
+  if (monthlyLimit === 0) {
+    throw new ManagerQuotaError('upgrade_required', { plan });
+  }
+  if (monthlyLimit !== -1) {
+    const used = await getManagerAIUsageThisMonth(restaurantId);
+    if (used >= monthlyLimit) {
+      throw new ManagerQuotaError('quota_exceeded', { used, limit: monthlyLimit });
+    }
+  }
+
+  const [memories, snapshot, history, configResult] = await Promise.all([
+    retrieveRelevantMemories(restaurantId, userMessage),
+    getRestaurantSnapshot(restaurantId),
+    getConversationHistory(restaurantId),
+    supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('restaurant_name, name, restaurant_profile, ai_strategy_doc, language')
+      .eq('id', restaurantId)
+      .maybeSingle()
+      .then(r => {
+        if (r.error?.message?.includes('ai_strategy_doc')) {
+          return supabaseAdmin
+            .schema('restaurant')
+            .from('restaurant_config')
+            .select('restaurant_name, name, restaurant_profile, language')
+            .eq('id', restaurantId)
+            .maybeSingle();
+        }
+        return r;
+      }),
+  ]);
+
+  const config = configResult?.data || {};
+  const systemPrompt = buildSystemPrompt(memories, snapshot, config);
+  const messages = [
+    ...history.map((h) => ({
+      role: h.role === 'manager' ? 'user' : 'assistant',
+      content: h.content,
+    })),
+    { role: 'user', content: userMessage },
+  ];
+
+  let assistantText = '';
+
+  async function streamCall(msgs) {
+    const stream = getAnthropic().messages.stream({
+      model: CLAUDE_MODEL,
+      max_tokens: 512,
+      system: systemPrompt,
+      messages: msgs,
+      tools: MANAGER_TOOLS,
+    });
+
+    stream.on('text', (text) => {
+      assistantText += text;
+      onToken(text);
+    });
+
+    return stream.finalMessage();
+  }
+
+  const response = await streamCall(messages);
+
+  if (response.stop_reason === 'tool_use') {
+    assistantText = '';
+    const toolBlock = response.content.find((b) => b.type === 'tool_use');
+    if (toolBlock?.name === 'compare_periods') {
+      const { period_a, period_b } = toolBlock.input;
+      const compResult = await comparePeriods(restaurantId, period_a, period_b);
+
+      const followUpMessages = [
+        ...messages,
+        { role: 'assistant', content: response.content },
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: toolBlock.id,
+              content: JSON.stringify(compResult),
+            },
+          ],
+        },
+      ];
+
+      await streamCall(followUpMessages);
+    }
+  }
+
+  if (!assistantText) {
+    throw new Error('Unexpected Claude response structure');
+  }
+
+  await Promise.all([
+    saveTurn(restaurantId, 'manager', userMessage, channel),
+    saveTurn(restaurantId, 'assistant', assistantText, channel),
+  ]);
+
+  extractFactsFromConversation(restaurantId, userMessage).catch((err) => {
+    logger.error('extractFactsFromConversation failed', { error: err.message });
+  });
+
+  trackUsage(restaurantId, 'manager_ai_call');
+
+  return assistantText;
+}
+
+module.exports = { runManagerAgent, runManagerAgentStream, ManagerQuotaError };

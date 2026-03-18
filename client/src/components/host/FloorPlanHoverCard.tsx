@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { Table } from '../../types/host.types';
 import { getStatusStyle, statusLabel } from './floorPlanHelpers';
 import type { PartyInfo } from './floorPlanHelpers';
@@ -17,6 +18,7 @@ interface HoverCardProps {
 export default function FloorPlanHoverCard({
   table, party, x, y, w, h, svgW, allTables,
 }: HoverCardProps) {
+  const { t } = useTranslation();
   const st = getStatusStyle(table.status);
   const isOccupied = table.status?.toLowerCase() === 'occupied' && party;
 
@@ -77,15 +79,15 @@ export default function FloorPlanHoverCard({
         </div>
 
         <div style={{ color: '#78716C', fontSize: 11, marginTop: 2 }}>
-          {table.capacity} seats &middot;{' '}
+          {table.capacity} {t('floorPlan.seats', 'seats')} &middot;{' '}
           {(table.shape || 'Round').charAt(0).toUpperCase() + (table.shape || 'round').slice(1)}{' '}
-          &middot; {table.location || 'Indoor'}
+          &middot; {t(`floorPlan.location.${(table.location || 'Indoor').toLowerCase()}`, table.location || 'Indoor')}
         </div>
 
         {isOccupied && party && (
           <>
             <div style={{ marginTop: 7, fontWeight: 600, fontSize: 12 }}>
-              {party.guestName} &middot; {party.partySize} guest{party.partySize !== 1 ? 's' : ''}
+              {party.guestName} &middot; {party.partySize} {t('floorPlan.guests', 'guests')}
             </div>
             <div style={{ marginTop: 5, display: 'flex', alignItems: 'center', gap: 7 }}>
               <div style={{
@@ -97,7 +99,7 @@ export default function FloorPlanHoverCard({
                 }} />
               </div>
               <span style={{ fontSize: 10, color: '#78716C', whiteSpace: 'nowrap' }}>
-                {party.isOverdue ? 'Overdue' : `${formatTime(party.timeRemaining)} left`}
+                {party.isOverdue ? t('floorPlan.overdue', 'Overdue') : `${formatTime(party.timeRemaining)} ${t('floorPlan.left', 'left')}`}
               </span>
             </div>
           </>
@@ -112,7 +114,7 @@ export default function FloorPlanHoverCard({
           }}>
             <span style={{ fontSize: 12 }}>&#x1F517;</span>
             <span>
-              Join w/ Table {joinableNames.join(', ')} &middot; {combinedCapacity} seats
+              {t('floorPlan.joinWith', 'Join w/ Table')} {joinableNames.join(', ')} &middot; {combinedCapacity} {t('floorPlan.seats', 'seats')}
             </span>
           </div>
         )}

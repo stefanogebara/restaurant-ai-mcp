@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { Table } from '../../types/host.types';
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export default function FloorPlanLocationTabs({ tables, locations, activeLocation, onLocationChange }: Props) {
+  const { t } = useTranslation();
   if (locations.length === 0) return null;
 
   return (
@@ -26,7 +28,7 @@ export default function FloorPlanLocationTabs({ tables, locations, activeLocatio
                 : 'bg-white text-warm-stone border border-border-gray hover:text-deep-charcoal hover:border-stone-gray/50'
             }`}
           >
-            {loc}
+            {t(`floorPlan.location.${loc.toLowerCase()}`, loc)}
             <span className={`text-xs font-semibold min-w-[18px] text-center ${
               isActive ? 'text-white/70' : 'text-muted-stone'
             }`}>

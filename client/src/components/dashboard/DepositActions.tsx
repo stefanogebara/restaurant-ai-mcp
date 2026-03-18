@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 
 interface DepositActionsProps {
@@ -8,6 +9,7 @@ interface DepositActionsProps {
 }
 
 export default function DepositActions({ reservationId, depositAmount, onActionComplete }: DepositActionsProps) {
+  const { t } = useTranslation();
   const [isCapturing, setIsCapturing] = useState(false);
   const [isReleasing, setIsReleasing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +27,7 @@ export default function DepositActions({ reservationId, depositAmount, onActionC
       await api.post('/capture-deposit', { reservation_id: reservationId });
       onActionComplete();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to capture deposit';
+      const message = err instanceof Error ? err.message : t('dashboard.deposit.captureFailed', 'Failed to capture deposit');
       setError(message);
     } finally {
       setIsCapturing(false);
@@ -39,7 +41,7 @@ export default function DepositActions({ reservationId, depositAmount, onActionC
       await api.post('/release-deposit', { reservation_id: reservationId });
       onActionComplete();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to release deposit';
+      const message = err instanceof Error ? err.message : t('dashboard.deposit.releaseFailed', 'Failed to release deposit');
       setError(message);
     } finally {
       setIsReleasing(false);
@@ -54,18 +56,18 @@ export default function DepositActions({ reservationId, depositAmount, onActionC
         onClick={handleRelease}
         disabled={isReleasing || isCapturing}
         className="text-[11px] font-medium px-2 py-1 rounded-lg border border-green-600/30 text-green-600 hover:bg-green-600/[6%] transition-colors disabled:opacity-50"
-        title="Release deposit hold (guest arrived)"
+        title={t('dashboard.deposit.releaseTitle', 'Release deposit hold (guest arrived)')}
       >
-        {isReleasing ? '...' : 'Release'}
+        {isReleasing ? '...' : t('dashboard.deposit.release', 'Release')}
       </button>
       <button
         type="button"
         onClick={handleCapture}
         disabled={isCapturing || isReleasing}
         className="text-[11px] font-medium px-2 py-1 rounded-lg border border-red-600/30 text-red-600 hover:bg-red-600/[6%] transition-colors disabled:opacity-50"
-        title={`Capture ${formatted} deposit (no-show)`}
+        title={t('dashboard.deposit.captureTitle', 'Capture {{amount}} deposit (no-show)', { amount: formatted })}
       >
-        {isCapturing ? '...' : `Capture ${formatted}`}
+        {isCapturing ? '...' : t('dashboard.deposit.captureAmount', 'Capture {{amount}}', { amount: formatted })}
       </button>
     </div>
   );

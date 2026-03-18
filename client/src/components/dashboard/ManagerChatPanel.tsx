@@ -87,7 +87,7 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-        {isLoading && <p className="text-xs text-muted-stone text-center">Loading history...</p>}
+        {isLoading && <p className="text-xs text-muted-stone text-center">{t('managerAI.loadingHistory')}</p>}
         {messages.length === 0 && !isLoading && (
           <p className="text-xs text-muted-stone text-center mt-8">{t('dashboard.managerAssistantHint')}</p>
         )}
