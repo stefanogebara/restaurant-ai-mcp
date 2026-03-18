@@ -327,7 +327,7 @@ export default function WhatsAppSettingsPage() {
               className={`relative w-11 h-6 rounded-full transition-colors ${
                 currentEnabled ? 'bg-whatsapp' : 'bg-stone-300'
               }`}
-              aria-label={currentEnabled ? 'Disable WhatsApp' : 'Enable WhatsApp'}
+              aria-label={currentEnabled ? t('settings.disableWhatsApp', 'Disable WhatsApp') : t('settings.enableWhatsAppLabel', 'Enable WhatsApp')}
               role="switch"
               aria-checked={currentEnabled}
             >
@@ -435,7 +435,7 @@ export default function WhatsAppSettingsPage() {
               value={testPhone}
               onChange={(e) => setTestPhone(e.target.value)}
               className="flex-1 px-3 py-2 border border-border-gray rounded-xl text-sm text-deep-charcoal focus:outline-none focus:ring-2 focus:ring-whatsapp/40 focus:border-whatsapp"
-              aria-label="Test phone number"
+              aria-label={t('settings.testPhoneNumber', 'Test phone number')}
             />
             <button
               onClick={handleTest}
