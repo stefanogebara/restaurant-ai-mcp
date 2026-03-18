@@ -87,7 +87,7 @@ export default function VoiceSettingsPage() {
 
   // ─── Voice browser ────────────────────────────────────────────────────────────
 
-  const { voices, isLoadingVoices, isLoadingMore, hasMore, voicesSource, filters, setFilters, handleLoadMore } = useVoiceBrowser({
+  const { voices, isLoadingVoices, isLoadingMore, hasMore, voicesSource, error: voiceBrowserError, refetch: refetchVoices, filters, setFilters, handleLoadMore } = useVoiceBrowser({
     isOpen: isBrowserOpen,
     language: currentLanguage,
     restaurantName: config?.restaurant_name || undefined,
@@ -149,7 +149,12 @@ export default function VoiceSettingsPage() {
       if (pendingSettings) body.voice_settings = pendingSettings;
       if (pendingLanguage) body.language = pendingLanguage;
       saveMutation.mutate(body, {
-        onSuccess: onCallComplete,
+        onSuccess: (result) => {
+          if (result?.sync_warning) {
+            toast.info(t('voice.savedWithSyncWarning', 'Settings saved locally. Agent sync will apply on next refresh.'));
+          }
+          onCallComplete();
+        },
         onError: (error) => toast.error(error instanceof Error ? error.message : 'Failed to save voice settings'),
       });
     }
@@ -294,20 +299,43 @@ export default function VoiceSettingsPage() {
                     <ThiingsIcon name="search" pxSize={20} />
                     {t('voiceSettings.voiceLibrary', 'Voice Library')}
                   </h2>
-                  <VoiceFilters filters={filters} onChange={setFilters} defaultLanguage={currentLanguage} hideSearch={voicesSource === 'own_voices_fallback'} />
-                  <VoiceGrid
-                    voices={voices}
-                    selectedVoiceId={pendingVoiceId || config.voice_id || ''}
-                    playingVoiceId={playingVoiceId}
-                    loadingAudioId={loadingAudio}
-                    hasMore={hasMore}
-                    isLoadingMore={isLoadingMore}
-                    onSelectVoice={setPendingVoiceId}
-                    onPlayVoice={handlePlayVoice}
-                    onLoadMore={handleLoadMore}
-                    isLoading={isLoadingVoices}
-                    source={voicesSource}
-                  />
+                  {voiceBrowserError ? (
+                    <div className="text-center py-10">
+                      <div className="w-14 h-14 mx-auto mb-3 bg-red-50 rounded-2xl flex items-center justify-center">
+                        <ThiingsIcon name="alert-circle" pxSize={24} />
+                      </div>
+                      <p className="text-sm font-semibold text-deep-charcoal">
+                        {t('voiceSettings.voiceLoadError', 'Could not load voices')}
+                      </p>
+                      <p className="text-xs text-stone-gray mt-1 mb-4">
+                        {t('voiceSettings.voiceLoadErrorHint', 'The voice service may be temporarily unavailable. Please try again.')}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => refetchVoices()}
+                        className="px-5 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-medium rounded-xl transition-colors"
+                      >
+                        {t('common.retry', 'Retry')}
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <VoiceFilters filters={filters} onChange={setFilters} defaultLanguage={currentLanguage} hideSearch={voicesSource === 'own_voices_fallback'} />
+                      <VoiceGrid
+                        voices={voices}
+                        selectedVoiceId={pendingVoiceId || config.voice_id || ''}
+                        playingVoiceId={playingVoiceId}
+                        loadingAudioId={loadingAudio}
+                        hasMore={hasMore}
+                        isLoadingMore={isLoadingMore}
+                        onSelectVoice={setPendingVoiceId}
+                        onPlayVoice={handlePlayVoice}
+                        onLoadMore={handleLoadMore}
+                        isLoading={isLoadingVoices}
+                        source={voicesSource}
+                      />
+                    </>
+                  )}
                 </section>
               )}
               <VoiceLanguagePicker currentLanguage={currentLanguage} savedLanguage={config?.language} onChange={setPendingLanguage} />

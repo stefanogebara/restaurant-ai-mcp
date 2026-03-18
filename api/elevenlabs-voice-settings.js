@@ -320,33 +320,7 @@ async function handlePatch(req, res) {
       };
     }
 
-    logger.info(`[VoiceSettings PATCH] Updating agent ${restaurant.elevenlabs_agent_id}:`, JSON.stringify(patchPayload));
-
-    // Call ElevenLabs PATCH API
-    const patchResponse = await fetch(
-      `https://api.elevenlabs.io/v1/convai/agents/${restaurant.elevenlabs_agent_id}`,
-      {
-        method: 'PATCH',
-        headers: {
-          'xi-api-key': process.env.ELEVENLABS_API_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(patchPayload)
-      }
-    );
-
-    if (!patchResponse.ok) {
-      const errorText = await patchResponse.text();
-      logger.error('[VoiceSettings PATCH] ElevenLabs error:', patchResponse.status, errorText);
-      // Return a generic error — do not leak raw ElevenLabs error details to the client
-      const clientStatus = patchResponse.status >= 400 && patchResponse.status < 500 ? 400 : 502;
-      return res.status(clientStatus).json({
-        success: false,
-        error: 'Failed to update voice settings. Please try again.'
-      });
-    }
-
-    // Update restaurant_info in database
+    // Save settings to local DB first — ensures settings persist even if ElevenLabs sync fails
     const dbUpdates = {
       agent_updated_at: new Date().toISOString()
     };
@@ -364,12 +338,41 @@ async function handlePatch(req, res) {
 
     if (updateError) {
       logger.error('[VoiceSettings PATCH] DB update error:', updateError);
-      // Agent was updated successfully, DB sync failed - not critical
+    }
+
+    // Attempt to sync changes to ElevenLabs agent
+    logger.info(`[VoiceSettings PATCH] Updating agent ${restaurant.elevenlabs_agent_id}:`, JSON.stringify(patchPayload));
+
+    let elevenLabsSyncFailed = false;
+    try {
+      const patchResponse = await fetch(
+        `https://api.elevenlabs.io/v1/convai/agents/${restaurant.elevenlabs_agent_id}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'xi-api-key': process.env.ELEVENLABS_API_KEY,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(patchPayload)
+        }
+      );
+
+      if (!patchResponse.ok) {
+        const errorText = await patchResponse.text();
+        logger.error('[VoiceSettings PATCH] ElevenLabs error:', patchResponse.status, errorText);
+        elevenLabsSyncFailed = true;
+      }
+    } catch (syncError) {
+      logger.error('[VoiceSettings PATCH] ElevenLabs sync exception:', syncError);
+      elevenLabsSyncFailed = true;
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Voice settings updated successfully',
+      message: elevenLabsSyncFailed
+        ? 'Voice settings saved locally. Live agent sync will apply on next refresh.'
+        : 'Voice settings updated successfully',
+      sync_warning: elevenLabsSyncFailed ? 'ElevenLabs agent sync failed — settings saved locally and will apply on next agent refresh.' : undefined,
       data: {
         voice_id: voice_id || null,
         language: language || null,

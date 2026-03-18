@@ -148,22 +148,33 @@ async function handleSuggest(req, res, restaurantId) {
 
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   if (!anthropicKey) {
-    return res.status(500).json({ success: false, error: 'AI service not configured' });
+    logger.error('ANTHROPIC_API_KEY not configured for strategy suggestions');
+    return res.status(500).json({ success: false, error: 'AI service not configured. Contact support.' });
   }
 
   // Fetch current strategy + metrics in parallel
-  const [configRes, metricsRes] = await Promise.all([
-    supabaseAdmin
-      .schema('restaurant')
-      .from('restaurant_config')
-      .select('restaurant_name, ai_strategy_doc, restaurant_profile')
-      .eq('id', restaurantId)
-      .single(),
-    fetchStrategyMetrics(restaurantId),
-  ]);
+  let config = {};
+  let metrics;
+  try {
+    const [configRes, metricsRes] = await Promise.all([
+      supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('restaurant_name, ai_strategy_doc, restaurant_profile')
+        .eq('id', restaurantId)
+        .single(),
+      fetchStrategyMetrics(restaurantId),
+    ]);
 
-  const config = configRes.data || {};
-  const metrics = metricsRes;
+    if (configRes.error) {
+      logger.warn('Strategy suggest: config query error, using defaults', { error: configRes.error.message });
+    }
+    config = configRes.data || {};
+    metrics = metricsRes;
+  } catch (fetchError) {
+    logger.error('Strategy suggest: failed to fetch data', { error: fetchError.message });
+    return res.status(500).json({ success: false, error: 'Failed to load restaurant data for suggestion generation.' });
+  }
 
   const metricsBlock = buildMetricsBlock(metrics);
   const currentStrategy = config.ai_strategy_doc
@@ -183,24 +194,34 @@ Based on these metrics, provide 3 specific, actionable strategy improvements. Ea
 
 Format as numbered list. Be specific and data-driven. Under 250 words total.`;
 
-  const anthropic = new Anthropic({ apiKey: anthropicKey });
-  const response = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 500,
-    messages: [{ role: 'user', content: prompt }],
-  });
+  let suggestions;
+  try {
+    const AnthropicClass = typeof Anthropic === 'function' ? Anthropic : Anthropic.default;
+    const anthropic = new AnthropicClass({ apiKey: anthropicKey });
+    const response = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 500,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    suggestions = response.content[0]?.text || '';
+  } catch (aiError) {
+    logger.error('Strategy suggest: Anthropic API call failed', { error: aiError.message });
+    return res.status(502).json({ success: false, error: 'AI suggestion generation failed. Please try again later.' });
+  }
 
-  const suggestions = response.content[0]?.text || '';
+  if (!suggestions) {
+    return res.status(500).json({ success: false, error: 'AI returned empty suggestions. Please try again.' });
+  }
 
   // Store suggestion in manager memory so it appears in briefings
   try {
-    const { writeMemory } = require('./_lib/manager-agent');
+    const { writeMemory } = require('./services/managerMemory');
     if (writeMemory) {
       await writeMemory(restaurantId, 'insight', 'strategy',
         `[AI STRATEGY SUGGESTION]\n${suggestions}`, 'ai_strategy', 6);
     }
   } catch (_) {
-    // non-blocking
+    // non-blocking — memory write failure should not break suggestion generation
   }
 
   return res.status(200).json({

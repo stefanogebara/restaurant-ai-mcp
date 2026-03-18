@@ -95,9 +95,10 @@ export function useSetupPhone() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ restaurant_id: restaurantId }),
       });
-      if (!res.ok) throw new Error('Failed to set up phone');
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || 'Failed to set up phone');
+      const data = await res.json().catch(() => ({ success: false, error: 'Unexpected server error' }));
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to set up phone');
+      }
       return data;
     },
     onSuccess: (_, restaurantId) => {

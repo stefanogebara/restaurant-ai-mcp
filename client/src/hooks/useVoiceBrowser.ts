@@ -69,6 +69,8 @@ export function useVoiceBrowser({ isOpen, language, restaurantName }: UseVoiceBr
     isLoadingMore: voiceQuery.isFetchingNextPage,
     hasMore: voiceQuery.hasNextPage ?? false,
     voicesSource: voiceQuery.data?.pages.at(-1)?.source ?? '',
+    error: voiceQuery.error,
+    refetch: voiceQuery.refetch,
     filters,
     setFilters,
     handleLoadMore: () => voiceQuery.fetchNextPage(),

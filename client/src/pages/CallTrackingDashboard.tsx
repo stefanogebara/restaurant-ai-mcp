@@ -61,7 +61,10 @@ export default function CallTrackingDashboard() {
   // ─── Handlers ────────────────────────────────────────────────────────────────
 
   const handleSetupPhone = () => {
-    if (!restaurant_id) return;
+    if (!restaurant_id) {
+      toastError(t('callTracking.noRestaurantId', 'No restaurant configured. Please complete onboarding first.'));
+      return;
+    }
     setupPhone.mutate(restaurant_id, {
       onSuccess: (data) => toastSuccess(data.message || t('callTracking.phoneConnected')),
       onError: (err) => toastError(err.message || t('callTracking.phoneSetupFailed')),
@@ -69,7 +72,10 @@ export default function CallTrackingDashboard() {
   };
 
   const handleDisconnect = () => {
-    if (!restaurant_id) return;
+    if (!restaurant_id) {
+      toastError(t('callTracking.noRestaurantId', 'No restaurant configured. Please complete onboarding first.'));
+      return;
+    }
     if (!confirm(t('callTracking.confirmDisconnect'))) return;
     disconnectPhone.mutate(restaurant_id, {
       onSuccess: () => {
@@ -81,7 +87,10 @@ export default function CallTrackingDashboard() {
   };
 
   const handleDiagnose = () => {
-    if (!restaurant_id) return;
+    if (!restaurant_id) {
+      toastError(t('callTracking.noRestaurantId', 'No restaurant configured. Please complete onboarding first.'));
+      return;
+    }
     setShowDiagnosePanel(true);
     diagnose.mutate(restaurant_id, {
       onSuccess: () => toastSuccess(t('callTracking.diagnosticsLoaded')),
@@ -93,7 +102,10 @@ export default function CallTrackingDashboard() {
   };
 
   const handleFixTools = () => {
-    if (!restaurant_id) return;
+    if (!restaurant_id) {
+      toastError(t('callTracking.noRestaurantId', 'No restaurant configured. Please complete onboarding first.'));
+      return;
+    }
     fixTools.mutate(restaurant_id, {
       onSuccess: (data) => {
         toastSuccess(data.message || t('callTracking.toolsConfigured'));
