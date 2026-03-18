@@ -128,7 +128,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
         return; // Show payment step
       } catch (err) {
         console.error('Deposit intent error:', err);
-        setDepositError('Payment setup failed. Please try again.');
+        setDepositError(t('booking.depositError', 'Payment setup failed. Please try again.'));
         return;
       }
     }
@@ -323,14 +323,14 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
                 }}
                 className="h-12 px-3 rounded-xl bg-burgundy text-white text-sm font-semibold hover:bg-burgundy-dark transition-colors"
               >
-                OK
+                {t('common.ok', 'OK')}
               </button>
               <button
                 type="button"
                 onClick={() => setShowPartySizeInput(false)}
                 className="h-12 px-3 rounded-xl border border-border-gray text-stone-gray text-sm font-medium hover:bg-soft-gray transition-colors"
               >
-                Cancel
+                {t('common.cancel', 'Cancel')}
               </button>
             </div>
           )}

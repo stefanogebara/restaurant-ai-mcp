@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface Props { slug: string; }
 
 export default function EmbedSnippetPanel({ slug }: Props) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
-  const snippet = `<script src="https://seatable.one/widget.js?slug=${slug}"></script>`;
+  const snippet = `<script src="${window.location.origin}/widget.js?slug=${slug}"></script>`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(snippet).then(() => {
@@ -15,9 +17,9 @@ export default function EmbedSnippetPanel({ slug }: Props) {
 
   return (
     <div className="bg-white border border-border-gray rounded-2xl p-6 space-y-4">
-      <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">Booking Widget</h2>
+      <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">{t('dashboard.embedWidgetTitle', 'Booking Widget')}</h2>
       <p className="text-xs text-warm-stone">
-        Paste this snippet anywhere on your website to add a "Book a Table" button.
+        {t('dashboard.embedWidgetDescription', 'Paste this snippet anywhere on your website to add a booking button.')}
       </p>
       <div className="relative">
         <pre className="bg-soft-gray rounded-xl px-4 py-3 text-xs text-deep-charcoal overflow-x-auto whitespace-pre-wrap break-all">
@@ -29,7 +31,7 @@ export default function EmbedSnippetPanel({ slug }: Props) {
           aria-label="Copy snippet"
           className="absolute top-2 right-2 px-3 py-1 bg-deep-charcoal text-white text-xs rounded-lg hover:bg-charcoal-dark transition-colors"
         >
-          {copied ? 'Copied!' : 'Copy'}
+          {copied ? t('common.copied', 'Copied!') : t('common.copy', 'Copy')}
         </button>
       </div>
     </div>

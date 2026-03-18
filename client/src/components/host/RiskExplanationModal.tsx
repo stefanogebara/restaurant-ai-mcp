@@ -1,4 +1,6 @@
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon, { type IconName } from '../common/ThiingsIcon';
+import { LARGE_PARTY_THRESHOLD, DEPOSIT_RECOMMENDATION } from '../../config/businessDefaults';
 
 interface RiskFactor {
   factor: string;
@@ -27,6 +29,7 @@ export default function RiskExplanationModal({
   reservation,
   riskFactors = []
 }: RiskExplanationModalProps) {
+  const { t } = useTranslation();
   if (!isOpen) return null;
 
   const riskScore = reservation.ml_risk_score || 0;
@@ -129,24 +132,12 @@ export default function RiskExplanationModal({
             <div className="flex items-start gap-3">
               <ThiingsIcon name="info" size="sm" className="mt-0.5 flex-shrink-0" />
               <div>
-                <h3 className="font-semibold text-deep-charcoal mb-1">What This Means</h3>
+                <h3 className="font-semibold text-deep-charcoal mb-1">{t('host.whatThisMeans', 'What This Means')}</h3>
                 <p className="text-sm text-stone-gray leading-relaxed">
-                  {riskLevel === 'very-high' && (
-                    <>This reservation has multiple red flags. <strong>Require a credit card deposit</strong> (€10-20/person)
-                    or make a confirmation call to verify they're still coming. Without action, there's a strong chance this party won't show up.</>
-                  )}
-                  {riskLevel === 'high' && (
-                    <>This reservation shows elevated no-show risk. <strong>Call the customer 24 hours before</strong> to confirm
-                    they're still coming. A quick 2-minute call can prevent an empty table during peak hours.</>
-                  )}
-                  {riskLevel === 'medium' && (
-                    <>This reservation has some risk factors but nothing alarming. Consider sending an <strong>automated reminder</strong>
-                    a few hours before. No phone call needed unless other concerns arise.</>
-                  )}
-                  {riskLevel === 'low' && (
-                    <>This reservation looks reliable! The customer has shown commitment signals. <strong>No special action needed</strong> -
-                    just provide excellent service as usual.</>
-                  )}
+                  {riskLevel === 'very-high' && t('host.riskAction.veryHigh', 'This reservation has multiple red flags. Require a credit card deposit ({{deposit}}/person) or make a confirmation call to verify they\'re still coming. Without action, there\'s a strong chance this party won\'t show up.', { deposit: DEPOSIT_RECOMMENDATION })}
+                  {riskLevel === 'high' && t('host.riskAction.high', 'This reservation shows elevated no-show risk. Call the customer 24 hours before to confirm they\'re still coming. A quick 2-minute call can prevent an empty table during peak hours.')}
+                  {riskLevel === 'medium' && t('host.riskAction.medium', 'This reservation has some risk factors but nothing alarming. Consider sending an automated reminder a few hours before. No phone call needed unless other concerns arise.')}
+                  {riskLevel === 'low' && t('host.riskAction.low', 'This reservation looks reliable! The customer has shown commitment signals. No special action needed - just provide excellent service as usual.')}
                 </p>
               </div>
             </div>
@@ -157,7 +148,7 @@ export default function RiskExplanationModal({
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <ThiingsIcon name="trending-up" size="sm" />
-                <h3 className="font-semibold text-deep-charcoal">Risk Factors</h3>
+                <h3 className="font-semibold text-deep-charcoal">{t('host.riskFactors', 'Risk Factors')}</h3>
               </div>
               <div className="space-y-2">
                 {riskIncreasing.map((factor, idx) => (
@@ -175,7 +166,7 @@ export default function RiskExplanationModal({
                         {factor.description}
                       </p>
                       <p className="text-xs text-muted-stone mt-0.5">
-                        {getFactorExplanation(factor.factor)}
+                        {getFactorExplanation(factor.factor, t)}
                       </p>
                     </div>
                   </div>
@@ -189,7 +180,7 @@ export default function RiskExplanationModal({
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <ThiingsIcon name="trending-down" size="sm" />
-                <h3 className="font-semibold text-deep-charcoal">Positive Signals</h3>
+                <h3 className="font-semibold text-deep-charcoal">{t('host.positiveSignals', 'Positive Signals')}</h3>
               </div>
               <div className="space-y-2">
                 {riskDecreasing.map((factor, idx) => (
@@ -207,7 +198,7 @@ export default function RiskExplanationModal({
                         {factor.description}
                       </p>
                       <p className="text-xs text-muted-stone mt-0.5">
-                        {getFactorExplanation(factor.factor)}
+                        {getFactorExplanation(factor.factor, t)}
                       </p>
                     </div>
                   </div>
@@ -221,9 +212,7 @@ export default function RiskExplanationModal({
             <div className="text-center py-8 text-muted-stone">
               <ThiingsIcon name="alert-triangle" size="md" className="mx-auto mb-3 opacity-50" />
               <p className="text-sm">
-                Detailed risk factors not available for this reservation.
-                <br />
-                Risk score calculated using standard criteria.
+                {t('host.riskFactorsUnavailable', 'Detailed risk factors not available for this reservation. Risk score calculated using standard criteria.')}
               </p>
             </div>
           )}
@@ -235,7 +224,7 @@ export default function RiskExplanationModal({
             onClick={onClose}
             className="w-full px-4 py-3 bg-burgundy text-white rounded-xl font-medium hover:bg-burgundy-dark transition-colors"
           >
-            Got it
+            {t('host.gotIt', 'Got it')}
           </button>
         </div>
       </div>
@@ -244,50 +233,50 @@ export default function RiskExplanationModal({
 }
 
 // Helper function to provide staff-friendly explanations
-function getFactorExplanation(factor: string): string {
+function getFactorExplanation(factor: string, t: (key: string, fallback: string, opts?: Record<string, unknown>) => string): string {
   const explanations: Record<string, string> = {
     // Customer History
-    new_customer: "No previous visits. First-time guests are statistically more likely to no-show.",
-    high_no_show_history: "This customer has failed to show up for previous reservations.",
-    moderate_no_show_history: "This customer has occasionally missed reservations in the past.",
-    good_history: "Loyal customer with excellent track record. Very reliable!",
+    new_customer: t('host.riskFactor.newCustomer', 'No previous visits. First-time guests are statistically more likely to no-show.'),
+    high_no_show_history: t('host.riskFactor.highNoShowHistory', 'This customer has failed to show up for previous reservations.'),
+    moderate_no_show_history: t('host.riskFactor.moderateNoShowHistory', 'This customer has occasionally missed reservations in the past.'),
+    good_history: t('host.riskFactor.goodHistory', 'Loyal customer with excellent track record. Very reliable!'),
 
     // Party Size
-    very_large_party: "Large groups (8+) have higher cancellation rates due to coordination challenges.",
-    large_party: "Larger parties are harder to coordinate, increasing no-show risk.",
-    medium_party: "Moderate-sized groups have slightly elevated no-show rates.",
+    very_large_party: t('host.riskFactor.veryLargeParty', 'Large groups ({{threshold}}+) have higher cancellation rates due to coordination challenges.', { threshold: LARGE_PARTY_THRESHOLD }),
+    large_party: t('host.riskFactor.largeParty', 'Larger parties are harder to coordinate, increasing no-show risk.'),
+    medium_party: t('host.riskFactor.mediumParty', 'Moderate-sized groups have slightly elevated no-show rates.'),
 
     // Booking Timing
-    same_day_urgent: "Booked very recently - they're coming NOW. Highly committed!",
-    short_notice: "Last-minute bookings (1-2 days) are often impulsive and plans may change.",
-    far_advance: "Booked weeks ahead - plans may change, they may forget, or make other arrangements.",
+    same_day_urgent: t('host.riskFactor.sameDayUrgent', "Booked very recently - they're coming NOW. Highly committed!"),
+    short_notice: t('host.riskFactor.shortNotice', 'Last-minute bookings (1-2 days) are often impulsive and plans may change.'),
+    far_advance: t('host.riskFactor.farAdvance', 'Booked weeks ahead - plans may change, they may forget, or make other arrangements.'),
 
     // Time Slot
-    prime_time: "Weekend prime-time slots (Fri/Sat 7-9 PM) have highest no-show rates.",
-    peak_hour: "Popular dinner hours see more no-shows due to high demand and multiple bookings.",
+    prime_time: t('host.riskFactor.primeTime', 'Weekend prime-time slots (Fri/Sat 7-9 PM) have highest no-show rates.'),
+    peak_hour: t('host.riskFactor.peakHour', 'Popular dinner hours see more no-shows due to high demand and multiple bookings.'),
 
     // Contact
-    no_email: "Phone-only contact makes confirmation harder and suggests less commitment.",
+    no_email: t('host.riskFactor.noEmail', 'Phone-only contact makes confirmation harder and suggests less commitment.'),
 
     // Customer Type
-    tourist: "Tourists have higher no-show rates due to travel uncertainties and itinerary changes.",
-    local: "Local customers are more reliable and have stronger commitment to showing up.",
+    tourist: t('host.riskFactor.tourist', 'Tourists have higher no-show rates due to travel uncertainties and itinerary changes.'),
+    local: t('host.riskFactor.local', 'Local customers are more reliable and have stronger commitment to showing up.'),
 
     // Language
-    language_barrier: "Potential communication issues may lead to misunderstandings about reservation.",
+    language_barrier: t('host.riskFactor.languageBarrier', 'Potential communication issues may lead to misunderstandings about reservation.'),
 
     // Special Occasion
-    special_occasion: "Birthday/Anniversary bookings show high commitment - people rarely skip these!",
+    special_occasion: t('host.riskFactor.specialOccasion', 'Birthday/Anniversary bookings show high commitment - people rarely skip these!'),
 
     // Seating Preference
-    terrace_weather_risk: "Last-minute terrace requests are weather-dependent and may cancel if it rains.",
+    terrace_weather_risk: t('host.riskFactor.terraceWeatherRisk', 'Last-minute terrace requests are weather-dependent and may cancel if it rains.'),
 
     // Dietary Restrictions
-    dietary_needs: "Customers with special dietary needs show intentionality and planning.",
+    dietary_needs: t('host.riskFactor.dietaryNeeds', 'Customers with special dietary needs show intentionality and planning.'),
 
     // First Timer
-    first_timer: "First-time visitors are less familiar with the restaurant and slightly less committed."
+    first_timer: t('host.riskFactor.firstTimer', 'First-time visitors are less familiar with the restaurant and slightly less committed.')
   };
 
-  return explanations[factor] || "This factor affects the likelihood of the customer showing up.";
+  return explanations[factor] || t('host.riskFactor.default', 'This factor affects the likelihood of the customer showing up.');
 }

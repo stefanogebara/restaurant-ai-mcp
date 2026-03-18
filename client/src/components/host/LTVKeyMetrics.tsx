@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import HelpTooltip from '../common/HelpTooltip';
 import { formatCurrency } from './ltvHelpers';
@@ -8,6 +9,8 @@ interface LTVKeyMetricsProps {
 }
 
 export default function LTVKeyMetrics({ stats }: LTVKeyMetricsProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
       <div className="p-4 bg-burgundy/10 rounded-xl border border-burgundy/20">
@@ -26,17 +29,8 @@ export default function LTVKeyMetrics({ stats }: LTVKeyMetricsProps) {
         <div className="flex items-center gap-1">
           <div className="text-xs text-stone-gray">Avg Lifetime Value</div>
           <HelpTooltip
-            title="What is LTV?"
-            content="Total revenue a customer generates over their relationship with you.
-
-Components:
-• Average spend per visit: €45
-• Visit frequency: 3x per year
-• Customer lifespan: 3 years
-• LTV = €45 × 3 × 3 = €405
-
-Why it matters:
-Focus retention efforts on high-LTV customers"
+            title={t('ltv.tooltipTitle', 'What is LTV?')}
+            content={t('ltv.tooltipContent', 'Total revenue a customer generates over their relationship with you.\n\nComponents:\n• Average spend per visit: €45\n• Visit frequency: 3x per year\n• Customer lifespan: 3 years\n• LTV = €45 × 3 × 3 = €405\n\nWhy it matters:\nFocus retention efforts on high-LTV customers')}
             position="bottom"
             size="sm"
           />

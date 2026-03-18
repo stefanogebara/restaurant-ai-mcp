@@ -38,7 +38,8 @@
     "noData": "No data available",
     "noDataDesc": "Data will appear here once interventions are tracked",
     "copiedToClipboard": "Link copied!",
-    "shareFailed": "Could not copy link"
+    "shareFailed": "Could not copy link",
+    "ok": "OK"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -215,7 +216,58 @@
     "avgRating": "Avg Rating",
     "responseRate": "Response Rate",
     "responses": "Responses",
-    "reports": "Reports"
+    "reports": "Reports",
+    "noShowRisk": {
+      "low": "Low Risk",
+      "medium": "Medium Risk",
+      "high": "High Risk",
+      "veryHigh": "Very High",
+      "probability": "No-show probability: {{score}}%"
+    },
+    "deposit": {
+      "held": "held",
+      "release": "Release",
+      "captureAmount": "Capture {{amount}}",
+      "releaseTitle": "Release deposit hold (guest arrived)",
+      "captureTitle": "Capture {{amount}} deposit (no-show)",
+      "captureFailed": "Failed to capture deposit",
+      "releaseFailed": "Failed to release deposit"
+    },
+    "voicePersona": {
+      "title": "Agent Persona",
+      "refreshPrompt": "Refresh Agent Prompt",
+      "refreshing": "Refreshing...",
+      "saving": "Saving...",
+      "agentName": "Agent name",
+      "max50": "(max 50 chars)",
+      "openingGreeting": "Opening greeting",
+      "max200": "(max 200 chars)",
+      "refreshSuccess": "Agent prompt refreshed successfully",
+      "refreshFailed": "Failed to refresh prompt",
+      "skipped": "Skipped: {{reason}}",
+      "noAgentConfigured": "no agent configured",
+      "saved": "Agent persona saved",
+      "saveFailed": "Failed to save persona"
+    },
+    "feedback": {
+      "title": "Post-Visit Feedback",
+      "description": "Automatically send a WhatsApp message after each dining experience to collect guest feedback.",
+      "enableToggle": "Enable post-visit feedback",
+      "sendAfter": "Send feedback after (minutes)",
+      "time30min": "30 min",
+      "time1hour": "1 hour",
+      "time2hours": "2 hours",
+      "time3hours": "3 hours",
+      "time6hours": "6 hours",
+      "time12hours": "12 hours",
+      "time24hours": "24 hours",
+      "customMessage": "Custom message (optional)",
+      "customPlaceholder": "Leave blank for default message. Use {name} and {restaurant} as placeholders.",
+      "saving": "Saving...",
+      "saveSettings": "Save Feedback Settings"
+    },
+    "embedWidgetTitle": "Booking Widget",
+    "embedWidgetDescription": "Paste this snippet anywhere on your website to add a booking button."
   },
   "time": {
     "justNow": "just now",
@@ -327,7 +379,8 @@
     "emailPlaceholder": "your@email.com",
     "optional": "optional",
     "specialRequests": "Special requests",
-    "specialRequestsPlaceholder": "Allergies, celebrations, seating preferences..."
+    "specialRequestsPlaceholder": "Allergies, celebrations, seating preferences...",
+    "depositError": "Payment setup failed. Please try again."
   },
   "waitlist": {
     "title": "Waitlist",
@@ -547,6 +600,23 @@
         "timePrefExample": "Always Friday 8pm, or Tuesday lunch, or weekend brunch",
         "timePrefGood": "Predict when they'll book next, send targeted offers"
       }
+    },
+    "export": {
+      "export": "Export",
+      "reservationsCsv": "Reservations CSV",
+      "useAllFirst": "use All first",
+      "summaryCsv": "Summary CSV",
+      "tablesCsv": "Tables CSV",
+      "downloadAll": "Download All"
+    },
+    "presets": {
+      "today": "Today",
+      "7d": "7d",
+      "30d": "30d",
+      "90d": "90d",
+      "thisMonth": "This month",
+      "lastMonth": "Last month",
+      "custom": "Custom"
     }
   },
   "onboarding": {
@@ -818,6 +888,10 @@
       "emailNotConfirmed": "Please confirm your email before signing in.",
       "userAlreadyRegistered": "An account with this email already exists.",
       "passwordTooShort": "Password must be at least 6 characters.",
+      "passwordMin8": "Password must be at least 8 characters",
+      "passwordUppercase": "Password must contain at least one uppercase letter",
+      "passwordLowercase": "Password must contain at least one lowercase letter",
+      "passwordNumber": "Password must contain at least one number",
       "generic": "Something went wrong. Please try again."
     }
   },
@@ -1162,7 +1236,18 @@
     "noTablesDescription": "Click \"Add Table\" to start building your floor plan.",
     "table": "table",
     "tables": "tables",
-    "seats": "seats"
+    "seats": "seats",
+    "guests": "guests",
+    "overdue": "Overdue",
+    "left": "left",
+    "joinWith": "Join w/ Table",
+    "location": {
+      "indoor": "Indoor",
+      "outdoor": "Outdoor",
+      "patio": "Patio",
+      "bar": "Bar",
+      "main": "Main"
+    }
   },
   "insights": {
     "title": "AI Insights",
@@ -1207,7 +1292,10 @@
     "visits": "{{count}} visits",
     "send": "Send",
     "reEngagementSent": "Re-engagement message sent",
-    "reEngagementFailed": "Failed to send message"
+    "reEngagementFailed": "Failed to send message",
+    "lastVisit": "Last",
+    "editStrategy": "Edit AI strategy document",
+    "whatsappCampaigns": "WhatsApp Campaigns"
   },
   "callTracking": {
     "title": "Call History",
@@ -2028,6 +2116,69 @@
     "noCampaigns": "No campaigns yet",
     "messageRequired": "Message is required",
     "messagePlaceholder": "Hi {name}, we miss you at our restaurant! Book your next visit..."
+  },
+  "host": {
+    "riskBadge": {
+      "lowRisk": "Low Risk",
+      "mediumRisk": "Medium Risk",
+      "highRisk": "High Risk",
+      "veryHighRisk": "Very High Risk",
+      "standardConfirmation": "Standard confirmation",
+      "sendReminder": "Send reminder notification",
+      "callToConfirm": "Call to confirm",
+      "requestDeposit": "Request deposit or call"
+    },
+    "customerProfile": {
+      "vipSignals": "VIP Signals",
+      "visits": "visits",
+      "analyzed": "Analyzed",
+      "confidence": "Confidence",
+      "dataSources": "Data sources:"
+    },
+    "dnaCustomerList": {
+      "title": "Customer Profiles",
+      "searchPlaceholder": "Search by name or phone...",
+      "loading": "Loading customers...",
+      "noMatch": "No customers match your filters",
+      "noProfiles": "No customer profiles available"
+    },
+    "allClear": "All Clear!",
+    "allClearDescription": "No high-risk reservations need attention",
+    "interventionNeeded": "Intervention Needed",
+    "whatThisMeans": "What This Means",
+    "riskFactors": "Risk Factors",
+    "positiveSignals": "Positive Signals",
+    "riskFactorsUnavailable": "Detailed risk factors not available for this reservation. Risk score calculated using standard criteria.",
+    "gotIt": "Got it",
+    "riskAction": {
+      "veryHigh": "This reservation has multiple red flags. Require a credit card deposit ({{deposit}}/person) or make a confirmation call to verify they're still coming. Without action, there's a strong chance this party won't show up.",
+      "high": "This reservation shows elevated no-show risk. Call the customer 24 hours before to confirm they're still coming. A quick 2-minute call can prevent an empty table during peak hours.",
+      "medium": "This reservation has some risk factors but nothing alarming. Consider sending an automated reminder a few hours before. No phone call needed unless other concerns arise.",
+      "low": "This reservation looks reliable! The customer has shown commitment signals. No special action needed - just provide excellent service as usual."
+    },
+    "riskFactor": {
+      "newCustomer": "No previous visits. First-time guests are statistically more likely to no-show.",
+      "highNoShowHistory": "This customer has failed to show up for previous reservations.",
+      "moderateNoShowHistory": "This customer has occasionally missed reservations in the past.",
+      "goodHistory": "Loyal customer with excellent track record. Very reliable!",
+      "veryLargeParty": "Large groups ({{threshold}}+) have higher cancellation rates due to coordination challenges.",
+      "largeParty": "Larger parties are harder to coordinate, increasing no-show risk.",
+      "mediumParty": "Moderate-sized groups have slightly elevated no-show rates.",
+      "sameDayUrgent": "Booked very recently - they're coming NOW. Highly committed!",
+      "shortNotice": "Last-minute bookings (1-2 days) are often impulsive and plans may change.",
+      "farAdvance": "Booked weeks ahead - plans may change, they may forget, or make other arrangements.",
+      "primeTime": "Weekend prime-time slots (Fri/Sat 7-9 PM) have highest no-show rates.",
+      "peakHour": "Popular dinner hours see more no-shows due to high demand and multiple bookings.",
+      "noEmail": "Phone-only contact makes confirmation harder and suggests less commitment.",
+      "tourist": "Tourists have higher no-show rates due to travel uncertainties and itinerary changes.",
+      "local": "Local customers are more reliable and have stronger commitment to showing up.",
+      "languageBarrier": "Potential communication issues may lead to misunderstandings about reservation.",
+      "specialOccasion": "Birthday/Anniversary bookings show high commitment - people rarely skip these!",
+      "terraceWeatherRisk": "Last-minute terrace requests are weather-dependent and may cancel if it rains.",
+      "dietaryNeeds": "Customers with special dietary needs show intentionality and planning.",
+      "firstTimer": "First-time visitors are less familiar with the restaurant and slightly less committed.",
+      "default": "This factor affects the likelihood of the customer showing up."
+    }
   },
   "placeholders": {
     "name": "John Smith",

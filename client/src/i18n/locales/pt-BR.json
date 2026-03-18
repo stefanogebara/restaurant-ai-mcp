@@ -38,7 +38,8 @@
     "noData": "Nenhum dado disponível",
     "noDataDesc": "Os dados aparecerão aqui quando as intervenções forem registradas",
     "copiedToClipboard": "Link copiado!",
-    "shareFailed": "Não foi possível copiar o link"
+    "shareFailed": "Não foi possível copiar o link",
+    "ok": "OK"
   },
   "navigation": {
     "dashboard": "Painel",
@@ -215,7 +216,58 @@
     "avgRating": "Nota Média",
     "responseRate": "Taxa de Resposta",
     "responses": "Respostas",
-    "reports": "Relatórios"
+    "reports": "Relatórios",
+    "noShowRisk": {
+      "low": "Risco Baixo",
+      "medium": "Risco Médio",
+      "high": "Risco Alto",
+      "veryHigh": "Muito Alto",
+      "probability": "Probabilidade de no-show: {{score}}%"
+    },
+    "deposit": {
+      "held": "retido",
+      "release": "Liberar",
+      "captureAmount": "Cobrar {{amount}}",
+      "releaseTitle": "Liberar depósito (cliente chegou)",
+      "captureTitle": "Cobrar depósito de {{amount}} (no-show)",
+      "captureFailed": "Falha ao cobrar depósito",
+      "releaseFailed": "Falha ao liberar depósito"
+    },
+    "voicePersona": {
+      "title": "Persona do Agente",
+      "refreshPrompt": "Atualizar Prompt do Agente",
+      "refreshing": "Atualizando...",
+      "saving": "Salvando...",
+      "agentName": "Nome do agente",
+      "max50": "(máx 50 caracteres)",
+      "openingGreeting": "Saudação de abertura",
+      "max200": "(máx 200 caracteres)",
+      "refreshSuccess": "Prompt do agente atualizado com sucesso",
+      "refreshFailed": "Falha ao atualizar prompt",
+      "skipped": "Ignorado: {{reason}}",
+      "noAgentConfigured": "nenhum agente configurado",
+      "saved": "Persona do agente salva",
+      "saveFailed": "Falha ao salvar persona"
+    },
+    "feedback": {
+      "title": "Feedback Pós-Visita",
+      "description": "Envie automaticamente uma mensagem pelo WhatsApp após cada experiência gastronômica para coletar feedback.",
+      "enableToggle": "Ativar feedback pós-visita",
+      "sendAfter": "Enviar feedback após (minutos)",
+      "time30min": "30 min",
+      "time1hour": "1 hora",
+      "time2hours": "2 horas",
+      "time3hours": "3 horas",
+      "time6hours": "6 horas",
+      "time12hours": "12 horas",
+      "time24hours": "24 horas",
+      "customMessage": "Mensagem personalizada (opcional)",
+      "customPlaceholder": "Deixe em branco para mensagem padrão. Use {name} e {restaurant} como variáveis.",
+      "saving": "Salvando...",
+      "saveSettings": "Salvar Configurações de Feedback"
+    },
+    "embedWidgetTitle": "Widget de Reservas",
+    "embedWidgetDescription": "Cole este trecho em qualquer lugar do seu site para adicionar um botão de reserva."
   },
   "time": {
     "justNow": "agora",
@@ -327,7 +379,8 @@
     "emailPlaceholder": "seu@email.com",
     "optional": "opcional",
     "specialRequests": "Pedidos especiais",
-    "specialRequestsPlaceholder": "Alergias, comemorações, preferência de mesa..."
+    "specialRequestsPlaceholder": "Alergias, comemorações, preferência de mesa...",
+    "depositError": "Falha na configuração do pagamento. Tente novamente."
   },
   "waitlist": {
     "title": "Lista de Espera",
@@ -547,6 +600,23 @@
         "timePrefExample": "Sempre sexta 20h, ou almoço de terça, ou brunch de fim de semana",
         "timePrefGood": "Prever quando vão reservar, enviar ofertas direcionadas"
       }
+    },
+    "export": {
+      "export": "Exportar",
+      "reservationsCsv": "Reservas CSV",
+      "useAllFirst": "use Todos primeiro",
+      "summaryCsv": "Resumo CSV",
+      "tablesCsv": "Mesas CSV",
+      "downloadAll": "Baixar Tudo"
+    },
+    "presets": {
+      "today": "Hoje",
+      "7d": "7d",
+      "30d": "30d",
+      "90d": "90d",
+      "thisMonth": "Este mês",
+      "lastMonth": "Mês passado",
+      "custom": "Personalizado"
     }
   },
   "onboarding": {
@@ -819,6 +889,10 @@
       "emailNotConfirmed": "Por favor, confirme seu e-mail antes de entrar.",
       "userAlreadyRegistered": "Já existe uma conta com este e-mail.",
       "passwordTooShort": "A senha deve ter pelo menos 6 caracteres.",
+      "passwordMin8": "A senha deve ter pelo menos 8 caracteres",
+      "passwordUppercase": "A senha deve conter pelo menos uma letra maiúscula",
+      "passwordLowercase": "A senha deve conter pelo menos uma letra minúscula",
+      "passwordNumber": "A senha deve conter pelo menos um número",
       "generic": "Algo deu errado. Por favor, tente novamente."
     }
   },
@@ -1163,7 +1237,18 @@
     "noTablesDescription": "Clique em \"Adicionar Mesa\" para começar a montar seu plano.",
     "table": "mesa",
     "tables": "mesas",
-    "seats": "lugares"
+    "seats": "lugares",
+    "guests": "pessoas",
+    "overdue": "Atrasado",
+    "left": "restantes",
+    "joinWith": "Juntar c/ Mesa",
+    "location": {
+      "indoor": "Interior",
+      "outdoor": "Terraço",
+      "patio": "Pátio",
+      "bar": "Bar",
+      "main": "Principal"
+    }
   },
   "insights": {
     "title": "Insights de IA",
@@ -1208,7 +1293,10 @@
     "visits": "{{count}} visitas",
     "send": "Enviar",
     "reEngagementSent": "Mensagem de reengajamento enviada",
-    "reEngagementFailed": "Falha ao enviar mensagem"
+    "reEngagementFailed": "Falha ao enviar mensagem",
+    "lastVisit": "Última",
+    "editStrategy": "Editar documento de estratégia IA",
+    "whatsappCampaigns": "Campanhas WhatsApp"
   },
   "callTracking": {
     "title": "Histórico de Chamadas",
@@ -2037,6 +2125,69 @@
     "noCampaigns": "Nenhuma campanha ainda",
     "messageRequired": "Mensagem é obrigatória",
     "messagePlaceholder": "Olá {name}, sentimos sua falta! Reserve sua próxima visita..."
+  },
+  "host": {
+    "riskBadge": {
+      "lowRisk": "Risco Baixo",
+      "mediumRisk": "Risco Médio",
+      "highRisk": "Risco Alto",
+      "veryHighRisk": "Risco Muito Alto",
+      "standardConfirmation": "Confirmação padrão",
+      "sendReminder": "Enviar lembrete",
+      "callToConfirm": "Ligar para confirmar",
+      "requestDeposit": "Solicitar depósito ou ligar"
+    },
+    "customerProfile": {
+      "vipSignals": "Sinais VIP",
+      "visits": "visitas",
+      "analyzed": "Analisado",
+      "confidence": "Confiança",
+      "dataSources": "Fontes de dados:"
+    },
+    "dnaCustomerList": {
+      "title": "Perfis de Clientes",
+      "searchPlaceholder": "Buscar por nome ou telefone...",
+      "loading": "Carregando clientes...",
+      "noMatch": "Nenhum cliente corresponde aos filtros",
+      "noProfiles": "Nenhum perfil de cliente disponível"
+    },
+    "allClear": "Tudo Certo!",
+    "allClearDescription": "Nenhuma reserva de alto risco precisa de atenção",
+    "interventionNeeded": "Intervenção Necessária",
+    "whatThisMeans": "O Que Isso Significa",
+    "riskFactors": "Fatores de Risco",
+    "positiveSignals": "Sinais Positivos",
+    "riskFactorsUnavailable": "Fatores de risco detalhados não disponíveis para esta reserva. Pontuação de risco calculada usando critérios padrão.",
+    "gotIt": "Entendi",
+    "riskAction": {
+      "veryHigh": "Esta reserva tem múltiplos sinais de alerta. Exija um depósito com cartão de crédito ({{deposit}}/pessoa) ou faça uma ligação de confirmação para verificar se ainda virão. Sem ação, há grande chance de não comparecimento.",
+      "high": "Esta reserva mostra risco elevado de não comparecimento. Ligue para o cliente 24 horas antes para confirmar que ainda virá. Uma ligação rápida de 2 minutos pode evitar uma mesa vazia no horário de pico.",
+      "medium": "Esta reserva tem alguns fatores de risco, mas nada alarmante. Considere enviar um lembrete automático algumas horas antes. Não é necessário ligar, a menos que surjam outras preocupações.",
+      "low": "Esta reserva parece confiável! O cliente demonstrou sinais de compromisso. Nenhuma ação especial necessária - apenas ofereça um excelente serviço como de costume."
+    },
+    "riskFactor": {
+      "newCustomer": "Sem visitas anteriores. Clientes de primeira vez têm estatisticamente mais chances de não comparecer.",
+      "highNoShowHistory": "Este cliente não compareceu a reservas anteriores.",
+      "moderateNoShowHistory": "Este cliente ocasionalmente faltou a reservas no passado.",
+      "goodHistory": "Cliente fiel com excelente histórico. Muito confiável!",
+      "veryLargeParty": "Grupos grandes ({{threshold}}+) têm taxas de cancelamento mais altas devido a desafios de coordenação.",
+      "largeParty": "Grupos maiores são mais difíceis de coordenar, aumentando o risco de não comparecimento.",
+      "mediumParty": "Grupos de tamanho moderado têm taxas de não comparecimento ligeiramente elevadas.",
+      "sameDayUrgent": "Reservou muito recentemente - estão vindo AGORA. Altamente comprometidos!",
+      "shortNotice": "Reservas de última hora (1-2 dias) são frequentemente impulsivas e os planos podem mudar.",
+      "farAdvance": "Reservou com semanas de antecedência - os planos podem mudar, podem esquecer ou fazer outros arranjos.",
+      "primeTime": "Horários nobres de fim de semana (Sex/Sáb 19-21h) têm as maiores taxas de não comparecimento.",
+      "peakHour": "Horários populares de jantar têm mais faltas devido à alta demanda e múltiplas reservas.",
+      "noEmail": "Contato apenas por telefone dificulta a confirmação e sugere menos compromisso.",
+      "tourist": "Turistas têm taxas mais altas de não comparecimento devido a incertezas de viagem e mudanças de itinerário.",
+      "local": "Clientes locais são mais confiáveis e têm maior compromisso em comparecer.",
+      "languageBarrier": "Possíveis problemas de comunicação podem levar a mal-entendidos sobre a reserva.",
+      "specialOccasion": "Reservas de aniversário mostram alto compromisso - as pessoas raramente faltam!",
+      "terraceWeatherRisk": "Pedidos de terraço de última hora dependem do clima e podem cancelar se chover.",
+      "dietaryNeeds": "Clientes com necessidades alimentares especiais demonstram intencionalidade e planejamento.",
+      "firstTimer": "Visitantes de primeira vez são menos familiarizados com o restaurante e ligeiramente menos comprometidos.",
+      "default": "Este fator afeta a probabilidade do cliente comparecer."
+    }
   },
   "placeholders": {
     "name": "João Silva",

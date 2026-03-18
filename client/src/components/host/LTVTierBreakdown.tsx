@@ -1,5 +1,6 @@
 import HelpTooltip from '../common/HelpTooltip';
 import { getTierColor, getTierBgColor, getTierIcon } from './ltvHelpers';
+import { LTV_TIERS } from '../../config/businessDefaults';
 import type { LTVStats } from './ltvDashboard.types';
 
 interface LTVTierBreakdownProps {
@@ -16,11 +17,11 @@ export default function LTVTierBreakdown({ tiers }: LTVTierBreakdownProps) {
           <h3 className="text-sm font-semibold text-deep-charcoal">Customer Segments</h3>
           <HelpTooltip
             title="Customer Segments"
-            content="VIP (€500+): Top 10% - Priority reservations, special offers
-Regular (€200-€500): Core customers - Loyalty rewards
-Occasional (€50-€200): Potential for growth - Engagement campaigns
-New (<€50): First-time diners - Welcome offers
-At Risk: Haven't visited in 90+ days - Win-back campaigns"
+            content={`VIP (${LTV_TIERS.vip.label}): Top 10% - Priority reservations, special offers
+Regular (${LTV_TIERS.regular.label}): Core customers - Loyalty rewards
+Occasional (${LTV_TIERS.occasional.label}): Potential for growth - Engagement campaigns
+New (${LTV_TIERS.new.label}): First-time diners - Welcome offers
+At Risk: Haven't visited in 90+ days - Win-back campaigns`}
             position="right"
             size="sm"
           />

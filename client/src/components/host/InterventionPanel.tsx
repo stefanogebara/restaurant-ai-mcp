@@ -7,9 +7,11 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { UpcomingReservation } from '../../types/host.types';
+import { DEFAULT_AVG_REVENUE_PER_PERSON } from '../../config/businessDefaults';
 import RiskScoreBadge from './RiskScoreBadge';
 import RiskExplanationModal from './RiskExplanationModal';
 
@@ -22,6 +24,7 @@ export default function InterventionPanel({
   reservations,
   onRecordIntervention
 }: InterventionPanelProps) {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(true);
   const [actedReservations, setActedReservations] = useState<Set<string>>(new Set());
   const [selectedReservation, setSelectedReservation] = useState<UpcomingReservation | null>(null);
@@ -72,8 +75,7 @@ export default function InterventionPanel({
 
   // Calculate potential value at risk
   const calculatePotentialValue = (partySize: number) => {
-    const avgRevenuePerPerson = 50; // €50 per person
-    return partySize * avgRevenuePerPerson;
+    return partySize * DEFAULT_AVG_REVENUE_PER_PERSON;
   };
 
   // If no high-risk reservations, show success state
@@ -85,8 +87,8 @@ export default function InterventionPanel({
             <ThiingsIcon name="star" pxSize={24} />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-deep-charcoal">All Clear!</h3>
-            <p className="text-sm text-stone-gray">No high-risk reservations need attention</p>
+            <h3 className="text-lg font-semibold text-deep-charcoal">{t('host.allClear', 'All Clear!')}</h3>
+            <p className="text-sm text-stone-gray">{t('host.allClearDescription', 'No high-risk reservations need attention')}</p>
           </div>
         </div>
       </div>
@@ -120,7 +122,7 @@ export default function InterventionPanel({
               <ThiingsIcon name="alert-triangle" pxSize={20} />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-deep-charcoal">Intervention Needed</h3>
+              <h3 className="text-lg font-semibold text-deep-charcoal">{t('host.interventionNeeded', 'Intervention Needed')}</h3>
               <p className="text-sm text-stone-gray">
                 {highRiskReservations.length} high-risk reservation{highRiskReservations.length !== 1 ? 's' : ''} •
                 <span className="ml-1 font-medium text-amber-600">
