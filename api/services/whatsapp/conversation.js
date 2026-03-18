@@ -251,11 +251,11 @@ Guidelines:
     }
 
     // Extract text response
-    return choice?.message?.content || 'I apologize, I had trouble processing that. Could you try again?';
+    return choice?.message?.content || 'Desculpe, tive dificuldade em processar isso. Pode tentar novamente?';
 
   } catch (error) {
     logger.error(' AI error:', error);
-    return 'I apologize, something went wrong. Please try again or contact the restaurant directly.';
+    return 'Desculpe, algo deu errado. Por favor, tente novamente ou entre em contato diretamente com o restaurante.';
   }
 }
 

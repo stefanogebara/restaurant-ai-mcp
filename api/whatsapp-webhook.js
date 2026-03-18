@@ -243,7 +243,7 @@ async function handleIncomingMessage(message, res) {
 
   if (!session) {
     logger.error(' Failed to create session');
-    await sendWhatsAppMessage(from, 'Sorry, I had trouble starting our conversation. Please try again.');
+    await sendWhatsAppMessage(from, 'Desculpe, tive um problema ao iniciar nossa conversa. Por favor, tente novamente.');
     return res.status(200).json({ status: 'ok' });
   }
 
@@ -323,7 +323,7 @@ async function handleIncomingMessage(message, res) {
     logger.info(` [STEP 3] AI done in ${Date.now() - aiStart}ms: ${response?.substring(0, 100)}...`);
   } catch (aiError) {
     logger.error(` [STEP 3] AI error after ${Date.now() - aiStart}ms:`, aiError);
-    response = 'Sorry, I had trouble processing your message. Please try again.';
+    response = 'Desculpe, tive dificuldade em processar sua mensagem. Por favor, tente novamente.';
   }
 
   // Save updated conversation history (append user message + assistant response)
