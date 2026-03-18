@@ -40,7 +40,7 @@ export const statusLabel = (s: string) => {
 export const getStatusStyle = (status: string): StatusStyle => {
   switch (status?.toLowerCase()) {
     case 'available':
-      return { fill: '#ECFDF5', stroke: '#10B981', text: '#064E3B', chairFill: '#10B981', sublabel: '#34D399' };
+      return { fill: '#ECFDF5', stroke: '#9F1239', text: '#064E3B', chairFill: '#9F1239', sublabel: '#9F1239' };
     case 'occupied':
       return { fill: '#FFF1F2', stroke: '#E11D48', text: '#881337', chairFill: '#E11D48', sublabel: '#FB7185' };
     case 'reserved':

@@ -120,8 +120,8 @@ export default function RecordOutcomeModal({
                 onClick={() => setOutcome('showed_up')}
                 className={`p-4 rounded-2xl border-2 transition-all ${
                   outcome === 'showed_up'
-                    ? 'border-green-600 bg-green-600/10'
-                    : 'border-border-gray hover:border-green-600/50'
+                    ? 'border-rose-600 bg-rose-600/10'
+                    : 'border-border-gray hover:border-rose-600/50'
                 }`}
               >
                 <div className="flex justify-center mb-2"><ThiingsIcon name="check-circle" pxSize={32} /></div>

@@ -33,7 +33,7 @@ export default function WaitlistEntryCard({
 
   return (
     <div className={`px-3 py-4 border-b border-border-gray/50 hover:bg-warm-white transition-colors ${
-      isTableReady ? 'bg-green-600/5' : ''
+      isTableReady ? 'bg-rose-600/5' : ''
     }`}>
       {/* Row 1: Avatar, Name, Party Size, Status */}
       <div className="flex items-center gap-2">
@@ -92,7 +92,7 @@ export default function WaitlistEntryCard({
               <button
                 onClick={() => onNotify(entry.id)}
                 disabled={isNotifying}
-                className="px-2 py-1 text-[11px] bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                className="px-2 py-1 text-[11px] bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
               >
                 {t('waitlist.ready')}
               </button>

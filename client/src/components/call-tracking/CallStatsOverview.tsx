@@ -24,7 +24,7 @@ export default function CallStatsOverview({ stats }: Props) {
 
       <div className="bg-white rounded-2xl border border-border-gray p-6">
         <div className="text-xs font-medium text-muted-stone mb-2">{t('callTracking.successRate')}</div>
-        <div className="text-[32px] font-bold tracking-tight leading-none text-green-600">
+        <div className="text-[32px] font-bold tracking-tight leading-none text-rose-600">
           {overview.success_rate}%
         </div>
         <div className="text-xs text-warm-stone mt-1">

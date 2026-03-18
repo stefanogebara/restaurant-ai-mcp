@@ -29,7 +29,7 @@ export default function FloorPlanHeader({ saveStatus, linkMode, onToggleLinkMode
         } ${
           saveStatus === 'saving'
             ? 'bg-soft-gray text-muted-stone'
-            : 'bg-green-50 text-green-700 border border-green-200'
+            : 'bg-rose-50 text-rose-700 border border-rose-200'
         }`}>
           {saveStatus === 'saving' ? t('floorPlan.saving') : t('floorPlan.saved')}
         </span>

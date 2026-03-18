@@ -53,10 +53,10 @@ export default function ActivePartiesPanel({
               {parties.length}
             </span>
             {parties.length > 0 && (
-              <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-600">
+              <span className="flex items-center gap-1 text-[10px] font-medium text-rose-600">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
                 </span>
                 {t('common.live', 'Live')}
               </span>

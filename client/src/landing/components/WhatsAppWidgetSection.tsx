@@ -52,7 +52,7 @@ export default function WhatsAppWidgetSection() {
                 {/* Chat */}
                 <div className="px-3 py-4 min-h-[200px]" style={{ backgroundImage: 'radial-gradient(circle at 20% 80%, #e8e5e0 0%, #ede9e3 100%)' }}>
                   <div className="flex justify-end">
-                    <div className="max-w-[85%] px-3 py-2 bg-green-100 rounded-2xl rounded-tr-sm text-[13px] text-deep-charcoal shadow-sm">
+                    <div className="max-w-[85%] px-3 py-2 bg-rose-100 rounded-2xl rounded-tr-sm text-[13px] text-deep-charcoal shadow-sm">
                       {messageText}
                     </div>
                   </div>

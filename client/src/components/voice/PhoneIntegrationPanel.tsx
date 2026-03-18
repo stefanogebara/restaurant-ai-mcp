@@ -25,8 +25,8 @@ function formatBrazilianPhone(raw: string): string {
 function StatusBadge({ status, t }: { status: 'active' | 'not_configured' | 'error'; t: any }) {
   if (status === 'active') {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
+        <span className="w-1.5 h-1.5 rounded-full bg-rose-500" aria-hidden="true" />
         {t('phoneIntegration.statusActive', 'Active')}
       </span>
     );

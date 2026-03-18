@@ -16,7 +16,7 @@ export default function WeeklyReportSummaryCards({ summary }: WeeklyReportSummar
         {summary.previous_covers === 0 && summary.total_covers > 0 ? (
           <div className="text-[11px] font-medium mt-1 text-blue-600">{t('analytics.new', 'New')}</div>
         ) : summary.previous_covers >= 3 && (
-          <div className={`text-[11px] font-medium mt-1 ${summary.covers_change_percent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <div className={`text-[11px] font-medium mt-1 ${summary.covers_change_percent >= 0 ? 'text-rose-600' : 'text-red-600'}`}>
             {summary.covers_change_percent >= 0 ? '+' : ''}{summary.covers_change_percent}% {t('analytics.vsPrevWeek', 'vs prev week')}
           </div>
         )}
@@ -41,7 +41,7 @@ export default function WeeklyReportSummaryCards({ summary }: WeeklyReportSummar
         {summary.previous_covers === 0 && summary.total_covers > 0 ? (
           <div className="text-[11px] font-medium mt-1 text-blue-600">{t('analytics.new', 'New')}</div>
         ) : summary.previous_covers >= 3 && (
-          <div className={`text-[11px] font-medium mt-1 ${summary.covers_change_percent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <div className={`text-[11px] font-medium mt-1 ${summary.covers_change_percent >= 0 ? 'text-rose-600' : 'text-red-600'}`}>
             {summary.covers_change_percent >= 0 ? '+' : ''}{summary.covers_change_percent}%
           </div>
         )}

@@ -54,8 +54,8 @@ export default function SubscriptionSuccess() {
           {/* Success Card */}
           <div className="bg-white border border-border-gray rounded-2xl p-12 text-center">
             {/* Green Checkmark */}
-            <div className="w-16 h-16 rounded-full bg-green-600/[8%] flex items-center justify-center mx-auto mb-5">
-              <ThiingsIcon name="check" pxSize={28} className="text-green-600" />
+            <div className="w-16 h-16 rounded-full bg-rose-600/[8%] flex items-center justify-center mx-auto mb-5">
+              <ThiingsIcon name="check" pxSize={28} className="text-rose-600" />
             </div>
 
             <h1 className="font-serif text-2xl font-medium text-deep-charcoal mb-2">{t('subscription.welcomeTo', { plan })}</h1>
@@ -63,7 +63,7 @@ export default function SubscriptionSuccess() {
               {t('subscription.upgradeActive')}
             </p>
 
-            <p className="text-[13px] text-green-600 font-medium mb-6">
+            <p className="text-[13px] text-rose-600 font-medium mb-6">
               {t('subscription.redirecting')}
             </p>
 

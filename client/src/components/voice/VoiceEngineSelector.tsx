@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import type { VoiceEngineSettings } from '../../hooks/useVoiceEngineSettings';
 
 const STATUS_STYLES: Record<string, string> = {
-  active:  'bg-green-600/[8%] text-green-600',
+  active:  'bg-rose-600/[8%] text-rose-600',
   testing: 'bg-amber-600/[8%] text-amber-600',
 };
 

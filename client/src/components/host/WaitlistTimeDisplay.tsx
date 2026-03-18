@@ -23,13 +23,13 @@ export default function WaitlistTimeDisplay({ addedAt, estimatedWait, compact = 
 
   // Color based on progress
   const getProgressColor = () => {
-    if (progress < 50) return 'bg-green-600';
+    if (progress < 50) return 'bg-rose-600';
     if (progress < 80) return 'bg-amber-600';
     return 'bg-red-600';
   };
 
   const getTextColor = () => {
-    if (progress < 50) return 'text-green-600';
+    if (progress < 50) return 'text-rose-600';
     if (progress < 80) return 'text-amber-600';
     return 'text-red-600';
   };

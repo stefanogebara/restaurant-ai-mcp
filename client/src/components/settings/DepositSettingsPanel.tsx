@@ -121,7 +121,7 @@ export default function DepositSettingsPanel() {
           {updateConfig.isPending ? t('common.loading') : t('settings.saveDepositSettings')}
         </button>
         {updateConfig.isSuccess && (
-          <span className="ml-3 text-xs text-green-600 font-medium">{t('common.saved')}</span>
+          <span className="ml-3 text-xs text-rose-600 font-medium">{t('common.saved')}</span>
         )}
         {updateConfig.isError && (
           <span className="ml-3 text-xs text-red-600 font-medium">

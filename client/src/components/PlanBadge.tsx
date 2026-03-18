@@ -89,7 +89,7 @@ export default function PlanBadge({
       </div>
 
       {isTrial && (
-        <span className="px-2 py-0.5 text-xs rounded-full bg-green-600/10 border border-green-600/30 text-green-600 font-semibold">
+        <span className="px-2 py-0.5 text-xs rounded-full bg-rose-600/10 border border-rose-600/30 text-rose-600 font-semibold">
           Free Trial
         </span>
       )}

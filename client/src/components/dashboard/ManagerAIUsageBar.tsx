@@ -25,7 +25,7 @@ export default function ManagerAIUsageBar() {
   if (limit === null) {
     return (
       <div className="px-3 py-2 text-xs text-gray-400 flex items-center gap-1">
-        <span className="text-green-500">●</span>
+        <span className="text-rose-500">●</span>
         <span>{t('managerAI.title', 'Manager AI')} — {t('managerAI.unlimited', 'Unlimited')}</span>
       </div>
     );

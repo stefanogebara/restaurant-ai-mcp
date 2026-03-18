@@ -108,7 +108,7 @@ export default function CallConversationModal({ conversation, onClose }: Props) 
                     className={`p-3 rounded-xl ${
                       message.role === 'user'
                         ? 'bg-blue-500/10 ml-4 sm:ml-8'
-                        : 'bg-green-500/10 mr-4 sm:mr-8'
+                        : 'bg-rose-500/10 mr-4 sm:mr-8'
                     }`}
                   >
                     <p className="text-xs text-stone-gray mb-1">

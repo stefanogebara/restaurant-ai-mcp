@@ -229,7 +229,7 @@ export default function CustomerPortal() {
                   <span className="text-[15px] font-semibold">{t('reservations.yourReservation')}</span>
                   <span className={`text-[11px] font-semibold px-3 py-1 rounded-full ${
                     reservation.status === 'Confirmed'
-                      ? 'bg-green-600/[8%] text-green-600'
+                      ? 'bg-rose-600/[8%] text-rose-600'
                       : reservation.status === 'Cancelled'
                       ? 'bg-red-600/[8%] text-red-600'
                       : 'bg-amber-600/[8%] text-amber-600'

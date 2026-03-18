@@ -71,8 +71,8 @@ export default function RiskScoreBadge({
         };
       case 'low':
         return {
-          bg: 'bg-emerald-500/10 border-emerald-500/30',
-          text: 'text-emerald-600 dark:text-emerald-400',
+          bg: 'bg-rose-500/10 border-rose-500/30',
+          text: 'text-rose-600 dark:text-rose-400',
           iconName: 'shield-check',
           label: 'Low Risk'
         };

@@ -79,7 +79,7 @@ export default function FeedbackWidget() {
               <div key={r} className="flex-1">
                 <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
                   <div
-                    className={`h-full rounded-full ${r >= 4 ? 'bg-emerald-500' : r === 3 ? 'bg-amber-400' : 'bg-red-400'}`}
+                    className={`h-full rounded-full ${r >= 4 ? 'bg-rose-500' : r === 3 ? 'bg-amber-400' : 'bg-red-400'}`}
                     style={{ width: `${pct}%` }}
                   />
                 </div>

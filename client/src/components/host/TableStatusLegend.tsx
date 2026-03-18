@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 
 const statuses = [
-  { key: 'available', dotColor: 'bg-green-500' },
+  { key: 'available', dotColor: 'bg-rose-500' },
   { key: 'occupied', dotColor: 'bg-burgundy' },
   { key: 'cleaning', dotColor: 'bg-amber-500' },
   { key: 'reserved', dotColor: 'bg-violet-600' },

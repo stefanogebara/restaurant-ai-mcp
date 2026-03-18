@@ -72,10 +72,10 @@ export default function VoiceDemoDashboard({
           </div>
           <div className="flex items-center gap-1.5">
             <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500" />
             </span>
-            <span className="text-[10px] text-green-400/70">
+            <span className="text-[10px] text-rose-400/70">
               {t('landing.voiceDemo.aiActive', 'AI Active')}
             </span>
           </div>
@@ -141,7 +141,7 @@ export default function VoiceDemoDashboard({
                       <div
                         className={`px-1.5 py-0.5 rounded-full text-[8px] font-medium ${
                           r.status === 'confirmed'
-                            ? 'bg-green-500/20 text-green-400'
+                            ? 'bg-rose-500/20 text-rose-400'
                             : 'bg-red-500/20 text-red-400'
                         }`}
                       >
@@ -166,7 +166,7 @@ export default function VoiceDemoDashboard({
                       {r.time} · {r.size}p
                     </div>
                   </div>
-                  <div className="px-1.5 py-0.5 rounded-full text-[8px] font-medium bg-green-500/20 text-green-400">
+                  <div className="px-1.5 py-0.5 rounded-full text-[8px] font-medium bg-rose-500/20 text-rose-400">
                     confirmed
                   </div>
                 </div>

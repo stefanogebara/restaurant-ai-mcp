@@ -26,9 +26,9 @@ export default function TableCard({ table, onClick }: TableCardProps) {
     switch (table.status) {
       case 'Available':
         return {
-          iconBg: 'bg-green-600',
+          iconBg: 'bg-rose-600',
           iconName: 'check',
-          statusPill: 'text-green-600 bg-green-600/10',
+          statusPill: 'text-rose-600 bg-rose-600/10',
         };
       case 'Occupied':
         return {

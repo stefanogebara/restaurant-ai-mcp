@@ -88,7 +88,7 @@ export default function TableConfigForm({
               type="radio"
               checked={!formData.is_fixed}
               onChange={() => setFormData({ ...formData, is_fixed: false })}
-              className="w-4 h-4 text-green-500 accent-green-500"
+              className="w-4 h-4 text-rose-500 accent-rose-500"
             />
             <span className="text-sm text-warm-stone">Flexible (can combine)</span>
           </label>

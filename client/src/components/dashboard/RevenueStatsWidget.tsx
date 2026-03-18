@@ -60,7 +60,7 @@ export default function RevenueStatsWidget() {
               </span>
               <div className="flex-1 h-2 bg-soft-gray rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-emerald-400 rounded-full transition-all"
+                  className="h-full bg-rose-400 rounded-full transition-all"
                   style={{ width: `${pct}%` }}
                 />
               </div>

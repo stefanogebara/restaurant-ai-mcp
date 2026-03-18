@@ -113,7 +113,7 @@ export default function CustomerDNADashboard() {
               </div>
               <div className="text-xs text-stone-gray">DNA Profiles</div>
             </div>
-            <div className="p-4 bg-green-600/10 rounded-xl border border-green-600/20">
+            <div className="p-4 bg-rose-600/10 rounded-xl border border-rose-600/20">
               <div className="flex items-center justify-between mb-2">
                 <ThiingsIcon name="target" pxSize={20} />
                 <span className="text-2xl font-bold text-deep-charcoal">{stats.avg_confidence}%</span>
@@ -176,7 +176,7 @@ export default function CustomerDNADashboard() {
           )}
 
           {/* Predictions Made */}
-          <div className="p-3 bg-green-600/10 rounded-xl border border-green-600/20">
+          <div className="p-3 bg-rose-600/10 rounded-xl border border-rose-600/20">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <ThiingsIcon name="trending-up" pxSize={16} />

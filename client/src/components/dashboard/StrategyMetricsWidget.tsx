@@ -72,7 +72,7 @@ const METRICS = [
 function TrendIcon({ value, target, lowerIsBetter }: { value: number | null; target: number; lowerIsBetter: boolean }) {
   if (value === null) return <Minus className="w-4 h-4 text-muted-stone" />;
   const good = lowerIsBetter ? value <= target : value >= target;
-  if (good) return <TrendingUp className="w-4 h-4 text-green-600" />;
+  if (good) return <TrendingUp className="w-4 h-4 text-rose-600" />;
   return <TrendingDown className="w-4 h-4 text-red-500" />;
 }
 
@@ -108,7 +108,7 @@ function MetricCard({
       </div>
 
       <div className="flex items-baseline gap-2 mb-1">
-        <span className={`text-2xl font-semibold font-serif ${bad ? 'text-red-600' : good ? 'text-green-700' : 'text-deep-charcoal'}`}>
+        <span className={`text-2xl font-semibold font-serif ${bad ? 'text-red-600' : good ? 'text-rose-700' : 'text-deep-charcoal'}`}>
           {value !== null ? metric.format(value) : '—'}
         </span>
         <span className="text-xs text-muted-stone">

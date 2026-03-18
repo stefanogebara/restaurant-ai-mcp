@@ -224,7 +224,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="border border-green-200 bg-green-50/50 rounded-xl p-5"
+            className="border border-rose-200 bg-rose-50/50 rounded-xl p-5"
           >
             <div className="flex items-start justify-between gap-3 mb-3">
               <div>

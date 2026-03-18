@@ -210,7 +210,7 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
               <button
                 type="button"
                 onClick={handleProceedToSeat}
-                className="flex-1 px-4 py-3 bg-green-600 text-white font-medium rounded-xl hover:bg-green-700 disabled:bg-muted-stone disabled:cursor-not-allowed transition-colors"
+                className="flex-1 px-4 py-3 bg-rose-600 text-white font-medium rounded-xl hover:bg-rose-700 disabled:bg-muted-stone disabled:cursor-not-allowed transition-colors"
                 disabled={selectedTableIds.length === 0}
               >
                 {t('dashboard.walkIn.proceedToSeat')}

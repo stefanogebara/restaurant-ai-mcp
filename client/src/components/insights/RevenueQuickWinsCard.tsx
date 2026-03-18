@@ -38,8 +38,8 @@ export default function RevenueQuickWinsCard() {
   return (
     <div className="bg-white border border-border-gray/50 rounded-2xl overflow-hidden shadow-sm">
       <div className="p-5 border-b border-border-gray flex items-center gap-3">
-        <div className="w-8 h-8 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
-          <ThiingsIcon name="bar-chart" pxSize={16} className="text-green-600" />
+        <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
+          <ThiingsIcon name="bar-chart" pxSize={16} className="text-rose-600" />
         </div>
         <div>
           <h2 className="text-sm font-semibold text-deep-charcoal">{t('insights.revenueQuickWins')}</h2>
@@ -47,7 +47,7 @@ export default function RevenueQuickWinsCard() {
         </div>
         {data?.summary && (
           <div className="ml-auto text-right">
-            <div className="text-sm font-bold text-green-600">{formatCurrency(data.summary.estimated_monthly_impact)}</div>
+            <div className="text-sm font-bold text-rose-600">{formatCurrency(data.summary.estimated_monthly_impact)}</div>
             <div className="text-xs text-warm-stone">{t('insights.monthPotential')}</div>
           </div>
         )}
@@ -64,13 +64,13 @@ export default function RevenueQuickWinsCard() {
                 onClick={() => setExpanded(expanded === index ? null : index)}
                 className="w-full flex items-center gap-3 p-4 text-left hover:bg-soft-gray/30 transition-colors"
               >
-                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${opp.priority === 'high' ? 'bg-red-500' : opp.priority === 'medium' ? 'bg-amber-500' : 'bg-green-500'}`} />
+                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${opp.priority === 'high' ? 'bg-red-500' : opp.priority === 'medium' ? 'bg-amber-500' : 'bg-rose-500'}`} />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-deep-charcoal">{tCat(opp.category)}</div>
                   <div className="text-xs text-warm-stone truncate">{opp.description}</div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <div className="text-sm font-bold text-green-600">+{formatCurrency(opp.potential_gain)}</div>
+                  <div className="text-sm font-bold text-rose-600">+{formatCurrency(opp.potential_gain)}</div>
                   <div className="text-xs text-warm-stone">{opp.estimated_timeline}</div>
                 </div>
                 <ThiingsIcon

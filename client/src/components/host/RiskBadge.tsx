@@ -11,9 +11,9 @@ interface RiskBadgeProps {
 const RISK_STYLES = {
   'low': {
     iconName: 'green-check' as IconName,
-    color: 'text-green-400',
-    bg: 'bg-green-500/20',
-    border: 'border-green-500/30',
+    color: 'text-rose-400',
+    bg: 'bg-rose-500/20',
+    border: 'border-rose-500/30',
   },
   'medium': {
     iconName: 'alert-triangle' as IconName,

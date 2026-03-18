@@ -21,12 +21,12 @@ export default function CustomerPredictions({ predictions, occasions }: Customer
       {predictions.length > 0 ? (
         <div className="space-y-3">
           {predictions.map((pred, i) => (
-            <div key={i} className="p-3 bg-green-600/5 rounded-xl border border-green-600/20">
+            <div key={i} className="p-3 bg-rose-600/5 rounded-xl border border-rose-600/20">
               <div className="flex items-center justify-between">
                 <div className="text-sm font-medium text-deep-charcoal capitalize">{pred.prediction_type.replace(/_/g, ' ')}</div>
                 <div className="text-xs text-stone-gray">{t('customerPredictions.confidence', { value: Math.round(pred.confidence_score * 100) })}</div>
               </div>
-              <div className="text-lg font-bold text-green-600 mt-1">{pred.predicted_value}</div>
+              <div className="text-lg font-bold text-rose-600 mt-1">{pred.predicted_value}</div>
             </div>
           ))}
         </div>

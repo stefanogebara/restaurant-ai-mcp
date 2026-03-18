@@ -133,7 +133,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
               </button>
               <button
                 onClick={handleFindTables}
-                className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-colors disabled:bg-muted-stone"
+                className="flex-1 px-4 py-3 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl transition-colors disabled:bg-muted-stone"
                 disabled={findTablesMutation.isPending}
               >
                 {findTablesMutation.isPending ? 'Finding Tables...' : 'Find Available Tables'}
@@ -155,11 +155,11 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
                     aria-label={`Select tables ${option.tables.join(', ')} (${option.total_capacity} seats)`}
                     className={`
                       w-full text-left border-2 rounded-2xl p-4 cursor-pointer transition-all
-                      focus:outline-none focus:ring-2 focus:ring-green-600/40
+                      focus:outline-none focus:ring-2 focus:ring-rose-600/40
                       ${
                         selectedTables.join(',') === option.tables.join(',')
-                          ? 'border-green-600 bg-green-600/10'
-                          : 'border-border-gray hover:border-green-600/50 bg-white'
+                          ? 'border-rose-600 bg-rose-600/10'
+                          : 'border-border-gray hover:border-rose-600/50 bg-white'
                       }
                     `}
                   >
@@ -173,7 +173,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-medium text-green-600">
+                        <div className="text-sm font-medium text-rose-600">
                           Score: {option.score}
                         </div>
                         <div className="text-xs text-muted-stone capitalize">
@@ -197,7 +197,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
                 <button
                   type="button"
                   onClick={handleProceedToSeat}
-                  className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-colors disabled:bg-muted-stone"
+                  className="flex-1 px-4 py-3 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl transition-colors disabled:bg-muted-stone"
                   disabled={selectedTables.length === 0}
                 >
                   Proceed to Seat

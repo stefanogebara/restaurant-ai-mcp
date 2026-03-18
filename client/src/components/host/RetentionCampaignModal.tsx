@@ -88,7 +88,7 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
 
         {sent ? (
           <div className="p-8 text-center">
-            <div className="w-16 h-16 bg-green-600/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-rose-600/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <ThiingsIcon name="mail" pxSize={32} />
             </div>
             <h3 className="text-lg font-medium text-deep-charcoal mb-2">{t('retentionCampaign.sent')}</h3>

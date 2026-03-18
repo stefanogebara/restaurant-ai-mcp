@@ -126,7 +126,7 @@ export default function SubscriptionManage() {
             <div className="flex items-center gap-5">
               <div>
                 <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
-                  subscription.status === 'active' ? 'bg-green-600/[8%] text-green-600' :
+                  subscription.status === 'active' ? 'bg-rose-600/[8%] text-rose-600' :
                   subscription.status === 'trialing' ? 'bg-sky-500/[8%] text-sky-500' :
                   subscription.status === 'past_due' ? 'bg-red-600/[8%] text-red-600' :
                   'bg-soft-gray text-stone-gray'

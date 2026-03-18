@@ -191,7 +191,7 @@ export default function PhoneInput({
           {localNumber && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
               {isValid ? (
-                <ThiingsIcon name="check" pxSize={20} className="text-green-600" />
+                <ThiingsIcon name="check" pxSize={20} className="text-rose-600" />
               ) : (
                 <ThiingsIcon name="alert-triangle" pxSize={20} className="text-amber-600" />
               )}

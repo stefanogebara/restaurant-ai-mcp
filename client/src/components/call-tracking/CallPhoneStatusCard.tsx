@@ -20,8 +20,8 @@ function StatusBadge({ status }: { status: PhoneStatusData['status'] }) {
   switch (status) {
     case 'active':
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-500/10 text-green-600 text-xs font-semibold rounded-full">
-          <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-500/10 text-rose-600 text-xs font-semibold rounded-full">
+          <span className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
           {t('callTracking.statusActive')}
         </span>
       );

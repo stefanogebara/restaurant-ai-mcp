@@ -26,7 +26,7 @@ const SCENE_LABEL_KEYS = [
 
 // ─── Glass helpers ──────────────────────────────────────────────
 const glass = 'backdrop-blur-xl bg-white/[0.03] border border-white/[0.07]';
-const glassGreen = 'backdrop-blur-xl bg-emerald-500/[0.06] border border-emerald-400/[0.12]';
+const glassGreen = 'backdrop-blur-xl bg-rose-500/[0.06] border border-rose-400/[0.12]';
 const glassRed = 'backdrop-blur-xl bg-red-500/[0.06] border border-red-400/[0.12]';
 const glassAmber = 'backdrop-blur-xl bg-amber-500/[0.06] border border-amber-400/[0.12]';
 const glassBurgundy = 'backdrop-blur-xl bg-burgundy/[0.06] border border-burgundy/[0.15]';
@@ -293,7 +293,7 @@ function SceneRevenue({ progress }: { progress: number }) {
                   <div className="text-[13px] font-medium text-white/80">{r.name}</div>
                   <div className="text-[10px] text-white/25">{r.time} - {r.size}p</div>
                 </div>
-                <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400/70">confirmed</span>
+                <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">confirmed</span>
               </motion.div>
             ))}
 
@@ -315,7 +315,7 @@ function SceneRevenue({ progress }: { progress: number }) {
                         animate={{ opacity: 1, scale: 1, filter: 'blur(0px)', width: 'auto' }}
                         exit={{ opacity: 0, scale: 0.5, width: 0 }}
                         transition={{ type: 'spring', stiffness: 300, damping: 18 }}
-                        className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${glassGreen} text-emerald-400 overflow-hidden whitespace-nowrap`}
+                        className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${glassGreen} text-rose-400 overflow-hidden whitespace-nowrap`}
                       >
                         +168
                       </motion.span>
@@ -324,7 +324,7 @@ function SceneRevenue({ progress }: { progress: number }) {
                 </div>
                 <div className="text-[10px] text-white/25">20:00 - 4 guests - 3 visits</div>
               </div>
-              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400">confirmed</span>
+              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400">confirmed</span>
             </motion.div>
 
             {/* Alessandro — second prediction */}
@@ -345,7 +345,7 @@ function SceneRevenue({ progress }: { progress: number }) {
                         animate={{ opacity: 1, scale: 1, filter: 'blur(0px)', width: 'auto' }}
                         exit={{ opacity: 0, scale: 0.5, width: 0 }}
                         transition={{ type: 'spring', stiffness: 300, damping: 18 }}
-                        className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${glassGreen} text-emerald-400 overflow-hidden whitespace-nowrap`}
+                        className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${glassGreen} text-rose-400 overflow-hidden whitespace-nowrap`}
                       >
                         +252
                       </motion.span>
@@ -354,7 +354,7 @@ function SceneRevenue({ progress }: { progress: number }) {
                 </div>
                 <div className="text-[10px] text-white/25">19:30 - 6 guests - VIP</div>
               </div>
-              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400">confirmed</span>
+              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400">confirmed</span>
             </motion.div>
           </div>
         </motion.div>
@@ -369,12 +369,12 @@ function SceneRevenue({ progress }: { progress: number }) {
           >
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-[9px] uppercase tracking-widest text-emerald-400/40 mb-1">
+                <div className="text-[9px] uppercase tracking-widest text-rose-400/40 mb-1">
                   Predicted Daily Revenue
                 </div>
                 <div className="flex items-baseline gap-2.5">
                   <motion.span
-                    className="text-3xl font-bold text-emerald-400"
+                    className="text-3xl font-bold text-rose-400"
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
@@ -385,7 +385,7 @@ function SceneRevenue({ progress }: { progress: number }) {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.25 }}
-                    className="text-sm font-bold text-emerald-400/60"
+                    className="text-sm font-bold text-rose-400/60"
                   >
                     +18%
                   </motion.span>
@@ -431,7 +431,7 @@ function SceneNoShow({ progress }: { progress: number }) {
             <div className="text-[13px] font-medium text-white/80">Giovanni B.</div>
             <div className="text-[10px] text-white/25">12:00 - 4 guests</div>
           </div>
-          <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400/70">confirmed</span>
+          <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">confirmed</span>
         </motion.div>
 
         {/* Risk row — zooms in with pulsing red glow */}
@@ -466,7 +466,7 @@ function SceneNoShow({ progress }: { progress: number }) {
                     initial={{ opacity: 0, scale: 0.3, filter: 'blur(10px)' }}
                     animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
                     transition={{ type: 'spring', stiffness: 300, damping: 18 }}
-                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${glassGreen} text-emerald-400`}
+                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${glassGreen} text-rose-400`}
                   >
                     arrived
                   </motion.span>
@@ -495,7 +495,7 @@ function SceneNoShow({ progress }: { progress: number }) {
             <div className="text-[13px] font-medium text-white/80">Maria Santos</div>
             <div className="text-[10px] text-white/25">20:00 - 4 guests</div>
           </div>
-          <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400/70">confirmed</span>
+          <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">confirmed</span>
         </motion.div>
       </div>
 
@@ -527,7 +527,7 @@ function SceneNoShow({ progress }: { progress: number }) {
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-6" stroke="#34d399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </PulsingIcon>
               <div>
-                <div className="text-[12px] font-semibold text-emerald-400">Guest arrived - deposit released</div>
+                <div className="text-[12px] font-semibold text-rose-400">Guest arrived - deposit released</div>
                 <div className="text-[10px] text-white/35">Lucas Ferreira checked in at 18:52</div>
               </div>
             </div>
@@ -586,7 +586,7 @@ function SceneManagerAI({ progress }: { progress: number }) {
               <div className="text-[13px] font-medium text-white/80">{r.name}</div>
               <div className="text-[10px] text-white/25">{r.time} - {r.size}p</div>
             </div>
-            <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400/70">confirmed</span>
+            <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">confirmed</span>
           </motion.div>
         ))}
       </div>
@@ -909,7 +909,7 @@ export default function DashboardWalkthroughSection() {
               </div>
               <div className="flex items-center gap-1.5">
                 <StatusDot />
-                <span className="text-[10px] text-emerald-400/60 font-medium">AI Active</span>
+                <span className="text-[10px] text-rose-400/60 font-medium">AI Active</span>
               </div>
             </div>
 

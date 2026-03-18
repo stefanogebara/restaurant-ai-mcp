@@ -15,14 +15,14 @@ export default function RevenueOpportunities() {
     switch (priority) {
       case 'high': return 'bg-red-600';
       case 'medium': return 'bg-amber-600';
-      case 'low': return 'bg-green-500';
+      case 'low': return 'bg-rose-500';
       default: return 'bg-warm-stone';
     }
   };
 
   const getDifficultyBadge = (difficulty: string) => {
     switch (difficulty) {
-      case 'low': return 'bg-green-500/15 text-emerald-800';
+      case 'low': return 'bg-rose-500/15 text-rose-800';
       case 'medium': return 'bg-amber-600/15 text-amber-800';
       case 'high': return 'bg-red-600/15 text-red-800';
       default: return 'bg-soft-gray text-charcoal-dark';
@@ -75,7 +75,7 @@ export default function RevenueOpportunities() {
       {summary && (
         <div className="grid grid-cols-2 gap-4 p-6 bg-soft-gray/30 border-b border-border-gray">
           <div className="text-center">
-            <div className="text-3xl font-bold text-green-600">{formatCurrency(summary.total_potential_revenue)}</div>
+            <div className="text-3xl font-bold text-rose-600">{formatCurrency(summary.total_potential_revenue)}</div>
             <div className="text-xs text-warm-stone mt-1">{t('analytics.totalPotential')}</div>
           </div>
           <div className="text-center">
@@ -122,10 +122,10 @@ export default function RevenueOpportunities() {
 
                 {/* Metrics */}
                 <div className="grid grid-cols-2 gap-4 mt-4">
-                  <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3">
-                    <div className="text-xs text-green-600 font-medium mb-1">{t('analytics.potentialGain')}</div>
-                    <div className="text-2xl font-bold text-green-700">{formatCurrency(opp.potential_gain)}</div>
-                    <div className="text-xs text-green-600 mt-1">{t('analytics.recoveryRate', { rate: opp.recovery_rate })}</div>
+                  <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3">
+                    <div className="text-xs text-rose-600 font-medium mb-1">{t('analytics.potentialGain')}</div>
+                    <div className="text-2xl font-bold text-rose-700">{formatCurrency(opp.potential_gain)}</div>
+                    <div className="text-xs text-rose-600 mt-1">{t('analytics.recoveryRate', { rate: opp.recovery_rate })}</div>
                   </div>
                   <div className="bg-soft-gray/50 border border-border-gray rounded-xl p-3">
                     <div className="text-xs text-warm-stone font-medium mb-1">{t('analytics.timeline')}</div>

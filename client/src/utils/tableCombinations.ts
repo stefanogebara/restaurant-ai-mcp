@@ -188,7 +188,7 @@ export function formatTableNumbers(tables: Table[]): string {
  * Get a color class based on combination score
  */
 export function getCombinationColorClass(score: number): string {
-  if (score >= 140) return 'bg-green-500/20 border-green-500/40 text-green-400';
+  if (score >= 140) return 'bg-rose-500/20 border-rose-500/40 text-rose-400';
   if (score >= 100) return 'bg-yellow-500/20 border-yellow-500/40 text-yellow-400';
   return 'bg-orange-500/20 border-orange-500/40 text-orange-400';
 }

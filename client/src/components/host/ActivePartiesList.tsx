@@ -76,7 +76,7 @@ function LiveCountdown({ seatedMinutesAgo, estimatedDurationMinutes }: { seatedM
   const { text, showWarning } = formatTime(remainingMinutes, isOverdue);
 
   return (
-    <span className={`font-semibold flex items-center gap-1 ${isOverdue ? 'text-burgundy' : 'text-green-600'}`}>
+    <span className={`font-semibold flex items-center gap-1 ${isOverdue ? 'text-burgundy' : 'text-rose-600'}`}>
       {showWarning && <ThiingsIcon name="alert-triangle" size="xs" />}
       {text}
     </span>
@@ -166,7 +166,7 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
               </button>
               <button
                 onClick={() => handleCompleteService(party.service_id, party.customer_name)}
-                className="flex-1 px-3 py-2 text-sm bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-3 py-2 text-sm bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={completeServiceMutation.isPending}
               >
                 {completeServiceMutation.isPending && (

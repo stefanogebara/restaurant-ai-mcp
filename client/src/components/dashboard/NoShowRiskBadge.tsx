@@ -6,7 +6,7 @@ interface NoShowRiskBadgeProps {
 }
 
 const RISK_STYLES = {
-  low: { bg: 'bg-green-600/[8%]', text: 'text-green-600' },
+  low: { bg: 'bg-rose-600/[8%]', text: 'text-rose-600' },
   medium: { bg: 'bg-amber-500/[8%]', text: 'text-amber-500' },
   high: { bg: 'bg-red-600/[8%]', text: 'text-red-600' },
   'very-high': { bg: 'bg-red-700/[8%]', text: 'text-red-700' },

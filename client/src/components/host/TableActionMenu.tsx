@@ -32,7 +32,7 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
     {
       label: 'Mark as Free',
       iconName: 'green-check',
-      color: 'text-green-600',
+      color: 'text-rose-600',
       show: table.status !== 'Available',
       onClick: () => updateTableMutation.mutate({ status: 'Available' }),
     },
@@ -88,7 +88,7 @@ export default function TableActionMenu({ table, onClose }: TableActionMenuProps
                 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold
                 ${
                   table.status === 'Available'
-                    ? 'bg-green-600/10 text-green-600'
+                    ? 'bg-rose-600/10 text-rose-600'
                     : table.status === 'Occupied'
                     ? 'bg-burgundy/10 text-burgundy'
                     : table.status === 'Being Cleaned'

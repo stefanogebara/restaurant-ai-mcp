@@ -255,7 +255,7 @@ export default function DemoAIInsightsBar({
               <h3 className="text-sm font-semibold text-deep-charcoal leading-none">{ui.title}</h3>
               <p className="text-[10px] text-muted-stone mt-0.5">{ui.powered}</p>
             </div>
-            <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.4)]" />
+            <div className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_6px_rgba(34,197,94,0.4)]" />
           </div>
 
           {/* Messages area */}

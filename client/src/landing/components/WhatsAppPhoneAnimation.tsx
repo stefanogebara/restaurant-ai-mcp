@@ -56,7 +56,7 @@ function ChatBubble({ message }: { message: ChatMessage }) {
       <div
         className={`max-w-[85%] px-3 py-2 shadow-sm text-[13px] leading-relaxed ${
           isCustomer
-            ? 'bg-green-100 rounded-2xl rounded-tr-sm text-deep-charcoal'
+            ? 'bg-rose-100 rounded-2xl rounded-tr-sm text-deep-charcoal'
             : 'bg-white rounded-2xl rounded-tl-sm text-deep-charcoal'
         }`}
       >

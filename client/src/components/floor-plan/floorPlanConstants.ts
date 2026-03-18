@@ -23,7 +23,7 @@ export const EDITOR_CSS = `
 export const STATUS_STYLES: Record<string, {
   fill: string; stroke: string; text: string; chairFill: string;
 }> = {
-  available: { fill: '#ECFDF5', stroke: '#10B981', text: '#064E3B', chairFill: '#10B981' },
+  available: { fill: '#ECFDF5', stroke: '#9F1239', text: '#064E3B', chairFill: '#9F1239' },
   occupied:  { fill: '#FFF1F2', stroke: '#E11D48', text: '#881337', chairFill: '#E11D48' },
   reserved:  { fill: '#F5F3FF', stroke: '#7C3AED', text: '#3730A3', chairFill: '#7C3AED' },
   cleaning:  { fill: '#FFFBEB', stroke: '#D97706', text: '#78350F', chairFill: '#D97706' },
@@ -68,7 +68,7 @@ export const CAPACITIES = [2, 4, 6, 8, 10];
 // ── Legend items ──────────────────────────────────────────────────────────────
 
 export const LEGEND_ITEMS = [
-  { key: 'available', label: 'Available', stroke: '#10B981', fill: '#ECFDF5' },
+  { key: 'available', label: 'Available', stroke: '#9F1239', fill: '#ECFDF5' },
   { key: 'occupied',  label: 'Occupied',  stroke: '#E11D48', fill: '#FFF1F2' },
   { key: 'reserved',  label: 'Reserved',  stroke: '#7C3AED', fill: '#F5F3FF' },
   { key: 'cleaning',  label: 'Cleaning',  stroke: '#D97706', fill: '#FFFBEB' },

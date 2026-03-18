@@ -60,7 +60,7 @@ export default function VoiceExperimentPanel() {
           <button
             onClick={() => promoteMutation.mutate()}
             disabled={promoteMutation.isPending}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
+            className="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm hover:bg-rose-700 disabled:opacity-50"
           >
             Promote
           </button>

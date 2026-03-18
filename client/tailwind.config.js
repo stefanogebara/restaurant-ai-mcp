@@ -20,14 +20,14 @@ export default {
         'nordic-teal': '#9F1239',
         'nordic-teal-dark': '#881337',
         'nordic-text': '#111827',
-        'nordic-success': '#059669',
+        'nordic-success': '#9F1239',
         'nordic-warning': '#D97706',
         // Legacy aliases (mapped to Nordic equivalents)
         'warm-bg': '#FFFFFF',
         'warm-hover': '#F9FAFB',
         'warm-divider': '#E5E7EB',
         'accent-burgundy': '#9F1239',
-        'success-green': '#059669',
+        'success-green': '#9F1239',
         'warning-amber': '#D97706',
         // Modern Elegant Theme Colors
         'warm-white': '#FAFAF9',

@@ -56,7 +56,7 @@ export default function StatsBar({
         label={t('dashboard.stats.reservations')}
         value={String(reservationsToday)}
         change={reservationsToday > 0 ? `${seatedReservations} ${t('dashboard.stats.seated')}` : ''}
-        changeColor="text-green-600"
+        changeColor="text-rose-600"
         barPercent={seatedPercent}
         barColor="#9F1239"
         icon={<ThiingsIcon name="calendar-days" pxSize={16} className="text-muted-stone" />}
@@ -69,7 +69,7 @@ export default function StatsBar({
         valueSuffix={` / ${totalTables}`}
         valueColor="text-[#9F1239]"
         change={`${occupancyPercent}% ${t('dashboard.stats.capacity')}`}
-        changeColor={occupancyPercent >= 80 ? 'text-red-600' : occupancyPercent >= 50 ? 'text-amber-600' : 'text-green-600'}
+        changeColor={occupancyPercent >= 80 ? 'text-red-600' : occupancyPercent >= 50 ? 'text-amber-600' : 'text-rose-600'}
         barPercent={occupancyPercent}
         barColor={occupancyPercent >= 80 ? '#ef4444' : occupancyPercent >= 50 ? '#d97706' : '#16a34a'}
         icon={<ThiingsIcon name="layout-grid" pxSize={16} className="text-muted-stone" />}
@@ -94,7 +94,7 @@ export default function StatsBar({
           label={t('dashboard.stats.predictedRevenue', 'Predicted Revenue')}
           value={formatCurrency(predictedRevenue)}
           change={`${activeParties} ${t('dashboard.stats.activeParties', 'active')} · ${totalGuests} ${t('dashboard.stats.seated', 'seated')}`}
-          changeColor="text-emerald-600"
+          changeColor="text-rose-600"
           barPercent={Math.min(100, Math.round((predictedRevenue / Math.max(predictedRevenue * 1.3, 1)) * 100))}
           barColor="#10b981"
           icon={<ThiingsIcon name="trending-up" pxSize={16} className="text-muted-stone" />}

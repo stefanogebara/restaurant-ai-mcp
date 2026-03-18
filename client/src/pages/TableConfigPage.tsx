@@ -180,7 +180,7 @@ export default function TableConfigPage() {
         </div>
         <div className="bg-white rounded-2xl p-6 border border-border-gray">
           <div className="text-xs font-medium text-muted-stone mb-2">{t('settings.activeTables')}</div>
-          <div className="text-[32px] font-bold tracking-tight leading-none text-green-600">{stats.active || 0}</div>
+          <div className="text-[32px] font-bold tracking-tight leading-none text-rose-600">{stats.active || 0}</div>
         </div>
         <div className="bg-white rounded-2xl p-6 border border-border-gray">
           <div className="text-xs font-medium text-muted-stone mb-2">{t('settings.locations')}</div>
@@ -258,7 +258,7 @@ export default function TableConfigPage() {
                       <span
                         className={`w-2 h-2 rounded-full ${
                           table.status === 'available'
-                            ? 'bg-green-500'
+                            ? 'bg-rose-500'
                             : table.status === 'occupied'
                             ? 'bg-red-600'
                             : 'bg-amber-600'

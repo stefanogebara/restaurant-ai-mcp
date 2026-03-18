@@ -65,7 +65,7 @@ export default function CustomerBehavioralProfile({ profile, textSignals }: Cust
             <div className="text-xs text-stone-gray mb-1">Cuisine Preferences</div>
             <div className="flex flex-wrap gap-1">
               {profile.cuisine_preferences.map((c) => (
-                <span key={c} className="px-2 py-0.5 bg-green-600/10 text-green-600 text-xs rounded-full">{c}</span>
+                <span key={c} className="px-2 py-0.5 bg-rose-600/10 text-rose-600 text-xs rounded-full">{c}</span>
               ))}
             </div>
           </div>
@@ -89,7 +89,7 @@ export default function CustomerBehavioralProfile({ profile, textSignals }: Cust
           <div className="text-xs text-stone-gray mb-1">Feedback Sentiment</div>
           <div className={`text-sm font-medium capitalize ${getSentimentColor(profile?.feedback_sentiment || 'neutral')}`}>
             {profile?.feedback_sentiment || 'Neutral'}
-            {(profile?.compliment_count || 0) > 0 && <span className="text-green-600 ml-2">+{profile?.compliment_count} compliments</span>}
+            {(profile?.compliment_count || 0) > 0 && <span className="text-rose-600 ml-2">+{profile?.compliment_count} compliments</span>}
             {(profile?.complaint_count || 0) > 0 && <span className="text-red-600 ml-2">{profile?.complaint_count} complaints</span>}
           </div>
         </div>

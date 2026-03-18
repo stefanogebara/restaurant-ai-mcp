@@ -356,8 +356,8 @@ export default function VoiceSettingsPage() {
               </h2>
               {waStatus.meta.approved ? (
                 <div className="space-y-1">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                     {t('voiceSettings.waConnected', 'Connected')}
                   </span>
                   {waStatus.meta.phone_number && (

@@ -18,8 +18,8 @@ export default function WhatsAppStatsCard() {
           </div>
           <h3 className="text-sm font-semibold text-deep-charcoal">WhatsApp</h3>
         </div>
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700">
-          <span className="w-1 h-1 rounded-full bg-emerald-500" />
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-rose-50 text-rose-700">
+          <span className="w-1 h-1 rounded-full bg-rose-500" />
           Active
         </span>
       </div>

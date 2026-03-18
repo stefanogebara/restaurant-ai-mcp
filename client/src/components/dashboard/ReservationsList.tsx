@@ -72,10 +72,10 @@ export default function ReservationsList({
             {displayed.length}
           </span>
           {displayed.length > 0 && (
-            <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-600">
+            <span className="flex items-center gap-1 text-[10px] font-medium text-rose-600">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
               </span>
               {t('common.live', 'Live')}
             </span>
@@ -207,7 +207,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
     ? { label: tl('seated'), classes: 'bg-violet-600/[8%] text-violet-600' }
     : isHighRisk
     ? { label: tl('atRisk'), classes: 'bg-amber-600/[8%] text-amber-600' }
-    : { label: tl('confirmed'), classes: 'bg-green-600/[8%] text-green-600' };
+    : { label: tl('confirmed'), classes: 'bg-rose-600/[8%] text-rose-600' };
 
   const hue = (reservation.customer_name?.charCodeAt(0) ?? 65) * 137 % 360;
   const avatarStyle = { background: `linear-gradient(135deg, hsl(${hue},50%,75%), hsl(${(hue + 40) % 360},50%,65%))` };
@@ -229,7 +229,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
         <div className="text-xs text-muted-stone mt-0.5 truncate">
           {reservation.party_size} {tl('people')}
           {avgSpendPerCover ? (
-            <span className="text-emerald-600 font-medium"> · ~{formatCurrency(predictReservationRevenue(reservation.party_size, avgSpendPerCover, byPartySize))}</span>
+            <span className="text-rose-600 font-medium"> · ~{formatCurrency(predictReservationRevenue(reservation.party_size, avgSpendPerCover, byPartySize))}</span>
           ) : null}
           {reservation.special_requests && <span> · {reservation.special_requests}</span>}
         </div>
@@ -279,7 +279,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
             </span>
           </button>
         ) : reservation.intervention_taken ? (
-          <span className="text-xs font-semibold px-3 py-1 rounded-full bg-green-600/[8%] text-green-600">
+          <span className="text-xs font-semibold px-3 py-1 rounded-full bg-rose-600/[8%] text-rose-600">
             <span className="inline-flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60 flex-shrink-0" />
               {tl('actionTaken')}

@@ -28,7 +28,7 @@ const TEMPLATE_LABEL_KEYS: Record<string, string> = {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  APPROVED: 'bg-emerald-50 text-emerald-700',
+  APPROVED: 'bg-rose-50 text-rose-700',
   PENDING: 'bg-amber-50 text-amber-700',
   IN_REVIEW: 'bg-amber-50 text-amber-700',
   REJECTED: 'bg-red-50 text-red-700',
@@ -36,7 +36,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 const STATUS_DOT: Record<string, string> = {
-  APPROVED: 'bg-emerald-500',
+  APPROVED: 'bg-rose-500',
   PENDING: 'bg-amber-500',
   IN_REVIEW: 'bg-amber-500',
   REJECTED: 'bg-red-500',
@@ -167,9 +167,9 @@ function PhoneVerificationPanel() {
           <p className="text-xs text-warm-stone">{phone?.verified_name}</p>
         </div>
         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-          isVerified ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+          isVerified ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'
         }`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${isVerified ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+          <span className={`w-1.5 h-1.5 rounded-full ${isVerified ? 'bg-rose-500' : 'bg-amber-500'}`} />
           {isVerified ? t('settings.verified') : (phone?.code_verification_status || 'Unknown').replace(/_/g, ' ')}
         </span>
       </div>
@@ -209,7 +209,7 @@ function PhoneVerificationPanel() {
       )}
 
       {message && (
-        <p className={`text-xs mt-2 ${message.type === 'success' ? 'text-emerald-600' : 'text-red-600'}`}>
+        <p className={`text-xs mt-2 ${message.type === 'success' ? 'text-rose-600' : 'text-red-600'}`}>
           {message.text}
         </p>
       )}
@@ -292,11 +292,11 @@ export default function WhatsAppSettingsPage() {
             <span
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
                 status?.api_configured
-                  ? 'bg-emerald-50 text-emerald-700'
+                  ? 'bg-rose-50 text-rose-700'
                   : 'bg-amber-50 text-amber-700'
               }`}
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${status?.api_configured ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+              <span className={`w-1.5 h-1.5 rounded-full ${status?.api_configured ? 'bg-rose-500' : 'bg-amber-500'}`} />
               {status?.api_configured ? t('settings.apiConnected') : t('settings.apiNotConfigured')}
             </span>
           </div>
@@ -460,7 +460,7 @@ export default function WhatsAppSettingsPage() {
             </p>
           )}
           {testResult && (
-            <p className={`text-sm mt-2 ${testResult.success ? 'text-emerald-600' : 'text-red-600'}`}>
+            <p className={`text-sm mt-2 ${testResult.success ? 'text-rose-600' : 'text-red-600'}`}>
               {testResult.message}
             </p>
           )}

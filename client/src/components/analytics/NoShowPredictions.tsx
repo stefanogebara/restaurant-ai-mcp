@@ -18,7 +18,7 @@ export default function NoShowPredictions() {
     switch (level) {
       case 'high': return 'text-red-600 bg-red-600/10 border-red-600/20';
       case 'medium': return 'text-amber-600 bg-amber-600/10 border-amber-600/20';
-      case 'low': return 'text-green-600 bg-green-500/10 border-green-500/20';
+      case 'low': return 'text-rose-600 bg-rose-500/10 border-rose-500/20';
       default: return 'text-stone-gray bg-warm-white border-border-gray';
     }
   };
@@ -27,7 +27,7 @@ export default function NoShowPredictions() {
     switch (level) {
       case 'high': return 'bg-red-600 text-white';
       case 'medium': return 'bg-amber-600 text-white';
-      case 'low': return 'bg-green-600 text-white';
+      case 'low': return 'bg-rose-600 text-white';
       default: return 'bg-stone-gray text-white';
     }
   };
@@ -79,7 +79,7 @@ export default function NoShowPredictions() {
       <div className="p-6">
         {predictions.length === 0 ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 bg-green-600/10 rounded-2xl flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-rose-600/10 rounded-2xl flex items-center justify-center">
               <ThiingsIcon name="check-circle" pxSize={28} />
             </div>
             <p className="font-semibold text-deep-charcoal">{t('analytics.noHighRiskReservations')}</p>

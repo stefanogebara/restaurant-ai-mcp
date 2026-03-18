@@ -80,7 +80,7 @@ export function ManagerChatPanel({ onClose }: ManagerChatPanelProps) {
     <div className="fixed bottom-20 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-96 h-[70vh] sm:h-[520px] max-h-[520px] bg-white rounded-2xl shadow-xl border border-border-gray flex flex-col z-50">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border-gray">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-green-500" />
+          <div className="w-2 h-2 rounded-full bg-rose-500" />
           <span className="font-semibold text-deep-charcoal text-sm">{t('dashboard.managerAssistant')}</span>
         </div>
         <button type="button" aria-label="Close" onClick={onClose} className="text-muted-stone hover:text-deep-charcoal text-lg leading-none">&times;</button>

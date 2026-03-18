@@ -14,7 +14,7 @@ export default function FloorPlanProgressRing({ cx, cy, radius, party }: Progres
   const circ = 2 * Math.PI * radius;
   const offset = circ * (1 - progress);
 
-  let ringColor = '#10B981';
+  let ringColor = '#9F1239';
   if (party.isOverdue) ringColor = '#E11D48';
   else if (progress > 0.75) ringColor = '#D97706';
   else if (progress > 0.5)  ringColor = '#F59E0B';

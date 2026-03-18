@@ -198,7 +198,7 @@ export default function DemoVoiceAgent({ restaurantName, scrapedData, onContinue
               custom={i}
               animate="pulse"
               variants={ringVariants}
-              className={`absolute inset-0 rounded-full border ${isActive ? 'border-green-400/40' : 'border-burgundy/40'}`}
+              className={`absolute inset-0 rounded-full border ${isActive ? 'border-rose-400/40' : 'border-burgundy/40'}`}
             />
           ))}
 
@@ -221,7 +221,7 @@ export default function DemoVoiceAgent({ restaurantName, scrapedData, onContinue
             transition={{ duration: isActive ? 1.5 : 3, repeat: Infinity, ease: 'easeInOut' }}
             className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center transition-colors duration-500 ${
               isActive
-                ? 'bg-gradient-to-br from-green-500 to-green-700'
+                ? 'bg-gradient-to-br from-rose-500 to-rose-700'
                 : 'bg-gradient-to-br from-burgundy to-burgundy-dark'
             }`}
           >
@@ -258,8 +258,8 @@ export default function DemoVoiceAgent({ restaurantName, scrapedData, onContinue
           className="inline-flex items-center gap-2 px-4 py-2 bg-white/[6%] rounded-full"
         >
           <span className="relative flex h-2 w-2">
-            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isActive ? 'bg-green-400' : 'bg-green-400'} opacity-75`} />
-            <span className={`relative inline-flex rounded-full h-2 w-2 ${isActive ? 'bg-green-500' : 'bg-green-500'}`} />
+            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isActive ? 'bg-rose-400' : 'bg-rose-400'} opacity-75`} />
+            <span className={`relative inline-flex rounded-full h-2 w-2 ${isActive ? 'bg-rose-500' : 'bg-rose-500'}`} />
           </span>
           <span className="text-xs font-medium text-white/70">
             {scriptError

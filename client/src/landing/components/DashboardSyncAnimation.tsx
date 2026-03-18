@@ -42,7 +42,7 @@ export default function DashboardSyncAnimation({
 
   const statusBadge = (s: 'confirmed' | 'pending') =>
     s === 'confirmed'
-      ? 'bg-green-100 text-green-700'
+      ? 'bg-rose-100 text-rose-700'
       : 'bg-amber-100 text-amber-700';
 
   return (
@@ -55,7 +55,7 @@ export default function DashboardSyncAnimation({
         <div className="flex gap-1.5">
           <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
           <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
-          <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
+          <div className="w-2.5 h-2.5 rounded-full bg-rose-500/70" />
         </div>
         <div className="flex-1 mx-3 bg-[#1a1a1a] rounded-md px-3 py-1 text-[10px] text-white/30 text-center truncate">
           seatable.one/dashboard

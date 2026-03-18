@@ -88,7 +88,7 @@ export default function DemoSlideIn() {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackShareClicked({ location: 'post_demo', channel: 'whatsapp' })}
-              className="text-xs text-warm-stone hover:text-[#25D366] transition-colors underline underline-offset-2"
+              className="text-xs text-warm-stone hover:text-[#9F1239] transition-colors underline underline-offset-2"
             >
               {t('landing.slideIn.share', 'Share with a friend')}
             </a>

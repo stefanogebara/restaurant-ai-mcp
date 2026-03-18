@@ -26,7 +26,7 @@ const TIME_SLOTS = [
 
 // Colors for different reservation statuses
 const STATUS_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  confirmed: { bg: 'bg-emerald-100', border: 'border-emerald-400', text: 'text-emerald-800' },
+  confirmed: { bg: 'bg-rose-100', border: 'border-rose-400', text: 'text-rose-800' },
   pending: { bg: 'bg-amber-100', border: 'border-amber-400', text: 'text-amber-800' },
   seated: { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-800' },
   completed: { bg: 'bg-soft-gray', border: 'border-muted-stone', text: 'text-stone-gray' },
@@ -310,7 +310,7 @@ export default function ReservationsCalendarGrid({
                       onRecordOutcome(selectedReservation);
                       setSelectedReservation(null);
                     }}
-                    className="flex-1 px-4 py-2.5 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 transition-colors"
+                    className="flex-1 px-4 py-2.5 bg-rose-600 text-white font-medium rounded-xl hover:bg-rose-700 transition-colors"
                   >
                     {t('reservationsCalendarGrid.recordOutcome')}
                   </button>

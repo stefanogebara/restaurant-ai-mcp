@@ -67,7 +67,7 @@ export default function TeamPage() {
     const map: Record<string, string> = {
       owner: 'bg-burgundy/10 text-burgundy',
       manager: 'bg-blue-50 text-blue-700',
-      host: 'bg-green-50 text-green-700',
+      host: 'bg-rose-50 text-rose-700',
       staff: 'bg-soft-gray text-stone-gray',
     };
     return map[role] ?? 'bg-soft-gray text-stone-gray';
@@ -107,7 +107,7 @@ export default function TeamPage() {
             </button>
           </div>
           {feedback && (
-            <p className={`text-sm ${feedback.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+            <p className={`text-sm ${feedback.type === 'success' ? 'text-rose-600' : 'text-red-600'}`}>
               {feedback.msg}
             </p>
           )}

@@ -28,7 +28,7 @@ export function getStatusColor(status: string): string {
   switch (status) {
     case 'Waiting': return 'bg-burgundy/10 text-burgundy';
     case 'Notified': return 'bg-amber-600/10 text-amber-600';
-    case 'Seated': return 'bg-green-600/10 text-green-600';
+    case 'Seated': return 'bg-rose-600/10 text-rose-600';
     case 'Cancelled': return 'bg-red-500/10 text-red-500';
     case 'No Show': return 'bg-stone-gray/10 text-stone-gray';
     default: return 'bg-stone-gray/10 text-stone-gray';

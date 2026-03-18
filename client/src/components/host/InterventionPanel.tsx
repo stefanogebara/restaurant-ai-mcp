@@ -83,7 +83,7 @@ export default function InterventionPanel({
     return (
       <div className="bg-white rounded-2xl border border-border-gray p-6 shadow-md">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-green-600/10 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-rose-600/10 flex items-center justify-center">
             <ThiingsIcon name="star" pxSize={24} />
           </div>
           <div>
@@ -150,7 +150,7 @@ export default function InterventionPanel({
             return (
               <div
                 key={reservation.reservation_id}
-                className={`p-4 transition-colors ${hasActed ? 'bg-green-600/5' : 'hover:bg-soft-gray'}`}
+                className={`p-4 transition-colors ${hasActed ? 'bg-rose-600/5' : 'hover:bg-soft-gray'}`}
               >
                 <div className="flex items-start justify-between gap-4">
                   {/* Reservation Info */}
@@ -173,7 +173,7 @@ export default function InterventionPanel({
                         />
                       </button>
                       {hasActed && (
-                        <span className="px-2 py-0.5 bg-green-600/10 text-green-600 text-xs font-medium rounded-full">
+                        <span className="px-2 py-0.5 bg-rose-600/10 text-rose-600 text-xs font-medium rounded-full">
                           ✓ Contacted
                         </span>
                       )}
@@ -226,7 +226,7 @@ export default function InterventionPanel({
                     <a
                       href={`sms:${reservation.customer_phone}?body=Hi ${reservation.customer_name}, this is [Restaurant Name]. We're looking forward to seeing you at ${reservation.time} today!`}
                       onClick={() => handleAction(reservation, 'sms_reminder')}
-                      className="px-3 py-2 bg-green-600/10 hover:bg-green-600/20 text-green-600 rounded-xl text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+                      className="px-3 py-2 bg-rose-600/10 hover:bg-rose-600/20 text-rose-600 rounded-xl text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
                       title="Send SMS reminder"
                     >
                       <ThiingsIcon name="mail" pxSize={16} />

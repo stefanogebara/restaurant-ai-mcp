@@ -27,8 +27,8 @@ const STATUS_BADGES: Record<string, { label: string; classes: string }> = {
   scheduled: { label: 'Scheduled', classes: 'bg-blue-50 text-blue-700' },
   active: { label: 'Sending', classes: 'bg-amber-50 text-amber-700' },
   sending: { label: 'Sending', classes: 'bg-amber-50 text-amber-700' },
-  completed: { label: 'Complete', classes: 'bg-emerald-50 text-emerald-700' },
-  sent: { label: 'Sent', classes: 'bg-emerald-50 text-emerald-700' },
+  completed: { label: 'Complete', classes: 'bg-rose-50 text-rose-700' },
+  sent: { label: 'Sent', classes: 'bg-rose-50 text-rose-700' },
   failed: { label: 'Failed', classes: 'bg-red-50 text-red-700' },
 };
 
@@ -67,8 +67,8 @@ export default function CampaignManager() {
     <div className="bg-white border border-border-gray rounded-2xl p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-            <ThiingsIcon name="send" pxSize={16} className="text-emerald-600" />
+          <div className="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center">
+            <ThiingsIcon name="send" pxSize={16} className="text-rose-600" />
           </div>
           <h3 className="text-sm font-semibold text-deep-charcoal">{t('insights.whatsappCampaigns', 'WhatsApp Campaigns')}</h3>
         </div>
@@ -234,7 +234,7 @@ function CampaignRow({
             <button
               onClick={onSend}
               disabled={isSending}
-              className="mt-2 w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+              className="mt-2 w-full py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
             >
               {isSending ? 'Sending...' : 'Send Now'}
             </button>

@@ -30,8 +30,8 @@ const SHOWCASE_ITEMS: ShowcaseItem[] = [
     titleKey: 'landing.showcase.whatsappTitle',
     descKey: 'landing.showcase.whatsappDesc',
     videoSrc: '/videos/whatsapp-demo.mp4',
-    color: 'text-green-600',
-    bgColor: 'bg-green-50',
+    color: 'text-rose-600',
+    bgColor: 'bg-rose-50',
   },
   {
     id: 'voice',

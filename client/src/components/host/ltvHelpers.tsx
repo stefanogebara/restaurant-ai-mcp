@@ -5,7 +5,7 @@ export function getTierColor(tier: string): string {
   switch (tier) {
     case 'vip': return 'text-violet-600';
     case 'regular': return 'text-burgundy';
-    case 'occasional': return 'text-green-600';
+    case 'occasional': return 'text-rose-600';
     case 'new': return 'text-stone-gray';
     case 'at_risk': return 'text-amber-600';
     default: return 'text-stone-gray';
@@ -16,7 +16,7 @@ export function getTierBgColor(tier: string): string {
   switch (tier) {
     case 'vip': return 'bg-violet-600/10 border-violet-600/30';
     case 'regular': return 'bg-burgundy/10 border-burgundy/30';
-    case 'occasional': return 'bg-green-600/10 border-green-600/30';
+    case 'occasional': return 'bg-rose-600/10 border-rose-600/30';
     case 'new': return 'bg-stone-gray/10 border-stone-gray/30';
     case 'at_risk': return 'bg-amber-600/10 border-amber-600/30';
     default: return 'bg-stone-gray/10 border-stone-gray/30';

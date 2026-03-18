@@ -21,7 +21,7 @@ export default function LTVKeyMetrics({ stats }: LTVKeyMetricsProps) {
         <div className="text-xs text-stone-gray">Total Customers</div>
       </div>
 
-      <div className="p-4 bg-green-600/10 rounded-xl border border-green-600/20">
+      <div className="p-4 bg-rose-600/10 rounded-xl border border-rose-600/20">
         <div className="flex items-center justify-between mb-2">
           <ThiingsIcon name="trending-up" size="sm" />
           <span className="text-2xl font-bold text-deep-charcoal">{formatCurrency(stats.avg_ltv)}</span>

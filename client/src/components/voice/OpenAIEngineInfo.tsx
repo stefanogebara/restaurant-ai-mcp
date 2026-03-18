@@ -6,7 +6,7 @@ interface Props {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  active:  'text-emerald-700 bg-emerald-50',
+  active:  'text-rose-700 bg-rose-50',
   testing: 'text-amber-700 bg-amber-50',
 };
 

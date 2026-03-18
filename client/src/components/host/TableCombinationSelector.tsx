@@ -139,7 +139,7 @@ export default function TableCombinationSelector({
                   <div
                     className={`h-full transition-all ${
                       combination.score >= 140
-                        ? 'bg-green-600'
+                        ? 'bg-rose-600'
                         : combination.score >= 100
                         ? 'bg-amber-600'
                         : 'bg-burgundy'

@@ -65,10 +65,10 @@ export default function SeatPartyModal({ isOpen, data, onClose, onRetryTableSele
 
         {seatPartyMutation.isSuccess ? (
           <div className="text-center py-6">
-            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4 text-green-600">
+            <div className="w-16 h-16 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-4 text-rose-600">
               <ThiingsIcon name="check" pxSize={32} />
             </div>
-            <div className="text-lg font-semibold text-green-600 mb-2">
+            <div className="text-lg font-semibold text-rose-600 mb-2">
               Party Seated Successfully!
             </div>
             <div className="text-sm text-stone-gray mb-6">
@@ -145,7 +145,7 @@ export default function SeatPartyModal({ isOpen, data, onClose, onRetryTableSele
               </button>
               <button
                 onClick={handleConfirm}
-                className="flex-1 px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-green-600 disabled:bg-muted-stone disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-3 bg-rose-600 text-white rounded-xl hover:bg-rose-700 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-rose-600 disabled:bg-muted-stone disabled:cursor-not-allowed"
                 disabled={seatPartyMutation.isPending}
               >
                 {seatPartyMutation.isPending ? 'Seating...' : 'Confirm Seating'}

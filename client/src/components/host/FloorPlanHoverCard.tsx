@@ -46,7 +46,7 @@ export default function FloorPlanHoverCard({
 
   const total = party ? party.timeElapsed + party.timeRemaining : 0;
   const pct = party ? (party.isOverdue ? 100 : (total > 0 ? Math.min((party.timeElapsed / total) * 100, 100) : 0)) : 0;
-  let barColor = '#10B981';
+  let barColor = '#9F1239';
   if (party?.isOverdue) barColor = '#E11D48';
   else if (pct > 75) barColor = '#D97706';
 

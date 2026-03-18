@@ -226,7 +226,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-semibold text-deep-charcoal">{reservation.customer_name}</span>
                             {reservation.checked_in && (
-                              <span className="px-2 py-0.5 bg-green-600/10 text-green-600 text-xs rounded-full">
+                              <span className="px-2 py-0.5 bg-rose-600/10 text-rose-600 text-xs rounded-full">
                                 ✓ {t('reservationsCalendar.checkedIn')}
                               </span>
                             )}
@@ -304,7 +304,7 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
       {/* Export Button */}
       <button
         onClick={exportToCSV}
-        className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+        className="w-full px-4 py-3 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
       >
         <ThiingsIcon name="download" pxSize={20} />
         {t('reservationsCalendar.exportCsv', { count: reservations.length })}

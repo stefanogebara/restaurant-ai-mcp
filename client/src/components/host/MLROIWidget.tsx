@@ -73,7 +73,7 @@ export default function MLROIWidget() {
           {/* ROI Metric - Hero */}
           <div className={`p-4 rounded-2xl border-2 ${
             meetsTarget
-              ? 'bg-green-600/10 border-green-600/30'
+              ? 'bg-rose-600/10 border-rose-600/30'
               : 'bg-amber-600/10 border-amber-600/30'
           }`}>
             <div className="flex items-center justify-between mb-2">
@@ -94,13 +94,13 @@ Example:
                 />
               </div>
               {meetsTarget && (
-                <span className="px-2 py-1 bg-green-600/20 text-green-600 text-xs rounded-full font-semibold">
+                <span className="px-2 py-1 bg-rose-600/20 text-rose-600 text-xs rounded-full font-semibold">
                   Target Met!
                 </span>
               )}
             </div>
             <div className="flex items-baseline gap-2">
-              <div className={`text-4xl font-bold ${meetsTarget ? 'text-green-600' : 'text-amber-600'}`}>
+              <div className={`text-4xl font-bold ${meetsTarget ? 'text-rose-600' : 'text-amber-600'}`}>
                 {roiValue}%
               </div>
               <div className="text-sm text-stone-gray">
@@ -181,7 +181,7 @@ Each intervention has a cost and potential value saved."
             <div className="text-xs font-semibold text-stone-gray mb-2">Outcomes</div>
             <div className="grid grid-cols-3 gap-2">
               <div className="text-center">
-                <div className="text-lg font-bold text-green-600">{data.outcomes.showed_up}</div>
+                <div className="text-lg font-bold text-rose-600">{data.outcomes.showed_up}</div>
                 <div className="text-xs text-stone-gray">Showed</div>
               </div>
               <div className="text-center">

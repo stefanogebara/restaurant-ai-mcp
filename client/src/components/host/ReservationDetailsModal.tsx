@@ -75,7 +75,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
         {/* Status Badge */}
         {reservation.checked_in && (
           <div className="mb-4">
-            <span className="px-3 py-1.5 bg-green-600/10 text-green-600 text-sm rounded-xl inline-flex items-center gap-2">
+            <span className="px-3 py-1.5 bg-rose-600/10 text-rose-600 text-sm rounded-xl inline-flex items-center gap-2">
               <ThiingsIcon name="check-circle" pxSize={16} />
               {t('reservationDetails.checkedIn')}
               {reservation.checked_in_at && (
@@ -122,7 +122,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
             <div className="bg-soft-gray rounded-xl p-4 border border-border-gray">
               <div className="text-xs text-muted-stone mb-1">{t('reservationDetails.phoneNumber')}</div>
               <div className="text-deep-charcoal font-semibold flex items-center gap-2">
-                <ThiingsIcon name="phone" pxSize={20} className="text-green-600" />
+                <ThiingsIcon name="phone" pxSize={20} className="text-rose-600" />
                 {reservation.customer_phone}
               </div>
             </div>
@@ -193,7 +193,7 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
                     {reservation.dietary_restrictions.map((restriction) => (
                       <span
                         key={restriction}
-                        className="px-2 py-0.5 bg-green-600/10 text-green-600 text-xs rounded-full"
+                        className="px-2 py-0.5 bg-rose-600/10 text-rose-600 text-xs rounded-full"
                       >
                         {restriction}
                       </span>

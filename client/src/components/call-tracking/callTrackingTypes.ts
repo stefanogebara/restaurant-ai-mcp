@@ -107,7 +107,7 @@ export function formatConfiguredDate(dateString: string | null): string {
 
 export function getOutcomeColor(outcome?: string): string {
   switch (outcome) {
-    case 'reservation_created': return 'bg-green-500/10 text-green-600';
+    case 'reservation_created': return 'bg-rose-500/10 text-rose-600';
     case 'information_only':    return 'bg-blue-500/10 text-blue-600';
     case 'error':               return 'bg-red-600/10 text-red-600';
     case 'abandoned':           return 'bg-warm-stone/10 text-stone-gray';
@@ -128,7 +128,7 @@ export function getOutcomeLabelKey(outcome?: string): string {
 
 export function getOutcomePillColor(outcome?: string): string {
   switch (outcome) {
-    case 'reservation_created': return 'bg-green-600/[8%] text-green-600';
+    case 'reservation_created': return 'bg-rose-600/[8%] text-rose-600';
     case 'information_only':    return 'bg-blue-500/[8%] text-blue-500';
     case 'error':               return 'bg-red-600/[8%] text-red-600';
     case 'abandoned':           return 'bg-amber-600/[8%] text-amber-600';

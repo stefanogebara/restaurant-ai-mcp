@@ -74,7 +74,7 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
           {/* Completed Services */}
           <div className="flex items-center justify-between p-3 bg-soft-gray rounded-xl">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-rose-600 rounded-lg flex items-center justify-center">
                 <ThiingsIcon name="check" size="sm" />
               </div>
               <div>

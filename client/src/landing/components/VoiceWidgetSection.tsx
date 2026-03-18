@@ -105,7 +105,7 @@ export default function VoiceWidgetSection() {
                     <button
                       type="button"
                       onClick={confirmStart}
-                      className="px-5 py-2 bg-green-600 hover:bg-green-500 text-white text-sm font-medium rounded-full transition-colors"
+                      className="px-5 py-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-medium rounded-full transition-colors"
                     >
                       {t('landing.voice.startCall', 'Start call')}
                     </button>

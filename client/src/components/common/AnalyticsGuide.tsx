@@ -180,7 +180,7 @@ export default function AnalyticsGuide({ page = 'ml' }: AnalyticsGuideProps) {
                 </div>
                 <div className="flex-1">
                   <h4 className="font-bold text-deep-charcoal text-sm mb-1">{metric.term}</h4>
-                  <p className="text-xs text-green-600 font-semibold mb-2">
+                  <p className="text-xs text-rose-600 font-semibold mb-2">
                     → {metric.simple}
                   </p>
                 </div>
@@ -192,7 +192,7 @@ export default function AnalyticsGuide({ page = 'ml' }: AnalyticsGuideProps) {
                   <p className="text-stone-gray mt-1">{metric.example}</p>
                 </div>
                 <div className="text-xs">
-                  <span className="text-green-600 font-semibold">{'\u2713'} {t('analytics.guide.whatsGood')}</span>
+                  <span className="text-rose-600 font-semibold">{'\u2713'} {t('analytics.guide.whatsGood')}</span>
                   <p className="text-stone-gray mt-1">{metric.good}</p>
                 </div>
               </div>

@@ -4,8 +4,8 @@ import ThiingsIcon, { type IconName } from '../common/ThiingsIcon';
 
 const COLOR_MAP: Record<string, string> = {
   red: 'bg-red-100 text-red-600',
-  green: 'bg-emerald-100 text-emerald-600',
-  emerald: 'bg-emerald-100 text-emerald-600',
+  green: 'bg-rose-100 text-rose-600',
+  emerald: 'bg-rose-100 text-rose-600',
   blue: 'bg-blue-100 text-blue-600',
   amber: 'bg-amber-100 text-amber-600',
   gray: 'bg-gray-100 text-gray-500',

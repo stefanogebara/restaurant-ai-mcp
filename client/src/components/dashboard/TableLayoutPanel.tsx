@@ -80,10 +80,10 @@ export default function TableLayoutPanel({
         <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E7EB]">
           <div className="flex items-center gap-2.5">
             <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] whitespace-nowrap">{t('tableLayout.title')}</span>
-            <span className="relative flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
+            <span className="relative flex items-center gap-1.5 text-xs font-semibold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full">
               <span className="relative flex h-2 w-2 flex-shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
               </span>
               {t('dashboard.live')}
             </span>
@@ -251,11 +251,11 @@ interface ActionButtonProps {
 
 const actionColors = {
   green: {
-    bg: 'bg-green-50 hover:bg-green-100',
-    border: 'border-green-200',
-    iconBg: 'bg-green-600',
-    title: 'text-green-900',
-    sub: 'text-green-700',
+    bg: 'bg-rose-50 hover:bg-rose-100',
+    border: 'border-rose-200',
+    iconBg: 'bg-rose-600',
+    title: 'text-rose-900',
+    sub: 'text-rose-700',
   },
   blue: {
     bg: 'bg-blue-50 hover:bg-blue-100',

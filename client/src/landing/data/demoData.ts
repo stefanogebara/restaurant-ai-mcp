@@ -134,7 +134,7 @@ export const FEATURES = [
     icon: "Users",
     title: "Smart Table Matching",
     description: "Intelligent algorithm recommends optimal table combinations for any party size",
-    gradient: "from-emerald-500 to-teal-500",
+    gradient: "from-rose-500 to-teal-500",
     demo: "See how the system finds the perfect table match instantly",
   },
   {

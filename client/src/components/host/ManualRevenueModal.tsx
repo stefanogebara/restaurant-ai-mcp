@@ -127,7 +127,7 @@ export default function ManualRevenueModal({
         {/* Header */}
         <div className="sticky top-0 bg-white px-6 py-4 border-b border-border-gray flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-600/10 rounded-xl">
+            <div className="p-2 bg-rose-600/10 rounded-xl">
               <ThiingsIcon name="dollar" size="sm" />
             </div>
             <h2 className="text-xl font-bold text-deep-charcoal">{t.title}</h2>
@@ -351,7 +351,7 @@ export default function ManualRevenueModal({
             <button
               type="submit"
               disabled={createRevenue.isPending}
-              className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-3 bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {createRevenue.isPending ? (
                 <>

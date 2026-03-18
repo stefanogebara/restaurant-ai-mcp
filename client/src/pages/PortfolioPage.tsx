@@ -210,14 +210,14 @@ function HeroSection() {
             <div className="relative bg-white/8 backdrop-blur-xl border border-white/10 rounded-3xl p-6 space-y-4">
               {/* Header */}
               <div className="flex items-center gap-3 pb-3 border-b border-white/10">
-                <div className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-full bg-rose-500 flex items-center justify-center">
                   <span className="text-white text-xs font-bold">WA</span>
                 </div>
                 <div>
                   <div className="text-[#FAFAF9] font-semibold text-sm">WhatsApp IA</div>
                   <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-emerald-400 text-xs font-medium">Online</span>
+                    <div className="w-2 h-2 rounded-full bg-rose-400 animate-pulse" />
+                    <span className="text-rose-400 text-xs font-medium">Online</span>
                   </div>
                 </div>
               </div>

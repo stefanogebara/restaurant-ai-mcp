@@ -125,8 +125,8 @@ export default function ReservationNotesEditor({
               onClick={() => setCustomerType('Local')}
               className={`p-4 rounded-2xl border-2 transition-all ${
                 customerType === 'Local'
-                  ? 'bg-green-600/10 border-green-600 text-green-600'
-                  : 'bg-soft-gray border-border-gray text-stone-gray hover:border-green-600/50'
+                  ? 'bg-rose-600/10 border-rose-600 text-rose-600'
+                  : 'bg-soft-gray border-border-gray text-stone-gray hover:border-rose-600/50'
               }`}
             >
               <div className="text-center">
@@ -152,8 +152,8 @@ export default function ReservationNotesEditor({
                 onClick={() => toggleDietaryRestriction(restriction)}
                 className={`p-3 rounded-2xl border-2 transition-all flex items-center justify-between ${
                   dietaryRestrictions.includes(restriction)
-                    ? 'bg-green-600/10 border-green-600 text-green-600'
-                    : 'bg-soft-gray border-border-gray text-stone-gray hover:border-green-600/50'
+                    ? 'bg-rose-600/10 border-rose-600 text-rose-600'
+                    : 'bg-soft-gray border-border-gray text-stone-gray hover:border-rose-600/50'
                 }`}
               >
                 <span className="font-medium">{restriction}</span>

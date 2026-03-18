@@ -55,7 +55,7 @@ export default function DepositActions({ reservationId, depositAmount, onActionC
         type="button"
         onClick={handleRelease}
         disabled={isReleasing || isCapturing}
-        className="text-[11px] font-medium px-2 py-1 rounded-lg border border-green-600/30 text-green-600 hover:bg-green-600/[6%] transition-colors disabled:opacity-50"
+        className="text-[11px] font-medium px-2 py-1 rounded-lg border border-rose-600/30 text-rose-600 hover:bg-rose-600/[6%] transition-colors disabled:opacity-50"
         title={t('dashboard.deposit.releaseTitle', 'Release deposit hold (guest arrived)')}
       >
         {isReleasing ? '...' : t('dashboard.deposit.release', 'Release')}

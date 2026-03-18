@@ -115,8 +115,8 @@ export default function QuickInterventionModal({
 
   const actionOptions: Array<{ id: string; label: string; icon: IconName; color: string }> = [
     { id: 'phone_call', label: t.called, icon: 'phone', color: 'bg-blue-500' },
-    { id: 'sms_reminder', label: t.sentSMS, icon: 'chat', color: 'bg-green-500' },
-    { id: 'whatsapp_reminder', label: t.sentWhatsApp, icon: 'chat', color: 'bg-emerald-500' },
+    { id: 'sms_reminder', label: t.sentSMS, icon: 'chat', color: 'bg-rose-500' },
+    { id: 'whatsapp_reminder', label: t.sentWhatsApp, icon: 'chat', color: 'bg-rose-500' },
     { id: 'deposit_required', label: t.depositRequired, icon: 'credit-card', color: 'bg-violet-500' },
     { id: 'other', label: t.other, icon: 'check-circle', color: 'bg-warm-stone' }
   ];
@@ -126,7 +126,7 @@ export default function QuickInterventionModal({
       case 'very-high': return 'bg-red-600/15 text-red-800 border-red-600/30';
       case 'high': return 'bg-orange-600/15 text-orange-800 border-orange-600/30';
       case 'medium': return 'bg-amber-600/15 text-amber-800 border-amber-600/30';
-      default: return 'bg-green-500/15 text-emerald-800 border-green-500/30';
+      default: return 'bg-rose-500/15 text-rose-800 border-rose-500/30';
     }
   };
 
@@ -225,12 +225,12 @@ export default function QuickInterventionModal({
 
           {/* Already taken indicator */}
           {reservation.intervention_taken && (
-            <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 flex items-center gap-2">
+            <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 flex items-center gap-2">
               <ThiingsIcon name="check-circle" size="sm" />
               <div>
-                <span className="text-emerald-800 font-medium">{t.alreadyTaken}</span>
+                <span className="text-rose-800 font-medium">{t.alreadyTaken}</span>
                 {reservation.intervention_type && (
-                  <span className="text-green-600 text-sm ml-2">
+                  <span className="text-rose-600 text-sm ml-2">
                     ({reservation.intervention_type.replace('_', ' ')})
                   </span>
                 )}
@@ -301,10 +301,10 @@ export default function QuickInterventionModal({
           {/* Success State */}
           {logIntervention.isSuccess && (
             <div className="text-center py-6">
-              <div className="w-16 h-16 bg-green-500/15 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-rose-500/15 rounded-full flex items-center justify-center mx-auto mb-4">
                 <ThiingsIcon name="check-circle" pxSize={32} />
               </div>
-              <p className="text-lg font-semibold text-emerald-800">{t.success}</p>
+              <p className="text-lg font-semibold text-rose-800">{t.success}</p>
             </div>
           )}
 

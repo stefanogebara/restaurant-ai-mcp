@@ -69,8 +69,8 @@ export default function RiskExplanationModal({
         };
       default:
         return {
-          color: 'text-green-600',
-          bg: 'bg-green-600/10',
+          color: 'text-rose-600',
+          bg: 'bg-rose-600/10',
           label: 'Low Risk',
           description: 'Low no-show probability. Standard handling.',
           iconName: 'green-check' as IconName
@@ -188,8 +188,8 @@ export default function RiskExplanationModal({
                     key={idx}
                     className="flex items-start gap-3 p-3 bg-soft-gray rounded-xl border border-border-gray"
                   >
-                    <div className="w-12 h-12 rounded-full bg-green-600/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-green-600 font-bold">
+                    <div className="w-12 h-12 rounded-full bg-rose-600/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-rose-600 font-bold">
                         {factor.impact}
                       </span>
                     </div>

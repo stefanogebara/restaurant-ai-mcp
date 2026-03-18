@@ -23,10 +23,10 @@ export default function Toast({ message, type, onClose, duration = 3000 }: Toast
     switch (type) {
       case 'success':
         return {
-          bg: 'bg-emerald-500/20 border-emerald-500/50',
+          bg: 'bg-rose-500/20 border-rose-500/50',
           iconName: 'check-circle' as const,
-          iconBg: 'bg-emerald-500/30',
-          text: 'text-emerald-400',
+          iconBg: 'bg-rose-500/30',
+          text: 'text-rose-400',
         };
       case 'error':
         return {
