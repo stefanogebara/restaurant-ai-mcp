@@ -65,6 +65,10 @@
   },
   "dashboard": {
     "welcome": "Bienvenido",
+    "goodMorning": "Buenos días",
+    "goodAfternoon": "Buenas tardes",
+    "goodEvening": "Buenas noches",
+    "noFeedbackYet": "Aún no se han recibido comentarios. Las calificaciones aparecerán aquí después de que los clientes respondan.",
     "todayReservations": "Reservas de Hoy",
     "activeParties": "Grupos Activos",
     "revenue": "Ingresos",

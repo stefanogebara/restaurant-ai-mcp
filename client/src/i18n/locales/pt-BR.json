@@ -71,6 +71,10 @@
   },
   "dashboard": {
     "welcome": "Bem-vindo",
+    "goodMorning": "Bom dia",
+    "goodAfternoon": "Boa tarde",
+    "goodEvening": "Boa noite",
+    "noFeedbackYet": "Nenhum feedback coletado ainda. As avaliações aparecerão aqui após os clientes responderem.",
     "todayReservations": "Reservas de Hoje",
     "activeParties": "Mesas Ocupadas",
     "revenue": "Receita",

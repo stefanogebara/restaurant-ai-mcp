@@ -57,11 +57,11 @@ function maybeTrackFirstReservation() {
   }
 }
 
-function getTimeGreeting(): string {
+function getTimeGreeting(t: (key: string, fallback: string) => string): string {
   const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  return 'Good evening';
+  if (hour < 12) return t('dashboard.goodMorning', 'Good morning');
+  if (hour < 17) return t('dashboard.goodAfternoon', 'Good afternoon');
+  return t('dashboard.goodEvening', 'Good evening');
 }
 
 export default function Dashboard() {
@@ -178,7 +178,7 @@ export default function Dashboard() {
     || user?.email?.split('@')[0]
     || '';
   const restaurantName = restaurantSettings?.restaurant_name || '';
-  const greeting = getTimeGreeting();
+  const greeting = getTimeGreeting(t);
 
   // ---- Computed metrics ----
   const waitlistCount = rawStats.waitlist_count || 0;
@@ -391,7 +391,7 @@ export default function Dashboard() {
         {/* ---- FAB: Add Walk-in ---- */}
         <button
           onClick={() => setShowWalkInModal(true)}
-          aria-label="Add walk-in"
+          aria-label={t('dashboard.addWalkIn', 'Add walk-in')}
           className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-accent-burgundy hover:opacity-90 active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
         >
           <ThiingsIcon name="plus" pxSize={24} />
