@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { Table } from '../../types/host.types';
 import TableCard from './TableCard';
 import ThiingsIcon from '../common/ThiingsIcon';
@@ -8,14 +9,16 @@ interface TableGridProps {
 }
 
 export default function TableGrid({ tables, onTableClick }: TableGridProps) {
+  const { t } = useTranslation();
+
   if (!tables || tables.length === 0) {
     return (
       <div className="text-center py-16">
         <div className="w-16 h-16 mx-auto mb-4 bg-soft-gray rounded-2xl flex items-center justify-center">
           <ThiingsIcon name="layout-grid" pxSize={28} />
         </div>
-        <p className="font-semibold text-deep-charcoal">No tables configured yet</p>
-        <p className="text-sm text-stone-gray mt-1">Tables will appear here after onboarding</p>
+        <p className="font-semibold text-deep-charcoal">{t('settings.noTablesTitle', 'No tables configured')}</p>
+        <p className="text-sm text-stone-gray mt-1">{t('settings.noTablesDescription', 'Add tables to start receiving reservations and managing your floor.')}</p>
       </div>
     );
   }
@@ -46,9 +49,9 @@ export default function TableGrid({ tables, onTableClick }: TableGridProps) {
               className="w-2.5 h-2.5 rounded-full flex-shrink-0"
               style={{ backgroundColor: locationColors[location] || '#6b7280' }}
             />
-            <span className="text-sm font-semibold text-deep-charcoal">{location}</span>
+            <span className="text-sm font-semibold text-deep-charcoal">{t(`floorPlan.location.${location.toLowerCase()}`, location)}</span>
             <span className="text-xs bg-soft-gray text-muted-stone px-2 py-0.5 rounded-full font-medium flex-shrink-0">
-              {locationTables.length} {locationTables.length === 1 ? 'table' : 'tables'}
+              {locationTables.length} {locationTables.length === 1 ? t('floorPlan.table', 'table') : t('floorPlan.tables', 'tables')}
             </span>
             <div className="flex-1 h-px bg-border-gray" />
           </div>

@@ -60,14 +60,14 @@ describe('TableGrid', () => {
   it('renders the empty state when tables array is empty', () => {
     render(<TableGrid tables={[]} />);
 
-    expect(screen.getByText('No tables configured yet')).toBeInTheDocument();
-    expect(screen.getByText('Tables will appear here after onboarding')).toBeInTheDocument();
+    expect(screen.getByText('No tables configured')).toBeInTheDocument();
+    expect(screen.getByText('Add tables to start receiving reservations and managing your floor.')).toBeInTheDocument();
   });
 
   it('renders the empty state when tables is undefined-like (empty array)', () => {
     render(<TableGrid tables={[]} />);
 
-    expect(screen.getByText('No tables configured yet')).toBeInTheDocument();
+    expect(screen.getByText('No tables configured')).toBeInTheDocument();
   });
 
   it('renders all tables from the provided array', () => {

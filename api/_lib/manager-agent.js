@@ -79,33 +79,43 @@ function getAnthropic() {
 }
 
 async function getRestaurantPlan(restaurantId) {
-  const { data, error } = await supabaseAdmin
-    .from('subscriptions')
-    .select('plan_name, status')
-    .eq('restaurant_id', restaurantId)
-    .in('status', ['active', 'trialing'])
-    .maybeSingle();
-  if (error) {
-    logger.error('getRestaurantPlan failed', { restaurantId, error: error.message });
-    throw error;
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('subscriptions')
+      .select('plan_name, status')
+      .eq('restaurant_id', restaurantId)
+      .in('status', ['active', 'trialing'])
+      .maybeSingle();
+    if (error) {
+      logger.error('getRestaurantPlan failed', { restaurantId, error: error.message });
+      return 'free';
+    }
+    return (data?.plan_name || 'free').toLowerCase();
+  } catch (err) {
+    logger.error('getRestaurantPlan unexpected error', { restaurantId, error: err.message });
+    return 'free';
   }
-  return (data?.plan_name || 'free').toLowerCase();
 }
 
 async function getManagerAIUsageThisMonth(restaurantId) {
-  const now = new Date();
-  const firstDay = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-01`;
-  const { data, error } = await supabaseAdmin
-    .from('usage_tracking')
-    .select('count')
-    .eq('restaurant_id', restaurantId)
-    .eq('metric_type', 'manager_ai_call')
-    .gte('period', firstDay);
-  if (error) {
-    logger.error('getManagerAIUsageThisMonth failed', { restaurantId, error: error.message });
-    throw error;
+  try {
+    const now = new Date();
+    const firstDay = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-01`;
+    const { data, error } = await supabaseAdmin
+      .from('usage_tracking')
+      .select('count')
+      .eq('restaurant_id', restaurantId)
+      .eq('metric_type', 'manager_ai_call')
+      .gte('period', firstDay);
+    if (error) {
+      logger.error('getManagerAIUsageThisMonth failed', { restaurantId, error: error.message });
+      return 0;
+    }
+    return (data || []).reduce((sum, row) => sum + (row.count || 0), 0);
+  } catch (err) {
+    logger.error('getManagerAIUsageThisMonth unexpected error', { restaurantId, error: err.message });
+    return 0;
   }
-  return (data || []).reduce((sum, row) => sum + (row.count || 0), 0);
 }
 
 async function getConversationHistory(restaurantId) {

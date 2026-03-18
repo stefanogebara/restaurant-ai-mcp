@@ -86,8 +86,8 @@ export default function ActivityFeedWidget() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-deep-charcoal truncate">
-                  {EVENT_MESSAGE_KEYS[event.type]
-                    ? t(EVENT_MESSAGE_KEYS[event.type], event.message, { name: event.customer_name || '' })
+                  {EVENT_MESSAGE_KEYS[event.type] && event.customer_name
+                    ? t(EVENT_MESSAGE_KEYS[event.type], event.message, { name: event.customer_name })
                     : event.message}
                 </p>
                 <p className="text-xs text-muted-stone truncate">

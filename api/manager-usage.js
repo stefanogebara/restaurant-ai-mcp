@@ -35,11 +35,11 @@ module.exports = async function handler(req, res) {
 
     if (subError) {
       logger.error('manager-usage: subscriptions query failed', { error: subError.message });
-      return res.status(500).json({ error: 'Internal error' });
+      // Gracefully fall back to free tier instead of 500
     }
 
     const plan = (sub?.plan_name || 'free').toLowerCase();
-    const limits = getPlanLimits(plan);
+    const limits = getPlanLimits(plan) || getPlanLimits('free');
     const monthlyLimit = limits?.managerAICallsMonthly ?? 0;
 
     const now = new Date();
