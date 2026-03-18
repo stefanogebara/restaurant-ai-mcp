@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.tsx'
 import { initSentry } from './lib/sentry'
 import { initAnalytics } from './lib/analytics'
+import { i18nReady } from './i18n/config'
 
 // Initialize Sentry error tracking
 initSentry();
@@ -14,11 +15,14 @@ initAnalytics();
 // Enable dark mode by default
 document.documentElement.classList.add('dark')
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+// Wait for locale bundle to load before first render (prevents flash of English)
+i18nReady.then(() => {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  )
+})
 // Register service worker for PWA + force update check on every page load
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

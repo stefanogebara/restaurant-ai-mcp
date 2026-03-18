@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
-import { languageOptions } from '../../i18n/config';
+import { languageOptions, preloadAndSwitchLanguage } from '../../i18n/config';
 import { authFetch } from '../../services/api';
 import { LS_LANGUAGE, LS_RESTAURANT_ID } from '../../config/localStorageKeys';
 
@@ -23,7 +23,7 @@ export default function LanguageSelector({
 
   const updateLanguage = useMutation({
     mutationFn: async (languageCode: string) => {
-      await i18n.changeLanguage(languageCode);
+      await preloadAndSwitchLanguage(languageCode);
       localStorage.setItem(LS_LANGUAGE, languageCode);
 
       const restaurantId = localStorage.getItem(LS_RESTAURANT_ID);

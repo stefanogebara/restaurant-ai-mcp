@@ -28,7 +28,14 @@ async function loadLocale(lng: string) {
   if (key === 'en' || !localeLoaders[key]) return;
   if (i18n.hasResourceBundle(key, 'translation')) return;
   const mod = await localeLoaders[key]();
-  i18n.addResourceBundle(key, 'translation', mod.default, true, true);
+  const translations = mod.default || mod;
+  i18n.addResourceBundle(key, 'translation', translations, true, true);
+}
+
+/** Pre-load locale before switching — avoids race where React renders before translations arrive */
+export async function preloadAndSwitchLanguage(lng: string) {
+  await loadLocale(lng);
+  await i18n.changeLanguage(lng);
 }
 
 // One-time migration: move explicit language choice from old key to new key.
@@ -71,10 +78,9 @@ i18n
 
 // Load the detected language on startup (if not English)
 const detectedLng = i18n.language;
-if (detectedLng && !detectedLng.startsWith('en')) {
-  loadLocale(detectedLng);
-  document.documentElement.lang = detectedLng;
-}
+export const i18nReady: Promise<void> = (detectedLng && !detectedLng.startsWith('en'))
+  ? loadLocale(detectedLng).then(() => { document.documentElement.lang = detectedLng; })
+  : Promise.resolve();
 
 // Load locale dynamically whenever language changes
 i18n.on('languageChanged', (lng) => {

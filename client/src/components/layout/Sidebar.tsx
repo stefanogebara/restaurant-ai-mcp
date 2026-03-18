@@ -7,7 +7,7 @@ import { useSubscription } from '../../hooks/useSubscription';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePermission } from '../../hooks/usePermission';
 import { hasFeatureAccess, type PlanFeatures, type PlanType } from '../../config/planFeatures';
-import { languageOptions } from '../../i18n/config';
+import { languageOptions, preloadAndSwitchLanguage } from '../../i18n/config';
 import { LS_LANGUAGE } from '../../config/localStorageKeys';
 
 interface NavItem {
@@ -75,7 +75,7 @@ export default function Sidebar() {
   }, []);
 
   const handleLanguageChange = async (langCode: string) => {
-    await i18n.changeLanguage(langCode);
+    await preloadAndSwitchLanguage(langCode);
     localStorage.setItem(LS_LANGUAGE, langCode);
     setIsLanguageOpen(false);
   };
