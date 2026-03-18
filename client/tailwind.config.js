@@ -13,13 +13,22 @@ export default {
         mono: ['JetBrains Mono', 'monospace'],
       },
       colors: {
-        // Warm Editorial Theme Colors
-        'warm-bg': '#FAFAF8',
-        'warm-hover': '#F5F3EF',
-        'warm-divider': '#E8E5E0',
-        'accent-burgundy': '#8B1A2B',
-        'success-green': '#2D6A4F',
-        'warning-amber': '#D4A017',
+        // Nordic Clean Theme Colors
+        'nordic-surface': '#F9FAFB',
+        'nordic-border': '#E5E7EB',
+        'nordic-muted': '#9CA3AF',
+        'nordic-teal': '#0D9488',
+        'nordic-teal-dark': '#0F766E',
+        'nordic-text': '#111827',
+        'nordic-success': '#059669',
+        'nordic-warning': '#D97706',
+        // Legacy aliases (mapped to Nordic equivalents)
+        'warm-bg': '#FFFFFF',
+        'warm-hover': '#F9FAFB',
+        'warm-divider': '#E5E7EB',
+        'accent-burgundy': '#0D9488',
+        'success-green': '#059669',
+        'warning-amber': '#D97706',
         // Modern Elegant Theme Colors
         'warm-white': '#FAFAF9',
         'soft-gray': '#F5F5F4',

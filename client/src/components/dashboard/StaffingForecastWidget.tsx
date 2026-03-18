@@ -19,7 +19,7 @@ export default function StaffingForecastWidget() {
 
   return (
     <div className="p-6 space-y-4">
-      <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#8C8C8C]">
+      <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111827]">
         {t('dashboard.staffingForecast')}
       </h2>
 

@@ -1,15 +1,11 @@
 /**
- * Unified Dashboard - Warm Editorial Design
+ * Unified Dashboard - Nordic Clean Design
  *
  * Layout:
- *   Header (greeting, date, controls)
- *   Metrics Row (4 inline metrics with vertical dividers)
- *   Section Divider
+ *   Header (title, date, controls)
+ *   Metrics Row (4 metrics with border-bottom, gap-12)
  *   Reservations Table (upcoming)
- *   Section Divider
- *   Two-column split (60/40):
- *     Left: Table Layout
- *     Right: Waitlist + Active Parties
+ *   Grid 12 cols: Floor Plan (7) + Waitlist/Active (5)
  *   Additional widgets below
  *
  * All panels are extracted into standalone components.
@@ -23,8 +19,6 @@ import { useQuery } from '@tanstack/react-query';
 import { hostAPI } from '../services/api';
 import { useCompleteService } from '../hooks/useCompleteService';
 import { usePlanInfo } from '../hooks/useSubscription';
-import { useAuth } from '../contexts/AuthContext';
-import { useRestaurantSettings } from '../hooks/useRestaurantSettings';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import TableLayoutPanel from '../components/dashboard/TableLayoutPanel';
 import ReservationsList from '../components/dashboard/ReservationsList';
@@ -57,19 +51,10 @@ function maybeTrackFirstReservation() {
   }
 }
 
-function getTimeGreeting(t: (key: string, fallback: string) => string): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return t('dashboard.goodMorning', 'Good morning');
-  if (hour < 17) return t('dashboard.goodAfternoon', 'Good afternoon');
-  return t('dashboard.goodEvening', 'Good evening');
-}
-
 export default function Dashboard() {
   const { t, i18n } = useTranslation();
   useDocumentTitle(t('pageTitles.dashboard'));
   const { success } = useToast();
-  const { user } = useAuth();
-  const { data: restaurantSettings } = useRestaurantSettings();
 
   // Show a one-time welcome toast when arriving from demo conversion
   useEffect(() => {
@@ -173,12 +158,7 @@ export default function Dashboard() {
   const dateLocale = i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US';
   const fullDateStr = new Date().toLocaleDateString(dateLocale, { weekday: 'long', month: 'long', day: 'numeric' });
 
-  // ---- Greeting ----
-  const firstName = user?.user_metadata?.full_name?.split(' ')[0]
-    || user?.email?.split('@')[0]
-    || '';
-  const restaurantName = restaurantSettings?.restaurant_name || '';
-  const greeting = getTimeGreeting(t);
+  // ---- Short date for header ----
 
   // ---- Computed metrics ----
   const waitlistCount = rawStats.waitlist_count || 0;
@@ -209,8 +189,8 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="dashboard min-h-screen bg-warm-bg p-6 sm:p-8 md:p-12 pb-28 sm:pb-12">
-        <div className="max-w-[1220px] mx-auto">
+      <div className="dashboard min-h-screen bg-white px-10 pt-10 pb-20">
+        <div className="max-w-[1240px]">
 
           {/* ---- Payment Failure Banner ---- */}
           {subStatus === 'past_due' && (
@@ -249,25 +229,25 @@ export default function Dashboard() {
           )}
 
           {/* ---- Header Section ---- */}
-          <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-16 mt-14 sm:mt-0 gap-4">
+          <header className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-14 mt-14 sm:mt-0 gap-4">
             <div className="pl-12 lg:pl-0">
-              <h1 className="font-serif text-[32px] leading-tight mb-2">
-                {greeting}{firstName ? `, ${firstName}` : ''}
+              <h1 className="font-sans text-2xl font-semibold tracking-tight text-[#111827]">
+                {t('dashboard.overview', 'Overview')}
               </h1>
-              <p className="text-[#8C8C8C] text-sm font-medium uppercase tracking-wide">
-                {fullDateStr}{restaurantName ? ` \u00B7 ${restaurantName}` : ''}
+              <p className="text-[13px] text-[#9CA3AF] font-mono uppercase tracking-widest mt-1">
+                {fullDateStr}
               </p>
             </div>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => window.location.href = '/host-dashboard/reports'}
-                className="text-sm font-medium text-[#1A1A1A] hover:underline underline-offset-4 decoration-warm-divider"
+                className="px-4 py-2 border border-[#E5E7EB] rounded-lg text-[13px] font-medium bg-transparent hover:bg-[#F9FAFB] transition-colors text-[#111827]"
               >
                 {t('dashboard.reports', 'Export')}
               </button>
               <button
                 onClick={() => setShowWalkInModal(true)}
-                className="bg-accent-burgundy text-white px-6 py-3 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"
+                className="px-4 py-2 bg-[#0D9488] hover:bg-[#0F766E] text-white border border-[#0D9488] rounded-lg text-[13px] font-medium transition-colors"
               >
                 + {t('dashboard.addWalkIn')}
               </button>
@@ -276,55 +256,51 @@ export default function Dashboard() {
 
           {/* ---- Metrics Row ---- */}
           {isLoading ? (
-            <section className="grid grid-cols-2 sm:grid-cols-4 items-center mb-16">
+            <section className="grid grid-cols-2 sm:grid-cols-4 gap-12 mb-12 pb-12 border-b border-[#E5E7EB]">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className={`${i < 3 ? 'pr-8 border-r border-warm-divider' : 'pl-8'} ${i > 0 && i < 3 ? 'px-8' : ''}`}>
-                  <div className="h-3 w-20 bg-warm-divider rounded animate-pulse mb-3" />
-                  <div className="h-10 w-16 bg-warm-divider rounded animate-pulse" />
+                <div key={i}>
+                  <div className="h-7 w-16 bg-[#E5E7EB] rounded animate-pulse mb-3" />
+                  <div className="h-3 w-20 bg-[#E5E7EB] rounded animate-pulse" />
                 </div>
               ))}
             </section>
           ) : (
-            <section className="grid grid-cols-2 sm:grid-cols-4 items-center mb-16">
+            <section className="grid grid-cols-2 sm:grid-cols-4 gap-12 mb-12 pb-12 border-b border-[#E5E7EB]">
               {/* Reservations */}
-              <div className="pr-8 border-r border-warm-divider">
-                <p className="text-[#8C8C8C] text-[11px] font-semibold tracking-[0.2em] uppercase mb-3">
+              <div>
+                <p className="font-mono text-[28px] font-medium leading-none text-[#111827]">{todayReservations.length}</p>
+                <p className="text-[12px] uppercase tracking-[0.05em] text-[#9CA3AF] mt-3">
                   {t('dashboard.stats.reservations', 'Reservations')}
                 </p>
-                <p className="font-mono text-4xl text-[#1A1A1A]">{todayReservations.length}</p>
               </div>
               {/* Guests Expected */}
-              <div className="px-8 border-r border-warm-divider">
-                <p className="text-[#8C8C8C] text-[11px] font-semibold tracking-[0.2em] uppercase mb-3">
-                  {t('dashboard.stats.guests', 'Guests Expected')}
+              <div>
+                <p className="font-mono text-[28px] font-medium leading-none text-[#111827]">{guestsExpected}</p>
+                <p className="text-[12px] uppercase tracking-[0.05em] text-[#9CA3AF] mt-3">
+                  {t('dashboard.stats.guests', 'Guests')}
                 </p>
-                <p className="font-mono text-4xl text-[#1A1A1A]">{guestsExpected}</p>
               </div>
               {/* Capacity */}
-              <div className="px-8 border-r border-warm-divider">
-                <p className="text-[#8C8C8C] text-[11px] font-semibold tracking-[0.2em] uppercase mb-3">
-                  {t('dashboard.stats.capacity', 'Capacity')}
+              <div>
+                <p className="font-mono text-[28px] font-medium leading-none text-[#111827]">
+                  {occupiedTables}/{totalTables}
                 </p>
-                <p className="font-mono text-4xl text-[#1A1A1A]">
-                  {occupiedTables}/{totalTables}{' '}
-                  <span className="text-xl text-[#8C8C8C]">{t('dashboard.stats.tables', 'tables')}</span>
+                <p className="text-[12px] uppercase tracking-[0.05em] text-[#9CA3AF] mt-3">
+                  {t('dashboard.stats.capacity', 'Tables Available')}
                 </p>
               </div>
               {/* Waitlist */}
-              <div className="pl-8">
-                <p className="text-[#8C8C8C] text-[11px] font-semibold tracking-[0.2em] uppercase mb-3">
+              <div>
+                <p className="font-mono text-[28px] font-medium leading-none text-[#111827]">{waitlistCount}</p>
+                <p className="text-[12px] uppercase tracking-[0.05em] text-[#9CA3AF] mt-3">
                   {t('waitlist.title', 'Waitlist')}
                 </p>
-                <p className="font-mono text-4xl text-[#1A1A1A]">{waitlistCount}</p>
               </div>
             </section>
           )}
 
-          {/* ---- Section Divider ---- */}
-          <div className="border-t border-warm-divider mt-12 mb-12" />
-
           {/* ---- Reservations Section ---- */}
-          <section className="mb-20">
+          <section className="mb-16">
             <ReservationsList
               todayReservations={todayReservations}
               tomorrowReservations={tomorrowReservations}
@@ -340,13 +316,10 @@ export default function Dashboard() {
             />
           </section>
 
-          {/* ---- Section Divider ---- */}
-          <div className="border-t border-warm-divider mt-12 mb-12" />
-
-          {/* ---- Two-Column Split: Floor Plan (60%) + Waitlist/Active (40%) ---- */}
-          <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
+          {/* ---- Two-Column Split: Floor Plan (col-span-7) + Waitlist/Active (col-span-5) ---- */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
             {/* Left: Floor Plan / Table Layout */}
-            <section className="w-full lg:w-[60%]">
+            <section className="lg:col-span-7">
               <TableLayoutPanel
                 tables={tables}
                 activeParties={activeParties}
@@ -356,7 +329,7 @@ export default function Dashboard() {
             </section>
 
             {/* Right: Waitlist + Active Parties */}
-            <section className="w-full lg:w-[40%] space-y-12">
+            <section className="lg:col-span-5 space-y-14">
               <div>
                 <WaitlistPanel onSeatNow={handleSeatFromWaitlist} />
               </div>
@@ -370,7 +343,7 @@ export default function Dashboard() {
           </div>
 
           {/* ---- Section Divider ---- */}
-          <div className="border-t border-warm-divider mt-12 mb-12" />
+          <div className="border-t border-[#E5E7EB] mt-16 mb-12" />
 
           {/* ---- Additional Widgets ---- */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -392,7 +365,7 @@ export default function Dashboard() {
         <button
           onClick={() => setShowWalkInModal(true)}
           aria-label={t('dashboard.addWalkIn', 'Add walk-in')}
-          className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-accent-burgundy hover:opacity-90 active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
+          className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-[#0D9488] hover:bg-[#0F766E] active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
         >
           <ThiingsIcon name="plus" pxSize={24} />
         </button>
@@ -451,15 +424,15 @@ export default function Dashboard() {
       {/* Complete Service Confirmation */}
       {showCompleteModal && serviceToComplete && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-warm-divider p-6 max-w-sm w-full">
-            <h3 className="text-lg font-bold text-[#1A1A1A] mb-2">{t('dashboard.completeService')}</h3>
-            <p className="text-sm text-[#8C8C8C] mb-6">
+          <div className="bg-white rounded-2xl shadow-2xl border border-[#E5E7EB] p-6 max-w-sm w-full">
+            <h3 className="text-lg font-bold text-[#111827] mb-2">{t('dashboard.completeService')}</h3>
+            <p className="text-sm text-[#9CA3AF] mb-6">
               {t('dashboard.completeServiceFor', { name: serviceToComplete.customer_name })}
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => { setShowCompleteModal(false); setServiceToComplete(null); }}
-                className="flex-1 px-4 py-2.5 border border-warm-divider text-[#8C8C8C] rounded-xl hover:bg-warm-hover transition-colors font-medium"
+                className="flex-1 px-4 py-2.5 border border-[#E5E7EB] text-[#9CA3AF] rounded-lg hover:bg-[#F9FAFB] transition-colors font-medium"
               >
                 {t('common.cancel')}
               </button>
@@ -469,7 +442,7 @@ export default function Dashboard() {
                   setShowCompleteModal(false);
                   setServiceToComplete(null);
                 }}
-                className="flex-1 px-4 py-2.5 bg-accent-burgundy hover:opacity-90 text-white font-semibold rounded-xl transition-opacity"
+                className="flex-1 px-4 py-2.5 bg-[#0D9488] hover:bg-[#0F766E] text-white font-semibold rounded-lg transition-colors"
               >
                 {t('dashboard.complete')}
               </button>

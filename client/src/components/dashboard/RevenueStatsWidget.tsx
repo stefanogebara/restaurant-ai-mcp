@@ -20,7 +20,7 @@ export default function RevenueStatsWidget() {
   if (!stats || !forecast || forecast.length === 0) {
     return (
       <div className="p-6">
-        <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#8C8C8C]">
+        <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111827]">
           {t('dashboard.revenueForecast')}
         </h2>
         <p className="text-sm text-warm-stone mt-3">{t('dashboard.revenueNoData', 'Revenue forecast will appear once you have reservations and service data.')}</p>
@@ -35,7 +35,7 @@ export default function RevenueStatsWidget() {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#8C8C8C]">
+        <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111827]">
           {t('dashboard.revenueForecast')}
         </h2>
         <div className="flex items-center gap-2">

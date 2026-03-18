@@ -37,7 +37,7 @@ export default function WaitlistEntryCard({
     }`}>
       {/* Row 1: Avatar, Name, Party Size, Status */}
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-burgundy/15 to-violet-600/15 flex items-center justify-center font-bold text-xs text-burgundy border border-burgundy/20 flex-shrink-0">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0D9488]/15 to-[#0D9488]/10 flex items-center justify-center font-bold text-xs text-[#0D9488] border border-[#0D9488]/20 flex-shrink-0">
           {initials}
         </div>
         <div className="flex-1 min-w-0">
@@ -98,7 +98,7 @@ export default function WaitlistEntryCard({
               </button>
               <button
                 onClick={() => onSeatNow(entry)}
-                className="px-2 py-1 text-[11px] bg-burgundy hover:bg-burgundy-dark text-white font-medium rounded-lg transition-colors"
+                className="px-2 py-1 text-[11px] bg-[#0D9488] hover:bg-[#0F766E] text-white font-medium rounded-lg transition-colors"
               >
                 {t('waitlist.seat')}
               </button>
@@ -107,7 +107,7 @@ export default function WaitlistEntryCard({
           {entry.status === 'Notified' && (
             <button
               onClick={() => onSeatNow(entry)}
-              className="px-2 py-1 text-[11px] bg-burgundy hover:bg-burgundy-dark text-white font-medium rounded-lg transition-colors"
+              className="px-2 py-1 text-[11px] bg-[#0D9488] hover:bg-[#0F766E] text-white font-medium rounded-lg transition-colors"
             >
               {t('waitlist.seatNow')}
             </button>

@@ -77,9 +77,9 @@ export default function TableLayoutPanel({
     <>
       <div className="overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-warm-divider">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E7EB]">
           <div className="flex items-center gap-2.5">
-            <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#8C8C8C] whitespace-nowrap">{t('tableLayout.title')}</span>
+            <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] whitespace-nowrap">{t('tableLayout.title')}</span>
             <span className="relative flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
               <span className="relative flex h-2 w-2 flex-shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
@@ -169,8 +169,8 @@ export default function TableLayoutPanel({
 
             {/* Joinable info */}
             {selectedTable.is_joinable && selectedTable.joinable_with?.length > 0 && (
-              <div className="mb-4 p-3 bg-burgundy/5 border border-burgundy/15 rounded-xl">
-                <div className="text-sm font-semibold text-burgundy mb-1.5">{t('tableLayout.joinableTables')}</div>
+              <div className="mb-4 p-3 bg-[#0D9488]/5 border border-[#0D9488]/15 rounded-xl">
+                <div className="text-sm font-semibold text-[#0D9488] mb-1.5">{t('tableLayout.joinableTables')}</div>
                 <div className="flex flex-wrap gap-1.5">
                   {selectedTable.joinable_with.map((linkedId: string) => {
                     const linked = tables.find((tbl) => tbl.id === linkedId);

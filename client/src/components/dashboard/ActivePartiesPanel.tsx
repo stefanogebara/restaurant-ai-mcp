@@ -45,11 +45,11 @@ export default function ActivePartiesPanel({
   return (
     <div className="overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-5 border-b border-warm-divider">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E7EB]">
         <div>
           <div className="flex items-center gap-2.5">
-            <h3 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#8C8C8C]">{t('dashboard.activeParties')}</h3>
-            <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">
+            <h3 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('dashboard.activeParties')}</h3>
+            <span className="text-[11px] font-semibold bg-[#0D9488]/[8%] text-[#0D9488] px-2.5 py-0.5 rounded-full">
               {parties.length}
             </span>
             {parties.length > 0 && (
@@ -121,7 +121,7 @@ function PartyRow({ party, billValue, onBillChange, onComplete }: PartyRowProps)
     <div>
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-burgundy/15 to-violet-600/15 flex items-center justify-center text-[10px] font-bold text-burgundy border border-burgundy/20 flex-shrink-0">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0D9488]/15 to-[#0D9488]/10 flex items-center justify-center text-[10px] font-bold text-[#0D9488] border border-[#0D9488]/20 flex-shrink-0">
             {(party.customer_name || '--')
               .split(' ')
               .map((n) => n[0])
@@ -151,7 +151,7 @@ function PartyRow({ party, billValue, onBillChange, onComplete }: PartyRowProps)
       {/* Time progress */}
       {party.time_elapsed_minutes !== undefined && (
         <div>
-          <div className="h-[2px] bg-[#E8E5E0] rounded-full overflow-hidden mt-2 mb-3">
+          <div className="h-[2px] bg-[#F3F4F6] rounded-full overflow-hidden mt-2 mb-3">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
@@ -160,7 +160,7 @@ function PartyRow({ party, billValue, onBillChange, onComplete }: PartyRowProps)
                     (party.time_elapsed_minutes + Math.max(party.time_remaining_minutes, 0))) * 100,
                   100
                 )}%`,
-                background: isOverdue ? '#ef4444' : '#722F37',
+                background: isOverdue ? '#ef4444' : '#0D9488',
               }}
             />
           </div>
@@ -178,7 +178,7 @@ function PartyRow({ party, billValue, onBillChange, onComplete }: PartyRowProps)
           placeholder={t('dashboard.activePartiesPanel.billAmount')}
           value={billValue}
           onChange={e => onBillChange(e.target.value)}
-          className="w-24 sm:w-28 border border-border-gray rounded-lg px-2 py-1 text-xs text-deep-charcoal focus:outline-none focus:ring-1 focus:ring-burgundy/30"
+          className="w-24 sm:w-28 border border-border-gray rounded-lg px-2 py-1 text-xs text-deep-charcoal focus:outline-none focus:ring-1 focus:ring-[#0D9488]/30"
           aria-label="Total bill amount"
         />
         <button

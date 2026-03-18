@@ -44,7 +44,7 @@ export default function ManagerNotesPanel() {
     <div className="p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#8C8C8C]">
+          <h3 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111827]">
             {t('dashboard.managerNotes.title')}
           </h3>
           <p className="text-xs text-muted-stone mt-0.5">{t('dashboard.managerNotes.subtitle')}</p>
@@ -53,7 +53,7 @@ export default function ManagerNotesPanel() {
           type="button"
           onClick={() => setShowForm(!showForm)}
           aria-expanded={showForm}
-          className="text-xs px-3 py-1.5 rounded-xl bg-burgundy text-white font-medium hover:bg-burgundy-dark transition-colors"
+          className="text-xs px-3 py-1.5 rounded-lg bg-[#0D9488] text-white font-medium hover:bg-[#0F766E] transition-colors"
         >
           {t('dashboard.managerNotes.addNote')}
         </button>
@@ -75,7 +75,7 @@ export default function ManagerNotesPanel() {
               id="note-type"
               value={noteType}
               onChange={(e) => setNoteType(e.target.value as typeof noteType)}
-              className="w-full text-sm border border-border-gray rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
+              className="w-full text-sm border border-border-gray rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0D9488]/20 focus:border-[#0D9488]"
             >
               <option value="vip_instruction">{t('dashboard.managerNotes.typeVip')}</option>
               <option value="general_policy">{t('dashboard.managerNotes.typePolicy')}</option>
@@ -93,7 +93,7 @@ export default function ManagerNotesPanel() {
                 value={guestPhone}
                 onChange={(e) => setGuestPhone(e.target.value)}
                 placeholder={t('dashboard.managerNotes.guestPhonePlaceholder')}
-                className="w-full text-sm border border-border-gray rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy"
+                className="w-full text-sm border border-border-gray rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0D9488]/20 focus:border-[#0D9488]"
               />
             </div>
           )}
@@ -107,7 +107,7 @@ export default function ManagerNotesPanel() {
               onChange={(e) => setNoteContent(e.target.value)}
               placeholder={t('dashboard.managerNotes.noteContentPlaceholder')}
               rows={3}
-              className="w-full text-sm border border-border-gray rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-burgundy/20 focus:border-burgundy resize-none"
+              className="w-full text-sm border border-border-gray rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0D9488]/20 focus:border-[#0D9488] resize-none"
             />
           </div>
 
@@ -115,7 +115,7 @@ export default function ManagerNotesPanel() {
             type="button"
             onClick={handleSave}
             disabled={addNote.isPending || !noteContent.trim()}
-            className="w-full text-sm px-4 py-2 rounded-xl bg-burgundy text-white font-medium hover:bg-burgundy-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full text-sm px-4 py-2 rounded-lg bg-[#0D9488] text-white font-medium hover:bg-[#0F766E] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {addNote.isPending ? t('dashboard.managerNotes.saving') : t('dashboard.managerNotes.save')}
           </button>

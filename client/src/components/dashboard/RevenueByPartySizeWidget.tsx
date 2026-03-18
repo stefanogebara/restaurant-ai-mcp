@@ -23,7 +23,7 @@ export default function RevenueByPartySizeWidget() {
 
   return (
     <div className="p-6 space-y-4">
-      <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#8C8C8C] flex items-center gap-2">
+      <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111827] flex items-center gap-2">
         <ThiingsIcon name="users" pxSize={14} className="text-muted-stone" />
         {t('dashboard.revenueByPartySize', 'Revenue by Party Size')}
       </h2>
