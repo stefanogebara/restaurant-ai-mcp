@@ -180,11 +180,14 @@ test.describe('Journey 3: Email Signup', () => {
     // Submit
     await page.locator('button[type="submit"]').first().click();
 
-    // Should show either: green confirmation, verify text, OR rate limit error
-    // All are valid outcomes — the important thing is the form submitted and a response appeared
+    // Valid outcomes: redirect to onboarding (signup succeeded), confirmation message, or rate limit
+    const redirected = page.waitForURL(/onboarding/, { timeout: 10000 }).then(() => true).catch(() => false);
     const anyResponse = page.locator('[class*="green"], [class*="red-600"]').first();
     const anyText = page.getByText(/verify|confirm|rate limit|e-mail|confirmação|exceeded/i).first();
-    await expect(anyResponse.or(anyText)).toBeVisible({ timeout: 10000 });
+    const messageShown = expect(anyResponse.or(anyText)).toBeVisible({ timeout: 10000 }).then(() => true).catch(() => false);
+
+    const result = await Promise.race([redirected, messageShown]);
+    expect(result).toBeTruthy();
   });
 });
 
