@@ -4,16 +4,13 @@ const { Readable } = require('stream');
 
 // ─── Mocks (hoisted before require) ───────────────────────────────────────────
 
-// Mock Anthropic SDK — messages.create is controlled per-test via mockAnthropicCreate
+// Mock AI client — messages.create is controlled per-test via mockAnthropicCreate
 const mockAnthropicCreate = jest.fn();
-jest.mock('@anthropic-ai/sdk', () => {
-  return {
-    __esModule: true,
-    default: jest.fn().mockImplementation(() => ({
-      messages: { create: mockAnthropicCreate },
-    })),
-  };
-});
+jest.mock('../_lib/ai-client', () => ({
+  getAI: () => ({ messages: { create: mockAnthropicCreate } }),
+  AI_MODEL: 'anthropic/claude-3.5-sonnet',
+  AI_MODEL_FAST: 'anthropic/claude-3-haiku',
+}));
 
 jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({
