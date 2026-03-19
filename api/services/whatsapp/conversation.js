@@ -10,14 +10,14 @@ const {
 const { RESERVATION_TOOLS, executeTool, getCurrentDateTime } = require('./reservation-tools');
 
 // AI provider: OpenRouter (or direct Anthropic fallback)
-const { getAI, AI_MODEL } = require('../../_lib/ai-client');
+const { getAI, AI_MODEL, AI_MODEL_FAST } = require('../../_lib/ai-client');
 
 /**
  * Call Anthropic Claude and return response in OpenAI-compatible format.
  * Converts OpenAI tool format -> Anthropic tool format, and response back.
  */
 async function callChatCompletions(messages, tools) {
-  logger.info(` AI call: model=${AI_MODEL}, provider=anthropic`);
+  logger.info(` AI call: model=${AI_MODEL_FAST}, provider=openrouter`);
 
   // Separate system message from conversation messages
   const systemContent = messages.find(m => m.role === 'system')?.content || '';
@@ -60,9 +60,11 @@ async function callChatCompletions(messages, tools) {
     input_schema: t.function.parameters,
   }));
 
+  // Use fast model for WhatsApp (Haiku: 12x cheaper than Sonnet)
+  // 300 max_tokens is enough for 2-3 sentence WhatsApp replies
   const response = await getAI().messages.create({
-    model: AI_MODEL,
-    max_tokens: 1024,
+    model: AI_MODEL_FAST,
+    max_tokens: 300,
     system: systemContent,
     messages: anthropicMessages,
     tools: anthropicTools.length > 0 ? anthropicTools : undefined,
@@ -359,7 +361,11 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
     return choice?.message?.content || 'Desculpe, tive dificuldade em processar isso. Pode tentar novamente?';
 
   } catch (error) {
-    logger.error(' AI error:', error);
+    logger.error(' AI error:', error?.message || error, { stack: error?.stack?.substring(0, 300) });
+    // In development, include error detail for debugging
+    if (process.env.NODE_ENV !== 'production') {
+      return `[DEBUG] AI error: ${error?.message || 'unknown'}`;
+    }
     return 'Desculpe, algo deu errado. Por favor, tente novamente ou entre em contato diretamente com o restaurante.';
   }
 }

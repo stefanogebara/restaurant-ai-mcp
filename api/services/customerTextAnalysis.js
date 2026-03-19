@@ -9,7 +9,7 @@
  * Implements hash-based caching to avoid redundant AI calls.
  */
 
-const { getAI, AI_MODEL } = require('../_lib/ai-client');
+const { getAI, AI_MODEL_FAST } = require('../_lib/ai-client');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const crypto = require('crypto');
@@ -195,7 +195,7 @@ async function analyzeWithClaude(textSources) {
   }).join('\n');
 
   const response = await anthropic.messages.create({
-    model: AI_MODEL,
+    model: AI_MODEL_FAST,
     max_tokens: 1024,
     system: `You are a restaurant customer analyst. Extract structured behavioral signals from customer interaction text. Return ONLY valid JSON with no markdown formatting, no code blocks, no explanation.`,
     messages: [

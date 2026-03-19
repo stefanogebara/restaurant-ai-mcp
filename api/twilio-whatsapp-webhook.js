@@ -21,7 +21,7 @@
  * 3. Set webhook URL to this endpoint
  */
 
-const { getAI, AI_MODEL } = require('./_lib/ai-client');
+const { getAI, AI_MODEL_FAST } = require('./_lib/ai-client');
 const twilio = require('twilio');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('Twilio');
@@ -794,8 +794,8 @@ async function processWithClaude(messageText, session) {
 
     // Initial Claude call
     currentResponse = await anthropic.messages.create({
-      model: AI_MODEL,
-      max_tokens: 1024,
+      model: AI_MODEL_FAST,
+      max_tokens: 300,
       system: buildSystemPrompt(restaurantInfo, session, availableRestaurants),
       tools: tools,
       messages: conversationHistory
@@ -855,8 +855,8 @@ async function processWithClaude(messageText, session) {
 
       // Get next response from Claude
       currentResponse = await anthropic.messages.create({
-        model: AI_MODEL,
-        max_tokens: 1024,
+        model: AI_MODEL_FAST,
+        max_tokens: 300,
         system: buildSystemPrompt(restaurantInfo, session, availableRestaurants),
         tools: tools,
         messages: conversationHistory
