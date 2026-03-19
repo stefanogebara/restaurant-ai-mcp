@@ -121,7 +121,7 @@ export default function Onboarding() {
       })
       .catch(() => { /* non-fatal — user fills in manually */ })
       .finally(() => { setIsDemoLoading(false); });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Persist progress
   useEffect(() => {

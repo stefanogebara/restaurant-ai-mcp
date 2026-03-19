@@ -66,6 +66,7 @@ export default function JoinPage() {
     ) {
       acceptMutation.mutate();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [validateQuery.data, user]);
 
   const inviteInfo = validateQuery.data ?? null;

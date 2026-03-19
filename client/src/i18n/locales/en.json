@@ -39,7 +39,19 @@
     "noDataDesc": "Data will appear here once interventions are tracked",
     "copiedToClipboard": "Link copied!",
     "shareFailed": "Could not copy link",
-    "ok": "OK"
+    "ok": "OK",
+    "or": "or",
+    "notSet": "Not set",
+    "loadingText": "Loading...",
+    "loadingChart": "Loading chart...",
+    "loadingStats": "Loading stats...",
+    "loadingData": "Loading data...",
+    "loadingProfiles": "Loading profiles...",
+    "loadingAnalytics": "Loading analytics...",
+    "preview": "Preview",
+    "pause": "Pause",
+    "guests": "guests",
+    "partyOf": "Party of {{size}}"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -133,6 +145,10 @@
     "patio": "Patio",
     "bar": "Bar",
     "seatsLabel": "{{count}} seats",
+    "checkInReservation": "Check In Reservation",
+    "checkInAndFindTables": "Check In & Find Tables",
+    "customer": "Customer",
+    "specialRequests": "Special Requests",
     "completeService": "Complete Service",
     "completeServiceFor": "Complete service for {{name}}?",
     "complete": "Complete",
@@ -371,7 +387,17 @@
     "cancelledNoNotification": "Reservation cancelled.",
     "cancelFailed": "Failed to cancel",
     "cancelling": "Cancelling...",
-    "confirmCancel": "Cancel Reservation"
+    "confirmCancel": "Cancel Reservation",
+    "guestCount": "{{count}} guest",
+    "guestCount_other": "{{count}} guests",
+    "reservationFound": "Reservation found!",
+    "reservationUpdated": "Reservation updated successfully!",
+    "reservationCancelledSuccess": "Reservation cancelled successfully",
+    "yesCancelReservation": "Yes, cancel reservation",
+    "keepReservation": "Keep reservation",
+    "statusConfirmed": "Confirmed",
+    "statusPending": "Pending",
+    "statusCancelled": "Cancelled"
   },
   "booking": {
     "reserveTable": "Reserve a table",
@@ -2210,6 +2236,7 @@
     "creating": "Creating...",
     "createAndSend": "Create & Send Campaign",
     "noCampaigns": "No campaigns yet",
+    "noCampaignsHint": "Create your first WhatsApp campaign to re-engage guests",
     "messageRequired": "Message is required",
     "messagePlaceholder": "Hi {name}, we miss you at our restaurant! Book your next visit..."
   },

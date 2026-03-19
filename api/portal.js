@@ -33,6 +33,18 @@ module.exports = async (req, res) => {
   const rateLimited = await checkAndApplyRateLimit(req, res, 'api');
   if (rateLimited) return;
 
+  // Body size validation: reject payloads > 1MB to prevent abuse
+  if (req.body) {
+    const bodySize = Buffer.byteLength(JSON.stringify(req.body), 'utf8');
+    if (bodySize > 1_048_576) {
+      logger.warn('[Portal] Rejected oversized body:', { size: bodySize });
+      return res.status(413).json({
+        success: false,
+        message: 'Request body too large. Maximum size is 1MB.'
+      });
+    }
+  }
+
   const action = req.query.action || (req.body && req.body.action);
 
   try {

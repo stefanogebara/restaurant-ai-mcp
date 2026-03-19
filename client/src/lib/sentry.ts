@@ -44,7 +44,7 @@ export function initSentry() {
       release: import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA || 'development',
 
       // Error filtering
-      beforeSend(event, _hint) {
+      beforeSend(event) {
         // Don't send errors from browser extensions
         if (event.exception) {
           const error = event.exception.values?.[0];

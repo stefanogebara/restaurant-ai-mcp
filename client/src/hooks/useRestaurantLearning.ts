@@ -202,7 +202,7 @@ export function useRestaurantLearning(): UseRestaurantLearningReturn {
     setTopicsCovered([]);
     setSessionId(null);
     setShouldGeneratePersona(false);
-  }, []);
+  }, [researchMutation, sendMutation, personaMutation]);
 
   return {
     phase,

@@ -1,5 +1,6 @@
 import { icons, type LucideIcon } from 'lucide-react';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const ICON_NAMES = [
   'accessibility', 'activity', 'airplane', 'alert-circle', 'alert-triangle',
   'arrow-down', 'arrow-left', 'arrow-right', 'ban', 'bar-chart',

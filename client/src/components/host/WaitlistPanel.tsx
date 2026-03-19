@@ -56,7 +56,8 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['waitlist'] }),
   });
 
-  const waitlist = data?.waitlist || [];
+  const rawWaitlist = data?.waitlist;
+  const waitlist = useMemo(() => rawWaitlist || [], [rawWaitlist]);
   const activeCount = waitlist.filter(e => ['Waiting', 'Notified'].includes(e.status)).length;
   const seatedCount = waitlist.filter(e => e.status === 'Seated').length;
   const removedCount = waitlist.filter(e => ['Cancelled', 'No Show'].includes(e.status)).length;

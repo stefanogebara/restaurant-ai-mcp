@@ -8,6 +8,7 @@ export interface DateRangeValue {
   endDate: string;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function presetToRange(preset: DatePreset): { startDate: string; endDate: string } {
   const now = new Date();
   const fmt = (d: Date) => d.toISOString().split('T')[0];
@@ -21,8 +22,9 @@ export function presetToRange(preset: DatePreset): { startDate: string; endDate:
       return { startDate: fmt(new Date(now.getTime() - 30 * 86400000)), endDate: today };
     case '90d':
       return { startDate: fmt(new Date(now.getTime() - 90 * 86400000)), endDate: today };
-    case 'this_month':
+    case 'this_month': {
       const y = now.getUTCFullYear(); const m = now.getUTCMonth(); return { startDate: fmt(new Date(Date.UTC(y, m, 1))), endDate: today };
+    }
     case 'last_month': {
       const y2 = now.getUTCFullYear(); const m2 = now.getUTCMonth(); const first = new Date(Date.UTC(y2, m2 - 1, 1));
       const last  = new Date(Date.UTC(y2, m2, 0));

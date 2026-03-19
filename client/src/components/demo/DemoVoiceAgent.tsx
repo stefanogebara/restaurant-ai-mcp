@@ -71,14 +71,15 @@ export default function DemoVoiceAgent({ restaurantName, scrapedData, onContinue
 
     document.body.appendChild(script);
 
+    const containerRef = widgetContainerRef.current;
     return () => {
       if (document.body.contains(script)) {
         document.body.removeChild(script);
       }
-      if (widgetContainerRef.current) {
-        const widget = widgetContainerRef.current.querySelector('elevenlabs-convai');
+      if (containerRef) {
+        const widget = containerRef.querySelector('elevenlabs-convai');
         if (widget) {
-          widgetContainerRef.current.removeChild(widget);
+          containerRef.removeChild(widget);
         }
       }
       widgetRef.current = null;

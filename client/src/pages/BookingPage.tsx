@@ -11,7 +11,7 @@ export default function BookingPage() {
   const [searchParams] = useSearchParams();
   const isEmbed = searchParams.get('embed') === 'true';
 
-  const { data: restaurant, isLoading, isError, error: _error } = useRestaurantBySlug(slug);
+  const { data: restaurant, isLoading, isError } = useRestaurantBySlug(slug);
 
   // SEO: inject dynamic title, meta tags, and JSON-LD when restaurant loads
   useEffect(() => {
@@ -75,7 +75,7 @@ export default function BookingPage() {
       document.title = DEFAULT_TITLE;
       document.getElementById('booking-page-jsonld')?.remove();
     };
-  }, [restaurant]);
+  }, [restaurant, t]);
 
   const getTodayHours = () => {
     if (!restaurant) return '';

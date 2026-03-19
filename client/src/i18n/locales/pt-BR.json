@@ -39,7 +39,19 @@
     "noDataDesc": "Os dados aparecerão aqui quando as intervenções forem registradas",
     "copiedToClipboard": "Link copiado!",
     "shareFailed": "Não foi possível copiar o link",
-    "ok": "OK"
+    "ok": "OK",
+    "or": "ou",
+    "notSet": "Não definido",
+    "loadingText": "Carregando...",
+    "loadingChart": "Carregando gráfico...",
+    "loadingStats": "Carregando estatísticas...",
+    "loadingData": "Carregando dados...",
+    "loadingProfiles": "Carregando perfis...",
+    "loadingAnalytics": "Carregando análises...",
+    "preview": "Prévia",
+    "pause": "Pausar",
+    "guests": "convidados",
+    "partyOf": "Grupo de {{size}}"
   },
   "navigation": {
     "dashboard": "Painel",
@@ -133,6 +145,10 @@
     "patio": "Terraço",
     "bar": "Bar",
     "seatsLabel": "{{count}} lugares",
+    "checkInReservation": "Check-in da Reserva",
+    "checkInAndFindTables": "Check-in & Encontrar Mesas",
+    "customer": "Cliente",
+    "specialRequests": "Pedidos Especiais",
     "completeService": "Concluir Atendimento",
     "completeServiceFor": "Concluir atendimento de {{name}}?",
     "complete": "Concluir",
@@ -371,7 +387,17 @@
     "cancelledNoNotification": "Reserva cancelada.",
     "cancelFailed": "Falha ao cancelar",
     "cancelling": "Cancelando...",
-    "confirmCancel": "Cancelar Reserva"
+    "confirmCancel": "Cancelar Reserva",
+    "guestCount": "{{count}} convidado",
+    "guestCount_other": "{{count}} convidados",
+    "reservationFound": "Reserva encontrada!",
+    "reservationUpdated": "Reserva atualizada com sucesso!",
+    "reservationCancelledSuccess": "Reserva cancelada com sucesso",
+    "yesCancelReservation": "Sim, cancelar reserva",
+    "keepReservation": "Manter reserva",
+    "statusConfirmed": "Confirmada",
+    "statusPending": "Pendente",
+    "statusCancelled": "Cancelada"
   },
   "booking": {
     "reserveTable": "Reserve uma mesa",
@@ -2255,6 +2281,7 @@
     "creating": "Criando...",
     "createAndSend": "Criar e Enviar Campanha",
     "noCampaigns": "Nenhuma campanha ainda",
+    "noCampaignsHint": "Crie sua primeira campanha WhatsApp para reengajar clientes",
     "messageRequired": "Mensagem é obrigatória",
     "messagePlaceholder": "Olá {name}, sentimos sua falta! Reserve sua próxima visita..."
   },

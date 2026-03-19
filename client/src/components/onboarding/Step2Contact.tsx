@@ -119,6 +119,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
     if (data.business_hours[0]?.open_time === '09:00') {
       applyServicePreset('lunch_dinner');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const validate = () => {

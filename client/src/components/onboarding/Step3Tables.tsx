@@ -25,8 +25,9 @@ export default function Step3Tables({ data, updateData, onNext, onBack }: Onboar
 
   useEffect(() => {
     if (errors.tables) {
-      setErrors((prev) => { const { tables, ...rest } = prev; return rest; });
+      setErrors((prev) => { const next = { ...prev }; delete next.tables; return next; });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.areas]);
 
   useEffect(() => {

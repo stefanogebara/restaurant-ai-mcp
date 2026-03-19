@@ -59,6 +59,7 @@ export default function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
 }
 
 // Pre-configured breadcrumbs for common pages
+// eslint-disable-next-line react-refresh/only-export-components
 export const breadcrumbConfigs = {
   ml: [{ label: 'No-Show Prevention' }],
   reports: [{ label: 'Weekly Reports' }],

@@ -48,7 +48,7 @@ interface ChatResponse {
 type InterviewPhase = 'idle' | 'researching' | 'chatting' | 'generating' | 'complete';
 
 export default function Step5TeachAI({
-  restaurantId: _restaurantId,
+  restaurantId: _restaurantId, // eslint-disable-line @typescript-eslint/no-unused-vars
   restaurantName,
   city,
   country,

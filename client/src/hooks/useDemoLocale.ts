@@ -145,11 +145,11 @@ export function useDemoLocale() {
     if (i18n.language !== target) {
       changeDemoLanguage(target);
     }
+    const originalLng = originalLngRef.current;
     return () => {
       // Restore the user's original language when leaving the demo
-      const original = originalLngRef.current;
-      if (original && original !== i18n.language) {
-        changeDemoLanguage(original);
+      if (originalLng && originalLng !== i18n.language) {
+        changeDemoLanguage(originalLng);
       }
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

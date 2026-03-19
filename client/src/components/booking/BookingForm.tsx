@@ -96,7 +96,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       days.push({ value, label, dayKey, dayNum: d.getDate(), isToday: value === todayStr });
     }
     return days;
-  }, [restaurant]);
+  }, [restaurant, dateLocale]);
 
   const formatTime = (time: string) => {
     const [h, m] = time.split(':').map(Number);

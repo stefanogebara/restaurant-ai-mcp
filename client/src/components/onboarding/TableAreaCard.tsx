@@ -15,6 +15,7 @@ interface TableAreaCardProps {
   onRemove: (index: number) => void;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export { TABLE_CAPACITIES };
 
 const SHAPE_KEYS: Record<string, string> = {

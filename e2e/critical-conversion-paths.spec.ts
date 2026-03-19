@@ -175,7 +175,7 @@ test.describe('Journey 3: Email Signup', () => {
 
     // Fill valid form
     await page.locator('input[type="email"], input[placeholder*="mail" i]').first().fill(`e2e.test.${Date.now()}@gmail.com`);
-    await page.locator('input[type="password"]').first().fill('E2eTestPass123!');
+    await page.locator('input[type="password"]').first().fill(process.env.E2E_TEST_PASSWORD || 'TestPass123!');
 
     // Submit
     await page.locator('button[type="submit"]').first().click();

@@ -38,7 +38,7 @@ describe('RevenueStatsWidget', () => {
   it('shows projected revenue (40 covers × €50 = €2,000)', () => {
     render(<RevenueStatsWidget />);
     // Default currency is EUR: €2,000 or €2.000 depending on locale
-    expect(screen.getByText(/[€R\$]\s*2/)).toBeInTheDocument();
+    expect(screen.getByText(/[€R$]\s*2/)).toBeInTheDocument();
   });
 
   it('shows estimated badge when using default', () => {

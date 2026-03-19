@@ -36,6 +36,7 @@ export default function TableCombinationSelector({
         suggested[0].tables.map(t => t.table_number)
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [availableTables, partySize]);
 
   const handleSelectCombination = (combination: TableCombination) => {

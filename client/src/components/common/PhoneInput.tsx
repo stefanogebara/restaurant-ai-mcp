@@ -94,6 +94,7 @@ export default function PhoneInput({
         setLocalNumber(value.replace(/[^\d]/g, ''));
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Close dropdown when clicking outside

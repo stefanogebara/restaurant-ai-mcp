@@ -124,7 +124,7 @@ export default function WeeklyReport() {
   if (!report) {
     return (
       <DashboardLayout>
-        <div className="min-h-screen bg-warm-white flex items-center justify-center">
+        <div className="min-h-screen bg-white flex items-center justify-center">
           <div className="text-center">
             <div className="w-16 h-16 mx-auto mb-4 bg-soft-gray rounded-2xl flex items-center justify-center">
               <ThiingsIcon name="bar-chart" pxSize={28} />

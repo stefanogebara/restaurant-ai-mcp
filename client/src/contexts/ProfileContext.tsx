@@ -130,6 +130,7 @@ export function ProfileProvider({ children, restaurantId }: ProfileProviderProps
   return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useProfile() {
   const context = useContext(ProfileContext);
   if (context === undefined) {
@@ -138,6 +139,7 @@ export function useProfile() {
   return context;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useCustomization<K extends keyof RestaurantProfile['customizations']>(
   key: K
 ): RestaurantProfile['customizations'][K] {
@@ -145,6 +147,7 @@ export function useCustomization<K extends keyof RestaurantProfile['customizatio
   return getCustomization(key);
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useMetricVisibility(metricId: string): boolean {
   const { isMetricVisible } = useProfile();
   return isMetricVisible(metricId);

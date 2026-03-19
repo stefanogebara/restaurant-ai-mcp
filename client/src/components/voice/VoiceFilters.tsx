@@ -34,6 +34,7 @@ export default function VoiceFilters({ filters, onChange, defaultLanguage = 'en'
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchInput]);
 
   return (
