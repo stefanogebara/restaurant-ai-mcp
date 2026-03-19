@@ -105,13 +105,15 @@ async function calculateAnalytics(restaurantId, period = '30d', startDate = null
   const tablesResult = results[2];
   const activePartiesResult = results[3];
 
-  if (!reservationsResult.success || !serviceRecordsResult.success || !tablesResult.success) {
+  if (!reservationsResult.success && !serviceRecordsResult.success && !tablesResult.success) {
+    // All queries failed — likely a database issue
     return { success: false, error: 'Failed to fetch analytics data' };
   }
 
-  const reservations = reservationsResult.records || [];
-  const serviceRecords = serviceRecordsResult.records || [];
-  const tables = tablesResult.tables || [];
+  // Gracefully handle partial failures — use empty arrays for failed queries
+  const reservations = reservationsResult.success ? (reservationsResult.records || []) : [];
+  const serviceRecords = serviceRecordsResult.success ? (serviceRecordsResult.records || []) : [];
+  const tables = tablesResult.success ? (tablesResult.tables || []) : [];
   const activeParties = activePartiesResult.service_records || [];
 
   const now = new Date();
