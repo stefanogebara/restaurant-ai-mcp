@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import Modal from '../common/Modal';
 import type { VoiceEngineSettings } from '../../hooks/useVoiceEngineSettings';
 
@@ -9,14 +10,13 @@ interface Props {
 }
 
 export default function VoiceEngineSwitchModal({ isOpen, engineSwitchTarget, onConfirm, onClose }: Props) {
+  const { t } = useTranslation();
   const targetLabel = engineSwitchTarget === 'openai_realtime' ? 'OpenAI Realtime' : 'ElevenLabs';
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Switch Voice Engine?" size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title={t('voiceEngine.switchTitle', 'Switch Voice Engine?')} size="sm">
       <p className="text-sm text-stone-gray mb-6">
-        Are you sure you want to switch to{' '}
-        <span className="font-semibold text-deep-charcoal">{targetLabel}</span>?
-        This will change how incoming calls are handled.
+        {t('voiceEngine.switchConfirmation', 'Are you sure you want to switch to {{engine}}? This will change how incoming calls are handled.', { engine: targetLabel })}
       </p>
       <div className="flex items-center justify-end gap-3">
         <button
@@ -24,14 +24,14 @@ export default function VoiceEngineSwitchModal({ isOpen, engineSwitchTarget, onC
           onClick={onClose}
           className="px-4 py-2 text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors"
         >
-          Cancel
+          {t('common.cancel', 'Cancel')}
         </button>
         <button
           type="button"
           onClick={onConfirm}
           className="px-5 py-2 text-sm font-semibold bg-burgundy hover:bg-burgundy-dark text-white rounded-xl transition-colors"
         >
-          Switch Engine
+          {t('voiceEngine.switchButton', 'Switch Engine')}
         </button>
       </div>
     </Modal>

@@ -1949,7 +1949,10 @@
     "current": "Current",
     "elevenlabsDesc": "Managed voice agent with premium voice quality, voice cloning, and multilingual support.",
     "openaiDesc": "Lower cost, native tool calling with WebSocket-based real-time voice.",
-    "changePending": "Engine change pending. Click \"Save Changes\" to apply."
+    "changePending": "Engine change pending. Click \"Save Changes\" to apply.",
+    "switchTitle": "Switch Voice Engine?",
+    "switchConfirmation": "Are you sure you want to switch to {{engine}}? This will change how incoming calls are handled.",
+    "switchButton": "Switch Engine"
   },
   "voice": {
     "settingsSaved": "Voice settings saved successfully",

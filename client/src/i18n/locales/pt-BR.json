@@ -2000,7 +2000,10 @@
     "current": "Atual",
     "elevenlabsDesc": "Agente de voz gerenciado com qualidade premium, clonagem de voz e suporte multilíngue.",
     "openaiDesc": "Menor custo, chamada nativa de ferramentas com voz em tempo real via WebSocket.",
-    "changePending": "Mudança de motor pendente. Clique em \"Salvar Alterações\" para aplicar."
+    "changePending": "Mudança de motor pendente. Clique em \"Salvar Alterações\" para aplicar.",
+    "switchTitle": "Trocar Motor de Voz?",
+    "switchConfirmation": "Tem certeza que deseja trocar para {{engine}}? Isso mudará como as chamadas recebidas são tratadas.",
+    "switchButton": "Trocar Motor"
   },
   "voice": {
     "settingsSaved": "Configurações de voz salvas com sucesso",

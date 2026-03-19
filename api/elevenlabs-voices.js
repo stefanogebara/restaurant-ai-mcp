@@ -11,7 +11,7 @@
 const { verifyAuth } = require('./_lib/auth');
 const { checkSubscription, requireFeature } = require('./_lib/subscription-middleware');
 const { createSecureLogger } = require('./_lib/secure-logger');
-const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { setInternalCors } = require('./_lib/cors');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('ElevenLabsVoices');
 
@@ -95,6 +95,7 @@ module.exports = async (req, res) => {
     });
   }
 
+  try {
   const rateLimited = await checkAndApplyRateLimit(req, res, 'elevenlabs_voices', 60, 60);
   if (rateLimited) return;
 
@@ -113,8 +114,6 @@ module.exports = async (req, res) => {
   let featureAllowed = false;
   requireFeature('voice_ai')(req, res, () => { featureAllowed = true; });
   if (!featureAllowed) return;
-
-  try {
     const {
       country,
       language,
@@ -225,9 +224,21 @@ module.exports = async (req, res) => {
 
   } catch (error) {
     logger.error('[ElevenLabs] Error fetching voices:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Something went wrong. Please try again.'
+    // Return empty voices with success=true so frontend degrades gracefully
+    return res.status(200).json({
+      success: true,
+      data: {
+        voices: [],
+        language: req.query?.language || 'en',
+        country: req.query?.country || null,
+        total_count: 0,
+        returned_count: 0,
+        has_more: false,
+        page: 0,
+        page_size: parseInt(req.query?.page_size) || 6,
+        source: 'error_fallback'
+      },
+      message: 'Voice service is temporarily unavailable. Please try again later.'
     });
   }
 };
@@ -266,9 +277,21 @@ async function fallbackToOwnVoices(req, res, targetLanguage, normalizedLanguage,
   if (!response.ok) {
     const errorText = await response.text();
     logger.error('[ElevenLabs] Own voices API error:', response.status, errorText);
-    return res.status(502).json({
-      success: false,
-      error: 'Voice service is temporarily unavailable. Please try again later.'
+    // Return empty voices so frontend degrades gracefully
+    return res.status(200).json({
+      success: true,
+      data: {
+        voices: [],
+        language: targetLanguage,
+        country: country || null,
+        total_count: 0,
+        returned_count: 0,
+        has_more: false,
+        page: 0,
+        page_size: pageSize,
+        source: 'own_voices_fallback'
+      },
+      message: 'Voice service is temporarily unavailable. Please try again later.'
     });
   }
 
