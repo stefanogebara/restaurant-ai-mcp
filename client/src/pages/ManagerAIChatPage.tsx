@@ -218,12 +218,17 @@ export default function ManagerAIChatPage() {
 
           {/* Thinking indicator */}
           {sendMutation.isPending && (
-            <div className="flex justify-start">
+            <div className="flex justify-start" role="status" aria-label="AI is thinking">
               <div className="w-7 h-7 rounded-full bg-burgundy/10 flex items-center justify-center flex-shrink-0 mt-1 mr-2">
-                <ThiingsIcon name="sparkles" pxSize={14} className="text-burgundy" />
+                <ThiingsIcon name="sparkles" pxSize={14} className="text-burgundy animate-spin" />
               </div>
-              <div className="bg-white border border-border-gray rounded-2xl px-4 py-3 text-sm text-muted-stone animate-pulse">
-                {t('dashboard.thinking', 'Thinking...')}
+              <div className="bg-white border border-border-gray rounded-2xl px-4 py-3 text-sm text-muted-stone flex items-center gap-1.5">
+                <span>{t('dashboard.thinking', 'Thinking')}</span>
+                <span className="flex gap-0.5">
+                  <span className="w-1.5 h-1.5 bg-burgundy/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-1.5 h-1.5 bg-burgundy/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-1.5 h-1.5 bg-burgundy/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </span>
               </div>
             </div>
           )}
