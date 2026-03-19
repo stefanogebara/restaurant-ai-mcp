@@ -7,7 +7,7 @@
 
 export type SupportedCurrency = 'EUR' | 'BRL';
 
-export const DEFAULT_CURRENCY = 'EUR';
+export const DEFAULT_CURRENCY = 'BRL';
 
 /**
  * Detect currency based on browser locale and navigator language.

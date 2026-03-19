@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useRevenueOpportunities } from '../../hooks/usePredictiveAnalytics';
-import { DEFAULT_CURRENCY } from '../../utils/currency';
+import { formatCurrency } from '../../utils/currency';
 
 export default function RevenueOpportunities() {
   const { t } = useTranslation();
@@ -27,15 +27,6 @@ export default function RevenueOpportunities() {
       case 'high': return 'bg-red-600/15 text-red-800';
       default: return 'bg-soft-gray text-charcoal-dark';
     }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IE', {
-      style: 'currency',
-      currency: DEFAULT_CURRENCY,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
   };
 
   if (isLoading) {

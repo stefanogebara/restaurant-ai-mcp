@@ -107,4 +107,22 @@ describe('PlanBadge', () => {
     // But icon matching is case-insensitive
     expect(screen.getByTestId('icon-star')).toBeInTheDocument();
   });
+
+  it('renders zap icon for Portuguese plan name Inicial', () => {
+    render(<PlanBadge plan="Inicial" />);
+    expect(screen.getByText('Inicial')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-zap')).toBeInTheDocument();
+  });
+
+  it('renders star icon for Portuguese plan name Crescimento', () => {
+    render(<PlanBadge plan="Crescimento" />);
+    expect(screen.getByText('Crescimento')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-star')).toBeInTheDocument();
+  });
+
+  it('renders crown icon for Portuguese plan name Escala', () => {
+    render(<PlanBadge plan="Escala" />);
+    expect(screen.getByText('Escala')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-crown')).toBeInTheDocument();
+  });
 });

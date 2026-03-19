@@ -227,8 +227,8 @@ describe('ReservationsList', () => {
     );
     // Party of 4 → bucket 3-4, avg_per_cover 78, predicted = 4*78 = 312 → formatted as currency
     // Party of 2 → bucket 1-2, avg_per_cover 65, predicted = 2*65 = 130
-    // Should show emerald-colored revenue estimates
-    const revenueSpans = document.querySelectorAll('.text-emerald-600');
+    // Should show rose-colored revenue estimates (brand color)
+    const revenueSpans = document.querySelectorAll('.text-rose-600');
     expect(revenueSpans.length).toBeGreaterThanOrEqual(2);
   });
 

@@ -152,8 +152,8 @@ describe('formatTableNumbers', () => {
 });
 
 describe('getCombinationColorClass', () => {
-  it('returns green for high scores', () => {
-    expect(getCombinationColorClass(150)).toContain('green');
+  it('returns rose for high scores', () => {
+    expect(getCombinationColorClass(150)).toContain('rose');
   });
 
   it('returns yellow for medium scores', () => {

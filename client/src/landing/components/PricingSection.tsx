@@ -98,7 +98,7 @@ export default function PricingSection() {
               <div key={index} className={`relative px-8 sm:px-9 py-12 ${isFeatured ? 'bg-deep-charcoal' : 'bg-warm-white'}`}>
                 {/* Plan label */}
                 <div className={`text-xs font-semibold tracking-[1.5px] uppercase mb-2 ${isFeatured ? 'text-burgundy' : 'text-warm-stone'}`}>
-                  {tier.name}
+                  {t(`subscription.${tierKey}Name`, tier.name)}
                 </div>
 
                 {/* Price */}

@@ -55,16 +55,16 @@ describe('PLAN_PRICES', () => {
     expect(PLAN_PRICES.free).toBe(0);
   });
 
-  test('starter plan is 29', () => {
-    expect(PLAN_PRICES.starter).toBe(29);
+  test('starter plan is 149 (BRL)', () => {
+    expect(PLAN_PRICES.starter).toBe(149);
   });
 
-  test('growth plan is 99', () => {
-    expect(PLAN_PRICES.growth).toBe(99);
+  test('growth plan is 499 (BRL)', () => {
+    expect(PLAN_PRICES.growth).toBe(499);
   });
 
-  test('scale plan is 199', () => {
-    expect(PLAN_PRICES.scale).toBe(199);
+  test('scale plan is 999 (BRL)', () => {
+    expect(PLAN_PRICES.scale).toBe(999);
   });
 
   test('includes free plan', () => {
@@ -73,12 +73,20 @@ describe('PLAN_PRICES', () => {
 });
 
 describe('PLAN_NAMES', () => {
-  test('free plan name is Free', () => {
-    expect(PLAN_NAMES.free).toBe('Free');
+  test('free plan name is Grátis', () => {
+    expect(PLAN_NAMES.free).toBe('Grátis');
   });
 
-  test('starter plan name is Starter', () => {
-    expect(PLAN_NAMES.starter).toBe('Starter');
+  test('starter plan name is Inicial', () => {
+    expect(PLAN_NAMES.starter).toBe('Inicial');
+  });
+
+  test('growth plan name is Crescimento', () => {
+    expect(PLAN_NAMES.growth).toBe('Crescimento');
+  });
+
+  test('scale plan name is Escala', () => {
+    expect(PLAN_NAMES.scale).toBe('Escala');
   });
 
   test('includes all plan types', () => {

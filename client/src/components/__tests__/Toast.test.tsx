@@ -27,8 +27,8 @@ describe('Toast', () => {
     const { container } = render(<Toast message="Saved!" type="success" onClose={vi.fn()} />);
 
     expect(screen.getByText('Saved!')).toBeInTheDocument();
-    // Icon container has emerald background
-    expect(container.querySelector('.bg-emerald-500\\/30')).toBeTruthy();
+    // Icon container has rose background (brand color)
+    expect(container.querySelector('.bg-rose-500\\/30')).toBeTruthy();
   });
 
   it('renders error toast with X icon', () => {

@@ -8,13 +8,16 @@ import { useSubscriptionData, useCustomerPortal } from '../hooks/useSubscription
 
 const planTiers = ['starter', 'growth', 'scale'];
 
-/** Map legacy/orphaned plan names to current plan names */
+/** Map legacy/orphaned plan names to current plan names (Portuguese) */
 function normalizePlanName(raw: string): string {
   const mapping: Record<string, string> = {
-    professional: 'Growth',
-    pro: 'Scale',
-    basic: 'Starter',
-    enterprise: 'Scale',
+    starter: 'Inicial',
+    professional: 'Crescimento',
+    growth: 'Crescimento',
+    pro: 'Escala',
+    basic: 'Inicial',
+    enterprise: 'Escala',
+    scale: 'Escala',
   };
   return mapping[raw.toLowerCase()] ?? raw;
 }

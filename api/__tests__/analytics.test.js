@@ -451,7 +451,7 @@ describe('Analytics: Table utilization', () => {
 // Error paths
 // ============================================================
 describe('Analytics: Error paths', () => {
-  test('returns success:false when getAllTables fails', async () => {
+  test('returns 200 with empty tables on getAllTables failure (graceful degradation)', async () => {
     verifyAuth.mockResolvedValueOnce({
       user: { restaurant_id: 'rest-1', email: 'test@test.com' },
     });
@@ -459,40 +459,48 @@ describe('Analytics: Error paths', () => {
 
     const { req, res } = createMockReqRes();
     await handler(req, res);
-    // calculateAnalytics returns { success: false } → handler returns 200 with it
+    // calculateAnalytics sees partial failure (only tables failed, not all three)
+    // → gracefully degrades: uses empty array for tables, returns { success: true }
     expect(res.status).toHaveBeenCalledWith(200);
     const data = res.json.mock.calls[0][0];
-    expect(data.success).toBe(false);
+    expect(data.success).toBe(true);
+    expect(data.analytics.overview.total_capacity).toBe(0);
+    expect(data.analytics.table_utilization).toEqual([]);
   });
 
-  test('returns 500 on reservation DB error (throws)', async () => {
+  test('returns 200 with empty data on reservation DB error (graceful degradation)', async () => {
     verifyAuth.mockResolvedValueOnce({
       user: { restaurant_id: 'rest-1', email: 'test@test.com' },
     });
-    // Mock reservations to throw when resolved
+    // Mock reservations to return an error
     mockTableData.reservations = { data: null, error: { message: 'Connection failed' } };
 
     const { req, res } = createMockReqRes();
     await handler(req, res);
-    // getReservationRows catches the error and returns { success: false }
-    // calculateAnalytics detects !reservationsResult.success → returns { success: false }
-    // handler returns 200 with { success: false }
+    // getAllReservations catches the error and returns { success: false }
+    // calculateAnalytics sees partial failure (only reservations failed, not all three)
+    // → gracefully degrades: uses empty array for reservations, returns { success: true }
     expect(res.status).toHaveBeenCalledWith(200);
+    const data = res.json.mock.calls[0][0];
+    expect(data.success).toBe(true);
+    expect(data.analytics.overview.total_reservations).toBe(0);
   });
 
-  test('getServiceRecordRows catch block (lines 38-39): service_records error', async () => {
+  test('returns 200 with empty service data on service_records error (graceful degradation)', async () => {
     verifyAuth.mockResolvedValueOnce({
       user: { restaurant_id: 'rest-1', email: 'test@test.com' },
     });
-    // Force service_records DB to return an error → getServiceRecordRows throws → catch returns { success: false }
+    // Force service_records DB to return an error → getAllServiceRecordsData catches → returns { success: false }
     mockTableData.service_records = { data: null, error: { message: 'service_records error' } };
 
     const { req, res } = createMockReqRes();
     await handler(req, res);
-    // calculateAnalytics sees !serviceResult.success → returns { success: false }
+    // calculateAnalytics sees partial failure (only service_records failed, not all three)
+    // → gracefully degrades: uses empty array for service records, returns { success: true }
     expect(res.status).toHaveBeenCalledWith(200);
     const data = res.json.mock.calls[0][0];
-    expect(data.success).toBe(false);
+    expect(data.success).toBe(true);
+    expect(data.analytics.overview.avg_service_time_minutes).toBe(90); // default when no service records
   });
 
   test('handler top-level catch (lines 235-236): calculateAnalytics throws', async () => {

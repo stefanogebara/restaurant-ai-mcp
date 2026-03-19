@@ -288,28 +288,28 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
 
 export const PLAN_PRICES = {
   free: 0,
-  starter: 29,
-  growth: 99,
-  professional: 99,
-  scale: 199,
+  starter: 149,
+  growth: 499,
+  professional: 499,
+  scale: 999,
 } as const;
 
 export const PLAN_NAMES = {
-  free: 'Free',
-  starter: 'Starter',
-  growth: 'Growth',
-  professional: 'Professional',
-  scale: 'Scale',
-  trial: 'Trial',
+  free: 'Grátis',
+  starter: 'Inicial',
+  growth: 'Crescimento',
+  professional: 'Crescimento',
+  scale: 'Escala',
+  trial: 'Teste',
 } as const;
 
 export const PLAN_DESCRIPTIONS = {
-  free: 'Get started at no cost — up to 30 reservations/month',
-  starter: 'Perfect for small restaurants getting started',
-  growth: 'Advanced features for growing restaurants',
-  professional: 'Advanced features for growing restaurants',
-  scale: 'Full platform for high-volume restaurants',
-  trial: '14-day trial with Growth features',
+  free: 'Comece sem custo — até 30 reservas/mês',
+  starter: 'Perfeito para restaurantes pequenos começando',
+  growth: 'Recursos avançados para restaurantes em crescimento',
+  professional: 'Recursos avançados para restaurantes em crescimento',
+  scale: 'Plataforma completa para restaurantes de alto volume',
+  trial: 'Teste de 14 dias com recursos do Crescimento',
 } as const;
 
 /**
