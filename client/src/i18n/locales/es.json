@@ -515,6 +515,8 @@
     "opportunitiesFooter": "As oportunidades são classificadas por impacto potencial de receita e viabilidade de implementación. Clique em qualquer cartão de oportunidade para ver os passos detalhados.",
     "analyzingOpportunities": "Analisando oportunidades de receita...",
     "noOpportunities": "Ningúna oportunidade encontrada ainda.",
+    "noRevenueData": "Sin datos de ingresos aún",
+    "noRevenueDataDesc": "Las oportunidades de ingresos aparecerán cuando haya suficiente historial de reservas para analizar.",
     "weeklyReportsUpgradeTitle": "Relatórios Semanais no Crescimento & Escala",
     "weeklyReportsUpgradeDesc": "Atualize para desbloquear relatórios semanais de desempenho con perfil demográfico, horarios de pico e análise de preferencias.",
     "noReportData": "Ningún dado de relatório disponível",
@@ -1244,7 +1246,11 @@
       "fallbackDesc": "Prueba nuestra IA por WhatsApp — envía un mensaje y recibe una respuesta instantánea.",
       "suggestion1": "Reservar mesa para 2 esta noche",
       "suggestion2": "¿Qué hay en el menú?",
-      "suggestion3": "¿Tienen terraza?"
+      "suggestion3": "¿Tienen terraza?",
+      "readyPrompt": "Esto usará tu micrófono.",
+      "startCall": "Iniciar llamada",
+      "cancel": "Cancelar",
+      "fullExperience": "Prueba la experiencia completa"
     },
     "heroChat": {
       "msg1": "¡Hola! ¿Mesa para 4 mañana a las 8pm?",
@@ -1642,6 +1648,30 @@
         "launchDemo": "Lanzar mi demo",
         "creatingDemo": "Creando tu demo..."
       }
+    },
+    "voiceDemo": {
+      "backToSite": "\u2190 Volver",
+      "title": "Habla con nuestro anfitri\u00f3n IA",
+      "subtitle": "Pide reservar una mesa, consulta disponibilidad o pregunta sobre el men\u00fa",
+      "readyPrompt": "Esto usar\u00e1 tu micr\u00f3fono para hablar con nuestro anfitri\u00f3n IA.",
+      "startCall": "Iniciar llamada",
+      "cancel": "Cancelar",
+      "endCall": "Finalizar llamada",
+      "liveDashboard": "Panel en vivo \u2014 las reservas aparecen en tiempo real",
+      "powered": "Desarrollado con ElevenLabs \u00b7 Seatable IA",
+      "tryDashboard": "Prueba el panel completo",
+      "pricing": "Precios",
+      "tables": "Mesas",
+      "today": "Hoy",
+      "waitlist": "Espera",
+      "guests": "Invitados",
+      "dashboard": "Panel",
+      "todayDate": "Hoy \u00b7 15 de Marzo",
+      "aiActive": "IA Activa",
+      "todaysReservations": "Reservas de Hoy",
+      "confirmed": "confirmada",
+      "cancelled": "cancelada",
+      "readyToCall": "\u00bfListo para llamar?"
     }
   },
   "upgrade": {

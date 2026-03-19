@@ -527,6 +527,8 @@
     "opportunitiesFooter": "As oportunidades são classificadas por impacto potencial de receita e viabilidade de implementação. Clique em qualquer cartão de oportunidade para ver os passos detalhados.",
     "analyzingOpportunities": "Analisando oportunidades de receita...",
     "noOpportunities": "Nenhuma oportunidade encontrada ainda.",
+    "noRevenueData": "Sem dados de receita ainda",
+    "noRevenueDataDesc": "Oportunidades de receita aparecerão quando houver histórico de reservas suficiente para análise.",
     "weeklyReportsUpgradeTitle": "Relatórios Semanais no Crescimento & Escala",
     "weeklyReportsUpgradeDesc": "Atualize para desbloquear relatórios semanais de desempenho com perfil demográfico, horários de pico e análise de preferências.",
     "noReportData": "Nenhum dado de relatório disponível",
@@ -1478,7 +1480,11 @@
       "fallbackDesc": "Experimente nossa IA pelo WhatsApp — envie uma mensagem e receba uma resposta instantânea.",
       "suggestion1": "Reservar mesa para 2 hoje à noite",
       "suggestion2": "O que tem no cardápio?",
-      "suggestion3": "Vocês têm terraço?"
+      "suggestion3": "Vocês têm terraço?",
+      "readyPrompt": "Isso usará seu microfone.",
+      "startCall": "Iniciar chamada",
+      "cancel": "Cancelar",
+      "fullExperience": "Veja a experiência completa"
     },
     "heroChat": {
       "msg1": "Oi! Mesa para 4 amanhã às 20h?",
@@ -1748,12 +1754,6 @@
       "copyLink": "Copiar link",
       "copied": "Link copiado!"
     },
-    "voice": {
-      "fullExperience": "Veja a experiência completa"
-    },
-    "heroChat": {
-      "inputPlaceholder": "Digite uma mensagem..."
-    },
     "pricing": {
       "title": "Planos e Preços",
       "label": "Planos",
@@ -1921,6 +1921,30 @@
         "launchDemo": "Iniciar meu demo",
         "creatingDemo": "Criando seu demo..."
       }
+    },
+    "voiceDemo": {
+      "backToSite": "\u2190 Voltar",
+      "title": "Fale com nosso anfitri\u00e3o IA",
+      "subtitle": "Pe\u00e7a para reservar uma mesa, verificar disponibilidade ou tirar d\u00favidas sobre o card\u00e1pio",
+      "readyPrompt": "Isso vai usar seu microfone para falar com nosso anfitri\u00e3o IA.",
+      "startCall": "Iniciar chamada",
+      "cancel": "Cancelar",
+      "endCall": "Encerrar chamada",
+      "liveDashboard": "Painel ao vivo \u2014 reservas aparecem em tempo real",
+      "powered": "Desenvolvido com ElevenLabs \u00b7 Seatable IA",
+      "tryDashboard": "Experimente o painel completo",
+      "pricing": "Pre\u00e7os",
+      "tables": "Mesas",
+      "today": "Hoje",
+      "waitlist": "Espera",
+      "guests": "Convidados",
+      "dashboard": "Painel",
+      "todayDate": "Hoje \u00b7 15 de Mar\u00e7o",
+      "aiActive": "IA Ativa",
+      "todaysReservations": "Reservas de Hoje",
+      "confirmed": "confirmada",
+      "cancelled": "cancelada",
+      "readyToCall": "Pronto para ligar?"
     }
   },
   "managerAI": {
@@ -2220,9 +2244,6 @@
     "status.PENDING": "pendente",
     "status.REJECTED": "rejeitado",
     "status.NOT_SUBMITTED": "não enviado"
-  },
-  "voice": {
-    "settingsSaved": "Configurações de voz salvas com sucesso"
   },
   "manager": {
     "sendFailed": "Falha ao enviar. Tente novamente."

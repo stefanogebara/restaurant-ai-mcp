@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function TermsOfService() {
   const currentYear = new Date().getFullYear();
+  const { i18n } = useTranslation();
+  const showPtNotice = i18n.language === 'pt-BR' || i18n.language === 'pt';
 
   return (
     <div className="min-h-screen bg-warm-white">
@@ -12,6 +15,13 @@ export default function TermsOfService() {
       </nav>
 
       <div className="max-w-[720px] mx-auto px-6 py-16">
+        {showPtNotice && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-3.5 mb-8">
+            <p className="text-sm text-amber-800">
+              Esta p&aacute;gina est&aacute; dispon&iacute;vel apenas em ingl&ecirc;s. Estamos trabalhando na tradu&ccedil;&atilde;o.
+            </p>
+          </div>
+        )}
         <h1 className="font-serif text-4xl font-medium text-deep-charcoal mb-2">Terms of Service</h1>
         <p className="text-sm text-warm-stone mb-12">Last updated: January 2025</p>
 

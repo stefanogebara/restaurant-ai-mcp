@@ -4,8 +4,29 @@ import ThiingsIcon from '../common/ThiingsIcon';
 import { useRevenueOpportunities } from '../../hooks/usePredictiveAnalytics';
 import { formatCurrency } from '../../utils/currency';
 
+// Translate backend-generated category strings on the frontend
+const CATEGORY_I18N: Record<string, Record<string, string>> = {
+  'pt-BR': {
+    'Off-Peak Optimization': 'Otimização Fora de Pico',
+    'Table Turnover': 'Rotatividade de Mesas',
+    'No-Show Reduction': 'Redução de No-Shows',
+  },
+  es: {
+    'Off-Peak Optimization': 'Optimización Fuera de Pico',
+    'Table Turnover': 'Rotación de Mesas',
+    'No-Show Reduction': 'Reducción de No-Shows',
+  },
+};
+
+const PRIORITY_I18N: Record<string, Record<string, string>> = {
+  'pt-BR': { high: 'Alto', medium: 'Médio', low: 'Baixo' },
+  es: { high: 'Alto', medium: 'Medio', low: 'Bajo' },
+};
+
 export default function RevenueOpportunities() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const tCat = (cat: string) => CATEGORY_I18N[i18n.language]?.[cat] ?? cat;
+  const tPriority = (p: string) => PRIORITY_I18N[i18n.language]?.[p] ?? p.charAt(0).toUpperCase() + p.slice(1);
   const { data, isLoading, isError } = useRevenueOpportunities();
   const opportunities = data?.opportunities ?? [];
   const summary = data?.summary ?? null;
@@ -31,7 +52,7 @@ export default function RevenueOpportunities() {
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-border-gray/50 rounded-2xl p-8 shadow-sm">
+      <div className="py-8">
         <div role="status" className="flex items-center justify-center">
           <div aria-hidden="true" className="w-8 h-8 border-4 border-burgundy border-t-transparent rounded-full animate-spin"></div>
           <span className="ml-3 text-warm-stone">{t('analytics.analyzingOpportunities')}</span>
@@ -42,7 +63,7 @@ export default function RevenueOpportunities() {
 
   if (isError || (!isLoading && opportunities.length === 0 && !summary)) {
     return (
-      <div className="bg-white border border-border-gray/50 rounded-2xl p-8 shadow-sm">
+      <div className="py-8">
         <div className="text-center py-8">
           <ThiingsIcon name="lightbulb" pxSize={32} className="mx-auto mb-3 text-warm-stone" />
           <p className="font-semibold text-deep-charcoal mb-1">{t('analytics.noRevenueData', 'No revenue data yet')}</p>
@@ -53,10 +74,10 @@ export default function RevenueOpportunities() {
   }
 
   return (
-    <div className="bg-white border border-border-gray/50 rounded-2xl overflow-hidden shadow-sm">
+    <div className="overflow-hidden">
       {/* Header */}
-      <div className="p-6 border-b border-border-gray">
-        <h2 className="text-lg font-semibold text-deep-charcoal tracking-tight mb-1">{t('analytics.revenueOpportunities')}</h2>
+      <div className="py-5 border-b border-[#E5E7EB]">
+        <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-1">{t('analytics.revenueOpportunities')}</h2>
         <p className="text-sm text-warm-stone">
           {t('analytics.revenueOpportunitiesDesc')}
         </p>
@@ -64,7 +85,7 @@ export default function RevenueOpportunities() {
 
       {/* Summary Stats */}
       {summary && (
-        <div className="grid grid-cols-2 gap-4 p-6 bg-soft-gray/30 border-b border-border-gray">
+        <div className="grid grid-cols-2 gap-8 py-5 border-b border-[#E5E7EB]">
           <div className="text-center">
             <div className="text-3xl font-bold text-rose-600">{formatCurrency(summary.total_potential_revenue)}</div>
             <div className="text-xs text-warm-stone mt-1">{t('analytics.totalPotential')}</div>
@@ -93,7 +114,7 @@ export default function RevenueOpportunities() {
               role="button"
               tabIndex={0}
               aria-expanded={expandedCard === opp.rank}
-              className="border border-border-gray/50 rounded-2xl overflow-hidden hover:shadow-lg transition-all cursor-pointer bg-gradient-to-br from-white to-soft-gray/20 focus:outline-none focus:ring-2 focus:ring-burgundy/20"
+              className="border border-[#E5E7EB] rounded-lg overflow-hidden hover:bg-[#FAFAFA] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20"
               onClick={() => setExpandedCard(expandedCard === opp.rank ? null : opp.rank)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedCard(expandedCard === opp.rank ? null : opp.rank); } }}
             >
@@ -105,7 +126,7 @@ export default function RevenueOpportunities() {
                       #{opp.rank}
                     </div>
                     <div>
-                      <h3 className="font-bold text-lg text-deep-charcoal">{opp.category}</h3>
+                      <h3 className="font-bold text-lg text-deep-charcoal">{tCat(opp.category)}</h3>
                       <p className="text-sm text-warm-stone">{opp.description}</p>
                     </div>
                   </div>
@@ -147,7 +168,7 @@ export default function RevenueOpportunities() {
                   </div>
                   <div className="mt-4 pt-4 border-t border-border-gray flex justify-between items-center">
                     <div className="text-xs text-warm-stone">
-                      <span className="font-semibold">{t('analytics.roiPotential')}</span> High
+                      <span className="font-semibold">{t('analytics.roiPotential')}</span> {tPriority('high')}
                     </div>
                     <button
                       type="button"
@@ -165,7 +186,7 @@ export default function RevenueOpportunities() {
       </div>
 
       {/* Footer Info */}
-      <div className="bg-soft-gray/30 px-6 py-4 border-t border-border-gray">
+      <div className="py-4 border-t border-[#E5E7EB]">
         <div className="flex items-center gap-2 text-xs text-warm-stone">
           <ThiingsIcon name="lightbulb" pxSize={16} />
           <span>

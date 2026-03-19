@@ -145,7 +145,7 @@ export default function VoiceDemoDashboard({
                             : 'bg-red-500/20 text-red-400'
                         }`}
                       >
-                        {r.status}
+                        {t(`landing.voiceDemo.${r.status}`, r.status)}
                       </div>
                     </motion.div>
                   </motion.div>
@@ -167,7 +167,7 @@ export default function VoiceDemoDashboard({
                     </div>
                   </div>
                   <div className="px-1.5 py-0.5 rounded-full text-[8px] font-medium bg-rose-500/20 text-rose-400">
-                    confirmed
+                    {t('landing.voiceDemo.confirmed', 'confirmed')}
                   </div>
                 </div>
               ))}

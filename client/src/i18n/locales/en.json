@@ -527,6 +527,8 @@
     "opportunitiesFooter": "Opportunities are ranked by potential revenue impact and implementation feasibility. Click on any opportunity card to see detailed action steps.",
     "analyzingOpportunities": "Analyzing revenue opportunities...",
     "noOpportunities": "No opportunities found yet.",
+    "noRevenueData": "No revenue data yet",
+    "noRevenueDataDesc": "Revenue opportunities will appear once there is enough booking history to analyze.",
     "weeklyReportsUpgradeTitle": "Weekly Reports on Growth & Scale",
     "weeklyReportsUpgradeDesc": "Upgrade to unlock weekly performance reports with guest demographics, busiest times, and preference breakdowns.",
     "noReportData": "No report data available",
@@ -1472,7 +1474,11 @@
       "fallbackDesc": "Try our WhatsApp AI instead — send a message and get an instant response.",
       "suggestion1": "Book a table for 2 tonight",
       "suggestion2": "What's on the menu?",
-      "suggestion3": "Do you have a terrace?"
+      "suggestion3": "Do you have a terrace?",
+      "readyPrompt": "This will use your microphone.",
+      "startCall": "Start call",
+      "cancel": "Cancel",
+      "fullExperience": "Try the full experience"
     },
     "heroChat": {
       "msg1": "Hi! Table for 4 tomorrow at 8pm?",
@@ -1870,6 +1876,30 @@
         "launchDemo": "Launch my demo",
         "creatingDemo": "Creating your demo..."
       }
+    },
+    "voiceDemo": {
+      "backToSite": "\u2190 Back",
+      "title": "Talk to our AI host",
+      "subtitle": "Ask to book a table, check availability, or inquire about the menu",
+      "readyPrompt": "This will use your microphone to talk with our AI host.",
+      "startCall": "Start call",
+      "cancel": "Cancel",
+      "endCall": "End call",
+      "liveDashboard": "Live dashboard \u2014 reservations appear in real-time",
+      "powered": "Powered by ElevenLabs \u00b7 Seatable AI",
+      "tryDashboard": "Try the full dashboard",
+      "pricing": "Pricing",
+      "tables": "Tables",
+      "today": "Today",
+      "waitlist": "Waitlist",
+      "guests": "Guests",
+      "dashboard": "Dashboard",
+      "todayDate": "Today \u00b7 March 15",
+      "aiActive": "AI Active",
+      "todaysReservations": "Today's Reservations",
+      "confirmed": "confirmed",
+      "cancelled": "cancelled",
+      "readyToCall": "Ready to call?"
     }
   },
   "managerAI": {
@@ -2169,9 +2199,6 @@
     "status.PENDING": "pending",
     "status.REJECTED": "rejected",
     "status.NOT_SUBMITTED": "not submitted"
-  },
-  "voice": {
-    "settingsSaved": "Voice settings saved successfully"
   },
   "manager": {
     "sendFailed": "Failed to send. Please try again."
