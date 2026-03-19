@@ -20,7 +20,7 @@ const { supabaseAdmin } = require('./_lib/supabase');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { initSentry, captureException } = require('./_lib/sentry');
-const Anthropic = require('@anthropic-ai/sdk');
+const { getAI, AI_MODEL_FAST } = require('./_lib/ai-client');
 initSentry();
 
 const logger = createSecureLogger('AIStrategy');
@@ -146,12 +146,6 @@ async function handleSuggest(req, res, restaurantId) {
     return res.status(405).json({ success: false, error: 'Method not allowed. Use POST.' });
   }
 
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  if (!anthropicKey) {
-    logger.error('ANTHROPIC_API_KEY not configured for strategy suggestions');
-    return res.status(500).json({ success: false, error: 'AI service not configured. Contact support.' });
-  }
-
   // Fetch current strategy + metrics in parallel
   let config = {};
   let metrics;
@@ -196,10 +190,9 @@ Format as numbered list. Be specific and data-driven. Under 250 words total.`;
 
   let suggestions;
   try {
-    const AnthropicClass = typeof Anthropic === 'function' ? Anthropic : Anthropic.default;
-    const anthropic = new AnthropicClass({ apiKey: anthropicKey });
-    const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+    const ai = getAI();
+    const response = await ai.messages.create({
+      model: AI_MODEL_FAST,
       max_tokens: 500,
       messages: [{ role: 'user', content: prompt }],
     });

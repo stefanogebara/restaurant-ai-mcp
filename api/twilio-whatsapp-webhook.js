@@ -13,7 +13,7 @@
  * - TWILIO_ACCOUNT_SID: Twilio Account SID
  * - TWILIO_AUTH_TOKEN: Twilio Auth Token
  * - TWILIO_WHATSAPP_NUMBER: Your Twilio WhatsApp number (e.g., +14155238886)
- * - ANTHROPIC_API_KEY: Claude AI API key
+ * - OPENROUTER_API_KEY or ANTHROPIC_API_KEY: AI API key (via centralized ai-client)
  *
  * Twilio Console Setup:
  * 1. Go to Messaging > Senders > WhatsApp Senders
@@ -21,7 +21,7 @@
  * 3. Set webhook URL to this endpoint
  */
 
-const Anthropic = require('@anthropic-ai/sdk');
+const { getAI, AI_MODEL } = require('./_lib/ai-client');
 const twilio = require('twilio');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const logger = createSecureLogger('Twilio');
@@ -350,10 +350,8 @@ async function updateSessionContext(sessionId, contextUpdate) {
   }
 }
 
-// Initialize Anthropic client
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY
-});
+// Initialize AI client (lazy singleton via centralized ai-client)
+const anthropic = getAI();
 
 /**
  * Sanitize conversation history to ensure valid message structure for Claude API
@@ -796,7 +794,7 @@ async function processWithClaude(messageText, session) {
 
     // Initial Claude call
     currentResponse = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: AI_MODEL,
       max_tokens: 1024,
       system: buildSystemPrompt(restaurantInfo, session, availableRestaurants),
       tools: tools,
@@ -857,7 +855,7 @@ async function processWithClaude(messageText, session) {
 
       // Get next response from Claude
       currentResponse = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: AI_MODEL,
         max_tokens: 1024,
         system: buildSystemPrompt(restaurantInfo, session, availableRestaurants),
         tools: tools,

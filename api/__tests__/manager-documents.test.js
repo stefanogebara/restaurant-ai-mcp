@@ -10,12 +10,10 @@ var mockHandlePreflight = jest.fn().mockReturnValue(false);
 
 jest.mock('../_lib/auth', () => ({ verifyJWT: mockVerifyJWT }));
 jest.mock('../services/managerMemory', () => ({ writeMemory: mockWriteMemory }));
-jest.mock('@anthropic-ai/sdk', () => ({
-  default: class Anthropic {
-    constructor() {
-      this.messages = { create: mockAnthropicCreate };
-    }
-  },
+jest.mock('../_lib/ai-client', () => ({
+  getAI: () => ({ messages: { create: mockAnthropicCreate } }),
+  AI_MODEL: 'anthropic/claude-3.5-sonnet',
+  AI_MODEL_FAST: 'anthropic/claude-3-haiku',
 }));
 jest.mock('pdf-parse', () => jest.fn().mockResolvedValue({ text: 'Parsed PDF text content here' }));
 jest.mock('../_lib/secure-logger', () => ({
@@ -197,7 +195,7 @@ describe('text document upload', () => {
 
     expect(mockAnthropicCreate).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'anthropic/claude-3-haiku',
         messages: expect.arrayContaining([
           expect.objectContaining({ role: 'user', content: expect.stringContaining(text) }),
         ]),

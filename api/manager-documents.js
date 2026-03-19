@@ -2,8 +2,7 @@
 
 const path = require('path');
 const Busboy = require('busboy');
-const AnthropicModule = require('@anthropic-ai/sdk');
-const Anthropic = AnthropicModule.default || AnthropicModule;
+const { getAI, AI_MODEL_FAST } = require('./_lib/ai-client');
 // pdf-parse v2 uses ESM-first; lazy-require the CJS build to avoid Vercel cold-start crashes
 let pdfParse;
 function getPdfParse() {
@@ -94,9 +93,9 @@ async function extractText(buffer, mimetype, filename) {
  * @returns {Promise<string[]>} Array of fact strings (numbering prefix stripped)
  */
 async function extractFacts(text) {
-  const client = new Anthropic();
+  const client = getAI();
   const response = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: AI_MODEL_FAST,
     max_tokens: 1024,
     messages: [
       {

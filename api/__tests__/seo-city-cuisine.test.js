@@ -6,15 +6,15 @@ jest.mock('../_lib/supabase', () => ({
   },
 }));
 
-jest.mock('@anthropic-ai/sdk', () =>
-  jest.fn().mockImplementation(() => ({
-    messages: {
-      create: jest.fn().mockResolvedValue({
-        content: [{ text: '<p>Generated copy.</p>' }],
-      }),
-    },
-  }))
-);
+var mockMessagesCreate = jest.fn().mockResolvedValue({
+  content: [{ text: '<p>Generated copy.</p>' }],
+});
+
+jest.mock('../_lib/ai-client', () => ({
+  getAI: () => ({ messages: { create: mockMessagesCreate } }),
+  AI_MODEL: 'anthropic/claude-3.5-sonnet',
+  AI_MODEL_FAST: 'anthropic/claude-3-haiku',
+}));
 
 const handler = require('../seo/city-cuisine');
 const { supabaseAdmin } = require('../_lib/supabase');
@@ -121,14 +121,9 @@ describe('GET /api/seo/city-cuisine', () => {
   });
 
   it('sanitizes Claude output — strips script tags injected into p content', async () => {
-    const Anthropic = require('@anthropic-ai/sdk');
-    Anthropic.mockImplementationOnce(() => ({
-      messages: {
-        create: jest.fn().mockResolvedValue({
-          content: [{ text: '<p>Good text.<script>alert(1)</script></p><p>More text.</p><p>Final.</p>' }],
-        }),
-      },
-    }));
+    mockMessagesCreate.mockResolvedValueOnce({
+      content: [{ text: '<p>Good text.<script>alert(1)</script></p><p>More text.</p><p>Final.</p>' }],
+    });
     mockSupabase({
       cacheError: { code: 'PGRST116' },
       restaurants: [
@@ -143,12 +138,7 @@ describe('GET /api/seo/city-cuisine', () => {
   });
 
   it('falls back to static copy when Claude returns empty content', async () => {
-    const Anthropic = require('@anthropic-ai/sdk');
-    Anthropic.mockImplementationOnce(() => ({
-      messages: {
-        create: jest.fn().mockResolvedValue({ content: [] }),
-      },
-    }));
+    mockMessagesCreate.mockResolvedValueOnce({ content: [] });
     mockSupabase({
       cacheError: { code: 'PGRST116' },
       restaurants: [

@@ -37,8 +37,10 @@ jest.mock('../_lib/supabase', () => ({
 }));
 
 const mockAnthropic = { messages: { create: mockMessagesCreate } };
-jest.mock('@anthropic-ai/sdk', () => ({
-  default: jest.fn().mockImplementation(() => mockAnthropic),
+jest.mock('../_lib/ai-client', () => ({
+  getAI: () => mockAnthropic,
+  AI_MODEL: 'anthropic/claude-3.5-sonnet',
+  AI_MODEL_FAST: 'anthropic/claude-3-haiku',
 }));
 
 jest.mock('../_lib/secure-logger', () => ({

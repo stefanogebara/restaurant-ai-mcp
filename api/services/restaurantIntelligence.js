@@ -9,21 +9,19 @@
  * Stores results in restaurant.restaurant_intelligence table.
  */
 
-const Anthropic = require('@anthropic-ai/sdk');
+const { getAI, AI_MODEL_FAST } = require('../_lib/ai-client');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 
 const logger = createSecureLogger('RestaurantIntelligence');
 
-// Singleton Anthropic client (reuses connections, enables SDK retry/pooling)
-let _anthropicClient = null;
+// Backward-compatible wrapper — used by learningInterview.js and personaGenerator.js
 function getAnthropicClient() {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return null;
-  if (!_anthropicClient) {
-    _anthropicClient = new Anthropic({ apiKey });
+  try {
+    return getAI();
+  } catch {
+    return null;
   }
-  return _anthropicClient;
 }
 
 // Max response body size for website fetches (2MB)
@@ -263,7 +261,7 @@ async function fetchAndExtractWebsite(websiteUrl, restaurantName) {
     // Use Claude Haiku to extract structured data
     const anthropic = getAnthropicClient();
     if (!anthropic) {
-      logger.warn('ANTHROPIC_API_KEY not configured, skipping website extraction');
+      logger.warn('AI client not configured, skipping website extraction');
       return null;
     }
 
@@ -271,7 +269,7 @@ async function fetchAndExtractWebsite(websiteUrl, restaurantName) {
     const extractionTimeout = setTimeout(() => extractionController.abort(), 30000);
 
     const extraction = await anthropic.messages.create({
-      model: 'claude-haiku-4-20250414',
+      model: AI_MODEL_FAST,
       max_tokens: 1500,
       signal: extractionController.signal,
       messages: [{

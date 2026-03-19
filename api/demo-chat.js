@@ -1,4 +1,4 @@
-const Anthropic = require('@anthropic-ai/sdk');
+const { getAI, AI_MODEL_FAST } = require('./_lib/ai-client');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors } = require('./_lib/cors');
@@ -17,11 +17,6 @@ module.exports = async function handler(req, res) {
 
   if (!message || typeof message !== 'string' || message.length > 500) {
     return res.status(400).json({ error: 'Invalid message' });
-  }
-
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: 'AI service not configured' });
   }
 
   const ctx = context || {};
@@ -48,9 +43,8 @@ Rules:
 - This is a demo — if asked about specific menu items or prices, say this is a demo environment`;
 
   try {
-    const client = new Anthropic({ apiKey });
-    const response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+    const response = await getAI().messages.create({
+      model: AI_MODEL_FAST,
       max_tokens: 150,
       system: systemPrompt,
       messages: [{ role: 'user', content: message }],

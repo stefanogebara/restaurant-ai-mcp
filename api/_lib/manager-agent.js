@@ -5,8 +5,7 @@
  * Routes all messages through the same memory + snapshot + conversation logic.
  */
 
-const AnthropicModule = require('@anthropic-ai/sdk');
-const Anthropic = AnthropicModule.default || AnthropicModule;
+const { getAI, AI_MODEL } = require('./ai-client');
 const { retrieveRelevantMemories, writeMemory } = require('../services/managerMemory');
 const { getRestaurantSnapshot } = require('../services/restaurantSnapshot');
 const { buildRestaurantIdentitySection } = require('./persona-prompt-builder');
@@ -29,7 +28,6 @@ class ManagerQuotaError extends Error {
   }
 }
 
-const CLAUDE_MODEL = 'claude-sonnet-4-6';
 const HISTORY_LIMIT = 20;
 
 const VALID_PERIODS = [
@@ -68,15 +66,6 @@ const FACT_PATTERNS = [
   /we (open|close|serve|offer|have|use)/i,
   /our (menu|policy|staff|hours|special)/i,
 ];
-
-let anthropicClient = null;
-
-function getAnthropic() {
-  if (!anthropicClient) {
-    anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  }
-  return anthropicClient;
-}
 
 async function getRestaurantPlan(restaurantId) {
   try {
@@ -352,8 +341,8 @@ async function runManagerAgent(restaurantId, userMessage, channel) {
     { role: 'user', content: userMessage },
   ];
 
-  const response = await getAnthropic().messages.create({
-    model: CLAUDE_MODEL,
+  const response = await getAI().messages.create({
+    model: AI_MODEL,
     max_tokens: 512,
     system: systemPrompt,
     messages,
@@ -383,8 +372,8 @@ async function runManagerAgent(restaurantId, userMessage, channel) {
         },
       ];
 
-      const finalResponse = await getAnthropic().messages.create({
-        model: CLAUDE_MODEL,
+      const finalResponse = await getAI().messages.create({
+        model: AI_MODEL,
         max_tokens: 512,
         system: systemPrompt,
         messages: followUpMessages,
@@ -475,8 +464,8 @@ async function runManagerAgentStream(restaurantId, userMessage, channel, onToken
   let assistantText = '';
 
   async function streamCall(msgs) {
-    const stream = getAnthropic().messages.stream({
-      model: CLAUDE_MODEL,
+    const stream = getAI().messages.stream({
+      model: AI_MODEL,
       max_tokens: 512,
       system: systemPrompt,
       messages: msgs,

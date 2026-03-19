@@ -10,17 +10,8 @@ const {
 } = require('../../_lib/whatsapp-sessions');
 const { RESERVATION_TOOLS, executeTool, getCurrentDateTime } = require('./reservation-tools');
 
-// AI provider: Anthropic Claude
-let anthropicClient = null;
-function getAnthropic() {
-  if (!anthropicClient) {
-    const AnthropicModule = require('@anthropic-ai/sdk');
-    const Anthropic = AnthropicModule.default || AnthropicModule;
-    anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  }
-  return anthropicClient;
-}
-const AI_MODEL = process.env.AI_MODEL || 'claude-sonnet-4-20250514';
+// AI provider: OpenRouter (or direct Anthropic fallback)
+const { getAI, AI_MODEL } = require('../../_lib/ai-client');
 
 /**
  * Call Anthropic Claude and return response in OpenAI-compatible format.
@@ -70,7 +61,7 @@ async function callChatCompletions(messages, tools) {
     input_schema: t.function.parameters,
   }));
 
-  const response = await getAnthropic().messages.create({
+  const response = await getAI().messages.create({
     model: AI_MODEL,
     max_tokens: 1024,
     system: systemContent,

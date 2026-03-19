@@ -6,7 +6,7 @@
  * upserts to cache, returns HTML.
  */
 
-const Anthropic = require('@anthropic-ai/sdk');
+const { getAI, AI_MODEL_FAST } = require('../_lib/ai-client');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { renderPage, titleCase, slugify, escapeHtml } = require('../_lib/seo-html');
 const { createSecureLogger } = require('../_lib/secure-logger');
@@ -94,9 +94,9 @@ module.exports = async (req, res) => {
   // 3. Generate copy via Claude Haiku (one call, ~$0.001)
   let generatedCopy = '';
   try {
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const anthropic = getAI();
     const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: AI_MODEL_FAST,
       max_tokens: 512,
       system: `You write concise, factual marketing copy for a restaurant reservation SaaS called Seatable.
 Output exactly 3 HTML paragraphs (wrapped in <p> tags). No headings. No lists. No markdown. No code blocks.

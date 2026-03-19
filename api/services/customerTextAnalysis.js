@@ -9,6 +9,7 @@
  * Implements hash-based caching to avoid redundant AI calls.
  */
 
+const { getAI, AI_MODEL } = require('../_lib/ai-client');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const crypto = require('crypto');
@@ -185,10 +186,7 @@ function computeTextHash(text) {
  * Call Claude to extract structured signals from customer text.
  */
 async function analyzeWithClaude(textSources) {
-  const Anthropic = require('@anthropic-ai/sdk');
-  const anthropic = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY
-  });
+  const anthropic = getAI();
 
   // Build the prompt with all text grouped by source
   const textBlock = textSources.texts.map(t => {
@@ -197,7 +195,7 @@ async function analyzeWithClaude(textSources) {
   }).join('\n');
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-5-20250929',
+    model: AI_MODEL,
     max_tokens: 1024,
     system: `You are a restaurant customer analyst. Extract structured behavioral signals from customer interaction text. Return ONLY valid JSON with no markdown formatting, no code blocks, no explanation.`,
     messages: [

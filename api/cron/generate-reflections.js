@@ -12,7 +12,7 @@
  * Runs daily at 5 AM UTC via Vercel Cron Jobs
  */
 
-const Anthropic = require('@anthropic-ai/sdk');
+const { getAI, AI_MODEL_FAST } = require('../_lib/ai-client');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { createMemory } = require('../services/guestMemory');
@@ -21,8 +21,6 @@ const { logCronRun } = require('../_lib/cron-tracker');
 initSentry();
 
 const logger = createSecureLogger('CronReflections');
-
-const REFLECTION_MODEL = 'claude-haiku-4-5-20251001';
 const MIN_OBSERVATIONS_FOR_REFLECTION = 5;
 
 module.exports = async (req, res) => {
@@ -151,19 +149,15 @@ async function generateReflectionsForGuest(restaurantId, guestPhone) {
     return 0; // Already reflected this week
   }
 
-  // Use Claude to synthesize reflections
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return 0;
-
   const observationList = observations
     .map(o => `- ${o.content} (${new Date(o.created_at).toLocaleDateString()})`)
     .join('\n');
 
   try {
-    const client = new Anthropic();
+    const client = getAI();
 
     const response = await client.messages.create({
-      model: REFLECTION_MODEL,
+      model: AI_MODEL_FAST,
       max_tokens: 512,
       messages: [
         {

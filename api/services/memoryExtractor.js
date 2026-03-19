@@ -12,14 +12,12 @@
  * Called after every AI conversation ends (voice, WhatsApp).
  */
 
-const Anthropic = require('@anthropic-ai/sdk');
+const { getAI, AI_MODEL_FAST } = require('../_lib/ai-client');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { createMemory } = require('./guestMemory');
 
 const logger = createSecureLogger('MemoryExtractor');
-
-const EXTRACTION_MODEL = 'claude-haiku-4-5-20251001';
 
 /**
  * Extract memories from a completed conversation
@@ -171,17 +169,11 @@ async function extractMemoriesFromWhatsApp(restaurantId, guestPhone, conversatio
  * @returns {Promise<Object[]>} Array of {content, type, importance}
  */
 async function extractWithClaude(transcriptText) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    logger.warn('ANTHROPIC_API_KEY not set, skipping memory extraction');
-    return { memories: [], crm: null };
-  }
-
   try {
-    const client = new Anthropic();
+    const client = getAI();
 
     const response = await client.messages.create({
-      model: EXTRACTION_MODEL,
+      model: AI_MODEL_FAST,
       max_tokens: 1500,
       messages: [
         {
