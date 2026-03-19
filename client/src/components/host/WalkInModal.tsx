@@ -185,7 +185,7 @@ export default function WalkInModal({ isOpen, onClose, onSuccess, availableTable
                 </div>
                 <div>
                   <div className="text-sm text-stone-gray">{t('dashboard.walkIn.partySize')}</div>
-                  <div className="font-semibold text-deep-charcoal">{t('reservations.guestCount', { count: formData.party_size })}</div>
+                  <div className="font-semibold text-deep-charcoal">{t('reservations.guestCount', { count: Number(formData.party_size) })}</div>
                 </div>
               </div>
             </div>

@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import DemoSetupForm from '../components/landing/DemoSetupForm';
+import { trackDemoCompleted } from '../lib/analytics';
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 export default function DemoSetupPage() {
@@ -42,6 +43,7 @@ export default function DemoSetupPage() {
         throw new Error(result.error || 'Failed to create demo. Please try again.');
       }
 
+      trackDemoCompleted({ demo_token: result.demo_token || '' });
       window.location.href = result.demo_url;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';

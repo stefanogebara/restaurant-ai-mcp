@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { trackDemoStarted } from '../../lib/analytics';
 
 interface ScrapedData {
   name: string;
@@ -100,6 +101,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    trackDemoStarted({ source: 'setup_form' });
     onSubmit({
       restaurant_name: selectedResult?.name || restaurantName.trim(),
       city: city.trim(),

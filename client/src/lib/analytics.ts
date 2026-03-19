@@ -124,3 +124,11 @@ export function trackShareClicked(props: { location: 'demo_dashboard' | 'landing
 export function trackDemoFunnel(props: { step: 'demo_started' | 'demo_interacted' | 'demo_share_clicked' | 'signup_started'; preset?: string }): void {
   safeCapture('demo_funnel', props);
 }
+
+export function trackDemoStarted(props: { source: string }): void {
+  safeCapture('demo_started', props);
+}
+
+export function trackDemoCompleted(props: { demo_token: string }): void {
+  safeCapture('demo_completed', props);
+}
