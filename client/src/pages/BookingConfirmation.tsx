@@ -157,7 +157,7 @@ export default function BookingConfirmation() {
               </div>
               <div className="flex justify-between items-center py-2.5 border-b border-soft-gray">
                 <span className="text-[13px] text-warm-stone">{t('reservations.partySize')}</span>
-                <span className="text-sm font-medium text-deep-charcoal">{reservation.party_size} guest{reservation.party_size !== 1 ? 's' : ''}</span>
+                <span className="text-sm font-medium text-deep-charcoal">{t('reservations.guestCount', { count: reservation.party_size })}</span>
               </div>
               <div className="flex justify-between items-center py-2.5">
                 <span className="text-[13px] text-warm-stone">{t('reservations.guest')}</span>

@@ -149,7 +149,7 @@ export default function CampaignManager() {
       ) : !campaigns?.length ? (
         <div className="text-center py-8">
           <p className="text-sm text-muted-stone">{t('campaigns.noCampaigns', 'No campaigns yet')}</p>
-          <p className="text-xs text-muted-stone mt-1">Create your first WhatsApp campaign to re-engage guests</p>
+          <p className="text-xs text-muted-stone mt-1">{t('campaigns.noCampaignsHint')}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -227,7 +227,7 @@ function CampaignRow({
               <Stat label="Failed" value={stats.failed} />
             </div>
           ) : (
-            <p className="text-xs text-muted-stone text-center">Loading stats...</p>
+            <p className="text-xs text-muted-stone text-center">{t('common.loadingStats')}</p>
           )}
 
           {(campaign.status === 'pending' || campaign.status === 'scheduled') && (

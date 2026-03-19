@@ -397,7 +397,12 @@
     "keepReservation": "Keep reservation",
     "statusConfirmed": "Confirmed",
     "statusPending": "Pending",
-    "statusCancelled": "Cancelled"
+    "statusCancelled": "Cancelled",
+    "enterReservationId": "Please enter your reservation ID",
+    "enterPhoneNumber": "Please enter your phone number",
+    "reservationNotFoundLookup": "Reservation not found",
+    "updateFailed": "Failed to update reservation",
+    "cancelFailed2": "Failed to cancel reservation"
   },
   "booking": {
     "reserveTable": "Reserve a table",

@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../../contexts/ToastContext';
 import ThiingsIcon from '../common/ThiingsIcon';
 import DNAStatsBreakdown from './DNAStatsBreakdown';
@@ -13,6 +14,7 @@ import DNACustomerList from './DNACustomerList';
 import { useCustomerDNAStats, useCustomerDNAList, useAnalyzeAllCustomers } from '../../hooks/useCustomerDNA';
 
 export default function CustomerDNADashboard() {
+  const { t } = useTranslation();
   const { success, error } = useToast();
   const [isExpanded, setIsExpanded] = useState(true);
   const [showOccasions, setShowOccasions] = useState(false);
@@ -53,7 +55,7 @@ export default function CustomerDNADashboard() {
         </div>
         <div role="status" className="flex items-center justify-center py-8 gap-3">
           <div aria-hidden="true" className="w-6 h-6 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
-          <span className="text-stone-gray text-sm">Loading profiles...</span>
+          <span className="text-stone-gray text-sm">{t('common.loadingProfiles')}</span>
         </div>
       </div>
     );

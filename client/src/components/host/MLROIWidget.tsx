@@ -6,11 +6,13 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import HelpTooltip from '../common/HelpTooltip';
 import { useMLROI } from '../../hooks/useMLPerformance';
 
 export default function MLROIWidget() {
+  const { t } = useTranslation();
   const { data, isLoading } = useMLROI();
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -25,7 +27,7 @@ export default function MLROIWidget() {
         </div>
         <div role="status" className="flex items-center justify-center py-4 gap-3">
           <div aria-hidden="true" className="w-6 h-6 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
-          <span className="text-stone-gray text-sm">Loading data...</span>
+          <span className="text-stone-gray text-sm">{t('common.loadingData')}</span>
         </div>
       </div>
     );

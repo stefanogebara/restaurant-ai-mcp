@@ -77,17 +77,17 @@ export function useVoiceAgent({ agentId, useSignedUrl = false, requireConfirmati
         const res = await fetch('/api/elevenlabs-signed-url');
         if (!res.ok) throw new Error('Failed to get signed URL');
         const data = await res.json();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await conversation.startSession({
           signedUrl: data.signed_url,
           ...sessionOpts,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any);
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await conversation.startSession({
           agentId,
           connectionType: 'webrtc',
           ...sessionOpts,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any);
       }
     } catch (err: unknown) {

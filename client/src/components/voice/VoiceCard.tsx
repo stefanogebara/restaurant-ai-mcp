@@ -4,6 +4,7 @@
  */
 
 import { forwardRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import Spinner from '../common/Spinner';
 import type { EnhancedVoice } from './voiceTypes';
@@ -21,6 +22,7 @@ const VoiceCard = forwardRef<HTMLDivElement, VoiceCardProps>(function VoiceCard(
   { voice, isSelected, isPlaying, isLoading, onSelect, onPlay },
   ref,
 ) {
+  const { t } = useTranslation();
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -113,17 +115,17 @@ const VoiceCard = forwardRef<HTMLDivElement, VoiceCardProps>(function VoiceCard(
         {isLoading ? (
           <>
             <Spinner size="sm" />
-            <span>Loading...</span>
+            <span>{t('common.loadingText')}</span>
           </>
         ) : isPlaying ? (
           <>
             <ThiingsIcon name="pause" pxSize={18} />
-            <span>Pause</span>
+            <span>{t('common.pause')}</span>
           </>
         ) : (
           <>
             <ThiingsIcon name="play" pxSize={18} />
-            <span>Preview</span>
+            <span>{t('common.preview')}</span>
           </>
         )}
       </button>

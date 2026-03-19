@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../services/api';
 import type { TableRecommendation, SeatModalData } from '../../types/host.types';
 import { useState } from 'react';
@@ -23,6 +24,7 @@ interface WaitlistSeatModalProps {
 }
 
 export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }: WaitlistSeatModalProps) {
+  const { t } = useTranslation();
   const [recommendations, setRecommendations] = useState<TableRecommendation[] | null>(null);
   const [selectedTables, setSelectedTables] = useState<string[]>([]);
 
@@ -102,7 +104,7 @@ export default function WaitlistSeatModal({ isOpen, entry, onClose, onSuccess }:
               </div>
               <div>
                 <div className="text-sm text-muted-stone mb-1">Party Size</div>
-                <div className="font-semibold text-deep-charcoal">{entry.party_size} guests</div>
+                <div className="font-semibold text-deep-charcoal">{t('reservations.guestCount', { count: entry.party_size })}</div>
               </div>
               <div>
                 <div className="text-sm text-muted-stone mb-1">Phone</div>

@@ -10,6 +10,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { UpcomingReservation } from '../../types/host.types';
 import ThiingsIcon from '../common/ThiingsIcon';
 
@@ -24,6 +25,7 @@ export default function ReservationNotesEditor({
   onSave,
   onCancel
 }: ReservationNotesEditorProps) {
+  const { t } = useTranslation();
   const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>(
     reservation.dietary_restrictions || []
   );
@@ -77,7 +79,7 @@ export default function ReservationNotesEditor({
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-2xl font-bold text-deep-charcoal">Reservation Notes</h2>
-            <p className="text-stone-gray text-sm">{reservation.customer_name} · {reservation.party_size} guests</p>
+            <p className="text-stone-gray text-sm">{reservation.customer_name} · {t('reservations.guestCount', { count: reservation.party_size })}</p>
           </div>
           <button
             onClick={onCancel}

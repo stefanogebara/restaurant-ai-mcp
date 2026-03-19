@@ -132,7 +132,13 @@ export default function ReservationDetailsModal({ isOpen, reservation, onClose, 
           {reservation.status && (
             <div className="bg-soft-gray rounded-xl p-4 border border-border-gray">
               <div className="text-xs text-muted-stone mb-1">{t('reservationDetails.status')}</div>
-              <div className="text-deep-charcoal font-semibold capitalize">{reservation.status}</div>
+              <div className="text-deep-charcoal font-semibold capitalize">{
+                reservation.status === 'Confirmed' ? t('reservations.confirmed')
+                : reservation.status === 'Cancelled' ? t('reservations.cancelled')
+                : reservation.status === 'Completed' ? t('reservations.completed')
+                : reservation.status === 'No Show' ? t('reservations.noShow')
+                : t('reservations.pending')
+              }</div>
             </div>
           )}
         </div>

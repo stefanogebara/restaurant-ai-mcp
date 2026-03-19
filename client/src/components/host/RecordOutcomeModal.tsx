@@ -7,6 +7,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../../contexts/ToastContext';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { UpcomingReservation } from '../../types/host.types';
@@ -32,6 +33,7 @@ export default function RecordOutcomeModal({
   onClose,
   onSubmit
 }: RecordOutcomeModalProps) {
+  const { t } = useTranslation();
   const { error } = useToast();
   const [outcome, setOutcome] = useState<'showed_up' | 'no_show' | 'cancelled' | null>(null);
   const [interventionTaken, setInterventionTaken] = useState(false);
@@ -103,7 +105,7 @@ export default function RecordOutcomeModal({
               />
             </div>
             <div className="text-sm text-stone-gray space-y-1">
-              <div>Party of {reservation.party_size} • {reservation.time}</div>
+              <div>{t('common.partyOf', { size: reservation.party_size })} • {reservation.time}</div>
               <div>{reservation.customer_phone}</div>
               {reservation.special_requests && (
                 <div className="italic text-stone-gray">"{reservation.special_requests}"</div>
@@ -125,7 +127,7 @@ export default function RecordOutcomeModal({
                 }`}
               >
                 <div className="flex justify-center mb-2"><ThiingsIcon name="check-circle" pxSize={32} /></div>
-                <div className="text-sm font-medium text-deep-charcoal">Showed Up</div>
+                <div className="text-sm font-medium text-deep-charcoal">{t('reservations.confirmed')}</div>
               </button>
 
               <button
@@ -138,7 +140,7 @@ export default function RecordOutcomeModal({
                 }`}
               >
                 <div className="flex justify-center mb-2"><ThiingsIcon name="x-circle" pxSize={32} /></div>
-                <div className="text-sm font-medium text-deep-charcoal">No Show</div>
+                <div className="text-sm font-medium text-deep-charcoal">{t('reservations.noShow')}</div>
               </button>
 
               <button
@@ -151,7 +153,7 @@ export default function RecordOutcomeModal({
                 }`}
               >
                 <div className="flex justify-center mb-2"><ThiingsIcon name="ban" pxSize={32} /></div>
-                <div className="text-sm font-medium text-deep-charcoal">Cancelled</div>
+                <div className="text-sm font-medium text-deep-charcoal">{t('reservations.cancelled')}</div>
               </button>
             </div>
           </div>

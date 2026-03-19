@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../../contexts/ToastContext';
 import ThiingsIcon from '../common/ThiingsIcon';
 import Spinner from '../common/Spinner';
@@ -18,6 +19,7 @@ import LTVAtRiskCustomers from './LTVAtRiskCustomers';
 import { useLTVStats, useLTVTopVIPs, useLTVAtRisk, useRecalculateLTV, useSendCampaign } from '../../hooks/useLTVData';
 
 export default function LTVDashboard() {
+  const { t } = useTranslation();
   const { success, error } = useToast();
   const statsQuery = useLTVStats();
   const vipsQuery = useLTVTopVIPs();
@@ -52,7 +54,7 @@ export default function LTVDashboard() {
         </h2>
         <div className="flex flex-col items-center justify-center py-8">
           <Spinner size="lg" className="mb-4" />
-          <p className="text-stone-gray font-semibold">Loading analytics...</p>
+          <p className="text-stone-gray font-semibold">{t('common.loadingAnalytics')}</p>
         </div>
       </div>
     );

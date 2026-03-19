@@ -44,7 +44,7 @@ export default function TrendChart({
         style={{ height }}
       >
         <div aria-hidden="true" className="w-5 h-5 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
-        <div role="status" className="text-warm-stone text-sm">Loading chart...</div>
+        <div role="status" className="text-warm-stone text-sm">{t('common.loadingChart')}</div>
       </div>
     );
   }

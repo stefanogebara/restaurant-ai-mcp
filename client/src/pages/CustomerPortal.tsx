@@ -43,8 +43,8 @@ export default function CustomerPortal() {
       const currentMethod = override?.method ?? lookupMethod;
       const currentValue = override?.value ?? (lookupMethod === 'id' ? reservationId : phone);
 
-      if (currentMethod === 'id' && !currentValue.trim()) throw new Error('Please enter your reservation ID');
-      if (currentMethod === 'phone' && !currentValue.trim()) throw new Error('Please enter your phone number');
+      if (currentMethod === 'id' && !currentValue.trim()) throw new Error(t('reservations.enterReservationId'));
+      if (currentMethod === 'phone' && !currentValue.trim()) throw new Error(t('reservations.enterPhoneNumber'));
 
       lastLookupRef.current = { method: currentMethod, value: currentValue };
 
@@ -56,14 +56,14 @@ export default function CustomerPortal() {
       });
       const response = await fetch(`/api/customer-reservation?${params}`);
       const data = await response.json();
-      if (!data.success || !data.reservation) throw new Error(data.message || 'Reservation not found');
+      if (!data.success || !data.reservation) throw new Error(data.message || t('reservations.reservationNotFoundLookup'));
       return data.reservation;
     },
     onSuccess: (res) => {
       setReservation(res);
       const { date, time } = parseReservationDateTime(res);
       setModifiedData({ ...res, date, time });
-      success('Reservation found!');
+      success(t('reservations.reservationFound'));
     },
     onError: (err) => showError(err.message),
   });
@@ -83,7 +83,7 @@ export default function CustomerPortal() {
         }),
       });
       const data = await response.json();
-      if (!data.success) throw new Error(data.message || 'Failed to update reservation');
+      if (!data.success) throw new Error(data.message || t('reservations.updateFailed'));
       return data;
     },
     onSuccess: () => {
@@ -91,9 +91,9 @@ export default function CustomerPortal() {
         lookupMutation.mutate(lastLookupRef.current);
       }
       setIsModifying(false);
-      success('Reservation updated successfully!');
+      success(t('reservations.reservationUpdated'));
     },
-    onError: (err) => showError(err instanceof Error ? err.message : 'Failed to update reservation'),
+    onError: (err) => showError(err instanceof Error ? err.message : t('reservations.updateFailed')),
   });
 
   const cancelMutation = useMutation({
@@ -107,15 +107,15 @@ export default function CustomerPortal() {
         }),
       });
       const data = await response.json();
-      if (!data.success) throw new Error(data.message || 'Failed to cancel reservation');
+      if (!data.success) throw new Error(data.message || t('reservations.cancelFailed2'));
       return data;
     },
     onSuccess: () => {
-      success('Reservation cancelled successfully');
+      success(t('reservations.reservationCancelledSuccess'));
       setReservation(prev => prev ? { ...prev, status: 'Cancelled' } : null);
       setShowCancelConfirm(false);
     },
-    onError: (err) => showError(err instanceof Error ? err.message : 'Failed to cancel reservation'),
+    onError: (err) => showError(err instanceof Error ? err.message : t('reservations.cancelFailed2')),
   });
 
   function handleCancel() {
@@ -142,7 +142,7 @@ export default function CustomerPortal() {
           {restaurantName ? (
             <>
               <div className="font-serif text-lg font-semibold text-deep-charcoal truncate">{restaurantName}</div>
-              <div className="text-[11px] text-muted-stone">Powered by seatable<span className="text-burgundy">.</span></div>
+              <div className="text-[11px] text-muted-stone">{t('common.poweredBy')} seatable<span className="text-burgundy">.</span></div>
             </>
           ) : (
             <div className="font-serif text-lg font-semibold text-deep-charcoal">
@@ -187,7 +187,7 @@ export default function CustomerPortal() {
                 {/* Divider */}
                 <div className="flex items-center gap-4 my-4">
                   <div className="flex-1 h-px bg-border-gray" />
-                  <span className="text-xs font-medium text-muted-stone">or</span>
+                  <span className="text-xs font-medium text-muted-stone">{t('common.or')}</span>
                   <div className="flex-1 h-px bg-border-gray" />
                 </div>
 
@@ -234,7 +234,9 @@ export default function CustomerPortal() {
                       ? 'bg-red-600/[8%] text-red-600'
                       : 'bg-amber-600/[8%] text-amber-600'
                   }`}>
-                    {reservation.status}
+                    {reservation.status === 'Confirmed' ? t('reservations.statusConfirmed')
+                      : reservation.status === 'Cancelled' ? t('reservations.statusCancelled')
+                      : t('reservations.statusPending')}
                   </span>
                 </div>
 
@@ -256,16 +258,16 @@ export default function CustomerPortal() {
                               <span className="text-sm font-medium text-deep-charcoal">
                                 {date ? new Date(date + 'T00:00:00').toLocaleDateString(i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US', {
                                   weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
-                                }) : 'Not set'}
+                                }) : t('common.notSet')}
                               </span>
                             </div>
                             <div className="flex justify-between py-2.5 border-b border-soft-gray">
                               <span className="text-[13px] text-warm-stone">{t('reservations.time')}</span>
-                              <span className="text-sm font-medium text-deep-charcoal">{time || 'Not set'}</span>
+                              <span className="text-sm font-medium text-deep-charcoal">{time || t('common.notSet')}</span>
                             </div>
                             <div className="flex justify-between py-2.5 border-b border-soft-gray">
                               <span className="text-[13px] text-warm-stone">{t('reservations.partySize')}</span>
-                              <span className="text-sm font-medium text-deep-charcoal">{reservation.party_size} guests</span>
+                              <span className="text-sm font-medium text-deep-charcoal">{t('reservations.guestCount', { count: reservation.party_size })}</span>
                             </div>
                             <div className="flex justify-between py-2.5 border-b border-soft-gray">
                               <span className="text-[13px] text-warm-stone">{t('reservations.guest')}</span>
@@ -302,7 +304,7 @@ export default function CustomerPortal() {
                       </div>
                       <div>
                         <label className="block text-[13px] font-medium text-stone-gray mb-1.5">{t('reservations.specialRequests')}</label>
-                        <textarea value={modifiedData.special_requests || ''} onChange={(e) => setModifiedData({ ...modifiedData, special_requests: e.target.value })} rows={3} placeholder="Allergies, celebrations, seating preferences..." className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%] resize-none" />
+                        <textarea value={modifiedData.special_requests || ''} onChange={(e) => setModifiedData({ ...modifiedData, special_requests: e.target.value })} rows={3} placeholder={t('booking.specialRequestsPlaceholder')} className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%] resize-none" />
                       </div>
                       <div className="flex gap-2.5 pt-2">
                         <button type="button" onClick={() => { setIsModifying(false); setModifiedData(reservation); }} className="flex-1 py-3 border border-border-gray bg-white text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">{t('common.cancel')}</button>
@@ -323,10 +325,10 @@ export default function CustomerPortal() {
                     {showCancelConfirm ? (
                       <div className="flex gap-2 flex-1">
                         <button type="button" onClick={handleCancel} disabled={cancelMutation.isPending} className="flex-1 py-3 border border-red-600/20 bg-red-600 text-white font-medium rounded-[10px] text-[13px] hover:bg-red-700 transition-colors disabled:opacity-50">
-                          {cancelMutation.isPending ? t('common.cancelling', 'Cancelling...') : 'Yes, cancel reservation'}
+                          {cancelMutation.isPending ? t('common.cancelling', 'Cancelling...') : t('reservations.yesCancelReservation')}
                         </button>
                         <button type="button" onClick={() => setShowCancelConfirm(false)} className="flex-1 py-3 border border-border-gray bg-white text-stone-gray font-medium rounded-[10px] text-[13px] hover:border-muted-stone transition-colors">
-                          Keep reservation
+                          {t('reservations.keepReservation')}
                         </button>
                       </div>
                     ) : (

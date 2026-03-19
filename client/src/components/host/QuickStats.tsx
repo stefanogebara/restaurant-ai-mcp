@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 
 interface QuickStatsProps {
@@ -13,6 +14,7 @@ interface QuickStatsProps {
 }
 
 export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps) {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(true);
 
   if (isLoading) {
@@ -26,7 +28,7 @@ export default function QuickStats({ analyticsData, isLoading }: QuickStatsProps
         </div>
         <div role="status" className="flex items-center justify-center py-4 gap-3">
           <div aria-hidden="true" className="w-6 h-6 border-2 border-burgundy border-t-transparent rounded-full animate-spin" />
-          <span className="text-stone-gray text-sm">Loading stats...</span>
+          <span className="text-stone-gray text-sm">{t('common.loadingStats')}</span>
         </div>
       </div>
     );

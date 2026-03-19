@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { UpcomingReservation, Table, SeatModalData } from '../../types/host.types';
 import TableCombinationSelector from './TableCombinationSelector';
 import ThiingsIcon from '../common/ThiingsIcon';
@@ -12,6 +13,7 @@ interface CheckInModalProps {
 }
 
 export default function CheckInModal({ isOpen, reservation, onClose, onSuccess, availableTables }: CheckInModalProps) {
+  const { t } = useTranslation();
   const [showTableSelection, setShowTableSelection] = useState(false);
   const [selectedTableIds, setSelectedTableIds] = useState<string[]>([]);
   const [selectedTableNumbers, setSelectedTableNumbers] = useState<string[]>([]);
@@ -60,9 +62,9 @@ export default function CheckInModal({ isOpen, reservation, onClose, onSuccess, 
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
     >
-      <div role="dialog" aria-modal="true" aria-label="Check In Reservation" className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div role="dialog" aria-modal="true" aria-label={t('dashboard.checkInReservation')} className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-deep-charcoal">Check In Reservation</h2>
+          <h2 className="text-2xl font-bold text-deep-charcoal">{t('dashboard.checkInReservation')}</h2>
           <button
             type="button"
             onClick={handleClose}
@@ -77,25 +79,25 @@ export default function CheckInModal({ isOpen, reservation, onClose, onSuccess, 
         <div className="bg-soft-gray rounded-xl p-4 mb-4 border border-border-gray">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="text-sm text-stone-gray">Customer</div>
+              <div className="text-sm text-stone-gray">{t('dashboard.customer')}</div>
               <div className="font-semibold text-deep-charcoal text-lg">{reservation.customer_name}</div>
             </div>
             <div>
-              <div className="text-sm text-stone-gray">Party Size</div>
-              <div className="font-semibold text-deep-charcoal text-lg">{reservation.party_size} guests</div>
+              <div className="text-sm text-stone-gray">{t('reservations.partySize')}</div>
+              <div className="font-semibold text-deep-charcoal text-lg">{t('reservations.guestCount', { count: reservation.party_size })}</div>
             </div>
             <div>
-              <div className="text-sm text-stone-gray">Time</div>
+              <div className="text-sm text-stone-gray">{t('reservations.time')}</div>
               <div className="font-semibold text-deep-charcoal text-lg">{reservation.reservation_time}</div>
             </div>
             <div>
-              <div className="text-sm text-stone-gray">Phone</div>
+              <div className="text-sm text-stone-gray">{t('reservations.customerPhone')}</div>
               <div className="font-semibold text-deep-charcoal text-lg">{reservation.customer_phone}</div>
             </div>
           </div>
           {reservation.special_requests && (
             <div className="mt-3 pt-3 border-t border-border-gray">
-              <div className="text-sm text-stone-gray font-medium">Special Requests</div>
+              <div className="text-sm text-stone-gray font-medium">{t('dashboard.specialRequests')}</div>
               <div className="text-sm text-deep-charcoal italic mt-1">{reservation.special_requests}</div>
             </div>
           )}
@@ -108,13 +110,13 @@ export default function CheckInModal({ isOpen, reservation, onClose, onSuccess, 
               onClick={handleClose}
               className="flex-1 px-4 py-3 border border-border-gray text-stone-gray font-medium rounded-xl hover:bg-soft-gray transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               onClick={handleCheckIn}
               className="flex-1 px-4 py-3 bg-burgundy text-white font-medium rounded-xl hover:bg-burgundy-dark transition-colors"
             >
-              Check In & Find Tables
+              {t('dashboard.checkInAndFindTables')}
             </button>
           </div>
         )}

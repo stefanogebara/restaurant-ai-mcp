@@ -385,7 +385,12 @@
     "keepReservation": "Mantener reserva",
     "statusConfirmed": "Confirmada",
     "statusPending": "Pendiente",
-    "statusCancelled": "Cancelada"
+    "statusCancelled": "Cancelada",
+    "enterReservationId": "Por favor, introduce tu ID de reserva",
+    "enterPhoneNumber": "Por favor, introduce tu número de teléfono",
+    "reservationNotFoundLookup": "Reserva no encontrada",
+    "updateFailed": "Error al actualizar la reserva",
+    "cancelFailed2": "Error al cancelar la reserva"
   },
   "booking": {
     "reserveTable": "Reservar una mesa",

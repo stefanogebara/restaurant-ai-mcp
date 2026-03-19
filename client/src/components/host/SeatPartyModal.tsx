@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useSeatParty } from '../../hooks/useSeatParty';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { SeatModalData } from '../../types/host.types';
@@ -10,6 +11,7 @@ interface SeatPartyModalProps {
 }
 
 export default function SeatPartyModal({ isOpen, data, onClose, onRetryTableSelection }: SeatPartyModalProps) {
+  const { t } = useTranslation();
   const seatPartyMutation = useSeatParty();
 
   if (!isOpen || !data) return null;
@@ -91,7 +93,7 @@ export default function SeatPartyModal({ isOpen, data, onClose, onRetryTableSele
               </div>
               <div className="flex justify-between">
                 <span className="text-stone-gray">Party Size:</span>
-                <span className="font-semibold text-deep-charcoal">{data.party_size} guests</span>
+                <span className="font-semibold text-deep-charcoal">{t('reservations.guestCount', { count: data.party_size })}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-stone-gray">Tables:</span>
