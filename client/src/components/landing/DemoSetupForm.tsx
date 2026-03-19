@@ -111,6 +111,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
   function handleSkipSearch() {
     setSearchResults([]);
     setSelectedResult(null);
+    setSearchError(null);
   }
 
   const showResults = searchResults !== null;

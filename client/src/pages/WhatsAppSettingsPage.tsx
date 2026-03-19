@@ -7,6 +7,7 @@ import StaffingSettingsPanel from '../components/dashboard/StaffingSettingsPanel
 import DepositSettingsPanel from '../components/settings/DepositSettingsPanel';
 import FeedbackSettingsPanel from '../components/dashboard/FeedbackSettingsPanel';
 import { authFetch } from '../services/api';
+import { useToast } from '../contexts/ToastContext';
 import {
   useWhatsAppStatus,
   useWhatsAppStats,
@@ -228,6 +229,7 @@ function PhoneVerificationPanel() {
 
 export default function WhatsAppSettingsPage() {
   const { t } = useTranslation();
+  const toast = useToast();
   const { data: status, isLoading: statusLoading } = useWhatsAppStatus();
   const { data: stats, isLoading: statsLoading } = useWhatsAppStats();
   const saveMutation = useSaveWhatsAppSettings();
@@ -237,6 +239,7 @@ export default function WhatsAppSettingsPage() {
   const [pendingPhone, setPendingPhone] = useState<string | null>(null);
   const [testPhone, setTestPhone] = useState('');
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const currentEnabled = pendingEnabled ?? status?.enabled ?? false;
   const currentPhone = pendingPhone ?? status?.phone_number ?? '';
@@ -251,6 +254,7 @@ export default function WhatsAppSettingsPage() {
       onSuccess: () => {
         setPendingEnabled(null);
         setPendingPhone(null);
+        toast.success(t('common.saved', 'Settings saved'));
       },
     });
   };
@@ -386,10 +390,14 @@ export default function WhatsAppSettingsPage() {
                 {status.wa_me_link}
               </a>
               <button
-                onClick={() => navigator.clipboard.writeText(status.wa_me_link || '')}
+                onClick={() => {
+                  navigator.clipboard.writeText(status.wa_me_link || '');
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
                 className="flex-shrink-0 px-3 py-1.5 text-xs font-medium bg-soft-gray hover:bg-border-gray rounded-xl transition-colors text-stone-gray"
               >
-                {t('settings.copyLink')}
+                {copied ? t('common.copied', 'Copied!') : t('settings.copyLink')}
               </button>
             </div>
             <p className="text-xs text-warm-stone mt-2">
