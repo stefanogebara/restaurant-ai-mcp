@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { usePermission } from '../hooks/usePermission';
@@ -17,6 +17,7 @@ import DateRangePicker, { presetToRange, type DateRangeValue } from '../componen
 import ExportDropdown from '../components/analytics/ExportDropdown';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 
+const LOADING_TIMEOUT_MS = 10_000;
 const init30d = presetToRange('30d');
 
 export default function AnalyticsDashboard() {
@@ -25,12 +26,26 @@ export default function AnalyticsDashboard() {
   const { can } = usePermission();
   const [dateRange, setDateRange] = useState<DateRangeValue>({ preset: '30d', ...init30d });
   const [includeExport, setIncludeExport] = useState(false);
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data, isLoading, isError, refetch } = useAnalytics({
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
     includeExport,
   });
+
+  // Timeout fallback: if loading takes > 10s, stop showing skeleton
+  useEffect(() => {
+    if (isLoading) {
+      setLoadingTimedOut(false);
+      timeoutRef.current = setTimeout(() => setLoadingTimedOut(true), LOADING_TIMEOUT_MS);
+    } else {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      setLoadingTimedOut(false);
+    }
+    return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
+  }, [isLoading]);
 
   if (!can('viewAnalytics')) {
     return (
@@ -57,11 +72,11 @@ export default function AnalyticsDashboard() {
     );
   }
 
-  if (isLoading) {
+  if (isLoading && !loadingTimedOut) {
     return <DashboardLayout><SkeletonAnalytics /></DashboardLayout>;
   }
 
-  if (isError) {
+  if (isError || loadingTimedOut) {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">

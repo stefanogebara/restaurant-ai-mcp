@@ -3,7 +3,7 @@
  * Route: /host-dashboard/team  (owner only to manage; all roles can view)
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePermission } from '../hooks/usePermission';
 import DashboardLayout from '../components/layout/DashboardLayout';
@@ -15,6 +15,7 @@ import {
   type TeamMember,
 } from '../hooks/useTeamMembers';
 
+const LOADING_TIMEOUT_MS = 10_000;
 type Role = 'manager' | 'host' | 'staff';
 
 export default function TeamPage() {
@@ -30,8 +31,22 @@ export default function TeamPage() {
   const [inviteRole, setInviteRole] = useState<Role>('host');
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { data: members = [], isLoading } = useTeamMembers();
+  const { data: members = [], isLoading, isError } = useTeamMembers();
+
+  // Timeout fallback: if loading takes > 10s, stop showing loading spinner
+  useEffect(() => {
+    if (isLoading) {
+      setLoadingTimedOut(false);
+      timeoutRef.current = setTimeout(() => setLoadingTimedOut(true), LOADING_TIMEOUT_MS);
+    } else {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      setLoadingTimedOut(false);
+    }
+    return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
+  }, [isLoading]);
   const invite = useInviteTeamMember();
   const updateRole = useUpdateTeamMemberRole();
   const remove = useRemoveTeamMember();
@@ -115,8 +130,10 @@ export default function TeamPage() {
       )}
 
       <div className="bg-white border border-border-gray rounded-2xl divide-y divide-border-gray">
-        {isLoading ? (
+        {(isLoading && !loadingTimedOut) ? (
           <div className="p-6 text-center text-sm text-stone-gray">{t('common.loading')}</div>
+        ) : (isError || loadingTimedOut) ? (
+          <div className="p-6 text-center text-sm text-stone-gray">{t('team.noMembers')}</div>
         ) : members.length === 0 ? (
           <div className="p-6 text-center text-sm text-stone-gray">{t('team.noMembers')}</div>
         ) : members.map(member => (
