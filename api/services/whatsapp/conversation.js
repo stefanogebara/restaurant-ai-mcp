@@ -3,7 +3,6 @@
 const { createSecureLogger } = require('../../_lib/secure-logger');
 const logger = createSecureLogger('WhatsApp');
 const { supabaseAdmin } = require('../../_lib/supabase');
-const { buildPersonaPrompt } = require('../../_lib/persona-prompt-builder');
 const { buildGuestContext } = require('../guestMemory');
 const {
   getSessionByPhone,
@@ -95,25 +94,176 @@ async function callChatCompletions(messages, tools) {
 }
 
 /**
+ * Build a WhatsApp-specific system prompt for a restaurant with full config.
+ * This is separate from persona-prompt-builder.js which is voice-oriented.
+ */
+function buildWhatsAppPrompt(restaurantConfig, session, currentDateTime) {
+  const agentName = restaurantConfig.agent_name || 'the host';
+  const restaurantName = restaurantConfig.restaurant_name || restaurantConfig.name || 'the restaurant';
+
+  let prompt = `You are ${agentName} at ${restaurantName}. You love this restaurant and genuinely enjoy helping guests.\n\n`;
+
+  // Restaurant details
+  prompt += `ABOUT ${restaurantName}:\n`;
+  if (restaurantConfig.restaurant_type) {
+    prompt += `- Cuisine: ${restaurantConfig.restaurant_type}\n`;
+  }
+  if (restaurantConfig.address) {
+    prompt += `- Address: ${restaurantConfig.address}\n`;
+  }
+  if (restaurantConfig.city) {
+    prompt += `- City: ${restaurantConfig.city}\n`;
+  }
+  if (restaurantConfig.phone) {
+    prompt += `- Phone: ${restaurantConfig.phone}\n`;
+  }
+
+  // Business hours
+  const hours = restaurantConfig.business_hours;
+  if (hours && typeof hours === 'object' && Object.keys(hours).length > 0) {
+    prompt += '\nBusiness Hours:\n';
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    for (const day of days) {
+      const dayHours = hours[day];
+      if (!dayHours) continue;
+      const isOpen = dayHours.is_open !== undefined ? dayHours.is_open : dayHours.isOpen;
+      if (isOpen === false) {
+        prompt += `- ${day.charAt(0).toUpperCase() + day.slice(1)}: Closed\n`;
+      } else {
+        const openTime = dayHours.open_time || dayHours.open || '?';
+        const closeTime = dayHours.close_time || dayHours.close || '?';
+        prompt += `- ${day.charAt(0).toUpperCase() + day.slice(1)}: ${openTime} - ${closeTime}\n`;
+      }
+    }
+  }
+
+  // Strategy doc
+  if (restaurantConfig.ai_strategy_doc) {
+    prompt += '\n[RESTAURANT STRATEGY]\n' + restaurantConfig.ai_strategy_doc + '\n';
+  }
+
+  prompt += '\n';
+
+  // Communication style
+  prompt += `HOW YOU COMMUNICATE:
+- You're texting on WhatsApp \u{2014} keep it short, warm, natural
+- Write like you're texting a friend, not drafting an email
+- Use 1-3 sentences per message, never paragraphs
+- Light emoji is fine (\u{1F60A} \u{1F44B} \u{2705}) but don't overdo it
+- Answer ANY question about the restaurant naturally \u{2014} hours, location, menu, parking, dress code
+- You have tools to check availability and make reservations, but only use them when the customer actually wants to book
+- NEVER ignore a customer's question to push a booking. If they ask "qual restaurante?", answer it.
+`;
+
+  // Language
+  prompt += `\nLANGUAGE:
+- Match the language the customer writes in
+- Default to Brazilian Portuguese (pt-BR) with "voc\u{00EA}" form
+- Be natural \u{2014} "Oi!", "Claro!", "Perfeito!" \u{2014} not formal
+`;
+
+  // Capabilities
+  prompt += `\nWHAT YOU CAN DO:
+- Answer questions about the restaurant
+- Check table availability
+- Make, modify, or cancel reservations
+- Look up existing reservations
+`;
+
+  // Boundaries
+  prompt += `\nBOUNDARIES:
+- Stay focused on the restaurant
+- Don't share internal business details (revenue, staff schedules)
+- If asked about unrelated topics, gently redirect
+- If directly asked, say you're an AI assistant for the restaurant
+`;
+
+  // Date/time context
+  prompt += `\nCurrent date/time: ${currentDateTime.formatted}\n`;
+  prompt += `Today is ${currentDateTime.dayOfWeek}, ${currentDateTime.date}\n`;
+
+  // Customer phone
+  if (session?.sender_phone) {
+    prompt += `Customer's WhatsApp: ${session.sender_phone} (use as phone for reservations \u{2014} don't ask for it)\n`;
+  }
+
+  return prompt;
+}
+
+/**
+ * Clean conversation history for storage.
+ * Removes tool-role messages and assistant messages with tool_calls,
+ * keeping only clean user/assistant text pairs.
+ *
+ * @param {Array} messages - Full messages array
+ * @returns {Array} Cleaned array with only user/assistant text messages
+ */
+function cleanHistoryForStorage(messages) {
+  return messages.filter(msg => {
+    // Keep user messages
+    if (msg.role === 'user') return true;
+    // Keep assistant messages that have text content and no tool_calls
+    if (msg.role === 'assistant' && msg.content && !msg.tool_calls) return true;
+    // Filter out tool messages and assistant tool_calls messages
+    return false;
+  });
+}
+
+/**
+ * Compress old conversation history by summarizing oldest messages.
+ * If history has more than 15 messages, summarize the oldest 10 into a
+ * single system message and keep the remaining recent messages.
+ *
+ * @param {Array} history - Conversation history array
+ * @returns {Promise<Array>} Compressed history
+ */
+async function compressOldHistory(history) {
+  if (!history || history.length <= 15) {
+    return history;
+  }
+
+  const oldMessages = history.slice(0, history.length - 5);
+  const recentMessages = history.slice(history.length - 5);
+
+  try {
+    const summaryPrompt = oldMessages.map(m =>
+      `${m.role}: ${m.content}`
+    ).join('\n');
+
+    const summaryResult = await callChatCompletions([
+      {
+        role: 'system',
+        content: 'Summarize this WhatsApp conversation in 1-2 sentences in the same language. Focus on: what the customer wanted, what was done, any reservations made.'
+      },
+      { role: 'user', content: summaryPrompt }
+    ], []);
+
+    const summary = summaryResult.choices?.[0]?.message?.content;
+    if (summary) {
+      return [
+        { role: 'system', content: `[Previous conversation] ${summary}` },
+        ...recentMessages
+      ];
+    }
+  } catch (err) {
+    logger.warn('History compression failed (non-fatal):', err.message);
+  }
+
+  // If compression fails, just return the most recent messages
+  return history.slice(-15);
+}
+
+/**
  * Process a message with AI (OpenAI-compatible API)
  */
 async function processWithAI(userMessage, session, conversationHistory = []) {
   const language = session?.restaurant?.language || 'en';
   const currentDateTime = getCurrentDateTime(language);
 
-  // Language instruction — auto-detect from customer message, fall back to restaurant config
-  let languageInstruction = '\nCRITICAL LANGUAGE RULE: Always match the language the customer writes in. ' +
-    'If they write in Portuguese, respond in Portuguese. If in English, respond in English. ' +
-    'If in Spanish, respond in Spanish. Auto-detect and mirror their language.\n';
-  if (language === 'pt' || language === 'pt-BR') {
-    languageInstruction += 'This restaurant is configured for Brazilian Portuguese — when in doubt or on first message, default to pt-BR. Use natural, friendly Brazilian Portuguese with "você" form.\n';
-  } else if (language === 'es') {
-    languageInstruction += 'This restaurant is configured for Spanish — when in doubt or on first message, default to Spanish. Use the formal "usted" form.\n';
-  } else {
-    languageInstruction += 'When in doubt or on first message, default to English.\n';
-  }
+  // Compress old history if it's getting long
+  const compressedHistory = await compressOldHistory(conversationHistory);
 
-  // Build system prompt -- use rich per-restaurant persona when available
+  // Build system prompt -- use WhatsApp-specific prompt when restaurant config available
   let systemPrompt = null;
 
   if (session?.restaurant?.id) {
@@ -126,19 +276,7 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
         .single();
 
       if (restaurantConfig) {
-        systemPrompt = buildPersonaPrompt(restaurantConfig, { language });
-        systemPrompt += `\n\nCurrent date and time: ${currentDateTime.formatted}\nToday is ${currentDateTime.dayOfWeek}, ${currentDateTime.date}\n`;
-        systemPrompt += '\nWhatsApp-specific guidelines:\n';
-        systemPrompt += '- Keep responses concise (under 500 characters when possible)\n';
-        systemPrompt += '- Use plain conversational messages, no bullet points or formatted text\n';
-        systemPrompt += `- When they mention "today", use ${currentDateTime.date}\n`;
-        systemPrompt += '- When they mention "tomorrow", calculate the next day\n';
-        systemPrompt += '- If they give a time like "7pm", convert to 24-hour format (19:00)\n';
-        if (session?.sender_phone) {
-          systemPrompt += `- The customer's WhatsApp phone number is ${session.sender_phone}. Use this as customer_phone when creating reservations — do NOT ask for their phone number.\n`;
-          systemPrompt += '- Instead, ask for their name and optionally their email (for confirmation email). Only ask for email if they seem interested.\n';
-        }
-        if (languageInstruction) systemPrompt += languageInstruction;
+        systemPrompt = buildWhatsAppPrompt(restaurantConfig, session, currentDateTime);
       }
     } catch (configErr) {
       logger.warn('Failed to load restaurant config for prompt (non-fatal):', configErr.message);
@@ -147,39 +285,15 @@ async function processWithAI(userMessage, session, conversationHistory = []) {
 
   // Fallback to generic prompt
   if (!systemPrompt) {
-    systemPrompt = `You are a friendly AI assistant helping customers make restaurant reservations via WhatsApp.
-${languageInstruction}
-Current date and time: ${currentDateTime.formatted}
-Today is ${currentDateTime.dayOfWeek}, ${currentDateTime.date}
-
-`;
+    systemPrompt = 'You are a friendly restaurant assistant on WhatsApp. A customer has messaged but hasn\'t selected a restaurant yet. Be warm and helpful in Portuguese.\n';
+    systemPrompt += `\nCurrent date/time: ${currentDateTime.formatted}\n`;
+    systemPrompt += `Today is ${currentDateTime.dayOfWeek}, ${currentDateTime.date}\n`;
 
     if (session?.restaurant) {
-      systemPrompt += `
-The customer is booking at: ${session.restaurant.restaurant_name}
-Restaurant ID: ${session.restaurant.id}
-
-You can now help them check availability and make reservations.
-`;
-    } else {
-      systemPrompt += `
-The customer has not yet specified a restaurant.
-First, ask them which restaurant they'd like to book at, or use the identify_restaurant tool if they mention one.
-`;
+      systemPrompt += `\nThe customer is at: ${session.restaurant.restaurant_name}\n`;
     }
-
-    systemPrompt += `
-Guidelines:
-- Be conversational and helpful
-- When they mention "today", use ${currentDateTime.date}
-- When they mention "tomorrow", calculate the next day
-- Always confirm details before creating a reservation
-- Keep responses concise for WhatsApp (under 500 characters when possible)
-- If they give a time like "7pm", convert to 24-hour format (19:00)
-`;
     if (session?.sender_phone) {
-      systemPrompt += `- The customer's WhatsApp phone number is ${session.sender_phone}. Use this as customer_phone when creating reservations — do NOT ask for their phone number.\n`;
-      systemPrompt += '- Instead, ask for their name and optionally their email (for confirmation email). Only ask for email if they seem interested.\n';
+      systemPrompt += `Customer's WhatsApp: ${session.sender_phone} (use as phone for reservations \u{2014} don't ask for it)\n`;
     }
   }
 
@@ -202,7 +316,7 @@ Guidelines:
   // Build messages array with system prompt as first message
   const messages = [
     { role: 'system', content: systemPrompt },
-    ...conversationHistory,
+    ...compressedHistory,
     { role: 'user', content: userMessage }
   ];
 
@@ -253,5 +367,7 @@ Guidelines:
 module.exports = {
   processWithAI,
   callChatCompletions,
+  cleanHistoryForStorage,
+  compressOldHistory,
   AI_MODEL,
 };

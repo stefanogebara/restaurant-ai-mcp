@@ -6,6 +6,7 @@
  */
 
 const { centralSupabase, isCentralConfigured } = require('./central-supabase');
+const { supabaseAdmin } = require('./supabase');
 const { createSecureLogger } = require('./secure-logger');
 const logger = createSecureLogger('RestaurantRegistry');
 
@@ -130,7 +131,32 @@ async function getAllActiveRestaurants() {
       return [];
     }
 
-    return data || [];
+    const restaurants = data || [];
+
+    // Enrich with restaurant_type and city from restaurant.restaurant_config
+    if (restaurants.length > 0) {
+      try {
+        const ids = restaurants.map(r => r.id);
+        const { data: configs, error: configError } = await supabaseAdmin
+          .schema('restaurant')
+          .from('restaurant_config')
+          .select('id, restaurant_type, city')
+          .in('id', ids);
+
+        if (!configError && configs) {
+          const configMap = Object.fromEntries(configs.map(c => [c.id, c]));
+          return restaurants.map(r => ({
+            ...r,
+            restaurant_type: configMap[r.id]?.restaurant_type || null,
+            city: configMap[r.id]?.city || null,
+          }));
+        }
+      } catch (configErr) {
+        logger.warn('[RestaurantRegistry] Failed to enrich with config data (non-fatal):', configErr.message);
+      }
+    }
+
+    return restaurants;
   } catch (error) {
     logger.error('[RestaurantRegistry] Error:', error);
     return [];

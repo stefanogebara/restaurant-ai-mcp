@@ -35,7 +35,7 @@ const { updateDeliveryStatus } = require('./services/campaignService');
 // Extracted modules
 const { sendWhatsAppMessage, sendInteractiveListMessage } = require('./services/whatsapp/message-sender');
 const { isRateLimited } = require('./services/whatsapp/rate-limiter');
-const { processWithAI } = require('./services/whatsapp/conversation');
+const { processWithAI, cleanHistoryForStorage } = require('./services/whatsapp/conversation');
 const { handleKeyword } = require('./services/whatsapp/keyword-handler');
 
 /**
@@ -276,7 +276,23 @@ async function handleIncomingMessage(message, res) {
             if (updated) {
               session = updated;
             }
-            await sendWhatsAppMessage(from, `Great! You've selected ${selectedRestaurant.restaurant_name}. How can I help you today? I can check availability, make a reservation, or answer questions about the restaurant.`);
+            // Load restaurant config for personalized greeting
+            let greetingMsg = `Oi! Sou o assistente do ${selectedRestaurant.restaurant_name}. Como posso te ajudar? \u{1F60A}`;
+            try {
+              const { supabaseAdmin: adminClient } = require('./_lib/supabase');
+              const { data: rConfig } = await adminClient
+                .schema('restaurant')
+                .from('restaurant_config')
+                .select('agent_name, agent_greeting, restaurant_type, city')
+                .eq('id', selectedRestaurant.id)
+                .maybeSingle();
+              if (rConfig?.agent_greeting) {
+                greetingMsg = rConfig.agent_greeting;
+              }
+            } catch (greetErr) {
+              logger.warn('Failed to load restaurant config for greeting (non-fatal):', greetErr.message);
+            }
+            await sendWhatsAppMessage(from, greetingMsg);
             return res.status(200).json({ status: 'ok' });
           }
         }
@@ -288,19 +304,21 @@ async function handleIncomingMessage(message, res) {
         for (let i = 0; i < activeRestaurants.length; i += chunkSize) {
           const chunk = activeRestaurants.slice(i, i + chunkSize);
           sections.push({
-            title: sections.length === 0 ? 'Restaurants' : `More (${sections.length + 1})`,
+            title: sections.length === 0 ? 'Restaurantes' : `Mais (${sections.length + 1})`,
             rows: chunk.map(r => ({
               id: `restaurant_${r.id}`,
               title: r.restaurant_name,
-              description: ''
+              description: r.restaurant_type && r.city
+                ? `${r.restaurant_type} \u{00B7} ${r.city}`
+                : (r.restaurant_type || r.city || '')
             }))
           });
         }
 
         await sendInteractiveListMessage(
           from,
-          `Welcome to Seatable! We partner with ${activeRestaurants.length} restaurants. Which restaurant would you like to book at?`,
-          'Select restaurant',
+          `Ol\u{00E1}! \u{1F44B} Com qual restaurante voc\u{00EA} gostaria de falar?`,
+          'Ver restaurantes',
           sections
         );
         return res.status(200).json({ status: 'ok' });
@@ -326,14 +344,16 @@ async function handleIncomingMessage(message, res) {
     response = 'Desculpe, tive dificuldade em processar sua mensagem. Por favor, tente novamente.';
   }
 
-  // Save updated conversation history (append user message + assistant response)
-  const updatedHistory = [
+  // Save updated conversation history — clean out tool messages for storage
+  const updatedHistory = cleanHistoryForStorage([
     ...conversationHistory,
     { role: 'user', content: messageText },
     { role: 'assistant', content: response }
-  ];
+  ]);
+  // Cap at 20 messages to keep session payload manageable
+  const cappedHistory = updatedHistory.slice(-20);
   try {
-    await updateSessionConversationHistory(session.id, updatedHistory);
+    await updateSessionConversationHistory(session.id, cappedHistory);
   } catch (historyErr) {
     logger.error(' Failed to save conversation history (non-fatal):', historyErr.message);
   }
