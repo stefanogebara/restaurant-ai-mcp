@@ -37,6 +37,7 @@ export interface AnalyticsData {
     reservation_id: string;
   }>;
   upgrade_required?: boolean;
+  no_restaurant?: boolean;
 }
 
 export interface AnalyticsParams {
@@ -64,7 +65,7 @@ export function useAnalytics(params: AnalyticsParams = {}) {
       if (!response.ok) throw new Error('Failed to fetch analytics');
       const result = await response.json();
       if (!result.success) throw new Error(result.error || 'Failed to fetch analytics');
-      return { ...result.analytics, upgrade_required: result.upgrade_required ?? false };
+      return { ...result.analytics, upgrade_required: result.upgrade_required ?? false, no_restaurant: result.no_restaurant ?? false };
     },
     refetchInterval: ANALYTICS_POLL_INTERVAL,
     staleTime: ANALYTICS_STALE_TIME,

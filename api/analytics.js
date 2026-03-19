@@ -314,6 +314,22 @@ module.exports = async (req, res) => {
 
   try {
     const restaurantId = req.user.restaurant_id;
+    if (!restaurantId) {
+      // User has no restaurant — return empty analytics instead of failing
+      return res.status(200).json({
+        success: true,
+        no_restaurant: true,
+        analytics: {
+          overview: {
+            total_reservations: 0, total_completed_services: 0,
+            avg_party_size: 0, avg_service_time_minutes: 0,
+            total_capacity: 0, current_occupancy: 0, current_occupancy_percentage: '0.0',
+          },
+          reservations_by_status: {}, reservations_by_day: {},
+          reservations_by_time_slot: {}, table_utilization: [], daily_trend: [],
+        },
+      });
+    }
     const period     = req.query.period || '30d';
     const startDate  = req.query.start_date || null;
     const endDate    = req.query.end_date   || null;

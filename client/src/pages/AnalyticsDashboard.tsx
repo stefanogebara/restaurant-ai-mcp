@@ -114,7 +114,7 @@ export default function AnalyticsDashboard() {
       <div className="min-h-screen bg-soft-gray p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Upgrade banner for canceled/expired subscriptions */}
-          {data.upgrade_required && (
+          {(data.upgrade_required || data.no_restaurant) && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <ThiingsIcon name="lightning" pxSize={20} className="text-amber-600 flex-shrink-0" />
