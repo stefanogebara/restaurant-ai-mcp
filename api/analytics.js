@@ -279,57 +279,49 @@ module.exports = async (req, res) => {
   }
   req.user = authResult.user;
 
+  // Early check: user must have a restaurant_id
+  const restaurantId = req.user.restaurant_id;
+  if (!restaurantId) {
+    return res.status(200).json({
+      success: true,
+      no_restaurant: true,
+      analytics: {
+        overview: {
+          total_reservations: 0, total_completed_services: 0,
+          avg_party_size: 0, avg_service_time_minutes: 0,
+          total_capacity: 0, current_occupancy: 0, current_occupancy_percentage: '0.0',
+        },
+        reservations_by_status: {}, reservations_by_day: {},
+        reservations_by_time_slot: {}, table_utilization: [], daily_trend: [],
+      },
+    });
+  }
+
   // Check subscription status
   let subscriptionChecked = false;
   await checkSubscription(req, res, () => { subscriptionChecked = true; });
-  if (!subscriptionChecked) return; // Response already sent by middleware
+  if (!subscriptionChecked) return;
 
-  // Check feature access - advanced_analytics required for full data
+  // Check feature access
   const plan = req.subscription?.plan_name?.toLowerCase();
   const featureAllowed = hasFeature(plan, 'advanced_analytics');
   if (!featureAllowed) {
-    // Instead of blocking with 403, return basic empty analytics so the page loads
-    const period = req.query.period || '30d';
     return res.status(200).json({
       success: true,
       upgrade_required: true,
       analytics: {
         overview: {
-          total_reservations: 0,
-          total_completed_services: 0,
-          avg_party_size: 0,
-          avg_service_time_minutes: 0,
-          total_capacity: 0,
-          current_occupancy: 0,
-          current_occupancy_percentage: '0.0',
+          total_reservations: 0, total_completed_services: 0,
+          avg_party_size: 0, avg_service_time_minutes: 0,
+          total_capacity: 0, current_occupancy: 0, current_occupancy_percentage: '0.0',
         },
-        reservations_by_status: {},
-        reservations_by_day: {},
-        reservations_by_time_slot: {},
-        table_utilization: [],
-        daily_trend: [],
+        reservations_by_status: {}, reservations_by_day: {},
+        reservations_by_time_slot: {}, table_utilization: [], daily_trend: [],
       },
     });
   }
 
   try {
-    const restaurantId = req.user.restaurant_id;
-    if (!restaurantId) {
-      // User has no restaurant — return empty analytics instead of failing
-      return res.status(200).json({
-        success: true,
-        no_restaurant: true,
-        analytics: {
-          overview: {
-            total_reservations: 0, total_completed_services: 0,
-            avg_party_size: 0, avg_service_time_minutes: 0,
-            total_capacity: 0, current_occupancy: 0, current_occupancy_percentage: '0.0',
-          },
-          reservations_by_status: {}, reservations_by_day: {},
-          reservations_by_time_slot: {}, table_utilization: [], daily_trend: [],
-        },
-      });
-    }
     const period     = req.query.period || '30d';
     const startDate  = req.query.start_date || null;
     const endDate    = req.query.end_date   || null;
