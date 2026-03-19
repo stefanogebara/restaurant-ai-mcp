@@ -18,7 +18,7 @@ export default function AIInsights() {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
-          <div className="bg-white border border-border-gray rounded-2xl p-10 max-w-md text-center shadow-sm">
+          <div className="border border-[#E5E7EB] rounded-lg p-10 max-w-md text-center">
             <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-5">
               <ThiingsIcon name="star" pxSize={32} className="text-amber-600" />
             </div>
@@ -41,14 +41,14 @@ export default function AIInsights() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-8 bg-white">
         {/* Header */}
         <div className="mb-8 mt-14 sm:mt-0">
           <div className="flex items-center gap-3 mb-1">
             <div className="w-8 h-8 rounded-xl bg-burgundy/10 flex items-center justify-center">
               <ThiingsIcon name="star" pxSize={16} className="text-burgundy" />
             </div>
-            <h1 className="text-2xl font-serif font-medium text-deep-charcoal tracking-tight">
+            <h1 className="text-2xl font-bold text-[#111827] tracking-tight">
               {t('insights.title')}
             </h1>
           </div>
@@ -58,7 +58,7 @@ export default function AIInsights() {
         </div>
 
         {/* 2×2 grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <TonightBriefingCard />
           <CustomerIntelligenceCard />
           <RevenueQuickWinsCard />
@@ -66,6 +66,7 @@ export default function AIInsights() {
         </div>
 
         {/* Strategy Scorecard — val_bpb for the autoresearch loop */}
+        <div className="border-t border-[#E5E7EB] mt-8 mb-8" />
         <div className="mt-6">
           <StrategyMetricsWidget />
           <div className="mt-2 flex justify-end">
@@ -79,6 +80,7 @@ export default function AIInsights() {
         </div>
 
         {/* WhatsApp Campaigns */}
+        <div className="border-t border-[#E5E7EB] mt-8 mb-8" />
         <div className="mt-6">
           <CampaignManager />
         </div>

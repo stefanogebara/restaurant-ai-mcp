@@ -105,7 +105,7 @@ export default function RestaurantSettingsPage() {
       <DashboardLayout>
         <div className="p-6 sm:p-10 max-w-3xl mx-auto space-y-6 mt-14 sm:mt-0">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white border border-border-gray rounded-2xl p-6 animate-pulse space-y-3">
+            <div key={i} className="py-5 border-b border-[#E5E7EB] animate-pulse space-y-3">
               <div className="h-5 bg-gray-100 rounded w-40" />
               <div className="h-10 bg-gray-100 rounded" />
               <div className="h-10 bg-gray-100 rounded" />
@@ -118,8 +118,8 @@ export default function RestaurantSettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 sm:p-10 max-w-3xl mx-auto space-y-6 mt-14 sm:mt-0">
-        <div className="pl-12 lg:pl-0">
+      <div className="p-6 sm:p-10 max-w-3xl mx-auto bg-white mt-14 sm:mt-0">
+        <div className="pl-12 lg:pl-0 mb-8">
           <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
             {t('settings.title', 'Restaurant Settings')}
           </h1>
@@ -129,8 +129,8 @@ export default function RestaurantSettingsPage() {
         </div>
 
         {/* ── Basic Info ── */}
-        <section className="bg-white border border-border-gray rounded-2xl p-6 space-y-4">
-          <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider flex items-center gap-2">
+        <section className="py-5 border-b border-[#E5E7EB] space-y-4">
+          <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] flex items-center gap-2">
             <ThiingsIcon name="store" pxSize={16} className="text-muted-stone" />
             {t('settings.restaurantInfo', 'Restaurant Info')}
           </h2>
@@ -150,8 +150,8 @@ export default function RestaurantSettingsPage() {
         </section>
 
         {/* ── Business Hours ── */}
-        <section className="bg-white border border-border-gray rounded-2xl p-6 space-y-4">
-          <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider flex items-center gap-2">
+        <section className="py-5 border-b border-[#E5E7EB] space-y-4">
+          <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] flex items-center gap-2">
             <ThiingsIcon name="clock" pxSize={16} className="text-muted-stone" />
             {t('settings.businessHours', 'Business Hours')}
           </h2>
@@ -204,8 +204,8 @@ export default function RestaurantSettingsPage() {
         </section>
 
         {/* ── Reservation Policies ── */}
-        <section className="bg-white border border-border-gray rounded-2xl p-6 space-y-4">
-          <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider flex items-center gap-2">
+        <section className="py-5 border-b border-[#E5E7EB] space-y-4">
+          <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] flex items-center gap-2">
             <ThiingsIcon name="settings" pxSize={16} className="text-muted-stone" />
             {t('settings.reservationPolicies', 'Reservation Policies')}
           </h2>

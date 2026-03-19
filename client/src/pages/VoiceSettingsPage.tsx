@@ -190,14 +190,15 @@ export default function VoiceSettingsPage() {
           <Skeleton className="h-8 w-64 mb-1" />
           <Skeleton className="h-4 w-80 mb-6" />
           <div className="space-y-6">
-            <div className="bg-white border border-border-gray rounded-2xl p-6">
+            <div className="py-5">
               <Skeleton className="h-5 w-32 mb-4" />
               <div className="flex items-center justify-between">
                 <div><Skeleton className="h-5 w-40 mb-2" /><Skeleton className="h-4 w-24" /></div>
                 <Skeleton className="h-10 w-32 rounded-lg" />
               </div>
             </div>
-            <div className="bg-white border border-border-gray rounded-2xl p-6">
+            <div className="border-t border-[#E5E7EB] mt-8 mb-8" />
+            <div className="py-5">
               <Skeleton className="h-5 w-28 mb-4" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {Array.from({ length: 4 }).map((_, i) => (
@@ -218,7 +219,7 @@ export default function VoiceSettingsPage() {
       <DashboardLayout>
         <div className="p-6 lg:p-8 max-w-5xl space-y-6">
           <div className="mt-8 text-center py-16">
-            <div className="bg-burgundy/5 border border-burgundy/20 rounded-2xl p-8 max-w-md mx-auto">
+            <div className="border border-[#E5E7EB] rounded-lg p-8 max-w-md mx-auto">
               <ThiingsIcon name="volume" pxSize={48} className="mx-auto mb-4" />
               <h2 className="text-lg font-bold text-deep-charcoal mb-2">{t('settings.noAgentConfigured')}</h2>
               <p className="text-sm text-stone-gray mb-6">
@@ -243,7 +244,7 @@ export default function VoiceSettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="dashboard p-6 lg:p-8 max-w-5xl">
+      <div className="bg-white p-6 lg:p-8 max-w-5xl">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
             {t('navigation.voiceAgent')} <span className="font-light text-warm-stone">/ {t('common.settings')}</span>
@@ -294,8 +295,8 @@ export default function VoiceSettingsPage() {
                 onPreview={() => handlePreviewWithSettings(toast)}
               />
               {isBrowserOpen && (
-                <section className="bg-white border border-border-gray rounded-2xl p-6">
-                  <h2 className="text-lg font-bold text-deep-charcoal mb-4 flex items-center gap-2">
+                <section className="py-5">
+                  <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-4 flex items-center gap-2">
                     <ThiingsIcon name="search" pxSize={20} />
                     {t('voiceSettings.voiceLibrary', 'Voice Library')}
                   </h2>
@@ -350,8 +351,8 @@ export default function VoiceSettingsPage() {
             </>
           )}
           {waStatus && (
-            <div className="bg-white border border-border-gray rounded-2xl p-6">
-              <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider mb-3">
+            <div className="py-5 border-t border-[#E5E7EB] mt-8">
+              <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-3">
                 {t('voiceSettings.whatsappStatus', 'WhatsApp Status')}
               </h2>
               {waStatus.meta.approved ? (

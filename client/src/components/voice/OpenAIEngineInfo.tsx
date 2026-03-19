@@ -14,8 +14,8 @@ export default function OpenAIEngineInfo({ engineStatus, currentOpenAIVoice }: P
   const status = engineStatus || 'active';
 
   return (
-    <section className="bg-white border border-border-gray rounded-2xl p-6">
-      <h2 className="text-lg font-bold text-deep-charcoal mb-4 flex items-center gap-2">
+    <section className="py-5 border-b border-[#E5E7EB]">
+      <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-4 flex items-center gap-2">
         <ThiingsIcon name="info" pxSize={20} />
         Engine Info
       </h2>

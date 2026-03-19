@@ -81,7 +81,7 @@ export default function WeeklyReport() {
   if (subscription.isLoading) {
     return (
       <DashboardLayout>
-        <div className="min-h-screen bg-soft-gray p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
+        <div className="min-h-screen bg-white p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
           <div className="flex items-center justify-center min-h-[50vh]"><Spinner size="lg" /></div>
         </div>
       </DashboardLayout>
@@ -91,9 +91,9 @@ export default function WeeklyReport() {
   if (!hasAccess) {
     return (
       <DashboardLayout>
-        <div className="min-h-screen bg-soft-gray p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
+        <div className="min-h-screen bg-white p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
           <div className="flex flex-col items-center justify-center min-h-[50vh]">
-            <div className="bg-white rounded-2xl border border-border-gray p-12 max-w-lg text-center">
+            <div className="border border-[#E5E7EB] rounded-lg p-12 max-w-lg text-center">
               <ThiingsIcon name="lock" pxSize={32} className="mx-auto mb-6" />
               <h2 className="text-2xl font-bold text-deep-charcoal mb-3">{t('analytics.weeklyReports')}</h2>
               <p className="text-stone-gray mb-6">{t('analytics.weeklyReportsDesc')}</p>
@@ -114,7 +114,7 @@ export default function WeeklyReport() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="min-h-screen bg-soft-gray p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
+        <div className="min-h-screen bg-white p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
           <SkeletonWeeklyReport />
         </div>
       </DashboardLayout>
@@ -139,8 +139,8 @@ export default function WeeklyReport() {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-soft-gray p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <div className="min-h-screen bg-white p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
+        <div className="max-w-7xl mx-auto space-y-12">
           <WeeklyReportHeader
             startDate={startDate}
             endDate={endDate}

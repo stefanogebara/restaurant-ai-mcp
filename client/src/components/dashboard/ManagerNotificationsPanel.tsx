@@ -48,9 +48,9 @@ export default function ManagerNotificationsPanel() {
   if (isLoading) return null;
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl p-6 space-y-6">
+    <div className="py-5 border-t border-[#E5E7EB] mt-8 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-deep-charcoal tracking-wider">
+        <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">
           {t('settings.managerNotifications')}
         </h2>
         <button

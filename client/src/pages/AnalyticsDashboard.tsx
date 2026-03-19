@@ -51,7 +51,7 @@ export default function AnalyticsDashboard() {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
-          <div className="bg-white border border-border-gray rounded-2xl p-10 max-w-md text-center shadow-sm">
+          <div className="border border-[#E5E7EB] rounded-lg p-10 max-w-md text-center">
             <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-5">
               <ThiingsIcon name="bar-chart" pxSize={32} className="text-amber-600" />
             </div>
@@ -80,7 +80,7 @@ export default function AnalyticsDashboard() {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
-          <div className="bg-white rounded-2xl p-8 border border-border-gray max-w-md text-center">
+          <div className="border border-[#E5E7EB] rounded-lg p-8 max-w-md text-center">
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <ThiingsIcon name="alert-circle" pxSize={32} className="text-red-600" />
             </div>
@@ -111,8 +111,8 @@ export default function AnalyticsDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-soft-gray p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <div className="min-h-screen bg-white p-4 sm:p-6 md:p-8 lg:px-10 lg:py-8">
+        <div className="max-w-7xl mx-auto space-y-12">
           {/* Upgrade banner for canceled/expired subscriptions */}
           {(data.upgrade_required || data.no_restaurant) && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">

@@ -20,11 +20,11 @@ export default function CallDiagnosticsPanel({
 }: Props) {
   const { t } = useTranslation();
   return (
-    <div className="bg-white rounded-2xl border border-border-gray overflow-hidden p-6">
+    <div className="py-5 border-b border-[#E5E7EB]">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <ThiingsIcon name="stethoscope" size="sm" />
-          <h2 className="text-lg font-semibold text-deep-charcoal">{t('callTracking.agentDiagnostics')}</h2>
+          <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('callTracking.agentDiagnostics')}</h2>
         </div>
         <button
           type="button"

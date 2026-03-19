@@ -29,14 +29,14 @@ export default function DepositSettingsPanel() {
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-border-gray rounded-2xl p-6">
+      <div className="py-5 border-t border-[#E5E7EB] mt-8">
         <div className="h-6 w-40 bg-border-gray rounded-lg animate-pulse" />
       </div>
     );
   }
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl p-6">
+    <div className="py-5 border-t border-[#E5E7EB] mt-8">
       <h3 className="text-[15px] font-semibold text-deep-charcoal mb-1">{t('settings.depositTitle')}</h3>
       <p className="text-xs text-warm-stone mb-5">
         {t('settings.depositDesc')}

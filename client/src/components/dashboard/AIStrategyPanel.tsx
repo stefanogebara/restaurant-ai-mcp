@@ -122,7 +122,7 @@ export default function AIStrategyPanel() {
     : null;
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl p-6">
+    <div className="py-5 border-t border-[#E5E7EB] mt-8">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">

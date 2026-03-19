@@ -47,9 +47,9 @@ export default function TableUtilizationHeatmap({ tableUtilization }: TableUtili
   , sortedTables[0]) : null;
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
-        <span className="text-[15px] font-semibold tracking-tight">{t('analytics.bookingHeatmap')}</span>
+    <div className="overflow-hidden">
+      <div className="flex items-center justify-between py-5 border-b border-[#E5E7EB]">
+        <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('analytics.bookingHeatmap')}</span>
         <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">{t('analytics.peakHoursLabel')}</span>
       </div>
       <div className="p-6">

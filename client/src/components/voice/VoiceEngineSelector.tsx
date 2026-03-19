@@ -17,9 +17,9 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
   const { t } = useTranslation();
 
   return (
-    <section className="bg-white border border-border-gray rounded-2xl overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
-        <span className="text-[15px] font-semibold">{t('settings.voiceEngine')}</span>
+    <section className="overflow-hidden pb-5 border-b border-[#E5E7EB]">
+      <div className="flex items-center justify-between py-5 border-b border-[#E5E7EB]">
+        <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('settings.voiceEngine')}</span>
         {engineStatus && (
           <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${STATUS_STYLES[engineStatus] ?? 'bg-soft-gray text-stone-gray'}`}>
             {engineStatus.charAt(0).toUpperCase() + engineStatus.slice(1)}

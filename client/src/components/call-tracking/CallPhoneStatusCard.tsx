@@ -69,13 +69,13 @@ export default function CallPhoneStatusCard({
         : t('callTracking.phoneStatusConnect');
 
   return (
-    <div className="bg-white rounded-2xl border border-border-gray overflow-hidden p-6">
+    <div className="py-5 border-b border-[#E5E7EB]">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div className="flex items-center gap-3">
           <ThiingsIcon name="phone-call" pxSize={24} />
           <div>
-            <h2 className="text-lg font-semibold text-deep-charcoal">{t('callTracking.phoneStatus')}</h2>
+            <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('callTracking.phoneStatus')}</h2>
             <p className="text-sm text-stone-gray">{statusDescription}</p>
           </div>
         </div>
@@ -91,7 +91,7 @@ export default function CallPhoneStatusCard({
       {/* Info grid */}
       {phoneStatus && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-          <div className="bg-soft-gray/30 rounded-xl p-3 border border-border-gray/50">
+          <div className="py-3">
             <p className="text-xs text-stone-gray mb-1">{t('callTracking.connection')}</p>
             <div className="flex items-center gap-2">
               {phoneStatus.status === 'active' ? (
@@ -105,14 +105,14 @@ export default function CallPhoneStatusCard({
             </div>
           </div>
 
-          <div className="bg-soft-gray/30 rounded-xl p-3 border border-border-gray/50">
+          <div className="py-3">
             <p className="text-xs text-stone-gray mb-1">{t('callTracking.phoneNumber')}</p>
             <p className="text-sm font-medium text-deep-charcoal">
               {phoneStatus.phone_number || t('callTracking.noneAssigned')}
             </p>
           </div>
 
-          <div className="bg-soft-gray/30 rounded-xl p-3 border border-border-gray/50">
+          <div className="py-3">
             <p className="text-xs text-stone-gray mb-1">{t('callTracking.agentId')}</p>
             <p
               className="text-sm font-medium text-deep-charcoal font-mono truncate"
@@ -124,7 +124,7 @@ export default function CallPhoneStatusCard({
             </p>
           </div>
 
-          <div className="bg-soft-gray/30 rounded-xl p-3 border border-border-gray/50">
+          <div className="py-3">
             <p className="text-xs text-stone-gray mb-1">{t('callTracking.configured')}</p>
             <p className="text-sm font-medium text-deep-charcoal">
               {formatConfiguredDate(phoneStatus.configured_at)}
@@ -142,7 +142,7 @@ export default function CallPhoneStatusCard({
       )}
 
       {/* Action buttons */}
-      <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-border-gray">
+      <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-[#F3F4F6]">
         {(!phoneStatus || phoneStatus.status === 'not_configured' || phoneStatus.status === 'error') && (
           <button
             type="button"

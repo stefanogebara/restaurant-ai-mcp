@@ -45,7 +45,7 @@ export default function VoicePersonaPanel() {
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-border-gray rounded-2xl p-6 animate-pulse space-y-3">
+      <div className="py-5 border-t border-[#E5E7EB] mt-8 animate-pulse space-y-3">
         <div className="h-4 bg-gray-100 rounded w-40" />
         <div className="h-10 bg-gray-100 rounded" />
         <div className="h-10 bg-gray-100 rounded" />
@@ -54,9 +54,9 @@ export default function VoicePersonaPanel() {
   }
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl p-6 space-y-4">
+    <div className="py-5 border-t border-[#E5E7EB] mt-8 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-deep-charcoal uppercase tracking-wider">{t('dashboard.voicePersona.title', 'Agent Persona')}</h2>
+        <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('dashboard.voicePersona.title', 'Agent Persona')}</h2>
         <div className="flex items-center gap-2">
           <button
             type="button"

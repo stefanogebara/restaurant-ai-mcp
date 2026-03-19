@@ -151,7 +151,7 @@ export default function TableConfigPage() {
 
   return (
     <DashboardLayout>
-    <div className="dashboard p-6 lg:p-8">
+    <div className="bg-white p-6 lg:p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
@@ -168,30 +168,30 @@ export default function TableConfigPage() {
         </button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-2xl p-6 border border-border-gray">
-          <div className="text-xs font-medium text-muted-stone mb-2">{t('settings.totalTables')}</div>
-          <div className="text-[32px] font-bold tracking-tight leading-none text-deep-charcoal">{tables.length}</div>
+      {/* Summary Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8 py-5 border-b border-[#E5E7EB]">
+        <div>
+          <div className="text-[13px] font-semibold uppercase tracking-widest text-[#9CA3AF] mb-2">{t('settings.totalTables')}</div>
+          <div className="text-[32px] font-bold tracking-tight leading-none text-[#111827] font-mono">{tables.length}</div>
         </div>
-        <div className="bg-white rounded-2xl p-6 border border-border-gray">
-          <div className="text-xs font-medium text-muted-stone mb-2">{t('settings.totalSeats')}</div>
-          <div className="text-[32px] font-bold tracking-tight leading-none text-deep-charcoal">{stats.total_capacity || 0}</div>
+        <div>
+          <div className="text-[13px] font-semibold uppercase tracking-widest text-[#9CA3AF] mb-2">{t('settings.totalSeats')}</div>
+          <div className="text-[32px] font-bold tracking-tight leading-none text-[#111827] font-mono">{stats.total_capacity || 0}</div>
         </div>
-        <div className="bg-white rounded-2xl p-6 border border-border-gray">
-          <div className="text-xs font-medium text-muted-stone mb-2">{t('settings.activeTables')}</div>
-          <div className="text-[32px] font-bold tracking-tight leading-none text-rose-600">{stats.active || 0}</div>
+        <div>
+          <div className="text-[13px] font-semibold uppercase tracking-widest text-[#9CA3AF] mb-2">{t('settings.activeTables')}</div>
+          <div className="text-[32px] font-bold tracking-tight leading-none text-[#9F1239] font-mono">{stats.active || 0}</div>
         </div>
-        <div className="bg-white rounded-2xl p-6 border border-border-gray">
-          <div className="text-xs font-medium text-muted-stone mb-2">{t('settings.locations')}</div>
-          <div className="text-[32px] font-bold tracking-tight leading-none text-deep-charcoal">{stats.locations?.length || 0}</div>
+        <div>
+          <div className="text-[13px] font-semibold uppercase tracking-widest text-[#9CA3AF] mb-2">{t('settings.locations')}</div>
+          <div className="text-[32px] font-bold tracking-tight leading-none text-[#111827] font-mono">{stats.locations?.length || 0}</div>
         </div>
       </div>
 
         {/* Empty state */}
         {tables.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 px-6">
-            <div className="bg-white border border-border-gray rounded-2xl p-10 max-w-md text-center shadow-sm">
+            <div className="border border-[#E5E7EB] rounded-lg p-10 max-w-md text-center">
               <div className="w-16 h-16 bg-soft-gray rounded-full flex items-center justify-center mx-auto mb-5">
                 <span className="text-2xl">🪑</span>
               </div>
@@ -234,7 +234,7 @@ export default function TableConfigPage() {
                     role="button"
                     tabIndex={0}
                     aria-label={`Edit Table ${table.table_number}`}
-                    className="bg-white rounded-2xl p-6 border border-border-gray cursor-pointer hover:border-muted-stone transition-colors relative focus:outline-none focus:ring-2 focus:ring-burgundy/20"
+                    className="p-5 border-b border-[#F3F4F6] cursor-pointer hover:bg-[#FAFAFA] transition-colors relative focus:outline-none focus:ring-2 focus:ring-[#9F1239]/20"
                     onClick={() => openEditModal(table)}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEditModal(table); } }}
                   >
@@ -311,7 +311,7 @@ export default function TableConfigPage() {
               {tables
                 .filter((t: TableConfig) => !t.is_active)
                 .map((table: TableConfig) => (
-                  <div key={table.id} className="bg-soft-gray rounded-2xl p-4 border border-border-gray opacity-60">
+                  <div key={table.id} className="p-4 border-b border-[#F3F4F6] opacity-60">
                     <div className="text-lg font-bold text-muted-stone">{t('settings.tableLabel')} {table.table_number}</div>
                     <div className="text-sm text-muted-stone">{table.capacity} {t('settings.seats')} - {table.location}</div>
                   </div>

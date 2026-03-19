@@ -72,7 +72,7 @@ export default function FloorPlanCanvas({
   const { t } = useTranslation();
   return (
     <div
-      className="rounded-2xl border border-border-gray overflow-hidden"
+      className="rounded-lg border border-[#E5E7EB] overflow-hidden"
       style={{ background: '#F5F2EC' }}
     >
       {isLoading ? (
@@ -81,7 +81,7 @@ export default function FloorPlanCanvas({
         </div>
       ) : filteredTables.length === 0 ? (
         <div className="flex flex-col items-center justify-center text-center py-20 px-6">
-          <div className="w-16 h-16 rounded-2xl bg-white border border-border-gray flex items-center justify-center mb-5 shadow-sm">
+          <div className="w-16 h-16 rounded-lg border border-[#E5E7EB] flex items-center justify-center mb-5">
             <span className="text-muted-stone"><ThiingsIcon name="map" pxSize={30} /></span>
           </div>
           <p className="font-semibold text-deep-charcoal text-base">{t('floorPlan.noTablesTitle', { area: activeLocation })}</p>

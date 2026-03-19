@@ -12,11 +12,11 @@ export default function WeeklyPreferencesPanel({ preferences }: WeeklyPreference
   const topPillThreshold = pills.length > 3 ? pills[2]?.count : 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-border-gray overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
-        <span className="text-[15px] font-semibold tracking-tight">{t('analytics.topGuestPreferences')}</span>
+    <div className="overflow-hidden">
+      <div className="flex items-center justify-between py-5 border-b border-[#E5E7EB]">
+        <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('analytics.topGuestPreferences')}</span>
       </div>
-      <div className="p-6">
+      <div className="py-6">
         <div className="flex flex-wrap gap-2">
           {pills.map((pill) => (
             <span

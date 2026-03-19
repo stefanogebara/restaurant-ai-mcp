@@ -43,9 +43,9 @@ export default function DayOfWeekChart({ reservationsByDay }: DayOfWeekChartProp
   };
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
-        <span className="text-[15px] font-semibold tracking-tight">{t('analytics.reservationsByDay')}</span>
+    <div className="overflow-hidden">
+      <div className="flex items-center justify-between py-5 border-b border-[#E5E7EB]">
+        <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('analytics.reservationsByDay')}</span>
       </div>
       <div role="img" aria-label="Bar chart showing number of reservations by day of the week" className="p-6">
         <ResponsiveContainer width="100%" height={220}>

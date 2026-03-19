@@ -34,7 +34,7 @@ export default function NoShowPredictions() {
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-border-gray/50 rounded-2xl p-8 shadow-sm">
+      <div className="py-8">
         <div role="status" className="flex items-center justify-center">
           <div aria-hidden="true" className="w-8 h-8 border-4 border-burgundy border-t-transparent rounded-full animate-spin"></div>
           <span className="ml-3 text-warm-stone">{t('analytics.loadingPredictions')}</span>
@@ -44,10 +44,10 @@ export default function NoShowPredictions() {
   }
 
   return (
-    <div className="bg-white border border-border-gray/50 rounded-2xl overflow-hidden shadow-sm">
+    <div className="overflow-hidden">
       {/* Header */}
-      <div className="p-6 border-b border-border-gray">
-        <h2 className="text-lg font-semibold text-deep-charcoal tracking-tight mb-1">{t('analytics.noShowPredictions')}</h2>
+      <div className="py-5 border-b border-[#E5E7EB]">
+        <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827] mb-1">{t('analytics.noShowPredictions')}</h2>
         <p className="text-sm text-warm-stone">
           {t('analytics.noShowPredictionsDesc')}
         </p>
@@ -55,7 +55,7 @@ export default function NoShowPredictions() {
 
       {/* Summary Stats */}
       {summary && (
-        <div className="grid grid-cols-2 gap-4 p-6 bg-soft-gray/30 border-b border-border-gray">
+        <div className="grid grid-cols-2 gap-8 py-5 border-b border-[#E5E7EB]">
           <div className="text-center">
             <div className="text-3xl font-bold text-deep-charcoal">{summary.total_upcoming}</div>
             <div className="text-xs text-warm-stone mt-1">{t('analytics.upcomingSevenDays')}</div>
@@ -143,7 +143,7 @@ export default function NoShowPredictions() {
       </div>
 
       {/* Footer Info */}
-      <div className="bg-soft-gray/30 px-6 py-4 border-t border-border-gray">
+      <div className="py-4 border-t border-[#E5E7EB]">
         <div className="flex items-center gap-2 text-xs text-warm-stone">
           <ThiingsIcon name="info" pxSize={16} />
           <span>

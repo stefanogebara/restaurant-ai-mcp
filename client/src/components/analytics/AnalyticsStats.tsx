@@ -28,10 +28,10 @@ export default function AnalyticsStats({ overview }: AnalyticsStatsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 border-b border-[#E5E7EB] pb-5">
       {stats.map((stat) => (
-        <div key={stat.label} className="bg-white rounded-2xl p-6 border border-border-gray">
-          <div className="text-xs font-medium text-muted-stone mb-2 tracking-wide">
+        <div key={stat.label} className="py-5">
+          <div className="text-[13px] font-semibold uppercase tracking-widest text-[#9CA3AF] mb-2">
             {stat.label}
           </div>
           <div className={`text-[32px] font-bold tracking-tight leading-none ${stat.color || 'text-deep-charcoal'}`}>

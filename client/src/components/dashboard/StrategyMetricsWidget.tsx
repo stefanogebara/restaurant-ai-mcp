@@ -160,7 +160,7 @@ export default function StrategyMetricsWidget() {
   const { data, isLoading, refetch, isFetching } = useStrategyMetrics(range);
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl p-6">
+    <div className="py-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">

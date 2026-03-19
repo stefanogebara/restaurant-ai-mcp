@@ -68,7 +68,7 @@ export default function SubscriptionManage() {
 
   if (!subscription || subscription.status === 'none') {
     return (
-      <div className="min-h-screen bg-warm-white flex flex-col">
+      <div className="min-h-screen bg-white flex flex-col">
         <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
           <div className="font-serif text-lg font-semibold text-deep-charcoal">
             seatable<span className="text-burgundy">.</span>
@@ -76,7 +76,7 @@ export default function SubscriptionManage() {
         </header>
 
         <div className="flex-1 flex items-center justify-center p-6">
-          <div className="bg-white border border-border-gray rounded-2xl p-12 max-w-md text-center">
+          <div className="border border-[#E5E7EB] rounded-lg p-12 max-w-md text-center">
             <div className="w-16 h-16 rounded-full bg-soft-gray flex items-center justify-center mx-auto mb-5" aria-hidden="true">
               <ThiingsIcon name="close" pxSize={28} className="text-muted-stone" />
             </div>
@@ -101,7 +101,7 @@ export default function SubscriptionManage() {
   const currentTierIndex = planTiers.indexOf(currentPlanName);
 
   return (
-    <div className="min-h-screen bg-warm-white flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Top Bar */}
       <header className="flex justify-between items-center px-6 sm:px-10 py-4 border-b border-border-gray bg-white">
         <div className="font-serif text-lg font-semibold text-deep-charcoal">
@@ -120,8 +120,8 @@ export default function SubscriptionManage() {
             <p className="text-[15px] text-warm-stone font-light">{t('subscription.manageSubtitle')}</p>
           </div>
 
-          {/* Current Plan Card */}
-          <div className="bg-white border border-border-gray rounded-2xl px-8 py-7 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-12">
+          {/* Current Plan */}
+          <div className="border-b border-[#E5E7EB] px-0 py-7 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-12">
             <div>
               <div className="flex items-center gap-2.5 mb-1">
                 <span className="text-xl font-bold text-deep-charcoal">{t('subscription.plan', { name: displayPlanName })}</span>
@@ -177,7 +177,7 @@ export default function SubscriptionManage() {
             <p className="text-[15px] text-warm-stone font-light">{t('subscription.noHiddenFees')}</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-[2px] bg-border-gray rounded-[20px] overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-px border border-[#E5E7EB] rounded-lg overflow-hidden">
             {plans.map((p) => {
               const isCurrent = currentPlanName === p.key;
               const isFeatured = !!p.featured;
@@ -188,7 +188,7 @@ export default function SubscriptionManage() {
                 : isCurrent ? t('subscription.currentPlan') : tierIndex > currentTierIndex ? t('subscription.upgrade') : t('subscription.downgrade');
 
               return (
-                <div key={p.key} className={`relative px-8 py-10 ${isFeatured ? 'bg-deep-charcoal' : 'bg-warm-white'}`}>
+                <div key={p.key} className={`relative px-8 py-10 ${isFeatured ? 'bg-deep-charcoal' : 'bg-white'}`}>
                   {isCurrent && (
                     <span className={`absolute top-4 right-4 text-xs font-semibold px-3 py-1 rounded-full ${isFeatured ? 'bg-burgundy/30 text-white' : 'bg-burgundy/[8%] text-burgundy'}`}>
                       {t('subscription.currentPlan')}

@@ -13,8 +13,8 @@ export default function CallStatsOverview({ stats }: Props) {
     : 0;
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <div className="bg-white rounded-2xl border border-border-gray p-6">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 py-5 border-b border-[#E5E7EB]">
+      <div className="py-5">
         <div className="text-xs font-medium text-muted-stone mb-2">{t('callTracking.totalCallsToday')}</div>
         <div className="text-[32px] font-bold tracking-tight leading-none text-deep-charcoal">
           {overview.total_calls}
@@ -22,7 +22,7 @@ export default function CallStatsOverview({ stats }: Props) {
         <div className="text-xs text-warm-stone mt-1">{overview.successful_bookings} {t('callTracking.successfulBookings')}</div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-border-gray p-6">
+      <div className="py-5">
         <div className="text-xs font-medium text-muted-stone mb-2">{t('callTracking.successRate')}</div>
         <div className="text-[32px] font-bold tracking-tight leading-none text-rose-600">
           {overview.success_rate}%
@@ -32,7 +32,7 @@ export default function CallStatsOverview({ stats }: Props) {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-border-gray p-6">
+      <div className="py-5">
         <div className="text-xs font-medium text-muted-stone mb-2">{t('callTracking.avgDuration')}</div>
         <div className="text-[32px] font-bold tracking-tight leading-none text-deep-charcoal">
           {overview.average_duration_formatted}
@@ -40,7 +40,7 @@ export default function CallStatsOverview({ stats }: Props) {
         <div className="text-xs text-warm-stone mt-1">{t('callTracking.minutesPerCall')}</div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-border-gray p-6">
+      <div className="py-5">
         <div className="text-xs font-medium text-muted-stone mb-2">{t('callTracking.bookingsViaCall')}</div>
         <div className="text-[32px] font-bold tracking-tight leading-none text-burgundy">
           {overview.successful_bookings}

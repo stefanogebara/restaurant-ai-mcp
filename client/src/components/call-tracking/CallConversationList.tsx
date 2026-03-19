@@ -34,10 +34,10 @@ export default function CallConversationList({
   ] as const;
 
   return (
-    <div className="bg-white rounded-2xl border border-border-gray overflow-hidden">
+    <div className="overflow-hidden">
       {/* Header + tabs */}
-      <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
-        <span className="text-[15px] font-semibold tracking-tight">{t('callTracking.recentCalls')}</span>
+      <div className="flex items-center justify-between py-5 border-b border-[#E5E7EB]">
+        <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('callTracking.recentCalls')}</span>
         <div className="flex gap-0">
           {OUTCOME_TABS.map((tab) => (
             <button
@@ -80,7 +80,7 @@ export default function CallConversationList({
             return (
               <div
                 key={conv.id}
-                className="flex items-center px-4 sm:px-6 py-4 border-b border-warm-white gap-3 sm:gap-4 cursor-pointer hover:bg-warm-white transition-colors"
+                className="flex items-center py-5 border-b border-[#F3F4F6] gap-3 sm:gap-4 cursor-pointer hover:bg-[#FAFAFA] transition-colors"
                 onClick={() => onConversationClick(conv.id)}
               >
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${callIconStyle(conv.outcome)}`}>

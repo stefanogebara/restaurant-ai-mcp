@@ -36,7 +36,7 @@ export default function FeedbackSettingsPanel() {
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-border-gray rounded-2xl p-5 animate-pulse">
+      <div className="py-5 border-t border-[#E5E7EB] mt-8 animate-pulse">
         <div className="h-5 bg-gray-200 rounded w-40 mb-4" />
         <div className="h-10 bg-gray-100 rounded" />
       </div>
@@ -44,7 +44,7 @@ export default function FeedbackSettingsPanel() {
   }
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl p-5">
+    <div className="py-5 border-t border-[#E5E7EB] mt-8">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
           <ThiingsIcon name="chat" pxSize={16} className="text-amber-600" />

@@ -126,7 +126,7 @@ export default function ManagerAIChatPage() {
   const prompts = SUGGESTED_PROMPTS[lang] || SUGGESTED_PROMPTS.en;
 
   return (
-    <div className="h-screen flex flex-col bg-soft-gray">
+    <div className="h-screen flex flex-col bg-white">
       {/* Header */}
       <div className="bg-white border-b border-border-gray px-4 sm:px-6 py-3 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">

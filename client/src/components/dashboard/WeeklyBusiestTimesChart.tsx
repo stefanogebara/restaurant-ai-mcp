@@ -11,11 +11,11 @@ export default function WeeklyBusiestTimesChart({ times }: WeeklyBusiestTimesCha
   const maxTimeCovers = Math.max(...times.map(t => t.covers), 1);
 
   return (
-    <div className="bg-white rounded-2xl border border-border-gray overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-5 border-b border-soft-gray">
-        <span className="text-[15px] font-semibold tracking-tight">{t('analytics.busiestTimes')}</span>
+    <div className="overflow-hidden">
+      <div className="flex items-center justify-between py-5 border-b border-[#E5E7EB]">
+        <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('analytics.busiestTimes')}</span>
       </div>
-      <div className="p-6 space-y-3">
+      <div className="py-6 space-y-3">
         {times.map((time) => {
           const widthPct = Math.max((time.covers / maxTimeCovers) * 100, 5);
           return (

@@ -10,9 +10,9 @@ interface Props {
 export default function VoiceLanguagePicker({ currentLanguage, savedLanguage, onChange }: Props) {
   const { t } = useTranslation();
   return (
-    <section className="bg-white border border-border-gray rounded-2xl overflow-hidden">
-      <div className="px-6 py-5 border-b border-soft-gray">
-        <span className="text-[15px] font-semibold">{t('voiceSettings.languages')}</span>
+    <section className="overflow-hidden pb-5 border-b border-[#E5E7EB]">
+      <div className="py-5 border-b border-[#E5E7EB]">
+        <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('voiceSettings.languages')}</span>
       </div>
 
       <div className="p-6">

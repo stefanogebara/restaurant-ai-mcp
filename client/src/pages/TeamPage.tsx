@@ -90,15 +90,15 @@ export default function TeamPage() {
 
   return (
     <DashboardLayout>
-    <div className="max-w-2xl mx-auto py-8 px-4 space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-deep-charcoal">{t('team.title')}</h1>
-        <p className="text-sm text-stone-gray mt-1">{t('team.subtitle')}</p>
+    <div className="max-w-2xl mx-auto py-8 px-4 bg-white">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-[#111827]">{t('team.title')}</h1>
+        <p className="text-sm text-[#9CA3AF] mt-1">{t('team.subtitle')}</p>
       </div>
 
       {can('manageTeam') && (
-        <form onSubmit={handleInvite} className="bg-white border border-border-gray rounded-2xl p-6 space-y-4">
-          <h2 className="text-sm font-semibold text-deep-charcoal">{t('team.inviteTitle')}</h2>
+        <form onSubmit={handleInvite} className="py-5 space-y-4">
+          <h2 className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('team.inviteTitle')}</h2>
           <div className="flex flex-wrap sm:flex-nowrap gap-3">
             <input
               type="email" required
@@ -129,7 +129,7 @@ export default function TeamPage() {
         </form>
       )}
 
-      <div className="bg-white border border-border-gray rounded-2xl divide-y divide-border-gray">
+      <div className="border-t border-[#E5E7EB] mt-8 divide-y divide-[#F3F4F6]">
         {(isLoading && !loadingTimedOut) ? (
           <div className="p-6 text-center text-sm text-stone-gray">{t('common.loading')}</div>
         ) : (isError || loadingTimedOut) ? (

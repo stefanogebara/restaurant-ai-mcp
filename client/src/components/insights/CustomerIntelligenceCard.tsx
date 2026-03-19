@@ -150,7 +150,7 @@ export default function CustomerIntelligenceCard() {
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-border-gray/50 rounded-2xl p-6 shadow-sm">
+      <div className="py-6">
         <div className="h-4 w-40 bg-soft-gray rounded animate-pulse mb-3" />
         <div className="h-3 w-32 bg-soft-gray rounded animate-pulse" />
       </div>
@@ -159,7 +159,7 @@ export default function CustomerIntelligenceCard() {
 
   return (
     <>
-      <div className="bg-white border border-border-gray/50 rounded-2xl overflow-hidden shadow-sm">
+      <div className="border border-[#E5E7EB] rounded-lg overflow-hidden">
         <div className="p-5 border-b border-border-gray flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0">
             <ThiingsIcon name="user" pxSize={16} className="text-rose-600" />
