@@ -185,6 +185,7 @@ function CampaignRow({
   onSend: () => void;
   isSending: boolean;
 }) {
+  const { t } = useTranslation();
   const { data: stats } = useCampaignDeliveryStats(isSelected ? campaign.id : null);
   const badge = STATUS_BADGES[campaign.status] || STATUS_BADGES.pending;
 
