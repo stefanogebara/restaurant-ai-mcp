@@ -31,7 +31,7 @@ describe('PresetDemoSection', () => {
     renderSection();
     expect(screen.getByText('Trattoria da Marco')).toBeInTheDocument();
     expect(screen.getByText('Sakura Izakaya')).toBeInTheDocument();
-    expect(screen.getByText('Casa Oaxaca')).toBeInTheDocument();
+    expect(screen.getByText('Cantina da Praça')).toBeInTheDocument();
   });
 
   it('renders correct demo links for each preset', () => {
@@ -41,14 +41,14 @@ describe('PresetDemoSection', () => {
     expect(presetLinks).toHaveLength(3);
     expect(presetLinks[0]).toHaveAttribute('href', '/demo?preset=italian');
     expect(presetLinks[1]).toHaveAttribute('href', '/demo?preset=japanese');
-    expect(presetLinks[2]).toHaveAttribute('href', '/demo?preset=mexican');
+    expect(presetLinks[2]).toHaveAttribute('href', '/demo?preset=brazilian');
   });
 
   it('renders cuisine badges', () => {
     renderSection();
     expect(screen.getByText('Italian')).toBeInTheDocument();
     expect(screen.getByText('Japanese')).toBeInTheDocument();
-    expect(screen.getByText('Mexican')).toBeInTheDocument();
+    expect(screen.getByText('Brazilian')).toBeInTheDocument();
   });
 
   it('renders the CTA link to demo setup', () => {

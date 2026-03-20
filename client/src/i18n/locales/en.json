@@ -1484,10 +1484,10 @@
       "ctaLink": "Set it up here →",
       "cuisineItalian": "Italian",
       "cuisineJapanese": "Japanese",
-      "cuisineMexican": "Mexican",
       "briefItalian": "8 tables · Little Italy",
       "briefJapanese": "8 tables · Midtown",
-      "briefMexican": "9 tables · Mission District"
+      "cuisineBrazilian": "Brazilian",
+      "briefBrazilian": "Churrasco, feijoada & caipirinhas in São Paulo"
     },
     "voice": {
       "label": "Try it live",
@@ -1909,15 +1909,15 @@
       }
     },
     "voiceDemo": {
-      "backToSite": "\u2190 Back",
+      "backToSite": "← Back",
       "title": "Talk to our AI host",
       "subtitle": "Ask to book a table, check availability, or inquire about the menu",
       "readyPrompt": "This will use your microphone to talk with our AI host.",
       "startCall": "Start call",
       "cancel": "Cancel",
       "endCall": "End call",
-      "liveDashboard": "Live dashboard \u2014 reservations appear in real-time",
-      "powered": "Powered by ElevenLabs \u00b7 Seatable AI",
+      "liveDashboard": "Live dashboard — reservations appear in real-time",
+      "powered": "Powered by ElevenLabs · Seatable AI",
       "tryDashboard": "Try the full dashboard",
       "pricing": "Pricing",
       "tables": "Tables",
@@ -1925,7 +1925,7 @@
       "waitlist": "Waitlist",
       "guests": "Guests",
       "dashboard": "Dashboard",
-      "todayDate": "Today \u00b7 March 15",
+      "todayDate": "Today · March 15",
       "aiActive": "AI Active",
       "todaysReservations": "Today's Reservations",
       "confirmed": "confirmed",

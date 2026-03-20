@@ -6,7 +6,7 @@ import { trackPresetDemoClicked } from '../../lib/analytics';
 const presets = [
   { id: 'italian', flag: '\u{1F1EE}\u{1F1F9}', name: 'Trattoria da Marco', cuisineKey: 'landing.tryDemo.cuisineItalian', brief: 'landing.tryDemo.briefItalian', accent: 'bg-amber-50 text-amber-700' },
   { id: 'japanese', flag: '\u{1F1EF}\u{1F1F5}', name: 'Sakura Izakaya', cuisineKey: 'landing.tryDemo.cuisineJapanese', brief: 'landing.tryDemo.briefJapanese', accent: 'bg-rose-50 text-rose-700' },
-  { id: 'mexican', flag: '\u{1F1F2}\u{1F1FD}', name: 'Casa Oaxaca', cuisineKey: 'landing.tryDemo.cuisineMexican', brief: 'landing.tryDemo.briefMexican', accent: 'bg-teal-50 text-teal-700' },
+  { id: 'brazilian', flag: '\u{1F1E7}\u{1F1F7}', name: 'Cantina da Praça', cuisineKey: 'landing.tryDemo.cuisineBrazilian', brief: 'landing.tryDemo.briefBrazilian', accent: 'bg-lime-50 text-lime-700' },
 ] as const;
 
 export default function PresetDemoSection() {

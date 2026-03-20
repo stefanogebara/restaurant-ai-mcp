@@ -1256,10 +1256,10 @@
       "ctaLink": "Configúralo aquí →",
       "cuisineItalian": "Italiana",
       "cuisineJapanese": "Japonesa",
-      "cuisineMexican": "Mexicana",
       "briefItalian": "8 mesas · Little Italy",
       "briefJapanese": "8 mesas · Midtown",
-      "briefMexican": "9 mesas · Mission District"
+      "cuisineBrazilian": "Brasileño",
+      "briefBrazilian": "Churrasco, feijoada y caipirinhas en São Paulo"
     },
     "voice": {
       "label": "Prueba en vivo",
@@ -1681,15 +1681,15 @@
       }
     },
     "voiceDemo": {
-      "backToSite": "\u2190 Volver",
-      "title": "Habla con nuestro anfitri\u00f3n IA",
-      "subtitle": "Pide reservar una mesa, consulta disponibilidad o pregunta sobre el men\u00fa",
-      "readyPrompt": "Esto usar\u00e1 tu micr\u00f3fono para hablar con nuestro anfitri\u00f3n IA.",
+      "backToSite": "← Volver",
+      "title": "Habla con nuestro anfitrión IA",
+      "subtitle": "Pide reservar una mesa, consulta disponibilidad o pregunta sobre el menú",
+      "readyPrompt": "Esto usará tu micrófono para hablar con nuestro anfitrión IA.",
       "startCall": "Iniciar llamada",
       "cancel": "Cancelar",
       "endCall": "Finalizar llamada",
-      "liveDashboard": "Panel en vivo \u2014 las reservas aparecen en tiempo real",
-      "powered": "Desarrollado con ElevenLabs \u00b7 Seatable IA",
+      "liveDashboard": "Panel en vivo — las reservas aparecen en tiempo real",
+      "powered": "Desarrollado con ElevenLabs · Seatable IA",
       "tryDashboard": "Prueba el panel completo",
       "pricing": "Precios",
       "tables": "Mesas",
@@ -1697,12 +1697,12 @@
       "waitlist": "Espera",
       "guests": "Invitados",
       "dashboard": "Panel",
-      "todayDate": "Hoy \u00b7 15 de Marzo",
+      "todayDate": "Hoy · 15 de Marzo",
       "aiActive": "IA Activa",
       "todaysReservations": "Reservas de Hoy",
       "confirmed": "confirmada",
       "cancelled": "cancelada",
-      "readyToCall": "\u00bfListo para llamar?"
+      "readyToCall": "¿Listo para llamar?"
     }
   },
   "upgrade": {
