@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import ThiingsIcon from '../common/ThiingsIcon';
 import { useTranslation } from 'react-i18next';
 
@@ -8,7 +7,6 @@ interface OnboardingSuccessModalProps {
 }
 
 export default function OnboardingSuccessModal({ countdown, ownReferral }: OnboardingSuccessModalProps) {
-  const navigate = useNavigate();
   const { t } = useTranslation();
 
   return (
@@ -59,7 +57,7 @@ export default function OnboardingSuccessModal({ countdown, ownReferral }: Onboa
           })()}
 
           <button
-            onClick={() => navigate('/host-dashboard/simple')}
+            onClick={() => { window.location.href = '/host-dashboard/simple'; }}
             className="w-full px-8 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all duration-300 mb-2"
           >
             {t('onboarding.goToDashboard')} →
