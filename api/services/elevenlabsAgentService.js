@@ -12,6 +12,8 @@
 const fetch = require('node-fetch');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { createSecureLogger } = require('../_lib/secure-logger');
+const { buildPersonaPrompt } = require('../_lib/persona-prompt-builder');
+const { validateElevenLabsVoiceId } = require('../_lib/validation');
 
 const logger = createSecureLogger('ElevenLabsAgentService');
 
@@ -583,10 +585,293 @@ async function getBranchConversationCount(agentId, branchId, sinceDate) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Agent Creation — core logic (no HTTP/subscription guards)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build first message based on language and optional custom greeting.
+ * @param {{ restaurant_name: string, language?: string, custom_greeting?: string }} opts
+ * @returns {string}
+ */
+function buildFirstMessage({ restaurant_name, language = 'en', custom_greeting }) {
+  if (custom_greeting) return custom_greeting;
+
+  const greetings = {
+    en: `Thank you for calling ${restaurant_name}. How may I help you today?`,
+    es: `Gracias por llamar a ${restaurant_name}. ¿En qué puedo ayudarle hoy?`,
+    fr: `Merci d'avoir appelé ${restaurant_name}. Comment puis-je vous aider aujourd'hui?`,
+    it: `Grazie per aver chiamato ${restaurant_name}. Come posso aiutarla oggi?`,
+    pt: `Obrigado por ligar para ${restaurant_name}. Como posso ajudá-lo hoje?`,
+  };
+  return greetings[language] || greetings.en;
+}
+
+/**
+ * Build webhook tool definitions for a single-tenant agent.
+ * @param {string} baseUrl
+ * @param {string} restaurantId - restaurant_config UUID
+ * @returns {Array}
+ */
+function buildToolDefinitions(baseUrl, restaurantId) {
+  const rp = restaurantId ? `&restaurant_id=${restaurantId}` : '';
+
+  return [
+    {
+      type: 'webhook', name: 'get_current_datetime',
+      description: 'Get the current date and time. Use this at the start of conversations to know what "today" and "tomorrow" mean.',
+      api_schema: { url: `${baseUrl}/api/elevenlabs-webhook?action=get_current_datetime`, method: 'GET' },
+    },
+    {
+      type: 'webhook', name: 'check_availability',
+      description: 'Check table availability for a specific date, time, and party size. Use this before creating a reservation to verify availability.',
+      api_schema: {
+        url: `${baseUrl}/api/elevenlabs-webhook?action=check_availability${rp}`, method: 'POST',
+        content_type: 'application/json',
+        request_body_schema: { type: 'object', properties: {
+          date: { type: 'string', description: 'Date in YYYY-MM-DD format' },
+          time: { type: 'string', description: 'Time in HH:MM format' },
+          party_size: { type: 'number', description: 'Number of guests' },
+        }, required: ['date', 'time', 'party_size'] },
+      },
+    },
+    {
+      type: 'webhook', name: 'create_reservation',
+      description: 'Create a new reservation after confirming all details with the customer.',
+      api_schema: {
+        url: `${baseUrl}/api/elevenlabs-webhook?action=create_reservation${rp}`, method: 'POST',
+        content_type: 'application/json',
+        request_body_schema: { type: 'object', properties: {
+          customer_name: { type: 'string', description: 'Full name' },
+          customer_phone: { type: 'string', description: 'Phone number' },
+          customer_email: { type: 'string', description: 'Email (optional)' },
+          date: { type: 'string', description: 'Date YYYY-MM-DD' },
+          time: { type: 'string', description: 'Time HH:MM' },
+          party_size: { type: 'number', description: 'Number of guests' },
+          special_requests: { type: 'string', description: 'Special requests (optional)' },
+        }, required: ['customer_name', 'customer_phone', 'date', 'time', 'party_size'] },
+      },
+    },
+    {
+      type: 'webhook', name: 'lookup_reservation',
+      description: 'Find an existing reservation by customer phone number or name.',
+      api_schema: {
+        url: `${baseUrl}/api/reservations?action=lookup${rp}`, method: 'POST',
+        content_type: 'application/json',
+        request_body_schema: { type: 'object', properties: {
+          customer_phone: { type: 'string', description: 'Phone number for the reservation' },
+          customer_name: { type: 'string', description: 'Name for the reservation (optional if phone provided)' },
+        } },
+      },
+    },
+    {
+      type: 'webhook', name: 'cancel_reservation',
+      description: 'Cancel an existing reservation by ID.',
+      api_schema: {
+        url: `${baseUrl}/api/reservations?action=cancel${rp}`, method: 'POST',
+        content_type: 'application/json',
+        request_body_schema: { type: 'object', properties: {
+          reservation_id: { type: 'string', description: 'Reservation ID to cancel' },
+        }, required: ['reservation_id'] },
+      },
+    },
+    {
+      type: 'webhook', name: 'modify_reservation',
+      description: 'Change date, time, or party size of an existing reservation.',
+      api_schema: {
+        url: `${baseUrl}/api/reservations?action=modify${rp}`, method: 'POST',
+        content_type: 'application/json',
+        request_body_schema: { type: 'object', properties: {
+          reservation_id: { type: 'string', description: 'Reservation ID to modify' },
+          new_date: { type: 'string', description: 'New date YYYY-MM-DD (optional)' },
+          new_time: { type: 'string', description: 'New time HH:MM (optional)' },
+          new_party_size: { type: 'number', description: 'New party size (optional)' },
+        }, required: ['reservation_id'] },
+      },
+    },
+    {
+      type: 'webhook', name: 'get_wait_time',
+      description: 'Get current estimated wait time for walk-in customers.',
+      api_schema: {
+        url: `${baseUrl}/api/get-wait-time?${restaurantId ? `restaurant_id=${restaurantId}` : ''}`,
+        method: 'GET',
+      },
+    },
+  ];
+}
+
+/**
+ * Create tools via the ElevenLabs Tools API and return their IDs.
+ * @param {Array} toolDefinitions
+ * @param {string} apiKey
+ * @returns {Promise<{toolIds: string[], errors: Array}>}
+ */
+async function createToolsViaAPI(toolDefinitions, apiKey) {
+  const toolIds = [];
+  const errors = [];
+
+  for (const toolDef of toolDefinitions) {
+    try {
+      const res = await fetch(`${ELEVENLABS_BASE}/tools`, {
+        method: 'POST',
+        headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tool_config: toolDef }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        logger.error(`Failed to create tool '${toolDef.name}'`, { error: errorText });
+        errors.push({ tool: toolDef.name, error: errorText });
+        continue;
+      }
+
+      const data = await res.json();
+      const toolId = data.id || data.tool_id;
+      if (toolId) {
+        toolIds.push(toolId);
+        logger.info(`Created tool '${toolDef.name}'`, { toolId });
+      } else {
+        errors.push({ tool: toolDef.name, error: 'No ID in response' });
+      }
+    } catch (err) {
+      logger.error(`Error creating tool '${toolDef.name}'`, { error: err.message });
+      errors.push({ tool: toolDef.name, error: err.message });
+    }
+  }
+
+  return { toolIds, errors };
+}
+
+/**
+ * Create a per-restaurant ElevenLabs conversational AI agent.
+ *
+ * This is the core creation logic — no HTTP or subscription guards.
+ * Called from onboarding and from the elevenlabs-agent-create endpoint.
+ *
+ * @param {object} opts
+ * @param {string} opts.restaurantId - restaurant_config UUID (used for tool webhooks + DB save)
+ * @param {string} opts.restaurant_name
+ * @param {string} opts.voice_id - ElevenLabs voice ID
+ * @param {string} [opts.language='en']
+ * @param {object} [opts.business_hours] - { monday: { isOpen, open, close }, ... }
+ * @param {string} [opts.phone]
+ * @param {string} [opts.address]
+ * @param {string} [opts.custom_greeting]
+ * @returns {Promise<{success: boolean, agent_id?: string, tools_created?: number, error?: string}>}
+ */
+async function createAgent({
+  restaurantId,
+  restaurant_name,
+  voice_id,
+  language = 'en',
+  business_hours = {},
+  phone,
+  address,
+  custom_greeting,
+}) {
+  try {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      return { success: false, error: 'ElevenLabs API key not configured' };
+    }
+
+    if (!restaurant_name || !voice_id) {
+      return { success: false, error: 'Missing required fields: restaurant_name, voice_id' };
+    }
+
+    // Validate voice_id format
+    const voiceCheck = validateElevenLabsVoiceId(voice_id);
+    if (!voiceCheck.valid) {
+      return { success: false, error: voiceCheck.error };
+    }
+
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'https://seatable.one';
+
+    // Build system prompt — try persona-aware prompt if config exists, else basic
+    let systemPrompt;
+    if (restaurantId) {
+      const { data: restaurantConfig } = await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('*')
+        .eq('id', restaurantId)
+        .maybeSingle();
+
+      const configForPrompt = restaurantConfig || {
+        restaurant_name, phone, address, business_hours, language,
+      };
+      systemPrompt = buildPersonaPrompt(configForPrompt, { channel: 'voice' });
+    } else {
+      systemPrompt = buildPersonaPrompt(
+        { restaurant_name, phone, address, business_hours, language },
+        { channel: 'voice' },
+      );
+    }
+
+    const firstMessage = buildFirstMessage({ restaurant_name, language, custom_greeting });
+
+    // Create webhook tools
+    const toolDefs = buildToolDefinitions(baseUrl, restaurantId);
+    const { toolIds, errors: toolErrors } = await createToolsViaAPI(toolDefs, apiKey);
+
+    if (toolIds.length === 0) {
+      logger.error('Failed to create any tools', { toolErrors });
+      return { success: false, error: 'Failed to create agent tools', details: toolErrors };
+    }
+
+    // Create agent
+    const agentRes = await fetch(`${ELEVENLABS_BASE}/agents/create`, {
+      method: 'POST',
+      headers: elevenLabsHeaders(apiKey),
+      body: JSON.stringify({
+        name: `${restaurant_name} AI Host`,
+        conversation_config: {
+          agent: {
+            prompt: { prompt: systemPrompt, llm: 'gpt-4o-mini', tool_ids: toolIds },
+            first_message: firstMessage,
+            language,
+          },
+          tts: { voice_id, model_id: 'eleven_flash_v2_5' },
+          conversation: {
+            turn_timeout: 8,
+            client_events: ['agent_response', 'agent_response_correction', 'user_transcript', 'internal_tentative_agent_response'],
+          },
+          asr: { quality: 'high', provider: 'elevenlabs' },
+        },
+        platform_settings: {
+          widget_config: {
+            avatar_url: 'https://seatable.one/logo.png',
+            title: `${restaurant_name} AI Host`,
+          },
+        },
+      }),
+    });
+
+    if (!agentRes.ok) {
+      const errorText = await agentRes.text();
+      logger.error('ElevenLabs agent creation failed', { status: agentRes.status, error: errorText });
+      return { success: false, error: 'Failed to create agent at ElevenLabs' };
+    }
+
+    const agentData = await agentRes.json();
+    const agentId = agentData.agent_id;
+
+    logger.info('ElevenLabs agent created', { agentId, restaurantId, toolsCreated: toolIds.length });
+
+    return { success: true, agent_id: agentId, tools_created: toolIds.length };
+  } catch (err) {
+    logger.error('createAgent error', { error: err.message, stack: err.stack });
+    return { success: false, error: err.message };
+  }
+}
+
 module.exports = {
   getAgentIdForRestaurant,
   syncKnowledgeBase,
   deleteAgent,
+  createAgent,
   enableVersioning,
   createBranch,
   deployTrafficSplit,

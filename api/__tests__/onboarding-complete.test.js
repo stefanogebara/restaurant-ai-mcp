@@ -102,7 +102,7 @@ jest.mock('../_lib/timezone', () => ({
   suggestTimezone: jest.fn(() => 'America/Sao_Paulo'),
 }));
 
-// Mock node-fetch to prevent actual HTTP calls
+// Mock node-fetch (no longer used for agent creation, but may be required by other imports)
 jest.mock('node-fetch', () =>
   jest.fn(() =>
     Promise.resolve({
@@ -112,6 +112,16 @@ jest.mock('node-fetch', () =>
     })
   )
 );
+
+// Mock elevenlabsAgentService to prevent actual ElevenLabs API calls
+jest.mock('../services/elevenlabsAgentService', () => ({
+  createAgent: jest.fn(() =>
+    Promise.resolve({ success: false, error: 'mock: no API key' })
+  ),
+  syncKnowledgeBase: jest.fn(() =>
+    Promise.resolve({ success: false, error: 'mock: no agent' })
+  ),
+}));
 
 // ---------------------------------------------------------------------------
 // Test helpers
@@ -451,19 +461,16 @@ describe('User management edge cases', () => {
 });
 
 // ============================================================
-// ElevenLabs agent creation paths (lines 590-621, 631-635)
+// ElevenLabs agent creation paths (via elevenlabsAgentService)
 // ============================================================
 describe('ElevenLabs agent creation', () => {
-  test('handles agent creation success (lines 590-621)', async () => {
-    const nodeFetch = require('node-fetch');
-    nodeFetch.mockImplementationOnce(() =>
-      Promise.resolve({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({ agent_id: 'agent-elevenlabs-123' }),
-        text: () => Promise.resolve('success'),
-      })
-    );
+  test('handles agent creation success via service', async () => {
+    const { createAgent } = require('../services/elevenlabsAgentService');
+    createAgent.mockResolvedValueOnce({
+      success: true,
+      agent_id: 'agent-elevenlabs-123',
+      tools_created: 7,
+    });
 
     const { req, res } = mockReqRes({
       ...BASE_BODY,
@@ -472,15 +479,62 @@ describe('ElevenLabs agent creation', () => {
     });
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(200);
+    expect(createAgent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        restaurant_name: 'Test Restaurant',
+        voice_id: 'voice-abc',
+        language: 'en',
+      })
+    );
   });
 
-  test('handles agent creation network error (lines 631-635)', async () => {
-    const nodeFetch = require('node-fetch');
-    nodeFetch.mockImplementationOnce(() => Promise.reject(new Error('Network error')));
+  test('handles agent creation failure gracefully', async () => {
+    const { createAgent } = require('../services/elevenlabsAgentService');
+    createAgent.mockResolvedValueOnce({
+      success: false,
+      error: 'ElevenLabs API key not configured',
+    });
 
     const { req, res } = mockReqRes(BASE_BODY);
     await handler(req, res);
     // Should not fail the whole onboarding
     expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('handles agent creation exception gracefully', async () => {
+    const { createAgent } = require('../services/elevenlabsAgentService');
+    createAgent.mockRejectedValueOnce(new Error('Network error'));
+
+    const { req, res } = mockReqRes(BASE_BODY);
+    await handler(req, res);
+    // Should not fail the whole onboarding
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  test('uses configResult.id as restaurantId (not REST-xxx string)', async () => {
+    const { createAgent } = require('../services/elevenlabsAgentService');
+    const { verifyAuth } = require('../_lib/auth');
+
+    // Provide sub (JWT subject) so userId is set and restaurant_config is created
+    verifyAuth.mockResolvedValueOnce({
+      user: { id: 'user-1', sub: 'user-uuid-1', restaurant_id: 'rest-1' },
+    });
+
+    createAgent.mockResolvedValueOnce({
+      success: true,
+      agent_id: 'agent-check-id',
+      tools_created: 7,
+    });
+
+    const { req, res } = mockReqRes({
+      ...BASE_BODY,
+      selected_voice_id: 'voice-abc',
+    });
+    await handler(req, res);
+
+    // createAgent should have been called with the UUID from configResult, not REST-xxx
+    const callArgs = createAgent.mock.calls[0][0];
+    // configResult.id from mock is 'config-uuid'
+    expect(callArgs.restaurantId).toBe('config-uuid');
   });
 });

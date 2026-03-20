@@ -13,7 +13,6 @@
 const crypto = require('crypto');
 const { supabaseAdmin } = require('../_lib/supabase');
 const { setInternalCors, handlePreflight } = require('../_lib/cors');
-const fetch = require('node-fetch');
 const { createSecureLogger } = require('../_lib/secure-logger');
 const { verifyAuth } = require('../_lib/auth');
 const { suggestTimezone } = require('../_lib/timezone');
@@ -605,6 +604,9 @@ module.exports = async (req, res) => {
     }
 
     // STEP 4: Create ElevenLabs Agent
+    // Uses the service directly (no HTTP call) to bypass subscription guards.
+    // During onboarding the subscription doesn't exist yet, and the agent should
+    // be provisioned for ALL plans — voice settings UI is gated separately.
     logger.info(' Step 4: Creating ElevenLabs agent...');
     logger.info(' Voice config:', {
       selected_voice_id,
@@ -612,7 +614,7 @@ module.exports = async (req, res) => {
       restaurant_name
     });
 
-    // Transform business_hours array to object format for agent API
+    // Transform business_hours array to object format for agent service
     // From: [{ day: "Monday", is_open: true, open_time: "12:00", close_time: "23:00" }]
     // To: { monday: { isOpen: true, open: "12:00", close: "23:00" } }
     const agentBusinessHours = {};
@@ -627,32 +629,25 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Use the correct restaurant_config UUID (not the generated REST-xxx string)
+    const canonicalRestaurantId = configResult?.id || null;
+
     let agentId = null;
     try {
-      const agentCreateEndpoint = `${process.env.CLIENT_URL || 'https://seatable.one'}/api/elevenlabs-agent-create`;
+      const { createAgent, syncKnowledgeBase } = require('../services/elevenlabsAgentService');
 
-      const agentResponse = await fetch(agentCreateEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': req.headers.authorization || ''
-        },
-        body: JSON.stringify({
-          restaurant_id: generatedRestaurantId,
-          restaurant_name,
-          voice_id: selected_voice_id || getDefaultVoiceId(selected_voice_language),
-          language: selected_voice_language || 'en',
-          business_hours: agentBusinessHours,
-          phone: phone_number,
-          address: `${city}, ${country}`
-        })
+      const agentResult = await createAgent({
+        restaurantId: canonicalRestaurantId,
+        restaurant_name,
+        voice_id: selected_voice_id || getDefaultVoiceId(selected_voice_language),
+        language: selected_voice_language || 'en',
+        business_hours: agentBusinessHours,
+        phone: phone_number,
+        address: `${city}, ${country}`
       });
 
-      logger.info(' Agent API response status:', agentResponse.status);
-
-      if (agentResponse.ok) {
-        const agentData = await agentResponse.json();
-        agentId = agentData.agent_id;
+      if (agentResult.success) {
+        agentId = agentResult.agent_id;
 
         // Update restaurant_info with agent details
         const voiceIdToSave = selected_voice_id || getDefaultVoiceId(selected_voice_language);
@@ -668,7 +663,7 @@ module.exports = async (req, res) => {
           .eq('id', restaurantInfoResult.id);
 
         // Also save agent_id to restaurant_config for webhook routing
-        if (userId) {
+        if (canonicalRestaurantId) {
           await supabaseAdmin
             .schema('restaurant')
             .from('restaurant_config')
@@ -676,7 +671,7 @@ module.exports = async (req, res) => {
               elevenlabs_agent_id: agentId,
               agent_language: selected_voice_language || 'en'
             })
-            .eq('user_id', userId);
+            .eq('id', canonicalRestaurantId);
 
           logger.info(' Agent saved to restaurant_config');
         }
@@ -685,24 +680,23 @@ module.exports = async (req, res) => {
         logger.info(' Agent URL: https://elevenlabs.io/app/conversational-ai/' + agentId);
 
         // Step 4b: Sync knowledge base to ElevenLabs agent (fire-and-forget)
-        const { syncKnowledgeBase } = require('../services/elevenlabsAgentService');
-        syncKnowledgeBase(generatedRestaurantId).then(result => {
-          if (result.success) {
-            logger.info('KB synced to ElevenLabs agent', { documentId: result.documentId });
-          } else {
-            logger.warn('KB sync skipped or failed:', result.error);
-          }
-        }).catch(err => logger.error('KB sync error:', err.message));
+        if (canonicalRestaurantId) {
+          syncKnowledgeBase(canonicalRestaurantId).then(result => {
+            if (result.success) {
+              logger.info('KB synced to ElevenLabs agent', { documentId: result.documentId });
+            } else {
+              logger.warn('KB sync skipped or failed:', result.error);
+            }
+          }).catch(err => logger.error('KB sync error:', err.message));
+        }
       } else {
-        const errorText = await agentResponse.text();
-        logger.error(' ❌ Failed to create agent:', {
-          status: agentResponse.status,
-          statusText: agentResponse.statusText,
-          error: errorText
+        logger.error(' Failed to create agent:', {
+          error: agentResult.error,
+          details: agentResult.details
         });
       }
     } catch (agentError) {
-      logger.error(' ❌ Error creating ElevenLabs agent:', {
+      logger.error(' Error creating ElevenLabs agent:', {
         message: agentError.message,
         stack: agentError.stack
       });
