@@ -269,13 +269,14 @@ function buildElevenLabsTwiml(restaurant) {
     );
   }
 
-  // ElevenLabs uses their own <Connect> flow
-  // The exact TwiML depends on how ElevenLabs integration is set up
-  // This matches the existing phone-integration-simple.js pattern
+  // ElevenLabs Twilio integration uses <Connect><Stream> for bidirectional audio
+  // The Stream connects to ElevenLabs WebSocket which handles STT + LLM + TTS
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Connect>
-    <ConversationRelay url="wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${agentId}" />
+    <Stream url="wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${agentId}">
+      <Parameter name="caller_id" value="{{From}}" />
+    </Stream>
   </Connect>
 </Response>`;
 }
