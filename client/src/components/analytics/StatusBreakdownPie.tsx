@@ -10,19 +10,33 @@ interface StatusBreakdownPieProps {
 
 export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreakdownPieProps) {
   const { t } = useTranslation();
-  // Transform object data into array for Recharts
-  const chartData = Object.entries(reservationsByStatus).map(([status, count]) => ({
-    name: status.charAt(0).toUpperCase() + status.slice(1), // Capitalize
-    value: count,
-  }));
+  // FIX 4: Translate status labels using existing i18n keys
+  const statusKeyMap: Record<string, string> = {
+    confirmed: 'reservations.confirmed',
+    pending: 'reservations.pending',
+    cancelled: 'reservations.cancelled',
+    completed: 'reservations.completed',
+    'no-show': 'reservations.noShow',
+    no_show: 'reservations.noShow',
+    seated: 'reservations.seated',
+  };
 
-  // Color mapping for each status
+  // Transform object data into array for Recharts
+  const chartData = Object.entries(reservationsByStatus).map(([status, count]) => {
+    const i18nKey = statusKeyMap[status.toLowerCase()];
+    const translatedName = i18nKey ? t(i18nKey) : (status.charAt(0).toUpperCase() + status.slice(1));
+    return { name: translatedName, value: count, rawStatus: status };
+  });
+
+  // Color mapping for each status (by raw lowercase status key)
   const COLORS: Record<string, string> = {
-    Pending: colors.warmStone,
-    Confirmed: colors.stoneGray,
-    Seated: colors.burgundy,
-    Completed: '#22c55e',
-    Cancelled: '#ef4444',
+    pending: colors.warmStone,
+    confirmed: colors.stoneGray,
+    seated: colors.burgundy,
+    completed: '#22c55e',
+    cancelled: '#ef4444',
+    'no-show': '#f97316',
+    no_show: '#f97316',
   };
 
   // Custom label to show percentage
@@ -74,7 +88,7 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
               dataKey="value"
             >
               {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[entry.name] || colors.mutedStone} />
+                <Cell key={`cell-${index}`} fill={COLORS[entry.rawStatus.toLowerCase()] || colors.mutedStone} />
               ))}
             </Pie>
             <Tooltip content={<CustomTooltip />} />

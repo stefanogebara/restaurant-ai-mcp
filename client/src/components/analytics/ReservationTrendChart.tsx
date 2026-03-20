@@ -14,6 +14,23 @@ interface ReservationTrendChartProps {
 export default function ReservationTrendChart({ dailyTrend }: ReservationTrendChartProps) {
   const { t, i18n } = useTranslation();
 
+  // FIX 2: Calculate real trend from last 7 vs previous 7 days
+  const trendInfo = (() => {
+    if (dailyTrend.length < 2) return { key: 'analytics.trendStable', color: 'bg-[#9CA3AF]/[8%] text-[#9CA3AF]' };
+    const len = dailyTrend.length;
+    const splitIdx = Math.max(0, len - 7);
+    const recent = dailyTrend.slice(splitIdx);
+    const previous = dailyTrend.slice(Math.max(0, splitIdx - 7), splitIdx);
+    const recentTotal = recent.reduce((s, d) => s + d.reservations, 0);
+    const prevTotal = previous.reduce((s, d) => s + d.reservations, 0);
+    if (prevTotal === 0 && recentTotal === 0) return { key: 'analytics.trendStable', color: 'bg-[#9CA3AF]/[8%] text-[#9CA3AF]' };
+    if (prevTotal === 0) return { key: 'analytics.trendingUp', color: 'bg-burgundy/[8%] text-burgundy' };
+    const change = ((recentTotal - prevTotal) / prevTotal) * 100;
+    if (change > 10) return { key: 'analytics.trendingUp', color: 'bg-burgundy/[8%] text-burgundy' };
+    if (change < -10) return { key: 'analytics.trendingDown', color: 'bg-red-500/[8%] text-red-600' };
+    return { key: 'analytics.trendStable', color: 'bg-[#9CA3AF]/[8%] text-[#9CA3AF]' };
+  })();
+
   // Format day labels using browser locale instead of server-hardcoded English
   const localizedTrend = dailyTrend.map(d => ({
     ...d,
@@ -40,7 +57,7 @@ export default function ReservationTrendChart({ dailyTrend }: ReservationTrendCh
     <div className="overflow-hidden">
       <div className="flex items-center justify-between py-5 border-b border-[#E5E7EB]">
         <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('analytics.reservationsOverTime')}</span>
-        <span className="text-[11px] font-semibold bg-burgundy/[8%] text-burgundy px-2.5 py-0.5 rounded-full">{t('analytics.trendingUp')}</span>
+        <span className={`text-[11px] font-semibold ${trendInfo.color} px-2.5 py-0.5 rounded-full`}>{t(trendInfo.key)}</span>
       </div>
       <div role="img" aria-label="Line chart showing reservation trends over time" className="p-6">
 

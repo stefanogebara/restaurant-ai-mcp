@@ -76,7 +76,8 @@ export default function AnalyticsDashboard() {
     return <DashboardLayout><SkeletonAnalytics /></DashboardLayout>;
   }
 
-  if (isError || loadingTimedOut) {
+  // FIX 3: Don't show error if data eventually loaded after timeout
+  if ((isError || loadingTimedOut) && !data) {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
