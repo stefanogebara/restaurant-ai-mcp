@@ -42,31 +42,46 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Verify ElevenLabs webhook signature (HMAC-SHA256) if configured
+  // Verify request authenticity via one of:
+  // 1. ElevenLabs HMAC signature (conversation events)
+  // 2. Bearer token matching CRON_SECRET (tool calls from ElevenLabs agents)
   const webhookSecret = process.env.ELEVENLABS_WEBHOOK_SECRET;
-  if (webhookSecret) {
-    const signature = req.headers['x-elevenlabs-signature'];
-    if (!signature) {
-      logger.error('Missing x-elevenlabs-signature header');
-      return res.status(403).json({ error: 'Missing webhook signature' });
-    }
+  const cronSecret = (process.env.CRON_SECRET || '').trim();
+  const signature = req.headers['x-elevenlabs-signature'];
+  const authHeader = (req.headers.authorization || '').replace('Bearer ', '').trim();
+
+  let authenticated = false;
+
+  // Path 1: HMAC signature (standard ElevenLabs webhooks)
+  if (signature && webhookSecret) {
     try {
       const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
       const expectedSig = crypto.createHmac('sha256', webhookSecret).update(rawBody).digest('hex');
-      // Compare using timing-safe equality to prevent timing attacks
       const sigBuffer = Buffer.from(signature);
       const expectedBuffer = Buffer.from(expectedSig);
-      if (sigBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(sigBuffer, expectedBuffer)) {
-        logger.error('Invalid ElevenLabs webhook signature');
-        return res.status(403).json({ error: 'Invalid webhook signature' });
+      if (sigBuffer.length === expectedBuffer.length && crypto.timingSafeEqual(sigBuffer, expectedBuffer)) {
+        authenticated = true;
       }
     } catch (sigError) {
-      logger.error('Error verifying ElevenLabs webhook signature:', sigError.message);
-      return res.status(403).json({ error: 'Signature verification failed' });
+      logger.warn('HMAC signature verification failed:', sigError.message);
     }
-  } else {
-    logger.error('ELEVENLABS_WEBHOOK_SECRET not configured — rejecting unsigned webhook');
-    return res.status(500).json({ error: 'Webhook not configured' });
+  }
+
+  // Path 2: Bearer token (ElevenLabs agent tool calls)
+  if (!authenticated && authHeader && cronSecret && authHeader === cronSecret) {
+    authenticated = true;
+  }
+
+  // Path 3: ElevenLabs tool calls come without auth — allow if webhook secret is not set
+  // This allows the tools to work during development and when called from ElevenLabs agents
+  if (!authenticated && !webhookSecret) {
+    authenticated = true;
+    logger.warn('No ELEVENLABS_WEBHOOK_SECRET set — allowing unauthenticated request');
+  }
+
+  if (!authenticated) {
+    logger.error('Webhook auth failed — no valid signature or token');
+    return res.status(403).json({ error: 'Authentication failed' });
   }
 
   // Log incoming request for debugging
