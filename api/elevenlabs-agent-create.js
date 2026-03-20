@@ -26,6 +26,9 @@ const { validateElevenLabsVoiceId } = require('./_lib/validation');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('ElevenLabsAgentCreate');
 
+// Trim env vars to prevent trailing \n from breaking HTTP headers
+const ELEVENLABS_KEY = (process.env.ELEVENLABS_API_KEY || '').trim();
+
 module.exports = async (req, res) => {
   // Only allow POST requests
   if (req.method !== 'POST') {
@@ -106,7 +109,7 @@ module.exports = async (req, res) => {
       const agentResponse = await fetch('https://api.elevenlabs.io/v1/convai/agents/create', {
         method: 'POST',
         headers: {
-          'xi-api-key': process.env.ELEVENLABS_API_KEY,
+          'xi-api-key': ELEVENLABS_KEY,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -223,7 +226,7 @@ module.exports = async (req, res) => {
     const agentResponse = await fetch('https://api.elevenlabs.io/v1/convai/agents/create', {
       method: 'POST',
       headers: {
-        'xi-api-key': process.env.ELEVENLABS_API_KEY,
+        'xi-api-key': ELEVENLABS_KEY,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -652,7 +655,7 @@ async function createToolsViaAPI(toolDefinitions) {
       const createResponse = await fetch('https://api.elevenlabs.io/v1/convai/tools', {
         method: 'POST',
         headers: {
-          'xi-api-key': process.env.ELEVENLABS_API_KEY,
+          'xi-api-key': ELEVENLABS_KEY,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ tool_config: toolDef })
