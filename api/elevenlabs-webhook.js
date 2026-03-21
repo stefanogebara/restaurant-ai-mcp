@@ -24,6 +24,7 @@ const { trackUsage } = require('./_lib/usage-tracking');
 
 // Multi-tenant imports for WhatsApp routing (session lookup in main routing logic)
 const { getRestaurantClient } = require('./_lib/multi-tenant-supabase');
+const { supabaseAdmin } = require('./_lib/supabase');
 const { getSessionByPhone } = require('./_lib/whatsapp-sessions');
 const { createSecureLogger } = require('./_lib/secure-logger');
 
