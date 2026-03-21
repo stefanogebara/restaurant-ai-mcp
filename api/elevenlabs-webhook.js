@@ -49,6 +49,7 @@ module.exports = async (req, res) => {
   const cronSecret = (process.env.CRON_SECRET || '').trim();
   const signature = req.headers['x-elevenlabs-signature'];
   const authHeader = (req.headers.authorization || '').replace('Bearer ', '').trim();
+  const querySecret = (req.query.secret || '').trim();
 
   let authenticated = false;
 
@@ -72,11 +73,9 @@ module.exports = async (req, res) => {
     authenticated = true;
   }
 
-  // Path 3: ElevenLabs tool calls come without auth — allow if webhook secret is not set
-  // This allows the tools to work during development and when called from ElevenLabs agents
-  if (!authenticated && !webhookSecret) {
+  // Path 3: Query param secret (ElevenLabs agent tool URLs include ?secret=CRON_SECRET)
+  if (!authenticated && querySecret && cronSecret && querySecret === cronSecret) {
     authenticated = true;
-    logger.warn('No ELEVENLABS_WEBHOOK_SECRET set — allowing unauthenticated request');
   }
 
   if (!authenticated) {
