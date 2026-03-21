@@ -507,6 +507,35 @@ async function handleIdentifyRestaurant(req, res) {
   const data = req.method === 'POST' ? req.body : req.query;
   const { restaurant_name, sender_phone, conversation_id } = data;
 
+  // Voice agent tool calls don't have sender_phone or conversation_id
+  // Fall back to direct DB search without session management
+  if (!sender_phone && !conversation_id) {
+    try {
+      const { getRestaurantByName } = require('./_lib/restaurant-registry');
+      if (!restaurant_name) {
+        return res.status(200).json({ success: false, error: 'Missing restaurant_name' });
+      }
+      const match = await getRestaurantByName(restaurant_name);
+      if (match) {
+        return res.status(200).json({
+          success: true,
+          restaurant_identified: true,
+          restaurant_name: match.restaurant_name,
+          restaurant_id: match.id,
+          message: `Found ${match.restaurant_name}. You can now check availability and make reservations.`
+        });
+      }
+      return res.status(200).json({
+        success: true,
+        restaurant_identified: false,
+        message: `No restaurant matching "${restaurant_name}" found in Seatable.`
+      });
+    } catch (err) {
+      logger.error('Direct restaurant lookup error:', err.message);
+      return res.status(200).json({ success: false, error: err.message });
+    }
+  }
+
   const result = await toolHandlers.identifyRestaurant(restaurant_name, sender_phone, conversation_id);
   return res.status(200).json(result);
 }
