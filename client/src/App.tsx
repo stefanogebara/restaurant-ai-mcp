@@ -40,6 +40,7 @@ const FloorPlanEditor = lazy(() => import('./pages/FloorPlanEditor'));
 const JoinPage = lazy(() => import('./pages/JoinPage'));
 const TeamPage = lazy(() => import('./pages/TeamPage'));
 const DemoSetupPage = lazy(() => import('./pages/DemoSetupPage'));
+const DemoConversation = lazy(() => import('./pages/DemoConversation'));
 const DemoDashboard = lazy(() => import('./pages/DemoDashboard'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
@@ -118,6 +119,7 @@ function App() {
               <Route path="/live-demo" element={<LiveAIDemo />} />
               <Route path="/prototype" element={<Prototype />} />
               <Route path="/demo/setup" element={<DemoSetupPage />} />
+              <Route path="/demo/chat" element={<DemoConversation />} />
               <Route path="/demo" element={<DemoDashboard />} />
               <Route path="/demo/:token" element={<DemoDashboard />} />
 {/* Dashboard - New unified dashboard (default) */}

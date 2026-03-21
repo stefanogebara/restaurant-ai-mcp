@@ -515,7 +515,8 @@ async function createOutreachDemo(scrapedData) {
   return {
     restaurant_id: restaurantId,
     demo_token: demoToken,
-    demo_url: `${BASE_URL}/demo?token=${demoToken}`,
+    demo_url: `${BASE_URL}/demo/chat?token=${demoToken}`,
+    dashboard_url: `${BASE_URL}/demo?token=${demoToken}`,
     booking_url: `${BASE_URL}/book/${finalSlug}`,
     slug: finalSlug,
   };
