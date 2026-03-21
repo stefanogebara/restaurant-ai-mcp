@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import BookingForm from '../components/booking/BookingForm';
 import { useRestaurantBySlug } from '../hooks/useBooking';
+import { preloadAndSwitchLanguage } from '../i18n/config';
 
 // Map restaurant country → i18n language code
 const COUNTRY_LANG: Record<string, string> = {
@@ -25,7 +26,7 @@ export default function BookingPage() {
     if (!restaurant?.country) return;
     const lang = COUNTRY_LANG[restaurant.country.toLowerCase()];
     if (lang && i18n.language !== lang) {
-      i18n.changeLanguage(lang);
+      preloadAndSwitchLanguage(lang);
     }
   }, [restaurant?.country, i18n]);
 
