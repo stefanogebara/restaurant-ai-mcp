@@ -511,18 +511,47 @@ async function handleIdentifyRestaurant(req, res) {
   // Fall back to direct DB search without session management
   if (!sender_phone && !conversation_id) {
     try {
-      const { getRestaurantByName } = require('./_lib/restaurant-registry');
       if (!restaurant_name) {
         return res.status(200).json({ success: false, error: 'Missing restaurant_name' });
       }
-      const match = await getRestaurantByName(restaurant_name);
-      if (match) {
+      // Direct fuzzy search on restaurant_config (main DB)
+      const searchName = restaurant_name.trim().toLowerCase();
+      const { data: restaurants } = await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('id, restaurant_name')
+        .eq('is_active', true)
+        .eq('onboarding_completed', true);
+
+      // Fuzzy match: find best match by checking if search term is contained in name
+      let bestMatch = null;
+      if (restaurants) {
+        for (const r of restaurants) {
+          const rName = (r.restaurant_name || '').toLowerCase();
+          if (rName === searchName || rName.includes(searchName) || searchName.includes(rName)) {
+            bestMatch = r;
+            break;
+          }
+        }
+        // Try partial word match if no exact/contains match
+        if (!bestMatch) {
+          const searchWords = searchName.split(/\s+/);
+          for (const r of restaurants) {
+            const rName = (r.restaurant_name || '').toLowerCase();
+            if (searchWords.some(w => w.length > 2 && rName.includes(w))) {
+              bestMatch = r;
+              break;
+            }
+          }
+        }
+      }
+      if (bestMatch) {
         return res.status(200).json({
           success: true,
           restaurant_identified: true,
-          restaurant_name: match.restaurant_name,
-          restaurant_id: match.id,
-          message: `Found ${match.restaurant_name}. You can now check availability and make reservations.`
+          restaurant_name: bestMatch.restaurant_name,
+          restaurant_id: bestMatch.id,
+          message: `Found ${bestMatch.restaurant_name}. You can now check availability and make reservations.`
         });
       }
       return res.status(200).json({
