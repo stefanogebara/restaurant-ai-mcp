@@ -194,12 +194,19 @@ function genId(prefix: string): string {
   return `${prefix}${nextId}`;
 }
 
+// ---------- API override data (for token-based outreach demos) ----------
+
+export interface DemoOverrideData {
+  tables?: DemoTable[];
+  reservations?: UpcomingReservation[];
+}
+
 // ---------- Hook ----------
 
-export function useDemoState(presetKey?: string) {
+export function useDemoState(presetKey?: string, overrideData?: DemoOverrideData) {
   const preset: DemoPreset | undefined = presetKey ? DEMO_PRESETS[presetKey] : undefined;
-  const [tables, setTables] = useState<DemoTable[]>(preset?.tables ?? INITIAL_TABLES);
-  const [reservations, setReservations] = useState<UpcomingReservation[]>(preset?.reservations ?? INITIAL_RESERVATIONS);
+  const [tables, setTables] = useState<DemoTable[]>(overrideData?.tables ?? preset?.tables ?? INITIAL_TABLES);
+  const [reservations, setReservations] = useState<UpcomingReservation[]>(overrideData?.reservations ?? preset?.reservations ?? INITIAL_RESERVATIONS);
   const [activeParties, setActiveParties] = useState<ActiveParty[]>(preset?.activeParties ?? INITIAL_ACTIVE_PARTIES);
   const [waitlist, setWaitlist] = useState<DemoWaitlistEntry[]>(preset?.waitlist ?? INITIAL_WAITLIST);
   const [completedCount, setCompletedCount] = useState(3);

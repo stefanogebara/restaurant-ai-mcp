@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import DemoSlideIn from '../landing/components/DemoSlideIn';
 import DemoSidebar from '../components/demo/DemoSidebar';
@@ -10,14 +10,54 @@ import DemoWaitlistPanel from '../components/demo/DemoWaitlistPanel';
 import DemoAIInsightsBar from '../components/demo/DemoAIInsightsBar';
 import { useDemoState } from '../hooks/useDemoState';
 import { useDemoLocale } from '../hooks/useDemoLocale';
+import { useDemoSession } from '../hooks/useDemoSession';
 import { useExitIntent } from '../hooks/useExitIntent';
 import type { UpcomingReservation, ActiveParty } from '../types/host.types';
+
+// Map DB table rows to the shape useDemoState expects
+function mapApiTables(apiTables: Array<{ id: string; table_number: number; capacity: number; status: string; location: string }>) {
+  return apiTables.map(t => ({
+    id: t.id,
+    table_number: String(t.table_number),
+    capacity: t.capacity,
+    status: (t.status === 'occupied' ? 'Occupied' : t.status === 'reserved' ? 'Reserved' : 'Available') as 'Available' | 'Occupied' | 'Reserved',
+    location: t.location ? t.location.charAt(0).toUpperCase() + t.location.slice(1) : 'Indoor',
+  }));
+}
+
+// Cuisine type display map
+const CUISINE_DISPLAY: Record<string, string> = {
+  fine_dining: 'Fine Dining', casual_dining: 'Casual Dining', fast_casual: 'Fast Casual',
+  cafe: 'Café', bar: 'Bar', steakhouse: 'Steakhouse', italian: 'Italiana',
+  japanese: 'Japonesa', mexican: 'Mexicana', other: 'Restaurante',
+};
 
 export default function DemoDashboard() {
   const [searchParams] = useSearchParams();
   const presetKey = searchParams.get('preset') || undefined;
-  const demo = useDemoState(presetKey);
+  const demoToken = searchParams.get('token') || undefined;
+
+  // Fetch personalized demo from API when token is present
+  const { data: tokenSession, isLoading: tokenLoading } = useDemoSession(demoToken);
+
+  // Build override data from API response
+  const overrideData = useMemo(() => {
+    if (!tokenSession) return undefined;
+    return {
+      tables: tokenSession.tables ? mapApiTables(tokenSession.tables as never[]) : undefined,
+      reservations: tokenSession.reservations || undefined,
+    };
+  }, [tokenSession]);
+
+  const demo = useDemoState(presetKey, overrideData);
   const { t, dateLocale, lang, setLang, showLangPopup, dismissPopup } = useDemoLocale();
+
+  // Override restaurant identity when using token-based demo
+  const restaurantName = tokenSession?.restaurant?.restaurant_name || t.restaurantName;
+  const cuisineLabel = tokenSession?.restaurant?.restaurant_type
+    ? (CUISINE_DISPLAY[tokenSession.restaurant.restaurant_type] || tokenSession.restaurant.restaurant_type)
+    : t.cuisine;
+  const neighborhoodLabel = tokenSession?.restaurant?.city || t.neighborhood;
 
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const { showPopup: showExitPopup, dismiss: dismissExitPopup } = useExitIntent();
@@ -136,15 +176,25 @@ export default function DemoDashboard() {
         </div>
       </div>
 
+      {/* Loading state for token-based demos */}
+      {demoToken && tokenLoading && (
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="text-center space-y-3">
+            <div className="w-8 h-8 border-2 border-burgundy border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-warm-stone text-sm">Carregando demo...</p>
+          </div>
+        </div>
+      )}
+
       {/* Page content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8 pb-24 sm:pb-8 space-y-6 lg:ml-[220px] transition-all duration-300">
+      <div className={`max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8 pb-24 sm:pb-8 space-y-6 lg:ml-[220px] transition-all duration-300 ${demoToken && tokenLoading ? 'hidden' : ''}`}>
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
-              {t.restaurantName}
+              {restaurantName}
               <span className="ml-2 text-base font-light text-warm-stone">
-                &mdash; {t.cuisine} &middot; {t.neighborhood}
+                &mdash; {cuisineLabel} &middot; {neighborhoodLabel}
               </span>
             </h1>
             <p className="text-sm text-muted-stone mt-0.5">{dayName}, {dateStr}</p>
@@ -176,7 +226,7 @@ export default function DemoDashboard() {
 
         {/* AI Insights Bar */}
         <DemoAIInsightsBar
-          restaurantName={t.restaurantName}
+          restaurantName={restaurantName}
           occupiedTables={demo.stats.occupiedTables}
           totalTables={demo.stats.totalTables}
           reservationsToday={demo.stats.reservationsToday}
