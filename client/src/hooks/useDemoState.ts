@@ -203,6 +203,14 @@ export interface DemoOverrideData {
 }
 
 // Realistic seed data for token-based demos (so the dashboard feels alive)
+// Use relative times so wait/elapsed are always reasonable regardless of current time
+function minutesAgo(min: number): string {
+  return new Date(Date.now() - min * 60_000).toISOString();
+}
+function minutesFromNow(min: number): string {
+  return new Date(Date.now() + min * 60_000).toISOString();
+}
+
 const TOKEN_DEMO_ACTIVE_PARTIES: ActiveParty[] = [
   {
     service_id: 'srv-t1',
@@ -210,8 +218,8 @@ const TOKEN_DEMO_ACTIVE_PARTIES: ActiveParty[] = [
     customer_phone: '+55 11 98765-4321',
     party_size: 2,
     tables: ['1'],
-    seated_at: eveningTime(19, 30),
-    estimated_departure: eveningTime(21, 0),
+    seated_at: minutesAgo(35),
+    estimated_departure: minutesFromNow(55),
     time_elapsed_minutes: 35,
     time_remaining_minutes: 55,
     is_overdue: false,
@@ -222,8 +230,8 @@ const TOKEN_DEMO_ACTIVE_PARTIES: ActiveParty[] = [
     customer_phone: '+55 11 97654-3210',
     party_size: 4,
     tables: ['5'],
-    seated_at: eveningTime(19, 45),
-    estimated_departure: eveningTime(21, 15),
+    seated_at: minutesAgo(20),
+    estimated_departure: minutesFromNow(70),
     time_elapsed_minutes: 20,
     time_remaining_minutes: 70,
     is_overdue: false,
@@ -237,7 +245,7 @@ const TOKEN_DEMO_WAITLIST: DemoWaitlistEntry[] = [
     customer_phone: '+55 11 96543-2109',
     party_size: 3,
     estimated_wait: 20,
-    added_at: eveningTime(20, 5),
+    added_at: minutesAgo(8),
     status: 'Waiting',
   },
   {
@@ -246,7 +254,7 @@ const TOKEN_DEMO_WAITLIST: DemoWaitlistEntry[] = [
     customer_phone: '+55 11 95432-1098',
     party_size: 2,
     estimated_wait: 30,
-    added_at: eveningTime(20, 10),
+    added_at: minutesAgo(3),
     status: 'Waiting',
     special_requests: 'Mesa na varanda',
   },

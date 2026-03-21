@@ -215,7 +215,7 @@ export default function DemoAIInsightsBar({
     >
       <div className="flex flex-col lg:flex-row gap-4">
         {/* ── Left: Liquid Glass Insight Cards ── */}
-        <div className="flex flex-col sm:flex-row gap-3 lg:w-[45%] flex-shrink-0">
+        <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 lg:w-[55%] flex-shrink-0">
           {insights.map((insight, i) => (
             <motion.div
               key={insight.id}

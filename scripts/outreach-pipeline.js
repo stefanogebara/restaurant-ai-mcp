@@ -371,20 +371,40 @@ function buildFakeTables(restaurantId) {
 function buildFakeReservations(restaurantId) {
   const reservations = [];
   const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
 
-  for (let i = 0; i < 8; i++) {
-    const daysOffset = (i % 7) + 1;
+  // 3 today reservations (so "Reservas de Hoje" isn't empty)
+  const todayNames = ['Ana Costa', 'Pedro Santos', 'Julia Oliveira'];
+  const todayTimes = ['19:30', '20:00', '20:30'];
+  const todayParty = [2, 4, 3];
+  for (let i = 0; i < 3; i++) {
+    reservations.push({
+      reservation_id: generateReservationId(),
+      restaurant_id: restaurantId,
+      customer_name: todayNames[i],
+      customer_phone: null,
+      customer_email: null,
+      party_size: todayParty[i],
+      date: todayStr,
+      time: todayTimes[i],
+      status: 'confirmed',
+      special_requests: i === 2 ? 'Aniversário' : null,
+    });
+  }
+
+  // 5 future reservations (spread over next 5 days)
+  for (let i = 0; i < 5; i++) {
     const resDate = new Date(now);
-    resDate.setDate(resDate.getDate() + daysOffset);
+    resDate.setDate(resDate.getDate() + i + 1);
     const dateStr = resDate.toISOString().split('T')[0];
 
     reservations.push({
       reservation_id: generateReservationId(),
       restaurant_id: restaurantId,
-      customer_name: BR_FAKE_NAMES[i],
+      customer_name: BR_FAKE_NAMES[i + 3],
       customer_phone: null,
       customer_email: null,
-      party_size: 2 + (i % 5),
+      party_size: 2 + (i % 4),
       date: dateStr,
       time: BR_FAKE_TIMES[i % BR_FAKE_TIMES.length],
       status: 'confirmed',
@@ -400,7 +420,7 @@ function buildFakeReservations(restaurantId) {
     customer_phone: null,
     customer_email: null,
     party_size: 3,
-    date: now.toISOString().split('T')[0],
+    date: todayStr,
     time: '20:00',
     status: 'confirmed',
     checked_in_at: now.toISOString(),
