@@ -99,6 +99,8 @@ export default function SubscriptionManage() {
   const displayPlanName = normalizePlanName(subscription.planName);
   const currentPlanName = displayPlanName.toLowerCase();
   const currentTierIndex = planTiers.indexOf(currentPlanName);
+  // Use locale-aware price from plan cards instead of EUR price from Stripe API
+  const currentPlanPrice = plans.find(p => p.key === (planTiers[currentTierIndex] ?? ''))?.price;
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -127,7 +129,7 @@ export default function SubscriptionManage() {
                 <span className="text-xl font-bold text-deep-charcoal">{t('subscription.plan', { name: displayPlanName })}</span>
                 <span className="text-xs font-semibold tracking-wide uppercase text-burgundy bg-burgundy/[8%] px-3.5 py-1.5 rounded-full">{t('subscription.current')}</span>
               </div>
-              <div className="text-sm text-warm-stone">{subscription.planPrice} &middot; {t('subscription.billedMonthly')}</div>
+              <div className="text-sm text-warm-stone">{currentPlanPrice ?? subscription.planPrice}{t('subscription.perMonth')} &middot; {t('subscription.billedMonthly')}</div>
             </div>
             <div className="flex items-center gap-5">
               <div>

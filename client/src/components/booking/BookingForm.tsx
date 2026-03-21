@@ -68,9 +68,27 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   const [depositError, setDepositError] = useState<string | null>(null);
   const [showPartySizeInput, setShowPartySizeInput] = useState(false);
   const [customPartySizeValue, setCustomPartySizeValue] = useState('8');
+  const [timeResetHint, setTimeResetHint] = useState(false);
 
   // Reset time when date or party size changes
-  useEffect(() => { setSelectedTime(''); }, [selectedDate, partySize]);
+  useEffect(() => {
+    setSelectedTime(prev => {
+      if (prev) setTimeResetHint(true);
+      return '';
+    });
+  }, [selectedDate, partySize]);
+
+  // Auto-dismiss the hint after 4 seconds
+  useEffect(() => {
+    if (!timeResetHint) return;
+    const timer = setTimeout(() => setTimeResetHint(false), 4000);
+    return () => clearTimeout(timer);
+  }, [timeResetHint]);
+
+  // Clear hint when user selects a new time
+  useEffect(() => {
+    if (selectedTime) setTimeResetHint(false);
+  }, [selectedTime]);
 
   // ─── Server state ────────────────────────────────────────────────────────────
   const { data: timeSlots = [], isLoading: loadingSlots } = useTimeSlots(
@@ -253,6 +271,11 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
                 </button>
               ))}
             </div>
+          )}
+          {timeResetHint && (
+            <p className="text-xs text-amber-600 mt-2">
+              {t('booking.timeResetHint', 'Time slot cleared — please re-select for your updated party size.')}
+            </p>
           )}
         </div>
       )}
