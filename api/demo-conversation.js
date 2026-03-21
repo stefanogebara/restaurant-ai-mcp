@@ -270,12 +270,15 @@ module.exports = async function handler(req, res) {
     res.end();
 
   } catch (err) {
-    logger.error('demo-conversation error', { error: err.message });
+    logger.error('demo-conversation error', { error: err.message, stack: err.stack });
+    const debugMsg = process.env.NODE_ENV !== 'production'
+      ? err.message
+      : 'Erro interno. Tente novamente.';
     if (res.headersSent) {
-      res.write(`data: ${JSON.stringify({ type: 'error', error: 'Erro interno. Tente novamente.' })}\n\n`);
+      res.write(`data: ${JSON.stringify({ type: 'error', error: debugMsg, debug: err.message })}\n\n`);
       res.end();
     } else {
-      res.status(500).json({ error: 'Internal error' });
+      res.status(500).json({ error: debugMsg, debug: err.message });
     }
   }
 };
