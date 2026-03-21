@@ -346,7 +346,11 @@ async function handleCheckAvailability(req, res) {
     });
   }
 
-  const restaurant = req.restaurant;
+  // Get restaurant from session, request, or body restaurant_id (voice agent)
+  let restaurant = req.restaurant || {};
+  if (!restaurant.id && data.restaurant_id) {
+    restaurant = { id: data.restaurant_id };
+  }
   const result = await toolHandlers.checkAvailability(restaurant.id, restaurant, { date, time, party_size });
   logger.info(' check_availability response:', result);
   return res.status(200).json(result);
@@ -357,10 +361,15 @@ async function handleCreateReservation(req, res) {
   const startTime = Date.now();
 
   const data = req.method === 'POST' ? req.body : req.query;
-  const { date, time, party_size, customer_name, customer_phone, customer_email, special_requests } = data;
+  // Accept both "phone" (voice agent) and "customer_phone" (WhatsApp) field names
+  const { date, time, party_size, customer_name, customer_email, special_requests } = data;
+  const customer_phone = data.customer_phone || data.phone;
 
-  // Get restaurant from session (multi-tenant) or request
-  const restaurant = req.multiTenantRestaurant || req.restaurant || {};
+  // Get restaurant from session, request, or body restaurant_id (voice agent)
+  let restaurant = req.multiTenantRestaurant || req.restaurant || {};
+  if (!restaurant.id && data.restaurant_id) {
+    restaurant = { id: data.restaurant_id, restaurant_name: 'the restaurant' };
+  }
   const restaurantName = restaurant.restaurant_name || restaurant.name || 'the restaurant';
 
   // Log tool call start
