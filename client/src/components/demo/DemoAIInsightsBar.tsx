@@ -213,41 +213,8 @@ export default function DemoAIInsightsBar({
       className="rounded-lg overflow-hidden"
       data-testid="ai-insights-bar"
     >
-      <div className="flex flex-col lg:flex-row gap-4">
-        {/* ── Left: Liquid Glass Insight Cards ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 lg:w-[55%] flex-shrink-0">
-          {insights.map((insight, i) => (
-            <motion.div
-              key={insight.id}
-              initial={{ opacity: 0, y: 16, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.4, delay: 0.1 + i * 0.08 }}
-              className="flex-1 relative group"
-            >
-              {/* Liquid glass card */}
-              <div className="relative rounded-lg p-4 h-full overflow-hidden
-                bg-white
-                border border-[#E5E7EB]
-                transition-all duration-300
-              ">
-
-                <div className="relative z-10">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-base">{insight.icon}</span>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-burgundy/70">
-                      {insight.label}
-                    </span>
-                  </div>
-                  <p className="text-[13px] leading-relaxed text-deep-charcoal/80 font-medium">
-                    {insight.text}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* ── Right: LLM-style Chat ── */}
+      <div className="flex flex-col gap-4">
+        {/* ── Full-width Manager AI Chat ── */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -270,7 +237,7 @@ export default function DemoAIInsightsBar({
           </div>
 
           {/* Messages area */}
-          <div className="flex-1 px-4 py-3 space-y-3 max-h-[200px] overflow-y-auto scrollbar-thin">
+          <div className="flex-1 px-4 py-4 space-y-3 min-h-[120px] max-h-[320px] overflow-y-auto scrollbar-thin">
             {messages.length === 0 && (
               <div className="text-center py-4">
                 <p className="text-xs text-muted-stone/70 italic">
