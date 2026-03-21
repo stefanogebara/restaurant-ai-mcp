@@ -72,63 +72,62 @@ function buildInsights(
 ): Insight[] {
   const { occupiedTables, totalTables, waitlistCount, totalGuests, reservationsToday } = props;
   const occupancy = totalTables > 0 ? Math.round((occupiedTables / totalTables) * 100) : 0;
-  const available = totalTables - occupiedTables;
-  const hour = new Date().getHours();
   const isPt = lang === 'pt-BR';
   const insights: Insight[] = [];
 
-  // Capacity
-  if (occupancy >= 80) {
+  // 1. Revenue Forecast
+  const avgSpend = 85 + Math.round(reservationsToday * 3.7); // Simulated avg spend
+  const projectedRevenue = (reservationsToday * avgSpend * 2.2).toFixed(0);
+  insights.push({
+    id: 'revenue',
+    label: isPt ? 'Receita Prevista' : 'Revenue Forecast',
+    icon: '💰',
+    text: isPt
+      ? `R$ ${Number(projectedRevenue).toLocaleString('pt-BR')} previsto hoje — ticket médio R$ ${avgSpend}/pessoa`
+      : `$${Number(projectedRevenue).toLocaleString()} projected today — avg $${avgSpend}/cover`,
+  });
+
+  // 2. Occupancy + action
+  if (occupancy >= 60) {
     insights.push({
-      id: 'cap',
-      label: isPt ? 'Capacidade' : 'Capacity',
-      icon: '📊',
+      id: 'peak',
+      label: isPt ? 'Pico' : 'Peak Alert',
+      icon: '🔥',
       text: isPt
-        ? `${occupancy}% lotado — ${available} mesa${available !== 1 ? 's' : ''} livre${available !== 1 ? 's' : ''}. Considere o patio.`
-        : `${occupancy}% full — ${available} table${available !== 1 ? 's' : ''} free. Consider the patio.`,
+        ? `${occupancy}% ocupação. ${waitlistCount > 0 ? `${waitlistCount} na fila.` : ''} Próxima mesa livre em ~25min`
+        : `${occupancy}% full. ${waitlistCount > 0 ? `${waitlistCount} waiting.` : ''} Next table ~25min`,
     });
   } else {
     insights.push({
-      id: 'cap',
-      label: isPt ? 'Capacidade' : 'Capacity',
+      id: 'peak',
+      label: isPt ? 'Status' : 'Status',
       icon: '📊',
       text: isPt
-        ? `${occupancy}% ocupação, ${available} mesa${available !== 1 ? 's' : ''} disponíveis`
-        : `${occupancy}% occupancy, ${available} table${available !== 1 ? 's' : ''} available`,
+        ? `${occupancy}% ocupação — ${totalTables - occupiedTables} mesas livres. Boa janela para walk-ins`
+        : `${occupancy}% full — ${totalTables - occupiedTables} tables free. Good window for walk-ins`,
     });
   }
 
-  // Staffing
-  if (hour >= 17 && hour <= 22) {
-    const servers = Math.max(2, Math.ceil(totalGuests / 8));
-    insights.push({
-      id: 'staff',
-      label: isPt ? 'Equipe' : 'Staffing',
-      icon: '👥',
-      text: isPt
-        ? `Pico ${hour}h-${hour + 1}:30 — ${servers} garçons para ${totalGuests} clientes`
-        : `Peak ${hour}:00-${hour + 1}:30 — ${servers} servers for ${totalGuests} guests`,
-    });
-  } else {
-    insights.push({
-      id: 'staff',
-      label: isPt ? 'Equipe' : 'Staffing',
-      icon: '👥',
-      text: isPt
-        ? `${reservationsToday} reservas hoje, equipe padrão suficiente`
-        : `${reservationsToday} reservations today, standard staffing sufficient`,
-    });
-  }
+  // 3. No-show risk
+  const riskCount = Math.max(1, Math.floor(reservationsToday * 0.15));
+  insights.push({
+    id: 'noshow',
+    label: isPt ? 'No-Show' : 'No-Show Risk',
+    icon: '⚠️',
+    text: isPt
+      ? `${riskCount} reserva${riskCount > 1 ? 's' : ''} com risco de no-show. Lembretes enviados por WhatsApp`
+      : `${riskCount} reservation${riskCount > 1 ? 's' : ''} at no-show risk. WhatsApp reminders sent`,
+  });
 
-  // Waitlist
-  if (waitlistCount > 0) {
+  // 4. VIP / Guest intel
+  if (totalGuests > 0) {
     insights.push({
-      id: 'wait',
-      label: isPt ? 'Fila' : 'Waitlist',
-      icon: '⏳',
+      id: 'vip',
+      label: isPt ? 'VIP' : 'VIP Alert',
+      icon: '⭐',
       text: isPt
-        ? `${waitlistCount} grupo${waitlistCount !== 1 ? 's' : ''} esperando (~${waitlistCount * 15}min)`
-        : `${waitlistCount} part${waitlistCount !== 1 ? 'ies' : 'y'} waiting (~${waitlistCount * 15}min)`,
+        ? `Marcos Oliveira (mesa 1) — cliente frequente, 12ª visita. Preferência: vinho tinto`
+        : `Marcos Oliveira (table 1) — regular, 12th visit. Preference: red wine`,
     });
   }
 
@@ -183,15 +182,27 @@ export default function DemoAIInsightsBar({
     setInput('');
     setIsTyping(true);
 
-    // Simulate AI typing delay
-    const delay = 800 + Math.random() * 1200;
-    setTimeout(() => {
-      const responses = cannedResponses[langKey];
-      const idx = text.length % responses.length;
-      const aiMsg: ChatMessage = { id: `a-${Date.now()}`, role: 'assistant', text: responses[idx] };
-      setMessages((prev) => [...prev, aiMsg]);
-      setIsTyping(false);
-    }, delay);
+    // Call real demo-chat API, fall back to canned responses on failure
+    const apiBase = (import.meta as Record<string, Record<string, string>>).env?.VITE_API_BASE_URL || '/api';
+    fetch(`${apiBase}/demo-chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: text,
+        context: { occupiedTables, totalTables, reservationsToday, waitlistCount, totalGuests },
+        lang: langKey,
+      }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        const reply = data.reply || cannedResponses[langKey][text.length % cannedResponses[langKey].length];
+        setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', text: reply }]);
+      })
+      .catch(() => {
+        const responses = cannedResponses[langKey];
+        setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', text: responses[text.length % responses.length] }]);
+      })
+      .finally(() => setIsTyping(false));
   };
 
   return (

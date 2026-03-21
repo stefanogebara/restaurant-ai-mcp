@@ -199,8 +199,58 @@ function genId(prefix: string): string {
 export interface DemoOverrideData {
   tables?: DemoTable[];
   reservations?: UpcomingReservation[];
-  isTokenDemo?: boolean; // When true, clear waitlist/active parties (outreach demos)
+  isTokenDemo?: boolean;
 }
+
+// Realistic seed data for token-based demos (so the dashboard feels alive)
+const TOKEN_DEMO_ACTIVE_PARTIES: ActiveParty[] = [
+  {
+    service_id: 'srv-t1',
+    customer_name: 'Marcos Oliveira',
+    customer_phone: '+55 11 98765-4321',
+    party_size: 2,
+    tables: ['1'],
+    seated_at: eveningTime(19, 30),
+    estimated_departure: eveningTime(21, 0),
+    time_elapsed_minutes: 35,
+    time_remaining_minutes: 55,
+    is_overdue: false,
+  },
+  {
+    service_id: 'srv-t2',
+    customer_name: 'Fernanda Costa',
+    customer_phone: '+55 11 97654-3210',
+    party_size: 4,
+    tables: ['5'],
+    seated_at: eveningTime(19, 45),
+    estimated_departure: eveningTime(21, 15),
+    time_elapsed_minutes: 20,
+    time_remaining_minutes: 70,
+    is_overdue: false,
+  },
+];
+
+const TOKEN_DEMO_WAITLIST: DemoWaitlistEntry[] = [
+  {
+    id: 'wt1',
+    customer_name: 'Ricardo Mendes',
+    customer_phone: '+55 11 96543-2109',
+    party_size: 3,
+    estimated_wait: 20,
+    added_at: eveningTime(20, 5),
+    status: 'Waiting',
+  },
+  {
+    id: 'wt2',
+    customer_name: 'Carolina Lima',
+    customer_phone: '+55 11 95432-1098',
+    party_size: 2,
+    estimated_wait: 30,
+    added_at: eveningTime(20, 10),
+    status: 'Waiting',
+    special_requests: 'Mesa na varanda',
+  },
+];
 
 // ---------- Hook ----------
 
@@ -208,8 +258,8 @@ export function useDemoState(presetKey?: string, overrideData?: DemoOverrideData
   const preset: DemoPreset | undefined = presetKey ? DEMO_PRESETS[presetKey] : undefined;
   const [tables, setTables] = useState<DemoTable[]>(overrideData?.tables ?? preset?.tables ?? INITIAL_TABLES);
   const [reservations, setReservations] = useState<UpcomingReservation[]>(overrideData?.reservations ?? preset?.reservations ?? INITIAL_RESERVATIONS);
-  const [activeParties, setActiveParties] = useState<ActiveParty[]>(overrideData?.isTokenDemo ? [] : (preset?.activeParties ?? INITIAL_ACTIVE_PARTIES));
-  const [waitlist, setWaitlist] = useState<DemoWaitlistEntry[]>(overrideData?.isTokenDemo ? [] : (preset?.waitlist ?? INITIAL_WAITLIST));
+  const [activeParties, setActiveParties] = useState<ActiveParty[]>(overrideData?.isTokenDemo ? TOKEN_DEMO_ACTIVE_PARTIES : (preset?.activeParties ?? INITIAL_ACTIVE_PARTIES));
+  const [waitlist, setWaitlist] = useState<DemoWaitlistEntry[]>(overrideData?.isTokenDemo ? TOKEN_DEMO_WAITLIST : (preset?.waitlist ?? INITIAL_WAITLIST));
   const [completedCount, setCompletedCount] = useState(3);
 
   // Sync state when API override data arrives (useState ignores changes after mount)
@@ -217,8 +267,8 @@ export function useDemoState(presetKey?: string, overrideData?: DemoOverrideData
     if (overrideData?.tables) setTables(overrideData.tables);
     if (overrideData?.reservations) setReservations(overrideData.reservations);
     if (overrideData?.isTokenDemo) {
-      setActiveParties([]);
-      setWaitlist([]);
+      setActiveParties(TOKEN_DEMO_ACTIVE_PARTIES);
+      setWaitlist(TOKEN_DEMO_WAITLIST);
     }
   }, [overrideData?.tables, overrideData?.reservations, overrideData?.isTokenDemo]);
 
