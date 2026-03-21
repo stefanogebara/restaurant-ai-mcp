@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface DemoAIInsightsBarProps {
@@ -162,11 +162,6 @@ export default function DemoAIInsightsBar({
 
   const langKey = lang === 'pt-BR' ? 'pt-BR' : 'en';
   const ui = labels[langKey];
-
-  const insights = useMemo(
-    () => buildInsights({ restaurantName, occupiedTables, totalTables, reservationsToday, waitlistCount, totalGuests }, lang),
-    [restaurantName, occupiedTables, totalTables, reservationsToday, waitlistCount, totalGuests, lang],
-  );
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
