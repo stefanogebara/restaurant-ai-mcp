@@ -42,8 +42,8 @@ function cleanSessions() {
   }
 }
 
-// Clean every 5 min
-setInterval(cleanSessions, 5 * 60 * 1000);
+// Clean stale sessions on each request (no setInterval in serverless)
+let lastClean = 0;
 
 // ─── System prompt builder ──────────────────────────────────────────────────
 
@@ -171,13 +171,11 @@ async function streamCompletion(systemPrompt, messages, onToken) {
 
 // ─── Handler ────────────────────────────────────────────────────────────────
 
+const { setInternalCors, handlePreflight } = require('./_lib/cors');
+
 module.exports = async function handler(req, res) {
-  if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept');
-    return res.status(204).end();
-  }
+  setInternalCors(req, res);
+  if (handlePreflight(req, res)) return;
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -186,9 +184,9 @@ module.exports = async function handler(req, res) {
   const rateLimited = await checkAndApplyRateLimit(req, res, 'chat');
   if (rateLimited) return;
 
-  if (!OPENROUTER_KEY) {
-    return res.status(503).json({ error: 'AI service unavailable' });
-  }
+  // Clean stale sessions periodically
+  const now = Date.now();
+  if (now - lastClean > 5 * 60 * 1000) { lastClean = now; cleanSessions(); }
 
   const { message, session_id, restaurant_context, demo_token, lang = 'pt-BR' } = req.body || {};
 
