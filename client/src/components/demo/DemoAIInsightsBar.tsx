@@ -11,13 +11,6 @@ interface DemoAIInsightsBarProps {
   lang: string;
 }
 
-interface Insight {
-  id: string;
-  text: string;
-  icon: string;
-  label: string;
-}
-
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -64,76 +57,6 @@ const cannedResponses: Record<string, string[]> = {
   ],
 };
 
-// ── Insight Builder ──
-
-function buildInsights(
-  props: Omit<DemoAIInsightsBarProps, 'lang'>,
-  lang: string,
-): Insight[] {
-  const { occupiedTables, totalTables, waitlistCount, totalGuests, reservationsToday } = props;
-  const occupancy = totalTables > 0 ? Math.round((occupiedTables / totalTables) * 100) : 0;
-  const isPt = lang === 'pt-BR';
-  const insights: Insight[] = [];
-
-  // 1. Revenue Forecast
-  const avgSpend = 85 + Math.round(reservationsToday * 3.7); // Simulated avg spend
-  const projectedRevenue = (reservationsToday * avgSpend * 2.2).toFixed(0);
-  insights.push({
-    id: 'revenue',
-    label: isPt ? 'Receita Prevista' : 'Revenue Forecast',
-    icon: '💰',
-    text: isPt
-      ? `R$ ${Number(projectedRevenue).toLocaleString('pt-BR')} previsto hoje — ticket médio R$ ${avgSpend}/pessoa`
-      : `$${Number(projectedRevenue).toLocaleString()} projected today — avg $${avgSpend}/cover`,
-  });
-
-  // 2. Occupancy + action
-  if (occupancy >= 60) {
-    insights.push({
-      id: 'peak',
-      label: isPt ? 'Pico' : 'Peak Alert',
-      icon: '🔥',
-      text: isPt
-        ? `${occupancy}% ocupação. ${waitlistCount > 0 ? `${waitlistCount} na fila.` : ''} Próxima mesa livre em ~25min`
-        : `${occupancy}% full. ${waitlistCount > 0 ? `${waitlistCount} waiting.` : ''} Next table ~25min`,
-    });
-  } else {
-    insights.push({
-      id: 'peak',
-      label: isPt ? 'Status' : 'Status',
-      icon: '📊',
-      text: isPt
-        ? `${occupancy}% ocupação — ${totalTables - occupiedTables} mesas livres. Boa janela para walk-ins`
-        : `${occupancy}% full — ${totalTables - occupiedTables} tables free. Good window for walk-ins`,
-    });
-  }
-
-  // 3. No-show risk
-  const riskCount = Math.max(1, Math.floor(reservationsToday * 0.15));
-  insights.push({
-    id: 'noshow',
-    label: isPt ? 'No-Show' : 'No-Show Risk',
-    icon: '⚠️',
-    text: isPt
-      ? `${riskCount} reserva${riskCount > 1 ? 's' : ''} com risco de no-show. Lembretes enviados por WhatsApp`
-      : `${riskCount} reservation${riskCount > 1 ? 's' : ''} at no-show risk. WhatsApp reminders sent`,
-  });
-
-  // 4. VIP / Guest intel
-  if (totalGuests > 0) {
-    insights.push({
-      id: 'vip',
-      label: isPt ? 'VIP' : 'VIP Alert',
-      icon: '⭐',
-      text: isPt
-        ? `Marcos Oliveira (mesa 1) — cliente frequente, 12ª visita. Preferência: vinho tinto`
-        : `Marcos Oliveira (table 1) — regular, 12th visit. Preference: red wine`,
-    });
-  }
-
-  return insights;
-}
-
 // ── Sparkle Icon ──
 
 const SparkleIcon = () => (
@@ -146,7 +69,6 @@ const SparkleIcon = () => (
 // ── Component ──
 
 export default function DemoAIInsightsBar({
-  restaurantName,
   occupiedTables,
   totalTables,
   reservationsToday,
