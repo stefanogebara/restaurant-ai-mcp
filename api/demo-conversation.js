@@ -26,11 +26,9 @@ const crypto = require('crypto');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { supabaseAdmin } = require('./_lib/supabase');
+const { getAI, AI_MODEL } = require('./_lib/ai-client');
 
 const logger = createSecureLogger('demo-conversation');
-
-const AI_MODEL = process.env.AI_MODEL || 'anthropic/claude-sonnet-4-20250514';
-const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
 
 // ─── In-memory session store (30min TTL) ────────────────────────────────────
 
@@ -149,60 +147,24 @@ ${painBlock || '  No critical issues detected'}
 // ─── Real OpenRouter SSE streaming ──────────────────────────────────────────
 
 async function streamCompletion(systemPrompt, messages, onToken) {
-  const oaiMessages = [
-    { role: 'system', content: systemPrompt },
-    ...messages,
-  ];
-
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${OPENROUTER_KEY}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': 'https://seatable.one',
-      'X-Title': 'Seatable Demo Conversation',
-    },
-    body: JSON.stringify({
-      model: AI_MODEL,
-      max_tokens: 400,
-      stream: true,
-      messages: oaiMessages,
-    }),
+  // Use getAI() which is already proven in production (manager-agent.js)
+  const ai = getAI();
+  const stream = ai.messages.stream({
+    model: AI_MODEL,
+    max_tokens: 400,
+    system: systemPrompt,
+    messages,
   });
 
-  if (!response.ok) {
-    const errText = await response.text().catch(() => '');
-    throw new Error(`OpenRouter streaming error ${response.status}: ${errText}`);
-  }
+  stream.on('text', (text) => {
+    onToken(text);
+  });
 
-  // Node.js-compatible streaming: use async iterator on response.body
-  let buffer = '';
-  let fullText = '';
-
-  for await (const chunk of response.body) {
-    const text = typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf-8');
-    buffer += text;
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || !trimmed.startsWith('data: ')) continue;
-      const payload = trimmed.slice(6);
-      if (payload === '[DONE]') continue;
-
-      try {
-        const parsed = JSON.parse(payload);
-        const delta = parsed.choices?.[0]?.delta?.content;
-        if (delta) {
-          fullText += delta;
-          onToken(delta);
-        }
-      } catch {
-        // Skip malformed chunks
-      }
-    }
-  }
+  const finalMsg = await stream.finalMessage();
+  const fullText = finalMsg.content
+    .filter(b => b.type === 'text')
+    .map(b => b.text)
+    .join('');
 
   return fullText;
 }
