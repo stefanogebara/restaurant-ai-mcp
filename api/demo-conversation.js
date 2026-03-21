@@ -175,16 +175,13 @@ async function streamCompletion(systemPrompt, messages, onToken) {
     throw new Error(`OpenRouter streaming error ${response.status}: ${errText}`);
   }
 
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
+  // Node.js-compatible streaming: use async iterator on response.body
   let buffer = '';
   let fullText = '';
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
+  for await (const chunk of response.body) {
+    const text = typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf-8');
+    buffer += text;
     const lines = buffer.split('\n');
     buffer = lines.pop() || '';
 
