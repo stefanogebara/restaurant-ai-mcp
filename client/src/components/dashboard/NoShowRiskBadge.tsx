@@ -28,7 +28,7 @@ function getRiskLevel(score: number): 'low' | 'medium' | 'high' | 'very-high' {
 
 export default function NoShowRiskBadge({ riskScore, riskLevel }: NoShowRiskBadgeProps) {
   const { t } = useTranslation();
-  if (riskScore === undefined && !riskLevel) return null;
+  if ((riskScore === undefined || riskScore === null) && !riskLevel) return null;
 
   const level = riskLevel || getRiskLevel(riskScore ?? 0);
   const styles = RISK_STYLES[level] || RISK_STYLES.low;

@@ -234,7 +234,7 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
           {reservation.special_requests && <span> · {reservation.special_requests}</span>}
         </div>
         {/* Risk + Deposit badges */}
-        {(reservation.ml_risk_score !== undefined || reservation.deposit_amount) && (
+        {(reservation.ml_risk_score != null || reservation.deposit_amount) && (
           <div className="flex items-center gap-1.5 mt-1">
             <NoShowRiskBadge
               riskScore={reservation.ml_risk_score}

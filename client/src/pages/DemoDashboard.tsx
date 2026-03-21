@@ -46,6 +46,7 @@ export default function DemoDashboard() {
     return {
       tables: tokenSession.tables ? mapApiTables(tokenSession.tables as never[]) : undefined,
       reservations: tokenSession.reservations || undefined,
+      isTokenDemo: true,
     };
   }, [tokenSession]);
 
@@ -430,8 +431,8 @@ export default function DemoDashboard() {
         </div>
       )}
 
-      {/* Conversion nudge — appears after 60s */}
-      <DemoSlideIn />
+      {/* Conversion nudge — appears after 60s (hidden for personalized outreach demos) */}
+      {!demoToken && <DemoSlideIn />}
     </div>
   );
 }

@@ -284,6 +284,9 @@ function analyzeReviews(reviews) {
     const matches = [];
 
     for (const review of reviews) {
+      // Only match pain points in negative/neutral reviews (rating <= 3)
+      if (review.rating && review.rating >= 4) continue;
+
       const text = review.text.toLowerCase();
       const matchedKeyword = config.keywords.find(kw => text.includes(kw));
 
@@ -389,7 +392,7 @@ function buildFakeReservations(restaurantId) {
     });
   }
 
-  // One checked-in reservation for today
+  // One checked-in reservation for today (realistic dinner time)
   reservations.push({
     reservation_id: generateReservationId(),
     restaurant_id: restaurantId,
@@ -398,7 +401,7 @@ function buildFakeReservations(restaurantId) {
     customer_email: null,
     party_size: 3,
     date: now.toISOString().split('T')[0],
-    time: '23:59',
+    time: '20:00',
     status: 'confirmed',
     checked_in_at: now.toISOString(),
     special_requests: null,
