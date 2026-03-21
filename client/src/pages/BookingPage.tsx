@@ -5,13 +5,29 @@ import ThiingsIcon from '../components/common/ThiingsIcon';
 import BookingForm from '../components/booking/BookingForm';
 import { useRestaurantBySlug } from '../hooks/useBooking';
 
+// Map restaurant country → i18n language code
+const COUNTRY_LANG: Record<string, string> = {
+  brazil: 'pt-BR', brasil: 'pt-BR',
+  spain: 'es', españa: 'es', mexico: 'es', méxico: 'es',
+  argentina: 'es', colombia: 'es', chile: 'es', peru: 'es', perú: 'es',
+};
+
 export default function BookingPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
   const isEmbed = searchParams.get('embed') === 'true';
 
   const { data: restaurant, isLoading, isError } = useRestaurantBySlug(slug);
+
+  // Auto-detect language from restaurant country (PT-BR for Brazil, ES for Spain/LATAM)
+  useEffect(() => {
+    if (!restaurant?.country) return;
+    const lang = COUNTRY_LANG[restaurant.country.toLowerCase()];
+    if (lang && i18n.language !== lang) {
+      i18n.changeLanguage(lang);
+    }
+  }, [restaurant?.country, i18n]);
 
   // SEO: inject dynamic title, meta tags, and JSON-LD when restaurant loads
   useEffect(() => {
@@ -134,7 +150,13 @@ export default function BookingPage() {
           <div className="font-serif text-lg font-semibold text-deep-charcoal">
             seatable<span className="text-burgundy">.</span>
           </div>
-          <span className="text-[13px] text-warm-stone">{t('reservations.needHelp')}</span>
+          {restaurant?.phone && restaurant.phone !== 'N/A' ? (
+            <a href={`tel:${restaurant.phone}`} className="text-[13px] text-warm-stone hover:text-burgundy transition-colors">
+              {t('reservations.needHelp')}
+            </a>
+          ) : (
+            <span className="text-[13px] text-warm-stone">{t('reservations.needHelp')}</span>
+          )}
         </header>
       )}
 
