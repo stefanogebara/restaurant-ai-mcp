@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { UpcomingReservation, ActiveParty } from '../types/host.types';
 import { DEMO_PRESETS, type DemoPreset } from '../data/demoPresets';
 
@@ -210,6 +210,14 @@ export function useDemoState(presetKey?: string, overrideData?: DemoOverrideData
   const [activeParties, setActiveParties] = useState<ActiveParty[]>(preset?.activeParties ?? INITIAL_ACTIVE_PARTIES);
   const [waitlist, setWaitlist] = useState<DemoWaitlistEntry[]>(preset?.waitlist ?? INITIAL_WAITLIST);
   const [completedCount, setCompletedCount] = useState(3);
+
+  // Sync state when API override data arrives (useState ignores changes after mount)
+  useEffect(() => {
+    if (overrideData?.tables) setTables(overrideData.tables);
+  }, [overrideData?.tables]);
+  useEffect(() => {
+    if (overrideData?.reservations) setReservations(overrideData.reservations);
+  }, [overrideData?.reservations]);
 
   // ---- Derived ----
   const todayReservations = useMemo(
