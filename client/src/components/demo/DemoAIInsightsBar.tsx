@@ -183,7 +183,7 @@ export default function DemoAIInsightsBar({
     setIsTyping(true);
 
     // Call real demo-chat API, fall back to canned responses on failure
-    const apiBase = (import.meta as Record<string, Record<string, string>>).env?.VITE_API_BASE_URL || '/api';
+    const apiBase = import.meta.env?.VITE_API_BASE_URL || '/api';
     fetch(`${apiBase}/demo-chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
