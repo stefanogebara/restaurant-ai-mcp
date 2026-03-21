@@ -159,7 +159,9 @@ function getDefaultBusinessHours() {
  * Subtract minutes from a time string
  */
 function subtractTime(timeStr, minutes) {
-  const [hours, mins] = timeStr.split(':').map(Number);
+  let [hours, mins] = timeStr.split(':').map(Number);
+  // Treat 00:00 as 24:00 (midnight closing = end of day, not start)
+  if (hours === 0 && mins === 0) hours = 24;
   const totalMins = hours * 60 + mins - minutes;
   const newHours = Math.floor(totalMins / 60);
   const newMins = totalMins % 60;
