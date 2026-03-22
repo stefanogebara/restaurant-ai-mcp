@@ -222,6 +222,7 @@ export default function DemoDashboard() {
           waitlistCount={demo.stats.waitlistCount}
           activeParties={demo.stats.activeParties}
           totalGuests={demo.stats.totalGuests}
+          predictedRevenue={demo.stats.totalRevenue > 0 ? demo.stats.totalRevenue : undefined}
           isLoading={false}
         />
 
