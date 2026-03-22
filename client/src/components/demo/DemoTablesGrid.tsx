@@ -10,6 +10,10 @@ const labels = {
   'pt-BR': { title: 'Mesas', seats: 'lugares', available: 'Disponível', occupied: 'Ocupada', reserved: 'Reservada' },
 } as const;
 
+const LOCATION_LABELS: Record<string, Record<string, string>> = {
+  'pt-BR': { window: 'Janela', indoor: 'Salão', terrace: 'Terraço', patio: 'Pátio', bar: 'Bar', Window: 'Janela', Indoor: 'Salão', Terrace: 'Terraço', Patio: 'Pátio', Bar: 'Bar' },
+};
+
 const STATUS_STYLES: Record<string, { dot: string; text: string; bg: string }> = {
   Available: { dot: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50' },
   Occupied:  { dot: 'bg-rose-600',    text: 'text-rose-700',    bg: 'bg-rose-50' },
@@ -46,7 +50,7 @@ export default function DemoTablesGrid({ tables, lang }: DemoTablesGridProps) {
       {Object.entries(grouped).map(([location, locationTables]) => (
         <div key={location}>
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-warm-stone">{location}</span>
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-warm-stone">{LOCATION_LABELS[lang]?.[location] || location}</span>
             <span className="text-[11px] font-semibold bg-stone-100 text-warm-stone px-2 py-0.5 rounded-full">
               {locationTables.length}
             </span>
