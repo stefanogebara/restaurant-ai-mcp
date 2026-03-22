@@ -71,7 +71,7 @@ export default function ReservationsList({
           <span className="text-[11px] font-semibold bg-[#9F1239]/[8%] text-[#9F1239] px-2.5 py-0.5 rounded-full">
             {displayed.length}
           </span>
-          {displayed.length > 0 && (
+          {displayed.length > 0 && !showTomorrow && (
             <span className="flex items-center gap-1 text-[10px] font-medium text-rose-600">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
@@ -180,8 +180,8 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
   const tl = (key: string) => t(`dashboard.reservationsList.${key}`);
 
   const formatTime = (time: string) => {
-    if (language !== 'en') return time;
     const [hours, minutes] = time.split(':');
+    if (language !== 'en') return `${hours}:${minutes}`; // Always HH:MM, strip seconds
     const hour = parseInt(hours);
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const hour12 = hour % 12 || 12;
