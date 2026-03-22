@@ -133,8 +133,8 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Rate limit: standard API rate limiting
-  const rateLimited = await checkAndApplyRateLimit(req, res, 'api');
+  // Rate limit: strict tier (Google Places API has cost/quota)
+  const rateLimited = await checkAndApplyRateLimit(req, res, 'demo-create');
   if (rateLimited) return;
 
   const { query, city, country } = req.body || {};

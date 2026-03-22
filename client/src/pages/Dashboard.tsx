@@ -417,7 +417,7 @@ export default function Dashboard() {
             setInterventionReservation(null);
             refetch();
           }}
-          language="en"
+          language={i18n.language as 'en' | 'es' | 'pt-BR'}
         />
       )}
 

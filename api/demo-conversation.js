@@ -193,13 +193,15 @@ module.exports = async function handler(req, res) {
   if (!message || typeof message !== 'string') {
     return res.status(400).json({ error: 'message is required' });
   }
+  if (message.length > 2000) {
+    return res.status(400).json({ error: 'Message too long (max 2000 chars)' });
+  }
 
-  // SSE headers
+  // SSE headers (CORS already set by setInternalCors above)
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*',
   });
 
   try {

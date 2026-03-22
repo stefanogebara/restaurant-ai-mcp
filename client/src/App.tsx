@@ -59,29 +59,30 @@ const queryClient = new QueryClient({
 });
 
 function RouteErrorFallback() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-[50vh] flex flex-col items-center justify-center p-6">
-      <div className="bg-white border border-border-gray rounded-2xl p-8 max-w-md text-center shadow-sm">
+      <div className="bg-white border border-border-gray rounded-2xl p-8 max-w-md text-center">
         <div className="w-14 h-14 bg-amber-600/10 rounded-xl flex items-center justify-center mx-auto mb-4">
           <ThiingsIcon name="alert-triangle" pxSize={28} className="text-amber-600" />
         </div>
-        <h3 className="text-lg font-bold text-deep-charcoal mb-2">This page encountered an error</h3>
+        <h3 className="text-lg font-bold text-deep-charcoal mb-2">{t('errors.pageError', 'Esta página encontrou um erro')}</h3>
         <p className="text-sm text-stone-gray mb-4">
-          Something went wrong loading this page. Other parts of the app should still work.
+          {t('errors.pageErrorDesc', 'Algo deu errado ao carregar esta página. Outras partes do app devem funcionar.')}
         </p>
         <div className="flex gap-3 justify-center">
           <a
             href="/host-dashboard/simple"
             className="px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-colors text-sm"
           >
-            Go to Dashboard
+            {t('errors.goToDashboard', 'Ir para o Painel')}
           </a>
           <button
             type="button"
             onClick={() => window.location.reload()}
             className="px-5 py-2.5 bg-soft-gray hover:bg-border-gray text-deep-charcoal font-semibold rounded-xl transition-colors text-sm"
           >
-            Retry
+            {t('errors.retry', 'Tentar novamente')}
           </button>
         </div>
       </div>

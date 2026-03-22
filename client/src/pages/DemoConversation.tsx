@@ -258,7 +258,7 @@ export default function DemoConversation() {
       )}
 
       {/* Chat area */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto" role="log" aria-label="Conversa com IA" aria-live="polite">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-4">
           {messages.map((msg) => (
             <MessageBubble key={msg.id} message={msg} isStreaming={isStreaming && msg === messages[messages.length - 1] && msg.role === 'assistant'} />
@@ -293,6 +293,7 @@ export default function DemoConversation() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Digite sua mensagem..."
+            aria-label="Digite sua mensagem"
             rows={1}
             disabled={isStreaming || isConverting}
             className="flex-1 resize-none rounded-xl border border-border-gray px-4 py-2.5 text-sm text-deep-charcoal placeholder:text-muted-stone focus:outline-none focus:border-burgundy/40 disabled:opacity-50 transition-colors"
@@ -307,6 +308,7 @@ export default function DemoConversation() {
             type="button"
             onClick={handleSend}
             disabled={!input.trim() || isStreaming || isConverting}
+            aria-label="Enviar mensagem"
             className="flex-shrink-0 w-10 h-10 rounded-xl bg-burgundy hover:bg-burgundy-dark disabled:opacity-30 text-white flex items-center justify-center transition-colors"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
