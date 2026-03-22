@@ -90,8 +90,8 @@ export default function DemoDashboard() {
     }
   };
 
-  const handleCompleteService = (party: ActiveParty) => {
-    demo.completeService(party.service_id);
+  const handleCompleteService = (party: ActiveParty, billAmount?: number) => {
+    demo.completeService(party.service_id, billAmount);
   };
 
   const handleSeatFromWaitlist = (waitlistId: string) => {
@@ -233,6 +233,8 @@ export default function DemoDashboard() {
           reservationsToday={demo.stats.reservationsToday}
           waitlistCount={demo.stats.waitlistCount}
           totalGuests={demo.stats.totalGuests}
+          completedCount={demo.stats.completedCount}
+          totalRevenue={demo.stats.totalRevenue}
           lang={lang}
         />
 

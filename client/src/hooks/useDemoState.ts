@@ -350,7 +350,12 @@ export function useDemoState(presetKey?: string, overrideData?: DemoOverrideData
   );
 
   /** Complete service for an active party */
-  const completeService = useCallback((serviceId: string) => {
+  const [totalRevenue, setTotalRevenue] = useState(0);
+
+  const completeService = useCallback((serviceId: string, billAmount?: number) => {
+    if (billAmount && billAmount > 0) {
+      setTotalRevenue((r) => r + billAmount);
+    }
     setActiveParties((prev) => {
       const party = prev.find((p) => p.service_id === serviceId);
       if (party) {
@@ -438,8 +443,9 @@ export function useDemoState(presetKey?: string, overrideData?: DemoOverrideData
       activeParties: activeParties.length,
       totalGuests,
       completedCount,
+      totalRevenue,
     }),
-    [occupiedTables, totalTables, todayReservations, seatedReservations, waitlist, activeParties, totalGuests, completedCount],
+    [occupiedTables, totalTables, todayReservations, seatedReservations, waitlist, activeParties, totalGuests, completedCount, totalRevenue],
   );
 
   return {

@@ -8,6 +8,8 @@ interface DemoAIInsightsBarProps {
   reservationsToday: number;
   waitlistCount: number;
   totalGuests: number;
+  completedCount?: number;
+  totalRevenue?: number;
   lang: string;
 }
 
@@ -88,11 +90,14 @@ function injectStats(text: string): string {
 }
 
 export default function DemoAIInsightsBar({
+  restaurantName,
   occupiedTables,
   totalTables,
   reservationsToday,
   waitlistCount,
   totalGuests,
+  completedCount = 0,
+  totalRevenue = 0,
   lang,
 }: DemoAIInsightsBarProps) {
   // Update stats for fallback responses
@@ -127,7 +132,7 @@ export default function DemoAIInsightsBar({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         message: text,
-        context: { occupiedTables, totalTables, reservationsToday, waitlistCount, totalGuests },
+        context: { occupiedTables, totalTables, reservationsToday, waitlistCount, totalGuests, restaurantName, completedCount, totalRevenue },
         lang: langKey,
       }),
     })

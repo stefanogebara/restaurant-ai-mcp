@@ -24,23 +24,29 @@ module.exports = async function handler(req, res) {
   const total = ctx.totalTables ?? 12;
   const available = total - occupied;
   const occupancy = total > 0 ? Math.round((occupied / total) * 100) : 0;
+  const restaurantName = ctx.restaurantName || 'seu restaurante';
+  const revenue = ctx.totalRevenue ? `R$ ${ctx.totalRevenue}` : 'não disponível';
 
   const respondIn = lang === 'pt-BR' ? 'Portuguese (Brazil)' : 'English';
 
-  const systemPrompt = `You are a concise AI restaurant manager assistant for a demo restaurant called "Cantina da Praça" in São Paulo.
+  const systemPrompt = `You are a concise AI restaurant manager assistant for "${restaurantName}" in São Paulo.
 
 Current stats:
 - Tables: ${occupied}/${total} occupied (${available} available, ${occupancy}% occupancy)
 - Active parties: ${ctx.activeParties ?? 0} with ${ctx.totalGuests ?? 0} guests
 - Reservations today: ${ctx.reservationsToday ?? 0}
 - Waitlist: ${ctx.waitlistCount ?? 0}
+- Completed services today: ${ctx.completedCount ?? 0}
+- Revenue today: ${revenue}
 
 Rules:
 - Respond in ${respondIn}
 - Keep responses under 2 sentences
 - Be helpful, professional, and friendly
 - You can advise on staffing, table management, waitlist, and reservations
-- This is a demo — if asked about specific menu items or prices, say this is a demo environment`;
+- Use the EXACT restaurant name "${restaurantName}" when referring to the restaurant
+- NEVER say "Cantina da Praça" or make up a restaurant name
+- If asked about specific menu items, say you'd need the menu uploaded to give recommendations`;
 
   try {
     const response = await getAI().messages.create({
