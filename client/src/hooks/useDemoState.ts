@@ -272,7 +272,19 @@ export function useDemoState(presetKey?: string, overrideData?: DemoOverrideData
 
   // Sync state when API override data arrives (useState ignores changes after mount)
   useEffect(() => {
-    if (overrideData?.tables) setTables(overrideData.tables);
+    if (overrideData?.tables) {
+      let newTables = overrideData.tables;
+      // Mark tables occupied by active parties
+      if (overrideData.isTokenDemo) {
+        const occupiedTableNums = new Set(TOKEN_DEMO_ACTIVE_PARTIES.flatMap(p => p.tables));
+        newTables = newTables.map(t =>
+          occupiedTableNums.has(t.table_number)
+            ? { ...t, status: 'Occupied' as const }
+            : t
+        );
+      }
+      setTables(newTables);
+    }
     if (overrideData?.reservations) setReservations(overrideData.reservations);
     if (overrideData?.isTokenDemo) {
       setActiveParties(TOKEN_DEMO_ACTIVE_PARTIES);

@@ -89,53 +89,66 @@ function buildFakeTables(restaurantId) {
 // Fake reservation seed data
 // ---------------------------------------------------------------------------
 const FAKE_NAMES = [
-  'Emma Wilson', 'James Carter', 'Sofia Rossi', 'Lucas Müller',
-  'Olivia Brown', 'Noah Davis', 'Ava Martinez', 'Liam Johnson',
+  'Ana Costa', 'Pedro Santos', 'Julia Oliveira', 'Rafael Lima',
+  'Mariana Silva', 'Lucas Ferreira', 'Camila Souza', 'Gabriel Almeida',
 ];
 
-const FAKE_TIMES = ['12:00', '12:30', '13:00', '13:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30'];
+const FAKE_TIMES = ['12:00', '12:30', '13:00', '19:00', '19:30', '20:00', '20:30', '21:00'];
 
 function buildFakeReservations(restaurantId) {
   const reservations = [];
   const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
 
-  for (let i = 0; i < 8; i++) {
-    const daysOffset = (i % 7) + 1; // spread over next 7 days
+  // 3 today reservations so dashboard isn't empty
+  const todayNames = ['Ana Costa', 'Pedro Santos', 'Julia Oliveira'];
+  const todayTimes = ['19:30', '20:00', '20:30'];
+  const todayParty = [2, 4, 3];
+  for (let i = 0; i < 3; i++) {
+    reservations.push({
+      reservation_id: generateSecureReservationId(),
+      restaurant_id: restaurantId,
+      customer_name: todayNames[i],
+      customer_phone: null,
+      customer_email: null,
+      party_size: todayParty[i],
+      date: todayStr,
+      time: todayTimes[i],
+      status: 'confirmed',
+      special_requests: i === 2 ? 'Aniversario' : null,
+    });
+  }
+
+  // 5 future reservations spread over next days
+  for (let i = 0; i < 5; i++) {
     const resDate = new Date(now);
-    resDate.setDate(resDate.getDate() + daysOffset);
+    resDate.setDate(resDate.getDate() + i + 1);
     const dateStr = resDate.toISOString().split('T')[0];
-
-    const name = FAKE_NAMES[i];
-    const partySize = 2 + (i % 5); // 2, 3, 4, 5, 6, 2, 3, 4
-    const timeStr = FAKE_TIMES[i % FAKE_TIMES.length];
 
     reservations.push({
       reservation_id: generateSecureReservationId(),
       restaurant_id: restaurantId,
-      customer_name: name,
+      customer_name: FAKE_NAMES[i + 3],
       customer_phone: null,
       customer_email: null,
-      party_size: partySize,
+      party_size: 2 + (i % 4),
       date: dateStr,
-      time: timeStr,
+      time: FAKE_TIMES[i % FAKE_TIMES.length],
       status: 'confirmed',
       special_requests: null,
     });
   }
 
-  // Seed one checked-in reservation for today so the "seated" stat is non-zero.
-  // Status stays 'confirmed' so getUpcomingReservations includes it; checked_in_at
-  // causes the checked_in flag to be true when mapped by the supabase layer.
-  const todayStr = now.toISOString().split('T')[0];
+  // One checked-in reservation for today (realistic dinner time)
   reservations.push({
     reservation_id: generateSecureReservationId(),
     restaurant_id: restaurantId,
-    customer_name: 'Sophie Laurent',
+    customer_name: 'Isabela Martins',
     customer_phone: null,
     customer_email: null,
     party_size: 3,
     date: todayStr,
-    time: '23:59',
+    time: '20:00',
     status: 'confirmed',
     checked_in_at: now.toISOString(),
     special_requests: null,
