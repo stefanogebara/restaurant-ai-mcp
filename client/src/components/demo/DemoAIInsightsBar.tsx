@@ -42,20 +42,32 @@ const labels = {
   },
 } as const;
 
-const cannedResponses: Record<string, string[]> = {
+// Keyword-matched fallback responses when API is unavailable
+const cannedResponses: Record<string, Array<{ keywords: string[]; response: string }>> = {
   en: [
-    "Based on current trends, tonight should peak around 19:30. I'd recommend pre-setting tables for large parties and briefing the kitchen on expected volume.",
-    "Your average table turn time this week is 52 minutes — that's 8% faster than last week. Great efficiency from the team.",
-    "I'd suggest checking on Table 5. They've been seated for over 90 minutes without ordering dessert — could be a good upsell opportunity.",
-    "Looking at your reservation patterns, Fridays between 19:00-20:30 consistently fill up. Consider adding a second seating window.",
+    { keywords: ['today', 'tonight', 'movement', 'busy', 'how'], response: `Right now we have ${'{occupied}'} tables occupied out of ${'{total}'}. ${'{waitlist}'} groups on the waitlist. I'd recommend preparing for the dinner rush.` },
+    { keywords: ['staff', 'team', 'server', 'waiter'], response: "Your average table turn time this week is 52 minutes — 8% faster than last week. Great efficiency from the team." },
+    { keywords: ['revenue', 'money', 'sales', 'billing'], response: "Based on current reservations and average spend, I'd estimate tonight's revenue around $3,200. Consider upselling desserts to boost the average ticket." },
+    { keywords: ['reservation', 'booking', 'table'], response: "Looking at your reservation patterns, Fridays between 19:00-20:30 consistently fill up. Consider adding a second seating window." },
   ],
   'pt-BR': [
-    "Com base nas tendências atuais, o pico deve ser por volta das 19:30. Recomendo preparar mesas para grupos grandes e avisar a cozinha sobre o volume esperado.",
-    "O tempo médio de rotação de mesa esta semana é de 52 minutos — 8% mais rápido que semana passada. Ótima eficiência da equipe.",
-    "Sugiro verificar a Mesa 5. Estão sentados há mais de 90 minutos sem pedir sobremesa — pode ser uma boa oportunidade de upsell.",
-    "Analisando seus padrões de reserva, sextas entre 19:00-20:30 lotam consistentemente. Considere adicionar um segundo turno.",
+    { keywords: ['hoje', 'movimento', 'como', 'noite', 'ocupação'], response: `Agora temos ${'{occupied}'} mesas ocupadas de ${'{total}'}. ${'{waitlist}'} grupos na lista de espera. Recomendo preparar a equipe para o pico do jantar.` },
+    { keywords: ['equipe', 'garçom', 'staff', 'time'], response: "O tempo médio de rotação de mesa esta semana é de 52 minutos — 8% mais rápido que semana passada. Ótima eficiência da equipe." },
+    { keywords: ['receita', 'faturamento', 'dinheiro', 'venda'], response: "Com base nas reservas atuais e gasto médio, estimo o faturamento de hoje em torno de R$ 8.500. Considere sugerir sobremesas para aumentar o ticket médio." },
+    { keywords: ['reserva', 'mesa', 'disponível'], response: "Analisando seus padrões de reserva, sextas entre 19:00-20:30 lotam consistentemente. Considere adicionar um segundo turno." },
+    { keywords: ['no-show', 'cancelamento', 'falta'], response: "Hoje temos 1 reserva com risco de no-show. Os lembretes automáticos por WhatsApp já foram enviados — historicamente reduzimos no-shows em 40%." },
   ],
 };
+
+function pickCannedResponse(text: string, langKey: string): string {
+  const lower = text.toLowerCase();
+  const responses = cannedResponses[langKey] || cannedResponses['en'];
+  const match = responses.find(r => r.keywords.some(kw => lower.includes(kw)));
+  return match?.response || responses[0].response;
+}
+
+// Placeholder for stats injection — component will override this
+let _statsForFallback = { occupied: '2', total: '8', waitlist: '2' };
 
 // ── Sparkle Icon ──
 
@@ -68,6 +80,13 @@ const SparkleIcon = () => (
 
 // ── Component ──
 
+function injectStats(text: string): string {
+  return text
+    .replace(/\{occupied\}/g, _statsForFallback.occupied)
+    .replace(/\{total\}/g, _statsForFallback.total)
+    .replace(/\{waitlist\}/g, _statsForFallback.waitlist);
+}
+
 export default function DemoAIInsightsBar({
   occupiedTables,
   totalTables,
@@ -76,6 +95,8 @@ export default function DemoAIInsightsBar({
   totalGuests,
   lang,
 }: DemoAIInsightsBarProps) {
+  // Update stats for fallback responses
+  _statsForFallback = { occupied: String(occupiedTables), total: String(totalTables), waitlist: String(waitlistCount) };
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -112,12 +133,12 @@ export default function DemoAIInsightsBar({
     })
       .then(res => res.json())
       .then(data => {
-        const reply = data.reply || cannedResponses[langKey][text.length % cannedResponses[langKey].length];
+        const reply = data.reply || injectStats(pickCannedResponse(text, langKey));
         setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', text: reply }]);
       })
       .catch(() => {
-        const responses = cannedResponses[langKey];
-        setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', text: responses[text.length % responses.length] }]);
+        const reply = injectStats(pickCannedResponse(text, langKey));
+        setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', text: reply }]);
       })
       .finally(() => setIsTyping(false));
   };
