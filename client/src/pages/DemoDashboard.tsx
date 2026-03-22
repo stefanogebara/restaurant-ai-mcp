@@ -64,6 +64,7 @@ export default function DemoDashboard() {
 
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [activeView, setActiveView] = useState<'dashboard' | 'tables' | 'whatsapp'>('dashboard');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { showPopup: showExitPopup, dismiss: dismissExitPopup } = useExitIntent();
 
   // Walk-in form state
@@ -116,7 +117,7 @@ export default function DemoDashboard() {
 
   return (
     <div className="min-h-screen bg-soft-gray">
-      <DemoSidebar lang={lang} activeView={activeView} onNavigate={(v) => setActiveView(v as typeof activeView)} />
+      <DemoSidebar lang={lang} activeView={activeView} onNavigate={(v) => setActiveView(v as typeof activeView)} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(c => !c)} />
 
       {/* Language Popup */}
       {showLangPopup && (
@@ -152,7 +153,7 @@ export default function DemoDashboard() {
       )}
 
       {/* Demo Banner */}
-      <div className="bg-gradient-to-r from-burgundy to-burgundy-dark text-white lg:ml-[220px] transition-all duration-300">
+      <div className={`bg-gradient-to-r from-burgundy to-burgundy-dark text-white ${sidebarCollapsed ? 'lg:ml-[60px]' : 'lg:ml-[220px]'} transition-all duration-300`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
@@ -191,7 +192,7 @@ export default function DemoDashboard() {
       )}
 
       {/* Page content */}
-      <div className={`max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8 pb-24 sm:pb-8 space-y-6 lg:ml-[220px] transition-all duration-300 ${demoToken && tokenLoading ? 'hidden' : ''}`}>
+      <div className={`max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8 pb-24 sm:pb-8 space-y-6 ${sidebarCollapsed ? 'lg:ml-[60px]' : 'lg:ml-[220px]'} transition-all duration-300 ${demoToken && tokenLoading ? 'hidden' : ''}`}>
         {/* View: Tables Grid */}
         {activeView === 'tables' && (
           <DemoTablesGrid tables={demo.tables} lang={lang} />

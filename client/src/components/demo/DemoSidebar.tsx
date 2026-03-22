@@ -54,9 +54,11 @@ interface DemoSidebarProps {
   lang: string;
   activeView?: string;
   onNavigate?: (view: string) => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate }: DemoSidebarProps) {
+export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate, collapsed = false, onToggleCollapse }: DemoSidebarProps) {
   const [toast, setToast] = useState<string | null>(null);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -77,18 +79,26 @@ export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate
   const sidebar = (
     <aside
       className={`
-        fixed top-0 left-0 h-full w-[220px] bg-deep-charcoal z-40
-        transition-transform duration-300 ease-in-out
+        fixed top-0 left-0 h-full bg-deep-charcoal z-40
+        transition-all duration-300 ease-in-out
+        ${collapsed ? 'w-[60px]' : 'w-[220px]'}
         ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0
       `}
     >
       <div className="flex flex-col h-full">
         {/* Logo */}
-        <div className="py-6 px-5 flex items-center justify-between">
-          <h1 className="font-serif text-[22px] font-semibold text-white tracking-tight">
-            seatable<span className="text-burgundy">.</span>
-          </h1>
+        <div className={`py-6 flex items-center justify-between ${collapsed ? 'px-3' : 'px-5'}`}>
+          {!collapsed && (
+            <h1 className="font-serif text-[22px] font-semibold text-white tracking-tight">
+              seatable<span className="text-burgundy">.</span>
+            </h1>
+          )}
+          {collapsed && (
+            <h1 className="font-serif text-[18px] font-semibold text-white tracking-tight mx-auto">
+              s<span className="text-burgundy">.</span>
+            </h1>
+          )}
           <button
             onClick={() => setIsMobileOpen(false)}
             className="lg:hidden p-1.5 hover:bg-white/5 rounded-lg text-stone-gray"
@@ -102,9 +112,11 @@ export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate
         <nav aria-label="Demo navigation" className="flex-1 overflow-y-auto">
           {navSections.map((section) => (
             <div key={section.label} className="mb-5">
-              <div className="px-5 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-gray/70">
-                {t(section.label)}
-              </div>
+              {!collapsed && (
+                <div className="px-5 mb-2 text-[11px] font-semibold tracking-widest uppercase text-stone-gray/70">
+                  {t(section.label)}
+                </div>
+              )}
 
               <div className="space-y-0.5">
                 {section.items.map((item) => {
@@ -116,14 +128,17 @@ export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate
                         key={item.label}
                         type="button"
                         onClick={() => handleNavigate(item.view!)}
-                        className={`w-full flex items-center gap-3 px-5 py-2.5 border-l-2 transition-all duration-150 ${
+                        title={collapsed ? t(item.label) : undefined}
+                        className={`w-full flex items-center border-l-2 transition-all duration-150 ${
+                          collapsed ? 'justify-center px-0 py-3' : 'gap-3 px-5 py-2.5'
+                        } ${
                           isActive
                             ? 'text-white bg-burgundy/10 border-l-burgundy font-medium'
                             : 'text-muted-stone/70 hover:text-white hover:bg-white/[0.04] border-l-transparent'
                         }`}
                       >
                         <ThiingsIcon name={item.icon} pxSize={16} className={isActive ? 'text-burgundy' : ''} />
-                        <span className="text-sm">{t(item.label)}</span>
+                        {!collapsed && <span className="text-sm">{t(item.label)}</span>}
                       </button>
                     );
                   }
@@ -134,11 +149,14 @@ export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate
                       key={item.label}
                       type="button"
                       onClick={() => handleLockedClick(t(item.label))}
-                      className="w-full flex items-center gap-3 px-5 py-2.5 text-muted-stone/50 hover:text-muted-stone/70 hover:bg-white/[0.02] border-l-2 border-l-transparent transition-all duration-150"
+                      title={collapsed ? t(item.label) : undefined}
+                      className={`w-full flex items-center border-l-2 border-l-transparent text-muted-stone/50 hover:text-muted-stone/70 hover:bg-white/[0.02] transition-all duration-150 ${
+                        collapsed ? 'justify-center px-0 py-3' : 'gap-3 px-5 py-2.5'
+                      }`}
                     >
                       <ThiingsIcon name={item.icon} pxSize={16} />
-                      <span className="text-sm flex-1 text-left">{t(item.label)}</span>
-                      <ThiingsIcon name="lock" pxSize={11} className="opacity-60" />
+                      {!collapsed && <span className="text-sm flex-1 text-left">{t(item.label)}</span>}
+                      {!collapsed && <ThiingsIcon name="lock" pxSize={11} className="opacity-60" />}
                     </button>
                   );
                 })}
@@ -147,15 +165,41 @@ export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate
           ))}
         </nav>
 
-        {/* Upgrade CTA */}
-        <div className="p-4 border-t border-charcoal-dark">
-          <Link
-            to="/login"
-            className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors"
+        {/* Collapse toggle */}
+        <div className="hidden lg:flex justify-center py-2 border-t border-charcoal-dark">
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            className="p-2 hover:bg-white/5 rounded-lg text-stone-gray/60 hover:text-stone-gray transition-colors"
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            <ThiingsIcon name="sparkles" pxSize={14} />
-            {signupCTA}
-          </Link>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              className={`transition-transform duration-300 ${collapsed ? 'rotate-180' : ''}`}>
+              <polyline points="11 17 6 12 11 7" />
+              <polyline points="18 17 13 12 18 7" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Upgrade CTA */}
+        <div className={`border-t border-charcoal-dark ${collapsed ? 'p-2' : 'p-4'}`}>
+          {collapsed ? (
+            <Link
+              to="/login"
+              className="flex items-center justify-center w-full p-2.5 bg-burgundy hover:bg-burgundy-dark text-white rounded-xl transition-colors"
+              title={signupCTA}
+            >
+              <ThiingsIcon name="sparkles" pxSize={14} />
+            </Link>
+          ) : (
+            <Link
+              to="/login"
+              className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-xl transition-colors"
+            >
+              <ThiingsIcon name="sparkles" pxSize={14} />
+              {signupCTA}
+            </Link>
+          )}
         </div>
       </div>
     </aside>
