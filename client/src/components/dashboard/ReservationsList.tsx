@@ -4,6 +4,7 @@ import ThiingsIcon from '../common/ThiingsIcon';
 import type { UpcomingReservation } from '../../types/host.types';
 import NoShowRiskBadge from './NoShowRiskBadge';
 import DepositBadge from './DepositBadge';
+import CustomerTierBadge from './CustomerTierBadge';
 import DepositActions from './DepositActions';
 import { formatCurrency } from '../../utils/currency';
 import { predictReservationRevenue, type PartySizeRevenue } from '../../utils/revenuePredictor';
@@ -225,7 +226,10 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-semibold text-deep-charcoal tracking-tight break-words" title={reservation.customer_name}>{reservation.customer_name}</div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm font-semibold text-deep-charcoal tracking-tight break-words" title={reservation.customer_name}>{reservation.customer_name}</span>
+          <CustomerTierBadge tier={reservation.customer_tier} visitCount={reservation.visit_count} compact />
+        </div>
         <div className="text-xs text-muted-stone mt-0.5 truncate">
           {reservation.party_size} {tl('people')}
           {avgSpendPerCover ? (

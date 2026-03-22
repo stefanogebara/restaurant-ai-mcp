@@ -54,6 +54,9 @@ const INITIAL_RESERVATIONS: UpcomingReservation[] = [
     special_requests: 'Mesa perto da janela',
     checked_in: false,
     status: 'confirmed',
+    customer_tier: 'vip',
+    visit_count: 14,
+    is_regular: true,
   },
   {
     reservation_id: 'r2',
@@ -65,6 +68,9 @@ const INITIAL_RESERVATIONS: UpcomingReservation[] = [
     reservation_time: `${today}T13:00:00`,
     checked_in: false,
     status: 'confirmed',
+    customer_tier: 'regular',
+    visit_count: 6,
+    is_regular: true,
   },
   {
     reservation_id: 'r3',
@@ -77,6 +83,8 @@ const INITIAL_RESERVATIONS: UpcomingReservation[] = [
     special_requests: 'Aniversario',
     checked_in: false,
     status: 'confirmed',
+    customer_tier: 'occasional',
+    visit_count: 3,
   },
   {
     reservation_id: 'r4',
@@ -88,6 +96,7 @@ const INITIAL_RESERVATIONS: UpcomingReservation[] = [
     reservation_time: `${today}T20:00:00`,
     checked_in: false,
     status: 'confirmed',
+    first_time_visitor: true,
   },
   {
     reservation_id: 'r5',
@@ -99,6 +108,9 @@ const INITIAL_RESERVATIONS: UpcomingReservation[] = [
     reservation_time: `${tomorrow}T12:00:00`,
     checked_in: false,
     status: 'confirmed',
+    customer_tier: 'vip',
+    visit_count: 22,
+    is_regular: true,
   },
   {
     reservation_id: 'r6',
@@ -111,6 +123,8 @@ const INITIAL_RESERVATIONS: UpcomingReservation[] = [
     special_requests: 'Jantar de aniversario',
     checked_in: false,
     status: 'confirmed',
+    customer_tier: 'regular',
+    visit_count: 8,
   },
 ];
 
