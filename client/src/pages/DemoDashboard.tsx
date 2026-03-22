@@ -192,7 +192,7 @@ export default function DemoDashboard() {
       )}
 
       {/* Page content */}
-      <div className={`max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8 pb-24 sm:pb-8 space-y-6 ${sidebarCollapsed ? 'lg:ml-[60px]' : 'lg:ml-[220px]'} transition-all duration-300 ${demoToken && tokenLoading ? 'hidden' : ''}`}>
+      <div className={`max-w-7xl mx-auto px-4 sm:px-8 py-8 pb-24 sm:pb-8 space-y-8 ${sidebarCollapsed ? 'lg:ml-[60px]' : 'lg:ml-[220px]'} transition-all duration-300 ${demoToken && tokenLoading ? 'hidden' : ''}`}>
         {/* View: Tables Grid */}
         {activeView === 'tables' && (
           <DemoTablesGrid tables={demo.tables} lang={lang} />
@@ -208,20 +208,22 @@ export default function DemoDashboard() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-deep-charcoal tracking-tight">
-              {restaurantName}
-              <span className="ml-2 text-base font-light text-warm-stone">
+            <div className="flex items-baseline gap-2">
+              <h1 className="font-serif text-[22px] font-bold text-stone-900 tracking-tight">
+                {restaurantName}
+              </h1>
+              <span className="text-stone-400 text-sm font-light">
                 &mdash; {cuisineLabel} &middot; {neighborhoodLabel}
               </span>
-            </h1>
-            <p className="text-sm text-muted-stone mt-0.5">{dayName}, {dateStr}</p>
+            </div>
+            <p className="text-stone-500 text-[13px] mt-0.5">{dayName}, {dateStr}</p>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-4">
             <button
               type="button"
               onClick={() => setShowWalkInModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white rounded-xl text-[13px] font-medium transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white rounded-lg text-sm font-semibold transition-all"
             >
               <ThiingsIcon name="plus" pxSize={14} />
               {t.addWalkIn}
@@ -256,9 +258,9 @@ export default function DemoDashboard() {
         />
 
         {/* Main Content: Unified container with 2px dividers */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-px border border-[#E5E7EB] rounded-lg overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
           {/* Left Column: Reservations — spans all right-column rows */}
-          <div className="lg:row-span-3 bg-white [&>div]:border-0 [&>div]:rounded-none">
+          <div className="space-y-6">
             <ReservationsList
               todayReservations={demo.todayReservations}
               tomorrowReservations={demo.tomorrowReservations}
@@ -270,7 +272,7 @@ export default function DemoDashboard() {
           </div>
 
           {/* Right Column: Waitlist */}
-          <div className="bg-white [&>div]:border-0 [&>div]:rounded-none">
+          <div>
             <DemoWaitlistPanel
               entries={demo.waitlist}
               onSeat={handleSeatFromWaitlist}
@@ -279,7 +281,7 @@ export default function DemoDashboard() {
           </div>
 
           {/* Right Column: Active Parties */}
-          <div className="bg-white [&>div]:border-0 [&>div]:rounded-none">
+          <div>
             <ActivePartiesPanel
               parties={demo.activeParties}
               onCompleteService={handleCompleteService}
@@ -287,21 +289,20 @@ export default function DemoDashboard() {
             />
           </div>
 
-          {/* Right Column: Upgrade CTA */}
-          <div className="bg-deep-charcoal p-6 text-center">
-            <h3 className="text-base font-semibold text-white mb-1 tracking-tight">
-              {t.readyToGoLive}
-            </h3>
-            <p className="text-xs text-muted-stone font-light mb-4">
-              {t.setupYourOwn}
-            </p>
-            <Link
-              to="/login"
-              className="inline-block px-5 py-2 bg-burgundy hover:bg-burgundy-dark text-white text-sm font-semibold rounded-full transition-colors"
-            >
-              {t.getStartedFree}
-            </Link>
+        </div>
+
+        {/* Footer CTA */}
+        <div className="bg-stone-900 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div>
+            <h2 className="text-white text-2xl font-serif font-bold mb-2">{t.readyToGoLive}</h2>
+            <p className="text-stone-400 text-sm">{t.setupYourOwn}</p>
           </div>
+          <Link
+            to="/login"
+            className="px-8 py-3.5 bg-burgundy text-white rounded-full font-bold text-sm hover:bg-burgundy-dark transition-all"
+          >
+            {t.getStartedFree}
+          </Link>
         </div>
       </>)}
       </div>

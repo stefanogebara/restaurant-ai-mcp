@@ -50,7 +50,7 @@ export default function StatsBar({
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
       {/* Today's Reservations */}
       <StatCard
         label={t('dashboard.stats.reservations')}
@@ -131,29 +131,28 @@ function StatCard({ label, value, valueSuffix, valueColor, change, changeColor, 
   useEffect(() => { const t = setTimeout(() => setMounted(true), 50); return () => clearTimeout(t); }, []);
 
   return (
-    <div className="rounded-lg p-5 border border-border-gray transition-all duration-300 opacity-0 translate-y-2 animate-[fadeInUp_0.4s_ease-out_forwards]">
+    <div className="bg-white rounded-lg p-5 border border-[#E5E7EB]/60 flex flex-col transition-all duration-300 opacity-0 translate-y-2 animate-[fadeInUp_0.4s_ease-out_forwards]">
       {icon && (
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-soft-gray flex items-center justify-center flex-shrink-0">
-            {icon}
-          </div>
+        <div className="mb-3">
+          {icon}
         </div>
       )}
-      <div className="text-xs font-medium text-muted-stone tracking-wide mb-2">
+      <div className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mb-4">
         {label}
       </div>
-      <div className={`text-[32px] font-bold tracking-tight leading-none ${valueColor || 'text-deep-charcoal'}`}>
+      <div className={`font-serif text-3xl font-extrabold tracking-tight leading-none mb-2 ${valueColor || 'text-stone-900'}`}>
         {value}
         {valueSuffix && (
-          <span className="text-base text-muted-stone font-normal">{valueSuffix}</span>
+          <span className="text-base text-stone-400 font-normal font-sans">{valueSuffix}</span>
         )}
       </div>
       {change && (
-        <div className={`text-xs font-medium mt-1.5 ${changeColor}`}>
+        <div className={`flex items-center gap-1.5 text-[11px] font-medium mb-4 ${changeColor}`}>
+          <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
           {change}
         </div>
       )}
-      <div className="h-2 bg-soft-gray rounded-full mt-3 overflow-hidden">
+      <div className="w-full bg-stone-100 h-1 rounded-full overflow-hidden mt-auto">
         <div
           className="h-full rounded-full transition-all duration-700 ease-out"
           style={{ width: mounted ? `${barPercent}%` : '0%', backgroundColor: barColor }}
