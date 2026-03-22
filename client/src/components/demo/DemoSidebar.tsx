@@ -6,8 +6,8 @@ import type { IconName } from '../common/ThiingsIcon';
 interface DemoNavItem {
   label: string;
   icon: IconName;
-  active?: boolean;
-  locked?: boolean;
+  view?: string;   // navigable view name (unlocked)
+  locked?: boolean; // locked items show signup toast
 }
 
 const NAV_LABELS: Record<string, Record<string, string>> = {
@@ -29,8 +29,8 @@ const navSections: { label: string; items: DemoNavItem[] }[] = [
   {
     label: 'Main',
     items: [
-      { label: 'Dashboard', icon: 'layout-grid', active: true },
-      { label: 'Tables', icon: 'dining', locked: true },
+      { label: 'Dashboard', icon: 'layout-grid', view: 'dashboard' },
+      { label: 'Tables', icon: 'dining', view: 'tables' },
     ],
   },
   {
@@ -38,7 +38,7 @@ const navSections: { label: string; items: DemoNavItem[] }[] = [
     items: [
       { label: 'Manager AI', icon: 'bot', locked: true },
       { label: 'Voice Agent', icon: 'microphone', locked: true },
-      { label: 'WhatsApp', icon: 'phone', locked: true },
+      { label: 'WhatsApp', icon: 'phone', view: 'whatsapp' },
     ],
   },
   {
@@ -52,15 +52,22 @@ const navSections: { label: string; items: DemoNavItem[] }[] = [
 
 interface DemoSidebarProps {
   lang: string;
+  activeView?: string;
+  onNavigate?: (view: string) => void;
 }
 
-export default function DemoSidebar({ lang }: DemoSidebarProps) {
+export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate }: DemoSidebarProps) {
   const [toast, setToast] = useState<string | null>(null);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const handleLockedClick = (label: string) => {
     setToast(label);
     setTimeout(() => setToast(null), 2500);
+  };
+
+  const handleNavigate = (view: string) => {
+    onNavigate?.(view);
+    setIsMobileOpen(false);
   };
 
   const t = (key: string) => NAV_LABELS[lang]?.[key] ?? key;
@@ -101,18 +108,27 @@ export default function DemoSidebar({ lang }: DemoSidebarProps) {
 
               <div className="space-y-0.5">
                 {section.items.map((item) => {
-                  if (item.active) {
+                  // Navigable (unlocked) items
+                  if (item.view) {
+                    const isActive = item.view === activeView;
                     return (
-                      <div
+                      <button
                         key={item.label}
-                        className="flex items-center gap-3 px-5 py-2.5 text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium"
+                        type="button"
+                        onClick={() => handleNavigate(item.view!)}
+                        className={`w-full flex items-center gap-3 px-5 py-2.5 border-l-2 transition-all duration-150 ${
+                          isActive
+                            ? 'text-white bg-burgundy/10 border-l-burgundy font-medium'
+                            : 'text-muted-stone/70 hover:text-white hover:bg-white/[0.04] border-l-transparent'
+                        }`}
                       >
-                        <ThiingsIcon name={item.icon} pxSize={16} className="text-burgundy" />
+                        <ThiingsIcon name={item.icon} pxSize={16} className={isActive ? 'text-burgundy' : ''} />
                         <span className="text-sm">{t(item.label)}</span>
-                      </div>
+                      </button>
                     );
                   }
 
+                  // Locked items
                   return (
                     <button
                       key={item.label}

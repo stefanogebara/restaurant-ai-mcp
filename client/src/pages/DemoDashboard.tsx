@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import DemoSlideIn from '../landing/components/DemoSlideIn';
 import DemoSidebar from '../components/demo/DemoSidebar';
+import DemoTablesGrid from '../components/demo/DemoTablesGrid';
+import DemoWhatsAppSim from '../components/demo/DemoWhatsAppSim';
 import ThiingsIcon from '../components/common/ThiingsIcon';
 import StatsBar from '../components/dashboard/StatsBar';
 import ReservationsList from '../components/dashboard/ReservationsList';
@@ -61,6 +63,7 @@ export default function DemoDashboard() {
   const neighborhoodLabel = tokenSession?.restaurant?.city || t.neighborhood;
 
   const [showWalkInModal, setShowWalkInModal] = useState(false);
+  const [activeView, setActiveView] = useState<'dashboard' | 'tables' | 'whatsapp'>('dashboard');
   const { showPopup: showExitPopup, dismiss: dismissExitPopup } = useExitIntent();
 
   // Walk-in form state
@@ -113,7 +116,7 @@ export default function DemoDashboard() {
 
   return (
     <div className="min-h-screen bg-soft-gray">
-      <DemoSidebar lang={lang} />
+      <DemoSidebar lang={lang} activeView={activeView} onNavigate={(v) => setActiveView(v as typeof activeView)} />
 
       {/* Language Popup */}
       {showLangPopup && (
@@ -189,6 +192,18 @@ export default function DemoDashboard() {
 
       {/* Page content */}
       <div className={`max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8 pb-24 sm:pb-8 space-y-6 lg:ml-[220px] transition-all duration-300 ${demoToken && tokenLoading ? 'hidden' : ''}`}>
+        {/* View: Tables Grid */}
+        {activeView === 'tables' && (
+          <DemoTablesGrid tables={demo.tables} lang={lang} />
+        )}
+
+        {/* View: WhatsApp Simulator */}
+        {activeView === 'whatsapp' && (
+          <DemoWhatsAppSim restaurantName={restaurantName} lang={lang} />
+        )}
+
+        {/* View: Dashboard (default) */}
+        {activeView !== 'tables' && activeView !== 'whatsapp' && (<>
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
@@ -287,17 +302,20 @@ export default function DemoDashboard() {
             </Link>
           </div>
         </div>
+      </>)}
       </div>
 
-      {/* FAB: Add Walk-in */}
-      <button
-        type="button"
-        onClick={() => setShowWalkInModal(true)}
-        aria-label={t.addWalkIn}
-        className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-deep-charcoal hover:bg-charcoal-dark hover:scale-105 active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
-      >
-        <ThiingsIcon name="plus" pxSize={24} />
-      </button>
+      {/* FAB: Add Walk-in (only on dashboard view) */}
+      {activeView === 'dashboard' && (
+        <button
+          type="button"
+          onClick={() => setShowWalkInModal(true)}
+          aria-label={t.addWalkIn}
+          className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-deep-charcoal hover:bg-charcoal-dark hover:scale-105 active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
+        >
+          <ThiingsIcon name="plus" pxSize={24} />
+        </button>
+      )}
 
       {/* Exit Intent Popup */}
       {showExitPopup && (

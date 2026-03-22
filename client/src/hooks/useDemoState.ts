@@ -20,7 +20,7 @@ function eveningTime(hour: number, minute: number): string {
 
 // ---------- Seed tables ----------
 
-interface DemoTable {
+export interface DemoTable {
   id: string;
   table_number: string;
   capacity: number;
