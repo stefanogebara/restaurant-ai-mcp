@@ -10,6 +10,7 @@ import ReservationsList from '../components/dashboard/ReservationsList';
 import ActivePartiesPanel from '../components/dashboard/ActivePartiesPanel';
 import DemoWaitlistPanel from '../components/demo/DemoWaitlistPanel';
 import DemoAIInsightsBar from '../components/demo/DemoAIInsightsBar';
+import CustomerProfileDrawer from '../components/dashboard/CustomerProfileDrawer';
 import { useDemoState } from '../hooks/useDemoState';
 import { useDemoLocale } from '../hooks/useDemoLocale';
 import { useDemoSession } from '../hooks/useDemoSession';
@@ -65,6 +66,7 @@ export default function DemoDashboard() {
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [activeView, setActiveView] = useState<'dashboard' | 'tables' | 'whatsapp'>('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<UpcomingReservation | null>(null);
   const { showPopup: showExitPopup, dismiss: dismissExitPopup } = useExitIntent();
 
   // Walk-in form state
@@ -266,6 +268,7 @@ export default function DemoDashboard() {
               tomorrowReservations={demo.tomorrowReservations}
               onCheckIn={handleCheckIn}
               onIntervention={() => {}}
+              onCustomerClick={setSelectedCustomer}
               isLoading={false}
               language={lang as 'en' | 'es' | 'pt-BR'}
             />
@@ -456,6 +459,12 @@ export default function DemoDashboard() {
 
       {/* Conversion nudge — appears after 60s (hidden for personalized outreach demos) */}
       {!demoToken && <DemoSlideIn />}
+
+      {/* Customer Profile Drawer */}
+      <CustomerProfileDrawer
+        reservation={selectedCustomer}
+        onClose={() => setSelectedCustomer(null)}
+      />
     </div>
   );
 }

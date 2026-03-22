@@ -18,6 +18,7 @@ interface ReservationsListProps {
   onAdd?: () => void;
   onEdit?: (reservation: UpcomingReservation) => void;
   onCancel?: (reservation: UpcomingReservation) => void;
+  onCustomerClick?: (reservation: UpcomingReservation) => void;
   avgSpendPerCover?: number;
   byPartySize?: PartySizeRevenue[];
   language?: 'en' | 'es' | 'pt-BR';
@@ -33,6 +34,7 @@ export default function ReservationsList({
   onAdd,
   onEdit,
   onCancel,
+  onCustomerClick,
   avgSpendPerCover,
   byPartySize,
   language = 'en',
@@ -151,6 +153,7 @@ export default function ReservationsList({
               onDepositAction={onDepositAction}
               onEdit={onEdit ? () => onEdit(reservation) : undefined}
               onCancel={onCancel ? () => onCancel(reservation) : undefined}
+              onCustomerClick={onCustomerClick ? () => onCustomerClick(reservation) : undefined}
               avgSpendPerCover={avgSpendPerCover}
               byPartySize={byPartySize}
               language={language}
@@ -171,12 +174,13 @@ interface ReservationRowProps {
   onDepositAction?: () => void;
   onEdit?: () => void;
   onCancel?: () => void;
+  onCustomerClick?: () => void;
   avgSpendPerCover?: number;
   byPartySize?: PartySizeRevenue[];
   language: 'en' | 'es' | 'pt-BR';
 }
 
-function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositAction, onEdit, onCancel, avgSpendPerCover, byPartySize, language }: ReservationRowProps) {
+function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositAction, onEdit, onCancel, onCustomerClick, avgSpendPerCover, byPartySize, language }: ReservationRowProps) {
   const { t } = useTranslation();
   const tl = (key: string) => t(`dashboard.reservationsList.${key}`);
 
@@ -227,7 +231,14 @@ function ReservationRow({ reservation, onCheckIn, onIntervention, onDepositActio
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className="text-sm font-semibold text-deep-charcoal tracking-tight break-words" title={reservation.customer_name}>{reservation.customer_name}</span>
+          <button
+            type="button"
+            onClick={onCustomerClick}
+            className="text-sm font-semibold text-deep-charcoal tracking-tight break-words hover:text-burgundy transition-colors text-left"
+            title={reservation.customer_name}
+          >
+            {reservation.customer_name}
+          </button>
           <CustomerTierBadge tier={reservation.customer_tier} visitCount={reservation.visit_count} compact />
         </div>
         <div className="text-xs text-muted-stone mt-0.5 truncate">
