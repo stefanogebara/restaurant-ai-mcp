@@ -466,9 +466,15 @@ async function handleCreateReservation(req, res) {
 
 async function handleLookupReservation(req, res) {
   const conversationId = req.conversation_id;
-  const restaurant = req.restaurant;
   const data = req.method === 'POST' ? req.body : req.query;
-  const { phone, name, reservation_id } = data;
+  // Accept both "name" and "customer_name" field names
+  const { phone, reservation_id } = data;
+  const name = data.name || data.customer_name;
+  // Get restaurant from session, request, or body restaurant_id (voice agent)
+  let restaurant = req.restaurant || {};
+  if (!restaurant.id && data.restaurant_id) {
+    restaurant = { id: data.restaurant_id };
+  }
 
   // Log tool call
   if (conversationId) {
@@ -495,9 +501,12 @@ async function handleLookupReservation(req, res) {
 }
 
 async function handleModifyReservation(req, res) {
-  const restaurant = req.restaurant;
   const data = req.method === 'POST' ? req.body : req.query;
   const { reservation_id, new_date, new_time, new_party_size } = data;
+  let restaurant = req.restaurant || {};
+  if (!restaurant.id && data.restaurant_id) {
+    restaurant = { id: data.restaurant_id };
+  }
 
   // Also support date/time/party_size (without new_ prefix) for backwards compatibility
   const result = await toolHandlers.modifyReservation(restaurant.id, {
@@ -511,9 +520,12 @@ async function handleModifyReservation(req, res) {
 }
 
 async function handleCancelReservation(req, res) {
-  const restaurant = req.restaurant;
   const data = req.method === 'POST' ? req.body : req.query;
   const { reservation_id } = data;
+  let restaurant = req.restaurant || {};
+  if (!restaurant.id && data.restaurant_id) {
+    restaurant = { id: data.restaurant_id };
+  }
 
   const result = await toolHandlers.cancelReservation(restaurant.id, { reservation_id });
   return res.status(200).json(result);
