@@ -231,23 +231,23 @@ export default function Dashboard() {
           {/* ---- Header Section ---- */}
           <header className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-14 mt-14 sm:mt-0 gap-4">
             <div className="pl-12 lg:pl-0">
-              <h1 className="font-sans text-2xl font-semibold tracking-tight text-[#111827]">
+              <h1 className="font-sans text-2xl font-semibold tracking-tight text-deep-charcoal">
                 {t('dashboard.overview', 'Overview')}
               </h1>
-              <p className="text-[13px] text-[#9CA3AF] font-mono uppercase tracking-widest mt-1">
+              <p className="text-[13px] text-muted-stone font-mono uppercase tracking-widest mt-1">
                 {fullDateStr}
               </p>
             </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => window.location.href = '/host-dashboard/reports'}
-                className="px-4 py-2 border border-[#E5E7EB] rounded-lg text-[13px] font-medium bg-transparent hover:bg-[#F9FAFB] transition-colors text-[#111827]"
+                className="px-4 py-2 border border-border-gray rounded-lg text-[13px] font-medium bg-transparent hover:bg-soft-gray transition-colors text-deep-charcoal"
               >
                 {t('dashboard.reports', 'Export')}
               </button>
               <button
                 onClick={() => setShowWalkInModal(true)}
-                className="px-4 py-2 bg-[#9F1239] hover:bg-[#881337] text-white border border-[#9F1239] rounded-lg text-[13px] font-medium transition-colors"
+                className="px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white border border-burgundy rounded-lg text-[13px] font-medium transition-colors"
               >
                 + {t('dashboard.addWalkIn')}
               </button>
@@ -256,43 +256,43 @@ export default function Dashboard() {
 
           {/* ---- Metrics Row ---- */}
           {isLoading ? (
-            <section className="grid grid-cols-2 sm:grid-cols-4 gap-12 mb-12 pb-12 border-b border-[#E5E7EB]">
+            <section className="grid grid-cols-2 sm:grid-cols-4 gap-12 mb-12 pb-12 border-b border-border-gray">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i}>
-                  <div className="h-7 w-16 bg-[#E5E7EB] rounded animate-pulse mb-3" />
-                  <div className="h-3 w-20 bg-[#E5E7EB] rounded animate-pulse" />
+                  <div className="h-7 w-16 bg-border-gray rounded animate-pulse mb-3" />
+                  <div className="h-3 w-20 bg-border-gray rounded animate-pulse" />
                 </div>
               ))}
             </section>
           ) : (
-            <section className="grid grid-cols-2 sm:grid-cols-4 gap-12 mb-12 pb-12 border-b border-[#E5E7EB]">
+            <section className="grid grid-cols-2 sm:grid-cols-4 gap-12 mb-12 pb-12 border-b border-border-gray">
               {/* Reservations */}
               <div>
-                <p className="font-mono text-[28px] font-medium leading-none text-[#111827]">{todayReservations.length}</p>
-                <p className="text-[12px] uppercase tracking-[0.05em] text-[#9CA3AF] mt-3">
+                <p className="font-mono text-[28px] font-medium leading-none text-deep-charcoal">{todayReservations.length}</p>
+                <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
                   {t('dashboard.stats.reservations', 'Reservations')}
                 </p>
               </div>
               {/* Guests Expected */}
               <div>
-                <p className="font-mono text-[28px] font-medium leading-none text-[#111827]">{guestsExpected}</p>
-                <p className="text-[12px] uppercase tracking-[0.05em] text-[#9CA3AF] mt-3">
+                <p className="font-mono text-[28px] font-medium leading-none text-deep-charcoal">{guestsExpected}</p>
+                <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
                   {t('dashboard.stats.guests', 'Guests')}
                 </p>
               </div>
               {/* Capacity */}
               <div>
-                <p className="font-mono text-[28px] font-medium leading-none text-[#111827]">
+                <p className="font-mono text-[28px] font-medium leading-none text-deep-charcoal">
                   {occupiedTables}/{totalTables}
                 </p>
-                <p className="text-[12px] uppercase tracking-[0.05em] text-[#9CA3AF] mt-3">
+                <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
                   {t('dashboard.stats.capacity', 'Tables Available')}
                 </p>
               </div>
               {/* Waitlist */}
               <div>
-                <p className="font-mono text-[28px] font-medium leading-none text-[#111827]">{waitlistCount}</p>
-                <p className="text-[12px] uppercase tracking-[0.05em] text-[#9CA3AF] mt-3">
+                <p className="font-mono text-[28px] font-medium leading-none text-deep-charcoal">{waitlistCount}</p>
+                <p className="text-[12px] uppercase tracking-[0.05em] text-muted-stone mt-3">
                   {t('waitlist.title', 'Waitlist')}
                 </p>
               </div>
@@ -343,7 +343,7 @@ export default function Dashboard() {
           </div>
 
           {/* ---- Section Divider ---- */}
-          <div className="border-t border-[#E5E7EB] mt-16 mb-12" />
+          <div className="border-t border-border-gray mt-16 mb-12" />
 
           {/* ---- Additional Widgets ---- */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -365,7 +365,7 @@ export default function Dashboard() {
         <button
           onClick={() => setShowWalkInModal(true)}
           aria-label={t('dashboard.addWalkIn', 'Add walk-in')}
-          className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-[#9F1239] hover:bg-[#881337] active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
+          className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-50 w-14 h-14 bg-burgundy hover:bg-burgundy-dark active:scale-95 text-white rounded-full shadow-xl shadow-black/20 transition-all duration-200 flex items-center justify-center"
         >
           <ThiingsIcon name="plus" pxSize={24} />
         </button>
@@ -424,15 +424,15 @@ export default function Dashboard() {
       {/* Complete Service Confirmation */}
       {showCompleteModal && serviceToComplete && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-[#E5E7EB] p-6 max-w-sm w-full">
-            <h3 className="text-lg font-bold text-[#111827] mb-2">{t('dashboard.completeService')}</h3>
-            <p className="text-sm text-[#9CA3AF] mb-6">
+          <div className="bg-white rounded-2xl shadow-2xl border border-border-gray p-6 max-w-sm w-full">
+            <h3 className="text-lg font-bold text-deep-charcoal mb-2">{t('dashboard.completeService')}</h3>
+            <p className="text-sm text-muted-stone mb-6">
               {t('dashboard.completeServiceFor', { name: serviceToComplete.customer_name })}
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => { setShowCompleteModal(false); setServiceToComplete(null); }}
-                className="flex-1 px-4 py-2.5 border border-[#E5E7EB] text-[#9CA3AF] rounded-lg hover:bg-[#F9FAFB] transition-colors font-medium"
+                className="flex-1 px-4 py-2.5 border border-border-gray text-muted-stone rounded-lg hover:bg-soft-gray transition-colors font-medium"
               >
                 {t('common.cancel')}
               </button>
@@ -442,7 +442,7 @@ export default function Dashboard() {
                   setShowCompleteModal(false);
                   setServiceToComplete(null);
                 }}
-                className="flex-1 px-4 py-2.5 bg-[#9F1239] hover:bg-[#881337] text-white font-semibold rounded-lg transition-colors"
+                className="flex-1 px-4 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-lg transition-colors"
               >
                 {t('dashboard.complete')}
               </button>
