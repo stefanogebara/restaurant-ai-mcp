@@ -30,11 +30,17 @@ module.exports = async function handler(req, res) {
   const rateLimited = await checkAndApplyRateLimit(req, res, 'api');
   if (rateLimited) return;
 
+  let user;
   try {
-    const user = await verifyAuth(req.headers.authorization?.replace('Bearer ', ''));
-    if (!user || !user.restaurant_id) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
+    user = await verifyAuth(req.headers.authorization?.replace('Bearer ', ''));
+  } catch {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  if (!user || !user.restaurant_id) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
 
     const restaurantId = user.restaurant_id;
     const { customer_phone } = req.body || {};
