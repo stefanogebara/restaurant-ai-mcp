@@ -56,7 +56,10 @@ const INITIAL_RESERVATIONS: UpcomingReservation[] = [
     status: 'confirmed',
     customer_tier: 'vip',
     visit_count: 14,
+    avg_spend: 95,
     is_regular: true,
+    dietary_restrictions: ['sem gluten'],
+    seating_preference: 'Janela',
   },
   {
     reservation_id: 'r2',
@@ -70,6 +73,7 @@ const INITIAL_RESERVATIONS: UpcomingReservation[] = [
     status: 'confirmed',
     customer_tier: 'regular',
     visit_count: 6,
+    avg_spend: 72,
     is_regular: true,
   },
   {
@@ -85,6 +89,8 @@ const INITIAL_RESERVATIONS: UpcomingReservation[] = [
     status: 'confirmed',
     customer_tier: 'occasional',
     visit_count: 3,
+    avg_spend: 110,
+    special_occasion: 'Aniversario',
   },
   {
     reservation_id: 'r4',
@@ -110,6 +116,7 @@ const INITIAL_RESERVATIONS: UpcomingReservation[] = [
     status: 'confirmed',
     customer_tier: 'vip',
     visit_count: 22,
+    avg_spend: 88,
     is_regular: true,
   },
   {

@@ -44,45 +44,50 @@ export default function CustomerProfileDrawer({ reservation, onClose }: Customer
   const phone = reservation?.customer_phone;
 
   // Fetch guest context (memories)
+  const authToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  const hasAuth = !!authToken;
+
+  // Fetch guest context (memories) — only when authenticated
   const { data: guestCtx } = useQuery<GuestContext>({
     queryKey: ['guest-context', phone],
     queryFn: async () => {
-      const token = localStorage.getItem('auth_token');
       const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
       const res = await fetch(`${apiBase}/guest-context?phone=${encodeURIComponent(phone!)}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${authToken}` },
       });
+      if (!res.ok) return null;
       return res.json();
     },
-    enabled: !!phone && isOpen,
+    enabled: !!phone && isOpen && hasAuth,
     staleTime: 60_000,
   });
 
-  // Fetch LTV data
+  // Fetch LTV data — only when authenticated
   const { data: ltvData } = useQuery<LtvData>({
     queryKey: ['customer-ltv', phone],
     queryFn: async () => {
-      const token = localStorage.getItem('auth_token');
       const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
       const res = await fetch(`${apiBase}/ltv?action=get&customer_id=${encodeURIComponent(phone!)}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${authToken}` },
       });
+      if (!res.ok) return null;
       const data = await res.json();
       return data.customer || data;
     },
-    enabled: !!phone && isOpen,
+    enabled: !!phone && isOpen && hasAuth,
     staleTime: 60_000,
   });
 
   if (!reservation) return null;
 
+  // Use reservation-level data (works in demo), fall back to API data (works in production)
   const tier = reservation.customer_tier || ltvData?.customer_tier || 'new';
   const visits = reservation.visit_count || ltvData?.total_visits || 0;
-  const avgSpend = ltvData?.avg_revenue_per_visit;
-  const totalRevenue = ltvData?.total_revenue;
-  const churnRisk = ltvData?.churn_risk_score;
+  const avgSpend = reservation.avg_spend || ltvData?.avg_revenue_per_visit;
+  const totalRevenue = ltvData?.total_revenue || (avgSpend && visits ? Math.round(avgSpend * visits) : undefined);
+  const churnRisk = ltvData?.churn_risk_score ?? (tier === 'vip' ? 5 : tier === 'regular' ? 15 : tier === 'occasional' ? 40 : undefined);
   const firstVisit = ltvData?.first_visit_date;
-  const favTime = ltvData?.favorite_time_slot;
+  const favTime = ltvData?.favorite_time_slot || (reservation.time ? reservation.time.split(':')[0] + ':00' : undefined);
   const favDay = ltvData?.favorite_day;
 
   const memories = guestCtx?.memories || [];
