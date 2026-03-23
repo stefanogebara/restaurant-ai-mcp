@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -38,13 +37,6 @@ interface LtvData {
   avg_days_between_visits: number;
 }
 
-const TIER_COLORS: Record<string, string> = {
-  vip: 'text-amber-700',
-  regular: 'text-emerald-700',
-  occasional: 'text-stone-600',
-  new: 'text-blue-600',
-  at_risk: 'text-red-600',
-};
 
 export default function CustomerProfileDrawer({ reservation, onClose }: CustomerProfileDrawerProps) {
   const { t } = useTranslation();

@@ -312,7 +312,7 @@ export default function Dashboard() {
               avgSpendPerCover={avgSpendPerCover}
               byPartySize={revenueStats?.by_party_size}
               isLoading={isLoading}
-              language={i18n.language as 'en' | 'es' | 'pt-BR'}
+              language={i18n.language === 'es' ? 'es' : 'en'}
             />
           </section>
 
@@ -417,7 +417,7 @@ export default function Dashboard() {
             setInterventionReservation(null);
             refetch();
           }}
-          language={i18n.language as 'en' | 'es' | 'pt-BR'}
+          language={i18n.language === 'es' ? 'es' : 'en'}
         />
       )}
 
