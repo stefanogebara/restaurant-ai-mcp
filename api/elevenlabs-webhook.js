@@ -533,54 +533,55 @@ async function handleIdentifyRestaurant(req, res) {
         .eq('is_active', true)
         .eq('onboarding_completed', true);
 
-      // Fuzzy match with STT-aware scoring (speech-to-text merges/mangles words)
+      // Fuzzy match with STT-aware scoring
       let bestMatch = null;
       let bestScore = 0;
 
-      // Levenshtein distance for fuzzy comparison
-      const levenshtein = (a, b) => {
-        const m = a.length, n = b.length;
-        const dp = Array.from({ length: m + 1 }, (_, i) => [i]);
-        for (let j = 0; j <= n; j++) dp[0][j] = j;
-        for (let i = 1; i <= m; i++)
-          for (let j = 1; j <= n; j++)
-            dp[i][j] = Math.min(dp[i-1][j] + 1, dp[i][j-1] + 1, dp[i-1][j-1] + (a[i-1] !== b[j-1] ? 1 : 0));
-        return dp[m][n];
-      };
-
       if (restaurants) {
-        const norm = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '').toLowerCase();
-        const searchNorm = norm(searchName);
+        // Strip accents, spaces, punctuation, & for comparison
+        const strip = (s) => {
+          let r = '';
+          for (const c of (s || '').toLowerCase()) {
+            if (c >= 'a' && c <= 'z') r += c;
+            else if (c >= '0' && c <= '9') r += c;
+          }
+          return r;
+        };
+        const sStrip = strip(searchName);
 
         for (const r of restaurants) {
           const rName = (r.restaurant_name || '').toLowerCase();
-          const rNorm = norm(r.restaurant_name || '');
+          const rStrip = strip(r.restaurant_name);
           let score = 0;
 
-          // Exact or normalized exact
-          if (rName === searchName || rNorm === searchNorm) { score = 100; }
-          // Contains (either direction)
-          else if (rNorm.includes(searchNorm) || searchNorm.includes(rNorm)) { score = 85; }
+          // Exact
+          if (rStrip === sStrip) { score = 100; }
+          // Contains
+          else if (rStrip.includes(sStrip) || sStrip.includes(rStrip)) { score = 85; }
           else {
-            // Levenshtein similarity on normalized strings
-            const dist = levenshtein(searchNorm, rNorm);
-            const maxLen = Math.max(searchNorm.length, rNorm.length);
-            const similarity = 1 - (dist / maxLen);
-            if (similarity > 0.6) { score = Math.round(similarity * 80); }
+            // Count matching characters in order (LCS-like)
+            let j = 0;
+            let matched = 0;
+            for (const c of sStrip) {
+              const idx = rStrip.indexOf(c, j);
+              if (idx >= 0) { matched++; j = idx + 1; }
+            }
+            const sim = matched / Math.max(sStrip.length, rStrip.length);
+            if (sim > 0.65) { score = Math.round(sim * 80); }
           }
 
-          // Partial word match as fallback
+          // Word overlap fallback
           if (score === 0) {
-            const searchWords = searchName.split(/\s+/);
-            if (searchWords.some(w => w.length > 3 && rName.includes(w))) { score = 45; }
+            const words = searchName.toLowerCase().split(/[\s&,]+/);
+            for (const w of words) {
+              if (w.length > 3 && rName.includes(w)) { score = 45; break; }
+            }
           }
 
-          if (score > bestScore) {
-            bestScore = score;
-            bestMatch = r;
-          }
+          if (score > bestScore) { bestScore = score; bestMatch = r; }
         }
         if (bestScore < 40) bestMatch = null;
+        logger.info('Restaurant search:', { query: searchName, match: bestMatch?.restaurant_name, score: bestScore });
       }
       if (bestMatch) {
         return res.status(200).json({
