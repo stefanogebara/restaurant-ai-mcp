@@ -214,6 +214,32 @@ const TEMPLATES = {
       `Tel: ${phone}\n` +
       `Ref: ${reservationId}`,
   },
+
+  // ============================================================
+  // Voice Note Templates (spoken by TTS, keep natural & concise)
+  // ============================================================
+
+  voice_note_confirmation: {
+    en: ({ name, restaurant, partySize, date, time }) =>
+      `Hi ${name}! Your reservation at ${restaurant} for ${partySize} guests on ${date} at ${time} is confirmed. See you there!`,
+
+    es: ({ name, restaurant, partySize, date, time }) =>
+      `Hola ${name}! Confirmada tu reserva en ${restaurant} para ${partySize} personas, dia ${date} a las ${time}. Te esperamos!`,
+
+    pt: ({ name, restaurant, partySize, date, time }) =>
+      `Oi ${name}! Confirmada sua reserva no ${restaurant} pra ${partySize} pessoas, dia ${date} as ${time}. Te esperamos!`,
+  },
+
+  voice_note_reminder: {
+    en: ({ name, restaurant, time }) =>
+      `Hi ${name}, just a reminder that your reservation at ${restaurant} is today at ${time}! See you soon!`,
+
+    es: ({ name, restaurant, time }) =>
+      `Hola ${name}, recordando que tu reserva en ${restaurant} es hoy a las ${time}. Hasta pronto!`,
+
+    pt: ({ name, restaurant, time }) =>
+      `Oi ${name}, lembrando que sua reserva no ${restaurant} e hoje as ${time}! Ate logo!`,
+  },
 };
 
 // ============================================================

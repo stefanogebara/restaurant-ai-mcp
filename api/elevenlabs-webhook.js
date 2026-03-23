@@ -27,6 +27,7 @@ const { getRestaurantClient } = require('./_lib/multi-tenant-supabase');
 const { supabaseAdmin } = require('./_lib/supabase');
 const { getSessionByPhone } = require('./_lib/whatsapp-sessions');
 const { createSecureLogger } = require('./_lib/secure-logger');
+const { sendConfirmationVoiceNote } = require('./services/whatsapp/voice-note-trigger');
 
 const logger = createSecureLogger('ElevenLabs');
 
@@ -416,6 +417,21 @@ async function handleCreateReservation(req, res) {
         if (restaurant?.id) {
           trackUsage(restaurant.id, 'ai_call_completed');
         }
+      }
+
+      // Fire-and-forget: send voice note confirmation to customer
+      if (customer_phone && restaurant?.id) {
+        sendConfirmationVoiceNote({
+          restaurantId: restaurant.id,
+          customerPhone: customer_phone,
+          customerName: customer_name,
+          partySize: party_size,
+          date,
+          time,
+          restaurantName,
+          voiceId: restaurant.voice_id,
+          language: restaurant.language,
+        }).catch(err => logger.warn('Voice note confirmation failed (non-blocking)', { error: err.message }));
       }
     } else {
       // Log failure

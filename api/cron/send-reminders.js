@@ -13,6 +13,7 @@ const { createSecureLogger } = require('../_lib/secure-logger');
 const { initSentry, captureMessage } = require('../_lib/sentry');
 const { logCronRun } = require('../_lib/cron-tracker');
 const { getLocalDate } = require('../_lib/timezone');
+const { sendReminderVoiceNote } = require('../services/whatsapp/voice-note-trigger');
 initSentry();
 const logger = createSecureLogger('CronReminders');
 
@@ -134,11 +135,12 @@ module.exports = async (req, res) => {
 
     logger.info(` Found ${reservations?.length || 0} confirmed reservations for today`);
 
-    // Batch-fetch restaurant names for all tenant restaurant_ids present in today's reservations
+    // Batch-fetch restaurant names + voice config for all tenant restaurant_ids
     const uniqueRestaurantIds = [...new Set(
       (reservations || []).map(r => r.restaurant_id).filter(Boolean)
     )];
     const restaurantNameMap = {};
+    const restaurantVoiceMap = {}; // { id: { voice_id, language } }
     if (uniqueRestaurantIds.length > 0) {
       const { data: restaurantInfoRows, error: restaurantError } = await supabaseAdmin
         .schema('restaurant')
@@ -150,6 +152,22 @@ module.exports = async (req, res) => {
       }
       for (const row of (restaurantInfoRows || [])) {
         restaurantNameMap[row.id] = row.restaurant_name;
+      }
+
+      // Fetch voice config for voice note reminders
+      const { data: configRows, error: configError } = await supabaseAdmin
+        .schema('restaurant')
+        .from('restaurant_config')
+        .select('id, voice_id, ai_config')
+        .in('id', uniqueRestaurantIds);
+      if (configError) {
+        logger.warn('Error fetching restaurant voice config:', configError);
+      }
+      for (const row of (configRows || [])) {
+        restaurantVoiceMap[row.id] = {
+          voice_id: row.voice_id,
+          language: row.ai_config?.language || 'en',
+        };
       }
     }
 
@@ -224,6 +242,23 @@ module.exports = async (req, res) => {
           status: 'sent',
           messageId: sendResult.messageId
         });
+
+        // Fire-and-forget: also send a voice note reminder if voice is configured
+        const voiceConfig = restaurantVoiceMap[restaurant_id];
+        if (voiceConfig?.voice_id) {
+          sendReminderVoiceNote({
+            restaurantId: restaurant_id,
+            customerPhone: customer_phone,
+            customerName: customer_name,
+            time: formattedTime,
+            restaurantName,
+            voiceId: voiceConfig.voice_id,
+            language: voiceConfig.language,
+          }).catch(err => logger.warn('Voice note reminder failed (non-blocking)', {
+            reservation_id,
+            error: err.message,
+          }));
+        }
       } else {
         logger.error(`Failed to send reminder to ${customer_name}:`, sendResult.error);
         results.failed++;

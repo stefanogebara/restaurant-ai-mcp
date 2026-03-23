@@ -194,9 +194,9 @@ describe('getTemplate - edge cases', () => {
 });
 
 describe('getTemplateNames', () => {
-  test('returns array of all 9 template names', () => {
+  test('returns array of all 11 template names', () => {
     const names = getTemplateNames();
-    expect(names).toHaveLength(9);
+    expect(names).toHaveLength(11);
     expect(names).toContain('reservation_confirmed');
     expect(names).toContain('reservation_modified');
     expect(names).toContain('reservation_cancelled');
@@ -205,6 +205,8 @@ describe('getTemplateNames', () => {
     expect(names).toContain('waitlist_added');
     expect(names).toContain('table_ready');
     expect(names).toContain('new_booking_alert');
+    expect(names).toContain('voice_note_confirmation');
+    expect(names).toContain('voice_note_reminder');
   });
 });
 
