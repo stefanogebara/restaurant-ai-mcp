@@ -26,9 +26,12 @@ const crypto = require('crypto');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { supabaseAdmin } = require('./_lib/supabase');
-const { getAI, AI_MODEL } = require('./_lib/ai-client');
+const { getAI } = require('./_lib/ai-client');
 
 const logger = createSecureLogger('demo-conversation');
+
+// Use DeepSeek for demo conversations — 37x cheaper than Sonnet, great PT-BR quality
+const DEMO_MODEL = process.env.DEMO_CONVERSATION_MODEL || 'deepseek/deepseek-chat-v3.1';
 
 // ─── In-memory session store (30min TTL) ────────────────────────────────────
 
@@ -147,10 +150,10 @@ ${painBlock || '  No critical issues detected'}
 // ─── Real OpenRouter SSE streaming ──────────────────────────────────────────
 
 async function streamCompletion(systemPrompt, messages, onToken) {
-  // Use getAI() which is already proven in production (manager-agent.js)
+  // Use DeepSeek for demo — 37x cheaper than Sonnet, great PT-BR quality
   const ai = getAI();
   const stream = ai.messages.stream({
-    model: AI_MODEL,
+    model: DEMO_MODEL,
     max_tokens: 400,
     system: systemPrompt,
     messages,
