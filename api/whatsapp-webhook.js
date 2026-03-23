@@ -122,7 +122,14 @@ async function handlePost(req, res) {
     });
 
     // Check if this is a message event
+    // When ElevenLabs WhatsApp is enabled, they handle inbound messages.
+    // Our webhook only processes status updates (delivery receipts, campaign tracking).
     if (value?.messages) {
+      const elevenLabsWhatsApp = process.env.ELEVENLABS_WHATSAPP_ENABLED === 'true';
+      if (elevenLabsWhatsApp) {
+        logger.info('ElevenLabs WhatsApp active — skipping message handling (ElevenLabs handles it)');
+        return res.status(200).json({ status: 'ok', handler: 'elevenlabs' });
+      }
       return await handleIncomingMessage(value.messages[0], res);
     }
 
