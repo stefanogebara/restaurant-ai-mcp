@@ -533,38 +533,46 @@ async function handleIdentifyRestaurant(req, res) {
         .eq('is_active', true)
         .eq('onboarding_completed', true);
 
-      // Fuzzy match with STT-aware scoring (speech-to-text often merges/mangles words)
+      // Fuzzy match with STT-aware scoring (speech-to-text merges/mangles words)
       let bestMatch = null;
       let bestScore = 0;
+
+      // Levenshtein distance for fuzzy comparison
+      const levenshtein = (a, b) => {
+        const m = a.length, n = b.length;
+        const dp = Array.from({ length: m + 1 }, (_, i) => [i]);
+        for (let j = 0; j <= n; j++) dp[0][j] = j;
+        for (let i = 1; i <= m; i++)
+          for (let j = 1; j <= n; j++)
+            dp[i][j] = Math.min(dp[i-1][j] + 1, dp[i][j-1] + 1, dp[i-1][j-1] + (a[i-1] !== b[j-1] ? 1 : 0));
+        return dp[m][n];
+      };
+
       if (restaurants) {
-        // Normalize: remove accents, special chars, spaces for comparison
-        const normalize = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '').toLowerCase();
-        const searchNorm = normalize(searchName);
+        const norm = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '').toLowerCase();
+        const searchNorm = norm(searchName);
 
         for (const r of restaurants) {
           const rName = (r.restaurant_name || '').toLowerCase();
-          const rNorm = normalize(r.restaurant_name || '');
+          const rNorm = norm(r.restaurant_name || '');
           let score = 0;
 
-          // Exact match
-          if (rName === searchName) { score = 100; }
-          // Normalized exact (ignores accents, spaces, &)
-          else if (rNorm === searchNorm) { score = 95; }
+          // Exact or normalized exact
+          if (rName === searchName || rNorm === searchNorm) { score = 100; }
           // Contains (either direction)
-          else if (rName.includes(searchName) || searchName.includes(rName)) { score = 80; }
-          // Normalized contains (handles "brasialma" matching "brasaalma")
-          else if (rNorm.includes(searchNorm) || searchNorm.includes(rNorm)) { score = 75; }
-          // Substring match (at least 60% of chars overlap)
+          else if (rNorm.includes(searchNorm) || searchNorm.includes(rNorm)) { score = 85; }
           else {
-            const overlap = [...searchNorm].filter((c, i) => rNorm[i] === c).length;
-            const ratio = overlap / Math.max(searchNorm.length, rNorm.length);
-            if (ratio > 0.6) { score = Math.round(ratio * 70); }
+            // Levenshtein similarity on normalized strings
+            const dist = levenshtein(searchNorm, rNorm);
+            const maxLen = Math.max(searchNorm.length, rNorm.length);
+            const similarity = 1 - (dist / maxLen);
+            if (similarity > 0.6) { score = Math.round(similarity * 80); }
           }
 
           // Partial word match as fallback
           if (score === 0) {
             const searchWords = searchName.split(/\s+/);
-            if (searchWords.some(w => w.length > 2 && rName.includes(w))) { score = 50; }
+            if (searchWords.some(w => w.length > 3 && rName.includes(w))) { score = 45; }
           }
 
           if (score > bestScore) {
@@ -572,7 +580,6 @@ async function handleIdentifyRestaurant(req, res) {
             bestMatch = r;
           }
         }
-        // Only accept matches with reasonable confidence
         if (bestScore < 40) bestMatch = null;
       }
       if (bestMatch) {
