@@ -533,27 +533,47 @@ async function handleIdentifyRestaurant(req, res) {
         .eq('is_active', true)
         .eq('onboarding_completed', true);
 
-      // Fuzzy match: find best match by checking if search term is contained in name
+      // Fuzzy match with STT-aware scoring (speech-to-text often merges/mangles words)
       let bestMatch = null;
+      let bestScore = 0;
       if (restaurants) {
+        // Normalize: remove accents, special chars, spaces for comparison
+        const normalize = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '').toLowerCase();
+        const searchNorm = normalize(searchName);
+
         for (const r of restaurants) {
           const rName = (r.restaurant_name || '').toLowerCase();
-          if (rName === searchName || rName.includes(searchName) || searchName.includes(rName)) {
+          const rNorm = normalize(r.restaurant_name || '');
+          let score = 0;
+
+          // Exact match
+          if (rName === searchName) { score = 100; }
+          // Normalized exact (ignores accents, spaces, &)
+          else if (rNorm === searchNorm) { score = 95; }
+          // Contains (either direction)
+          else if (rName.includes(searchName) || searchName.includes(rName)) { score = 80; }
+          // Normalized contains (handles "brasialma" matching "brasaalma")
+          else if (rNorm.includes(searchNorm) || searchNorm.includes(rNorm)) { score = 75; }
+          // Substring match (at least 60% of chars overlap)
+          else {
+            const overlap = [...searchNorm].filter((c, i) => rNorm[i] === c).length;
+            const ratio = overlap / Math.max(searchNorm.length, rNorm.length);
+            if (ratio > 0.6) { score = Math.round(ratio * 70); }
+          }
+
+          // Partial word match as fallback
+          if (score === 0) {
+            const searchWords = searchName.split(/\s+/);
+            if (searchWords.some(w => w.length > 2 && rName.includes(w))) { score = 50; }
+          }
+
+          if (score > bestScore) {
+            bestScore = score;
             bestMatch = r;
-            break;
           }
         }
-        // Try partial word match if no exact/contains match
-        if (!bestMatch) {
-          const searchWords = searchName.split(/\s+/);
-          for (const r of restaurants) {
-            const rName = (r.restaurant_name || '').toLowerCase();
-            if (searchWords.some(w => w.length > 2 && rName.includes(w))) {
-              bestMatch = r;
-              break;
-            }
-          }
-        }
+        // Only accept matches with reasonable confidence
+        if (bestScore < 40) bestMatch = null;
       }
       if (bestMatch) {
         return res.status(200).json({
