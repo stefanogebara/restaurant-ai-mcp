@@ -57,7 +57,7 @@ function TypeFx({ words, className = '' }: { words: string[]; className?: string
 // ─── Cycling words per language ─────────────────────────────────
 const TYPING_WORDS: Record<string, string[]> = {
   en: ['a reservation.', 'a WhatsApp message.', 'a phone call.', 'a walk-in question.'],
-  pt: ['uma reserva.', 'uma mensagem no WhatsApp.', 'uma ligacao.', 'uma pergunta de walk-in.'],
+  pt: ['uma reserva.', 'uma mensagem no WhatsApp.', 'uma ligação.', 'uma pergunta de walk-in.'],
   es: ['una reserva.', 'un mensaje de WhatsApp.', 'una llamada.', 'una pregunta de walk-in.'],
 };
 
