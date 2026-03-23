@@ -40,7 +40,7 @@ const labels = {
     insightStaffLabel: 'Equipe',
     insightWaitLabel: 'Fila de Espera',
     insightVipLabel: 'Alerta VIP',
-    powered: 'Powered by Seatable AI',
+    powered: 'Desenvolvido por Seatable AI',
   },
 } as const;
 

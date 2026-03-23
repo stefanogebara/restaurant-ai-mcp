@@ -171,7 +171,7 @@ export default function DemoSidebar({ lang, activeView = 'dashboard', onNavigate
             type="button"
             onClick={onToggleCollapse}
             className="p-2 hover:bg-white/5 rounded-lg text-stone-gray/60 hover:text-stone-gray transition-colors"
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={collapsed ? (lang === 'pt-BR' ? 'Expandir menu' : 'Expand sidebar') : (lang === 'pt-BR' ? 'Recolher menu' : 'Collapse sidebar')}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
               className={`transition-transform duration-300 ${collapsed ? 'rotate-180' : ''}`}>

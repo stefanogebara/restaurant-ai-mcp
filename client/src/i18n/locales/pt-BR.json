@@ -220,7 +220,7 @@
       "noUpcoming": "Sem reservas futuras para hoje",
       "noTomorrow": "Sem reservas amanhã",
       "aiHint": "Reservas do assistente de IA ou adicionadas manualmente aparecerão aqui",
-      "checkIn": "Check In",
+      "checkIn": "Confirmar",
       "seated": "Sentado",
       "takeAction": "Tomar Ação",
       "actionTaken": "Ação realizada",
@@ -1533,7 +1533,8 @@
       "title": "Estes são dados de exemplo",
       "subtitle": "Quer ver SEU restaurante aqui? Leva 30 segundos para configurar.",
       "cta": "Configurar meu restaurante",
-      "later": "Talvez depois"
+      "later": "Talvez depois",
+      "share": "Compartilhar com um amigo"
     },
     "faq": {
       "label": "Perguntas Frequentes",
@@ -1785,7 +1786,9 @@
     },
     "share": {
       "heading": "Conhece outro dono de restaurante?",
+      "subtitle": "Compartilhe o Seatable — eles vão agradecer.",
       "body": "Compartilhe o Seatable — eles vão agradecer.",
+      "message": "Conheça o Seatable — IA que atende ligações, WhatsApp e gerencia reservas para restaurantes. Teste a demo: {{url}}",
       "whatsapp": "Compartilhar via WhatsApp",
       "copyLink": "Copiar link",
       "copied": "Link copiado!"
