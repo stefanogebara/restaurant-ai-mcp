@@ -44,8 +44,9 @@ module.exports = async (req, res) => {
     <priority>${p.priority}</priority>
   </url>`).join('\n');
 
+  const excludedSlugPattern = /test|xss|pentest/i;
   const restaurantEntries = (restaurants || [])
-    .filter(r => r.slug && !r.slug.startsWith('demo-') && !r.slug.startsWith('test-') && !r.slug.startsWith('logverify-'))
+    .filter(r => r.slug && !r.slug.startsWith('demo-') && !r.slug.startsWith('logverify-') && !excludedSlugPattern.test(r.slug))
     .map(r => {
     const lastmod = r.updated_at ? r.updated_at.split('T')[0] : today;
     return `  <url>
@@ -67,10 +68,18 @@ module.exports = async (req, res) => {
     .not('city', 'is', null)
     .not('restaurant_type', 'is', null);
 
+  // Normalize city slugs (e.g. "São Paulo" variants → "sao-paulo")
+  const citySlugOverrides = { 'so-paulo': 'sao-paulo', 'sp': 'sao-paulo' };
+
   const seenPairs = new Set();
   const seoEntries = (seoPairs || [])
     .map((r) => {
-      const key = `${seoSlugify(r.city)}/${seoSlugify(r.restaurant_type)}`;
+      let citySlug = seoSlugify(r.city);
+      // Skip test cities
+      if (excludedSlugPattern.test(citySlug)) return null;
+      // Normalize known duplicates
+      if (citySlugOverrides[citySlug]) citySlug = citySlugOverrides[citySlug];
+      const key = `${citySlug}/${seoSlugify(r.restaurant_type)}`;
       if (seenPairs.has(key)) return null;
       seenPairs.add(key);
       return `  <url>

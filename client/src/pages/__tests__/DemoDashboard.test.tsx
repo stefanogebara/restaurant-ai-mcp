@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mock child components to keep tests focused on DemoDashboard logic
 vi.mock('../../components/dashboard/StatsBar', () => ({
@@ -30,12 +31,17 @@ vi.mock('../../components/demo/DemoAIInsightsBar', () => ({
 }));
 
 function renderDemoDashboard() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   return render(
-    <MemoryRouter initialEntries={['/demo']}>
-      <Routes>
-        <Route path="/demo" element={<DemoDashboard />} />
-      </Routes>
-    </MemoryRouter>,
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={['/demo']}>
+        <Routes>
+          <Route path="/demo" element={<DemoDashboard />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 

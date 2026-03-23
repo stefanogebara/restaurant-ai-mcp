@@ -24,14 +24,17 @@ vi.mock('../../../services/api', () => ({
   hostAPI: { modifyReservation: vi.fn() },
 }));
 
+// Use a future date to avoid HTML5 min-date validation blocking form submit
+const futureDate = new Date(Date.now() + 7 * 86_400_000).toISOString().split('T')[0];
+
 const reservation: UpcomingReservation = {
   reservation_id: 'res-123',
   customer_name: 'Alice Smith',
   customer_phone: '+1 555-0001',
   party_size: 4,
-  date: '2026-03-20',
+  date: futureDate,
   time: '19:30',
-  reservation_time: '2026-03-20T19:30:00Z',
+  reservation_time: `${futureDate}T19:30:00Z`,
   checked_in: false,
   special_requests: 'Window seat',
 };
@@ -74,7 +77,7 @@ describe('EditReservationModal', () => {
     render(<EditReservationModal {...defaultProps} />);
     const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
     const timeInput = document.querySelector('input[type="time"]') as HTMLInputElement;
-    expect(dateInput.value).toBe('2026-03-20');
+    expect(dateInput.value).toBe(futureDate);
     expect(timeInput.value).toBe('19:30');
   });
 
