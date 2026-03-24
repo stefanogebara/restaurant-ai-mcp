@@ -521,7 +521,7 @@ async function handleModifyReservation(req, res) {
 
 async function handleCancelReservation(req, res) {
   const data = req.method === 'POST' ? req.body : req.query;
-  const { reservation_id } = data;
+  const reservation_id = data.reservation_id || data.id;
   let restaurant = req.restaurant || {};
   if (!restaurant.id && data.restaurant_id) {
     restaurant = { id: data.restaurant_id };

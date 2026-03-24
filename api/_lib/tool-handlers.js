@@ -580,7 +580,7 @@ async function modifyReservation(restaurantId, { reservation_id, new_date, new_t
  * @returns {object} Cancellation result
  */
 async function cancelReservation(restaurantId, { reservation_id }) {
-  const { cancelReservation: dbCancelReservation } = require('./supabase');
+  const { cancelReservation: dbCancelReservation, findReservation } = require('./supabase');
 
   if (!reservation_id) {
     return {
@@ -591,7 +591,17 @@ async function cancelReservation(restaurantId, { reservation_id }) {
   }
 
   try {
-    const result = await dbCancelReservation(restaurantId, reservation_id);
+    // Try cancel with the given ID first
+    let result = await dbCancelReservation(restaurantId, reservation_id);
+
+    // If it failed and the ID looks like a UUID (not RES-xxx), try looking up by UUID
+    if (!result.success && !reservation_id.startsWith('RES-')) {
+      logger.info('Cancel failed with non-RES ID, trying UUID lookup', { id: reservation_id });
+      const lookup = await findReservation(restaurantId, { reservation_id });
+      if (lookup.success && lookup.reservation?.reservation_id) {
+        result = await dbCancelReservation(restaurantId, lookup.reservation.reservation_id);
+      }
+    }
 
     if (!result.success) {
       return {
