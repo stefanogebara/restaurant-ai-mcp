@@ -188,9 +188,8 @@ const findReservation = async (restaurantId, { reservation_id, customer_phone, c
     query = query.ilike('customer_name', `%${sanitizeSearchQuery(customer_name)}%`);
   }
 
-  // Prefer confirmed/upcoming reservations over past/cancelled/no-show
+  // Get recent reservations, ordered by date descending
   const { data, error } = await query
-    .in('status', ['confirmed', 'pending', 'no-show', 'cancelled'])
     .order('date', { ascending: false })
     .limit(10);
 
