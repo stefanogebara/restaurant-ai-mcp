@@ -14,12 +14,15 @@ const DURATION_FRAMES = 10 * FPS; // 10s total
 const COMP_WIDTH = 900;
 const COMP_HEIGHT = 500;
 
-const BG_GRADIENT_FROM = '#13121a';
-const BG_GRADIENT_TO = '#1a1a2e';
+const BG_GRADIENT_FROM = '#fafaf9';
+const BG_GRADIENT_TO = '#f5f5f4';
 const BURGUNDY = '#9F1239';
 const BURGUNDY_LIGHT = '#be123c';
-const GLASS_BG = 'rgba(255,255,255,0.06)';
-const GLASS_BORDER = 'rgba(255,255,255,0.1)';
+const GLASS_BG = 'rgba(0,0,0,0.03)';
+const GLASS_BORDER = 'rgba(0,0,0,0.08)';
+const TEXT_PRIMARY = '#1c1917';
+const TEXT_SECONDARY = 'rgba(0,0,0,0.5)';
+const TEXT_MUTED = 'rgba(0,0,0,0.35)';
 
 // ─── Helpers ─────────────────────────────────────────────────────
 function fadeIn(frame: number, start: number, duration = 10): number {
@@ -60,8 +63,9 @@ function Scene1() {
           width: 280,
           height: 420,
           borderRadius: 32,
-          border: '3px solid rgba(255,255,255,0.15)',
-          background: 'rgba(0,0,0,0.5)',
+          border: '3px solid rgba(0,0,0,0.1)',
+          background: '#ffffff',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
@@ -73,7 +77,7 @@ function Scene1() {
           style={{
             width: 100,
             height: 24,
-            background: '#000',
+            background: '#1c1917',
             borderRadius: '0 0 16px 16px',
             margin: '0 auto',
           }}
@@ -85,7 +89,7 @@ function Scene1() {
             display: 'flex',
             alignItems: 'center',
             gap: 8,
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
+            borderBottom: '1px solid rgba(0,0,0,0.06)',
           }}
         >
           <div
@@ -98,15 +102,15 @@ function Scene1() {
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: 14,
-              color: '#fff',
+              color: TEXT_PRIMARY,
               fontWeight: 700,
             }}
           >
             S
           </div>
           <div>
-            <div style={{ color: '#fff', fontSize: 12, fontWeight: 600 }}>Brasa & Alma</div>
-            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9 }}>Seatable AI</div>
+            <div style={{ color: TEXT_PRIMARY, fontSize: 12, fontWeight: 600 }}>Brasa & Alma</div>
+            <div style={{ color: TEXT_SECONDARY, fontSize: 9 }}>Seatable AI</div>
           </div>
         </div>
         {/* Messages */}
@@ -137,8 +141,8 @@ function Scene1() {
                   style={{
                     padding: '7px 10px',
                     borderRadius: msg.fromUser ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
-                    background: msg.fromUser ? '#005c4b' : 'rgba(255,255,255,0.1)',
-                    color: '#fff',
+                    background: msg.fromUser ? '#dcf8c6' : '#f0f0f0',
+                    color: TEXT_PRIMARY,
                     fontSize: 11,
                     lineHeight: 1.4,
                   }}
@@ -165,7 +169,7 @@ function Scene1() {
           bottom: 40,
           left: '50%',
           transform: 'translateX(-50%)',
-          color: 'rgba(255,255,255,0.4)',
+          color: TEXT_MUTED,
           fontSize: 12,
           letterSpacing: 2,
           textTransform: 'uppercase',
@@ -221,8 +225,8 @@ function Scene2() {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ color: '#fff', fontSize: 16, fontWeight: 600 }}>Maria Silva</div>
-              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 2 }}>
+              <div style={{ color: TEXT_PRIMARY, fontSize: 16, fontWeight: 600 }}>Maria Silva</div>
+              <div style={{ color: TEXT_SECONDARY, fontSize: 12, marginTop: 2 }}>
                 4 pessoas &middot; 20:00 &middot; Amanha
               </div>
             </div>
@@ -274,8 +278,8 @@ function Scene2() {
             <WaveformIcon frame={frame} />
           </div>
           <div>
-            <div style={{ color: '#fff', fontSize: 12, fontWeight: 600 }}>AI Ativa</div>
-            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>Pronta para atender</div>
+            <div style={{ color: TEXT_PRIMARY, fontSize: 12, fontWeight: 600 }}>AI Ativa</div>
+            <div style={{ color: TEXT_MUTED, fontSize: 10 }}>Pronta para atender</div>
           </div>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 2, alignItems: 'flex-end', height: 20 }}>
             <WaveformBars frame={frame} />
@@ -290,7 +294,7 @@ function Scene2() {
           bottom: 40,
           left: '50%',
           transform: 'translateX(-50%)',
-          color: 'rgba(255,255,255,0.4)',
+          color: TEXT_MUTED,
           fontSize: 12,
           letterSpacing: 2,
           textTransform: 'uppercase',
@@ -314,7 +318,7 @@ function StatCard({ label, value, color }: { label: string; value: number; color
         padding: '14px 16px',
       }}
     >
-      <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 }}>
+      <div style={{ color: TEXT_SECONDARY, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 }}>
         {label}
       </div>
       <div style={{ color, fontSize: 28, fontWeight: 700, marginTop: 4, fontFamily: 'JetBrains Mono, monospace' }}>
@@ -418,11 +422,11 @@ function Scene3() {
             <div style={{ flex: 1, display: 'flex', gap: 2, alignItems: 'center', height: 32 }}>
               <VoiceNoteWaveform frame={frame} />
             </div>
-            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, flexShrink: 0 }}>0:08</div>
+            <div style={{ color: TEXT_MUTED, fontSize: 11, flexShrink: 0 }}>0:08</div>
           </div>
 
           {/* Transcription text */}
-          <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, lineHeight: 1.6, fontStyle: 'italic' }}>
+          <div style={{ color: TEXT_SECONDARY, fontSize: 13, lineHeight: 1.6, fontStyle: 'italic' }}>
             &quot;Oi Maria! Confirmada sua reserva para amanha as 20h, mesa para 4 no Brasa & Alma. Ate la!&quot;
           </div>
 
@@ -450,7 +454,7 @@ function Scene3() {
           bottom: 40,
           left: '50%',
           transform: 'translateX(-50%)',
-          color: 'rgba(255,255,255,0.4)',
+          color: TEXT_MUTED,
           fontSize: 12,
           letterSpacing: 2,
           textTransform: 'uppercase',
@@ -518,7 +522,7 @@ function Scene4() {
           style={{
             fontSize: 40,
             fontWeight: 700,
-            color: '#fff',
+            color: TEXT_PRIMARY,
             letterSpacing: -1,
             fontFamily: 'Inter, system-ui, sans-serif',
           }}
@@ -528,7 +532,7 @@ function Scene4() {
       </div>
       <div
         style={{
-          color: 'rgba(255,255,255,0.4)',
+          color: TEXT_MUTED,
           fontSize: 14,
           opacity: fadeIn(frame, 20, 15),
           letterSpacing: 1,

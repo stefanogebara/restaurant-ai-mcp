@@ -8,6 +8,7 @@ import HeroSection from '../components/HeroSection';
 import PresetDemoSection from '../components/PresetDemoSection';
 import WhatsAppWidgetSection from '../components/WhatsAppWidgetSection';
 import BeforeAfterSection from '../components/BeforeAfterSection';
+import HeroAnimation from '../components/HeroAnimation';
 import DashboardWalkthroughSection from '../components/DashboardWalkthroughSection';
 import PricingSection from '../components/PricingSection';
 import SharePrompt from '../components/SharePrompt';
@@ -76,7 +77,14 @@ export default function LandingPage() {
       {/* 3. Text our AI — WhatsApp widget with real number */}
       <WhatsAppWidgetSection />
 
-      {/* 4. Dashboard Walkthrough — animated "silent movie" of AI features */}
+      {/* 4. See Seatable in action — Remotion animation showcase */}
+      <section className="py-20 px-6 sm:px-16">
+        <div className="max-w-[1000px] mx-auto text-center">
+          <HeroAnimation />
+        </div>
+      </section>
+
+      {/* 5. Dashboard Walkthrough — animated "silent movie" of AI features */}
       <DashboardWalkthroughSection />
 
       {/* 6. Before/After — animated side-by-side visual demo */}

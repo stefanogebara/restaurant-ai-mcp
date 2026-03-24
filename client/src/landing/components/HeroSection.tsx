@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { trackCtaClicked, trackHeadlineVariantViewed } from '../../lib/analytics';
-import HeroAnimation from './HeroAnimation';
+import HeroSplitScreen from './HeroSplitScreen';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
@@ -128,7 +128,7 @@ export default function HeroSection() {
 
       {/* Split-screen animation */}
       <div className="mt-16 px-0 sm:px-4">
-        <HeroAnimation />
+        <HeroSplitScreen />
       </div>
     </section>
   );
