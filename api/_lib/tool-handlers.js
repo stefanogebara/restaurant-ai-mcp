@@ -429,11 +429,34 @@ async function lookupReservation(restaurantId, { phone, name, reservation_id }) 
   }
 
   try {
-    const result = await findReservation(restaurantId, {
+    // Normalize phone: strip spaces, dashes, parens. Try with and without country code.
+    const normalizePhone = (p) => p ? p.replace(/[\s\-\(\)]/g, '') : undefined;
+    const phoneNorm = normalizePhone(phone);
+
+    // Try multiple lookup strategies: reservation_id > phone > name > phone variants
+    let result = await findReservation(restaurantId, {
       reservation_id: reservation_id || undefined,
-      customer_phone: !reservation_id ? phone : undefined,
-      customer_name: !reservation_id && !phone ? name : undefined
+      customer_phone: !reservation_id ? phoneNorm : undefined,
+      customer_name: !reservation_id && !phoneNorm ? name : undefined
     });
+
+    // If phone lookup failed, try with +country code variants
+    if (!result.success && phoneNorm && !reservation_id) {
+      const variants = [
+        phoneNorm.startsWith('+') ? phoneNorm.slice(1) : '+' + phoneNorm,
+        phoneNorm.startsWith('+55') ? phoneNorm.slice(3) : '+55' + phoneNorm,
+        phoneNorm.length > 10 ? phoneNorm.slice(-11) : phoneNorm, // last 11 digits
+      ];
+      for (const variant of variants) {
+        result = await findReservation(restaurantId, { customer_phone: variant });
+        if (result.success) break;
+      }
+    }
+
+    // If phone lookup still failed, try by name as fallback
+    if (!result.success && name && !reservation_id) {
+      result = await findReservation(restaurantId, { customer_name: name });
+    }
 
     if (!result.success) {
       return {
