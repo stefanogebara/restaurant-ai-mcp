@@ -7,7 +7,6 @@ import LandingNav from '../components/LandingNav';
 import HeroSection from '../components/HeroSection';
 import PresetDemoSection from '../components/PresetDemoSection';
 import WhatsAppWidgetSection from '../components/WhatsAppWidgetSection';
-import VoiceWidgetSection from '../components/VoiceWidgetSection';
 import BeforeAfterSection from '../components/BeforeAfterSection';
 import DashboardWalkthroughSection from '../components/DashboardWalkthroughSection';
 import PricingSection from '../components/PricingSection';
@@ -77,10 +76,7 @@ export default function LandingPage() {
       {/* 3. Text our AI — WhatsApp widget with real number */}
       <WhatsAppWidgetSection />
 
-      {/* 4. Call our AI — ElevenLabs voice agent */}
-      <VoiceWidgetSection />
-
-      {/* 5. Dashboard Walkthrough — animated "silent movie" of AI features */}
+      {/* 4. Dashboard Walkthrough — animated "silent movie" of AI features */}
       <DashboardWalkthroughSection />
 
       {/* 6. Before/After — animated side-by-side visual demo */}
