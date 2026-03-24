@@ -207,11 +207,22 @@ const findReservation = async (restaurantId, { reservation_id, customer_phone, c
       if (reservation_id) query = query.eq('reservation_id', reservation_id);
       else if (customer_phone) query = query.eq('customer_phone', customer_phone);
       else if (customer_name) query = query.ilike('customer_name', `%${sanitizeSearchQuery(customer_name)}%`);
-      return query.limit(1).single();
+      return query.order('date', { ascending: false }).limit(10);
     }));
   } catch (err) {
     return { success: false, error: true, message: 'Reservation not found' };
   }
+
+  // Pick best match: confirmed > pending > others, most recent first
+  const statusPriority = { confirmed: 0, pending: 1, 'no-show': 2, cancelled: 3 };
+  const results = Array.isArray(data) ? data : (data ? [data] : []);
+  const sorted = results.sort((a, b) => {
+    const aPri = statusPriority[a.status] ?? 9;
+    const bPri = statusPriority[b.status] ?? 9;
+    if (aPri !== bPri) return aPri - bPri;
+    return new Date(b.date) - new Date(a.date);
+  });
+  data = sorted[0] || null;
 
   if (error || !data) {
     return {

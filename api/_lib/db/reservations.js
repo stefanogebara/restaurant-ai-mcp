@@ -188,7 +188,23 @@ const findReservation = async (restaurantId, { reservation_id, customer_phone, c
     query = query.ilike('customer_name', `%${sanitizeSearchQuery(customer_name)}%`);
   }
 
-  const { data, error } = await query.limit(1).single();
+  // Prefer confirmed/upcoming reservations over past/cancelled/no-show
+  const { data, error } = await query
+    .in('status', ['confirmed', 'pending', 'no-show', 'cancelled'])
+    .order('date', { ascending: false })
+    .limit(10);
+
+  // Pick the best match: confirmed > pending > others, most recent first
+  const statusPriority = { confirmed: 0, pending: 1, 'no-show': 2, cancelled: 3 };
+  const sorted = (data || []).sort((a, b) => {
+    const aPri = statusPriority[a.status] ?? 9;
+    const bPri = statusPriority[b.status] ?? 9;
+    if (aPri !== bPri) return aPri - bPri;
+    return new Date(b.date) - new Date(a.date);
+  });
+  const bestMatch = sorted[0];
+
+  if (error || !bestMatch) {
 
   if (error || !data) {
     return {
@@ -201,15 +217,15 @@ const findReservation = async (restaurantId, { reservation_id, customer_phone, c
   return {
     success: true,
     reservation: {
-      reservation_id: data.reservation_id,
-      customer_name: data.customer_name,
-      customer_phone: data.customer_phone,
-      customer_email: data.customer_email || '',
-      party_size: data.party_size,
-      reservation_time: `${data.date} ${data.time}`,
-      special_requests: data.special_requests || '',
-      status: data.status,
-      record_id: data.id
+      reservation_id: bestMatch.reservation_id,
+      customer_name: bestMatch.customer_name,
+      customer_phone: bestMatch.customer_phone,
+      customer_email: bestMatch.customer_email || '',
+      party_size: bestMatch.party_size,
+      reservation_time: `${bestMatch.date} ${bestMatch.time}`,
+      special_requests: bestMatch.special_requests || '',
+      status: bestMatch.status,
+      record_id: bestMatch.id
     }
   };
 };
