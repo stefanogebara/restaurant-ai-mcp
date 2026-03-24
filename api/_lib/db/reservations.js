@@ -204,8 +204,6 @@ const findReservation = async (restaurantId, { reservation_id, customer_phone, c
   const bestMatch = sorted[0];
 
   if (error || !bestMatch) {
-
-  if (error || !data) {
     return {
       success: false,
       error: true,
