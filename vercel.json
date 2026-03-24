@@ -198,7 +198,7 @@
     },
     {
       "path": "/api/cron/send-feedback",
-      "schedule": "*/30 * * * *"
+      "schedule": "0 * * * *"
     },
     {
       "path": "/api/cron/send-campaigns",
