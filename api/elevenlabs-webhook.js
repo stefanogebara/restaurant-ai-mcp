@@ -131,6 +131,9 @@ module.exports = async (req, res) => {
       'get_wait_time'
     ];
 
+    // Actions that query across all restaurants (no restaurant context needed)
+    const globalActions = ['get_customer_info'];
+
     // Actions that handle their own restaurant identification (multi-tenant mode)
     const multiTenantActions = ['identify_restaurant'];
 
@@ -247,7 +250,8 @@ module.exports = async (req, res) => {
         'modify_reservation',
         'cancel_reservation',
         'get_wait_time',
-        'get_current_datetime'
+        'get_current_datetime',
+        'get_customer_info'
       ];
       // Add multi-tenant actions if enabled
       if (MULTI_TENANT_MODE) {
@@ -290,6 +294,9 @@ module.exports = async (req, res) => {
       case 'identify_restaurant':
         return await handleIdentifyRestaurant(req, res);
 
+      case 'get_customer_info':
+        return await handleGetCustomerInfo(req, res);
+
       default:
         logger.warn(`Unknown action: ${action}`);
         const defaultAvailableActions = [
@@ -299,7 +306,8 @@ module.exports = async (req, res) => {
           'modify_reservation',
           'cancel_reservation',
           'get_wait_time',
-          'get_current_datetime'
+          'get_current_datetime',
+          'get_customer_info'
         ];
         if (MULTI_TENANT_MODE) {
           defaultAvailableActions.unshift('identify_restaurant');
@@ -535,6 +543,74 @@ async function handleGetWaitTime(req, res) {
   const restaurant = req.restaurant;
   const result = await toolHandlers.getWaitTime(restaurant.id);
   return res.status(200).json(result);
+}
+
+/**
+ * Handle customer info lookup by phone number.
+ * Searches reservations across all restaurants to identify returning customers.
+ */
+async function handleGetCustomerInfo(req, res) {
+  const data = req.method === 'POST' ? req.body : req.query;
+  const phone = data.phone;
+
+  if (!phone) {
+    return res.status(200).json({ known: false, message: 'No phone provided' });
+  }
+
+  try {
+    // Normalize: strip whitespace, dashes, parens, plus sign
+    const stripped = phone.replace(/[\s\-\(\)\+]/g, '');
+    const variants = [
+      phone,
+      stripped,
+      '+' + stripped,
+      '+55' + stripped,
+      stripped.slice(-11),
+      stripped.slice(-10),
+    ].filter(Boolean);
+
+    // Deduplicate variants
+    const uniqueVariants = [...new Set(variants)];
+
+    let reservations = [];
+    for (const variant of uniqueVariants) {
+      const { data: rows } = await supabaseAdmin
+        .from('reservations')
+        .select('customer_name, customer_phone, date, time, status, restaurant_id')
+        .eq('customer_phone', variant)
+        .order('date', { ascending: false })
+        .limit(5);
+
+      if (rows && rows.length > 0) {
+        reservations = rows;
+        break;
+      }
+    }
+
+    if (reservations.length === 0) {
+      logger.info('get_customer_info: No reservations found for phone', { phone });
+      return res.status(200).json({ known: false });
+    }
+
+    const name = reservations[0].customer_name;
+    const result = {
+      known: true,
+      customer_name: name,
+      phone,
+      reservation_count: reservations.length,
+      recent_reservations: reservations.slice(0, 3).map(r => ({
+        date: r.date,
+        time: r.time,
+        status: r.status
+      }))
+    };
+
+    logger.info('get_customer_info: Customer found', { name, count: reservations.length });
+    return res.status(200).json(result);
+  } catch (error) {
+    logger.error('get_customer_info error:', error);
+    return res.status(200).json({ known: false, message: 'Error looking up customer' });
+  }
 }
 
 /**
