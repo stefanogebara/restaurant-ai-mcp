@@ -138,7 +138,7 @@
   "crons": [
     {
       "path": "/api/cron/check-late-reservations",
-      "schedule": "*/5 * * * *"
+      "schedule": "*/15 * * * *"
     },
     {
       "path": "/api/cron/send-reminders",
@@ -202,7 +202,7 @@
     },
     {
       "path": "/api/cron/send-campaigns",
-      "schedule": "*/5 * * * *"
+      "schedule": "*/15 * * * *"
     },
     {
       "path": "/api/cron/pre-reservation-upsell",
