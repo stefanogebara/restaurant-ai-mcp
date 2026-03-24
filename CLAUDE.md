@@ -1,3 +1,11 @@
+## Vercel Cost Rules (CRITICAL — $375 bill incident March 2026)
+
+- **Crons**: NEVER more than */15. Check-late-reservations and send-campaigns should be */15, not */5.
+- **maxDuration**: Keep at 60s or less. Double duration = double cost.
+- **Deploys**: ONE per push (Vercel Git integration handles it). No duplicate GitHub Action hooks.
+- **Batch commits** — don't push 10 times in a row. Stage changes, push once.
+- **New crons**: Must justify frequency. Default to hourly or daily, not every-N-minutes.
+
 ## Workflow Orchestration
 
 ### 1. Plan Node Default
