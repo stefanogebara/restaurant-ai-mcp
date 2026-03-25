@@ -108,21 +108,21 @@ describe('PlanBadge', () => {
     expect(screen.getByTestId('icon-star')).toBeInTheDocument();
   });
 
-  it('renders zap icon for Portuguese plan name Inicial', () => {
-    render(<PlanBadge plan="Inicial" />);
-    expect(screen.getByText('Inicial')).toBeInTheDocument();
+  it('renders zap icon for Portuguese plan name Essencial', () => {
+    render(<PlanBadge plan="Essencial" />);
+    expect(screen.getByText('Essencial')).toBeInTheDocument();
     expect(screen.getByTestId('icon-zap')).toBeInTheDocument();
   });
 
-  it('renders star icon for Portuguese plan name Crescimento', () => {
-    render(<PlanBadge plan="Crescimento" />);
-    expect(screen.getByText('Crescimento')).toBeInTheDocument();
+  it('renders star icon for Portuguese plan name Profissional', () => {
+    render(<PlanBadge plan="Profissional" />);
+    expect(screen.getByText('Profissional')).toBeInTheDocument();
     expect(screen.getByTestId('icon-star')).toBeInTheDocument();
   });
 
-  it('renders crown icon for Portuguese plan name Escala', () => {
-    render(<PlanBadge plan="Escala" />);
-    expect(screen.getByText('Escala')).toBeInTheDocument();
+  it('renders crown icon for Portuguese plan name Enterprise', () => {
+    render(<PlanBadge plan="Enterprise" />);
+    expect(screen.getByText('Enterprise')).toBeInTheDocument();
     expect(screen.getByTestId('icon-crown')).toBeInTheDocument();
   });
 });

@@ -72,7 +72,7 @@ module.exports = async (req, res) => {
     }
 
     // Fallback: return DB data directly
-    const planPriceMap = { Starter: 'R$149', Growth: 'R$499', Scale: 'R$999' };
+    const planPriceMap = { Starter: 'R$497', Growth: 'R$1.497', Scale: 'R$2.997' };
     const planName = sub['Plan Name'] || 'Starter';
 
     return res.status(200).json({

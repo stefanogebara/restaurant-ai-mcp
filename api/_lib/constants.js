@@ -48,12 +48,12 @@ const FREE_PLAN_MONTHLY_RESERVATIONS = 30;
 /**
  * Starter plan monthly reservation limit
  */
-const STARTER_PLAN_MONTHLY_RESERVATIONS = 50;
+const STARTER_PLAN_MONTHLY_RESERVATIONS = 100;
 
 /**
  * Growth plan monthly reservation limit
  */
-const GROWTH_PLAN_MONTHLY_RESERVATIONS = 150;
+const GROWTH_PLAN_MONTHLY_RESERVATIONS = 300;
 
 // ============ HELPER FUNCTIONS ============
 

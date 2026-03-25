@@ -23,6 +23,7 @@ export default function PlanBadge({
   const getPlanStyle = () => {
     switch (planLower) {
       case 'starter':
+      case 'essencial':
       case 'inicial':
         return {
           bg: 'bg-stone-gray',
@@ -32,6 +33,7 @@ export default function PlanBadge({
           borderColor: 'border-border-gray',
         };
       case 'growth':
+      case 'profissional':
       case 'crescimento':
         return {
           bg: 'bg-burgundy',
@@ -41,6 +43,7 @@ export default function PlanBadge({
           borderColor: 'border-burgundy/30',
         };
       case 'scale':
+      case 'enterprise':
       case 'escala':
         return {
           bg: 'bg-violet-600',

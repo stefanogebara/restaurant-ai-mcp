@@ -288,28 +288,28 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
 
 export const PLAN_PRICES = {
   free: 0,
-  starter: 149,
-  growth: 499,
-  professional: 499,
-  scale: 999,
+  starter: 497,
+  growth: 1497,
+  professional: 1497,
+  scale: 2997,
 } as const;
 
 export const PLAN_NAMES = {
   free: 'Grátis',
-  starter: 'Inicial',
-  growth: 'Crescimento',
-  professional: 'Crescimento',
-  scale: 'Escala',
+  starter: 'Essencial',
+  growth: 'Profissional',
+  professional: 'Profissional',
+  scale: 'Enterprise',
   trial: 'Teste',
 } as const;
 
 export const PLAN_DESCRIPTIONS = {
   free: 'Comece sem custo — até 30 reservas/mês',
-  starter: 'Perfeito para restaurantes pequenos começando',
-  growth: 'Recursos avançados para restaurantes em crescimento',
-  professional: 'Recursos avançados para restaurantes em crescimento',
-  scale: 'Plataforma completa para restaurantes de alto volume',
-  trial: 'Teste de 14 dias com recursos do Crescimento',
+  starter: 'WhatsApp AI + reservas para seu restaurante',
+  growth: 'Voice AI + WhatsApp + analytics completo',
+  professional: 'Voice AI + WhatsApp + analytics completo',
+  scale: 'IA ilimitada para restaurantes de alto volume',
+  trial: 'Teste de 14 dias com recursos do Profissional',
 } as const;
 
 /**
