@@ -211,7 +211,7 @@ export default function BeforeAfterSection() {
                     {t('landing.beforeAfter.predictedRevenue', 'Predicted Revenue')}
                   </div>
                   <ShineFx>
-                    <span className="text-sm font-bold text-burgundy/80">{'\u20AC'}1,596</span>
+                    <span className="text-sm font-bold text-burgundy/80">R$1.596</span>
                   </ShineFx>
                 </div>
                 <div className="mt-2 h-1.5 rounded-full bg-white/[0.04] overflow-hidden">

@@ -10,6 +10,10 @@ import { useToast } from '../../contexts/ToastContext';
 import { detectCurrency } from '../../utils/currency';
 
 const TIER_KEYS: Record<string, string> = {
+  Essencial: 'starter',
+  Profissional: 'growth',
+  Enterprise: 'scale',
+  // Legacy mappings
   Starter: 'starter',
   Growth: 'growth',
   Scale: 'scale',
@@ -18,7 +22,7 @@ const TIER_KEYS: Record<string, string> = {
 const FEATURE_COUNTS: Record<string, number> = {
   starter: 5,
   growth: 6,
-  scale: 5,
+  scale: 6,
 };
 
 export default function PricingSection() {
