@@ -335,7 +335,7 @@ module.exports = async (req, res) => {
 const toolHandlers = require('./_lib/tool-handlers');
 
 async function handleGetDateTime(req, res) {
-  const timezone = req.multiTenantRestaurant?.timezone || req.query.timezone || req.body?.timezone || 'UTC';
+  const timezone = req.multiTenantRestaurant?.timezone || req.query.timezone || req.body?.timezone || 'America/Sao_Paulo';
   const response = toolHandlers.getDateTime(timezone);
   logger.info(' get_current_datetime response:', response);
   return res.status(200).json(response);

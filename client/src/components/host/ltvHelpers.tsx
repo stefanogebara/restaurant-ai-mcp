@@ -35,9 +35,11 @@ export function getTierIcon(tier: string) {
 }
 
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
+  const lang = navigator.language || 'pt-BR';
+  const isBRL = lang.toLowerCase().startsWith('pt');
+  return new Intl.NumberFormat(isBRL ? 'pt-BR' : 'en-US', {
     style: 'currency',
-    currency: 'EUR',
+    currency: isBRL ? 'BRL' : 'EUR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);

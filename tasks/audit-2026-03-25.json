@@ -1,0 +1,25 @@
+{
+  "date": "2026-03-25",
+  "summary": "26 issues found. All CRITICAL and HIGH fixed.",
+  "issues": {
+    "critical": [
+      { "id": "C1", "title": "CSP blocks audio on landing page", "status": "FIXED", "fix": "Added data: to media-src in vercel.json" },
+      { "id": "C2", "title": "Terms of Service shows EUR billing", "status": "FIXED", "fix": "Changed to BRL in TermsOfService.tsx" },
+      { "id": "C3", "title": "Terms references Spain jurisdiction", "status": "FIXED", "fix": "Changed to Brazil/São Paulo" }
+    ],
+    "high": [
+      { "id": "H1-H6", "title": "Hardcoded EUR/€ across dashboard components", "status": "FIXED", "fix": "12 files updated to R$/BRL-aware" },
+      { "id": "H7", "title": "Deposit config label hardcoded EUR", "status": "FIXED" },
+      { "id": "H8", "title": "PT-BR locale deposit strings", "status": "OK", "note": "Already correct in pt-BR.json" }
+    ],
+    "medium": [
+      { "id": "M3", "title": "No end_call in WhatsApp/voice prompts", "status": "FIXED", "fix": "Added graceful failure handling to both prompts" },
+      { "id": "M4", "title": "get_current_datetime defaults to UTC", "status": "FIXED", "fix": "Changed to America/Sao_Paulo" },
+      { "id": "M1-M2", "title": "Aria-label accessibility strings not translated", "status": "DEFERRED", "note": "Screen reader only" },
+      { "id": "M5-M8", "title": "Tooltip/portfolio hardcoded EUR examples", "status": "DEFERRED" }
+    ],
+    "low": [
+      { "id": "L1-L7", "title": "Various aria-label strings in English", "status": "DEFERRED", "note": "Not user-visible" }
+    ]
+  }
+}

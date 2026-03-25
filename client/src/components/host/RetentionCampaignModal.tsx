@@ -109,7 +109,7 @@ export function RetentionCampaignModal({ isOpen, onClose, customer, onSendCampai
                 <div>
                   <p className="font-medium text-deep-charcoal">{customerName}</p>
                   <p className="text-sm text-stone-gray">
-                    {t('retentionCampaign.lastVisit')}: {new Date(customer.last_visit_date).toLocaleDateString(dateLocale)} · {t('retentionCampaign.visits', { count: customer.total_visits })} · {new Intl.NumberFormat(dateLocale, { style: 'currency', currency: 'EUR' }).format(customer.lifetime_value)} LTV
+                    {t('retentionCampaign.lastVisit')}: {new Date(customer.last_visit_date).toLocaleDateString(dateLocale)} · {t('retentionCampaign.visits', { count: customer.total_visits })} · {new Intl.NumberFormat(dateLocale, { style: 'currency', currency: dateLocale.startsWith('pt') ? 'BRL' : 'EUR' }).format(customer.lifetime_value)} LTV
                   </p>
                 </div>
               </div>

@@ -126,7 +126,7 @@ export default function InterventionPanel({
               <p className="text-sm text-stone-gray">
                 {highRiskReservations.length} high-risk reservation{highRiskReservations.length !== 1 ? 's' : ''} •
                 <span className="ml-1 font-medium text-amber-600">
-                  €{sortedReservations.reduce((sum, r) => sum + calculatePotentialValue(r.party_size), 0)} at risk
+                  R${sortedReservations.reduce((sum, r) => sum + calculatePotentialValue(r.party_size), 0)} at risk
                 </span>
               </p>
             </div>
@@ -198,7 +198,7 @@ export default function InterventionPanel({
                       </div>
 
                       <div className="text-xs text-amber-600 font-medium">
-                        €{potentialValue} potential revenue at risk
+                        R${potentialValue} potential revenue at risk
                       </div>
 
                       {reservation.special_requests && (

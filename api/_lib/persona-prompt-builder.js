@@ -179,6 +179,13 @@ function buildPersonaPrompt(restaurantConfig, options = {}) {
   prompt += '- While looking up a booking: "One sec, let me pull that up..."\n';
   prompt += '- Keep fillers short and natural — they bridge silence while tools run.\n';
 
+  // 9. Graceful failure handling
+  prompt += '\nWhen things go wrong:\n';
+  prompt += '- If a tool call fails, apologize briefly and suggest an alternative.\n';
+  prompt += '- If you cannot help after 2 attempts, politely offer to transfer or end the call.\n';
+  prompt += '- Use the end_call tool when the conversation is complete or you cannot assist further.\n';
+  prompt += '- Never leave the caller in silence — always close with a warm goodbye.\n';
+
   // Strategy document — injects owner-defined priorities into voice agent context
   if (restaurantConfig.ai_strategy_doc) {
     prompt += '\n[RESTAURANT STRATEGY]\n' + restaurantConfig.ai_strategy_doc + '\n';

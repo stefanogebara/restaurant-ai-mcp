@@ -110,7 +110,7 @@ Example:
               </div>
             </div>
             <div className="mt-2 text-xs text-stone-gray">
-              €{data.summary.total_value_saved} saved • €{data.summary.total_cost} spent
+              R${data.summary.total_value_saved} saved • R${data.summary.total_cost} spent
             </div>
           </div>
 

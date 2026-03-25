@@ -96,7 +96,7 @@ export default function DNACustomerList({
                       {customer.dining_style}
                     </span>
                     <span className="text-xs text-stone-gray">
-                      {customer.avg_check_per_person != null ? `€${customer.avg_check_per_person.toFixed(0)}` : '--'}
+                      {customer.avg_check_per_person != null ? `R$${customer.avg_check_per_person.toFixed(0)}` : '--'}
                     </span>
                     <span className="text-xs text-stone-gray">{customer.profile_confidence}%</span>
                   </div>
@@ -123,7 +123,7 @@ export default function DNACustomerList({
                   {Math.round(customer.typical_party_size)}
                 </div>
                 <div className="col-span-2 text-right text-sm text-deep-charcoal">
-                  {customer.avg_check_per_person != null ? `€${customer.avg_check_per_person.toFixed(0)}` : '--'}
+                  {customer.avg_check_per_person != null ? `R$${customer.avg_check_per_person.toFixed(0)}` : '--'}
                 </div>
                 <div className="col-span-2 flex items-center justify-center gap-1">
                   <div className="w-16 bg-border-gray h-1.5 rounded-full overflow-hidden">

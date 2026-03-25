@@ -90,7 +90,7 @@ export default function DepositSettingsPanel() {
               {t('settings.depositAmount')}
             </label>
             <div className="relative w-32">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-warm-stone">EUR</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-warm-stone">R$</span>
               <input
                 type="number"
                 value={amount}

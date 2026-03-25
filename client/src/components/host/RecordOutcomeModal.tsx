@@ -223,7 +223,7 @@ export default function RecordOutcomeModal({
                 {/* Intervention Cost */}
                 <div>
                   <label htmlFor="cost" className="block text-sm font-medium text-deep-charcoal mb-2">
-                    Cost of intervention (€)
+                    Cost of intervention (R$)
                   </label>
                   <input
                     type="number"

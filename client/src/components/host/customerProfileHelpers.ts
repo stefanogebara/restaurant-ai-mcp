@@ -23,5 +23,13 @@ export function getSentimentColor(sentiment: string): string {
 
 export function formatCurrency(val: number | null): string {
   if (val == null) return '--';
-  return `€${val.toFixed(2)}`;
+  const lang = navigator.language || 'pt-BR';
+  const isBRL = lang.toLowerCase().startsWith('pt');
+  const cur = isBRL ? 'BRL' : 'EUR';
+  return new Intl.NumberFormat(isBRL ? 'pt-BR' : 'en-US', {
+    style: 'currency',
+    currency: cur,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(val);
 }

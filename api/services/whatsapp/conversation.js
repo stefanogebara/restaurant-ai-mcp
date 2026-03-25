@@ -180,6 +180,13 @@ function buildWhatsAppPrompt(restaurantConfig, session, currentDateTime) {
 - If directly asked, say you're an AI assistant for the restaurant
 `;
 
+  // Graceful failure handling
+  prompt += `\nWHEN THINGS GO WRONG:
+- If a tool call fails (reservation not found, system error), apologize briefly and suggest an alternative
+- If you can't help after 2 attempts, say something like "Desculpe, não consegui completar isso agora. Posso ajudar com outra coisa?"
+- Never leave the customer hanging — always close with a helpful next step or offer to try again later
+`;
+
   // Date/time context
   prompt += `\nCurrent date/time: ${currentDateTime.formatted}\n`;
   prompt += `Today is ${currentDateTime.dayOfWeek}, ${currentDateTime.date}\n`;

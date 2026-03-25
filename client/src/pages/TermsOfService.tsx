@@ -39,7 +39,7 @@ export default function TermsOfService() {
           <section>
             <h2 className="text-lg font-semibold text-deep-charcoal mb-3">3. Subscriptions and Billing</h2>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Subscriptions are billed monthly in EUR.</li>
+              <li>Subscriptions are billed monthly in BRL (Brazilian Real).</li>
               <li>Usage-based fees apply for reservations, AI calls, SMS, and WhatsApp messages beyond your plan's included limits.</li>
               <li>You may cancel at any time; your subscription remains active until the end of the billing period.</li>
               <li>No refunds are issued for partial months.</li>
@@ -89,7 +89,7 @@ export default function TermsOfService() {
 
           <section>
             <h2 className="text-lg font-semibold text-deep-charcoal mb-3">11. Governing Law</h2>
-            <p>These Terms are governed by the laws of Spain. Disputes shall be resolved in the courts of Madrid.</p>
+            <p>These Terms are governed by the laws of Brazil. Disputes shall be resolved in the courts of São Paulo, SP, Brazil.</p>
           </section>
 
           <section>
