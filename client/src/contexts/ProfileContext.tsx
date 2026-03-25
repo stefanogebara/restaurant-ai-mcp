@@ -44,7 +44,7 @@ function getDefaultProfile(): RestaurantProfile {
     customizations: {
       risk_display: 'simple',
       time_format: '24h',
-      currency: 'EUR',
+      currency: 'BRL',
       show_technical_details: false,
       font_size: 'large',
       language: 'en',

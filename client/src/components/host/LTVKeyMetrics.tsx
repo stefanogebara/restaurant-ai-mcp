@@ -30,7 +30,7 @@ export default function LTVKeyMetrics({ stats }: LTVKeyMetricsProps) {
           <div className="text-xs text-stone-gray">Avg Lifetime Value</div>
           <HelpTooltip
             title={t('ltv.tooltipTitle', 'What is LTV?')}
-            content={t('ltv.tooltipContent', 'Total revenue a customer generates over their relationship with you.\n\nComponents:\n• Average spend per visit: €45\n• Visit frequency: 3x per year\n• Customer lifespan: 3 years\n• LTV = €45 × 3 × 3 = €405\n\nWhy it matters:\nFocus retention efforts on high-LTV customers')}
+            content={t('ltv.tooltipContent', 'Total revenue a customer generates over their relationship with you.\n\nComponents:\n• Average spend per visit: R$45\n• Visit frequency: 3x per year\n• Customer lifespan: 3 years\n• LTV = R$45 × 3 × 3 = R$405\n\nWhy it matters:\nFocus retention efforts on high-LTV customers')}
             position="bottom"
             size="sm"
           />

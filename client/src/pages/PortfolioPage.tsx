@@ -507,7 +507,7 @@ function PricingSection() {
               <div>
                 <p className="text-[#A8A29E] text-sm font-medium mb-1">{name}</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-[#FAFAF9] text-4xl font-bold">EUR {price}</span>
+                  <span className="text-[#FAFAF9] text-4xl font-bold">R$ {price}</span>
                   <span className="text-[#A8A29E] text-sm">/mês</span>
                 </div>
               </div>

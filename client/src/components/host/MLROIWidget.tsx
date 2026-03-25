@@ -84,14 +84,14 @@ export default function MLROIWidget() {
                 <div className="text-sm font-semibold text-stone-gray">Return on Investment</div>
                 <HelpTooltip
                   title="What is ROI?"
-                  content="For every €1 you spend on interventions (calls, emails), how much money do you save from prevented no-shows?
+                  content="For every R$1 you spend on interventions (calls, emails), how much money do you save from prevented no-shows?
 
-Target: 300-500% (€3-€5 saved per €1 spent)
+Target: 300-500% (R$3-R$5 saved per R$1 spent)
 
 Example:
-• Spent: €214 on confirmation calls
-• Saved: €1,720 from prevented no-shows
-• ROI: 704% (€7.04 saved per €1 spent)"
+• Spent: R$214 on confirmation calls
+• Saved: R$1,720 from prevented no-shows
+• ROI: 704% (R$7.04 saved per R$1 spent)"
                   position="bottom"
                 />
               </div>
