@@ -115,7 +115,7 @@ export default function PricingSection() {
 
                 {/* Description */}
                 <p className={`text-sm font-light mb-8 ${isFeatured ? 'text-muted-stone' : 'text-warm-stone'}`}>
-                  {t(`landing.pricing.${tierKey}.desc`, tier.description)}
+                  {t(`subscription.${tierKey}Desc`, tier.description)}
                 </p>
 
                 {/* Features */}
@@ -128,7 +128,7 @@ export default function PricingSection() {
                       }`}
                     >
                       <span className="w-[5px] h-[5px] rounded-full bg-burgundy flex-shrink-0" />
-                      {t(`landing.pricing.${tierKey}.f${i + 1}`, tier.features[i] || '')}
+                      {t(`subscription.${tierKey}F${i + 1}`, tier.features[i] || '')}
                     </li>
                   ))}
                 </ul>
@@ -158,7 +158,7 @@ export default function PricingSection() {
                       {t('common.loading')}
                     </>
                   ) : (
-                    t(`landing.pricing.${tierKey}.cta`, tier.cta)
+                    t(`subscription.${tierKey}Cta`, tier.cta)
                   )}
                 </button>
               </div>
