@@ -15,7 +15,7 @@ const LOCATION_LABELS: Record<string, Record<string, string>> = {
 };
 
 const STATUS_STYLES: Record<string, { dot: string; text: string; bg: string }> = {
-  Available: { dot: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50' },
+  Available: { dot: 'bg-rose-500', text: 'text-rose-700', bg: 'bg-rose-50' },
   Occupied:  { dot: 'bg-rose-600',    text: 'text-rose-700',    bg: 'bg-rose-50' },
   Reserved:  { dot: 'bg-amber-500',   text: 'text-amber-700',   bg: 'bg-amber-50' },
 };

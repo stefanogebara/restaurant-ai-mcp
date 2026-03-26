@@ -359,7 +359,8 @@ function sanitizeInput(input) {
 
   return input
     .trim()
-    .replace(/[<>\"']/g, '') // Remove HTML/JS injection characters
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
     .substring(0, 500); // Limit length
 }
 

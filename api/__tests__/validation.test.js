@@ -387,8 +387,12 @@ describe('sanitizeInput', () => {
     expect(sanitizeInput('  hello  ')).toBe('hello');
   });
 
-  test('removes HTML/JS injection characters', () => {
-    expect(sanitizeInput('<script>alert("xss")</script>')).toBe('scriptalert(xss)/script');
+  test('encodes angle brackets but preserves quotes', () => {
+    expect(sanitizeInput('<script>alert("xss")</script>')).toBe('&lt;script&gt;alert("xss")&lt;/script&gt;');
+  });
+
+  test('preserves apostrophes in names', () => {
+    expect(sanitizeInput("O'Brien")).toBe("O'Brien");
   });
 
   test('truncates to 500 characters', () => {

@@ -62,22 +62,29 @@ module.exports = async (req, res) => {
     // C-2: Nest url inside data so sw.js can read event.notification.data?.url
     const payload = JSON.stringify({ title, body, data: { url: url || '/book' } });
 
-    // I-4: Sequential loop to detect and clean up expired subscriptions
+    // Send push notifications in parallel — individual failures are isolated
+    const settled = await Promise.allSettled(
+      subscriptions.map((sub) =>
+        webpush.sendNotification(sub.subscription, payload).then(() => ({ id: sub.id, ok: true }))
+      )
+    );
+
     let sent = 0;
     let failed = 0;
     const expiredIds = [];
 
-    for (const sub of subscriptions) {
-      try {
-        await webpush.sendNotification(sub.subscription, payload);
+    for (let i = 0; i < settled.length; i++) {
+      const outcome = settled[i];
+      if (outcome.status === 'fulfilled') {
         sent++;
-      } catch (err) {
+      } else {
         failed++;
+        const err = outcome.reason;
         // 410 Gone or 404 Not Found means the subscription has expired
         if (err.statusCode === 410 || err.statusCode === 404) {
-          expiredIds.push(sub.id);
+          expiredIds.push(subscriptions[i].id);
         } else {
-          logger.warn(`Push failed for sub ${sub.id}: ${err.message}`);
+          logger.warn(`Push failed for sub ${subscriptions[i].id}: ${err.message}`);
         }
       }
     }

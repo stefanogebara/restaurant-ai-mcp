@@ -83,6 +83,7 @@ function mockSupabase(fetchResults) {
       }),
       update: jest.fn().mockReturnValue({
         eq: jest.fn().mockResolvedValue({ error: null }),
+        in: jest.fn().mockResolvedValue({ error: null }),
       }),
     };
     return chain;

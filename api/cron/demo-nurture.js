@@ -347,89 +347,54 @@ module.exports = async (req, res) => {
       day7: { sent: 0, failed: 0, skipped: 0 },
     };
 
-    // Process day-3 emails
-    for (const demo of (day3Demos || [])) {
-      if (!demo.demo_contact_email) {
-        logger.info(`Skipping day-3 for demo ${demo.id} — no contact email`);
-        results.day3.skipped++;
-        continue;
+    /**
+     * Process a batch of demos: send emails sequentially (Resend rate limit),
+     * then batch-update all successful IDs in a single DB call.
+     */
+    async function processDemoBatch(demos, sendFn, dedupCol, dayKey) {
+      const successIds = [];
+
+      for (const demo of (demos || [])) {
+        if (!demo.demo_contact_email) {
+          logger.info(`Skipping ${dayKey} for demo ${demo.id} — no contact email`);
+          results[dayKey].skipped++;
+          continue;
+        }
+
+        const emailResult = await sendFn({
+          contactName: demo.demo_contact_name || 'there',
+          contactEmail: demo.demo_contact_email,
+          restaurantName: demo.restaurant_name,
+          demoToken: demo.demo_token,
+        });
+
+        if (emailResult.success) {
+          results[dayKey].sent++;
+          successIds.push(demo.id);
+        } else {
+          results[dayKey].failed++;
+        }
+        await sleep(100);
       }
 
-      const emailResult = await sendDay3Email({
-        contactName: demo.demo_contact_name || 'there',
-        contactEmail: demo.demo_contact_email,
-        restaurantName: demo.restaurant_name,
-        demoToken: demo.demo_token,
-      });
-
-      if (emailResult.success) {
-        results.day3.sent++;
-        await supabaseAdmin
+      // Batch-update all successful sends in a single DB call
+      if (successIds.length > 0) {
+        const { error: updateError } = await supabaseAdmin
           .schema('restaurant')
           .from('restaurant_config')
-          .update({ demo_day3_sent_at: nowIso })
-          .eq('id', demo.id);
-      } else {
-        results.day3.failed++;
+          .update({ [dedupCol]: nowIso })
+          .in('id', successIds);
+
+        if (updateError) {
+          logger.error(`Failed to batch-update ${dedupCol} for ${successIds.length} demos:`, updateError.message);
+        }
       }
-      await sleep(100);
     }
 
-    // Process day-5 emails
-    for (const demo of (day5Demos || [])) {
-      if (!demo.demo_contact_email) {
-        logger.info(`Skipping day-5 for demo ${demo.id} — no contact email`);
-        results.day5.skipped++;
-        continue;
-      }
-
-      const emailResult = await sendDay5Email({
-        contactName: demo.demo_contact_name || 'there',
-        contactEmail: demo.demo_contact_email,
-        restaurantName: demo.restaurant_name,
-        demoToken: demo.demo_token,
-      });
-
-      if (emailResult.success) {
-        results.day5.sent++;
-        await supabaseAdmin
-          .schema('restaurant')
-          .from('restaurant_config')
-          .update({ demo_day5_sent_at: nowIso })
-          .eq('id', demo.id);
-      } else {
-        results.day5.failed++;
-      }
-      await sleep(100);
-    }
-
-    // Process day-7 emails
-    for (const demo of (day7Demos || [])) {
-      if (!demo.demo_contact_email) {
-        logger.info(`Skipping day-7 for demo ${demo.id} — no contact email`);
-        results.day7.skipped++;
-        continue;
-      }
-
-      const emailResult = await sendDay7Email({
-        contactName: demo.demo_contact_name || 'there',
-        contactEmail: demo.demo_contact_email,
-        restaurantName: demo.restaurant_name,
-        demoToken: demo.demo_token,
-      });
-
-      if (emailResult.success) {
-        results.day7.sent++;
-        await supabaseAdmin
-          .schema('restaurant')
-          .from('restaurant_config')
-          .update({ demo_day7_sent_at: nowIso })
-          .eq('id', demo.id);
-      } else {
-        results.day7.failed++;
-      }
-      await sleep(100);
-    }
+    // Process all three tiers
+    await processDemoBatch(day3Demos, sendDay3Email, 'demo_day3_sent_at', 'day3');
+    await processDemoBatch(day5Demos, sendDay5Email, 'demo_day5_sent_at', 'day5');
+    await processDemoBatch(day7Demos, sendDay7Email, 'demo_day7_sent_at', 'day7');
 
     const totalFailed = results.day3.failed + results.day5.failed + results.day7.failed;
     if (totalFailed > 0) {

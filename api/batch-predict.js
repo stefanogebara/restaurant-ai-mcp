@@ -16,73 +16,108 @@ const { setInternalCors, handlePreflight } = require('./_lib/cors');
 
 const logger = createSecureLogger('BatchPredict');
 
+const DEFAULT_CUSTOMER_STATS = {
+  is_repeat_customer: false,
+  total_reservations: 0,
+  completed_reservations: 0,
+  no_show_count: 0,
+  no_show_rate: 0.15,
+  cancellation_count: 0,
+  average_party_size: 0,
+  days_since_last_visit: null,
+  vip_status: false,
+  customer_id: null
+};
+
 /**
- * Fetch customer stats from Supabase customer_history table.
- * Returns an Airtable-style record for compatibility with ml/features.js,
- * or default new-customer stats when no record exists.
+ * Convert a raw customer_history row into the stats format used by ml/features.js.
  */
-async function getCustomerStats(email, phone, restaurantId) {
-  const DEFAULT_STATS = {
-    is_repeat_customer: false,
-    total_reservations: 0,
-    completed_reservations: 0,
-    no_show_count: 0,
-    no_show_rate: 0.15,
-    cancellation_count: 0,
-    average_party_size: 0,
-    days_since_last_visit: null,
-    vip_status: false,
-    customer_id: null
+function toCustomerStats(data) {
+  const totalReservations = (data.total_visits || 0) + (data.total_no_shows || 0) + (data.total_cancellations || 0);
+  const noShowRate = totalReservations > 0
+    ? (data.total_no_shows || 0) / totalReservations
+    : 0.15;
+
+  return {
+    is_repeat_customer: (data.total_visits || 0) > 0,
+    total_reservations: totalReservations,
+    completed_reservations: data.total_visits || 0,
+    no_show_count: data.total_no_shows || 0,
+    no_show_rate: parseFloat(noShowRate.toFixed(3)),
+    cancellation_count: data.total_cancellations || 0,
+    average_party_size: data.average_party_size || 0,
+    days_since_last_visit: data.last_visit_date
+      ? Math.ceil(Math.abs(new Date() - new Date(data.last_visit_date)) / (1000 * 60 * 60 * 24))
+      : null,
+    vip_status: data.vip_status || false,
+    customer_id: data.id || null
   };
+}
+
+/**
+ * Batch-fetch customer stats for a list of reservations in 2 queries (phone + email).
+ * Returns a Map keyed by reservation record_id → stats object.
+ */
+async function batchGetCustomerStats(reservations, restaurantId) {
+  const statsMap = new Map();
+
+  // Initialize all with defaults
+  for (const r of reservations) {
+    statsMap.set(r.record_id, DEFAULT_CUSTOMER_STATS);
+  }
 
   try {
-    let data = null;
+    // Collect unique phones and emails
+    const phones = [...new Set(reservations.map(r => r.customer_phone).filter(Boolean))];
+    const emails = [...new Set(reservations.map(r => r.customer_email).filter(Boolean))];
 
-    if (phone) {
-      let query = supabaseAdmin
-        .from('customer_history')
-        .select('*')
-        .eq('customer_phone', phone);
-      if (restaurantId) query = query.eq('restaurant_id', restaurantId);
-      const result = await query.single();
-      if (!result.error) data = result.data;
+    // Batch-fetch by phone and email in parallel
+    const [phoneResult, emailResult] = await Promise.all([
+      phones.length > 0
+        ? supabaseAdmin
+            .from('customer_history')
+            .select('*')
+            .in('customer_phone', phones)
+            .eq('restaurant_id', restaurantId)
+        : { data: [], error: null },
+      emails.length > 0
+        ? supabaseAdmin
+            .from('customer_history')
+            .select('*')
+            .in('customer_email', emails)
+            .eq('restaurant_id', restaurantId)
+        : { data: [], error: null },
+    ]);
+
+    // Build lookup maps: identifier → customer_history row
+    const byPhone = new Map();
+    if (!phoneResult.error && phoneResult.data) {
+      for (const row of phoneResult.data) {
+        byPhone.set(row.customer_phone, row);
+      }
     }
 
-    if (!data && email) {
-      let query = supabaseAdmin
-        .from('customer_history')
-        .select('*')
-        .eq('customer_email', email);
-      if (restaurantId) query = query.eq('restaurant_id', restaurantId);
-      const result = await query.single();
-      if (!result.error) data = result.data;
+    const byEmail = new Map();
+    if (!emailResult.error && emailResult.data) {
+      for (const row of emailResult.data) {
+        byEmail.set(row.customer_email, row);
+      }
     }
 
-    if (!data) return DEFAULT_STATS;
-
-    const totalReservations = (data.total_visits || 0) + (data.total_no_shows || 0) + (data.total_cancellations || 0);
-    const noShowRate = totalReservations > 0
-      ? (data.total_no_shows || 0) / totalReservations
-      : 0.15;
-
-    return {
-      is_repeat_customer: (data.total_visits || 0) > 0,
-      total_reservations: totalReservations,
-      completed_reservations: data.total_visits || 0,
-      no_show_count: data.total_no_shows || 0,
-      no_show_rate: parseFloat(noShowRate.toFixed(3)),
-      cancellation_count: data.total_cancellations || 0,
-      average_party_size: data.average_party_size || 0,
-      days_since_last_visit: data.last_visit_date
-        ? Math.ceil(Math.abs(new Date() - new Date(data.last_visit_date)) / (1000 * 60 * 60 * 24))
-        : null,
-      vip_status: data.vip_status || false,
-      customer_id: data.id || null
-    };
+    // Match each reservation: prefer phone match, fall back to email
+    for (const r of reservations) {
+      const row = (r.customer_phone && byPhone.get(r.customer_phone))
+        || (r.customer_email && byEmail.get(r.customer_email));
+      if (row) {
+        statsMap.set(r.record_id, toCustomerStats(row));
+      }
+    }
   } catch (error) {
-    logger.error('Error fetching customer stats from Supabase:', error.message);
-    return DEFAULT_STATS;
+    logger.error('Error batch-fetching customer stats:', error.message);
+    // statsMap already has defaults for every reservation
   }
+
+  return statsMap;
 }
 
 /**
@@ -121,16 +156,13 @@ async function predictForRestaurant(restaurantId, timezone = 'UTC') {
     return { predictions_made: 0, already_predicted: reservations.length, total: reservations.length, errors: [] };
   }
 
-  const results = [];
-  const errors = [];
+  // Batch-fetch all customer stats in 2 queries instead of N sequential calls
+  const customerStatsMap = await batchGetCustomerStats(needsPrediction, restaurantId);
 
-  for (const reservation of needsPrediction) {
-    try {
-      const customerHistory = await getCustomerStats(
-        reservation.customer_email,
-        reservation.customer_phone,
-        restaurantId
-      );
+  // Run predictions + updates in parallel with error isolation
+  const settled = await Promise.allSettled(
+    needsPrediction.map(async (reservation) => {
+      const customerHistory = customerStatsMap.get(reservation.record_id) || DEFAULT_CUSTOMER_STATS;
 
       const reservationForPrediction = {
         reservation_id: reservation.reservation_id,
@@ -159,19 +191,28 @@ async function predictForRestaurant(restaurantId, timezone = 'UTC') {
 
       await updateReservation(restaurantId, reservation.record_id, mlFields);
 
-      results.push({
+      return {
         reservation_id: reservation.reservation_id,
         customer_name: reservation.customer_name,
         risk_score: mlFields['ML Risk Score'],
         risk_level: mlFields['ML Risk Level'],
         success: true
-      });
+      };
+    })
+  );
 
-    } catch (error) {
+  const results = [];
+  const errors = [];
+
+  for (let i = 0; i < settled.length; i++) {
+    const outcome = settled[i];
+    if (outcome.status === 'fulfilled') {
+      results.push(outcome.value);
+    } else {
       errors.push({
-        reservation_id: reservation.reservation_id,
-        customer_name: reservation.customer_name,
-        error: error.message
+        reservation_id: needsPrediction[i].reservation_id,
+        customer_name: needsPrediction[i].customer_name,
+        error: outcome.reason?.message || 'Unknown error'
       });
     }
   }

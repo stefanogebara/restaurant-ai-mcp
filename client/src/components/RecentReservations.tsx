@@ -136,7 +136,7 @@ export default function RecentReservations() {
             className="bg-white p-4 rounded-2xl border-2 border-rose-500/50 shadow-md"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-500 to-teal-500 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-500 to-rose-900 flex items-center justify-center">
                 <ThiingsIcon name="check" pxSize={24} />
               </div>
               <div className="flex-1">
