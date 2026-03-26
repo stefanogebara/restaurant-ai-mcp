@@ -3,6 +3,7 @@ import { ArrowUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { trackLandingPageViewed } from '../../lib/analytics';
 import { LS_REFERRAL_CODE } from '../../config/localStorageKeys';
+import ErrorBoundary from '../../components/common/ErrorBoundary';
 import LandingNav from '../components/LandingNav';
 import HeroSection from '../components/HeroSection';
 import PresetDemoSection from '../components/PresetDemoSection';
@@ -78,14 +79,20 @@ export default function LandingPage() {
       <WhatsAppWidgetSection />
 
       {/* 4. See Seatable in action — Remotion animation showcase */}
-      <section className="py-20 px-6 sm:px-16">
-        <div className="max-w-[1000px] mx-auto text-center">
-          <HeroAnimation />
-        </div>
-      </section>
+      {/* Silent error boundary: Remotion can fail (license, AudioContext, version mismatch)
+          — gracefully hide rather than crash the entire landing page */}
+      <ErrorBoundary silent>
+        <section className="py-20 px-6 sm:px-16">
+          <div className="max-w-[1000px] mx-auto text-center">
+            <HeroAnimation />
+          </div>
+        </section>
+      </ErrorBoundary>
 
       {/* 5. Dashboard Walkthrough — animated "silent movie" of AI features */}
-      <DashboardWalkthroughSection />
+      <ErrorBoundary silent>
+        <DashboardWalkthroughSection />
+      </ErrorBoundary>
 
       {/* 6. Before/After — animated side-by-side visual demo */}
       <BeforeAfterSection />

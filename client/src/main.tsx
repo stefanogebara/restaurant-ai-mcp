@@ -15,6 +15,10 @@ initAnalytics();
 // Enable dark mode by default
 document.documentElement.classList.add('dark')
 
+// Clear chunk-reload flag on successful app load (set by lazyRetry on fatal chunk failure).
+// This allows future visits to retry chunk loading if needed.
+sessionStorage.removeItem('seatable-chunk-reload');
+
 // Wait for locale bundle to load before first render (prevents flash of English)
 i18nReady.then(() => {
   createRoot(document.getElementById('root')!).render(

@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ThiingsIcon from './components/common/ThiingsIcon';
@@ -16,38 +16,44 @@ import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/common/ErrorBoundary';
 
-// Lazy-loaded pages
-const LandingPage = lazy(() => import('./landing/pages/LandingPage'));
-const Login = lazy(() => import('./pages/Login'));
-const LiveAIDemo = lazy(() => import('./pages/LiveAIDemo'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const WeeklyReport = lazy(() => import('./pages/WeeklyReport'));
-const AnalyticsDashboard = lazy(() => import('./pages/AnalyticsDashboard'));
-const AIInsights = lazy(() => import('./pages/AIInsights'));
-const CallTrackingDashboard = lazy(() => import('./pages/CallTrackingDashboard'));
-const CustomerPortal = lazy(() => import('./pages/CustomerPortal'));
-const SubscriptionSuccess = lazy(() => import('./pages/SubscriptionSuccess'));
-const SubscriptionManage = lazy(() => import('./pages/SubscriptionManage'));
-const Welcome = lazy(() => import('./pages/Welcome'));
-const Onboarding = lazy(() => import('./pages/Onboarding'));
-const LanguageSettings = lazy(() => import('./pages/LanguageSettings'));
-const TableConfigPage = lazy(() => import('./pages/TableConfigPage'));
-const VoiceSettingsPage = lazy(() => import('./pages/VoiceSettingsPage'));
-const WhatsAppSettingsPage = lazy(() => import('./pages/WhatsAppSettingsPage'));
-const BookingPage = lazy(() => import('./pages/BookingPage'));
-const BookingConfirmation = lazy(() => import('./pages/BookingConfirmation'));
-const FloorPlanEditor = lazy(() => import('./pages/FloorPlanEditor'));
-const JoinPage = lazy(() => import('./pages/JoinPage'));
-const TeamPage = lazy(() => import('./pages/TeamPage'));
-const DemoSetupPage = lazy(() => import('./pages/DemoSetupPage'));
-const DemoConversation = lazy(() => import('./pages/DemoConversation'));
-const DemoDashboard = lazy(() => import('./pages/DemoDashboard'));
-const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
-const TermsOfService = lazy(() => import('./pages/TermsOfService'));
-const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
-const RestaurantSettingsPage = lazy(() => import('./pages/RestaurantSettingsPage'));
-const ManagerAIChatPage = lazy(() => import('./pages/ManagerAIChatPage'));
-const Prototype = lazy(() => import('./pages/Prototype'));
+// lazyRetry: wraps React.lazy with automatic retry on chunk load failures.
+// After a new Vercel deploy, stale chunk hashes cause import failures for
+// users with cached HTML (Meta in-app browsers, service worker, back-button).
+// This retries twice before falling back to a full page reload.
+import { lazyRetry } from './utils/lazyRetry';
+
+// Lazy-loaded pages (with retry for chunk load resilience)
+const LandingPage = lazyRetry(() => import('./landing/pages/LandingPage'));
+const Login = lazyRetry(() => import('./pages/Login'));
+const LiveAIDemo = lazyRetry(() => import('./pages/LiveAIDemo'));
+const Dashboard = lazyRetry(() => import('./pages/Dashboard'));
+const WeeklyReport = lazyRetry(() => import('./pages/WeeklyReport'));
+const AnalyticsDashboard = lazyRetry(() => import('./pages/AnalyticsDashboard'));
+const AIInsights = lazyRetry(() => import('./pages/AIInsights'));
+const CallTrackingDashboard = lazyRetry(() => import('./pages/CallTrackingDashboard'));
+const CustomerPortal = lazyRetry(() => import('./pages/CustomerPortal'));
+const SubscriptionSuccess = lazyRetry(() => import('./pages/SubscriptionSuccess'));
+const SubscriptionManage = lazyRetry(() => import('./pages/SubscriptionManage'));
+const Welcome = lazyRetry(() => import('./pages/Welcome'));
+const Onboarding = lazyRetry(() => import('./pages/Onboarding'));
+const LanguageSettings = lazyRetry(() => import('./pages/LanguageSettings'));
+const TableConfigPage = lazyRetry(() => import('./pages/TableConfigPage'));
+const VoiceSettingsPage = lazyRetry(() => import('./pages/VoiceSettingsPage'));
+const WhatsAppSettingsPage = lazyRetry(() => import('./pages/WhatsAppSettingsPage'));
+const BookingPage = lazyRetry(() => import('./pages/BookingPage'));
+const BookingConfirmation = lazyRetry(() => import('./pages/BookingConfirmation'));
+const FloorPlanEditor = lazyRetry(() => import('./pages/FloorPlanEditor'));
+const JoinPage = lazyRetry(() => import('./pages/JoinPage'));
+const TeamPage = lazyRetry(() => import('./pages/TeamPage'));
+const DemoSetupPage = lazyRetry(() => import('./pages/DemoSetupPage'));
+const DemoConversation = lazyRetry(() => import('./pages/DemoConversation'));
+const DemoDashboard = lazyRetry(() => import('./pages/DemoDashboard'));
+const PrivacyPolicy = lazyRetry(() => import('./pages/PrivacyPolicy'));
+const TermsOfService = lazyRetry(() => import('./pages/TermsOfService'));
+const PortfolioPage = lazyRetry(() => import('./pages/PortfolioPage'));
+const RestaurantSettingsPage = lazyRetry(() => import('./pages/RestaurantSettingsPage'));
+const ManagerAIChatPage = lazyRetry(() => import('./pages/ManagerAIChatPage'));
+const Prototype = lazyRetry(() => import('./pages/Prototype'));
 
 const queryClient = new QueryClient({
   defaultOptions: {

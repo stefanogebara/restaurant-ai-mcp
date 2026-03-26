@@ -5,30 +5,81 @@ import ThiingsIcon from './ThiingsIcon';
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  /** If true, silently hide the component on error instead of showing an error UI */
+  silent?: boolean;
 }
 
 interface State {
   hasError: boolean;
   error: Error | null;
+  retryCount: number;
+}
+
+/** Max auto-retries for transient errors (chunk load, network) */
+const MAX_AUTO_RETRIES = 1;
+
+/** Detect chunk/lazy-load failures that are transient and retryable */
+function isChunkLoadError(error: Error): boolean {
+  const message = error.message || '';
+  return (
+    message.includes('Loading chunk') ||
+    message.includes('Failed to fetch dynamically imported module') ||
+    message.includes('Importing a module script failed') ||
+    error.name === 'ChunkLoadError'
+  );
 }
 
 export default class ErrorBoundary extends Component<Props, State> {
+  private retryTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, retryCount: 0 };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error('[ErrorBoundary] Caught error:', error, info.componentStack);
     Sentry.captureException(error, { extra: { componentStack: info.componentStack } });
+
+    // Auto-retry for transient chunk load failures
+    if (isChunkLoadError(error) && this.state.retryCount < MAX_AUTO_RETRIES) {
+      this.retryTimer = setTimeout(() => {
+        this.setState((prev) => ({
+          hasError: false,
+          error: null,
+          retryCount: prev.retryCount + 1,
+        }));
+      }, 1500);
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+    }
   }
 
   render() {
     if (this.state.hasError) {
+      // Silent mode: render nothing on error (used for non-critical UI like animations)
+      if (this.props.silent) return null;
+
+      // If auto-retry is pending for chunk errors, show loading instead of error
+      if (isChunkLoadError(this.state.error!) && this.state.retryCount < MAX_AUTO_RETRIES) {
+        return (
+          <div className="min-h-[50vh] flex flex-col items-center justify-center gap-4">
+            <div className="font-serif text-2xl text-deep-charcoal opacity-50">
+              seatable<span className="text-burgundy">.</span>
+            </div>
+            <div role="status" aria-label="Loading" className="animate-spin rounded-full h-8 w-8 border-2 border-border-gray border-t-burgundy" />
+          </div>
+        );
+      }
+
       if (this.props.fallback) return this.props.fallback;
 
       return (
