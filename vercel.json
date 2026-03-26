@@ -1,6 +1,6 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "cd client && rm -rf dist node_modules/.vite && npm install && npm run build && node -e \"const fs=require('fs');const f='dist/sw.js';fs.writeFileSync(f,fs.readFileSync(f,'utf8').replace('seatable-v2','seatable-'+Date.now()))\"",
+  "buildCommand": "cd client && rm -rf dist node_modules/.vite && npm install && npm run build && node cache-bust-sw.js",
   "outputDirectory": "client/dist",
   "functions": {
     "api/**/*.js": {
