@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useManagerPreferences, useSaveManagerPreferences } from '../../hooks/useManagerPreferences';
 import type { NotificationPreferences } from '../../hooks/useManagerPreferences';
 import { useToast } from '../../contexts/ToastContext';
+import PhoneInput from '../common/PhoneInput';
 
 type BriefingChannel = 'text' | 'voice_note' | 'phone_call';
 
@@ -150,18 +151,13 @@ export default function ManagerNotificationsPanel() {
             </span>
           </label>
           {getValue('analytics_briefing_enabled') && (
-            <div className="ml-6">
-              <label className="block text-xs font-medium text-deep-charcoal mb-1">
-                {t('settings.analyticsBriefingPhone', 'WhatsApp number for briefing')}
-              </label>
-              <input
-                type="tel"
+            <div className="ml-6 max-w-xs">
+              <PhoneInput
                 value={(getValue('analytics_briefing_phone') as string) || ''}
-                onChange={e => set('analytics_briefing_phone', e.target.value)}
-                placeholder="+5511999999999"
-                className="w-full max-w-xs px-3 py-1.5 text-sm border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#9F1239] focus:border-[#9F1239]"
+                onChange={(fullNumber) => set('analytics_briefing_phone', fullNumber)}
+                defaultCountry="BR"
+                label={t('settings.analyticsBriefingPhone', 'WhatsApp number for briefing')}
               />
-              <p className="text-[11px] text-warm-stone mt-1">{t('settings.analyticsBriefingPhoneHint', 'E.164 format with country code')}</p>
             </div>
           )}
         </div>
