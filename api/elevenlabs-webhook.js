@@ -51,7 +51,6 @@ module.exports = async (req, res) => {
   const cronSecret = (process.env.CRON_SECRET || '').trim();
   const signature = req.headers['x-elevenlabs-signature'];
   const authHeader = (req.headers.authorization || '').replace('Bearer ', '').trim();
-  const querySecret = (req.query.secret || '').trim();
 
   let authenticated = false;
 
@@ -72,11 +71,6 @@ module.exports = async (req, res) => {
 
   // Path 2: Bearer token (ElevenLabs agent tool calls)
   if (!authenticated && authHeader && cronSecret && authHeader === cronSecret) {
-    authenticated = true;
-  }
-
-  // Path 3: Query param secret (ElevenLabs agent tool URLs include ?secret=CRON_SECRET)
-  if (!authenticated && querySecret && cronSecret && querySecret === cronSecret) {
     authenticated = true;
   }
 

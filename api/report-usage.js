@@ -40,10 +40,7 @@ module.exports = async (req, res) => {
   const isAdminCall = authHeader?.startsWith('Bearer ') && !isVercelCron;
 
   if (!isVercelCron && !isAdminCall) {
-    // Also check for x-vercel-cron header (Vercel internal cron)
-    if (!req.headers['x-vercel-cron']) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
+    return res.status(401).json({ error: 'Authentication required' });
   }
 
   // If it's a manual admin call, verify the JWT
