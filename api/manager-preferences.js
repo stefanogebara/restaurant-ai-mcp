@@ -13,6 +13,8 @@ const ALLOWED_PREF_KEYS = new Set([
   'alert_high_noshows',
   'alert_late_cancellations',
   'pre_reservation_upsell',
+  'analytics_briefing_enabled',
+  'analytics_briefing_phone',
 ]);
 
 module.exports = async (req, res) => {

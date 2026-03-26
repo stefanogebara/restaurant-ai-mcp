@@ -18,12 +18,12 @@
  */
 
 const { createSecureLogger } = require('../_lib/secure-logger');
+const { supabaseAdmin } = require('../_lib/supabase');
 const logger = createSecureLogger('AnalyticsBriefing');
 
 const POSTHOG_API_KEY = process.env.POSTHOG_PERSONAL_API_KEY;
 const POSTHOG_PROJECT_ID = process.env.POSTHOG_PROJECT_ID;
 const POSTHOG_HOST = process.env.POSTHOG_HOST || 'https://us.posthog.com';
-const FOUNDER_PHONE = process.env.FOUNDER_WHATSAPP_NUMBER || '+5511999999999';
 
 module.exports = async (req, res) => {
   // Auth: CRON_SECRET only
@@ -123,37 +123,55 @@ module.exports = async (req, res) => {
 
     logger.info('Analytics briefing generated:', briefing);
 
-    // Send via WhatsApp if configured
+    // Find recipients: users who enabled analytics_briefing in notification_preferences
     const whatsappPhoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
     const whatsappToken = process.env.WHATSAPP_ACCESS_TOKEN;
+    let sentCount = 0;
 
-    if (whatsappPhoneNumberId && whatsappToken && FOUNDER_PHONE) {
+    if (whatsappPhoneNumberId && whatsappToken) {
       try {
-        const waResponse = await fetch(
-          `https://graph.facebook.com/v21.0/${whatsappPhoneNumberId}/messages`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${whatsappToken}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              messaging_product: 'whatsapp',
-              to: FOUNDER_PHONE.replace(/[^0-9]/g, ''),
-              type: 'text',
-              text: { body: briefing },
-            }),
-          }
-        );
+        const { data: configs } = await supabaseAdmin
+          .schema('restaurant')
+          .from('restaurant_config')
+          .select('id, notification_preferences, manager_phone')
+          .not('notification_preferences', 'is', null);
 
-        if (waResponse.ok) {
-          logger.info('Analytics briefing sent via WhatsApp');
-        } else {
-          const errText = await waResponse.text();
-          logger.warn('WhatsApp send failed:', errText);
+        const recipients = (configs || [])
+          .filter(c => c.notification_preferences?.analytics_briefing_enabled)
+          .map(c => c.notification_preferences?.analytics_briefing_phone || c.manager_phone)
+          .filter(Boolean);
+
+        for (const phone of recipients) {
+          try {
+            const waResponse = await fetch(
+              `https://graph.facebook.com/v21.0/${whatsappPhoneNumberId}/messages`,
+              {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${whatsappToken}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  messaging_product: 'whatsapp',
+                  to: phone.replace(/[^0-9]/g, ''),
+                  type: 'text',
+                  text: { body: briefing },
+                }),
+              }
+            );
+            if (waResponse.ok) {
+              sentCount++;
+            } else {
+              const errText = await waResponse.text();
+              logger.warn('WhatsApp send failed for', phone, ':', errText);
+            }
+          } catch (waErr) {
+            logger.warn('WhatsApp send error:', waErr.message);
+          }
         }
-      } catch (waErr) {
-        logger.warn('WhatsApp send error:', waErr.message);
+        logger.info(`Analytics briefing sent to ${sentCount}/${recipients.length} recipients`);
+      } catch (dbErr) {
+        logger.warn('Failed to query briefing recipients:', dbErr.message);
       }
     }
 
@@ -164,7 +182,8 @@ module.exports = async (req, res) => {
         unique_visitors: uniqueVisitors,
         ...counts,
       },
-      briefing_sent: !!(whatsappPhoneNumberId && whatsappToken),
+      briefing_sent: sentCount > 0,
+      recipients: sentCount,
     });
   } catch (err) {
     logger.error('Analytics briefing failed:', err);

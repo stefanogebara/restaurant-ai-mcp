@@ -131,6 +131,41 @@ export default function ManagerNotificationsPanel() {
           </label>
         </div>
       </div>
+
+      {/* Analytics briefing */}
+      <div>
+        <p className="text-sm font-medium text-deep-charcoal mb-3">{t('settings.analyticsBriefing', 'Daily Analytics Briefing')}</p>
+        <div className="space-y-3">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={!!getValue('analytics_briefing_enabled')}
+              onChange={e => set('analytics_briefing_enabled', e.target.checked)}
+              aria-label={t('settings.analyticsBriefingLabel', 'Daily analytics via WhatsApp')}
+              className="mt-0.5 accent-[#9F1239]"
+            />
+            <span>
+              <span className="text-sm font-medium text-deep-charcoal">{t('settings.analyticsBriefingLabel', 'Daily analytics via WhatsApp')}</span>
+              <span className="block text-xs text-warm-stone">{t('settings.analyticsBriefingDesc', 'Receive a daily summary at 9 AM with visitors, demo funnel, and conversion metrics')}</span>
+            </span>
+          </label>
+          {getValue('analytics_briefing_enabled') && (
+            <div className="ml-6">
+              <label className="block text-xs font-medium text-deep-charcoal mb-1">
+                {t('settings.analyticsBriefingPhone', 'WhatsApp number for briefing')}
+              </label>
+              <input
+                type="tel"
+                value={(getValue('analytics_briefing_phone') as string) || ''}
+                onChange={e => set('analytics_briefing_phone', e.target.value)}
+                placeholder="+5511999999999"
+                className="w-full max-w-xs px-3 py-1.5 text-sm border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#9F1239] focus:border-[#9F1239]"
+              />
+              <p className="text-[11px] text-warm-stone mt-1">{t('settings.analyticsBriefingPhoneHint', 'E.164 format with country code')}</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
