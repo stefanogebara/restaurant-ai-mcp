@@ -1,6 +1,6 @@
 {
-  "installCommand": "npm install --legacy-peer-deps",
-  "buildCommand": "cd client && npm run build && node cache-bust-sw.js",
+  "installCommand": "npm install",
+  "buildCommand": "cd client && rm -rf dist node_modules/.vite && npm install && npm run build && node cache-bust-sw.js",
   "outputDirectory": "client/dist",
   "functions": {
     "api/**/*.js": {
