@@ -146,7 +146,7 @@ describe('customer-reservation: modify', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test('returns 403 when phone does not match', async () => {
+  test('returns 404 when phone does not match (M-02: same as not found)', async () => {
     mockSingle.mockResolvedValueOnce({
       data: { id: 'row-1', status: 'Confirmed', customer_phone: '+15550001' },
       error: null,
@@ -162,7 +162,7 @@ describe('customer-reservation: modify', () => {
       },
     });
     await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.status).toHaveBeenCalledWith(404);
   });
 
   test('returns 400 when modifying a cancelled reservation', async () => {
@@ -212,7 +212,7 @@ describe('customer-reservation: modify', () => {
 // Cancel
 // ─────────────────────────────────────────────────────────────────────────────
 describe('customer-reservation: cancel', () => {
-  test('returns 403 when phone does not match', async () => {
+  test('returns 404 when phone does not match (M-02: same as not found)', async () => {
     mockSingle.mockResolvedValueOnce({
       data: { id: 'row-1', status: 'Confirmed', customer_phone: '+15550001' },
       error: null,
@@ -224,7 +224,7 @@ describe('customer-reservation: cancel', () => {
       body: { reservation_id: 'CEL-2026-0218-A7K3', customer_phone: '+99999999' },
     });
     await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.status).toHaveBeenCalledWith(404);
   });
 
   test('cancels reservation and returns 200', async () => {

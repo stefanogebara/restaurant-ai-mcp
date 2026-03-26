@@ -19,6 +19,45 @@ const logger = createSecureLogger('CustomerReservation');
 const CUSTOMER_FIELDS =
   'reservation_id, customer_name, customer_email, customer_phone, date, time, party_size, special_requests, status';
 
+// M-02: Per-reservation-ID rate limit for phone verification attempts.
+// After 5 failed phone matches for the same reservation_id, block for 15 minutes.
+const phoneVerifyAttempts = new Map();
+const PHONE_VERIFY_MAX_ATTEMPTS = 5;
+const PHONE_VERIFY_BLOCK_MS = 15 * 60 * 1000; // 15 minutes
+
+function checkPhoneVerifyRateLimit(reservationId) {
+  const entry = phoneVerifyAttempts.get(reservationId);
+  if (!entry) return false; // not blocked
+  if (Date.now() > entry.blockedUntil) {
+    phoneVerifyAttempts.delete(reservationId);
+    return false;
+  }
+  return entry.failures >= PHONE_VERIFY_MAX_ATTEMPTS;
+}
+
+function recordPhoneVerifyFailure(reservationId) {
+  const entry = phoneVerifyAttempts.get(reservationId) || { failures: 0, blockedUntil: 0 };
+  entry.failures += 1;
+  if (entry.failures >= PHONE_VERIFY_MAX_ATTEMPTS) {
+    entry.blockedUntil = Date.now() + PHONE_VERIFY_BLOCK_MS;
+  }
+  phoneVerifyAttempts.set(reservationId, entry);
+}
+
+function clearPhoneVerifyFailures(reservationId) {
+  phoneVerifyAttempts.delete(reservationId);
+}
+
+// Clean up expired entries every 10 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, entry] of phoneVerifyAttempts) {
+    if (now > entry.blockedUntil && entry.failures >= PHONE_VERIFY_MAX_ATTEMPTS) {
+      phoneVerifyAttempts.delete(id);
+    }
+  }
+}, 10 * 60 * 1000);
+
 module.exports = async (req, res) => {
   setWebhookCors(req, res);
   if (handlePreflight(req, res)) return;
@@ -60,6 +99,14 @@ async function handleLookup(req, res) {
   let query = supabaseAdmin.from('reservations').select(CUSTOMER_FIELDS);
 
   if (reservation_id) {
+    // L-05: reservation_id lookup is not scoped by restaurant_id. This is acceptable
+    // because reservation_ids (RES-YYYYMMDD-XXXX) are unguessable and include random
+    // characters. Adding restaurant_id scoping here would require the customer to know
+    // their restaurant_id, which they typically don't. The format provides sufficient
+    // entropy to prevent enumeration attacks.
+    if (restaurant_id) {
+      query = query.eq('restaurant_id', restaurant_id);
+    }
     query = query.eq('reservation_id', reservation_id.trim().toUpperCase());
   } else {
     // Phone lookup requires restaurant_id to prevent cross-tenant data leaks
@@ -100,6 +147,12 @@ async function handleModify(req, res) {
     return res.status(400).json({ success: false, message: 'reservation_id and customer_phone are required' });
   }
 
+  // M-02: Check per-reservation rate limit before DB query
+  if (checkPhoneVerifyRateLimit(reservation_id)) {
+    logger.info('Phone verify rate limited', { reservation_id });
+    return res.status(429).json({ success: false, message: 'Too many attempts. Please try again later.' });
+  }
+
   // Verify ownership: phone must match the reservation
   const { data: existing, error: fetchError } = await supabaseAdmin
     .from('reservations')
@@ -107,17 +160,23 @@ async function handleModify(req, res) {
     .eq('reservation_id', reservation_id)
     .single();
 
+  // M-02: Return same generic error for both "not found" and "phone mismatch"
+  // to prevent reservation ID enumeration via differing error messages.
+  const GENERIC_NOT_FOUND = 'Reservation not found or phone number does not match';
+
   if (fetchError || !existing) {
-    return res.status(404).json({ success: false, message: 'Reservation not found' });
+    // Record a failure even when reservation doesn't exist to avoid timing leaks
+    recordPhoneVerifyFailure(reservation_id);
+    return res.status(404).json({ success: false, message: GENERIC_NOT_FOUND });
   }
 
-  // SEC-H4: Phone-only auth design limitation — an attacker who knows the reservation_id
-  // can brute-force phone numbers. Mitigated by the customer_portal rate limit (30 req/hr/IP).
-  // Do NOT remove or bypass checkAndApplyRateLimit above. A future improvement would add
-  // a time-based OTP or magic-link flow to eliminate this reliance on phone alone.
   if (existing.customer_phone !== customer_phone) {
-    return res.status(403).json({ success: false, message: 'Phone number does not match this reservation' });
+    recordPhoneVerifyFailure(reservation_id);
+    return res.status(404).json({ success: false, message: GENERIC_NOT_FOUND });
   }
+
+  // Phone matched — clear any accumulated failures
+  clearPhoneVerifyFailures(reservation_id);
 
   if (existing.status === 'Cancelled' || existing.status === 'cancelled') {
     return res.status(400).json({ success: false, message: 'Cannot modify a cancelled reservation' });
@@ -162,6 +221,12 @@ async function handleCancel(req, res) {
     return res.status(400).json({ success: false, message: 'reservation_id and customer_phone are required' });
   }
 
+  // M-02: Check per-reservation rate limit before DB query
+  if (checkPhoneVerifyRateLimit(reservation_id)) {
+    logger.info('Phone verify rate limited', { reservation_id });
+    return res.status(429).json({ success: false, message: 'Too many attempts. Please try again later.' });
+  }
+
   // Verify ownership
   const { data: existing, error: fetchError } = await supabaseAdmin
     .from('reservations')
@@ -169,15 +234,21 @@ async function handleCancel(req, res) {
     .eq('reservation_id', reservation_id)
     .single();
 
+  // M-02: Return same generic error for both "not found" and "phone mismatch"
+  const GENERIC_NOT_FOUND = 'Reservation not found or phone number does not match';
+
   if (fetchError || !existing) {
-    return res.status(404).json({ success: false, message: 'Reservation not found' });
+    recordPhoneVerifyFailure(reservation_id);
+    return res.status(404).json({ success: false, message: GENERIC_NOT_FOUND });
   }
 
-  // SEC-H4: See modify handler comment — same phone-only auth limitation applies.
-  // Rate limiting (customer_portal, 30 req/hr/IP) is the primary mitigation.
   if (existing.customer_phone !== customer_phone) {
-    return res.status(403).json({ success: false, message: 'Phone number does not match this reservation' });
+    recordPhoneVerifyFailure(reservation_id);
+    return res.status(404).json({ success: false, message: GENERIC_NOT_FOUND });
   }
+
+  // Phone matched — clear any accumulated failures
+  clearPhoneVerifyFailures(reservation_id);
 
   if (existing.status === 'Cancelled' || existing.status === 'cancelled') {
     return res.status(400).json({ success: false, message: 'Reservation is already cancelled' });

@@ -52,6 +52,33 @@ module.exports = async (req, res) => {
   try {
     // Get timezone from query param, body, or default to UTC
     const timezone = req.query?.timezone || req.body?.timezone || 'UTC';
+
+    // L-20: Validate timezone to prevent invalid timezone strings from throwing
+    if (timezone !== 'UTC') {
+      let valid = false;
+      try {
+        // Intl.supportedValuesOf is available in Node 18+
+        if (typeof Intl.supportedValuesOf === 'function') {
+          const supported = Intl.supportedValuesOf('timeZone');
+          valid = supported.includes(timezone);
+        } else {
+          // Fallback: try to use the timezone — if it throws, it's invalid
+          Intl.DateTimeFormat(undefined, { timeZone: timezone });
+          valid = true;
+        }
+      } catch {
+        valid = false;
+      }
+
+      if (!valid) {
+        return res.status(400).json({
+          success: false,
+          error: true,
+          message: `Invalid timezone: "${timezone}". Use IANA timezone names like "America/Sao_Paulo" or "UTC".`
+        });
+      }
+    }
+
     const now = new Date();
 
     // Format date as YYYY-MM-DD
