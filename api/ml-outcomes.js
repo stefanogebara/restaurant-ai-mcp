@@ -159,9 +159,9 @@ async function handleRecordOutcome(req, res) {
       if (revenueData && revenueData.length > 0) {
         const totalBill = revenueData.reduce((sum, r) => sum + (r.total_bill || 0), 0);
         avg_revenue_per_party = Math.round(totalBill / revenueData.length);
-        logger.info(`📊 Using actual avg cover €${avg_revenue_per_party} (from ${revenueData.length} service records)`);
+        logger.info(`📊 Using actual avg cover R$${avg_revenue_per_party} (from ${revenueData.length} service records)`);
       } else {
-        logger.info('📊 No service_records data yet, using fallback €50 avg cover');
+        logger.info('📊 No service_records data yet, using fallback R$50 avg cover');
       }
     }
     let value_saved = 0;
@@ -185,8 +185,8 @@ async function handleRecordOutcome(req, res) {
       ? ((value_saved - intervention_cost) / intervention_cost) * 100
       : 0;
 
-    logger.info(`💰 Value Saved: €${value_saved}`);
-    logger.info(`💵 Intervention Cost: €${intervention_cost}`);
+    logger.info(`💰 Value Saved: R$${value_saved}`);
+    logger.info(`💵 Intervention Cost: R$${intervention_cost}`);
     logger.info(`📈 ROI: ${roi_multiplier.toFixed(0)}%`);
 
     // 3. Create ml_interventions record

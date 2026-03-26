@@ -159,6 +159,16 @@ module.exports = async function handler(req, res) {
       return res.status(413).json({ error: 'File too large (max 5MB)' });
     }
 
+    // Magic byte validation — reject files whose content doesn't match declared type
+    const isPDF = buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46;
+    const isText = !buffer.includes(0x00); // no null bytes = likely text
+    if (mimetype === 'application/pdf' && !isPDF) {
+      return res.status(415).json({ error: 'File content does not match declared type' });
+    }
+    if (mimetype.startsWith('text/') && !isText) {
+      return res.status(415).json({ error: 'File content does not match declared type' });
+    }
+
     // File type allowlist — reject non-PDF/text files
     const ext = path.extname(filename || '').toLowerCase();
     if (!ALLOWED_MIME_TYPES.has(mimetype) && !ALLOWED_EXTENSIONS.includes(ext)) {

@@ -5,7 +5,7 @@ interface DepositBadgeProps {
   currency?: string;
 }
 
-export default function DepositBadge({ amount, currency = 'EUR' }: DepositBadgeProps) {
+export default function DepositBadge({ amount, currency = 'BRL' }: DepositBadgeProps) {
   const { t } = useTranslation();
   if (!amount) return null;
 

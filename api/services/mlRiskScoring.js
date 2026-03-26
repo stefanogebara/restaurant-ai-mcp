@@ -20,12 +20,12 @@ const MODEL_VERSION = 'v1.2-heuristic-segovia-fixed'; // Fixed lead time U-curve
 
 const INTERVENTION_COSTS = {
   // Confirmation call: Staff time to make 5-10 min call
-  // Example: If staff makes €18/hr, 10 min = €3
+  // Example: If staff makes R$18/hr, 10 min = R$3
   // ADJUST THIS: Use your actual labor cost
   confirmation_call: 3,
 
   // Deposit processing: Payment processor fees + admin overhead
-  // Example: Stripe 2.9% + €0.30 = ~€0.88 per €20 deposit, rounded to €2
+  // Example: Stripe 2.9% + R$0.30 = ~R$0.88 per R$20 deposit, rounded to R$2
   // ADJUST THIS: Use your actual payment processing fees
   deposit_required: 2,
 
@@ -41,7 +41,7 @@ const INTERVENTION_COSTS = {
 
 // Average revenue per no-show prevented
 // AUTO-CALCULATED from actual service_records data
-// Falls back to €50 if no data available yet
+// Falls back to R$50 if no data available yet
 let AVERAGE_NO_SHOW_VALUE_CACHE = null;
 let CACHE_TIMESTAMP = null;
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // Refresh every 24 hours
@@ -262,7 +262,7 @@ async function calculateAverageNoShowValue() {
     }
 
     if (!data || data.length === 0) {
-      logger.info('[mlRiskScoring] No service records with total_bill found. Using default €50.');
+      logger.info('[mlRiskScoring] No service records with total_bill found. Using default R$50.');
       return 50; // No data yet, use default
     }
 
@@ -274,7 +274,7 @@ async function calculateAverageNoShowValue() {
     AVERAGE_NO_SHOW_VALUE_CACHE = average;
     CACHE_TIMESTAMP = now;
 
-    logger.info(`[mlRiskScoring] Calculated avg revenue from ${data.length} records: €${average}`);
+    logger.info(`[mlRiskScoring] Calculated avg revenue from ${data.length} records: R$${average}`);
     return average;
 
   } catch (error) {

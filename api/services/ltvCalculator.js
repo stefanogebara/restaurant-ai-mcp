@@ -219,12 +219,12 @@ function getMostCommon(arr) {
  * Calculate customer tier based on visits and revenue
  */
 function calculateTier(visits, totalRevenue, avgRevenue) {
-  // VIP: 10+ visits OR €1000+ total revenue OR €100+ avg per visit
+  // VIP: 10+ visits OR R$1000+ total revenue OR R$100+ avg per visit
   if (visits >= 10 || totalRevenue >= 1000 || avgRevenue >= 100) {
     return 'vip';
   }
 
-  // Regular: 5+ visits OR €500+ total revenue
+  // Regular: 5+ visits OR R$500+ total revenue
   if (visits >= 5 || totalRevenue >= 500) {
     return 'regular';
   }

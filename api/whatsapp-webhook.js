@@ -79,16 +79,21 @@ async function handlePost(req, res) {
     logger.error('Missing X-Hub-Signature-256 header');
     return res.status(403).json({ error: 'Missing signature' });
   }
-  // Use raw body for HMAC: prefer stream-captured body, then req.rawBody, then fallback
-  const rawBody = req._rawBody || req.rawBody || (typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
-  const rawBodySource = req._rawBody ? 'stream' : req.rawBody ? 'req.rawBody' : (typeof req.body === 'string' ? 'string-body' : 'JSON.stringify');
-  const expectedSig = 'sha256=' + crypto.createHmac('sha256', appSecret).update(rawBody).digest('hex');
+  // Use raw body for HMAC: prefer stream-captured body, then req.rawBody — reject if neither available
+  const rawBody = req._rawBody || req.rawBody;
+  if (!rawBody && typeof req.body !== 'string') {
+    logger.error('No raw body available for HMAC verification');
+    return res.status(400).json({ error: 'Cannot verify request integrity' });
+  }
+  const bodyForHmac = rawBody || req.body;
+  const rawBodySource = req._rawBody ? 'stream' : req.rawBody ? 'req.rawBody' : 'string-body';
+  const expectedSig = 'sha256=' + crypto.createHmac('sha256', appSecret).update(bodyForHmac).digest('hex');
   logger.info('[WA-SIG]', {
     source: rawBodySource,
     bodyDefined: req.body !== undefined,
     rawBodyAvail: !!req.rawBody,
     _rawBodyAvail: !!req._rawBody,
-    rawBodyLen: rawBody ? rawBody.length ?? rawBody.byteLength : 0,
+    rawBodyLen: bodyForHmac ? bodyForHmac.length ?? bodyForHmac.byteLength : 0,
     sigMatch: signature === expectedSig,
   });
   if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig))) {

@@ -51,7 +51,9 @@ module.exports = async (req, res) => {
       if (auth.error) {
         return res.status(auth.status || 401).json({ error: auth.error });
       }
-      // Optionally check for admin role here
+      if (!auth.user || auth.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
     } catch (err) {
       return res.status(401).json({ error: 'Authentication required' });
     }

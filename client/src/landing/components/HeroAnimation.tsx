@@ -577,6 +577,7 @@ export default function HeroAnimation() {
         autoPlay
         loop
         controls={false}
+        acknowledgeRemotionLicense
         style={{
           width: '100%',
           maxWidth: COMP_WIDTH,

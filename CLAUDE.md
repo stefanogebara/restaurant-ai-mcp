@@ -166,8 +166,8 @@ Restaurant config lives in `restaurant.restaurant_config` schema.
 
 | Schedule | Endpoint | Description |
 |----------|----------|-------------|
-| Every 5 min | `/api/cron/check-late-reservations` | Marks 20+ min late reservations as no-show |
-| Every 5 min | `/api/cron/send-campaigns` | Sends scheduled retention campaigns |
+| Every 15 min | `/api/cron/check-late-reservations` | Marks 20+ min late reservations as no-show |
+| Every 15 min | `/api/cron/send-campaigns` | Sends scheduled retention campaigns |
 | Every 30 min | `/api/cron/send-feedback` | Sends post-visit feedback requests |
 | Daily 2 AM | `/api/cron/warm-seo-cache` | Pre-warms SEO page cache |
 | Daily 3 AM | `/api/cron/cleanup-expired-demos` | Deletes expired demo restaurants |

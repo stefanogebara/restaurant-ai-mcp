@@ -15,9 +15,9 @@ const logger = createSecureLogger('DynamicPricing');
 
 // Base prices (can be configured per restaurant)
 const BASE_PRICES = {
-  lunch: 25, // €25 base for lunch
-  dinner: 40, // €40 base for dinner
-  default: 30 // €30 default
+  lunch: 25, // R$25 base for lunch
+  dinner: 40, // R$40 base for dinner
+  default: 30 // R$30 default
 };
 
 /**

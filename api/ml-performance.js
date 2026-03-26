@@ -373,7 +373,7 @@ function generateRecommendations(breakdown, summary) {
     recommendations.push({
       type: 'budget',
       icon: '💰',
-      message: `Spent €${totalCost.toFixed(0)} this period - consider optimizing intervention costs`,
+      message: `Spent R$${totalCost.toFixed(0)} this period - consider optimizing intervention costs`,
       priority: 'low'
     });
   }
