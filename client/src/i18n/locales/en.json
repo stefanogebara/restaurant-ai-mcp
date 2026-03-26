@@ -82,6 +82,7 @@
     "restaurantSettings": "Restaurant Settings"
   },
   "dashboard": {
+    "overview": "Overview",
     "welcome": "Welcome",
     "goodMorning": "Good morning",
     "goodAfternoon": "Good afternoon",

@@ -76,6 +76,7 @@
     "restaurantSettings": "Configuración del Restaurante"
   },
   "dashboard": {
+    "overview": "Vista General",
     "welcome": "Bienvenido",
     "goodMorning": "Buenos días",
     "goodAfternoon": "Buenas tardes",

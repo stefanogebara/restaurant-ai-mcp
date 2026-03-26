@@ -455,7 +455,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
         </button>
       )}
       <p className="text-center text-xs text-muted-stone mt-3">
-        {restaurant.cancellation_policy || t('reservations.cancellationPolicy')}
+        {t('reservations.cancellationPolicy')}
       </p>
     </div>
   );

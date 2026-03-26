@@ -22,13 +22,13 @@ describe('PLAN_LIMITS structure', () => {
 
   test('starter plan exists with correct reservation limit', () => {
     expect(PLAN_LIMITS.starter).toBeDefined();
-    expect(PLAN_LIMITS.starter.maxReservationsPerMonth).toBe(50);
+    expect(PLAN_LIMITS.starter.maxReservationsPerMonth).toBe(100);
     expect(PLAN_LIMITS.starter.name).toBe('Starter');
   });
 
   test('growth plan exists with correct reservation limit', () => {
     expect(PLAN_LIMITS.growth).toBeDefined();
-    expect(PLAN_LIMITS.growth.maxReservationsPerMonth).toBe(150);
+    expect(PLAN_LIMITS.growth.maxReservationsPerMonth).toBe(300);
     expect(PLAN_LIMITS.growth.name).toBe('Growth');
   });
 
@@ -87,13 +87,13 @@ describe('getPlanLimits', () => {
   test('returns correct limits for starter', () => {
     const limits = getPlanLimits('starter');
     expect(limits).toBeDefined();
-    expect(limits.maxReservationsPerMonth).toBe(50);
+    expect(limits.maxReservationsPerMonth).toBe(100);
   });
 
   test('returns correct limits for growth', () => {
     const limits = getPlanLimits('growth');
     expect(limits).toBeDefined();
-    expect(limits.maxReservationsPerMonth).toBe(150);
+    expect(limits.maxReservationsPerMonth).toBe(300);
   });
 
   test('returns correct limits for scale', () => {
@@ -180,18 +180,18 @@ describe('checkReservationLimit', () => {
   test('starter plan allows when under limit', () => {
     const result = checkReservationLimit('starter', 40);
     expect(result.allowed).toBe(true);
-    expect(result.limit).toBe(50);
+    expect(result.limit).toBe(100);
   });
 
-  test('starter plan blocks at 50', () => {
-    const result = checkReservationLimit('starter', 50);
+  test('starter plan blocks at 100', () => {
+    const result = checkReservationLimit('starter', 100);
     expect(result.allowed).toBe(false);
   });
 
-  test('growth plan allows when under 150', () => {
+  test('growth plan allows when under 300', () => {
     const result = checkReservationLimit('growth', 100);
     expect(result.allowed).toBe(true);
-    expect(result.limit).toBe(150);
+    expect(result.limit).toBe(300);
   });
 
   test('scale plan always allows (unlimited)', () => {
