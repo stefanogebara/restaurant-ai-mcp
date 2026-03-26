@@ -1,12 +1,7 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "cd client && rm -rf dist node_modules/.vite && npm install && npm run build && sed -i \"s/seatable-v2/seatable-$(date +%s)/\" dist/sw.js",
+  "buildCommand": "cd client && rm -rf dist node_modules/.vite && npm install && npm run build && node -e \"const fs=require('fs');const f='dist/sw.js';fs.writeFileSync(f,fs.readFileSync(f,'utf8').replace('seatable-v2','seatable-'+Date.now()))\"",
   "outputDirectory": "client/dist",
-  "build": {
-    "env": {
-      "PYTHON_VERSION": "3.9"
-    }
-  },
   "functions": {
     "api/**/*.js": {
       "excludeFiles": "lambda/**",
