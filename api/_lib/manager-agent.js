@@ -225,7 +225,7 @@ function buildSystemPrompt(memories, snapshot, config) {
 
   if (snapshot.deposit_summary && snapshot.deposit_summary.count > 0) {
     const { count, total_amount } = snapshot.deposit_summary;
-    const formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(total_amount);
+    const formatted = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0 }).format(total_amount);
     systemPrompt += `\n\n[DEPOSITS HELD TONIGHT]\n${count} reservation${count !== 1 ? 's' : ''} with deposits held — total ${formatted} at risk of no-show capture.`;
   }
 

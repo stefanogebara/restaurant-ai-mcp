@@ -56,7 +56,7 @@ module.exports = async (req, res) => {
         const response = {
           status: stripeSub.status,
           planName: planMapping[price.id] || sub['Plan Name'] || 'Unknown Plan',
-          planPrice: `€${(price.unit_amount / 100).toFixed(2)}/${price.recurring.interval}`,
+          planPrice: `R$${(price.unit_amount / 100).toFixed(0)}/${price.recurring.interval === 'month' ? 'mês' : price.recurring.interval}`,
           currentPeriodEnd: new Date(stripeSub.current_period_end * 1000).toLocaleDateString(),
           cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
         };
@@ -78,7 +78,7 @@ module.exports = async (req, res) => {
     return res.status(200).json({
       status: sub['Status'] || 'active',
       planName,
-      planPrice: `${planPriceMap[planName] || '€29'}/month`,
+      planPrice: `${planPriceMap[planName] || 'R$497'}/mês`,
       currentPeriodEnd: sub['Current Period End'] || null,
       cancelAtPeriodEnd: false,
     });

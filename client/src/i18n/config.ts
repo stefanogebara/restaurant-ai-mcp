@@ -2,8 +2,9 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-// Only import English eagerly (fallback language, always needed)
+// Import both EN and PT-BR eagerly (PT-BR is fallback/primary, EN for international)
 import en from './locales/en.json';
+import ptBR from './locales/pt-BR.json';
 
 export const languages = {
   en: { name: 'English', flag: '\u{1F1FA}\u{1F1F8}' },
@@ -60,8 +61,9 @@ i18n
   .init({
     resources: {
       en: { translation: en },
+      'pt-BR': { translation: ptBR },
     },
-    fallbackLng: 'en',
+    fallbackLng: 'pt-BR',
     debug: false,
     interpolation: {
       escapeValue: false, // React already escapes values

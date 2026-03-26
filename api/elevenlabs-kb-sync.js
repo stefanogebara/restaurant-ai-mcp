@@ -60,7 +60,7 @@ function buildKnowledgeDoc(config, managerFacts) {
   if (config.deposit_config) {
     const dc = config.deposit_config;
     if (dc.enabled) {
-      lines.push(`Deposit required: ${dc.type === 'per_person' ? `€${dc.amount} per person` : `€${dc.amount} flat`} for parties of ${dc.min_party_size}+`);
+      lines.push(`Deposit required: ${dc.type === 'per_person' ? `R$${dc.amount} per person` : `R$${dc.amount} flat`} for parties of ${dc.min_party_size}+`);
     }
   }
   lines.push('');

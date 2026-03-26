@@ -55,16 +55,16 @@ describe('PLAN_PRICES', () => {
     expect(PLAN_PRICES.free).toBe(0);
   });
 
-  test('starter plan is 149 (BRL)', () => {
-    expect(PLAN_PRICES.starter).toBe(149);
+  test('starter plan is 497 (BRL)', () => {
+    expect(PLAN_PRICES.starter).toBe(497);
   });
 
-  test('growth plan is 499 (BRL)', () => {
-    expect(PLAN_PRICES.growth).toBe(499);
+  test('growth plan is 1497 (BRL)', () => {
+    expect(PLAN_PRICES.growth).toBe(1497);
   });
 
-  test('scale plan is 999 (BRL)', () => {
-    expect(PLAN_PRICES.scale).toBe(999);
+  test('scale plan is 2997 (BRL)', () => {
+    expect(PLAN_PRICES.scale).toBe(2997);
   });
 
   test('includes free plan', () => {

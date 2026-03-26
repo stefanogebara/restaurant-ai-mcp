@@ -445,7 +445,7 @@ async function sendReferralRewardEmail(to, { referrerName, refereeRestaurantName
   if (!resend) { logger.warn('RESEND_API_KEY not set, skipping referral reward email'); return; }
 
   const displayCredit = typeof creditAmount === 'number'
-    ? `EUR ${(creditAmount / 100).toFixed(2)}`
+    ? `R$${(creditAmount / 100).toFixed(2)}`
     : String(creditAmount);
 
   const plainText = [

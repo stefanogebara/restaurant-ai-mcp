@@ -280,10 +280,10 @@ function buildMetricsBlock(metrics) {
   block += `Total reservations: ${metrics.total_reservations}\n`;
   block += `No-show rate: ${metrics.no_show_rate}%\n`;
   if (metrics.avg_bill) {
-    block += `Avg bill: €${metrics.avg_bill}\n`;
+    block += `Avg bill: R$${metrics.avg_bill}\n`;
   }
   if (metrics.avg_revenue_per_cover) {
-    block += `Avg revenue per cover: €${metrics.avg_revenue_per_cover}\n`;
+    block += `Avg revenue per cover: R$${metrics.avg_revenue_per_cover}\n`;
   }
   if (metrics.data_points < 5) {
     block += `Note: Limited data (${metrics.data_points} records) — suggestions are directional.\n`;

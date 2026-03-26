@@ -141,7 +141,7 @@ module.exports = async (req, res) => {
     const vipCount = ltvRecords.filter(r => r.customer_tier === 'vip').length;
     const regularCount = ltvRecords.filter(r => r.customer_tier === 'regular').length;
     const avgSpend = Math.round(ltvRecords.reduce((s, r) => s + r.avg_revenue_per_visit, 0) / ltvRecords.length);
-    const summary = `Imported ${ltvRecords.length} past customers from historical CSV. ${vipCount} VIPs, ${regularCount} regulars. Average spend: €${avgSpend}/visit.`;
+    const summary = `Imported ${ltvRecords.length} past customers from historical CSV. ${vipCount} VIPs, ${regularCount} regulars. Average spend: R$${avgSpend}/visit.`;
     await writeMemory(restaurantId, 'fact', 'customer_intelligence', summary, 'csv_import', 7).catch(() => {});
 
     logger.info('import-history success', { restaurantId, imported: ltvRecords.length, skipped });

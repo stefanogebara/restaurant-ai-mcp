@@ -397,7 +397,7 @@ async function getRecommendedIntervention(riskLevel, riskScore, avgRevenue = nul
   if (riskLevel === 'very-high') {
     return {
       type: 'deposit_required',
-      description: 'Require credit card deposit (€10-20 per person)',
+      description: 'Require credit card deposit (R$10-20 per person)',
       estimatedCost: INTERVENTION_COSTS.deposit_required, // Configurable: payment processing fees
       estimatedValue
     };

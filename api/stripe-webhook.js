@@ -114,12 +114,12 @@ async function rewardReferralIfEligible(refereeRestaurantId, refereeStripeCustom
     return;
   }
 
-  const planPrices = { Starter: 2900, Growth: 9900, Scale: 19900 }; // EUR cents
+  const planPrices = { Starter: 49700, Growth: 149700, Scale: 299700 }; // BRL centavos
   const creditCents = planPrices[referrerSub['Plan Name']] || planPrices.Starter;
 
   await stripe.customers.createBalanceTransaction(referrerSub['Customer ID'], {
     amount:      -creditCents,
-    currency:    'eur',
+    currency:    'brl',
     description: `Referral reward: 1 month free (referred ${refereeStripeCustomerId})`,
   });
 
@@ -128,7 +128,7 @@ async function rewardReferralIfEligible(refereeRestaurantId, refereeStripeCustom
     .update({ status: 'rewarded', rewarded_at: new Date().toISOString() })
     .eq('id', claimed.id);
 
-  logger.info(`Referral rewarded: ${claimed.referral_code} -> credited ${creditCents / 100} EUR to ${referrerSub['Customer ID']}`);
+  logger.info(`Referral rewarded: ${claimed.referral_code} -> credited R$${creditCents / 100} to ${referrerSub['Customer ID']}`);
 
   // Send reward notification email to the referrer
   try {
