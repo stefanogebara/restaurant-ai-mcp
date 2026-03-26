@@ -17,6 +17,7 @@
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const logger = createSecureLogger('Health');
 
 // Health check uses supabaseAdmin (service_role) for unscoped cross-tenant
@@ -42,26 +43,32 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  if (await checkAndApplyRateLimit(req, res, 'api')) return;
+
   const cronSecret = process.env.CRON_SECRET;
   const requestSecret = req.headers.authorization?.replace('Bearer ', '');
   const detailed = req.query.detailed === 'true' && cronSecret && requestSecret === cronSecret;
   const startTime = Date.now();
 
   try {
-    // Parallel health checks
-    const [
-      databaseHealth,
-      staleDataCheck,
-      dataQualityCheck
-    ] = await Promise.all([
-      checkDatabaseConnectivity(),
+    // Public: only check DB connectivity. Detailed: run all checks.
+    const databaseHealth = await checkDatabaseConnectivity();
+    const responseTime = Date.now() - startTime;
+
+    if (!detailed) {
+      return res.status(databaseHealth.status === 'healthy' ? 200 : 503).json({
+        status: databaseHealth.status === 'healthy' ? 'healthy' : 'degraded',
+        timestamp: new Date().toISOString(),
+        responseTime: `${responseTime}ms`,
+      });
+    }
+
+    // Authenticated detailed mode — run full checks
+    const [staleDataCheck, dataQualityCheck] = await Promise.all([
       checkForStaleData(),
       checkDataQuality()
     ]);
 
-    const responseTime = Date.now() - startTime;
-
-    // Determine overall health status
     const isHealthy =
       databaseHealth.status === 'healthy' &&
       staleDataCheck.status !== 'critical' &&
@@ -71,22 +78,14 @@ module.exports = async (req, res) => {
       status: isHealthy ? 'healthy' : 'degraded',
       timestamp: new Date().toISOString(),
       responseTime: `${responseTime}ms`,
-    };
-
-    // Only include detailed checks for authenticated requests
-    if (detailed) {
-      healthStatus.checks = {
+      checks: {
         database: databaseHealth,
         staleData: staleDataCheck,
         dataQuality: dataQualityCheck
-      };
-    }
-
-    // Add detailed metrics if requested
-    if (detailed) {
-      healthStatus.metrics = await getDetailedMetrics();
-      healthStatus.thresholds = THRESHOLDS;
-    }
+      },
+      metrics: await getDetailedMetrics(),
+      thresholds: THRESHOLDS,
+    };
 
     // Add alerts only for authenticated detailed requests
     if (detailed) {

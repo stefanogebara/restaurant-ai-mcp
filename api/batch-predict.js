@@ -224,16 +224,17 @@ module.exports = async (req, res) => {
     // ---- Single-restaurant mode ----
     let restaurantId = req.query.restaurant_id;
 
-    const authResult = await verifyAuth(req, { required: false });
-    if (authResult.user) {
-      req.user = authResult.user;
-      restaurantId = req.user.restaurant_id || restaurantId;
+    const authResult = await verifyAuth(req, { required: true });
+    if (!authResult.user) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
     }
+    req.user = authResult.user;
+    restaurantId = req.user.restaurant_id || restaurantId;
 
     if (!restaurantId) {
       return res.status(400).json({
         success: false,
-        error: 'Missing restaurant_id. Provide via query parameter or authentication.'
+        error: 'Missing restaurant_id.'
       });
     }
 

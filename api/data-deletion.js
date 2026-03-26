@@ -32,7 +32,8 @@ module.exports = async function handler(req, res) {
 
   let user;
   try {
-    user = await verifyAuth(req.headers.authorization?.replace('Bearer ', ''));
+    const authResult = await verifyAuth(req, { required: true });
+    user = authResult.user;
   } catch {
     return res.status(401).json({ error: 'Authentication required' });
   }
@@ -122,7 +123,7 @@ module.exports = async function handler(req, res) {
       .from('manager_memory')
       .delete()
       .eq('restaurant_id', restaurantId)
-      .ilike('content', `%${phone}%`)
+      .ilike('content', `%${phone.replace(/[%_]/g, '\\$&')}%`)
       .select('id');
 
     deletionResults.memory_records_deleted = memData?.length || 0;

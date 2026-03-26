@@ -138,7 +138,7 @@ export default function ReservationsList({
               onClick={onAdd}
               className="mt-3 text-xs font-semibold px-4 py-2 rounded-lg bg-[#9F1239]/[8%] text-[#9F1239] hover:bg-[#9F1239]/[14%] transition-colors"
             >
-              + {tl('addReservation')}
+              {tl('addReservation')}
             </button>
           )}
         </div>

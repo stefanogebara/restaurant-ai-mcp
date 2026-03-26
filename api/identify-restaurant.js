@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
     const { restaurant_name } = req.method === 'POST' ? req.body : req.query;
 
     if (!restaurant_name) {
-      // If no restaurant name provided, return list of available restaurants
+      // Return restaurant names only (no UUIDs) to prevent enumeration
       const restaurants = await getAllActiveRestaurants();
 
       if (restaurants.length === 0) {
@@ -40,8 +40,7 @@ module.exports = async (req, res) => {
         success: false,
         message: 'Which restaurant would you like to book at? We have the following options:',
         available_restaurants: restaurants.map(r => ({
-          name: r.restaurant_name,
-          id: r.id
+          name: r.restaurant_name
         }))
       });
     }

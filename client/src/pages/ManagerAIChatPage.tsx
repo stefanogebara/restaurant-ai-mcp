@@ -87,10 +87,17 @@ export default function ManagerAIChatPage() {
         qc.setQueryData(['manager-chat-history'], context.previous);
       }
     },
-    onSuccess: ({ reply }) => {
-      qc.setQueryData<{ history: Message[] }>(['manager-chat-history'], (old) => ({
-        history: [...(old?.history || []), { role: 'assistant', content: reply }],
-      }));
+    onSuccess: ({ reply }, sentMessage, context) => {
+      // Rebuild from the pre-mutation snapshot to avoid duplicates caused by
+      // a concurrent query refetch that already contains the DB-persisted turns.
+      const base = context?.previous?.history || [];
+      qc.setQueryData<{ history: Message[] }>(['manager-chat-history'], {
+        history: [
+          ...base,
+          { role: 'manager', content: sentMessage },
+          { role: 'assistant', content: reply },
+        ],
+      });
       qc.invalidateQueries({ queryKey: ['manager-usage'] });
     },
   });

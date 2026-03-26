@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { supabase } from '../lib/supabase';
+import { supabase, authReady, isAuthInitialized } from '../lib/supabase';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
@@ -10,9 +10,12 @@ export const api = axios.create({
   },
 });
 
-// Add authentication interceptor to include Supabase session token
+// Add authentication interceptor to include Supabase session token.
+// Wait for auth initialization before attaching the token to avoid sending
+// stale/missing tokens during the INITIAL_SESSION resolution (C-03 fix).
 api.interceptors.request.use(async (config) => {
   try {
+    await authReady;
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.access_token) {
       config.headers.Authorization = `Bearer ${session.access_token}`;
@@ -25,10 +28,15 @@ api.interceptors.request.use(async (config) => {
 
 // Redirect to /login on 401 responses — catches expired sessions that
 // slipped past the auth state listener (C-05 fix).
+// Skips redirect if auth hasn't initialized yet (prevents race on page load, C-03 fix).
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
+      // Don't redirect during auth initialization — the token may not be ready yet (C-03)
+      if (!isAuthInitialized) {
+        return Promise.reject(error);
+      }
       // Only redirect if user is on a protected page (not public booking pages)
       const path = window.location.pathname;
       const isProtectedPage = path.startsWith('/host-dashboard') ||

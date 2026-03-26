@@ -249,7 +249,7 @@ export default function Dashboard() {
                 onClick={() => setShowWalkInModal(true)}
                 className="px-4 py-2 bg-burgundy hover:bg-burgundy-dark text-white border border-burgundy rounded-lg text-[13px] font-medium transition-colors"
               >
-                + {t('dashboard.addWalkIn')}
+                {t('dashboard.addWalkIn')}
               </button>
             </div>
           </header>

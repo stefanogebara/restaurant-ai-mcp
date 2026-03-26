@@ -93,11 +93,15 @@ export function useManagerChatStream() {
         }
       }
 
-      // Stream complete — add full assistant message to query cache
+      // Stream complete — rebuild from pre-mutation snapshot to avoid duplicates
       if (accumulated) {
-        qc.setQueryData<{ history: Message[] }>(['manager-chat-history'], (old) => ({
-          history: [...(old?.history || []), { role: 'assistant', content: accumulated }],
-        }));
+        qc.setQueryData<{ history: Message[] }>(['manager-chat-history'], {
+          history: [
+            ...(previous?.history || []),
+            { role: 'manager', content: message },
+            { role: 'assistant', content: accumulated },
+          ],
+        });
       }
 
       qc.invalidateQueries({ queryKey: ['manager-usage'] });

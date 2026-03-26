@@ -5,6 +5,11 @@
  * Session timeouts enforced:
  *   - Absolute timeout: 30 days from first sign-in
  *   - Idle timeout: 7 days since last activity
+ *
+ * Auth initialization:
+ *   - `authReady` resolves after the INITIAL_SESSION event fires,
+ *     preventing race conditions where API calls or redirects happen
+ *     before the session state is known (C-03 fix).
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -29,6 +34,18 @@ export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {
     detectSessionInUrl: true,
   },
 });
+
+/**
+ * Resolves once the Supabase INITIAL_SESSION event has fired.
+ * Used by API interceptors to avoid 401-redirect races during page load (C-03).
+ */
+let _resolveAuthReady: () => void;
+export const authReady: Promise<void> = new Promise((resolve) => {
+  _resolveAuthReady = resolve;
+});
+
+/** Synchronous flag — true after INITIAL_SESSION has fired. */
+export let isAuthInitialized = false;
 
 /**
  * Updates the last activity timestamp in localStorage.
@@ -66,28 +83,56 @@ function clearSessionTimestamps(): void {
 }
 
 /**
+ * Returns true if the current page is a public route that should never
+ * trigger a sign-out or redirect (booking pages, demo, login).
+ */
+function isPublicRoute(): boolean {
+  const path = window.location.pathname;
+  return (
+    path === '/login' ||
+    path === '/' ||
+    path.startsWith('/book/') ||
+    path.startsWith('/demo') ||
+    path.startsWith('/customer') ||
+    path.startsWith('/privacy') ||
+    path.startsWith('/terms') ||
+    path.startsWith('/portfolio') ||
+    path.startsWith('/join')
+  );
+}
+
+/**
  * Force sign-out and redirect to /login.
  * Prevents stale sessions from leaving users on broken pages (C-05).
+ * Skips entirely on public pages to avoid disrupting the booking flow (C-04).
  */
 async function forceSignOutToLogin(): Promise<void> {
+  // On public pages (booking, demo, etc.), don't sign out or redirect.
+  // Signing out would trigger SIGNED_OUT in AuthContext, causing re-renders
+  // that can disrupt the booking form mid-flow (C-04 fix).
+  if (isPublicRoute()) {
+    return;
+  }
+
   clearSessionTimestamps();
   try {
     await supabase.auth.signOut();
   } catch {
     // Even if signOut fails, redirect to login
   }
-  // Use replaceState so the user can't "back" into an expired session page
-  if (
-    window.location.pathname !== '/login' &&
-    !window.location.pathname.startsWith('/book/') &&
-    !window.location.pathname.startsWith('/demo')
-  ) {
-    window.location.replace('/login');
-  }
+  window.location.replace('/login');
 }
 
 // Listen for auth state changes to set session start and enforce timeouts.
 supabase.auth.onAuthStateChange((event, session) => {
+  // Mark auth as initialized once the first event fires.
+  // INITIAL_SESSION is the first event Supabase emits; it waits for any
+  // URL token exchange to complete before firing (C-03 fix).
+  if (!isAuthInitialized) {
+    isAuthInitialized = true;
+    _resolveAuthReady();
+  }
+
   if (event === 'SIGNED_IN' && session) {
     if (!localStorage.getItem(STORAGE_KEY_SESSION_START)) {
       localStorage.setItem(STORAGE_KEY_SESSION_START, Date.now().toString());
@@ -116,9 +161,12 @@ supabase.auth.onAuthStateChange((event, session) => {
   }
 });
 
-// On app load, immediately enforce timeouts if a session is already active.
-supabase.auth.getSession().then(({ data }) => {
-  if (data.session && isSessionExpired()) {
-    forceSignOutToLogin();
-  }
+// On app load, enforce timeouts — but only AFTER auth initialization completes
+// to avoid racing with INITIAL_SESSION resolution (C-03 fix).
+authReady.then(() => {
+  supabase.auth.getSession().then(({ data }) => {
+    if (data.session && isSessionExpired()) {
+      forceSignOutToLogin();
+    }
+  });
 });
