@@ -77,6 +77,7 @@ export default function Dashboard() {
   const [showAddReservation, setShowAddReservation] = useState(false);
   const [editReservation, setEditReservation] = useState<UpcomingReservation | null>(null);
   const [cancelReservation, setCancelReservation] = useState<UpcomingReservation | null>(null);
+  const [showInsightsWidgets, setShowInsightsWidgets] = useState(false);
 
   // ---- Data fetching ----
   const { data: dashboardData, refetch, isLoading, isError } = useQuery({
@@ -163,6 +164,11 @@ export default function Dashboard() {
   // ---- Computed metrics ----
   const waitlistCount = rawStats.waitlist_count || 0;
   const guestsExpected = todayReservations.reduce((sum, r) => sum + (r.party_size || 0), 0);
+
+  // ---- Progressive disclosure: detect if dashboard is mostly empty (new user) ----
+  const hasReservations = todayReservations.length > 0 || tomorrowReservations.length > 0;
+  const hasActiveParties = activeParties.length > 0;
+  const isDashboardEmpty = !hasReservations && !hasActiveParties && waitlistCount === 0;
 
   // ---- Error state ----
   if (isError && !isLoading) {
@@ -299,6 +305,18 @@ export default function Dashboard() {
             </section>
           )}
 
+          {/* ---- Welcome Guide for New Users ---- */}
+          {isDashboardEmpty && !isLoading && (
+            <div className="bg-[#FFF7ED] border border-amber-200 rounded-xl px-6 py-5 mb-12">
+              <h3 className="text-sm font-semibold text-amber-900 mb-1">
+                {t('dashboard.welcomeGuide.title', 'Your dashboard is ready!')}
+              </h3>
+              <p className="text-sm text-amber-800">
+                {t('dashboard.welcomeGuide.description', 'Reservations, waitlist, and activity will appear here as your restaurant starts receiving guests. Add a walk-in or create a reservation to get started.')}
+              </p>
+            </div>
+          )}
+
           {/* ---- Reservations Section ---- */}
           <section className="mb-16">
             <ReservationsList
@@ -345,19 +363,34 @@ export default function Dashboard() {
           {/* ---- Section Divider ---- */}
           <div className="border-t border-border-gray mt-16 mb-12" />
 
-          {/* ---- Additional Widgets ---- */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <ManagerNotesPanel />
-            <FeedbackWidget />
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-            <StaffingForecastWidget />
-            <RevenueStatsWidget />
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-            <RevenueByPartySizeWidget />
-            <ActivityFeedWidget />
-          </div>
+          {/* ---- Additional Widgets (progressive disclosure for new users) ---- */}
+          {isDashboardEmpty && !showInsightsWidgets ? (
+            <div className="text-center py-6">
+              <button
+                type="button"
+                onClick={() => setShowInsightsWidgets(true)}
+                className="text-sm text-muted-stone hover:text-deep-charcoal transition-colors inline-flex items-center gap-2"
+              >
+                <ThiingsIcon name="chevron-down" pxSize={14} />
+                {t('dashboard.showInsights', 'Show analytics & insights')}
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <ManagerNotesPanel />
+                <FeedbackWidget />
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+                <StaffingForecastWidget />
+                <RevenueStatsWidget />
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+                <RevenueByPartySizeWidget />
+                <ActivityFeedWidget />
+              </div>
+            </>
+          )}
 
         </div>
 

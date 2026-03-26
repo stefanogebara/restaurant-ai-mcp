@@ -80,7 +80,7 @@ export default function Onboarding() {
     // Step 3
     areas: [
       {
-        name: 'Indoor',
+        name: t('onboarding.areaIndoor'),
         is_active: true,
         tables: [
           { capacity: 2, count: 0, shape: 'square', is_fixed_seating: false, is_joinable: true },
@@ -92,7 +92,7 @@ export default function Onboarding() {
     ],
     advance_booking_days: 30,
     buffer_time: 15,
-    cancellation_policy: 'Free cancellation up to 2 hours before reservation',
+    cancellation_policy: t('onboarding.cancelFree2h'),
     special_notes: '',
     // Team setup moved to Settings post-onboarding
     team_members: [],

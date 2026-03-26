@@ -137,6 +137,13 @@
     "staffingForecast": "Previsão de Equipe",
     "covers": "couverts",
     "staffingForecastEmpty": "Nenhuma previsão disponível ainda.",
+    "staffingForecastHint": "Recomendações de equipe aparecerão aqui quando você tiver reservas.",
+    "revenueNoData": "A previsão de receita aparecerá quando você tiver reservas e dados de serviço.",
+    "showInsights": "Mostrar análises e insights",
+    "welcomeGuide": {
+      "title": "Seu painel está pronto!",
+      "description": "Reservas, lista de espera e atividades aparecerão aqui conforme seu restaurante receber clientes. Adicione um walk-in ou crie uma reserva para começar."
+    },
     "todayLabel": "Hoje",
     "tomorrowLabel": "Amanhã",
     "allCaughtUp": "Tudo em Dia!",
@@ -431,7 +438,8 @@
     "optional": "opcional",
     "specialRequests": "Pedidos especiais",
     "specialRequestsPlaceholder": "Alergias, comemorações, preferência de mesa...",
-    "depositError": "Falha na configuração do pagamento. Tente novamente."
+    "depositError": "Falha na configuração do pagamento. Tente novamente.",
+    "locationFormat": "{{city}}, {{country}}"
   },
   "waitlist": {
     "title": "Lista de Espera",

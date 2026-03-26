@@ -132,9 +132,12 @@ export function useDemoLocale() {
   const urlCuisine = preset?.cuisine || urlParams.get('cuisine');
   const urlCity = preset?.neighborhood || urlParams.get('city');
 
-  // Presets default to English; regular demo defaults to PT-BR
-  const defaultLang: DemoLang = preset ? 'en' : 'pt-BR';
-  const [showLangPopup, setShowLangPopup] = useState(!stored && !preset && !browserLang.startsWith('pt'));
+  // Use the current i18n language for presets so clicking from a PT-BR landing
+  // page keeps PT-BR instead of always defaulting to English.
+  // Non-preset demo always defaults to PT-BR (it's the Brazilian demo).
+  const currentI18nLang: DemoLang = i18n.language?.startsWith('pt') ? 'pt-BR' : 'en';
+  const defaultLang: DemoLang = preset ? currentI18nLang : 'pt-BR';
+  const [showLangPopup, setShowLangPopup] = useState(!stored && !preset && !browserLang.startsWith('pt') && currentI18nLang !== 'pt-BR');
   const [lang, setLangState] = useState<DemoLang>(stored || defaultLang);
 
   // Sync i18next with demo locale on mount, restore original on unmount.

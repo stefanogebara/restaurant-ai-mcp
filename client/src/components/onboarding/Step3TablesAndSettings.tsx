@@ -91,8 +91,9 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
     if (hasExistingTables) { hasInitialized.current = true; return; }
 
     const distribution = calculateTableDistribution(profileData.size as RestaurantSize, profileData.seat_count);
+    const indoorName = t('onboarding.areaIndoor');
     const updatedAreas = data.areas.map(area => {
-      if (area.name === 'Indoor') {
+      if (area.name === indoorName || area.name === 'Indoor') {
         return {
           ...area,
           tables: TABLE_CAPACITIES.map(cap => ({
@@ -133,7 +134,8 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
   };
 
   const addArea = (template: string) => {
-    const areaName = template === 'Custom' ? `Area ${data.areas.length + 1}` : template;
+    const translatedName = AREA_TEMPLATE_KEYS[template] ? t(AREA_TEMPLATE_KEYS[template]) : template;
+    const areaName = template === 'Custom' ? `${translatedName} ${data.areas.length + 1}` : translatedName;
     const newArea: RestaurantArea = { name: areaName, is_active: true, tables: [] };
     updateData({ areas: [...data.areas, newArea] });
   };
@@ -211,7 +213,7 @@ export default function Step3TablesAndSettings({ data, updateData, onNext, onBac
             <button
               key={template}
               onClick={() => addArea(template)}
-              disabled={template !== 'Custom' && data.areas.some((a) => a.name === template)}
+              disabled={template !== 'Custom' && data.areas.some((a) => a.name === template || a.name === t(AREA_TEMPLATE_KEYS[template] || ''))}
               className="px-4 py-2 bg-white hover:bg-soft-gray disabled:bg-soft-gray disabled:text-muted-stone disabled:cursor-not-allowed text-deep-charcoal border border-border-gray rounded-xl transition-colors text-sm"
             >
               + {t(AREA_TEMPLATE_KEYS[template] || template)}

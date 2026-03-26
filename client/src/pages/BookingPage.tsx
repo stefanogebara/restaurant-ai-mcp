@@ -13,6 +13,21 @@ const COUNTRY_LANG: Record<string, string> = {
   argentina: 'es', colombia: 'es', chile: 'es', peru: 'es', perú: 'es',
 };
 
+// Translate country names for PT-BR locale (DB stores English names)
+const COUNTRY_NAMES_PT: Record<string, string> = {
+  brazil: 'Brasil', 'united states': 'Estados Unidos', spain: 'Espanha',
+  mexico: 'México', argentina: 'Argentina', colombia: 'Colômbia',
+  chile: 'Chile', peru: 'Peru', portugal: 'Portugal', italy: 'Itália',
+  france: 'França', japan: 'Japão', germany: 'Alemanha',
+};
+
+const COUNTRY_NAMES_ES: Record<string, string> = {
+  brazil: 'Brasil', 'united states': 'Estados Unidos', spain: 'España',
+  mexico: 'México', argentina: 'Argentina', colombia: 'Colombia',
+  chile: 'Chile', peru: 'Perú', portugal: 'Portugal', italy: 'Italia',
+  france: 'Francia', japan: 'Japón', germany: 'Alemania',
+};
+
 export default function BookingPage() {
   const { t, i18n } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
@@ -141,7 +156,18 @@ export default function BookingPage() {
     );
   }
 
-  const restaurantType = t(`onboarding.restaurantTypes.${restaurant.type}`, restaurant.type.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()));
+  // Normalize restaurant type key: DB may store underscores (fine_dining) or hyphens (fine-dining).
+  // i18n keys use hyphens, so convert underscores to hyphens before lookup.
+  const typeKey = restaurant.type.replace(/_/g, '-');
+  const restaurantType = t(`onboarding.restaurantTypes.${typeKey}`, restaurant.type.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()));
+
+  // Translate country name based on current locale
+  const countryLower = restaurant.country.toLowerCase();
+  const translatedCountry = i18n.language === 'pt-BR'
+    ? (COUNTRY_NAMES_PT[countryLower] || restaurant.country)
+    : i18n.language.startsWith('es')
+      ? (COUNTRY_NAMES_ES[countryLower] || restaurant.country)
+      : restaurant.country;
 
   return (
     <div className="min-h-screen bg-warm-white">
@@ -162,16 +188,16 @@ export default function BookingPage() {
       )}
 
       {/* Two-column layout */}
-      <div className="flex flex-col lg:flex-row max-w-[1200px] mx-auto w-full px-6 sm:px-10 py-8 lg:py-12 gap-10 lg:gap-16">
+      <div className="flex flex-col md:flex-row max-w-[1200px] mx-auto w-full px-4 sm:px-10 py-8 md:py-12 gap-8 md:gap-16">
         {/* Left: Restaurant Info */}
-        <div className="lg:flex-shrink-0 lg:w-[340px]">
+        <div className="md:flex-shrink-0 md:w-[340px]">
           <div className="w-full h-[220px] rounded-2xl bg-gradient-to-br from-charcoal-dark to-stone-700 mb-7 flex items-end p-6">
             <div>
               <h2 className="font-serif text-[28px] font-medium text-white tracking-tight mb-1">
                 {restaurant.name}
               </h2>
               <p className="text-[13px] text-stone-300 font-light">
-                {restaurantType} &middot; {restaurant.city}, {restaurant.country}
+                {restaurantType} &middot; {t('booking.locationFormat', { city: restaurant.city, country: translatedCountry, defaultValue: '{{city}}, {{country}}' })}
               </p>
             </div>
           </div>

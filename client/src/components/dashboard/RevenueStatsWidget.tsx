@@ -23,7 +23,20 @@ export default function RevenueStatsWidget() {
         <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111827]">
           {t('dashboard.revenueForecast')}
         </h2>
-        <p className="text-sm text-warm-stone mt-3">{t('dashboard.revenueNoData', 'Revenue forecast will appear once you have reservations and service data.')}</p>
+        <p className="text-sm text-warm-stone mt-2">{t('dashboard.revenueNoData', 'Revenue forecast will appear once you have reservations and service data.')}</p>
+      </div>
+    );
+  }
+
+  // All days project zero revenue — show compact hint instead of zero bars
+  const allZero = forecast.slice(0, 7).every(d => d.expected_covers === 0);
+  if (allZero) {
+    return (
+      <div className="p-6">
+        <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111827]">
+          {t('dashboard.revenueForecast')}
+        </h2>
+        <p className="text-sm text-warm-stone mt-2">{t('dashboard.revenueNoData', 'Revenue forecast will appear once you have reservations and service data.')}</p>
       </div>
     );
   }

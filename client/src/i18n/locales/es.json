@@ -155,6 +155,13 @@
     "paymentFailedHint": "Actualiza tu método de pago para mantener tu suscripción activa.",
     "updatePayment": "Actualizar Pago",
     "staffingForecastEmpty": "No hay previsión disponible aún.",
+    "staffingForecastHint": "Las recomendaciones de personal aparecerán aquí cuando tengas reservas.",
+    "revenueNoData": "La previsión de ingresos aparecerá cuando tengas reservas y datos de servicio.",
+    "showInsights": "Mostrar análisis e insights",
+    "welcomeGuide": {
+      "title": "Tu panel está listo!",
+      "description": "Las reservas, lista de espera y actividad aparecerán aquí a medida que tu restaurante reciba clientes. Añade un walk-in o crea una reserva para empezar."
+    },
     "todayLabel": "Hoy",
     "tomorrowLabel": "Mañana",
     "allCaughtUp": "¡Todo al Día!",
@@ -419,7 +426,8 @@
     "optional": "opcional",
     "specialRequests": "Pedidos especiais",
     "specialRequestsPlaceholder": "Alergias, comemoraciones, preferencia de mesa...",
-    "depositError": "Error en la configuración del pago. Inténtalo de nuevo."
+    "depositError": "Error en la configuración del pago. Inténtalo de nuevo.",
+    "locationFormat": "{{city}}, {{country}}"
   },
   "waitlist": {
     "title": "Lista de Espera",

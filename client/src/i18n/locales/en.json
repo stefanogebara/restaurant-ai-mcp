@@ -137,6 +137,13 @@
     "paymentFailedHint": "Please update your payment method to keep your subscription active.",
     "updatePayment": "Update Payment",
     "staffingForecastEmpty": "No forecast available yet.",
+    "staffingForecastHint": "Staff recommendations will appear here once you have reservations.",
+    "revenueNoData": "Revenue forecast will appear once you have reservations and service data.",
+    "showInsights": "Show analytics & insights",
+    "welcomeGuide": {
+      "title": "Your dashboard is ready!",
+      "description": "Reservations, waitlist, and activity will appear here as your restaurant starts receiving guests. Add a walk-in or create a reservation to get started."
+    },
     "todayLabel": "Today",
     "tomorrowLabel": "Tomorrow",
     "allCaughtUp": "All Caught Up!",
@@ -431,7 +438,8 @@
     "optional": "optional",
     "specialRequests": "Special requests",
     "specialRequestsPlaceholder": "Allergies, celebrations, seating preferences...",
-    "depositError": "Payment setup failed. Please try again."
+    "depositError": "Payment setup failed. Please try again.",
+    "locationFormat": "{{city}}, {{country}}"
   },
   "waitlist": {
     "title": "Waitlist",

@@ -6,6 +6,9 @@ export default function StaffingForecastWidget() {
   const dateLocale = i18n.language?.startsWith('pt') ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US';
   const { data: forecast, isLoading, isError } = useStaffingForecast();
 
+  const isEmpty = isError || !forecast || forecast.length === 0 ||
+    forecast.every((day) => day.expected_covers === 0);
+
   if (isLoading) {
     return (
       <div className="p-6 animate-pulse space-y-3">
@@ -17,19 +20,24 @@ export default function StaffingForecastWidget() {
     );
   }
 
+  if (isEmpty) {
+    return (
+      <div className="p-6">
+        <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111827]">
+          {t('dashboard.staffingForecast')}
+        </h2>
+        <p className="text-sm text-warm-stone mt-2">
+          {t('dashboard.staffingForecastHint', 'Staff recommendations will appear here once you have reservations.')}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-4">
       <h2 className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#111827]">
         {t('dashboard.staffingForecast')}
       </h2>
-
-      {isError && (
-        <p className="text-sm text-warm-stone">{t('dashboard.staffingForecastEmpty')}</p>
-      )}
-
-      {!isError && forecast && forecast.length === 0 && (
-        <p className="text-sm text-warm-stone">{t('dashboard.staffingForecastEmpty')}</p>
-      )}
 
       {forecast && forecast.length > 0 && (
         <div className="space-y-3">

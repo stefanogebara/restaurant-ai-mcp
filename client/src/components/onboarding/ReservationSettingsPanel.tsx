@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 
-const CANCELLATION_POLICY_KEYS = [
-  { value: 'Free cancellation up to 2 hours before reservation', key: 'onboarding.cancelFree2h' },
-  { value: 'Free cancellation up to 24 hours before reservation', key: 'onboarding.cancelFree24h' },
-  { value: 'Free cancellation up to 48 hours before reservation', key: 'onboarding.cancelFree48h' },
-  { value: 'No cancellations allowed', key: 'onboarding.cancelNone' },
+const CANCELLATION_POLICY_I18N_KEYS = [
+  'onboarding.cancelFree2h',
+  'onboarding.cancelFree24h',
+  'onboarding.cancelFree48h',
+  'onboarding.cancelNone',
 ];
 
 interface ReservationSettingsPanelProps {
@@ -89,8 +89,8 @@ export default function ReservationSettingsPanel({ advanceBookingDays, bufferTim
               onChange={(e) => onUpdate('cancellation_policy', e.target.value)}
               className="w-full px-4 py-3 bg-soft-gray border border-border-gray rounded-xl text-deep-charcoal appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-burgundy"
             >
-              {CANCELLATION_POLICY_KEYS.map((policy) => (
-                <option key={policy.value} value={policy.value}>{t(policy.key)}</option>
+              {CANCELLATION_POLICY_I18N_KEYS.map((key) => (
+                <option key={key} value={t(key)}>{t(key)}</option>
               ))}
             </select>
           </div>

@@ -53,12 +53,12 @@ describe('StaffingForecastWidget', () => {
   it('shows empty state when no forecast', () => {
     mockUse.mockReturnValue({ data: [], isLoading: false, isError: false });
     render(<StaffingForecastWidget />);
-    expect(screen.getByText(/no forecast/i)).toBeInTheDocument();
+    expect(screen.getByText(/staff recommendations will appear/i)).toBeInTheDocument();
   });
 
   it('shows error state as neutral empty message', () => {
     mockUse.mockReturnValue({ data: undefined, isLoading: false, isError: true });
     render(<StaffingForecastWidget />);
-    expect(screen.getByText(/no forecast available/i)).toBeInTheDocument();
+    expect(screen.getByText(/staff recommendations will appear/i)).toBeInTheDocument();
   });
 });

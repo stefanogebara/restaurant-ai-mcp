@@ -234,7 +234,7 @@ module.exports = async (req, res) => {
         plan: plan || 'Starter',
         template: (plan === 'growth' || plan === 'Growth' || plan === 'scale' || plan === 'Scale') ? 'advanced' : 'simple',
         website: website || '',
-        cancellation_policy: cancellation_policy || 'Free cancellation up to 2 hours before reservation',
+        cancellation_policy: cancellation_policy || 'Cancelamento gratuito até 2 horas antes da reserva',
         special_notes: special_notes || '',
         advance_booking_days: advance_booking_days || 30,
         buffer_time: buffer_time || 15,
@@ -488,7 +488,7 @@ module.exports = async (req, res) => {
       reservation_settings: {
         advance_booking_days: advance_booking_days || 30,
         buffer_time_minutes: buffer_time || 15,
-        cancellation_policy: cancellation_policy || '24 hours notice required',
+        cancellation_policy: cancellation_policy || 'Cancelamento gratuito até 2 horas antes da reserva',
         special_notes: special_notes || '',
         max_party_size: 12,
         min_party_size: 1,

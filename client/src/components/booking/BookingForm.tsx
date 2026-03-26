@@ -118,6 +118,10 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
 
   const formatTime = (time: string) => {
     const [h, m] = time.split(':').map(Number);
+    // PT-BR and ES use 24-hour format; EN uses 12-hour AM/PM
+    if (i18n.language === 'pt-BR' || i18n.language.startsWith('es')) {
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
     const period = h >= 12 ? 'PM' : 'AM';
     const hour = h > 12 ? h - 12 : h === 0 ? 12 : h;
     return `${hour}:${String(m).padStart(2, '0')} ${period}`;
@@ -444,7 +448,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
         </button>
       )}
       <p className="text-center text-xs text-muted-stone mt-3">
-        {restaurant.cancellation_policy || t('booking.cancellationPolicy')}
+        {restaurant.cancellation_policy || t('reservations.cancellationPolicy')}
       </p>
     </div>
   );

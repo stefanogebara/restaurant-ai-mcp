@@ -319,7 +319,7 @@ async function handleCreate(req, res) {
     allow_waitlist: true,
     buffer_time_minutes: 15,
     require_credit_card: false,
-    cancellation_policy: cancellation_policy || 'Free cancellation up to 2 hours before reservation',
+    cancellation_policy: cancellation_policy || 'Cancelamento gratuito até 2 horas antes da reserva',
     special_notes: custom_policy || '',
   };
 
