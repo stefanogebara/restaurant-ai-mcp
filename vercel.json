@@ -1,6 +1,6 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "cd client && rm -rf dist node_modules/.vite && npm install && npm run build && node cache-bust-sw.js",
+  "buildCommand": "cd client && rm -rf dist node_modules/.vite && npm install && npm run build && node cache-bust-sw.cjs",
   "outputDirectory": "client/dist",
   "functions": {
     "api/**/*.js": {
