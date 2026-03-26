@@ -142,8 +142,24 @@ module.exports = async (req, res) => {
           .filter(Boolean);
 
         for (const phone of recipients) {
+          const to = phone.replace(/[^0-9]/g, '');
           try {
-            const waResponse = await fetch(
+            // Try approved template first (works without 24h conversation window)
+            const templatePayload = {
+              messaging_product: 'whatsapp',
+              to,
+              type: 'template',
+              template: {
+                name: 'analytics_daily_briefing',
+                language: { code: 'pt_BR' },
+                components: [{
+                  type: 'body',
+                  parameters: [{ type: 'text', text: briefing.split('\n').slice(2, -2).join('\n') }],
+                }],
+              },
+            };
+
+            let waResponse = await fetch(
               `https://graph.facebook.com/v21.0/${whatsappPhoneNumberId}/messages`,
               {
                 method: 'POST',
@@ -151,14 +167,31 @@ module.exports = async (req, res) => {
                   'Authorization': `Bearer ${whatsappToken}`,
                   'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                  messaging_product: 'whatsapp',
-                  to: phone.replace(/[^0-9]/g, ''),
-                  type: 'text',
-                  text: { body: briefing },
-                }),
+                body: JSON.stringify(templatePayload),
               }
             );
+
+            // If template fails (not approved yet), fall back to free-form text
+            if (!waResponse.ok) {
+              logger.info('Template not available, falling back to free-form text');
+              waResponse = await fetch(
+                `https://graph.facebook.com/v21.0/${whatsappPhoneNumberId}/messages`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${whatsappToken}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    messaging_product: 'whatsapp',
+                    to,
+                    type: 'text',
+                    text: { body: briefing },
+                  }),
+                }
+              );
+            }
+
             if (waResponse.ok) {
               sentCount++;
             } else {
