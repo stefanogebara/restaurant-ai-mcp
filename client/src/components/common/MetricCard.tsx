@@ -49,7 +49,7 @@ export default function MetricCard({
   }
 
   return (
-    <div className="bg-white border border-border-gray rounded-2xl p-6 hover:shadow-lg transition-all duration-200">
+    <div className="bg-white border border-border-gray rounded-2xl p-6 hover:border-burgundy/30 transition-all duration-200">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">

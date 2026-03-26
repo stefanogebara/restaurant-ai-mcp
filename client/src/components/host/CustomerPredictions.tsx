@@ -12,7 +12,7 @@ export default function CustomerPredictions({ predictions, occasions }: Customer
   const dateLocale = i18n.language === 'pt-BR' ? 'pt-BR' : i18n.language === 'es' ? 'es-ES' : 'en-US';
 
   return (
-    <div className="bg-white rounded-2xl border border-border-gray p-6 shadow-lg">
+    <div className="bg-white rounded-2xl border border-border-gray p-6">
       <h2 className="text-lg font-semibold font-serif text-deep-charcoal mb-4 flex items-center gap-2">
         <ThiingsIcon name="trending-up" size="sm" />
         {t('customerPredictions.title')}

@@ -57,12 +57,16 @@ export default function VoiceCurrentCard({
               )}
             </p>
             <div className="flex items-center gap-3 mt-1 text-sm text-stone-gray">
-              <span className="capitalize">{selectedBrowserVoice?.gender || '—'}</span>
-              <span>-</span>
+              {selectedBrowserVoice?.gender && (
+                <>
+                  <span className="capitalize">{selectedBrowserVoice.gender}</span>
+                  <span>·</span>
+                </>
+              )}
               <span>{currentLanguage.toUpperCase()}</span>
               {selectedBrowserVoice?.accent && (
                 <>
-                  <span>-</span>
+                  <span>·</span>
                   <span>{selectedBrowserVoice.accent}</span>
                 </>
               )}

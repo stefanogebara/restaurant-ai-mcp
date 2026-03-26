@@ -4,7 +4,7 @@
  * Automatically marks reservations as "No-Show" if the customer is 20+ minutes late
  * without checking in or communicating with the restaurant.
  *
- * Runs every 5 minutes via Vercel Cron Jobs
+ * Runs every 15 minutes via Vercel Cron Jobs
  */
 
 const { supabaseAdmin } = require('../_lib/supabase');

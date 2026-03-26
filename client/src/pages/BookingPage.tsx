@@ -178,7 +178,7 @@ export default function BookingPage() {
             seatable<span className="text-burgundy">.</span>
           </div>
           {restaurant?.phone && restaurant.phone !== 'N/A' ? (
-            <a href={`tel:${restaurant.phone}`} className="text-[13px] text-warm-stone hover:text-burgundy transition-colors">
+            <a href={`tel:${restaurant.phone.replace(/[\s()-]/g, '')}`} className="text-[13px] text-warm-stone hover:text-burgundy transition-colors">
               {t('reservations.needHelp')}
             </a>
           ) : (
@@ -191,8 +191,15 @@ export default function BookingPage() {
       <div className="flex flex-col md:flex-row max-w-[1200px] mx-auto w-full px-4 sm:px-10 py-8 md:py-12 gap-8 md:gap-16">
         {/* Left: Restaurant Info */}
         <div className="md:flex-shrink-0 md:w-[340px]">
-          <div className="w-full h-[220px] rounded-2xl bg-gradient-to-br from-charcoal-dark to-stone-700 mb-7 flex items-end p-6">
-            <div>
+          <div className="w-full h-[220px] rounded-2xl bg-gradient-to-br from-burgundy/80 via-burgundy/50 to-stone-700 mb-7 flex items-end p-6 relative overflow-hidden">
+            {/* Restaurant initial as a subtle background accent */}
+            <span
+              aria-hidden="true"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-serif text-[140px] font-bold text-white/[0.07] leading-none select-none pointer-events-none"
+            >
+              {restaurant.name.charAt(0).toUpperCase()}
+            </span>
+            <div className="relative z-10">
               <h2 className="font-serif text-[28px] font-medium text-white tracking-tight mb-1">
                 {restaurant.name}
               </h2>

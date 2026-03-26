@@ -65,7 +65,7 @@ export default function LanguageSettings() {
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
           <button
             onClick={() => navigate('/host-dashboard')}
-            className="p-6 bg-white rounded-2xl shadow-sm border border-border-gray hover:shadow-md transition-shadow text-left group"
+            className="p-6 bg-white rounded-2xl border border-border-gray hover:border-burgundy/30 transition-colors text-left group"
           >
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-xl bg-burgundy/10 flex items-center justify-center">
@@ -82,7 +82,7 @@ export default function LanguageSettings() {
 
           <button
             onClick={() => navigate('/subscription/manage')}
-            className="p-6 bg-white rounded-2xl shadow-sm border border-border-gray hover:shadow-md transition-shadow text-left group"
+            className="p-6 bg-white rounded-2xl border border-border-gray hover:border-burgundy/30 transition-colors text-left group"
           >
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 rounded-xl bg-burgundy/10 flex items-center justify-center">

@@ -47,7 +47,7 @@ export default function LTVDashboard() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg p-6 border border-border-gray">
+      <div className="bg-white rounded-2xl p-6 border border-border-gray">
         <h2 className="text-xl font-bold text-deep-charcoal flex items-center gap-2 mb-4">
           <ThiingsIcon name="users" size="sm" />
           Customer Lifetime Value
@@ -62,7 +62,7 @@ export default function LTVDashboard() {
 
   if (!stats || stats.total_customers === 0) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg p-6 border border-border-gray">
+      <div className="bg-white rounded-2xl p-6 border border-border-gray">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-soft-gray flex items-center justify-center">
             <ThiingsIcon name="users" pxSize={24} />
@@ -77,7 +77,7 @@ export default function LTVDashboard() {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-border-gray">
+    <div className="bg-white rounded-2xl border border-border-gray">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         aria-expanded={isExpanded}
@@ -103,7 +103,7 @@ export default function LTVDashboard() {
             onOpenCampaignModal={openCampaignModal}
           />
           <button
-            className="w-full px-4 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-burgundy/30 flex items-center justify-center gap-2"
+            className="w-full px-4 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
             onClick={() => recalculate.mutate(undefined, {
               onSuccess: (result) => success(`Calculated LTV for ${result.total_customers} customers`),
               onError: () => error('Failed to calculate LTV for all customers'),

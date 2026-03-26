@@ -87,7 +87,7 @@ export default function CustomerProfileView() {
       <div className="flex justify-center">
         <button
           onClick={handleAnalyze}
-          className="px-6 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-burgundy/30 flex items-center gap-2"
+          className="px-6 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-all flex items-center gap-2"
         >
           <ThiingsIcon name="brain" pxSize={20} />
           Re-analyze Customer DNA

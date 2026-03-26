@@ -1,5 +1,8 @@
 'use strict';
 
+const { createSecureLogger } = require('./secure-logger');
+const logger = createSecureLogger('validate-env');
+
 const CRITICAL_VARS = [
   'SUPABASE_URL',
   'SUPABASE_SERVICE_ROLE_KEY',
@@ -32,7 +35,7 @@ function warnMissing() {
   if (process.env.NODE_ENV === 'production') {
     throw new Error(`[validate-env] Missing critical env vars in production: ${missing.join(', ')}`);
   }
-  console.error(`[validate-env] WARNING: Missing critical env vars: ${missing.join(', ')}`);
+  logger.warn(`Missing critical env vars: ${missing.join(', ')}`);
 }
 
 // Auto-warn on import

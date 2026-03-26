@@ -36,8 +36,22 @@ function timeAgo(timestamp: string, t: (key: string, fallback: string, opts?: Re
   return t('time.daysAgo', '{{count}}d ago', { count: days });
 }
 
+/** Format an event date+time like "21:00, 25 de mar." for pt-BR or "9:00 PM, Mar 25" for en */
+function formatEventDateTime(date: string, time: string | null, locale: string): string {
+  const loc = locale === 'pt-BR' ? 'pt-BR' : locale === 'es' ? 'es' : 'en-US';
+  const parts: string[] = [];
+  if (time) parts.push(time.slice(0, 5));
+  try {
+    const d = new Date(date + 'T00:00:00');
+    parts.push(d.toLocaleDateString(loc, { day: 'numeric', month: 'short' }));
+  } catch {
+    parts.push(date);
+  }
+  return parts.join(', ');
+}
+
 export default function ActivityFeedWidget() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: events, isLoading } = useActivityFeed(15);
 
   if (isLoading) {
@@ -92,7 +106,7 @@ export default function ActivityFeedWidget() {
                 </p>
                 <p className="text-xs text-muted-stone truncate">
                   {event.party_size
-                    ? `${t('activity.partyOf', 'Party of')} ${event.party_size}${event.event_date ? ` · ${event.event_date}${event.event_time ? ` ${event.event_time.slice(0, 5)}` : ''}` : ''}`
+                    ? `${t('activity.partyOf', 'Party of')} ${event.party_size}${event.event_date ? ` · ${formatEventDateTime(event.event_date, event.event_time, i18n.language)}` : ''}`
                     : event.detail}
                 </p>
               </div>

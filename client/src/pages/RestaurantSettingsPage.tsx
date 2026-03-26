@@ -13,6 +13,8 @@ import type { BusinessHours, ReservationSettings } from '../hooks/useRestaurantS
 import { useToast } from '../contexts/ToastContext';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import ThiingsIcon from '../components/common/ThiingsIcon';
+import StaffingSettingsPanel from '../components/dashboard/StaffingSettingsPanel';
+import DepositSettingsPanel from '../components/settings/DepositSettingsPanel';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
 
@@ -291,6 +293,16 @@ export default function RestaurantSettingsPage() {
           <div className="flex justify-end pt-2">
             <SaveButton onClick={handleSavePolicies} loading={updateMutation.isPending} label={t('settings.savePolicies', 'Save Policies')} />
           </div>
+        </section>
+
+        {/* ── Staffing Ratios ── */}
+        <section className="py-5 border-b border-[#E5E7EB]">
+          <StaffingSettingsPanel />
+        </section>
+
+        {/* ── Reservation Deposits ── */}
+        <section className="py-5 border-b border-[#E5E7EB]">
+          <DepositSettingsPanel />
         </section>
       </div>
     </DashboardLayout>

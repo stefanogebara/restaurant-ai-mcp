@@ -97,9 +97,10 @@ export default function StatusBreakdownPie({ reservationsByStatus }: StatusBreak
               height={36}
               formatter={((value: string, entry: LegendPayload) => (
                 <span className="text-sm text-deep-charcoal">
-                  {value} ({entry.payload?.value})
+                  {String(value)} ({entry.payload?.value})
                 </span>
               )) as LegendFormatter}
+              iconType="circle"
             />
           </PieChart>
         </ResponsiveContainer>

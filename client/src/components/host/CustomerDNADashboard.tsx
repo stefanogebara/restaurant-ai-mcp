@@ -46,7 +46,7 @@ export default function CustomerDNADashboard() {
 
   if (isLoading || analyze.isPending) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg p-6 border border-border-gray">
+      <div className="bg-white rounded-2xl p-6 border border-border-gray">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold font-serif text-deep-charcoal flex items-center gap-2">
             <ThiingsIcon name="brain" pxSize={20} />
@@ -63,7 +63,7 @@ export default function CustomerDNADashboard() {
 
   if (!stats || stats.total_profiles === 0) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg p-6 border border-border-gray">
+      <div className="bg-white rounded-2xl p-6 border border-border-gray">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-full bg-soft-gray flex items-center justify-center">
             <ThiingsIcon name="brain" pxSize={24} />
@@ -75,7 +75,7 @@ export default function CustomerDNADashboard() {
         </div>
         <button
           onClick={analyzeAllCustomers}
-          className="w-full px-4 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-burgundy/30 flex items-center justify-center gap-2"
+          className="w-full px-4 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
         >
           <ThiingsIcon name="activity" pxSize={20} />
           Analyze All Customers
@@ -85,7 +85,7 @@ export default function CustomerDNADashboard() {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-border-gray">
+    <div className="bg-white rounded-2xl border border-border-gray">
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
@@ -191,7 +191,7 @@ export default function CustomerDNADashboard() {
           <div className="flex gap-3">
             <button
               onClick={analyzeAllCustomers}
-              className="flex-1 px-4 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-burgundy/30 flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-3 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
             >
               <ThiingsIcon name="activity" pxSize={20} />
               Analyze All Customers

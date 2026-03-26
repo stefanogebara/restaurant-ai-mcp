@@ -121,7 +121,7 @@ export default function HeroSection() {
       <button
         type="button"
         onClick={scrollToDemo}
-        className="px-10 py-4 bg-burgundy hover:bg-burgundy-dark text-white text-base font-semibold rounded-full transition-colors shadow-lg shadow-burgundy/20"
+        className="px-10 py-4 bg-burgundy hover:bg-burgundy-dark text-white text-base font-semibold rounded-full transition-colors"
       >
         {t('landing.hero.ctaNew', 'See it live ↓')}
       </button>

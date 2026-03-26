@@ -73,8 +73,8 @@ export default function TableCard({ table, onClick }: TableCardProps) {
           aria-label={`Manage table ${table.table_number} — ${table.status}`}
           className={`
             w-full p-4 rounded-2xl transition-all duration-200
-            bg-white border border-border-gray shadow-md
-            hover:shadow-lg hover:bg-soft-gray
+            bg-white border border-border-gray
+            hover:border-burgundy/30 hover:bg-soft-gray
             cursor-pointer group
             ${isOver && table.status === 'Available' ? 'ring-2 ring-burgundy scale-[1.02] bg-soft-gray' : ''}
           `}

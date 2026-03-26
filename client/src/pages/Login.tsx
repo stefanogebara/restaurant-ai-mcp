@@ -185,7 +185,7 @@ export default function Login() {
           transition={{ duration: 0.5 }}
           className="w-full max-w-md"
         >
-          <div className="bg-white border border-border-gray rounded-2xl p-8 sm:p-10 shadow-xl">
+          <div className="bg-white border border-border-gray rounded-2xl p-8 sm:p-10">
             {/* Logo and Title */}
             <div className="text-center mb-8">
               <Link to="/" className="inline-block mb-6 lg:hidden">
@@ -281,7 +281,7 @@ export default function Login() {
                     bg-white border border-border-gray hover:border-stone-300 hover:bg-warm-white
                     text-deep-charcoal font-medium text-[15px] rounded-xl
                     transition-all duration-300
-                    ${isSigningIn ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-md'}
+                    ${isSigningIn ? 'opacity-70 cursor-not-allowed' : 'hover:border-stone-300'}
                   `}
                 >
                   {isSigningIn && !email ? (

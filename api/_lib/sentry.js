@@ -39,10 +39,13 @@ function initSentry() {
 
     });
 
+    // console.log intentional: secure-logger requires sentry.js, so importing
+    // createSecureLogger here would create a circular dependency.
     console.log('[sentry] initialized for error tracking');
     return true;
   }
 
+  // console.log intentional: circular dependency with secure-logger (see above)
   console.log('[sentry] not initialized (missing SENTRY_DSN or not in production)');
   return false;
 }
@@ -54,7 +57,7 @@ function captureException(error, context = {}) {
       extra: context
     });
   } else {
-    // Log to console in development
+    // console.error intentional: circular dependency with secure-logger (see above)
     console.error('[sentry] Error captured:', error, context);
   }
 }
@@ -67,6 +70,7 @@ function captureMessage(message, level = 'info', context = {}) {
       extra: context
     });
   } else {
+    // console.log intentional: circular dependency with secure-logger (see above)
     console.log(`[sentry][${level.toUpperCase()}]`, message, context);
   }
 }

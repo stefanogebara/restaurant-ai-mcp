@@ -115,7 +115,7 @@ export default function ReservationsCalendarGrid({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+    <div className="bg-white rounded-2xl border border-border-gray overflow-hidden">
       {/* Calendar Header */}
       <div className="px-6 py-4 border-b border-border-gray flex items-center justify-between">
         <div className="flex items-center gap-4">

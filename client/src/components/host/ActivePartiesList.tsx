@@ -116,7 +116,7 @@ export default function ActivePartiesList({ parties }: ActivePartiesListProps) {
     <div className="space-y-3">
       {parties.map((party) => (
         <DraggablePartyCard key={party.service_id} party={party}>
-          <div className="bg-white border border-border-gray rounded-2xl p-4 hover:bg-soft-gray transition-all relative shadow-md">
+          <div className="bg-white border border-border-gray rounded-2xl p-4 hover:bg-soft-gray transition-all relative">
             {/* Drag handle indicator */}
             <div className="absolute top-2 right-2 text-muted-stone text-xs flex items-center gap-1">
               <ThiingsIcon name="menu" size="xs" />

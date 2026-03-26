@@ -104,6 +104,12 @@ export function useManagerChatStream() {
         });
       }
 
+      // Optimistically increment usage counter
+      qc.setQueryData(['manager-usage'], (old: Record<string, unknown> | undefined) =>
+        old && typeof old === 'object' && 'used' in old
+          ? { ...old, used: (old.used as number) + 1 }
+          : old
+      );
       qc.invalidateQueries({ queryKey: ['manager-usage'] });
       setStreamingContent('');
     } catch (err) {

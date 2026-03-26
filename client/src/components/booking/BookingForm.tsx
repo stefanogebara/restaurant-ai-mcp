@@ -243,6 +243,13 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
       </div>
 
       {/* Time Selection */}
+      {!selectedDate && (
+        <div className="mb-8">
+          <p className="text-sm text-warm-stone">
+            {t('booking.selectDateToSeeSlots', 'Selecione a data e o número de pessoas para ver os horários disponíveis')}
+          </p>
+        </div>
+      )}
       {selectedDate && (
         <div className="mb-8">
           <div className="text-xs font-semibold tracking-wider uppercase text-warm-stone mb-3">

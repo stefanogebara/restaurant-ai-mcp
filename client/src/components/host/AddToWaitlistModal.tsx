@@ -196,7 +196,7 @@ export default function AddToWaitlistModal({ onClose, onSuccess }: AddToWaitlist
               <button
                 type="submit"
                 disabled={addMutation.isPending}
-                className="flex-1 px-4 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-all shadow-lg shadow-burgundy/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2.5 bg-burgundy hover:bg-burgundy-dark text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {addMutation.isPending ? t('waitlist.adding') : t('waitlist.addToWaitlist')}
               </button>

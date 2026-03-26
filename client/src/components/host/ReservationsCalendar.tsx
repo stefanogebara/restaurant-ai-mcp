@@ -304,14 +304,14 @@ export default function ReservationsCalendar({ reservations, onCheckIn, onRecord
       {/* Export Button */}
       <button
         onClick={exportToCSV}
-        className="w-full px-4 py-3 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+        className="w-full px-4 py-3 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
       >
         <ThiingsIcon name="download" pxSize={20} />
         {t('reservationsCalendar.exportCsv', { count: reservations.length })}
       </button>
 
       {/* Summary Stats */}
-      <div className="bg-white rounded-2xl p-4 border border-border-gray shadow-md">
+      <div className="bg-white rounded-2xl p-4 border border-border-gray">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <div className="text-2xl font-bold text-deep-charcoal">{reservations.length}</div>

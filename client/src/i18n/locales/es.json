@@ -405,6 +405,7 @@
     "chooseDetails": "Elige tu fecha, hora y numero de personas a continuacion.",
     "selectDate": "Seleccionar Fecha",
     "selectTime": "Seleccionar Hora",
+    "selectDateToSeeSlots": "Selecciona una fecha y el numero de personas para ver los horarios disponibles.",
     "checkingAvailability": "Verificando disponibilidad...",
     "noAvailableTimes": "No hay horarios disponibles para esta fecha.",
     "partySize": "Tamano del Grupo",

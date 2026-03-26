@@ -21,7 +21,7 @@ module.exports = async (req, res) => {
   setInternalCors(req, res);
 
   if (req.method === 'OPTIONS') {
-    return res.status(200).json({ success: true });
+    return res.status(200).end();
   }
 
   const rateLimited = await checkAndApplyRateLimit(req, res, 'reports', 60, 60);

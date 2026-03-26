@@ -29,6 +29,14 @@ jest.mock('../_lib/secure-logger', () => ({
   createSecureLogger: () => ({ error: jest.fn(), info: jest.fn(), warn: jest.fn() }),
 }));
 
+jest.mock('../_lib/cors', () => ({
+  setInternalCors: jest.fn(),
+}));
+
+jest.mock('../_lib/security-headers', () => ({
+  applySecurityHeaders: jest.fn(),
+}));
+
 jest.mock('../_lib/rate-limit', () => ({
   checkAndApplyRateLimit: jest.fn().mockResolvedValue(false),
 }));
@@ -37,6 +45,8 @@ function mockRes() {
   const res = {};
   res.status = jest.fn().mockReturnValue(res);
   res.json = jest.fn().mockReturnValue(res);
+  res.end = jest.fn().mockReturnValue(res);
+  res.setHeader = jest.fn().mockReturnValue(res);
   return res;
 }
 

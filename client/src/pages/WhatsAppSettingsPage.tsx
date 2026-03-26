@@ -3,8 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import ManagerNotificationsPanel from '../components/dashboard/ManagerNotificationsPanel';
-import StaffingSettingsPanel from '../components/dashboard/StaffingSettingsPanel';
-import DepositSettingsPanel from '../components/settings/DepositSettingsPanel';
 import FeedbackSettingsPanel from '../components/dashboard/FeedbackSettingsPanel';
 import { authFetch } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
@@ -488,12 +486,6 @@ export default function WhatsAppSettingsPage() {
 
         {/* Manager Notifications */}
         <ManagerNotificationsPanel />
-
-        {/* Staffing Ratios */}
-        <StaffingSettingsPanel />
-
-        {/* Reservation Deposits */}
-        <DepositSettingsPanel />
 
         {/* Post-Visit Feedback */}
         <FeedbackSettingsPanel />

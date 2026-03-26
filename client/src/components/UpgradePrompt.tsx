@@ -48,7 +48,7 @@ export default function UpgradePrompt({
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`bg-white rounded-2xl shadow-lg border border-border-gray ${sizeClasses[size]} text-center`}
+      className={`bg-white rounded-2xl border border-border-gray ${sizeClasses[size]} text-center`}
     >
       {/* Icon */}
       <motion.div

@@ -39,7 +39,7 @@ export default function PresetDemoSection() {
                 onClick={() => trackPresetDemoClicked({ restaurant: p.id })}
                 aria-label={t('landing.tryDemo.cardAria', { name: p.name, defaultValue: `Explore ${p.name} demo` })}
                 className="group relative flex flex-col items-center gap-3 p-8 bg-white rounded-2xl border border-border-gray
-                  hover:border-burgundy hover:-translate-y-1 hover:shadow-lg
+                  hover:border-burgundy hover:-translate-y-1
                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-burgundy focus-visible:ring-offset-2
                   transition-all duration-200"
               >

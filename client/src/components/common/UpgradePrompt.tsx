@@ -22,7 +22,7 @@ export default function UpgradePrompt({ requiredPlan, feature, description }: Up
 
   return (
     <div className="min-h-screen bg-warm-white flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-white border border-border-gray rounded-2xl shadow-xl overflow-hidden">
+      <div className="max-w-2xl w-full bg-white border border-border-gray rounded-2xl overflow-hidden">
         {/* Header with gradient */}
         <div className="bg-burgundy/10 p-8 text-center">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-burgundy/10 border-2 border-burgundy/20 mb-4">
@@ -76,7 +76,7 @@ export default function UpgradePrompt({ requiredPlan, feature, description }: Up
             <button
               type="button"
               onClick={handleUpgrade}
-              className="flex-1 bg-burgundy hover:bg-burgundy-dark text-white font-semibold py-3 px-6 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center justify-center gap-2"
+              className="flex-1 bg-burgundy hover:bg-burgundy-dark text-white font-semibold py-3 px-6 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
             >
               <span>{t('upgrade.upgradeTo', { planName })}</span>
               <ThiingsIcon name="arrow-right" pxSize={20} />

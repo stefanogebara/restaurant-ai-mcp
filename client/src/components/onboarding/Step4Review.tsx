@@ -123,7 +123,7 @@ export default function Step4Review({ data, onBack, onComplete, isSubmitting, go
         <button
           onClick={onComplete}
           disabled={isSubmitting}
-          className="px-8 py-3.5 bg-burgundy hover:bg-burgundy-dark disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300 shadow-lg shadow-burgundy/20"
+          className="px-8 py-3.5 bg-burgundy hover:bg-burgundy-dark disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold rounded-xl flex items-center gap-2 transition-all duration-300"
         >
           {isSubmitting ? (
             <>

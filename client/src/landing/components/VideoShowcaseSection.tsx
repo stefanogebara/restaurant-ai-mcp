@@ -147,7 +147,7 @@ function VideoPlayer({ src }: { src: string }) {
   const [isPlaying, setIsPlaying] = useState(true);
 
   return (
-    <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-black shadow-xl">
+    <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-black border border-gray-200">
       <video
         className="w-full h-full object-cover"
         src={src}

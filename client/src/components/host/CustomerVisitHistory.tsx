@@ -14,7 +14,7 @@ export default function CustomerVisitHistory({ reservations, showAll, onToggle }
   const visible = showAll ? reservations : reservations.slice(0, 5);
 
   return (
-    <div className="bg-white rounded-2xl border border-border-gray p-6 shadow-lg">
+    <div className="bg-white rounded-2xl border border-border-gray p-6">
       <button onClick={onToggle} aria-expanded={showAll} className="w-full flex items-center justify-between">
         <h2 className="text-lg font-semibold font-serif text-deep-charcoal flex items-center gap-2">
           <ThiingsIcon name="utensils" size="sm" />

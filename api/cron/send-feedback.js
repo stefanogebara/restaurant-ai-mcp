@@ -1,7 +1,7 @@
 /**
  * Send Feedback Cron
  *
- * Runs every 30 minutes to:
+ * Runs every hour to:
  * 1. Send pending feedback requests whose delay has elapsed
  * 2. Expire feedback sent >24h ago without response
  */

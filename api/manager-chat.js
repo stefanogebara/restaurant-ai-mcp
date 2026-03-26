@@ -3,10 +3,16 @@ const { runManagerAgent, runManagerAgentStream, ManagerQuotaError } = require('.
 const { supabaseAdmin } = require('./_lib/supabase');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
+const { setInternalCors } = require('./_lib/cors');
+const { applySecurityHeaders } = require('./_lib/security-headers');
 
 const logger = createSecureLogger('manager-chat');
 
 module.exports = async (req, res) => {
+  setInternalCors(req, res);
+  applySecurityHeaders(res);
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method === 'GET') return handleHistory(req, res);
   if (req.method === 'POST') {
     const wantsStream = (req.headers.accept || '').includes('text/event-stream');

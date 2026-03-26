@@ -81,7 +81,7 @@ export default function InterventionPanel({
   // If no high-risk reservations, show success state
   if (highRiskReservations.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-border-gray p-6 shadow-md">
+      <div className="bg-white rounded-2xl border border-border-gray p-6">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-rose-600/10 flex items-center justify-center">
             <ThiingsIcon name="star" pxSize={24} />
@@ -108,7 +108,7 @@ export default function InterventionPanel({
   });
 
   return (
-    <div className="bg-white rounded-2xl border border-border-gray shadow-md">
+    <div className="bg-white rounded-2xl border border-border-gray">
       {/* Header */}
       <button
         type="button"

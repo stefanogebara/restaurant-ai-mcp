@@ -133,7 +133,7 @@ export default function RecentReservations() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-white p-4 rounded-2xl border-2 border-rose-500/50 shadow-md"
+            className="bg-white p-4 rounded-2xl border-2 border-rose-500/50"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-500 to-rose-900 flex items-center justify-center">
@@ -157,7 +157,7 @@ export default function RecentReservations() {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white p-6 rounded-[2rem] border border-border-gray shadow-md"
+        className="bg-white p-6 rounded-[2rem] border border-border-gray"
       >
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-xl bg-burgundy flex items-center justify-center">

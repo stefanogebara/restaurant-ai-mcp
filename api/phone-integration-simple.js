@@ -33,6 +33,9 @@ module.exports = async (req, res) => {
   const auth = await verifyAuth(req);
   if (auth.error) return res.status(auth.status).json({ error: auth.error });
 
+  // Make JWT-derived restaurant_id available as a fallback for handlers
+  req._authRestaurantId = auth.user?.restaurant_id || null;
+
   const action = req.query.action || req.body?.action;
 
   try {
@@ -387,7 +390,7 @@ async function handleUnregister(req, res) {
  * Get phone integration status
  */
 async function handleStatus(req, res) {
-  const restaurant_id = req.query.restaurant_id || req.body?.restaurant_id;
+  const restaurant_id = req.query.restaurant_id || req.body?.restaurant_id || req._authRestaurantId;
 
   // Platform status (no restaurant_id needed)
   if (!restaurant_id) {

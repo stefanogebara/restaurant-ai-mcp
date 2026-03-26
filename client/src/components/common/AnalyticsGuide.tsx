@@ -173,7 +173,7 @@ export default function AnalyticsGuide({ page = 'ml' }: AnalyticsGuideProps) {
       <div className="grid md:grid-cols-2 gap-4">
         {guide.metrics.map((metric, index) => {
           return (
-            <div key={index} className="bg-white rounded-2xl border border-border-gray p-4 hover:border-burgundy/30 transition-colors shadow-md">
+            <div key={index} className="bg-white rounded-2xl border border-border-gray p-4 hover:border-burgundy/30 transition-colors">
               <div className="flex items-start gap-3 mb-2">
                 <div className="w-8 h-8 bg-burgundy/10 rounded-lg flex items-center justify-center flex-shrink-0">
                   <ThiingsIcon name={metric.iconName} pxSize={16} />

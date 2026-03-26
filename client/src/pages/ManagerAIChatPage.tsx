@@ -98,6 +98,11 @@ export default function ManagerAIChatPage() {
           { role: 'assistant', content: reply },
         ],
       });
+      // Optimistically increment usage counter so the UI reflects the new message immediately
+      qc.setQueryData<UsageData>(['manager-usage'], (old) =>
+        old ? { ...old, used: old.used + 1 } : old
+      );
+      // Also refetch from backend to reconcile (fire-and-forget tracking may lag)
       qc.invalidateQueries({ queryKey: ['manager-usage'] });
     },
   });

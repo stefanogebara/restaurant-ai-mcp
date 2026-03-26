@@ -40,7 +40,7 @@ export default function UpgradeBanner({
   }
 
   return (
-    <div className="bg-white rounded-2xl p-4 border-2 border-burgundy/30 shadow-lg">
+    <div className="bg-white rounded-2xl p-4 border-2 border-burgundy/30">
       <div className="flex items-start gap-4">
         {/* Icon */}
         <div className="w-10 h-10 rounded-xl bg-burgundy flex items-center justify-center flex-shrink-0">

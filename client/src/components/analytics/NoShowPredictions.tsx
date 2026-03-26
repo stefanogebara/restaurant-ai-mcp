@@ -92,7 +92,7 @@ export default function NoShowPredictions() {
                 key={prediction.reservation_id}
                 type="button"
                 aria-expanded={selectedPrediction === prediction}
-                className={`w-full text-left border rounded-xl p-4 hover:shadow-md transition-all ${getRiskColor(prediction.risk_level)}`}
+                className={`w-full text-left border rounded-xl p-4 hover:border-burgundy/30 transition-all ${getRiskColor(prediction.risk_level)}`}
                 onClick={() => setSelectedPrediction(selectedPrediction === prediction ? null : prediction)}
               >
                 <div className="flex items-center justify-between">

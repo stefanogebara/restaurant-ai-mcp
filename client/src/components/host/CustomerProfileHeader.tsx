@@ -16,7 +16,7 @@ export default function CustomerProfileHeader({ data }: CustomerProfileHeaderPro
   const tier = getTierBadge(profile?.profile_confidence || 0);
 
   return (
-    <div className="bg-white rounded-2xl border border-border-gray p-6 shadow-lg">
+    <div className="bg-white rounded-2xl border border-border-gray p-6">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-violet-600/10 flex items-center justify-center">

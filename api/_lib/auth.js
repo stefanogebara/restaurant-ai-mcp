@@ -13,6 +13,9 @@ const logger = createSecureLogger('Auth');
 
 // JWT_SECRET for internally generated tokens (HS256)
 const JWT_SECRET = process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET;
+if (!process.env.JWT_SECRET && process.env.SUPABASE_JWT_SECRET) {
+  logger.warn('JWT_SECRET not set, falling back to SUPABASE_JWT_SECRET');
+}
 
 const JWT_EXPIRY = '8h';
 

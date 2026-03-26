@@ -120,7 +120,7 @@ export default function DemoSetupForm({ onSubmit, isSubmitting, submitError }: D
   const showEmailStep = showResults;
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white border border-border-gray rounded-[2rem] p-8 sm:p-10 shadow-xl space-y-6">
+    <form onSubmit={handleSubmit} className="bg-white border border-border-gray rounded-[2rem] p-8 sm:p-10 space-y-6">
       {/* Step 1: Find your restaurant */}
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-[1.6px] text-muted-stone mb-4">

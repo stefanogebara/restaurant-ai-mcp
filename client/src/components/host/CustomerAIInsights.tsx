@@ -9,7 +9,7 @@ interface CustomerAIInsightsProps {
 
 export default function CustomerAIInsights({ textSignals, onAnalyze }: CustomerAIInsightsProps) {
   return (
-    <div className="bg-white rounded-2xl border border-border-gray p-6 shadow-lg">
+    <div className="bg-white rounded-2xl border border-border-gray p-6">
       <h2 className="text-lg font-semibold font-serif text-deep-charcoal mb-4 flex items-center gap-2">
         <ThiingsIcon name="sparkles" size="sm" />
         AI Insights
