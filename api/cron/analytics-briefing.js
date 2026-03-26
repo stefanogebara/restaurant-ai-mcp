@@ -22,7 +22,7 @@ const logger = createSecureLogger('AnalyticsBriefing');
 
 const POSTHOG_API_KEY = process.env.POSTHOG_PERSONAL_API_KEY;
 const POSTHOG_PROJECT_ID = process.env.POSTHOG_PROJECT_ID;
-const POSTHOG_HOST = process.env.POSTHOG_HOST || 'https://eu.i.posthog.com';
+const POSTHOG_HOST = process.env.POSTHOG_HOST || 'https://us.posthog.com';
 const FOUNDER_PHONE = process.env.FOUNDER_WHATSAPP_NUMBER || '+5511999999999';
 
 module.exports = async (req, res) => {
