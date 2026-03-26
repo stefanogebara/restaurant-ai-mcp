@@ -67,7 +67,7 @@ export default function LandingNav() {
         <Link to="/demo/setup" className="text-sm font-medium text-burgundy hover:text-burgundy-dark transition-colors min-h-[44px] flex items-center">
           {t('landing.nav.tryFree', 'Try free demo')}
         </Link>
-        <Link to="/login" className="text-sm font-medium text-stone-gray hover:text-deep-charcoal transition-colors min-h-[44px] flex items-center">
+        <Link to="/login" className="text-sm font-semibold text-deep-charcoal border border-deep-charcoal rounded-full px-5 py-2 hover:bg-deep-charcoal hover:text-white transition-colors min-h-[44px] flex items-center">
           {t('landing.nav.signIn')}
         </Link>
         <button
@@ -135,7 +135,7 @@ export default function LandingNav() {
         <Link to="/demo/setup" onClick={closeMobileMenu} className="block text-left text-sm font-medium text-burgundy hover:text-burgundy-dark hover:bg-stone-50 transition-colors py-3 px-2 rounded-lg">
           {t('landing.nav.tryFree', 'Try free demo')}
         </Link>
-        <Link to="/login" onClick={closeMobileMenu} className="block text-left text-sm font-medium text-stone-gray hover:text-deep-charcoal hover:bg-stone-50 transition-colors py-3 px-2 rounded-lg">
+        <Link to="/login" onClick={closeMobileMenu} className="block text-center text-sm font-semibold text-deep-charcoal border border-deep-charcoal rounded-full py-3 px-4 hover:bg-deep-charcoal hover:text-white transition-colors">
           {t('landing.nav.signIn')}
         </Link>
         <button

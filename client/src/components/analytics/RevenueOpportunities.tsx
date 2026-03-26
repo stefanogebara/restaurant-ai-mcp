@@ -10,11 +10,29 @@ const CATEGORY_I18N: Record<string, Record<string, string>> = {
     'Off-Peak Optimization': 'Otimização Fora de Pico',
     'Table Turnover': 'Rotatividade de Mesas',
     'No-Show Reduction': 'Redução de No-Shows',
+    'Upselling': 'Vendas Adicionais',
   },
   es: {
     'Off-Peak Optimization': 'Optimización Fuera de Pico',
     'Table Turnover': 'Rotación de Mesas',
     'No-Show Reduction': 'Reducción de No-Shows',
+    'Upselling': 'Ventas Adicionales',
+  },
+};
+
+// Translate backend-generated description strings on the frontend
+const DESCRIPTION_I18N: Record<string, Record<string, string>> = {
+  'pt-BR': {
+    'Implement confirmation reminders and deposits to reduce no-shows': 'Implemente lembretes de confirmação e depósitos para reduzir no-shows',
+    'Fill empty tables during slow hours with promotions': 'Preencha mesas vazias em horários de baixo movimento com promoções',
+    'Improve table turnover rate during peak hours': 'Melhore a rotatividade de mesas nos horários de pico',
+    'Increase average revenue per customer through upselling': 'Aumente a receita média por cliente com vendas adicionais',
+  },
+  es: {
+    'Implement confirmation reminders and deposits to reduce no-shows': 'Implemente recordatorios de confirmación y depósitos para reducir ausencias',
+    'Fill empty tables during slow hours with promotions': 'Llene mesas vacías en horas de baja demanda con promociones',
+    'Improve table turnover rate during peak hours': 'Mejore la rotación de mesas en horas pico',
+    'Increase average revenue per customer through upselling': 'Aumente los ingresos promedio por cliente con ventas adicionales',
   },
 };
 
@@ -26,6 +44,7 @@ const PRIORITY_I18N: Record<string, Record<string, string>> = {
 export default function RevenueOpportunities() {
   const { t, i18n } = useTranslation();
   const tCat = (cat: string) => CATEGORY_I18N[i18n.language]?.[cat] ?? cat;
+  const tDesc = (desc: string) => DESCRIPTION_I18N[i18n.language]?.[desc] ?? desc;
   const tPriority = (p: string) => PRIORITY_I18N[i18n.language]?.[p] ?? p.charAt(0).toUpperCase() + p.slice(1);
   const { data, isLoading, isError } = useRevenueOpportunities();
   const opportunities = data?.opportunities ?? [];
@@ -127,7 +146,7 @@ export default function RevenueOpportunities() {
                     </div>
                     <div>
                       <h3 className="font-bold text-lg text-deep-charcoal">{tCat(opp.category)}</h3>
-                      <p className="text-sm text-warm-stone">{opp.description}</p>
+                      <p className="text-sm text-warm-stone">{tDesc(opp.description)}</p>
                     </div>
                   </div>
                 </div>

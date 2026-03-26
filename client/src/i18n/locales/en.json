@@ -1141,7 +1141,9 @@
     "tableUpdated": "Table updated successfully",
     "tableFreed": "Table freed successfully",
     "errorUpdate": "Error updating table",
-    "errorFree": "Error freeing table"
+    "errorFree": "Error freeing table",
+    "floorPlanView": "Floor Plan View",
+    "gridView": "Grid View"
   },
   "customers": {
     "title": "Customers",
@@ -1991,7 +1993,21 @@
     "languageChangeWarning": "Changing the language will update your agent's greeting message. The voice will speak in the selected language using its multilingual capabilities.",
     "changeSettingsHint": "Change a setting above to enable saving",
     "voiceLoadError": "Could not load voices",
-    "voiceLoadErrorHint": "The voice service may be temporarily unavailable. Please try again."
+    "voiceLoadErrorHint": "The voice service may be temporarily unavailable. Please try again.",
+    "waQuality": {
+      "green": "Good",
+      "yellow": "Warning",
+      "red": "Critical"
+    }
+  },
+  "agentInfo": {
+    "title": "Agent Info",
+    "voiceEngine": "Voice Engine",
+    "agentId": "Agent ID",
+    "agentIdCopied": "Agent ID copied",
+    "copyAgentId": "Copy Agent ID",
+    "lastUpdated": "Last Updated",
+    "created": "Created"
   },
   "voiceTuning": {
     "title": "Voice Tuning",
@@ -2026,7 +2042,11 @@
     "changePending": "Engine change pending. Click \"Save Changes\" to apply.",
     "switchTitle": "Switch Voice Engine?",
     "switchConfirmation": "Are you sure you want to switch to {{engine}}? This will change how incoming calls are handled.",
-    "switchButton": "Switch Engine"
+    "switchButton": "Switch Engine",
+    "status": {
+      "active": "Active",
+      "testing": "Testing"
+    }
   },
   "voice": {
     "settingsSaved": "Voice settings saved successfully",

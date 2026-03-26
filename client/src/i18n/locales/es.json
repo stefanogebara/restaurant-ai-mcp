@@ -1749,7 +1749,21 @@
     "languageChangeWarning": "Cambiar el idioma actualizará el mensaje de bienvenida de tu agente. La voz hablará en el idioma seleccionado usando sus capacidades multilingües.",
     "changeSettingsHint": "Cambia una configuración arriba para habilitar el guardado",
     "voiceLoadError": "No se pudieron cargar las voces",
-    "voiceLoadErrorHint": "El servicio de voz puede estar temporalmente no disponible. Inténtalo de nuevo."
+    "voiceLoadErrorHint": "El servicio de voz puede estar temporalmente no disponible. Inténtalo de nuevo.",
+    "waQuality": {
+      "green": "Buena",
+      "yellow": "Advertencia",
+      "red": "Crítica"
+    }
+  },
+  "agentInfo": {
+    "title": "Info del Agente",
+    "voiceEngine": "Motor de Voz",
+    "agentId": "ID del Agente",
+    "agentIdCopied": "ID del agente copiado",
+    "copyAgentId": "Copiar ID del Agente",
+    "lastUpdated": "Última Actualización",
+    "created": "Creado"
   },
   "voiceTuning": {
     "title": "Ajuste de Voz",
@@ -1784,7 +1798,11 @@
     "changePending": "Cambio de motor pendiente. Haz clic en \"Guardar Cambios\" para aplicar.",
     "switchTitle": "¿Cambiar Motor de Voz?",
     "switchConfirmation": "¿Estás seguro de que deseas cambiar a {{engine}}? Esto cambiará cómo se manejan las llamadas entrantes.",
-    "switchButton": "Cambiar Motor"
+    "switchButton": "Cambiar Motor",
+    "status": {
+      "active": "Activo",
+      "testing": "Probando"
+    }
   },
   "voice": {
     "settingsSaved": "Configuración de voz guardada exitosamente",
@@ -1951,8 +1969,10 @@
     "markAvailableSub": "Mesa pronta para novos clientes",
     "tableUpdated": "Mesa actualizada exitosamente",
     "tableFreed": "Mesa liberada con sucesso",
-    "errorUpdate": "Erro ao atualizar mesa",
-    "errorFree": "Erro ao liberar mesa"
+    "errorUpdate": "Error al actualizar mesa",
+    "errorFree": "Error al liberar mesa",
+    "floorPlanView": "Vista de Planta",
+    "gridView": "Vista de Cuadrícula"
   },
   "team": {
     "title": "Equipo",

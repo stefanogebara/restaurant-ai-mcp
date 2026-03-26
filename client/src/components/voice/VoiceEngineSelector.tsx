@@ -22,7 +22,7 @@ export default function VoiceEngineSelector({ currentEngine, pendingEngine, engi
         <span className="text-[13px] font-semibold uppercase tracking-widest text-[#111827]">{t('settings.voiceEngine')}</span>
         {engineStatus && (
           <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${STATUS_STYLES[engineStatus] ?? 'bg-soft-gray text-stone-gray'}`}>
-            {engineStatus.charAt(0).toUpperCase() + engineStatus.slice(1)}
+            {t(`voiceEngine.status.${engineStatus}`, engineStatus.charAt(0).toUpperCase() + engineStatus.slice(1))}
           </span>
         )}
       </div>

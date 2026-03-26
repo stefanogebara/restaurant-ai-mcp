@@ -268,6 +268,22 @@ export default function Sidebar() {
                 </div>
               )}
               <Link
+                to="/host-dashboard/settings"
+                onClick={() => setIsMobileOpen(false)}
+                className={`
+                  flex items-center gap-3 transition-all duration-150
+                  ${isCollapsed ? 'justify-center px-6 py-3' : 'px-6 py-3'}
+                  ${isActive('/host-dashboard/settings')
+                    ? 'text-white bg-burgundy/10 border-l-2 border-l-burgundy font-medium'
+                    : 'text-muted-stone hover:text-stone-300 hover:bg-white/[0.03] border-l-2 border-l-transparent'
+                  }
+                `}
+                title={isCollapsed ? t('navigation.restaurantSettings', 'Restaurant Settings') : undefined}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors ${isActive('/host-dashboard/settings') ? 'bg-burgundy' : 'bg-current opacity-40'}`} />
+                {!isCollapsed && <span className="text-sm">{t('navigation.restaurantSettings', 'Restaurant Settings')}</span>}
+              </Link>
+              <Link
                 to="/settings/language"
                 onClick={() => setIsMobileOpen(false)}
                 className={`

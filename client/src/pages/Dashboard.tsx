@@ -238,7 +238,7 @@ export default function Dashboard() {
           <header className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-14 mt-14 sm:mt-0 gap-4">
             <div className="pl-12 lg:pl-0">
               <h1 className="font-sans text-2xl font-semibold tracking-tight text-deep-charcoal">
-                {t('dashboard.overview', 'Overview')}
+                {t('dashboard.overview')}
               </h1>
               <p className="text-[13px] text-muted-stone font-mono uppercase tracking-widest mt-1">
                 {fullDateStr}

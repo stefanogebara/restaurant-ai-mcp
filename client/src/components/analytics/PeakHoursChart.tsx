@@ -6,11 +6,31 @@ interface PeakHoursChartProps {
   reservationsByTimeSlot: Record<string, number>;
 }
 
+// Translate backend-generated time slot labels on the frontend
+const TIME_SLOT_I18N: Record<string, Record<string, string>> = {
+  'pt-BR': {
+    'Lunch (11AM-2PM)': 'Almoço (11h-14h)',
+    'Early Dinner (5PM-7PM)': 'Jantar Cedo (17h-19h)',
+    'Prime Dinner (7PM-10PM)': 'Jantar Principal (19h-22h)',
+    'Late Night (10PM+)': 'Noite (22h+)',
+    'Other': 'Outros',
+  },
+  es: {
+    'Lunch (11AM-2PM)': 'Almuerzo (11-14h)',
+    'Early Dinner (5PM-7PM)': 'Cena Temprana (17-19h)',
+    'Prime Dinner (7PM-10PM)': 'Cena Principal (19-22h)',
+    'Late Night (10PM+)': 'Noche (22h+)',
+    'Other': 'Otros',
+  },
+};
+
 export default function PeakHoursChart({ reservationsByTimeSlot }: PeakHoursChartProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const tSlot = (slot: string) => TIME_SLOT_I18N[i18n.language]?.[slot] ?? slot;
+
   // Transform object data into array for Recharts
   const chartData = Object.entries(reservationsByTimeSlot).map(([time, count]) => ({
-    time,
+    time: tSlot(time),
     count,
   }));
 

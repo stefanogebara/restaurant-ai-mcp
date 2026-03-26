@@ -1147,7 +1147,9 @@
     "tableUpdated": "Mesa atualizada com sucesso",
     "tableFreed": "Mesa liberada com sucesso",
     "errorUpdate": "Erro ao atualizar mesa",
-    "errorFree": "Erro ao liberar mesa"
+    "errorFree": "Erro ao liberar mesa",
+    "floorPlanView": "Planta Baixa",
+    "gridView": "Visão em Grade"
   },
   "customers": {
     "title": "Clientes",
@@ -2044,7 +2046,21 @@
     "languageChangeWarning": "Alterar o idioma atualizará a mensagem de boas-vindas do seu agente. A voz falará no idioma selecionado usando suas capacidades multilíngues.",
     "changeSettingsHint": "Altere uma configuração acima para habilitar o salvamento",
     "voiceLoadError": "Não foi possível carregar as vozes",
-    "voiceLoadErrorHint": "O serviço de voz pode estar temporariamente indisponível. Tente novamente."
+    "voiceLoadErrorHint": "O serviço de voz pode estar temporariamente indisponível. Tente novamente.",
+    "waQuality": {
+      "green": "Boa",
+      "yellow": "Atenção",
+      "red": "Crítica"
+    }
+  },
+  "agentInfo": {
+    "title": "Informações do Agente",
+    "voiceEngine": "Motor de Voz",
+    "agentId": "ID do Agente",
+    "agentIdCopied": "ID do agente copiado",
+    "copyAgentId": "Copiar ID do Agente",
+    "lastUpdated": "Última Atualização",
+    "created": "Criado"
   },
   "voiceTuning": {
     "title": "Ajuste de Voz",
@@ -2079,7 +2095,11 @@
     "changePending": "Mudança de motor pendente. Clique em \"Salvar Alterações\" para aplicar.",
     "switchTitle": "Trocar Motor de Voz?",
     "switchConfirmation": "Tem certeza que deseja trocar para {{engine}}? Isso mudará como as chamadas recebidas são tratadas.",
-    "switchButton": "Trocar Motor"
+    "switchButton": "Trocar Motor",
+    "status": {
+      "active": "Ativo",
+      "testing": "Testando"
+    }
   },
   "voice": {
     "settingsSaved": "Configurações de voz salvas com sucesso",

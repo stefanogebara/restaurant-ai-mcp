@@ -368,7 +368,7 @@ export default function VoiceSettingsPage() {
                   )}
                   {waStatus.meta.quality_rating && (
                     <p className="text-sm text-deep-charcoal">
-                      <span className="text-warm-stone">{t('voiceSettings.waQualityRating', 'Quality rating')}:</span> {waStatus.meta.quality_rating}
+                      <span className="text-warm-stone">{t('voiceSettings.waQualityRating', 'Quality rating')}:</span> {t(`voiceSettings.waQuality.${waStatus.meta.quality_rating.toLowerCase()}`, waStatus.meta.quality_rating)}
                     </p>
                   )}
                 </div>
