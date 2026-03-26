@@ -106,7 +106,7 @@ export default function ActivityFeedWidget() {
                 </p>
                 <p className="text-xs text-muted-stone truncate">
                   {event.party_size
-                    ? `${t('activity.partyOf', 'Party of')} ${event.party_size}${event.event_date ? ` · ${formatEventDateTime(event.event_date, event.event_time, i18n.language)}` : ''}`
+                    ? `${t('activity.partyOf', 'Party of')} ${event.party_size}${event.event_date ? ` · ${formatEventDateTime(event.event_date, event.event_time ?? null, i18n.language)}` : ''}`
                     : event.detail}
                 </p>
               </div>
