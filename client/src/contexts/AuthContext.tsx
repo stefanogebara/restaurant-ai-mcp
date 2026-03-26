@@ -7,6 +7,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { supabase } from '../lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
 import { LS_CUSTOMER_EMAIL } from '../config/localStorageKeys';
+import { identifyUser } from '../lib/analytics';
 
 type RestaurantRole = 'owner' | 'manager' | 'host' | 'staff';
 
@@ -43,6 +44,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Store email in localStorage for onboarding
         if (session?.user?.email) {
           localStorage.setItem('customer_email', session.user.email);
+          // Identify user in PostHog for session recording + funnel analysis
+          identifyUser(session.user.id, {
+            email: session.user.email,
+            auth_provider: session.user.app_metadata?.provider || 'unknown',
+          });
         } else {
           localStorage.removeItem(LS_CUSTOMER_EMAIL);
         }

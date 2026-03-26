@@ -207,6 +207,10 @@
     {
       "path": "/api/cron/pre-reservation-upsell",
       "schedule": "0 11 * * *"
+    },
+    {
+      "path": "/api/cron/analytics-briefing",
+      "schedule": "0 9 * * *"
     }
   ]
 }

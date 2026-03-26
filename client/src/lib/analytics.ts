@@ -29,12 +29,21 @@ export function initAnalytics(): void {
   try {
     posthog.init(key, {
       api_host: host,
-      // Don't capture pageviews automatically — we fire them manually for SPA accuracy
-      capture_pageview: false,
-      // Respect privacy — don't capture sensitive form input values
+      // Capture SPA pageviews on route changes
+      capture_pageview: true,
+      capture_pageleave: true,
+      // Autocapture clicks, inputs, form submissions for heatmaps
+      autocapture: true,
+      // Session recording — see exactly what users do
+      session_recording: {
+        maskAllInputs: true, // Mask form inputs (phone, email, name) for privacy
+        maskTextSelector: '[data-mask]', // Custom mask selector
+      },
+      // Respect privacy — mask sensitive text in recordings
       mask_all_text: false,
-      autocapture: false,
       persistence: 'localStorage',
+      // Track time on page and scroll depth
+      capture_performance: true,
     });
     posthogReady = true;
     console.log('PostHog analytics initialized');
@@ -51,6 +60,17 @@ function safeCapture(event: string, properties?: Record<string, unknown>): void 
     posthog.capture(event, properties);
   } catch {
     // Silently ignore — PostHog may have been blocked mid-session
+  }
+}
+
+// ─── User identification ─────────────────────────────────────────────────────
+
+export function identifyUser(userId: string, props?: Record<string, unknown>): void {
+  if (!posthogReady) return;
+  try {
+    posthog.identify(userId, props);
+  } catch {
+    // Silently ignore
   }
 }
 
