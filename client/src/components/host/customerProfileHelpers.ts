@@ -25,7 +25,7 @@ export function formatCurrency(val: number | null): string {
   if (val == null) return '--';
   const lang = navigator.language || 'pt-BR';
   const isBRL = lang.toLowerCase().startsWith('pt');
-  const cur = isBRL ? 'BRL' : 'EUR';
+  const cur = isBRL ? 'BRL' : 'USD';
   return new Intl.NumberFormat(isBRL ? 'pt-BR' : 'en-US', {
     style: 'currency',
     currency: cur,

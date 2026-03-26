@@ -100,7 +100,7 @@ function recommendProfile(characteristics) {
   const customizations = {
     risk_display: template === 'simple' ? 'simple' : template === 'balanced' ? 'detailed' : 'technical',
     time_format: '24h',
-    currency: 'EUR',
+    currency: 'USD',
     show_technical_details: template === 'advanced',
     font_size: template === 'simple' ? 'large' : 'medium',
     language: 'en',

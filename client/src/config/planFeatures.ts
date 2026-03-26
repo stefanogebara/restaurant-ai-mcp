@@ -286,13 +286,31 @@ export const PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
   },
 };
 
-export const PLAN_PRICES = {
+export const PLAN_PRICES_BRL = {
   free: 0,
   starter: 497,
   growth: 1497,
   professional: 1497,
   scale: 2997,
 } as const;
+
+export const PLAN_PRICES_USD = {
+  free: 0,
+  starter: 97,
+  growth: 297,
+  professional: 297,
+  scale: 597,
+} as const;
+
+/** @deprecated Use PLAN_PRICES_BRL or getPlanPrices() instead */
+export const PLAN_PRICES = PLAN_PRICES_BRL;
+
+/**
+ * Get plan prices for the given currency.
+ */
+export function getPlanPrices(currency: 'BRL' | 'USD'): typeof PLAN_PRICES_BRL {
+  return currency === 'BRL' ? PLAN_PRICES_BRL : PLAN_PRICES_USD;
+}
 
 export const PLAN_NAMES = {
   free: 'Grátis',

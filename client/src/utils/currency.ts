@@ -2,16 +2,16 @@
  * Currency Detection Utility
  *
  * Auto-detects BRL from browser locale for Brazilian users.
- * Falls back to EUR for all other locales.
+ * Falls back to USD for all other locales (US + LatAm).
  */
 
-export type SupportedCurrency = 'EUR' | 'BRL';
+export type SupportedCurrency = 'USD' | 'BRL';
 
 export const DEFAULT_CURRENCY = 'BRL';
 
 /**
  * Detect currency based on browser locale and navigator language.
- * Returns 'BRL' for Portuguese-Brazil users, 'EUR' for all others.
+ * Returns 'BRL' for Portuguese-Brazil users, 'USD' for all others.
  */
 export function detectCurrency(): SupportedCurrency {
   try {
@@ -45,10 +45,10 @@ export function detectCurrency(): SupportedCurrency {
       return 'BRL';
     }
   } catch {
-    // Fallback to EUR if detection fails
+    // Fallback to USD if detection fails
   }
 
-  return 'EUR';
+  return 'USD';
 }
 
 /**
@@ -64,7 +64,7 @@ function getDefaultCurrency(): SupportedCurrency {
 }
 
 /**
- * Format an amount as a currency string using the detected (BRL/EUR) or specified currency.
+ * Format an amount as a currency string using the detected (BRL/USD) or specified currency.
  */
 export function formatCurrency(amount: number, currency?: SupportedCurrency): string {
   const cur = currency ?? getDefaultCurrency();
@@ -84,5 +84,5 @@ export function formatPrice(amount: number, currency: SupportedCurrency): string
   if (currency === 'BRL') {
     return `R$${amount}`;
   }
-  return `\u20AC${amount}`;
+  return `$${amount}`;
 }

@@ -145,7 +145,7 @@ async function handleRecordOutcome(req, res) {
     }
 
     // 2. Calculate value saved based on outcome
-    // Use actual average cover from service_records; fall back to €50 if no data yet
+    // Use actual average cover from service_records; fall back to $50 if no data yet
     let avg_revenue_per_party = 50;
     // restaurantId already validated above
     if (restaurantId) {

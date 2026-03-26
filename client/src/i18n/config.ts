@@ -47,12 +47,12 @@ if (!localStorage.getItem('seatable-user-lang') && localStorage.getItem('i18next
   localStorage.removeItem('i18nextLng');
 }
 
-/** Normalize detected language codes to our supported set (en, es, pt-BR). */
+/** Normalize detected language codes to our supported set (en, es, pt-BR).
+ *  Unsupported languages default to English. */
 function normalizeLanguage(lng: string): string {
   if (lng === 'pt' || lng.startsWith('pt-')) return 'pt-BR';
   if (lng.startsWith('es')) return 'es';
-  if (lng.startsWith('en')) return 'en';
-  return lng;
+  return 'en';
 }
 
 i18n

@@ -16,9 +16,9 @@ export default function DepositActions({ reservationId, depositAmount, onActionC
 
   const lang = navigator.language || 'pt-BR';
   const isBRL = lang.toLowerCase().startsWith('pt');
-  const formatted = new Intl.NumberFormat(isBRL ? 'pt-BR' : 'en-IE', {
+  const formatted = new Intl.NumberFormat(isBRL ? 'pt-BR' : 'en-US', {
     style: 'currency',
-    currency: isBRL ? 'BRL' : 'EUR',
+    currency: isBRL ? 'BRL' : 'USD',
     minimumFractionDigits: 0,
   }).format(depositAmount);
 

@@ -163,7 +163,7 @@ export const FEATURES = [
 export const PRICING_TIERS = [
   {
     name: "Essencial",
-    price: "€97",
+    price: "$97",
     brlPrice: "R$497",
     period: "/month",
     brlPeriod: "/mês",
@@ -182,7 +182,7 @@ export const PRICING_TIERS = [
   },
   {
     name: "Profissional",
-    price: "€297",
+    price: "$297",
     brlPrice: "R$1.497",
     period: "/month",
     brlPeriod: "/mês",
@@ -202,7 +202,7 @@ export const PRICING_TIERS = [
   },
   {
     name: "Enterprise",
-    price: "€597",
+    price: "$597",
     brlPrice: "R$2.997",
     period: "/month",
     brlPeriod: "/mês",

@@ -170,7 +170,7 @@ export default function PricingSection() {
         <div className="mt-10 p-5 bg-soft-gray rounded-2xl border border-border-gray text-center">
           <p className="text-xs text-stone-gray leading-relaxed">
             <span className="font-semibold text-deep-charcoal">{t('landing.pricing.usageBased')}</span>{' '}
-            {t('landing.pricing.usageDetail', { currency: isBRL ? 'BRL' : 'EUR' })}
+            {t('landing.pricing.usageDetail', { currency: isBRL ? 'BRL' : 'USD' })}
           </p>
         </div>
 

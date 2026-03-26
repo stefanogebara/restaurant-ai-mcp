@@ -41,7 +41,7 @@ describe('detectCurrency', () => {
     expect(detectCurrency()).toBe('BRL');
   });
 
-  test('returns EUR for en language', () => {
+  test('returns USD for en language', () => {
     Object.defineProperty(globalThis, 'navigator', {
       value: { languages: ['en-US'], language: 'en-US' },
       writable: true,
@@ -57,10 +57,10 @@ describe('detectCurrency', () => {
       writable: true,
       configurable: true,
     });
-    expect(detectCurrency()).toBe('EUR');
+    expect(detectCurrency()).toBe('USD');
   });
 
-  test('returns EUR for es language', () => {
+  test('returns USD for es language', () => {
     Object.defineProperty(globalThis, 'navigator', {
       value: { languages: ['es'], language: 'es' },
       writable: true,
@@ -75,10 +75,10 @@ describe('detectCurrency', () => {
       writable: true,
       configurable: true,
     });
-    expect(detectCurrency()).toBe('EUR');
+    expect(detectCurrency()).toBe('USD');
   });
 
-  test('returns EUR for fr language', () => {
+  test('returns USD for fr language', () => {
     Object.defineProperty(globalThis, 'navigator', {
       value: { languages: ['fr'], language: 'fr' },
       writable: true,
@@ -93,10 +93,10 @@ describe('detectCurrency', () => {
       writable: true,
       configurable: true,
     });
-    expect(detectCurrency()).toBe('EUR');
+    expect(detectCurrency()).toBe('USD');
   });
 
-  test('returns EUR for de language', () => {
+  test('returns USD for de language', () => {
     Object.defineProperty(globalThis, 'navigator', {
       value: { languages: ['de'], language: 'de' },
       writable: true,
@@ -111,7 +111,7 @@ describe('detectCurrency', () => {
       writable: true,
       configurable: true,
     });
-    expect(detectCurrency()).toBe('EUR');
+    expect(detectCurrency()).toBe('USD');
   });
 
   test('returns BRL for Brazil timezone (America/Sao_Paulo)', () => {
@@ -168,7 +168,7 @@ describe('detectCurrency', () => {
     expect(detectCurrency()).toBe('BRL');
   });
 
-  test('returns EUR when detection throws', () => {
+  test('returns USD when detection throws', () => {
     Object.defineProperty(globalThis, 'navigator', {
       value: {
         get languages() {
@@ -181,7 +181,7 @@ describe('detectCurrency', () => {
       writable: true,
       configurable: true,
     });
-    expect(detectCurrency()).toBe('EUR');
+    expect(detectCurrency()).toBe('USD');
   });
 
   test('returns BRL when pt-br is in secondary language', () => {
@@ -199,15 +199,15 @@ describe('formatPrice', () => {
     expect(formatPrice(149, 'BRL')).toBe('R$149');
   });
 
-  test('returns EUR symbol for EUR', () => {
-    expect(formatPrice(29, 'EUR')).toBe('\u20AC29');
+  test('returns $ symbol for USD', () => {
+    expect(formatPrice(29, 'USD')).toBe('$29');
   });
 
   test('formats zero price for BRL', () => {
     expect(formatPrice(0, 'BRL')).toBe('R$0');
   });
 
-  test('formats larger amounts for EUR', () => {
-    expect(formatPrice(199, 'EUR')).toBe('\u20AC199');
+  test('formats larger amounts for USD', () => {
+    expect(formatPrice(199, 'USD')).toBe('$199');
   });
 });

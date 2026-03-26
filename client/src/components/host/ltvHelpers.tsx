@@ -39,7 +39,7 @@ export function formatCurrency(amount: number): string {
   const isBRL = lang.toLowerCase().startsWith('pt');
   return new Intl.NumberFormat(isBRL ? 'pt-BR' : 'en-US', {
     style: 'currency',
-    currency: isBRL ? 'BRL' : 'EUR',
+    currency: isBRL ? 'BRL' : 'USD',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
