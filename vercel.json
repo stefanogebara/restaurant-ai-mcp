@@ -1,6 +1,6 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "ls client/dist || (cd client && npm install --legacy-peer-deps 2>&1 | tail -20 && npm run build 2>&1 | tail -20 && node cache-bust-sw.js)",
+  "buildCommand": "cd client && npm install --legacy-peer-deps && npx vite build && node cache-bust-sw.js",
   "outputDirectory": "client/dist",
   "functions": {
     "api/**/*.js": {
