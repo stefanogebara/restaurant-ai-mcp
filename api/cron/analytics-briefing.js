@@ -150,7 +150,7 @@ module.exports = async (req, res) => {
               to,
               type: 'template',
               template: {
-                name: 'analytics_daily_briefing',
+                name: 'analytics_report',
                 language: { code: 'pt_BR' },
                 components: [{
                   type: 'body',
