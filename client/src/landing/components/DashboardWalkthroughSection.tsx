@@ -250,7 +250,7 @@ function SceneRevenue({ progress }: { progress: number }) {
           className="origin-center"
         >
           <div className="text-[11px] font-semibold text-white/25 uppercase tracking-wider mb-2">
-            {t('landing.walkthrough.todaysReservations', "Today's Reservations")}
+            {t('landing.walkthrough.todaysReservations', 'Reservas de Hoje')}
           </div>
 
           {/* Scanning line */}
@@ -294,7 +294,7 @@ function SceneRevenue({ progress }: { progress: number }) {
                   <div className="text-[13px] font-medium text-white/80">{r.name}</div>
                   <div className="text-[10px] text-white/25">{r.time} - {r.size}p</div>
                 </div>
-                <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">confirmed</span>
+                <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">confirmado</span>
               </motion.div>
             ))}
 
@@ -325,7 +325,7 @@ function SceneRevenue({ progress }: { progress: number }) {
                 </div>
                 <div className="text-[10px] text-white/25">20:00 - 4 guests - 3 visits</div>
               </div>
-              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400">confirmed</span>
+              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400">confirmado</span>
             </motion.div>
 
             {/* Alessandro — second prediction */}
@@ -355,7 +355,7 @@ function SceneRevenue({ progress }: { progress: number }) {
                 </div>
                 <div className="text-[10px] text-white/25">19:30 - 6 guests - VIP</div>
               </div>
-              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400">confirmed</span>
+              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400">confirmado</span>
             </motion.div>
           </div>
         </motion.div>
@@ -421,7 +421,7 @@ function SceneNoShow({ progress }: { progress: number }) {
   return (
     <div>
       <div className="text-[11px] font-semibold text-white/25 uppercase tracking-wider mb-3">
-        Today's Reservations
+        Reservas de Hoje
       </div>
       <div className="space-y-1">
         <motion.div
@@ -433,7 +433,7 @@ function SceneNoShow({ progress }: { progress: number }) {
             <div className="text-[13px] font-medium text-white/80">Giovanni B.</div>
             <div className="text-[10px] text-white/25">12:00 - 4 guests</div>
           </div>
-          <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">confirmed</span>
+          <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">confirmado</span>
         </motion.div>
 
         {/* Risk row — zooms in with pulsing red glow */}
@@ -484,7 +484,7 @@ function SceneNoShow({ progress }: { progress: number }) {
               color: showResolved ? '#4ade80' : showRisk ? '#f87171' : '#4ade80',
             }}
           >
-            {showResolved ? t('landing.walkthrough.checkedIn', 'checked in') : t('landing.walkthrough.confirmed', 'confirmed')}
+            {showResolved ? t('landing.walkthrough.checkedIn', 'check-in feito') : t('landing.walkthrough.confirmed', 'confirmado')}
           </span>
         </motion.div>
 
@@ -497,7 +497,7 @@ function SceneNoShow({ progress }: { progress: number }) {
             <div className="text-[13px] font-medium text-white/80">Maria Santos</div>
             <div className="text-[10px] text-white/25">20:00 - 4 guests</div>
           </div>
-          <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">confirmed</span>
+          <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">confirmado</span>
         </motion.div>
       </div>
 
@@ -572,7 +572,7 @@ function SceneManagerAI({ progress }: { progress: number }) {
       </div>
 
       <div className="text-[11px] font-semibold text-white/25 uppercase tracking-wider mb-2">
-        Today's Reservations
+        Reservas de Hoje
       </div>
       <div className="space-y-0.5">
         {[
@@ -589,7 +589,7 @@ function SceneManagerAI({ progress }: { progress: number }) {
               <div className="text-[13px] font-medium text-white/80">{r.name}</div>
               <div className="text-[10px] text-white/25">{r.time} - {r.size}p</div>
             </div>
-            <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">confirmed</span>
+            <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">confirmado</span>
           </motion.div>
         ))}
       </div>
@@ -918,7 +918,7 @@ export default function DashboardWalkthroughSection() {
               </div>
               <div className="flex items-center gap-1.5">
                 <StatusDot />
-                <span className="text-[10px] text-rose-400/60 font-medium">AI Active</span>
+                <span className="text-[10px] text-rose-400/60 font-medium">IA Ativa</span>
               </div>
             </div>
 
