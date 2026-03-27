@@ -1,0 +1,283 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import DashboardLayout from '../components/layout/DashboardLayout';
+import CustomerTierBadge from '../components/dashboard/CustomerTierBadge';
+import CrmCustomerDrawer from '../components/dashboard/CrmCustomerDrawer';
+import { useCustomerList } from '../hooks/useCustomers';
+import type { CustomerListFilters } from '../hooks/useCustomers';
+import { formatCurrency } from '../utils/currency';
+
+const PAGE_SIZE = 25;
+
+const TIER_OPTIONS = ['', 'vip', 'regular', 'occasional', 'new', 'at_risk'] as const;
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
+function formatRelativeDate(dateStr: string | null): string {
+  if (!dateStr) return '--';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'Hoje';
+  if (diffDays === 1) return 'Ontem';
+  if (diffDays < 7) return `${diffDays}d`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}sem`;
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)}m`;
+  return `${Math.floor(diffDays / 365)}a`;
+}
+
+export default function CustomersPage() {
+  const { t } = useTranslation();
+
+  const [searchInput, setSearchInput] = useState('');
+  const [tierFilter, setTierFilter] = useState('');
+  const [tagFilter, setTagFilter] = useState('');
+  const [page, setPage] = useState(0);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+
+  const debouncedSearch = useDebounce(searchInput, 300);
+
+  // Reset page when filters change
+  const resetPage = useCallback(() => setPage(0), []);
+  useEffect(() => { resetPage(); }, [debouncedSearch, tierFilter, tagFilter, resetPage]);
+
+  const filters: CustomerListFilters = {
+    search: debouncedSearch || undefined,
+    tier: tierFilter || undefined,
+    tag: tagFilter || undefined,
+    sort: 'last_visit_date',
+    order: 'desc',
+    limit: PAGE_SIZE,
+    offset: page * PAGE_SIZE,
+  };
+
+  const { data, isLoading, isError } = useCustomerList(filters);
+
+  const customers = data?.customers ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  return (
+    <DashboardLayout>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-xl font-bold text-stone-900">
+              {t('crm.pageTitle', 'Clientes')}
+            </h1>
+            {total > 0 && (
+              <p className="text-sm text-stone-500 mt-0.5">
+                {t('crm.totalCustomers', '{{count}} clientes', { count: total })}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="space-y-3 mb-6">
+          {/* Search */}
+          <div className="relative">
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder={t('crm.searchPlaceholder', 'Buscar por nome, telefone ou email...')}
+              className="w-full pl-10 pr-4 py-2.5 text-sm border border-[#E5E7EB] rounded-lg text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+            />
+          </div>
+
+          {/* Filter row */}
+          <div className="flex items-center gap-3">
+            <select
+              value={tierFilter}
+              onChange={(e) => setTierFilter(e.target.value)}
+              className="text-sm border border-[#E5E7EB] rounded-lg px-3 py-2 text-stone-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+            >
+              <option value="">{t('crm.allTiers', 'Todos os niveis')}</option>
+              {TIER_OPTIONS.filter(Boolean).map((tier) => (
+                <option key={tier} value={tier}>
+                  {t(`crm.tier_${tier}`, tier)}
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="text"
+              value={tagFilter}
+              onChange={(e) => setTagFilter(e.target.value)}
+              placeholder={t('crm.filterByTag', 'Filtrar por tag...')}
+              className="text-sm border border-[#E5E7EB] rounded-lg px-3 py-2 text-stone-700 placeholder:text-stone-400 bg-white focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30"
+            />
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-200 border-t-[#9F1239]" />
+            </div>
+          ) : isError ? (
+            <div className="text-center py-20">
+              <p className="text-sm text-red-600">{t('crm.loadError', 'Erro ao carregar clientes')}</p>
+            </div>
+          ) : customers.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-sm text-stone-500">{t('crm.noCustomers', 'Nenhum cliente encontrado')}</p>
+              {(debouncedSearch || tierFilter || tagFilter) && (
+                <button
+                  type="button"
+                  onClick={() => { setSearchInput(''); setTierFilter(''); setTagFilter(''); }}
+                  className="mt-2 text-sm text-[#9F1239] hover:underline"
+                >
+                  {t('crm.clearFilters', 'Limpar filtros')}
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Desktop table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[#E5E7EB] bg-stone-50">
+                      <th className="text-left px-4 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
+                        {t('crm.colName', 'Cliente')}
+                      </th>
+                      <th className="text-left px-4 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
+                        {t('crm.colTier', 'Nivel')}
+                      </th>
+                      <th className="text-right px-4 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
+                        {t('crm.colVisits', 'Visitas')}
+                      </th>
+                      <th className="text-right px-4 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
+                        {t('crm.colLastVisit', 'Ultima Visita')}
+                      </th>
+                      <th className="text-right px-4 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
+                        {t('crm.colLTV', 'LTV')}
+                      </th>
+                      <th className="text-left px-4 py-3 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
+                        {t('crm.colTags', 'Tags')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {customers.map((c) => (
+                      <tr
+                        key={c.customer_id}
+                        onClick={() => setSelectedCustomerId(c.customer_id)}
+                        className="border-b border-[#E5E7EB] last:border-0 hover:bg-stone-50 cursor-pointer transition-colors"
+                      >
+                        <td className="px-4 py-3">
+                          <div>
+                            <p className="font-medium text-stone-900">
+                              {c.customer_name || c.customer_phone}
+                            </p>
+                            {c.customer_name && (
+                              <p className="text-xs text-stone-400">{c.customer_phone}</p>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <CustomerTierBadge
+                            tier={c.customer_tier as 'vip' | 'regular' | 'occasional' | 'new' | 'at_risk'}
+                            compact
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-right text-stone-700 font-medium">
+                          {c.total_visits}
+                        </td>
+                        <td className="px-4 py-3 text-right text-stone-500">
+                          {formatRelativeDate(c.last_visit_date)}
+                        </td>
+                        <td className="px-4 py-3 text-right text-stone-700 font-medium">
+                          {c.lifetime_value ? formatCurrency(Math.round(c.lifetime_value)) : '--'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1">
+                            {(c.tags || []).slice(0, 3).map((tag) => (
+                              <span
+                                key={tag}
+                                className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                            {(c.tags || []).length > 3 && (
+                              <span className="text-[10px] text-stone-400">
+                                +{c.tags.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 border-t border-[#E5E7EB]">
+                  <p className="text-xs text-stone-500">
+                    {t('crm.showing', 'Mostrando {{from}}-{{to}} de {{total}}', {
+                      from: page * PAGE_SIZE + 1,
+                      to: Math.min((page + 1) * PAGE_SIZE, total),
+                      total,
+                    })}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPage((p) => Math.max(0, p - 1))}
+                      disabled={page === 0}
+                      className="px-3 py-1.5 text-xs font-medium border border-[#E5E7EB] rounded-lg text-stone-600 hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {t('crm.prev', 'Anterior')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                      disabled={page >= totalPages - 1}
+                      className="px-3 py-1.5 text-xs font-medium border border-[#E5E7EB] rounded-lg text-stone-600 hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {t('crm.next', 'Proximo')}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Customer Drawer */}
+      <CrmCustomerDrawer
+        customerId={selectedCustomerId}
+        onClose={() => setSelectedCustomerId(null)}
+      />
+    </DashboardLayout>
+  );
+}

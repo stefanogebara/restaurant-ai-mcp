@@ -28,27 +28,35 @@ async function getSegmentCustomers(restaurantId, segment) {
     .eq('restaurant_id', restaurantId)
     .not('customer_phone', 'is', null);
 
-  switch (segment) {
-    case 'vip':
-      query = query.eq('customer_tier', 'vip');
-      break;
-    case 'at_risk':
-      query = query.eq('customer_tier', 'at_risk');
-      break;
-    case 'new_customers':
-      query = query.in('customer_tier', ['new', 'occasional']);
-      break;
-    case 'inactive_30d': {
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      query = query.lt('last_visit_date', thirtyDaysAgo);
-      break;
+  // Handle tagged:xxx segments (e.g. 'tagged:vegan', 'tagged:corporate')
+  if (segment.startsWith('tagged:')) {
+    const tag = segment.split(':')[1];
+    if (tag) {
+      query = query.contains('tags', [tag]);
     }
-    case 'birthday_this_month':
-      // Will filter in JS since birthday data is in JSONB
-      break;
-    case 'all':
-    default:
-      break;
+  } else {
+    switch (segment) {
+      case 'vip':
+        query = query.eq('customer_tier', 'vip');
+        break;
+      case 'at_risk':
+        query = query.eq('customer_tier', 'at_risk');
+        break;
+      case 'new_customers':
+        query = query.in('customer_tier', ['new', 'occasional']);
+        break;
+      case 'inactive_30d': {
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        query = query.lt('last_visit_date', thirtyDaysAgo);
+        break;
+      }
+      case 'birthday_this_month':
+        // Will filter in JS since birthday data is in JSONB
+        break;
+      case 'all':
+      default:
+        break;
+    }
   }
 
   const { data, error } = await query.limit(500);

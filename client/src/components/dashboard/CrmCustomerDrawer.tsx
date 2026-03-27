@@ -1,0 +1,263 @@
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { motion, AnimatePresence } from 'framer-motion';
+import CustomerTierBadge from './CustomerTierBadge';
+import TagEditor from './TagEditor';
+import { formatCurrency } from '../../utils/currency';
+import { useCustomerDetail, useUpdateTags, useAddNote, useDeleteNote } from '../../hooks/useCustomers';
+
+interface CrmCustomerDrawerProps {
+  customerId: string | null;
+  onClose: () => void;
+}
+
+export default function CrmCustomerDrawer({ customerId, onClose }: CrmCustomerDrawerProps) {
+  const { t } = useTranslation();
+  const isOpen = !!customerId;
+
+  const { data: customer, isLoading } = useCustomerDetail(customerId);
+  const updateTags = useUpdateTags();
+  const addNote = useAddNote();
+  const deleteNote = useDeleteNote();
+
+  const [noteText, setNoteText] = useState('');
+
+  const handleTagsChange = (tags: string[]) => {
+    if (!customerId) return;
+    updateTags.mutate({ customerId, tags });
+  };
+
+  const handleAddNote = () => {
+    const content = noteText.trim();
+    if (!content || !customerId) return;
+    addNote.mutate(
+      { customerId, content },
+      { onSuccess: () => setNoteText('') }
+    );
+  };
+
+  const handleDeleteNote = (noteId: string) => {
+    if (!customerId) return;
+    deleteNote.mutate({ customerId, noteId });
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50"
+            onClick={onClose}
+          />
+
+          {/* Drawer */}
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="fixed right-0 top-0 h-full w-[420px] max-w-[90vw] bg-white z-50 overflow-y-auto border-l border-[#E5E7EB]"
+          >
+            {isLoading || !customer ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-stone-200 border-t-[#9F1239]" />
+              </div>
+            ) : (
+              <>
+                {/* Header */}
+                <div className="sticky top-0 bg-white border-b border-[#E5E7EB] px-6 py-4 flex items-center justify-between z-10">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg font-bold text-stone-900 truncate">
+                        {customer.customer_name || customer.customer_phone}
+                      </h2>
+                      <CustomerTierBadge
+                        tier={customer.customer_tier as 'vip' | 'regular' | 'occasional' | 'new' | 'at_risk'}
+                        visitCount={customer.total_visits}
+                      />
+                    </div>
+                    <div className="flex items-center gap-3 mt-0.5">
+                      <p className="text-xs text-stone-500">{customer.customer_phone}</p>
+                      {customer.customer_email && (
+                        <p className="text-xs text-stone-500">{customer.customer_email}</p>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="p-2 hover:bg-stone-100 rounded-lg transition-colors flex-shrink-0"
+                    aria-label={t('common.close', 'Fechar')}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="px-6 py-5 space-y-6">
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <StatBox
+                      label={t('crm.totalVisits', 'Visitas')}
+                      value={String(customer.total_visits)}
+                    />
+                    <StatBox
+                      label={t('crm.avgSpend', 'Ticket Medio')}
+                      value={customer.avg_revenue_per_visit ? formatCurrency(Math.round(customer.avg_revenue_per_visit)) : '--'}
+                    />
+                    <StatBox
+                      label={t('crm.totalRevenue', 'Receita Total')}
+                      value={customer.total_revenue ? formatCurrency(Math.round(customer.total_revenue)) : '--'}
+                    />
+                    <StatBox
+                      label={t('crm.churnRisk', 'Risco de Churn')}
+                      value={customer.churn_risk_score != null ? `${customer.churn_risk_score}%` : '--'}
+                      valueColor={customer.churn_risk_score > 50 ? 'text-red-600' : undefined}
+                    />
+                  </div>
+
+                  {/* Tags */}
+                  <Section title={t('crm.tags', 'Tags')}>
+                    <TagEditor
+                      tags={customer.tags || []}
+                      onTagsChange={handleTagsChange}
+                    />
+                  </Section>
+
+                  {/* Notes */}
+                  <Section title={t('crm.notes', 'Notas')}>
+                    {/* Add note */}
+                    <div className="mb-3">
+                      <textarea
+                        value={noteText}
+                        onChange={(e) => setNoteText(e.target.value)}
+                        placeholder={t('crm.notePlaceholder', 'Adicionar nota...')}
+                        rows={2}
+                        className="w-full text-sm border border-stone-200 rounded-lg px-3 py-2 text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#9F1239]/30 focus:border-[#9F1239]/30 resize-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddNote}
+                        disabled={!noteText.trim() || addNote.isPending}
+                        className="mt-1.5 px-3 py-1.5 text-xs font-semibold bg-[#9F1239] text-white rounded-lg hover:bg-[#7f0e2e] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {addNote.isPending
+                          ? t('crm.saving', 'Salvando...')
+                          : t('crm.addNote', 'Adicionar Nota')}
+                      </button>
+                    </div>
+
+                    {/* Note list */}
+                    {customer.notes && customer.notes.length > 0 ? (
+                      <div className="space-y-2">
+                        {customer.notes.map((note) => (
+                          <div
+                            key={note.id}
+                            className="text-sm text-stone-700 bg-stone-50 px-3 py-2 rounded-lg flex items-start justify-between gap-2"
+                          >
+                            <div className="min-w-0">
+                              <p>{note.content}</p>
+                              <span className="text-[10px] text-stone-400">
+                                {new Date(note.created_at).toLocaleDateString('pt-BR')}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteNote(note.id)}
+                              className="text-stone-400 hover:text-red-500 transition-colors flex-shrink-0 mt-0.5"
+                              aria-label={t('crm.deleteNote', 'Excluir nota')}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-stone-400 italic">
+                        {t('crm.noNotes', 'Nenhuma nota adicionada')}
+                      </p>
+                    )}
+                  </Section>
+
+                  {/* Visit History */}
+                  <Section title={t('crm.visitHistory', 'Historico de Visitas')}>
+                    {customer.recent_reservations && customer.recent_reservations.length > 0 ? (
+                      <div className="space-y-2">
+                        {customer.recent_reservations.map((res) => (
+                          <div
+                            key={res.id}
+                            className="flex items-center justify-between text-sm border-b border-stone-100 pb-2 last:border-0 last:pb-0"
+                          >
+                            <div>
+                              <span className="text-stone-900 font-medium">{res.date}</span>
+                              <span className="text-stone-400 ml-2">{res.time}</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-stone-500">
+                                {res.party_size} {t('crm.people', 'pessoas')}
+                              </span>
+                              <StatusBadge status={res.status} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-stone-400 italic">
+                        {t('crm.noVisits', 'Nenhuma visita registrada')}
+                      </p>
+                    )}
+                  </Section>
+                </div>
+              </>
+            )}
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ─── Sub-components ─────────────────────────────────────────
+
+function StatBox({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
+  return (
+    <div className="bg-stone-50 rounded-lg p-3">
+      <p className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mb-1">{label}</p>
+      <p className={`text-lg font-bold ${valueColor || 'text-stone-900'}`}>{value}</p>
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <h3 className="text-[11px] font-bold text-stone-500 uppercase tracking-widest mb-2">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const colorMap: Record<string, string> = {
+    confirmed: 'bg-green-50 text-green-700',
+    completed: 'bg-blue-50 text-blue-700',
+    cancelled: 'bg-red-50 text-red-700',
+    'no-show': 'bg-amber-50 text-amber-700',
+    pending: 'bg-stone-100 text-stone-600',
+  };
+  const cls = colorMap[status.toLowerCase()] || colorMap.pending;
+  return (
+    <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${cls}`}>
+      {status}
+    </span>
+  );
+}
