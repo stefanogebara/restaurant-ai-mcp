@@ -5,8 +5,10 @@ interface GuestDetailsFormProps {
   customerPhone: string;
   customerEmail: string;
   specialRequests: string;
+  phoneError?: string;
   onNameChange: (value: string) => void;
   onPhoneChange: (value: string) => void;
+  onPhoneBlur?: () => void;
   onEmailChange: (value: string) => void;
   onSpecialRequestsChange: (value: string) => void;
 }
@@ -16,8 +18,10 @@ export default function GuestDetailsForm({
   customerPhone,
   customerEmail,
   specialRequests,
+  phoneError,
   onNameChange,
   onPhoneChange,
+  onPhoneBlur,
   onEmailChange,
   onSpecialRequestsChange,
 }: GuestDetailsFormProps) {
@@ -44,9 +48,17 @@ export default function GuestDetailsForm({
             type="tel"
             value={customerPhone}
             onChange={e => onPhoneChange(e.target.value)}
+            onBlur={onPhoneBlur}
             placeholder={t('booking.phonePlaceholder')}
-            className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
+            className={`w-full px-4 py-3 border rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:ring-[3px] ${
+              phoneError
+                ? 'border-red-500 focus:border-red-500 focus:ring-red-500/[6%]'
+                : 'border-border-gray focus:border-burgundy focus:ring-burgundy/[6%]'
+            }`}
           />
+          {phoneError && (
+            <p className="text-xs text-red-600 mt-1">{phoneError}</p>
+          )}
         </div>
       </div>
       <div className="mb-3.5">

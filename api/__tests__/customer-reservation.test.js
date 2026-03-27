@@ -57,7 +57,7 @@ function mkReqRes(overrides = {}) {
 const RESERVATION = {
   reservation_id: 'CEL-2026-0218-A7K3',
   customer_name: 'Alice Smith',
-  customer_phone: '+15550001',
+  customer_phone: '+15550001234',
   customer_email: 'alice@example.com',
   date: '2026-03-01',
   time: '19:00',
@@ -94,7 +94,7 @@ describe('customer-reservation: lookup', () => {
 
   test('returns 400 for phone lookup without restaurant_id', async () => {
     const { req, res } = mkReqRes({
-      query: { action: 'lookup', customer_phone: '+15550001' },
+      query: { action: 'lookup', customer_phone: '+15550001234' },
     });
     await handler(req, res);
 
@@ -106,7 +106,7 @@ describe('customer-reservation: lookup', () => {
     mockSingle.mockResolvedValueOnce({ data: RESERVATION, error: null });
 
     const { req, res } = mkReqRes({
-      query: { action: 'lookup', customer_phone: '+15550001', restaurant_id: 'rest-123' },
+      query: { action: 'lookup', customer_phone: '+15550001234', restaurant_id: 'rest-123' },
     });
     await handler(req, res);
 
@@ -148,7 +148,7 @@ describe('customer-reservation: modify', () => {
 
   test('returns 404 when phone does not match (M-02: same as not found)', async () => {
     mockSingle.mockResolvedValueOnce({
-      data: { id: 'row-1', status: 'Confirmed', customer_phone: '+15550001' },
+      data: { id: 'row-1', status: 'Confirmed', customer_phone: '+15550001234' },
       error: null,
     });
 
@@ -157,7 +157,7 @@ describe('customer-reservation: modify', () => {
       query: { action: 'modify' },
       body: {
         reservation_id: 'CEL-2026-0218-A7K3',
-        customer_phone: '+99999999', // wrong phone
+        customer_phone: '+19999999999', // wrong phone (10 digits, valid format)
         date: '2026-03-02',
       },
     });
@@ -167,7 +167,7 @@ describe('customer-reservation: modify', () => {
 
   test('returns 400 when modifying a cancelled reservation', async () => {
     mockSingle.mockResolvedValueOnce({
-      data: { id: 'row-1', status: 'Cancelled', customer_phone: '+15550001' },
+      data: { id: 'row-1', status: 'Cancelled', customer_phone: '+15550001234' },
       error: null,
     });
 
@@ -176,7 +176,7 @@ describe('customer-reservation: modify', () => {
       query: { action: 'modify' },
       body: {
         reservation_id: 'CEL-2026-0218-A7K3',
-        customer_phone: '+15550001',
+        customer_phone: '+15550001234',
         date: '2026-03-02',
       },
     });
@@ -186,7 +186,7 @@ describe('customer-reservation: modify', () => {
 
   test('updates reservation and returns 200', async () => {
     mockSingle.mockResolvedValueOnce({
-      data: { id: 'row-1', status: 'Confirmed', customer_phone: '+15550001' },
+      data: { id: 'row-1', status: 'Confirmed', customer_phone: '+15550001234' },
       error: null,
     });
 
@@ -195,7 +195,7 @@ describe('customer-reservation: modify', () => {
       query: { action: 'modify' },
       body: {
         reservation_id: 'CEL-2026-0218-A7K3',
-        customer_phone: '+15550001',
+        customer_phone: '+15550001234',
         date: '2026-03-05',
         party_size: 6,
       },
@@ -214,14 +214,14 @@ describe('customer-reservation: modify', () => {
 describe('customer-reservation: cancel', () => {
   test('returns 404 when phone does not match (M-02: same as not found)', async () => {
     mockSingle.mockResolvedValueOnce({
-      data: { id: 'row-1', status: 'Confirmed', customer_phone: '+15550001' },
+      data: { id: 'row-1', status: 'Confirmed', customer_phone: '+15550001234' },
       error: null,
     });
 
     const { req, res } = mkReqRes({
       method: 'POST',
       query: { action: 'cancel' },
-      body: { reservation_id: 'CEL-2026-0218-A7K3', customer_phone: '+99999999' },
+      body: { reservation_id: 'CEL-2026-0218-A7K3', customer_phone: '+19999999999' },
     });
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(404);
@@ -229,14 +229,14 @@ describe('customer-reservation: cancel', () => {
 
   test('cancels reservation and returns 200', async () => {
     mockSingle.mockResolvedValueOnce({
-      data: { id: 'row-1', status: 'Confirmed', customer_phone: '+15550001' },
+      data: { id: 'row-1', status: 'Confirmed', customer_phone: '+15550001234' },
       error: null,
     });
 
     const { req, res } = mkReqRes({
       method: 'POST',
       query: { action: 'cancel' },
-      body: { reservation_id: 'CEL-2026-0218-A7K3', customer_phone: '+15550001' },
+      body: { reservation_id: 'CEL-2026-0218-A7K3', customer_phone: '+15550001234' },
     });
     await handler(req, res);
 
@@ -246,14 +246,14 @@ describe('customer-reservation: cancel', () => {
 
   test('returns 400 when already cancelled', async () => {
     mockSingle.mockResolvedValueOnce({
-      data: { id: 'row-1', status: 'Cancelled', customer_phone: '+15550001' },
+      data: { id: 'row-1', status: 'Cancelled', customer_phone: '+15550001234' },
       error: null,
     });
 
     const { req, res } = mkReqRes({
       method: 'POST',
       query: { action: 'cancel' },
-      body: { reservation_id: 'CEL-2026-0218-A7K3', customer_phone: '+15550001' },
+      body: { reservation_id: 'CEL-2026-0218-A7K3', customer_phone: '+15550001234' },
     });
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(400);

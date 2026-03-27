@@ -9,10 +9,10 @@ describe('PhoneInput', () => {
     onChange: vi.fn(),
   };
 
-  it('renders with default label and country (Spain)', () => {
+  it('renders with default label and country (Brazil)', () => {
     render(<PhoneInput {...defaultProps} />);
     expect(screen.getByText('Phone Number')).toBeInTheDocument();
-    expect(screen.getByText('+34')).toBeInTheDocument();
+    expect(screen.getByText('+55')).toBeInTheDocument();
   });
 
   it('renders with custom label', () => {
@@ -102,7 +102,7 @@ describe('PhoneInput', () => {
     render(<PhoneInput {...defaultProps} />);
 
     // Click the country selector
-    await user.click(screen.getByText('+34'));
+    await user.click(screen.getByText('+55'));
 
     // Should show all countries
     expect(screen.getByText('United States')).toBeInTheDocument();

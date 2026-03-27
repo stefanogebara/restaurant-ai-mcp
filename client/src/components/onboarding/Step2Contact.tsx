@@ -197,7 +197,7 @@ export default function Step2Contact({ data, updateData, onNext, onBack }: Onboa
       <PhoneInput
         value={data.phone_number}
         onChange={handlePhoneChange}
-        defaultCountry={(data.country_code?.toUpperCase() || 'ES') as CountryCode}
+        defaultCountry={(data.country_code?.toUpperCase() || 'BR') as CountryCode}
         label={t('onboarding.restaurantPhoneLabel')}
         required
         error={errors.phone_number}

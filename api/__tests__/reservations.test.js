@@ -175,6 +175,10 @@ jest.mock('../_lib/secure-logger', () => ({
   })),
 }));
 
+jest.mock('../_lib/reservation-validator', () => ({
+  validateReservation: jest.fn(() => ({ valid: true, message: null })),
+}));
+
 jest.mock('../services/guestMemory', () => ({
   createMemory: jest.fn(() => Promise.resolve()),
 }));
@@ -458,6 +462,9 @@ describe('WhatsApp confirmation', () => {
   });
 
   test('sends WhatsApp confirmation when enabled and configured', async () => {
+    // First schema call: business hours validation (returns null to skip validation)
+    mockSchemaFromSingle.mockResolvedValueOnce({ data: null, error: null });
+    // Second schema call: WhatsApp config fetch
     mockSchemaFromSingle.mockResolvedValueOnce({
       data: { whatsapp_enabled: true, restaurant_name: 'Test Restaurant', agent_language: 'pt' },
       error: null,
@@ -479,6 +486,9 @@ describe('WhatsApp confirmation', () => {
   });
 
   test('falls back to SMS when WhatsApp send fails', async () => {
+    // First schema call: business hours validation (returns null to skip validation)
+    mockSchemaFromSingle.mockResolvedValueOnce({ data: null, error: null });
+    // Second schema call: WhatsApp config fetch
     mockSchemaFromSingle.mockResolvedValueOnce({
       data: { whatsapp_enabled: true, restaurant_name: 'Test Restaurant', agent_language: 'en' },
       error: null,
@@ -778,13 +788,13 @@ describe('SMS confirmation with Twilio configured', () => {
         time: '19:00',
         party_size: 2,
         customer_name: 'Bad Phone Guest',
-        customer_phone: '123', // too short
+        customer_phone: '123', // too short — now rejected with 400 by phone validation
       },
     });
     await handler(req, res);
 
-    // Reservation succeeds regardless of SMS failure
-    expect(res.status).toHaveBeenCalledWith(200);
+    // Phone validation now rejects short numbers before SMS is attempted
+    expect(res.status).toHaveBeenCalledWith(400);
   });
 });
 

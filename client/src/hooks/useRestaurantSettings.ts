@@ -32,6 +32,9 @@ export interface RestaurantSettings {
 
 async function fetchSettings(): Promise<RestaurantSettings> {
   const res = await api.get('/restaurant-settings');
+  if (!res.data?.success || !res.data?.data) {
+    throw new Error(res.data?.error || 'Failed to load restaurant settings');
+  }
   return res.data.data;
 }
 

@@ -62,6 +62,10 @@ export default function BookingConfirmation() {
 
   const formatTime = (time: string) => {
     const [h, m] = time.split(':').map(Number);
+    // PT-BR and ES use 24-hour format; EN uses 12-hour AM/PM
+    if (i18n.language === 'pt-BR' || i18n.language.startsWith('es')) {
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
     const period = h >= 12 ? 'PM' : 'AM';
     const hour = h > 12 ? h - 12 : h === 0 ? 12 : h;
     return `${hour}:${String(m).padStart(2, '0')} ${period}`;
@@ -131,7 +135,7 @@ export default function BookingConfirmation() {
           <div className="bg-white border border-border-gray rounded-2xl p-8 text-left mb-6">
             {/* Restaurant Row */}
             <div className="flex items-center gap-4 pb-5 mb-5 border-b border-soft-gray">
-              <div className="w-14 h-14 rounded-[14px] bg-gradient-to-br from-charcoal-dark to-stone-700 flex-shrink-0" />
+              <div className="w-14 h-14 rounded-[14px] bg-gradient-to-br from-burgundy/80 via-burgundy/50 to-stone-700 flex-shrink-0" />
               <div className="min-w-0">
                 <h3 className="text-lg font-semibold text-deep-charcoal tracking-tight truncate">{reservation.restaurant_name}</h3>
                 <p className="text-[13px] text-warm-stone font-light">{t('reservations.reservationDetails')}</p>
@@ -198,6 +202,19 @@ export default function BookingConfirmation() {
           </p>
         </div>
       </main>
+
+      {/* Powered by Seatable badge */}
+      <div className="mt-8 pb-8 flex justify-center">
+        <a
+          href="/?ref=badge"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border-gray bg-warm-white hover:bg-soft-gray transition-colors text-xs text-muted-stone hover:text-warm-stone"
+        >
+          <span className="text-burgundy font-semibold">{'\u26A1'}</span>
+          {t('common.poweredBy')} Seatable
+        </a>
+      </div>
     </div>
   );
 }

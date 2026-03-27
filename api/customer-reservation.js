@@ -107,7 +107,7 @@ async function handleLookup(req, res) {
     if (restaurant_id) {
       query = query.eq('restaurant_id', restaurant_id);
     }
-    query = query.eq('reservation_id', reservation_id.trim().toUpperCase());
+    query = query.eq('reservation_id', reservation_id.trim());
   } else {
     // Phone lookup requires restaurant_id to prevent cross-tenant data leaks
     if (!restaurant_id) {
@@ -145,6 +145,12 @@ async function handleModify(req, res) {
 
   if (!reservation_id || !customer_phone) {
     return res.status(400).json({ success: false, message: 'reservation_id and customer_phone are required' });
+  }
+
+  // Validate phone number: at least 10 digits after stripping non-numeric chars
+  const phoneDigitsModify = String(customer_phone).replace(/\D/g, '');
+  if (phoneDigitsModify.length < 10) {
+    return res.status(400).json({ success: false, message: 'Invalid phone number. Must contain at least 10 digits.' });
   }
 
   // M-02: Check per-reservation rate limit before DB query
@@ -219,6 +225,12 @@ async function handleCancel(req, res) {
 
   if (!reservation_id || !customer_phone) {
     return res.status(400).json({ success: false, message: 'reservation_id and customer_phone are required' });
+  }
+
+  // Validate phone number: at least 10 digits after stripping non-numeric chars
+  const phoneDigitsCancel = String(customer_phone).replace(/\D/g, '');
+  if (phoneDigitsCancel.length < 10) {
+    return res.status(400).json({ success: false, message: 'Invalid phone number. Must contain at least 10 digits.' });
   }
 
   // M-02: Check per-reservation rate limit before DB query

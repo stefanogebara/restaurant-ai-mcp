@@ -88,6 +88,10 @@ jest.mock('../_lib/secure-logger', () => ({
   }),
 }));
 
+jest.mock('../_lib/reservation-validator', () => ({
+  validateReservation: jest.fn(() => ({ valid: true, message: null })),
+}));
+
 jest.mock('../_lib/availability-calculator', () => ({
   checkTimeSlotAvailability: (...args) => mockCheckTimeSlotAvailability(...args),
   getSuggestedTimes: jest.fn(() => []),

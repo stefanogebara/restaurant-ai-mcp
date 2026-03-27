@@ -48,6 +48,12 @@ const { isWhatsAppConfigured, sendReservationConfirmation } = require('./_lib/wh
 // Email notifications
 const { sendReservationModificationEmail, sendReservationConfirmationEmail, sendReservationCancellationEmail } = require('./_lib/email');
 
+// Reservation validation (business hours, holidays, party size limits)
+const { validateReservation: validateReservationRules } = require('./_lib/reservation-validator');
+
+// Input sanitization
+const { sanitizeStringXSS } = require('./_lib/validation');
+
 // ============================================================================
 // SMS CONFIRMATION HELPER
 // ============================================================================
@@ -177,6 +183,52 @@ async function handleCreate(req, res, restaurantId, timezone) {
     });
   }
 
+  // Validate phone number: at least 10 digits after stripping non-numeric chars
+  const phoneDigits = String(customer_phone).replace(/\D/g, '');
+  if (phoneDigits.length < 10) {
+    return res.status(400).json({
+      message: 'The phone number provided is invalid. Please provide a number with at least 10 digits.'
+    });
+  }
+
+  // ============================================================================
+  // SANITIZE CUSTOMER NAME (XSS prevention + max length)
+  // ============================================================================
+  const sanitizedName = sanitizeStringXSS(customer_name, { maxLength: 200 });
+
+  // ============================================================================
+  // BUSINESS HOURS VALIDATION
+  // ============================================================================
+  try {
+    const { data: restConfig } = await supabaseAdmin
+      .schema('restaurant')
+      .from('restaurant_config')
+      .select('business_hours, reservation_settings, timezone')
+      .eq('restaurant_id', restaurantId)
+      .single();
+
+    if (restConfig) {
+      const validation = validateReservationRules(
+        { date, time, party_size },
+        {
+          business_hours: restConfig.business_hours,
+          timezone: restConfig.timezone,
+          max_party_size: restConfig.reservation_settings?.max_party_size,
+          max_advance_days: restConfig.reservation_settings?.advance_booking_days,
+        }
+      );
+
+      if (!validation.valid) {
+        return res.status(400).json({
+          message: validation.message
+        });
+      }
+    }
+  } catch (err) {
+    // Log but don't block reservation if config fetch fails
+    logger.warn('Could not validate business hours (non-fatal):', err.message);
+  }
+
   // ============================================================================
   // SUBSCRIPTION LIMIT CHECK (For dashboard-created reservations)
   // ============================================================================
@@ -207,7 +259,7 @@ async function handleCreate(req, res, restaurantId, timezone) {
     'Date': date,
     'Time': time,
     'Party Size': parseInt(party_size),
-    'Customer Name': customer_name,
+    'Customer Name': sanitizedName,
     'Customer Phone': customer_phone,
     'Customer Email': customer_email || '',
     'Special Requests': special_requests || '',
@@ -250,7 +302,7 @@ async function handleCreate(req, res, restaurantId, timezone) {
       date: date,
       time: time,
       party_size: parseInt(party_size),
-      customer_name: customer_name,
+      customer_name: sanitizedName,
       customer_phone: customer_phone,
       customer_email: customer_email || '',
       special_requests: special_requests || '',
@@ -373,7 +425,7 @@ async function handleCreate(req, res, restaurantId, timezone) {
   try {
     const smsResult = await sendReservationConfirmationSMS(customer_phone, {
       reservationId,
-      customerName: customer_name,
+      customerName: sanitizedName,
       partySize: party_size,
       date,
       time,
@@ -395,7 +447,7 @@ async function handleCreate(req, res, restaurantId, timezone) {
   // ============================================================================
   if (restaurantConfig?.whatsapp_enabled && isWhatsAppConfigured()) {
     sendReservationConfirmation(customer_phone, {
-      customerName: customer_name,
+      customerName: sanitizedName,
       restaurantName: restaurantConfig.restaurant_name,
       language: restaurantConfig.agent_language || 'en',
       reservationId,
@@ -411,7 +463,7 @@ async function handleCreate(req, res, restaurantId, timezone) {
   if (customer_email) {
     sendReservationConfirmationEmail({
       customerEmail: customer_email,
-      customerName: customer_name,
+      customerName: sanitizedName,
       restaurantName: restaurantConfig?.restaurant_name || 'Your Restaurant',
       reservationId,
       partySize: parseInt(party_size),
@@ -452,7 +504,7 @@ async function handleCreate(req, res, restaurantId, timezone) {
   }
 
   return res.status(200).json({
-    message: `Perfect! Your reservation is confirmed for ${customer_name}, party of ${party_size}, on ${date} at ${time}. Your confirmation number is ${reservationId}. We've sent you a text message with the details. We look forward to seeing you!`,
+    message: `Perfect! Your reservation is confirmed for ${sanitizedName}, party of ${party_size}, on ${date} at ${time}. Your confirmation number is ${reservationId}. We've sent you a text message with the details. We look forward to seeing you!`,
     notification_sent: !!customer_email,
   });
 }

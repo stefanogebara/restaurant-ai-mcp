@@ -19,6 +19,8 @@ const { sendReservationConfirmationEmail, sendNewBookingAlertEmail } = require('
 const { sendNewBookingAlertWhatsApp, sendReservationConfirmation, isWhatsAppConfigured } = require('./_lib/whatsapp-sender');
 const { createSecureLogger } = require('./_lib/secure-logger');
 const { setInternalCors, handlePreflight } = require('./_lib/cors');
+const { sanitizeStringXSS } = require('./_lib/validation');
+const { validateReservation: validateReservationRules } = require('./_lib/reservation-validator');
 const logger = createSecureLogger('Portal');
 
 module.exports = async (req, res) => {
@@ -369,6 +371,18 @@ async function handleCreateReservation(req, res) {
     });
   }
 
+  // Validate phone number: at least 10 digits after stripping non-numeric chars
+  const phoneDigits = String(customer_phone).replace(/\D/g, '');
+  if (phoneDigits.length < 10) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid phone number. Must contain at least 10 digits.'
+    });
+  }
+
+  // Sanitize customer name (XSS prevention + max length)
+  const sanitizedName = sanitizeStringXSS(customer_name, { maxLength: 200 });
+
   const partySize = parseInt(party_size, 10);
   if (isNaN(partySize) || partySize < 1 || partySize > 20) {
     return res.status(400).json({
@@ -406,7 +420,7 @@ async function handleCreateReservation(req, res) {
   const { data: restaurant, error: restError } = await supabaseAdmin
     .schema('restaurant')
     .from('restaurant_config')
-    .select('id, restaurant_name, email, whatsapp_enabled, whatsapp_phone_number, agent_language, reservation_settings, business_hours, average_dining_duration_minutes, table_configuration')
+    .select('id, restaurant_name, email, whatsapp_enabled, whatsapp_phone_number, agent_language, reservation_settings, business_hours, timezone, average_dining_duration_minutes, table_configuration')
     .eq('id', restaurant_id)
     .eq('is_active', true)
     .eq('onboarding_completed', true)
@@ -426,6 +440,24 @@ async function handleCreateReservation(req, res) {
     return res.status(400).json({
       success: false,
       message: `Maximum party size is ${maxParty}. Please call us for larger groups.`
+    });
+  }
+
+  // Validate against business hours
+  const validation = validateReservationRules(
+    { date, time, party_size: partySize },
+    {
+      business_hours: restaurant.business_hours,
+      timezone: restaurant.timezone,
+      max_party_size: settings.max_party_size,
+      max_advance_days: settings.advance_booking_days,
+    }
+  );
+
+  if (!validation.valid) {
+    return res.status(400).json({
+      success: false,
+      message: validation.message
     });
   }
 
@@ -477,7 +509,7 @@ async function handleCreateReservation(req, res) {
     .insert({
       restaurant_id,
       reservation_id: reservationId,
-      customer_name: customer_name.trim(),
+      customer_name: sanitizedName,
       customer_phone: customer_phone.trim(),
       customer_email: customer_email ? customer_email.trim() : null,
       party_size: partySize,
@@ -507,7 +539,7 @@ async function handleCreateReservation(req, res) {
   if (customer_email) {
     sendReservationConfirmationEmail({
       customerEmail: customer_email.trim(),
-      customerName: customer_name.trim(),
+      customerName: sanitizedName,
       restaurantName: restaurant.restaurant_name,
       reservationId,
       partySize,
@@ -524,7 +556,7 @@ async function handleCreateReservation(req, res) {
     sendNewBookingAlertEmail({
       ownerEmail: restaurant.email,
       restaurantName: restaurant.restaurant_name,
-      customerName: customer_name.trim(),
+      customerName: sanitizedName,
       customerPhone: customer_phone.trim(),
       customerEmail: customer_email ? customer_email.trim() : null,
       reservationId,
@@ -539,7 +571,7 @@ async function handleCreateReservation(req, res) {
   if (restaurant.whatsapp_enabled && restaurant.whatsapp_phone_number && isWhatsAppConfigured()) {
     sendNewBookingAlertWhatsApp(restaurant.whatsapp_phone_number, {
       reservationId,
-      customerName: customer_name.trim(),
+      customerName: sanitizedName,
       customerPhone: customer_phone.trim(),
       partySize,
       date,
@@ -550,7 +582,7 @@ async function handleCreateReservation(req, res) {
   // Send WhatsApp confirmation to customer (fire-and-forget)
   if (restaurant.whatsapp_enabled && isWhatsAppConfigured() && customer_phone) {
     sendReservationConfirmation(customer_phone.trim(), {
-      customerName: customer_name.trim(),
+      customerName: sanitizedName,
       restaurantName: restaurant.restaurant_name,
       language: restaurant.agent_language || 'en',
       reservationId,

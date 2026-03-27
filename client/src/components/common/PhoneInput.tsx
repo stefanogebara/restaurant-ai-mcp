@@ -67,7 +67,7 @@ interface PhoneInputProps {
 export default function PhoneInput({
   value,
   onChange,
-  defaultCountry = 'ES',
+  defaultCountry = 'BR',
   error,
   label = 'Phone Number',
   required = false,

@@ -441,7 +441,9 @@
     "specialRequests": "Special requests",
     "specialRequestsPlaceholder": "Allergies, celebrations, seating preferences...",
     "depositError": "Payment setup failed. Please try again.",
-    "locationFormat": "{{city}}, {{country}}"
+    "locationFormat": "{{city}}, {{country}}",
+    "timeResetHint": "Time slot cleared — please re-select for your updated party size.",
+    "phoneInvalid": "Please enter a valid phone number (at least 10 digits)."
   },
   "waitlist": {
     "title": "Waitlist",

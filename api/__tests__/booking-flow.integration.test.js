@@ -282,6 +282,11 @@ jest.mock('../_lib/validation', () => ({
   validateServiceRecord: jest.fn(() => ({ valid: true, errors: [] })),
   validateWaitlistEntry: jest.fn(() => ({ valid: true, errors: [] })),
   sanitizeInput: jest.fn((v) => v),
+  sanitizeStringXSS: jest.fn((v) => v),
+}));
+
+jest.mock('../_lib/reservation-validator', () => ({
+  validateReservation: jest.fn(() => ({ valid: true, message: null })),
 }));
 
 jest.mock('../_lib/constants', () => ({

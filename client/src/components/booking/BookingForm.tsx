@@ -69,6 +69,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   const [showPartySizeInput, setShowPartySizeInput] = useState(false);
   const [customPartySizeValue, setCustomPartySizeValue] = useState('8');
   const [timeResetHint, setTimeResetHint] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
 
   // Reset time when date or party size changes
   useEffect(() => {
@@ -91,10 +92,24 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   }, [selectedTime]);
 
   // ─── Server state ────────────────────────────────────────────────────────────
-  const { data: timeSlots = [], isLoading: loadingSlots } = useTimeSlots(
+  const { data: rawTimeSlots = [], isLoading: loadingSlots } = useTimeSlots(
     restaurant.id, selectedDate, partySize
   );
   const reserve = useCreateReservation();
+
+  // Filter out past time slots when the selected date is today
+  const timeSlots = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (selectedDate !== todayStr) return rawTimeSlots;
+    const now = new Date();
+    const bufferMs = 30 * 60 * 1000; // 30-minute buffer
+    return rawTimeSlots.filter(slot => {
+      const [h, m] = slot.time.split(':').map(Number);
+      const slotDate = new Date();
+      slotDate.setHours(h, m, 0, 0);
+      return slotDate.getTime() > now.getTime() + bufferMs;
+    });
+  }, [rawTimeSlots, selectedDate]);
 
   // ─── Derived ─────────────────────────────────────────────────────────────────
   const availableDates = useMemo(() => {
@@ -203,7 +218,11 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
   };
 
   const depositRequired = restaurant.deposit_config?.enabled === true;
-  const canSubmit = customerName.trim() !== '' && customerPhone.trim() !== '' && selectedDate && selectedTime;
+
+  /** Phone is valid if it contains at least 10 digits (ignoring formatting chars). */
+  const isPhoneValid = (phone: string) => phone.replace(/\D/g, '').length >= 10;
+
+  const canSubmit = customerName.trim() !== '' && customerPhone.trim() !== '' && isPhoneValid(customerPhone) && selectedDate && selectedTime;
 
   return (
     <div className="flex-1 max-w-[540px]">
@@ -285,7 +304,7 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
           )}
           {timeResetHint && (
             <p className="text-xs text-amber-600 mt-2">
-              {t('booking.timeResetHint', 'Time slot cleared — please re-select for your updated party size.')}
+              {t('booking.timeResetHint')}
             </p>
           )}
         </div>
@@ -377,8 +396,14 @@ export default function BookingForm({ restaurant }: BookingFormProps) {
         customerPhone={customerPhone}
         customerEmail={customerEmail}
         specialRequests={specialRequests}
+        phoneError={phoneError}
         onNameChange={setCustomerName}
-        onPhoneChange={setCustomerPhone}
+        onPhoneChange={(v) => { setCustomerPhone(v); if (phoneError) setPhoneError(''); }}
+        onPhoneBlur={() => {
+          if (customerPhone.trim() && !isPhoneValid(customerPhone)) {
+            setPhoneError(t('booking.phoneInvalid'));
+          }
+        }}
         onEmailChange={setCustomerEmail}
         onSpecialRequestsChange={setSpecialRequests}
       />

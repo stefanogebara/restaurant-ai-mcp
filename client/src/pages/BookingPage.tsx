@@ -45,13 +45,21 @@ export default function BookingPage() {
     }
   }, [restaurant?.country, i18n]);
 
+  // Translate country name based on current locale (used for SEO meta + display)
+  const countryLower = restaurant?.country?.toLowerCase() ?? '';
+  const translatedCountry = i18n.language === 'pt-BR'
+    ? (COUNTRY_NAMES_PT[countryLower] || restaurant?.country || '')
+    : i18n.language.startsWith('es')
+      ? (COUNTRY_NAMES_ES[countryLower] || restaurant?.country || '')
+      : (restaurant?.country || '');
+
   // SEO: inject dynamic title, meta tags, and JSON-LD when restaurant loads
   useEffect(() => {
     if (!restaurant) return;
 
     const DEFAULT_TITLE = 'seatable - AI Restaurant Management';
     const title = t('pageTitles.bookingPage', { name: restaurant.name });
-    const description = t('pageTitles.bookingDescription', { name: restaurant.name, city: restaurant.city, country: restaurant.country });
+    const description = t('pageTitles.bookingDescription', { name: restaurant.name, city: restaurant.city, country: translatedCountry });
     const canonicalUrl = `${window.location.origin}/book/${restaurant.slug}`;
 
     document.title = title;
@@ -65,6 +73,15 @@ export default function BookingPage() {
       }
       el.setAttribute('content', content);
     };
+
+    // Update canonical link to point to the booking page, not the homepage
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', canonicalUrl);
 
     setMeta('name', 'description', description);
     setMeta('property', 'og:title', title);
@@ -106,8 +123,11 @@ export default function BookingPage() {
     return () => {
       document.title = DEFAULT_TITLE;
       document.getElementById('booking-page-jsonld')?.remove();
+      // Restore canonical to homepage
+      const canonicalEl = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+      if (canonicalEl) canonicalEl.setAttribute('href', 'https://seatable.one/');
     };
-  }, [restaurant, t]);
+  }, [restaurant, t, translatedCountry]);
 
   const getTodayHours = () => {
     if (!restaurant) return '';
@@ -160,14 +180,6 @@ export default function BookingPage() {
   // i18n keys use hyphens, so convert underscores to hyphens before lookup.
   const typeKey = restaurant.type.replace(/_/g, '-');
   const restaurantType = t(`onboarding.restaurantTypes.${typeKey}`, restaurant.type.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()));
-
-  // Translate country name based on current locale
-  const countryLower = restaurant.country.toLowerCase();
-  const translatedCountry = i18n.language === 'pt-BR'
-    ? (COUNTRY_NAMES_PT[countryLower] || restaurant.country)
-    : i18n.language.startsWith('es')
-      ? (COUNTRY_NAMES_ES[countryLower] || restaurant.country)
-      : restaurant.country;
 
   return (
     <div className="min-h-screen bg-warm-white">

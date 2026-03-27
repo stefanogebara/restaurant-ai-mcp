@@ -28,7 +28,7 @@ export default function RestaurantSettingsPage() {
   const { t, i18n } = useTranslation();
   useDocumentTitle(t('pageTitles.settings'));
   const toast = useToast();
-  const { data: settings, isLoading } = useRestaurantSettings();
+  const { data: settings, isLoading, error } = useRestaurantSettings();
   const updateMutation = useUpdateRestaurantSettings();
 
   // Basic info form
@@ -113,6 +113,23 @@ export default function RestaurantSettingsPage() {
               <div className="h-10 bg-gray-100 rounded" />
             </div>
           ))}
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="p-6 sm:p-10 max-w-3xl mx-auto mt-14 sm:mt-0 text-center">
+          <p className="text-sm text-red-600 mb-3">{t('settings.loadError', 'Failed to load restaurant settings.')}</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-burgundy text-white text-sm rounded-xl hover:bg-burgundy-dark transition-colors"
+          >
+            {t('common.retry', 'Retry')}
+          </button>
         </div>
       </DashboardLayout>
     );

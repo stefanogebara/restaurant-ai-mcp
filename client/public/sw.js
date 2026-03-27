@@ -2,7 +2,7 @@
 // Vite build does NOT change this file automatically, so either:
 //   1. Bump manually before deploy, or
 //   2. Use a build script to inject a hash/timestamp (recommended)
-const CACHE_VERSION = 'seatable-v2';
+const CACHE_VERSION = 'seatable-v3';
 
 // Only cache truly static, immutable assets (icons, fonts).
 // Do NOT pre-cache HTML — it contains hashed asset URLs that change per build.
@@ -41,21 +41,10 @@ self.addEventListener('fetch', (event) => {
   // 3. Skip cross-origin requests (CDNs, analytics, etc.)
   if (url.origin !== self.location.origin) return;
 
-  // 4. Navigation requests (HTML pages) — ALWAYS network-first
-  //    This ensures users always get the latest index.html with correct asset hashes.
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          // Cache a clone for offline fallback
-          const clone = response.clone();
-          caches.open(CACHE_VERSION).then(cache => cache.put(event.request, clone));
-          return response;
-        })
-        .catch(() => caches.match(event.request))
-    );
-    return;
-  }
+  // 4. Navigation requests (HTML pages) — ALWAYS go to network, NEVER cache.
+  //    SPA returns the same index.html for every route. Caching it causes stale
+  //    asset references after deploys and can trap users in redirect loops.
+  if (event.request.mode === 'navigate') return;
 
   // 5. Hashed assets (Vite output like /assets/index-abc123.js) — cache-first
   //    These are content-addressed and immutable: the hash guarantees the content.

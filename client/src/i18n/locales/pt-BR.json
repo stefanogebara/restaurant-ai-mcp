@@ -354,7 +354,7 @@
     "reservationConfirmed": "Reserva Confirmada",
     "confirmationSent": "Enviamos uma confirmação para o seu e-mail e telefone.",
     "reservationDetails": "Detalhes da reserva",
-    "guest": "Hóspede",
+    "guest": "Cliente",
     "confirmationId": "ID de Confirmação",
     "manageReservation": "Gerenciar Reserva",
     "cancellationPolicy": "Cancelamento gratuito até 2 horas antes da sua reserva.",
@@ -441,7 +441,9 @@
     "specialRequests": "Pedidos especiais",
     "specialRequestsPlaceholder": "Alergias, comemorações, preferência de mesa...",
     "depositError": "Falha na configuração do pagamento. Tente novamente.",
-    "locationFormat": "{{city}}, {{country}}"
+    "locationFormat": "{{city}}, {{country}}",
+    "timeResetHint": "Horário desmarcado — selecione novamente para o novo número de pessoas.",
+    "phoneInvalid": "Por favor, insira um número de telefone válido (mínimo 10 dígitos)."
   },
   "waitlist": {
     "title": "Lista de Espera",
