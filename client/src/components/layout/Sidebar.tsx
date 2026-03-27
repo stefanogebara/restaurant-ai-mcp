@@ -35,6 +35,7 @@ const navSections: NavSection[] = [
       { path: '/host-dashboard/manager-ai', label: 'Manager AI', requiredFeature: 'overview' },
       { path: '/host-dashboard/voice-settings', label: 'Voice Agent', requiredFeature: 'voiceAI' },
       { path: '/host-dashboard/whatsapp', label: 'WhatsApp', requiredFeature: 'overview' },
+      { path: '/host-dashboard/campaigns', label: 'Campaigns', requiredFeature: 'advancedAnalytics' },
       { path: '/host-dashboard/calls', label: 'Call History', requiredFeature: 'aiAgentTracking' },
     ]
   },

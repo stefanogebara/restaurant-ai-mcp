@@ -43,6 +43,11 @@ export default function WaitlistEntryCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-deep-charcoal text-sm truncate">{entry.customer_name || 'Guest'}</span>
+            {(entry.source === 'whatsapp' || entry.source === 'whatsapp_ai') && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-700 bg-green-50 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                WA
+              </span>
+            )}
             <span className="px-1.5 py-0.5 bg-soft-gray rounded-lg text-[10px] font-medium text-stone-gray flex-shrink-0">
               {entry.party_size}p
             </span>

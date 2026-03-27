@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { trackWhatsAppTapped } from '../../lib/analytics';
+import { SEATABLE_WHATSAPP_NUMBER } from '../../config/constants';
 
 export default function WhatsAppWidgetSection() {
   const { t } = useTranslation();
   const messageText = t('landing.whatsapp.previewMessage', "Hi! I'd like to book a table for 4 tomorrow at 8pm");
-  const waUrl = `https://wa.me/551150289356?text=${encodeURIComponent(messageText)}`;
+  const waUrl = `https://wa.me/${SEATABLE_WHATSAPP_NUMBER}?text=${encodeURIComponent(messageText)}`;
 
   return (
     <section className="py-24 px-6 bg-soft-gray border-t border-border-gray">

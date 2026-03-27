@@ -97,6 +97,7 @@ const updateWaitlistEntry = async (entryId, restaurantId, updates) => {
   if (updates.status !== undefined) allowedFields.status = updates.status;
   if (updates.estimated_wait_minutes !== undefined) allowedFields.estimated_wait_minutes = updates.estimated_wait_minutes;
   if (updates.notes !== undefined) allowedFields.notes = updates.notes;
+  if (updates.notified_at !== undefined) allowedFields.notified_at = updates.notified_at;
 
   allowedFields.updated_at = new Date().toISOString();
 

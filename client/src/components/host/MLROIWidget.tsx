@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
 import HelpTooltip from '../common/HelpTooltip';
 import { useMLROI } from '../../hooks/useMLPerformance';
+import { formatCurrency } from '../../utils/currency';
 
 export default function MLROIWidget() {
   const { t } = useTranslation();
@@ -22,7 +23,7 @@ export default function MLROIWidget() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-deep-charcoal flex items-center gap-2">
             <ThiingsIcon name="trending-up" size="sm" />
-            ML Performance
+            {t('host.mlRoi.mlPerformance', 'ML Performance')}
           </h2>
         </div>
         <div role="status" className="flex items-center justify-center py-4 gap-3">
@@ -41,8 +42,8 @@ export default function MLROIWidget() {
             <ThiingsIcon name="alert-triangle" pxSize={24} />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-deep-charcoal">No ML Data Yet</h3>
-            <p className="text-sm text-stone-gray">Start recording outcomes to see ROI</p>
+            <h3 className="text-lg font-semibold text-deep-charcoal">{t('host.mlRoi.noDataYet', 'No ML Data Yet')}</h3>
+            <p className="text-sm text-stone-gray">{t('host.mlRoi.startRecording', 'Start recording outcomes to see ROI')}</p>
           </div>
         </div>
       </div>
@@ -81,23 +82,23 @@ export default function MLROIWidget() {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <ThiingsIcon name="dollar" pxSize={24} />
-                <div className="text-sm font-semibold text-stone-gray">Return on Investment</div>
+                <div className="text-sm font-semibold text-stone-gray">{t('host.mlRoi.returnOnInvestment', 'Return on Investment')}</div>
                 <HelpTooltip
-                  title="What is ROI?"
-                  content="For every R$1 you spend on interventions (calls, emails), how much money do you save from prevented no-shows?
-
-Target: 300-500% (R$3-R$5 saved per R$1 spent)
-
-Example:
-• Spent: R$214 on confirmation calls
-• Saved: R$1,720 from prevented no-shows
-• ROI: 704% (R$7.04 saved per R$1 spent)"
+                  title={t('host.mlRoi.whatIsRoi', 'What is ROI?')}
+                  content={t('host.mlRoi.roiExplanation', 'For every {{currencyUnit}} you spend on interventions (calls, emails), how much money do you save from prevented no-shows?\n\nTarget: 300-500% ({{target3}} - {{target5}} saved per {{currencyUnit}} spent)\n\nExample:\n- Spent: {{exampleSpent}} on confirmation calls\n- Saved: {{exampleSaved}} from prevented no-shows\n- ROI: 704% ({{examplePer}} saved per {{currencyUnit}} spent)', {
+                    currencyUnit: formatCurrency(1),
+                    target3: formatCurrency(3),
+                    target5: formatCurrency(5),
+                    exampleSpent: formatCurrency(214),
+                    exampleSaved: formatCurrency(1720),
+                    examplePer: formatCurrency(7),
+                  })}
                   position="bottom"
                 />
               </div>
               {meetsTarget && (
                 <span className="px-2 py-1 bg-rose-600/20 text-rose-600 text-xs rounded-full font-semibold">
-                  Target Met!
+                  {t('host.mlRoi.targetMet', 'Target Met!')}
                 </span>
               )}
             </div>
@@ -110,7 +111,7 @@ Example:
               </div>
             </div>
             <div className="mt-2 text-xs text-stone-gray">
-              R${data.summary.total_value_saved} saved • R${data.summary.total_cost} spent
+              {formatCurrency(Number(data.summary.total_value_saved))} {t('host.mlRoi.saved', 'saved')} • {formatCurrency(Number(data.summary.total_cost))} {t('host.mlRoi.spent', 'spent')}
             </div>
           </div>
 
@@ -202,7 +203,7 @@ Each intervention has a cost and potential value saved."
             href="/analytics#ml-metrics"
             className="flex items-center justify-center gap-2 w-full mt-4 px-4 py-2 text-center text-sm bg-soft-gray hover:bg-border-gray text-stone-gray font-medium rounded-xl transition-colors group"
           >
-            View Full ML Analytics
+            {t('host.mlRoi.viewFullAnalytics', 'View Full ML Analytics')}
             <ThiingsIcon name="arrow-right" size="xs" className="group-hover:translate-x-1 transition-transform" />
           </a>
         </div>

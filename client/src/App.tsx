@@ -53,6 +53,7 @@ const TermsOfService = lazyRetry(() => import('./pages/TermsOfService'));
 const PortfolioPage = lazyRetry(() => import('./pages/PortfolioPage'));
 const RestaurantSettingsPage = lazyRetry(() => import('./pages/RestaurantSettingsPage'));
 const ManagerAIChatPage = lazyRetry(() => import('./pages/ManagerAIChatPage'));
+const CampaignsPage = lazyRetry(() => import('./pages/CampaignsPage'));
 const Prototype = lazyRetry(() => import('./pages/Prototype'));
 
 const queryClient = new QueryClient({
@@ -156,6 +157,7 @@ function App() {
               <Route path="/host-dashboard/team" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
               <Route path="/host-dashboard/settings" element={<ProtectedRoute><RestaurantSettingsPage /></ProtectedRoute>} />
               <Route path="/host-dashboard/manager-ai" element={<ProtectedRoute><ManagerAIChatPage /></ProtectedRoute>} />
+              <Route path="/host-dashboard/campaigns" element={<ProtectedRoute><CampaignsPage /></ProtectedRoute>} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
               <Route path="/portfolio" element={<PortfolioPage />} />

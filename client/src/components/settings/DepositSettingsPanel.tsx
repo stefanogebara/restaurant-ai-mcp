@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDepositConfig, useUpdateDepositConfig } from '../../hooks/useDepositConfig';
+import { getCurrencySymbol } from '../../utils/currency';
 
 export default function DepositSettingsPanel() {
   const { t } = useTranslation();
@@ -90,7 +91,7 @@ export default function DepositSettingsPanel() {
               {t('settings.depositAmount')}
             </label>
             <div className="relative w-32">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-warm-stone">R$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-warm-stone">{getCurrencySymbol()}</span>
               <input
                 type="number"
                 value={amount}

@@ -4,6 +4,7 @@ export interface WaitlistEntry {
   customer_name: string;
   customer_phone: string;
   customer_email?: string;
+  customer_whatsapp?: string;
   party_size: number;
   added_at: string;
   estimated_wait: number;
@@ -11,6 +12,7 @@ export interface WaitlistEntry {
   priority: number;
   special_requests?: string;
   notified_at?: string;
+  source?: 'walk_in' | 'whatsapp' | 'whatsapp_ai' | 'phone' | 'online';
 }
 
 export interface WaitlistResponse {

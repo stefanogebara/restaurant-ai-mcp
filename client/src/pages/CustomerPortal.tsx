@@ -198,7 +198,7 @@ export default function CustomerPortal() {
                     type="text"
                     value={reservationId}
                     onChange={(e) => { setReservationId(e.target.value); setLookupMethod('id'); }}
-                    placeholder="e.g. CEL-2026-0218-A7K3"
+                    placeholder={t('reservations.confirmationIdPlaceholder', 'e.g. CEL-0218-A7K3')}
                     className="w-full px-4 py-3 border border-border-gray rounded-[10px] text-sm bg-white text-deep-charcoal placeholder:text-stone-300 focus:outline-none focus:border-burgundy focus:ring-[3px] focus:ring-burgundy/[6%]"
                     onKeyDown={(e) => e.key === 'Enter' && lookupMutation.mutate(undefined)}
                   />

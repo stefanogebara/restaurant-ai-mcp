@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import VoiceOrb from '../../components/voice/VoiceOrb';
 import { useVoiceAgent } from '../../components/voice/useVoiceAgent';
+import { SEATABLE_WHATSAPP_NUMBER } from '../../config/constants';
 
 const SUGGESTION_KEYS = [
   { key: 'landing.voice.suggestion1', fallback: 'Book a table for 2 tonight' },
@@ -221,7 +222,7 @@ function FallbackWhatsApp({ t }: { t: (key: string, fallback?: string) => string
         </p>
       </div>
       <a
-        href={`https://wa.me/551150289356?text=${encodeURIComponent(t('landing.whatsapp.previewMessage', "Hi! I'd like to book a table for 4 tomorrow at 8pm"))}`}
+        href={`https://wa.me/${SEATABLE_WHATSAPP_NUMBER}?text=${encodeURIComponent(t('landing.whatsapp.previewMessage', "Hi! I'd like to book a table for 4 tomorrow at 8pm"))}`}
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-2 px-6 py-2.5 bg-whatsapp hover:bg-whatsapp/90 text-white text-sm font-semibold rounded-full transition-colors"

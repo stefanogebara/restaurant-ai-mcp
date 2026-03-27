@@ -170,6 +170,8 @@ function buildWhatsAppPrompt(restaurantConfig, session, currentDateTime) {
 - Check table availability
 - Make, modify, or cancel reservations
 - Look up existing reservations
+- Add customers to the walk-in queue/waitlist (fila)
+- Check queue position for customers already waiting
 `;
 
   // Boundaries
@@ -178,6 +180,13 @@ function buildWhatsAppPrompt(restaurantConfig, session, currentDateTime) {
 - Don't share internal business details (revenue, staff schedules)
 - If asked about unrelated topics, gently redirect
 - If directly asked, say you're an AI assistant for the restaurant
+`;
+
+  // Queue/waitlist behavior
+  prompt += `\nQUEUE / WAITLIST BEHAVIOR:
+- If someone says 'fila', 'queue', 'lista de espera', 'entrar na fila' — they want to JOIN THE WAITLIST, not make a reservation. Use the join_waitlist tool.
+- If someone says 'minha posição', 'posicao', 'quanto falta', 'my position' — they want to CHECK THEIR QUEUE POSITION. Use the check_queue_position tool.
+- The queue is for walk-in customers wanting a table NOW, not for future date reservations.
 `;
 
   // Graceful failure handling

@@ -86,3 +86,12 @@ export function formatPrice(amount: number, currency: SupportedCurrency): string
   }
   return `$${amount}`;
 }
+
+/**
+ * Get the currency symbol for input field prefixes.
+ * Returns 'R$' for BRL, '$' for USD.
+ */
+export function getCurrencySymbol(currency?: SupportedCurrency): string {
+  const cur = currency ?? getDefaultCurrency();
+  return cur === 'BRL' ? 'R$' : '$';
+}

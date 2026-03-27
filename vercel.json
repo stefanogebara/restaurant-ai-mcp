@@ -206,6 +206,10 @@
     {
       "path": "/api/cron/analytics-briefing",
       "schedule": "5 9 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-waitlist",
+      "schedule": "0 4 * * *"
     }
   ]
 }

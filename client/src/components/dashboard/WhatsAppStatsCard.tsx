@@ -1,6 +1,8 @@
+import { useTranslation } from 'react-i18next';
 import { useWhatsAppStatus, useWhatsAppStats } from '../../hooks/useWhatsAppSettings';
 
 export default function WhatsAppStatsCard() {
+  const { t } = useTranslation();
   const { data: status, isLoading: statusLoading } = useWhatsAppStatus();
   const { data: stats, isLoading: statsLoading } = useWhatsAppStats();
 
@@ -20,7 +22,7 @@ export default function WhatsAppStatsCard() {
         </div>
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-rose-50 text-rose-700">
           <span className="w-1 h-1 rounded-full bg-rose-500" />
-          Active
+          {t('whatsappStats.active', 'Active')}
         </span>
       </div>
 
@@ -33,11 +35,11 @@ export default function WhatsAppStatsCard() {
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-soft-gray rounded-xl px-3 py-2.5 text-center">
             <p className="text-lg font-bold text-deep-charcoal">{stats?.active_sessions ?? 0}</p>
-            <p className="text-[10px] text-warm-stone">Active Chats</p>
+            <p className="text-[10px] text-warm-stone">{t('whatsappStats.activeChats', 'Active Chats')}</p>
           </div>
           <div className="bg-soft-gray rounded-xl px-3 py-2.5 text-center">
             <p className="text-lg font-bold text-deep-charcoal">{stats?.messages_this_month ?? 0}</p>
-            <p className="text-[10px] text-warm-stone">Messages/Mo</p>
+            <p className="text-[10px] text-warm-stone">{t('whatsappStats.messagesPerMonth', 'Messages/Mo')}</p>
           </div>
         </div>
       )}

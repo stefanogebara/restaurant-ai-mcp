@@ -12,6 +12,7 @@ const {
 } = require('../../_lib/whatsapp-sessions');
 const { sendTemplateMessage } = require('./message-sender');
 const { sendReservationConfirmationEmail } = require('../../_lib/email');
+const { addCustomerToQueue, checkQueuePosition } = require('./waitlist-handler');
 
 /**
  * Get current date/time in restaurant timezone
@@ -210,6 +211,39 @@ const RESERVATION_TOOLS = [
           }
         },
         required: ['reservation_id']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'join_waitlist',
+      description: 'Add a customer to the restaurant\'s walk-in queue/waitlist. Use this when someone wants to join the fila/queue/lista de espera. This is NOT for reservations — it\'s for customers who want to wait for a table right now.',
+      parameters: {
+        type: 'object',
+        properties: {
+          customer_name: {
+            type: 'string',
+            description: 'The customer\'s name'
+          },
+          party_size: {
+            type: 'integer',
+            description: 'Number of guests in the party'
+          }
+        },
+        required: ['customer_name', 'party_size']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'check_queue_position',
+      description: 'Check a customer\'s current position in the queue/waitlist. Use when someone asks about their position, wait time, or says \'posição\', \'posicao\', \'quanto falta\'.',
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: []
       }
     }
   }
@@ -681,6 +715,65 @@ async function executeTool(toolName, toolInput, session) {
       } catch (err) {
         logger.error(' Modify error:', err);
         return { success: false, error: 'Error modifying reservation' };
+      }
+    }
+
+    case 'join_waitlist': {
+      if (!session?.restaurant) {
+        return {
+          success: false,
+          error: 'No restaurant selected. Please identify the restaurant first.'
+        };
+      }
+
+      const { customer_name, party_size } = toolInput;
+      const customerPhone = session?.sender_phone;
+
+      if (!customerPhone) {
+        return { success: false, error: 'Could not determine customer phone number.' };
+      }
+
+      if (!customer_name || !party_size) {
+        return { success: false, error: 'Customer name and party size are required.' };
+      }
+
+      try {
+        const result = await addCustomerToQueue(
+          session.restaurant.id,
+          customer_name,
+          party_size,
+          customerPhone
+        );
+        return result;
+      } catch (err) {
+        logger.error(' Join waitlist error:', err);
+        return { success: false, error: 'Error adding to waitlist' };
+      }
+    }
+
+    case 'check_queue_position': {
+      if (!session?.restaurant) {
+        return {
+          success: false,
+          error: 'No restaurant selected. Please identify the restaurant first.'
+        };
+      }
+
+      const customerPhone = session?.sender_phone;
+
+      if (!customerPhone) {
+        return { success: false, error: 'Could not determine customer phone number.' };
+      }
+
+      try {
+        const result = await checkQueuePosition(
+          session.restaurant.id,
+          customerPhone
+        );
+        return result;
+      } catch (err) {
+        logger.error(' Check queue position error:', err);
+        return { success: false, error: 'Error checking queue position' };
       }
     }
 

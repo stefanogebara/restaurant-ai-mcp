@@ -10,6 +10,7 @@ import { useMutation } from '@tanstack/react-query';
 import { authFetch } from '../../services/api';
 import ThiingsIcon from '../common/ThiingsIcon';
 import Spinner from '../common/Spinner';
+import { getCurrencySymbol } from '../../utils/currency';
 import { getManualRevenueTranslations } from './manualRevenueTranslations';
 import { useCustomerSearch } from '../../hooks/useCustomerSearch';
 import type { Customer } from '../../hooks/useCustomerSearch';
@@ -239,7 +240,7 @@ export default function ManualRevenueModal({
                 {t.totalRevenue} *
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-gray">R$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-gray">{getCurrencySymbol()}</span>
                 <input
                   type="number"
                   step="0.01"
@@ -257,7 +258,7 @@ export default function ManualRevenueModal({
                 {t.tipAmount}
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-gray">R$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-gray">{getCurrencySymbol()}</span>
                 <input
                   type="number"
                   step="0.01"

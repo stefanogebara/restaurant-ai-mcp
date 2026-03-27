@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api as apiClient } from '../services/api';
 
-interface Campaign {
+export interface Campaign {
   id: string;
   campaign_type: string;
   message: string;
@@ -11,11 +11,14 @@ interface Campaign {
   sent_count: number;
   delivered_count: number;
   read_count: number;
+  failed_count: number;
   created_at: string;
-  customer_id: string; // segment for whatsapp campaigns
+  segment_name: string;
+  whatsapp_template_name: string | null;
+  recipient_count: number;
 }
 
-interface CampaignDeliveryStats {
+export interface CampaignDeliveryStats {
   total: number;
   pending: number;
   sent: number;
@@ -25,7 +28,7 @@ interface CampaignDeliveryStats {
   opted_out: number;
 }
 
-interface SegmentCounts {
+export interface SegmentCounts {
   all: number;
   vip: number;
   at_risk: number;
@@ -72,10 +75,12 @@ export function useCreateWhatsAppCampaign() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: {
+      name: string;
       segment: string;
       message: string;
+      template_name?: string;
       campaign_type?: string;
-      scheduled_at?: string;
+      scheduled_at?: string | null;
     }) => {
       const res = await apiClient.post('/retention-campaigns?action=create_whatsapp', data);
       return res.data;

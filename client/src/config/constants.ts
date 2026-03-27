@@ -57,3 +57,11 @@ export const DEFAULT_DINING_DURATION = 90;
  * Threshold in minutes before a reservation is considered "late"
  */
 export const LATE_THRESHOLD_MINUTES = 20;
+
+// ============ CONTACT ============
+
+/**
+ * Seatable WhatsApp number (digits only, no '+')
+ * Used in wa.me links across landing pages
+ */
+export const SEATABLE_WHATSAPP_NUMBER = '551150289356';

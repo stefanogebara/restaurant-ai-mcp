@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import CustomerTierBadge from './CustomerTierBadge';
+import { formatCurrency } from '../../utils/currency';
 import type { UpcomingReservation } from '../../types/host.types';
 
 interface CustomerProfileDrawerProps {
@@ -145,8 +146,8 @@ export default function CustomerProfileDrawer({ reservation, onClose }: Customer
               {/* Stats Grid */}
               <div className="grid grid-cols-2 gap-3">
                 <StatBox label={t('customer.totalVisits', 'Visitas')} value={String(visits)} />
-                <StatBox label={t('customer.avgSpend', 'Ticket Medio')} value={avgSpend ? `R$ ${Math.round(avgSpend)}` : '—'} />
-                <StatBox label={t('customer.totalRevenue', 'Receita Total')} value={totalRevenue ? `R$ ${Math.round(totalRevenue)}` : '—'} />
+                <StatBox label={t('customer.avgSpend', 'Ticket Medio')} value={avgSpend ? formatCurrency(Math.round(avgSpend)) : '—'} />
+                <StatBox label={t('customer.totalRevenue', 'Receita Total')} value={totalRevenue ? formatCurrency(Math.round(totalRevenue)) : '—'} />
                 <StatBox label={t('customer.churnRisk', 'Risco de Churn')} value={churnRisk != null ? `${churnRisk}%` : '—'} valueColor={churnRisk != null && churnRisk > 50 ? 'text-red-600' : undefined} />
               </div>
 

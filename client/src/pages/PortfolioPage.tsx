@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { PLAN_PRICES_BRL } from '../config/planFeatures';
 
 // Inject Plus Jakarta Sans font
 const FONT_STYLE = `
@@ -433,7 +434,7 @@ function PricingSection() {
   const plans = [
     {
       name: 'Starter',
-      price: '29',
+      price: String(PLAN_PRICES_BRL.starter),
       featured: false,
       features: [
         'Reservas IA (Chat + WhatsApp)',
@@ -447,7 +448,7 @@ function PricingSection() {
     },
     {
       name: 'Growth',
-      price: '99',
+      price: String(PLAN_PRICES_BRL.growth),
       featured: true,
       badge: 'Mais popular',
       trial: '14 dias grátis',
@@ -465,7 +466,7 @@ function PricingSection() {
     },
     {
       name: 'Scale',
-      price: '199',
+      price: String(PLAN_PRICES_BRL.scale),
       featured: false,
       features: [
         'Tudo do Growth +',
@@ -633,7 +634,7 @@ function Footer() {
             <IconSquare />
             <span className="text-amber-400 font-bold text-lg">Seatable</span>
           </div>
-          <p className="text-stone-500 text-sm">© 2026 Seatable. Todos os direitos reservados.</p>
+          <p className="text-stone-500 text-sm">{`© ${new Date().getFullYear()} Seatable. Todos os direitos reservados.`}</p>
         </div>
 
         <div className="flex flex-wrap justify-center gap-6 text-sm text-stone-400">

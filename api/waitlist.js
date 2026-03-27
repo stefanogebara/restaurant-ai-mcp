@@ -12,6 +12,7 @@ const { setInternalCors, handlePreflight } = require('./_lib/cors');
 const { checkAndApplyRateLimit } = require('./_lib/rate-limit');
 const { validateWaitlistEntry, sanitizeInput } = require('./_lib/validation');
 const { trackUsage } = require('./_lib/usage-tracking');
+const { sendWhatsAppMessage, isWhatsAppConfigured } = require('./_lib/whatsapp-sender');
 const { initSentry, captureException } = require('./_lib/sentry');
 initSentry();
 
@@ -133,6 +134,7 @@ async function handleUpdateWaitlist(req, res, entryId, restaurantId) {
   if (status) updates.status = status;
   if (estimated_wait !== undefined) updates.estimated_wait_minutes = estimated_wait;
   if (notes !== undefined) updates.notes = notes;
+  if (status === 'notified') updates.notified_at = new Date().toISOString();
 
   const result = await updateWaitlistEntry(entryId, restaurantId, updates);
 
@@ -145,6 +147,13 @@ async function handleUpdateWaitlist(req, res, entryId, restaurantId) {
   // Send notifications if status changed to 'notified'
   if (status === 'notified' && result.entry) {
     const entry = result.entry;
+    // WhatsApp notification (preferred for WhatsApp-sourced entries)
+    if (entry.customer_whatsapp && isWhatsAppConfigured()) {
+      const waMessage = 'Sua mesa está pronta! Por favor, dirija-se à recepção. / Your table is ready! Please come to the host stand.';
+      sendWhatsAppMessage(entry.customer_whatsapp, waMessage)
+        .catch(err => logger.error('WhatsApp table-ready notification failed:', err));
+    }
+    // SMS fallback
     if (entry.customer_phone) {
       sendSMSNotification(entry.customer_name, entry.customer_phone, entry.party_size)
         .catch(err => logger.error('SMS notification failed:', err));

@@ -12,6 +12,7 @@ import { authFetch } from '../../services/api';
 import ThiingsIcon from '../common/ThiingsIcon';
 import type { UpcomingReservation } from '../../types/host.types';
 import { DEFAULT_AVG_REVENUE_PER_PERSON } from '../../config/businessDefaults';
+import { formatCurrency } from '../../utils/currency';
 import RiskScoreBadge from './RiskScoreBadge';
 import RiskExplanationModal from './RiskExplanationModal';
 
@@ -124,9 +125,9 @@ export default function InterventionPanel({
             <div>
               <h3 className="text-lg font-semibold text-deep-charcoal">{t('host.interventionNeeded', 'Intervention Needed')}</h3>
               <p className="text-sm text-stone-gray">
-                {highRiskReservations.length} high-risk reservation{highRiskReservations.length !== 1 ? 's' : ''} •
+                {t('host.highRiskCount', '{{count}} high-risk reservation(s)', { count: highRiskReservations.length })} •
                 <span className="ml-1 font-medium text-amber-600">
-                  R${sortedReservations.reduce((sum, r) => sum + calculatePotentialValue(r.party_size), 0)} at risk
+                  {formatCurrency(sortedReservations.reduce((sum, r) => sum + calculatePotentialValue(r.party_size), 0))} {t('host.atRisk', 'at risk')}
                 </span>
               </p>
             </div>
@@ -198,7 +199,7 @@ export default function InterventionPanel({
                       </div>
 
                       <div className="text-xs text-amber-600 font-medium">
-                        R${potentialValue} potential revenue at risk
+                        {formatCurrency(potentialValue)} potential revenue at risk
                       </div>
 
                       {reservation.special_requests && (

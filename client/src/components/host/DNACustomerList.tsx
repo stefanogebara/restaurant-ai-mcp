@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import ThiingsIcon from '../common/ThiingsIcon';
+import { formatCurrency } from '../../utils/currency';
 import { getDiningStyleColor, type CustomerListItem } from './dnaHelpers';
 
 interface DNACustomerListProps {
@@ -96,7 +97,7 @@ export default function DNACustomerList({
                       {customer.dining_style}
                     </span>
                     <span className="text-xs text-stone-gray">
-                      {customer.avg_check_per_person != null ? `R$${customer.avg_check_per_person.toFixed(0)}` : '--'}
+                      {customer.avg_check_per_person != null ? formatCurrency(Math.round(customer.avg_check_per_person)) : '--'}
                     </span>
                     <span className="text-xs text-stone-gray">{customer.profile_confidence}%</span>
                   </div>
@@ -123,7 +124,7 @@ export default function DNACustomerList({
                   {Math.round(customer.typical_party_size)}
                 </div>
                 <div className="col-span-2 text-right text-sm text-deep-charcoal">
-                  {customer.avg_check_per_person != null ? `R$${customer.avg_check_per_person.toFixed(0)}` : '--'}
+                  {customer.avg_check_per_person != null ? formatCurrency(Math.round(customer.avg_check_per_person)) : '--'}
                 </div>
                 <div className="col-span-2 flex items-center justify-center gap-1">
                   <div className="w-16 bg-border-gray h-1.5 rounded-full overflow-hidden">

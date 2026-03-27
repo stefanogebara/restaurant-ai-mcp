@@ -20,6 +20,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
   const [showAddModal, setShowAddModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'active' | 'seated' | 'removed'>('active');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sourceFilter, setSourceFilter] = useState<'all' | 'walk_in' | 'whatsapp'>('all');
   const [confirmRemove, setConfirmRemove] = useState<{ id: string; name: string } | null>(null);
 
   useRealtimeSubscription('waitlist', restaurantId);
@@ -69,6 +70,11 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
       case 'seated': filtered = filtered.filter(e => e.status === 'Seated'); break;
       case 'removed': filtered = filtered.filter(e => ['Cancelled', 'No Show'].includes(e.status)); break;
     }
+    if (sourceFilter === 'whatsapp') {
+      filtered = filtered.filter(e => e.source === 'whatsapp' || e.source === 'whatsapp_ai');
+    } else if (sourceFilter === 'walk_in') {
+      filtered = filtered.filter(e => !e.source || e.source === 'walk_in');
+    }
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(e =>
@@ -77,7 +83,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
       );
     }
     return filtered;
-  }, [waitlist, activeTab, searchQuery]);
+  }, [waitlist, activeTab, sourceFilter, searchQuery]);
 
   const tableReadyEntries = filteredWaitlist.filter(e => e.status === 'Notified');
   const waitingEntries = filteredWaitlist.filter(e => e.status === 'Waiting');
@@ -155,6 +161,27 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
                 }`}>
                   {tab.count}
                 </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex gap-1" role="group" aria-label="Source filter">
+            {([
+              { key: 'all', label: t('common.all', 'All') },
+              { key: 'walk_in', label: t('waitlist.walkIn', 'Walk-in') },
+              { key: 'whatsapp', label: 'WhatsApp' },
+            ] as const).map(pill => (
+              <button
+                key={pill.key}
+                type="button"
+                onClick={() => setSourceFilter(pill.key)}
+                className={`px-2 py-1 text-xs font-medium rounded-full border transition-all ${
+                  sourceFilter === pill.key
+                    ? 'border-[#9F1239] bg-[#9F1239]/[8%] text-[#9F1239]'
+                    : 'border-[#E5E7EB] text-stone-gray hover:border-[#9F1239]/40 hover:text-deep-charcoal'
+                }`}
+              >
+                {pill.label}
               </button>
             ))}
           </div>
