@@ -52,7 +52,7 @@ export default function CampaignManager() {
     }
     setFormError('');
     createCampaign.mutate(
-      { segment: formSegment, message: formMessage },
+      { name: formSegment, segment: formSegment, message: formMessage },
       {
         onSuccess: () => {
           setShowCreate(false);
@@ -179,7 +179,7 @@ function CampaignRow({
   onSend,
   isSending,
 }: {
-  campaign: { id: string; customer_id: string; message: string; status: string; created_at: string; sent_count: number };
+  campaign: { id: string; customer_id?: string; message: string; status: string; created_at: string; sent_count?: number };
   isSelected: boolean;
   onSelect: () => void;
   onSend: () => void;
@@ -211,7 +211,7 @@ function CampaignRow({
           <span className="text-xs text-muted-stone">
             {new Date(campaign.created_at).toLocaleDateString()}
           </span>
-          {campaign.sent_count > 0 && (
+          {(campaign.sent_count ?? 0) > 0 && (
             <p className="text-[10px] text-muted-stone">{campaign.sent_count} sent</p>
           )}
         </div>

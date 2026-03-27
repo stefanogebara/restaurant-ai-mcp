@@ -308,7 +308,7 @@ export const PLAN_PRICES = PLAN_PRICES_BRL;
 /**
  * Get plan prices for the given currency.
  */
-export function getPlanPrices(currency: 'BRL' | 'USD'): typeof PLAN_PRICES_BRL {
+export function getPlanPrices(currency: 'BRL' | 'USD'): { free: number; starter: number; growth: number; professional: number; scale: number } {
   return currency === 'BRL' ? PLAN_PRICES_BRL : PLAN_PRICES_USD;
 }
 
