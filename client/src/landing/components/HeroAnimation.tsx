@@ -7,6 +7,7 @@ import {
   spring,
   Sequence,
 } from 'remotion';
+import i18n from '../../i18n/config';
 
 // ─── Constants ───────────────────────────────────────────────────
 const FPS = 30;
@@ -41,11 +42,12 @@ function Scene1() {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
+  const t = (key: string, fallback: string) => i18n.t(key, fallback);
   const messages = [
-    { text: 'Oi, quero reservar uma mesa pra 4 amanha as 20h', fromUser: true, delay: 8 },
-    { text: 'Encontrei disponibilidade! Qual o seu nome?', fromUser: false, delay: 28 },
-    { text: 'Maria Silva', fromUser: true, delay: 48 },
-    { text: 'Reserva confirmada no Brasa & Alma!', fromUser: false, delay: 62, confirmed: true },
+    { text: t('landing.heroAnimation.wa1', 'Hi, I\'d like to book a table for 4 tomorrow at 8pm'), fromUser: true, delay: 8 },
+    { text: t('landing.heroAnimation.wa2', 'I found availability! What\'s your name?'), fromUser: false, delay: 28 },
+    { text: t('landing.heroAnimation.wa3', 'Maria Silva'), fromUser: true, delay: 48 },
+    { text: t('landing.heroAnimation.wa4', 'Reservation confirmed at Brasa & Alma!'), fromUser: false, delay: 62, confirmed: true },
   ];
 
   return (
@@ -109,7 +111,7 @@ function Scene1() {
             S
           </div>
           <div>
-            <div style={{ color: TEXT_PRIMARY, fontSize: 12, fontWeight: 600 }}>Brasa & Alma</div>
+            <div style={{ color: TEXT_PRIMARY, fontSize: 12, fontWeight: 600 }}>{i18n.t('landing.heroAnimation.restaurantName', 'Brasa & Alma')}</div>
             <div style={{ color: TEXT_SECONDARY, fontSize: 9 }}>Seatable AI</div>
           </div>
         </div>
@@ -227,7 +229,7 @@ function Scene2() {
             <div>
               <div style={{ color: TEXT_PRIMARY, fontSize: 16, fontWeight: 600 }}>Maria Silva</div>
               <div style={{ color: TEXT_SECONDARY, fontSize: 12, marginTop: 2 }}>
-                4 pessoas &middot; 20:00 &middot; Amanha
+                {i18n.t('landing.heroAnimation.guestDetail', '4 guests · 8:00 PM · Tomorrow')}
               </div>
             </div>
             <div
@@ -240,15 +242,15 @@ function Scene2() {
                 borderRadius: 8,
               }}
             >
-              Confirmada
+              {i18n.t('landing.heroAnimation.confirmed', 'Confirmed')}
             </div>
           </div>
         </div>
 
         {/* Stats row */}
         <div style={{ display: 'flex', gap: 12, opacity: statsProgress, transform: `translateY(${(1 - statsProgress) * 20}px)` }}>
-          <StatCard label="Reservas hoje" value={reservasHoje} color={BURGUNDY} />
-          <StatCard label="Clientes esperados" value={clientesEsperados} color={BURGUNDY_LIGHT} />
+          <StatCard label={i18n.t('landing.heroAnimation.reservationsToday', 'Reservations today')} value={reservasHoje} color={BURGUNDY} />
+          <StatCard label={i18n.t('landing.heroAnimation.expectedGuests', 'Expected guests')} value={clientesEsperados} color={BURGUNDY_LIGHT} />
         </div>
 
         {/* Voice waveform */}
@@ -278,8 +280,8 @@ function Scene2() {
             <WaveformIcon frame={frame} />
           </div>
           <div>
-            <div style={{ color: TEXT_PRIMARY, fontSize: 12, fontWeight: 600 }}>AI Ativa</div>
-            <div style={{ color: TEXT_MUTED, fontSize: 10 }}>Pronta para atender</div>
+            <div style={{ color: TEXT_PRIMARY, fontSize: 12, fontWeight: 600 }}>{i18n.t('landing.heroAnimation.aiActive', 'AI Active')}</div>
+            <div style={{ color: TEXT_MUTED, fontSize: 10 }}>{i18n.t('landing.heroAnimation.readyToServe', 'Ready to serve')}</div>
           </div>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 2, alignItems: 'flex-end', height: 20 }}>
             <WaveformBars frame={frame} />
@@ -427,7 +429,7 @@ function Scene3() {
 
           {/* Transcription text */}
           <div style={{ color: TEXT_SECONDARY, fontSize: 13, lineHeight: 1.6, fontStyle: 'italic' }}>
-            &quot;Oi Maria! Confirmada sua reserva para amanha as 20h, mesa para 4 no Brasa & Alma. Ate la!&quot;
+            &quot;{i18n.t('landing.heroAnimation.voiceTranscript', 'Hi Maria! Your reservation for tomorrow at 8pm is confirmed, table for 4 at Brasa & Alma. See you there!')}&quot;
           </div>
 
           {/* Status */}
@@ -441,7 +443,7 @@ function Scene3() {
               }}
             />
             <span style={{ color: '#4ade80', fontSize: 11, fontWeight: 600 }}>
-              Enviada via WhatsApp
+              {i18n.t('landing.heroAnimation.sentViaWhatsApp', 'Sent via WhatsApp')}
             </span>
           </div>
         </div>
@@ -538,7 +540,7 @@ function Scene4() {
           letterSpacing: 1,
         }}
       >
-        AI que atende seu restaurante
+        {i18n.t('landing.heroAnimation.tagline', 'AI that serves your restaurant')}
       </div>
     </AbsoluteFill>
   );

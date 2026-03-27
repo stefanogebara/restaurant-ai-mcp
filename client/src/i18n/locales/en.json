@@ -1248,7 +1248,7 @@
     "ownerOnly": "Only the restaurant owner can manage the subscription.",
     "needHelp": "Need help?",
     "contactSupport": "Contact our support team",
-    "starterName": "Essencial",
+    "starterName": "Starter",
     "starterPrice": "$97",
     "starterDesc": "WhatsApp AI + reservations for your restaurant.",
     "starterF1": "WhatsApp AI agent 24/7",
@@ -1256,10 +1256,10 @@
     "starterF3": "Host dashboard",
     "starterF4": "Customer CRM",
     "starterF5": "Up to 100 reservations/mo",
-    "growthName": "Profissional",
+    "growthName": "Growth",
     "growthPrice": "$297",
     "growthDesc": "Voice AI + WhatsApp + full analytics.",
-    "growthF1": "Everything in Essencial",
+    "growthF1": "Everything in Starter",
     "growthF2": "Voice AI agent (phone calls)",
     "growthF3": "Manager AI briefings",
     "growthF4": "Up to 300 reservations/mo",
@@ -1267,7 +1267,7 @@
     "scaleName": "Enterprise",
     "scalePrice": "$597",
     "scaleDesc": "Unlimited AI for high-volume restaurants.",
-    "scaleF1": "Everything in Profissional",
+    "scaleF1": "Everything in Growth",
     "scaleF2": "Unlimited reservations",
     "scaleF3": "Staffing intelligence",
     "scaleF4": "Priority support",
@@ -1538,6 +1538,22 @@
       "msg4": "Perfect! Table for 4, tomorrow at 8pm. Confirmed ✓ See you soon, Maria!",
       "inputPlaceholder": "Type a message..."
     },
+    "heroAnimation": {
+      "wa1": "Hi, I'd like to book a table for 4 tomorrow at 8pm",
+      "wa2": "I found availability! What's your name?",
+      "wa3": "Maria Silva",
+      "wa4": "Reservation confirmed at Brasa & Alma!",
+      "restaurantName": "Brasa & Alma",
+      "guestDetail": "4 guests · 8:00 PM · Tomorrow",
+      "confirmed": "Confirmed",
+      "reservationsToday": "Reservations today",
+      "expectedGuests": "Expected guests",
+      "aiActive": "AI Active",
+      "readyToServe": "Ready to serve",
+      "voiceTranscript": "Hi Maria! Your reservation for tomorrow at 8pm is confirmed, table for 4 at Brasa & Alma. See you there!",
+      "sentViaWhatsApp": "Sent via WhatsApp",
+      "tagline": "AI that serves your restaurant"
+    },
     "slideIn": {
       "title": "This is sample data",
       "subtitle": "Want to see YOUR restaurant here? Setup takes 30 seconds.",
@@ -1576,6 +1592,7 @@
       "subtitle": "Send a message on WhatsApp and get an instant response from our AI. No app to download, no signup needed.",
       "cta": "Send a test message",
       "previewMessage": "Hi! I'd like to book a table for 4 tomorrow at 8pm",
+      "inputPlaceholder": "Type a message",
       "trust": "Real number: +55 11 5028-9356 · São Paulo, Brazil"
     },
     "features": {
@@ -1709,6 +1726,9 @@
       "missed2": "Missed call — 19:45",
       "missed3": "Missed call — 20:01",
       "paperNotepad": "Paper notepad",
+      "note1": "Table 5 — Giovanni? 4ppl??",
+      "note2": "Table 3 — cancelled",
+      "note3": "8pm — someone called (name??)",
       "aiHandling": "AI handling all channels",
       "confirmed": "confirmed",
       "predictedRevenue": "Predicted Revenue"
@@ -1743,6 +1763,7 @@
       "sat": "Sat",
       "sun": "Sun",
       "dashboard": "Dashboard",
+      "aiActive": "AI Active",
       "visits": "visits",
       "risk": "risk",
       "arrived": "arrived",
@@ -1804,6 +1825,14 @@
       "terms": "Terms of Service",
       "faq": "Frequently Asked Questions"
     },
+    "share": {
+      "heading": "Know another restaurant owner?",
+      "subtitle": "Share Seatable with them — they'll thank you.",
+      "message": "Check out Seatable — AI that answers calls, WhatsApp, and manages reservations for restaurants. Try the demo: {{url}}",
+      "whatsapp": "Share via WhatsApp",
+      "copyLink": "Copy link",
+      "copied": "Link copied!"
+    },
     "pricing": {
       "label": "Pricing",
       "heading": "Simple, transparent pricing.",
@@ -1813,7 +1842,9 @@
       "checkoutError": "Failed to start checkout. Please try again.",
       "customSolution": "Need a custom solution?",
       "enterpriseLink": "Contact us for enterprise pricing",
+      "perMonth": "mo",
       "starter": {
+        "name": "Starter",
         "desc": "Perfect for small restaurants",
         "cta": "Get Started",
         "f1": "AI reservations (Chat + WhatsApp)",
@@ -1823,6 +1854,7 @@
         "f5": "Up to 50 reservations/month"
       },
       "growth": {
+        "name": "Growth",
         "desc": "For growing restaurants",
         "cta": "Start Free Trial",
         "f1": "Everything in Starter",
@@ -1833,13 +1865,15 @@
         "f6": "SMS notifications"
       },
       "scale": {
+        "name": "Enterprise",
         "desc": "For high-volume restaurants",
         "cta": "Start Free Trial",
         "f1": "Everything in Growth",
         "f2": "Unlimited reservations",
         "f3": "Unlimited SMS",
         "f4": "Priority support",
-        "f5": "Custom integrations"
+        "f5": "Custom integrations",
+        "f6": "Dedicated account manager"
       }
     },
     "liveDemo": {

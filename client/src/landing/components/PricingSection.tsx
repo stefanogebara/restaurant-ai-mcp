@@ -102,20 +102,20 @@ export default function PricingSection() {
               <div key={index} className={`relative px-8 sm:px-9 py-12 ${isFeatured ? 'bg-deep-charcoal' : 'bg-warm-white'}`}>
                 {/* Plan label */}
                 <div className={`text-xs font-semibold tracking-[1.5px] uppercase mb-2 ${isFeatured ? 'text-burgundy' : 'text-warm-stone'}`}>
-                  {t(`subscription.${tierKey}Name`, tier.name)}
+                  {t(`landing.pricing.${tierKey}.name`, tier.name)}
                 </div>
 
                 {/* Price */}
                 <div className={`font-serif text-4xl sm:text-[48px] font-medium tracking-tight leading-none mb-1 ${isFeatured ? 'text-white' : 'text-deep-charcoal'}`}>
                   {isBRL ? (tier.brlPrice ?? tier.price) : tier.price}
                   <span className="text-lg font-normal text-muted-stone">
-                    {isBRL ? (tier.brlPeriod ?? tier.period) : tier.period}
+                    /{t(`landing.pricing.perMonth`)}
                   </span>
                 </div>
 
                 {/* Description */}
                 <p className={`text-sm font-light mb-8 ${isFeatured ? 'text-muted-stone' : 'text-warm-stone'}`}>
-                  {t(`subscription.${tierKey}Desc`, tier.description)}
+                  {t(`landing.pricing.${tierKey}.desc`, tier.description)}
                 </p>
 
                 {/* Features */}
@@ -128,7 +128,7 @@ export default function PricingSection() {
                       }`}
                     >
                       <span className="w-[5px] h-[5px] rounded-full bg-burgundy flex-shrink-0" />
-                      {t(`subscription.${tierKey}F${i + 1}`, tier.features[i] || '')}
+                      {t(`landing.pricing.${tierKey}.f${i + 1}`, tier.features[i] || '')}
                     </li>
                   ))}
                 </ul>
@@ -158,7 +158,7 @@ export default function PricingSection() {
                       {t('common.loading')}
                     </>
                   ) : (
-                    t(`subscription.${tierKey}Cta`, tier.cta)
+                    t(`landing.pricing.${tierKey}.cta`, tier.cta)
                   )}
                 </button>
               </div>

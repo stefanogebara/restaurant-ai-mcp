@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { detectCurrency } from '../../utils/currency';
 
 /**
  * Animated Dashboard Walkthrough — a dynamic "silent movie" showing 4 moments
@@ -209,6 +210,7 @@ function Sparkline() {
 // ─── Scene 0: Revenue Intelligence ─────────────────────────────
 function SceneRevenue({ progress }: { progress: number }) {
   const { t } = useTranslation();
+  const isBRL = detectCurrency() === 'BRL';
   const showScan = progress > 0.06;
   const showPrediction1 = progress > 0.18;
   const showPrediction2 = progress > 0.35;
@@ -224,7 +226,7 @@ function SceneRevenue({ progress }: { progress: number }) {
         {[
           { label: t('landing.walkthrough.reservations', 'Reservations'), value: '11', sub: t('landing.walkthrough.today', 'today') },
           { label: t('landing.walkthrough.covers', 'Covers'), value: '38', sub: t('landing.walkthrough.expected', 'expected') },
-          { label: t('landing.walkthrough.avgSpend', 'Avg Spend'), value: 'R$42', sub: '/couvert' },
+          { label: t('landing.walkthrough.avgSpend', 'Avg Spend'), value: isBRL ? 'R$42' : '$42', sub: isBRL ? '/couvert' : '/cover' },
         ].map((s, i) => (
           <motion.div
             key={s.label}
@@ -250,7 +252,7 @@ function SceneRevenue({ progress }: { progress: number }) {
           className="origin-center"
         >
           <div className="text-[11px] font-semibold text-white/25 uppercase tracking-wider mb-2">
-            {t('landing.walkthrough.todaysReservations', 'Reservas de Hoje')}
+            {t('landing.walkthrough.todaysReservations', "Today's Reservations")}
           </div>
 
           {/* Scanning line */}
@@ -294,7 +296,7 @@ function SceneRevenue({ progress }: { progress: number }) {
                   <div className="text-[13px] font-medium text-white/80">{r.name}</div>
                   <div className="text-[10px] text-white/25">{r.time} - {r.size}p</div>
                 </div>
-                <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">confirmado</span>
+                <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">{t('landing.walkthrough.confirmed', 'confirmed')}</span>
               </motion.div>
             ))}
 
@@ -323,9 +325,9 @@ function SceneRevenue({ progress }: { progress: number }) {
                     )}
                   </AnimatePresence>
                 </div>
-                <div className="text-[10px] text-white/25">20:00 - 4p - 3 {t('landing.walkthrough.visits', 'visitas')}</div>
+                <div className="text-[10px] text-white/25">20:00 - 4p - 3 {t('landing.walkthrough.visits', 'visits')}</div>
               </div>
-              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400">confirmado</span>
+              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400">{t('landing.walkthrough.confirmed', 'confirmed')}</span>
             </motion.div>
 
             {/* Alessandro — second prediction */}
@@ -355,7 +357,7 @@ function SceneRevenue({ progress }: { progress: number }) {
                 </div>
                 <div className="text-[10px] text-white/25">19:30 - 6p - VIP</div>
               </div>
-              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400">confirmado</span>
+              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400">{t('landing.walkthrough.confirmed', 'confirmed')}</span>
             </motion.div>
           </div>
         </motion.div>
@@ -421,7 +423,7 @@ function SceneNoShow({ progress }: { progress: number }) {
   return (
     <div>
       <div className="text-[11px] font-semibold text-white/25 uppercase tracking-wider mb-3">
-        Reservas de Hoje
+        {t('landing.walkthrough.todaysReservations', "Today's Reservations")}
       </div>
       <div className="space-y-1">
         <motion.div
@@ -433,7 +435,7 @@ function SceneNoShow({ progress }: { progress: number }) {
             <div className="text-[13px] font-medium text-white/80">Giovanni B.</div>
             <div className="text-[10px] text-white/25">12:00 - 4p</div>
           </div>
-          <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">confirmado</span>
+          <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">{t('landing.walkthrough.confirmed', 'confirmed')}</span>
         </motion.div>
 
         {/* Risk row — zooms in with pulsing red glow */}
@@ -458,7 +460,7 @@ function SceneNoShow({ progress }: { progress: number }) {
                     transition={{ type: 'spring', stiffness: 300, damping: 18 }}
                     className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${glassRed} text-red-400`}
                   >
-                    78% {t('landing.walkthrough.risk', 'risco')}
+                    78% {t('landing.walkthrough.risk', 'risk')}
                   </motion.span>
                 )}
               </AnimatePresence>
@@ -470,7 +472,7 @@ function SceneNoShow({ progress }: { progress: number }) {
                     transition={{ type: 'spring', stiffness: 300, damping: 18 }}
                     className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${glassGreen} text-rose-400`}
                   >
-                    {t('landing.walkthrough.arrived', 'chegou')}
+                    {t('landing.walkthrough.arrived', 'arrived')}
                   </motion.span>
                 )}
               </AnimatePresence>
@@ -484,7 +486,7 @@ function SceneNoShow({ progress }: { progress: number }) {
               color: showResolved ? '#4ade80' : showRisk ? '#f87171' : '#4ade80',
             }}
           >
-            {showResolved ? t('landing.walkthrough.checkedIn', 'check-in feito') : t('landing.walkthrough.confirmed', 'confirmado')}
+            {showResolved ? t('landing.walkthrough.checkedIn', 'checked in') : t('landing.walkthrough.confirmed', 'confirmed')}
           </span>
         </motion.div>
 
@@ -497,7 +499,7 @@ function SceneNoShow({ progress }: { progress: number }) {
             <div className="text-[13px] font-medium text-white/80">Maria Santos</div>
             <div className="text-[10px] text-white/25">20:00 - 4p</div>
           </div>
-          <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">confirmado</span>
+          <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">{t('landing.walkthrough.confirmed', 'confirmed')}</span>
         </motion.div>
       </div>
 
@@ -512,8 +514,8 @@ function SceneNoShow({ progress }: { progress: number }) {
             <div className="flex items-center gap-3">
               <PulsingIcon color="#f59e0b" size={32}>$</PulsingIcon>
               <div>
-                <div className="text-[12px] font-semibold text-amber-400">{t('landing.walkthrough.depositRequested', 'Depósito solicitado')}</div>
-                <div className="text-[10px] text-white/35">{t('landing.walkthrough.depositDetail', 'R$25 retido — ativado pelo risco')}</div>
+                <div className="text-[12px] font-semibold text-amber-400">{t('landing.walkthrough.depositRequested', 'Deposit hold requested')}</div>
+                <div className="text-[10px] text-white/35">{t('landing.walkthrough.depositDetail', '$25 hold - auto-triggered by risk score')}</div>
               </div>
             </div>
           </motion.div>
@@ -529,8 +531,8 @@ function SceneNoShow({ progress }: { progress: number }) {
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-6" stroke="#34d399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </PulsingIcon>
               <div>
-                <div className="text-[12px] font-semibold text-rose-400">{t('landing.walkthrough.guestArrived', 'Cliente chegou — depósito liberado')}</div>
-                <div className="text-[10px] text-white/35">{t('landing.walkthrough.checkedInDetail', 'Lucas Ferreira fez check-in às 18:52')}</div>
+                <div className="text-[12px] font-semibold text-rose-400">{t('landing.walkthrough.guestArrived', 'Guest arrived - deposit released')}</div>
+                <div className="text-[10px] text-white/35">{t('landing.walkthrough.checkedInDetail', 'Lucas Ferreira checked in at 18:52')}</div>
               </div>
             </div>
           </motion.div>
@@ -572,7 +574,7 @@ function SceneManagerAI({ progress }: { progress: number }) {
       </div>
 
       <div className="text-[11px] font-semibold text-white/25 uppercase tracking-wider mb-2">
-        Reservas de Hoje
+        {t('landing.walkthrough.todaysReservations', "Today's Reservations")}
       </div>
       <div className="space-y-0.5">
         {[
@@ -589,7 +591,7 @@ function SceneManagerAI({ progress }: { progress: number }) {
               <div className="text-[13px] font-medium text-white/80">{r.name}</div>
               <div className="text-[10px] text-white/25">{r.time} - {r.size}p</div>
             </div>
-            <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">confirmado</span>
+            <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400/70">{t('landing.walkthrough.confirmed', 'confirmed')}</span>
           </motion.div>
         ))}
       </div>
@@ -630,8 +632,8 @@ function SceneManagerAI({ progress }: { progress: number }) {
                     transition={{ type: 'spring', stiffness: 200, damping: 20 }}
                     className="text-[12px] text-white/60 leading-relaxed"
                   >
-                    {t('landing.walkthrough.aiMessage1', 'Os couverts de hoje estão')} <span className="text-amber-400 font-semibold">{t('landing.walkthrough.aiMessage2', '15% abaixo da média')}</span>.
-                    {' '}{t('landing.walkthrough.aiMessage3', 'Encontrei 23 clientes que não visitam há 30+ dias. Quer que eu envie uma oferta especial?')}
+                    {t('landing.walkthrough.aiMessage1', "Tonight's covers are")} <span className="text-amber-400 font-semibold">{t('landing.walkthrough.aiMessage2', '15% below average')}</span>.
+                    {' '}{t('landing.walkthrough.aiMessage3', "I found 23 past guests who haven't visited in 30+ days. Want me to send them a special offer?")}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -648,13 +650,13 @@ function SceneManagerAI({ progress }: { progress: number }) {
                       className="text-[10px] font-semibold px-3.5 py-1.5 rounded-full bg-burgundy/80 text-white cursor-default"
                       whileHover={{ scale: 1.05 }}
                     >
-                      {t('landing.walkthrough.sendCampaign', 'Enviar campanha')}
+                      {t('landing.walkthrough.sendCampaign', 'Send campaign')}
                     </motion.span>
                     <motion.span
                       className="text-[10px] font-semibold px-3.5 py-1.5 rounded-full bg-white/[0.05] text-white/40 cursor-default"
                       whileHover={{ scale: 1.05 }}
                     >
-                      {t('landing.walkthrough.showList', 'Ver lista')}
+                      {t('landing.walkthrough.showList', 'Show me the list')}
                     </motion.span>
                   </motion.div>
                 )}
@@ -763,7 +765,7 @@ function SceneStaffing({ progress }: { progress: number }) {
           >
             {[
               { role: 'FOH', count: 3, need: showRecommendation ? 4 : 3 },
-              { role: t('landing.walkthrough.kitchen', 'Cozinha'), count: 2, need: 2 },
+              { role: t('landing.walkthrough.kitchen', 'Kitchen'), count: 2, need: 2 },
               { role: 'Bar', count: 1, need: 1 },
             ].map((s, i) => {
               const isHighlight = s.role === 'FOH' && showRecommendation;
@@ -804,7 +806,7 @@ function SceneStaffing({ progress }: { progress: number }) {
           >
             <PulsingIcon color="#8B1A4A" size={28}>AI</PulsingIcon>
             <div className="text-[11px] text-white/60">
-              <span className="text-burgundy font-semibold">{t('landing.walkthrough.staffRecommendation', 'Sexta precisa +1 FOH')}</span> — {t('landing.walkthrough.staffDetail', '42 couverts previstos, equipe atual suporta até 35.')}
+              <span className="text-burgundy font-semibold">{t('landing.walkthrough.staffRecommendation', 'Friday needs +1 FOH')}</span> — {t('landing.walkthrough.staffDetail', '42 covers predicted, current team handles up to 35.')}
             </div>
           </motion.div>
         )}
@@ -911,12 +913,12 @@ export default function DashboardWalkthroughSection() {
           <DashboardChrome accentColor={SCENE_ACCENTS[scene]}>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <div className="text-[14px] font-semibold text-white/85">{t('landing.walkthrough.dashboard', 'Painel')}</div>
-                <div className="text-[10px] text-white/25">{t('landing.walkthrough.today', 'Hoje')}</div>
+                <div className="text-[14px] font-semibold text-white/85">{t('landing.walkthrough.dashboard', 'Dashboard')}</div>
+                <div className="text-[10px] text-white/25">{t('landing.walkthrough.today', 'today')}</div>
               </div>
               <div className="flex items-center gap-1.5">
                 <StatusDot />
-                <span className="text-[10px] text-rose-400/60 font-medium">IA Ativa</span>
+                <span className="text-[10px] text-rose-400/60 font-medium">{t('landing.walkthrough.aiActive', 'AI Active')}</span>
               </div>
             </div>
 

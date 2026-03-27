@@ -1549,6 +1549,22 @@
       "msg4": "Perfeito! Mesa para 4, amanhã às 20h. Confirmada ✓ Até lá, Maria!",
       "inputPlaceholder": "Digite uma mensagem..."
     },
+    "heroAnimation": {
+      "wa1": "Oi, quero reservar uma mesa pra 4 amanhã às 20h",
+      "wa2": "Encontrei disponibilidade! Qual o seu nome?",
+      "wa3": "Maria Silva",
+      "wa4": "Reserva confirmada no Brasa & Alma!",
+      "restaurantName": "Brasa & Alma",
+      "guestDetail": "4 pessoas · 20:00 · Amanhã",
+      "confirmed": "Confirmada",
+      "reservationsToday": "Reservas hoje",
+      "expectedGuests": "Clientes esperados",
+      "aiActive": "IA Ativa",
+      "readyToServe": "Pronta para atender",
+      "voiceTranscript": "Oi Maria! Confirmada sua reserva para amanhã às 20h, mesa para 4 no Brasa & Alma. Até lá!",
+      "sentViaWhatsApp": "Enviada via WhatsApp",
+      "tagline": "IA que atende seu restaurante"
+    },
     "slideIn": {
       "title": "Estes são dados de exemplo",
       "subtitle": "Quer ver SEU restaurante aqui? Leva 30 segundos para configurar.",
@@ -1759,6 +1775,7 @@
       "sat": "Sáb",
       "sun": "Dom",
       "dashboard": "Painel",
+      "aiActive": "IA Ativa",
       "visits": "visitas",
       "risk": "risco",
       "arrived": "chegou",
@@ -1836,7 +1853,9 @@
       "subheading": "Sem taxas ocultas. Cancele quando quiser.",
       "subtitle": "Escolha o plano ideal para seu restaurante",
       "free": "Grátis",
+      "perMonth": "mês",
       "starter": {
+        "name": "Essencial",
         "desc": "Perfeito para restaurantes pequenos",
         "cta": "Começar",
         "f1": "Reservas com IA (Chat + WhatsApp)",
@@ -1846,9 +1865,10 @@
         "f5": "Até 50 reservas/mês"
       },
       "growth": {
+        "name": "Profissional",
         "desc": "Para restaurantes em crescimento",
         "cta": "Começar Teste Grátis",
-        "f1": "Tudo do Inicial",
+        "f1": "Tudo do Essencial",
         "f2": "Agente de voz com IA",
         "f3": "Análises avançadas",
         "f4": "Gestão de lista de espera",
@@ -1856,15 +1876,16 @@
         "f6": "Notificações por SMS"
       },
       "scale": {
+        "name": "Enterprise",
         "desc": "Para restaurantes de alto volume",
         "cta": "Começar Teste Grátis",
-        "f1": "Tudo do Crescimento",
+        "f1": "Tudo do Profissional",
         "f2": "Reservas ilimitadas",
         "f3": "SMS ilimitado",
         "f4": "Suporte prioritário",
-        "f5": "Integrações personalizadas"
+        "f5": "Integrações personalizadas",
+        "f6": "Gerente de conta dedicado"
       },
-      "perMonth": "/mês",
       "getStarted": "Começar Agora",
       "startTrial": "Iniciar Teste Grátis",
       "contactSales": "Falar com Vendas",

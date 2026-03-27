@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { detectCurrency } from '../../utils/currency';
 
 // ─── ShineFx — shimmer sweep on stat values ─────────────────────
 function ShineFx({ children, className = '' }: { children: React.ReactNode; className?: string }) {
@@ -25,6 +26,7 @@ export default function BeforeAfterSection() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
   const [showAfter, setShowAfter] = useState(false);
+  const isBRL = detectCurrency() === 'BRL';
 
   useEffect(() => {
     if (isInView) {
@@ -211,7 +213,7 @@ export default function BeforeAfterSection() {
                     {t('landing.beforeAfter.predictedRevenue', 'Predicted Revenue')}
                   </div>
                   <ShineFx>
-                    <span className="text-sm font-bold text-burgundy/80">R$1.596</span>
+                    <span className="text-sm font-bold text-burgundy/80">{isBRL ? 'R$1.596' : '$1,596'}</span>
                   </ShineFx>
                 </div>
                 <div className="mt-2 h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
