@@ -6,7 +6,8 @@ import "./i18n/config";
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
 
-const SentryBrowserRouter = Sentry.withSentryReactRouterV6Routing(BrowserRouter);
+// Use v7 wrapper to match react-router-dom v7.x (v6 wrapper caused auto-redirects)
+const SentryBrowserRouter = Sentry.withSentryReactRouterV7Routing(BrowserRouter);
 import { ToastProvider } from './contexts/ToastContext';
 import { SidebarProvider } from './contexts/SidebarContext';
 import { AuthProvider } from './contexts/AuthContext';

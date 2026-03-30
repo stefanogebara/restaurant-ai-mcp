@@ -1,7 +1,8 @@
 /**
  * Sentry Error Tracking - Frontend
  *
- * Initializes Sentry for React error tracking and performance monitoring
+ * Initializes Sentry for React error tracking and performance monitoring.
+ * Uses the v7 React Router integration to match react-router-dom v7.x.
  */
 
 import { useEffect } from 'react';
@@ -18,9 +19,11 @@ export function initSentry() {
       dsn,
       environment,
 
-      // Performance Monitoring with React Router v6 instrumentation
+      // Performance Monitoring with React Router v7 instrumentation
+      // (react-router-dom is v7.x — using the v6 integration caused
+      // navigation interception bugs that redirected dashboard pages)
       integrations: [
-        Sentry.reactRouterV6BrowserTracingIntegration({
+        Sentry.reactRouterV7BrowserTracingIntegration({
           useEffect,
           useLocation,
           useNavigationType,
