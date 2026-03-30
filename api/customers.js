@@ -67,7 +67,11 @@ async function handleList(req, res) {
     // Search filter: ILIKE on name or exact match on phone
     if (search) {
       const trimmed = search.trim();
-      query = query.or(`customer_name.ilike.%${trimmed}%,customer_phone.eq.${trimmed}`);
+      const sanitized = trimmed.replace(/[%_\\]/g, '');
+      if (sanitized.length < 2) {
+        return res.status(400).json({ success: false, error: 'Search too short' });
+      }
+      query = query.or(`customer_name.ilike.%${sanitized}%,customer_phone.eq.${sanitized}`);
     }
 
     // Tier filter

@@ -60,7 +60,7 @@ const CRM_STALE_TIME = 5 * 60 * 1000; // 5 minutes
 // ─── Helpers ────────────────────────────────────────────────
 
 function buildQueryString(filters: CustomerListFilters): string {
-  const params = new URLSearchParams({ action: 'crm_list' });
+  const params = new URLSearchParams({ action: 'list' });
   if (filters.search) params.set('search', filters.search);
   if (filters.tier) params.set('tier', filters.tier);
   if (filters.tag) params.set('tag', filters.tag);
@@ -93,7 +93,7 @@ export function useCustomerDetail(customerId: string | null) {
     queryKey: ['crm', 'customer', customerId],
     queryFn: async () => {
       const response = await authFetch(
-        `/api/crm?action=crm_detail&customer_id=${encodeURIComponent(customerId!)}`
+        `/api/crm?action=detail&customer_id=${encodeURIComponent(customerId!)}`
       );
       if (!response.ok) throw new Error('Failed to fetch customer detail');
       const result = await response.json();

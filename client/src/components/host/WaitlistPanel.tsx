@@ -40,7 +40,7 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
       const response = await authFetch(`/api/waitlist?id=${entryId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'Notified' }),
+        body: JSON.stringify({ status: 'notified' }),
       });
       if (!response.ok) throw new Error('Failed to notify customer');
       return response.json();
@@ -59,16 +59,16 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
 
   const rawWaitlist = data?.waitlist;
   const waitlist = useMemo(() => rawWaitlist || [], [rawWaitlist]);
-  const activeCount = waitlist.filter(e => ['Waiting', 'Notified'].includes(e.status)).length;
-  const seatedCount = waitlist.filter(e => e.status === 'Seated').length;
-  const removedCount = waitlist.filter(e => ['Cancelled', 'No Show'].includes(e.status)).length;
+  const activeCount = waitlist.filter(e => ['waiting', 'notified'].includes(e.status)).length;
+  const seatedCount = waitlist.filter(e => e.status === 'seated').length;
+  const removedCount = waitlist.filter(e => ['cancelled', 'no_show'].includes(e.status)).length;
 
   const filteredWaitlist = useMemo(() => {
     let filtered = waitlist;
     switch (activeTab) {
-      case 'active': filtered = filtered.filter(e => ['Waiting', 'Notified'].includes(e.status)); break;
-      case 'seated': filtered = filtered.filter(e => e.status === 'Seated'); break;
-      case 'removed': filtered = filtered.filter(e => ['Cancelled', 'No Show'].includes(e.status)); break;
+      case 'active': filtered = filtered.filter(e => ['waiting', 'notified'].includes(e.status)); break;
+      case 'seated': filtered = filtered.filter(e => e.status === 'seated'); break;
+      case 'removed': filtered = filtered.filter(e => ['cancelled', 'no_show'].includes(e.status)); break;
     }
     if (sourceFilter === 'whatsapp') {
       filtered = filtered.filter(e => e.source === 'whatsapp' || e.source === 'whatsapp_ai');
@@ -85,8 +85,8 @@ export default function WaitlistPanel({ onSeatNow, restaurantId }: WaitlistPanel
     return filtered;
   }, [waitlist, activeTab, sourceFilter, searchQuery]);
 
-  const tableReadyEntries = filteredWaitlist.filter(e => e.status === 'Notified');
-  const waitingEntries = filteredWaitlist.filter(e => e.status === 'Waiting');
+  const tableReadyEntries = filteredWaitlist.filter(e => e.status === 'notified');
+  const waitingEntries = filteredWaitlist.filter(e => e.status === 'waiting');
 
   if (isLoading) {
     return (

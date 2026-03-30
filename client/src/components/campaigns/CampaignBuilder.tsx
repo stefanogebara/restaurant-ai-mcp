@@ -49,7 +49,7 @@ export default function CampaignBuilder({ onCreated, onCancel }: CampaignBuilder
       toast.success(t('campaigns.created'));
       onCreated();
     } catch {
-      toast.error(t('campaigns.messageRequired'));
+      toast.error(t('campaigns.createFailed', 'Failed to create campaign'));
     }
   };
 
@@ -150,6 +150,7 @@ export default function CampaignBuilder({ onCreated, onCancel }: CampaignBuilder
               type="datetime-local"
               value={scheduledAt}
               onChange={(e) => setScheduledAt(e.target.value)}
+              min={new Date().toISOString().slice(0, 16)}
               className="border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm text-deep-charcoal focus:outline-none focus:ring-1 focus:ring-burgundy focus:border-burgundy"
               required={isScheduled}
             />
